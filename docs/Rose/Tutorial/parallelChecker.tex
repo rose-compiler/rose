@@ -1,0 +1,68 @@
+\chapter{Parallel Checker}
+
+This Chapter is about the project \emph{DistributedMemoryAnalysisCompass}, which
+runs Compass Checkers in Parallel, i.e. shared, combined and distributed.
+
+\section{Different Implementations}
+
+The project contains the following files:
+
+\begin{itemize}
+\item parallel\_functionBased\_ASTBalance contains the original implementation, which is based on an AST traversal
+      that is balanced based on the number of nodes in each function. Then the functions are distributed over all
+      processors. It contains as well the original interfaces to the shared and combined traversal work.
+\item parallel\_file\_compass distributed on the granularity level of files. 
+\item parallel\_functionBased\_dynamicBalance is the implementation of dynamically scheduling functions across
+      processors. In addition, this algorithm weights the functions first and then sorts them in descending order
+      according to their weight.
+\item parallel\_compass performs dynamic scheduling based on nodes. The nodes are weighted and then sorted.
+      This algorithm allows the greatest scalability.
+\end{itemize}
+
+
+\section{Running through PSUB}
+
+The following represents a typical script to run parallel\_compass on 64 processors using CXX\_Grammer.
+CXX\_Grammar is a binary ROSE AST representation of a previously parsed program. We specify 65 processors
+because processor 0 does only communication and no computation. Furthermore, we ask for 17 nodes of which each has 8 
+processors giving us a total of 136 possible processes. We only need 65 but still want to use this configuration.
+This will average out our 65 processes over 17 nodes, resulting in about 4 processors per node.
+This trick is used because the AST loaded into memory takes about 400 MB per process. We end up with 1600MB per node.
+
+
+\begin{verbatim}
+#!/bin/bash
+#  Sample LCRM script to be submitted with psub
+#PSUB -r ncxx65 # sets job name (limit of 7 characters)
+#PSUB -b nameofbank  # sets bank account
+#PSUB -ln 17 # == defines the amount of nodes needed
+#PSUB -o ~/log.log
+#PSUB -e ~/log.err
+#PSUB -tM 0:05  # Max time 5 min runtime
+#PSUB -x  # export current env var settings
+#PSUB -nr # do NOT rerun job after system reboot
+#PSUB -ro # send output log directly to file
+#PSUB -re # send err log directly to file
+#PSUB -mb # send email at execution start
+#PSUB -me # send email at execution finish
+#PSUB -c zeus
+#PSUB # no more psub commands
+# job commands start here
+set echo
+echo LCRM job id = $PSUB_JOBID
+cd ~/new-src/build-rose/projects/DistributedMemoryAnalysisCompass/
+srun -n 65 ./parallel_compass -load ~/CXX_Grammar.ast
+echo "ALL DONE"
+\end{verbatim} 
+
+There are a few tricks that could be considered.
+Prioritization is based on the amount of time and nodes requested. If less time
+is specified, it is more likely that a job runs very soon, as processing time
+becomes available.
+
+To submit the job above, use \emph{psub file-name}.
+To check the job in the queue, use \emph{squeue} and to cancel the job use \emph{mjobctl -c job-number}.
+
+
+
+

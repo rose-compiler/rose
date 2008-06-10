@@ -11,7 +11,7 @@ latexFiles = \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
    addAssignmentStmt.tex addExpression.tex\
-   addFunctionDeclaration.tex buildCFG.tex runtimeErrorCheck.tex defuseAnalysis.tex binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
+   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex runtimeErrorCheck.tex defuseAnalysis.tex binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
    debuggingSupport.tex commandlineProcessing.tex customGraphs.tex tutorialMakefile.tex wrapup.tex \
@@ -49,6 +49,7 @@ link_LaTeX_files:
 	test -f globalVariableHandling.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/globalVariableHandling.tex globalVariableHandling.tex
 	test -f buildCFG.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/buildCFG.tex buildCFG.tex
 	test -f runtimeErrorCheck.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/runtimeErrorCheck.tex runtimeErrorCheck.tex	
+	test -f parallelChecker.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/parallelChecker.tex parallelChecker.tex	
 	test -f defuseAnalysis.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/defuseAnalysis.tex defuseAnalysis.tex	
 	test -f binaryAnalysis.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/binaryAnalysis.tex binaryAnalysis.tex	
 	test -f buildCG.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/buildCG.tex buildCG.tex

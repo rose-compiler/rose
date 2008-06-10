@@ -358,6 +358,8 @@ our own use on large scale applications.}
 
 \input{distributedMemoryTraversals}
 
+\input{parallelChecker}
+
 \input{howToContribute}
 
 \backmatter
