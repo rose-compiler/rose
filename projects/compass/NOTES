@@ -1,5 +1,6 @@
+Notes about subtle details of Compass
 
-
+************************************************************************
 Removing all the output files before regeneration:
 find . -name "*TestOutput.txt" -exec rm {} \;
 
@@ -11,7 +12,7 @@ So use:
 instead of: 
 # checker
 
-
+************************************************************************
 Why are there two *.tex files in each directory? (Answer from Gary Yuan)
    The two .tex files was a fix for highlight and the (un)archive mechanism 
 that would make new tarballs in the repository of current checkers. What 
@@ -26,4 +27,21 @@ Greg White was missing the following files in this distribution:
     introduction.tex
     compassSupport/compassDocs.tex
 This issue is now fixed in the Makefile.am files.
+
+
+************************************************************************
+DQ (5/14/2008): We need an automated test for the process that builds 
+a new checker.
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+
 

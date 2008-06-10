@@ -74,9 +74,10 @@
 % \endinput
 
 
-\addtolength{\oddsidemargin}{-1.0in}
-\addtolength{\evensidemargin}{-1.0in}
-\addtolength{\textwidth}{2.0in}
+%\addtolength{\oddsidemargin}{-0.5in}
+%\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textheight}{0.5in}
+%\addtolength{\textwidth}{0.5in}
 %\addtolength{\textwidth}{1.0in}
 %\addtolength{\topmargin}{-0.5in}
 %\addtolength{\textheight}{1.5in}
@@ -168,6 +169,10 @@
 \newpage
 
 \input{introduction}
+
+\newpage
+
+\input{design}
 
 \newpage
 
