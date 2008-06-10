@@ -57,6 +57,8 @@ visit(SgNode* sgNode)
     SgProject* project = TransformationSupport::getProject(sgNode);
     defuse = new DefUseAnalysis(project);
     projectSet=true;
+  } else {
+    ((DefUseAnalysis*)defuse)->flush();
   }
   // Implement your traversal here.  
   if (isSgFunctionDefinition(sgNode)) {
