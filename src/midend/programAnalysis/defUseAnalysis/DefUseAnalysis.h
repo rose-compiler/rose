@@ -53,7 +53,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
  public:
   DefUseAnalysis(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(false){};
        virtual ~DefUseAnalysis() {}
-
+       
   // def-use-public-functions -----------
   int run();
   int run(bool debug);
@@ -87,6 +87,12 @@ class DefUseAnalysis : public DFAnalysis, Support {
   int getIntForSgNode(SgNode* node);
   void dfaToDOT();
   //void addIDefElement(SgNode* sgNode, SgInitializedName* initName);
+
+  // clear the tables if necessary
+  void flush() {
+   table.clear();
+   usetable.clear();
+  }
 };
 
 #endif
