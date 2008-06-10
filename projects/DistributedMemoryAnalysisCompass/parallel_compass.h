@@ -20,6 +20,7 @@ bool loadAST =false;
 bool saveAST =false;
 SgProject *root = NULL;
 struct timespec begin_time, end_time;
+struct timespec begin_time_node, end_time_node;
 int my_rank, processes;
 bool sequential=false;
 bool combined=false;
@@ -234,5 +235,32 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
   
 }
 
+
+void communicateResult(std::vector<CountingOutputObject *> &outputs, 
+		       double* times, double* memory, 
+		       unsigned int* output_values, 
+		       double my_time, double memusage, int* maxtime_nr, int max_time_i,  double* maxtime_val, double maxtime) {
+  /* communicate results */
+  unsigned int *my_output_values = new unsigned int[outputs.size()];
+  for (size_t i = 0; i < outputs.size(); i++)
+    my_output_values[i] = outputs[i]->outputs;
+
+  MPI_Reduce(my_output_values, output_values, outputs.size(), MPI_UNSIGNED,
+	     MPI_SUM, 0, MPI_COMM_WORLD);
+
+  /* communicate times */
+  MPI_Gather(&my_time, 1, MPI_DOUBLE, times, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&memusage, 1, MPI_DOUBLE, memory, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&max_time_i, 1, MPI_INT, maxtime_nr, 1, MPI_INT, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&maxtime, 1, MPI_DOUBLE, maxtime_val, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+  
+}
 
 #endif

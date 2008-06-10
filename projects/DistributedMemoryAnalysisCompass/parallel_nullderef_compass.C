@@ -18,13 +18,15 @@ public:
   SgNode* *nodes;
   bool count;
   size_t interestingNodes;
-  NodeNullDerefCounter(bool c) { interestingNodes=0; totalNodes=0; count=true;}
+  size_t nrOfForWhile;
+  NodeNullDerefCounter(bool c) { interestingNodes=0; totalNodes=0; count=true; nrOfForWhile=1;}
   NodeNullDerefCounter(int numberOfNodes)
     : totalNodes(0), totalFunctions(0), 
       nullDerefNodes(new size_t[numberOfNodes+1]), fileptr(nullDerefNodes) {
     *fileptr = 0;
     interestingNodes=0; 
     count=false;
+    nrOfForWhile=1;
     nodes = new SgNode*[numberOfNodes+1];
   }
 protected:
@@ -48,6 +50,10 @@ protected:
       }
       interestingNodes++;
       //}
+      if (isSgForStatement(node) || isSgWhileStmt(node) ||
+	  isSgVarRefExp(node) || isSgInitializedName(node) ||
+	  isSgFunctionCallExp(node))
+	nrOfForWhile++;
     SgFunctionDeclaration *funcDecl = isSgFunctionDeclaration(node);
     if (funcDecl && funcDecl->get_definingDeclaration() == funcDecl) {
       totalFunctions++;
@@ -117,9 +123,11 @@ std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int
 // algorithm that splits the files to processors
 // ************************************************************
 void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor,
-					  int my_rank, int processes, NodeNullDerefCounter nullderefCounter)
+					  int my_rank, int processes, 
+			   NodeNullDerefCounter nullderefCounter,
+			   std::vector<SgNode*>& nodeDecls)
 {
-  nullderefCounter.traverse(project, postorder);
+  // nullderefCounter.traverse(project, postorder);
   int nrOfInterestingNodes = nullderefCounter.interestingNodes;
   // count the amount of nodes in all files
   //cerr << " number of interesting : " << nrOfInterestingNodes << endl;
@@ -133,7 +141,7 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
     std::cout <<  "0: File: The total amount of nodes is : " << nullderefCounter.totalNodes << std::endl;
   }
 
-  std::vector<SgNode*> nodeDecls(nullderefCounter.totalNodes);
+  //  std::vector<SgNode*> nodeDecls(nullderefCounter.totalNodes);
   std::vector<double> nodeWeights(nullderefCounter.totalNodes);
 
   std::vector<std::pair<double, size_t> > weights(nullderefCounter.totalNodes);
@@ -151,7 +159,10 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
       } else if (isSgFunctionDefinition(node)) {
 	NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
 	nrNiF.traverse(node, postorder);
-	currentWeight = 0.001*nrNiF.totalNodes;
+	currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile;
+	// make sure a function is weighted more than all other nodes
+	if (currentWeight<=0.05)
+	  currentWeight=0.06;
       }
       weights[i].first = currentWeight;
       weights[i].second = i;
@@ -160,9 +171,19 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
     for (int i=0; i< (int) nullderefCounter.totalNodes; i++) {
       nodeDecls[i]=nullderefCounter.nodes[weights[i].second];
       nodeWeights[i]=weights[i].first;
-      //      if (my_rank==0)
-      //	  std::cout << "    node : " << nodeDecls[i]->class_name() << 
-      //    "  weight : " << nodeWeights[i] << std::endl;
+      if (my_rank==0) {
+	string name = "";
+	string name2= "";
+	SgFunctionDefinition* fast = isSgFunctionDefinition(nodeDecls[i]);
+	if (fast) {
+	  name = fast->get_qualified_name().str();
+	  name2 = fast->get_declaration()->get_name().str();
+	}
+	if (i<100)
+	  std::cout << "    node : " << nodeDecls[i]->class_name() << 
+	    "  weight : " << nodeWeights[i] << "   " << name << "  " << name2 <<  std::endl;
+
+      }
     }
 
 
@@ -211,7 +232,8 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
 
 void printPCResults(std::vector<CountingOutputObject *> &outputs,
 		    unsigned int* output_values,
-		    double* times, double* memory//, double* nr_func
+		    double* times, double* memory, int* maxtime_i, double* maxtime_val, 
+		    std::vector<SgNode*>& nodeDecls
 		    ) {
   /* print everything */
   if (my_rank == 0) {
@@ -224,29 +246,36 @@ void printPCResults(std::vector<CountingOutputObject *> &outputs,
     double total_time = 0.0;
     double total_memory = 0.0;
     double min_time = std::numeric_limits<double>::max(), max_time = 0.0;
-    int slowest_func=0;
-    int fastest_func=0;
+    //    int slowest_func=0;
+    //int fastest_func=0;
     for (size_t i = 0; i < (size_t) processes; i++) {
 
+      double maxval = maxtime_val[i];
+      SgNode* n = isSgNode(nodeDecls[maxtime_i[i]]);
+      string slow_node = n->class_name();
+      SgFunctionDefinition* sl_node = isSgFunctionDefinition(n);
+      if (sl_node) slow_node= sl_node->get_declaration()->get_name().str();
+
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
-	"  real # functions:  " << (dynamicFunctionsPerProcessor[i]) << std::endl;//   static func: " << nr_func[i] << std::endl;
+	"  real # functions:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << "  time: " << maxval << std::endl;
 
       total_time += times[i];
       total_memory += memory[i];
       if (min_time > times[i]) {
 	min_time = times[i];
-	fastest_func = i;
       }
       if (max_time < times[i]) {
 	max_time = times[i];
-	slowest_func = i;
       }
+
     }
     std::cout << std::endl;
 
     std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
       	      << "\n    fastest process: " << min_time // << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
       	      << "\n    slowest process: " << max_time //<< " slowest   in file: " << root->get_file(slowest_func).getFileName()
+      //	      << "\n    fastest process: " << min_time  << " fastest " << fastest_func << "   in node: " << nodeDecls[fastest_func]->class_name() << ": " <<namef<< " : " <<namef2
+      //              << "\n    slowest process: " << max_time  << " slowest node : " <<  nodeDecls[]->class_name() << ": " <<names<< " : " <<names2
 	      << std::endl;
     std::cout << std::endl;
   
@@ -308,15 +337,22 @@ int main(int argc, char **argv)
   int nrOfInterestingNodes = nc.interestingNodes;
   NodeNullDerefCounter nullderefCounter(nrOfInterestingNodes);
 
+  nullderefCounter.traverse(root, postorder);
+  std::vector<SgNode*> nodeDecls(nullderefCounter.totalNodes);
+
   dynamicFunctionsPerProcessor = new int[processes];
   for (int k=0;k<processes;k++)
     dynamicFunctionsPerProcessor[k]=0;
+
+  // which node is the most expensive?
+  int max_time_nr=0;
+  double max_time=0;
 
   //  std::pair<int, int> bounds;
   std::vector<int> bounds;
   if (processes==1) {
   /* figure out which files to process on this process */
-    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter);
+    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
     //   bounds = computeNullDerefIndices(root, my_rank, processes, nullderefCounter);
       if (DEBUG_OUTPUT_MORE) 
 	cout << "bounds size = " << bounds.size() << endl;
@@ -340,11 +376,11 @@ int main(int argc, char **argv)
     }
   } else {
     // apply runtime algorithm to def_use
-    cerr << " Dynamic scheduling ..." << endl;
+    cout << " Dynamic scheduling ..." << endl;
 
       // apply run-time load balancing
       //      std::vector<int> bounds;
-      computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter);
+    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
       // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
       int currentJob = -1;
       MPI_Status Stat;
@@ -353,7 +389,9 @@ int main(int argc, char **argv)
       res[1]=5;
       bool done = false;
       int jobsDone = 0;
-      int scale = 250;
+      // **********************************************************
+      int scale = 1;
+      // **********************************************************
       while (!done) {
 	// we are ready, make sure to notify 0
 	if (my_rank != 0) {
@@ -366,8 +404,10 @@ int main(int argc, char **argv)
 	    break;
 
 	  std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[  of " << 
-	    totalnr << "      range : " << (max-min) << std::endl;
-	  for (int i=min; i<max;i++) {
+	    totalnr << "      range : " << (max-min);// << std::endl;
+	  double total_node=0;
+	  for (int i=min; i<max;i++) { 
+	    gettime(begin_time_node);
 	    //if (i>=(int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size()) {
 	    //std::cout << "............ early breakup " << std::endl;
 	    //break;
@@ -378,18 +418,32 @@ int main(int argc, char **argv)
 	      // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
 	      // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
 	      //	    << std::endl; 
-	      SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
+	    	      
+	      SgNode* mynode = isSgNode(nodeDecls[i]);
 	      ROSE_ASSERT(mynode);
+	      //string name="";
+	      //if (isSgFunctionDefinition(mynode)) name = isSgFunctionDefinition(mynode)->get_declaration()->get_name().str();
+	      //cout << " " << mynode->class_name() << " " << name << " " ;
 	      (*b_itr)->visit(mynode);
-	      //(*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	      
 	    }
+	    gettime(end_time_node);
+	    double my_time_node = timeDifference(end_time_node, begin_time_node);
+	    if (my_time_node>max_time) {
+	      max_time=my_time_node;
+	      max_time_nr = i;
+	    }
+	    total_node += my_time_node;
 	  }
+	  std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
+	    "   in node : " << nodeDecls[max_time_nr]->class_name() << std::endl;
+	  
 	}
 	if (my_rank == 0) {
 	  //std::cout << " process : " << my_rank << " receiving. " << std::endl;
 	  MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	  currentJob+=scale;
-	  if ((currentJob % 50)==49) scale+=5;
+	  if ((currentJob % 100)==99) scale+=1;
 	  if (currentJob>=(int)bounds.size()) {
 	    res[0] = -1;
 	    jobsDone++;
@@ -413,8 +467,6 @@ int main(int argc, char **argv)
   }
 
 
-
-
   gettime(end_time);
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memusage = memusage_e-memusage_b;
@@ -424,12 +476,12 @@ int main(int argc, char **argv)
   unsigned int *output_values = new unsigned int[outputs.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
-  //double *nr_func = new double[processes];
-  //double thisfunction = bounds.second-bounds.first;
-  communicateResult(outputs, times, memory, output_values, my_time, memusage);//, nr_func, thisfunction);
+  int *maxtime_nr = new int[processes];
+  double *maxtime_val = new double[processes];
+  communicateResult(outputs, times, memory, output_values, my_time, memusage, maxtime_nr, max_time_nr, maxtime_val, max_time);//, nr_func, thisfunction);
 
 
-  printPCResults(outputs, output_values, times, memory);//, nr_func);
+  printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, nodeDecls);//, nr_func);
 
 
   /* all done */
