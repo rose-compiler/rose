@@ -6,11 +6,21 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TESTCODES_REQUIRED_TO_PASS = \
      test2004_22.upc 
-
 TESTCODE_CURRENTLY_FAILING = \
-     threads.upc \
+     barrier.upc \
+     consistency.upc \
+     fence.upc \
+     forall_1.upc \
+     forall_affinity.upc \
+     forall_continue.upc \
+     hello.upc \
+     lock.upc \
+     max_block_size.upc \
      mythread.upc \
-     hello.upc
+     notify_wait.upc \
+     shared.upc \
+     sizeof.upc \
+     threads.upc 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
@@ -45,7 +55,8 @@ $(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.upc)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
-EXTRA_DIST = $(ALL_TESTCODES)
+# put the headers here for now. TODO: Move them to a better place
+EXTRA_DIST = $(ALL_TESTCODES) upc.h upc_relaxed.h upc_strict.h upc_collective.h
 
 check-local:
 	@echo "Tests for UPC examples."
