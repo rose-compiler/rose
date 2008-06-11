@@ -14,18 +14,6 @@
 #define restrict __restrict__
 #endif
 
-/* Test for 64 bit system (using the LP64 model, though likely it is OK for ILP64 & LLP64
-   models as well: see ttp://www.unix.org/version2/whatsnew/lp64_wp.html for details) 
-*/
-#if (_LP64 == 1)
-/* Either EDG does not get this correct for 64 bit systems, or we don't set it up properly. */
-/* Comment this out because it is an error to defined anything like this different from
-   the backend compiler.
-   #undef __SIZE_TYPE__ 
-   #define __SIZE_TYPE__ unsigned long long
-*/
-#endif
-
 /* DQ (6/12/2005): Permit this to be optionally commented out because it makes it hard to
     look at the AST merging graphs. The ROSE-IR graphs will now filter nodes associated
     with declarations from this file (marked as front-end specific).
@@ -43,38 +31,6 @@
   #error "Macro ROSE_CPP_MODE should have been defined ROSE_CPP_MODE == 0 for C and C99 and ROSE_CPP_MODE == 1 for C++"
 #endif
 
-/* #if __cplusplus */
-#if ROSE_CPP_MODE
-/* DQ (10/2/2006): Import size_t to the std:: namespace with another typedef.
-// I think this is required for C++, but it is not done by EDG or GNU (though 
-// perhaps implecitly if size_t is not typedefed!).  
-// See also: http://www.cantrip.org/cheaders.html
-*/
-/* DQ (5/23/2007): This should not be required and it prevents 
-// seemingly valid code that would define size_t from compiling
-// (see test2007_34.C)
-*/
-#if 0
-typedef __SIZE_TYPE__ size_t;
-namespace std {
-    typedef ::size_t size_t;
-  }
-#endif
-#endif
-
-/* DQ (6/19/2007): This has now been added as part of a general definition of builtin
-   functions below.
-   DQ (3/7/2007): Added to represent this common hint mechanism, this avoids an warning 
-                  in ROSE about the function declaration not being found in the child 
-                  list of its parent. Note that GNU (at least) defined the function as 
-                  it is below 
-   long int __builtin_expect (long int exp, long int val);
-*/
-
-/* DQ (7/21/2006): The second argument really needs to be handled differently for C and C++ (see test2003_19.C and test2006_91.C).
-// DQ 10/20/2005): Need to make 2nd argument a const void * type (I think)
-// void va_start(__builtin_va_list __builtin__x, const void* __builtin__y);
-*/
 /* PC (9/25/2006): Define __builtin_va_start to the EDG expected symbol
    __builtin_stdarg_start */
 #define __builtin_va_start __builtin_stdarg_start

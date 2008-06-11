@@ -23,28 +23,6 @@
 @lineArray = <>;
 $lineNumber = 0;
 
-# DQ (4/11/2005): This should not be required now that we use GNU extensions within EDG and support them in ROSE
-if (0) {
-# Processing for all header files:
-# make all processed files first include the rose-g++-headerfilefixup.h header file
-# to make sure that any file which the user calls will first define rose specific
-# macros and all gnu built-in functions before processing any gnu header files
-# which might require them.  In this case we put the header files in include
-# guards that prevent unneccessary file lookup (for better performance in header
-# file processing).
-print "\n";
-print "// ***************** Automaticaly Generated Header File**************\n";
-print "// The file included below is a ROSE specific header file which      \n";
-print "// needs to be seen before any processing of the gnu 3.x compiler    \n";
-print "// header files (rose-g++-headerfilefixup.h in not a generated file).\n";
-print "// ***************** Automaticaly Generated Header File**************\n";
-print "#ifndef _ROSE_GNU_HEADERFILEFIXUP_H\n";
-print "   #include \"rose-g++-headerfilefixup.h\"\n";
-print "#endif // _ROSE_GNU_HEADERFILEFIXUP_H\n";
-print "\n";
-print "\n";
-}
-
 # Loop over all the strings in a file
 while ($lineNumber <= $#lineArray)
    {
@@ -53,25 +31,6 @@ while ($lineNumber <= $#lineArray)
    # Flag set to false and reset if line matches and is output 
    # by one of the rules below.
      $lineHasBeenOutput = 0;
-
-if (0) { # JJW 10-29-2007 Do we really need this now?  It breaks compilers in non-standard locations
-     if ($line =~ /include_next/)
-        {
-        # Processing of "include_next" non-standard CPP macro mechanism
-
-        # Both limits.h and syslimits.h use the include_only non-standard directive
-        # so we have to translate these (other compiler vendors make wider use of 
-        # this mechanism.
-          $_ = $line;
-        # s/# *include_next *["<]\(.*\)[">]/#include "\/usr\/include\/\1"/g;
-          s/# *include_next *["<](.*)[">]/#include "\/usr\/include\/\1"/;
-          $line = $_;
-          print "$line";
-
-        # Mark as being output
-          $lineHasBeenOutput = 1;
-        }
-}
 
    # DQ (7/24/2006): Modified macros to avoid overflow.  These macros causes warning which were annoying (EDG complained, but gnu did not)
    # This works for gnu 3.3.2 header files, but should be portable
@@ -103,76 +62,6 @@ if (0) { # JJW 10-29-2007 Do we really need this now?  It breaks compilers in no
 
         # Mark as being output
           $lineHasBeenOutput = 1;
-        }
-
-   # DQ (4/9/2005): This should not be required now that we use GNU extensions within EDG and support them in ROSE
-     if (0) {
-     if ($line =~ /extern template/)
-        {
-        # Processing of "extern template" C++ gnu extension to standard C++
-
-        # sstream.tcc uses this "gnu specific "extern template" syntax it is used in
-        # many other files as well (total of 369 locations in the g++ 3.x header files).
-          $_ = $line;
-          s/extern *template/template/;
-          $line = $_;
-          print "$line";
-
-        # Mark as being output
-          $lineHasBeenOutput = 1;
-        }
-        }
-
-   # DQ (4/9/2005): This should not be required now that we use GNU extensions within EDG and support them in ROSE
-     if (0) {
-# DQ (6/4/2005): For support of g++ 3.4.x headers we need to test for __glibcxx_function_requires
-   # if ($line =~ /__glibcpp_function_requires|__glibcpp_class_requires/)
-     if ($line =~ /__glibcpp_function_requires|__glibcpp_class_requires|__glibcxx_function_requires/)
-        {
-        # Processing of C99 macro mechanismused in GNU header files and which is 
-        # non-standard in C++ front-end.
-
-        # print "Found a specific macro! \n";
-          $macroText = $line;
-          if ($macroText =~ /\)$/)
-             {
-             # print "This is the whole macro! macro = $macroText \n";
-             # Output the single line macro commented out
-               print "// $macroText";
-             }
-            else
-             {
-             # print "There is another line to this macro! \n";
-               $macroLineNumber = 0;
-               $found = 0;
-               $multiLineMacro = "";
-               while (!$found)
-                  {
-                    $multiLineMacro .= substr($lineArray[$lineNumber + $macroLineNumber],0);
-                  # print "Building up multiLineMacro = $multiLineMacro \n";
-
-                  # Output the single line macro commented out
-                    print "// $lineArray[$lineNumber + $macroLineNumber]";
-                  # if ($multiLineMacro =~ /\)$/)
-                    if ($multiLineMacro =~ /\)/)
-                       {
-                       # print "Found last line of macro! \n";
-                         $found = 1;
-                       }
-                      else
-                       {
-                       # print "Keep searching ... macroLineNumber = $macroLineNumber \n";
-                         $macroLineNumber++;
-                       }
-                  }
-
-               $lineNumber += $macroLineNumber;
-               $macroText = $multiLineMacro;
-             }
-
-        # Mark as being output
-          $lineHasBeenOutput = 1;
-        }
         }
 
    # If not previously output by the above rules then output the unmodified line 
