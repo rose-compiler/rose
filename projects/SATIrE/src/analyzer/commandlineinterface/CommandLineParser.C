@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.19 2008-06-02 11:25:38 gergo Exp $
+// $Id: CommandLineParser.C,v 1.20 2008-06-11 09:46:45 adrian Exp $
 
 #include <config.h>
 
@@ -217,7 +217,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setLanguage(AnalyzerOptions::Language_C99);
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
-    std::cout << "Found Input filename." << std::endl;
+    std::cout << "Found input file '" << argv[i] << "'." << std::endl;
  // GB (2008-06-02): Using appendInputFile here; this method sets the input
  // file name, appends the name to the command line, and increments the file
  // name counter.
