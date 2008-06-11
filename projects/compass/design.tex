@@ -186,7 +186,7 @@ understand to be relevant. The main threats to the validity of Compass checkers 
          but a malicious checker could modify or erase parts of the accessible file 
          system (e.g. deleting whole directory structures).
 %     \item {\bf others ??? ...}
-   \end{itemize} 
+   \end{itemize}
 
 \item \emph{Malicious Compass} \\
     Since Compass is built from ROSE, it is possible to modify compass (or any checker) 
@@ -229,10 +229,10 @@ mentioned above:
    \begin{itemize}
       \item \emph{fileReadOnlyAccess} ensures that a user defined checker performs no write
          or execute operations on files.
-      \item \emph{forbiddenFunctions} is a {\em white list} of function calls permitted in
-\fixme{Change to allowed functions?}
+      \item \emph{allowedFunctions} is a {\em white list} of function calls permitted in
          a checker. This list contains functions that are trusted and hence considered
-         unharmful when integrated to Compass.
+         safe when integrated to Compass.
+\fixme{This is not yet implemented as a white list and is instead currently a black list; called: forbiddenFunctions.}
       \item \emph{noAsmStmtsOps} searches for assembly instructions in a checker and flags
          and reports all cases as unsafe.
       \item To avoid modifications of the AST for the purpose of allowing other checkers
