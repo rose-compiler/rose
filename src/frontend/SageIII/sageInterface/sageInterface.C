@@ -2941,6 +2941,23 @@ SageInterface::is_C_language()
 
      return returnValue;
    }
+bool
+SageInterface::is_UPC_language()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_UPC_only() == true)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 
 bool
 SageInterface::is_C99_language()

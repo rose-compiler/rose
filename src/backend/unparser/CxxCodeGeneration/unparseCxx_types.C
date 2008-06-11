@@ -1379,6 +1379,12 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
             // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
             // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") )
                string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+               // Liao 6/11/2008, Preserve the original "restrict" for UPC
+               // regardless types of the backend compiler
+               if (SageInterface::is_UPC_language() == true )
+                  curprint ( "restrict ");
+               else 
+               {    
                if ( (compilerName == "g++") || (compilerName == "gcc") )
                   {
                  // GNU uses a string variation on the C99 spelling of the "restrict" keyword
@@ -1388,6 +1394,7 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                   {
                     curprint ( "restrict ");
                   }
+               }   
              }
 
        // Microsoft extension
@@ -1398,12 +1405,16 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
        // xxx_far         // far pointer
 
        // Support for UPC
+       // Liao, 6/11/2008. Enable faithful unparsing for .upc files
           if (mod_type->get_typeModifier().get_upcModifier().isUPC_Shared())
-             { curprint ( string("/* shared: upc not supported by vendor compiler (ignored) */ ")); }
+             // { curprint ( string("/* shared: upc not supported by vendor compiler (ignored) */ ")); }
+             { curprint ("shared ") ; }
           if (mod_type->get_typeModifier().get_upcModifier().isUPC_Strict())
-             { curprint ( string("/* strict: upc not supported by vendor compiler (ignored) */ ")); }
+             //{ curprint ( string("/* strict: upc not supported by vendor compiler (ignored) */ ")); }
+             { curprint ("strict "); }
           if (mod_type->get_typeModifier().get_upcModifier().isUPC_Relaxed())
-             { curprint ( string("/* relaxed: upc not supported by vendor compiler (ignored) */ ")); }
+             //{ curprint ( string("/* relaxed: upc not supported by vendor compiler (ignored) */ ")); }
+             { curprint ("relaxed "); }
 
 #if 0
           printf ("SgModifierType::m_restrict = %d \n",SgModifierType::m_restrict);
