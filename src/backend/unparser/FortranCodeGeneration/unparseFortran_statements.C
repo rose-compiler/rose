@@ -64,7 +64,7 @@ FortranCodeGeneration_locatedNode::unparseStatementNumbersSupport ( SgLabelRefEx
             // A label exists in the source code
                string numeric_label_string = StringUtility::numberToString(numeric_label);
 
-            // append an extra blank to separate the lable from other code (if fixedFormat == true 
+            // append an extra blank to seperate the lable from other code (if fixedFormat == true 
             // then this puts a blank into column 6 as required for this to be a code statement).
                numeric_label_string += " ";
 
@@ -444,7 +444,7 @@ FortranCodeGeneration_locatedNode::unparseFormatItemList (SgFormatItemList* form
                   }
                  else
                   {
-                 // This is the case of "format (10/)" which processes "10" and "/" separately (I think this is a bug, see test2007_241.f).
+                 // This is the case of "format (10/)" which processes "10" and "/" seperately (I think this is a bug, see test2007_241.f).
 
                     printf ("Error: both get_data() and get_format_item_list() are NULL \n");
                  // ROSE_ASSERT(false);
@@ -884,8 +884,8 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
           string intentString;
           switch(attributeSpecificationStatement->get_intent())
              {
-               case IN:    intentString = "in"; break;
-               case OUT:   intentString = "out"; break;
+               case IN:    intentString = "in";    break;
+               case OUT:   intentString = "out";   break;
                case INOUT: intentString = "inout"; break;
 
                default:
@@ -924,11 +924,21 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
           curprint(")");
         }
 
+  // if ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_parameterStatement) &&
+  //      (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_dataStatement) )
      if ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_parameterStatement) &&
-          (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_dataStatement) )
+          (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_dataStatement) && 
+          ( (attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_private && 
+             attributeSpecificationStatement->get_attribute_kind() != SgAttributeSpecificationStatement::e_accessStatement_public) && 
+             attributeSpecificationStatement->get_parameter_list() != NULL) )
         {
        // The parameter and data statement do not use "::" in their syntax
           curprint(" :: ");
+        }
+       else
+        {
+       // Need a space to prevent variables from being too close to the keywords (e.g. "privatei" should be "private i").
+          curprint(" ");
         }
 
      if ( attributeSpecificationStatement->get_attribute_kind() == SgAttributeSpecificationStatement::e_bindStatement )
@@ -1162,7 +1172,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
      SgStringList::const_iterator i = localList.begin();
      while (i != localList.end())
         {
-       // printf ("Output name = %s \n",(*i).c_str());
+          printf ("Output name = %s \n",(*i).c_str());
 
           curprint(*i);
 
@@ -1198,7 +1208,7 @@ FortranCodeGeneration_locatedNode::unparseImplicitStmt(SgStatement* stmt, SgUnpa
              {
             // For now I just want to skip where alternative implicit rules are specified.
                if ( SgProject::get_verbose() >= 1 )
-                    printf ("***** WARNING IMPLICT STATEMENT NOT YET FINISHED (skipped, default implicit type rules apply) *****\n");
+                    printf ("***** WARNING: in unparser NON \"IMPLICT NONE\" STATEMENT NOT YET FINISHED (skipped, default implicit type rules apply) *****\n");
              }
             else
              {
@@ -1748,16 +1758,16 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
   // specified in a type declaration.  The alternative is that we could build separate 
   // variable declarations for each variable (as is done in C/C++).
      bool isSameVariant = true;
-  // printf ("Initial value: isSameVariant = %s \n",isSameVariant ? "true" : "false");
+     printf ("Initial value: isSameVariant = %s \n",isSameVariant ? "true" : "false");
      SgType* previousType = (*i)->get_type();
      while (i != vardecl->get_variables().end())
         {
           SgType* type = (*i)->get_type();
-       // printf ("type = %p = %s \n",type,type->class_name().c_str());
+          printf ("type = %p = %s \n",type,type->class_name().c_str());
 
        // printf ("type->variantT() = %d \n",(int)(type->variantT()));
           isSameVariant = ( (isSameVariant == true) && (variantType == type->variantT()) );
-       // printf ("isSameVariant = %s \n",isSameVariant ? "true" : "false");
+          printf ("isSameVariant = %s \n",isSameVariant ? "true" : "false");
           SgArrayType* arrayType = isSgArrayType(type);
           if (isSameVariant == true && arrayType != NULL)
              {
@@ -1816,9 +1826,11 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
 #else
                          ROSE_ASSERT(arrayTypeDimensionList->get_expressions().size() == previousArrayTypeDimensionList->get_expressions().size());
                          int size = arrayTypeDimensionList->get_expressions().size();
+                      // printf ("In unparseVarDeclStmt(): size = %d \n",size);
+
                          int i = 0;
                          do {
-                           // Check each dimension separately to avoid unparing a SgColon expression (an error in the C/C++ unparser).
+                           // Check each dimension separately to avoid unparsing a SgColon expression (an error in the C/C++ unparser).
                               if (arrayTypeDimensionList->get_expressions()[i]->variantT() == previousArrayTypeDimensionList->get_expressions()[i]->variantT())
                                  {
                                 // Make sure this is not a SgColonShapeExp or SgAsteriskShapeExp expression
@@ -1881,9 +1893,10 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
      isSameVariant = false;
 #endif
 
+     printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
      if (isSameVariant == true)
         {
-       // printf ("These types are all the same so use the type attributes \n");
+          printf ("These types are all the same so use the type attributes \n");
 
           ninfo.set_useTypeAttributes();
 
@@ -1911,7 +1924,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         }
        else
         {
-       // printf ("These types are different so do NOT use the type attributes \n");
+          printf ("These types are different so do NOT use the type attributes \n");
 
           SgInitializedNamePtrList::iterator p = vardecl->get_variables().begin();
 
@@ -3507,15 +3520,32 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
   // FIXME: eventually we will probably use this
   // SgStorageModifier& storage = initializedName->get_storageModifier();
 
+  // printf ("In unparseVarDecl(SgStatement,SgInitializedName,SgUnparse_Info): info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
      if (info.SkipBaseType() == false)
         {
-          unp->u_fortran_type->unparseType(type, info);  
+       // printf ("In unparseVarDecl(): calling unparseType on type = %p = %s \n",type,type->class_name().c_str());
+
+       // DQ (3/23/2008): If this is a SgPointerType then just output the 
+       // base type (since the declaration will use the "POINTER" attribute).
+       // unp->u_fortran_type->unparseType(type, info);
+          SgPointerType* pointerType = isSgPointerType(type);
+          if (pointerType != NULL)
+             {
+               SgType* baseType = pointerType->get_base_type();
+               ROSE_ASSERT(baseType != NULL);
+               unp->u_fortran_type->unparseType(baseType, info);
+             }
+          else
+             {
+               unp->u_fortran_type->unparseType(type, info);
+             }
 
        // DQ (11/18/2007): Added support for ALLOCATABLE declaration attribute
           SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(stmt);
           ROSE_ASSERT(variableDeclaration != NULL);
 
        // DIMENSION is already handled (within the unparsing of the type)
+       // DQ (3/23/2008): Likely POINTER should also be handled in the unparsing of the type!
 
        // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable() == true)
@@ -3560,16 +3590,19 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", EXTERNAL");
              }
 
-       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
+          printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() == true)
              {
             // PARAMETER in Fortran implies const in C/C++
                curprint(", PARAMETER");
              }
 
+       // DQ (5/14/2008): Note that POINTER is only relevant if the variable is NOT declared as ALLOCATABLE.
+       //                 If it is ALLOCATABLE then POINTER is not used.
        // DQ (11/23/2007): A better implementation of this might require that we strip off some modifiers
        // printf ("initializedName->get_type() = %s \n",initializedName->get_type()->class_name().c_str());
-          if (isSgPointerType(initializedName->get_type()) != NULL)
+       // if (isSgPointerType(initializedName->get_type()) != NULL)
+          if ( (isSgPointerType(initializedName->get_type()) != NULL) && (variableDeclaration->get_declarationModifier().get_typeModifier().isAllocatable() == false) )
              {
                curprint(", POINTER");
              }
@@ -3673,6 +3706,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
           curprint(" = ");
 
        // I think the initializer for Fortran is always a SgExprListExp, but it need not be.
+#if 0
           SgAssignInitializer* assignInitializer = isSgAssignInitializer(init);
           ROSE_ASSERT(assignInitializer != NULL);
           SgExprListExp* expressionList = isSgExprListExp(assignInitializer->get_operand());
@@ -3694,8 +3728,28 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
              }
             else
              {
-               unparseExpression(init, info);
+            // DQ (21/4/2008): We now handle the SgImpliedDo when it is not contained in a SgExprListExp
+            // unparseExpression(init, info);
+               SgImpliedDo* impliedDo = isSgImpliedDo(assignInitializer->get_operand());
+               if (impliedDo != NULL)
+                  {
+                    SgUnparse_Info ninfo(info);
+                    ninfo.set_SkipParen();
+                    curprint("(/");
+                    unparseExpression(init, info);
+                    curprint("/)");
+                  }
+                 else
+                  {
+                    unparseExpression(init, info);
+                  }
              }
+#else
+       // DQ (4/28/2008): Make this code simpler, by using differen initializer IR nodes.
+          SgInitializer* initializer = isSgInitializer(init);
+          ROSE_ASSERT(initializer != NULL);
+          unparseExpression(initializer, info);
+#endif
         }
    }
 
@@ -3720,16 +3774,23 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
 
 void
 FortranCodeGeneration_locatedNode::printDeclModifier(SgDeclarationStatement* decl_stmt, SgUnparse_Info & info)
-{
-  printAccessModifier(decl_stmt, info);
-  printStorageModifier(decl_stmt, info);
-}
+   {
+     printf ("Access modifiers are handled differently for Fortran, this function printDeclModifier() should not be called! \n");
+     ROSE_ASSERT(false);
+
+     printAccessModifier(decl_stmt, info);
+     printStorageModifier(decl_stmt, info);
+   }
 
 void
 FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * decl_stmt, SgUnparse_Info & info)
 {
   // FIXME: this will look different for full-featured Fortran
-  
+
+     printf ("Access modifiers are handled differently for Fortran, this function printAccessModifier() should not be called! \n");
+//   ROSE_ASSERT(false);
+
+#if 0
   if (info.CheckAccess()) {
     ROSE_ASSERT (decl_stmt != NULL);
     bool flag = false;
@@ -3777,6 +3838,7 @@ FortranCodeGeneration_locatedNode::printAccessModifier(SgDeclarationStatement * 
       }
     }
   }
+#endif
 }
 
 void
@@ -3808,70 +3870,10 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement* 
    {
   // FIXME: this will look different for full-featured Fortran
 
+     printf ("Access modifiers are handled differently for Fortran, this function printStorageModifier() should not be called! \n");
+  // ROSE_ASSERT(false);
+
   // printf ("printStorageModifier not implemented for Fortran \n");
-#if 0
-     if (decl_stmt->get_declarationModifier().isBind() == true)
-        {
-          unparseBindAttribute(decl_stmt);
-        }
-#endif
-#if 0
-
-
-  // if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && decl_stmt->get_linkage()) 
-     if ( (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() == true) && (decl_stmt->get_linkage().empty() == false) ) 
-        {
-          curprint("extern \"");
-          curprint(decl_stmt->get_linkage());
-          curprint("\" ");
-          if (decl_stmt->isExternBrace())
-             {
-               curprint("{ ");
-             }
-        }
-
-     if (decl_stmt->get_declarationModifier().isFriend())
-        {
-          curprint("friend ");
-        }
-  
-  SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
-  if (functionDeclaration != NULL) {
-    if (functionDeclaration->get_functionModifier().isVirtual()) {
-      curprint("virtual ");
-    }
-
-    if (functionDeclaration->get_functionModifier().isInline()) {
-      curprint("inline ");
-    }
-
-    if ((!info.SkipFunctionDefinition()) && functionDeclaration->get_functionModifier().isExplicit()) {
-      curprint("explicit ");
-    }
-  }
-
-  if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic()) {
-    curprint("static ");
-  }
-
-  if (decl_stmt->get_declarationModifier().get_storageModifier().isExtern() && !decl_stmt->get_linkage()) {
-    curprint("extern ");
-  }
-
-  if (opt.get_auto_opt()) {    // checks option status before printing auto
-    if (decl_stmt->get_declarationModifier().get_storageModifier().isAuto()) {
-      curprint("auto ");
-    }
-  }
-  
-  if (decl_stmt->get_declarationModifier().get_storageModifier().isRegister()) {
-    curprint("register ");
-  }
-
-  if (decl_stmt->get_declarationModifier().get_storageModifier().isMutable()) {
-    curprint("mutable ");
-  }
-#endif
    }
 
 // void FortranCodeGeneration_locatedNode::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)

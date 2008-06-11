@@ -940,6 +940,15 @@ HEADER_DESIGNATED_INITIALIZER_START
           virtual unsigned int cfgFindChildIndex(SgNode* n);
 HEADER_DESIGNATED_INITIALIZER_END
 
+HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_START
+HEADER_UPC_LOCAL_SIZEOF_EXPRESSION_END
+
+HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_START
+HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_END
+
+HEADER_UPC_ELEM_SIZEOF_EXPRESSION_START
+HEADER_UPC_ELEM_SIZEOF_EXPRESSION_END
+
 
 
 // #########################################################
@@ -5908,3 +5917,55 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    }
 
 SOURCE_DESIGNATED_INITIALIZER_END
+
+
+
+SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_START
+void
+SgUpcLocalsizeofExpression::post_construction_initialization()
+   {
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = get_expression()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION_END
+
+
+SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_START
+void
+SgUpcBlocksizeofExpression::post_construction_initialization()
+   {
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = get_expression()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION_END
+
+SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_START
+void
+SgUpcElemsizeofExpression::post_construction_initialization()
+   {
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = get_expression()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_END
+

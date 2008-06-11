@@ -51,5 +51,6 @@ language.tab.h: language-parser.cc
 
 clean:
 	rm -f language-lexer.cc lex.ann.c language-parser.cc language.tab.h tempBisonOutput.*
+	rm -f *.lo *.la
 
 EXTRA_DIST = language.l language.y

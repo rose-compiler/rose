@@ -1130,8 +1130,10 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
           while ( fixedFormatFile.eof() == false )
              {
                getline (fixedFormatFile,line);
-            // cout << "collect comments: " << line << endl;
-
+#if 0
+            // Debugging output
+               cout << "collect comments: " << line << endl;
+#endif
             // Handle comments first, Fortran fixed format comments should be easy.
             // if there is a character in the first column, then the whole line is a comment.
             // Also, more subtle, if it is a blank line then it is a comment, so save the blank lines too.
@@ -1139,13 +1141,21 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                bool isComment = false;
 
                char firstCharacter = line[0];
-               if (firstCharacter != ' ' && firstCharacter != '\n' && firstCharacter != '\0' )
+            // if (firstCharacter != ' ' && firstCharacter != '\n' && firstCharacter != '\0' )
+               if (firstCharacter != ' '  /* SPACE */ && firstCharacter != '\n' /* CR  */ && 
+                   firstCharacter != '\0' /* NUL   */ && firstCharacter != '\t' /* TAB */)
                   {
                  // This has something in the first colum, it might be a comment!
 
                  // Error checking on first character
-                 // printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
-                    ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
+#if 0
+                    if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
+                       {
+                         printf ("firstCharacter = %d line.length() = %zu \n",(int)firstCharacter,line.length());
+                       }
+#endif
+                 // DQ (5/15/2008): The filter is in the conditional above and is not required to be repeated.
+                 // ROSE_ASSERT(firstCharacter >= ' ' && firstCharacter < 126);
 #if 1
                  // Make sure it is not part a number (which could be part of a label)
                     if (firstCharacter >= '0' && firstCharacter <= '9')

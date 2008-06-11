@@ -3568,6 +3568,9 @@ HEADER_APPLICATION_FILE_START
       //! Generate an output filename from the source file name (xxx.C -> rose_xxx.C -> xxx.o -> xxx)
           std::string generateOutputFileName() const;
 
+      //! Support for C preprocessed files (Fortran only).
+          std::string generate_C_preprocessor_intermediate_filename( std::string filename );
+
        // The unparser and vendor compiler needs access to many variables
        // that are protected (Later this should be a member function).
        // friend void unparseFile ( SgFile & file );

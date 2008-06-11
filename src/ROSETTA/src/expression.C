@@ -28,6 +28,13 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (FunctionCallExp,        "FunctionCallExp",        "FUNC_CALL" );
      NEW_TERMINAL_MACRO (SizeOfOp,               "SizeOfOp",               "SIZEOF_OP" );
 
+#if USE_UPC_IR_NODES
+  // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
+     NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
+     NEW_TERMINAL_MACRO (UpcBlocksizeofExpression,    "UpcBlocksizeofExpression",    "UPC_BLOCK_SIZEOF_EXPR" );
+     NEW_TERMINAL_MACRO (UpcElemsizeofExpression,     "UpcElemsizeofExpression",     "UPC_ELEM_SIZEOF_EXPR" );
+#endif
+
   // DQ (2/5/2004): EDG 3.3 now separates out vararg functions explicitly in the AST 
   // (something I always wanted to see done), so we will do the same in SAGE.
   // This provides for the best possible vararg handling!
@@ -175,7 +182,6 @@ Grammar::setUpExpressions ()
                             AddressOfOp    | MinusMinusOp | PlusPlusOp | BitComplementOp | CastExp | ThrowOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
-#if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
           ArrowExp       | DotExp           | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
@@ -185,18 +191,6 @@ Grammar::setUpExpressions ()
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
           RshiftAssignOp | ExponentiationOp | ConcatenationOp,"BinaryOp","BINARY_EXPRESSION", false);
-#else
-#error "DEAD CODE!"
-
-     NEW_NONTERMINAL_MACRO (BinaryOp,
-          ArrowExp      | DotExp       | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
-          GreaterThanOp | NotEqualOp   | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
-          MultiplyOp    | DivideOp     | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
-          BitXorOp      | BitAndOp     | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
-          PntrArrRefExp | ScopeOp      | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
-          IorAssignOp   | MultAssignOp | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp,"BinaryOp","BINARY_EXPRESSION", false);
-#endif
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -204,10 +198,10 @@ Grammar::setUpExpressions ()
           LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
           DoubleVal      | LongDoubleVal    | ComplexVal ,"ValueExp","ValueExpTag", false);
 
-#if USE_FORTRAN_IR_NODES
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp             | BinaryOp                | ExprListExp         | VarRefExp           | ClassNameRefExp          |
           FunctionRefExp      | MemberFunctionRefExp    | ValueExp            | FunctionCallExp     | SizeOfOp                 |
+          UpcLocalsizeofExpression | UpcBlocksizeofExpression | UpcElemsizeofExpression |
           TypeIdOp            | ConditionalExp          | NewExp              | DeleteExp           | ThisExp                  |
           RefExp              | Initializer             | VarArgStartOp       | VarArgOp            | VarArgEndOp              |
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
@@ -215,17 +209,6 @@ Grammar::setUpExpressions ()
           UseRenameExpression | StatementExpression     | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference,
           "Expression","ExpressionTag", false);
-#else
-#error "DEAD CODE!"
-
-     NEW_NONTERMINAL_MACRO (Expression,
-          UnaryOp        | BinaryOp                | ExprListExp    | VarRefExp         | ClassNameRefExp     |
-          FunctionRefExp | MemberFunctionRefExp    | ValueExp       | FunctionCallExp   | SizeOfOp            |
-          TypeIdOp       | ConditionalExp          | NewExp         | DeleteExp         | ThisExp             |
-          RefExp         | Initializer             | VarArgStartOp  | VarArgOp          | VarArgEndOp         |
-          VarArgCopyOp   | VarArgStartOneOperandOp | NullExpression | VariantExpression | StatementExpression |
-          AsmOp,"Expression","ExpressionTag", false);
-#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -339,6 +322,23 @@ Grammar::setUpExpressions ()
      Expression.setFunctionPrototype( "HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      Expression.setSubTreeFunctionPrototype ( "HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
   // Expression.excludeFunctionPrototype ( "HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+
+#if USE_UPC_IR_NODES
+  // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
+     UpcLocalsizeofExpression.setFunctionPrototype ( "HEADER_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcLocalsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UpcBlocksizeofExpression.setFunctionPrototype ( "HEADER_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcBlocksizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UpcElemsizeofExpression.setFunctionPrototype  ( "HEADER_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
+     UpcElemsizeofExpression.setDataPrototype ( "SgExpression*", "expression", "= NULL",
+            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+
 
   // DQ (1/14/2006): We should be using SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION instead of 
   // SOURCE_POST_CONSTRUCTION_INITIALIZATION_USING_SET_TYPE since we don't want to have a set_type
@@ -619,6 +619,7 @@ Grammar::setUpExpressions ()
 #endif
 
 #endif
+
 
      UnaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
      BinaryOp.setFunctionPrototype ( "HEADER_GET_NEXT_EXPRESSION", "../Grammar/Expression.code" );
@@ -1494,6 +1495,13 @@ Grammar::setUpExpressions ()
 
      ActualArgumentExpression.setFunctionSource ( "SOURCE_ACTUAL_ARGUMENT_EXPRESSION", "../Grammar/Expression.code" );
      DesignatedInitializer.setFunctionSource ( "SOURCE_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
+
+#if USE_UPC_IR_NODES
+  // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
+     UpcLocalsizeofExpression.setFunctionSource ( "SOURCE_UPC_LOCAL_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcBlocksizeofExpression.setFunctionSource ( "SOURCE_UPC_BLOCK_SIZEOF_EXPRESSION", "../Grammar/Expression.code" );
+     UpcElemsizeofExpression.setFunctionSource  ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
+#endif
 
      // ***************************************
      //      get_type() member function

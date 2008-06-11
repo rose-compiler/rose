@@ -3680,25 +3680,27 @@ SageInterface::generateProjectName( const SgProject* project )
 SgFunctionSymbol*
 SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, SgScopeStatement* currentScope )
    {
- // DQ (11/24/2007): This function can return NULL.  It returns NULL when the function symbol is not found.
- // This can happen when a function is referenced before it it defined (no prototype mechanism in Fortran is required).
+  // DQ (11/24/2007): This function can return NULL.  It returns NULL when the function symbol is not found.
+  // This can happen when a function is referenced before it it defined (no prototype mechanism in Fortran is required).
+
   // enable default search from top of StackScope, Liao, 1/24/2008
      SgFunctionSymbol* functionSymbol = NULL;
-  if (currentScope == NULL)
-    currentScope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(currentScope != NULL);
+     if (currentScope == NULL)
+          currentScope = SageBuilder::topScopeStack();
+     ROSE_ASSERT(currentScope != NULL);
 
      SgScopeStatement* tempScope = currentScope;
      while ((functionSymbol == NULL) && (tempScope != NULL))
         {
-
           functionSymbol = tempScope->lookup_function_symbol(functionName);
-        if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set in middle of translation
-          tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
-        else tempScope = NULL;
+
+          if (tempScope->get_parent()!=NULL) // avoid calling get_scope when parent is not set in middle of translation
+               tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+            else
+               tempScope = NULL;
         }
      return functionSymbol;
-        }
+   }
 
 SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
 {

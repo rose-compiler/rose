@@ -33,7 +33,7 @@ AstNameListType astNameStack;
 // Global stack of SgType IR nodes
 std::list<SgType*> astTypeStack;
 
-// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type separately from the
+// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type seperately from the
 // the constructed types build from the base type.  This is designed to handle the case of 
 // "integer i(5),j" and "character*100 k,l" (see test2007_148.f)
 std::list<SgType*> astBaseTypeStack;
@@ -47,8 +47,12 @@ std::list<int> astArraySpecStack;
 // Attribute spec for holding attributes
 std::list<int> astAttributeSpecStack;
 
+// DQ (4/4/2008): I think that type initialization shows that we can't have a separate astInitializerStack
+// since scalar initializers are placed onto the astExpressionStack and there is no rule to move them. So 
+// we need a single stack for expressions and initializers to avoid loosing the order of their use.
+// See test2008_24.f90, which makes this point clear.
 // Global stack of expressions used for initialization of variables in declarations.
-std::list<SgExpression*> astInitializerStack;
+// std::list<SgExpression*> astInitializerStack;
 
 // DQ (11/30/2007): Function attributes are held as tokens and not not defined as integer value codes (like other attributes)
 AstNameListType astFunctionAttributeStack;
@@ -69,7 +73,7 @@ std::list<SgIfStmt*> astIfStatementStack;
 // test2007_162.h demonstrates this problems (and test2007_184.f)
 AstNameListType astActualArgumentNameStack;
 
-// DQ (2/18/2008): This is the support for the Frotran include stack.
+// DQ (2/18/2008): This is the support for the Fortran include stack.
 // This is specific to the Fortran include mechanism, not the CPP include 
 // mechanism. Though at some point a unified approach might be required.
 std::vector<std::string> astIncludeStack;
@@ -846,7 +850,7 @@ void outputState( const std::string label )
      maxStackSize = astTypeStack.size()                 > maxStackSize ? astTypeStack.size()          : maxStackSize;
      maxStackSize = astIntentSpecStack.size()           > maxStackSize ? astIntentSpecStack.size()    : maxStackSize;
      maxStackSize = astAttributeSpecStack.size()        > maxStackSize ? astAttributeSpecStack.size() : maxStackSize;
-     maxStackSize = astInitializerStack.size()          > maxStackSize ? astInitializerStack.size()   : maxStackSize;
+  // maxStackSize = astInitializerStack.size()          > maxStackSize ? astInitializerStack.size()   : maxStackSize;
      maxStackSize = astTypeKindStack.size()             > maxStackSize ? astTypeKindStack.size()      : maxStackSize;
      maxStackSize = astTypeParameterStack.size()        > maxStackSize ? astTypeParameterStack.size() : maxStackSize;
      maxStackSize = astLabelSymbolStack.size()          > maxStackSize ? astLabelSymbolStack.size()   : maxStackSize;
@@ -865,7 +869,7 @@ void outputState( const std::string label )
      std::list<SgType*>                ::reverse_iterator astTypeStack_iterator                 = astTypeStack.rbegin();
      std::list<int>                    ::reverse_iterator astIntentSpecStack_iterator           = astIntentSpecStack.rbegin();
      std::list<int>                    ::reverse_iterator astAttributeSpecStack_iterator        = astAttributeSpecStack.rbegin();
-     std::list<SgExpression*>          ::reverse_iterator astInitializerStack_iterator          = astInitializerStack.rbegin();
+  // std::list<SgExpression*>          ::reverse_iterator astInitializerStack_iterator          = astInitializerStack.rbegin();
      std::list<SgExpression*>          ::reverse_iterator astTypeKindStack_iterator             = astTypeKindStack.rbegin();
      std::list<SgExpression*>          ::reverse_iterator astTypeParameterStack_iterator        = astTypeParameterStack.rbegin();
      std::list<SgLabelSymbol*>         ::reverse_iterator astLabelSymbolStack_iterator          = astLabelSymbolStack.rbegin();
@@ -873,14 +877,14 @@ void outputState( const std::string label )
   // std::list<SgDeclarationStatement*>::reverse_iterator astDeclarationStatementStack_iterator = astDeclarationStatementStack.rbegin();
 
   // printf ("     astScopeStack : astExpressionStack : astNodeStack : astDeclarationStatementStack : astTypeStack : astIntentSpecStack : astAttributeSpecStack \n");
-     const int NumberOfStacks = 12;
+     const int NumberOfStacks = 11;
   // string stackNames[NumberOfStacks] = { "astScopeStack", "astExpressionStack", "astNodeStack", "astNameStack", "astTypeStack", "astIntentSpecStack", "astAttributeSpecStack" };
      struct
         { std::string name;
           int fieldWidth;
         } stackNames[NumberOfStacks] = { {"astScopeStack", 40} ,    {"astExpressionStack",30} ,   {"astNodeStack",30},
                                          {"astNameStack",30} ,      {"astBaseTypeStack",30},      {"astTypeStack",30}, 
-                                         {"astIntentSpecStack",30}, {"astAttributeSpecStack",20}, {"astInitializerStack",20},
+                                         {"astIntentSpecStack",30}, {"astAttributeSpecStack",20}, /* {"astInitializerStack",20}, */
                                          {"astTypeKindStack",20},   {"astTypeParameterStack",20}, {"astLabelSymbolStack",20} };
 
      for (int k=0; k < NumberOfStacks; k++)
@@ -1059,6 +1063,7 @@ void outputState( const std::string label )
 
           outputStateSupport(s,stackNames[7].fieldWidth);
 
+#if 0
           if (astInitializerStack_iterator != astInitializerStack.rend())
              {
                s = (*astInitializerStack_iterator)->class_name() + " : " + SageInterface::get_name(*astInitializerStack_iterator);
@@ -1069,8 +1074,8 @@ void outputState( const std::string label )
              {
                s = " No Expression ";
              }
-
           outputStateSupport(s,stackNames[8].fieldWidth);
+#endif
 
           if (astTypeKindStack_iterator != astTypeKindStack.rend())
              {
@@ -1083,7 +1088,8 @@ void outputState( const std::string label )
                s = " No Expression ";
              }
 
-          outputStateSupport(s,stackNames[9].fieldWidth);
+       // outputStateSupport(s,stackNames[9].fieldWidth);
+          outputStateSupport(s,stackNames[8].fieldWidth);
 
           if (astTypeParameterStack_iterator != astTypeParameterStack.rend())
              {
@@ -1096,7 +1102,8 @@ void outputState( const std::string label )
                s = " No Expression ";
              }
 
-          outputStateSupport(s,stackNames[10].fieldWidth);
+       // outputStateSupport(s,stackNames[10].fieldWidth);
+          outputStateSupport(s,stackNames[9].fieldWidth);
 
           if (astLabelSymbolStack_iterator != astLabelSymbolStack.rend())
              {
@@ -1109,7 +1116,8 @@ void outputState( const std::string label )
                s = " No Symbol ";
              }
 
-          outputStateSupport(s,stackNames[11].fieldWidth);
+       // outputStateSupport(s,stackNames[11].fieldWidth);
+          outputStateSupport(s,stackNames[10].fieldWidth);
 
           printf ("\n");
         }
@@ -1629,12 +1637,14 @@ setStatementStringLabel(SgStatement* stmt, Token_t* label)
 
 
 void
-trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol)
+trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol, SgClassSymbol* & classSymbol)
    {
   // This function traces back through the parent scopes to search for the named symbol in an outer scope
   // It returns NULL if it is not found in any scope.  Is does not look in any scopes specified using a 
   // C++ using declaration (SgUsingDeclarationStatement), using directives (SgUsingDirectiveStatement), a
   // Fortran use statement (SgUseStatement).  This will be done in another function, not yet implemented.
+
+  // DQ (4/29/2008): Added support for detecting SgClassSymbol IR nodes (fro drived types).
 
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
@@ -1650,13 +1660,14 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
 
   // DQ (12/12/2007): Added test for if this is a function!
   // while (variableSymbol == NULL && tempScope != NULL)
-     while (variableSymbol == NULL && functionSymbol == NULL && tempScope != NULL)
+     while (variableSymbol == NULL && functionSymbol == NULL && classSymbol == NULL && tempScope != NULL)
         {
           variableSymbol = tempScope->lookup_variable_symbol(variableName);
           functionSymbol = tempScope->lookup_function_symbol(variableName);
+          classSymbol    = tempScope->lookup_class_symbol(variableName);
 #if 0
-          printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): tempScope = %p = %s variableSymbol = %p functionSymbol = %p \n",
-               tempScope,tempScope->class_name().c_str(),variableSymbol,functionSymbol);
+          printf ("In trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): tempScope = %p = %s variableSymbol = %p functionSymbol = %p classSymbol = %p \n",
+               tempScope,tempScope->class_name().c_str(),variableSymbol,functionSymbol,classSymbol);
 #endif
        // If we have processed the global scope then we can stop (if we have not found the symbol at this
        // point then it is not available (or it is only availalbe through a USE statment and we have not 
@@ -1669,10 +1680,11 @@ trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variabl
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
-
+#endif
    }
 
 // void build_implicit_program_statement_if_required();
@@ -1685,8 +1697,10 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // C++ using declaration (SgUsingDeclarationStatement), using directives (SgUsingDirectiveStatement), a
   // Fortran use statement (SgUseStatement).  This will be done in another function, not yet implemented.
 
+#if 0
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableName = %s currentScope = %p \n",variableName.str(),currentScope);
+#endif
 
   // An AttributeSpecification statement can be the first statement in a program
   // (see test2007_213.f, if so then this can be one of the first c_action statements called.
@@ -1694,25 +1708,10 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
 
      SgVariableSymbol* variableSymbol = NULL;
      SgFunctionSymbol* functionSymbol = NULL;
+     SgClassSymbol*    classSymbol    = NULL;
 
-#if 1
-     trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol);
-#else
-     SgScopeStatement* tempScope = currentScope;
-
-  // DQ (12/12/2007): Added test for if this is a function!
-  // while (variableSymbol == NULL && tempScope != NULL)
-     while (variableSymbol == NULL && functionSymbol == NULL && tempScope != NULL)
-        {
-          variableSymbol = tempScope->lookup_variable_symbol(variableName);
-          functionSymbol = tempScope->lookup_function_symbol(variableName);
-
-       // If we have processed the global scope then we can stop (if we have not found the symbol at this
-       // point then it is not available (or it is only availalbe through a USE statment and we have not 
-       // implemented that support yet.
-          tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
-        }
-#endif
+  // trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol);
+     trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
 
   // printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p \n",variableSymbol);
   // printf ("In trace_back_through_parent_scopes_lookup_variable_symbol(): functionSymbol = %p \n",functionSymbol);
@@ -1722,7 +1721,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // if ( (variableSymbol == NULL) && (matchAgainstImplicitFunctionList(variableName.str()) == false) )
   // if ( (variableSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
   // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
-     if ( (variableSymbol == NULL) && functionSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
+     if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
         {
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
@@ -1740,62 +1739,75 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
           token.type = 0;
           token.text = strdup(variableName.str());
 
-       // Push the name onto the stack
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Push the name onto the astNameStack \n");
-          astNameStack.push_front(&token);
-          ROSE_ASSERT(astNameStack.empty() == false);
-
+       // Check if this is a scope using implicit none rules, however for now ieven if we know it is function we first build it as a variable and later convert it to either an array or a function (or a derived type)
+          bool isAnImplicitScope = isImplicitNoneScope();
+          if (isAnImplicitScope == true)
+             {
+            // This has to be a function call since we can't be building a variable to represent an implicitly type variable.
 #if 0
-          int typeCode         = IntrinsicTypeSpec_INTEGER;
-
-       // printf ("Calling c_action_intrinsic_type_spec() to build a type and put it onto the stack: astNameStack.size() = %zu \n",astNameStack.size());
-       // bool hasKindSelector = false;
-       // c_action_intrinsic_type_spec(typeCode,hasKindSelector);
-          SgType* intrinsicType = createType(typeCode);
+               outputState("scope marked as implict none, so we must construct function in trace_back_through_parent_scopes_lookup_variable_symbol()");
+               printf ("Error: scope marked as implict none, so we must construct name = %s as a function (function reference expression) \n",variableName.str());
+               ROSE_ASSERT(false);
+             }
+            else
+             {
 #else
-       // DQ (12/20/2007): The type here must be determined using implicit type rules.
-          SgType* intrinsicType = generateImplicitType(variableName.str());
+            // This has to be a function call since we can't be building a variable to represent an implicitly type variable.
+               printf ("Warning: scope marked as implict none, so we must construct name = %s as a function (function reference expression) \n",variableName.str());
+             }
 #endif
-          ROSE_ASSERT(intrinsicType != NULL);
-          astTypeStack.push_front(intrinsicType);
+             {
+            // Since "implicit none" has not been specified we have to build an implicitly typed variable
 
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Calling buildVariableDeclaration to build an implicitly defined variable: name = %s type = %s astNameStack.size() = %zu \n",variableName.str(),intrinsicType->class_name().c_str(),astNameStack.size());
+            // Push the name onto the stack
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("Push the name onto the astNameStack \n");
+               astNameStack.push_front(&token);
+               ROSE_ASSERT(astNameStack.empty() == false);
 
-          ROSE_ASSERT(astTypeStack.empty() == false);
-          SgType* type = astTypeStack.front();
-          astTypeStack.pop_front();
+            // DQ (12/20/2007): The type here must be determined using implicit type rules.
+               SgType* intrinsicType = generateImplicitType(variableName.str());
+               ROSE_ASSERT(intrinsicType != NULL);
 
-          SgInitializedName* initializedName = new SgInitializedName(variableName,type,NULL,NULL,NULL);
-          setSourcePosition(initializedName);
+               astTypeStack.push_front(intrinsicType);
 
-       // printf ("Built a new SgInitializedName = %p = %s \n",initializedName,variableName.str());
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("Calling buildVariableDeclaration to build an implicitly defined variable: name = %s type = %s astNameStack.size() = %zu \n",variableName.str(),intrinsicType->class_name().c_str(),astNameStack.size());
 
-       // DQ (12/14/2007): This will be set in buildVariableDeclaration()
-       // initializedName->set_scope(currentScope);
+               ROSE_ASSERT(astTypeStack.empty() == false);
+               SgType* type = astTypeStack.front();
+               astTypeStack.pop_front();
 
-          astNameStack.pop_front();
-          astNodeStack.push_front(initializedName);
+               SgInitializedName* initializedName = new SgInitializedName(variableName,type,NULL,NULL,NULL);
+               setSourcePosition(initializedName);
+
+            // printf ("Built a new SgInitializedName = %p = %s \n",initializedName,variableName.str());
+
+            // DQ (12/14/2007): This will be set in buildVariableDeclaration()
+            // initializedName->set_scope(currentScope);
+
+               astNameStack.pop_front();
+               astNodeStack.push_front(initializedName);
 #if 0
-       // Output debugging information about saved state (stack) information.
-          outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
+            // Output debugging information about saved state (stack) information.
+               outputState("Calling buildVariableDeclaration to build an implicitly defined variable from trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
-       // We need to explicitly specify that the variable is to be implicitly declarated (so that we will know to process only one variable at a time).
-          bool buildingImplicitVariable = true;
-          SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,buildingImplicitVariable);
-          ROSE_ASSERT(variableDeclaration != NULL);
+            // We need to explicitly specify that the variable is to be implicitly declarated (so that we will know to process only one variable at a time).
+               bool buildingImplicitVariable = true;
+               SgVariableDeclaration* variableDeclaration = buildVariableDeclaration(NULL,buildingImplicitVariable);
+               ROSE_ASSERT(variableDeclaration != NULL);
 
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("DONE: Calling buildVariableDeclaration to build an implicitly defined variable \n");
+               if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+                    printf ("DONE: Calling buildVariableDeclaration to build an implicitly defined variable \n");
 
-       // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == true);
+            // ROSE_ASSERT(variableDeclaration->get_file_info()->isCompilerGenerated() == true);
 
-       // DQ (12/17/2007): Make sure the scope was set!
-          ROSE_ASSERT(initializedName->get_scope() != NULL);
+            // DQ (12/17/2007): Make sure the scope was set!
+               ROSE_ASSERT(initializedName->get_scope() != NULL);
 
-          ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+               ROSE_ASSERT(initializedName->get_symbol_from_symbol_table() != NULL);
+             }
         }
 
 #if 0
@@ -1803,9 +1815,11 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
      outputState("At BOTTOM of trace_back_through_parent_scopes_lookup_variable_symbol()");
 #endif
 
+#if 0
   // This function could have returned a NULL pointer if there was no symbol found ???
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_lookup_variable_symbol(): variableSymbol = %p functionSymbol = %p \n",variableSymbol,functionSymbol);
+#endif
 
      return variableSymbol;
    }
@@ -1837,10 +1851,11 @@ trace_back_through_parent_scopes_lookup_derived_type_symbol(const SgName & deriv
           tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
         }
 
+  // DQ (4/30/2008): I think it is not a problem to return a NULL pointer if no derived type was found (commented out assertion).
      if (derivedTypeSymbol == NULL)
         {
           printf ("Warning: trace_back_through_parent_scopes_lookup_derived_type_symbol(): could not locate the specified type %s in any outer symbol table \n",derivedTypeName.str());
-          ROSE_ASSERT(false);
+       // ROSE_ASSERT(false);
         }
 
      return derivedTypeSymbol;
@@ -1853,7 +1868,15 @@ trace_back_through_parent_scopes_lookup_function_symbol(const SgName & functionN
   // This can happen when a function is referenced before it it defined (no prototype mechanism in Fortran is required).
 
   // This function was moved to the SageInteface so that the astPostProcessing could call it too.
-     return SageInterface::lookupFunctionSymbolInParentScopes(functionName,currentScope);
+  // return SageInterface::lookupFunctionSymbolInParentScopes(functionName,currentScope);
+     SgFunctionSymbol* functionSymbol = SageInterface::lookupFunctionSymbolInParentScopes(functionName,currentScope);
+
+     if (functionSymbol != NULL)
+        {
+          printf ("Found a function for functionName = %s functionSymbol = %p \n",functionName.str(),functionSymbol);
+        }
+
+     return functionSymbol;
    }
 
 
@@ -2014,13 +2037,75 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
    }
 
 
+bool
+isImplicitNoneScope()
+   {
+  // This function works by traversing the scopes to the SgFunctionDefinition scope and looking
+  // for an implicit none statement.  We can make this more efficient at a later point.
+
+  // Default is that we are NOT in an implicit none scope.
+     bool isImplicitNoneScope = false;
+
+     bool foundFunctionDefinition = false;
+
+     std::list<SgScopeStatement*>::iterator i = astScopeStack.begin();
+     while ( i != astScopeStack.end() )
+        {
+       // Find the function definition, or where else an implicit statement can be!
+       // module statement, interface statement
+
+          SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(*i);
+          if (functionDefinition != NULL)
+             {
+               foundFunctionDefinition = true;
+               std::vector<SgStatement*>::iterator j = functionDefinition->get_body()->get_statements().begin();
+               while ( j != functionDefinition->get_body()->get_statements().end() )
+                  {
+                 // Look for the SgImplicitStatement, then test if it was specificed using "none"
+                    SgImplicitStatement* implicitStatement = isSgImplicitStatement(*j);
+                    if (implicitStatement != NULL && implicitStatement->get_implicit_none() == true)
+                       isImplicitNoneScope = true;
+
+                    j++;
+                  }
+             }
+
+          i++;
+        }
+
+  // DQ (5/21/2008): for the case of a module we will not find a SgFunctionDefinition (see test2008_35.f90)
+  // ROSE_ASSERT(foundFunctionDefinition == true);
+
+     return isImplicitNoneScope;
+   }
+
+
 SgVariableDeclaration* 
 buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
    {
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildVariableDeclaration()");
 #endif
+
+  // DQ (5/17/2008): If we are building a variable using implicit type rules, 
+  // then make sure this is not in a scope (or in a nested scope) that has 
+  // been marked as "implicit none".
+     if (buildingImplicitVariable == true)
+        {
+          bool isAnImplicitScope = isImplicitNoneScope();
+          printf ("In buildVariableDeclaration(): isAnImplicitScope = %s \n",(isAnImplicitScope == true) ? "true" : "false");
+          if (isAnImplicitScope == true)
+             {
+               outputState("Warning: isAnImplicitScope == true buildVariableDeclaration()");
+             }
+
+       // First we build it as a variable then we build it as a function (a few rules later)
+       // So although we know at this point that this is going to be a function, we have to
+       // build it as a varialbe so that it can be evaluated for converstion from a variable 
+       // into a function or array a bit later.
+       // ROSE_ASSERT(isAnImplicitScope == false);
+        }
 
   // printf ("buildingImplicitVariable = %s \n",buildingImplicitVariable ? "true" : "false");
 
@@ -2038,7 +2123,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
   // setSourcePosition(variableDeclaration,label);
      setSourcePosition(variableDeclaration);
 
-  // DQ (9/20/2007): Set the parent and definingDeclaration explicitly, the scoeps is not defined.
+  // DQ (9/20/2007): Set the parent and definingDeclaration explicitly, the scopes is not defined.
      SgScopeStatement* currentScope = getTopOfScopeStack();
      variableDeclaration->set_parent(currentScope);
      variableDeclaration->set_definingDeclaration(variableDeclaration);
@@ -2077,7 +2162,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In buildVariableDeclaration(): initializedName = %p = %s initializer = %p \n",initializedName,initializedName->get_name().str(),initializedName->get_initializer());
 
-       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide separately to the append_variable() member function).
+       // DQ (11/29/2007): This is an odd API in ROSE, the initializer (already a part of the SgInitializedName, must be provide seperately to the append_variable() member function).
        // variableDeclaration->append_variable(initializedName,initializedName->get_initializer());
           variableDeclaration->prepend_variable(initializedName,initializedName->get_initializer());
 
@@ -2091,7 +2176,8 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
           ROSE_ASSERT(astScopeStack.front()->get_parent() != NULL);
           SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(astScopeStack.front()->get_parent());
 
-          ROSE_ASSERT(initializedName->get_scope() == NULL);
+       // DQ (5/15/2008): This is allowed since the variable may have been previous built from a common block declaration.
+       // ROSE_ASSERT(initializedName->get_scope() == NULL);
 
           SgVariableSymbol* variableSymbol = NULL;
           if (functionDefinition != NULL)
@@ -2908,6 +2994,8 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
   // build_implicit_program_statement_if_required();
 
+     printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
+
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
      ROSE_ASSERT(sourcePositionToken != NULL);
@@ -2915,7 +3003,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      attributeSpecificationStatement->set_attribute_kind(kind);
 
-  // printf ("In c_action_external_stmt(): astNameStack.size() = %zu \n",astNameStack.size());
+     printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
 
      if (kind == SgAttributeSpecificationStatement::e_bindStatement)
         {
@@ -3115,10 +3203,18 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
      switch(astAttributeSpec)
         {
           case AttrSpec_none:
-          case AttrSpec_access:
                printf ("Error: Unsupported option for astAttributeSpec = %d \n",astAttributeSpec);
                ROSE_ASSERT(false);
                break;
+
+          case AttrSpec_access:
+             {
+            // DQ (5/20/2008): This is a redundant specifier, it appears to only be used with AttrSpec_PUBLIC or AttrSpec_PRIVATE
+            // It should be filtered out so that will not see this case in this function.
+               printf ("Error: Unsupported option for astAttributeSpec = %d \n",astAttributeSpec);
+               ROSE_ASSERT(false);
+               break;
+             }
 
           case AttrSpec_language_binding:
              {
@@ -3186,6 +3282,52 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_NON_OVERRIDABLE:
           case AttrSpec_DEFERRED:
                printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
+               break;
+
+/*
+// DQ (3/3/2008): Note that array declarations that appear in types are are processed
+// using different rules and different enum values for similar concepts.
+
+static const int ComponentAttrSpec_pointer=ComponentAttrSpecBase+0;
+static const int ComponentAttrSpec_dimension_paren=ComponentAttrSpecBase+1;
+static const int ComponentAttrSpec_dimension_bracket=ComponentAttrSpecBase+2;
+static const int ComponentAttrSpec_allocatable=ComponentAttrSpecBase+3;
+static const int ComponentAttrSpec_access_spec=ComponentAttrSpecBase+4;
+static const int ComponentAttrSpec_kind=ComponentAttrSpecBase+5;
+static const int ComponentAttrSpec_len=ComponentAttrSpecBase+6;
+*/
+          case ComponentAttrSpec_pointer:
+               printf ("Error: POINTER (ComponentAttrSpec_pointer) is an attribute specifier that effects the associated type (no flag is provided) \n");
+               break;
+
+          case ComponentAttrSpec_dimension_paren:
+               printf ("Error: ComponentAttrSpec_dimension_paren used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+          case ComponentAttrSpec_dimension_bracket:
+               printf ("Error: ComponentAttrSpec_dimension_bracket used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+          case ComponentAttrSpec_allocatable:
+               printf ("Error: ComponentAttrSpec_allocatable used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+          case ComponentAttrSpec_access_spec:
+               printf ("Error: ComponentAttrSpec_access_spec used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+          case ComponentAttrSpec_kind:
+               printf ("Error: ComponentAttrSpec_kind used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
+               break;
+
+          case ComponentAttrSpec_len:
+               printf ("Error: ComponentAttrSpec_len used as an attribute specifier (unclear how to process this) \n");
+               ROSE_ASSERT(false);
                break;
 
           default:
@@ -3318,6 +3460,11 @@ convertExpressionOnStackToFunctionCallExp()
   // and so for which we assumed it was a variable and only later in the sequence of parsing actions discovered that 
   // it was a function.  In general everything is a function unless there is a hint that it is an array.
 
+#if 0
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of convertExpressionOnStackToFunctionCallExp()");
+#endif
+
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* expression = astExpressionStack.front();
   // printf ("In convertExpressionOnStackToFunctionCallExp(): expression = %p = %s \n",expression,expression->class_name().c_str());
@@ -3334,7 +3481,6 @@ convertExpressionOnStackToFunctionCallExp()
 
           convertVariableSymbolToFunctionCallExp(variableSymbol,nameToken);
         }
-#if 1
        else
         {
        // DQ (1/20/2008): Added support to fix test2007_164.f (calling functions without the "()" syntax)
@@ -3359,13 +3505,11 @@ convertExpressionOnStackToFunctionCallExp()
             // printf ("In convertExpressionOnStackToFunctionCallExp(): expression = %p = %s \n",expression,expression->class_name().c_str());
              }
         }
-#endif
    }
 
 
-// Note: it might make more sense for "convert" function to not have return types and leave there 
-// result on the stack.
-SgArrayType* 
+// Note: it might make more sense for "convert" function to not have return types and leave their result on the stack.
+SgArrayType*
 convertTypeOnStackToArrayType( int count )
    {
   // This function uses the entry on the top of the type stach and the expressions on the astExpressionStack
@@ -3374,7 +3518,7 @@ convertTypeOnStackToArrayType( int count )
   // in the process of building the variable declaration or because an "allocatable statement" is seen after
   // the variable declaration).
 
-  // printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
+     printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -3458,6 +3602,9 @@ convertTypeOnStackToArrayType( int count )
      outputState("At BOTTOM of convertTypeOnStackToArrayType()");
 #endif
 
+  // printf ("Exiting at base of convertTypeOnStackToArrayType \n");
+  // ROSE_ASSERT(false);
+
   // Put the array type onto the type stack
   // astTypeStack.push_front(arrayType);
      return arrayType;
@@ -3503,6 +3650,8 @@ generateFunctionRefExp( Token_t* nameToken )
      ROSE_ASSERT(nameToken != NULL);
      std::string name = nameToken->text;
 
+     printf ("Generating a SgFunctionRefExp for name = %s \n",name.c_str());
+
      SgFunctionType* functionType = generateImplicitFunctionType(name);
      ROSE_ASSERT(functionType != NULL);
 
@@ -3533,6 +3682,8 @@ generateFunctionRefExp( Token_t* nameToken )
        // SgFunctionDeclaration* functionDeclaration = new SgFunctionDeclaration(name,functionType,functionDefinition);
        // SgProgramHeaderStatement* functionDeclaration = new SgProgramHeaderStatement(name,functionType,functionDefinition);
           SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name,functionType,functionDefinition);
+
+          printf ("Generated a SgProcedureHeaderStatement for name = %s functionDeclaration = %p \n",name.c_str(),functionDeclaration);
 
           functionDeclaration->set_firstNondefiningDeclaration(functionDeclaration);
           functionDeclaration->set_definingDeclaration(NULL);
@@ -3573,6 +3724,8 @@ generateFunctionCall( Token_t* nameToken )
    {
      ROSE_ASSERT(nameToken != NULL);
 
+     printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
+
   // The next element on the stack is the expression list of function arguments
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExprListExp* functionArguments = isSgExprListExp(astExpressionStack.front());
@@ -3586,6 +3739,56 @@ generateFunctionCall( Token_t* nameToken )
   // Now push the function call to the implicit function onto the astExpressionStack
      ROSE_ASSERT(functionCallExp != NULL);
      astExpressionStack.push_front(functionCallExp);
+
+
+  // DQ (5/14/2008): Now cleanup the SgInitializedName, the SgVariableSymbol, and the 
+  // SgVariableDeclarationStatement; since these are now invalid how that the name is 
+  // interpreted as a function call.  Note that we see R619 a little bit too late in the
+  // parsing (after we have interpreted the name as a variable).
+
+  // Look up the name, 
+     SgVariableSymbol* variableSymbol = NULL;
+     SgFunctionSymbol* functionSymbol = NULL;
+     SgClassSymbol*    classSymbol    = NULL;
+     
+     SgName variableName = nameToken->text;
+     SgScopeStatement* currentScope = astScopeStack.front();
+
+     ROSE_ASSERT(currentScope != NULL);
+
+     trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(variableName,currentScope,variableSymbol,functionSymbol,classSymbol);
+
+     if (variableSymbol != NULL)
+        {
+          printf ("Found variableSymbol = %p nameToken = %s (erasing all traces of this variable so it can be supported as a function) \n",variableSymbol,nameToken->text);
+       // ROSE_ASSERT(false);
+
+          SgSymbolTable* symbolTable = isSgSymbolTable(variableSymbol->get_parent());
+          ROSE_ASSERT(symbolTable != NULL);
+
+          symbolTable->remove(variableSymbol);
+
+          SgInitializedName* initializedName = variableSymbol->get_declaration();
+          ROSE_ASSERT(initializedName != NULL);
+
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(initializedName->get_parent());
+          ROSE_ASSERT(variableDeclaration != NULL);
+
+          SgVariableDefinition* variableDefinition = isSgVariableDefinition(initializedName->get_declptr());
+          ROSE_ASSERT(variableDefinition != NULL);
+
+          delete variableDefinition;
+          variableDefinition = NULL;
+
+          delete variableDeclaration;
+          variableDeclaration = NULL;
+
+          delete initializedName;
+          initializedName = NULL;
+
+          delete variableSymbol;
+          variableSymbol = NULL;
+        }
    }
 
 
@@ -3807,6 +4010,11 @@ markDoLoopAsUsingEndDo()
 SgExpression*
 buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStride, bool isAmbiguous )
    {
+  // DQ (4/26/2008): Note that test2008_21.f90 demonstrates that this function is called to evaluate 
+  // the initialization of types in structures (fortran types).  
+
+  // DQ (4/26/2008): Later... This function should not be called for initialization now!
+
      SgExpression* subscript = NULL;
 
      if (hasUpperBound == true)
@@ -3817,7 +4025,7 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
              {
                if (hasStride == true)
                   {
-                 // Get three values off oc the stack!
+                 // Get three values off of the stack!
                     SgExpression* stride = astExpressionStack.front();
                     astExpressionStack.pop_front();
                     SgExpression* upperBound = astExpressionStack.front();
@@ -3911,8 +4119,36 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
                       else
                        {
                       // This is the case of array(1)
-                         subscript = astExpressionStack.front();
-                         astExpressionStack.pop_front();
+                      // See also that this is used for type initialization (see test2008_21.f90)
+                         ROSE_ASSERT(astExpressionStack.empty() == false);
+                         if (astExpressionStack.empty() == false)
+                            {
+                              subscript = astExpressionStack.front();
+                              astExpressionStack.pop_front();
+                            }
+                           else
+                            {
+                           // This branch should not be called now!  This function should not be used in initialization.
+#if 0
+                           // DQ (4/26/2008): This is required for type initialization (which appear 
+                           // to be handled a bit like functions and arrays and are equally ambigious 
+                           // at early stages of translation).
+                              ROSE_ASSERT(astInitializerStack.empty() == false);
+                              subscript = astInitializerStack.front();
+                              astInitializerStack.pop_front();
+
+                              SgExprListExp* expressionList = isSgExprListExp(subscript);
+                              if (expressionList != NULL)
+                                 {
+                                   for (unsigned long i = 0; i < expressionList->get_expressions().size(); i++)
+                                      {
+                                        printf ("expressionList->get_expressions()[i] = %s \n",expressionList->get_expressions()[i]->class_name().c_str());
+                                      }
+                                 }
+#endif
+                              printf ("subscript evaluation used in type initialization \n");
+                              ROSE_ASSERT(false);
+                            }
                        }
                   }
              }
@@ -3931,6 +4167,8 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
                   }
                  else
                   {
+                 // DQ (4/30/2008): This case makes no requirement of the astExpressionStack
+
                  // SgExpression* stride     = new SgNullExpression();
                     SgExpression* stride     = new SgIntVal(1,"1");
 

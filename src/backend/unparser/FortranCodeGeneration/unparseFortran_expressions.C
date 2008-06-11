@@ -106,7 +106,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
           case V_SgAsteriskShapeExp:    unparseAsteriskShapeExp(expr, info); break;
       
        // initializers
-          case V_SgInitializer:            unparseExprInit(expr, info); break;
+       // case V_SgInitializer:            unparseExprInit(expr, info); break;
           case V_SgAggregateInitializer:   unparseAggrInit(expr, info); break;
           case V_SgConstructorInitializer: unparseConInit(expr, info); break;
           case V_SgAssignInitializer:      unparseAssnInit(expr, info); break;
@@ -877,94 +877,141 @@ FortranCodeGeneration_locatedNode::unparseAsteriskShapeExp(SgExpression* expr, S
 //  FortranCodeGeneration_locatedNode::<initializers>
 //----------------------------------------------------------------------------
 
+#if 0
+// DQ (4/28/2008): I don't think this is used!
 void 
 FortranCodeGeneration_locatedNode::unparseExprInit(SgExpression* expr, SgUnparse_Info& info) 
 {
 }
+#endif
+
+void
+FortranCodeGeneration_locatedNode::unparseInitializerList(SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr);
+     SgExprListExp* expr_list = isSgExprListExp(expr);
+
+     info.set_nested_expression();
+
+     bool paren = false;
+     if (paren)
+        {
+          curprint("(");
+        }
+
+     curprint("/");
+     SgExpressionPtrList::iterator it = expr_list->get_expressions().begin();
+     while (it != expr_list->get_expressions().end())
+        {
+          unparseExpression(*it, info);
+          it++;
+          if (it != expr_list->get_expressions().end())
+             {
+               curprint(","); 
+             }
+        }
+     curprint("/");
+
+     if (paren)
+        {
+          curprint(")");
+        }
+
+     info.unset_nested_expression();
+   }
 
 void 
 FortranCodeGeneration_locatedNode::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
-{
-  // FIXME:eraxxon
-  SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
-  ROSE_ASSERT(aggr_init != NULL);
-  
-  SgUnparse_Info ninfo(info);
-  curprint("{");
-  
-  SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
-  SgExpressionPtrList::iterator p = list.begin();
-  while (p != list.end()) {
-    unparseExpression((*p), ninfo);
-    p++;
-    if (p != list.end()) {  
-      curprint(", ");  
-    }
-  }
-  
-  curprint("}");
-}
-
-void
-FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
    {
-     printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
-     ROSE_ASSERT(false);
+  // DQ (4/28/2008): It might be that we should use these soom, but for now I am not using them.
+  // printf ("Case operators not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
+  // ROSE_ASSERT(false);
+
+     SgAggregateInitializer* aggr_init = isSgAggregateInitializer(expr);
+     ROSE_ASSERT(aggr_init != NULL);
+
+     printf ("In unparseAggrInit(): aggr_init->get_type() = %p = %s \n",aggr_init->get_type(),(aggr_init->get_type() != NULL) ? aggr_init->get_type()->class_name().c_str() : "NULL");
 
 #if 0
-  // FIXME:eraxxon
-  SgConstructorInitializer* con_init = isSgConstructorInitializer(expr);
-  ROSE_ASSERT(con_init != NULL);
+     SgUnparse_Info ninfo(info);
+     curprint("{");
   
-  SgUnparse_Info ninfo(info);
-  
-  if (con_init->get_need_name() == true) {
-    SgName nm;
-    
-    // DQ (12/4/2003): Added assertion (one of these is required!)
-    ROSE_ASSERT (con_init->get_declaration() != NULL || con_init->get_class_decl() != NULL);
-    
-    if (con_init->get_declaration() != NULL) {
-      if (con_init->get_need_qualifier())
-	nm = con_init->get_declaration()->get_qualified_name();
-      else
-	nm = con_init->get_declaration()->get_name();
-    }
-    else {
-      if (con_init->get_class_decl() != NULL) {
-	if (con_init->get_need_qualifier()) 
-	  nm = con_init->get_class_decl()->get_qualified_name();
-	else
-	  nm = con_init->get_class_decl()->get_name();
-      }
-    }
-    
-    ROSE_ASSERT ( nm.is_null() == false );
-    cur << nm.str();
-  }
-  
-  if (con_init->get_args()) {
-    cur << "(";
-    unparseExpression(con_init->get_args(), ninfo);
-    cur << ")";
-  }
-  else {
-    // DQ (5/29/2004) Skip this so that we can avoid unparsing "B b;" as "B b();" since
-    // this is a problem for g++ if a reference is taken to "b" (see test2004_44.C).
-    // Verify that P::P():B() {} will still unparse correctly, ... it does!
-  }
+     SgExpressionPtrList& list = aggr_init->get_initializers()->get_expressions();
+     SgExpressionPtrList::iterator p = list.begin();
+     while (p != list.end())
+        {
+          unparseExpression((*p), ninfo);
+          p++;
+          if (p != list.end())
+             {
+               curprint(", ");  
+             }
+        }
+
+     curprint("}");
+#else
+     curprint("(");
+  // info.set_nested_expression();
+  // unparseExpression(aggr_init->get_initializers(), info);
+     unparseInitializerList(aggr_init->get_initializers(), info);
+  // info.unset_nested_expression();
+     curprint(")");
 #endif
    }
 
 void
-FortranCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
-{
-  // FIXME:eraxxon
-  SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
-  ROSE_ASSERT(assn_init != NULL);
-  unparseExpression(assn_init->get_operand(), info);
-}
+FortranCodeGeneration_locatedNode::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (5/3/2008): This is now used for all initialization of user-defined types.
 
+     printf ("Case SgConstructorInitializer not defined for Fortran code generation! node = %s \n",expr->class_name().c_str());
+  // ROSE_ASSERT(false);
+     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(expr);
+     ROSE_ASSERT(constructorInitializer != NULL);
+
+     SgType* type = constructorInitializer->get_expression_type();
+     SgClassType* classType = isSgClassType(type);
+     ROSE_ASSERT(classType != NULL);
+
+     string className = classType->get_name().getString();
+     curprint(className);
+
+     curprint("(");
+     ROSE_ASSERT(constructorInitializer->get_args() != NULL);
+  // unparseInitializerList(constructorInitializer->get_args(), info);
+     unparseExpression(constructorInitializer->get_args(), info);
+     curprint(")");
+
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
+   {
+  // DQ (4/28/2008): This is used for simple initializers and we use the SgAggregateInitializer for structures!
+     SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
+     ROSE_ASSERT(assn_init != NULL);
+
+#if 0
+     SgExprListExp* exprListExp = isSgExprListExp(assn_init->get_operand());
+  // ROSE_ASSERT(exprListExp != NULL);
+
+     int numberOfInitializers = exprListExp != NULL ? exprListExp->get_expressions().size() : 1;
+     if (numberOfInitializers > 1)
+        {
+          curprint("(/");
+        }
+
+     unparseExpression(assn_init->get_operand(), info);
+
+     if (numberOfInitializers > 1)
+        {
+          curprint("/)");
+        }
+#else
+// DQ (4/28/2008): Now that we support the SgAggregateInitializer, this case is much simpler.
+     unparseExpression(assn_init->get_operand(), info);
+#endif
+   }
 
 //----------------------------------------------------------------------------
 //  FortranCodeGeneration_locatedNode::<rename/only lists>
