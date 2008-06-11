@@ -106,7 +106,7 @@ process_file()
  # rose_edg_required_macros_and_functions.h
    if [ $2 = "complex" ]
    then
-      echo "Processing complex header file (adding explicit keyword to private constructor) at $3/$2"
+      echo "Processing complex header file (commenting out private constructor) at $3/$2"
       sed -e 's/complex(_ComplexT __z)/\/\/ ***commented out for ROSE*** complex(_ComplexT __z)/g' $3/$2 > $3/tempFile 2>/dev/null;
       cp $3/tempFile $3/$2;
    fi
@@ -430,16 +430,5 @@ if test $error_code != 0; then
      echo "Error in cp $roseHome/config/rose_specific_complex.h $system_headers_directory/complex.h: nonzero exit code returned to caller error_code = $error_code"
      exit 1
 fi
-
-# DQ (4/13/2005): This is no longer required (in fact it generates a bug captured in 
-# test2005_54.C).  This simplifies the configuration of ROSE and is possible because
-# of the new level of compatability with GNU g++.
-# DQ (2/14/2005): This fixes a Python problem which does not want system files to be 
-# included before python files, but needs to have many g++ specific values defined.  
-# I have not thought of a better fix than this.  Silly Python! Copy the Python header 
-# file (modified) to a location in the ROSE system header files.
-# This fix is only required when compiling SWIG generated files using ROSE.
-# echo "copy $roseHome/config/Python-version-2.2.h to $mainTargetDir/Python.h"
-# cp $roseHome/config/Python-version-2.2.h $mainTargetDir/Python.h
 
 # echo "Leaving script for processing header files"
