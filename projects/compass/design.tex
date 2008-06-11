@@ -9,20 +9,21 @@ This chapter covers the design of {\em Compass} and the design of the verificati
 the \emph{Compass Verifier}, used to verify properties of the checkers implemented 
 and submitted to {\em Compass}.
 
-\section{Use Cases}
+% \section{Use Cases}
+\section{Usage Model}
 
 \label{design::UseCase}
 
-Figure~\ref{Compass_usecase} shows the use cases of \emph{Compass}.
+Figure~\ref{Compass_usecase} shows the usage model (use cases) of \emph{Compass}.
 The analysis is triggered by the user running {\em Compass} over an
 input file (source code or binary). The user implicitly selects 
 which checkers to execute (defining what rules are to be enforced); 
 by default all checkers are run. 
 The user also specifies the input file to be checked; for source code 
 the specification is similar to the command line required for the 
-compiliation in the case of a source file.  Results of the analysis 
+compilation in the case of a source file.  Results of the analysis 
 are presented to the user, a number of mechanisms can be used to 
-diplay the results.
+display the results.
 
 \begin{figure}[th]
 \includegraphics[width=4.5in]{compass_pic.png}
@@ -36,38 +37,51 @@ implement and submit checkers to be built into Compass.
 Since external users may contribute checker automatically via scripts, a verification of the 
 validity and safety of these checkers is necessary. We provide a \emph{Compass Verifier}
 that helps to check that all checkers are safe. Currently, the verifier is run by
-a administrative person but may run automatically in the future.
+an administrative person but may run automatically in the future.
 
-\section{Assumption of trust} 
+%\section{Assumption of trust} 
+\section{Trust Model}
 By design we make a few assumptions about the use of Compass in order to define
 a secure tool. We assume:
 \begin{enumerate}
-   \item The person writing the checker is trusted. \\
+   \item For now, there is an assuption of trust in the person writing the checker. \\
       We use the \emph{Compass Verifier} as a way to double check the 
       checkers so that we can eventually weaken the level of trust assumed for people 
-      writing checkers. However, the design of the compass verifiy is not likely to
-      ever be robust enough to guarentee an automated proof of security.  Thus,
-      we also assume that someone trusted will review the checker.  
+      writing checkers. However, the design of the \emph{Compass Verifier} is not likely to
+      ever be robust enough to guarantee an automated proof of security for each checker.  
+      Thus, we also assume that someone trusted will also review the checker.
       {\em not implemented: We expect that a digital signature is possible to associate 
-      a trusted reviewer with a review of the checker.}
+      a trusted reviewer with a review of the checker together with an MD5 hash that
+      verifies the checker source code.}
 
    \item Since running \emph{Compass Verifier} is an optional part of building 
       the Compass executable, the person running these test is trusted. There are
       two ways to run the \emph{Compass Verifier} (see section \ref{sec:compass_verify}
     for details):
       \begin{itemize}
-         \item slow: once on each checker ({\tt make verify})
-         \item fast: once on the union of all the checkers ({\tt make oneBigVerify})
+         \item Slow: once on each checker ({\tt make verify}). This mechanism
+            tests all the files one checker at a time and thus can not miss 
+            a file.  Note that even the counter examples are tests which can 
+            be a problem when the counter example for the checker is detected
+            as a violation for \emph{Compass Verifier}.  Conter examples for
+            checkers have to be carefull written to not represent examples that
+            violate \emph{Compass Verifier}.
+         \item Fast: once on the union of all the checkers ({\tt make oneBigVerify}).
+            This step forms a single file of all the checkers (and indoing so can
+            miss some files, and so is less secure).  It is mostly for testing 
+            purposes.
       \end{itemize}
 
    \item The person building the Compass executable is trusted.
 
    \item The environment where the testing using Compass is done is trusted.
 
+   \item Compass is designed so that the user running Compass need not be trusted.
+
 \end{enumerate}
 
 It is unclear at present how weak the assumption of trust on the compass checker developer 
-can be and it will depend directly on the capabilities of the \emph{Compass Verifier}.
+can be and it may ultimately depend directly on the capabilities of the \emph{Compass Verifier}.
 
 
 \section{Architecture}
@@ -143,7 +157,7 @@ input and parameters provided to Compass, is provided within the Compass namespa
 
 Compass must be safe, so that analyses and their results can be trusted. 
 The {\em Compass Verifier} is used at build time to run a specific set of separate 
-compass rules ofer the source cod eof all the checkers.  For simplicity it runs in two
+compass rules offer the source cod eof all the checkers.  For simplicity it runs in two
 modes: fast, for checking specific named checker source files; and slow, for testing 
 {\em all} checker source files.
 
@@ -152,8 +166,10 @@ modes: fast, for checking specific named checker source files; and slow, for tes
 In order to define a complete design for security we outline the threats that
 understand to be relevant. The main threats to the validity of Compass checkers are:
 \begin{itemize}
-\item \emph{Malicious User}. A malicious user is an external user of Compass contributing a checker that performs malicious behavior.
-\item \emph{Malicious Checker}. Compass is extensible and new detectos can be added externally (users outside the main development group).
+\item \emph{Malicious User} \\ 
+  A malicious user is an external user of Compass contributing a checker that performs malicious behavior.
+\item \emph{Malicious Checker} \\ 
+  Compass is extensible and new checkers can be added externally (users outside the main development group).
   A checker can be programmed arbitrarily using the C/C++ and assembly programming languages. 
   It is therefore possible for a skilled programmer to hide malicious operations within a
   checker.  Compass must prevent checkers with malicious behavior to be part of the
@@ -168,29 +184,37 @@ understand to be relevant. The main threats to the validity of Compass checkers 
       \item {\bf modification of filesystem} \\
          A checker should be side-effect free, or have only well defined side-effects, 
          but a malicious checker could modify or erase parts of the accessible file 
-         system (e.g. deleting whold directy structures).
+         system (e.g. deleting whole directory structures).
 %     \item {\bf others ??? ...}
    \end{itemize} 
 
-\item \emph{Source Code Replacement}. It should not be possible for users to exchange the
+\item \emph{Malicious Compass} \\
+    Since Compass is built from ROSE, it is possible to modify compass (or any checker) 
+    to generate source code that could be compiled to replace the existing executable
+    (there are some constraints here) or regenerate the source code to replace the 
+    existing source code or perhaps just provide an alternative copy of the source code.
+    This indirect transformation of the input code is a threat.
+
+\item \emph{Source Code Replacement} \\ It should not be possible for users to exchange the
     source code of checkers within a running system, i.e. Compass cannot implement dynamic
     loading of checkers. Such a feature would compromise its safety.
 
-\item \emph{Binary Replacement}. Another threat is the replacement of a valid Compass
+\item \emph{Binary Replacement} \\ Another threat is the replacement of a valid Compass
     checker with a modified malicious version within a binary release of Compass.
     Therefore, Compass should be aware if parts of itself were modified and should not
     execute.
 
 \end{itemize} 
 
-\subsection{Safety Handling}
+%\subsection{Safety Handling}
+\subsection{Mitigation of Threats}
 
 Compass is designed to be safe. The Compass Verifier is a stable separate copy of Compass
 that contains only a few checkers to check (external and internal) user delivered checkers
-for safety. We have hopefully designed Compass in a way that it addresses the threats
+for safety.  We have hopefully designed Compass in a way that it addresses the threats
 mentioned above:
 \begin{itemize}
-\item \emph{Malicious User}. Initially, we permit only trusted individuals to add new
+\item \emph{Malicious User} \\ Initially, we permit only trusted individuals to add new
     checkers to Compass. Once the verification process is matured, we will extend this
     policy to allow less trusted users to contribute to Compass. A goal will be to allow
     arbitrary users to contribute checkers, however, a review of the whole Compass design
@@ -199,25 +223,40 @@ mentioned above:
 \fixme{We might define trusted and untrusted checkers as a way to have checkers from
        arbitrary users, but mark them as untrusted.}
 
-\item \emph{Malicious Checker}. To prevent Compass from executing malicious code, the Compass
-    Verifier executes its own checkers on any user defined checker that is beeing
+\item \emph{Malicious Checker} \\ To prevent Compass from executing malicious code, the Compass
+    Verifier executes its own checkers on any user defined checker that is being
     considered to be added to Compass. Currently, the Compass Verifier contains three checkers:
    \begin{itemize}
-      \item \emph{fileReadOnlyAccess} ensures that a user defined checker perorms no write
-         or execute operations on files. 
-      \item \emph{forbiddenFunctions} is a {\em white list} of function calls permitted in a
-         checker. This list contains functions that are trusted and hence considered
+      \item \emph{fileReadOnlyAccess} ensures that a user defined checker performs no write
+         or execute operations on files.
+      \item \emph{forbiddenFunctions} is a {\em white list} of function calls permitted in
+\fixme{Change to allowed functions?}
+         a checker. This list contains functions that are trusted and hence considered
          unharmful when integrated to Compass.
       \item \emph{noAsmStmtsOps} searches for assembly instructions in a checker and flags
          and reports all cases as unsafe.
+      \item To avoid modifications of the AST for the purpose of allowing other checkers
+         to pass, the AST should not be modified (this should extend to all the
+         program analysis graphs generated and used by other checkers).
+         {\em This is not implemented yet.} 
 \end{itemize}
 
-\item \emph{Source Code Replacement}. Checkers can only be added at compile time to
+\item \emph{Malicious Compass} \\
+    Since Compass does not generate code, it can not be used to modify the input software
+    (source code or binary) or generate an new copy that could be confused with the input.
+    However, future versions of Compass make make transformation to introduce greater
+    levels of security; fix flaws, mitigate specific forms of threats, etc.  It will be
+    important to make sure that such transformation can not change the behavior of an
+    input code to make the modified input code malicious.  Current proposed approaches
+    would build a patch which would have to be inspected by a trusted developer before
+    it would be applied to modify the input code.
+
+\item \emph{Source Code Replacement} \\ Checkers can only be added at compile time to
     Compass, not at run-time. This means that checkers (meaning the source code) cannot be
     exchanged against unsafe versions at run-time. Furthermore, we allow only the Compass
     tool builder (admin) to build versions of Compass that must pass the Compass Verifier.
 
-\item \emph{Binary Replacement}. Our goal is to perform a MD5 checksum on all the checkers
+\item \emph{Binary Replacement} \\ Our goal is to perform a MD5 checksum on all the checkers
     part of the binary Compass distribution before Compass is executed. In this way
     Compass will not run if parts of it were modified. {\em This is not implemented yet.}
 \fixme{We should describe the policy for allowing MD5 checksums to be verified.}
