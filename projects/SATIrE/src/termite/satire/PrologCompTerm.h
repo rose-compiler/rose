@@ -15,10 +15,35 @@ public:
   /// Creates a composite term with the given name. no subterms added yet.
   
   PrologCompTerm(std::string name) : mName(name) {};
-  int getArity();
-  bool isGround();
+  int getArity() { return mSubterms.size(); };
+  bool isGround() {
+    bool ground = true;
+    std::vector<PrologTerm*>::iterator it;
+    it = mSubterms.begin();
+    while (it != mSubterms.end()) {
+      ground = ground && (*it)->isGround();
+      it++;
+    }
+    return ground;
+  };
+
   std::string getName() { return mName; };
-  std::string getRepresentation();
+  std::string getRepresentation() {
+    /*Pattern: name(...all subterms separated by commas..) */
+    std::string rep = getName();
+    rep += "(";
+    std::vector<PrologTerm*>::iterator it;
+    it = mSubterms.begin();
+    // append the representation of all subterms
+    while (it != mSubterms.end()) {
+      rep = rep + (*it)->getRepresentation();
+      // all but the last subterm are followed by a comma
+      if(++it != mSubterms.end()) rep += ",";
+    }
+    rep += ")";
+    return rep;
+  };
+
   std::vector<PrologTerm *> getSubTerms() { return mSubterms; };
 
 
@@ -36,7 +61,6 @@ protected:
   /// list of the subterms
   std::vector<PrologTerm *> mSubterms;
 };
-
 
 class PrologInfixOperator : public PrologCompTerm {
 public:

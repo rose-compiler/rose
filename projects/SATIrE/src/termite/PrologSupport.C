@@ -632,11 +632,11 @@ PrologSupport::getValueExpSpecific(SgValueExp* astNode) {
     } 
     /* char and string types */
     else if (SgCharVal* n = dynamic_cast<SgCharVal*>(astNode)) {
-	t->addSubterm(new PrologAtom(
-				       escape_string(std::string(1, (unsigned char)n->get_value()))));
+	//t->addSubterm(new PrologAtom(escape_string(std::string(1, (unsigned char)n->get_value()))));
+	t->addSubterm(new PrologInt((int)n->get_value())); 
     } else if (SgUnsignedCharVal* n = dynamic_cast<SgUnsignedCharVal*>(astNode)) {
-	t->addSubterm(new PrologAtom(
-				       escape_string(std::string(1, n->get_value()))));
+	//t->addSubterm(new PrologAtom(escape_string(std::string(1, n->get_value()))));
+	t->addSubterm(new PrologUnsignedInt((unsigned)n->get_value())); 
     } else if (SgWcharVal* n = dynamic_cast<SgWcharVal*>(astNode)) {
 	ostringstream o;
 	o << n->get_valueUL();

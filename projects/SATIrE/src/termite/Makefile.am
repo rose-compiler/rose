@@ -22,14 +22,11 @@ AM_YFLAGS = -d
 
 lib_LIBRARIES = libtermite.a
 libtermite_a_SOURCES = \
-	PrologVariable.cpp PrologList.cpp PrologAtom.cpp PrologString.cpp \
-	PrologInt.cpp PrologCompTerm.cpp PrologTerm.cpp PrologSupport.C \
+	PrologSupport.C \
 	\
 	termparser.y++ termparser.tab.h++ termlexer.l++ \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
-	PrologToRose.C \
-	PrologVariable.cpp PrologList.cpp PrologAtom.cpp PrologString.cpp \
-	PrologInt.cpp PrologCompTerm.cpp PrologTerm.cpp PrologSupport.C 
+	PrologToRose.C
 
 termparser.tab.h++ termparser.tab.c++: $(srcdir)/termparser.y++ 
 	$(YACC) -d $(srcdir)/termparser.y++

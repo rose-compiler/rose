@@ -1,5 +1,6 @@
-/*
+/* -*- C++ -*-
 Copyright 2006 Christoph Bonitz (christoph.bonitz@gmail.com)
+          2008 Adrian Prantl (adrian@complang.tuwien.ac.at)
 see LICENSE in the root folder of this project
 */
 #ifndef PROLOGTERM_H_
