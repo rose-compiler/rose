@@ -228,14 +228,21 @@ force-html-docs: logo force-user-manual-docs
 
 rose.html: rose.html.in
 AvailableDocumentation.docs: AvailableDocumentation.docs.in
-
-logo: copyPublications rose.html
+# Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
+projects.html: projects.html.in
+COMPASS_MANUAL = $(top_builddir)/projects/compass/compass.pdf
+$(COMPASS_MANUAL):
+	$(MAKE) -C $(top_builddir)/projects/compass docs
+logo: copyPublications rose.html projects.html $(COMPASS_MANUAL)
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
+	mkdir -p ROSE_WebPages/Projects;
 #	cp $(srcdir)/StartHere.html ROSE_WebPages;
 #	cp $(srcdir)/compass_rose.gif ROSE_WebPages/ROSE_HTML_Reference
 	cp -f $(srcdir)/compass_rose.gif ROSE_WebPages
 	cp -f rose.html ROSE_WebPages
 	cp -f rose.html ROSE_WebPages/index.html
+	cp -f projects.html ROSE_WebPages/Projects/projects.html
+	cp -f $(COMPASS_MANUAL) ROSE_WebPages/Projects/
 
 # Copy the ROSE research publication in the distribution into the web pages so that
 # the web pages can reference them with relative paths and the documentation can be
@@ -246,8 +253,7 @@ copyPublications:
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages
 
-# Upload web pages to LLNL server (prerequisite for R&R process)
-# final web pages (after R&R) should be copied to cmg-1:/green_rev/www/casc/rose
+# Upload web pages to the LBL server 
 copyWebPages: logo
 #	cd ROSE_WebPages; rsync -avz * quinlan1@cmg-1:/green_dev/www/casc/rose
 	cd ROSE_WebPages; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
@@ -460,7 +466,7 @@ clean-local:
           rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
           roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
           $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz rose.html index.html AvailableDocumentation.docs \
-          compass_rose.gif
+          compass_rose.gif projects.html
 #	This is a significant problem when the ROSE_WebPages don't exist
 #	Change the permissions on the ROSE_WebPages, and files in it, so that we can remove it during "make distcheck"
 #	chmod +w -R ROSE_WebPages
