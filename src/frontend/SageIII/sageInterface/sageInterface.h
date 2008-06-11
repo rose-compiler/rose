@@ -344,6 +344,7 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
   /*! brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
   bool is_C_language ();
+  bool is_UPC_language ();
   bool is_C99_language ();
   bool is_Cxx_language ();
   bool is_Fortran_language ();

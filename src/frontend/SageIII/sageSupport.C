@@ -3884,8 +3884,12 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      {  
        if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false) &&
         (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(upc)",false) ==false)) 
+   local_commandLineArgumentList.push_back("--edg:upc");
 
-         local_commandLineArgumentList.push_back("--edg:upc");
+// Liao, 6/11/2008. Enable restrict by default if UPC is used. 
+        if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(restrict)",false) ==false) &&
+        (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(restrict)",false) ==false)) 
+    local_commandLineArgumentList.push_back("--edg:restrict");
      }    
  
   // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!

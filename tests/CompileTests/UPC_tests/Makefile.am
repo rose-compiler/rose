@@ -5,6 +5,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #####################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     restrict.upc \
+     shared_2.upc \
      test2004_22.upc 
 TESTCODE_CURRENTLY_FAILING = \
      barrier.upc \
@@ -20,6 +22,7 @@ TESTCODE_CURRENTLY_FAILING = \
      notify_wait.upc \
      shared.upc \
      sizeof.upc \
+     strict.upc \
      threads.upc 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
@@ -31,8 +34,8 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings -w --edg:restrict 
-# Liao (6/6/2008) --edg:upc is not required since ROSE can add it internally based on the file suffix (.upc) 
+ROSE_FLAGS = --edg:no_warnings
+# Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add it internally based on the file suffix (.upc) 
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
 PASSING_TEST_Objects = ${TESTCODES:.upc=.o}

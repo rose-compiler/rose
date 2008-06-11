@@ -28,9 +28,9 @@ typdef enum {
 typedef int upc_flag_t; /* Not mentioned in the specification about where to define this ? */
 
 /* 7.3.1 Re-localization Operations*/
-extern void upc_all_broadcast(shared void * restrict, shared const void * restrict, size_t, upc_flag_t);
+extern void upc_all_broadcast(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
 
-extern void upc_all_scatter(shared void * restrict, shared const void * restrict, size_t, upc_flag_t);
+extern void upc_all_scatter(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
 
 extern void upc_all_gather(shared void * restrict dst, shared const void * restrict src, size_t nbytes, upc_flag_t flags);
 
