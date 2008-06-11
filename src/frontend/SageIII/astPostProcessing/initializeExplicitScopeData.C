@@ -413,7 +413,12 @@ InitializeExplicitScopes::visit ( SgNode *node)
                SgInitializedName* firstVariable = *(variableList.begin());
                ROSE_ASSERT(firstVariable != NULL);
                SgType* baseType = firstVariable->get_typeptr();
+               if (baseType == NULL)
+                  {
+                    printf ("Error: variableDeclaration = %p firstVariable = %p = %s \n",variableDeclaration,firstVariable,SageInterface::get_name(firstVariable).c_str());
+                  }
                ROSE_ASSERT(baseType != NULL);
+
                initializeExplicitScopeDataHiddenInType(baseType);
 
 #if 0

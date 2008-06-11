@@ -693,6 +693,11 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "F2003_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/18/2008): Added flag to specify that CPP preprocessing is required (default true for C and C++, and 
+  // Fortran with *.F?? extension an explicitly set to false for fortran with *.f?? extension and binaries).
+     File.setDataPrototype         ( "bool", "requires_C_preprocessor", "= true",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (1/9/2008): This permits a file to be marked explicitly as a binary file and avoids 
   // confusion when processing object files within linking (where no source file is present 
   // and the object file could be interpreted as being provided for binary analysis).

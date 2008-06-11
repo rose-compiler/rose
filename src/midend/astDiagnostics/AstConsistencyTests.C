@@ -3800,8 +3800,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                     Sg_File_Info* fileInfo = isSg_File_Info(node);
                     if (node->get_file_info() == NULL)
                        {
+                      // DQ (5/17/2008): It is OK for a SgSymbol to have a NULL fileInfo pointer
                       // DQ (1/22/2008): Ignore that the get_file_info() for a Sg_File_Info IR node is NULL
-                         if (fileInfo == NULL && isSgType(node) == NULL )
+                      // if (fileInfo == NULL && isSgType(node) == NULL )
+                         if (fileInfo == NULL && (isSgType(node) == NULL && isSgSymbol(node) == NULL))
                               printf ("Warning: node->get_file_info() is NULL on node = %p = %s \n",node,node->class_name().c_str());
                        }
                       else
@@ -3815,8 +3817,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                        {
                          if (parent->get_file_info() == NULL)
                             {
+                           // DQ (5/17/2008): It is OK for a SgSymbol to have a parent which is a symbol table without a valid fileInfo pointer
                            // DQ (1/22/2008): Ignore SgType IR nodes (since they never have a valid get_file_info())
-                              if (isSgType(parent) == NULL )
+                           // if (isSgType(parent) == NULL )
+                              if (isSgType(parent) == NULL && isSgSymbolTable(parent) == NULL)
                                    printf ("Warning: parent->get_file_info() is NULL on node = %p = %s \n",parent,parent->class_name().c_str());
                             }
                            else

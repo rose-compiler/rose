@@ -230,6 +230,7 @@ class ObjectTableEntry {
     std::string name;
     addr_t      virtual_size, rva, physical_size, physical_offset;
     unsigned    reserved[3], flags;
+
   private:
     void ctor(const ObjectTableEntry_disk*);
 };

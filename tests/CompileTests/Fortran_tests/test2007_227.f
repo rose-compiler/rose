@@ -1,4 +1,4 @@
-C  CVS $Revision: 1.4 $  created $Date: 2008/01/25 03:06:41 $
+C  CVS $Revision: 1.1 $  created $Date: 2008/01/08 02:55:38 $
       SUBROUTINE TRANFT (LINCK, LINMC, LTRAN, LIN, LOUT, MAXTP,
      1                   LIWORK, LRWORK, LCWORK, I, R, C)
 C*****precision > double

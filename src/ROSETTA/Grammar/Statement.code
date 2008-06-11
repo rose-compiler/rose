@@ -2628,6 +2628,29 @@ HEADER_FORTRAN_INCLUDE_LINE_START
 HEADER_FORTRAN_INCLUDE_LINE_END
 
 
+HEADER_UPC_NOTIFY_STATEMENT_START
+HEADER_UPC_NOTIFY_STATEMENT_END
+
+HEADER_UPC_WAIT_STATEMENT_START
+HEADER_UPC_WAIT_STATEMENT_END
+
+HEADER_UPC_BARRIER_STATEMENT_START
+HEADER_UPC_BARRIER_STATEMENT_END
+
+HEADER_UPC_FENCE_STATEMENT_START
+HEADER_UPC_FENCE_STATEMENT_END
+
+HEADER_UPC_FORALL_STATEMENT_START
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual bool cfgIsIndexInteresting(unsigned int) const;
+          virtual unsigned int cfgFindChildIndex(SgNode* n);
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_UPC_FORALL_STATEMENT_END
+
+
+
 // #########################################################
 // #########################################################
 //                      SOURCE CODE
@@ -7518,16 +7541,17 @@ SgForStatement::get_mangled_name(void) const
 
 SOURCE_FOR_STATEMENT_END
 
-
 SOURCE_FORALL_STATEMENT_START
 
-unsigned int SgForAllStatement::cfgIndexForEnd() const {
-  return VirtualCFG::doForallCfgIndexForEnd(this);
-}
+unsigned int SgForAllStatement::cfgIndexForEnd() const
+   {
+     return VirtualCFG::doForallCfgIndexForEnd(this);
+   }
 
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return VirtualCFG::doForallCfgIsIndexInteresting(this, idx);
-}
+bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const 
+   {
+     return VirtualCFG::doForallCfgIsIndexInteresting(this, idx);
+   }
 
 unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
    {
@@ -7539,13 +7563,15 @@ unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
      return VirtualCFG::doForallCfgFindNextChildIndex(this, n);
    }
 
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  return VirtualCFG::doForallCfgOutEdges(this, idx);
-}
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     return VirtualCFG::doForallCfgOutEdges(this, idx);
+   }
 
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  return VirtualCFG::doForallCfgInEdges(this, idx);
-}
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
+   {
+     return VirtualCFG::doForallCfgInEdges(this, idx);
+   }
 
 void
 SgForAllStatement::post_construction_initialization()
@@ -7553,6 +7579,102 @@ SgForAllStatement::post_construction_initialization()
    }
 
 SOURCE_FORALL_STATEMENT_END
+
+SOURCE_UPC_FORALL_STATEMENT_START
+
+unsigned int SgUpcForAllStatement::cfgIndexForEnd() const
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+  // return VirtualCFG::doForallCfgIndexForEnd(this);
+   }
+
+bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const 
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return false;
+  // return VirtualCFG::doForallCfgIsIndexInteresting(this, idx);
+   }
+
+unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+  // return VirtualCFG::doForallCfgFindChildIndex(this, n);
+   }
+
+unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+  // return VirtualCFG::doForallCfgFindNextChildIndex(this, n);
+   }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return std::vector<VirtualCFG::CFGEdge>();
+  // return VirtualCFG::doForallCfgOutEdges(this, idx);
+   }
+
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
+   {
+     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
+     ROSE_ASSERT(false);
+
+     return std::vector<VirtualCFG::CFGEdge>();
+  // return VirtualCFG::doForallCfgInEdges(this, idx);
+   }
+
+void
+SgUpcForAllStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_UPC_FORALL_STATEMENT_END
+
+SOURCE_UPC_NOTIFY_STATEMENT_START
+void
+SgUpcNotifyStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_UPC_NOTIFY_STATEMENT_END
+
+SOURCE_UPC_WAIT_STATEMENT_START
+void
+SgUpcWaitStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_UPC_WAIT_STATEMENT_END
+
+SOURCE_UPC_BARRIER_STATEMENT_START
+void
+SgUpcBarrierStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_UPC_BARRIER_STATEMENT_END
+
+SOURCE_UPC_FENCE_STATEMENT_START
+void
+SgUpcFenceStatement::post_construction_initialization()
+   {
+   }
+
+SOURCE_UPC_FENCE_STATEMENT_END
+
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START

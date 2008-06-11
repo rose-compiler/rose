@@ -174,7 +174,8 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
 //        virtual void unparseForDeclOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseTypeRef                 (SgExpression* expr, SgUnparse_Info& info);  
 //        virtual void unparseVConst                  (SgExpression* expr, SgUnparse_Info& info);  
-          virtual void unparseExprInit                (SgExpression* expr, SgUnparse_Info& info);  
+//        virtual void unparseExprInit                (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseInitializerList         (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAggrInit                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseConInit                 (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAssnInit                (SgExpression* expr, SgUnparse_Info& info);

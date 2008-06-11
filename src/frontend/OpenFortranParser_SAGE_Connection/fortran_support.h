@@ -80,13 +80,15 @@ extern std::list<SgDeclarationStatement*> astDeclarationStatementStack;
 // Global stack of SgType IR nodes
 extern std::list<SgType*> astTypeStack;
 
-// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type separately from the
+// DQ (12/8/2007): Global stack of SgType IR nodes used to hold the base type seperately from the
 // the constructed types build from the base type.  This is designed to handle the case of 
 // "integer i(5),j" and "character*100 k,l" (see test2007_148.f)
 extern std::list<SgType*> astBaseTypeStack;
 
+// DQ (4/4/2008): I think that type initialization shows that we can't have a separate astInitializerStack
+// See comment in fortran_support.C file.  For now use a macro to test this idea.
 // Global stack of expressions used for initialization of variables in declarations.
-extern std::list<SgExpression*> astInitializerStack;
+// extern std::list<SgExpression*> astInitializerStack;
 
 // DQ (11/30/2007): Function attributes are held as tokens and not not defined as integer value codes (like other attributes)
 extern AstNameListType astFunctionAttributeStack;
@@ -175,7 +177,10 @@ SgLabelSymbol* buildNumericLabelSymbol(Token_t* label);
 SgLabelSymbol* buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* label);
 
 SgVariableSymbol* trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableName, SgScopeStatement* currentScope );
-void trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol );
+
+// DQ (4/30/2008): Modified to handle derived types
+// void trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol );
+void trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol, SgClassSymbol* & classSymbol);
 
 SgClassSymbol* trace_back_through_parent_scopes_lookup_derived_type_symbol(const SgName & derivedTypeName, SgScopeStatement* currentScope );
 
@@ -219,6 +224,8 @@ void buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, boo
 void markDoLoopAsUsingEndDo();
 
 SgExpression* buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStride, bool isAmbiguous );
+
+bool isImplicitNoneScope();
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif

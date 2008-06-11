@@ -697,6 +697,33 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
    }
 
 bool
+CommandlineProcessing::isFortranFileNameSuffixRequiringCPP ( const std::string & suffix )
+   {
+  // Returns false only if this is a Fortran source file not requireing C preprocessing (file extension (suffix) is *.f??)
+
+     bool returnValue = true;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+  // For Fortran, upper case is used to indicate that CPP preprocessing is required.
+     if (   suffix == "f"
+         || suffix == "f77" 
+         || suffix == "f90"
+         || suffix == "f95"
+         || suffix == "f03"
+         || suffix == "f08"
+             )
+          returnValue = false;
+#else
+  // It is a case insensitive system (assume that C preprocessing is required since I don't know how to tell the difference.
+     returnValue = true;
+#endif
+
+     return returnValue;
+   }
+
+bool
 CommandlineProcessing::isFortran77FileNameSuffix ( const std::string & suffix )
    {
   // DQ (11/17/2007): Added fortran mode specific suffix checking

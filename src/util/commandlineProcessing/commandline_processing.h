@@ -54,6 +54,10 @@ namespace CommandlineProcessing
        // DQ (8/7/2007): Added support for Fortran file suffix names.
           bool isFortranFileNameSuffix ( const std::string & suffix );
 
+       // DQ (5/18/2008): Support to marking when C preprocessing is required for 
+       // Fortran files, default is true for C and C++.
+          bool isFortranFileNameSuffixRequiringCPP ( const std::string & suffix );
+
        // DQ (11/17/2007): Added fortran mode specific suffix checking
           bool isFortran77FileNameSuffix   ( const std::string & suffix );
           bool isFortran90FileNameSuffix   ( const std::string & suffix );

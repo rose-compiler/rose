@@ -399,3 +399,11 @@ SgAsmExprListExp
 SgAsmUnaryArmSpecialRegisterList
 SgAsmx86RegisterReferenceExpression
 SgAsmArmRegisterReferenceExpression
+SgUpcLocalsizeofExpression
+SgUpcBlocksizeofExpression
+SgUpcElemsizeofExpression
+SgUpcNotifyStatement
+SgUpcWaitStatement
+SgUpcBarrierStatement
+SgUpcFenceStatement
+SgUpcForAllStatement

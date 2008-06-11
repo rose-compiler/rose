@@ -1,29 +1,3 @@
-Hi,
-    We are distributing ROSE to a number of groups but it is not
-yet available on the web more generally.  I would ask that you not
-share this information about how to obtain ROSE, but instead refer
-people to me.  Let us know if you have any feedback.  And please
-let me know if you wish to be added to our ROSE email list for
-updates about ROSE.
-
-Instructions for download of ROSE:
-    We are moving the distribution to ORNL at some point soon and that
-will simplify distribution for us.  Until then you can get the
-version using binaries of the EDG work at (it uses gnu version 3.3.x
-to build its binaries so this is also a requirement for using ROSE):
-
-ROSE 0.8.10a source with EDG binaries:
-     http://www.cs.berkeley.edu/~richie/llnl/ROSE
-
-The user ID is 'rose', and the password is 'let.me.in' (w/o quotes).
-Grab ROSE-0.8.10a-with-EDG-binaries.tar.gz. (The other file is the HTML documentation)
-This particular binary distribution assumes Linux and use of gcc 3.3.x. Please
-feel free to ask if you need something different, or if you run into any problems.
-
-Let me know if I can be of any help,
-Dan
-
-
 
 Hi,
     Unlike for source code distributions of ROSE which

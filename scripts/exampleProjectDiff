@@ -1,5 +1,8 @@
 # This is an example commandline used to build a patch
-diff -r -u --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in' --exclude 'configure' --exclude '*~' --exclude '*.orig' DANs_ORIGINAL ROSE > RamasChanges.patch
+diff -r -N -u --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in' --exclude 'configure' --exclude '*~' --exclude '*.orig' ORIGINAL_ROSE MODIFIED_ROSE > ROSE_Changes.patch
+
+or for more context:
+diff -r -N -U 10 --exclude 'aclocal.m4' --exclude 'autom4te.cache' --exclude 'Makefile.in' --exclude 'configure' --exclude '*~' --exclude '*.orig' ORIGINAL_ROSE MODIFIED_ROSE > ROSE_Changes.patch
 
 Note that "-N" will support addition of any new files from the patch.
 
@@ -7,8 +10,9 @@ To remove all ~ files use:
      find . -name \*~ | xargs rm
 
 
-# And to apply the patch:
-patch -p1 < RamasChanges.patch
+# And to apply the patch (patches are usually built from the parent of the 
+# ROSE directory, this effects the number provided to the -p option):
+patch -p1 < ROSE_Changes.patch
 
 tux212.llnl.gov{dquinlan}1470: patch -p1 < RamasChanges.patch
 patching file src/backend/unparser/unparse_expr.C

@@ -180,6 +180,15 @@ Grammar::setUpStatements ()
           "IOStatement", "IO_STATEMENT", false);
 #endif
 
+#if USE_UPC_IR_NODES
+  // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
+     NEW_TERMINAL_MACRO (UpcNotifyStatement,    "UpcNotifyStatement",    "UPC_NOTIFY_STMT" );
+     NEW_TERMINAL_MACRO (UpcWaitStatement,      "UpcWaitStatement",      "UPC_WAIT_STMT" );
+     NEW_TERMINAL_MACRO (UpcBarrierStatement,   "UpcBarrierStatement",   "UPC_BARRIER_STMT" );
+     NEW_TERMINAL_MACRO (UpcFenceStatement,     "UpcFenceStatement",     "UPC_FENCE_STMT" );
+     NEW_TERMINAL_MACRO (UpcForAllStatement,    "UpcForAllStatement",    "UPC_FORALL_STMT" );
+#endif
+
   // DQ (8/21/2007): More IR nodes required for Fortran support
      NEW_TERMINAL_MACRO (BlockDataStatement,        "BlockDataStatement",         "TEMP_Block_Data_Statement" );
      NEW_TERMINAL_MACRO (ImplicitStatement,         "ImplicitStatement",          "TEMP_Implicit_Statement" );
@@ -253,7 +262,8 @@ Grammar::setUpStatements ()
      NEW_NONTERMINAL_MACRO (ScopeStatement,
           Global                       | BasicBlock         | IfStmt             | ForStatement    | FunctionDefinition |
           ClassDefinition              | WhileStmt          | DoWhileStmt        | SwitchStatement | CatchOptionStmt    |
-          NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement
+          NamespaceDefinitionStatement | BlockDataStatement | AssociateStatement | FortranDo       | ForAllStatement    |
+          UpcForAllStatement
        /* | TemplateInstantiationDefn */,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -312,7 +322,6 @@ Grammar::setUpStatements ()
           ClinkageStartStatement | ClinkageEndStatement,
           "ClinkageDeclarationStatement", "C_LINKAGE_DECLARATION_STMT", false );
 
-#if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration  | VariableDefinition   | 
@@ -327,13 +336,7 @@ Grammar::setUpStatements ()
           FunctionDeclaration                  /* | ModuleStatement */   | ContainsStatement    |
           C_PreprocessorDirectiveStatement        | FortranIncludeLine,
           "DeclarationStatement","DECL_STMT", false);
-#else
 
-#error "DEAD CODE!"
-
-#endif
-
-#if USE_FORTRAN_IR_NODES
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
      NEW_NONTERMINAL_MACRO (Statement,
 			    ScopeStatement       | FunctionTypeTable      | DeclarationStatement            | ExprStatement         |
@@ -343,7 +346,8 @@ Grammar::setUpStatements ()
              CatchStatementSeq    | StopOrPauseStatement   | IOStatement                     | 
              WhereStatement       | ElseWhereStatement     | NullifyStatement                | ArithmeticIfStatement |
              AssignStatement      | ComputedGotoStatement  | AssignedGotoStatement           |
-          /* FortranDo            | */ AllocateStatement   | DeallocateStatement             |
+          /* FortranDo            | */ AllocateStatement   | DeallocateStatement             | UpcNotifyStatement    | 
+             UpcWaitStatement     | UpcBarrierStatement    | UpcFenceStatement               | 
              SequenceStatement,
 			    "Statement","StatementTag", false);
 
@@ -351,18 +355,6 @@ Grammar::setUpStatements ()
           // InterfaceStatement   | ModuleStatement        | UseStatement                    | ContainsStatement     |
           // DQ (11/24/2007): These are derived from IOControlStatement and are not directly derived from SgStatement
           // InputOutputStatement | OpenStatement          | CloseStatement                  | InquireStatement      | IOFileControlStmt |
-#else
-
-#error "DEAD CODE!"
-
-     NEW_NONTERMINAL_MACRO (Statement,
-			    ScopeStatement   | FunctionTypeTable  | DeclarationStatement | ExprStatement     |
-			    LabelStatement   | CaseOptionStmt     | TryStmt              | DefaultOptionStmt |
-			    BreakStmt        | ContinueStmt       | ReturnStmt           | GotoStatement     |
-             SpawnStmt        | NullStatement      | VariantStatement     |
-			    ForInitStatement | CatchStatementSeq,
-			    "Statement","StatementTag", false);
-#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -610,49 +602,17 @@ Grammar::setUpStatements ()
 				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
 
-#if 0
-  // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
-  // DQ (12/9/2004): As additional comments to the code below.
-  // The following data members MUST appear in this order since a wrapper mechanism is used 
-  // to preserve an older interface within Sage III using newer automatically generated 
-  // functions.  We can at some point explore what might be a fix less sensative to ordering.
-
-  // QY 11/9/04  set test_expr as the indirect member "operand" wrapped inside expr_root. 
-     ForStatement.setDataPrototype ( "SgExpression*", "test_expr", 
-                                         " = NULL", INDIRECT_CONSTRUCTOR_PARAMETER, 
-                                      BUILD_INDIRECT_ACCESS_FUNCTIONS, 
-                                      NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-  // QY 11/9/04 test_expr_root needs to follow test_expr immediately
-     ForStatement.setDataPrototype ( "SgExpressionRoot*", "test_expr_root",
-				     "operand", WRAP_CONSTRUCTOR_PARAMETER, 
-                                     BUILD_WRAP_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE,
-                                     CLONE_TREE);
-#else
   // DQ (11/23/2005): This replaces the SgExpressionRoot with a SgStatement 
   // so that declarations can be used (required for C and C++).
      ForStatement.setDataPrototype ( "SgStatement*", "test", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
-#if 0
-  // QY 11/9/04  set increment_expr as the indirect member "operand" wrapped inside expr_root. 
-     ForStatement.setDataPrototype ( "SgExpression*", "increment_expr", 
-                                         " = NULL", INDIRECT_CONSTRUCTOR_PARAMETER, 
-                                      BUILD_INDIRECT_ACCESS_FUNCTIONS, 
-                                      NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-  // QY 11/9/04 test_expr_root needs to follow test_expr immediately
-     ForStatement.setDataPrototype ( "SgExpressionRoot*", "increment_expr_root",
-				     "operand", WRAP_CONSTRUCTOR_PARAMETER, 
-                                     BUILD_WRAP_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE,
-                                     CLONE_TREE);
-#else
+
   // DQ (10/24/2007): Copy the SgForInitStatement
   // DQ (11/7/2006): Trying to remove the WRAP mechanism since it is overly complex and not required
   // ForStatement.setDataPrototype ( "SgExpression*", "increment", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ForStatement.setDataPrototype ( "SgExpression*", "increment", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
-#endif
-  // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 
      ForStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
 				     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -675,6 +635,26 @@ Grammar::setUpStatements ()
   				         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
   // ForInitStatement.setAutomaticGenerationOfDestructor(FALSE);
+
+
+  // DQ and Liao (6/11/2008): Added support for UPC foral IR node.
+     UpcForAllStatement.setFunctionPrototype ( "HEADER_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
+     UpcForAllStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     UpcForAllStatement.editSubstitute      ( "LIST_DATA_TYPE", "SgStatementPtrList" );
+     UpcForAllStatement.editSubstitute      ( "LIST_NAME", "init_stmt" );
+     UpcForAllStatement.editSubstitute      ( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     UpcForAllStatement.editSubstitute      ( "LIST_FUNCTION_NAME", "init_stmt" );
+     UpcForAllStatement.editSubstitute      ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
+     UpcForAllStatement.setDataPrototype ( "SgForInitStatement*", "for_init_stmt", "= NULL",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     UpcForAllStatement.setDataPrototype ( "SgStatement*", "test", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UpcForAllStatement.setDataPrototype ( "SgExpression*", "increment", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     UpcForAllStatement.setDataPrototype ( "SgExpression*", "affinity", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, CLONE_PTR);
+     UpcForAllStatement.setDataPrototype ( "SgStatement*", "loop_body",        "= NULL",
+				     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
      FunctionDeclaration.setFunctionPrototype ( "HEADER_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
@@ -869,6 +849,11 @@ Grammar::setUpStatements ()
   // DQ (10/13/2007): Modifed to avoid copying within copy mechanism so that it can be built as required.
      FunctionDefinition.setDataPrototype ( "std::map<SgNode*,int>", "scope_number_list", "",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (5/17/2008): Mark function definition if it uses an implicit none declaration
+  //                 I decided for now to make this dynamically computed to avoid state!
+  // FunctionDefinition.setDataPrototype ( "bool", "implicit_none_used", "= false",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (1/17/2006): Removed since it was not properly initialized or ever used (hold over from CC++ days)
   // FunctionDefinition.setDataPrototype ( "int","par_flag", "= 0",
@@ -2446,6 +2431,24 @@ Grammar::setUpStatements ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#if USE_UPC_IR_NODES
+  // UpcNotifyStatement, UpcWaitStatement, UpcBarrierStatement, UpcFenceStatement, UpcForAllStatement
+
+     UpcNotifyStatement.setFunctionPrototype ( "HEADER_UPC_NOTIFY_STATEMENT", "../Grammar/Statement.code" );
+     UpcNotifyStatement.setDataPrototype     ( "SgExpression*", "notify_expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UpcWaitStatement.setFunctionPrototype ( "HEADER_UPC_WAIT_STATEMENT", "../Grammar/Statement.code" );
+     UpcWaitStatement.setDataPrototype     ( "SgExpression*", "wait_expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UpcBarrierStatement.setFunctionPrototype ( "HEADER_UPC_BARRIER_STATEMENT", "../Grammar/Statement.code" );
+     UpcBarrierStatement.setDataPrototype     ( "SgExpression*", "barrier_expression", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UpcFenceStatement.setFunctionPrototype ( "HEADER_UPC_FENCE_STATEMENT", "../Grammar/Statement.code" );
+#endif
+
 #if 0
   // Support for comments within the AST (it would be nice to use a string as a data member)
   // CommentStatement.setFunctionPrototype ( "HEADER_COMMENT_STATEMENT", "Grammar/Statement.code" );
@@ -2532,14 +2535,26 @@ Grammar::setUpStatements ()
        // Use the specialized unparse function for this terminal
           Global.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
           Global.setFunctionSource     ( "SOURCE_GLOBAL_STATEMENT_PARSER", "../Grammar/Statement.code" );
-	}
+        }
 
      DeclarationStatement.setFunctionSource ( "SOURCE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      BasicBlock.setFunctionSource           ( "SOURCE_BASIC_BLOCK_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setFunctionSource               ( "SOURCE_IF_STATEMENT", "../Grammar/Statement.code" );
      ForStatement.setFunctionSource         ( "SOURCE_FOR_STATEMENT", "../Grammar/Statement.code" );
-     ForStatement.editSubstitute            ( "$CLASSNAME", "SgForStatement" );
+  // ForStatement.editSubstitute            ( "$CLASSNAME", "SgForStatement" );
      ForStatement.editSubstitute            ( "get_body", "get_loop_body" );
+
+     UpcForAllStatement.setFunctionSource   ( "SOURCE_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
+
+#if USE_UPC_IR_NODES
+  // UpcNotifyStatement, UpcWaitStatement, UpcBarrierStatement, UpcFenceStatement, UpcForAllStatement
+
+     UpcNotifyStatement.setFunctionSource  ( "SOURCE_UPC_NOTIFY_STATEMENT", "../Grammar/Statement.code" );
+     UpcWaitStatement.setFunctionSource    ( "SOURCE_UPC_WAIT_STATEMENT", "../Grammar/Statement.code" );
+     UpcBarrierStatement.setFunctionSource ( "SOURCE_UPC_BARRIER_STATEMENT", "../Grammar/Statement.code" );
+     UpcFenceStatement.setFunctionSource   ( "SOURCE_UPC_FENCE_STATEMENT", "../Grammar/Statement.code" );
+#endif
+
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
      FunctionDeclaration.setFunctionSource  ( "SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT", "../Grammar/Statement.code" );
 

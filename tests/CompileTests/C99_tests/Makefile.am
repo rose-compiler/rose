@@ -27,7 +27,8 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = -rose:C99 --edg:no_warnings -w --edg:restrict 
+#ROSE_FLAGS = -rose:C99 --edg:no_warnings -w --edg:restrict 
+ROSE_FLAGS = -rose:verbose 2 -rose:C99 --edg:no_warnings -w --edg:restrict 
 
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}

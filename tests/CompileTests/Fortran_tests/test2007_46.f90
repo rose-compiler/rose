@@ -8,6 +8,15 @@ include "test2007_46_a.h"
 ! include file using single quoted string
 include 'test2007_46_b.h'
 
-end
+subroutine foobar()
+   common /globals/ x
+
+   integer :: y 
+end subroutine foobar
+
+#line 10 "foobar_header_file"
+subroutine foobar_cpp_include()
+   integer :: z 
+end subroutine foobar_cpp_include
 
 

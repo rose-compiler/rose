@@ -89,6 +89,8 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
    }
 #endif
 
+#if 0
+// DQ: 5/19/2008): This does not appear to be used in this file...
 static bool sameFile(const string& a, const string& b) {
   // Uses stat() to test device and inode numbers
   // Returning false on error is so that a non-existant file doesn't match
@@ -101,6 +103,7 @@ static bool sameFile(const string& a, const string& b) {
   if (statResultB != 0) return false;
   return aStat.st_dev == bStat.st_dev && aStat.st_ino == bStat.st_ino;
 }
+#endif
 
 static bool isRoseInBuildTree() {
   const char* envVar = getenv("ROSE_IN_BUILD_TREE");
@@ -2793,6 +2796,9 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
 
+       // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+          set_requires_C_preprocessor(true);
+
        // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
           if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
              {
@@ -2803,6 +2809,9 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                set_outputLanguage(SgFile::e_Fortran_output_language);
 
                set_Fortran_only(true);
+
+            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+               set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
 
             // Now set the specific types of Fortran file extensions
                if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
@@ -2912,6 +2921,9 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                             {
                               set_sourceFileUsesBinaryFileExtension(true);
                               set_binary_only(true);
+
+                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor.
+                              set_requires_C_preprocessor(false);
                             }
                        }
                   }
@@ -4163,6 +4175,33 @@ incrementPosition:
    }
 #endif
 
+
+
+string
+SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
+   {
+  // Note: for "foo.F90" the fileNameSuffix() returns "F90"
+     string filenameExtension              = StringUtility::fileNameSuffix(sourceFilename);
+     string sourceFileNameWithoutExtension = StringUtility::stripFileSuffixFromFileName(sourceFilename);
+
+  // string sourceFileNameInputToCpp = get_sourceFileNameWithPath();
+
+  // printf ("Before lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+
+  // We need to turn on the 5th bit to make the capital a lower case character (assume ASCII)
+     filenameExtension[0] = filenameExtension[0] | (1 << 5);
+
+  // printf ("After lowering case: filenameExtension = %s \n",filenameExtension.c_str());
+
+  // Rename the CPP generated intermediate file (strip path to put it in the current directory)
+  // string sourceFileNameOutputFromCpp = sourceFileNameWithoutExtension + "_preprocessed." + filenameExtension;
+     string sourceFileNameWithoutPathAndWithoutExtension = StringUtility::stripPathFromFileName(sourceFileNameWithoutExtension);
+     string sourceFileNameOutputFromCpp = sourceFileNameWithoutPathAndWithoutExtension + "_postprocessed." + filenameExtension;
+
+     return sourceFileNameOutputFromCpp;
+   }
+
+
 // This is the "C" function implemented in:
 //    ROSE/src/frontend/OpenFortranParser_SAGE_Connection/openFortranParser_main.c
 // This function calls the Java JVM to load the Java implemented parser (written 
@@ -4312,13 +4351,13 @@ SgFile::callFrontEnd ()
        // ROSE_ASSERT (get_unparse_output_filename() != NULL);
        // ROSE_ASSERT (get_unparse_output_filename().empty() == false);
 
-          std::string frontEndCommandLineString;
           if ( get_new_frontend() == true )
              {
             // Use the current version of the EDG frontend from EDG (or any other version)
                abort();
                printf ("ROSE::new_frontend == true (call edgFrontEnd using unix system() function!) \n");
 
+               std::string frontEndCommandLineString;
                if ( get_KCC_frontend() == true )
                   {
                     frontEndCommandLineString = "KCC ";  // -cpfe_only is no longer supported (I think)
@@ -4355,16 +4394,20 @@ SgFile::callFrontEnd ()
             // int frontendErrorLevel = 0;
 
 #if 0
+               this->get_project()->display("SgProject::callFrontEnd()");
                display("SgFile::callFrontEnd()");
-               printf ("get_C_only()       = %s \n",(get_C_only() == true) ? "true" : "false");
-               printf ("get_C99_only()     = %s \n",(get_C99_only() == true) ? "true" : "false");
-               printf ("get_Cxx_only()     = %s \n",(get_Cxx_only() == true) ? "true" : "false");
+               printf ("get_C_only()       = %s \n",(get_C_only()       == true) ? "true" : "false");
+               printf ("get_C99_only()     = %s \n",(get_C99_only()     == true) ? "true" : "false");
+               printf ("get_Cxx_only()     = %s \n",(get_Cxx_only()     == true) ? "true" : "false");
                printf ("get_Fortran_only() = %s \n",(get_Fortran_only() == true) ? "true" : "false");
-               printf ("get_F77_only()     = %s \n",(get_F77_only() == true) ? "true" : "false");
-               printf ("get_F90_only()     = %s \n",(get_F90_only() == true) ? "true" : "false");
-               printf ("get_F95_only()     = %s \n",(get_F95_only() == true) ? "true" : "false");
-               printf ("get_F2003_only()   = %s \n",(get_F2003_only() == true) ? "true" : "false");
-               printf ("get_binary_only()  = %s \n",(get_binary_only() == true) ? "true" : "false");
+               printf ("get_F77_only()     = %s \n",(get_F77_only()     == true) ? "true" : "false");
+               printf ("get_F90_only()     = %s \n",(get_F90_only()     == true) ? "true" : "false");
+               printf ("get_F95_only()     = %s \n",(get_F95_only()     == true) ? "true" : "false");
+               printf ("get_F2003_only()   = %s \n",(get_F2003_only()   == true) ? "true" : "false");
+               printf ("get_binary_only()  = %s \n",(get_binary_only()  == true) ? "true" : "false");
+
+            // DQ (18/2008): We not explicit mark files that require C preprocessing...
+               printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");
 #endif
 #if 0
                printf ("Exiting while testing binary \n");
@@ -4373,8 +4416,46 @@ SgFile::callFrontEnd ()
 
                if (get_Fortran_only() == true)
                   {
-                 // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine,*this);
-                 // printf ("Calling the openFortranParser_main() function (which loads the JVM) \n");
+                    bool requires_C_preprocessor = get_requires_C_preprocessor();
+                    if (requires_C_preprocessor == true)
+                       {
+                         vector<string> fortran_C_preprocessor_commandLine;
+
+                      // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
+                      // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
+                      // gfortran to call cpp.
+                         fortran_C_preprocessor_commandLine.push_back("gfortran");
+
+                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+                         for (size_t i = 0; i < includeList.size(); i++)
+                            {
+                              fortran_C_preprocessor_commandLine.push_back(includeList[i]);
+                            }
+
+                         fortran_C_preprocessor_commandLine.push_back("-E");
+
+                      // DQ (5/20/2008): Need to select between fixed and free format
+                         fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+
+                         string sourceFilename              = get_sourceFileNameWithPath();
+                         fortran_C_preprocessor_commandLine.push_back(sourceFilename);
+
+                         fortran_C_preprocessor_commandLine.push_back("-o");
+                         string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+                         fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
+
+                         printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
+
+                      // Some security checking here could be helpful!!!
+                         systemFromVector (fortran_C_preprocessor_commandLine);
+
+#if 0
+                         printf ("Exiting as a test ... (after calling C preprocessor)\n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+
 
                  // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 
                  // and let it report on the syntax errors).  Later we can make this a command line switch to disable (default 
@@ -4411,6 +4492,14 @@ SgFile::callFrontEnd ()
                          vector<string> fortranCommandLine;
                          fortranCommandLine.push_back("gfortran");
                          fortranCommandLine.push_back("-fsyntax-only");
+
+                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+                         for (size_t i = 0; i < includeList.size(); i++)
+                            {
+                              fortranCommandLine.push_back(includeList[i]);
+                            }
+
                          if (get_output_warnings() == true)
                             {
                            // These are gfortran specific options
@@ -4454,16 +4543,25 @@ SgFile::callFrontEnd ()
                             {
                            // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
                               fortranCommandLine.push_back("-std=f95");
+
+                           // DQ (5/20/2008)
+                              fortranCommandLine.push_back("-ffree-line-length-none");
                             }
                            else
                             {
                               if (get_F2003_only() == true)
                                  {
                                    fortranCommandLine.push_back("-std=f2003");
+
+                                // DQ (5/20/2008)
+                                   fortranCommandLine.push_back("-ffree-line-length-none");
                                  }
                                 else
                                  {
                                 // This should be the default mode (fortranMode string is empty). So is it f77?
+
+                                // DQ (5/20/2008)
+                                   fortranCommandLine.push_back("-ffixed-line-length-none");
                                  }
                             }
 
@@ -4475,15 +4573,36 @@ SgFile::callFrontEnd ()
 
                       // Note that "-c" is required to enforce that we only compile and not link the result (even though -fno-backend is specified)
                       // A web page specific to -fno-backend suggests using -fsyntax-only instead (so the "-c" options is not required).
-
+#if 0
                       // if ( SgProject::get_verbose() > 0 )
                          if ( get_verbose() > 0 )
                             {
-                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %%s \n" /* ,syntaxCheckingCommandline.c_str() FIXME */);
+                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
+                            }
+#endif
+                      // Call the OS with the commandline defined by: syntaxCheckingCommandline
+#if 0
+                         fortranCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+                      // DQ (5/19/2008): Support for C preprocessing
+                         if (requires_C_preprocessor == true)
+                            {
+                           // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+                              string sourceFilename    = get_sourceFileNameWithPath();
+                              string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+                              fortranCommandLine.push_back(sourceFileNameOutputFromCpp);
+                            }
+                           else
+                            {
+                              fortranCommandLine.push_back(get_sourceFileNameWithPath());
+                            }
+#endif
+                      // At this point we have the full command line with the source file name
+                         if ( get_verbose() > 0 )
+                            {
+                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
                             }
 
-                      // Call the OS with the commandline defined by: syntaxCheckingCommandline
-                         fortranCommandLine.push_back(get_sourceFileNameWithPath());
                          int returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
 
                       // Check that there are no errors, I think that warnings are ignored!
@@ -4493,6 +4612,11 @@ SgFile::callFrontEnd ()
                               exit(1);
                             }
                          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+#if 0
+                         printf ("Exiting as a test ... (after syntax check) \n");
+                         ROSE_ASSERT(false);
+#endif
                        }
 
                  // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
@@ -4504,8 +4628,33 @@ SgFile::callFrontEnd ()
                          OFPCommandLine.push_back("java");
                          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
                          OFPCommandLine.push_back("--dump");
+
+                      // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+                         for (size_t i = 0; i < includeList.size(); i++)
+                            {
+                              OFPCommandLine.push_back(includeList[i]);
+                            }
+
+#if 0
                          OFPCommandLine.push_back(get_sourceFileNameWithPath());
-                         // printf ("output_parser_actions: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
+#else
+                      // DQ (5/19/2008): Support for C preprocessing
+                         if (requires_C_preprocessor == true)
+                            {
+                           // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+                              string sourceFilename              = get_sourceFileNameWithPath();
+                              string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+                              OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
+                            }
+                           else
+                            {
+                              OFPCommandLine.push_back(get_sourceFileNameWithPath());
+                            }
+#endif
+#if 1
+                         printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
+#endif
 #if 1
                       // Some security checking here could be helpful!!!
                          systemFromVector (OFPCommandLine);
@@ -4534,6 +4683,14 @@ SgFile::callFrontEnd ()
                          vector<string> OFPCommandLine;
                          OFPCommandLine.push_back("java");
                          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+
+                      // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+                         for (size_t i = 0; i < includeList.size(); i++)
+                            {
+                              OFPCommandLine.push_back(includeList[i]);
+                            }
+
                          OFPCommandLine.push_back(get_sourceFileNameWithPath());
 
                       // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
@@ -4587,11 +4744,26 @@ SgFile::callFrontEnd ()
                          frontEndCommandLine.push_back("-I" + getSourceDirectory() );
                        }
 
-                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-
 #if 0
+                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+                 // DQ (5/19/2008): Support for C preprocessing
+                    if (requires_C_preprocessor == true)
+                       {
+                      // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+                         string sourceFilename    = get_sourceFileNameWithPath();
+                         string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+                         frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
+                       }
+                      else
+                       {
+                         frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+                       }
+#endif
+
+#if 1
                     if ( get_verbose() > 0 )
-                         printf ("numberOfCommandLineArguments = %zu frontEndCommandLineString = %s \n",inputCommandLine.size(),frontEndCommandLineString.c_str());
+                         printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
                     int openFortranParser_argc    = 0;
@@ -4707,6 +4879,7 @@ SgFile::callFrontEnd ()
                        }
                       else
                        {
+                         std::string frontEndCommandLineString;
                          frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
                          if ( get_verbose() > 1 )
@@ -4863,6 +5036,11 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // display("Data in SgFile in buildCompilerCommandLineOptions()");
 
+     if ( SgProject::get_verbose() >= 1 )
+        {
+          printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+        }
+
   // To use rose in place of a C or C++ compiler specify the compiler name using
   //      rose -compiler <originalCompilerName> ...
   // the default value of "originalCompilerName" is "CC"
@@ -4896,6 +5074,12 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         {
        // compilerNameString = "gcc ";
           compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+
+       // DQ (6/4/2008): Added support to trigger use of C99 for older versions of GNU that don't use use C99 as the default.
+          if (get_C99_only() == true)
+             {
+               compilerNameString.push_back("-std=gnu99");
+             }
         }
        else
         {
