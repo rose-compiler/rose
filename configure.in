@@ -768,6 +768,7 @@ src/frontend/CxxFrontend/EDG_3.10/Makefile
 src/frontend/CxxFrontend/EDG_3.10/misc/Makefile
 src/frontend/CxxFrontend/EDG_3.10/src/Makefile
 src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
+src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
 src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
 src/frontend/BinaryDisassembly/Makefile
