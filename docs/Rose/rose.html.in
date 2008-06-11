@@ -42,6 +42,7 @@
             <p class="style3"><a href="ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf">User Manual (pdf)</p>
             <p class="style3"><a href="ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf">Tutorial (pdf)</p>
             <!-- <p class="style3"><a href="ROSE_Tutorial/tutorial.html">Tutorial (generated from Latex, work in progress)</p> -->
+            <p class="style3"><a href="Projects/projects.html">Projects</p>
             <p class="style3"><a href="ROSE_HTML_Reference/index.html">Programmer's Reference</p>
             <p class="style3"><a href="ROSE_HTML_Reference/ProjectPublications.html">Publications</p>
             <!-- <p class="style3"><a href="ROSE_HTML_Reference/Gallery.html">Download Software</p> -->

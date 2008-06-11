@@ -1007,6 +1007,7 @@ exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
 exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
 docs/Makefile
 docs/Rose/rose.html
+docs/Rose/projects.html
 docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
