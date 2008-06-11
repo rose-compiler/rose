@@ -73,21 +73,6 @@ int main(int argc, char **argv)
       file.set_unparse_output_filename(opt->getOutputSourceFileName());
       unparseFile(&file,0,0);
     }
-    /* Handle command line option --termoutput */
-    if(opt->outputTerm()) {
-      TimingPerformance timer("Output Prolog term:");
-      TermPrinter<DFI_STORE> tp(analysis_info);
-
-      if (outputAll) tp.traverse(ast_root);
-      else tp.traverseInputFiles(ast_root);
-
-      ofstream termfile;
-      string filename = opt->getOutputTermFileName();
-      termfile.open(filename.c_str());
-      termfile << "% Termite term representation" << endl;
-      termfile << tp.getTerm()->getRepresentation() << "." << endl;
-      termfile.close();
-    }
   }
 
   /* handle multiple input files */
@@ -103,6 +88,22 @@ int main(int argc, char **argv)
         unparseFile(&file,0,0);
       }
     }
+  }
+
+  /* Handle command line option --termoutput */
+  if(opt->outputTerm()) {
+    TimingPerformance timer("Output Prolog term:");
+    TermPrinter<DFI_STORE> tp(analysis_info);
+    
+    if (outputAll) tp.traverse(ast_root);
+    else tp.traverseInputFiles(ast_root);
+
+    ofstream termfile;
+    string filename = opt->getOutputTermFileName();
+    termfile.open(filename.c_str());
+    termfile << "% Termite term representation" << endl;
+    termfile << tp.getTerm()->getRepresentation() << "." << endl;
+    termfile.close();
   }
 
   /* output binary AST if requested */

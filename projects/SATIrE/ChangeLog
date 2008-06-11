@@ -9,6 +9,7 @@ V0.8.3 (in progress)
   - implemented total ordering on each Id type
 
 * Termite: [AP]
+  - Support for multiple input files
   - Changed all occurrences of PrologString to PrologAtom
     (all names in the term representation are now 'singlequoted')
 
