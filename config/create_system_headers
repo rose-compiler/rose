@@ -90,12 +90,13 @@ process_file()
 
  # DQ (6/23/2004): Work with Olav Beckman determined that this "==" must be "=" under CygWin!
  # strip out all ^M characters (a problem for the sstream header file on Linux machines)
-   if [ $2 = "sstream" ]
-   then
-      echo "Processing (removing) ^M characters from sstream file at $3/$2"
-      sed -e s/\//g $3/$2 > $3/tempFile 2>/dev/null;
-      cp $3/tempFile $3/$2;
-   fi
+# JJW 6-11-2008: This is unlikely to be needed anymore
+#    if [ $2 = "sstream" ]
+#    then
+#       echo "Processing (removing) ^M characters from sstream file at $3/$2"
+#       sed -e s/\//g $3/$2 > $3/tempFile 2>/dev/null;
+#       cp $3/tempFile $3/$2;
+#    fi
 
  # DQ (10/31/2005): The Complex header file needs to be modified to work with ROSE.
  # The following solution does work.  Replacing
