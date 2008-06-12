@@ -3,7 +3,7 @@
 
 using namespace std;
 #define DEBUG_OUTPUT true
-#define DEBUG_OUTPUT_MORE false
+#define DEBUG_OUTPUT_MORE true
 
 
 // ************************************************************
@@ -258,9 +258,19 @@ void printPCResults(std::vector<CountingOutputObject *> &outputs,
       SgFunctionDefinition* sl_node = isSgFunctionDefinition(n);
       if (sl_node) slow_node= sl_node->get_declaration()->get_name().str();
 
+      int perc = 0;
+      if (times[i]>0) 
+	if (i==0)
+	  perc = (int) (commtimes[i]/times[i]*10000);
+	else
+	  perc = (int) (calctimes[i]/times[i]*10000);
+
+      double perc_d = (double) perc/100;
+
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
 	"  real # functions:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
-	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << std::endl;
+	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << 
+	"   => " << perc_d << " % "  << std::endl;
 
       total_time += times[i];
       total_memory += memory[i];
@@ -491,6 +501,8 @@ int main(int argc, char **argv)
   double *maxtime_val = new double[processes];
   double *calctimes = new double[processes];
   double *commtimes = new double[processes];
+  MPI_Barrier(MPI_COMM_WORLD);
+
   communicateResult(outputs, times, memory, output_values, my_time, memusage, maxtime_nr, max_time_nr, maxtime_val, max_time,
 		    calctimes, calc_time_processor, commtimes, (my_time-calc_time_processor));
   double my_time_0;
@@ -499,7 +511,6 @@ int main(int argc, char **argv)
     my_time_0 = timeDifference(end_time_0, begin_time_0);
   }
 
-  MPI_Barrier(MPI_COMM_WORLD);
   printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, calctimes, commtimes, nodeDecls);
 
   if (my_rank==0)
