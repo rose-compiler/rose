@@ -158,8 +158,10 @@
 /src/frontend/CxxFrontend/EDG_3.3/src/Makefile.in
 /src/frontend/CxxFrontend/EDG_3.3/util/Makefile.in
 /src/frontend/CxxFrontend/EDG_3.10/Makefile.in
+/src/frontend/CxxFrontend/EDG_3.10/lib/Makefile.in
 /src/frontend/CxxFrontend/EDG_3.10/misc/Makefile.in
 /src/frontend/CxxFrontend/EDG_3.10/src/Makefile.in
+/src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile.in
 /src/frontend/CxxFrontend/EDG_3.10/util/Makefile.in
 /src/frontend/CxxFrontend/Makefile.in
 /src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile.in
