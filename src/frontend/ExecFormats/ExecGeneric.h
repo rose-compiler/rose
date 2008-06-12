@@ -236,7 +236,7 @@ class ExecFormat {
         abi_version(0),
         word_size(4)
         {}
-    void dump(FILE*, const char *prefix);
+    void dump(FILE*, const char *prefix, ssize_t idx);
 
     ExecFamily          family;                         /* General format: ELF, PE, etc. */
     ExecPurpose         purpose;                        /* executable, library, etc. */
@@ -280,78 +280,103 @@ public:
         
 /////////////////////////////////////////////// SageIII Nodes ///////////////////////////////////////////////////////////////
 
+class ExecFile;                                         /* An executable file */
+class ExecSection;                                      /* One section of an executable file */
+class ExecHeader;                                       /* Executable file format header (e.g., Elf, PE, DOS, etc. file header */
+class ExecSegment;
+class ExecDLL;                                          /* One required dynamically-linked library and its functions */
 
 /* Represents an entire binary executable file. The file is mmap'd so that file data structures can be easily associated with
  * memory, so that the file contents is available to the child nodes of an ExecFile, and so that the data can be shared among
  * children (such as overlapping ExecSection objects). Note that there are no I/O methods for ExecFile; see ExecSection. */
 class ExecFile {
-    friend class ExecSection;
   public:
-    ExecFile(std::string fileName);                     /* Constructor opens file and mmaps to memory */
-    ~ExecFile() {close();}                              /* Destructor munmaps and closes file */
-    addr_t size();                                      /* Size of file in bytes as of time it was opened */
-    void close();                                       /* Close the file and free resources */
-    std::vector<class ExecHeader*> get_headers();       /* all file header sections */
-    std::vector<class ExecSection*> get_sections();     /* all sections (including file headers) */
-    std::vector<class ExecSegment*> get_segments();     /* all segments */
-    ExecSection *lookup_section_id(int id);             /* Find section within file by ID */
-    ExecSection *lookup_section_name(const std::string&);/* Find section within file by name */
-    std::vector<class ExecSection*> lookup_section_offset(addr_t offset, addr_t size);
-    std::vector<class ExecSection*> lookup_section_rva(addr_t rva);
-    addr_t lookup_next_offset(addr_t offset);           /* Find file offset for next segment */
-    void find_holes();                                  /* Find holes in file and create sections to fill them */
+    ExecFile(std::string file_name)
+        : fd(-1), data(NULL)
+        {ctor(file_name);}
+    virtual ~ExecFile();                                /* Destructor deletes children and munmaps and closes file */
+
+    /* File contents */
+    addr_t get_size() {return sb.st_size;}              /* Size of file in bytes as of time it was opened */
+    const unsigned char *content() {return data;}       /* File contents */
+
+    /* Functions for sections (plurals return vectors; singular throws exception when there's more than one match) */
+    void add_section(ExecSection*);                     /* Add new section to the file; called implicitly by section constructor */
+    std::vector<ExecSection*>& get_sections() {return sections;}/* all sections (including file headers) */
+    ExecSection *get_section_by_id(int id);             /* Returns first section having specified ID */
+    ExecSection *get_section_by_name(const std::string&);/* Find section within file by name */
+    std::vector<ExecSection*> get_sections_by_offset(addr_t offset, addr_t size);
+    std::vector<ExecSection*> get_sections_by_rva(addr_t rva);
+    addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
+    void fill_holes();                                  /* Find holes in file and create sections to fill them */
+
+    /* Functions for file headers (a kind of section) */
+    void add_header(ExecHeader*);                       /* Add a new file header to the list of headers for this file */
+    std::vector<ExecHeader*>& get_headers() {return headers;}/* all file header sections */
+
+    /* Functions for segments */
+    std::vector<ExecSegment*> get_segments();           /* all segments from all sections */
+
   private:
+    void ctor(std::string file_name);
     int                 fd;                             /* File descriptor opened for read-only (or negative) */
     struct stat         sb;                             /* File attributes at time of file open (valid if fd>=0) */
     unsigned char       *data;                          /* Content of file mapped into memory   (or null on file error) */
     std::vector<ExecSection*> sections;                 /* All known sections for this file */
+    std::vector<ExecHeader*> headers;                   /* All format headers belonging to this file */
 };
 
 /* An executable file is loosely partitioned into sections (ExecSection) that are normally non-overlapping and cover the
  * entire file.  Some file formats explicitly define sections (e.g., ELF and PE), but sections are also used internally as a
- * bookkeeping mechanism by synthesizing sections to describe file headers, etc. */
+ * bookkeeping mechanism by synthesizing sections to describe file headers, etc.
+ *
+ * ExecSection serves as a base class for many other file-level data structures.
+ *
+ * Every section belongs to exactly one file and and has a pointer to its ExecFile The ExecFile has a list of all of its
+ * sections. An ExecSection can also appear in other lists which it may not know about (i.e., be careful when destroying it). */
 class ExecSection {
-    friend class ExecSegment;
   public:
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
-        : data(0), purpose(SP_UNSPECIFIED), synthesized(false), id(-1), mapped(false), mapped_rva(0)
+        : file(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
+        id(-1), mapped(false), mapped_rva(0)
         {ctor(f, offset, size);}
     virtual ~ExecSection();
+    virtual void        dump(FILE*, const char *prefix, ssize_t idx);
+    ExecHeader          *is_file_header();              /* true if section represents a top level file header */
 
-    addr_t              end_offset() {return offset+size;} /* file offset for end of section */
-    const unsigned char *extend(addr_t nbytes);         /* make section larger by extending the end */
-    class ExecHeader    *is_file_header();              /* true if section represents a top level file header */
-    virtual void        dump(FILE*, const char *prefix);
-
-    /* I/O-like functions for reading */
-    const unsigned char *content(addr_t offset, addr_t size);
-    const char          *content_str(addr_t offset);
-    uint16_t            u16le(addr_t offset);           /* returns 16-bit little-endian unsigned integer in native format */
-    int16_t             s16le(addr_t offset);           /* returns 16-bit little-endian signed integer in native format */
-    uint32_t            u32le(addr_t offset);           /* returns 32-bit little-endian unsigned integer in native format */
-    int32_t             s32le(addr_t offset);           /* returns 32-bit little-endian signed integer in native format */
-
-    /* Accessors for private members */
-    void                set_synthesized(bool b) {synthesized=b;}
-    bool                get_synthesized() {return synthesized;}
-    void                set_name(const char *s) {name=s;}
-    void                set_name(const unsigned char *s) {name=(const char*)s;}
-    void                set_name(std::string &s) {name=s;}
-    const std::string&  get_name() {return name;}
-    void                set_id(int i) {id=i;}
-    int                 get_id() {return id;}
-    void                set_purpose(SectionPurpose p) {purpose=p;}
-    SectionPurpose      get_purpose() {return purpose;}
+    /* Functions for section extent within the file */
     ExecFile            *get_file() {return file;}      /* read-only */
     addr_t              get_size() {return size;}       /* read-only */
     addr_t              get_offset() {return offset;}   /* read-only */
-    std::vector<class ExecSegment*> get_segments() {return segments;}
+    addr_t              end_offset() {return offset+size;} /* file offset for end of section */
+    const unsigned char *extend(addr_t nbytes);         /* make section larger by extending the end */
+    const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+    const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
+
+    /* Functions related to mapping of sections into executable memory */
     bool                is_mapped() {return mapped;}
     addr_t              get_mapped() {return mapped ? mapped_rva : 0;}
     void                set_mapped(bool b, addr_t a) {mapped=b; mapped_rva=a;}
 
-  private:
+    /* Functions for segment children */
+    void add_segment(ExecSegment*);                     /* Add a new segment to this section */
+    std::vector<ExecSegment*>& get_segments() {return segments;}
+
+    /* Accessors for private members */
+    int                 get_id() {return id;}
+    void                set_id(int i) {id=i;}
+    const std::string&  get_name() {return name;}
+    void                set_name(const char *s) {name=s;}
+    void                set_name(const unsigned char *s) {name=(const char*)s;}
+    void                set_name(std::string &s) {name=s;}
+    SectionPurpose      get_purpose() {return purpose;}
+    void                set_purpose(SectionPurpose p) {purpose=p;}
+    void                set_synthesized(bool b) {synthesized=b;}
+    bool                get_synthesized() {return synthesized;}
+
+  protected:
     void                ctor(ExecFile*, addr_t offset, addr_t size);
+
     ExecFile            *file;                          /* The file to which this section belongs */
     addr_t              size;                           /* Size of section in bytes */
     addr_t              offset;                         /* Starting offset of the section */
@@ -362,24 +387,44 @@ class ExecSection {
     std::string         name;                           /* Optional, non-unique name of section */
     bool                mapped;                         /* True if section should be mapped to program's address space */
     addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
-    std::vector<class ExecSegment*> segments;           /* All segments belonging within this section */
+    std::vector<ExecSegment*> segments;                 /* All segments belonging within this section */
 };
-
 
 /* An ExecHeader represents any kind of top-level file header. File headers generally define other file data structures such
  * as sections and segments. A single file may have multiple top-level headers (e.g., a Windows PE file has a PE header and an
- * MS-DOS header, each of which describes, in essence, a complete executable sub-file. */
+ * MS-DOS header, each of which describes, in essence, a complete executable sub-file.
+ *
+ * Being an ExecSection, file headers are added to the list of sections maintained by the executable file. Their constructor
+ * also adds them to the file's list of headers. */
 class ExecHeader : public ExecSection {
   public:
-    ExecHeader(ExecFile *f, addr_t offset, addr_t size)
-        : ExecSection(f, offset, size), base_va(0), entry_rva(0) {ctor(f, offset, size);}
-    virtual void dump(FILE*, const char *prefix);
-        
-    ExecFormat          fileFormat;                     /* General info about the executable format */
-    Architecture        target;                         /* Machine for which this header and its sections, etc. was compiled */
+    ExecHeader(ExecFile *ef, addr_t offset, addr_t size)
+        : ExecSection(ef, offset, size),
+        base_va(0), entry_rva(0)
+        {ctor(ef, offset, size);}
+    virtual ~ExecHeader();
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    
+    /* Functions for dynamically linked libraries (DLLs) */
+    void add_dll(ExecDLL *dll) {dlls.push_back(dll);}   /* Add new DLL to list of DLLs for this file */
+    std::vector<ExecDLL*> get_dlls();                   /* all necessary dynamically loaded libraries */
+
+    /* Accessors for protected/private members */
+    ExecFormat& get_exec_format() {return exec_format;}
+    std::vector<unsigned char>& get_magic() {return magic;}
+
+    /* Convenience functions */
+    ByteOrder get_sex() {return exec_format.sex;}
+    size_t get_word_size() {return exec_format.word_size;}
+    addr_t get_base_va() {return base_va;}
+
+  protected:
+    ExecFormat          exec_format;                    /* General info about the executable format */
     std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
+    Architecture        target;                         /* Machine for which this header and its sections, etc. was compiled */
     addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
     addr_t              entry_rva;                      /* Code entry point wrt base_va */
+    std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
 
   private:
     void ctor(ExecFile *f, addr_t offset, addr_t size);
@@ -399,25 +444,29 @@ class ExecHeader : public ExecSection {
  * that are mapped by the reader to ExecSegments and the ExecSections are synthesized to hold the segments. */
 class ExecSegment {
   public:
-    ExecSegment(ExecSection *sect, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size) :
-        writable(false), executable(false) {ctor(sect, offset, size, rva, mapped_size);}
+    ExecSegment(ExecSection *sect, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+        : section(NULL), offset(0), disk_size(0), mapped_size(0), mapped_padding(0), mapped_rva(0),
+        writable(false), executable(false)
+        {ctor(sect, offset, size, rva, mapped_size);}
     virtual ~ExecSegment();
-    virtual void dump(FILE*, const char *prefix);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Address and size functions */
+    addr_t              get_disk_size() {return disk_size;}     /*read-only*/
+    addr_t              get_offset() {return offset;}           /*read-only*/
+    addr_t              get_mapped_rva() {return mapped_rva;}   /*read-only*/
 
     /* Private member accessors */
+    bool                get_executable() {return executable;}
+    void                set_executable(bool b) {executable=b;}
+    const std::string&  get_name() {return name;}
     void                set_name(const char *s) {name=s;}
     void                set_name(const unsigned char *s) {name=(const char*)s;}
     void                set_name(std::string &s) {name=s;}
-    const std::string&  get_name() {return name;}
-    void                set_writable(bool b) {writable=b;}
-    bool                get_writable() {return writable;}
-    void                set_executable(bool b) {executable=b;}
-    bool                get_executable() {return executable;}
     ExecSection         *get_section() {return section;} /*read-only*/
-    addr_t              get_disk_size() {return disk_size;} /* read-only */
-    addr_t              get_offset() {return offset;}   /* read-only */
-    addr_t              get_mapped_rva() {return mapped_rva;} /*read-only*/
-    
+    bool                get_writable() {return writable;}
+    void                set_writable(bool b) {writable=b;}
+
   private:
     void ctor(ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
     ExecSection         *section;                       /* Section in which this segment lives */
@@ -430,6 +479,19 @@ class ExecSegment {
     bool                writable;                       /* Mapped by loader into memory having write permission */
     bool                executable;                     /* Mapped by loader into memory having execute permission */
 };
+
+/* Represents information about a dynamic library that must be linked at runtime. */
+class ExecDLL {
+  public:
+    ExecDLL(std::string name) : name(name) {}
+    virtual ~ExecDLL() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    void add_function(std::string fname) {funcs.push_back(fname);} /* Add a needed function to the import list for this DLL */
+  private:
+    std::string         name;                           /* Name of library as stored in executable (usually a base name) */
+    std::vector<std::string> funcs;                     /* List of functions needed from the library */
+};
+
 
 ExecFile *parse(const char *name);
 

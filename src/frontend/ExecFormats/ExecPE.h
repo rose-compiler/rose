@@ -34,11 +34,12 @@ struct DOSFileHeader_disk {
     uint32_t    e_lfanew;               /* file offset of new exe (PE) header */
 };
 
-class DOSFileHeader : public ::Exec::ExecHeader {
+class DOSFileHeader : public ExecHeader {
   public:
     DOSFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(DOSFileHeader_disk)) {ctor(f, offset);}
-    virtual void dump(FILE*, const char *prefix);
+    virtual ~DOSFileHeader() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in the DOSFileHeader_disk format struct */
     unsigned            e_cblp, e_cp, e_crlc, e_cparhdr, e_minalloc, e_maxalloc, e_ss, e_sp, e_csum, e_ip, e_cs, e_lfarlc, e_ovno;
@@ -153,8 +154,9 @@ class PEFileHeader : public ExecHeader {
   public:
     PEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(PEFileHeader_disk)) {ctor(f, offset);}
+    virtual ~PEFileHeader() {}
     void add_rvasize_pairs();
-    virtual void dump(FILE*, const char *prefix);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
     unsigned    e_cpu_type, e_nobjects, e_time;
@@ -226,7 +228,7 @@ class ObjectTableEntry {
     ObjectTableEntry(const ObjectTableEntry_disk *disk)
         {ctor(disk);}
     virtual ~ObjectTableEntry() {};
-    virtual void dump(FILE*, const char *prefix);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* These are the native-format versions of the same members described in the ObjectTableEntry_disk struct. */
     std::string name;
@@ -241,7 +243,8 @@ class ObjectTable : public ExecSection {
   public:
     ObjectTable(PEFileHeader *fhdr)
         : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(ObjectTableEntry_disk)) {ctor(fhdr);}
-    virtual void dump(FILE*, const char *prefix);
+    virtual ~ObjectTable() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(PEFileHeader*);
     std::vector<ObjectTableEntry*> entries;
@@ -249,6 +252,10 @@ class ObjectTable : public ExecSection {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PE Import Directory (".idata" segment)
+//
+// The ".idata" segment contains import info for all functions that need to be linked in from all DLLs. The segment consists of
+// ImportDirectory objects (terminated by an all-zero value) where each ImportDirectory points to the DLL name and the names of
+// all the functions needed from that DLL.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ImportDirectory_disk {
@@ -262,7 +269,8 @@ struct ImportDirectory_disk {
 class ImportDirectory {
   public:
     ImportDirectory(const ImportDirectory_disk *disk) {ctor(disk);}
-    void dump(FILE*, const char *prefix);
+    virtual ~ImportDirectory() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
     addr_t              hintnames_rva, bindings_rva, dll_name_rva;
     time_t              time;
     unsigned            forwarder_chain;
@@ -270,14 +278,38 @@ class ImportDirectory {
     void ctor(const ImportDirectory_disk*);
 };
 
+/* Hint/name pairs */
+struct ImportHintName_disk {
+    uint16_t            hint;                   /* Possible index into lib's export name pointer table */
+    /* NUL-terminated name follows */
+    /* Optional byte to pad struct to an even number of bytes */
+};
+
+class ImportHintName {
+  public:
+    ImportHintName(ExecSection *section, addr_t offset)
+        : hint(0), padding('\0')
+        {ctor(section, offset);}
+    virtual ~ImportHintName() {};
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    void set_name(std::string name) {this->name=name;}
+    std::string get_name() {return name;}
+  private:
+    void ctor(ExecSection*, addr_t offset);
+    unsigned hint;
+    std::string name;
+    unsigned char padding;
+};
+
 class ImportSegment : public ExecSegment {
   public:
-    ImportSegment(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+    ImportSegment(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
         : ExecSegment(section, offset, size, rva, mapped_size)
-        {ctor(section, offset, size, rva, mapped_size);}
-    virtual void dump(FILE*, const char *prefix);
+        {ctor(fhdr, section, offset, size, rva, mapped_size);}
+    virtual ~ImportSegment() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
-    void ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
+    void ctor(PEFileHeader*, ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
     std::vector<ImportDirectory*> dirs;
 };
 
@@ -309,8 +341,8 @@ class COFFSymbol {
         : name_offset(0), section_num(0), value(0), type(0), storage_class(0), num_aux_entries(0)
         {ctor(strtab, disk);}
     virtual ~COFFSymbol() {}
-    virtual void dump(FILE *f, const char *prefix) {dump(f, prefix, NULL);}
-    void dump(FILE*, const char *prefix, ExecFile*);
+    virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
+    void dump(FILE*, const char *prefix, ssize_t idx, ExecFile*);
     std::string         name;
     addr_t              name_offset;
     int                 section_num;

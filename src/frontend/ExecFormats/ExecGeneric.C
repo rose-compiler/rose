@@ -19,11 +19,15 @@ namespace Exec {
 
 /* Print some debugging info */
 void
-ExecFormat::dump(FILE *f, const char *prefix)
+ExecFormat::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096], sbuf[256];
     const char *s;
-    sprintf(p, "%sExecFormat.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sExecFormat[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecFormat.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     switch (family) {
@@ -98,9 +102,9 @@ ExecFormat::dump(FILE *f, const char *prefix)
 // ExecFile
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 /* Constructs by mapping file contents into memory */
-ExecFile::ExecFile(std::string fileName)
+void
+ExecFile::ctor(std::string fileName)
 {
     if ((fd=open(fileName.c_str(), O_RDONLY))<0 || fstat(fd, &sb)<0) {
         throw FormatError("Could not open binary file: " + fileName);
@@ -110,45 +114,52 @@ ExecFile::ExecFile(std::string fileName)
     }
 }
 
-/* Returns file size in bytes */
-addr_t
-ExecFile::size()
+/* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
+ExecFile::~ExecFile() 
 {
-    ROSE_ASSERT(fd>=0);
-    return sb.st_size;
-}
-
-/* Closes and unmaps the file */
-void
-ExecFile::close() 
-{
+    /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
+    while (headers.size()) {
+        ExecHeader *header = headers.back();
+        headers.pop_back();
+        delete header;
+    }
+    while (sections.size()) {
+        ExecSection *section = sections.back();
+        sections.pop_back();
+        delete section;
+    }
+    
+    /* Unmap and close */
     if (data)
         munmap(data, sb.st_size);
     if (fd>=0)
-        ::close(fd);
+        close(fd);
 }
 
-/* Returns vector of file headers. This is a subset of the vector of file sections. */
-std::vector<ExecHeader*>
-ExecFile::get_headers()
+/* Adds a new header to the file. This is called implicitly by the header constructor */
+void
+ExecFile::add_header(ExecHeader *header) 
 {
-    std::vector<ExecHeader*> retval;
-    for (size_t i=0; i<sections.size(); i++) {
-        ExecHeader *hdr=NULL;
-        try {
-            hdr = dynamic_cast<ExecHeader*>(sections[i]);
-        } catch(...) {/*void*/}
-        if (hdr)
-            retval.push_back(hdr);
+#ifndef NDEBUG
+    /* New header must not already be present. */
+    for (size_t i=0; i<headers.size(); i++) {
+        ROSE_ASSERT(headers[i]!=header);
     }
-    return retval;
+#endif
+    headers.push_back(header);
 }
 
-/* Returns vector of all sections (including file headers) defined in the file. */
-std::vector<ExecSection*>
-ExecFile::get_sections()
+/* Adds a new section to the file. This is called implicitly by the section constructor. */
+void
+ExecFile::add_section(ExecSection *section)
 {
-    return sections;
+#ifndef NDEBUG
+    /* New section must not already be present. */
+    for (size_t i=0; i<sections.size(); i++) {
+        ROSE_ASSERT(sections[i]!=section);
+    }
+#endif
+    sections.push_back(section);
 }
 
 /* Returns vector of all segments across all sections */
@@ -163,9 +174,9 @@ ExecFile::get_segments()
     return retval;
 }
 
-/* Returns the pointer to the section with the specified ID. */
+/* Returns the pointer to the first section with the specified ID. */
 ExecSection *
-ExecFile::lookup_section_id(int id)
+ExecFile::get_section_by_id(int id)
 {
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
         if ((*i)->get_id() == id) {
@@ -175,9 +186,9 @@ ExecFile::lookup_section_id(int id)
     return NULL;
 }
 
-/* Returns pointer to first section with specified name. */
+/* Returns pointer to the first section with the specified name. */
 ExecSection *
-ExecFile::lookup_section_name(const std::string &name)
+ExecFile::get_section_by_name(const std::string &name)
 {
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
         if (0==(*i)->get_name().compare(name))
@@ -188,7 +199,7 @@ ExecFile::lookup_section_name(const std::string &name)
 
 /* Returns a vector of sections that contain the specified portion of the file */
 std::vector<ExecSection*>
-ExecFile::lookup_section_offset(addr_t offset, addr_t size)
+ExecFile::get_sections_by_offset(addr_t offset, addr_t size)
 {
     std::vector<ExecSection*> retval;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
@@ -203,7 +214,7 @@ ExecFile::lookup_section_offset(addr_t offset, addr_t size)
 
 /* Returns a vector of sections that are mapped to the specified RVA */
 std::vector<ExecSection*>
-ExecFile::lookup_section_rva(addr_t rva)
+ExecFile::get_sections_by_rva(addr_t rva)
 {
     std::vector<ExecSection*> retval;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
@@ -218,7 +229,7 @@ ExecFile::lookup_section_rva(addr_t rva)
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
 addr_t
-ExecFile::lookup_next_offset(addr_t offset)
+ExecFile::get_next_section_offset(addr_t offset)
 {
     addr_t found = ~(addr_t)0;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
@@ -230,15 +241,15 @@ ExecFile::lookup_next_offset(addr_t offset)
 
 /* Synthesizes sections to describe the parts of the file that are not yet referenced by other sections. */
 void
-ExecFile::find_holes()
+ExecFile::fill_holes()
 {
     std::vector<std::pair<addr_t,addr_t> > extents;
 
     addr_t offset = 0;
     while (offset < (uint64_t)sb.st_size) {
-        std::vector<ExecSection*> sections = lookup_section_offset(offset, 1);
+        std::vector<ExecSection*> sections = get_sections_by_offset(offset, 1);
         if (0==sections.size()) {
-            addr_t next_offset = lookup_next_offset(offset);
+            addr_t next_offset = get_next_section_offset(offset);
             if (next_offset==(addr_t)-1) next_offset = sb.st_size;
             extents.push_back(std::pair<addr_t,addr_t>(offset, next_offset-offset));
             offset = next_offset;
@@ -261,33 +272,49 @@ ExecFile::find_holes()
 
 /* Constructor */
 void
-ExecSection::ctor(ExecFile *f, addr_t offset, addr_t size)
+ExecSection::ctor(ExecFile *ef, addr_t offset, addr_t size)
 {
-    ROSE_ASSERT(f);
-    if (offset > f->size() || offset+size > f->size())
+    ROSE_ASSERT(ef);
+    if (offset > ef->get_size() || offset+size > ef->get_size())
         throw ShortRead(NULL, offset, size);
     
-    this->file = f;
+    this->file = ef;
     this->offset = offset;
     this->size = size;
-    this->data = f->data + offset;
+    this->data = ef->content() + offset;
 
-    f->sections.push_back(this);
+    /* The section is added to the file's list of sections. It may also be added to other lists by the caller. The destructor
+     * will remove it from the file's list but does not know about other lists. */
+    ef->add_section(this);
 }
 
-/* Destructor must remove the section from its ExecFile parent */
+/* Destructor must remove the section from its parent file's segment list */
 ExecSection::~ExecSection()
 {
     if (file) {
-        std::vector<ExecSection*>::iterator i = file->sections.begin();
-        while (i!=file->sections.end()) {
+        std::vector<ExecSection*> &sections = file->get_sections();
+        std::vector<ExecSection*>::iterator i = sections.begin();
+        while (i!=sections.end()) {
             if (*i==this) {
-                i = file->sections.erase(i);
+                i = sections.erase(i);
             } else {
                 i++;
             }
         }
     }
+}
+
+/* Adds a new segment to a section. This is called implicitly by the segment constructor. */
+void
+ExecSection::add_segment(ExecSegment *segment)
+{
+#ifndef NDEBUG
+    /* New segment must not already be present. */
+    for (size_t i=0; i<segments.size(); i++) {
+        ROSE_ASSERT(segments[i]!=segment);
+    }
+#endif
+    segments.push_back(segment);
 }
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. */
@@ -318,28 +345,10 @@ const unsigned char *
 ExecSection::extend(addr_t size)
 {
     ROSE_ASSERT(file);
-    if (offset + this->size + size > file->size()) throw ShortRead(this, offset+this->size, size);
+    if (offset + this->size + size > file->get_size()) throw ShortRead(this, offset+this->size, size);
     const unsigned char *retval = data + this->size;
     this->size += size;
     return retval;
-}
-
-/* Returns 16-bit little-endian unsigned integer in native format */
-uint16_t
-ExecSection::u16le(addr_t offset)
-{
-    ROSE_ASSERT(file);
-    if (offset > size || offset+2 > size) throw ShortRead(this, offset, 2);
-    return data[offset+0] | (data[offset+1]<<8);
-}
-
-/* Returns 16-bit little-endian signed integer in native format or throws short read */
-int16_t
-ExecSection::s16le(addr_t offset)
-{
-    ROSE_ASSERT(file);
-    if (offset > size || offset+2 > size) throw ShortRead(this, offset, 2);
-    return data[offset+0] | (data[offset+1]<<8);
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
@@ -356,11 +365,16 @@ ExecSection::is_file_header()
     
 /* Print some debugging info */
 void
-ExecSection::dump(FILE *f, const char *prefix)
+ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096], sbuf[256];
     const char *s;
-    sprintf(p, "%sExecSection.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sExecSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecSection.", prefix);
+    }
+    
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        name.c_str());
@@ -395,22 +409,43 @@ ExecSection::dump(FILE *f, const char *prefix)
 
 /* Constructor */
 void
-ExecHeader::ctor(ExecFile *f, addr_t offset, addr_t size)
+ExecHeader::ctor(ExecFile *ef, addr_t offset, addr_t size)
 {
     set_synthesized(true);
     set_purpose(SP_HEADER);
+    ef->add_header(this);
+}
+
+/* Destructor must remove the header from its parent file's headers list. */
+ExecHeader::~ExecHeader() 
+{
+    if (file) {
+        std::vector<ExecHeader*> &headers = file->get_headers();
+        std::vector<ExecHeader*>::iterator i=headers.begin();
+        while (i!=headers.end()) {
+            if (*i==this) {
+                i = headers.erase(i);
+            } else {
+                i++;
+            }
+        }
+    }
 }
 
 /* Print some debugging info */
 void
-ExecHeader::dump(FILE *f, const char *prefix)
+ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sExecHeader.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sExecHeader[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecHeader.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    ExecSection::dump(f, p);
-    fileFormat.dump(f, p);
+    ExecSection::dump(f, p, -1);
+    exec_format.dump(f, p, -1);
 
     fprintf(f, "%s%-*s = %s\n", p, w, "target",   "<FIXME>");
 
@@ -434,21 +469,21 @@ ExecHeader::dump(FILE *f, const char *prefix)
     
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "base_va",   base_va);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "entry_rva", entry_rva);
-}
-    
-            
 
+    for (size_t i=0; i<dlls.size(); i++)
+        dlls[i]->dump(f, p, i);
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecSegment
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Intialize values during construction */
+/* Constructor adds segment to its parent section's segment list. */
 void
 ExecSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
 {
     ROSE_ASSERT(section);
-    if (offset > section->size || offset+size > section->size)
+    if (offset > section->get_size() || offset+size > section->get_size())
         throw ShortRead(section, offset, size);
     
     this->section = section;
@@ -459,17 +494,18 @@ ExecSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, 
     this->writable = false;
     this->executable = false;
 
-    section->segments.push_back(this);
+    section->add_segment(this);
 }
 
 /* The destructor removes the section from its ExecSegment parent. */
 ExecSegment::~ExecSegment()
 {
     if (section) {
-        std::vector<ExecSegment*>::iterator i = section->segments.begin();
-        while (i!=section->segments.end()) {
+        std::vector<ExecSegment*> &segments = section->get_segments();
+        std::vector<ExecSegment*>::iterator i = segments.begin();
+        while (i!=segments.end()) {
             if (*i==this) {
-                i = section->segments.erase(i);
+                i = segments.erase(i);
             } else {
                 i++;
             }
@@ -479,10 +515,14 @@ ExecSegment::~ExecSegment()
 
 /* Print some debugging info about the segment */
 void
-ExecSegment::dump(FILE *f, const char *prefix)
+ExecSegment::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sExecSegment.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sExecSegment[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecSegment.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     fprintf(f, "%s%-*s = \"%s\"\n",                         p, w, "name",          name.c_str());
@@ -493,6 +533,27 @@ ExecSegment::dump(FILE *f, const char *prefix)
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "address (rva)", mapped_rva);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",              p, w, "mapped_size",   mapped_size);
     fprintf(f, "%s%-*s = %swritable, %sexecutable\n",       p, w, "permissions",   writable?"":"not-", executable?"":"not-");
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Dynamically linked libraries
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Print some debugging info */
+void
+ExecDLL::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sExecDLL[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecDLL.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", name.c_str());
+    for (size_t i=0; i<funcs.size(); i++)
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "func", i, funcs[i].c_str());
 }
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -511,7 +572,7 @@ parse(const char *name)
     } else if (PE::is_PE(ef)) {
         PE::parse(ef);
     } else {
-        ef->close();
+        delete ef;
         throw FormatError("unrecognized file format");
     }
     return ef;

@@ -47,14 +47,14 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     magic.push_back(disk->e_magic[1]);
 
     /* File format */
-    fileFormat.family      = FAMILY_DOS;
-    fileFormat.purpose     = PURPOSE_EXECUTABLE;
-    fileFormat.sex         = ORDER_LSB;
-    fileFormat.abi         = ABI_MSDOS;
-    fileFormat.abi_version = 0;
-    fileFormat.word_size   = 2;
-    fileFormat.version     = 0;
-    fileFormat.is_current_version = true;
+    exec_format.family      = FAMILY_DOS;
+    exec_format.purpose     = PURPOSE_EXECUTABLE;
+    exec_format.sex         = ORDER_LSB;
+    exec_format.abi         = ABI_MSDOS;
+    exec_format.abi_version = 0;
+    exec_format.word_size   = 2;
+    exec_format.version     = 0;
+    exec_format.is_current_version = true;
 
     /* Target architecture */
     target.set_isa(ISA_IA32_386);
@@ -66,13 +66,17 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
 
 /* Print some debugging info */
 void
-DOSFileHeader::dump(FILE *f, const char *prefix)
+DOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sDOSFileHeader.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sDOSFileHeader[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sDOSFileHeader.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    ExecHeader::dump(f, p);
+    ExecHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u bytes\n",        p, w, "e_cblp",     e_cblp);
     fprintf(f, "%s%-*s = %u pages\n",        p, w, "e_cp",       e_cp);
     fprintf(f, "%s%-*s = %u relocations\n",  p, w, "e_crlc",     e_crlc);
@@ -163,15 +167,15 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         magic.push_back(disk->e_magic[i]);
 
     /* File format */
-    fileFormat.family      = FAMILY_PE;
-    fileFormat.purpose     = e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY;
-    fileFormat.sex         = ORDER_LSB;
-    fileFormat.abi         = ABI_NT;
-    fileFormat.abi_version = 0;
-    fileFormat.word_size   = 4;
+    exec_format.family      = FAMILY_PE;
+    exec_format.purpose     = e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY;
+    exec_format.sex         = ORDER_LSB;
+    exec_format.abi         = ABI_NT;
+    exec_format.abi_version = 0;
+    exec_format.word_size   = 4;
     ROSE_ASSERT(e_lmajor<=0xffff && e_lminor<=0xffff);
-    fileFormat.version     = (e_lmajor<<16) | e_lminor;
-    fileFormat.is_current_version = true; /*FIXME*/
+    exec_format.version     = (e_lmajor<<16) | e_lminor;
+    exec_format.is_current_version = true; /*FIXME*/
 
     /* Target architecture */
     switch (e_cpu_type) {
@@ -218,13 +222,17 @@ PEFileHeader::add_rvasize_pairs()
 
 /* Print some debugging information */
 void
-PEFileHeader::dump(FILE *f, const char *prefix)
+PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sPEFileHeader.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sPEFileHeader[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEFileHeader.", prefix);
+    }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    ExecHeader::dump(f, p);
+    ExecHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_cpu_type",          e_cpu_type);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_nobjects",          e_nobjects);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_time",              e_time);
@@ -295,9 +303,14 @@ ObjectTableEntry::ctor(const ObjectTableEntry_disk *disk)
 
 /* Prints some debugging info */
 void
-ObjectTableEntry::dump(FILE *f, const char *prefix)
+ObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
-    const char *p = prefix; /* Don't append to prefix since caller (ObjectTable::dump) is adding array indices. */
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sObjectTableEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sObjectTableEntry.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "virtual_size",    virtual_size);
@@ -334,7 +347,7 @@ ObjectTable::ctor(PEFileHeader *fhdr)
 
         ExecSegment *segment = NULL;
         if (0==entry->name.compare(".idata")) {
-            segment = new ImportSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+            segment = new ImportSegment(fhdr, section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         } else {
             segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         }
@@ -351,17 +364,20 @@ ObjectTable::ctor(PEFileHeader *fhdr)
 
 /* Prints some debugging info */
 void
-ObjectTable::dump(FILE *f, const char *prefix)
+ObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sObjectTable.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sObjectTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sObjectTable.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    ExecSection::dump(f, p);
+    ExecSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", entries.size());
     for (size_t i=0; i<entries.size(); i++) {
-        sprintf(p, "%sObjectTable.entries[%zu].", prefix, i);
-        entries[i]->dump(f, p);
+        entries[i]->dump(f, p, i);
     }
 }
 
@@ -382,10 +398,14 @@ ImportDirectory::ctor(const ImportDirectory_disk *disk)
 
 /* Print debugging info */
 void
-ImportDirectory::dump(FILE *f, const char *prefix)
+ImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sImportDirectory.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sImportDirectory[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sImportDirectory.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "hintnames_rva",   hintnames_rva);
@@ -397,7 +417,34 @@ ImportDirectory::dump(FILE *f, const char *prefix)
 
 /* Constructor */
 void
-ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+ImportHintName::ctor(ExecSection *section, addr_t offset)
+{
+    const ImportHintName_disk *disk = (const ImportHintName_disk*)section->content(offset, sizeof(*disk));
+    hint = le_to_host(disk->hint);
+    name = section->content_str(offset+sizeof(*disk));
+    padding = name.size() % 2 ? *(section->content(offset+sizeof(*disk)+name.size()+1, 1)) : '\0';
+}
+
+/* Print debugging info */
+void
+ImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sImporNameHint[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sImporNameHint.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = %u\n",     p, w, "hint",    hint);
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name",    name.c_str());
+    fprintf(f, "%s%-*s = 0x%02x\n", p, w, "padding", padding);
+}
+
+/* Constructor */
+void
+ImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
 {
     size_t entry_size = sizeof(ImportDirectory_disk);
     ImportDirectory_disk zero;
@@ -415,7 +462,8 @@ ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva
         ROSE_ASSERT(idir->dll_name_rva >= get_mapped_rva());
         addr_t dll_name_offset = get_offset() + idir->dll_name_rva - get_mapped_rva();
         std::string dll_name = section->content_str(dll_name_offset);
-        fprintf(stderr, "ROBB: dll = \"%s\"\n", dll_name.c_str());
+        ExecDLL *dll = new ExecDLL(dll_name);
+
 
         /* The thunks is an array of RVAs that point to hint/name pairs for the entities imported from the DLL that we're
          * currently processing. Each hint is a two-byte little-endian value. Each name is NUL-terminated. The array address
@@ -432,25 +480,31 @@ ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva
             hintnames_offset += sizeof(uint32_t);
             if (0==hint_rva) break; /*list of RVAs is null terminated */
             addr_t hint_offset = get_offset() + hint_rva - get_mapped_rva();
-            unsigned hint = le_to_host(*(const uint16_t*)section->content(hint_offset, sizeof(uint16_t)));
-            const char *name = section->content_str(hint_offset+sizeof(uint16_t));
+            ImportHintName *hintname = new ImportHintName(section, hint_offset);
+            dll->add_function(hintname->get_name());
+
             addr_t binding = le_to_host(*(const uint32_t*)section->content(bindings_offset, sizeof(uint32_t)));
-            /*FIXME: what to do with "hint", "name", and "binding"? */
-            fprintf(stderr, "ROBB: DLL hint=%u name=\"%s\" binding=0x%08"PRIx64"\n", hint, name, binding);
+            bindings_offset += sizeof(uint32_t);
         }
+
+        fhdr->add_dll(dll);
     }
 }
 
 /* Print debugging info */
 void
-ImportSegment::dump(FILE *f, const char *prefix)
+ImportSegment::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
-    sprintf(p, "%sImportSegment.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sImportSegment[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sImportSegment.", prefix);
+    }
     
-    ExecSegment::dump(f, p);
+    ExecSegment::dump(f, p, -1);
     for (size_t i=0; i<dirs.size(); i++)
-        dirs[i]->dump(f, p);
+        dirs[i]->dump(f, p, i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -480,12 +534,16 @@ COFFSymbol::ctor(ExecSection *strtab, const COFFSymbol_disk *disk)
 
 /* Print some debugging info */
 void
-COFFSymbol::dump(FILE *f, const char *prefix, ExecFile *ef)
+COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
 {
     char p[4096], ss[128], tt[128];
     const char *s=NULL, *t=NULL;
     ExecSection *section=NULL;
-    sprintf(p, "%sCOFFSymbol.", prefix);
+    if (idx>=0) {
+        sprintf(p, "%sCOFFSymbol[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sCOFFSymbol.", prefix);
+    }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %"PRIu64" \"%s\"\n", p, w, "name", name_offset, name.c_str());
@@ -500,7 +558,7 @@ COFFSymbol::dump(FILE *f, const char *prefix, ExecFile *ef)
         fprintf(f, "%s%-*s = %s\n", p, w, "section", s);
     } else if (NULL==ef) {
         fprintf(f, "%s%-*s = [%d] <section info not available here>\n", p, w, "section", section_num);
-    } else if (NULL==(section=ef->lookup_section_id(section_num))) {
+    } else if (NULL==(section=ef->get_section_by_id(section_num))) {
         fprintf(f, "%s%-*s = [%d] <not a valid section ID>\n", p, w, "section", section_num);
     } else {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "section", 
@@ -605,7 +663,7 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
         const COFFSymbol_disk *disk = (const COFFSymbol_disk*)content(i*COFFSymbol_disk_size, COFFSymbol_disk_size);
         fprintf(stderr, "ROBB: COFF symbol %zu found at section offset %zu:\n", i, i*COFFSymbol_disk_size);
         COFFSymbol *sym = new COFFSymbol(strtab, disk);
-        sym->dump(stderr, "    ", ef);
+        sym->dump(stderr, "    ", -1, ef);
 
         /* Parse aux symtab entries */
         if (sym->num_aux_entries>0) {
@@ -622,7 +680,7 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
                 strcpy(fname, (const char*)content((i+1)*COFFSymbol_disk_size, COFFSymbol_disk_size));
                 fname[18] = '\0';
                 fprintf(stderr, "          name = \"%s\"\n", fname);
-            } else if (sym->storage_class==3/*static*/ && NULL!=ef->lookup_section_name(sym->name)) {
+            } else if (sym->storage_class==3/*static*/ && NULL!=ef->get_section_by_name(sym->name)) {
                 fprintf(stderr, "    ROBB: Section definition aux\n");
             } else if (sym->value==0 && sym->type==0x30/*static/null*/ && 1==sym->num_aux_entries) {
                 fprintf(stderr, "    ROBB: COMDAT section aux\n");
@@ -647,10 +705,11 @@ is_PE(ExecFile *f)
 
     try {
         dos_hdr = new DOSFileHeader(f, 0);
-        if (dos_hdr->magic.size()<2 || dos_hdr->magic[0]!='M' || dos_hdr->magic[1]!='Z') goto done;
+        if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
         pe_hdr = new PEFileHeader(f, dos_hdr->e_lfanew);
-        if (pe_hdr->magic.size()<4 ||
-            pe_hdr->magic[0]!=0x50 || pe_hdr->magic[1]!=0x45 || pe_hdr->magic[2]!=0x00 || pe_hdr->magic[3]!=0x00) goto done;
+        if (pe_hdr->get_magic().size()<4 ||
+            pe_hdr->get_magic()[0]!=0x50 || pe_hdr->get_magic()[1]!=0x45 ||
+            pe_hdr->get_magic()[2]!=0x00 || pe_hdr->get_magic()[3]!=0x00) goto done;
         retval = true;
     } catch (...) {
         /* cleanup is below */
@@ -696,7 +755,7 @@ parse(ExecFile *f)
         new COFFSymtab(f, pe_header);
 
     /* Identify parts of the file that we haven't encountered during parsing */
-    f->find_holes();
+    f->fill_holes();
 }
     
 }; //namespace PE
