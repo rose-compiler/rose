@@ -10,7 +10,7 @@ distributedScripts = \
      dotgen2                       lsdot                  \
      check-dist-file dotgenLetter  generateDirectoryGraph \
      cvschk                        find_cvs_conflicts     \
-     generate-gnu-to-edg-headerfile-diff.sh libtoolcp     \
+     libtoolcp     \
      dotgenLetterPDF dotgenLetterPNG
 
 # scripts put into the distribution

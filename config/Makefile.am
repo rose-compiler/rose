@@ -12,15 +12,10 @@ include_HEADERS = \
 # Note that without the file: config.guess, depend, install-sh, and dirincludes;
 # the configuration will exit and the backend specific compiler header file are not built.
 # DQ (10/22/2003) Support for GNU header file processing (including STL header file processing)
-# DQ (5/29/2003) Support for vararg processing
 EXTRA_DIST = \
      Makefile.for.ROSE.includes.and.libs \
      QMTest_makefile.inc \
-     gnu-hdrs1-bits-basic_string-h.patchfile \
      gnu-3.x-headerfile-fixup.pl \
-     vararg_handling_commands.sed \
-     stdarg_handling_commands.sed \
-     iostream_handling_commands.sed \
      rose_edg_required_macros_and_functions.h.in \
      config.guess \
      depend \
