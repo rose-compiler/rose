@@ -1,5 +1,4 @@
 generate_checker(AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction);
-generate_checker(Compass_defUseAnalysis);
 generate_checker(AssignmentOperatorCheckSelf);
 generate_checker(AssignmentReturnConstThis);
 generate_checker(AsynchronousSignalHandler);

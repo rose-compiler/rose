@@ -3,7 +3,7 @@
 
 using namespace std;
 #define DEBUG_OUTPUT true
-#define DEBUG_OUTPUT_MORE true
+#define DEBUG_OUTPUT_MORE false
 
 
 // ************************************************************
@@ -461,7 +461,7 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	if ((currentJob % 100)==99) scale+=1;
+	if ((currentJob % 5)==4) scale+=2;
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
@@ -484,8 +484,9 @@ int main(int argc, char **argv)
 	  break;
       }
     }
+    if (my_rank==0)
+      cout << "Final scale = " << scale << endl;
   }
-
 
 
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
