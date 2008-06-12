@@ -283,6 +283,53 @@ class ImportSegment : public ExecSegment {
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// COFF Symbol Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* WARNING: Instances of this type are aligned on 4-byte boundaries, which means sizeof() will return 20 rather than 18. */
+#define COFFSymbol_disk_size 18
+struct COFFSymbol_disk {
+    union {
+        char            name[8];
+        struct {
+            uint32_t    zero;
+            uint32_t    offset;
+        };
+    };
+    uint32_t            value;
+    int16_t             section_num;
+    uint16_t            type;
+    unsigned char       storage_class;
+    unsigned char       num_aux_entries;
+};
+
+class COFFSymbol {
+  public:
+    COFFSymbol(ExecSection *strtab, const COFFSymbol_disk *disk)
+        : name_offset(0), section_num(0), value(0), type(0), storage_class(0), num_aux_entries(0)
+        {ctor(strtab, disk);}
+    virtual ~COFFSymbol() {}
+    virtual void dump(FILE *f, const char *prefix) {dump(f, prefix, NULL);}
+    void dump(FILE*, const char *prefix, ExecFile*);
+    std::string         name;
+    addr_t              name_offset;
+    int                 section_num;
+    unsigned            value, type, storage_class, num_aux_entries;
+  private:
+    void ctor(ExecSection *strtab, const COFFSymbol_disk*);
+};
+
+class COFFSymtab : public ExecSection {
+  public:
+    COFFSymtab(ExecFile *f, PEFileHeader *fhdr)
+        : ExecSection(f, fhdr->e_coff_symtab, fhdr->e_coff_nsyms*COFFSymbol_disk_size)
+        {ctor(f, fhdr);}
+  private:
+    void ctor(ExecFile*, PEFileHeader*);
+};
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
 /* Functions */

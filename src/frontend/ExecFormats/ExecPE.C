@@ -329,7 +329,7 @@ ObjectTable::ctor(PEFileHeader *fhdr)
         ExecSection *section = new ExecSection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
         section->set_synthesized(true);
         section->set_name(entry->name);
-        section->set_id(i);
+        section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
 
         ExecSegment *segment = NULL;
@@ -454,6 +454,142 @@ ImportSegment::dump(FILE *f, const char *prefix)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// COFF Symbol Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+COFFSymbol::ctor(ExecSection *strtab, const COFFSymbol_disk *disk)
+{
+    if (disk->zero==0) {
+        name_offset = le_to_host(disk->offset);
+        if (name_offset<4) throw FormatError("name collides with size field");
+        name = strtab->content_str(disk->offset);
+    } else {
+        char temp[9];
+        memcpy(temp, disk->name, 8);
+        temp[8] = '\0';
+        name = temp;
+    }
+    value           = le_to_host(disk->value);
+    section_num     = le_to_host(disk->section_num);
+    type            = le_to_host(disk->type);
+    storage_class   = le_to_host(disk->storage_class);
+    num_aux_entries = le_to_host(disk->num_aux_entries);
+}
+
+/* Print some debugging info */
+void
+COFFSymbol::dump(FILE *f, const char *prefix, ExecFile *ef)
+{
+    char p[4096], ss[32];
+    const char *s=NULL, *t=NULL;
+    ExecSection *section=NULL;
+    sprintf(p, "%sCOFFSymbol.", prefix);
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = %"PRIu64" \"%s\"\n", p, w, "name", name_offset, name.c_str());
+
+    if (section_num<=0) {
+        switch (section_num) {
+          case 0:  s = "external, not assigned";    break;
+          case -1: s = "absolute value";            break;
+          case -2: s = "general debug, no section"; break;
+          default: sprintf(ss, "%d", section_num); s = ss; break;
+        }
+        fprintf(f, "%s%-*s = %s\n", p, w, "section", s);
+    } else if (NULL==ef) {
+        fprintf(f, "%s%-*s = [%d] <section info not available here>\n", p, w, "section", section_num);
+    } else if (NULL==(section=ef->lookup_section_id(section_num))) {
+        fprintf(f, "%s%-*s = [%d] <not a valid section ID>\n", p, w, "section", section_num);
+    } else {
+        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "section", 
+                section_num, section->get_name().c_str(), section->get_offset(), section->get_size());
+    }
+
+    switch (type) {
+      case 0: s = "no type";  break;
+      case 1: s = "pointer";  break;
+      case 2: s = "function"; break;
+      case 3: s = "array";    break;
+      default:
+        sprintf(ss, "%u", type);
+        s = ss;
+        break;
+    }
+    fprintf(f, "%s%-*s = %u (%s)\n",          p, w, "type", type, s);
+
+    switch (storage_class) {
+      case 0xff: s = "end of function"; t = "";                                  break;
+      case 0:    s = "none";            t = "";                                  break;
+      case 1:    s = "auto variable";   t = "stack frame offset";                break;
+      case 2:    s = "external";        t = "size or section offset";            break;
+      case 3:    s = "static";          t = "offset in section or section name"; break;
+      case 4:    s = "register";        t = "register number";                   break;
+      case 5:    s = "extern_def";      t = "";                                  break;
+      case 6:    s = "label";           t = "offset in section";                 break;
+      case 7:    s = "label(undef)";    t = "";                                  break;
+      case 8:    s = "struct member";   t = "member number";                     break;
+      case 9:    s = "formal arg";      t = "argument number";                   break;
+      case 10:   s = "struct tag";      t = "tag name";                          break;
+      case 11:   s = "union member";    t = "member number";                     break;
+      case 12:   s = "union tag";       t = "tag name";                          break;
+      case 13:   s = "typedef";         t = "";                                  break;
+      case 14:   s = "static(undef)";   t = "";                                  break;
+      case 15:   s = "enum tag";        t = "";                                  break;
+      case 16:   s = "enum member";     t = "member number";                     break;
+      case 17:   s = "register param";  t = "";                                  break;
+      case 18:   s = "bit field";       t = "bit number";                        break;
+      case 100:  s = "block(bb,eb)";    t = "relocatable address";               break;
+      case 101:  s = "function";        t = "nlines or size";                    break;
+      case 102:  s = "struct end";      t = "";                                  break;
+      case 103:  s = "file";            t = "";                                  break;
+      case 104:  s = "section";         t = "";                                  break;
+      case 105:  s = "weak extern";     t = "";                                  break;
+      case 107:  s = "CLR token";       t = "";                                  break;
+      default:
+        sprintf(ss, "%u", storage_class);
+        s = ss;
+        t = "";  
+        break;
+    }
+    fprintf(f, "%s%-*s = %s\n",               p, w, "storage_class", s);
+    fprintf(f, "%s%-*s = 0x%08x %s\n",        p, w, "value", value, t);
+
+    fprintf(f, "%s%-*s = %u\n",               p, w, "num_aux_entries", num_aux_entries);
+}
+
+/* Constructor */
+void
+COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
+{
+    set_synthesized(false);
+    set_name("COFF Symbols");
+    set_purpose(SP_SYMTAB);
+
+    /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
+     * string table in little endian. */
+    addr_t strtab_offset = get_offset() + fhdr->e_coff_nsyms * COFFSymbol_disk_size;
+    ExecSection *strtab = new ExecSection(ef, strtab_offset, sizeof(uint32_t));
+    strtab->set_synthesized(false);
+    strtab->set_name("COFF Symbol Strtab");
+    strtab->set_purpose(SP_HEADER);
+    addr_t strtab_size = le_to_host(*(const uint32_t*)strtab->content(0, sizeof(uint32_t)));
+    if (strtab_size<sizeof(uint32_t))
+        throw FormatError("COFF symbol table string table size is less than four bytes");
+    strtab->extend(strtab_size-sizeof(uint32_t));
+
+    for (size_t i=0; i<fhdr->e_coff_nsyms; i++) {
+        const COFFSymbol_disk *disk = (const COFFSymbol_disk*)content(i*COFFSymbol_disk_size, COFFSymbol_disk_size);
+        fprintf(stderr, "ROBB: COFF symbol %zu found at section offset %zu:\n", i, i*COFFSymbol_disk_size);
+        COFFSymbol *sym = new COFFSymbol(strtab, disk);
+        sym->dump(stderr, "    ", ef);
+
+        i += sym->num_aux_entries; /*DEBUGGING: skip aux entries for now*/
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns true if a cursory look at the file indicates that it could be a PE file. */
 bool
@@ -506,8 +642,15 @@ parse(ExecFile *f)
     ROSE_ASSERT(pe_header->e_num_rvasize_pairs < 1000); /* just a sanity check before we allocate memory */
     pe_header->add_rvasize_pairs();
 
-    new ObjectTable(pe_header); /* c'tor adds the new segment to the file */
-    f->find_holes();            /* Identify parts of the file that we haven't encountered during parsing */
+    /* Construct the segments and their sections */
+    new ObjectTable(pe_header);
+
+    /* Parse the COFF symbol table */
+    if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms)
+        new COFFSymtab(f, pe_header);
+
+    /* Identify parts of the file that we haven't encountered during parsing */
+    f->find_holes();
 }
     
 }; //namespace PE
