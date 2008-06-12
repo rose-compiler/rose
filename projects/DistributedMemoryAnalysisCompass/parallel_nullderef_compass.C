@@ -268,7 +268,7 @@ void printPCResults(std::vector<CountingOutputObject *> &outputs,
       double perc_d = (double) perc/100;
 
       std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
-	"  real # functions:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
+	"  real # nodes:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
 	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << 
 	"   => " << perc_d << " % "  << std::endl;
 
@@ -514,7 +514,7 @@ int main(int argc, char **argv)
   printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, calctimes, commtimes, nodeDecls);
 
   if (my_rank==0)
-    cout << " Processor 0 : including communication : time : " << my_time_0 << endl;
+    cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
 
   /* all done */
   MPI_Finalize();
