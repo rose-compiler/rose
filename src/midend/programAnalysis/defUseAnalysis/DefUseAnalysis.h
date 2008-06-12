@@ -92,6 +92,8 @@ class DefUseAnalysis : public DFAnalysis, Support {
   void flush() {
    table.clear();
    usetable.clear();
+   globalVarList.clear();
+   vizzhelp.clear();
   }
 };
 
