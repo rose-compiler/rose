@@ -175,6 +175,17 @@ ExecFile::lookup_section_id(int id)
     return NULL;
 }
 
+/* Returns pointer to first section with specified name. */
+ExecSection *
+ExecFile::lookup_section_name(const std::string &name)
+{
+    for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
+        if (0==(*i)->get_name().compare(name))
+            return *i;
+    }
+    return NULL;
+}
+
 /* Returns a vector of sections that contain the specified portion of the file */
 std::vector<ExecSection*>
 ExecFile::lookup_section_offset(addr_t offset, addr_t size)

@@ -482,7 +482,7 @@ COFFSymbol::ctor(ExecSection *strtab, const COFFSymbol_disk *disk)
 void
 COFFSymbol::dump(FILE *f, const char *prefix, ExecFile *ef)
 {
-    char p[4096], ss[32];
+    char p[4096], ss[128], tt[128];
     const char *s=NULL, *t=NULL;
     ExecSection *section=NULL;
     sprintf(p, "%sCOFFSymbol.", prefix);
@@ -507,17 +507,39 @@ COFFSymbol::dump(FILE *f, const char *prefix, ExecFile *ef)
                 section_num, section->get_name().c_str(), section->get_offset(), section->get_size());
     }
 
-    switch (type) {
-      case 0: s = "no type";  break;
-      case 1: s = "pointer";  break;
-      case 2: s = "function"; break;
-      case 3: s = "array";    break;
+    switch (type & 0xf0) {
+      case 0x00: s = "none";     break;
+      case 0x10: s = "pointer";  break;
+      case 0x20: s = "function"; break;
+      case 0x30: s = "array";    break;
       default:
-        sprintf(ss, "%u", type);
+        sprintf(ss, "%u", type>>8);
         s = ss;
         break;
     }
-    fprintf(f, "%s%-*s = %u (%s)\n",          p, w, "type", type, s);
+    switch (type & 0xf) {
+      case 0x00: t = "none";            break;
+      case 0x01: t = "void";            break;
+      case 0x02: t = "char";            break;
+      case 0x03: t = "short";           break;
+      case 0x04: t = "int";             break;
+      case 0x05: t = "long";            break;
+      case 0x06: t = "float";           break;
+      case 0x07: t = "double";          break;
+      case 0x08: t = "struct";          break;
+      case 0x09: t = "union";           break;
+      case 0x0a: t = "enum";            break;
+      case 0x0b: t = "enum member";     break;
+      case 0x0c: t = "byte";            break;
+      case 0x0d: t = "2-byte word";     break;
+      case 0x0e: t = "unsigned int";    break;
+      case 0x0f: t = "4-byte unsigned"; break;
+      default:
+        sprintf(tt, "%u", type & 0xf);
+        t = tt;
+        break;
+    }
+    fprintf(f, "%s%-*s = %s / %s\n",          p, w, "type", s, t);
 
     switch (storage_class) {
       case 0xff: s = "end of function"; t = "";                                  break;
@@ -585,6 +607,30 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
         COFFSymbol *sym = new COFFSymbol(strtab, disk);
         sym->dump(stderr, "    ", ef);
 
+        /* Parse aux symtab entries */
+        if (sym->num_aux_entries>0) {
+            if (sym->storage_class==2/*external*/ && sym->type==0x20/*function*/ && sym->section_num>0) {
+                fprintf(stderr, "    ROBB: Function definition aux\n");
+            } else if (0==sym->name.compare(".bf") || 0==sym->name.compare(".ef")) {
+                fprintf(stderr, "    ROBB: Function begin/end aux\n");
+            } else if (sym->storage_class==2/*external*/ && sym->section_num<=0 && sym->value==0) {
+                fprintf(stderr, "    ROBB: Weak external aux\n");
+            } else if (sym->storage_class==103/*file*/ && 0==sym->name.compare(".file")) {
+                fprintf(stderr, "    ROBB: File aux\n");
+                ROSE_ASSERT(sym->num_aux_entries==1);
+                char fname[19];
+                strcpy(fname, (const char*)content((i+1)*COFFSymbol_disk_size, COFFSymbol_disk_size));
+                fname[18] = '\0';
+                fprintf(stderr, "          name = \"%s\"\n", fname);
+            } else if (sym->storage_class==3/*static*/ && NULL!=ef->lookup_section_name(sym->name)) {
+                fprintf(stderr, "    ROBB: Section definition aux\n");
+            } else if (sym->value==0 && sym->type==0x30/*static/null*/ && 1==sym->num_aux_entries) {
+                fprintf(stderr, "    ROBB: COMDAT section aux\n");
+            } else {
+                fprintf(stderr, "    ROBB: unknown aux symbol (skipping)\n");
+            }
+        }
+        
         i += sym->num_aux_entries; /*DEBUGGING: skip aux entries for now*/
     }
 }
