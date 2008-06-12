@@ -21,6 +21,7 @@ bool saveAST =false;
 SgProject *root = NULL;
 struct timespec begin_time, end_time;
 struct timespec begin_time_node, end_time_node;
+struct timespec begin_time_0, end_time_0;
 int my_rank, processes;
 bool sequential=false;
 bool combined=false;
@@ -239,7 +240,11 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 void communicateResult(std::vector<CountingOutputObject *> &outputs, 
 		       double* times, double* memory, 
 		       unsigned int* output_values, 
-		       double my_time, double memusage, int* maxtime_nr, int max_time_i,  double* maxtime_val, double maxtime) {
+		       double my_time, double memusage, int* maxtime_nr, int max_time_i,  
+		       double* maxtime_val, double maxtime,
+		       double* calctimes, double calc_time_processor,
+		       double* commtimes, double comm_time_processor
+		       ) {
   /* communicate results */
   unsigned int *my_output_values = new unsigned int[outputs.size()];
   for (size_t i = 0; i < outputs.size(); i++)
@@ -259,6 +264,12 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 	     MPI_COMM_WORLD);
 
   MPI_Gather(&maxtime, 1, MPI_DOUBLE, maxtime_val, 1, MPI_DOUBLE, 0,
+     MPI_COMM_WORLD);
+
+  MPI_Gather(&calc_time_processor, 1, MPI_DOUBLE, calctimes, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+
+  MPI_Gather(&comm_time_processor, 1, MPI_DOUBLE, commtimes, 1, MPI_DOUBLE, 0,
 	     MPI_COMM_WORLD);
   
 }
