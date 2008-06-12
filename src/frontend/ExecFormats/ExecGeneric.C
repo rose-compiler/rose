@@ -228,6 +228,7 @@ ExecFile::find_holes()
         std::vector<ExecSection*> sections = lookup_section_offset(offset, 1);
         if (0==sections.size()) {
             addr_t next_offset = lookup_next_offset(offset);
+            if (next_offset==(addr_t)-1) next_offset = sb.st_size;
             extents.push_back(std::pair<addr_t,addr_t>(offset, next_offset-offset));
             offset = next_offset;
         } else {

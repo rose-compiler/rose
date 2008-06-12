@@ -429,12 +429,14 @@ ImportSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva
         addr_t bindings_offset  = get_offset() + idir->bindings_rva  - get_mapped_rva();
         while (1) {
             addr_t hint_rva = le_to_host(*(const uint32_t*)section->content(hintnames_offset, sizeof(uint32_t)));
+            hintnames_offset += sizeof(uint32_t);
             if (0==hint_rva) break; /*list of RVAs is null terminated */
             addr_t hint_offset = get_offset() + hint_rva - get_mapped_rva();
             unsigned hint = le_to_host(*(const uint16_t*)section->content(hint_offset, sizeof(uint16_t)));
             const char *name = section->content_str(hint_offset+sizeof(uint16_t));
             addr_t binding = le_to_host(*(const uint32_t*)section->content(bindings_offset, sizeof(uint32_t)));
             /*FIXME: what to do with "hint", "name", and "binding"? */
+            fprintf(stderr, "ROBB: DLL hint=%u name=\"%s\" binding=0x%08"PRIx64"\n", hint, name, binding);
         }
     }
 }

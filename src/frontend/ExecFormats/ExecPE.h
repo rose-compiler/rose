@@ -73,8 +73,8 @@ struct PEFileHeader_disk {
     uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
     uint16_t    e_nobjects;             /* number of objects (segments) defined in the Object Table */
     uint32_t    e_time;                 /* time and date file was created or modified by the linker */
-    uint32_t    e_reserved1;
-    uint32_t    e_reserved2;
+    uint32_t    e_reserved1;            /* file address of COFF symbol table, now deprecated */
+    uint32_t    e_reserved2;            /* number of symbols in COFF symbol table, now deprecated */
     uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
     uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
     uint16_t    e_reserved3;
