@@ -73,8 +73,8 @@ struct PEFileHeader_disk {
     uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
     uint16_t    e_nobjects;             /* number of objects (segments) defined in the Object Table */
     uint32_t    e_time;                 /* time and date file was created or modified by the linker */
-    uint32_t    e_reserved1;            /* file address of COFF symbol table, now deprecated */
-    uint32_t    e_reserved2;            /* number of symbols in COFF symbol table, now deprecated */
+    uint32_t    e_coff_symtab;          /* offset to COFF symbol table */
+    uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
     uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
     uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
     uint16_t    e_reserved3;
@@ -157,7 +157,9 @@ class PEFileHeader : public ExecHeader {
     virtual void dump(FILE*, const char *prefix);
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
-    unsigned    e_cpu_type, e_nobjects, e_time, e_reserved1, e_reserved2, e_nt_hdr_size, e_flags, e_reserved3;
+    unsigned    e_cpu_type, e_nobjects, e_time;
+    addr_t      e_coff_symtab;
+    unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_reserved3;
     unsigned    e_lmajor, e_lminor, e_reserved4, e_reserved5, e_reserved6, e_entrypoint_rva, e_reserved7, e_reserved8;
     unsigned    e_image_base, e_object_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
     unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
