@@ -333,7 +333,11 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 #if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
           void getDirectives ( char* sourceFilename );
 #endif
-
+//#if UPC_EXTENSIONS_ALLOWED
+//#if USE_UPC_IR_NODES
+      // Liao, 6/13/2008, support UPC nodes
+       virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
+//#endif       
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
        // void run_unparser();
