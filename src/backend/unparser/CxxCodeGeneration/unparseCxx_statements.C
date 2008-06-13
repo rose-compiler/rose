@@ -638,6 +638,12 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 #endif
 //        case V_SgNullStatement:                      unparseNullStatement(stmt, info); break;
 
+//#if USE_UPC_IR_NODES
+//#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
+// Liao, 6/13/2008: UPC support
+          case V_SgUpcBarrierStatement:             unparseUpcBarrierStatement(stmt, info); break;
+
+//#endif 
           default:
              {
                printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
@@ -5127,6 +5133,31 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
                ROSE_ASSERT (false);
         }
    }
+ 
+//#if USE_UPC_IR_NODES //TODO need this?
+//#if UPC_EXTENSIONS_ALLOWED
+ // Liao, 6/13/2008, unparsing UPC nodes in the AST
+
+void
+Unparse_ExprStmt::unparseUpcBarrierStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUpcBarrierStatement* input = isSgUpcBarrierStatement(stmt);
+     ROSE_ASSERT(input != NULL);
+
+     curprint ( string("upc_barrier "));
+     SgUnparse_Info ninfo(info);
+
+     if (input->get_barrier_expression())
+        {
+          unparseExpression(input->get_barrier_expression(), ninfo);
+        }
+
+     if (!ninfo.SkipSemiColon())
+        {
+          curprint ( string(";"));
+        }
+   }
+//#endif   
  
 #if 0
 // DQ (8/13/2007): This has been moved to the base class (language independent code)

@@ -5,11 +5,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #####################################################################################
 
 TESTCODES_REQUIRED_TO_PASS = \
+     barrier.upc \
      restrict.upc \
      shared_2.upc \
      test2004_22.upc 
 TESTCODE_CURRENTLY_FAILING = \
-     barrier.upc \
      consistency.upc \
      fence.upc \
      forall_1.upc \

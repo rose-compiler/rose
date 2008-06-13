@@ -423,7 +423,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, SgUPC_AccessModifier & m );
 
-       // DQ (2/4/2006): Added mechamism to clear all bits
+       // DQ (2/4/2006): Added mechanism to clear all bits
           void reset();
 
 HEADER_UPC_ACCESS_MODIFIER_END
@@ -435,7 +435,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
 
       /*! \brief Special Function Modifiers (only one value can be specified)
 
-          Modifier information about (constructor, destructor, conversion operator (cast operator), and operator (general overloaded operaotrs)).
+          Modifier information about (constructor, destructor, conversion operator (cast operator), and operator (general overloaded operators)).
 
           \internal Only one value can be specified (at least in C and C++)
        */
