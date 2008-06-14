@@ -637,7 +637,7 @@ Grammar::setUpStatements ()
   // ForInitStatement.setAutomaticGenerationOfDestructor(FALSE);
 
 
-  // DQ and Liao (6/11/2008): Added support for UPC foral IR node.
+  // DQ and Liao (6/11/2008): Added support for UPC forall IR node.
      UpcForAllStatement.setFunctionPrototype ( "HEADER_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
      UpcForAllStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      UpcForAllStatement.editSubstitute      ( "LIST_DATA_TYPE", "SgStatementPtrList" );
@@ -2544,7 +2544,6 @@ Grammar::setUpStatements ()
   // ForStatement.editSubstitute            ( "$CLASSNAME", "SgForStatement" );
      ForStatement.editSubstitute            ( "get_body", "get_loop_body" );
 
-     UpcForAllStatement.setFunctionSource   ( "SOURCE_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
 
 #if USE_UPC_IR_NODES
   // UpcNotifyStatement, UpcWaitStatement, UpcBarrierStatement, UpcFenceStatement, UpcForAllStatement
@@ -2553,6 +2552,7 @@ Grammar::setUpStatements ()
      UpcWaitStatement.setFunctionSource    ( "SOURCE_UPC_WAIT_STATEMENT", "../Grammar/Statement.code" );
      UpcBarrierStatement.setFunctionSource ( "SOURCE_UPC_BARRIER_STATEMENT", "../Grammar/Statement.code" );
      UpcFenceStatement.setFunctionSource   ( "SOURCE_UPC_FENCE_STATEMENT", "../Grammar/Statement.code" );
+     UpcForAllStatement.setFunctionSource   ( "SOURCE_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
 #endif
 
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );

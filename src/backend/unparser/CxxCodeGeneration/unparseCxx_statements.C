@@ -641,7 +641,10 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 //#if USE_UPC_IR_NODES
 //#if UPC_EXTENSIONS_ALLOWED //TODO turn on by default?
 // Liao, 6/13/2008: UPC support
+          case V_SgUpcNotifyStatement:             unparseUpcNotifyStatement(stmt, info); break;
+          case V_SgUpcWaitStatement:             unparseUpcWaitStatement(stmt, info); break;
           case V_SgUpcBarrierStatement:             unparseUpcBarrierStatement(stmt, info); break;
+          case V_SgUpcFenceStatement:             unparseUpcFenceStatement(stmt, info); break;
 
 //#endif 
           default:
@@ -5137,6 +5140,44 @@ Unparse_ExprStmt::unparseTemplateDeclStmt(SgStatement* stmt, SgUnparse_Info& inf
 //#if USE_UPC_IR_NODES //TODO need this?
 //#if UPC_EXTENSIONS_ALLOWED
  // Liao, 6/13/2008, unparsing UPC nodes in the AST
+void
+Unparse_ExprStmt::unparseUpcNotifyStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUpcNotifyStatement* input = isSgUpcNotifyStatement(stmt);
+     ROSE_ASSERT(input != NULL);
+
+     curprint ( string("upc_notify "));
+     SgUnparse_Info ninfo(info);
+
+     if (input->get_notify_expression())
+        {
+          unparseExpression(input->get_notify_expression(), ninfo);
+        }
+
+     if (!ninfo.SkipSemiColon())
+        {
+          curprint ( string(";"));
+        }
+   }
+
+void
+Unparse_ExprStmt::unparseUpcWaitStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+     SgUpcWaitStatement* input = isSgUpcWaitStatement(stmt);
+     ROSE_ASSERT(input != NULL);
+
+     curprint ( string("upc_wait "));
+     SgUnparse_Info ninfo(info);
+
+     if (input->get_wait_expression())
+        {
+          unparseExpression(input->get_wait_expression(), ninfo);
+        }
+     if (!ninfo.SkipSemiColon())
+        {
+          curprint ( string(";"));
+        }
+   }
 
 void
 Unparse_ExprStmt::unparseUpcBarrierStatement(SgStatement* stmt, SgUnparse_Info& info)
@@ -5157,6 +5198,20 @@ Unparse_ExprStmt::unparseUpcBarrierStatement(SgStatement* stmt, SgUnparse_Info& 
           curprint ( string(";"));
         }
    }
+
+void
+Unparse_ExprStmt::unparseUpcFenceStatement(SgStatement* stmt, SgUnparse_Info& info)
+ {
+   SgUpcFenceStatement* input = isSgUpcFenceStatement(stmt);
+   ROSE_ASSERT(input != NULL);
+
+   curprint ( string("upc_fence "));
+   SgUnparse_Info ninfo(info);
+
+   if (!ninfo.SkipSemiColon())
+        curprint ( string(";"));
+ }
+
 //#endif   
  
 #if 0
