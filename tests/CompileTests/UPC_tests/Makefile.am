@@ -6,12 +6,12 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 TESTCODES_REQUIRED_TO_PASS = \
      barrier.upc \
+     fence.upc \
+     notify_wait.upc \
      restrict.upc \
-     shared_2.upc \
      test2004_22.upc 
 TESTCODE_CURRENTLY_FAILING = \
      consistency.upc \
-     fence.upc \
      forall_1.upc \
      forall_affinity.upc \
      forall_continue.upc \
@@ -19,8 +19,8 @@ TESTCODE_CURRENTLY_FAILING = \
      lock.upc \
      max_block_size.upc \
      mythread.upc \
-     notify_wait.upc \
      shared.upc \
+     shared_2.upc \
      sizeof.upc \
      strict.upc \
      threads.upc 

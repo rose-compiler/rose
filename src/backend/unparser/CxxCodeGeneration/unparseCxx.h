@@ -336,7 +336,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 //#if UPC_EXTENSIONS_ALLOWED
 //#if USE_UPC_IR_NODES
       // Liao, 6/13/2008, support UPC nodes
+       virtual void unparseUpcNotifyStatement (SgStatement* stmt, SgUnparse_Info& info);
+       virtual void unparseUpcWaitStatement (SgStatement* stmt, SgUnparse_Info& info);
        virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
+       virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)
