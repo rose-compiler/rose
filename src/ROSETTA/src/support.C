@@ -1221,9 +1221,19 @@ Specifiers that can have only one value (implemented with a protected enum varia
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      SpecialFunctionModifier.setDataPrototype("SgBitVector","modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UPC_AccessModifier.setDataPrototype("SgUPC_AccessModifier::upc_access_modifier_enum", "modifier",
-                "= SgUPC_AccessModifier::e_unknown",
+
+     UPC_AccessModifier.setDataPrototype("SgUPC_AccessModifier::upc_access_modifier_enum", "modifier", "= SgUPC_AccessModifier::e_unknown",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UPC_AccessModifier.setDataPrototype("bool", "isShared","= false",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Note that layout == 0 means allocate all to one thread (what EDG calls "INDEFINITE") (also same as "[]"),
+  //           layout == -1 means no layout was specified (what EDG calls "NONE"), 
+  //           layout == -2 means layout == "*" (what EDG calls "BLOCK")
+  // any non-zero positive value is the block size,
+  // the default is block size == 1 (cyclic distribution).
+     UPC_AccessModifier.setDataPrototype("long", "layout","= -1",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      DeclarationModifier.setDataPrototype("SgBitVector", "modifierVector", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DeclarationModifier.setDataPrototype("SgTypeModifier", "typeModifier", ".reset()",

@@ -137,6 +137,27 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | AsmTypeDoubleQuadWord | AsmType80bitFloat | AsmType128bitFloat |
                              AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector, "AsmType", "AsmTypeTag", false );
 
+#define NEW_ASM_EXECUTABLE_FORMAT_IR_NODES 0
+#if NEW_ASM_EXECUTABLE_FORMAT_IR_NODES
+  // ExecSegment, ExecSection, ExecHeader, ExecFile
+     NEW_TERMINAL_MACRO ( AsmGenericSegment, "AsmGenericSegment", "AsmGenericSegmentTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericSection, "AsmGenericSection", "AsmGenericSectionTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericHeader,  "AsmGenericHeader",  "AsmGenericHeaderTag"  );
+     NEW_TERMINAL_MACRO ( AsmGenericFile,    "AsmGenericFile",    "AsmGenericFileTag"    );
+
+  // ElfFileHeader, ElfSectionTable, ElfSectionTableEntry, ElfSection, 
+  //                ElfSegmentTable, ElfSegmentTableEntry, ElfDynamicSegment, ElfDynamicEntry, 
+  // ElfSymbolSection, ElfSymbol
+     NEW_TERMINAL_MACRO ( AsmElfFile,  "AsmElfFile",    "AsmElfFileTag"    );
+     NEW_TERMINAL_MACRO ( AsmElfSectionTable,  "AsmElfSectionTable",    "AsmElfSectionTableTag"    );
+     NEW_TERMINAL_MACRO ( AsmElfSectionTableEntry,  "AsmElfSectionTableEntry",    "AsmElfSectionTableEntryTag"    );
+     NEW_TERMINAL_MACRO ( AsmElfSection,  "AsmElfSection",    "AsmElfSectionTag"    );
+     NEW_TERMINAL_MACRO ( AsmElfSection,  "AsmElfSection",    "AsmElfSectionTag"    );
+
+
+#endif
+
+
      NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
 
   // DQ (1/6/2008): Added ELF program header and section header support to AST.

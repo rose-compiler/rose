@@ -2306,7 +2306,8 @@ SgModifierType::get_mangled (void) const
   // if (isSync())        mangled_name << "SYN";
   // if (isGlobal())      mangled_name << "GLB";
      if (type_mod.isRestrict())    mangled_name << "RST";
-     if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
+  // if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
+     if (upc_mod.get_isShared())  mangled_name << "SHD";
      if (upc_mod.isUPC_Strict())  mangled_name << "STR";
      if (upc_mod.isUPC_Relaxed()) mangled_name << "RLX";
  
