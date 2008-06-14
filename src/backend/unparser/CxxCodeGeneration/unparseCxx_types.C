@@ -1406,7 +1406,8 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
        // Support for UPC
        // Liao, 6/11/2008. Enable faithful unparsing for .upc files
-          if (mod_type->get_typeModifier().get_upcModifier().isUPC_Shared())
+       // if (mod_type->get_typeModifier().get_upcModifier().isUPC_Shared())
+          if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
              // { curprint ( string("/* shared: upc not supported by vendor compiler (ignored) */ ")); }
              { curprint ("shared ") ; }
           if (mod_type->get_typeModifier().get_upcModifier().isUPC_Strict())

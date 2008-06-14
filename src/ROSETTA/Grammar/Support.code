@@ -390,7 +390,8 @@ HEADER_UPC_ACCESS_MODIFIER_START
             // Bit values can support multiple values in a single enum type
                e_unknown,       /*!< error value */
                e_default,       /*!< default value */
-               e_upc_shared,    /*!< UPC shared */
+            // DQ and Liao (6/13/2008): "shared" can be used with "strict" and "relaxed" so it must be handled separately.
+            // e_upc_shared,    /*!< UPC shared */
                e_upc_strict,    /*!< UPC strict */
                e_upc_relaxed,   /*!< UPC relaxed */
                e_last_modifier  /*!< last value (upper bound on range of values, used in error checking) */
@@ -410,8 +411,8 @@ HEADER_UPC_ACCESS_MODIFIER_START
           bool isDefault() const;
           void setDefault();
 
-          bool isUPC_Shared() const;
-          void setUPC_Shared();
+       // bool isUPC_Shared() const;
+       // void setUPC_Shared();
 
           bool isUPC_Strict() const;
           void setUPC_Strict();
@@ -1464,7 +1465,7 @@ $CLASSNAME::displayString() const
      s += std::string("isCommon() = ")       + std::string(isCommon()       ? "true " : "false ");
      s += std::string("isAssociated() = ")   + std::string(isAssociated()   ? "true " : "false ");
      s += std::string("isIntrinsic() = ")    + std::string(isIntrinsic()    ? "true " : "false ");
-     s += std::string("isPointerBased() = ") + std::string(isPointerBased() ? "true" : "false");
+     s += std::string("isPointerBased() = ") + std::string(isPointerBased() ? "true"  : "false");
 #endif
      s += ")";
      return s;
@@ -1708,8 +1709,8 @@ void $CLASSNAME::setUnknown()      { p_modifier = e_unknown; }
 bool $CLASSNAME::isDefault() const { return p_modifier == e_default; }
 void $CLASSNAME::setDefault()      { p_modifier = e_default; }
 
-bool $CLASSNAME::isUPC_Shared() const { return p_modifier == e_upc_shared; }
-void $CLASSNAME::setUPC_Shared()      { p_modifier = e_upc_shared; }
+// bool $CLASSNAME::isUPC_Shared() const { return p_modifier == e_upc_shared; }
+// void $CLASSNAME::setUPC_Shared()      { p_modifier = e_upc_shared; }
 
 bool $CLASSNAME::isUPC_Strict() const { return p_modifier == e_upc_strict; }
 void $CLASSNAME::setUPC_Strict()      { p_modifier = e_upc_strict; }
@@ -1729,9 +1730,14 @@ $CLASSNAME::displayString() const
      std::string s = "$CLASSNAME(";
      s += std::string("isUnknown() = ")     + std::string(isUnknown()     ? "true " : "false ");
      s += std::string("isDefault() = ")     + std::string(isDefault()     ? "true " : "false ");
-     s += std::string("isUPC_Shared() = ")  + std::string(isUPC_Shared()  ? "true " : "false ");
+  // s += std::string("isUPC_Shared() = ")  + std::string(isUPC_Shared()  ? "true " : "false ");
      s += std::string("isUPC_Strict() = ")  + std::string(isUPC_Strict()  ? "true " : "false ");
      s += std::string("isUPC_Relaxed() = ") + std::string(isUPC_Relaxed() ? "true"  : "false");
+
+  // DQ (6/13/2008): Added support for layout and shared use with "strict" or "relaxed"
+     s += std::string("get_isShared() = ")  + std::string(get_isShared() ? "true " : "false ");
+     s += std::string("get_layout() = ")  + StringUtility::numberToString(get_layout());
+
      s += ")";
      return s;
    }
