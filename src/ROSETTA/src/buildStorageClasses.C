@@ -541,6 +541,11 @@ Terminal::evaluateType(std::string& varTypeString)
         {
              returnType = CHAR_POINTER;
         }
+  // DQ (6/14/2008): Added support for "unsigned char*"
+     else if ( varTypeString == "unsigned char*" )
+        {
+             returnType = CHAR_POINTER;
+        }
      else if ( varTypeString == "AttachedPreprocessingInfoType*" )
         {
      //     varTypeString = varTypeString.substr(0,varTypeString.size()-1) ;
@@ -635,6 +640,12 @@ Terminal::evaluateType(std::string& varTypeString)
        {
           returnType = BIT_VECTOR;
        }
+  // DQ (6/14/2008): Added support for vector of unsigned char
+     else if ( (varTypeString == "$GRAMMAR_PREFIX_CharList" ) || (varTypeString == "SgCharList" ))
+       {
+       // returnType = STRING;
+          returnType = STL_CONTAINER;
+       }
 #if 0
   // DQ (3/10/2007): Added set of SgNode* to the symbol table to support fast existence tests on symbols without names
      else if ( varTypeString == "SgNodeSet" )
@@ -716,6 +727,13 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "ArmInstructionKind" ) ||
                  ( varTypeString == "ArmInstructionCondition" ) ||
                  ( varTypeString == "SgAsmArmRegisterReferenceExpression::arm_register_enum" ) ||
+              // Note that these enum names do not conform to the naming scheme used in ROSE.
+                 ( varTypeString == "Exec::SectionPurpose" ) ||
+                 ( varTypeString == "Exec::InsSetArchitecture" ) ||
+                 ( varTypeString == "Exec::ExecFamily" ) ||
+                 ( varTypeString == "Exec::ExecPurpose" ) ||
+                 ( varTypeString == "Exec::ByteOrder" ) ||
+                 ( varTypeString == "Exec::ExecABI" ) ||
                  false
               )
        {
