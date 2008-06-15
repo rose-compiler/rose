@@ -562,6 +562,36 @@ ExecDLL::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
+void
+parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
+   {
+     ExecFile *ef = new ExecFile(name.c_str());
+    
+     asmFile->set_name(name);
+
+     if (ELF::is_ELF(ef))
+        {
+          ELF::parseBinaryFormat(ef,asmFile);
+        }
+       else
+        {
+          if (PE::is_PE(ef))
+             {
+               PE::parseBinaryFormat(ef,asmFile);
+             }
+            else
+             {
+               delete ef;
+               throw FormatError("unrecognized file format");
+             }
+        }
+
+  // return ef;
+   }
+
+// DQ (6/15/2008): Old function name (confirmed to not be called in ROSE)
+/* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
+ * and return information about the file. */
 ExecFile *
 parse(const char *name)
 {

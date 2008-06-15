@@ -223,6 +223,7 @@ Grammar::setUpBinaryInstructions ()
 
 #if NEW_ASM_EXECUTABLE_FORMAT_IR_NODES
   // We will elimiate: AsmFile, AsmProgramHeader, AsmSectionHeader, AsmProgramHeaderList, AsmSectionHeaderList
+  // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
 #else
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType, "AsmNode","AsmNodeTag");
@@ -282,6 +283,15 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmBlock*","global_block","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmFile.setDataPrototype("SgAsmGenericHeader*","header","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#if 0
+     AsmFile.setDataPrototype("SgAsmFile::elf_machine_architecture_enum", "machine_architecture","= SgAsmFile::e_machine_architecture_error",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFile.setDataPrototype("unsigned long", "associated_entry_point","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (6/15/2008): These are a part of the older design before using Robb's work
   // AsmFile.setDataPrototype("std::vector<unsigned int>", "magic_number_vector","",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // AsmFile.setDataPrototype("SgAsmFile::magic_number_vector_type", "magic_number_vector","",
@@ -329,6 +339,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmSectionHeaderList*", "sectionHeaderList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
      AsmSectionHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
 #if 1

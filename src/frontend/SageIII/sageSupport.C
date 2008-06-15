@@ -1742,6 +1742,7 @@ machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_archit
    }
 
 #if 0
+// Older Binary file format support
 void
 generateBinaryExecutableFileInformation_Windows ( string sourceFilename, SgAsmFile* asmFile )
    {
@@ -2152,23 +2153,21 @@ typedef struct _IMAGE_SECTION_HEADER {
   // Reread the file from the start
      rewind(f);
 
-
-
-
-
-
-
-
-
      printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() \n");
      ROSE_ASSERT(false);
    }
 #endif
- 
+
+
+#if USE_NEW_BINARY_FORMAT_READER == 0
+// Older Binary file format support (from before Robb's newer version)
+
 void
 generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
    {
      ROSE_ASSERT(asmFile != NULL);
+
+     printf ("Inside of generateBinaryExecutableFileInformation_ELF() \n");
 
      ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
 
@@ -2739,15 +2738,50 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
   // printf ("Exiting as a test in generateBinaryExecutableFileInformation() \n");
   // ROSE_ASSERT(false);
    }
-
+// Older Binary file format support
+#endif
  
 void
 generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
    {
   // Need a mechanism to select what kind of binary we will process.
-     generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
 
+#if USE_NEW_BINARY_FORMAT_READER
+     printf ("Calling Exec::parseBinaryFormat() \n");
+  // Exec::ExecFile* binaryFormat = Exec::parseBinaryFormat(sourceFilename,asmFile);
+  // ROSE_ASSERT(binaryFormat != NULL);
+     Exec::parseBinaryFormat(sourceFilename,asmFile);
+
+     asmFile->set_name(sourceFilename);
+
+  // Hard wire this for the moment while I work on getting Robb's work into place...
+     asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+
+#if 0
+  // These seem to be the relavant values that are set in the code above (i.e. in generateBinaryExecutableFileInformation_ELF())
+     asmFile->set_binary_class_type(SgAsmFile::e_class_32);
+     asmFile->set_binary_class_type(SgAsmFile::e_class_64);
+     asmFile->set_binary_class_type(SgAsmFile::e_class_none);
+     asmFile->set_binary_class_type(SgAsmFile::e_class_unknown);
+
+     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_none);
+     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_least_significant_byte);
+     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_most_significant_byte);
+     asmFile->set_version(SgAsmFile::e_version_none);
+     asmFile->set_version(SgAsmFile::e_version_current);
+     asmFile->set_object_file_type(object_file_kind);
+     asmFile->set_machine_architecture(machine_architecture_kind);
+#endif
+
+  // While we debug this case ...
+     printf ("Exiting at base of generateBinaryExecutableFileInformation() for sourceFilename = %s \n",sourceFilename.c_str());
+     ROSE_ASSERT(false);
+
+#else
+     printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
+     generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
   // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+#endif
    }
 
 void
@@ -4849,21 +4883,28 @@ SgFile::callFrontEnd ()
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
-                         switch (asmFile->get_machine_architecture()) {
-                           case SgAsmFile::e_machine_architecture_Intel_80386:
-                           case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:
-                             X86Disassembler::disassembleFile(asmFile);
-                             break;
+                         switch (asmFile->get_machine_architecture())
+                            {
+                              case SgAsmFile::e_machine_architecture_Intel_80386:
+                              case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:
+                                   X86Disassembler::disassembleFile(asmFile);
+                                   break;
 
-                           case SgAsmFile::e_machine_architecture_ARM:
-                             ArmDisassembler::disassembleFile(asmFile);
-                             break;
+                              case SgAsmFile::e_machine_architecture_ARM:
+                                   ArmDisassembler::disassembleFile(asmFile);
+                                   break;
 
-                           default: {
-                             cerr << "Cannot handle files with this architecture -- not disassembling" << endl;
-                             asmFile->set_global_block(new SgAsmBlock()); // To prevent crashes
-                           }
-                         }
+                              default:
+                                 {
+                                   cerr << "Cannot handle files with this architecture -- not disassembling" << endl;
+
+                                // To prevent crashes
+                                   asmFile->set_global_block(new SgAsmBlock());
+
+                                   printf ("This is an error, machine_architecture was not recognised as supported \n");
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);

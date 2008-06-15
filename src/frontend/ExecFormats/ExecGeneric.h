@@ -8,6 +8,10 @@
 #include <string>
 #include <vector>
 
+// Added support to include ROSE IR nodes, to support translation
+// #include "rose.h"
+class SgAsmFile;
+
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
 #define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
 
@@ -493,7 +497,13 @@ class ExecDLL {
 };
 
 
+// DQ (6/15/2008): Picking a better name, using "parse" is a compiler project is difficult to trace.
+// ExecFile *parse(const char *name);
 ExecFile *parse(const char *name);
+
+// DQ (6/15/2008): I have restored the previous function and written another one for use in ROSE.
+// ExecFile *parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
+void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
 
 /* Return byte order of caller */
 inline ByteOrder host_order() {

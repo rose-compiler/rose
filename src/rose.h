@@ -109,6 +109,8 @@
 // Endian access wrappers in src/frontend/SageIII/sageInterface
   #include "endianWrappers.h"
 
+#define USE_NEW_BINARY_FORMAT_READER 0
+
 // Files in src/frontend/ExecFormats
   #include "ExecGeneric.h"
   #include "ExecELF.h"

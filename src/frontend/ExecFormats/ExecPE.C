@@ -722,6 +722,46 @@ done:
         
 /* Parses the structure of a PE file and adds the information to the ExecFile. */
 void
+parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
+   {
+     ROSE_ASSERT(f != NULL);
+     ROSE_ASSERT(asmFile != NULL);
+
+  /* The MS-DOS real-mode "MZ" file header, which is always the first 64 bytes of the file */
+     ROSE_ASSERT(sizeof(DOSFileHeader_disk)==64);
+     DOSFileHeader *dos_header = new DOSFileHeader(f, 0);
+
+  /* The MS-DOS real-mode stub program sits between the DOS file header and the PE file header */
+  /* FIXME: this should be an executable segment. What is the entry address? */
+     size_t dos_stub_offset = dos_header->end_offset();
+     ROSE_ASSERT(dos_header->e_lfanew > dos_stub_offset);
+     size_t dos_stub_size = dos_header->e_lfanew - dos_stub_offset;
+     if (dos_stub_size>0)
+        {
+          ExecSection *dos_stub = new ExecSection(f, dos_stub_offset, dos_stub_size);
+          dos_stub->set_name("DOS real-mode stub");
+          dos_stub->set_synthesized(true);
+          dos_stub->set_purpose(SP_PROGRAM);
+        }
+    
+  /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
+     PEFileHeader *pe_header = new PEFileHeader(f, dos_header->e_lfanew);
+     ROSE_ASSERT(pe_header->e_num_rvasize_pairs < 1000); /* just a sanity check before we allocate memory */
+     pe_header->add_rvasize_pairs();
+
+  /* Construct the segments and their sections */
+     new ObjectTable(pe_header);
+
+  /* Parse the COFF symbol table */
+     if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms)
+          new COFFSymtab(f, pe_header);
+
+  /* Identify parts of the file that we haven't encountered during parsing */
+     f->fill_holes();
+   }
+
+
+void
 parse(ExecFile *f)
 {
     ROSE_ASSERT(f);

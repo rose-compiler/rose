@@ -2986,7 +2986,11 @@ done:
   struct AsmFileWithData {
     SgAsmFile* f;
     vector<uint8_t> data;
+#if USE_NEW_BINARY_FORMAT_READER
+    map<uint64_t, SgAsmGenericSection*> sectionsByAddress;
+#else
     map<uint64_t, SgAsmSectionHeader*> sectionsByAddress;
+#endif
     mutable size_t instructionsDisassembled;
 
     AsmFileWithData(SgAsmFile* f): f(f), instructionsDisassembled(0) {
@@ -3006,8 +3010,17 @@ done:
         data.insert(data.end(), buffer, buffer + status);
       }
       close(fd);
+
+#if USE_NEW_BINARY_FORMAT_READER
+   // Moving to the use of Robb's newer executable format reader...
+   // const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
+      const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
+#else
       ROSE_ASSERT (f->get_sectionHeaderList());
       const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
+#endif
+
+
       for (size_t i = 0; i < sections.size(); ++i) {
         if (sections[i]) {
           sectionsByAddress.insert(std::make_pair(sections[i]->get_starting_memory_address(), sections[i]));
@@ -3015,25 +3028,47 @@ done:
       }
     }
 
-    SgAsmSectionHeader* getSectionOfAddress(uint64_t addr) const {
+#if USE_NEW_BINARY_FORMAT_READER
+    SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const
+#else
+    SgAsmSectionHeader* getSectionOfAddress(uint64_t addr) const
+#endif
+       {
       // map<uint64_t, SgAsmSectionHeader*>::const_iterator i = sectionsByAddress.lower_bound(addr);
       // if (i == sectionsByAddress.end()) return NULL;
+
+#if USE_NEW_BINARY_FORMAT_READER
+   // Moving to the use of Robb's newer executable format reader...
+   // const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
+      const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
+#else
       ROSE_ASSERT (f->get_sectionHeaderList());
       const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
+#endif
+
       for (size_t i = 0; i < sections.size(); ++i) {
-        // SgAsmSectionHeader* section = i->second;
+#if USE_NEW_BINARY_FORMAT_READER
+        SgAsmGenericSection* section = sections[i];
+#else
+     // SgAsmSectionHeader* section = i->second;
         SgAsmSectionHeader* section = sections[i];
+#endif
         if (addr >= section->get_starting_memory_address() &&
             addr < section->get_starting_memory_address() + section->get_size() &&
-            (section->get_flags() & 2) != 0 /* ALLOC */) {
-          return section;
-        }
+            (section->get_flags() & 2) != 0 /* ALLOC */)
+           {
+             return section;
+           }
       }
       return NULL;
     }
 
     bool inCodeSegment(uint64_t addr) const {
+#if USE_NEW_BINARY_FORMAT_READER
+      SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
+#else
       SgAsmSectionHeader* sectionOfThisPtr = getSectionOfAddress(addr);
+#endif
       if (sectionOfThisPtr != NULL &&
           (sectionOfThisPtr->get_type() == SHT_PROGBITS) &&
           (sectionOfThisPtr->get_flags() & 2) != 0 /* ALLOC */ &&
@@ -3044,7 +3079,11 @@ done:
     }
 
     size_t getFileOffsetOfAddress(uint64_t addr) const {
+#if USE_NEW_BINARY_FORMAT_READER
+      SgAsmGenericSection* section = getSectionOfAddress(addr);
+#else
       SgAsmSectionHeader* section = getSectionOfAddress(addr);
+#endif
       if (!section) abort();
       ROSE_ASSERT (section->get_type() != SHT_NOBITS);
       return addr - section->get_starting_memory_address() + section->get_starting_file_offset();
@@ -3052,7 +3091,11 @@ done:
 
     SgAsmx86Instruction* disassembleOneAtAddress(uint64_t addr, Parameters params, set<uint64_t>& knownSuccessors) const {
       params.ip = addr;
+#if USE_NEW_BINARY_FORMAT_READER
+      SgAsmGenericSection* section = getSectionOfAddress(addr);
+#else
       SgAsmSectionHeader* section = getSectionOfAddress(addr);
+#endif
       if (!section) return 0;
       size_t fileOffset = addr - section->get_starting_memory_address() + section->get_starting_file_offset();
       try {
@@ -3211,11 +3254,21 @@ done:
     basicBlockStarts[f->get_associated_entry_point()] = true;
     functionStarts.insert(f->get_associated_entry_point());
     file.disassembleRecursively(f->get_associated_entry_point(), p, insns, basicBlockStarts, functionStarts);
+
+#if USE_NEW_BINARY_FORMAT_READER
+    const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
+#else
     ROSE_ASSERT (f->get_sectionHeaderList());
     const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
+#endif
+
     size_t pointerSize = (p.insnSize == x86_insnsize_64 ? 8 : p.insnSize == x86_insnsize_32 ? 4 : 2);
     for (size_t i = 0; i < sections.size(); ++i) {
+#if USE_NEW_BINARY_FORMAT_READER
+      SgAsmGenericSection* sect = sections[i];
+#else
       SgAsmSectionHeader* sect = sections[i];
+#endif
       if (sect->get_type() != SHT_NOBITS && sect->get_type() != SHT_NULL) {
         // Scan for pointers to code
         uint64_t endOffset = sect->get_starting_file_offset() + sect->get_size();

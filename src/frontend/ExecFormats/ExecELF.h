@@ -408,8 +408,11 @@ class ElfSymbolSection : public ElfSection {
 
 /* Functions */
 bool is_ELF(ExecFile*);
+
+void parseBinaryFormat(ExecFile*, SgAsmFile* asmFile);
+
 void parse(ExecFile*);
-    
+
 }; //namespace ELF
 }; //namespace Exec
 

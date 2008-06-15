@@ -366,8 +366,11 @@ class COFFSymtab : public ExecSection {
 
 /* Functions */
 bool is_PE(ExecFile*);
+
+void parseBinaryFormat(ExecFile*, SgAsmFile* asmFile);
+
 void parse(ExecFile*);
-    
+
 }; //namespace PE
 }; //namespace Exec
 
