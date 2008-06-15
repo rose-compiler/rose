@@ -2784,6 +2784,49 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 #endif
    }
 
+
+
+SgAsmElfHeader::
+SgAsmElfHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
+   {
+  // Conversion of Robb's data structures to ROSE IR nodes.
+
+     printf ("Inside of SgAsmElfHeader constructor \n");
+
+     set_e_ident_file_class(elf_file_header->e_ident_file_class);
+     set_e_ident_data_encoding(elf_file_header->e_ident_data_encoding);
+     set_e_ident_file_version(elf_file_header->e_ident_file_version);
+
+     SgCharList charList;
+     for (int i = 0; i < 9; i++)
+          charList.push_back(elf_file_header->e_ident_padding[i]);
+     set_e_ident_padding(charList);
+
+     set_e_type(elf_file_header->e_type);
+     set_e_machine(elf_file_header->e_machine);
+     set_e_version(elf_file_header->e_version);
+     set_e_entry(elf_file_header->e_entry);
+     set_e_phoff(elf_file_header->e_phoff);
+     set_e_shoff(elf_file_header->e_shoff);
+     set_e_flags(elf_file_header->e_flags);
+     set_e_ehsize(elf_file_header->e_ehsize);
+     set_e_phentsize(elf_file_header->e_phentsize);
+     set_e_phnum(elf_file_header->e_phnum);
+     set_e_shentsize(elf_file_header->e_shentsize);
+     set_e_shnum(elf_file_header->e_shnum);
+     set_e_shstrndx(elf_file_header->e_shstrndx);
+
+     set_section_table(NULL); 
+     set_segment_table(NULL);
+
+  // printf ("Exiting at base of SgAsmElfHeader constructor \n");
+  // ROSE_ASSERT(false);
+   }
+ 
+
+
+
+
 void
 SgFile::setupSourceFilename ( const vector<string>& argv )
    {

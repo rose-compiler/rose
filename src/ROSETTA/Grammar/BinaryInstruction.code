@@ -364,6 +364,12 @@ HEADER_GENERIC_ARCHITECTURE_START
 HEADER_GENERIC_ARCHITECTURE_END
 
 HEADER_ELF_HEADER_START
+
+       // Forward reference
+       // class Exec::ELF::ElfFileHeader;
+       //   AsmElfHeader
+          SgAsmElfHeader ( Exec::ELF::ElfFileHeader* elf_file_header );
+
 HEADER_ELF_HEADER_END
 
 HEADER_ELF_SECTION_TABLE_START
