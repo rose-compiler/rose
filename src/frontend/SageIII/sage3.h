@@ -203,6 +203,15 @@ using namespace __gnu_cxx;
 #define SKIP_BLOCK_NUMBER_CACHING 0
 #define SKIP_MANGLED_NAME_CACHING 0
 
+// DQ (6/15/2008): This had to be moved here so taht source files only including "sage3.h"
+// would see the required declarations (now that "Cxx_Grammar.h" references declarations in
+// the "Exec" namespace.
+// Files in src/frontend/ExecFormats
+// This is included in the "ExecELF.h" and "ExecPE.h" files already.
+// #include "ExecGeneric.h"
+  #include "ExecELF.h"
+  #include "ExecPE.h"
+
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).
 #include <Cxx_Grammar.h>

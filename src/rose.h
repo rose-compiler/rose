@@ -3,6 +3,16 @@
 #ifndef ROSE_H
 #define ROSE_H
 
+#if 0
+// Forward references to namespaces used in the binary execuable file format support.
+namespace Exec{
+namespace ELF{
+   int xxx;
+}
+   int xxx;
+}
+#endif
+
 #include "sage3.h"
 #include "roseInternal.h"
 
@@ -111,10 +121,12 @@
 
 #define USE_NEW_BINARY_FORMAT_READER 0
 
+#if 0
 // Files in src/frontend/ExecFormats
   #include "ExecGeneric.h"
   #include "ExecELF.h"
   #include "ExecPE.h"
+#endif
 
 // added .h file for error check transformations
 #include "RuntimeInstrumentation.h"
