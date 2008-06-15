@@ -801,7 +801,10 @@ pdf_wrapup_document(PDF *p)
     /* Don't write any object after this check! */
     for (i = 1; i <= p->currentobj; i++) {
 	if (p->file_offset[i] == BAD_ID) {
-	    pdf_error(p, PDF_NonfatalError, "Object %ld allocated but not used", i);
+
+    // DQ (6/14/2008): This is a relatively new problem, but it is annoying and not a serious error, so I will comment it out for now.
+    // pdf_error(p, PDF_NonfatalError, "Object %ld allocated but not used", i);
+
 	    pdf_begin_obj(p, i);
 	    pdf_end_obj(p);
 	}

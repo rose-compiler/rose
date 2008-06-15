@@ -168,7 +168,7 @@ CxxGrammarMetaProgram_LDADD = $(top_builddir)/src/util/libroseutil.la
 # $(top_builddir)/util/libroseutil.so:
 #	cd $(top_builddir)/util; $(MAKE)
 
-CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD) 
+CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
 
 
 # Force recompilation of source files if any of the header files 

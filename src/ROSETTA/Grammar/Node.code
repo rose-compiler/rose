@@ -4,6 +4,9 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include "sage3.h"
 
+// DQ (6/14/2008): Include the Exec format support.
+#include "ExecGeneric.h"
+
 class mutex
    {
   // This class was added by Valentin David (summer of 2007) as part of support for Stratego using a Java interface.
@@ -70,11 +73,29 @@ typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrLis
 typedef std::list<SgAsmBlock*>              SgAsmBlockPtrList;
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
 
+// DQ (6/14/2008): This will be removed at some point.
 typedef Rose_STL_Container<SgAsmSectionHeader*> SgAsmSectionHeaderPtrList;
 typedef SgAsmSectionHeaderPtrList*              SgAsmSectionHeaderPtrListPtr;
 
+// DQ (6/14/2008): This will be removed at some point.
 typedef Rose_STL_Container<SgAsmProgramHeader*> SgAsmProgramHeaderPtrList;
 typedef SgAsmProgramHeaderPtrList*              SgAsmProgramHeaderPtrListPtr;
+
+// DQ (6/14/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmGenericSection*> SgAsmGenericSectionPtrList;
+typedef SgAsmGenericSectionPtrList*              SgAsmGenericSectionPtrListPtr;
+
+// DQ (6/14/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmGenericSegment*> SgAsmGenericSegmentPtrList;
+typedef SgAsmGenericSegmentPtrList*              SgAsmGenericSegmentPtrListPtr;
+
+// DQ (6/14/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
+typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
+
+// DQ (6/14/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
+typedef SgAsmElfSymbolPtrList*              SgAsmElfSymbolPtrListPtr;
 
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
@@ -101,8 +122,11 @@ class SgAttribute;
 typedef Rose_STL_Container<SgAttribute*>    SgAttributePtrList;
 typedef SgAttributePtrList*                 SgAttributePtrListPtr;
 
-typedef Rose_STL_Container<char*>           SgCharPtrList;
-typedef SgCharPtrList*                      SgCharPtrListPtr;
+// DQ (6/14/2008): I think this should be unsigned char
+// typedef Rose_STL_Container<char*>           SgCharPtrList;
+// typedef SgCharPtrList*                      SgCharPtrListPtr;
+typedef Rose_STL_Container<unsigned char>   SgCharList;
+typedef SgCharList*                      SgCharListPtr;
 
 typedef SgExpression*                       SgExpressionPtr;
 typedef SgStatement*                        SgStatementPtr;
