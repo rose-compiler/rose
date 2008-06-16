@@ -106,7 +106,7 @@ ExecFormat::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 ExecFile::ctor(std::string fileName)
 {
-    if ((fd=open(fileName.c_str(), O_RDONLY))<0 || fstat(fd, &sb)<0) {
+    if ((fd=open(fileName.c_str(), O_RDONLY))<0 || fstat64(fd, &sb)<0) {
         throw FormatError("Could not open binary file: " + fileName);
     }
     if (NULL==(data=(unsigned char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {

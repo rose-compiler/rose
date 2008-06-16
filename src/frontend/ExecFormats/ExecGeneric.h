@@ -325,7 +325,7 @@ class ExecFile {
   private:
     void ctor(std::string file_name);
     int                 fd;                             /* File descriptor opened for read-only (or negative) */
-    struct stat         sb;                             /* File attributes at time of file open (valid if fd>=0) */
+    struct stat64       sb;                             /* File attributes at time of file open (valid if fd>=0) */
     unsigned char       *data;                          /* Content of file mapped into memory   (or null on file error) */
     std::vector<ExecSection*> sections;                 /* All known sections for this file */
     std::vector<ExecHeader*> headers;                   /* All format headers belonging to this file */

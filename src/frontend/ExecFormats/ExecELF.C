@@ -986,11 +986,11 @@ is_ELF(ExecFile *f)
 
 /* Parses the structure of an ELF file and adds the information to the ExecFile */
 void
-parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
+parseBinaryFormat(ExecFile *ef, SgAsmFile* asmFile)
 {
-    ROSE_ASSERT(f);
+    ROSE_ASSERT(ef);
     
-    ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
+    ElfFileHeader *fhdr = new ElfFileHeader(ef, 0);
 
     ROSE_ASSERT(fhdr != NULL);
     SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
@@ -1015,7 +1015,7 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
     }
 
     /* Identify parts of the file that we haven't encountered during parsing */
-    f->fill_holes();
+    ef->fill_holes();
 }
     
 }; //namespace ELF
