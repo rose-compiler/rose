@@ -279,11 +279,11 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Object Table
+// PE Segments and segment table (a.k.a., "object table")
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-ObjectTableEntry::ctor(const ObjectTableEntry_disk *disk)
+PEObjectTableEntry::ctor(const PEObjectTableEntry_disk *disk)
 {
     char name[9];
     strncpy(name, disk->name, 8);
@@ -303,13 +303,13 @@ ObjectTableEntry::ctor(const ObjectTableEntry_disk *disk)
 
 /* Prints some debugging info */
 void
-ObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+PEObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sObjectTableEntry[%zd].", prefix, idx);
+        sprintf(p, "%sPEObjectTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sObjectTableEntry.", prefix);
+        sprintf(p, "%sPEObjectTableEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -322,21 +322,35 @@ ObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                  p, w, "reserved[2]",     reserved[2]);
     fprintf(f, "%s%-*s = 0x%08x\n",              p, w, "flags",           flags);
 }
-    
+
+/* Print some debugging info. */
+void
+PESegment::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPESegment[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPESegment.", prefix);
+    }
+
+    ExecSegment::dump(f, p, -1);
+    st_entry->dump(f, p, -1);
+}
+
 /* Constructor */
 void
-ObjectTable::ctor(PEFileHeader *fhdr)
+PEObjectTable::ctor(PEFileHeader *fhdr)
 {
     set_synthesized(true);
     set_name("PE Object Table");
     set_purpose(SP_HEADER);
     
-    const size_t entsize = sizeof(ObjectTableEntry_disk);
+    const size_t entsize = sizeof(PEObjectTableEntry_disk);
     for (size_t i=0; i<fhdr->e_nobjects; i++) {
         /* Parse the object table entry */
-        const ObjectTableEntry_disk *disk = (const ObjectTableEntry_disk*)content(i*entsize, entsize);
-        ObjectTableEntry *entry = new ObjectTableEntry(disk);
-        entries.push_back(entry);
+        const PEObjectTableEntry_disk *disk = (const PEObjectTableEntry_disk*)content(i*entsize, entsize);
+        PEObjectTableEntry *entry = new PEObjectTableEntry(disk);
         
         /* Use the entry to define a segment in a synthesized section */
         ExecSection *section = new ExecSection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
@@ -345,14 +359,15 @@ ObjectTable::ctor(PEFileHeader *fhdr)
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
 
-        ExecSegment *segment = NULL;
+        PESegment *segment = NULL;
         if (0==entry->name.compare(".idata")) {
-            segment = new ImportSegment(fhdr, section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+            segment = new PEImportSegment(fhdr, section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         } else {
-            segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+            segment = new PESegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         }
 
         segment->set_name(entry->name);
+        segment->set_st_entry(entry);
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
         if (entry->flags & OF_EXECUTABLE)
@@ -364,21 +379,15 @@ ObjectTable::ctor(PEFileHeader *fhdr)
 
 /* Prints some debugging info */
 void
-ObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
+PEObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sObjectTable[%zd].", prefix, idx);
+        sprintf(p, "%sPEObjectTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sObjectTable.", prefix);
+        sprintf(p, "%sPEObjectTable.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
     ExecSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", entries.size());
-    for (size_t i=0; i<entries.size(); i++) {
-        entries[i]->dump(f, p, i);
-    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -387,7 +396,7 @@ ObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-ImportDirectory::ctor(const ImportDirectory_disk *disk)
+PEImportDirectory::ctor(const PEImportDirectory_disk *disk)
 {
     hintnames_rva   = le_to_host(disk->hintnames_rva);
     time            = le_to_host(disk->time);
@@ -398,13 +407,13 @@ ImportDirectory::ctor(const ImportDirectory_disk *disk)
 
 /* Print debugging info */
 void
-ImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
+PEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sImportDirectory[%zd].", prefix, idx);
+        sprintf(p, "%sPEImportDirectory[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sImportDirectory.", prefix);
+        sprintf(p, "%sPEImportDirectory.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -417,9 +426,9 @@ ImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-ImportHintName::ctor(ExecSection *section, addr_t offset)
+PEImportHintName::ctor(ExecSection *section, addr_t offset)
 {
-    const ImportHintName_disk *disk = (const ImportHintName_disk*)section->content(offset, sizeof(*disk));
+    const PEImportHintName_disk *disk = (const PEImportHintName_disk*)section->content(offset, sizeof(*disk));
     hint = le_to_host(disk->hint);
     name = section->content_str(offset+sizeof(*disk));
     padding = name.size() % 2 ? *(section->content(offset+sizeof(*disk)+name.size()+1, 1)) : '\0';
@@ -427,7 +436,7 @@ ImportHintName::ctor(ExecSection *section, addr_t offset)
 
 /* Print debugging info */
 void
-ImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
+PEImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
@@ -444,18 +453,18 @@ ImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-ImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+PEImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
 {
-    size_t entry_size = sizeof(ImportDirectory_disk);
-    ImportDirectory_disk zero;
+    size_t entry_size = sizeof(PEImportDirectory_disk);
+    PEImportDirectory_disk zero;
     memset(&zero, 0, sizeof zero);
 
     /* Read idata directory entries--one per DLL*/
     for (size_t i=0; 1; i++) {
         /* End of list is marked by an entry of all zero. */
-        const ImportDirectory_disk *idir_disk = (const ImportDirectory_disk*)section->content(i*entry_size, entry_size);
+        const PEImportDirectory_disk *idir_disk = (const PEImportDirectory_disk*)section->content(i*entry_size, entry_size);
         if (!memcmp(&zero, idir_disk, sizeof zero)) break;
-        ImportDirectory *idir = new ImportDirectory(idir_disk);
+        PEImportDirectory *idir = new PEImportDirectory(idir_disk);
         dirs.push_back(idir);
 
         /* The library's name is indicated by RVA. We need a section offset instead. */
@@ -480,7 +489,7 @@ ImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, add
             hintnames_offset += sizeof(uint32_t);
             if (0==hint_rva) break; /*list of RVAs is null terminated */
             addr_t hint_offset = get_offset() + hint_rva - get_mapped_rva();
-            ImportHintName *hintname = new ImportHintName(section, hint_offset);
+            PEImportHintName *hintname = new PEImportHintName(section, hint_offset);
             dll->add_function(hintname->get_name());
 
             /* FIXME: do something with binding */
@@ -494,16 +503,16 @@ ImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, add
 
 /* Print debugging info */
 void
-ImportSegment::dump(FILE *f, const char *prefix, ssize_t idx)
+PEImportSegment::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sImportSegment[%zd].", prefix, idx);
+        sprintf(p, "%sPEImportSegment[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sImportSegment.", prefix);
+        sprintf(p, "%sPEImportSegment.", prefix);
     }
     
-    ExecSegment::dump(f, p, -1);
+    PESegment::dump(f, p, -1);
     for (size_t i=0; i<dirs.size(); i++)
         dirs[i]->dump(f, p, i);
 }
@@ -816,7 +825,7 @@ parse(ExecFile *ef)
     pe_header->add_rvasize_pairs();
 
     /* Construct the segments and their sections */
-    new ObjectTable(pe_header);
+    new PEObjectTable(pe_header);
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms) {

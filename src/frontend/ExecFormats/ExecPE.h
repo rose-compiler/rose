@@ -172,13 +172,14 @@ class PEFileHeader : public ExecHeader {
   private:
     void ctor(ExecFile *f, addr_t offset);
 };
+
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Object Table
+// PE Objects (segments) and table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* File format of an object table entry. All fields are little endian. Objects are ordered by RVA. */
-struct ObjectTableEntry_disk {
+struct PEObjectTableEntry_disk {
     char        name[8];                /* NUL-padded */
     uint32_t    virtual_size;           /* virtual memory size (bytes), >= physical_size and difference is zero filled */
     uint32_t    rva;                    /* relative virtual address wrt Image Base; multiple of object_align; dense space */
@@ -189,7 +190,7 @@ struct ObjectTableEntry_disk {
 };
 
 /* These come from the windows PE documentation and http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
-enum ObjectFlags {
+enum PEObjectFlags {
     OF_CODE             = 0x00000020,   /* section contains code */
     OF_IDATA            = 0x00000040,   /* initialized data */
     OF_UDATA            = 0x00000080,   /* uninitialized data */
@@ -223,11 +224,11 @@ enum ObjectFlags {
     OF_WRITABLE         = 0x80000000,   /* write permission */
 };
 
-class ObjectTableEntry {
+class PEObjectTableEntry {
   public:
-    ObjectTableEntry(const ObjectTableEntry_disk *disk)
+    PEObjectTableEntry(const PEObjectTableEntry_disk *disk)
         {ctor(disk);}
-    virtual ~ObjectTableEntry() {};
+    virtual ~PEObjectTableEntry() {};
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* These are the native-format versions of the same members described in the ObjectTableEntry_disk struct. */
@@ -236,18 +237,35 @@ class ObjectTableEntry {
     unsigned    reserved[3], flags;
 
   private:
-    void ctor(const ObjectTableEntry_disk*);
+    void ctor(const PEObjectTableEntry_disk*);
 };
 
-class ObjectTable : public ExecSection {
+class PESegment : public ExecSegment {
   public:
-    ObjectTable(PEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(ObjectTableEntry_disk)) {ctor(fhdr);}
-    virtual ~ObjectTable() {}
+    PESegment(ExecSection *sect, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+        : ExecSegment(sect, offset, size, rva, mapped_size)
+        {}
+    virtual ~PESegment() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data */
+    PEObjectTableEntry *get_st_entry() {return st_entry;}
+    void set_st_entry(PEObjectTableEntry *e) {st_entry=e;}
+
+  private:
+    PEObjectTableEntry    *st_entry;
+};
+
+/* The table entries are stored in the segments themselves. We can reconstruct the table by realizing that the segments each
+ * live in their own section and the section IDs are generated from the table entry indices. */
+class PEObjectTable : public ExecSection {
+  public:
+    PEObjectTable(PEFileHeader *fhdr)
+        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(PEObjectTableEntry_disk)) {ctor(fhdr);}
+    virtual ~PEObjectTable() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(PEFileHeader*);
-    std::vector<ObjectTableEntry*> entries;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -258,7 +276,7 @@ class ObjectTable : public ExecSection {
 // all the functions needed from that DLL.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct ImportDirectory_disk {
+struct PEImportDirectory_disk {
     uint32_t            hintnames_rva;          /* address (RVA) of array of addresses (RVAs) of hint/name pairs */
     uint32_t            time;
     uint32_t            forwarder_chain;
@@ -266,31 +284,31 @@ struct ImportDirectory_disk {
     uint32_t            bindings_rva;           /* address (RVA) of array of object addresses after binding to DLL */
 };
 
-class ImportDirectory {
+class PEImportDirectory {
   public:
-    ImportDirectory(const ImportDirectory_disk *disk) {ctor(disk);}
-    virtual ~ImportDirectory() {}
+    PEImportDirectory(const PEImportDirectory_disk *disk) {ctor(disk);}
+    virtual ~PEImportDirectory() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     addr_t              hintnames_rva, bindings_rva, dll_name_rva;
     time_t              time;
     unsigned            forwarder_chain;
   private:
-    void ctor(const ImportDirectory_disk*);
+    void ctor(const PEImportDirectory_disk*);
 };
 
 /* Hint/name pairs */
-struct ImportHintName_disk {
+struct PEImportHintName_disk {
     uint16_t            hint;                   /* Possible index into lib's export name pointer table */
     /* NUL-terminated name follows */
     /* Optional byte to pad struct to an even number of bytes */
 };
 
-class ImportHintName {
+class PEImportHintName {
   public:
-    ImportHintName(ExecSection *section, addr_t offset)
+    PEImportHintName(ExecSection *section, addr_t offset)
         : hint(0), padding('\0')
         {ctor(section, offset);}
-    virtual ~ImportHintName() {};
+    virtual ~PEImportHintName() {};
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     void set_name(std::string name) {this->name=name;}
     std::string get_name() {return name;}
@@ -301,16 +319,16 @@ class ImportHintName {
     unsigned char padding;
 };
 
-class ImportSegment : public ExecSegment {
+class PEImportSegment : public PESegment {
   public:
-    ImportSegment(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
-        : ExecSegment(section, offset, size, rva, mapped_size)
+    PEImportSegment(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+        : PESegment(section, offset, size, rva, mapped_size)
         {ctor(fhdr, section, offset, size, rva, mapped_size);}
-    virtual ~ImportSegment() {}
+    virtual ~PEImportSegment() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(PEFileHeader*, ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
-    std::vector<ImportDirectory*> dirs;
+    std::vector<PEImportDirectory*> dirs;
 };
 
 
