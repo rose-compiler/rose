@@ -163,26 +163,32 @@ class ElfSection : public ExecSection {
         {ctor(fhdr, shdr);}
     virtual ~ElfSection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    virtual void set_linked_section(ElfSection *sec) {linked_section=sec;}
+
+    /* Accessors for protected/private data members */
     ElfSection *get_linked_section() {return linked_section;}
+    virtual void set_linked_section(ElfSection *sec) {linked_section=sec;}
+    ElfSectionTableEntry *get_st_entry() {return st_entry;}
+    void set_st_entry(ElfSectionTableEntry *e) {st_entry=e;}
+
   private:
     void ctor(ElfFileHeader*, ElfSectionTableEntry*);
     ElfSection *linked_section;
+    ElfSectionTableEntry *st_entry;
 };
 
 /* The section table is just a synthesized file section containing an array of section table entries (i.e., array of section
- * headers) */
+ * headers). The section table entry info parsed from the file is stored with its corresponding section rather than here. We
+ * can reconstruct the section table since sections have unique ID numbers that are their original indices in the section table
+ * entry array. */
 class ElfSectionTable : public ExecSection {
   public:
     ElfSectionTable(ElfFileHeader *fhdr)
         : ExecSection(fhdr->get_file(), fhdr->e_shoff, fhdr->e_shnum*fhdr->e_shentsize)
         {ctor(fhdr);}
     virtual ~ElfSectionTable() {}
-    ElfSectionTableEntry *lookup(addr_t offset, addr_t size);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader *fhdr);    
-    std::vector<ElfSectionTableEntry*> entries;
 };
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -413,7 +419,7 @@ class ElfSymbolSection : public ElfSection {
 /* Functions */
 bool is_ELF(ExecFile*);
 void parseBinaryFormat(ExecFile*, SgAsmFile* asmFile);
-void parse(ExecFile*);
+ElfFileHeader *parse(ExecFile*);
 
 }; //namespace ELF
 }; //namespace Exec

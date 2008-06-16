@@ -252,6 +252,7 @@ ElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     ExecSection::dump(f, p, -1);
+    st_entry->dump(f, p, -1);
     if (linked_section) {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%" PRIu64 ", %" PRIu64 " bytes\n", p, w, "linked_to",
                 linked_section->get_id(), linked_section->get_name().c_str(),
@@ -318,6 +319,7 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
         
         /* Read all the section headers. We can't just cast this to an array like with other structs because
          * the ELF header specifies the size of each entry. */
+        std::vector<ElfSectionTableEntry*> entries;
         addr_t offset=0;
         for (size_t i=0; i<fhdr->e_shnum; i++, offset+=fhdr->e_shentsize) {
             ElfSectionTableEntry *shdr = NULL;
@@ -340,6 +342,7 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
             ElfSectionTableEntry *shdr = entries[fhdr->e_shstrndx];
             strtab = new ElfSection(fhdr, shdr);
             strtab->set_id(fhdr->e_shstrndx);
+            strtab->set_st_entry(shdr);
             strtab->set_name(strtab->content_str(shdr->sh_name));
         }
         
@@ -359,6 +362,7 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
                 break;
             }
             section->set_id(i);
+            section->set_st_entry(shdr);
             if (strtab)
                 section->set_name(strtab->content_str(shdr->sh_name));
         }
@@ -402,23 +406,6 @@ ElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = %s\n",                        p, w, "extra",          "<FIXME>");
 }
 
-/* Look up a section based on some range of file addresses specified with an offset and size. Look only at the sections
- * defined in the Section Table and return only the first match found. */
-ElfSectionTableEntry *
-ElfSectionTable::lookup(addr_t offset, addr_t size)
-{
-    for (std::vector<ElfSectionTableEntry*>::iterator si=entries.begin(); si!=entries.end(); si++) {
-        ElfSectionTableEntry *shdr = *si;
-        if (offset >= shdr->sh_offset) {
-            addr_t offset_wrt_section = offset - shdr->sh_offset;
-            if (offset_wrt_section + size <= shdr->sh_size) {
-                return shdr;
-            }
-        }
-    }
-    return NULL;
-}
-
 /* Print some debugging info */
 void
 ElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -429,13 +416,8 @@ ElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sSectionTable.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ExecSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", entries.size());
-    for (size_t i=0; i<entries.size(); i++) {
-        entries[i]->dump(f, p, i);
-    }
 }
     
 
@@ -984,18 +966,25 @@ is_ELF(ExecFile *f)
     return ret;
 }
 
-/* Parses the structure of an ELF file and adds the information to the ExecFile */
+/* Parses the structure of an ELF file and adds the information to the asmFile */
 void
 parseBinaryFormat(ExecFile *ef, SgAsmFile* asmFile)
 {
-    ROSE_ASSERT(ef);
-    
-    ElfFileHeader *fhdr = new ElfFileHeader(ef, 0);
-
+    ElfFileHeader *fhdr = parse(ef);
     ROSE_ASSERT(fhdr != NULL);
     SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
     ROSE_ASSERT(roseElfHeader != NULL);
     asmFile->set_header(roseElfHeader);
+}
+
+/* Parses the structure of an ELF file and adds the info to the ExecFile */
+ElfFileHeader *
+parse(ExecFile *ef)
+{
+    ROSE_ASSERT(ef);
+    
+    ElfFileHeader *fhdr = new ElfFileHeader(ef, 0);
+    ROSE_ASSERT(fhdr != NULL);
 
     /* Read the optional section and segment tables and the sections/segments to which they point. */
     if (fhdr->e_shnum)
@@ -1016,7 +1005,9 @@ parseBinaryFormat(ExecFile *ef, SgAsmFile* asmFile)
 
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
+    return fhdr;
 }
+    
     
 }; //namespace ELF
 }; //namespace Exec

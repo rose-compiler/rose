@@ -483,6 +483,7 @@ ImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, add
             ImportHintName *hintname = new ImportHintName(section, hint_offset);
             dll->add_function(hintname->get_name());
 
+            /* FIXME: do something with binding */
             addr_t binding = le_to_host(*(const uint32_t*)section->content(bindings_offset, sizeof(uint32_t)));
             bindings_offset += sizeof(uint32_t);
         }
