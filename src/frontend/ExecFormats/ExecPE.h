@@ -355,6 +355,12 @@ class COFFSymtab : public ExecSection {
     COFFSymtab(ExecFile *f, PEFileHeader *fhdr)
         : ExecSection(f, fhdr->e_coff_symtab, fhdr->e_coff_nsyms*COFFSymbol_disk_size)
         {ctor(f, fhdr);}
+    virtual ~COFFSymtab() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data members */
+    std::vector<COFFSymbol*>& get_symbols() {return symbols;}
+
   private:
     void ctor(ExecFile*, PEFileHeader*);
     std::vector<COFFSymbol*> symbols;

@@ -728,9 +728,27 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
 
     for (size_t i=0; i<fhdr->e_coff_nsyms; i++) {
         COFFSymbol *symbol = new COFFSymbol(fhdr, this, strtab, i);
-        fprintf(stderr, "ROBB: COFF symbol %zu:\n", i);
-        symbol->dump(stderr, "    ", -1, ef);
         i += symbol->st_num_aux_entries;
+        symbols.push_back(symbol);
+    }
+}
+
+/* Print some debugging info */
+void
+COFFSymtab::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sCOFFSymtab[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sCOFFSymtab.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", symbols.size());
+    for (size_t i=0; i<symbols.size(); i++) {
+        symbols[i]->dump(f, p, i);
     }
 }
 
@@ -800,9 +818,13 @@ parse(ExecFile *ef)
     /* Construct the segments and their sections */
     new ObjectTable(pe_header);
 
-    /* Parse the COFF symbol table */
-    if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms)
-        new COFFSymtab(ef, pe_header);
+    /* Parse the COFF symbol table and add symbols to the PE header */
+    if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms) {
+        COFFSymtab *symtab = new COFFSymtab(ef, pe_header);
+        std::vector<COFFSymbol*> &symbols = symtab->get_symbols();
+        for (size_t i=0; i<symbols.size(); i++)
+            pe_header->add_symbol(symbols[i]);
+    }
 
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
