@@ -804,21 +804,61 @@ void
 ElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 {
     st_name =  disk_to_host(sex, disk->st_name);
-    st_value = disk_to_host(sex, disk->st_value);
-    st_size =  disk_to_host(sex, disk->st_size);
     st_info =  disk_to_host(sex, disk->st_info);
     st_res1 =  disk_to_host(sex, disk->st_res1);
     st_shndx = disk_to_host(sex, disk->st_shndx);
+
+    value = disk_to_host(sex, disk->st_value);
+    size =  disk_to_host(sex, disk->st_size);
+    ctor_common();
 }
 void
 ElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 {
     st_name =  disk_to_host(sex, disk->st_name);
-    st_value = disk_to_host(sex, disk->st_value);
-    st_size =  disk_to_host(sex, disk->st_size);
     st_info =  disk_to_host(sex, disk->st_info);
     st_res1 =  disk_to_host(sex, disk->st_res1);
     st_shndx = disk_to_host(sex, disk->st_shndx);
+
+    value = disk_to_host(sex, disk->st_value);
+    size =  disk_to_host(sex, disk->st_size);
+    ctor_common();
+}
+void
+ElfSymbol::ctor_common()
+{
+    /* Binding */
+    switch (get_elf_binding()) {
+      case STB_LOCAL:   binding = SYM_LOCAL;  break;
+      case STB_GLOBAL:  binding = SYM_GLOBAL; break;
+      case STB_WEAK:    binding = SYM_WEAK;   break;
+      default:
+        fprintf(stderr, "ROBB: unknown elf symbol binding: %u\n", get_elf_binding());
+        ROSE_ASSERT(0);
+        break;
+    }
+
+    /* Type */
+    switch (get_elf_type()) {
+      case STT_NOTYPE:  type = SYM_NONE;    break;
+      case STT_OBJECT:  type = SYM_DATA;    break;
+      case STT_FUNC:    type = SYM_FUNC;    break;
+      case STT_SECTION: type = SYM_SECTION; break;
+      case STT_FILE:    type = SYM_FILE;    break;
+      default:
+        fprintf(stderr, "ROBB: unknown elf symbol type: %u\n", get_elf_type());
+        ROSE_ASSERT(0);
+        break;
+    }
+
+    /* Definition state */
+    if (value || size) {
+        def_state = SYM_DEFINED;
+    } else if (st_name>0 || get_elf_type()) {
+        def_state = SYM_TENTATIVE;
+    } else {
+        def_state = SYM_UNDEFINED;
+    }
 }
 
 /* Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
@@ -835,42 +875,42 @@ ElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecSection *section)
     const char *s;
     char sbuf[256];
 
-    fprintf(f, "%s%-*s = %"PRIu64" \"%s\"\n", p, w, "name",  st_name, name.c_str());
-    fprintf(f, "%s%-*s = %"PRIu64"\n",        p, w, "value", st_value);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",        p, w, "size",  st_size);
+    ExecSymbol::dump(f, p, -1);
 
-    fprintf(f, "%s%-*s = %u",         p, w, "info",  st_info);
-    switch (get_type()) {
-      case STT_NOTYPE:  s = "";          break;
-      case STT_OBJECT:  s = " object";   break;
-      case STT_FUNC:    s = " function"; break;
-      case STT_SECTION: s = " section";  break;
-      case STT_FILE:    s = " file";     break;
+    fprintf(f, "%s%-*s = %"PRIu64" offset into strtab\n", p, w, "st_name",  st_name);
+
+    fprintf(f, "%s%-*s = %u (",          p, w, "st_info",  st_info);
+    switch (get_elf_binding()) {
+      case STB_LOCAL:  s = "local";  break;
+      case STB_GLOBAL: s = "global"; break;
+      case STB_WEAK:   s = "weak";   break;
       default:
-        sprintf(sbuf, " type=%d", get_type());
+        sprintf(sbuf, "binding-%d", get_elf_binding());
         s = sbuf;
         break;
     }
     fputs(s, f);
-    switch (get_binding()) {
-      case STB_LOCAL:  s = " local";  break;
-      case STB_GLOBAL: s = " global"; break;
-      case STB_WEAK:   s = " weak";   break;
+    switch (get_elf_type()) {
+      case STT_NOTYPE:  s = " no-type";   break;
+      case STT_OBJECT:  s = " object";    break;
+      case STT_FUNC:    s = " function";  break;
+      case STT_SECTION: s = " section";   break;
+      case STT_FILE:    s = " file";      break;
       default:
-        sprintf(sbuf, " binding=%d", get_binding());
+        sprintf(sbuf, " type-%d", get_elf_type());
         s = sbuf;
         break;
     }
     fputs(s, f);
-    fputc('\n', f);
+    fputs(")\n", f);
 
-    fprintf(f, "%s%-*s = %u\n",         p, w, "res1",  st_res1);
+    fprintf(f, "%s%-*s = %u\n",         p, w, "st_res1",  st_res1);
 
     if (section && section->get_id()==(int)st_shndx) {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_shndx",
                 section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
     } else {
-        fprintf(f, "%s%-*s = %u\n",         p, w, "shndx", st_shndx);        
+        fprintf(f, "%s%-*s = %u\n",         p, w, "st_shndx", st_shndx);        
     }
 }
 
@@ -882,13 +922,13 @@ ElfSymbolSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
         const Elf32SymbolEntry_disk *disk = (const Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
-            symbols.push_back(ElfSymbol(fhdr->get_sex(), disk+i));
+            symbols.push_back(new ElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {
         const Elf64SymbolEntry_disk *disk = (const Elf64SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(Elf64SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
-            symbols.push_back(ElfSymbol(fhdr->get_sex(), disk+i));
+            symbols.push_back(new ElfSymbol(fhdr->get_sex(), disk+i));
         }
     }
 }
@@ -899,7 +939,7 @@ ElfSymbolSection::set_linked_section(ElfSection *strtab)
 {
     ElfSection::set_linked_section(strtab);
     for (size_t i=0; i<symbols.size(); i++) {
-        symbols[i].name = strtab->content_str(symbols[i].st_name);
+        symbols[i]->set_name(strtab->content_str(symbols[i]->st_name));
     }
 }
 
@@ -918,8 +958,8 @@ ElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
     ElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", symbols.size());
     for (size_t i=0; i<symbols.size(); i++) {
-        ExecSection *section = get_file()->get_section_by_id(symbols[i].st_shndx);
-        symbols[i].dump(f, p, i, section);
+        ExecSection *section = get_file()->get_section_by_id(symbols[i]->st_shndx);
+        symbols[i]->dump(f, p, i, section);
     }
 }
     
@@ -947,38 +987,32 @@ is_ELF(ExecFile *f)
 /* Parses the structure of an ELF file and adds the information to the ExecFile */
 void
 parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
-   {
-     ROSE_ASSERT(f);
-    
-     ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
-
-     ROSE_ASSERT(fhdr != NULL);
-     SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
-     ROSE_ASSERT(roseElfHeader != NULL);
-     asmFile->set_header(roseElfHeader);
-
-  /* Read the optional section and segment tables and the sections/segments to which they point. */
-     if (fhdr->e_shnum)
-          fhdr->section_table = new ElfSectionTable(fhdr);
-
-     if (fhdr->e_phnum)
-          fhdr->segment_table = new ElfSegmentTable(fhdr);
-
-  /* Identify parts of the file that we haven't encountered during parsing */
-     f->fill_holes();
-   }
-
-
-void
-parse(ExecFile *f)
 {
     ROSE_ASSERT(f);
     
     ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
 
+    ROSE_ASSERT(fhdr != NULL);
+    SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
+    ROSE_ASSERT(roseElfHeader != NULL);
+    asmFile->set_header(roseElfHeader);
+
     /* Read the optional section and segment tables and the sections/segments to which they point. */
-    if (fhdr->e_shnum) fhdr->section_table = new ElfSectionTable(fhdr);
-    if (fhdr->e_phnum) fhdr->segment_table = new ElfSegmentTable(fhdr);
+    if (fhdr->e_shnum)
+        fhdr->section_table = new ElfSectionTable(fhdr);
+
+    if (fhdr->e_phnum)
+        fhdr->segment_table = new ElfSegmentTable(fhdr);
+
+    /* Use symbols from either ".symtab" or ".dynsym" */
+    ElfSymbolSection *symtab = dynamic_cast<ElfSymbolSection*>(ef->get_section_by_name(".symtab"));
+    if (!symtab)
+        symtab = dynamic_cast<ElfSymbolSection*>(ef->get_section_by_name(".dynsym"));
+    if (symtab) {
+        std::vector<ElfSymbol*> &symbols = symtab->get_symbols();
+        for (size_t i=0; i<symbols.size(); i++)
+            fhdr->add_symbol(symbols[i]);
+    }
 
     /* Identify parts of the file that we haven't encountered during parsing */
     f->fill_holes();

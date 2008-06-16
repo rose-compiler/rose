@@ -289,6 +289,7 @@ class ExecSection;                                      /* One section of an exe
 class ExecHeader;                                       /* Executable file format header (e.g., Elf, PE, DOS, etc. file header */
 class ExecSegment;
 class ExecDLL;                                          /* One required dynamically-linked library and its functions */
+class ExecSymbol;
 
 /* Represents an entire binary executable file. The file is mmap'd so that file data structures can be easily associated with
  * memory, so that the file contents is available to the child nodes of an ExecFile, and so that the data can be shared among
@@ -413,6 +414,9 @@ class ExecHeader : public ExecSection {
     void add_dll(ExecDLL *dll) {dlls.push_back(dll);}   /* Add new DLL to list of DLLs for this file */
     std::vector<ExecDLL*> get_dlls();                   /* all necessary dynamically loaded libraries */
 
+    /* Functions for symbols */
+    void add_symbol(ExecSymbol*);                       /* add a new symbol to the symbol table. Duplicates are allowed. */
+
     /* Accessors for protected/private members */
     ExecFormat& get_exec_format() {return exec_format;}
     std::vector<unsigned char>& get_magic() {return magic;}
@@ -429,6 +433,7 @@ class ExecHeader : public ExecSection {
     addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
     addr_t              entry_rva;                      /* Code entry point wrt base_va */
     std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
+    std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
 
   private:
     void ctor(ExecFile *f, addr_t offset, addr_t size);
@@ -485,6 +490,7 @@ class ExecSegment {
 };
 
 /* Represents information about a dynamic library that must be linked at runtime. */
+/* FIXME: ELF doesn't associate function names with the dll yet */
 class ExecDLL {
   public:
     ExecDLL(std::string name) : name(name) {}
@@ -496,6 +502,52 @@ class ExecDLL {
     std::vector<std::string> funcs;                     /* List of functions needed from the library */
 };
 
+enum SymbolDefState {
+    SYM_UNDEFINED,                                      /* Symbol has not been defined yet */
+    SYM_TENTATIVE,                                      /* Does not have size/value yet (uninitialized C or Fortran common blks) */
+    SYM_DEFINED                                         /* Created and assigned storage */
+};
+
+enum SymbolType {
+    SYM_NONE,                                           /* No type or type is unknown */
+    SYM_DATA,                                           /* Normal variable definitions */
+    SYM_FUNC,                                           /* Function */
+    SYM_SECTION,                                        /* Section of a file */
+    SYM_FILE,                                           /* Name of a file */
+    SYM_TLS,                                            /* Thread-local storage */
+    SYM_REGISTER                                        /* CPU register value (see Sparc) */
+};
+
+enum SymbolBinding {
+    SYM_LOCAL,
+    SYM_GLOBAL,
+    SYM_WEAK
+};
+
+/* A symbol from a symbol table */
+class ExecSymbol {
+  public:
+    ExecSymbol()
+        : def_state(SYM_UNDEFINED), type(SYM_NONE), value(0), size(0)
+        {}
+    virtual ~ExecSymbol() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data members */
+    std::string& get_name() {return name;}
+    void set_name(std::string &s) {name=s;}
+    void set_name(const char *s) {name=s;}
+
+  protected:
+    SymbolDefState      def_state;                      /* Undefined, created but not allocated, created and allocated, etc. */
+    SymbolBinding       binding;                        /* local, global, etc. */
+    SymbolType          type;                           /* file, section, variable, function, etc. */
+    addr_t              value;                          /* symbol value or address if defined */
+    addr_t              size;                           /* size of symbol if defined */
+
+  private:
+    std::string         name;                           /* Symbol name may be the empty string */
+};
 
 // DQ (6/15/2008): Picking a better name, using "parse" is a compiler project is difficult to trace.
 // ExecFile *parse(const char *name);

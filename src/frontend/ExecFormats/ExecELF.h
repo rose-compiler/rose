@@ -368,27 +368,27 @@ struct Elf64SymbolEntry_disk {
     uint64_t            st_size;
 };
 
-class ElfSymbol {
+class ElfSymbol : public ExecSymbol {
   public:
-    ElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk) {ctor(sex, disk);}
-    ElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk) {ctor(sex, disk);}
+    ElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+        {ctor(sex, disk);}
+    ElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+        {ctor(sex, disk);}
     virtual ~ElfSymbol() {};
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, ExecSection*);
-    ElfSymBinding get_binding() {return (ElfSymBinding)(st_info>>4);}
-    ElfSymType get_type() {return (ElfSymType)(st_info & 0xf);}
+    ElfSymBinding get_elf_binding() {return (ElfSymBinding)(st_info>>4);}
+    ElfSymType get_elf_type() {return (ElfSymType)(st_info & 0xf);}
         
-    std::string         name;
-
     /* Members defined by the ELF standard */
     addr_t              st_name;
     unsigned char       st_info, st_res1;
     unsigned            st_shndx;
-    addr_t              st_value, st_size;
 
   private:
     void ctor(ByteOrder, const Elf32SymbolEntry_disk*);
     void ctor(ByteOrder, const Elf64SymbolEntry_disk*);
+    void ctor_common();                                 /* Initialization common to all constructors */
 };
 
 class ElfSymbolSection : public ElfSection {
@@ -399,18 +399,20 @@ class ElfSymbolSection : public ElfSection {
     virtual ~ElfSymbolSection() {}
     virtual void set_linked_section(ElfSection *strtab);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data members */
+    std::vector<ElfSymbol*>& get_symbols() {return symbols;}
+    
   private:
     void ctor(ElfFileHeader*, ElfSectionTableEntry*);
-    std::vector<ElfSymbol> symbols;
+    std::vector<ElfSymbol*> symbols;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Functions */
 bool is_ELF(ExecFile*);
-
 void parseBinaryFormat(ExecFile*, SgAsmFile* asmFile);
-
 void parse(ExecFile*);
 
 }; //namespace ELF

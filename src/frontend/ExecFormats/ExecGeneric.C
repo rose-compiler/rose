@@ -432,6 +432,18 @@ ExecHeader::~ExecHeader()
     }
 }
 
+/* Add a new symbol to the symbol table */
+void
+ExecHeader::add_symbol(ExecSymbol *symbol)
+{
+#ifndef NDEBUG
+    for (size_t i=0; i<symbols.size(); i++) {
+        ROSE_ASSERT(symbols[i]!=symbol); /*duplicate*/
+    }
+#endif
+    symbols.push_back(symbol);
+}
+
 /* Print some debugging info */
 void
 ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -472,6 +484,9 @@ ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
     for (size_t i=0; i<dlls.size(); i++)
         dlls[i]->dump(f, p, i);
+
+    for (size_t i=0; i<symbols.size(); i++)
+        symbols[i]->dump(f, p, i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -555,7 +570,63 @@ ExecDLL::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i=0; i<funcs.size(); i++)
         fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "func", i, funcs[i].c_str());
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Symbols and symbol tables
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Print some debugging info */
+void
+ExecSymbol::dump(FILE *f, const char *prefix, ssize_t idx) 
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sExecSymbol[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sExecSymbol.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", name.c_str());
+
+    const char *s_def_state = NULL;
+    switch (def_state) {
+      case SYM_UNDEFINED: s_def_state = "undefined"; break;
+      case SYM_TENTATIVE: s_def_state = "tentative"; break;
+      case SYM_DEFINED:   s_def_state = "defined";   break;
+    }
+    fprintf(f, "%s%-*s = %s\n", p, w, "def_state", s_def_state);
+
+    const char *s_bind = NULL;
+    switch (binding) {
+      case SYM_LOCAL:    s_bind = "local";    break;
+      case SYM_GLOBAL:   s_bind = "global";   break;
+      case SYM_WEAK:     s_bind = "weak";     break;
+    }
+    fprintf(f, "%s%-*s = %s\n", p, w, "binding", s_bind);
     
+    const char *s_type = NULL;
+    switch (type) {
+      case SYM_NONE:     s_type = "no-type";  break;
+      case SYM_DATA:     s_type = "data";     break;
+      case SYM_FUNC:     s_type = "function"; break;
+      case SYM_SECTION:  s_type = "section";  break;
+      case SYM_FILE:     s_type = "file";     break;
+      case SYM_TLS:      s_type = "thread";   break;
+      case SYM_REGISTER: s_type = "register"; break;
+    }
+    fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
+
+    fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "value", value);
+    if (value>9) {
+        fprintf(f, " (unsigned)%"PRIu64, value);
+        if ((int64_t)value<0) fprintf(f, " (signed)%"PRId64, (int64_t)value);
+    }
+    fputc('\n', f);
+
+    fprintf(f, "%s%-*s = %"PRIx64" bytes\n", p, w, "size", size);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
