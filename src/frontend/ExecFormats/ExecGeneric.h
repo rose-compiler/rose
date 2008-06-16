@@ -510,7 +510,7 @@ enum SymbolDefState {
 };
 
 enum SymbolType {
-    SYM_NONE,                                           /* No type or type is unknown */
+    SYM_NO_TYPE,                                        /* No type or type is unknown */
     SYM_DATA,                                           /* Normal variable definitions */
     SYM_FUNC,                                           /* Function */
     SYM_SECTION,                                        /* Section of a file */
@@ -520,6 +520,7 @@ enum SymbolType {
 };
 
 enum SymbolBinding {
+    SYM_NO_BINDING,                                     /* Unknown binding */
     SYM_LOCAL,
     SYM_GLOBAL,
     SYM_WEAK
@@ -529,7 +530,7 @@ enum SymbolBinding {
 class ExecSymbol {
   public:
     ExecSymbol()
-        : def_state(SYM_UNDEFINED), type(SYM_NONE), value(0), size(0)
+        : def_state(SYM_UNDEFINED), binding(SYM_NO_BINDING), type(SYM_NO_TYPE), value(0), size(0)
         {}
     virtual ~ExecSymbol() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -538,6 +539,10 @@ class ExecSymbol {
     std::string& get_name() {return name;}
     void set_name(std::string &s) {name=s;}
     void set_name(const char *s) {name=s;}
+    addr_t get_value() {return value;}
+    void set_value(addr_t v) {value=v;}
+    addr_t get_size() {return size;}
+    void set_size(addr_t sz) {size=sz;}
 
   protected:
     SymbolDefState      def_state;                      /* Undefined, created but not allocated, created and allocated, etc. */

@@ -322,33 +322,32 @@ class ImportSegment : public ExecSegment {
 #define COFFSymbol_disk_size 18
 struct COFFSymbol_disk {
     union {
-        char            name[8];
+        char            st_name[8];
         struct {
-            uint32_t    zero;
-            uint32_t    offset;
+            uint32_t    st_zero;
+            uint32_t    st_offset;
         };
     };
-    uint32_t            value;
-    int16_t             section_num;
-    uint16_t            type;
-    unsigned char       storage_class;
-    unsigned char       num_aux_entries;
+    uint32_t            st_value;
+    int16_t             st_section_num;
+    uint16_t            st_type;
+    unsigned char       st_storage_class;
+    unsigned char       st_num_aux_entries;
 };
 
-class COFFSymbol {
+class COFFSymbol : public ExecSymbol {
   public:
-    COFFSymbol(ExecSection *strtab, const COFFSymbol_disk *disk)
-        : name_offset(0), section_num(0), value(0), type(0), storage_class(0), num_aux_entries(0)
-        {ctor(strtab, disk);}
+    COFFSymbol(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strtab, size_t idx)
+        : st_name_offset(0), st_section_num(0), st_type(0), st_storage_class(0), st_num_aux_entries(0)
+        {ctor(fhdr, symtab, strtab, idx);}
     virtual ~COFFSymbol() {}
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, ExecFile*);
-    std::string         name;
-    addr_t              name_offset;
-    int                 section_num;
-    unsigned            value, type, storage_class, num_aux_entries;
+    addr_t              st_name_offset;
+    int                 st_section_num;
+    unsigned            st_type, st_storage_class, st_num_aux_entries;
   private:
-    void ctor(ExecSection *strtab, const COFFSymbol_disk*);
+    void ctor(PEFileHeader*, ExecSection *symtab, ExecSection *strtab, size_t idx);
 };
 
 class COFFSymtab : public ExecSection {
@@ -358,6 +357,7 @@ class COFFSymtab : public ExecSection {
         {ctor(f, fhdr);}
   private:
     void ctor(ExecFile*, PEFileHeader*);
+    std::vector<COFFSymbol*> symbols;
 };
 
 

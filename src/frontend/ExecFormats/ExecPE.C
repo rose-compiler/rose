@@ -511,25 +511,91 @@ ImportSegment::dump(FILE *f, const char *prefix, ssize_t idx)
 // COFF Symbol Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor */
-void
-COFFSymbol::ctor(ExecSection *strtab, const COFFSymbol_disk *disk)
+/* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs
+ * because the disk size is 18 bytes, which is not properly aligned according to the C standard. Therefore we pass the actual
+ * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots. */
+void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strtab, size_t idx)
 {
-    if (disk->zero==0) {
-        name_offset = le_to_host(disk->offset);
-        if (name_offset<4) throw FormatError("name collides with size field");
-        name = strtab->content_str(disk->offset);
+    const COFFSymbol_disk *disk = (const COFFSymbol_disk*)symtab->content(idx*COFFSymbol_disk_size, COFFSymbol_disk_size);
+    if (disk->st_zero==0) {
+        st_name_offset = le_to_host(disk->st_offset);
+        if (st_name_offset<4) throw FormatError("name collides with size field");
+        set_name(strtab->content_str(st_name_offset));
     } else {
         char temp[9];
-        memcpy(temp, disk->name, 8);
+        memcpy(temp, disk->st_name, 8);
         temp[8] = '\0';
-        name = temp;
+        set_name(temp);
     }
-    value           = le_to_host(disk->value);
-    section_num     = le_to_host(disk->section_num);
-    type            = le_to_host(disk->type);
-    storage_class   = le_to_host(disk->storage_class);
-    num_aux_entries = le_to_host(disk->num_aux_entries);
+
+    st_section_num     = le_to_host(disk->st_section_num);
+    st_type            = le_to_host(disk->st_type);
+    st_storage_class   = le_to_host(disk->st_storage_class);
+    st_num_aux_entries = le_to_host(disk->st_num_aux_entries);
+
+    /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
+    if (st_num_aux_entries>0) {
+        const unsigned char *aux_data = symtab->content((idx+1)*COFFSymbol_disk_size, st_num_aux_entries*COFFSymbol_disk_size);
+        if (st_storage_class==2/*external*/ && st_type==0x20/*function*/ && st_section_num>0) {
+            fprintf(stderr, "    ROBB: Function definition aux\n");
+        } else if (0==get_name().compare(".bf") || 0==get_name().compare(".ef")) {
+            fprintf(stderr, "    ROBB: Function begin/end aux\n");
+        } else if (st_storage_class==2/*external*/ && st_section_num<=0 && get_value()==0) {
+            fprintf(stderr, "    ROBB: Weak external aux\n");
+        } else if (st_storage_class==103/*file*/ && 0==get_name().compare(".file")) {
+            ROSE_ASSERT(st_num_aux_entries==1);
+            char fname[COFFSymbol_disk_size+1];
+            strcpy(fname, (const char*)aux_data);
+            fname[COFFSymbol_disk_size] = '\0';
+            set_name(fname); /*replace ".file" with the real name*/
+        } else if (st_storage_class==3/*static*/ && NULL!=fhdr->get_file()->get_section_by_name(get_name())) {
+            fprintf(stderr, "    ROBB: Section definition aux\n");
+        } else if (get_value()==0 && st_type==0x30/*static/null*/ && 1==st_num_aux_entries) {
+            fprintf(stderr, "    ROBB: COMDAT section aux\n");
+        } else {
+            fprintf(stderr, "    ROBB: unknown aux symbol (skipping)\n");
+        }
+    }
+
+    switch (st_storage_class) {
+      case 0:    binding = SYM_NO_BINDING; break; /*none*/
+      case 1:    binding = SYM_LOCAL;      break; /*stack*/
+      case 2:    binding = SYM_GLOBAL;     break; /*extern*/
+      case 3:    binding = SYM_GLOBAL;     break; /*static*/
+      case 4:    binding = SYM_LOCAL;      break; /*register*/
+      case 5:    binding = SYM_GLOBAL;     break; /*extern def*/
+      case 6:    binding = SYM_LOCAL;      break; /*label*/
+      case 7:    binding = SYM_LOCAL;      break; /*label(undef)*/
+      case 8:    binding = SYM_LOCAL;      break; /*struct member*/
+      case 9:    binding = SYM_LOCAL;      break; /*formal arg*/
+      case 10:   binding = SYM_LOCAL;      break; /*struct tag*/
+      case 11:   binding = SYM_LOCAL;      break; /*union member*/
+      case 12:   binding = SYM_GLOBAL;     break; /*union tag*/
+      case 13:   binding = SYM_GLOBAL;     break; /*typedef*/
+      case 14:   binding = SYM_GLOBAL;     break; /*static(undef)*/
+      case 15:   binding = SYM_GLOBAL;     break; /*enum tag*/
+      case 16:   binding = SYM_LOCAL;      break; /*enum member*/
+      case 17:   binding = SYM_GLOBAL;     break; /*register param*/
+      case 18:   binding = SYM_LOCAL;      break; /*bit field*/
+      case 100:  binding = SYM_GLOBAL;     break; /*block(bb or eb)*/
+      case 101:  binding = SYM_GLOBAL;     break; /*function*/
+      case 102:  binding = SYM_LOCAL;      break; /*struct end*/
+      case 103:  binding = SYM_GLOBAL;     break; /*file*/
+      case 104:  binding = SYM_GLOBAL;     break; /*section*/
+      case 105:  binding = SYM_WEAK;       break; /*weak extern*/
+      case 107:  binding = SYM_LOCAL;      break; /*CLR token*/
+      case 0xff: binding = SYM_GLOBAL;     break; /*end of function*/
+    }
+
+    switch (st_type & 0xf0) {
+      case 0x00: type = SYM_NO_TYPE; break;     /*none*/
+      case 0x10: type = SYM_DATA;    break;     /*ptr*/
+      case 0x20: type = SYM_FUNC;    break;     /*function*/
+      case 0x30: type = SYM_DATA;    break;     /*array*/
+    }
+    
+    value = le_to_host(disk->st_value);
+    def_state = SYM_DEFINED;
 }
 
 /* Print some debugging info */
@@ -545,37 +611,38 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
         sprintf(p, "%sCOFFSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    fprintf(f, "%s%-*s = %"PRIu64" \"%s\"\n", p, w, "name", name_offset, name.c_str());
 
-    if (section_num<=0) {
-        switch (section_num) {
+
+    ExecSymbol::dump(f, p, -1);
+    
+    if (st_section_num<=0) {
+        switch (st_section_num) {
           case 0:  s = "external, not assigned";    break;
           case -1: s = "absolute value";            break;
           case -2: s = "general debug, no section"; break;
-          default: sprintf(ss, "%d", section_num); s = ss; break;
+          default: sprintf(ss, "%d", st_section_num); s = ss; break;
         }
         fprintf(f, "%s%-*s = %s\n", p, w, "section", s);
     } else if (NULL==ef) {
-        fprintf(f, "%s%-*s = [%d] <section info not available here>\n", p, w, "section", section_num);
-    } else if (NULL==(section=ef->get_section_by_id(section_num))) {
-        fprintf(f, "%s%-*s = [%d] <not a valid section ID>\n", p, w, "section", section_num);
+        fprintf(f, "%s%-*s = [%d] <section info not available here>\n", p, w, "section", st_section_num);
+    } else if (NULL==(section=ef->get_section_by_id(st_section_num))) {
+        fprintf(f, "%s%-*s = [%d] <not a valid section ID>\n", p, w, "section", st_section_num);
     } else {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "section", 
-                section_num, section->get_name().c_str(), section->get_offset(), section->get_size());
+                st_section_num, section->get_name().c_str(), section->get_offset(), section->get_size());
     }
 
-    switch (type & 0xf0) {
+    switch (st_type & 0xf0) {
       case 0x00: s = "none";     break;
       case 0x10: s = "pointer";  break;
       case 0x20: s = "function"; break;
       case 0x30: s = "array";    break;
       default:
-        sprintf(ss, "%u", type>>8);
+        sprintf(ss, "%u", st_type>>8);
         s = ss;
         break;
     }
-    switch (type & 0xf) {
+    switch (st_type & 0xf) {
       case 0x00: t = "none";            break;
       case 0x01: t = "void";            break;
       case 0x02: t = "char";            break;
@@ -593,14 +660,13 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
       case 0x0e: t = "unsigned int";    break;
       case 0x0f: t = "4-byte unsigned"; break;
       default:
-        sprintf(tt, "%u", type & 0xf);
+        sprintf(tt, "%u", st_type & 0xf);
         t = tt;
         break;
     }
-    fprintf(f, "%s%-*s = %s / %s\n",          p, w, "type", s, t);
+    fprintf(f, "%s%-*s = %s / %s\n",          p, w, "st_type", s, t);
 
-    switch (storage_class) {
-      case 0xff: s = "end of function"; t = "";                                  break;
+    switch (st_storage_class) {
       case 0:    s = "none";            t = "";                                  break;
       case 1:    s = "auto variable";   t = "stack frame offset";                break;
       case 2:    s = "external";        t = "size or section offset";            break;
@@ -627,16 +693,16 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
       case 104:  s = "section";         t = "";                                  break;
       case 105:  s = "weak extern";     t = "";                                  break;
       case 107:  s = "CLR token";       t = "";                                  break;
+      case 0xff: s = "end of function"; t = "";                                  break;
       default:
-        sprintf(ss, "%u", storage_class);
+        sprintf(ss, "%u", st_storage_class);
         s = ss;
         t = "";  
         break;
     }
     fprintf(f, "%s%-*s = %s\n",               p, w, "storage_class", s);
-    fprintf(f, "%s%-*s = 0x%08x %s\n",        p, w, "value", value, t);
 
-    fprintf(f, "%s%-*s = %u\n",               p, w, "num_aux_entries", num_aux_entries);
+    fprintf(f, "%s%-*s = %u\n",               p, w, "num_aux_entries", st_num_aux_entries);
 }
 
 /* Constructor */
@@ -660,36 +726,10 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
     strtab->extend(strtab_size-sizeof(uint32_t));
 
     for (size_t i=0; i<fhdr->e_coff_nsyms; i++) {
-        const COFFSymbol_disk *disk = (const COFFSymbol_disk*)content(i*COFFSymbol_disk_size, COFFSymbol_disk_size);
-        fprintf(stderr, "ROBB: COFF symbol %zu found at section offset %zu:\n", i, i*COFFSymbol_disk_size);
-        COFFSymbol *sym = new COFFSymbol(strtab, disk);
-        sym->dump(stderr, "    ", -1, ef);
-
-        /* Parse aux symtab entries */
-        if (sym->num_aux_entries>0) {
-            if (sym->storage_class==2/*external*/ && sym->type==0x20/*function*/ && sym->section_num>0) {
-                fprintf(stderr, "    ROBB: Function definition aux\n");
-            } else if (0==sym->name.compare(".bf") || 0==sym->name.compare(".ef")) {
-                fprintf(stderr, "    ROBB: Function begin/end aux\n");
-            } else if (sym->storage_class==2/*external*/ && sym->section_num<=0 && sym->value==0) {
-                fprintf(stderr, "    ROBB: Weak external aux\n");
-            } else if (sym->storage_class==103/*file*/ && 0==sym->name.compare(".file")) {
-                fprintf(stderr, "    ROBB: File aux\n");
-                ROSE_ASSERT(sym->num_aux_entries==1);
-                char fname[19];
-                strcpy(fname, (const char*)content((i+1)*COFFSymbol_disk_size, COFFSymbol_disk_size));
-                fname[18] = '\0';
-                fprintf(stderr, "          name = \"%s\"\n", fname);
-            } else if (sym->storage_class==3/*static*/ && NULL!=ef->get_section_by_name(sym->name)) {
-                fprintf(stderr, "    ROBB: Section definition aux\n");
-            } else if (sym->value==0 && sym->type==0x30/*static/null*/ && 1==sym->num_aux_entries) {
-                fprintf(stderr, "    ROBB: COMDAT section aux\n");
-            } else {
-                fprintf(stderr, "    ROBB: unknown aux symbol (skipping)\n");
-            }
-        }
-        
-        i += sym->num_aux_entries; /*DEBUGGING: skip aux entries for now*/
+        COFFSymbol *symbol = new COFFSymbol(fhdr, this, strtab, i);
+        fprintf(stderr, "ROBB: COFF symbol %zu:\n", i);
+        symbol->dump(stderr, "    ", -1, ef);
+        i += symbol->st_num_aux_entries;
     }
 }
 

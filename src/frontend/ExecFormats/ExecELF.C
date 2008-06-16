@@ -840,7 +840,7 @@ ElfSymbol::ctor_common()
 
     /* Type */
     switch (get_elf_type()) {
-      case STT_NOTYPE:  type = SYM_NONE;    break;
+      case STT_NOTYPE:  type = SYM_NO_TYPE; break;
       case STT_OBJECT:  type = SYM_DATA;    break;
       case STT_FUNC:    type = SYM_FUNC;    break;
       case STT_SECTION: type = SYM_SECTION; break;

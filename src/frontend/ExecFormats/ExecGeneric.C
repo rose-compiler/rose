@@ -612,15 +612,16 @@ ExecSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 
     const char *s_bind = NULL;
     switch (binding) {
-      case SYM_LOCAL:    s_bind = "local";    break;
-      case SYM_GLOBAL:   s_bind = "global";   break;
-      case SYM_WEAK:     s_bind = "weak";     break;
+      case SYM_NO_BINDING: s_bind = "no-binding"; break;
+      case SYM_LOCAL:      s_bind = "local";      break;
+      case SYM_GLOBAL:     s_bind = "global";     break;
+      case SYM_WEAK:       s_bind = "weak";       break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "binding", s_bind);
     
     const char *s_type = NULL;
     switch (type) {
-      case SYM_NONE:     s_type = "no-type";  break;
+      case SYM_NO_TYPE:  s_type = "no-type";  break;
       case SYM_DATA:     s_type = "data";     break;
       case SYM_FUNC:     s_type = "function"; break;
       case SYM_SECTION:  s_type = "section";  break;
