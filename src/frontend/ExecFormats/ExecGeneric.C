@@ -432,6 +432,19 @@ ExecHeader::~ExecHeader()
     }
 }
 
+/* Add a new DLL to the header DLL list */
+void
+ExecHeader::add_dll(ExecDLL *dll)
+{
+#ifndef NDEBUG
+    for (size_t i=0; i<dlls.size(); i++) {
+        ROSE_ASSERT(dlls[i]!=dll); /*duplicate*/
+    }
+#endif
+    dlls.push_back(dll);
+}
+
+
 /* Add a new symbol to the symbol table */
 void
 ExecHeader::add_symbol(ExecSymbol *symbol)

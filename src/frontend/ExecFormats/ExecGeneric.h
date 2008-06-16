@@ -411,11 +411,12 @@ class ExecHeader : public ExecSection {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* Functions for dynamically linked libraries (DLLs) */
-    void add_dll(ExecDLL *dll) {dlls.push_back(dll);}   /* Add new DLL to list of DLLs for this file */
-    std::vector<ExecDLL*> get_dlls();                   /* all necessary dynamically loaded libraries */
+    void add_dll(ExecDLL *dll);                         /* Add new DLL to list of DLLs for this file */
+    std::vector<ExecDLL*>& get_dlls() {return dlls;}    /* all necessary dynamically loaded libraries */
 
     /* Functions for symbols */
     void add_symbol(ExecSymbol*);                       /* add a new symbol to the symbol table. Duplicates are allowed. */
+    std::vector<ExecSymbol*>& get_symbols() {return symbols;}
 
     /* Accessors for protected/private members */
     ExecFormat& get_exec_format() {return exec_format;}
