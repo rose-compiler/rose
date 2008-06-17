@@ -1370,9 +1370,6 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
           if (mod_type->get_typeModifier().get_constVolatileModifier().isVolatile())
              { curprint ( "volatile "); }
 
-       // Previous support for CC++ (no longer supported in SAGE III)
-       // if (mod_type->isSync())     { curprint ( "sync "; }
-       // if (mod_type->isGlobal())   { curprint ( "global "; }
 
           if (mod_type->get_typeModifier().isRestrict())
              {
@@ -1406,10 +1403,25 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
        // Support for UPC
        // Liao, 6/11/2008. Enable faithful unparsing for .upc files
-       // if (mod_type->get_typeModifier().get_upcModifier().isUPC_Shared())
           if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
              // { curprint ( string("/* shared: upc not supported by vendor compiler (ignored) */ ")); }
-             { curprint ("shared ") ; }
+             { 
+               long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
+               stringstream ss;
+               if (block_size == -1) // block size not specified, default to 1
+               {
+                 curprint ("shared[1] ") ; 
+               }
+               else if (block_size == -2) // block size is *
+               {
+                 curprint ("shared[*] ") ; 
+               }
+               else 
+               {
+                 ss<<block_size;
+                 curprint ("shared["+ss.str()+"] ") ; 
+               }
+             }
           if (mod_type->get_typeModifier().get_upcModifier().isUPC_Strict())
              //{ curprint ( string("/* strict: upc not supported by vendor compiler (ignored) */ ")); }
              { curprint ("strict "); }

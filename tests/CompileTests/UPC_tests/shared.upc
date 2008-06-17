@@ -3,13 +3,11 @@
 * Liao 
 * 6/9/2008
 */
-int main()
-{ 
-  int * p1;         //a private pointer to a private variable
-  shared int *p2; //a private pointer to a shared variable, most useful
-  shared[] int *p22; //a private pointer to a shared variable, most useful
-  int *shared p3; //shared to private
-  shared int* shared p4; //shared to shared
-  shared[10] int* shared p44; //shared to shared
-  return 0;
-}
+typedef shared [3] void upc_lock_t;
+int * shared[3] p1; /* shared to private*/
+int * shared p11;   
+shared [10] int *p2;  /* private to shared */
+shared  int *p22;  
+shared [10] int * shared[3] p3; /* shared to shared */
+shared int * shared p33;
+shared[] int* shared p4; /* shared to shared data allocated to thread 0*/
