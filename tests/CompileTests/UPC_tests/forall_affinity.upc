@@ -1,5 +1,5 @@
 #include<stdio.h>
-// block size is 2 
+#include "upc.h"
 shared [2] int arr[10*THREADS];
 int main()
 {
@@ -13,7 +13,7 @@ int main()
 /*there is no implicit barrier after upc_forall*/
 upc_barrier;
 
-// chunksize is 2 now for loop iteration scheduling
+/* chunksize is 2 now for loop iteration scheduling */
   for (i=0;i<10;i++)
     if (MYTHREAD ==upc_threadof(&arr[i]))
       printf("2. thread %d of %d threads performing %d iteration.\n",\

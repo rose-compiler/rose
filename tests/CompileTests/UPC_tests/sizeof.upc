@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include "upc.h"
 shared double a[100*THREADS];
 //shared[10] double a[100*THREADS];
 //shared double a[100];// THREADS must appear for dynamic threads
