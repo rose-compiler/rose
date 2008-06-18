@@ -244,7 +244,8 @@ HEADER_BINARY_FILE_START
              };
 
        // DQ (6/15/2008): Adding interface to simplify migration to newer executable formate IR nodes.
-          SgAsmGenericSectionPtrList & get_sectionList();
+       // JJW (6/18/2008): Commenting out because this function doesn't have a definition
+       // SgAsmGenericSectionPtrList & get_sectionList();
 
 HEADER_BINARY_FILE_END
 
