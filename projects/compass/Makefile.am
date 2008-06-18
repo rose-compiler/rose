@@ -35,11 +35,11 @@ compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $
 CHECKER_LIST_WITHOUT_COMMENTS: $(srcdir)/CHECKER_LIST
 	grep -v '^#' < $(srcdir)/CHECKER_LIST | awk '{print $$0 " " toupper(substr($$0, 0, 1)) substr($$0, 2)}' > CHECKER_LIST_WITHOUT_COMMENTS
 
-compass_makefile.inc: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/buildCompassMakefileInc.sh
-	$(srcdir)/buildCompassMakefileInc.sh $(srcdir) > compass_makefile.inc
+compass_makefile.inc: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compass_scripts/buildCompassMakefileInc.sh
+	$(srcdir)/compass_scripts/buildCompassMakefileInc.sh $(srcdir) > compass_makefile.inc
 
-compassCheckerDocs.tex: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compassRepository/bin/compass_submission_setup_docsonly.sh
-	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | $(srcdir)/compassRepository/bin/compass_submission_setup_docsonly.sh $(srcdir) > compassCheckerDocs.tex
+compassCheckerDocs.tex: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compass_scripts/compass_submission_setup_docsonly.sh
+	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | $(srcdir)/compass_scripts/compass_submission_setup_docsonly.sh $(srcdir) > compassCheckerDocs.tex
 
 buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS
 	sed -n '1,/@@@/p' < $(srcdir)/buildCheckers.C.in > buildCheckers.C
@@ -108,9 +108,9 @@ regenerate:
 #	When using "make distcheck" rule we need to make the read only srcdir writable.
 	chmod -R +w $(srcdir)
 #	Call the compass_submission_setup directly (can also be called by the user)
-	/bin/bash $(srcdir)/compassRepository/bin/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass "regenerate"
+	/bin/bash $(srcdir)/compass_scripts/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass "regenerate"
 	@echo "Builddir $(top_builddir)"
-	@echo "/bin/bash $(srcdir)/compassRepository/bin/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass \"regenerate\" "
+	@echo "/bin/bash $(srcdir)/compass_scripts/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass \"regenerate\" "
 
 regenerate_skip_compass_makefile_inc:
 	@echo "***********************************************************************************************"
@@ -119,9 +119,9 @@ regenerate_skip_compass_makefile_inc:
 #	When using "make distcheck" rule we need to make the read only srcdir writable.
 	chmod -R +w $(srcdir)
 #	Call the compass_submission_setup directly (can also be called by the user)
-	/bin/bash $(srcdir)/compassRepository/bin/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass "regenerate" "skip_compass_makefile"
+	/bin/bash $(srcdir)/compass_scripts/compass_submission_setup.sh $(srcdir)/compassRepository $(srcdir) $(top_builddir)/projects/compass "regenerate" "skip_compass_makefile"
 	@echo "Builddir $(top_builddir)"
-	@echo "/bin/bash $(srcdir)/compassRepository/bin/compass_submission_setup.sh $(srcdir)/compassRepository \
+	@echo "/bin/bash $(srcdir)/compass_scripts/compass_submission_setup.sh $(srcdir)/compassRepository \
 	                $(srcdir) $(top_builddir)/projects/compass \"regenerate\" "
 
 # EXTRA_DIST = compass_parameters tests

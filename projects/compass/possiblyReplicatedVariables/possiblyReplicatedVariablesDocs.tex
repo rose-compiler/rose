@@ -34,9 +34,9 @@ This analyzer does not accept any parameters.
 The shared variable analysis is implemented using the system dependence
 graph (SDG) in ROSE.  It operates on the assumption that the only
 information that varies between ranks is the result of calling {\tt
-MPI_Comm_rank()}; other functions can be added as needed.  It first locates
+MPI\_Comm\_rank()}; other functions can be added as needed.  It first locates
 SDG nodes corresponding to the second argument (pointer to rank) of {\tt
-MPI_Comm_rank()}, and then traces the uses of those values.  All variables
+MPI\_Comm\_rank()}, and then traces the uses of those values.  All variables
 mentioned in statements using the rank value are considered to be private
 to each rank (this is a gross overapproximation of what must be private);
 and all values derived from those statements are also considered to be

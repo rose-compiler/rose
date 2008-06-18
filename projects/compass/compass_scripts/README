@@ -1,143 +1,58 @@
+                                 README 
+                                 ------
+
 Help:
 -----
 
-Contact Gary Yuan (yuangm@gmail.com)
+Contact Gary Yuan (yuan5@llnl.gov)
 
-Description of this directory
------------------------------
+Contents:
+---------
 
-**Contents (compass_scripts):
+1. Description of This Directory
+2. Invocation of the gen_checker.sh Script
+3. Invocation of the compass_checkin.sh Script
+4. Invocation of the compass_submission_setup.sh Script
+5. A HOW-TO typescript Session
+6. Using Compass With ToolGear
+
+################################################################################
+
+Description of This Directory:
+------------------------------
+
 compass_checkin.sh
 compass_submission_setup.sh
-compass_fixes (directory)
-	compassMain.C  compass.tex.in  Makefile.am
 compass_template_generator (directory)
-	compass.C  compass_parameters  gen_checker.sh
-	compass.h  compassTestMain.C
+	compass.C  compass.h  compass_parameters  compassTestMain.C  README
+gen_checker.sh
+README
+
+This directory contains the shell scripts and support files necessary 
+to generate new Compass checker templates and to incorporate new checkers into 
+the Compass source tree.
+
+`gen_checker.sh' and `compass_template_generator' are used to generate new
+Compass checker templates.	
+
+`compass_checkin.sh' is used to add/update Compass checkers into a central
+directory.
+
+`compass_submission_setup.sh' is used to add new Compass checkers to an 
+existing Compass source tree (usually located at .../ROSE/projects/compass).
+
+We recommend that you separate this directory from your Compass source
+tree as it is likely to be used in many locations. This can be done simply
+by moving `compassRepository' into a central location and having each user add
+the `bin' directory to their PATH environment variable.
 
 ################################################################################
 
-Invocation of the compass_checkin.sh script
--------------------------------------------
+Invocation of the gen_checker.sh Script:
+----------------------------------------
 
-If you are a member of the rose group then invoke the script compass_checkin.sh 
-script to handin your new Compass Checker or overwrite an existing checker
-with a new version.
-
-Usage:
-------
-
-compass_checkin.sh <Tar GZIP checker> <Checkin Directory>
-
-Example:
---------
-
-$ compass_checkin.sh noExitInMpiCode.tgz ~dquinlan/COMPASS_SUBMIT
-
-Restrictions:
--------------
-
-1. You may only specify one checker tarball file at a time
-2. You may only submit GZIP TAR format files
-3. You may only submit files less than 10 MB
-
-Test for Success: You should see the name of your checker archive
------------------
-
-$ ls -l ~dquinlan/COMPASS_SUBMIT
-
-################################################################################
-
-Invocation of the compass_submission_setup.sh script
-----------------------------------------------------
-
-You may use the compass_submission_setup.sh script to integrate your own and
-other people's checkers into your source tree of projects/compass.
-
-Necessary Edits to compass_submission_setup.sh:
------------------------------------------------
-
-Edit the following changes to your copy of compass_submission_setup.sh
-
-CHECKIN_DIRECTORY=<Full path to where you store your checker archives>
-COMPASS_PROJECT=<Full path to ROSE source tree projects/compass>
-
-Note, that compass_submission_setup.sh expects to find GZIP TAR format archives
-in the directory path specified by ${CHECKIN_DIRECTORY}
-
-Invocation of the compass_submission_setup.sh script
-----------------------------------------------------
-
-After you have made the necessary edits simply execute:
-
-$ compass_submission_setup.sh
-
-Results of executing compass_submission_setup.sh
-------------------------------------------------
-
-compass_submission_setup.sh will produce several generated files in your
-ROSE source tree projects/compass directory:
-
-projects/compass/CHECKER_LIST -- Contains a list of checkers ever 'seen' by your
-	copy of compass_submission_setup.sh
-
-projects/compass/compass_makefile.inc -- Include this file in at the top of your
-	projects/compass/Makefile.am. This will build the correct Makefile
-	for only the new checkers 'seen' by compass_submission_setup.sh
-
-projects/compass/checkers.h -- Header file included in 
-	projects/compass/compassMain.C, contains the individual include
-	directives for each checker 'seen' by compass_submission_setup.sh
-
-projects/compass/buildCheckers.C -- Source file containing the function
-	to build all traversals for checkers 'seen' by 
-	compass_submission_setup.sh. Call this function from
-	projects/compass/compassMain.C
-
-	Here is the prototype for this function
-
-void buildCheckers( std::vector<Compass::TraversalBase*> &retVal, 
-		    Compass::Parameters &params, 
-		    Compass::OutputObject &output );
-
-projects/compass/compassCheckerDocs.tex -- Is a common tex file that \inputs
-	all documentation for checkers 'seen' by compass_submission_setup.sh.
-	input this file in your projects/compass/compass.tex.in file instead
-	of the individual checker documentations.
-
-	Example of compass.tex.in edits:
-	\input{introduction}
-
-	\input{compassCheckerDocs}
-
-	\newpage
-	\input{addYourOwnDetector}
-
-Summary of post-processing instructions for compass_submission_setup.sh
------------------------------------------------------------------------
-
-You must complete these post-processing instructions once when switching to the
-version of compass provided after 7/18/2007.
-
-1. include compass_makefile.inc in your Makefile.am under the ROSE source
-   tree projects/compass directory
-
-2. Edit your compassMain.C to call the buildCheckers() function and have
-   the function prototype at an appropriate location in compassMain.C
-
-3. Edit your compass.tex.in file to input only compassCheckerDocs.tex instead
-   of the individual documentation .tex files for each checker
-
-0. If you would rather take the default files for all these changes please
-   copy compass/fixes/* to projects/compass
-
-################################################################################
-
-Invocation of the compass_template_generator/gen_checker.sh script
-------------------------------------------------------------------
-
-Invoke the gen_checker.sh script to generate a template for all your Compass
-checker submissions.
+Invoke the gen_checker.sh script to generate a new template to help you write
+a new Compass checker.
 
 Usage:
 ------
@@ -149,8 +64,8 @@ Example:
 
 $ gen_checker.sh multiple cases on same line
 
-Results of executing the gen_checker.sh script
-----------------------------------------------
+Results of Executing gen_checker.sh Script (with Example):
+----------------------------------------------------------
 
 A new directory name 'multipleCasesOnSameLine' (name of your checker in
 camel case) is created with the following files:
@@ -158,13 +73,13 @@ camel case) is created with the following files:
 	compass.C           multipleCasesOnSameLine.C
 	compass.h           multipleCasesOnSameLineDocs.tex
 	compass_parameters  multipleCasesOnSameLine.h
-	compassTestMain.C   multipleCasesOnSameLineMain.C
-	Makefile            multipleCasesOnSameLineTest1.C
-	Makefile.am
+	compassTestMain.C   multipleCasesOnSameLine.inc
+	Makefile            multipleCasesOnSameLineMain.C
+	Makefile.am         multipleCasesOnSameLineTest1.C
 
-Some of the files (compass.[Ch], compass_parameters, and compassTestMain.C)
-are copied from the current directory (compass_template_generator), while
-others are generated (multiple*, Makefile, Makefile.am)
+Some of these files (compass.[Ch], compass_parameters, and compassTestMain.C)
+are copied from the compass_template_generator directory; while others are
+generated (multiple*, Makefile, Makefile.am)
 
 Some Suggestions:
 -----------------
@@ -177,3 +92,360 @@ Some Suggestions:
 
 2. Some of the files have read-only permissions and are intended only for
    such use. Please do not change the permissions of these files.
+
+Advanced:
+---------
+
+The file `multipleCasesOnSameLine.inc' is used to pass in custom LDADD lines
+to the Make environment on a per checker basis. The LDADD line specified in
+this file will be added verbatim to the compass makefile.
+
+################################################################################
+
+Invocation of the compass_checkin.sh Script:
+--------------------------------------------
+
+Typically, the checkers written for Compass are kept together in a single
+repository in the form of GZIP tarballs. This script is used to check in new
+checkers and update existing checkers in that directory. Additionally, the
+compass_checkin.sh script only allows tar GZIP archives less than 10 MB
+as a sort of error check.
+
+This script is meant to be used as a way to collect the checkers from
+developers in a (*NIX) group. As such, each author must have group write
+permission to the directory specified by <Checkin Directory>. To use
+compass_checkin.sh with your group please edit line 36 to make the following
+change:
+
+36c36
+<     chgrp rose ${CHECKIN_DIRECTORY}/`basename ${FILE}`
+---
+>     chgrp <NAME OF YOUR GROUP> ${CHECKIN_DIRECTORY}/`basename ${FILE}`
+
+Usage:
+------
+
+compass_checkin.sh <Tar GZIP checker> <Checkin Directory>
+
+Example:
+--------
+
+$ compass_checkin.sh multipleCasesOnSameLine.tgz ~dquinlan/COMPASS_SUBMIT
+
+Restrictions:
+-------------
+
+1. Only one checker may be checked-in at a time
+2. Only GZIP TAR format files are accepted.
+3. Only files less than 10 MB are accepted.
+
+################################################################################
+
+Invocation of the compass_submission_setup.sh Script
+----------------------------------------------------
+
+The compass_submission_setup.sh handles adding/updating a Compass checker into
+an existing Compass source tree.
+
+Usage:
+------
+
+compass_submission_setup.sh <COMPASS SUBMIT DIR> <COMPASS PROJECT DIR> "regenerate"
+
+Where:
+<COMPASS SUBMIT DIR> -- is the directory where compass checker tarballs are
+                        kept. This directory should only have compass
+                        tarball files or other directories. Other regular files
+                        besides compass tarballs are strictly forbidden.
+
+<COMPASS PROJECT DIR> -- is the directory in your ROSE source tree where
+                        compass exists under projects.
+
+"regenerate" -- is an optional argument that instructs the script to perform a
+        read-only operation on the file CHECKER_LIST in your projects/compass
+        directory. This file contains a list of checkers that will be
+        integrated by compass_submission_setup.sh.
+
+Example:
+--------
+
+$ compass_submission_setup.sh ~dquinlan/COMPASS_SUBMIT /home/yuan5/ROSE/ROSE/projects/compass
+
+Detailed Description of compass_submission_setup.sh:
+----------------------------------------------------
+
+As stated previously, the compass_submission_setup.sh script handles
+adding/updating Compass checkers into the compass source tree (usually located
+at ROSE/projects/compass). It does this by generating the necessary files
+to compile Compass with the checkers located in <COMPASS SUBMIT DIR>. These
+files are:
+
+CHECKER_LIST -- a file that keeps a running list of all checkers seen by
+	compass_submission_setup.sh.
+
+compass_makefile.inc -- a Make include file that sets the Make environment
+	with the information for each checker. This environment specifies
+	the rules needed to compile each checker object, make the
+	documentation, and test all checkers together or separately.
+
+compass_makefile.inc provides the following Make rules: 
+	(note ${CHECKER} is the name of a checker directory i.e. 
+	doNotDeleteThis)
+
+docs: -- makes the documentation
+
+test${CHECKER}: -- tests a single checker, a single rule is provided
+		per checker.
+
+testAllCheckersSeparately: -- tests all checkers separately as a batch.
+
+archive${CHECKER}: -- tar & gzips a single checker directory in 
+		projects/compass/${CHECKER} to 
+		projects/compass/compassRepository/${CHECKER}.tar.gz
+
+archiveCheckers: -- archives all checkers (uncommented in CHECKER_LIST)
+                projects/compass to
+                projects/compass/compassRepository/${CHECKER}.tar.gz
+
+checkers.h -- An automatically generated file needed by compassMain.C that 
+	contains a list of #include directives for each checker header .h file.
+
+buildCheckers.C -- An automatically generated source file needed by 
+	compassMain.C to build the Compass checker traversals.
+
+compassCheckerDocs.tex -- A Latex include file that inputs each checker .tex
+	documentation file into the compass.tex document.
+
+compass_parameters -- The concatentation of individual checker parameter files
+	to be used with compassMain.
+
+After running compass_submission_setup.sh on the Compass source tree then
+you may run build/configure/make as usual to the ROSE build process.
+
+Advanced:
+---------
+
+The file `CHECKER_LIST' can use the `#' comment delimiter at the beginning of
+any checker name to remove that checker from compilation. The hash mark may
+only appear at the beginning of the line. The compass_submission_setup.sh
+script must be run again with the "regenerate" option if any checkers are
+commented out.
+
+################################################################################
+
+A HOW-TO typescript Session:
+----------------------------
+
+$ #start a new compass checker
+$
+$ gen_checker.sh do not delete this
+******************************************************************************
+Created the directory doNotDeleteThis.
+Copied the files "compass.C compass.h compassTestMain.C compass_parameters"
+into the directory doNotDeleteThis.
+
+Generated doNotDeleteThis/Makefile
+Generated doNotDeleteThis/Makefile.am
+Generated doNotDeleteThis/doNotDeleteThis.h
+Generated doNotDeleteThis/doNotDeleteThisMain.C
+Generated doNotDeleteThis/doNotDeleteThisTest1.C
+Generated doNotDeleteThis/../doNotDeleteThis/doNotDeleteThisDocs.tex
+******************************************************************************
+All files have been generated successfully. You should modify at least the
+variable ${ROSE_INSTALL} in doNotDeleteThis/Makefile to get a
+working system. Good luck with your style-checker!
+
+$ ls
+doNotDeleteThis
+$
+$
+$ # work on doNotDeleteThis checker ...
+$
+$ # I'm done! Archive the checker for submission
+$
+$ tar -zcvf doNotDeleteThis.tgz doNotDeleteThis/
+doNotDeleteThis/
+doNotDeleteThis/compass_parameters
+doNotDeleteThis/compass.h
+doNotDeleteThis/doNotDeleteThis.h
+doNotDeleteThis/doNotDeleteThisDocs.tex
+doNotDeleteThis/doNotDeleteThisMain.C
+doNotDeleteThis/Makefile
+doNotDeleteThis/compassTestMain.C
+doNotDeleteThis/Makefile.am
+doNotDeleteThis/compass.C
+doNotDeleteThis/doNotDeleteThisTest1.C
+doNotDeleteThis/doNotDeleteThis.C
+doNotDeleteThis/doNotDeleteThis.inc
+$
+$
+$ ls
+doNotDeleteThis  doNotDeleteThis.tgz
+$
+$ # Check in new checker to repository
+$
+$ compass_checkin.sh doNotDeleteThis.tgz /home/yuan5/ROSE/
+pass/compassRepository
+checking in doNotDeleteThis.tgz to /home/yuan5/ROSE/NOV9/ROSE/projects/compass/compassRepository...
+Done...Thank you for submitting doNotDeleteThis.tgz!
+$
+$
+$ cd /home/yuan5/ROSE/NOV9/ROSE/projects/compass/compassRepository
+$ ls
+bin  doNotDeleteThis.tgz
+$ ls bin
+compass_checkin.sh           compass_template_generator README
+compass_submission_setup.sh  gen_checker.sh
+$ cd ..
+$ ls
+acknowledgments.tex           compassRepository
+mMakefile.in
+addYourOwnDetector.tex        compassSupport               README
+checkers.h                    compass.tex.in               README~
+CompassCheckerSignUpList.txt  introduction.tex             template.tex
+compassMain.C                 Makefile.am                  tests
+compass_parameters            Makefile.am.subdir_template  util
+$ pwd
+/home/yuan5/ROSE/NOV9/ROSE/projects/compass
+$
+$
+$ # this is the compass source tree
+$ # run the compass_submission_setup.sh script here
+$
+$ compass_submission_setup.sh compassRepository/ `pwd`
+Updating /home/yuan5/ROSE/NOV9/ROSE/projects/compass/doNotDeleteThis/...
+Moving doNotDeleteThis/ to /home/yuan5/ROSE/NOV9/ROSE/projects/compass...
+grep: /home/yuan5/ROSE/NOV9/ROSE/projects/compass/CHECKER_LIST: No such file or directory
+Updating doNotDeleteThis to /home/yuan5/ROSE/NOV9/ROSE/projects/compass/CHECKER_LIST
+Sorting /home/yuan5/ROSE/NOV9/ROSE/projects/compass/CHECKER_LIST...
+Updating /home/yuan5/ROSE/NOV9/ROSE/projects/compass/compass_makefile.inc...
+Updating /home/yuan5/ROSE/NOV9/ROSE/projects/compass/checkers.h...
+Updating /home/yuan5/ROSE/NOV9/ROSE/projects/compass/buildCheckers.C...
+Updating /home/yuan5/ROSE/NOV9/ROSE/projects/compass/compassCheckerDocs.tex...
+Generated new compass_parameters file
+
+
+
+
+$ ls
+acknowledgments.tex           compass_makefile.inc  Makefile.am.subdir_template
+addYourOwnDetector.tex        compass_parameters    Makefile.in
+buildCheckers.C               compassRepository     README
+CHECKER_LIST                  compassSupport        README~
+checkers.h                    compass.tex.in        template.tex
+compassCheckerDocs.tex        doNotDeleteThis       tests
+CompassCheckerSignUpList.txt  introduction.tex      util
+compassMain.C                 Makefile.am
+$ cd ../..
+$ pwd
+/home/yuan5/ROSE/NOV9/ROSE
+$
+$
+$ ./build >& /dev/null
+$
+$ #change directory to build tree
+$ cd ../BUILD
+$ # build ROSE as normally done
+$ ../ROSE/configure --prefix=/home/yuan5/ROSE/NOV9/INSTALL/ CC=gcc CXX=g++ -
+h-edg_source_code=true >& /dev/null
+$
+$ cd projects/compass
+$
+$ ls
+compassSupport  compass.tex  Makefile  util
+$
+$ # make compass
+$ make -j4 >& /dev/null
+$
+$ ls
+buildCheckers.o  compassMain.o   compass.tex        Makefile
+compassMain      compassSupport  doNotDeleteThis.o util
+$
+$ # make compass docs
+$ make docs >& /dev/null
+$
+$ ls
+acknowledgments.tex     compassMain         compass.toc
+addYourOwnDetector.tex  compassMain.o       doNotDeleteThisDocs.tex
+buildCheckers.o         compass.out         doNotDeleteThis.o
+compass.aux             compass_parameters  fixme.sty
+compassCheckerDocs.tex  compass.pdf         introduction.tex
+compassDocs.tex         compassSupport      Makefile
+compass.log             compass.tex         util
+$ ls compass.pdf
+compass.pdf
+
+################################################################################
+
+Using Compass With ToolGear:
+----------------------------
+
+Prerequsites:
+-------------
+
+1. Make sure you have the compass.h and compassMain.C from after 8/28/2007 in
+   your compass project directory.
+
+2. TGui, is available from ToolGear
+   http://www.llnl.gov/CASC/tool_gear (requires Qt3)
+
+
+Description of TGui input format:
+---------------------------------
+
+The file output by compassMain that is input to TGui is of the following format:
+
+<tool_gear>
+<format>1</format>
+  <version>2.00</version>
+  <tool_title>Compass Analysis Static View</tool_title>
+  <message_folder>
+    <tag>CHECKER_NAME</tag>
+    <title>CHECKER_NAME Checker</title>
+    <if_empty>hide</if_empty>
+  </message_folder>
+  ... more message folder declarations ...
+  <message>
+    <folder>CHECKER_NAME</folder>
+    <heading>CHECKER_NAME: FILE_PATH</heading>
+    <body><![CDATA[BODY_CONTENT]]></body>
+    <annot>
+      <site>
+        <file>FILE_PATH</file>
+        <line>INT_LINE_NUMBER</line>
+        <desc><![CDATA[CHECKER_SHORT_DESCRIPTION]]></desc>
+      </site>
+    </annot>
+  </message>
+  ... more messages ...
+
+Note. the root tag <tool_gear> is not ended to be able to append easily. Thus
+      this file is not well-formed XML.
+
+
+Using compassMain (with ToolGear):
+----------------------------------
+
+1. Build, configure, and make Compass as usual
+
+2. Invoke compassMain with the following usage:
+
+        compassMain --tgui <file> ...
+
+        Where <file> is the name of the (new) TGui input file. An existing
+        files provided to this argument will be appended.
+
+3. Execute TGui <file>, where <file> is the output from compassMain
+
+4. (optional), to generate ToolGear output using the test* rules in the Makefile   of compass, invoke the `make` command with the argument, TGUI="--tgui <file>"
+   ex. make testAllCheckersSeparately TGUI="--tgui <file>"
+   ex. make testNoRand TGUI="--tgui <file>"
+
+Miscellaneous:
+--------------
+
+1. The list of <message_folder> tags in <file> is created only once per
+   instance of <file>. This list is created from the checker names of each
+   traversal run at the time when <file> is created. Appended <file>s will not
+   include the XML preamble or any new <message_folder> tags; only <message>
+   tags get appended.

@@ -2,11 +2,11 @@
 # COMPASS_SUPPORT to your compassSupport directory like this:
 #ROSE_INSTALL= ROSE-INSTALL-DIRECTORY
 #COMPASS_PROJECT = COMPASS-PROJECT-DIRECTORY 
-#COMPASS_SUPPORT = $\{COMPASS_PROJECT\}/compassSupport
+#COMPASS_SUPPORT = ${COMPASS_PROJECT}/compassSupport
 
 CHECKER_NAME = compass_defUseAnalysisTest
 
-LINKER_FLAGS = -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose -lrt -lfl -L`pwd` -Wl,-rpath `pwd` -lcompass
+LINKER_FLAGS = -L$(ROSE_INSTALL)/lib -Wl,-rpath $(ROSE_INSTALL)/lib -lrose $(RT_LIBS) -L`pwd` -Wl,-rpath `pwd` -lcompass
 
 all: compass_defUseAnalysisTest
 
