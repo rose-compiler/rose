@@ -340,6 +340,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        virtual void unparseUpcWaitStatement (SgStatement* stmt, SgUnparse_Info& info);
        virtual void unparseUpcBarrierStatement (SgStatement* stmt, SgUnparse_Info& info);
        virtual void unparseUpcFenceStatement (SgStatement* stmt, SgUnparse_Info& info);
+       virtual void unparseUpcForAllStatement (SgStatement* stmt, SgUnparse_Info& info);
 //#endif       
        // DQ (8/13/2007): This should go into the Unparser class
       //! begin the unparser (unparser.C)

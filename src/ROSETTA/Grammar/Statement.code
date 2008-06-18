@@ -2641,12 +2641,31 @@ HEADER_UPC_FENCE_STATEMENT_START
 HEADER_UPC_FENCE_STATEMENT_END
 
 HEADER_UPC_FORALL_STATEMENT_START
+HEADER_LIST_DECLARATIONS
+       // Liao, 6/17/2008 Copied from HEADER_FOR_STATEMENT_START
+         SgStatementPtrList & get_init_stmt();
+          const SgStatementPtrList & get_init_stmt() const;
+       protected:
+          virtual bool replace_child(SgStatement *,SgStatement *,
+                                         bool extractListFromBasicBlock = false);
+       public:
+
+       // DQ (11/25/2005): Support for previous interface function.
+          SgExpression*     get_test_expr () const                                 ROSE_DEPRECATED_FUNCTION;
+          void              set_test_expr (SgExpression* expression )              ROSE_DEPRECATED_FUNCTION;
+
+          int replace_expression(SgExpression * original_expression, SgExpression * new_expression );
+
           virtual unsigned int cfgIndexForEnd() const;
           virtual bool cfgIsIndexInteresting(unsigned int) const;
           virtual unsigned int cfgFindChildIndex(SgNode* n);
           virtual unsigned int cfgFindNextChildIndex(SgNode* n);
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+         // DQ (2/22/2007): Added for uniform support of mangled names
+          virtual SgName get_mangled_name() const;
+
 HEADER_UPC_FORALL_STATEMENT_END
 
 
@@ -4001,6 +4020,8 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
           case V_SgForStatement:
+       // Liao, 6/17/2008, upc_forall           
+          case V_SgUpcForAllStatement:
           case V_SgFunctionDefinition:
           case V_SgIfStmt:
           case V_SgSwitchStatement:
@@ -4599,6 +4620,19 @@ SgScopeStatement::getStatementList () const
           case V_SgForStatement:
              { 
                const SgForStatement* forScope = isSgForStatement(currentScope);
+               ROSE_ASSERT (forScope != NULL);
+               ROSE_ASSERT (forScope->get_loop_body() != NULL);
+            // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
+            // currentStatementList = forScope->get_init_stmt();
+            // currentStatementList = &(forScope->get_loop_body()->getStatementList());
+               return isSgBasicBlock(forScope->get_loop_body()) ? isSgBasicBlock(forScope->get_loop_body())->getStatementList() : emptyStatementList;
+               break;
+             }
+
+// Liao, 6/17/2008, upc_forall statement             
+          case V_SgUpcForAllStatement:
+             { 
+               const SgUpcForAllStatement* forScope = isSgUpcForAllStatement(currentScope);
                ROSE_ASSERT (forScope != NULL);
                ROSE_ASSERT (forScope->get_loop_body() != NULL);
             // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
@@ -7636,9 +7670,185 @@ std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
   // return VirtualCFG::doForallCfgInEdges(this, idx);
    }
 
+// Liao, we have to duplicate most code from SgForStatement since 
+// SgUpcForAllStatement and SgForStatement are not related 
+// Copy the member functions from SgForStatement below:
 void
 SgUpcForAllStatement::post_construction_initialization()
    {
+    ROSE_ASSERT(p_for_init_stmt == NULL);
+  // SgForInitStatement* forInitStatement = new SgForInitStatement(New_File_Info(this));
+     SgForInitStatement* forInitStatement = NULL;
+     if (get_startOfConstruct() != NULL)
+        {
+          forInitStatement = new SgForInitStatement(New_File_Info(this));
+
+       // DQ (10/27/2006): This will have to be updated after construction, 
+       // since we don't know the ending position at this point!
+          forInitStatement->set_endOfConstruct(New_File_Info(this));
+
+       // DQ (12/17/2006): Fixup the parents of Sg_File_Info objects
+          forInitStatement->get_startOfConstruct()->set_parent(forInitStatement);
+          forInitStatement->get_endOfConstruct()->set_parent(forInitStatement);
+        }
+       else
+        {
+          forInitStatement = new SgForInitStatement();
+        }
+
+     ROSE_ASSERT(forInitStatement != NULL);
+
+  // All SgUpcForAllStatement IR nodes should have a valid SgForInitStatement (even if it is an empty list!).
+     set_for_init_stmt(forInitStatement);
+
+     forInitStatement->set_parent(this);
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_test != NULL)
+        {
+          p_test->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_increment != NULL)
+        {
+          p_increment->set_parent(this);
+        }
+
+  // DQ (12/17/2006): If these are available, then set their parents as well (ok, since this is a structural issue).
+     if (p_loop_body != NULL)
+        {
+          p_loop_body->set_parent(this);
+        }
+   }
+
+// MS: moved StatementPtrList to ForInitStatement. Therefore the call is simply forwarded and the same interface
+SgStatementPtrList &
+SgUpcForAllStatement::get_init_stmt()
+   { 
+  // DQ (6/24/2006): If this is always true then we can simplify this function.
+     ROSE_ASSERT(p_for_init_stmt != NULL);
+     return get_for_init_stmt()->get_init_stmt(); 
+   }
+
+const SgStatementPtrList &
+SgUpcForAllStatement::get_init_stmt() const
+   {
+  // DQ (6/24/2006): When we later simplify the append, prepend, insert functions this will be important.
+     ROSE_ASSERT(p_for_init_stmt != NULL);
+
+     return get_for_init_stmt()->get_init_stmt();
+   }
+
+void
+SgUpcForAllStatement::append_init_stmt(SgStatement * what)
+   { 
+  // DQ (6/24/2006): If this is always true then we can simplify this function.
+     ROSE_ASSERT(p_for_init_stmt != NULL);
+     get_for_init_stmt()->append_init_stmt(what);
+   }
+
+void
+SgUpcForAllStatement::prepend_init_stmt(SgStatement * what)
+   {
+  // DQ (6/24/2006): If this is always true then we can simplify this function.
+     ROSE_ASSERT(p_for_init_stmt != NULL);
+     get_for_init_stmt()->prepend_init_stmt(what); 
+   }
+bool
+SgUpcForAllStatement::replace_child(SgStatement *target,SgStatement *newstmt,
+                              bool extractBasicBlock)
+   {
+     if ( StatementReplace(this, p_loop_body, target, newstmt) == true )
+          return true;
+       else
+          if ( StatementReplace(this, p_for_init_stmt, target, newstmt) == true )
+               return true;
+            else 
+               return false;
+   }
+
+SgExpression* 
+SgUpcForAllStatement::get_test_expr () const
+   {
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT(p_test != NULL);
+     ROSE_ASSERT(isSgStatement(p_test) != NULL);
+
+     SgExpression*    testExpression = NULL;
+     SgExprStatement* exprStatement  = isSgExprStatement(p_test);
+     if (exprStatement != NULL)
+        {
+       // testExpression = exprStatement->get_the_expr();
+          testExpression = exprStatement->get_expression();
+          ROSE_ASSERT(testExpression != NULL);
+        }
+       else
+        {
+          printf ("test in SgUpcForAllStatement is a %s \n",p_test->class_name().c_str());
+          ROSE_ASSERT(false);
+        }
+
+     ROSE_ASSERT(testExpression != NULL);
+     return testExpression;
+   }
+void
+SgUpcForAllStatement::set_test_expr (SgExpression* expr )
+   {
+  // DQ (11/25/2005): preserve the previous interface. This function 
+  // sets the SgStatement using a SgExpressionRoot IR node.
+     ROSE_ASSERT (this != NULL);
+     ROSE_ASSERT (expr != NULL);
+
+    Sg_File_Info* fileInfo = New_File_Info(expr);
+     SgExprStatement* expressionStatement = new SgExprStatement(fileInfo,expr);
+     ROSE_ASSERT(expressionStatement != NULL);
+
+  // DQ (10/27/2006): This might have to be reset later, 
+  // since at this point we might not know the exact size.
+     expressionStatement->set_endOfConstruct(New_File_Info(expr));
+
+     expressionStatement->get_startOfConstruct()->set_parent(expressionStatement);
+     expressionStatement->get_endOfConstruct()->set_parent(expressionStatement);
+
+     if (get_test() != NULL)
+        {
+          printf ("Warning SgUpcForAllStatement::set_test_expr is clobbering the existing test statement \n");
+        }
+     set_test(expressionStatement);
+
+  // DQ (4/7/2006): Set the parents
+     expressionStatement->set_parent(this);
+
+     ROSE_ASSERT(isSgStatement(p_test) != NULL);
+   }
+int
+SgUpcForAllStatement::replace_expression(SgExpression * original_expression, SgExpression * new_expression )
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(original_expression != NULL);
+     ROSE_ASSERT(new_expression != NULL);
+
+     ROSE_ASSERT(original_expression == p_increment);
+
+     set_increment(new_expression);
+
+     new_expression->set_parent(this);
+
+  // DQ: Let this be a memory leak for now to avoid initial problems.
+     ROSE_ASSERT(original_expression != NULL);
+  // delete original_expression;
+
+     return 0;
+   }
+
+// DQ (2/22/2007): Added to provide uniform support of mangle names for all scopes
+SgName
+SgUpcForAllStatement::get_mangled_name(void) const
+   {
+     return SgName ("");
    }
 
 SOURCE_UPC_FORALL_STATEMENT_END

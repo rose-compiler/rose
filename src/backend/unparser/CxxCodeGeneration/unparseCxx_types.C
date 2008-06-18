@@ -1403,8 +1403,12 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
 
        // Support for UPC
        // Liao, 6/11/2008. Enable faithful unparsing for .upc files
+          if (mod_type->get_typeModifier().get_upcModifier().isUPC_Strict())
+             { curprint ("strict "); }
+          if (mod_type->get_typeModifier().get_upcModifier().isUPC_Relaxed())
+             { curprint ("relaxed "); }
+      
           if (mod_type->get_typeModifier().get_upcModifier().get_isShared() == true)
-             // { curprint ( string("/* shared: upc not supported by vendor compiler (ignored) */ ")); }
              { 
                long block_size = mod_type->get_typeModifier().get_upcModifier().get_layout();
                stringstream ss;
@@ -1422,19 +1426,6 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                  curprint ("shared["+ss.str()+"] ") ; 
                }
              }
-          if (mod_type->get_typeModifier().get_upcModifier().isUPC_Strict())
-             //{ curprint ( string("/* strict: upc not supported by vendor compiler (ignored) */ ")); }
-             { curprint ("strict "); }
-          if (mod_type->get_typeModifier().get_upcModifier().isUPC_Relaxed())
-             //{ curprint ( string("/* relaxed: upc not supported by vendor compiler (ignored) */ ")); }
-             { curprint ("relaxed "); }
-
-#if 0
-          printf ("SgModifierType::m_restrict = %d \n",SgModifierType::m_restrict);
-          printf ("SgModifierType::m_shared   = %d \n",SgModifierType::m_shared);
-          printf ("SgModifierType::m_strict   = %d \n",SgModifierType::m_strict);
-          printf ("SgModifierType::m_relaxed  = %d \n",SgModifierType::m_relaxed);
-#endif
 
        // Print the base type unless it has been printed up front
           if (!btype_first)

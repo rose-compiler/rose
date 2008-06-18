@@ -645,6 +645,7 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           case V_SgUpcWaitStatement:             unparseUpcWaitStatement(stmt, info); break;
           case V_SgUpcBarrierStatement:             unparseUpcBarrierStatement(stmt, info); break;
           case V_SgUpcFenceStatement:             unparseUpcFenceStatement(stmt, info); break;
+          case V_SgUpcForAllStatement:           unparseUpcForAllStatement(stmt, info);    break; 
 
 //#endif 
           default:
@@ -5211,6 +5212,94 @@ Unparse_ExprStmt::unparseUpcFenceStatement(SgStatement* stmt, SgUnparse_Info& in
    if (!ninfo.SkipSemiColon())
         curprint ( string(";"));
  }
+// Liao, 6/17/2008, unparse upc_forall 
+// Most code is copied from Unparse_ExprStmt::unparseForStmt()
+void
+Unparse_ExprStmt::unparseUpcForAllStatement(SgStatement* stmt, SgUnparse_Info& info)
+   {
+  // printf ("Unparse for loop \n");
+     SgUpcForAllStatement* for_stmt = isSgUpcForAllStatement(stmt);
+     ROSE_ASSERT(for_stmt != NULL);
+
+     curprint ( string("upc_forall ("));
+     SgUnparse_Info newinfo(info);
+     newinfo.set_SkipSemiColon();
+     newinfo.set_inConditional();  // set to prevent printing line and file information
+
+  // curprint ( string(" /* initializer */ ";
+     SgStatement *tmp_stmt = for_stmt->get_for_init_stmt();
+  // ROSE_ASSERT(tmp_stmt != NULL);
+     if (tmp_stmt != NULL)
+        {
+          unparseStatement(tmp_stmt,newinfo);
+        }
+       else
+        {
+          printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
+          curprint ( string("; "));
+        }
+     newinfo.unset_inConditional();
+
+#if 0
+     SgExpression *tmp_expr = NULL;
+     if ( (tmp_expr = for_stmt->get_test_expr()))
+          unparseExpression(tmp_expr, info);
+#else
+  // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
+  // printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
+  // curprint ( string(" /* test */ ";
+     SgStatement *test_stmt = for_stmt->get_test();
+     ROSE_ASSERT(test_stmt != NULL);
+  // if ( test_stmt != NULL )
+     SgUnparse_Info testinfo(info);
+     testinfo.set_SkipSemiColon();
+     testinfo.set_inConditional();
+  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+     unparseStatement(test_stmt, testinfo);
+#endif
+     curprint ( string("; "));
+
+  // curprint ( string(" /* increment */ ";
+  // SgExpression *increment_expr = for_stmt->get_increment_expr();
+     SgExpression *increment_expr = for_stmt->get_increment();
+     ROSE_ASSERT(increment_expr != NULL);
+     if ( increment_expr != NULL )
+          unparseExpression(increment_expr, info);
+
+     curprint ( string("; "));
+  // Liao, unparse the affinity expression
+     SgExpression * affinity_expr = for_stmt->get_affinity();
+     ROSE_ASSERT(affinity_expr != NULL);
+     SgExpression * null_expr = isSgNullExpression(affinity_expr);
+     if (null_expr)
+       curprint (string("continue"));
+     else
+       unparseExpression(affinity_expr, info); 
+     curprint ( string(") "));
+   // Added support to output the header without the body to support the addition 
+  // of more context in the prefix used with the AST Rewrite Mechanism.
+  // if ( (tmp_stmt = for_stmt->get_loop_body()) )
+
+     SgStatement* loopBody = for_stmt->get_loop_body();
+     ROSE_ASSERT(loopBody != NULL);
+
+  // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
+     if ( (loopBody != NULL) && !info.SkipBasicBlock())
+        {
+          unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
+          unparseStatement(loopBody, info);
+          unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
+        }
+       else
+        {
+          if (!info.SkipSemiColon())
+             {
+               curprint ( string(";"));
+             }
+        }
+   }
+
+
 
 //#endif   
  
