@@ -968,14 +968,27 @@ is_ELF(ExecFile *f)
 
 /* Parses the structure of an ELF file and adds the information to the asmFile */
 void
-parseBinaryFormat(ExecFile *ef, SgAsmFile* asmFile)
-{
-    ElfFileHeader *fhdr = parse(ef);
-    ROSE_ASSERT(fhdr != NULL);
-    SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
-    ROSE_ASSERT(roseElfHeader != NULL);
-    asmFile->set_header(roseElfHeader);
-}
+parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
+   {
+     ROSE_ASSERT(f);
+    
+     ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
+
+     ROSE_ASSERT(fhdr != NULL);
+     SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
+     ROSE_ASSERT(roseElfHeader != NULL);
+     asmFile->set_header(roseElfHeader);
+
+  /* Read the optional section and segment tables and the sections/segments to which they point. */
+     if (fhdr->e_shnum)
+          fhdr->section_table = new ElfSectionTable(fhdr);
+
+     if (fhdr->e_phnum)
+          fhdr->segment_table = new ElfSegmentTable(fhdr);
+
+  /* Identify parts of the file that we haven't encountered during parsing */
+     f->fill_holes();
+   }
 
 /* Parses the structure of an ELF file and adds the info to the ExecFile */
 ElfFileHeader *

@@ -346,9 +346,9 @@ HEADER_GENERIC_SECTION_START
        // This can be mapped to the offset data member
           unsigned long get_starting_memory_address() { return get_offset(); }
 
-          unsigned long get_starting_file_offset();
-          unsigned long get_flags();
-          unsigned long get_type();
+          unsigned long get_starting_file_offset() { return 0; }
+          unsigned long get_flags() { return 0; }
+          unsigned long get_type() { return 0; }
 HEADER_GENERIC_SECTION_END
 
 HEADER_GENERIC_HEADER_START
