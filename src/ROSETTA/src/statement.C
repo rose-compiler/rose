@@ -2553,6 +2553,7 @@ Grammar::setUpStatements ()
      UpcBarrierStatement.setFunctionSource ( "SOURCE_UPC_BARRIER_STATEMENT", "../Grammar/Statement.code" );
      UpcFenceStatement.setFunctionSource   ( "SOURCE_UPC_FENCE_STATEMENT", "../Grammar/Statement.code" );
      UpcForAllStatement.setFunctionSource   ( "SOURCE_UPC_FORALL_STATEMENT", "../Grammar/Statement.code" );
+     UpcForAllStatement.editSubstitute       ( "get_body", "get_loop_body" );
 #endif
 
      FunctionDeclaration.setFunctionSource  ( "SOURCE_FUNCTION_DECLARATION_STATEMENT", "../Grammar/Statement.code" );

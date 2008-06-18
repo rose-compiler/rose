@@ -7,6 +7,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODES_REQUIRED_TO_PASS = \
      barrier.upc \
      fence.upc \
+     forall_1.upc \
+     forall_continue.upc \
      notify_wait.upc \
      restrict.upc \
      shared.upc \
@@ -14,15 +16,14 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2004_22.upc 
 TESTCODE_CURRENTLY_FAILING = \
      consistency.upc \
-     forall_1.upc \
      forall_affinity.upc \
-     forall_continue.upc \
      hello.upc \
      lock.upc \
      max_block_size.upc \
      mythread.upc \
      shared_2.upc \
      sizeof.upc \
+     sizeof_2.upc \
      threads.upc 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.

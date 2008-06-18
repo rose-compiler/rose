@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include "upc.h"
-shared[3] double * shared[10] a;
-/* shared double a[100*THREADS]; 
-shared[10] double a[100*THREADS];
-shared double a[100]; // THREADS must appear for dynamic threads
-*/
+
+shared[5] double a[100*THREADS]; 
+
 int main()
 {
   printf ("size of a is:%d\n",sizeof(a));
