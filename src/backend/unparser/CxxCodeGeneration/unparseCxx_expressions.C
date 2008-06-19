@@ -67,6 +67,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case UNSIGNED_LONG_INT_VAL: { unparseULongIntVal(expr, info); break; }
           case FLOAT_VAL: { unparseFloatVal(expr, info); break; }
           case LONG_DOUBLE_VAL: { unparseLongDoubleVal(expr, info); break; }
+          // Liao, 6/18/2008 , UPC identifiers 
+          case UPC_THREADS: { unparseUpcThreads(expr, info); break; }
+          case UPC_MYTHREAD: { unparseUpcMythread(expr, info); break; }
           case FUNC_CALL: { unparseFuncCall(expr, info); break; }
           case POINTST_OP: { unparsePointStOp(expr, info); break; }
           case RECORD_REF: { unparseRecRef(expr, info); break; }
@@ -2859,6 +2862,24 @@ Unparse_ExprStmt::unparseComplexVal(SgExpression* expr, SgUnparse_Info& info)
              }
         }
    }
+void 
+Unparse_ExprStmt::unparseUpcThreads(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgUpcThreads* upc_threads = isSgUpcThreads(expr);
+     ROSE_ASSERT(upc_threads != NULL);
+
+     curprint ("THREADS ");
+   }
+
+void 
+Unparse_ExprStmt::unparseUpcMythread(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgUpcMythread* upc_mythread = isSgUpcMythread(expr);
+     ROSE_ASSERT(upc_mythread != NULL);
+
+     curprint ("MYTHREAD ");
+   }
+
 
 // DQ (8/13/2007): Moved to common (language independent) base class
 // JJW Added a lot of these back in

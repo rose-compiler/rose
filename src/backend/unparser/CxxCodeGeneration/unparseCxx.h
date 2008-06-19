@@ -164,6 +164,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // virtual void unparseDoubleVal               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseLongDoubleVal           (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseComplexVal              (SgExpression* expr, SgUnparse_Info& info);
+        // Liao, 6/18/2008  UPC support
+          virtual void unparseUpcThreads              (SgExpression* expr, SgUnparse_Info& info);     
+          virtual void unparseUpcMythread             (SgExpression* expr, SgUnparse_Info& info);     
+
           virtual void unparseFuncCall                (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparsePointStOp               (SgExpression* expr, SgUnparse_Info& info);  
           virtual void unparseRecRef                  (SgExpression* expr, SgUnparse_Info& info);  

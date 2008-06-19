@@ -407,6 +407,8 @@ SgUpcWaitStatement
 SgUpcBarrierStatement
 SgUpcFenceStatement
 SgUpcForAllStatement
+SgUpcThreads
+SgUpcMythread
 SgAsmGenericSegment
 SgAsmGenericSection
 SgAsmGenericHeader

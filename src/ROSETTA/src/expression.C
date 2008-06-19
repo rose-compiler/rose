@@ -102,7 +102,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (LshiftAssignOp,         "LshiftAssignOp",         "LSHIFT_ASSIGN_OP" );
      NEW_TERMINAL_MACRO (RshiftAssignOp,         "RshiftAssignOp",         "RSHIFT_ASSIGN_OP" );
 
-  // DQ (12/13/2007): Added support for Fortran string concatination operator
+  // DQ (12/13/2007): Added support for Fortran string concatenation operator
      NEW_TERMINAL_MACRO (ConcatenationOp,        "ConcatenationOp",        "CONCATENATION_OP" );
 
      NEW_TERMINAL_MACRO (BoolValExp,             "BoolValExp",             "BOOL_VAL" );
@@ -122,6 +122,10 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (FloatVal,               "FloatVal",               "FLOAT_VAL" );
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
+
+  // Liao 6/18/2008: Support UPC constant THREADS, MYTHREAD
+     NEW_TERMINAL_MACRO (UpcThreads,              "UpcThreads",                 "UPC_THREADS" );
+     NEW_TERMINAL_MACRO (UpcMythread,             "UpcMythread",                 "UPC_MYTHREAD" );
 
   // DQ (8/27/2006): Added support for complex values (We will use a ComplexVal to stand for a imaginary number as well).
      NEW_TERMINAL_MACRO (ComplexVal,             "ComplexVal",             "COMPLEX_VAL" );
@@ -196,7 +200,8 @@ Grammar::setUpExpressions ()
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
           WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
           LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal      | LongDoubleVal    | ComplexVal ,"ValueExp","ValueExpTag", false);
+          DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread,
+          "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (Expression,
           UnaryOp             | BinaryOp                | ExprListExp         | VarRefExp           | ClassNameRefExp          |
@@ -494,6 +499,9 @@ Grammar::setUpExpressions ()
 
      StatementExpression.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      AsmOp.setFunctionSource               ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+     UpcThreads.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     UpcMythread.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
   // DQ (2/27/2005): We want to post_construction_initialization to call set_type so we don't want 
   // and empty function here plus I have added a set_type function for DotStarOp.
@@ -874,6 +882,19 @@ Grammar::setUpExpressions ()
   // DQ (11/9/2005): Added string to hold source code constant precisely (part of work with Andreas)
      ComplexVal.setDataPrototype ( "std::string", "valueString", "= \"\"",
 				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Liao 6/18/2008, UPC THREADS, MYTHREAD 
+     UpcThreads.setFunctionPrototype ( "HEADER_UPC_THREADS_EXPRESSION", "../Grammar/Expression.code" );
+     UpcThreads.setDataPrototype ( "int", "value", "= 0",
+			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UpcThreads.setDataPrototype ( "std::string", "valueString", "= \"\"",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UpcMythread.setFunctionPrototype ( "HEADER_UPC_MYTHREAD_EXPRESSION", "../Grammar/Expression.code" );
+     UpcMythread.setDataPrototype ( "int", "value", "= 0",
+			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UpcMythread.setDataPrototype ( "std::string", "valueString", "= \"\"",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      FunctionCallExp.setFunctionPrototype ( "HEADER_FUNCTION_CALL_EXPRESSION", "../Grammar/Expression.code" );
      FunctionCallExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
@@ -1368,6 +1389,9 @@ Grammar::setUpExpressions ()
      DotStarOp.setFunctionSource ( "SOURCE_DOT_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      ArrowStarOp.setFunctionSource ( "SOURCE_ARROW_STAR_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
+     UpcThreads.setFunctionSource ( "SOURCE_UPC_THREADS_EXPRESSION","../Grammar/Expression.code" );
+     UpcMythread.setFunctionSource ( "SOURCE_UPC_MYTHREAD_EXPRESSION","../Grammar/Expression.code" );
+
      EqualityOp.setFunctionSource       ( "SOURCE_EQUALITY_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      LessThanOp.setFunctionSource       ( "SOURCE_LESS_THAN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      GreaterThanOp.setFunctionSource    ( "SOURCE_GREATER_THAN_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
@@ -1532,6 +1556,9 @@ Grammar::setUpExpressions ()
      LongDoubleVal.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ComplexVal.setFunctionSource             ( "SOURCE_GET_TYPE_COMPLEX","../Grammar/Expression.code" );
 
+     UpcThreads.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     UpcMythread.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
      BoolValExp.editSubstitute     ( "GENERIC_TYPE", "SgTypeBool" );
      StringVal.editSubstitute      ( "GENERIC_TYPE", "SgTypeString" );
      ShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeShort" );
@@ -1558,6 +1585,8 @@ Grammar::setUpExpressions ()
      LongDoubleVal.editSubstitute          ( "GENERIC_TYPE", "SgTypeLongDouble" );
      ComplexVal.editSubstitute             ( "GENERIC_TYPE", "SgTypeComplex" );
 
+     UpcThreads.editSubstitute             ( "GENERIC_TYPE", "SgTypeInt" );
+     UpcMythread.editSubstitute            ( "GENERIC_TYPE", "SgTypeInt" );
 
   // DQ (1/16/2006): This is not IR node specific code since we don't store the type explicitly
   // FunctionCallExp.setFunctionSource     ( "SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION",
