@@ -9,22 +9,22 @@ TESTCODES_REQUIRED_TO_PASS = \
      fence.upc \
      forall_1.upc \
      forall_continue.upc \
+     mythread.upc \
      notify_wait.upc \
      restrict.upc \
      shared.upc \
      strict.upc \
-     test2004_22.upc 
+     test2004_22.upc \
+     threads.upc 
 TESTCODE_CURRENTLY_FAILING = \
      consistency.upc \
      forall_affinity.upc \
      hello.upc \
      lock.upc \
      max_block_size.upc \
-     mythread.upc \
      shared_2.upc \
      sizeof.upc \
-     sizeof_2.upc \
-     threads.upc 
+     sizeof_2.upc 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
