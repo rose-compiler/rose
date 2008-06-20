@@ -142,7 +142,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   //      2) -o <filename> is processed (since both the compilation and the linking 
   //         phases must know the output file name and it makes sense to process that once).
   //      3) Lists of files and libraries are processed (sense they too are required in 
-  //         both comilation and linking).  (e.g. -l<libname>, -L <directory>, <libname>.a,
+  //         both compilation and linking).  (e.g. -l<libname>, -L <directory>, <libname>.a,
   //         <filename>.C, <filename>.c, -I<directory name>, <filename>.h
   // NOTE: there is no side-effect to argc and argv.  Thus the original ROSE translator can 
   // see all options.  Any ROSE or EDG specific options can be striped by calling the
@@ -647,6 +647,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("verbose mode ON (for SgFile)\n");
         }
 
+
   //
   // Turn on warnings (turns on warnings in fronend, for Fortran support this turns on detection of 
   // warnings in initial syntax checking using gfortran before passing control to Open Fortran Parser).
@@ -744,7 +745,46 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("C99 mode ON \n");
           set_C99_only(true);
         }
+  //
+  // UPC only option , enable UPC mode of ROSE, especially the file suffix is not .upc
+  // It is an extension of C, so also set C mode. 
+  // Liao, 6/19/2008
+  //
+    // set_UPC_only(false); // invalidate the flag set by SgFile::setupSourceFilename() based on .upc suffix
+    // ROSE_ASSERT (get_UPC_only() == false);
+     bool hasRoseUpcEnabled = CommandlineProcessing::isOption(argv,"-rose:","(UPC|UPC_only)",true) ;
+     bool hasEdgUpcEnabled = CommandlineProcessing::isOption(argv,"--edg:","(upc)",true) ;
+     bool hasEdgUpcEnabled2 = CommandlineProcessing::isOption(argv,"-edg:","(upc)",true) ;
 
+     if (hasRoseUpcEnabled||hasEdgUpcEnabled2||hasEdgUpcEnabled) 
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf (" mode ON \n");
+          set_C_only(true);
+          set_UPC_only(true);
+          // remove edg:restrict since we will add it back in SgFile::build_EDG_CommandLine()
+          CommandlineProcessing::isOption(argv,"-edg:","(restrict)",true);
+          CommandlineProcessing::isOption(argv,"--edg:","(restrict)",true);
+        }
+
+    // two situations: either of -rose:upc_threads n  and --edg:upc_threads n appears.
+    // set flags and remove both.
+    int integerOptionForUPCThreads = 0;
+    int integerOptionForUPCThreads2 = 0;
+    bool hasRoseUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"-rose:","(upc_threads)",
+          integerOptionForUPCThreads,true);
+    bool hasEDGUpcThreads = CommandlineProcessing::isOptionWithParameter(argv,"--edg:","(upc_threads)",
+          integerOptionForUPCThreads2,true);
+
+    integerOptionForUPCThreads= (integerOptionForUPCThreads!=0)?integerOptionForUPCThreads:integerOptionForUPCThreads2;
+    if (hasRoseUpcThreads||hasEDGUpcThreads)
+    {  
+       // set ROSE SgFile::upc_threads value, done for ROSE
+       set_upc_threads(integerOptionForUPCThreads);
+       if ( SgProject::get_verbose() >= 1 )
+             printf ("upc_threads is set to %d\n",integerOptionForUPCThreads);
+
+     }       
   //
   // C++ only option
   //
@@ -1019,7 +1059,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_fortran_openmp(true);
           if (get_sourceFileUsesFortranFileExtension() == false)
              {
-               printf ("Warning, Non Fortran source file name specificed with explicit OpenMP option! \n");
+               printf ("Warning, Non Fortran source file name specified with explicit OpenMP option! \n");
                set_fortran_openmp(false);
              }
         }
@@ -1362,7 +1402,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // optionCount = sla(argv, "-rose:", "($)", "(v|verbose)",1);
      int integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(v|verbose)", &integerOption, 1);
+     optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
 
@@ -1474,7 +1516,7 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
    {
   // DQ (6/21/2005): This function processes commandline options that are specific to the backend 
   // but which the front-end or ROSE should know about.  Examples include template options that
-  // would influence how ROSE instatiates or outputs templates in the code generation phase.
+  // would influence how ROSE instantiates or outputs templates in the code generation phase.
 
   // This function leaves all commandline options in place (for use by the backend)
 
@@ -3256,7 +3298,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           initString += " -DROSE_CPP_MODE=1 ";
         }
 
-  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specificed directory 
+  // AS(02/24/06) Add support for the gcc "-isystem" option (this added a specified directory 
   // to the start of the system include path).  This maps to the "--sys_include" in EDG.
      string isystem_string_target = "-isystem";
      string isystem_string;
@@ -3283,7 +3325,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      initString += roseSpecificDefs;
 
   // DQ (9/17/2006): We should be able to build a version of this code which hands a std::string to StringUtility::splitStringIntoStrings()
-  // Separate the string into substrings consistant with the structure of argv command line input
+  // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine.clear();
      StringUtility::splitStringIntoStrings(initString, ' ', inputCommandLine);
 #endif
@@ -3554,8 +3596,29 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      edgOptionList = CommandlineProcessing::generateOptionWithNameParameterList (argv,"--edg_parameter:");
      CommandlineProcessing::addListToCommandLine(inputCommandLine,"--",edgOptionList);
 
+
+  // Liao, 6/20/2008, handle UPC specific EDG options.
+  // Generate --upc 
+    if (get_UPC_only()) 
+    {
+       inputCommandLine.push_back("--upc");
+       inputCommandLine.push_back("--restrict");
+    }  
+
+
+  // Generate --upc_threads n 
+     int intOptionUpcThreads = get_upc_threads();  
+     if (intOptionUpcThreads>0) 
+     { 
+       stringstream ss;
+       ss<<intOptionUpcThreads;
+       inputCommandLine.push_back("--upc_threads");
+       inputCommandLine.push_back(ss.str());
+     }  
+       
+
   // *******************************************************************
-  // Some EDG options have to turn on mechanims in ROSE
+  // Some EDG options have to turn on mechanism in ROSE
   // *******************************************************************
 
 #if 0
@@ -3956,19 +4019,22 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // Build a DEEP COPY of the input parameters!
      vector<string> local_commandLineArgumentList = argv;
 
+#if 0
+   // Moved into SgFile::build_EDG_CommandLine()
   // Liao, 6/6/2008. add --edg:upc if the file has .upc suffix but --edg:upc or -edg:upc is not specified
      if(get_UPC_only()) 
      {  
        if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(upc)",false) ==false) &&
         (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(upc)",false) ==false)) 
-   local_commandLineArgumentList.push_back("--edg:upc");
+         local_commandLineArgumentList.push_back("--edg:upc");
 
-// Liao, 6/11/2008. Enable restrict by default if UPC is used. 
+       // Liao, 6/11/2008. Enable restrict by default if UPC is used. 
         if ((CommandlineProcessing::isOption(local_commandLineArgumentList,"--edg:","(restrict)",false) ==false) &&
         (CommandlineProcessing::isOption(local_commandLineArgumentList,"-edg:","(restrict)",false) ==false)) 
-    local_commandLineArgumentList.push_back("--edg:restrict");
-     }    
- 
+         local_commandLineArgumentList.push_back("--edg:restrict");
+    }    
+#endif 
+
   // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!
      set_originalCommandLineArgumentList( local_commandLineArgumentList );
 

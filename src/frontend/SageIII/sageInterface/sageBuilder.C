@@ -702,6 +702,24 @@ SgUnsignedLongLongIntVal* SageBuilder::buildUnsignedLongLongIntValHex(unsigned l
   return result;
 }
 
+//! Build UPC THREADS (integer expression)
+SgUpcThreads* SageBuilder::buildUpcThreads()
+{
+  SgUpcThreads* result = new SgUpcThreads(0,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build UPC  MYTHREAD (integer expression)
+SgUpcMythread* SageBuilder::buildUpcMythread()
+{
+  SgUpcMythread* result = new SgUpcMythread(0,"");
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 //----------------------build unary expressions----------------------
 template <class T>
 T* SageBuilder::buildUnaryExpression(SgExpression* operand)

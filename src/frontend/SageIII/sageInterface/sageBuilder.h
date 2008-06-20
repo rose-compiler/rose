@@ -196,6 +196,12 @@ SgUnsignedLongVal* buildUnsignedLongValHex(unsigned long v = 0);
 SgUnsignedLongLongIntVal* buildUnsignedLongLongIntVal(unsigned long long v = 0);
 SgUnsignedLongLongIntVal* buildUnsignedLongLongIntValHex(unsigned long long v = 0);
 
+//! Build UPC THREADS (integer expression)
+SgUpcThreads* buildUpcThreads();
+
+//! Build UPC  MYTHREAD (integer expression)
+SgUpcMythread* buildUpcMythread();
+
 //!  template function to build a unary expression of type T
 template <class T> T* buildUnaryExpression(SgExpression* operand = NULL);
 template <class T> T* buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
@@ -225,7 +231,7 @@ SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_m
 
 #undef BUILD_UNARY_PROTO
 
-//! template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc.
+//! template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(lhs,rhs), AndAssignOp, AndOp, ArrowExp,EqualityOp, etc.
 template <class T> T* buildBinaryExpression(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
 template <class T>
 T* buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);

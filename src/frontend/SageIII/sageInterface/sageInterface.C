@@ -2958,6 +2958,25 @@ SageInterface::is_UPC_language()
      return returnValue;
    }
 
+// true if any of upc_threads is set to >0 via command line: -rose:upc_threads n 
+bool
+SageInterface::is_UPC_dynamic_threads()
+   {
+     bool returnValue = false;
+
+     vector<SgFile*> fileList = generateFileList();
+
+     int size = (int)fileList.size();
+     for (int i = 0; i < size; i++)
+        {
+          if (fileList[i]->get_upc_threads() > 0)
+               returnValue = true;
+        }
+
+     return returnValue;
+   }
+
+
 
 bool
 SageInterface::is_C99_language()

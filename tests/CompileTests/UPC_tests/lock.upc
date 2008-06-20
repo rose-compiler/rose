@@ -1,14 +1,13 @@
-// from UPC Manual Example 2.2.5
-#include <upc_relaxed.h>
+/* from UPC Manual Example 2.2.5
+*/
+#include "upc_relaxed.h"
 #include <stdio.h>
+#include <stdlib.h> /*for srand() etc.*/
 #include <math.h>
 
 #define N 1000
 
-shared [] int arr[10];
-// For dynamic translation, THREADS may not appear in declarations of 
-// shared arrays with indefinite block size
-//shared [] int arr[THREADS]; // Must use static translation
+shared [5] int arr[THREADS]; 
 upc_lock_t *lock;
 int main (){
   int i=0;

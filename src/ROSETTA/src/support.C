@@ -673,9 +673,12 @@ Grammar::setUpSupport ()
   // Controls language mode (should support strict variants as well)
      File.setDataPrototype         ( "bool", "C_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     // Liao (6/6/2008): Support for UPC model of C
+     // Liao (6/6/2008): Support for UPC model of C , 6/19/2008: add support for static threads compilation
      File.setDataPrototype         ( "bool", "UPC_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "int", "upc_threads", "= 0",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      File.setDataPrototype         ( "bool", "C99_only", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype         ( "bool", "Cxx_only", "= false",

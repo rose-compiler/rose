@@ -4,25 +4,33 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # These are UPC testcodes targeting aspects of UPCC that might not be a subset of C #
 #####################################################################################
 
+# affinity &arr[i] is parsed to arr+i, may hurt the later translation
 TESTCODES_REQUIRED_TO_PASS = \
      barrier.upc \
+     consistency.upc \
+     hello.upc \
      fence.upc \
      forall_1.upc \
+     forall_affinity.upc \
      forall_continue.upc \
+     lock.upc \
      mythread.upc \
      notify_wait.upc \
      restrict.upc \
      shared.upc \
+     shared_2.upc \
      strict.upc \
      test2004_22.upc \
-     threads.upc 
+     threads.upc \
+     threads_2.upc 
+#sizeof[_2].upc has two issues:
+# 1. localsizeof() etc are evaluated by EDG, operators are not preserved.
+# 2. Wrong evaluation by EDG 3.3,  EDG 3.10 fixes them.    
+# 
+# macro names are not supported in EDG 3.3, but EDG 3.10.
 TESTCODE_CURRENTLY_FAILING = \
-     consistency.upc \
-     forall_affinity.upc \
-     hello.upc \
-     lock.upc \
+     macro_names.upc \
      max_block_size.upc \
-     shared_2.upc \
      sizeof.upc \
      sizeof_2.upc 
 
@@ -35,8 +43,8 @@ ALL_TESTCODES = \
 $(TESTCODES_REQUIRED_TO_PASS) \
 $(TESTCODE_CURRENTLY_FAILING)
 
-ROSE_FLAGS = --edg:no_warnings
-# Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add it internally based on the file suffix (.upc) 
+# Liao (6/11/2008) --edg:upc and --edg:restrict are not required since ROSE can add them internally based on the file suffix (.upc) , no backend compilation since GCC does not recognize UPC .
+ROSE_FLAGS = --edg:no_warnings -rose:skipfinalCompileStep
 #ROSE_FLAGS = --edg:no_warnings -w --edg:restrict --edg:upc -rose:verbose 3
 
 PASSING_TEST_Objects = ${TESTCODES:.upc=.o}

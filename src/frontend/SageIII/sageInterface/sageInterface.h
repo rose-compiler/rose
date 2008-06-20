@@ -345,6 +345,7 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
    */
   bool is_C_language ();
   bool is_UPC_language ();
+  bool is_UPC_dynamic_threads();
   bool is_C99_language ();
   bool is_Cxx_language ();
   bool is_Fortran_language ();
