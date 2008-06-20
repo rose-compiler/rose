@@ -7,24 +7,36 @@
 
 namespace CommandlineProcessing
    {
+          /// Separate a string into individual parameters and store them into a string vector
           Rose_STL_Container<std::string> generateArgListFromString ( std::string commandline );
-
+          /// Convert an arc-argv pair into a string vector
           Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, const char* argv[] );
           inline Rose_STL_Container<std::string> generateArgListFromArgcArgv ( int argc, char* argv[] ) {return generateArgListFromArgcArgv(argc, (const char**)argv);}
-
+          /// Convert a string vector back to an arc-argv pair
           void generateArgcArgvFromList ( Rose_STL_Container<std::string> argList, int & argc, char** & argv );
 
           Rose_STL_Container<std::string> generateOptionList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
+
+       //! Find all options with a form like inputprefix:option from argList, strip off inputprefix: and return a string list for options only.
+       //! All matching inputprefix:option in argList are also removed.   
           Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
 
+       //! Search 'argv' for an option like optionPrefix:option, remove the option if 'removeOption' is true.
+       /*! 
+        The argument 'option' adds () to the actual option, and allows the |(OR) operations.For example: 
+              CommandlineProcessing::isOption(argv,"-rose:","(skip_syntax_check)",true)
+              CommandlineProcessing::isOption(argv,"-rose:","(C99|C99_only)",false) 
+       */       
           bool isOption ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, bool removeOption );
 
-       // Available options are: str, float, double, int, short, long, unsigned int, unsigned short, unsighed long, char
+       //! Search 'argv' for 'optionPrefix:option value',  store the integer value into 'optionParameter'. Remove the original option if 'removeOption' is true.
+       //! Available value types are: str, float, double, int, short, long, unsigned int, unsigned short, unsigned long, char, etc.
           bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, int & optionParameter, bool removeOption );
 
+       //! Search 'argv' for 'optionPrefix:option value',  store the string type value into 'optionParameter'. Remove the original option if 'removeOption' is true.
           bool isOptionWithParameter ( std::vector<std::string> & argv, std::string optionPrefix, std::string option, std::string & optionParameter, bool removeOption );
 
-      //! Add the strings in argList to the command line represented by argc and argv
+      //! Add the strings in argList to the command line represented by argc and argv, prepend 'prefix' to each of the arguments
           void addListToCommandLine ( std::vector<std::string> & argv , std::string prefix, Rose_STL_Container<std::string> argList );
 
           void removeArgs ( std::vector<std::string> & argv, std::string prefix );

@@ -13,7 +13,7 @@
 #include "sla.h"
 
 // DQ (12/31/2005): This is allowed in C files where it can not 
-// effect the users applcation (just not in header files).
+// effect the users application (just not in header files).
 using namespace std;
 
 #if 0
@@ -385,7 +385,7 @@ CommandlineProcessing::isOption ( vector<string> & argv, string optionPrefix, st
      return (optionCount > 0);
    }
 
-// Available options are: str,float,double,int,short,long,unsigned int, unsigned short, unsighed long, char
+// Available options are: string,float,double,int,short,long,unsigned int, unsigned short, unsigned long, char
 
 // DQ (2/12/2004): All parameters are handled as strings so no type specialization is required
 bool
