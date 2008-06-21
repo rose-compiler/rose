@@ -2,6 +2,7 @@
 test predefined macro names 
 Liao, 6/19/2008
 */
+#include <stdio.h>
 #ifdef __UPC_DYNAMIC_THREADS__
   shared int array[100*THREADS];
 #endif

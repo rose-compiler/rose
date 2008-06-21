@@ -14,6 +14,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      forall_affinity.upc \
      forall_continue.upc \
      lock.upc \
+     macro_names.upc \
+     max_block_size.upc \
      mythread.upc \
      notify_wait.upc \
      restrict.upc \
@@ -23,14 +25,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2004_22.upc \
      threads.upc \
      threads_2.upc 
-#sizeof[_2].upc has two issues:
-# 1. localsizeof() etc are evaluated by EDG, operators are not preserved.
-# 2. Wrong evaluation by EDG 3.3,  EDG 3.10 fixes them.    
-# 
-# macro names are not supported in EDG 3.3, but EDG 3.10.
+
+#upc_XXXsizeof() has two issues:
+# 1. They are evaluated by EDG, operators are not preserved in its IL
+# 2. EDG 3.3 wrongfully evaluate them,  EDG 3.10 fixes the mistakes.
 TESTCODE_CURRENTLY_FAILING = \
-     macro_names.upc \
-     max_block_size.upc \
      sizeof.upc \
      sizeof_2.upc 
 
