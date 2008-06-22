@@ -8740,7 +8740,7 @@ Sg_File_Info::setShared()
 
      if (isShared() == false)
         {
-          p_fileIDsToUnparse.insert(p_file_id);
+          p_fileIDsToUnparse.push_back(p_file_id);
         }
 
      p_classificationBitField |= e_shared;
@@ -8845,14 +8845,14 @@ void
 Sg_File_Info::addFileToUnparse(int file_id)
    { 
      ROSE_ASSERT(this != NULL);
-     p_fileIDsToUnparse.insert(file_id);
+     p_fileIDsToUnparse.push_back(file_id);
    }
 
 bool
 Sg_File_Info::shouldUnparse(int file_id)
    {
      ROSE_ASSERT(this != NULL);
-     return p_fileIDsToUnparse.count(file_id) != 0;
+     return std::find(p_fileIDsToUnparse.begin(), p_fileIDsToUnparse.end(), file_id) != p_fileIDsToUnparse.end();
    }
 
 unsigned int
