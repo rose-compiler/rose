@@ -163,7 +163,7 @@ string unparseArmInstruction(SgAsmArmInstruction* insn) {
   string mnemonic = insn->get_mnemonic();
   string cond = unparseArmCondition(insn->get_condition());
   ROSE_ASSERT (insn->get_positionOfConditionInMnemonic() >= 0);
-  ROSE_ASSERT (insn->get_positionOfConditionInMnemonic() <= mnemonic.size());
+  ROSE_ASSERT ((size_t)insn->get_positionOfConditionInMnemonic() <= mnemonic.size());
   mnemonic.insert(mnemonic.begin() + insn->get_positionOfConditionInMnemonic(), cond.begin(), cond.end());
   string result = mnemonic;
   result += '\t';
