@@ -48,13 +48,13 @@ BUILT_SOURCES = x86InstructionEnumPrinter.C armInstructionEnumPrinter.C
 
 CLEANFILES = $(BUILT_SOURCES)
 
-x86InstructionEnumPrinter.C: $(srcdir)/x86InstructionEnum.h Makefile
+x86InstructionEnumPrinter.C: $(srcdir)/x86InstructionEnum.h
 	echo '#include "x86InstructionEnum.h"' > x86InstructionEnumPrinter.C
 	echo '#include <string>' >> x86InstructionEnumPrinter.C
 	sed -n '/x86_unknown_instruction/,/x86_last_instruction/p' < $(srcdir)/x86InstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* x86InstructionStrings[] = {'; cat; echo '""};') >> x86InstructionEnumPrinter.C
 	echo 'std::string toString(X86InstructionKind k) {static const int s = sizeof(x86InstructionStrings) / sizeof(*x86InstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return x86InstructionStrings[(int)k];}' >> x86InstructionEnumPrinter.C
 
-armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h Makefile
+armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h
 	echo '#include "armInstructionEnum.h"' > armInstructionEnumPrinter.C
 	echo '#include <string>' >> armInstructionEnumPrinter.C
 	sed -n '/arm_unknown_instruction/,/arm_last_instruction/p' < $(srcdir)/armInstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* armInstructionStrings[] = {'; cat; echo '""};') >> armInstructionEnumPrinter.C
