@@ -25,7 +25,7 @@ genCertDocs()
 {
   local file=$1
   local href=`cat $file`
-  local code=`basename $href | gawk -F. '{print $1}'`
+  local code=`basename $href | awk -F. '{print $1}'`
   local tex=`ls ${CMDROOT}/seccode/*$code*.tex`
   local tempfile=`mktemp`
 
@@ -60,13 +60,13 @@ highlightDocs()
   mv -f $tempfile "$file2"
 
   count=0
-  for sl in `grep -n '\\\begin{verbatim}' "$file2" | gawk -F: '{print $1}'`
+  for sl in `grep -n '\\\begin{verbatim}' "$file2" | awk -F: '{print $1}'`
   do
     sblocks[$((count++))]=$sl
   done
 
   count=0
-  for el in `grep -n '\\end{verbatim}' "$file2" | gawk -F: '{print $1}'`
+  for el in `grep -n '\\end{verbatim}' "$file2" | awk -F: '{print $1}'`
   do
     eblocks[$((count++))]=$el
   done
@@ -143,19 +143,19 @@ makeDocs()
 
   # DQ (1/24/2008): Fixed bug specific to running with "make distcheck"
   # Old code: This was a problem for make distcheck
-  # num=`wc -l ${COMPASS_PROJECT}/${dir}/${dir}Docs.new.tex | gawk '{print $1}'`
-  # if(( $num==1 )); then
+  # num=`wc -l ${COMPASS_PROJECT}/${dir}/${dir}Docs.new.tex | awk '{print $1}'`
+  # if(( $num == 1 )); then
   #   genCertDocs ${COMPASS_PROJECT}/${dir}/${dir}Docs.new.tex
   # elif(( $highstat==0 )); then
   #   highlightDocs "${COMPASS_PROJECT}/${dir}/${dir}Docs.new.tex" ${makefile}
   # fi
 
-    num=`wc -l ${COMPASS_PROJECT}/${dir}/${dir}Docs.tex | gawk '{print $1}'`
+    num=`wc -l ${COMPASS_PROJECT}/${dir}/${dir}Docs.tex | awk '{print $1}'`
 
     echo '\begin{NOINDENT}'
     echo '\newpage'
 
-    if(( $num==1 )); then
+    if(( $num == 1 )); then
          genCertDocs ${COMPASS_PROJECT}/${dir}/${dir}Docs.tex
     elif(( $highstat==0 )); then
          highlightDocs "${COMPASS_PROJECT}/${dir}/${dir}Docs.tex"
