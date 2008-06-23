@@ -62,16 +62,19 @@ fi
 
 # Handle differences in GNU tar versions pre and post 1.14 (use of -o option redefined and
 # handling of 100 character absolute paths compromised).
-tar_version=`tar --version | grep "GNU tar" | cut -c14-18`
-echo "tar_version = $tar_version"
-if test $tar_version = 1.14; then
-   ROSE_TAR_OPTIONS=-chf
-   echo "This is GNU tar 1.14: skip use of -o option ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
-else
-   ROSE_TAR_OPTIONS=-chof
-   echo "This is NOT GNU tar 1.14 ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
-fi
+# tar_version=`tar --version | grep "GNU tar" | cut -c14-18`
+# echo "tar_version = $tar_version"
+# if test $tar_version = 1.14; then
+#    ROSE_TAR_OPTIONS=-chf
+#    echo "This is GNU tar 1.14: skip use of -o option ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
+# else
+#    ROSE_TAR_OPTIONS=-chof
+#    echo "This is NOT GNU tar 1.14 ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
+# fi
 
+# JJW (6/23/2008): We don't want the -o option to tar, since we want long filenames
+
+ROSE_TAR_OPTIONS="-chf"
 AC_SUBST(ROSE_TAR_OPTIONS)
 
 # DQ (4/13/2005):
