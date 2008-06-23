@@ -37,7 +37,7 @@ namespace CompassAnalyses
 
 
 	  std::string getFileName(SgFile* src);
-	  void checkNewDelForFunction(SgFunctionDeclaration* funcDecl, SgDeleteExp* delExpr, std::string name);
+	  void checkNewDelForFunction(SgDeleteExp* delExpr, std::string name);
 	  void switchForAssignment(std::vector<BOOSTGraphInterface::tps_node> &vec, 
 				   BOOSTGraphInterface::tps_node n, 
 				   BOOSTGraphInterface::tps_node oldN, SgExpression* rhs) const;

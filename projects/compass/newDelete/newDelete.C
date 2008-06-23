@@ -237,7 +237,7 @@ tps_out_edges(tps_node node) const{
 
 
 
-void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgFunctionDeclaration* funcDecl, SgDeleteExp* delExp, string name) {
+void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgDeleteExp* delExp, string name) {
   std::string lineNrDelete=ToString(delExp->get_file_info()->get_line());
 
   isCFGArrayDelete = delExp->get_is_array();
@@ -277,11 +277,11 @@ void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgFunctionDec
 }
 
 
-
 void
 CompassAnalyses::NewDelete::Traversal::
 visit(SgNode* sgNode)
 { 
+#if 0
   if (isSgFunctionDeclaration(sgNode)) {
     string fileName = isSgFunctionDeclaration(sgNode)->get_file_info()->get_filenameString();
     string name = sgNode->class_name();
@@ -296,5 +296,16 @@ visit(SgNode* sgNode)
       }
     }
   }
+#endif 
+
+  if (isSgDeleteExp(sgNode)) {
+    std::string name = sgNode->class_name();
+    SgDeleteExp* delExpr = isSgDeleteExp(sgNode);
+    if (delExpr!=NULL) {
+      checkNewDelForFunction(delExpr, name);
+      }
+  }
+
+
 } //End of the visit function.
    
