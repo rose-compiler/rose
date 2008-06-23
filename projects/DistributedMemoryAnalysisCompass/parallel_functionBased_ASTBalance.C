@@ -5,7 +5,7 @@
 
 using namespace std;
 #define DEBUG_OUTPUT true
-#define DEBUG_OUTPUT_MORE true
+#define DEBUG_OUTPUT_MORE false
 
 
 
@@ -111,6 +111,8 @@ int main(int argc, char **argv)
       }
 
 
+  MPI_Barrier(MPI_COMM_WORLD);
+
   /* traverse the files */
   gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
@@ -134,7 +136,7 @@ int main(int argc, char **argv)
 		  << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
 	  "   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	  if (DEBUG_OUTPUT_MORE)
+	  //if (DEBUG_OUTPUT_MORE)
 	    //std::cout << my_rank << ": running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
 	    //	      <<"[) : " << (*b_itr)->getName() << " \t on function: " << (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
 	    // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) << std::endl; 
@@ -177,6 +179,7 @@ int main(int argc, char **argv)
   double *memory = new double[processes];
   double *nr_func = new double[processes];
   double thisfunction = bounds.second-bounds.first;
+  MPI_Barrier(MPI_COMM_WORLD);
   communicateResult(outputs, times, memory, output_values, my_time, memusage, nr_func, thisfunction);
 
   printPCResults(myanalysis, outputs, output_values, times, memory, nr_func);

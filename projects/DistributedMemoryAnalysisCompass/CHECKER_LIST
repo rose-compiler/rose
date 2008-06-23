@@ -49,6 +49,7 @@ mallocReturnValueUsedInIfStmt
 multiplePublicInheritance
 nameAllParameters
 nameConsistency
+newDelete
 noExceptions
 noExitInMpiCode
 noGoto
@@ -63,6 +64,7 @@ noSecondTermSideEffects
 noSideEffectInSizeof
 noTemplateUsage
 noVfork
+nullDeref
 oneLinePerDeclaration
 operatorOverloading
 otherArgument

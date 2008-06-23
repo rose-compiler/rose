@@ -112,7 +112,7 @@ int main(int argc, char **argv)
     if (my_rank==0)
       std::cout << "\n>>> Running in sequence ... " << std::endl;
 
-
+  MPI_Barrier(MPI_COMM_WORLD);
   FunctionNamesPreTraversal preTraversal;
   MyAnalysis myanalysis;
   int initialDepth=0;
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
   unsigned int *output_values = new unsigned int[outputs.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
-
+  MPI_Barrier(MPI_COMM_WORLD);
   communicateResult(outputs, times, memory, output_values, my_time, memusage);
 
 
