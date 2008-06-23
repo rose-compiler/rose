@@ -27,7 +27,7 @@ genCertDocs()
   local href=`cat $file`
   local code=`basename $href | awk -F. '{print $1}'`
   local tex=`ls ${CMDROOT}/seccode/*$code*.tex`
-  local tempfile=`mktemp`
+  local tempfile=`mktemp -t compassXXXXXX`
 
   if [[ -f $tex ]]; then
     cat $tex
@@ -45,8 +45,8 @@ genCertDocs()
 highlightDocs()
 {
   local file=$1
-  local file2=`mktemp`
-  local tempfile=`mktemp`
+  local file2=`mktemp -t compassXXXXXX`
+  local tempfile=`mktemp -t compassXXXXXX`
   local -a sblocks
   local -a eblocks
   local -i count=0
@@ -130,7 +130,7 @@ highlightDocs()
 ###
 makeDocs()
 {
-  local tempfile=`mktemp`
+  local tempfile=`mktemp -t compassXXXXXX`
   local -i highstat=`which highlight >& /dev/null; echo $?`
 
   echo "Updating checker documentation (running highlight if available) ..."
