@@ -1131,6 +1131,30 @@ ElfSymbol::ctor_common()
     }
 }
 
+/* Encode a symbol into disk format */
+void *
+ElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk)
+{
+    host_to_disk(sex, st_name,     &(disk->st_name));
+    host_to_disk(sex, st_info,     &(disk->st_info));
+    host_to_disk(sex, st_res1,     &(disk->st_res1));
+    host_to_disk(sex, st_shndx,    &(disk->st_shndx));
+    host_to_disk(sex, get_value(), &(disk->st_value));
+    host_to_disk(sex, get_size(),  &(disk->st_size));
+    return disk;
+}
+void *
+ElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk)
+{
+    host_to_disk(sex, st_name,     &(disk->st_name));
+    host_to_disk(sex, st_info,     &(disk->st_info));
+    host_to_disk(sex, st_res1,     &(disk->st_res1));
+    host_to_disk(sex, st_shndx,    &(disk->st_shndx));
+    host_to_disk(sex, get_value(), &(disk->st_value));
+    host_to_disk(sex, get_size(),  &(disk->st_size));
+    return disk;
+}
+
 /* Print some debugging info. The 'section' is an optional section pointer for the st_shndx member. */
 void
 ElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecSection *section)
@@ -1213,6 +1237,37 @@ ElfSymbolSection::set_linked_section(ElfSection *strtab)
     ElfSection::set_linked_section(strtab);
     for (size_t i=0; i<symbols.size(); i++) {
         symbols[i]->set_name(strtab->content_str(symbols[i]->st_name));
+    }
+}
+
+/* Write symbol table sections back to disk */
+void
+ElfSymbolSection::unparse(FILE *f)
+{
+    ElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr);
+    ByteOrder sex = fhdr->get_sex();
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+
+    for (size_t i=0; i<symbols.size(); i++) {
+        Elf32SymbolEntry_disk disk32;
+        Elf64SymbolEntry_disk disk64;
+        void *disk=NULL;
+        size_t size = 0;
+        
+        if (4==fhdr->get_word_size()) {
+            disk = symbols[i]->encode(sex, &disk32);
+            size = sizeof disk32;
+        } else if (8==fhdr->get_word_size()) {
+            disk = symbols[i]->encode(sex, &disk64);
+            size = sizeof disk64;
+        } else {
+            ROSE_ASSERT(!"unsupported word size");
+        }
+        size_t nwrite = fwrite(disk, size, 1, f);
+        ROSE_ASSERT(1==nwrite);
     }
 }
 

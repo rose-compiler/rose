@@ -397,6 +397,8 @@ class ElfSymbol : public ExecSymbol {
     ElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
         {ctor(sex, disk);}
     virtual ~ElfSymbol() {};
+    void *encode(ByteOrder, Elf32SymbolEntry_disk*);
+    void *encode(ByteOrder, Elf64SymbolEntry_disk*);
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, ExecSection*);
     ElfSymBinding get_elf_binding() {return (ElfSymBinding)(st_info>>4);}
@@ -420,6 +422,7 @@ class ElfSymbolSection : public ElfSection {
         {ctor(shdr);}
     virtual ~ElfSymbolSection() {}
     virtual void set_linked_section(ElfSection *strtab);
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */
