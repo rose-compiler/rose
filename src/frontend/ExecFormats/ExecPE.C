@@ -442,16 +442,16 @@ PEObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Print some debugging info. */
 void
-PESegment::dump(FILE *f, const char *prefix, ssize_t idx)
+PESection::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPESegment[%zd].", prefix, idx);
+        sprintf(p, "%sPESection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPESegment.", prefix);
+        sprintf(p, "%sPESection.", prefix);
     }
 
-    ExecSegment::dump(f, p, -1);
+    ExecSection::dump(f, p, -1);
     st_entry->dump(f, p, -1);
 }
 
@@ -471,11 +471,11 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         PEObjectTableEntry *entry = new PEObjectTableEntry(disk);
 
         /* The section to hold the segment */
-        ExecSection *section=NULL;
+        PESection *section=NULL;
         if (0==entry->name.compare(".idata")) {
             section = new PEImportSection(fhdr, entry->physical_offset, entry->physical_size, entry->rva);
         } else {
-            section = new ExecSection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
+            section = new PESection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
         }
         section->set_synthesized(true);
         section->set_name(entry->name);
@@ -483,11 +483,11 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         section->set_purpose(SP_PROGRAM);
         section->set_header(fhdr);
         section->set_mapped_rva(entry->rva);
+        section->set_st_entry(entry);
 
         /* Define the segment */
-        PESegment *segment = new PESegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
+        ExecSegment *segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         segment->set_name(entry->name);
-        segment->set_st_entry(entry);
 
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
@@ -633,7 +633,7 @@ PEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sPEImportSection.", prefix);
     }
     
-    ExecSection::dump(f, p, -1);
+    PESection::dump(f, p, -1);
     for (size_t i=0; i<dirs.size(); i++)
         dirs[i]->dump(f, p, i);
 }
@@ -840,7 +840,7 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
 void
 COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
 {
-    set_synthesized(false);
+    set_synthesized(true);
     set_name("COFF Symbols");
     set_purpose(SP_SYMTAB);
     set_header(fhdr);

@@ -164,7 +164,7 @@ class ElfSection : public ExecSection {
   public:
     ElfSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
         : ExecSection(fhdr->get_file(), shdr->sh_offset, shdr->sh_size),
-        linked_section(NULL)
+        linked_section(NULL), st_entry(NULL)
         {ctor(fhdr, shdr);}
     virtual ~ElfSection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);

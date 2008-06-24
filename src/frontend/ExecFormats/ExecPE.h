@@ -262,12 +262,14 @@ class PEObjectTableEntry {
     void ctor(const PEObjectTableEntry_disk*);
 };
 
-class PESegment : public ExecSegment {
+/* Non-synthesized PE sections (i.e., present in the object table) */
+class PESection : public ExecSection {
   public:
-    PESegment(ExecSection *sect, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
-        : ExecSegment(sect, offset, size, rva, mapped_size)
+    PESection(ExecFile *ef, addr_t offset, addr_t size)
+        : ExecSection(ef, offset, size),
+        st_entry(NULL)
         {}
-    virtual ~PESegment() {}
+    virtual ~PESection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data */
@@ -342,10 +344,10 @@ class PEImportHintName {
     unsigned char padding;
 };
 
-class PEImportSection : public ExecSection {
+class PEImportSection : public PESection {
   public:
     PEImportSection(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
-        : ExecSection(fhdr->get_file(), offset, size)
+        : PESection(fhdr->get_file(), offset, size)
         {ctor(fhdr, offset, size, mapped_rva);}
     virtual ~PEImportSection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
