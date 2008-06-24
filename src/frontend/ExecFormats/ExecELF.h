@@ -324,6 +324,7 @@ class ElfDynamicSegment : public ExecSegment {
         dt_verneednum(0), dt_verneed(0), dt_versym(0)
         {ctor(fhdr, section, offset_wrt_section, file_size, rva, mem_size);}
     virtual ~ElfDynamicSegment() {}
+    virtual void unparse(FILE*, ElfFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader*, ElfSection*, addr_t offset_rwt_section, addr_t file_size, addr_t rva, addr_t mem_size);
@@ -344,7 +345,8 @@ class ElfDynamicSegment : public ExecSegment {
     unsigned            dt_verneednum;                  /* Number of entries in dt_verneed table */
     addr_t              dt_verneed;                     /* Address of table with needed versions */
     addr_t              dt_versym;                      /* GNU version symbol address */
-    std::vector<ElfDynamicEntry> other;                 /* Other values not specifically parsed out */
+    std::vector<ElfDynamicEntry*> other_entries;        /* Other values not specifically parsed out */
+    std::vector<ElfDynamicEntry*> all_entries;          /* All parsed entries in order of appearance */
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

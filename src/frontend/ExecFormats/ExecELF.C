@@ -860,93 +860,94 @@ ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
     set_name("DYNAMIC");
     ElfSection *dynamic_strtab = section->get_linked_section();
 
-    std::vector<ElfDynamicEntry> entries;
+    std::vector<ElfDynamicEntry*> entries;
     size_t entry_size=0, nentries=0;
     if (4==fhdr->get_word_size()) {
         const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
         entry_size = sizeof(Elf32DynamicEntry_disk);
         nentries = file_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
-            entries.push_back(ElfDynamicEntry(fhdr->get_sex(), disk+i));
+            entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else if (8==fhdr->get_word_size()) {
         const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
         entry_size = sizeof(Elf64DynamicEntry_disk);
         nentries = file_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
-            entries.push_back(ElfDynamicEntry(fhdr->get_sex(), disk+i));
+            entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else {
         throw FormatError("bad ELF word size");
     }
 
     for (size_t i=0; i<nentries; i++) {
-        switch (entries[i].d_tag) {
+        all_entries.push_back(entries[i]);
+        switch (entries[i]->d_tag) {
           case 0:
             /* DT_NULL: unused entry */
             break;
           case 1:
             /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
             if (dynamic_strtab) {
-                const char *name = (const char*)dynamic_strtab->content_str(entries[i].d_val);
+                const char *name = (const char*)dynamic_strtab->content_str(entries[i]->d_val);
                 fhdr->add_dll(new ExecDLL(name));
             } else {
                 throw FormatError("DYNAMIC segment is not linked to a string table");
             }
             break;
           case 2:
-            dt_pltrelsz = entries[i].d_val;
+            dt_pltrelsz = entries[i]->d_val;
             break;
           case 3:
-            dt_pltgot = entries[i].d_val;
+            dt_pltgot = entries[i]->d_val;
             break;
           case 4:
-            dt_hash = entries[i].d_val;
+            dt_hash = entries[i]->d_val;
             break;
           case 5:
-            dt_strtab = entries[i].d_val;
+            dt_strtab = entries[i]->d_val;
             break;
           case 6:
-            dt_symtab = entries[i].d_val;
+            dt_symtab = entries[i]->d_val;
             break;
           case 7:
-            dt_rela = entries[i].d_val;
+            dt_rela = entries[i]->d_val;
             break;
           case 8:
-            dt_relasz = entries[i].d_val;
+            dt_relasz = entries[i]->d_val;
             break;
           case 9:
-            dt_relaent = entries[i].d_val;
+            dt_relaent = entries[i]->d_val;
             break;
           case 10:
-            dt_strsz = entries[i].d_val;
+            dt_strsz = entries[i]->d_val;
             break;
           case 11:
-            dt_symentsz = entries[i].d_val;
+            dt_symentsz = entries[i]->d_val;
             break;
           case 12:
-            dt_init = entries[i].d_val;
+            dt_init = entries[i]->d_val;
             break;
           case 13:
-            dt_fini = entries[i].d_val;
+            dt_fini = entries[i]->d_val;
             break;
           case 20:
-            dt_pltrel = entries[i].d_val;
+            dt_pltrel = entries[i]->d_val;
             break;
           case 23:
-            dt_jmprel = entries[i].d_val;
+            dt_jmprel = entries[i]->d_val;
             break;
           case 0x6fffffff:
-            dt_verneednum = entries[i].d_val;
+            dt_verneednum = entries[i]->d_val;
             break;
           case 0x6ffffffe:
-            dt_verneed = entries[i].d_val;
+            dt_verneed = entries[i]->d_val;
             break;
           case 0x6ffffff0:
-            dt_versym = entries[i].d_val;
+            dt_versym = entries[i]->d_val;
             break;
           default:
-            other.push_back(entries[i]);
+            other_entries.push_back(entries[i]);
             break;
         }
     }
@@ -969,6 +970,13 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
         }
         fprintf(f, "\n");
     }
+}
+
+/* Write segment back to disk */
+void
+ElfDynamicSegment::unparse(FILE *f, ElfFileHeader *fhdr)
+{
+    fprintf(stderr, "ROBB: ElfDynamicSegment::unparse(FILE*,ElfFileHeader*): not implemented yet.\n");
 }
 
 /* Print some debugging info */
@@ -1003,8 +1011,8 @@ ElfDynamicSegment::dump(FILE *f, const char *prefix, ssize_t idx)
     dump_section_rva(f, p, w, "verneed", dt_verneed, ef);
     dump_section_rva(f, p, w, "versym",  dt_versym,  ef);
     
-    for (size_t i=0; i<other.size(); i++) {
-        other[i].dump(f, p, i);
+    for (size_t i=0; i<other_entries.size(); i++) {
+        other_entries[i]->dump(f, p, i);
     }
 }
     
