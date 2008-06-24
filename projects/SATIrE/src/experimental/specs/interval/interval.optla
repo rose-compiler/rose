@@ -212,13 +212,13 @@ binary(left, right, exp, state) =
 
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
           SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
-          MultiplyOp(_, _)=> (ltup(l1 * r1, l2 * r2), ls);
-          DivideOp(_, _)  => (ltup(l1 / r2, l2 / r1), ls);
+          MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
+          DivideOp(_, _)  => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
           IntegerDivideOp(_, _) 
-                          => (ltup(l1 / r2, l2 / r1), ls);
+                          => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
           ModOp(_, _)     => (ltup(r1, r2), ls);
           LshiftOp(_, _)  => (ltup(shiftleft(l1,r1), shiftleft(l2,r2)), ls);
-          RshiftOp(_, _)  => (ltup(shiftright(l1,r2), shiftright(l2,r1)), ls);
+          RshiftOp(_, _)  => (ltup(shiftright(l1,r1), shiftright(l2,r2)), ls);
 	  BitAndOp(_, _)  => (ltup(l1 & r1, l2 & r2), ls);
           BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
           BitXorOp(_, _)  => if constp then 
@@ -414,11 +414,16 @@ min(a, bot) = a;
 min(bot, b) = b;
 min(a, b) = if drop(a) < drop(b) then a else b endif;
 
+// -- all glory to polymorphy
+mini(a, b) = if a < b then a else b endif;
+
 max(_, top) = top;
 max(top, _) = top;
 max(a, bot) = a;
 max(bot, b) = b;
 max(a, b) = if drop(a) > drop(b) then a else b endif;
+
+maxi(a, b) = if a > b then a else b endif;
 
 wide(bot, b) = b;
 wide(a, bot) = a;
