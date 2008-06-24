@@ -651,17 +651,17 @@ inline void host_to_le(addr_t h, uint64_t &n) {
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(int h, int8_t &n) {
-    assert(0==((unsigned)h & ~0xff));
+    assert((unsigned)h<=0x8f || ((unsigned)h|0xff)==(unsigned)-1);
     int8_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(int h, int16_t &n) {
-    assert(0==((unsigned)h & ~0xffff));
+    assert((unsigned)h<=0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
     int16_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(int h, int32_t &n) {
-    assert(0==((unsigned)h & ~0xffffffff));
+    assert((unsigned)h<=0x8fffffff || ((unsigned)h|0xffffffff)==(unsigned)-1);
     int32_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
@@ -716,17 +716,17 @@ inline void host_to_be(addr_t h, uint64_t &n) {
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(int h, int8_t &n) {
-    assert(0==((unsigned)h & ~0xff));
+    assert((unsigned)h<0x8f || ((unsigned)h|0xff)==(unsigned)-1);
     int8_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(int h, int16_t &n) {
-    assert(0==((unsigned)h & ~0xffff));
+    assert((unsigned)h<0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
     int16_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(int h, int32_t &n) {
-    assert(0==((unsigned)h & ~0xffffffff));
+    assert((unsigned)h<0x8fffffff || ((unsigned)h|0xffffffff)==(unsigned)-1);
     int32_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
