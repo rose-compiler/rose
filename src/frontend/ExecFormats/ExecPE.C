@@ -388,6 +388,11 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",  p, w, "e_rva",  rvasize_pairs[i].e_rva);
         fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "e_size", rvasize_pairs[i].e_size);
     }
+    if (object_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "object_table", object_table->get_id(), object_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "object_table");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -990,7 +995,7 @@ parse(ExecFile *ef)
     pe_header->add_rvasize_pairs();
 
     /* Construct the segments and their sections */
-    new PEObjectTable(pe_header);
+    pe_header->set_object_table(new PEObjectTable(pe_header));
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms) {

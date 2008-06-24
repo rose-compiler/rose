@@ -7,6 +7,9 @@
 namespace Exec {
 namespace PE {
 
+/* Forwards */
+class PEObjectTable;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MS-DOS Real Mode File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,6 +173,10 @@ class PEFileHeader : public ExecHeader {
     void add_rvasize_pairs();
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data members */
+    PEObjectTable *get_object_table() {return object_table;}
+    void set_object_table(PEObjectTable *ot) {object_table=ot;}
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
     unsigned    e_cpu_type, e_nobjects, e_time;
@@ -185,6 +192,7 @@ class PEFileHeader : public ExecHeader {
   private:
     void ctor(ExecFile *f, addr_t offset);
     void *encode(PEFileHeader_disk*);
+    PEObjectTable *object_table;
 };
 
     
