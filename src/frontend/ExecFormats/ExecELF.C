@@ -250,23 +250,11 @@ ElfFileHeader::unparse(FILE *f)
     size_t nwrite = fwrite(disk, size, 1, f);
     ROSE_ASSERT(1==nwrite);
 
-    /* Write the ELF section and segment tables */
+    /* Write the ELF section and segment tables and, indirectly, the sections themselves. */
     if (section_table)
         section_table->unparse(f, this);
     if (segment_table)
         segment_table->unparse(f, this);
-
-    /* Write the sections and/or segments that are described by the tables */
-    std::vector<ExecSection*> sections = get_file()->get_sections();
-    for (size_t i=0; i<sections.size(); i++) {
-        std::vector<ExecSegment*> segments = sections[i]->get_segments();
-        if (segments.size()==1 && segments[0]->get_offset()==0 && segments[0]->get_disk_size()==sections[i]->get_size()) {
-            /* Section contains one segment. Call the segment unparser rather than the section unparser. */
-            segments[0]->unparse(f);
-        } else if (sections[i]->get_id()>=0) {
-            sections[i]->unparse(f);
-        }
-    }
 }
 
 /* Print some debugging info */
@@ -576,6 +564,9 @@ ElfSectionTable::unparse(FILE *f, ElfFileHeader *fhdr)
                 nwrite = fwrite(shdr->extra, 1, shdr->nextra, f);
                 ROSE_ASSERT(nwrite==shdr->nextra);
             }
+
+            /* The section itself */
+            sections[i]->unparse(f, fhdr);
         }
     }
 }
@@ -979,13 +970,6 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
         }
         fprintf(f, "\n");
     }
-}
-
-/* Write segment back to disk */
-void
-ElfDynamicSegment::unparse(FILE *f, ElfFileHeader *fhdr)
-{
-    fprintf(stderr, "ROBB: ElfDynamicSegment::unparse(FILE*,ElfFileHeader*): not implemented yet.\n");
 }
 
 /* Print some debugging info */
