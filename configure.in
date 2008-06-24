@@ -297,6 +297,12 @@ ROSE_SUPPORT_OPENMP
 # Configuration commandline support for OMP project using ROSE
 AM_CONDITIONAL(ROSE_USE_OPENMP,test ! "$with_omp_runtime_support" = no)
 
+# Call supporting macro for GCC OpenMP
+ROSE_SUPPORT_GCC_OMP
+
+# Configuration commandline support for OpenMP in ROSE
+AM_CONDITIONAL(ROSE_USE_GCC_OMP,test ! "$with_gcc_omp" = no)
+
 # Call supporting macro for python
 ROSE_SUPPORT_PYTHON
 

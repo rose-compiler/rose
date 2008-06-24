@@ -46,6 +46,7 @@ visit(SgNode* node)
         std::string thingName;
         if (fn)
           {
+#pragma omp critical (BooleanIsHasvisit)
             thingName = fn->get_name().str();
             SgFunctionType* s = fn->get_type();
             t = s->get_return_type();
@@ -53,6 +54,7 @@ visit(SgNode* node)
         else
           { 
             SgInitializedNamePtrList vars =  var->get_variables();
+
             if (!vars.empty())
               {
                 //I cut out the iterator loop because it seemed to
@@ -62,12 +64,13 @@ visit(SgNode* node)
                 SgInitializedName* initName = isSgInitializedName (*j);
                 if(!initName) {return;}
                 t = initName->get_type();
+#pragma omp critical (BooleanIsHasthingname)
                 thingName  = initName->get_qualified_name().str();
               }
           }
         if (isSgTypeBool(t) and not (thingName.rfind("is_", 0) != std::string::npos or thingName.rfind("has_", 0) != std::string::npos))
           {
-          output->addOutput(new CheckerOutput(node));
+            output->addOutput(new CheckerOutput(node));
           }
    }
    

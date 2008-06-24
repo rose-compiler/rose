@@ -36,8 +36,11 @@ namespace VirtualCFG
 
             if (visitedNodes.find(end) != visitedNodes.end())
                   return;
+#pragma omp critical (filteredCFGImplgo)
+	    {
               visitedNodes.insert(end);
               visitedPaths.insert(p);
+	    }
             if (dontAddChildren(end))
                   return;
               std::vector < CFGEdge > edges = findSuccessors(end);
@@ -162,6 +165,7 @@ namespace VirtualCFG
             if (i->second == n)
                 return;
         }
+#pragma omp critical (filteredCFGImpltoDot)
         exploredNodes.insert(make_pair(n.getNode(), n));
         std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)

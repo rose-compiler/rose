@@ -53,11 +53,13 @@ void
 CompassAnalyses::Compass_defUseAnalysis::Traversal::
 visit(SgNode* sgNode)
 { 
+
   if (projectSet==false) {
     SgProject* project = TransformationSupport::getProject(sgNode);
     defuse = new DefUseAnalysis(project);
     projectSet=true;
   } else {
+#pragma omp critical (defuseflush)
     ((DefUseAnalysis*)defuse)->flush();
   }
   // Implement your traversal here.  

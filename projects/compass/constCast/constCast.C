@@ -120,7 +120,10 @@ visit(SgNode* node)
  
         //Type casted from
         SgType* fromType     = ce->get_operand()->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
-        string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+
+        //tps (23 Jun 2008) unparseToString is slow and causes problems for OpenMP
+        //        string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+        string  fromTypeName = SageInterface::get_name(fromType);
        
         string  constPrefix = "const ";
 
@@ -143,7 +146,8 @@ visit(SgNode* node)
         for(int i = 0; i < fromTypeVec.size(); i++)
              {
                     SgType* fromType     = fromTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
-                    string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+                    string  fromTypeName = SageInterface::get_name(fromType);
+        //                    string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
                     SgType* toType       = toTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
                     string  toTypeName   = toType->unparseToString(); //TransformationSupport::getTypeName(fromType);
 

@@ -45,7 +45,10 @@ visit(SgNode* node)
      {
        if( node->get_file_info()->isCompilerGenerated() == true )
          return;
-
+     }
+#pragma omp critical (oneLinePDclear) 
+     if( sgVarDecl != NULL )
+     {
        std::string file = node->get_file_info()->get_filenameString();
        int line = node->get_file_info()->get_line();
 
@@ -53,12 +56,13 @@ visit(SgNode* node)
        {
          currFileName.assign( file );
          lineNums.clear();
-       } //if( currFileName.compare( file ) != 0 )
+       } 
 
        if( lineNums.find( line ) != lineNums.end() )
          output->addOutput( new CheckerOutput( node ) );
-       else
+       else {
          lineNums.insert( line );
+       }
      } //if( sgVarDecl != NULL )
 
      return;

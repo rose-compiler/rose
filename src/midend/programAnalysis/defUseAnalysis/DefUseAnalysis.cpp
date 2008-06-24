@@ -29,6 +29,7 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
  *********************************************************/
 void DefUseAnalysis::addID(SgNode* sgNode) { 
   if (searchVizzMap(sgNode)==false) {
+#pragma omp critical (DefUseAnalysisaddID) 
     vizzhelp[sgNode] = sgNodeCounter++;
   }
 }
@@ -48,6 +49,7 @@ void DefUseAnalysis::addIDefElement(SgNode* sgNode,
 void DefUseAnalysis::addDefElement(SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
+#pragma omp critical (DefUseAnalysisaddDefE) 
   addAnyElement(&table, sgNode, initName, defNode);
 }
 
@@ -57,6 +59,7 @@ void DefUseAnalysis::addDefElement(SgNode* sgNode,
 void DefUseAnalysis::addUseElement(SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
+#pragma omp critical (DefUseAnalysisaddUseE) 
   addAnyElement(&usetable, sgNode, initName, defNode);
 }
 
@@ -78,8 +81,11 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
   //table[sgNode].erase(table[sgNode].lower_bound(initName), table[sgNode].upper_bound(initName));
+#pragma omp critical (DefUseAnalysisreplaceE1) 
+  {
     table[sgNode].erase(initName);
-  table[sgNode].insert(make_pair(initName,sgNode));
+    table[sgNode].insert(make_pair(initName,sgNode));
+  }
 }
 
 /**********************************************************
@@ -87,6 +93,7 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
  *********************************************************/
 void DefUseAnalysis::clearUseOfElement(SgNode* sgNode, 
 				    SgInitializedName* initName) {
+#pragma omp critical (DefUseAnalysisclearUse) 
   usetable[sgNode].erase(initName);
 }
 
@@ -94,6 +101,7 @@ void DefUseAnalysis::clearUseOfElement(SgNode* sgNode,
  *  Union of two maps
  *********************************************************/
 void DefUseAnalysis::mapDefUnion(SgNode* before, SgNode* other, SgNode* sgNode) {
+#pragma omp critical (DefUseAnalysismapDefU) 
   mapAnyUnion(&table, before, other, sgNode);
 }
 
@@ -101,6 +109,7 @@ void DefUseAnalysis::mapDefUnion(SgNode* before, SgNode* other, SgNode* sgNode) 
  *  Union of two maps
  *********************************************************/
 void DefUseAnalysis::mapUseUnion(SgNode* before, SgNode* other, SgNode* sgNode) {
+#pragma omp critical (DefUseAnalysismapUseU)
   mapAnyUnion(&usetable, before, other, sgNode);
 }
 

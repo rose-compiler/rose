@@ -16,6 +16,10 @@
 
 #include <mpi.h>
 
+#ifdef _OPENMP
+  #include <omp.h>
+#endif
+
 bool loadAST =false;
 bool saveAST =false;
 SgProject *root = NULL;
@@ -47,6 +51,7 @@ double timeDifference(struct timespec end, struct timespec begin) {
   return (end.tv_sec + end.tv_nsec / 1.0e9)
     - (begin.tv_sec + begin.tv_nsec / 1.0e9);
 }
+
 inline void gettime(struct timespec &t) {
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
 }

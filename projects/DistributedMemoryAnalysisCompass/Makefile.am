@@ -4,7 +4,13 @@ if ROSE_MPI
 
 INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la
+ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la 
+
+if ROSE_USE_GCC_OMP
+ LDADD += -lgomp
+ CPPFLAGS += -fopenmp
+endif
+
 
 .C.o:
 	$(MPICXX) $(DEFS) \

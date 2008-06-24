@@ -424,7 +424,7 @@ std::vector <tps_node> CompassAnalyses::NullDeref::Traversal::tps_out_edges(tps_
 void CompassAnalyses::NullDeref::Traversal::
 checkNullDeref(string analysisname, SgExpression* theExp, string name) {
   std::string lineNrDelete=ToString(theExp->get_file_info()->get_line());
-  functionName = name;
+  //functionName = name;
 
   SgInitializedName* initName ;
   SgExpression* expr =  theExp;
@@ -438,7 +438,13 @@ checkNullDeref(string analysisname, SgExpression* theExp, string name) {
       if (debug) 
         std::cout << "     **** SgFunction (accept only free): " << ff_ex->unparseToString() << " " << ff_ex->class_name() << std::endl;
       if (ff_ex) { 
-        if (ff_ex->unparseToString()=="free") {
+        bool isFree=false;
+        //        { if (ff_ex->unparseToString()=="free")
+#pragma omp critical (nullDereffree)
+        { if (ff_ex->get_symbol()->get_name().str()=="free")
+          isFree=true;
+        }
+        if (isFree) {
           SgExprListExp* args = f_expr->get_args();
           SgExpressionPtrList& ptrList = args->get_expressions();
           SgExpressionPtrList::iterator it = ptrList.begin();

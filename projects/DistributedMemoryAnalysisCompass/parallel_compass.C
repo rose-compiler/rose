@@ -366,6 +366,21 @@ int main(int argc, char **argv)
   double max_time=0;
   double calc_time_processor=0;
 
+#ifdef _OPENMP
+  int threadsnr = -1;
+#pragma omp parallel
+  {
+    omp_set_num_threads(8);
+    threadsnr= omp_get_num_threads();
+  }
+	if (my_rank==0)
+	  std::cerr << "\n--------------- OPENMP enabled with " << threadsnr << 
+	    " threads!! processes = " << processes << " ------------" << std::endl;
+#elif
+	if (my_rank==0)
+	  std::cerr << "\n--------------- NO OPENMP !! ------------" << std::endl;
+#endif 
+
   //  std::pair<int, int> bounds;
   std::vector<int> bounds;
   if (processes==1) {
@@ -374,24 +389,19 @@ int main(int argc, char **argv)
     //   bounds = computeNullDerefIndices(root, my_rank, processes, nullderefCounter);
     if (DEBUG_OUTPUT_MORE) 
       cout << "bounds size = " << bounds.size() << endl;
-    for (int i = 0; i<(int)bounds.size();i++) {
+    int i=-1;
+    #pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
+    for (i = 0; i<(int)bounds.size();i++) {
       if (DEBUG_OUTPUT_MORE) 
 	cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
-      //  for (int i = bounds.first; i < bounds.second; i++)
-      //{
-      //if (DEBUG_OUTPUT_MORE) 
-      // std::cout << my_rank << ": bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << nrOfInterestingNodes << std::endl;
       if (bounds[i]== my_rank) 
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	  SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
 	  ROSE_ASSERT(mynode);
-	  //if (DEBUG_OUTPUT_MORE) 
-	  // std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-	  //	    <<"[) : " << (*b_itr)->getName()  << "   on node: " << 
-	  //  mynode->class_name() << std::endl; 
 	  (*b_itr)->visit(mynode);
 	}
     }
+
   } else {
     // apply runtime algorithm to def_use
     cout << " Dynamic scheduling ..." << endl;
@@ -405,56 +415,75 @@ int main(int argc, char **argv)
     int *res = new int[2];
     res[0]=5;
     res[1]=5;
+    int *res2 = new int[2];
+    res2[0]=-1;
+    res2[1]=-1;
     bool done = false;
     int jobsDone = 0;
     // **********************************************************
-    int scale = 1;
+    int scale = 2;
     // **********************************************************
+
+
+    MPI_Request request[2]; 
+    MPI_Status status[2];
+    int min = -1;
+    int max = -1;
+    if (my_rank != 0) {
+      //std::cout << " process : " << my_rank << " sending. " << std::endl;
+      MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
+      MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
+      min = res[0];
+      max = res[1];
+      if (res[0]==-1) 
+	done =true;
+    }
+
     while (!done) {
       // we are ready, make sure to notify 0
       double total_node=0;
       if (my_rank != 0) {
-	//std::cout << " process : " << my_rank << " sending. " << std::endl;
-	MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
-	MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
-	int min = res[0];
-	int max = res[1];
-	if (res[0]==-1) 
-	  break;
+	MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
+	MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
 
 	if (DEBUG_OUTPUT_MORE) 	
 	std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[  of " << 
 	  totalnr << "      range : " << (max-min);// << std::endl;
-	for (int i=min; i<max;i++) { 
+
+	// OPENMP START-------------------------------------------------------
+	int i=-1;
+	#pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
+	for (i=min; i<max;i++) { 
 	  gettime(begin_time_node);
-	  // ready contains the next number to be processed
 	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	    //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
-	    // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
-	    // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
-	    //	    << std::endl; 
-	    	      
 	    SgNode* mynode = isSgNode(nodeDecls[i]);
 	    ROSE_ASSERT(mynode);
-	    //string name="";
-	    //if (isSgFunctionDefinition(mynode)) name = isSgFunctionDefinition(mynode)->get_declaration()->get_name().str();
-	    //cout << " " << mynode->class_name() << " " << name << " " ;
 	    (*b_itr)->visit(mynode);
-	      
 	  }
 	  gettime(end_time_node);
 	  double my_time_node = timeDifference(end_time_node, begin_time_node);
+#pragma omp critical (parallelcompassmulti)
 	  if (my_time_node>max_time) {
 	    max_time=my_time_node;
 	    max_time_nr = i;
 	  }
 	  total_node += my_time_node;
 	}
+
+	// OPENMP END -------------------------------------------------------
+
 	calc_time_processor+=total_node;
 	if (DEBUG_OUTPUT_MORE) 
-	std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
-	  "   in node : " << nodeDecls[max_time_nr]->class_name() << "  total_node: " << total_node << std::endl;
-	  
+	  std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
+	    "   in node : " << nodeDecls[max_time_nr]->class_name() << "  total_node: " << total_node << std::endl;
+
+
+	MPI_Waitall(2,request,status);
+	min = res2[0];
+	max = res2[1];
+	if (res2[0]==-1) 
+	  break;
+  
       }
       if (my_rank == 0) {
 	//std::cout << " process : " << my_rank << " receiving. " << std::endl;
