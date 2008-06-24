@@ -39,6 +39,8 @@ class DOSFileHeader : public ExecHeader {
     DOSFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(DOSFileHeader_disk)) {ctor(f, offset);}
     virtual ~DOSFileHeader() {}
+    void *encode(DOSFileHeader_disk*);
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in the DOSFileHeader_disk format struct */

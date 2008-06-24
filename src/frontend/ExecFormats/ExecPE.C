@@ -64,6 +64,48 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     entry_rva = le_to_host(disk->e_ip);
 }
 
+/* Encode the DOS file header into disk format */
+void *
+DOSFileHeader::encode(DOSFileHeader_disk *disk)
+{
+    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
+        disk->e_magic[i] = get_magic()[i];
+    host_to_le(e_cblp,     disk->e_cblp);
+    host_to_le(e_cp,       disk->e_cp);
+    host_to_le(e_crlc,     disk->e_crlc);
+    host_to_le(e_cparhdr,  disk->e_cparhdr);
+    host_to_le(e_minalloc, disk->e_minalloc);
+    host_to_le(e_maxalloc, disk->e_maxalloc);
+    host_to_le(e_ss,       disk->e_ss);
+    host_to_le(e_sp,       disk->e_sp);
+    host_to_le(e_csum,     disk->e_csum);
+    host_to_le(e_ip,       disk->e_ip);
+    host_to_le(e_cs,       disk->e_cs);
+    host_to_le(e_lfarlc,   disk->e_lfarlc);
+    host_to_le(e_ovno,     disk->e_ovno);
+    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
+        host_to_le(e_res1[i], disk->e_res1[i]);
+    host_to_le(e_oemid,    disk->e_oemid);
+    host_to_le(e_oeminfo,  disk->e_oeminfo);
+    for (size_t i=0; i<NELMTS(disk->e_res2); i++)
+        host_to_le(e_res2[i], disk->e_res2[i]);
+    host_to_le(e_lfanew,   disk->e_lfanew);
+    return disk;
+}
+    
+/* Write the DOS file header back to disk */
+void
+DOSFileHeader::unparse(FILE *f)
+{
+    DOSFileHeader_disk disk;
+    encode(&disk);
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
+    ROSE_ASSERT(1==nwrite);
+}
+    
 /* Print some debugging info */
 void
 DOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
