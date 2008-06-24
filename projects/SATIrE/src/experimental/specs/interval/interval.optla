@@ -191,11 +191,11 @@ binary(left, right, exp, state) =
                               dontknow endif endif;
 
           LessThanOp(_, _)  => if (l2 < r1) then (duplift(1), ls) else 
-                               if (r2 < l1) then (duplift(0), ls) else 
+                               if (l1 >=l2) then (duplift(0), ls) else 
                                dontknow endif endif;
 
           GreaterThanOp(_, _) => if (l1 > r2) then (duplift(1), ls) else 
-                                 if (r1 > l2) then (duplift(0), ls) else 
+                                 if (l2 <=r1) then (duplift(0), ls) else 
                                  dontknow endif endif;
 
           NotEqualOp(_, _) => if (l2 < r1) || (l1 > r2) then (duplift(1), ls) else
@@ -203,11 +203,11 @@ binary(left, right, exp, state) =
                               dontknow endif;
 
           LessOrEqualOp(_, _) => if (l2 <= r1) then (duplift(1), ls) else 
-                                 if (r2 <= l1) then (duplift(0), ls) else 
+                                 if (r2 <  l1) then (duplift(0), ls) else 
                                  dontknow endif endif;
 
           GreaterOrEqualOp(_, _) => if (l1 >= r2) then (duplift(1), ls) else 
-                                    if (r1 >= l2) then (duplift(0), ls) else 
+                                    if (r1 >  l2) then (duplift(0), ls) else 
                                     dontknow endif endif;
 
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
@@ -316,6 +316,7 @@ branch(exp, state, edge) =
   if c = top then 
     // -- We don't know for sure which edge will be taken
     // --print("c=top\n") 
+    // --print("Maybe\n") 
     if is_binary(exp) then
       let lhs = eval(binary_get_left_child(exp), state)!1!2;
           rhs = eval(binary_get_right_child(exp), state)!1!2; in
@@ -338,10 +339,12 @@ branch(exp, state, edge) =
   else if drop(c) = edge then  
     // -- This edge will ALWAYS be taken
     // --print(newstate) print("\n") 
+    // --print("Always\n") 
     newstate
   else 
     // -- This edge will NEVER be taken
     // --print("bot\n") 
+    // --print("Never\n") 
     bot
   endif endif endif;
 
