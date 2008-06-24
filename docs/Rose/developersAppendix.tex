@@ -207,22 +207,29 @@ represented at most only once.
 
 
 \section {Adding New SAGE III IR Nodes (Developers Only)}
-
     We don't expect users to add nodes to the SAGE III Intermediate Representation (IR),
 however, we need to document the process to support developers who might be extending
 ROSE.  It is hoped that if you proceed to add IR nodes that you understand just
 what this means (you're not extending C++). Check with us so that we can help you and
 understand what you're doing.
 
-   The process is fairly simple: one adds IR node definitions using a BNF syntax within
-ROSETTA.  There are lots of examples within the construction of the C++ IR itself.
+The SAGE III IR is now completely generated using the ROSETTA IR generator tool which we developed to support our work within ROSE.
+   The process of adding new IR nodes using ROSETTA is fairly simple: one
+   adds IR node definitions using a BNF syntax and provides additional
+   headers and implementations for customized member data and functions
+   when necessary. 
+  There are lots of examples within the construction of the C++ IR itself.
 However, you can expect to hunt around a bit before you get the final generated code to
 compile and link!  The general steps are:
 
-
+\fixme{Need to cover the new Fortran support. }
 \begin{enumerate}
-     \item Define a new node. \\
-           For example:
+     \item Add a new node's name into \textit{src/ROSETTA/astNodeList}
+%------------- 
+     \item Define the node in ROSETTA's source files under
+     \textit{src/ROSETTA/src} \\
+           For example, an expression node has the following line in
+           \textit{src/ROSETTA/src/expression.C}:
 {\indent
 {\mySmallFontSize
 \begin{verbatim}
@@ -234,7 +241,8 @@ compile and link!  The general steps are:
            that will be called {\em V\_SgVarArgOp}.  The secondary generated enum name {\em VA\_OP}
            is historical and will be removed in a future release of ROSE.
 
-     \item Put the node into the SAGE Hierarchy. \\
+%------------- 
+     \item In the same ROSETTA source file, specify the node's SAGE class hierarchy. \\
            This is done through the specification of what looks a bit like a BNF
             production rule to define the abstract grammar. \\
 {\indent
@@ -251,39 +259,12 @@ compile and link!  The general steps are:
         In this case, we added the VarArgOp IR node as an expression node in the
     abstract grammar for C++.
 
-     \item Associate some externally defined source code. \\
-           Source code will be generated to implement the SAGE III IR nodes.  Any custom
-           code that needs to be associated with the IR node can be done so by specifying 
-           the name of a pair of markers in a file. The C++ source code is extracted 
-           from between the named markers (text labels) in the named file and inserted 
-           into the generated source code. Using this technique, very small amounts of 
-           specialized code can be tailored for each IR node, while still providing an 
-           automated means of generating all the rest.  Different locations in the
-           generated code can be modified with external code. Here we add the source code
-           for a function.
-{\indent
-{\mySmallFontSize
-\begin{verbatim}
-           VarArgOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
-                                  "Grammar/Expression.code" );
-\end{verbatim} 
-}}
-     \item Expressions have precedence. \\
-           All expression nodes have a precedence in the evaluation, but the precedence must
-           be specified.  This precedence must match that of the C++ frontend.  So we 
-           are not changing anything about the way that C++ evaluates expressions here!
-           It is just that SAGE must have a defined value for the precedence.
-           ROSETTA permits variables to be defined and edited to tailor the automatically
-           generated source code for the IR.
-{\indent
-{\mySmallFontSize
-\begin{verbatim}
-           VarArgOp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
-\end{verbatim} 
-}}
-     \item Add member data (fields). \\
+%------------- 
+     \item Add the new node's members (fields): both data and function
+     members are allowed. \\
            ROSETTA permits the addition of data fields to the class definitions for the
-           new IR node.
+           new IR node. Many generic access functions will be automatically
+           generated if desired. 
 {\indent
 {\mySmallFontSize
 \begin{verbatim}
@@ -314,6 +295,85 @@ compile and link!  The general steps are:
 \end{verbatim} 
 }}
 
+%------------- 
+    \item Expressions have precedence. \\
+           All expression nodes have a precedence in the evaluation, but the precedence must
+           be specified.  This precedence must match that of the C++ frontend.  So we 
+           are not changing anything about the way that C++ evaluates expressions here!
+           It is just that SAGE must have a defined value for the precedence.
+           ROSETTA permits variables to be defined and edited to tailor the automatically
+           generated source code for the IR.
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+           VarArgOp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+\end{verbatim} 
+}}
+%------------- 
+     \item Associate customized source code. \\
+           Automatically generated source code sometimes cannot meet all
+           requirements, so ROSETTA allows user to define any custom 
+           code that needs to be associated with the IR node in some
+           specified files. If customized code is needed, you have to
+           specify the source file containing the code. 
+           For example, we specify the file containing customized source
+           code for {\em VarArgOp} in \textit{src/ROSETTA/src/expression.C}:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+     VarArgOp.setFunctionPrototype ( "HEADER_VARARG_OPERATOR", "../Grammar/Expression.code" );
+     VarArgOp.setDataPrototype  ( "SgExpression*", "operand_expr"   , "= NULL",
+				 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     VarArgOp.setDataPrototype ( "SgType*", "expression_type", "= NULL",
+ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+   // ...
+   VarArgOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "Grammar/Expression.code" );
+\end{verbatim} 
+}}
+           Pairs of special markers (such as {\em SOURCE\_VARARG\_OPERATOR}
+           and {\em SOURCE\_VARARG\_END\_OPERATOR}) are used for marking the header 
+           and implementation parts of the customized code. 
+           For example, the marked header and implementation code portions 
+           for {\em VarArgOp} in
+           \textit{src/ROSETTA/Grammar/Expression.code} are:
+{\indent
+  {\mySmallFontSize
+\begin{verbatim}
+HEADER_VARARG_OPERATOR_START
+   virtual unsigned int cfgIndexForEnd() const;
+   virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+   virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+HEADER_VARARG_OPERATOR_END
+
+// ....
+SOURCE_VARARG_OPERATOR_START
+
+  SgType*
+  $CLASSNAME::get_type() const
+   {
+     SgType* returnType = p_expression_type;
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+  unsigned int $CLASSNAME::cfgIndexForEnd() const {
+    return 1;
+  }
+  //....
+
+SOURCE_VARARG_OPERATOR_END
+\end{verbatim} 
+ }}
+           The C++ source code is extracted 
+           from between the named markers (text labels) in the named file and inserted 
+           into the generated source code. Using this technique, very small amounts of 
+           specialized code can be tailored for each IR node, while still providing an 
+           automated means of generating all the rest.  Different locations in the
+           generated code can be modified with external code. Here we add the source code
+           for a function.
+
+\commentout{ %--------------out dated information -------------
      \item Adding the set\_type and get\_type member functions. \\
            It is not clear that this is required, but all expressions must define a
            function that can be used to describe its type (of the expression).
@@ -371,14 +431,79 @@ compile and link!  The general steps are:
 }}
           This could be automatically generated by ROSETTA. I'm not sure why it is
           not handled this way. {\em Note: Don't forget to add the {\bf Sym} suffix.}
+} % end of comment out, out dated information. ---------------
 
      \item Modify the EDG/SAGE connection code to have the new IR node built in the
            translation from EDG to SAGE III.  This step often requires a bit of expertise
            in working with the EDG/SAGE connection code. In general, it requires no great
            depth of knowledge of EDG.
 
+
+           Two source files are usually involved: a)
+           \textit{src/frontend/CxxFrontend/EDG\_SAGE\_Connection/sage\_gen\_be.C}
+           which converts IL tree to SAGE III AST and is derived from EDG's 
+           C++/C-generating back end \textit{cp\_gen\_be.c}; b)
+           \textit{sage\_il\_to\_str.C} contains helper functions forming SAGE
+           III AST from various EDG IL entries. It is derived from EDG's
+           \textit{il\_to\_str.c}.  For the {\em SgVarArgOp} example, the
+           following EDG-SAGE connection code is needed in
+           \textit{sage\_gen\_be.C}:
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+a_SgExpression_ptr
+sage_gen_expr ( an_expr_node_ptr expr, 
+                a_boolean need_parens, 
+    ...
+              )
+{
+  // ...
+  case eok_va_arg:
+  {
+   sageType = sage_gen_type(expr->type);
+   sageLhs = sage_gen_expr_with_parens(operand_1,NULL);
+   if (isSgAddressOfOp(sageLhs) != NULL)
+     sageLhs = isSgAddressOfOp(sageLhs)->get_operand();
+   else
+     sageLhs = new SgPointerDerefExp(sageLhs,NULL);
+  //....
+   result = new SgVarArgOp(sageLhs, sageType);
+   goto done_with_operation;
+                       }
+  }
+  //.....
+
+}
+\end{verbatim} 
+}}
+
      \item Modify the unparser to have whatever code you want generated in the final
            code generation step of the ROSE source-to-source translator.
+           The source files of the unparser are located at
+           \textit{src/backend/unparser}. For {\em SgVarArgOp}, it is
+           unparsed by the following function in
+           \textit{src/backend/unparser/CxxCodeGeneration/unparseCxx\_expressions.C}:
+
+{\indent
+{\mySmallFontSize
+\begin{verbatim}
+
+void
+Unparse_ExprStmt::unparseVarArgOp(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgVarArgOp* varArg = isSgVarArgOp(expr);
+     SgExpression* operand = varArg->get_operand_expr();
+     SgType* type = varArg->get_type();
+     curprint ( "va_arg(");
+     unparseExpression(operand,info);
+     curprint ( ",");
+     unp->u_type->unparseType(type,info);
+     curprint ( ")");
+   }
+\end{verbatim} 
+}}
+
+
 
 \end{enumerate}
 
