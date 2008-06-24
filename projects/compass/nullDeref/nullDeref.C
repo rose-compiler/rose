@@ -441,7 +441,7 @@ checkNullDeref(string analysisname, SgExpression* theExp, string name) {
         bool isFree=false;
         //        { if (ff_ex->unparseToString()=="free")
 #pragma omp critical (nullDereffree)
-        { if (ff_ex->get_symbol()->get_name().str()=="free")
+        { if (ff_ex->get_symbol()->get_name().getString()=="free")
           isFree=true;
         }
         if (isFree) {
