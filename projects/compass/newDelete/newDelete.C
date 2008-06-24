@@ -269,7 +269,7 @@ void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgDeleteExp* 
     predMapType pred_map = make_assoc_property_map(pred_map_data);
     // predecessor_recorder<predMapType, on_tree_edge> vis(pred_map);
 
-
+#pragma omp critical (boost_visit)
     breadth_first_visit(tps_graph(this), node, color_map(colorMapType(color_map_data)).visitor(make_bfs_visitor(record_predecessors(pred_map, on_tree_edge()))));
 
 

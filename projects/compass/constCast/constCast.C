@@ -114,18 +114,16 @@ visit(SgNode* node)
 
         //std::cout << "Looking for cast exp" << std::endl;
 
-        //Type casted to
         SgType* toType       = ce->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
-        string  toTypeName   = toType->unparseToString(); //TransformationSupport::getTypeName(toType);
- 
-        //Type casted from
         SgType* fromType     = ce->get_operand()->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE|SgType::STRIP_MODIFIER_TYPE);
 
-        //tps (23 Jun 2008) unparseToString is slow and causes problems for OpenMP
-        //        string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
-        string  fromTypeName = SageInterface::get_name(fromType);
-       
-        string  constPrefix = "const ";
+        string  toTypeName ; 
+        string  fromTypeName;
+        string  constPrefix;
+
+        toTypeName   = toType->unparseToString(); //TransformationSupport::getTypeName(toType);
+        fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+        constPrefix = "const ";
 
         //std::cout << "From:"<< fromTypeName << " To:" << toTypeName << std::endl;
 
@@ -145,12 +143,13 @@ visit(SgNode* node)
         if(fromTypeVec.size() == toTypeVec.size())
         for(int i = 0; i < fromTypeVec.size(); i++)
              {
-                    SgType* fromType     = fromTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
-                    string  fromTypeName = SageInterface::get_name(fromType);
-        //                    string  fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
-                    SgType* toType       = toTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
-                    string  toTypeName   = toType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+               SgType* fromType     = fromTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+               SgType* toType       = toTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
+               string  fromTypeName;
+               string  toTypeName;
 
+                     fromTypeName = fromType->unparseToString(); //TransformationSupport::getTypeName(fromType);
+                     toTypeName   = toType->unparseToString(); //TransformationSupport::getTypeName(fromType);
                     //std::cout <<  toTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE)->class_name() << std::endl;
                     //std::cout << "From1 " << fromTypeName << " To1: " << toTypeName << std::endl;  
 

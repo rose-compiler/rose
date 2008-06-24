@@ -19,8 +19,11 @@ int DefUseAnalysis::sgNodeCounter = 1;
  *********************************************************/
 int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
   bool contained = searchVizzMap (sgNode);
-  if (contained)
-    return vizzhelp[sgNode];
+#pragma omg critical (DefUseMapgetIntForSgNode)
+  if (contained) {
+    int nr = vizzhelp[sgNode];
+    return nr;
+  }
   return -1;
 }
 
@@ -30,7 +33,10 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
 void DefUseAnalysis::addID(SgNode* sgNode) { 
   if (searchVizzMap(sgNode)==false) {
 #pragma omp critical (DefUseAnalysisaddID) 
-    vizzhelp[sgNode] = sgNodeCounter++;
+      {
+      sgNodeCounter++;
+      vizzhelp[sgNode] = sgNodeCounter;
+      }
   }
 }
 
@@ -297,6 +303,8 @@ bool DefUseAnalysis::searchMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchVizzMap(SgNode* node) {
   bool isCurrentValueContained=false;
+#pragma omg critical (DefUsesearchVizzMap)
+  {
     convtype::const_iterator i = vizzhelp.begin();
     i = vizzhelp.begin();
     //SgNode* sgNodeMM = NULL;
@@ -305,6 +313,7 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
       if (initNameMM==node)
 	isCurrentValueContained=true;
     } 
+  }
   return isCurrentValueContained;
 }
 
@@ -313,6 +322,8 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
   bool isCurrentValueContained=false;
+#pragma omg critical (DefUsesearchMap)
+  {
     tabletype::const_iterator i = ltable->begin();
     //i = ltable.begin();
     //SgNode* sgNodeMM = NULL;
@@ -321,6 +332,7 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
       if (initNameMM==node)
 	isCurrentValueContained=true;
     } 
+  }
   return isCurrentValueContained;
 }
 
@@ -492,8 +504,11 @@ int DefUseAnalysis::run(bool debug) {
  * b) Traverse all functions of the program and create def-use relations
  *****************************************/
 int DefUseAnalysis::run() {
+#pragma omp critical (DefUseAnalysisinit) 
+  {
   sgNodeCounter = 1;
   nrOfNodesVisited = 0;
+  }
   if (DEBUG_MODE) 
     cout << "START: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
   // assert input is correct

@@ -1,10 +1,8 @@
 #include "parallel_compass.h"
 
-
 using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
-
 
 // ************************************************************
 // NodeCounter to determine on how to split the nodes
@@ -366,11 +364,13 @@ int main(int argc, char **argv)
   double max_time=0;
   double calc_time_processor=0;
 
+
 #ifdef _OPENMP
   int threadsnr = -1;
 #pragma omp parallel
   {
-    omp_set_num_threads(8);
+    // to set the amount of threads use: export OMP_NUM_THREADS=8
+    //    omp_set_num_threads(8);
     threadsnr= omp_get_num_threads();
   }
 	if (my_rank==0)
