@@ -252,6 +252,52 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     entry_rva = e_entrypoint_rva;
 }
 
+/* Encode the PE header into disk format */
+void *
+PEFileHeader::encode(PEFileHeader_disk *disk)
+{
+    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
+        disk->e_magic[i] = get_magic()[i];
+    host_to_le(e_cpu_type,           disk->e_cpu_type);
+    host_to_le(e_nobjects,           disk->e_nobjects);
+    host_to_le(e_time,               disk->e_time);
+    host_to_le(e_coff_symtab,        disk->e_coff_symtab);
+    host_to_le(e_coff_nsyms,         disk->e_coff_nsyms);
+    host_to_le(e_nt_hdr_size,        disk->e_nt_hdr_size);
+    host_to_le(e_flags,              disk->e_flags);
+    host_to_le(e_reserved3,          disk->e_reserved3);
+    host_to_le(e_lmajor,             disk->e_lmajor);
+    host_to_le(e_lminor,             disk->e_lminor);
+    host_to_le(e_reserved4,          disk->e_reserved4);
+    host_to_le(e_reserved5,          disk->e_reserved5);
+    host_to_le(e_reserved6,          disk->e_reserved6);
+    host_to_le(e_entrypoint_rva,     disk->e_entrypoint_rva);
+    host_to_le(e_reserved7,          disk->e_reserved7);
+    host_to_le(e_reserved8,          disk->e_reserved8);
+    host_to_le(e_image_base,         disk->e_image_base);
+    host_to_le(e_object_align,       disk->e_object_align);
+    host_to_le(e_file_align,         disk->e_file_align);
+    host_to_le(e_os_major,           disk->e_os_major);
+    host_to_le(e_os_minor,           disk->e_os_minor);
+    host_to_le(e_user_major,         disk->e_user_major);
+    host_to_le(e_user_minor,         disk->e_user_minor);
+    host_to_le(e_subsys_major,       disk->e_subsys_major);
+    host_to_le(e_subsys_minor,       disk->e_subsys_minor);
+    host_to_le(e_reserved9,          disk->e_reserved9);
+    host_to_le(e_image_size,         disk->e_image_size);
+    host_to_le(e_header_size,        disk->e_header_size);
+    host_to_le(e_file_checksum,      disk->e_file_checksum);
+    host_to_le(e_subsystem,          disk->e_subsystem);
+    host_to_le(e_dll_flags,          disk->e_dll_flags);
+    host_to_le(e_stack_reserve_size, disk->e_stack_reserve_size);
+    host_to_le(e_stack_commit_size,  disk->e_stack_commit_size);
+    host_to_le(e_heap_reserve_size,  disk->e_heap_reserve_size);
+    host_to_le(e_heap_commit_size,   disk->e_heap_commit_size);
+    host_to_le(e_reserved10,         disk->e_reserved10);
+    host_to_le(e_num_rvasize_pairs,  disk->e_num_rvasize_pairs);
+    return disk;
+}
+    
 /* Adds the RVA/Size pairs to the end of the PE file header */
 void
 PEFileHeader::add_rvasize_pairs()
@@ -262,6 +308,27 @@ PEFileHeader::add_rvasize_pairs()
     }
 }
 
+/* Write the PE file header back to disk */
+void
+PEFileHeader::unparse(FILE *f)
+{
+    /* The fixed length part of the header */
+    PEFileHeader_disk disk;
+    encode(&disk);
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
+    ROSE_ASSERT(1==nwrite);
+
+    /* The variable length RVA/size pair table */
+    for (size_t i=0; i<e_num_rvasize_pairs; i++) {
+        RVASizePair_disk rvasize_disk;
+        rvasize_pairs[i].encode(&rvasize_disk);
+        nwrite = fwrite(&rvasize_disk, sizeof rvasize_disk, 1, f);
+        ROSE_ASSERT(1==nwrite);
+    }
+}
+    
 /* Print some debugging information */
 void
 PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)

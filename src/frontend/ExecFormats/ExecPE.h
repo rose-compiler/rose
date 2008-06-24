@@ -39,7 +39,6 @@ class DOSFileHeader : public ExecHeader {
     DOSFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(DOSFileHeader_disk)) {ctor(f, offset);}
     virtual ~DOSFileHeader() {}
-    void *encode(DOSFileHeader_disk*);
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -49,6 +48,7 @@ class DOSFileHeader : public ExecHeader {
     
   private:
     void ctor(ExecFile *f, addr_t offset);
+    void *encode(DOSFileHeader_disk*);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +66,11 @@ class RVASizePair {
     RVASizePair(const RVASizePair_disk *disk) {
         e_rva  = le_to_host(disk->e_rva);
         e_size = le_to_host(disk->e_size);
+    }
+    void *encode(RVASizePair_disk *disk) {
+        host_to_le(e_rva,  disk->e_rva);
+        host_to_le(e_size, disk->e_size);
+        return disk;
     }
     addr_t      e_rva, e_size;
 };
@@ -158,6 +163,7 @@ class PEFileHeader : public ExecHeader {
         : ExecHeader(f, offset, sizeof(PEFileHeader_disk)) {ctor(f, offset);}
     virtual ~PEFileHeader() {}
     void add_rvasize_pairs();
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
@@ -173,6 +179,7 @@ class PEFileHeader : public ExecHeader {
 
   private:
     void ctor(ExecFile *f, addr_t offset);
+    void *encode(PEFileHeader_disk*);
 };
 
     
