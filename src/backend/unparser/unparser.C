@@ -645,6 +645,10 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
 
      string returnString;
 
+// tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
+#pragma omp critical (unparser)
+     {
+
   // all options are now defined to be false. When these options can be passed in
   // from the prompt, these options will be set accordingly.
      bool _auto                         = false;
@@ -1013,7 +1017,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
           if (inputUnparseInfoPointer == NULL)
                delete inheritedAttributeInfoPointer;
         }
-
+     } // pragma omp critical
      return returnString;
    }
 
