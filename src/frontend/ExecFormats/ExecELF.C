@@ -226,8 +226,6 @@ ElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     return disk;
 }
 
-    
-
 /* Write the ELF header back to a file by encoding its contents rather than simply writing the section contents */
 void
 ElfFileHeader::unparse(FILE *f)

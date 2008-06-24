@@ -379,6 +379,12 @@ ExecSection::is_file_header()
 void
 ExecSection::unparse(FILE *f)
 {
+#if 1
+    /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
+     *        have subclasses that override this method. */
+    fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
+#endif
+
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(data, 1, size, f);
