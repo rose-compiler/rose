@@ -42,6 +42,10 @@ class DOSFileHeader : public ExecHeader {
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
+    /* Accessors for protected/private data members */
+    ExecSection *get_rm_section() {return rm_section;}
+    void set_rm_section(ExecSection *s) {rm_section=s;}
+
     /* These are the native-format versions of the same members described in the DOSFileHeader_disk format struct */
     unsigned            e_cblp, e_cp, e_crlc, e_cparhdr, e_minalloc, e_maxalloc, e_ss, e_sp, e_csum, e_ip, e_cs, e_lfarlc, e_ovno;
     unsigned            e_res1[4], e_oemid, e_oeminfo, e_res2[10], e_lfanew;
@@ -49,6 +53,7 @@ class DOSFileHeader : public ExecHeader {
   private:
     void ctor(ExecFile *f, addr_t offset);
     void *encode(DOSFileHeader_disk*);
+    ExecSection         *rm_section;    /* Real mode code segment */
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -104,6 +104,9 @@ DOSFileHeader::unparse(FILE *f)
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
     ROSE_ASSERT(1==nwrite);
+
+    if (rm_section)
+        rm_section->unparse(f);
 }
     
 /* Print some debugging info */
@@ -978,6 +981,7 @@ parse(ExecFile *ef)
         dos_stub->set_synthesized(true);
         dos_stub->set_purpose(SP_PROGRAM);
         dos_stub->set_header(dos_header);
+        dos_header->set_rm_section(dos_stub);
     }
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
