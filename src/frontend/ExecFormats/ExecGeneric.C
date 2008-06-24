@@ -266,6 +266,17 @@ ExecFile::fill_holes()
     }
 }
 
+/* Mirror image of parsing an executable file. The result should be identical to the original file. */
+void
+ExecFile::unparse(const char *filename)
+{
+    FILE *f = fopen(filename, "w");
+    ROSE_ASSERT(f);
+    for (size_t i=0; i<sections.size(); i++) {
+        sections[i]->unparse(f);
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -362,7 +373,18 @@ ExecSection::is_file_header()
         return NULL;
     }
 }
-    
+
+/* Write a section back to the file. This is the generic version that simply writes the content. Subclasses should override
+ * this. */
+void
+ExecSection::unparse(FILE *f)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    size_t nwrite = fwrite(data, 1, size, f);
+    ROSE_ASSERT(nwrite==size);
+}
+
 /* Print some debugging info */
 void
 ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -692,6 +714,5 @@ parse(const char *name)
     }
     return ef;
 }
-
 
 }; /*namespace*/

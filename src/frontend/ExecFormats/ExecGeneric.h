@@ -300,6 +300,7 @@ class ExecFile {
         : fd(-1), data(NULL)
         {ctor(file_name);}
     virtual ~ExecFile();                                /* Destructor deletes children and munmaps and closes file */
+    void unparse(const char *filename);                 /* Unparse the file -- mirror image of parsing */
 
     /* File contents */
     addr_t get_size() {return sb.st_size;}              /* Size of file in bytes as of time it was opened */
@@ -347,6 +348,7 @@ class ExecSection {
         {ctor(f, offset, size);}
     virtual ~ExecSection();
     virtual void        dump(FILE*, const char *prefix, ssize_t idx);
+    virtual void        unparse(FILE*);
     ExecHeader          *is_file_header();              /* true if section represents a top level file header */
 
     /* Functions for section extent within the file */
