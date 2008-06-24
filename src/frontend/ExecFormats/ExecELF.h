@@ -310,6 +310,9 @@ class ElfDynamicEntry {
     ElfDynamicEntry(ByteOrder sex, const Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
     virtual ~ElfDynamicEntry() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    void *encode(ByteOrder, Elf32DynamicEntry_disk*);
+    void *encode(ByteOrder, Elf64DynamicEntry_disk*);
+    
     unsigned            d_tag;
     addr_t              d_val;
   private:
@@ -327,6 +330,7 @@ class ElfDynamicSection : public ElfSection {
         {}
     virtual ~ElfDynamicSection() {}
     virtual void set_linked_section(ElfSection *sec);   /* Parsing happens here rather than in constructor */
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */

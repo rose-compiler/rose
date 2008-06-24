@@ -843,6 +843,22 @@ ElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
     d_val = disk_to_host(sex, disk->d_val);
 }
 
+/* Encode a native entry back into disk format */
+void *
+ElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk)
+{
+    host_to_disk(sex, d_tag, &(disk->d_tag));
+    host_to_disk(sex, d_val, &(disk->d_val));
+    return disk;
+}
+void *
+ElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk)
+{
+    host_to_disk(sex, d_tag, &(disk->d_tag));
+    host_to_disk(sex, d_val, &(disk->d_val));
+    return disk;
+}
+
 /* Print some debugging info */
 void
 ElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -874,91 +890,89 @@ ElfDynamicSection::set_linked_section(ElfSection *strtab)
     ROSE_ASSERT(strtab!=NULL);
     ROSE_ASSERT(0==strtab->get_name().compare(".dynstr"));
 
-    std::vector<ElfDynamicEntry*> entries;
     size_t section_size=get_size(), entry_size=0, nentries=0;
     if (4==fhdr->get_word_size()) {
         const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(Elf32DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
-            entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
+            all_entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else if (8==fhdr->get_word_size()) {
         const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(Elf64DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
-            entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
+            all_entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else {
         throw FormatError("bad ELF word size");
     }
 
     for (size_t i=0; i<nentries; i++) {
-        all_entries.push_back(entries[i]);
-        switch (entries[i]->d_tag) {
+        switch (all_entries[i]->d_tag) {
           case 0:
             /* DT_NULL: unused entry */
             break;
           case 1: {
               /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-              const char *name = (const char*)strtab->content_str(entries[i]->d_val);
+              const char *name = (const char*)strtab->content_str(all_entries[i]->d_val);
               fhdr->add_dll(new ExecDLL(name));
               break;
           }
           case 2:
-            dt_pltrelsz = entries[i]->d_val;
+            dt_pltrelsz = all_entries[i]->d_val;
             break;
           case 3:
-            dt_pltgot = entries[i]->d_val;
+            dt_pltgot = all_entries[i]->d_val;
             break;
           case 4:
-            dt_hash = entries[i]->d_val;
+            dt_hash = all_entries[i]->d_val;
             break;
           case 5:
-            dt_strtab = entries[i]->d_val;
+            dt_strtab = all_entries[i]->d_val;
             break;
           case 6:
-            dt_symtab = entries[i]->d_val;
+            dt_symtab = all_entries[i]->d_val;
             break;
           case 7:
-            dt_rela = entries[i]->d_val;
+            dt_rela = all_entries[i]->d_val;
             break;
           case 8:
-            dt_relasz = entries[i]->d_val;
+            dt_relasz = all_entries[i]->d_val;
             break;
           case 9:
-            dt_relaent = entries[i]->d_val;
+            dt_relaent = all_entries[i]->d_val;
             break;
           case 10:
-            dt_strsz = entries[i]->d_val;
+            dt_strsz = all_entries[i]->d_val;
             break;
           case 11:
-            dt_symentsz = entries[i]->d_val;
+            dt_symentsz = all_entries[i]->d_val;
             break;
           case 12:
-            dt_init = entries[i]->d_val;
+            dt_init = all_entries[i]->d_val;
             break;
           case 13:
-            dt_fini = entries[i]->d_val;
+            dt_fini = all_entries[i]->d_val;
             break;
           case 20:
-            dt_pltrel = entries[i]->d_val;
+            dt_pltrel = all_entries[i]->d_val;
             break;
           case 23:
-            dt_jmprel = entries[i]->d_val;
+            dt_jmprel = all_entries[i]->d_val;
             break;
           case 0x6fffffff:
-            dt_verneednum = entries[i]->d_val;
+            dt_verneednum = all_entries[i]->d_val;
             break;
           case 0x6ffffffe:
-            dt_verneed = entries[i]->d_val;
+            dt_verneed = all_entries[i]->d_val;
             break;
           case 0x6ffffff0:
-            dt_versym = entries[i]->d_val;
+            dt_versym = all_entries[i]->d_val;
             break;
           default:
-            other_entries.push_back(entries[i]);
+            other_entries.push_back(all_entries[i]);
             break;
         }
     }
@@ -980,6 +994,37 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
             fprintf(f, " @0x%08"PRIx64" %"PRIu64" bytes" , sections[i]->get_mapped_rva(), sections[i]->get_size());
         }
         fprintf(f, "\n");
+    }
+}
+
+/* Write the dynamic section back to disk */
+void
+ElfDynamicSection::unparse(FILE *f)
+{
+    ElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr);
+    ByteOrder sex = fhdr->get_sex();
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+
+    for (size_t i=0; i<all_entries.size(); i++) {
+        Elf32DynamicEntry_disk disk32;
+        Elf64DynamicEntry_disk disk64;
+        void *disk=NULL;
+        size_t size = 0;
+        
+        if (4==fhdr->get_word_size()) {
+            disk = all_entries[i]->encode(sex, &disk32);
+            size = sizeof disk32;
+        } else if (8==fhdr->get_word_size()) {
+            disk = all_entries[i]->encode(sex, &disk64);
+            size = sizeof disk64;
+        } else {
+            ROSE_ASSERT(!"unsupported word size");
+        }
+        size_t nwrite = fwrite(disk, size, 1, f);
+        ROSE_ASSERT(1==nwrite);
     }
 }
 

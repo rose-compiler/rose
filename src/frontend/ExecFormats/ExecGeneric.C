@@ -579,24 +579,6 @@ ExecSegment::~ExecSegment()
     }
 }
 
-/* Write a segment back to the file. This is the generic version that simply writes the content. Subclasses should override
- * this. */
-void
-ExecSegment::unparse(FILE *f)
-{
-#if 1
-    /* FIXME: for now we print the names of all segments we dump using this method. Eventually most of these segments will
-     *        have subclasses that override this method. */
-    fprintf(stderr, "Exec::ExecSegment::unparse(FILE*) for segment \"%s\"\n", name.c_str());
-#endif
-
-    ExecSection *section = get_section();
-    int status = fseek(f, section->get_offset()+offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(section->content(offset, get_disk_size()), 1, get_disk_size(), f);
-    ROSE_ASSERT(nwrite==get_disk_size());
-}
-
 /* Print some debugging info about the segment */
 void
 ExecSegment::dump(FILE *f, const char *prefix, ssize_t idx)
