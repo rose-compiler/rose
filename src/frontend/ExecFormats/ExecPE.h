@@ -389,16 +389,27 @@ struct COFFSymbol_disk {
 class COFFSymbol : public ExecSymbol {
   public:
     COFFSymbol(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strtab, size_t idx)
-        : st_name_offset(0), st_section_num(0), st_type(0), st_storage_class(0), st_num_aux_entries(0)
+        : st_name_offset(0), st_section_num(0), st_type(0), st_storage_class(0), st_num_aux_entries(0),
+        aux_data(NULL), aux_size(0)
         {ctor(fhdr, symtab, strtab, idx);}
     virtual ~COFFSymbol() {}
+    void *encode(COFFSymbol_disk*);
     virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
     void dump(FILE*, const char *prefix, ssize_t idx, ExecFile*);
+
+    /* Auxilliary data for the symbol */
+    const unsigned char *get_aux_data() {return aux_data;}
+    size_t get_aux_size() {return aux_size;}
+
+    /* Native versions of the COFFSymbol_disk members */
     addr_t              st_name_offset;
     int                 st_section_num;
     unsigned            st_type, st_storage_class, st_num_aux_entries;
+    
   private:
     void ctor(PEFileHeader*, ExecSection *symtab, ExecSection *strtab, size_t idx);
+    const unsigned char *aux_data;      /* Auxilliary data from table entries that follow */
+    size_t              aux_size;       /* Size (bytes) of auxilliary data */
 };
 
 class COFFSymtab : public ExecSection {
@@ -407,6 +418,7 @@ class COFFSymtab : public ExecSection {
         : ExecSection(f, fhdr->e_coff_symtab, fhdr->e_coff_nsyms*COFFSymbol_disk_size)
         {ctor(f, fhdr);}
     virtual ~COFFSymtab() {}
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */

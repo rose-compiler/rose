@@ -339,6 +339,12 @@ PEFileHeader::unparse(FILE *f)
     /* The object table and all the sections/segments */
     if (object_table)
         object_table->unparse(f);
+
+#if 0 /*FIXME: not ready for prime time yet*/
+    /* Sections that aren't in the object table */
+    if (coff_symtab)
+        coff_symtab->unparse(f);
+#endif
 }
     
 /* Print some debugging information */
@@ -729,7 +735,9 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
 
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (st_num_aux_entries>0) {
-        const unsigned char *aux_data = symtab->content((idx+1)*COFFSymbol_disk_size, st_num_aux_entries*COFFSymbol_disk_size);
+        aux_size = st_num_aux_entries * COFFSymbol_disk_size;
+        aux_data = symtab->content((idx+1)*COFFSymbol_disk_size, aux_size);
+
         if (st_storage_class==2/*external*/ && st_type==0x20/*function*/ && st_section_num>0) {
             fprintf(stderr, "    ROBB: Function definition aux\n");
         } else if (0==get_name().compare(".bf") || 0==get_name().compare(".ef")) {
@@ -790,6 +798,31 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
     
     value = le_to_host(disk->st_value);
     def_state = SYM_DEFINED;
+}
+
+/* Encode a symbol back into disk format */
+void *
+COFFSymbol::encode(COFFSymbol_disk *disk)
+{
+    /* FIXME: doesn't take the aux entries into consideration, esp. how they modify name etc. */
+    if (0==st_name_offset) {
+        /* Name is stored in entry */
+        memset(disk->st_name, 0, sizeof(disk->st_name));
+        fprintf(stderr, "ROBB: symbol name = \"%s\" size=%zd\n", get_name().c_str(), get_name().size());
+        ROSE_ASSERT(get_name().size()<=sizeof(disk->st_name));
+        memcpy(disk->st_name, get_name().c_str(), get_name().size());
+    } else {
+        /* Name is an offset into the string table */
+        disk->st_zero = 0;
+        host_to_le(st_name_offset, disk->st_offset);
+    }
+    
+    host_to_le(get_value(),        disk->st_value);
+    host_to_le(st_section_num,     disk->st_section_num);
+    host_to_le(st_type,            disk->st_type);
+    host_to_le(st_storage_class,   disk->st_storage_class);
+    host_to_le(st_num_aux_entries, disk->st_num_aux_entries);
+    return disk;
 }
 
 /* Print some debugging info */
@@ -897,6 +930,7 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
     fprintf(f, "%s%-*s = %s\n",               p, w, "storage_class", s);
 
     fprintf(f, "%s%-*s = %u\n",               p, w, "num_aux_entries", st_num_aux_entries);
+    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_size", aux_size);
 }
 
 /* Constructor */
@@ -925,6 +959,27 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
         COFFSymbol *symbol = new COFFSymbol(fhdr, this, strtab, i);
         i += symbol->st_num_aux_entries;
         symbols.push_back(symbol);
+    }
+}
+
+/* Write symbol table back to disk */
+void
+COFFSymtab::unparse(FILE *f)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    
+    for (size_t i=0; i<symbols.size(); i++) {
+        COFFSymbol *symbol = symbols[i];
+        COFFSymbol_disk disk;
+        symbol->encode(&disk);
+        size_t nwrite = fwrite(&disk, COFFSymbol_disk_size, 1, f);
+        ROSE_ASSERT(1==nwrite);
+        
+        if (symbol->get_aux_size()>0) {
+            nwrite = fwrite(symbol->get_aux_data(), symbol->get_aux_size(), 1, f);
+            ROSE_ASSERT(1==nwrite);
+        }
     }
 }
 
