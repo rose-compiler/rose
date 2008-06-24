@@ -251,6 +251,7 @@ class PEObjectTableEntry {
     PEObjectTableEntry(const PEObjectTableEntry_disk *disk)
         {ctor(disk);}
     virtual ~PEObjectTableEntry() {};
+    void *encode(PEObjectTableEntry_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
     /* These are the native-format versions of the same members described in the ObjectTableEntry_disk struct. */
@@ -288,6 +289,7 @@ class PEObjectTable : public ExecSection {
         : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(PEObjectTableEntry_disk))
         {ctor(fhdr);}
     virtual ~PEObjectTable() {}
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(PEFileHeader*);

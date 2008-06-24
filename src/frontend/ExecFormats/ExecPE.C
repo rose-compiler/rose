@@ -152,6 +152,11 @@ DOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[8]",  e_res2[8]);
     fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[9]",  e_res2[9]);
     fprintf(f, "%s%-*s = %u byte offset\n",  p, w, "e_lfanew",   e_lfanew);
+    if (rm_section) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section", rm_section->get_id(), rm_section->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "rm_section");
+    }
 }
     
 
@@ -311,7 +316,7 @@ PEFileHeader::add_rvasize_pairs()
     }
 }
 
-/* Write the PE file header back to disk */
+/* Write the PE file header back to disk and all that it references */
 void
 PEFileHeader::unparse(FILE *f)
 {
@@ -330,6 +335,9 @@ PEFileHeader::unparse(FILE *f)
         nwrite = fwrite(&rvasize_disk, sizeof rvasize_disk, 1, f);
         ROSE_ASSERT(1==nwrite);
     }
+
+    if (object_table)
+        object_table->unparse(f);
 }
     
 /* Print some debugging information */
@@ -418,6 +426,23 @@ PEObjectTableEntry::ctor(const PEObjectTableEntry_disk *disk)
     flags           = le_to_host(disk->flags);
 }
 
+/* Encodes an object table entry back into disk format. */
+void *
+PEObjectTableEntry::encode(PEObjectTableEntry_disk *disk)
+{
+    memset(disk->name, 0, sizeof(disk->name));
+    memcpy(disk->name, name.c_str(), std::min(sizeof(name), name.size()));
+
+    host_to_le(virtual_size,    disk->virtual_size);
+    host_to_le(rva,             disk->rva);
+    host_to_le(physical_size,   disk->physical_size);
+    host_to_le(physical_offset, disk->physical_offset);
+    for (size_t i=0; i<NELMTS(reserved); i++)
+        host_to_le(reserved[i], disk->reserved[i]);
+    host_to_le(flags, disk->flags);
+    return disk;
+}
+
 /* Prints some debugging info */
 void
 PEObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -495,6 +520,37 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
             segment->set_executable(true);
         if (entry->flags & OF_WRITABLE)
             segment->set_writable(true);
+    }
+}
+
+/* Writes the object table back to disk along with each of the objects. */
+void
+PEObjectTable::unparse(FILE *f)
+{
+    ExecFile *ef = get_file();
+    PEFileHeader *fhdr = dynamic_cast<PEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    std::vector<ExecSection*> sections = ef->get_sections();
+
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id()>=0) {
+            PESection *section = dynamic_cast<PESection*>(sections[i]);
+
+            /* Write the table entry */
+            ROSE_ASSERT(section->get_id()>0); /*ID's are 1-origin in PE*/
+            size_t slot = section->get_id()-1;
+            PEObjectTableEntry *shdr = section->get_st_entry();
+            PEObjectTableEntry_disk disk;
+            shdr->encode(&disk);
+            addr_t entry_offset = offset + slot * sizeof disk;
+            int status = fseek(f, entry_offset, SEEK_SET);
+            ROSE_ASSERT(status>=0);
+            size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
+            ROSE_ASSERT(1==nwrite);
+
+            /* Write the section */
+            section->unparse(f);
+        }
     }
 }
 
