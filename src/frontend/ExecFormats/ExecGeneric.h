@@ -2,6 +2,7 @@
 #ifndef Exec_ExecFormats_h
 #define Exec_ExecFormats_h
 
+#include <assert.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -625,6 +626,45 @@ inline int64_t le_to_host(int64_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
 
+inline void host_to_le(unsigned h, uint8_t &n) {
+    assert(0==(h & ~0xff));
+    uint8_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(unsigned h, uint16_t &n) {
+    assert(0==(h & ~0xffff));
+    uint16_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(unsigned h, uint32_t &n) {
+    assert(0==(h & ~0xffffffff));
+    uint32_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(addr_t h, uint64_t &n) {
+    assert(0==(h & ~0xfffffffffffffffful));
+    uint8_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(int h, int8_t &n) {
+    assert(0==((unsigned)h & ~0xff));
+    int8_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(int h, int16_t &n) {
+    assert(0==((unsigned)h & ~0xffff));
+    int16_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(int h, int32_t &n) {
+    assert(0==((unsigned)h & ~0xffffffff));
+    int32_t hh = h;
+    n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_le(int64_t h, int64_t &n) {
+    n = ORDER_LSB==host_order() ? h : swap_bytes(h);
+}
+
 /* Big-endian byte order conversions */
 inline uint8_t be_to_host(uint8_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
@@ -649,6 +689,45 @@ inline int32_t be_to_host(int32_t n) {
 }
 inline int64_t be_to_host(int64_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+
+inline void host_to_be(unsigned h, uint8_t &n) {
+    assert(0==(h & ~0xff));
+    uint8_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(unsigned h, uint16_t &n) {
+    assert(0==(h & ~0xffff));
+    uint16_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(unsigned h, uint32_t &n) {
+    assert(0==(h & ~0xffffffff));
+    uint32_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(addr_t h, uint64_t &n) {
+    assert(0==(h & ~0xfffffffffffffffful));
+    uint8_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(int h, int8_t &n) {
+    assert(0==((unsigned)h & ~0xff));
+    int8_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(int h, int16_t &n) {
+    assert(0==((unsigned)h & ~0xffff));
+    int16_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(int h, int32_t &n) {
+    assert(0==((unsigned)h & ~0xffffffff));
+    int32_t hh = h;
+    n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+inline void host_to_be(int64_t h, int64_t &n) {
+    n = ORDER_MSB==host_order() ? h : swap_bytes(h);
 }
 
 /* Caller-specified byte order conversions */
@@ -677,6 +756,34 @@ inline int32_t disk_to_host(ByteOrder sex, int32_t n) {
 }
 inline int64_t disk_to_host(ByteOrder sex, int64_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+
+//inline void host_to_disk(ByteOrder, unsigned char h, unsigned char *np) {
+//    *np = h;
+//}
+inline void host_to_disk(ByteOrder sex, unsigned h, uint8_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, unsigned h, uint16_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, unsigned h, uint32_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, addr_t h, uint64_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, int h, int8_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, int h, int16_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, int h, int32_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
+}
+inline void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, *np) : host_to_be(h, *np);
 }
 
 

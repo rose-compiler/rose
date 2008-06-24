@@ -61,6 +61,9 @@ class ElfFileHeader : public ExecHeader {
         : ExecHeader(f, offset, sizeof(Elf32FileHeader_disk)) {ctor(f, offset);}
     virtual ~ElfFileHeader() {}
     uint64_t max_page_size();
+    virtual void unparse(FILE*);
+    void *encode(ByteOrder, Elf32FileHeader_disk*);
+    void *encode(ByteOrder, Elf64FileHeader_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in Elf*FileHeader_disk */

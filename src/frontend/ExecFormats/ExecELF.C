@@ -174,6 +174,85 @@ ElfFileHeader::max_page_size()
     return 4*1024;
 }
 
+/* Encode Elf header disk structure */
+void *
+ElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
+{
+    for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
+        disk->e_ident_magic[i] = magic[i];
+    host_to_disk(sex, e_ident_file_class,    &(disk->e_ident_file_class));
+    host_to_disk(sex, e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    host_to_disk(sex, e_ident_file_version,  &(disk->e_ident_file_version));
+    for (size_t i=0; i<NELMTS(e_ident_padding); i++)
+        disk->e_ident_padding[i] = e_ident_padding[i];
+    host_to_disk(sex, e_type,                &(disk->e_type));
+    host_to_disk(sex, e_machine,             &(disk->e_machine));
+    host_to_disk(sex, e_version,             &(disk->e_version));
+    host_to_disk(sex, e_entry,               &(disk->e_entry));
+    host_to_disk(sex, e_phoff,               &(disk->e_phoff));
+    host_to_disk(sex, e_shoff,               &(disk->e_shoff));
+    host_to_disk(sex, e_flags,               &(disk->e_flags));
+    host_to_disk(sex, e_ehsize,              &(disk->e_ehsize));
+    host_to_disk(sex, e_phentsize,           &(disk->e_phentsize));
+    host_to_disk(sex, e_phnum,               &(disk->e_phnum));
+    host_to_disk(sex, e_shentsize,           &(disk->e_shentsize));
+    host_to_disk(sex, e_shnum,               &(disk->e_shnum));
+    host_to_disk(sex, e_shstrndx,            &(disk->e_shstrndx));
+    return disk;
+}
+void *
+ElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
+{
+    for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
+        disk->e_ident_magic[i] = magic[i];
+    host_to_disk(sex, e_ident_file_class,    &(disk->e_ident_file_class));
+    host_to_disk(sex, e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    host_to_disk(sex, e_ident_file_version,  &(disk->e_ident_file_version));
+    for (size_t i=0; i<NELMTS(e_ident_padding); i++)
+        disk->e_ident_padding[i] = e_ident_padding[i];
+    host_to_disk(sex, e_type,                &(disk->e_type));
+    host_to_disk(sex, e_machine,             &(disk->e_machine));
+    host_to_disk(sex, e_version,             &(disk->e_version));
+    host_to_disk(sex, e_entry,               &(disk->e_entry));
+    host_to_disk(sex, e_phoff,               &(disk->e_phoff));
+    host_to_disk(sex, e_shoff,               &(disk->e_shoff));
+    host_to_disk(sex, e_flags,               &(disk->e_flags));
+    host_to_disk(sex, e_ehsize,              &(disk->e_ehsize));
+    host_to_disk(sex, e_phentsize,           &(disk->e_phentsize));
+    host_to_disk(sex, e_phnum,               &(disk->e_phnum));
+    host_to_disk(sex, e_shentsize,           &(disk->e_shentsize));
+    host_to_disk(sex, e_shnum,               &(disk->e_shnum));
+    host_to_disk(sex, e_shstrndx,            &(disk->e_shstrndx));
+    return disk;
+}
+
+    
+
+/* Write the ELF header back to a file by encoding its contents rather than simply writing the section contents */
+void
+ElfFileHeader::unparse(FILE *f)
+{
+    Elf32FileHeader_disk disk32;
+    Elf64FileHeader_disk disk64;
+    void *disk=NULL;
+    size_t size=0;
+    
+    if (4==get_word_size()) {
+        disk = encode(get_sex(), &disk32);
+        size = sizeof(disk32);
+    } else if (8==get_word_size()) {
+        disk = encode(get_sex(), &disk64);
+        size = sizeof(disk64);
+    } else {
+        ROSE_ASSERT(!"unsupported word size");
+    }
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    size_t nwrite = fwrite(disk, size, 1, f);
+    ROSE_ASSERT(1==nwrite);
+}
+
 /* Print some debugging info */
 void
 ElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
