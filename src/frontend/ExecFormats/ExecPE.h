@@ -320,15 +320,15 @@ class PEImportHintName {
     unsigned char padding;
 };
 
-class PEImportSegment : public PESegment {
+class PEImportSection : public ExecSection {
   public:
-    PEImportSegment(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
-        : PESegment(section, offset, size, rva, mapped_size)
-        {ctor(fhdr, section, offset, size, rva, mapped_size);}
-    virtual ~PEImportSegment() {}
+    PEImportSection(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
+        : ExecSection(fhdr->get_file(), offset, size)
+        {ctor(fhdr, offset, size, mapped_rva);}
+    virtual ~PEImportSection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
-    void ctor(PEFileHeader*, ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
+    void ctor(PEFileHeader*, addr_t offset, addr_t size, addr_t mapped_rva);
     std::vector<PEImportDirectory*> dirs;
 };
 

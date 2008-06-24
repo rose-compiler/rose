@@ -352,24 +352,26 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         /* Parse the object table entry */
         const PEObjectTableEntry_disk *disk = (const PEObjectTableEntry_disk*)content(i*entsize, entsize);
         PEObjectTableEntry *entry = new PEObjectTableEntry(disk);
-        
-        /* Use the entry to define a segment in a synthesized section */
-        ExecSection *section = new ExecSection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
+
+        /* The section to hold the segment */
+        ExecSection *section=NULL;
+        if (0==entry->name.compare(".idata")) {
+            section = new PEImportSection(fhdr, entry->physical_offset, entry->physical_size, entry->rva);
+        } else {
+            section = new ExecSection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
+        }
         section->set_synthesized(true);
         section->set_name(entry->name);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
         section->set_header(fhdr);
+        section->set_mapped_rva(entry->rva);
 
-        PESegment *segment = NULL;
-        if (0==entry->name.compare(".idata")) {
-            segment = new PEImportSegment(fhdr, section, 0, entry->physical_size, entry->rva, entry->virtual_size);
-        } else {
-            segment = new PESegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
-        }
-
+        /* Define the segment */
+        PESegment *segment = new PESegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
         segment->set_name(entry->name);
         segment->set_st_entry(entry);
+
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
         if (entry->flags & OF_EXECUTABLE)
@@ -393,7 +395,7 @@ PEObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Import Directory (".idata" segment)
+// PE Import Directory (".idata" section)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
@@ -455,7 +457,7 @@ PEImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-PEImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
+PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
 {
     size_t entry_size = sizeof(PEImportDirectory_disk);
     PEImportDirectory_disk zero;
@@ -464,15 +466,15 @@ PEImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, a
     /* Read idata directory entries--one per DLL*/
     for (size_t i=0; 1; i++) {
         /* End of list is marked by an entry of all zero. */
-        const PEImportDirectory_disk *idir_disk = (const PEImportDirectory_disk*)section->content(i*entry_size, entry_size);
+        const PEImportDirectory_disk *idir_disk = (const PEImportDirectory_disk*)content(i*entry_size, entry_size);
         if (!memcmp(&zero, idir_disk, sizeof zero)) break;
         PEImportDirectory *idir = new PEImportDirectory(idir_disk);
         dirs.push_back(idir);
 
         /* The library's name is indicated by RVA. We need a section offset instead. */
-        ROSE_ASSERT(idir->dll_name_rva >= get_mapped_rva());
-        addr_t dll_name_offset = get_offset() + idir->dll_name_rva - get_mapped_rva();
-        std::string dll_name = section->content_str(dll_name_offset);
+        ROSE_ASSERT(idir->dll_name_rva >= mapped_rva);
+        addr_t dll_name_offset = idir->dll_name_rva - mapped_rva;
+        std::string dll_name = content_str(dll_name_offset);
         ExecDLL *dll = new ExecDLL(dll_name);
 
 
@@ -480,22 +482,22 @@ PEImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, a
          * currently processing. Each hint is a two-byte little-endian value. Each name is NUL-terminated. The array address
          * and hint/name pair addresses are all specified with RVAs, but we need to convert them to section offsets in order
          * to read them since we've not mapped sections to their preferred base addresses. */
-        if (idir->hintnames_rva < get_mapped_rva())
+        if (idir->hintnames_rva < mapped_rva)
             throw FormatError("hint/name RVA is before beginning of \".idata\" segment");
-        if (idir->bindings_rva < get_mapped_rva())
+        if (idir->bindings_rva < mapped_rva)
             throw FormatError("bindings RVA is before beginning of \".idata\" segment");
-        addr_t hintnames_offset = get_offset() + idir->hintnames_rva - get_mapped_rva();
-        addr_t bindings_offset  = get_offset() + idir->bindings_rva  - get_mapped_rva();
+        addr_t hintnames_offset = idir->hintnames_rva - mapped_rva;
+        addr_t bindings_offset  = idir->bindings_rva  - mapped_rva;
         while (1) {
-            addr_t hint_rva = le_to_host(*(const uint32_t*)section->content(hintnames_offset, sizeof(uint32_t)));
+            addr_t hint_rva = le_to_host(*(const uint32_t*)content(hintnames_offset, sizeof(uint32_t)));
             hintnames_offset += sizeof(uint32_t);
             if (0==hint_rva) break; /*list of RVAs is null terminated */
-            addr_t hint_offset = get_offset() + hint_rva - get_mapped_rva();
-            PEImportHintName *hintname = new PEImportHintName(section, hint_offset);
+            addr_t hint_offset = hint_rva - mapped_rva;
+            PEImportHintName *hintname = new PEImportHintName(this, hint_offset);
             dll->add_function(hintname->get_name());
 
             /* FIXME: do something with binding */
-            addr_t binding = le_to_host(*(const uint32_t*)section->content(bindings_offset, sizeof(uint32_t)));
+            addr_t binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
             bindings_offset += sizeof(uint32_t);
         }
 
@@ -505,16 +507,16 @@ PEImportSegment::ctor(PEFileHeader *fhdr, ExecSection *section, addr_t offset, a
 
 /* Print debugging info */
 void
-PEImportSegment::dump(FILE *f, const char *prefix, ssize_t idx)
+PEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEImportSegment[%zd].", prefix, idx);
+        sprintf(p, "%sPEImportSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEImportSegment.", prefix);
+        sprintf(p, "%sPEImportSection.", prefix);
     }
     
-    PESegment::dump(f, p, -1);
+    ExecSection::dump(f, p, -1);
     for (size_t i=0; i<dirs.size(); i++)
         dirs[i]->dump(f, p, i);
 }

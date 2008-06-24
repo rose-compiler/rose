@@ -219,7 +219,7 @@ ExecFile::get_sections_by_rva(addr_t rva)
     std::vector<ExecSection*> retval;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
         ExecSection *section = *i;
-        if (section->is_mapped() && rva>=section->get_mapped() && rva<section->get_mapped()+section->get_size()) {
+        if (section->is_mapped() && rva>=section->get_mapped_rva() && rva<section->get_mapped_rva()+section->get_size()) {
             retval.push_back(section);
         }
     }

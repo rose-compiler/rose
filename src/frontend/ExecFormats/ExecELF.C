@@ -324,7 +324,7 @@ ElfSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
 
     /* Section mapping */
     if (shdr->sh_addr>0)
-        set_mapped(true, shdr->sh_addr);
+        set_mapped_rva(shdr->sh_addr);
 }
 
 /* Print some debugging info */
@@ -972,12 +972,12 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
     std::vector<ExecSection*> sections = ef->get_sections_by_rva(addr);
     for (size_t i=0; i<sections.size(); i++) {
         fprintf(f, "%s%-*s     [%d] \"%s\"", p, w, "...", sections[i]->get_id(), sections[i]->get_name().c_str());
-        addr_t offset = addr - sections[i]->get_mapped();
+        addr_t offset = addr - sections[i]->get_mapped_rva();
         if (offset>0) {
             addr_t nbytes = sections[i]->get_size() - offset;
-            fprintf(f, " @(0x%08"PRIx64"+%"PRIu64") %"PRIu64" bytes", sections[i]->get_mapped(), offset, nbytes);
+            fprintf(f, " @(0x%08"PRIx64"+%"PRIu64") %"PRIu64" bytes", sections[i]->get_mapped_rva(), offset, nbytes);
         } else {
-            fprintf(f, " @0x%08"PRIx64" %"PRIu64" bytes" , sections[i]->get_mapped(), sections[i]->get_size());
+            fprintf(f, " @0x%08"PRIx64" %"PRIu64" bytes" , sections[i]->get_mapped_rva(), sections[i]->get_size());
         }
         fprintf(f, "\n");
     }

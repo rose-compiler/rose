@@ -363,8 +363,9 @@ class ExecSection {
 
     /* Functions related to mapping of sections into executable memory */
     bool                is_mapped() {return mapped;}
-    addr_t              get_mapped() {return mapped ? mapped_rva : 0;}
-    void                set_mapped(bool b, addr_t a) {mapped=b; mapped_rva=a;}
+    addr_t              get_mapped_rva() {return mapped ? mapped_rva : 0;}
+    void                set_mapped_rva(addr_t a) {mapped=true; mapped_rva=a;}
+    void                clear_mapped_rva() {mapped=false; mapped_rva=0;}
 
     /* Functions for segment children */
     void add_segment(ExecSegment*);                     /* Add a new segment to this section */
