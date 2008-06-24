@@ -43,6 +43,7 @@ FILES_NOT_REQUIRED_FOR_DISTRIBUTIONS = \
      support-maple.m4 \
      support-mysql.m4 \
      support-omp.m4 \
+     support-gcc-omp.m4 \
      support-purify.m4 \
      support-rpath.m4 \
      support-sqlite.m4 \

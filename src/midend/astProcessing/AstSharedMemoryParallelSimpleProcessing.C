@@ -186,6 +186,7 @@ void AstSharedMemoryParallelSimpleProcessing::traverseInParallel(SgNode *basenod
 
     // Chop the flat list of traversals apart and distribute them into a few
     // parallelizable traversals.
+    //    std::cerr << "AstSharedMemoryParallelSimpleProcessing : starting " << numberOfThreads << " threads. " << std::endl;
     ParallelizableTraversalPtrList parallelTraversals(numberOfThreads);
     size_t begin = 0, end;
     for (i = 0; i < numberOfThreads; i++)
@@ -208,6 +209,7 @@ void AstSharedMemoryParallelSimpleProcessing::traverseInParallel(SgNode *basenod
         pthread_create(&threads[i], NULL,
                 parallelSimpleProcessingThread,
                 new AstSharedMemoryParallelSimpleThreadArgs(parallelTraversals[i], basenode, treeTraverseOrder));
+	//	std::cerr << " starting " << i << " thread. " << std::endl;
     }
 
     // Main "event loop" for the "master" thread: Simply wait for the
