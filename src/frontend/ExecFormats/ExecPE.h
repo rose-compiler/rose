@@ -261,7 +261,8 @@ class PESegment : public ExecSegment {
 class PEObjectTable : public ExecSection {
   public:
     PEObjectTable(PEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(PEObjectTableEntry_disk)) {ctor(fhdr);}
+        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(PEObjectTableEntry_disk))
+        {ctor(fhdr);}
     virtual ~PEObjectTable() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:

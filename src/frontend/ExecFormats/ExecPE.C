@@ -287,7 +287,7 @@ PEObjectTableEntry::ctor(const PEObjectTableEntry_disk *disk)
 {
     char name[9];
     strncpy(name, disk->name, 8);
-    name[9] = '\0';
+    name[8] = '\0';
     this->name = name;
 
     /* Decode file format */
@@ -345,6 +345,7 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
     set_synthesized(true);
     set_name("PE Object Table");
     set_purpose(SP_HEADER);
+    set_header(fhdr);
     
     const size_t entsize = sizeof(PEObjectTableEntry_disk);
     for (size_t i=0; i<fhdr->e_nobjects; i++) {
@@ -358,6 +359,7 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         section->set_name(entry->name);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
+        section->set_header(fhdr);
 
         PESegment *segment = NULL;
         if (0==entry->name.compare(".idata")) {
@@ -722,6 +724,7 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
     set_synthesized(false);
     set_name("COFF Symbols");
     set_purpose(SP_SYMTAB);
+    set_header(fhdr);
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
@@ -730,6 +733,7 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
     strtab->set_synthesized(false);
     strtab->set_name("COFF Symbol Strtab");
     strtab->set_purpose(SP_HEADER);
+    strtab->set_header(fhdr);
     addr_t strtab_size = le_to_host(*(const uint32_t*)strtab->content(0, sizeof(uint32_t)));
     if (strtab_size<sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
@@ -862,6 +866,7 @@ parse(ExecFile *ef)
         dos_stub->set_name("DOS real-mode stub");
         dos_stub->set_synthesized(true);
         dos_stub->set_purpose(SP_PROGRAM);
+        dos_stub->set_header(dos_header);
     }
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
