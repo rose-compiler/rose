@@ -251,10 +251,14 @@ ElfFileHeader::unparse(FILE *f)
     ROSE_ASSERT(1==nwrite);
 
     /* Write the ELF section and segment tables and, indirectly, the sections themselves. */
-    if (section_table)
-        section_table->unparse(f, this);
-    if (segment_table)
-        segment_table->unparse(f, this);
+    if (section_table) {
+        ROSE_ASSERT(section_table->get_header()==this);
+        section_table->unparse(f);
+    }
+    if (segment_table) {
+        ROSE_ASSERT(section_table->get_header()==this);
+        segment_table->unparse(f);
+    }
 }
 
 /* Print some debugging info */
@@ -299,6 +303,7 @@ void
 ElfSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
 {
     set_synthesized(false);
+    set_header(fhdr);
 
     /* Section purpose */
     switch (shdr->sh_type) {
@@ -420,6 +425,7 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name("ELF section table");
     set_purpose(SP_HEADER);
+    set_header(fhdr);
 
     ByteOrder sex = fhdr->get_sex();
 
@@ -471,6 +477,9 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
                 continue;
               case SHT_NOBITS:
                 section = new ElfSection(fhdr, shdr);
+                break;
+              case SHT_DYNAMIC:
+                section = new ElfDynamicSection(fhdr, shdr);
                 break;
               case SHT_DYNSYM:
               case SHT_SYMTAB:
@@ -527,9 +536,11 @@ ElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Write the section table section back to disk */
 void
-ElfSectionTable::unparse(FILE *f, ElfFileHeader *fhdr)
+ElfSectionTable::unparse(FILE *f)
 {
     ExecFile *ef = get_file();
+    ElfFileHeader *fhdr = dynamic_cast<ElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
     std::vector<ExecSection*> sections = ef->get_sections();
 
@@ -566,7 +577,7 @@ ElfSectionTable::unparse(FILE *f, ElfFileHeader *fhdr)
             }
 
             /* The section itself */
-            sections[i]->unparse(f, fhdr);
+            sections[i]->unparse(f);
         }
     }
 }
@@ -679,6 +690,7 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name("ELF Segment Table");
     set_purpose(SP_HEADER);
+    set_header(fhdr);
     
     ByteOrder sex = fhdr->get_sex();
     
@@ -724,6 +736,7 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
             section->set_synthesized(true);
             section->set_name("synthesized segment container");
             section->set_purpose(SP_UNSPECIFIED);
+            section->set_header(fhdr);
         }
 
         /* Calculate offsets and sizes */
@@ -732,27 +745,22 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
         addr_t rva = shdr->p_vaddr - fhdr->get_base_va();
 
         /* Read the segment */
-        ExecSegment *segment = NULL;
-        if (PT_DYNAMIC==shdr->p_type) {
-            ElfSection *elf_section = dynamic_cast<ElfSection*>(section); /*Dynamic segments always live in real sections!*/
-            segment = new ElfDynamicSegment(fhdr, elf_section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
-        } else {
-            segment = new ExecSegment(section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
-            switch (shdr->p_type) {
-              case PT_NULL:    segment->set_name("NULL");    break;
-              case PT_LOAD:    segment->set_name("LOAD");    break;
-              case PT_DYNAMIC: segment->set_name("DYNAMIC"); break;
-              case PT_INTERP:  segment->set_name("INPERP");  break;
-              case PT_NOTE:    segment->set_name("NOTE");    break;
-              case PT_SHLIB:   segment->set_name("SHLIB");   break;
-              case PT_PHDR:    segment->set_name("PHDR");    break;
-              default:
-                char s[128];
-                sprintf(s, "p_type=0x%08x", shdr->p_type);
-                segment->set_name(s);
-                break;
-            }
+        ExecSegment *segment = new ExecSegment(section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
+        switch (shdr->p_type) {
+          case PT_NULL:    segment->set_name("NULL");    break;
+          case PT_LOAD:    segment->set_name("LOAD");    break;
+          case PT_DYNAMIC: segment->set_name("DYNAMIC"); break;
+          case PT_INTERP:  segment->set_name("INPERP");  break;
+          case PT_NOTE:    segment->set_name("NOTE");    break;
+          case PT_SHLIB:   segment->set_name("SHLIB");   break;
+          case PT_PHDR:    segment->set_name("PHDR");    break;
+          default:
+            char s[128];
+            sprintf(s, "p_type=0x%08x", shdr->p_type);
+            segment->set_name(s);
+            break;
         }
+
         segment->set_executable(shdr->p_flags & 0x1 ? true : false);
         segment->set_writable  (shdr->p_flags & 0x2 ? true : false);
     }
@@ -760,9 +768,12 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
 
 /* Write the segment table to disk. */
 void
-ElfSegmentTable::unparse(FILE *f, ElfFileHeader *fhdr)
+ElfSegmentTable::unparse(FILE *f)
 {
+    ElfFileHeader *fhdr = dynamic_cast<ElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
+
     for (size_t i=0; i<entries.size(); i++) {
         ElfSegmentTableEntry *shdr = entries[i];
         Elf32SegmentTableEntry_disk disk32;
@@ -852,27 +863,30 @@ ElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",     p, w, "d_val_addr", d_val);
 }
 
-/* Constructor */
+/* Set linked section (the string table) and finish parsing this section. */
 void
-ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
-                        addr_t offset_wrt_section, addr_t file_size, addr_t rva, addr_t mem_size)
+ElfDynamicSection::set_linked_section(ElfSection *strtab) 
 {
-    set_name("DYNAMIC");
-    ElfSection *dynamic_strtab = section->get_linked_section();
+    ElfSection::set_linked_section(strtab);
+    ElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL && fhdr==strtab->get_elf_header());
+
+    ROSE_ASSERT(strtab!=NULL);
+    ROSE_ASSERT(0==strtab->get_name().compare(".dynstr"));
 
     std::vector<ElfDynamicEntry*> entries;
-    size_t entry_size=0, nentries=0;
+    size_t section_size=get_size(), entry_size=0, nentries=0;
     if (4==fhdr->get_word_size()) {
-        const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
+        const Elf32DynamicEntry_disk *disk = (const Elf32DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(Elf32DynamicEntry_disk);
-        nentries = file_size / entry_size;
+        nentries = section_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
             entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else if (8==fhdr->get_word_size()) {
-        const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)section->content(offset_wrt_section, file_size);
+        const Elf64DynamicEntry_disk *disk = (const Elf64DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(Elf64DynamicEntry_disk);
-        nentries = file_size / entry_size;
+        nentries = section_size / entry_size;
         for (size_t i=0; i<nentries; i++) {
             entries.push_back(new ElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
@@ -886,15 +900,12 @@ ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
           case 0:
             /* DT_NULL: unused entry */
             break;
-          case 1:
-            /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-            if (dynamic_strtab) {
-                const char *name = (const char*)dynamic_strtab->content_str(entries[i]->d_val);
-                fhdr->add_dll(new ExecDLL(name));
-            } else {
-                throw FormatError("DYNAMIC segment is not linked to a string table");
-            }
-            break;
+          case 1: {
+              /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
+              const char *name = (const char*)strtab->content_str(entries[i]->d_val);
+              fhdr->add_dll(new ExecDLL(name));
+              break;
+          }
           case 2:
             dt_pltrelsz = entries[i]->d_val;
             break;
@@ -953,7 +964,7 @@ ElfDynamicSegment::ctor(ElfFileHeader *fhdr, ElfSection *section,
     }
 }
 
-/* Helper for ElfDynamicSegment::dump */
+/* Helper for ElfDynamicSection::dump */
 static void
 dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, ExecFile *ef)
 {
@@ -974,18 +985,18 @@ dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, E
 
 /* Print some debugging info */
 void
-ElfDynamicSegment::dump(FILE *f, const char *prefix, ssize_t idx)
+ElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDynamicSegment[%zd].", prefix, idx);
+        sprintf(p, "%sDynamicSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDynamicSegment.", prefix);
+        sprintf(p, "%sDynamicSection.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    ExecFile *ef = get_section()->get_file();
+    ExecFile *ef = get_file();
 
-    ExecSegment::dump(f, p, -1);
+    ElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u bytes\n",        p, w, "pltrelsz",   dt_pltrelsz);
     dump_section_rva(f, p, w, "pltgot",  dt_pltgot, ef);
     dump_section_rva(f, p, w, "hash",    dt_hash,   ef);
@@ -1130,8 +1141,11 @@ ElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecSection *section)
 
 /* Constructor */
 void
-ElfSymbolSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+ElfSymbolSection::ctor(ElfSectionTableEntry *shdr)
 {
+    ElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr!=NULL);
+
     if (4==fhdr->get_word_size()) {
         const Elf32SymbolEntry_disk *disk = (const Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(Elf32SymbolEntry_disk);

@@ -415,7 +415,12 @@ ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %" PRId64 " bytes into file\n", p, w, "offset",      offset);
     fprintf(f, "%s%-*s = %" PRId64 " bytes\n",           p, w, "size",        size);
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", synthesized?"yes":"no");
-
+    if (header) {
+        fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      header->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
+    }
+    
     switch (purpose) {
       case SP_UNSPECIFIED: s = "not specified"; break;
       case SP_PROGRAM:     s = "program-supplied data/code/etc"; break;

@@ -344,7 +344,7 @@ class ExecFile {
 class ExecSection {
   public:
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
-        : file(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
+        : file(NULL), header(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
         id(-1), mapped(false), mapped_rva(0)
         {ctor(f, offset, size);}
     virtual ~ExecSection();
@@ -371,6 +371,8 @@ class ExecSection {
     std::vector<ExecSegment*>& get_segments() {return segments;}
 
     /* Accessors for private members */
+    ExecHeader          *get_header() {return header;}
+    void                set_header(ExecHeader *hdr) {header=hdr;}
     int                 get_id() {return id;}
     void                set_id(int i) {id=i;}
     const std::string&  get_name() {return name;}
@@ -386,6 +388,7 @@ class ExecSection {
     void                ctor(ExecFile*, addr_t offset, addr_t size);
 
     ExecFile            *file;                          /* The file to which this section belongs */
+    ExecHeader          *header;                        /* Optional header associated with section */
     addr_t              size;                           /* Size of section in bytes */
     addr_t              offset;                         /* Starting offset of the section */
     const unsigned char *data;                          /* Content of just this section; points into file's content */

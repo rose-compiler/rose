@@ -175,6 +175,9 @@ class ElfSection : public ExecSection {
     ElfSectionTableEntry *get_st_entry() {return st_entry;}
     void set_st_entry(ElfSectionTableEntry *e) {st_entry=e;}
 
+    /* Convenience functions */
+    ElfFileHeader *get_elf_header() {return dynamic_cast<ElfFileHeader*>(get_header());}
+
   private:
     void ctor(ElfFileHeader*, ElfSectionTableEntry*);
     ElfSection *linked_section;
@@ -191,7 +194,7 @@ class ElfSectionTable : public ExecSection {
         : ExecSection(fhdr->get_file(), fhdr->e_shoff, fhdr->e_shnum*fhdr->e_shentsize)
         {ctor(fhdr);}
     virtual ~ElfSectionTable() {}
-    virtual void unparse(FILE*, ElfFileHeader*);
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader *fhdr);    
@@ -280,7 +283,7 @@ class ElfSegmentTable : public ExecSection {
         : ExecSection(fhdr->get_file(), fhdr->e_phoff, fhdr->e_phnum*fhdr->e_phentsize)
         {ctor(fhdr);}
     virtual ~ElfSegmentTable() {}
-    virtual void unparse(FILE*, ElfFileHeader*);
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader*);
@@ -314,19 +317,18 @@ class ElfDynamicEntry {
     void ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk);
 };
 
-class ElfDynamicSegment : public ExecSegment {
+class ElfDynamicSection : public ElfSection {
   public:
-    ElfDynamicSegment(ElfFileHeader *fhdr, ElfSection *section,
-                      addr_t offset_wrt_section, addr_t file_size, addr_t rva, addr_t mem_size)
-        : ExecSegment(section, offset_wrt_section, file_size, rva, mem_size),
+    ElfDynamicSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
+        : ElfSection(fhdr, shdr),
         dt_pltrelsz(0), dt_pltgot(0), dt_hash(0), dt_strtab(0), dt_symtab(0), dt_rela(0), dt_relasz(0), dt_relaent(0),
         dt_strsz(0), dt_symentsz(0), dt_init(0), dt_fini(0), dt_pltrel(0), dt_jmprel(0),
         dt_verneednum(0), dt_verneed(0), dt_versym(0)
-        {ctor(fhdr, section, offset_wrt_section, file_size, rva, mem_size);}
-    virtual ~ElfDynamicSegment() {}
+        {}
+    virtual ~ElfDynamicSection() {}
+    virtual void set_linked_section(ElfSection *sec);   /* Parsing happens here rather than in constructor */
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
-    void ctor(ElfFileHeader*, ElfSection*, addr_t offset_rwt_section, addr_t file_size, addr_t rva, addr_t mem_size);
     unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
     addr_t              dt_pltgot;                      /* Address of global offset table */
     addr_t              dt_hash;                        /* Address of symbol hash table */
@@ -411,7 +413,7 @@ class ElfSymbolSection : public ElfSection {
   public:
     ElfSymbolSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
         : ElfSection(fhdr, shdr)
-        {ctor(fhdr, shdr);}
+        {ctor(shdr);}
     virtual ~ElfSymbolSection() {}
     virtual void set_linked_section(ElfSection *strtab);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -420,7 +422,7 @@ class ElfSymbolSection : public ElfSection {
     std::vector<ElfSymbol*>& get_symbols() {return symbols;}
     
   private:
-    void ctor(ElfFileHeader*, ElfSectionTableEntry*);
+    void ctor(ElfSectionTableEntry*);
     std::vector<ElfSymbol*> symbols;
 };
 
