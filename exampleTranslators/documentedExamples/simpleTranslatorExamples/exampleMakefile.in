@@ -17,6 +17,7 @@ ROSE_SOURCE_DIR = @top_srcdir@/exampleTranslators/documentedExamples/simpleTrans
 
 # Default make rule to use
 all: exampleTranslator
+	@if [ x$${ROSE_IN_BUILD_TREE:+present} = xpresent ]; then echo "ROSE_IN_BUILD_TREE should not be set" >&2; exit 1; fi
 
 # Example suffix rule for more experienced makefile users
 # .C.o:
