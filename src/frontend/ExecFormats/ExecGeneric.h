@@ -462,6 +462,7 @@ class ExecSegment {
         writable(false), executable(false)
         {ctor(sect, offset, size, rva, mapped_size);}
     virtual ~ExecSegment();
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Address and size functions */
