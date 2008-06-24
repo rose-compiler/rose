@@ -139,6 +139,8 @@ class ElfSectionTableEntry {
     ElfSectionTableEntry(ByteOrder sex, const Elf64SectionTableEntry_disk *disk)
         : extra(NULL), nextra(0) {ctor(sex, disk);};
     virtual ~ElfSectionTableEntry() {};
+    void *encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk);
+    void *encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in Elf*SectionTableEntry_disk */
@@ -189,6 +191,7 @@ class ElfSectionTable : public ExecSection {
         : ExecSection(fhdr->get_file(), fhdr->e_shoff, fhdr->e_shnum*fhdr->e_shentsize)
         {ctor(fhdr);}
     virtual ~ElfSectionTable() {}
+    virtual void unparse(FILE*, ElfFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader *fhdr);    
@@ -247,6 +250,8 @@ class ElfSegmentTableEntry {
     ElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
         : extra(NULL), nextra(0) {ctor(sex, disk);}
     virtual ~ElfSegmentTableEntry() {};
+    void *encode(ByteOrder, Elf32SegmentTableEntry_disk*);
+    void *encode(ByteOrder, Elf64SegmentTableEntry_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in Elf*SegmentTableEntry_disk */
@@ -275,6 +280,7 @@ class ElfSegmentTable : public ExecSection {
         : ExecSection(fhdr->get_file(), fhdr->e_phoff, fhdr->e_phnum*fhdr->e_phentsize)
         {ctor(fhdr);}
     virtual ~ElfSegmentTable() {}
+    virtual void unparse(FILE*, ElfFileHeader*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ElfFileHeader*);

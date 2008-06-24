@@ -272,8 +272,13 @@ ExecFile::unparse(const char *filename)
 {
     FILE *f = fopen(filename, "w");
     ROSE_ASSERT(f);
-    for (size_t i=0; i<sections.size(); i++) {
-        sections[i]->unparse(f);
+
+#if 0 /*FIXME: this is here during development so we can see whether any of the section writers doesn't work. */
+    fwrite(data, 1, sb.st_size, f);
+#endif
+
+    for (size_t i=0; i<headers.size(); i++) {
+        headers[i]->unparse(f);
     }
 }
 

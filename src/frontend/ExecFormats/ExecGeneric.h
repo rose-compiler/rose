@@ -643,7 +643,7 @@ inline void host_to_le(unsigned h, uint32_t &n) {
 }
 inline void host_to_le(addr_t h, uint64_t &n) {
     assert(0==(h & ~0xfffffffffffffffful));
-    uint8_t hh = h;
+    uint64_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(int h, int8_t &n) {
@@ -708,7 +708,7 @@ inline void host_to_be(unsigned h, uint32_t &n) {
 }
 inline void host_to_be(addr_t h, uint64_t &n) {
     assert(0==(h & ~0xfffffffffffffffful));
-    uint8_t hh = h;
+    uint64_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(int h, int8_t &n) {

@@ -226,15 +226,15 @@ ElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     return disk;
 }
 
-/* Write the ELF header back to a file by encoding its contents rather than simply writing the section contents */
+/* Write ELF contents back to a file. */
 void
 ElfFileHeader::unparse(FILE *f)
 {
+    /* Write the ELF file header */
     Elf32FileHeader_disk disk32;
     Elf64FileHeader_disk disk64;
     void *disk=NULL;
     size_t size=0;
-    
     if (4==get_word_size()) {
         disk = encode(get_sex(), &disk32);
         size = sizeof(disk32);
@@ -244,11 +244,17 @@ ElfFileHeader::unparse(FILE *f)
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-
+    ROSE_ASSERT(size==get_size());
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(disk, size, 1, f);
     ROSE_ASSERT(1==nwrite);
+
+    /* Write the ELF section and segment tables, which in turn write the sections */
+    if (section_table)
+        section_table->unparse(f, this);
+    if (segment_table)
+        segment_table->unparse(f, this);
 }
 
 /* Print some debugging info */
@@ -375,6 +381,38 @@ ElfSectionTableEntry::ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *dis
     sh_entsize   = disk_to_host(sex, disk->sh_entsize);
 }
 
+/* Encode a section table entry into the disk structure */
+void *
+ElfSectionTableEntry::encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk)
+{
+    host_to_disk(sex, sh_name,      &(disk->sh_name));
+    host_to_disk(sex, sh_type,      &(disk->sh_type));
+    host_to_disk(sex, sh_flags,     &(disk->sh_flags));
+    host_to_disk(sex, sh_addr,      &(disk->sh_addr));
+    host_to_disk(sex, sh_offset,    &(disk->sh_offset));
+    host_to_disk(sex, sh_size,      &(disk->sh_size));
+    host_to_disk(sex, sh_link,      &(disk->sh_link));
+    host_to_disk(sex, sh_info,      &(disk->sh_info));
+    host_to_disk(sex, sh_addralign, &(disk->sh_addralign));
+    host_to_disk(sex, sh_entsize,   &(disk->sh_entsize));
+    return disk;
+}
+void *
+ElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk)
+{
+    host_to_disk(sex, sh_name,      &(disk->sh_name));
+    host_to_disk(sex, sh_type,      &(disk->sh_type));
+    host_to_disk(sex, sh_flags,     &(disk->sh_flags));
+    host_to_disk(sex, sh_addr,      &(disk->sh_addr));
+    host_to_disk(sex, sh_offset,    &(disk->sh_offset));
+    host_to_disk(sex, sh_size,      &(disk->sh_size));
+    host_to_disk(sex, sh_link,      &(disk->sh_link));
+    host_to_disk(sex, sh_info,      &(disk->sh_info));
+    host_to_disk(sex, sh_addralign, &(disk->sh_addralign));
+    host_to_disk(sex, sh_entsize,   &(disk->sh_entsize));
+    return disk;
+}
+
 /* Constructor reads the Elf Section Table (i.e., array of section headers) */
 void
 ElfSectionTable::ctor(ElfFileHeader *fhdr)
@@ -428,8 +466,12 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
             ElfSectionTableEntry *shdr = entries[i];
             ElfSection *section=NULL;
             if (i==fhdr->e_shstrndx) continue; /*we already read string table*/
-            if (SHT_NULL==shdr->sh_type || SHT_NOBITS==shdr->sh_type) continue; /*no disk representation*/
             switch (shdr->sh_type) {
+              case SHT_NULL:
+                continue;
+              case SHT_NOBITS:
+                section = new ElfSection(fhdr, shdr);
+                break;
               case SHT_DYNSYM:
               case SHT_SYMTAB:
                 section = new ElfSymbolSection(fhdr, shdr);
@@ -483,6 +525,52 @@ ElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = %s\n",                        p, w, "extra",          "<FIXME>");
 }
 
+/* Write the section table section back to disk */
+void
+ElfSectionTable::unparse(FILE *f, ElfFileHeader *fhdr)
+{
+    ExecFile *ef = get_file();
+    ByteOrder sex = fhdr->get_sex();
+    std::vector<ExecSection*> sections = ef->get_sections();
+
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id()>=0) {
+            ElfSection *section = dynamic_cast<ElfSection*>(sections[i]);
+            ElfSectionTableEntry *shdr = section->get_st_entry();
+            Elf32SectionTableEntry_disk disk32;
+            Elf64SectionTableEntry_disk disk64;
+            void *disk=NULL;
+            size_t size = 0;
+
+            if (4==fhdr->get_word_size()) {
+                disk = shdr->encode(sex, &disk32);
+                size = sizeof disk32;
+            } else if (8==fhdr->get_word_size()) {
+                disk = shdr->encode(sex, &disk64);
+                size = sizeof disk64;
+            } else {
+                ROSE_ASSERT(!"invalid word size");
+            }
+
+            /* The disk struct */
+            addr_t entry_offset = get_offset() + section->get_id() * fhdr->e_shentsize;
+            int status = fseek(f, entry_offset, SEEK_SET);
+            ROSE_ASSERT(status>=0);
+            size_t nwrite = fwrite(disk, size, 1, f);
+            ROSE_ASSERT(1==nwrite);
+            
+            /* Padding after the disk struct */
+            if (shdr->nextra>0) {
+                nwrite = fwrite(shdr->extra, 1, shdr->nextra, f);
+                ROSE_ASSERT(nwrite==shdr->nextra);
+            }
+
+            /* Now write the sections themselves */
+            section->unparse(f);
+        }
+    }
+}
+
 /* Print some debugging info */
 void
 ElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -529,6 +617,35 @@ ElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *dis
     p_flags     = disk_to_host(sex, disk->p_flags);
     p_align     = disk_to_host(sex, disk->p_align);
 }
+
+/* Converts segment table entry back into disk structure */
+void *
+ElfSegmentTableEntry::encode(ByteOrder sex, Elf32SegmentTableEntry_disk *disk)
+{
+    host_to_disk(sex, p_type, &(disk->p_type));
+    host_to_disk(sex, p_offset, &(disk->p_offset));
+    host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
+    host_to_disk(sex, p_paddr, &(disk->p_paddr));
+    host_to_disk(sex, p_filesz, &(disk->p_filesz));
+    host_to_disk(sex, p_memsz, &(disk->p_memsz));
+    host_to_disk(sex, p_flags, &(disk->p_flags));
+    host_to_disk(sex, p_align, &(disk->p_align));
+    return disk;
+}
+void *
+ElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *disk)
+{
+    host_to_disk(sex, p_type, &(disk->p_type));
+    host_to_disk(sex, p_offset, &(disk->p_offset));
+    host_to_disk(sex, p_vaddr, &(disk->p_vaddr));
+    host_to_disk(sex, p_paddr, &(disk->p_paddr));
+    host_to_disk(sex, p_filesz, &(disk->p_filesz));
+    host_to_disk(sex, p_memsz, &(disk->p_memsz));
+    host_to_disk(sex, p_flags, &(disk->p_flags));
+    host_to_disk(sex, p_align, &(disk->p_align));
+    return disk;
+}
+
 
 /* Print some debugging info */
 void
@@ -640,7 +757,44 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
         segment->set_writable  (shdr->p_flags & 0x2 ? true : false);
     }
 }
-    
+
+/* Write the segment table to disk */
+void
+ElfSegmentTable::unparse(FILE *f, ElfFileHeader *fhdr)
+{
+    ByteOrder sex = fhdr->get_sex();
+    for (size_t i=0; i<entries.size(); i++) {
+        ElfSegmentTableEntry *shdr = entries[i];
+        Elf32SegmentTableEntry_disk disk32;
+        Elf64SegmentTableEntry_disk disk64;
+        void *disk = NULL;
+        size_t size = 0;
+        
+        if (4==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk32);
+            size = sizeof disk32;
+        } else if (8==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk64);
+            size = sizeof disk64;
+        } else {
+            ROSE_ASSERT(!"invalid word size");
+        }
+        
+        /* The disk struct */
+        addr_t entry_offset = get_offset() + i * fhdr->e_phentsize;
+        int status = fseek(f, entry_offset, SEEK_SET);
+        ROSE_ASSERT(status>=0);
+        size_t nwrite = fwrite(disk, size, 1, f);
+        ROSE_ASSERT(1==nwrite);
+        
+        /* Padding after the disk struct */
+        if (shdr->nextra>0) {
+            nwrite = fwrite(shdr->extra, 1, shdr->nextra, f);
+            ROSE_ASSERT(nwrite==shdr->nextra);
+        }
+    }
+}
+
 /* Print some debugging info */
 void
 ElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
