@@ -550,6 +550,8 @@ class ExecSymbol {
     void set_value(addr_t v) {value=v;}
     addr_t get_size() {return size;}
     void set_size(addr_t sz) {size=sz;}
+    SymbolType get_type() {return type;}
+    void set_type(SymbolType t) {type=t;}
 
   protected:
     SymbolDefState      def_state;                      /* Undefined, created but not allocated, created and allocated, etc. */

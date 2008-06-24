@@ -8,6 +8,7 @@ namespace Exec {
 namespace PE {
 
 /* Forwards */
+class COFFSymtab;
 class PEObjectTable;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -168,7 +169,9 @@ enum DLLFlags {
 class PEFileHeader : public ExecHeader {
   public:
     PEFileHeader(ExecFile *f, addr_t offset)
-        : ExecHeader(f, offset, sizeof(PEFileHeader_disk)) {ctor(f, offset);}
+        : ExecHeader(f, offset, sizeof(PEFileHeader_disk)),
+        object_table(NULL), coff_symtab(NULL)
+        {ctor(f, offset);}
     virtual ~PEFileHeader() {}
     void add_rvasize_pairs();
     virtual void unparse(FILE*);
@@ -177,6 +180,8 @@ class PEFileHeader : public ExecHeader {
     /* Accessors for protected/private data members */
     PEObjectTable *get_object_table() {return object_table;}
     void set_object_table(PEObjectTable *ot) {object_table=ot;}
+    COFFSymtab *get_coff_symtab() {return coff_symtab;}
+    void set_coff_symtab(COFFSymtab *st) {coff_symtab=st;}
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
     unsigned    e_cpu_type, e_nobjects, e_time;
@@ -193,6 +198,7 @@ class PEFileHeader : public ExecHeader {
     void ctor(ExecFile *f, addr_t offset);
     void *encode(PEFileHeader_disk*);
     PEObjectTable *object_table;
+    COFFSymtab *coff_symtab;
 };
 
     

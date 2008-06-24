@@ -336,6 +336,7 @@ PEFileHeader::unparse(FILE *f)
         ROSE_ASSERT(1==nwrite);
     }
 
+    /* The object table and all the sections/segments */
     if (object_table)
         object_table->unparse(f);
 }
@@ -358,6 +359,11 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_time",              e_time);
     fprintf(f, "%s%-*s = %"PRIu64"\n", p, w, "e_coff_symtab",       e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_coff_nsyms",        e_coff_nsyms);
+    if (coff_symtab) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "coff_symtab", coff_symtab->get_id(), coff_symtab->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "coff_symtab");
+    }
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_nt_hdr_size",       e_nt_hdr_size);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_flags",             e_flags);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved3",         e_reserved3);
@@ -713,6 +719,7 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
         memcpy(temp, disk->st_name, 8);
         temp[8] = '\0';
         set_name(temp);
+        st_name_offset = 0;
     }
 
     st_section_num     = le_to_host(disk->st_section_num);
@@ -905,7 +912,7 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
      * string table in little endian. */
     addr_t strtab_offset = get_offset() + fhdr->e_coff_nsyms * COFFSymbol_disk_size;
     ExecSection *strtab = new ExecSection(ef, strtab_offset, sizeof(uint32_t));
-    strtab->set_synthesized(false);
+    strtab->set_synthesized(true);
     strtab->set_name("COFF Symbol Strtab");
     strtab->set_purpose(SP_HEADER);
     strtab->set_header(fhdr);
@@ -1059,6 +1066,7 @@ parse(ExecFile *ef)
         std::vector<COFFSymbol*> &symbols = symtab->get_symbols();
         for (size_t i=0; i<symbols.size(); i++)
             pe_header->add_symbol(symbols[i]);
+        pe_header->set_coff_symtab(symtab);
     }
 
     /* Identify parts of the file that we haven't encountered during parsing */
@@ -1066,6 +1074,6 @@ parse(ExecFile *ef)
 
     return pe_header;
 }
-    
+
 }; //namespace PE
 }; //namespace Exec
