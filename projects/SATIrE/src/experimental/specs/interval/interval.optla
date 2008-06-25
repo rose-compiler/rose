@@ -209,16 +209,16 @@ binary(left, right, exp, state) =
           GreaterOrEqualOp(_, _) => if (l1 >= r2) then (duplift(1), ls) else 
                                     if (r1 >  l2) then (duplift(0), ls) else 
                                     dontknow endif endif;
-
+                                             
           AddOp(_, _)     => (ltup(l1 + r1, l2 + r2), ls);
           SubtractOp(_, _)=> (ltup(l1 - r2, l2 - r1), ls);
           MultiplyOp(_, _)=> (ltup(mini(l1*r1, l1*r2), maxi(l2*r1, l2*r2)), ls);
           DivideOp(_, _)  => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
           IntegerDivideOp(_, _) 
                           => (ltup(mini(l1/r1, l1/r2), maxi(l2/r1, l2/r2)), ls);
-          ModOp(_, _)     => (ltup(r1, r2), ls);
-          LshiftOp(_, _)  => (ltup(shiftleft(l1,r1), shiftleft(l2,r2)), ls);
-          RshiftOp(_, _)  => (ltup(shiftright(l1,r1), shiftright(l2,r2)), ls);
+          ModOp(_, _)     => (ltup(0, r2), ls);
+          LshiftOp(_, _)  => (ltup(l1<<unum(r1), l2<<unum(r2)), ls);
+          RshiftOp(_, _)  => (ltup(l1>>unum(r1), l2>>unum(r2)), ls);
 	  BitAndOp(_, _)  => (ltup(l1 & r1, l2 & r2), ls);
           BitOrOp(_, _)   => (ltup(l1 | r1, l2 | r2), ls);
           BitXorOp(_, _)  => if constp then 
@@ -236,14 +236,18 @@ binary(left, right, exp, state) =
           ScopeOp(_, _)       => (ltup(r1, r2), ls);
           PlusAssignOp(_, _)  => updatestate(ls, left, ltup(l1 + r1, l2 + r2));
           MinusAssignOp(_, _) => updatestate(ls, left, ltup(l1 - r2, l2 - r1));
-          MultAssignOp(_, _)  => updatestate(ls, left, ltup(l1 * r1, l2 * r2));
-          DivAssignOp(_, _)   => updatestate(ls, left, ltup(l1 / r1, l2 / r2));
-          ModAssignOp(_, _)   => updatestate(ls, left, ltup(l1 % r1, l2 % r2));
+          MultAssignOp(_, _)  => updatestate(ls, left, 
+                                               ltup(mini(l1*r1, l1*r2), 
+                                                    maxi(l2*r1, l2*r2)));
+          DivAssignOp(_, _)   => updatestate(ls, left, 
+                                               ltup(mini(l1/r1, l1/r2), 
+                                                    maxi(l2/r1, l2/r2)));
+          ModAssignOp(_, _)   => updatestate(ls, left, ltup(0, r2));
           LshiftAssignOp(_, _)=> updatestate(ls, left,
-                                   ltup(shiftleft(l1,r1), shiftleft(l2,r2)));
+                                   ltup(l1<<unum(r1), l2<<unum(r2)));
           RshiftAssignOp(_, _)=> updatestate(ls, left, 
-                                   ltup(shiftright(l1,r2), shiftright(l2,r1)));
-          _ => print("unsupported binary: ") print(exp) print("\n") 
+                                   ltup(l1>>unum(r2), l2>>unum(r1)));
+          _ => print("**WARNING: unsupported binary: ") print(exp) print("\n") 
                (top, lift([-> top]));
         endcase
       endif endif;
@@ -266,7 +270,7 @@ unary(child, exp, state) =
       MinusMinusOp(_) => updatestate(es, child, ltup(e1-1, e2-1));
       PlusPlusOp(_)   => updatestate(es, child, ltup(e1+1, e2+1));
       // -- the following is not safe at all
-      PointerDerefExp(_) => print("**WARNING ignoring possible pointer aliasing\n")
+      PointerDerefExp(_) => print("**WARNING: ignoring possible pointer aliasing\n")
                             ((top,top), state);
       _ => print("unsupported unary: ") print(exp) print("\n") 
            (top, lift([-> top]));
@@ -297,7 +301,7 @@ updatestate(state, exp, value) =
   let s <= state; in 
   let newstate =
     case exp of
-      VarRefExp(var) => lift(s\[varref_varid(exp) -> clamp(value)]);
+      VarRefExp(var) => lift(s\[varref_varid(exp) -> value]);
       _ => state;
     endcase;
   in // --print("\n=> ") print(state) print("\n") 
@@ -331,7 +335,7 @@ branch(exp, state, edge) =
         _ => newstate;
       endcase
     else 
-      top 
+      lift([-> (top,top)])
     endif
   else if c = bot then 
     print("FIXME c=bot\n") 
@@ -377,13 +381,13 @@ unary_get_child :: Expression -> Expression;
 binary_get_left_child :: Expression -> Expression;
 binary_get_right_child :: Expression -> Expression;
 
-shiftleft :: snum, snum -> snum;
-shiftleft(a, 0) = a;
-shiftleft(a, b) = shiftleft(a*2, b-1);
+//shiftleft :: snum, snum -> snum;
+//shiftleft(a, 0) = a;
+//shiftleft(a, b) = shiftleft(a*2, b-1);
 
-shiftright :: snum, snum -> snum;
-shiftright(a, 0) = a;
-shiftright(a, b) = shiftright(a/2, b-1);
+//shiftright :: snum, snum -> snum;
+//shiftright(a, 0) = a;
+//shiftright(a, b) = shiftright(a/2, b-1);
 
 comb(a, bot) = a;
 comb(bot, b) = b;
@@ -396,17 +400,6 @@ comb(a, b) =
   // --print("comb b: ") print(b) print("\n")
   // --print("result: ") print(res) print("\n\n")
   res;
-
-clamp(x) = x;
-//clamp(bot) = bot;
-//clamp(top) = top;
-//clamp((a1, a2)) = 
-//  if (a1 <= -512) && (a2 >= 512) then 
-//      top
-//  else 
-//      lift((a1, a2))
-//  endif;
-
 
 combi((a1, a2), (b1, b2)) = 
   (min(a1, b1), max(a2, b2));
