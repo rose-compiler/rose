@@ -9151,6 +9151,8 @@ SgFile::initialization ()
 
   // DQ (7/13/2004): Not previously initialized!
      p_C_only                  = false;
+     p_UPC_only                = false;
+     p_upc_threads             = 0;
      p_C99_only                = false;
      p_Cxx_only                = false;
 
@@ -9171,7 +9173,7 @@ SgFile::initialization ()
      p_backendCompileFormat    = SgFile::e_unknown_output_format;
      p_fortran_implicit_none   = false;
      p_fortran_openmp          = false;
-
+     p_requires_C_preprocessor = false;
      p_compileOnly             = false;
 
   // After higher level ASTs are build optionally apply transformations
