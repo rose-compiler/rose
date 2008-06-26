@@ -356,7 +356,15 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
       // if left side is not a varrefexp
       //isUse = false;
       isDefinition=true;
-    } else {
+    } else if (isSgExprListExp(l_expr)) { 
+      SgExprListExp* listexp = isSgExprListExp(l_expr);
+      Rose_STL_Container<SgNode *> exprs =  
+	listexp->get_traversalSuccessorContainer();
+      cout << " DefuseAnalysis:: unhandled condition : SgExprListExp ...  size: " << exprs.size() << 
+        "  file : " << l_expr->get_file_info()->get_filenameString() << 
+	"  line : " << l_expr->get_file_info()->get_line() << endl;
+      return false;
+    }    else {
       cout << " DefuseAnalysis:: unhandled condition - AssignInitializer ... "  
          << "  AssignInitializer - l_expr : " << l_expr->class_name() << "  file : " << l_expr->get_file_info()->get_filenameString() << 
 	"  line : " << l_expr->get_file_info()->get_line() << endl;

@@ -19,7 +19,7 @@ int DefUseAnalysis::sgNodeCounter = 1;
  *********************************************************/
 int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
   bool contained = searchVizzMap (sgNode);
-#pragma omg critical (DefUseMapgetIntForSgNode)
+  //#pragma omg critical (DefUseMapgetIntForSgNode)
   if (contained) {
     int nr = vizzhelp[sgNode];
     return nr;
@@ -55,7 +55,6 @@ void DefUseAnalysis::addIDefElement(SgNode* sgNode,
 void DefUseAnalysis::addDefElement(SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
-#pragma omp critical (DefUseAnalysisaddDefE) 
   addAnyElement(&table, sgNode, initName, defNode);
 }
 
@@ -65,7 +64,6 @@ void DefUseAnalysis::addDefElement(SgNode* sgNode,
 void DefUseAnalysis::addUseElement(SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
-#pragma omp critical (DefUseAnalysisaddUseE) 
   addAnyElement(&usetable, sgNode, initName, defNode);
 }
 
@@ -75,6 +73,7 @@ void DefUseAnalysis::addUseElement(SgNode* sgNode,
 void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
+#pragma omp critical (DefUseAnalysisaddUseE) 
   (*tabl)[sgNode].insert(make_pair(initName, defNode));
   addID(sgNode);
 }
@@ -107,7 +106,6 @@ void DefUseAnalysis::clearUseOfElement(SgNode* sgNode,
  *  Union of two maps
  *********************************************************/
 void DefUseAnalysis::mapDefUnion(SgNode* before, SgNode* other, SgNode* sgNode) {
-#pragma omp critical (DefUseAnalysismapDefU) 
   mapAnyUnion(&table, before, other, sgNode);
 }
 
@@ -115,7 +113,6 @@ void DefUseAnalysis::mapDefUnion(SgNode* before, SgNode* other, SgNode* sgNode) 
  *  Union of two maps
  *********************************************************/
 void DefUseAnalysis::mapUseUnion(SgNode* before, SgNode* other, SgNode* sgNode) {
-#pragma omp critical (DefUseAnalysismapUseU)
   mapAnyUnion(&usetable, before, other, sgNode);
 }
 
@@ -133,6 +130,7 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
 
   addID(sgNode);
 
+#pragma omp critical (DefUseAnalysismapUse)
   if (!beforeFound) {
     if (!otherFound)
       (*tabl)[sgNode].clear();
@@ -154,48 +152,6 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
       
     }
   }
-
-      /*
-  
-  multitype multiA;
-  multitype multiB;
-  string bname="none";
-  string oname="none";
-  if (before!=NULL) {
-    if (searchMap(tabl, before)) {
-      multiA = (*tabl)[before];
-      bname = before->class_name();
-    }
-  }
-  if (other!=NULL) {
-    if (searchMap(tabl, other)) {
-      multiB = (*tabl)[other];
-      oname = other->class_name();
-    }
-  }
-
-  if (DEBUG_MODE_EXTRA) {
-    cout << " Map A -------------- (before):" << before << " " << bname << endl;
-    printMultiMap(&multiA);
-    cout << " Map B -------------- (other):" << other << " " << oname << endl;
-    printMultiMap(&multiB);
-  }
-
-  multitype multiC;
-  set_union(multiA.begin(), multiA.end(), multiB.begin(), multiB.end(), 
-	    inserter(multiC, multiC.end()), 
-	    std::less<std::pair<SgInitializedName*, SgNode*> >() ); 
-  if (DEBUG_MODE_EXTRA) {  
-    cout << " Map C -------------- " << endl;
-    printMultiMap(&multiC);
-  }
-  (*tabl)[sgNode].clear();
-  for (multitype::iterator it = multiC.begin(); it != multiC.end(); ++it) {
-    SgInitializedName* mapInit = (*it).first;
-    SgNode* mapNode = (*it).second;
-    addAnyElement(tabl, sgNode, mapInit, mapNode);
-  }
-  */
 }
 
 /**********************************************************
@@ -303,8 +259,6 @@ bool DefUseAnalysis::searchMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchVizzMap(SgNode* node) {
   bool isCurrentValueContained=false;
-#pragma omg critical (DefUsesearchVizzMap)
-  {
     convtype::const_iterator i = vizzhelp.begin();
     i = vizzhelp.begin();
     //SgNode* sgNodeMM = NULL;
@@ -313,7 +267,6 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
       if (initNameMM==node)
 	isCurrentValueContained=true;
     } 
-  }
   return isCurrentValueContained;
 }
 
@@ -322,8 +275,6 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
   bool isCurrentValueContained=false;
-#pragma omg critical (DefUsesearchMap)
-  {
     tabletype::const_iterator i = ltable->begin();
     //i = ltable.begin();
     //SgNode* sgNodeMM = NULL;
@@ -332,7 +283,6 @@ bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
       if (initNameMM==node)
 	isCurrentValueContained=true;
     } 
-  }
   return isCurrentValueContained;
 }
 
@@ -504,11 +454,8 @@ int DefUseAnalysis::run(bool debug) {
  * b) Traverse all functions of the program and create def-use relations
  *****************************************/
 int DefUseAnalysis::run() {
-#pragma omp critical (DefUseAnalysisinit) 
-  {
   sgNodeCounter = 1;
   nrOfNodesVisited = 0;
-  }
   if (DEBUG_MODE) 
     cout << "START: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
   // assert input is correct
