@@ -13,10 +13,10 @@
     mechanisms.
 
 \todo The ROSE source code might be easier to organize if we have an include directory just for
-    the included files from the transforamtions.  Then use separate directories for the 
+    the included files from the transformations.  Then use separate directories for the 
     implementations (we want to always separate the implementation if possible from the
     header file and place it in a separate file.  This would make it easier to add
-    transformations and make the maintainance of the development tree a bit easier.
+    transformations and make the maintenance of the development tree a bit easier.
     As it is each new directory forces a new include path to be specified and a new
     library to be generated (in $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs).
 

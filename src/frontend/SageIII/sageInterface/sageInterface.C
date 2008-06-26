@@ -5520,7 +5520,7 @@ PreprocessingInfo* attachComment(
     }
     else  // TODO :What about Fortran?
     {
-      cout<<"Unhandled programming languages when building source comments.. "<<endl;
+      cout<<"Un-handled programming languages when building source comments.. "<<endl;
       ROSE_ASSERT(false);
     }
   }
