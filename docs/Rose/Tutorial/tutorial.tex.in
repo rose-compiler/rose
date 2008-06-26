@@ -274,17 +274,17 @@ our own use on large scale applications.}
 \input{templateParameter}
 
 \input{templateSupport}
+
 % chapter for AST construction
+% DQ (6/24/2008): Need to combine these into a
+% single file if it is to be a single chapter.
 \input{addVariableDeclaration}
-
 \input{addExpression}
-
 \input {addAssignmentStmt}
-
 \input{addFunctionDeclaration}
-
 \input{instrumentationExample}
 %-------end of chapter for AST construction
+
 \input{loopOptimization}
 %-----------------------------------------------------------
 %           Experimental Parts 
@@ -350,6 +350,8 @@ our own use on large scale applications.}
 \input{tauInstrumentation}
 
 \input{roseHPCT}
+
+\input{bugSeeding}
 
 % Disabled as it breaks new assertion in Copy Mechanism, Liao, 2/7/2008
 %\input{copyHelp}

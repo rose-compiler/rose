@@ -1,0 +1,185 @@
+\section{Design}
+
+   This section lays out a design for the construction of a source-to-source
+translator that will automatically insert security flaws into existing application codes.
+The design is ment to be collaborative effort with NIST.
+
+An initial tutorial example of a translator that introduces a 
+buffer overflow to an existing application is available in the ROSE Tutorial
+(Chapter 41) at {\em http://www.roseCompiler.org}.  This example detects a
+vulnerability first (any place where an array is indexed in a loop construct)
+and then modifies the indexing to guarantee a buffer overflow for all
+array accesses.  The example represents an extreemly narrow range of
+the ways in which this specific security flaw can be introduced in an
+arbitrary input application code.  To provide a concrete example, the code 
+before seeding is:
+{\mySmallFontSize
+\begin{verbatim}
+void foobar()
+   {
+  // Static array declaration
+     float array[10];
+     array[4] = 0;
+     for (int i=0; i < 5; i++)
+        {
+          array[i] = 0;
+        }
+   }
+\end{verbatim}
+}
+And the code after translation (with the seeded security flaw) is:
+{\mySmallFontSize
+\begin{verbatim}
+void foobar()
+{
+// Static array declaration
+  float array[10UL];
+  array[4 + 10UL] = (0);
+  for (int i = 0; i < 5; i++) {
+    array[i + 10UL] = (0);
+  }
+}
+\end{verbatim}
+}
+
+The approach to required to handle more general security flaws is as follows:
+\begin{enumerate}
+   \item We assume a range of security flaws (yet to be identified) 
+         which can be seeded independently of each other.
+
+   \item Classification of security flaws \\ 
+         The development of seeding for security flaws is addressed using a specific 
+         classification for security flaws: simple (local) security flaws, 
+         security flaw chains (defined over the control flow) and security flaw
+         collections (defined via state over the execution of the whole program).  
+         We define these according to discussions at NIST of work by MITRE.
+      \begin{enumerate}
+         \item A simple security flaw is defined as an isolated single security flaw
+               which can be locally defined in an application source code.
+         \item A bug chains is a sequential set of conditions each of which 
+               may or may not be a bug.
+         \item A bug collection is a set of conditions each of which may or 
+               may not be a bug and which colectively for a bug.
+      \end{enumerate}
+
+   \item Specification of vulnerabilities (domain) \\
+         For each security flaw, and input application code, there is an evaluation of
+         the application code to identify where it can be seeded.  For example, if
+         an application does not contain arrays, then it might have no vulnerability
+         to buffer overflow security flaws, and thus it may be inappropriate to seed 
+         such an application with this type of security flaw.  It is not the goal
+         of security flaw seeding to be a generator of every type of security flaw
+         indpendent of the input applications.  However, if a vulnerability for a
+         security flaw is detected, then every possible variation of code that
+         can seed that security flaw into the application may be approriate.
+
+   \item Seeding of individual security flaws \\
+         An aspect of the design is the seeding of individual security flaws within each 
+         classification.  Ideally the the design will be the same for each 
+         security flaw allowing each flaw to be addressed independently.
+         For each targeted security flaw the seeding is dependent upon
+         its classification:
+         \item For each classification of security flaws, we define the following steps:
+            \begin{enumerate}
+               \item Identify the location of potential vulnerabilities. Each security
+                     flaw has a relevant domain (possible location in the input
+                     application) a potential vulnerability where it 
+                     can be introduced (seeded).
+               \item Identify the space of transformations to represent the target bug.
+                     This defines the size of the search space (the size of the 
+                     space representing the code that could be generated).
+               \item Define the set of points in the space to evaluate; so that we can
+                     avoid the exhustive search of extremely large spaces; which might
+                     generate too much code to test.                     
+               \item Identify the grainularity where the security flaw should be applied
+                     (e.g. expression, statement, basic block, function, file).
+               \item Generate a copy of the relevant portion of the AST
+               \item Apply transofmration to modify each copy of the AST
+            \end{enumerate}
+
+   \item Specification of search space (range) \\
+         The seeding of any single security flaws can happen in many ways.  For example,
+         a buffer overflow many be introduced using literal values, scalar variables,
+         static declared arrays, heap declared arrays, dynamically differently
+         defined arrays (along different paths), etc.  The number of fundamentally
+         different ways in which a security flaw may be introduced (seeded) into source
+         code defines the number of dimensions of the search space.  A number of
+         ways on introducing security flaws are general and so can form a 
+         security flaw invariant subspace. The dimensions of the search space can be
+         considered to be the number of fundamentally different ways that a security flaw
+         can be hidden.  
+         Example search space dimensions are:
+         \begin{enumerate}
+            \item For values associated with a security flaw, the values may be:
+               \begin{enumerate}
+                  \item Use of literal values (most trivial)
+                  \item Use of scalar variables 
+                  \item Use of array values
+                  \item Use of structure field values
+                  \item Use of pointers to values (most difficult)
+               \end{enumerate}
+
+            \item For expressions where security flaws are either embedded or 
+                  which form a part of the security flaw, the expressions can 
+                  include any of the expresion language constucts available
+                  in the target language. Expressions can be:
+               \begin{enumerate}
+                  \item unary operators (most trivial)
+                  \item binary operators
+                  \item function arguments
+                  \item array index expressions
+                  \item declaration initializers
+               \end{enumerate}
+
+            \item For statements containing vulnerabilities, the embedding of 
+                  the security flaw in different statements, or the use of different
+                  types of statements in the seeding of the security flaw allows
+                  for the range of security flaws to be seeded. Statements 
+                  can be:
+               \begin{enumerate}
+                  \item declarations (variables, functions, classes, templates, etc.)
+                  \item loop constructs
+                  \item branch constructs
+               \end{enumerate}
+
+         \end{enumerate}
+         In several cases, there can be a depth (nested levels) at which the 
+         values can be hidden.  This defines a size along the respective
+         dimension.
+
+\end{enumerate}
+
+Notes on the design of a translator to seed security flaws:
+\begin{enumerate}
+
+   \item It may be more useful to define a grammar for security flaws and
+in so doing define how it is nested in a language grammar in a formal
+way that allows for the enumeration of all variants for any security flaw.
+Such a grammar should assume a typical memory model for the languages
+where it is to be used (e.g general procedural languages which have a
+stack based implementation).  So then we assume:
+      \begin{enumerate}
+         \item Memory model:
+            \begin{enumerate}
+               \item data: array $|$ scalar $|$ pointer $|$ literal $|$ function pointer
+               \item function: data $|$ return address $|$ function call $|$ branching control flow
+            \end{enumerate}
+      \end{enumerate}
+
+   \item The previous item (above) is not the same as requiring an enumeration of all
+         valid  programs over
+         a defined grammar, because we start with an existing application which defines
+         the set of all vulnerabilities and we define only local modifications that
+         are used to generate a new program.  I expect that because of the local nature
+         of the transformations to an existing (valid) program, that we should not
+         generate invalid programs.  It would be nice to prove this detail (or 
+         at least argue it better).
+
+\commentout{
+   \item Note that it might be that parts 2b and 2c can be addressed by reusing
+part 2a and expanding the space to include all permutations defined
+buy the bug chain and/or the bug collection.
+}
+
+\end{enumerate}
+

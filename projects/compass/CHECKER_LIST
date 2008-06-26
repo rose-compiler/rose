@@ -38,6 +38,7 @@ fopenFormatParameter
 forbiddenFunctions
 forLoopConstructionControlStmt
 forLoopCppIndexVariableDeclaration
+#fortranFloatingPointLiteral
 friendDeclarationModifier
 functionCallAllocatesMultipleResources
 functionDefinitionPrototype

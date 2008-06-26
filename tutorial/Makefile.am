@@ -78,6 +78,7 @@ noinst_PROGRAMS = \
    prePostTraversal \
    queryLibraryExample \
    resolveOverloadedFunction \
+   seedBugsExample_arrayIndexing \
    scopeInformation \
    selectedFileTranslation \
    sharedMemoryTraversals \
@@ -353,6 +354,9 @@ addStruct_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 sprintf_to_snprintf_SOURCES = sprintf_to_snprintf.C
 sprintf_to_snprintf_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+seedBugsExample_arrayIndexing_SOURCES = seedBugsExample_arrayIndexing.C
+seedBugsExample_arrayIndexing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
@@ -638,6 +642,8 @@ testsnprintf: sprintf_to_snprintf
 #	./sprintf_to_snprintf -rose:verbose 0 -I.. $(INCLUDES) -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 	./sprintf_to_snprintf -rose:verbose 0 -c $(srcdir)/inputCode_sprintf_to_snprintf.C
 
+testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
+	./seedBugsExample_arrayIndexing -rose:verbose 0 -c $(srcdir)/inputCode_seedBugsExample_arrayIndexing.C
 
 # #####################################
 # Output files use in tutorial
@@ -724,7 +730,8 @@ generatedCodeExamples = \
    defuseAnalysis_pic1.pdf \
    binaryAnalysis_pic1.pdf \
    rose_input_runtimeErrorCheck.C \
-   rose_input_runtimeErrorCheck2.C
+   rose_input_runtimeErrorCheck2.C \
+   rose_inputCode_seedBugsExample_arrayIndexing.C
 
 # DQ (9/8/2007): These currently fail due to more agressive internal symbol table testing
 #   rose_inputCode_inlineTransformations.C
@@ -1141,6 +1148,9 @@ wholeGraphAST.pdf: wholeGraphAST
 	@echo "Building postscript file from wholeGraphAST.dot and wholeGraphASTPool.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphAST1.dot wholeGraphAST.pdf
 	$(top_srcdir)/scripts/dotgenLetterPDF wholeGraphASTPool1.dot wholeGraphASTPool.pdf
+
+rose_inputCode_seedBugsExample_arrayIndexing.C: seedBugsExample_arrayIndexing
+	./seedBugsExample_arrayIndexing $(ROSE_FLAGS) -c $(srcdir)/inputCode_seedBugsExample_arrayIndexing.C
 
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.

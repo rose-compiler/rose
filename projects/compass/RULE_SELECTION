@@ -24,7 +24,7 @@
 +:DiscardAssignment
 +:DoNotCallPutenvWithAutoVar
 +:DoNotDeleteThis
-+:DoNotUseCstyleCasts
+-:DoNotUseCstyleCasts
 +:DuffsDevice
 +:DynamicCast
 +:EmptyInsteadOfSize
@@ -40,8 +40,8 @@
 +:ForLoopCppIndexVariableDeclaration
 +:FriendDeclarationModifier
 +:FunctionCallAllocatesMultipleResources
-+:FunctionDefinitionPrototype
-+:FunctionDocumentation
+-:FunctionDefinitionPrototype
+-:FunctionDocumentation
 +:InductionVariableUpdate
 +:InternalDataSharing
 +:localizedVariables
@@ -67,7 +67,7 @@
 +:NoSideEffectInSizeof
 +:NoTemplateUsage
 +:NoVfork
-+:NullDeref
+-:NullDeref
 +:OneLinePerDeclaration
 +:OperatorOverloading
 +:OtherArgument

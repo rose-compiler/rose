@@ -89,6 +89,13 @@ check-syntax: compass_parameters
 #	$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
 	$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
 
+testEmacs: compassMain alwaysPerformThis compass_parameters
+	./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(srcdir)/testEmacs.C $(srcdir)/testEmacs.C
+
+testEmacsSize: compassMain alwaysPerformThis compass_parameters
+	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) $(srcdir)/testEmacs.C > wc.out
+	wc -l wc.out
+
 testCompass:
 	$(MAKE) "CHK_SOURCES=/home/dquinlan/ROSE/NEW_ROSE/projects/compass/compassMain.C" check-syntax
 

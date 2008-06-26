@@ -11,13 +11,14 @@ latexFiles = \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
    addAssignmentStmt.tex addExpression.tex\
-   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex runtimeErrorCheck.tex defuseAnalysis.tex binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
+   addFunctionDeclaration.tex buildCFG.tex parallelChecker.tex runtimeErrorCheck.tex defuseAnalysis.tex \
+   binaryAnalysis.tex buildCG.tex classHierarchyGraph.tex loopOptimization.tex inliner.tex outliner.tex \
    parser-docs.tex codeCoverage.tex globalVariableHandling.tex scopeInformation.tex sideeffect-docs.tex \
    tauInstrumentation.tex templateSupport.tex dataBaseSupport.tex recognitionOfAbstractions.tex \
    debuggingSupport.tex commandlineProcessing.tex customGraphs.tex tutorialMakefile.tex wrapup.tex \
    appendix.tex astFileIO.tex uniqueNames.tex wholeGraphAST.tex addingComments.tex \
    partialRedundancyElimination.tex codeGenerationFormatControl.tex copyHelp.tex \
-   roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex \
+   roseHPCT.tex sharedMemoryTraversals.tex distributedMemoryTraversals.tex bugSeeding.tex \
    howToContribute.tex
 
 # glossary.tex FAQ.tex fixme.sty
@@ -74,6 +75,7 @@ link_LaTeX_files:
 	test -f howToContribute.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/howToContribute.tex howToContribute.tex
 	test -f astFileIO.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/astFileIO.tex astFileIO.tex
 	test -f wholeGraphAST.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/wholeGraphAST.tex wholeGraphAST.tex
+	test -f bugSeeding.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/bugSeeding.tex bugSeeding.tex
 	test -f tutorialMakefile.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/tutorialMakefile.tex tutorialMakefile.tex
 	test -f wrapup.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/wrapup.tex wrapup.tex
 	test -f appendix.tex || ln -s $(top_srcdir)/docs/Rose/Tutorial/appendix.tex appendix.tex

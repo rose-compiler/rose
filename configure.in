@@ -921,6 +921,8 @@ projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/BinaryContextLookup/Makefile
 projects/assemblyToSourceAst/Makefile
+projects/bugSeeding/Makefile
+projects/bugSeeding/bugSeeding.tex
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
