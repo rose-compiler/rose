@@ -35,6 +35,12 @@ class DFAnalysis {
   virtual int getUseSize()=0;
   virtual int getIntForSgNode(SgNode* node)=0;
   virtual void dfaToDOT()=0;
+
+  virtual std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > getDefMap()=0;
+  virtual std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > getUseMap()=0;
+  virtual void setMaps(std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > def,
+	       std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > use)=0;
+
 };
 
 #endif

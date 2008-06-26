@@ -309,7 +309,6 @@ int main(int argc, char **argv)
   initPCompass(argc, argv);
   ROSE_ASSERT(root);
 
-
   /* setup checkers */
   std::vector<AstSimpleProcessing *> traversals;
   std::vector<AstSimpleProcessing *>::iterator t_itr;
@@ -337,7 +336,7 @@ int main(int argc, char **argv)
   if (sequential)
     if (my_rank==0) {
       std::cout << "\n>>> Running in sequence ... " << std::endl;
-      std::cout << "\n>>> Running defuse ... " << std::endl;
+      std::cout << "\n>>> Initializing data ... " << std::endl;
     }
 
   NodeNullDerefCounter nc(true);
@@ -352,18 +351,6 @@ int main(int argc, char **argv)
   dynamicFunctionsPerProcessor = new int[processes];
   for (int k=0;k<processes;k++)
     dynamicFunctionsPerProcessor[k]=0;
-
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  gettime(begin_time_0);
-  gettime(begin_time);
-  double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-
-  // which node is the most expensive?
-  int max_time_nr=0;
-  double max_time=0;
-  double calc_time_processor=0;
-
 
 #ifdef _OPENMP
   int threadsnr = -1;
@@ -380,6 +367,112 @@ int main(int argc, char **argv)
 	if (my_rank==0)
 	  std::cerr << "\n--------------- NO OPENMP !! ------------" << std::endl;
 #endif 
+
+
+  // --------------------------------------------------------
+  // (tps, 07/24/08): added support for dataflow analysis
+  // this should run right before any other checker is executed.
+  // Other checkers rely on this information.
+#if 0
+  MPI_Barrier(MPI_COMM_WORLD);
+  gettime(begin_time_node);
+
+  defuse = new DefUseAnalysis(root);
+  Rose_STL_Container<SgNode *> funcs = 
+    NodeQuery::querySubTree(root, V_SgFunctionDefinition);
+  if (my_rank==0)
+    std::cerr << " running defuse analysis ...  functions: " << funcs.size() << std::endl;
+  int resultDefUseNodes=0;
+  // run the following in parallel
+  for (int p=0; p<processes;++p) {
+    int start = funcs.size()/processes*p;
+    int end = funcs.size()/processes*(p+1);
+    if (my_rank==p) {
+    cerr << my_rank <<": start: "<<start<<"  end: " << end<<endl;
+      for (int i=start; i< end; ++i) {
+	//      for (Rose_STL_Container<SgNode *>::iterator i = 
+	//     funcs.begin(); i != funcs.end(); i++) {
+	SgFunctionDefinition* funcDef = isSgFunctionDefinition(funcs[i]);
+	int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+	resultDefUseNodes+=nrNodes;
+      }
+    }
+  }
+  std::cerr << my_rank << ": DefUse Analysis complete. Nr of Nodes: " << resultDefUseNodes << std::endl;
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0)
+    std::cerr << "\n>> Collecting defuse results ... " << endl;
+  typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
+
+  ROSE_ASSERT(defuse);
+  my_map defmap = defuse->getDefMap();
+  my_map usemap = defuse->getUseMap();
+  std::cerr << my_rank << ": Def entries: " << defmap.size() << std::endl;
+
+  gettime(end_time_node);
+  double my_time_node = timeDifference(end_time_node, begin_time_node);
+
+  double *times_defuse = new double[processes];
+  /* communicate times */
+  MPI_Gather(&my_time_node, 1, MPI_DOUBLE, times_defuse, 1, MPI_DOUBLE, 0,
+	     MPI_COMM_WORLD);
+  double totaltime=0;
+  for (int i=0;i<processes;++i)
+    if (times_defuse[i]>totaltime)
+      totaltime=times_defuse[i];
+
+  if (my_rank==0)
+    cerr << "Time (max) needed for DefUse : " << totaltime << endl;
+
+  my_map res_defmap;
+  MPI_Gather(&defmap, 1, MPI_BYTE, res_defmap, 1, MPI_BYTE, 0,
+	     MPI_COMM_WORLD);
+
+  if (my_rank==0)
+    cerr <<  "Total number of defuse nodes: " <<  endl;
+#endif
+
+
+  // we have to run the def-use analysis first
+  // as some compass checkers rely on it
+  // however, we cant communicate the results(pointers)
+  // via MPI, so we use OpenMP. Another method
+  // might be UPC?
+  gettime(begin_time_defuse);
+  defuse = new DefUseAnalysis(root);
+  Rose_STL_Container<SgNode *> funcs = 
+    NodeQuery::querySubTree(root, V_SgFunctionDefinition);
+  if (my_rank==0)
+    std::cerr << " running defuse analysis ...  functions: " << funcs.size() << std::endl;
+  int resultDefUseNodes=0;
+  int it;
+#pragma omp parallel for private(it)  shared(funcs,defuse)  reduction(+:resultDefUseNodes) schedule(dynamic, threadsnr)
+  for (it = 0; it < (int)funcs.size(); it++) {
+    SgFunctionDefinition* funcDef = isSgFunctionDefinition(funcs[it]);
+    int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+    resultDefUseNodes+=nrNodes;
+  }
+  gettime(end_time_defuse);
+  double my_time_node = timeDifference(end_time_defuse, begin_time_defuse);
+  if (my_rank==0) {
+    std::cerr << " finished defuse analysis.  nrDefUseNodes: " << resultDefUseNodes << std::endl;  
+    std::cerr << " time for defuse : " << my_time_node << endl;
+  }
+
+
+  // --------------------------------------------------------
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  gettime(begin_time_0);
+  gettime(begin_time);
+  double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+
+  // which node is the most expensive?
+  int max_time_nr=0;
+  double max_time=0;
+  double calc_time_processor=0;
+
+
 
   //  std::pair<int, int> bounds;
   std::vector<int> bounds;
@@ -452,7 +545,7 @@ int main(int argc, char **argv)
 
 	// OPENMP START-------------------------------------------------------
 	int i=-1;
-	#pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
+#pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
 	for (i=min; i<max;i++) { 
 	  gettime(begin_time_node);
 	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {

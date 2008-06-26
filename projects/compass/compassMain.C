@@ -55,6 +55,7 @@ int main(int argc, char** argv)
   // SgProject* project = frontend(argc,argv);
      SgProject* project = frontend(commandLineArray);
 
+
 #if 0
      project->display("In Compass");
 #endif

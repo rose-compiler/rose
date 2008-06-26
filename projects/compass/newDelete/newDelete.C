@@ -186,7 +186,6 @@ tps_out_edges(tps_node node) const{
     //cout << "source = " << source.toString() << "  interesting : " << source.isInteresting() << endl;
     SgNode* sgNode = source.getNode();
 
-    
 
     if (!source.isInteresting())
       goto default_case;
@@ -234,9 +233,6 @@ tps_out_edges(tps_node node) const{
 }
 
 
-
-
-
 void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgDeleteExp* delExp, string name) {
   std::string lineNrDelete=ToString(delExp->get_file_info()->get_line());
 
@@ -250,28 +246,16 @@ void CompassAnalyses::NewDelete::Traversal::checkNewDelForFunction(SgDeleteExp* 
     // variable name!
     std::string initNameStr = initName->get_name().str();
     std::string lineNr=ToString(initName->get_file_info()->get_line());
-    //    std::string filename = getFileName(initName->get_file_info()->get_filename());
     std::string filename = initName->get_file_info()->get_filename();    
     
-    //    std::cout << std::endl;
-    //std::cout << "------------- found DeleteExp in :" << filename << ":" <<lineNrDelete <<
-    //  "  Declared in lineNr: " << lineNr <<
-    //  " array-Delete: " << (isCFGArrayDelete ? "True": "False") << std::endl;
-    // move up in tree and find assignments to variable name
-    // until the declaration is reached.
 
     VirtualCFG::CFGNode cfgNode = delExp->cfgForBeginning();
     tps_node node(cfgNode, initName);
-    //				my_bfs vis(istCFGArrayDelete);
-
-    // std::map<tps_node, tps_node> pred_map_data;
     pred_map_data.clear();
     predMapType pred_map = make_assoc_property_map(pred_map_data);
-    // predecessor_recorder<predMapType, on_tree_edge> vis(pred_map);
 
 #pragma omp critical (boost_visit)
     breadth_first_visit(tps_graph(this), node, color_map(colorMapType(color_map_data)).visitor(make_bfs_visitor(record_predecessors(pred_map, on_tree_edge()))));
-
 
   }
 }
@@ -281,22 +265,6 @@ void
 CompassAnalyses::NewDelete::Traversal::
 visit(SgNode* sgNode)
 { 
-#if 0
-  if (isSgFunctionDeclaration(sgNode)) {
-    string fileName = isSgFunctionDeclaration(sgNode)->get_file_info()->get_filenameString();
-    string name = sgNode->class_name();
-    //fileName = getFileName(fileName);
-    // query for delete expressions
-    std::vector<SgNode*> deleteExprList = NodeQuery:: querySubTree (sgNode, V_SgDeleteExp);
-    for (std::vector<SgNode*>::iterator it = deleteExprList.begin(); it!=deleteExprList.end(); ++it) {
-      SgNode* expr = *it;
-      SgDeleteExp* delExpr = isSgDeleteExp(expr);
-      if (delExpr!=NULL) {
-        checkNewDelForFunction(isSgFunctionDeclaration(sgNode), delExpr, name);
-      }
-    }
-  }
-#endif 
 
   if (isSgDeleteExp(sgNode)) {
     std::string name = sgNode->class_name();

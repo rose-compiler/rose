@@ -4,7 +4,6 @@
 #include <rose.h>
 
 namespace Compass {
-
  //! Silent setting is -1, default is 0, and values greater than zero indicate different levels of detail to be output.
      extern int verboseSetting;
 

@@ -26,6 +26,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
   typedef std::map< SgNode* , int > convtype;
   //typedef std::multimap< SgNode* , SgInitializedName* > ideftype;
 
+
   // local functions ---------------------
   void find_all_global_variables();
   void start_traversal_of_functions();
@@ -53,6 +54,14 @@ class DefUseAnalysis : public DFAnalysis, Support {
  public:
   DefUseAnalysis(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(false){};
        virtual ~DefUseAnalysis() {}
+
+  std::map< SgNode* , std::multimap <SgInitializedName* , SgNode* >  > getDefMap() { return table;}
+  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* >  > getUseMap() { return usetable;}
+  void setMaps(std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* >  > def,
+	  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > use) {
+    table = def;
+    usetable = use;
+  }
        
   // def-use-public-functions -----------
   int run();

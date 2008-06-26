@@ -14,7 +14,8 @@
 #include "LoadSaveAST.h"
 #include "../DistributedMemoryAnalysis/DistributedMemoryAnalysis.h"
 
-#include <mpi.h>
+#include "DefUseAnalysis.h"
+#include "DefUseAnalysis_perFunction.h"
 
 #ifdef _OPENMP
   #include <omp.h>
@@ -26,21 +27,31 @@ SgProject *root = NULL;
 struct timespec begin_time, end_time;
 struct timespec begin_time_node, end_time_node;
 struct timespec begin_time_0, end_time_0;
+struct timespec begin_time_defuse, end_time_defuse;
 int my_rank, processes;
 bool sequential=false;
 bool combined=false;
 int nrOfThreads = 3;
 int* dynamicFunctionsPerProcessor;
 
+// (tps 07/24/08) added to support dataflowanalysis
+// before compass is started.
+DFAnalysis* defuse;
+
+
+
 // ************************************************************
 // check for the usage parameters
 // ************************************************************
-bool containsArgument(int argc, char** argv, char* pattern) {
+bool containsArgument(int argc, char** argv, std::string pattern) {
   for (int i = 1; i < argc ; i++) {
-    if (!strcmp(argv[i], pattern)) {
+    //    if (!strcmp(argv[i], pattern)) {
+    std::string argument = argv[i];
+    if (argument== pattern) {
       return true;
     }
   }
+
   return false;
 }
 
