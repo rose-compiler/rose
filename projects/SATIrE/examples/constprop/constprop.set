@@ -6,3 +6,4 @@ DOMAIN
     Const = flat(snum)
     State = VariableId -> Const
     ConstStatePair = Const * State
+    LiftedState = lift(State)

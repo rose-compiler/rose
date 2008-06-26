@@ -3,11 +3,48 @@
 
 // Author: Gergo Barany, 2006--2008
 
+// This analysis implements simplified conditional constant propagation. All
+// variables and values are int, we do not handle other types, pointers etc.
+// We do have rudimentary handling of function calls.
+//
+// The data flow lattice is a lifted map from variables to constants, where
+// "constant" is a flat lattice over snums. In total:
+//     LiftedState = lift(VariableId -> flat(snum))
+//
+// The intended semantics are as follows. "bot" in the outermost lattice
+// means that a program point has not been reached yet and may be
+// unreachable. Inside, variables are mapped to a (lifted) number where the
+// constant is known; variables are mapped to top to denote unknown values.
+//
+// To avoid unreachable paths destroying our analysis information, bot must
+// be the neutral element of the combination operator, so comb must be the
+// least upper bound operation. This is why unknown values are top: lub will
+// make sure that we do not propagate constants beyond joins where one of
+// the values of a variable is a constant and the other is top.
+//
+// Transfer functions are monotonically decreasing:
+//     if  a < b  then  f(a) < f(b)
+// That is, if we know more constants in a than in b, then we will know more
+// constants after evaluating a transfer function. Combination using lub
+// will raise the information, i.e. some constants will be lost if they are
+// not know along each path.
+//
+// Strictly speaking, to be monotone, killing variables would have to be
+// done by assigning bot where they go out of scope explicitly
+// (UndeclareStmt) or implicitly (at the unique point of use of a temporary
+// variable). We do not do this because mapping them to top, the default
+// value of the variable map, results in a more efficient internal
+// representation of the data flow information.
+//
+// Nonmonotone kills should not be a problem: After undeclarations,
+// variables cannot be referenced by the program anymore.
+
+
 PROBLEM Constant_Propagation
     direction:  forward
-    carrier:    State
+    carrier:    LiftedState
     init:       bot
-    init_start: [-> top]
+    init_start: lift([-> top])
     combine:    comb
     retfunc:    comb
     widening:   wide
@@ -15,78 +52,84 @@ PROBLEM Constant_Propagation
 
 TRANSFER
 FunctionEntry(_), _:
-    if @ != bot then
-        @
-    else
-        top
-    endif;
+    @;
  
 ExprStatement(exp), _:
-    if @ != bot then
-        eval(exp, @)!2!2
-    else
-        bot
-    endif;
+    let info <= @;
+    in  lift(eval(exp, info)!2!2);
 
 ArgumentAssignment(VarRefExp(_) as var, exp), _:
-    if @ != bot then
-        @\[varref_varid(var) -> eval(exp, @)!1!2]
-    else
-        bot
-    endif;
+    let info <= @;
+    in  lift(info\[varref_varid(var) -> eval(exp, info)!1!2]);
 
 ParamAssignment(lhs, rhs), _:
-    if @ != bot then
-     // assign var
-        @\[varsym_varid(lhs) -> @{!varsym_varid(rhs)!}]
-     // kill rhs
-        \[varsym_varid(rhs) -> top]
-    else
-        bot
-    endif;
+    let info <= @;
+    in  lift(
+         // assign var
+            info\[varsym_varid(lhs) -> info{!varsym_varid(rhs)!}]
+         // kill rhs
+            \[varsym_varid(rhs) -> top]
+            );
 
 ReturnAssignment(lhs, rhs), _:
-    if @ != bot then
-     // assign var
-        @\[varsym_varid(lhs) -> @{!varsym_varid(rhs)!}]
-     // kill rhs
-        \[varsym_varid(rhs) -> top]
-    else
-        bot
-    endif;
+    let info <= @;
+    in  lift(
+         // assign var
+            info\[varsym_varid(lhs) -> info{!varsym_varid(rhs)!}]
+         // kill rhs
+            \[varsym_varid(rhs) -> top]
+            );
 
 ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
-    branch(cond, @, true);
+    let info <= @;
+    in  lift(branch(cond, info, true));
 
 ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
-    branch(cond, @, false);
+    let info <= @;
+    in  lift(branch(cond, info, false));
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
-    branch(cond, @, true);
+    let info <= @;
+    in  lift(branch(cond, info, true));
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
-    branch(cond, @, false);
+    let info <= @;
+    in  lift(branch(cond, info, false));
+
+ScopeStatement(DoWhileStmt(ExprStatement(cond))), true_edge:
+    let info <= @;
+    in  lift(branch(cond, info, true));
+
+ScopeStatement(DoWhileStmt(ExprStatement(cond))), false_edge:
+    let info <= @;
+    in  lift(branch(cond, info, false));
 
 ScopeStatement(ForStatement(_,cond,_)), true_edge:
-    branch(cond, @, true);
+    let info <= @;
+    in  lift(branch(cond, info, true));
 
 ScopeStatement(ForStatement(_,cond,_)), false_edge:
-    branch(cond, @, false);
+    let info <= @;
+    in  lift(branch(cond, info, false));
 
 LogicalIf(cond), true_edge:
-    branch(cond, @, true);
+    let info <= @;
+    in  lift(branch(cond, info, true));
 
 LogicalIf(cond), false_edge:
-    branch(cond, @, false);
+    let info <= @;
+    in  lift(branch(cond, info, false));
 
 UndeclareStmt(vars), _:
-    kill_vars(@, vars);
+    let info <= @;
+    in  lift(kill_vars(info, vars));
 
 FunctionExit(_, vars), _:
-    kill_vars(@, vars);
+    let info <= @;
+    in  lift(kill_vars(info, vars));
 
 FunctionCall(_,_), local_edge:
-    top;
+    bot; // neutral element of combine operator
 
 _, _: @;
 
@@ -115,8 +158,14 @@ eval(exp, state) =
                                  (top, [-> top]);
         endcase
     else case exp of
-        VarRefExp(_)          => (state{!varref_varid(exp)!}, state);
-        NewExp(_,_,_)         => (bot, state);
+        VarRefExp(_)          => let id = varref_varid(exp);
+                                 in  if is_tmpvarid(id) then
+                                      // kill tmpvar after its one use
+                                         (state{!id!}, state\[id -> top])
+                                     else
+                                         (state{!id!}, state)
+                                     endif;
+        NewExp(_,_,_)         => (top, state);
         _                     => // print("unknown exp: ")
                                  // print(exp) print("\n")
                                  (top, [-> top]);
@@ -225,12 +274,12 @@ branch(exp, state, edge) =
     let pair = eval(exp, state);
     in let c = pair!1!2; newstate = pair!2!2;
     in if c = top || c = bot then
-        state
+        newstate
     else let cond <= c;
     in if int_bool(cond) = edge then
         newstate
     else
-        state /*bot*/
+        bot /* unreachable */
     endif
     endif;
 
@@ -255,14 +304,8 @@ shiftright :: snum, snum -> snum;
 shiftright(a, 0) = a;
 shiftright(a, b) = shiftright(a/2, b-1);
 
-comb(a, b) =
- // print("comb a: ") print(a) print("\n")
- // print("comb b: ") print(b) print("\n")
- // print("result: ") print(
- // if a = bot then b else if b = bot then a else a glb b endif endif
- //                         ) print("\n\n")
-    if a = bot then b else if b = bot then a else a glb b endif endif;
-wide(a, b) = comb(a, b);
+comb(a, b) = a lub b;
+wide(_, b) = b;
 eq(a, b)   = (a = b);
 
 // Mapping functions from VarRefExps (don't call this for other kinds of
@@ -272,3 +315,5 @@ varsym_varid :: VariableSymbolNT -> VariableId;
 
 expr_to_exprnum :: Expression -> unum;
 variable_varnum :: VariableSymbolNT -> unum;
+
+is_tmpvarid :: VariableId -> bool;
