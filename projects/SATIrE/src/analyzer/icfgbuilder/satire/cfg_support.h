@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.25 2008-06-02 11:27:39 gergo Exp $
+// $Id: cfg_support.h,v 1.26 2008-06-26 08:08:09 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -123,6 +123,15 @@ public:
     std::map<std::string, SgExpression *> names_initializers;
     std::vector<SgVariableSymbol *> globals;
     std::map<SgVariableSymbol *, SgExpression *> globals_initializers;
+
+ // a single symbol for all return variables in the program
+    SgVariableSymbol *global_return_variable_symbol;
+ // a single set of argument variables for all function calls
+    std::vector<SgVariableSymbol *> global_argument_variable_symbols;
+ // a single symbol for all "this" return variables and arguments
+    SgVariableSymbol *global_this_variable_symbol;
+ // the type to assign to these global variables
+    SgType *global_unknown_type;
 
     EqualityTraversal equalityTraversal;
 
@@ -375,6 +384,13 @@ const UndeclareStmt *isUndeclareStmt(const SgNode *);
 class RetvalAttribute : public AstAttribute
 {
 public:
+    RetvalAttribute(SgVariableSymbol *sym) : sym(sym) { }
+    SgVariableSymbol *get_variable_symbol() const { return sym; }
+
+private:
+ // GB (2008-06-25): Strings are deprecated! We only use variable symbols
+ // now. That's more efficient and more correct (variable ids...).
+#if 0
     RetvalAttribute(std::string s) : str(s)
     {
     }
@@ -382,10 +398,10 @@ public:
     {
         return str;
     }
-
-private:
     RetvalAttribute();
     std::string str;
+#endif
+    SgVariableSymbol *sym;
 };
 
 // GB (2007-10-23): Added members for the expression that refers to the

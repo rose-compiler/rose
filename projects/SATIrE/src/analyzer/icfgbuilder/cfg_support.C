@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.23 2008-06-02 11:27:33 gergo Exp $
+// $Id: cfg_support.C,v 1.24 2008-06-26 08:08:06 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -516,12 +516,14 @@ void ArgumentAssignment::init(SgExpression *l, SgExpression *r)
   if (isSgFunctionCallExp(r)) {
     RetvalAttribute *varnameattr
       = (RetvalAttribute *) r->getAttribute("return variable");
-    rhs = Ir::createVarRefExp(varnameattr->get_str(),r->get_type());
+ // rhs = Ir::createVarRefExp(varnameattr->get_str(),r->get_type());
+    rhs = Ir::createVarRefExp(varnameattr->get_variable_symbol());
   } else if (isSgConstructorInitializer(r)
              && r->attributeExists("anonymous variable")) {
     RetvalAttribute *varnameattr
       = (RetvalAttribute *) r->getAttribute("anonymous variable");
-    rhs = Ir::createVarRefExp(varnameattr->get_str(),r->get_type());
+ // rhs = Ir::createVarRefExp(varnameattr->get_str(),r->get_type());
+    rhs = Ir::createVarRefExp(varnameattr->get_variable_symbol());
   } else {
     rhs = r;
   }
@@ -637,7 +639,8 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
     if ((*i)->memberf_name == "")
       break;
     if (destructor_name == (*i)->memberf_name) {
-      SgVariableSymbol* this_var_sym = Ir::createVariableSymbol(this_var_name, in->get_type());
+   // SgVariableSymbol* this_var_sym = Ir::createVariableSymbol(this_var_name, in->get_type());
+      SgVariableSymbol* this_var_sym = cfg->global_this_variable_symbol;
 
       CallBlock *entry = (*i)->entry;
       CallBlock *call_block = new CallBlock((*node_id)++, CALL, procnum,

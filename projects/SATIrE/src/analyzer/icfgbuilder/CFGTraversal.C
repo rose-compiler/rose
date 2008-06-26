@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.42 2008-06-06 13:01:29 gergo Exp $
+// $Id: CFGTraversal.C,v 1.43 2008-06-26 08:08:06 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -27,6 +27,12 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
   cfg->proc_map = p.proc_map;
   cfg->mangled_proc_map = p.mangled_proc_map;
   cfg->analyzerOptions = NULL;
+
+  cfg->global_return_variable_symbol = p.global_return_variable_symbol;
+  cfg->global_argument_variable_symbols = p.global_argument_variable_symbols;
+  cfg->global_this_variable_symbol = p.global_this_variable_symbol;
+  cfg->global_unknown_type = p.global_unknown_type;
+
 // GB (2008-05-05): Refactored.
   setProcedureEndNodes();
   processProcedureArgBlocks();
@@ -1902,7 +1908,10 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	}
 
 	SgVarRefExp* varref1
-	  = Ir::createVarRefExp(proc->returnvar);
+   // GB (2008-06-23): Trying unique global return variable instead of the
+   // procedure-specific ones.
+   // = Ir::createVarRefExp(proc->returnvar);
+      = Ir::createVarRefExp(cfg->global_return_variable_symbol);
 	SgExprStatement* exprstat
 	  = Ir::createExprStatement(Ir::createAssignOp(varref1, new_expr));
 	new_block->statements.push_front(exprstat);
@@ -2386,8 +2395,9 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
 
     SgPointerType* ptrType
       = Ir::createPointerType(p->class_type->get_declaration()->get_type());
-    SgVariableSymbol* this_var_sym
-      = Ir::createVariableSymbol(this_var_name,ptrType);
+ // SgVariableSymbol* this_var_sym
+ //   = Ir::createVariableSymbol(this_var_name,ptrType);
+    SgVariableSymbol* this_var_sym = cfg->global_this_variable_symbol;
  // GB (2008-05-26): The this symbol is now stored with the procedure.
  // SgVariableSymbol* this_sym 
  //   = Ir::createVariableSymbol("this", ptrType);

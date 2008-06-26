@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.h,v 1.5 2008-05-19 12:38:26 gergo Exp $
+// $Id: ProcTraversal.h,v 1.6 2008-06-26 08:08:09 gergo Exp $
 
 #ifndef H_PROCTRAVERSAL
 #define H_PROCTRAVERSAL
@@ -20,6 +20,11 @@ public:
 
   std::multimap<std::string, Procedure *> proc_map;
   std::multimap<std::string, Procedure *> mangled_proc_map;
+
+  SgVariableSymbol *global_return_variable_symbol;
+  std::vector<SgVariableSymbol *> global_argument_variable_symbols;
+  SgVariableSymbol *global_this_variable_symbol;
+  SgType *global_unknown_type;
   
 protected:
   void visit(SgNode *);

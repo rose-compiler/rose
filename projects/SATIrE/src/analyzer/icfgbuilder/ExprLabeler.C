@@ -1,9 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.6 2008-04-29 14:17:32 gergo Exp $
+// $Id: ExprLabeler.C,v 1.7 2008-06-26 08:08:06 gergo Exp $
 
 #include "ExprLabeler.h"
 
-ExprLabeler::ExprLabeler(int expnum_) : expnum(expnum_)
+ExprLabeler::ExprLabeler(int expnum_, CFG *cfg, Procedure *proc)
+  : expnum(expnum_), cfg(cfg), proc(proc)
 {
 }
 
@@ -17,7 +18,7 @@ void ExprLabeler::visit(SgNode *node)
     if (isSgThisExp(node))
     {
         SgThisExp *t = isSgThisExp(node);
-        RetvalAttribute *retval = new RetvalAttribute("this");
+        RetvalAttribute *retval = new RetvalAttribute(proc->this_sym);
         node->addNewAttribute("return variable", retval);
     }
     else if (isSgFunctionCallExp(node))
@@ -28,7 +29,10 @@ void ExprLabeler::visit(SgNode *node)
         varname << "$" << (name != NULL ? *name : "unknown_func")
             << "$return_" << expnum++;
         delete name;
-        RetvalAttribute *retval = new RetvalAttribute(varname.str());
+        SgVariableSymbol *varsym
+            = Ir::createVariableSymbol(varname.str(),
+                                       cfg->global_unknown_type);
+        RetvalAttribute *retval = new RetvalAttribute(varsym);
         node->addNewAttribute("return variable", retval);
     }
     else if (isSgConstructorInitializer(node))
@@ -82,10 +86,14 @@ void ExprLabeler::visit(SgNode *node)
             }
             else
             {
+#if 0
                 std::string name = namedType->get_name().str();
                 std::stringstream varname;
                 varname << "$" << name << "$this";
                 RetvalAttribute *retval = new RetvalAttribute(varname.str());
+#endif
+                SgVariableSymbol *varsym = cfg->global_this_variable_symbol;
+                RetvalAttribute *retval = new RetvalAttribute(varsym);
                 node->addNewAttribute("return variable", retval);
             }
         }
@@ -93,7 +101,10 @@ void ExprLabeler::visit(SgNode *node)
         {
             std::stringstream varname;
             varname << "$anonymous_var_" << expnum++;
-            RetvalAttribute *retval = new RetvalAttribute(varname.str());
+            SgVariableSymbol *varsym
+                = Ir::createVariableSymbol(varname.str(),
+                                           cfg->global_unknown_type);
+            RetvalAttribute *retval = new RetvalAttribute(varsym);
             node->addNewAttribute("anonymous variable", retval);
         }
     }
@@ -101,7 +112,10 @@ void ExprLabeler::visit(SgNode *node)
     {
         std::stringstream varname;
         varname << "$logical_" << expnum++;
-        RetvalAttribute *retval = new RetvalAttribute(varname.str());
+        SgVariableSymbol *varsym
+            = Ir::createVariableSymbol(varname.str(),
+                                       cfg->global_unknown_type);
+        RetvalAttribute *retval = new RetvalAttribute(varsym);
         node->addNewAttribute("logical variable", retval);
     }
 }

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.16 2008-05-26 11:27:59 gergo Exp $
+// $Id: ProcTraversal.C,v 1.17 2008-06-26 08:08:06 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -17,6 +17,15 @@ ProcTraversal::ProcTraversal()
     original_ast_statements(0),
     timer(NULL) {
   setPrintCollectedFunctionNames(false);
+// GB (2008-06-25): Some ROSE nodes have tight checks on what types they may
+// be associated with, especially concerning pointer base types. Let's hope
+// we get away with using void **.
+  global_unknown_type
+      = Ir::createPointerType(Ir::createPointerType(SgTypeVoid::createType()));
+  global_return_variable_symbol
+      = Ir::createVariableSymbol("$global$retvar", global_unknown_type);
+  global_this_variable_symbol
+      = Ir::createVariableSymbol("$global$this", global_unknown_type);
 }
 
 std::deque<Procedure *>*
@@ -121,7 +130,8 @@ ProcTraversal::visit(SgNode *node) {
           this_var = proc->this_sym;
           std::string varname
             = std::string("$") + proc->name + "$this";
-          this_temp_var = Ir::createVariableSymbol(varname, proc->this_type);
+       // this_temp_var = Ir::createVariableSymbol(varname, proc->this_type);
+          this_temp_var = global_this_variable_symbol;
           ParamAssignment* paramAssignment
             = Ir::createParamAssignment(this_var, this_temp_var);
           proc->arg_block->statements.push_back(paramAssignment);
@@ -133,6 +143,7 @@ ProcTraversal::visit(SgNode *node) {
         SgInitializedNamePtrList params
           = proc->params->get_args();
         SgInitializedNamePtrList::const_iterator i;
+#if 0
         int parnum = 0;
         for (i = params.begin(); i != params.end(); ++i) {
           SgVariableSymbol *i_var = Ir::createVariableSymbol(*i);
@@ -143,6 +154,41 @@ ProcTraversal::visit(SgNode *node) {
           proc->arg_block->statements.push_back(Ir::createParamAssignment(i_var, var));
           arglist->push_back(i_var);
         }
+#else
+     // GB (2008-06-23): Trying to replace all procedure-specific argument
+     // variables by a global list of argument variables. This means that at
+     // this point, we do not necessarily need to build a complete list but
+     // only add to the CFG's argument list if it is not long enough.
+        size_t func_params = params.size();
+        size_t global_args = global_argument_variable_symbols.size();
+        std::stringstream varname;
+        while (global_args < func_params)
+        {
+            varname.str("");
+            varname << "$global$arg_" << global_args++;
+            SgVariableSymbol *var
+                = Ir::createVariableSymbol(varname.str(),
+                        global_unknown_type);
+            global_argument_variable_symbols.push_back(var);
+        }
+     // now create the param assignments
+        size_t j = 0;
+        for (i = params.begin(); i != params.end(); ++i)
+        {
+            SgVariableSymbol *i_var = Ir::createVariableSymbol(params[j]);
+            SgVariableSymbol *var = global_argument_variable_symbols[j];
+            j++;
+            proc->arg_block->statements.push_back(
+                    Ir::createParamAssignment(i_var, var));
+            arglist->push_back(i_var);
+        }
+#if 0
+     // replace the arglist allocated above by the new one; this must be
+     // fixed for this pointers!
+        delete arglist;
+        arglist = &global_argument_variable_symbols;
+#endif
+#endif
       } else {
         proc->arg_block = NULL;
       }
@@ -174,8 +220,9 @@ ProcTraversal::visit(SgNode *node) {
           std::string this_called_varname
             = std::string("$") + baseclass->get_name() + "$this";
           SgVariableSymbol *this_called_var
-            = Ir::createVariableSymbol(this_called_varname,
-                                       baseclass->get_type());
+         // = Ir::createVariableSymbol(this_called_varname,
+         //                            baseclass->get_type());
+            = global_this_variable_symbol;
           ReturnAssignment* this_ass
             = Ir::createReturnAssignment(this_var, this_called_var);
           proc->arg_block->statements.push_back(this_ass);
@@ -214,9 +261,15 @@ ProcTraversal::visit(SgNode *node) {
          // number is irrelevant, however, as it does not appear in the
          // return variable.
             if (isSgFunctionCallExp(ai->get_operand_i())) {
+#if 0
                 ExprLabeler el(0 /*expnum*/);
                 el.traverse(ai->get_operand_i(), preorder);
              // expnum = el.get_expnum();
+#endif
+             // GB (2008-06-25): There is now a single global return
+             // variable. This may or may not mean that we can simply ignore
+             // the code above. I don't quite understand why this labeling
+             // couldn't be done later on, and where its result was used.
             }
             ArgumentAssignment* argumentAssignment 
               = Ir::createArgumentAssignment(arrowExp,ai->get_operand_i());
@@ -297,8 +350,9 @@ ProcTraversal::visit(SgNode *node) {
       }
       std::stringstream varname;
       varname << "$" << proc->name << "$return";
-      proc->returnvar = Ir::createVariableSymbol(varname.str(),
-                                                 decl->get_type()->get_return_type());
+   // proc->returnvar = Ir::createVariableSymbol(varname.str(),
+   //                                            decl->get_type()->get_return_type());
+      proc->returnvar = global_return_variable_symbol;
       procedures->push_back(proc);
       if(getPrintCollectedFunctionNames()) {
         std::cout << (proc->memberf_name != ""
@@ -306,7 +360,7 @@ ProcTraversal::visit(SgNode *node) {
                         : proc->name)
                   << " " /*<< proc->decl << std::endl*/;
       }
-      delete arglist;
+   // delete arglist;
     }
   }
 }

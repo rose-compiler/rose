@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.23 2008-05-26 09:00:17 gergo Exp $
+// $Id: ExprTransformer.C,v 1.24 2008-06-26 08:08:06 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -26,7 +26,8 @@ ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
         std::map<int, SgStatement *> &block_stmt_map, SgStatement *stmt)
   : node_id(node_id), procnum(procnum), expnum(expnum), cfg(cfg),
     after(after), retval(after), root_var(NULL),
-    block_stmt_map(block_stmt_map), stmt(stmt), el(expnum)
+    block_stmt_map(block_stmt_map), stmt(stmt),
+    el(expnum, cfg, (*cfg->procedures)[procnum])
 {
 }
 
@@ -551,7 +552,8 @@ void ExprTransformer::visit(SgNode *node)
           }
           RetvalAttribute *ra = (RetvalAttribute *) ci->getAttribute("return variable");
 
-          SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
+       // SgVariableSymbol *var = Ir::createVariableSymbol(ra->get_str(),newExp0->get_type());
+          SgVariableSymbol *var = ra->get_variable_symbol();
 
           if (isSgExpression(newExp0->get_parent())) {
             SgVarRefExp* varRefExp=Ir::createVarRefExp(var);
@@ -561,7 +563,8 @@ void ExprTransformer::visit(SgNode *node)
           }
         } else {
           RetvalAttribute* ra = (RetvalAttribute *) ci->getAttribute("anonymous variable");
-          SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
+       // SgVarRefExp* ref = Ir::createVarRefExp(ra->get_str(), ci->get_type());
+          SgVarRefExp* ref = Ir::createVarRefExp(ra->get_variable_symbol());
           elist.push_back(Ir::createAddressOfOp(ref, Ir::createPointerType(ref->get_type())));
         }
         if (!blocks.empty() && default_params.size() < alist.size()) {
@@ -809,7 +812,8 @@ void ExprTransformer::visit(SgNode *node)
           std::vector<CallBlock *>::const_iterator d;
           for (d = d_entries->begin(); d != d_entries->end(); ++d) {
             SgVariableSymbol *this_var_sym
-              = Ir::createVariableSymbol(*this_name++, de->get_variable()->get_type());
+           // = Ir::createVariableSymbol(*this_name++, de->get_variable()->get_type());
+              = cfg->global_this_variable_symbol;
 
             std::string destructor_name = *destr_name++;
             CallBlock *call_block = new CallBlock(node_id++, CALL,
@@ -849,11 +853,16 @@ void ExprTransformer::visit(SgNode *node)
           BasicBlock* kill_this_vars = new BasicBlock(node_id++, INNER, procnum);
           cfg->nodes.push_back(kill_this_vars);
           std::vector<SgVariableSymbol *>* this_syms = new std::vector<SgVariableSymbol *>();
+#if 0
           std::vector<std::string>::iterator dtn;
           for (dtn = d_this_names->begin(); dtn != d_this_names->end();
                ++dtn) {
             this_syms->push_back(Ir::createVariableSymbol(*dtn,Ir::createClassType()));
           }
+#else
+       // kill only the global this variable
+          this_syms->push_back(cfg->global_this_variable_symbol);
+#endif
           kill_this_vars->statements.push_back(Ir::createUndeclareStmt(this_syms));
           add_link(kill_this_vars, after, NORMAL_EDGE);
           after = kill_this_vars;
@@ -891,14 +900,16 @@ void ExprTransformer::visit(SgNode *node)
       SgBinaryOp *logical_op = isSgBinaryOp(node);
       RetvalAttribute *varnameattr
         = (RetvalAttribute *) logical_op->getAttribute("logical variable");
-      SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),
-                               logical_op->get_type());
+   // SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),
+   //                          logical_op->get_type());
+      SgVariableSymbol *var = varnameattr->get_variable_symbol();
       
       BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(if_block);
       if (logical_op->get_lhs_operand_i()->attributeExists("logical variable")) {
           RetvalAttribute* vna = (RetvalAttribute *) logical_op->get_lhs_operand_i()->getAttribute("logical variable");
-          SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),logical_op->get_lhs_operand_i()->get_type());
+       // SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_str(),logical_op->get_lhs_operand_i()->get_type());
+          SgVarRefExp* varexp = Ir::createVarRefExp(vna->get_variable_symbol());
           LogicalIf* logicalIf=Ir::createLogicalIf(varexp);
           if_block->statements.push_front(logicalIf);
       } else {
@@ -929,7 +940,8 @@ void ExprTransformer::visit(SgNode *node)
       if (rhs_operand->attributeExists("logical variable"))
       {
           RetvalAttribute* vna = (RetvalAttribute *) rhs_operand->getAttribute("logical variable");
-          rhs_operand = Ir::createVarRefExp(vna->get_str(), rhs_operand->get_type());
+       // rhs_operand = Ir::createVarRefExp(vna->get_str(), rhs_operand->get_type());
+          rhs_operand = Ir::createVarRefExp(vna->get_variable_symbol());
       }
       
       if(isSgAndOp(logical_op)) {
@@ -972,8 +984,9 @@ void ExprTransformer::visit(SgNode *node)
       SgConditionalExp* cond = isSgConditionalExp(node);
       RetvalAttribute* varnameattr
         = (RetvalAttribute *) cond->getAttribute("logical variable");
-      SgVariableSymbol* var = Ir::createVariableSymbol(varnameattr->get_str(),
-                                                       cond->get_type());
+   // SgVariableSymbol* var = Ir::createVariableSymbol(varnameattr->get_str(),
+   //                                                  cond->get_type());
+      SgVariableSymbol* var = varnameattr->get_variable_symbol();
       BasicBlock *if_block = new BasicBlock(node_id++, INNER, procnum);
       cfg->nodes.push_back(if_block);
       if_block->statements.push_front(Ir::createLogicalIf(
@@ -1242,7 +1255,8 @@ ExprTransformer::evaluate_arguments(std::string name,
     std::string varname = std::string("$") + name + "$this";
     SgExpression *new_expr = *i;
     SgVariableSymbol *varsym = 
-      Ir::createVariableSymbol(varname, (*i)->get_type());
+   // Ir::createVariableSymbol(varname, (*i)->get_type());
+      cfg->global_this_variable_symbol;
     params->push_back(varsym);
     block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));
     ++i;
@@ -1254,7 +1268,7 @@ ExprTransformer::evaluate_arguments(std::string name,
   int n = 0;
   for ( ; i != args.end(); ++i) {
     std::stringstream varname;
-    varname << "$" << name << "$arg_" << n++;
+ // varname << "$" << name << "$arg_" << n++;
     
     SgExpression *new_expr = *i;
     RetvalAttribute *varnameattr
@@ -1265,9 +1279,21 @@ ExprTransformer::evaluate_arguments(std::string name,
       : NULL;
     
     if (varnameattr != NULL) {
-      new_expr = Ir::createVarRefExp(varnameattr->get_str(),(*i)->get_type());
+   // new_expr = Ir::createVarRefExp(varnameattr->get_str(),(*i)->get_type());
+      new_expr = Ir::createVarRefExp(varnameattr->get_variable_symbol());
     }
-    SgVariableSymbol *varsym=Ir::createVariableSymbol(varname.str(), (*i)->get_type());
+ // GB (2008-06-23): Moving to a single global argument variable list.
+ // SgVariableSymbol *varsym=Ir::createVariableSymbol(varname.str(), (*i)->get_type());
+    if (n >= cfg->global_argument_variable_symbols.size())
+    {
+        varname.str("");
+        varname << "$global$arg_" << n;
+        SgVariableSymbol *varsym
+            = Ir::createVariableSymbol(varname.str(),
+                                       cfg->global_unknown_type);
+        cfg->global_argument_variable_symbols.push_back(varsym);
+    }
+    SgVariableSymbol *varsym = cfg->global_argument_variable_symbols[n++];
     params->push_back(varsym);
     block->statements.push_back(Ir::createArgumentAssignment(varsym, new_expr));
     if (block->successors.size() > 0) {
@@ -1287,8 +1313,12 @@ void ExprTransformer::assign_retval(std::string name, SgFunctionCallExp *call, B
   std::stringstream retname;
   retname << "$" << name << "$return";
   RetvalAttribute *varnameattr = (RetvalAttribute *) call->getAttribute("return variable");
-  SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
-  SgVariableSymbol *retvar = Ir::createVariableSymbol(retname.str(),call->get_type());
+  // SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
+  SgVariableSymbol *var = varnameattr->get_variable_symbol();
+// GB (2008-06-23): Toying around with using only one global retvar
+// everywhere. This should make it easier to kill.
+//SgVariableSymbol *retvar = Ir::createVariableSymbol(retname.str(),call->get_type());
+  SgVariableSymbol *retvar = cfg->global_return_variable_symbol;
   block->statements.push_front(Ir::createReturnAssignment(var, retvar));
   if (isSgExpression(call->get_parent())) {
     satireReplaceChild(call->get_parent(), call, Ir::createVarRefExp(var));
