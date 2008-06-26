@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.9 2008-05-08 14:08:27 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.10 2008-06-26 07:42:40 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -452,3 +452,55 @@ Fix:
     flow value should mean "unreachable".
 Status:
     Resolved 2008-04-23, GB
+
+
+Logged:
+    2008-06-23, GB
+Symptoms:
+    Trying to remove return variable Ids at ReturnAssignment statements
+    does not work. Same thing for argument variables.
+Reason:
+    $func$return variables are not unique per function, neither are
+    $func$arg_n variables.
+Fix:
+    Replace the function-based $func$return and $func$arg_n variables by
+    $global$return and $global$arg_n variables. While we're at it, also
+    replace all $func$this pointers similarly. This allows correct handling
+    of the above case, and it keeps working when a call goes to functions
+    with different names, as with function pointers.
+    These variables cannot be typed statically since different parts of the
+    program try to write and read differently typed values from them. We
+    give them type "void **", and where types of values are relevant to the
+    analysis, it will have to take care of dragging types along. As the ICFG
+    nodes for distinct function calls are never interleaved, this works well
+    with nested calls like f(42, g(23)) and with recursion.
+Status:
+    Resolved 2008-06-25, GB
+
+
+Logged:
+    2008-06-23, GB
+Symptoms:
+    The constprop analysis is broken:
+        x = top;
+        if (opaque)
+        {
+         // pre:  x -> top
+            x = 42;
+         // post: x -> 42
+        }
+        else
+        {
+         // pre:  x -> top
+            no_op;
+         // post: x -> top
+        }
+     // post: x -> 42 because glb(42, top) = 42!
+Reason:
+    If we use top for unknown variable values, we cannot use glb as the
+    combination operator.
+Fix:
+    Complete rewrite of constprop (yet again), now using lub as the
+    combination operator, which will map the above case to top.
+Status:
+    Resolved 2008-06-25, GB

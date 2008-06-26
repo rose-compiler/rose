@@ -1,17 +1,25 @@
 V0.8.3 (in progress)
 
-* Better support for combined analyses
+* Better support for combined analyses [GB]
   - correct prefixing of SATIrE support functions
 
-* New PAG analysis support features
+* New PAG analysis support features [GB]
   - TypeId as abstract type identifier
   - experimental side-effecting add_tmpvarid support function
   - implemented total ordering on each Id type
+
+* ICFG builder changes [GB]
+  - replaced function-specific $func$return, $func$arg_n, and $func$this
+    variables by generic $global$ variables; this allows for calling
+    functions without knowing their name (through pointers, for instance)
 
 * Termite: [AP]
   - Support for multiple input files
   - Changed all occurrences of PrologString to PrologAtom
     (all names in the term representation are now 'singlequoted')
+
+* Example analyses [GB]
+  - fixed bugs and style issues in constprop
 
 V0.8.2 2008-06-02 GB,MS,AP
 
