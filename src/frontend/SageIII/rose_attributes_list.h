@@ -7,7 +7,7 @@
 #include <vector>
 #include <map>
 
-// Inlude the ROSE lex specific definitions of tokens
+// Include the ROSE lex specific definitions of tokens
 #include "general_token_defs.h"
 
 
@@ -39,7 +39,7 @@ class Sg_File_Info;
 // DQ (1/21/2008): Need forward declaration
 class SgFile;
 
-// an element of the list
+//! For preprocessing information including source comments, #include , #if, #define, etc
 class  PreprocessingInfo
    {
 
@@ -139,8 +139,8 @@ class  PreprocessingInfo
      public:
 
        // DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).
-       // MK: Enum type to store if the directive goes before or after the
-       // corresponding line of source code
+       //! MK: Enum type to store if the directive goes before or after the
+       //! corresponding line of source code
 	  enum RelativePositionType
 	     {
 	       defaultValue = 0, // let the zero value be an error value

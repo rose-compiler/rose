@@ -7,7 +7,7 @@
 /*!
   \defgroup frontendSageHighLevelInterface High level AST builders
   \ingroup ROSE_FrontEndGroup
-  \brief This namespace contains high level SAGEIII AST node and subtree builders
+  \brief This namespace contains high level SAGE III AST node and subtree builders
 
   Building AST trees using raw SgNode constructors is tedious and error-prone. It becomes 
   even more difficult with the presence of symbol tables. This namespace contains major
@@ -509,6 +509,10 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
+//! Build and attach #define XX directives 
+PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
+                const std::string & content,
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 //@}
 
 } // end of namespace

@@ -3,6 +3,7 @@
 
 #include "sageBuilder.h"
 #include <fstream>
+#include <boost/algorithm/string/trim.hpp>
 using namespace std;
 using namespace SageInterface;
 //---------------------------------------------
@@ -1815,5 +1816,31 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
 {
   return SageInterface::attachComment(target,content, position, dtype);  
 }
+
+//! #define xxx yyy 
+  PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
+                const std::string & content,
+               PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
+  {
+    ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
+    // simple input verification
+    std::string content2 = content;  
+    boost::algorithm::trim(content2);
+    string prefix = "#define";
+    string::size_type pos = content2.find(prefix, 0);
+    ROSE_ASSERT (pos == 0);
+
+    PreprocessingInfo* result = NULL;
+
+    PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
+    
+
+    result = new PreprocessingInfo (mytype,content, "transformation-generated", 0, 0, 0,
+                               position, false, true);
+    ROSE_ASSERT(result);
+    target->addToAttachedPreprocessingInfo(result);
+    return result;
+  
+  }
 
 } // end of namespace 
