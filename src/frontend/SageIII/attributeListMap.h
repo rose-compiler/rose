@@ -105,7 +105,8 @@ class AttributeListMap {
 			    rose_typeid = PreprocessingInfo::CpreprocessorIfDeclaration;
 			    break;
 			 case T_PP_ELIF:      //#elif
-                            std::cout << "ELIF\n";
+             // DQ (4/17/2008): Commented out to avoid fly-make interpreting as an error!
+          // std::cout << "ELIF\n";
 			    rose_typeid = PreprocessingInfo::CpreprocessorElifDeclaration;
 			    break;
 			 case T_PP_ELSE:      //#else
@@ -648,10 +649,11 @@ class AttributeListMap {
 			       using namespace boost::wave;
 
 			       token_id wave_typeid = token_id(node);
-
+#if 0
+             // DQ (4/17/2008): Commented out to avoid error in fly-make!
 			       if( T_PP_ELIF  == wave_typeid)
 				       std::cout << "Found an #elif\n";
-
+#endif
 
 			       if(std::find(directiveList.begin(),directiveList.end(), wave_typeid) != directiveList.end())
 				       returnValue = true;

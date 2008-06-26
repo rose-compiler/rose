@@ -1143,9 +1143,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      AttributeListMap attributeListMap(sageFilePtr);
      ctx.get_hooks().attributeListMap = &attributeListMap;
 
-
-
-     printf ("specify the languge \n");
+  // printf ("specify the languge \n");
 
   // Preserve comments through preprocessing so that the output token-stream
   // contains the comments.
@@ -1308,14 +1306,14 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 	       }
 	       catch (boost::wave::cpp_exception &e) {
 		       // some preprocessing error
-		       cerr 
-			       << "WAVE: " << e.file_name() << "(" << e.line_no() << "): "
-				       << e.description() << endl;
+             // This is a problem for using compass with emacs (see testEmacs.C).
+		       // cerr  << "WAVE 1: " << e.file_name() << "(" << e.line_no() << "): "
+				 //       << e.description() << endl;
 	       }
 	       catch (boost::wave::cpplexer::lexing_exception &e) {
 		       // some lexing error
 		       cerr 
-			       << "WAVE:" << e.file_name() << "(" << e.line_no() << "): "
+			       << "WAVE 2:" << e.file_name() << "(" << e.line_no() << "): "
 				       << e.description() << endl;
 	       }
 
@@ -1324,19 +1322,19 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      catch (boost::wave::cpp_exception &e) {
        // some preprocessing error
           cerr 
-            << "WAVE: " << e.file_name() << "(" << e.line_no() << "): "
+            << "WAVE 3: " << e.file_name() << "(" << e.line_no() << "): "
               << e.description() << endl;
      }
      catch (boost::wave::cpplexer::lexing_exception &e) {
        // some lexing error
           cerr 
-            << "WAVE:" << e.file_name() << "(" << e.line_no() << "): "
+            << "WAVE 4:" << e.file_name() << "(" << e.line_no() << "): "
               << e.description() << endl;
      }
      catch (std::exception &e) {
        // use last recognized token to retrieve the error position
           cerr 
-            << "WAVE:" << current_position.get_file() 
+            << "WAVE 5:" << current_position.get_file() 
             << "(" << current_position.get_line() << "): "
               << "exception caught: " << e.what()
                 << endl;
@@ -1344,7 +1342,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      catch (...) {
        // use last recognized token to retrieve the error position
           cerr 
-            << "WAVE:" << current_position.get_file() 
+            << "WAVE 6:" << current_position.get_file() 
             << "(" << current_position.get_line() << "): "
               << "unexpected exception caught." << endl;
      }

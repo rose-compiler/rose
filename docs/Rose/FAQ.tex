@@ -226,3 +226,163 @@ of interface required to make manipulation generally more simple.
 % Dan
 
 \end{enumerate}
+
+\commentout{
+Tool Demos at Dagstuhl: Scalable Program Analysis
+
+    * LLNL-ROSE: Daniel J. Quinlan
+    * LLVM: Vikram Adve
+    * EspC Concurrency Toolset: Jason Yue Yang
+    * Parfait: Cristina Cifuentes
+    * pluggableTypeChecker: Michael D. Ernst
+    * SAFE: Eran Yahav
+    * SATIrE: Gergo Barany, Markus Schordan
+    * SLAM/SDV,CHESS,HAVOC: Thomas Ball
+    * SpaceInvader: Dino Distefano, Hongseok Yang
+    * WALA: Steve Fink
+    * CodeSonar : David Melski 
+
+ Questions List
+
+    * Which problem does your tool solve?
+      ROSE: is a general purpose source-to-source compiler infrastructure for C, C++,
+         Fortran 2003, and Binaries; supporting optimization and the connection of
+         source code based tools.  By design it supports outside collaborations with 
+         so that new research ideas can have impact on DOE applications.  We are obsessed
+         with the faithful representation of the source code.
+      Compass: is a simple tool wrapping arbitrary static analysis plug-ins for source 
+         code and binaries.
+
+    * What kind of analysis is the tool using?
+      ROSE: AST, CFG, Call graph, class hierarchy graph, SDG (and you can define your own
+         analysis)
+      Compass checkers can use any analysis available in ROSE (mostly directly using the
+         AST, some using the CFG).
+
+    * What are the strengths/weaknesses of the tool (e.g. which language features are (not) supported?)
+      ROSE: high level IR preserves source details, high level IR can be more tedious to
+         use for analysis if not lowered or noramlized in a number of ways that are not
+         currently supported.
+      Compass: Easily extensible to handle new domain-specific or user-defined checkers,
+         but only having relativlely simple checkers at present. Plaform for us to
+         deliver our research work to users, and support research work on parallel
+         program analysis.
+
+    * Usability: What and (qualitatively) how many user annotations does the tool need, if
+      any, for (a) primary functionality, and (b) filtering false alarms?
+      ROSE requires no annotations as a compiler infrastructure, but supports 
+         annotation via comments, pragmas, or in seperate files (Broadway annotation
+         mechanism).  Some tools build using ROSE require annotations, but it is
+         tool specific.
+      Compass: Requires no annotations at present, because none of the existing checkers
+         require annotations, but this will likely change in the future.
+
+    * How does your tool interface with other tools?
+      ROSE is defined as a library so that it is as easy as possible to use with other
+         tools.  How easy and how possible depends on the tool being used. Connections 
+         to PAG (SATiR), Yices, Maple, Wave, SPIN, MOPS, MPI, VizAnalyzer, Code Surfer,
+         IDA Pro, Objdump, and more.
+
+    * Under what conditions is it available (free download, commercial product)?
+      ROSE and Compass are available on the web (BSD), roseCompiler.org and we will
+         be moving the SVN repository to outreach.scidac.gov to support working with
+         external research groups. (Compass is a project within the ROSE release).
+         We use EDG for the C and C++ work and distribute it as a binary.
+
+    * If you were to write your tool from scratch again, what would you do differently?
+      ROSE: We rewrite sections from time to time and make significant changes as 
+         required, even though it breaks older code.  This defuses some of the desire
+         to rewrite anything from scratch.  I wish I had more accurately followed
+         the C++ grammar at an earlier stage, since it is difficult to make some 
+         changes that we know breack peoples codes.  Wish I had written the (n-1)
+         version of ROSETTA (internal IR code generator), instead of making do 
+         with the nth version.
+
+(Original questions from each group) Tentative question list
+
+Group 1:
+
+    * What problem your tool is supposed to solve? (For what class of problems your infrastructure can be used?)
+    * Who is the target audience? (In what phases of development/maintenance processes is your tool mostly usable?) (What quality attributes of a software are addressed by the tool?)
+    * What are the startup costs for using the tool? (Are there any 3rd party dependencies?) (What do you have to learn in order to start using the tool/infrastructure?)
+    * Which languages do you handle; do you handle the full language? (What would it mean to add a new language?)
+    * False alarms and coverage (precision/recall). (Do you over-approximate or under-approximate?)
+    * Do you do static or dynamic analysis, or both?
+    * How do you define scalability (what does it mean in the scope of the problem addressed)? (What is the predictable performance, i.e. operating environment (LOC) in which acceptable performance can be gained?)
+    * Under what conditions is it available (free download, commercial product)?
+    * What are the limitations of the tool/infrastructure?
+    * Some words about usability (documentation, GUI, etc.)
+    * Did you analyze your tool with your tool? 
+
+Group 2:
+
+For tools:
+
+    * Soundness: Under what conditions are the results of the tool sound? Examples: (In the absence of) Reflection, JNI, user annotations that are not checked 
+
+    * Capabilities: What class of properties can the tool check, and how are the required properties specified? 
+
+    * Usability: What and (qualitatively) how many user annotations does the tool need, if any, for (a) primary functionality, and (b) filtering false alarms? 
+
+For infrastructures:
+
+    * Languages: What source and/or machine languages does the system support? 
+
+    * Representation level: Is the internal representation high-level (AST) or mid-/low-level? The answer should imply whether or not source-level analysis and source-to-source transformations are feasible or not. 
+
+    * Flexibility: What scenarios does the system support? Static analysis? Load-/run-time analysis? Static transformations? Load-/run-time transformations? 
+
+4. Source mapping: Does the system preserve the mapping back to source code after transformations?
+
+
+For both:
+
+    * License: Under what license(s) is the tool/system available to 
+
+academic, industry research, and industry product users? This question also applies to infrastructures.
+
+    * Support: How well is the tool/system supported in terms of (a) 
+
+technical help for users, and (b) evolution to match evolving languages and systems?
+
+Group 3:
+
+    * Is anyone else using your tool?
+          o what is the target audience?
+          o How do you convince people that your tool is useful?
+          o What are the barriers to adoption? 
+
+    * What kind of expertise or user input is needed?
+          o How much can you control or tune the tool?
+          o Does the tool require you to change your workflow?
+          o If everyone used the tool how would the day-to-day life of programmers be different?
+          o How do you design the UI? What are the design trade-offs in the interface? 
+
+    * What kind of analysis are you using?
+          o What kind of pre-processing are you doing?
+          o When should you stop the analyzer?
+          o How do you know that you're not going to scale? 
+
+    * If you could redesign, what would you do differently?
+          o What are the caveats of the tool?
+                + What are the causes of the false positives? 
+
+Group 4:
+
+    * What is the user interface of the tool/IDE integration?
+    * Is it available? How do I get it? What license does it use?
+    * How long does it take to get a program through the tool?
+    * How many people are using the tool?
+    * Why was the tool created? What need does it address?
+    * What support is available for the tool?
+    * What are the strengths/weaknesses of the tool (e.g. which language features are (not) supported?) 
+
+Group 5:
+
+    * How does the tool explain how it arrived at its results?
+    * If you were to rewrite your tool, what would you do differently?
+    * What does the tool teach developers about their code, and how can it change their coding practices?
+    * Why doesn't your tool interface with other tools? 
+
+
+}

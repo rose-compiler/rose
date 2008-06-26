@@ -1,0 +1,106 @@
+\chapter{Bug Seeding}
+
+  Bug seeding is a technique used to construct example codes from 
+existing codes which can be used to evaluate tools for the finding
+bugs in randomly selected existing applications.  The idea is to
+seed an existing application with a known number of known bugs
+and evaluate the bug finding or security tool based on the
+percentage of the number of bugs found by the tool.  If the
+bug finding tool can identify all known bugs then there can
+be some confidence that the tool detects all bugs of that type
+used to seed the application.
+
+   This example tutorial code is a demonstration of a more
+complete technique being developed in collaboration with NIST 
+to evaluate tools for finding security flaws in applications.
+It will in the future be a basis for testing of tools built using
+ROSE, specifically Compass, but the techniques are not in any
+way specific to ROSE or Compass.
+
+\section{Input For Examples Showing Bug Seeding}
+
+   Figure~\ref{Tutorial:exampleInputCode_bugSeeding}
+shows the example input used for demonstration of bug seeding as 
+a transformation.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_seedBugsExample_arrayIndexing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_seedBugsExample_arrayIndexing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in
+         codes used in this chapter.}
+\label{Tutorial:exampleInputCode_seedBugs}
+\end{figure}
+
+
+\section{Generating the code representing the seeded bug}
+
+    Figure~\ref{Tutorial:example_seedBugs}
+shows a code that traverses each IR node and for and
+modifies array reference index expressions to be out of bounds.
+The input code is shown in figure \ref{Tutorial:exampleInputCode_seedBugs},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_seedBugs}.
+
+
+\begin{figure}[!h]
+{\indent
+{
+%\mySmallFontSize
+\mySmallestFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/seedBugsExample_arrayIndexing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/seedBugsExample_arrayIndexing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to seed bugs. }
+\label{Tutorial:example_seedBugs}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_seedBugsExample_arrayIndexing.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_seedBugsExample_arrayIndexing.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using seedBugsExample\_arrayIndexing.C}
+\label{Tutorial:exampleOutput_seedBugs}
+\end{figure}
+
