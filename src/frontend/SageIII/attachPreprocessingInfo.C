@@ -475,6 +475,17 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
             // DQ (6/20/2005): Compiler generated is not enough, it must be marked for output explicitly
             // bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGenerated();
                bool isCompilerGenerated = currentLocNodePtr->get_file_info()->isCompilerGeneratedNodeToBeUnparsed();
+            // JJW (6/25/2008): These are always flagged as "to be
+            // unparsed", even if they are not unparsed because their
+            // corresponding declarations aren't unparsed
+               if (isSgClassDefinition(currentLocNodePtr) ||
+                   isSgFunctionDefinition(currentLocNodePtr)) {
+                 SgLocatedNode* ln = isSgLocatedNode(currentLocNodePtr->get_parent());
+                 Sg_File_Info* parentFi = ln ? ln->get_file_info() : NULL;
+                 if (parentFi && parentFi->isCompilerGenerated() && !parentFi->isCompilerGeneratedNodeToBeUnparsed()) {
+                   isCompilerGenerated = false;
+                 }
+               }
                bool isTransformation    = currentLocNodePtr->get_file_info()->isTransformation();
 
             // Try to not call get_filename() if it would be inappropriate (either when isCompilerGenerated || isTransformation)
