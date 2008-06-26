@@ -1240,7 +1240,9 @@ EXTRA_DIST = \
    default_error_graph.dot \
    inputCode_addStruct.C \
    rose_bin_example_backup.s \
-   buffer2.bin
+   buffer2.bin \
+   inputCode_seedBugsExample_arrayIndexing.C
+
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 
 
