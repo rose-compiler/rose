@@ -4,7 +4,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = bugSeeding
 
-bugSeeding_SOURCES = bugSeedingSupport.C
+bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
