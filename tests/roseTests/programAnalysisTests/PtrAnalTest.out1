@@ -87,7 +87,7 @@ ctrl: 21->22 always
 ctrl: 22->23 always
 
  Mapping 
-SgBasicBlock:{char *content = "adlfkj";char *content2 = new char [4UL];char *output = ::foo(content);::goo(::foo);}:16->22
+SgBasicBlock:{char *content = "adlfkj";char *content2 = new char [4UL];char *output = ::foo(content);::goo(::foo);return 0;}:16->22
 SgVariableDeclaration:char *content = "adlfkj";:16->17
 SgInitializedName:content:17v:main-5-content
 SgCastExp:"adlfkj":17v:main-5-content

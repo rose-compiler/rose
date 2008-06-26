@@ -83,5 +83,6 @@ int main(int argc,char *argv[])
     }
   }
   printmatrix(a);
+  return 0;
 }
 

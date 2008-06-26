@@ -4909,19 +4909,7 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
 
           while ( pp != classdefn_stmt->get_members().end() )
              {
-            // DQ (3/18/2005): Check to make sure this is a statement from the current file! (see test2005_27.C)
-            // unparseStatement((*pp), ninfo);
-               bool unparseStatementIntoSourceFile = statementFromFile (*pp,getFileName());
-
-               if (ROSE_DEBUG > 5)
-                    cout << "unparseStatementIntoSourceFile = " 
-                         << ( (unparseStatementIntoSourceFile == true) ? "false" : "false" ) << endl;
-
-               if (unparseStatementIntoSourceFile == true)
-                  {
-                    unparseStatement((*pp), ninfo);
-                  }
-
+               unparseStatement((*pp), ninfo);
                pp++;
              }
 

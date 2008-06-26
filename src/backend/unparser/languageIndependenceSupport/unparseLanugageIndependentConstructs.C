@@ -398,6 +398,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
+  // JJW (8/23/2008): Move check for statement-within-file here rather than in individual procedures
+     if (!statementFromFile(stmt, getFileName())) {
+       return;
+     }
+
   // saveCompilerGeneratedStatements(stmt,info);
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code
      if ( info.outputCompilerGeneratedStatements() == false && 
@@ -1084,51 +1089,29 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           SgStatement* currentStatement = *statementIterator;
           ROSE_ASSERT(currentStatement != NULL);
 
-       // unp->opt.display("Before unp->statementFromFile");
-          bool unparseStatementIntoSourceFile = statementFromFile (currentStatement,getFileName());
-
-          if (ROSE_DEBUG > 1)
+          if (ROSE_DEBUG > 3)
              {
-               cout << "unparseStatementIntoSourceFile = " 
-                    << ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) << endl;
-
-               printf ("block scope statement = %p = %s \n",currentStatement,currentStatement->class_name().c_str());
-               currentStatement->get_file_info()->display("global scope statement: debug");
-             }
-#if 0
-          curprint ( string("/* global scope (" ) + currentStatement->class_name() + "): unparseStatementIntoSourceFile = " + ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) + " */ ");
-#endif
-
-          if (unparseStatementIntoSourceFile == true)
-             {
-               if (ROSE_DEBUG > 3)
-                  {
-                 // (*primary_os)
-                    cout << "In run_unparser(): getLineNumber(currentStatement) = "
+            // (*primary_os)
+               cout << "In run_unparser(): getLineNumber(currentStatement) = "
 #if 1
-                         << currentStatement->get_file_info()->displayString()
+                    << currentStatement->get_file_info()->displayString()
 #else
-                         << ROSE::getLineNumber(currentStatement)
-                         << " getFileName(currentStatement) = " 
-                         << ROSE::getFileName(currentStatement)
+                    << ROSE::getLineNumber(currentStatement)
+                    << " getFileName(currentStatement) = " 
+                    << ROSE::getFileName(currentStatement)
 #endif
-                         << " unp->cur_index = " 
-                         << unp->cur_index
-                         << endl;
-                  }
+                    << " unp->cur_index = " 
+                    << unp->cur_index
+                    << endl;
+             }
 
-            // DQ (6/4/2007): Make a new SgUnparse_Info object for each statement in global scope
-            // This should permit children to set the current_scope and not effect other children
-            // see test2007_56.C for example "namespace A { extern int x; } int A::x = 42;"
-            // Namespace definition scope should not effect scope set in SgGlobal.
-            // unparseStatement(currentStatement, info);
-               SgUnparse_Info infoLocal(info);
-               unparseStatement(currentStatement, infoLocal);
-             }
-            else
-             {
-            // printf ("Skipped unparsing %s (global declaration) \n",currentStatement->sage_class_name());
-             }
+       // DQ (6/4/2007): Make a new SgUnparse_Info object for each statement in global scope
+       // This should permit children to set the current_scope and not effect other children
+       // see test2007_56.C for example "namespace A { extern int x; } int A::x = 42;"
+       // Namespace definition scope should not effect scope set in SgGlobal.
+       // unparseStatement(currentStatement, info);
+          SgUnparse_Info infoLocal(info);
+          unparseStatement(currentStatement, infoLocal);
 
        // Go to the next statement
           statementIterator++;

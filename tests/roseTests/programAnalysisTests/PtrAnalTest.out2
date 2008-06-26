@@ -156,7 +156,7 @@ ctrl: 34->35 always
 ctrl: 35->36 always
 
  Mapping 
-SgBasicBlock:{struct ::List *head;struct ::List *end;::buildList(head,end);for(int i = 0;i < 10;++i) {::appendList(head,end,(2 * i));}struct ::List *p = ::lookupList(head,6);}:27->35
+SgBasicBlock:{struct ::List *head;struct ::List *end;::buildList(head,end);for(int i = 0;i < 10;++i) {::appendList(head,end,(2 * i));}struct ::List *p = ::lookupList(head,6);return 0;}:27->35
 SgExprStatement:buildList(head,end);:27->27
 SgFunctionRefExp:buildList:27v:buildList
 SgVarRefExp:head:27v:main-13-head

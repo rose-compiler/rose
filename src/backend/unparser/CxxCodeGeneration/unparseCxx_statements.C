@@ -738,17 +738,8 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
           SgStatement* currentStatement = *statementIterator;
           ROSE_ASSERT(currentStatement != NULL);
 
-          bool unparseStatementIntoSourceFile = statementFromFile (currentStatement,getFileName());
-
-          if (ROSE_DEBUG > 5)
-               cout << "unparseStatementIntoSourceFile = " 
-                    << ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) << endl;
-
-          if (unparseStatementIntoSourceFile == true)
-             {
-            // DQ (11/6/2004): use ninfo instead of info for nested declarations in namespace
-               unparseStatement(currentStatement, ninfo);
-             }
+       // DQ (11/6/2004): use ninfo instead of info for nested declarations in namespace
+          unparseStatement(currentStatement, ninfo);
 
        // Go to the next statement
           statementIterator++;
@@ -1820,25 +1811,8 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         { 
           ROSE_ASSERT((*p) != NULL);
 
-       // DQ (3/16/2005): Check for statements from include files within basic blocks! (see test2005_26.C)
-          bool unparseStatementIntoSourceFile = statementFromFile (*p,getFileName());
+          unparseStatement((*p), info);
 
-          if (ROSE_DEBUG > 3)
-             {
-               cout << "unparseStatementIntoSourceFile = " 
-                    << ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) << endl;
-               printf ("block scope statement = %p = %s \n",*p,(*p)->class_name().c_str());
-               (*p)->get_file_info()->display("block scope statement: debug");
-             }
-
-       // curprint ( string("/* block scope: unparseStatementIntoSourceFile = " + ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) + " */ ";
-
-          if (unparseStatementIntoSourceFile == true)
-             {
-               unparseStatement((*p), info);
-             }
-
-       // unparseStatement((*p), info);
           p++;
         }
 
@@ -4109,28 +4083,7 @@ Unparse_ExprStmt::unparseClassDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           while ( pp != classdefn_stmt->get_members().end() )
              {
-            // DQ (3/18/2005): Check to make sure this is a statement from the current file! (see test2005_27.C)
-            // unparseStatement((*pp), ninfo);
-               bool unparseStatementIntoSourceFile = statementFromFile (*pp,getFileName());
-
-               if (ROSE_DEBUG > 5)
-                    cout << "unparseStatementIntoSourceFile = " << ( (unparseStatementIntoSourceFile == true) ? "true" : "false" ) << endl;
-#if 0
-               printf ("\n\nIn unparseClassDefnStmt: unparseStatementIntoSourceFile = %s info.CheckAccess() = %s class declaration member = %p = %s \n",
-                    (unparseStatementIntoSourceFile == true) ? "true" : "false",info.CheckAccess() ? "true" : "false",*pp,(*pp)->class_name().c_str());
-#endif
-               if (unparseStatementIntoSourceFile == true)
-                  {
-                 // Error checking (this does not catch anything since the unparser does not modify the AST)
-                 // SgAccessModifier::access_modifier_enum accessSpecBefore = (*pp)->get_declarationModifier().get_accessModifier().get_modifier();
-
-                    unparseStatement((*pp), ninfo);
-
-                 // Error checking: The unparseStatement() should not change the accessSpec (I think).
-                 // SgAccessModifier::access_modifier_enum accessSpecAfter = (*pp)->get_declarationModifier().get_accessModifier().get_modifier();
-                 // ROSE_ASSERT(accessSpecBefore == accessSpecAfter);
-                  }
-
+               unparseStatement((*pp), ninfo);
                pp++;
              }
 
