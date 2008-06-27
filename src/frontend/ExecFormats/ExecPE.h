@@ -402,6 +402,7 @@ class COFFSymbol : public ExecSymbol {
     size_t get_aux_size() {return aux_size;}
 
     /* Native versions of the COFFSymbol_disk members */
+    std::string         st_name;        /* The original name; super.name might be modified */
     addr_t              st_name_offset;
     int                 st_section_num;
     unsigned            st_type, st_storage_class, st_num_aux_entries;
@@ -423,10 +424,12 @@ class COFFSymtab : public ExecSection {
 
     /* Accessors for protected/private data members */
     std::vector<COFFSymbol*>& get_symbols() {return symbols;}
+    ExecSection *get_strtab() {return strtab;}
 
   private:
     void ctor(ExecFile*, PEFileHeader*);
     std::vector<COFFSymbol*> symbols;
+    ExecSection *strtab;                /* Section containing symbol names */
 };
 
 

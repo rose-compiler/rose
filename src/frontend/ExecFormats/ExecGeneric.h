@@ -522,6 +522,7 @@ enum SymbolType {
     SYM_FUNC,                                           /* Function */
     SYM_SECTION,                                        /* Section of a file */
     SYM_FILE,                                           /* Name of a file */
+    SYM_ARRAY,                                          /* Array of some other type */
     SYM_TLS,                                            /* Thread-local storage */
     SYM_REGISTER                                        /* CPU register value (see Sparc) */
 };
@@ -564,6 +565,8 @@ class ExecSymbol {
     std::string         name;                           /* Symbol name may be the empty string */
 };
 
+void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
+    
 // DQ (6/15/2008): Picking a better name, using "parse" is a compiler project is difficult to trace.
 // ExecFile *parse(const char *name);
 ExecFile *parse(const char *name);

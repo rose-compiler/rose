@@ -666,6 +666,7 @@ ExecSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
       case SYM_FILE:     s_type = "file";     break;
       case SYM_TLS:      s_type = "thread";   break;
       case SYM_REGISTER: s_type = "register"; break;
+      case SYM_ARRAY:    s_type = "array";    break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
 
@@ -676,12 +677,38 @@ ExecSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fputc('\n', f);
 
-    fprintf(f, "%s%-*s = %"PRIx64" bytes\n", p, w, "size", size);
+    fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "size", size);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Works like hexdump -C to display N bytes of DATA */
+void
+hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
+{
+    for (size_t i=0; i<n; i+=16) {
+        fprintf(f, "%s0x%08"PRIx64, prefix, base_addr+i);
+        for (size_t j=0; j<16; j++) {
+            if (8==j) fputc(' ', f);
+            if (i+j<n) {
+                fprintf(f, " %02x", data[i+j]);
+            } else {
+                fputs("   ", f);
+            }
+        }
+        fprintf(f, "  |");
+        for (size_t j=0; j<16 && i+j<n; j++) {
+            if (isprint(data[i+j])) {
+                fputc(data[i+j], f);
+            } else {
+                fputc('.', f);
+            }
+        }
+        fputs("|\n", f);
+    }
+}
 
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
