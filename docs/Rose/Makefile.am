@@ -243,6 +243,7 @@ logo: copyPublications rose.html projects.html $(COMPASS_MANUAL)
 	cp -f rose.html ROSE_WebPages/index.html
 	cp -f projects.html ROSE_WebPages/Projects/projects.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/Projects/
+	cp -f $(top_srcdir)/INSTALL.txt ROSE_WebPages/INSTALL.txt
 
 # Copy the ROSE research publication in the distribution into the web pages so that
 # the web pages can reference them with relative paths and the documentation can be
