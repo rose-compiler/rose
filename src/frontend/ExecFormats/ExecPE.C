@@ -784,9 +784,9 @@ PEImportSection::unparse(FILE *f)
 
         /* Hint/name RVAs and their hint/name pairs */
         ROSE_ASSERT(idir->hintnames_rva >= mapped_rva);
-        addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
+        const addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
         ROSE_ASSERT(idir->bindings_rva >= mapped_rva);
-        addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
+        const addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
         const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
         const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
         const std::vector<addr_t> &bindings = dll->get_bindings();
@@ -813,25 +813,24 @@ PEImportSection::unparse(FILE *f)
 
         /* hint/name pair rva array and binding array are null terminated */
         rva_le = 0;
-        status = fseek(f, hintname_rvas_offset + (hintname_rvas.size()+1)*sizeof(rva_le), 1);
+        status = fseek(f, hintname_rvas_offset + hintname_rvas.size()*sizeof(rva_le), 1);
         ROSE_ASSERT(status>=0);
         nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
         ROSE_ASSERT(1==nwrite);
         
         binding_le = 0;
-        status = fseek(f, bindings_offset + (hintname_rvas.size()+1)*sizeof(binding_le), 1);
+        status = fseek(f, bindings_offset + hintname_rvas.size()*sizeof(binding_le), 1);
         ROSE_ASSERT(status>=0);
         nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
         ROSE_ASSERT(1==nwrite);
-        
-        
     }
 
     /* Directory list is zero terminated */
     {
         PEImportDirectory_disk zero;
         memset(&zero, 0, sizeof zero);
-        int status = fseek(f, offset + (dlls.size()+1)*sizeof zero, SEEK_SET);
+        fprintf(stderr, "ROBB: dlls.size=%zu, sizeof=%zu\n", dlls.size(), sizeof zero);
+        int status = fseek(f, offset + dlls.size()*sizeof zero, SEEK_SET);
         ROSE_ASSERT(status>=0);
         size_t nwrite = fwrite(&zero, sizeof zero, 1, f);
         ROSE_ASSERT(1==nwrite);
