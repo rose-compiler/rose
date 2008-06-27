@@ -394,8 +394,7 @@ class COFFSymbol : public ExecSymbol {
         {ctor(fhdr, symtab, strtab, idx);}
     virtual ~COFFSymbol() {}
     void *encode(COFFSymbol_disk*);
-    virtual void dump(FILE *f, const char *prefix, ssize_t idx) {dump(f, prefix, idx, NULL);}
-    void dump(FILE*, const char *prefix, ssize_t idx, ExecFile*);
+    virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 
     /* Auxilliary data for the symbol */
     const unsigned char *get_aux_data() {return aux_data;}

@@ -538,14 +538,15 @@ enum SymbolBinding {
 class ExecSymbol {
   public:
     ExecSymbol()
-        : def_state(SYM_UNDEFINED), binding(SYM_NO_BINDING), type(SYM_NO_TYPE), value(0), size(0)
+        : def_state(SYM_UNDEFINED), binding(SYM_NO_BINDING), type(SYM_NO_TYPE), value(0), size(0), bound(NULL)
         {}
     virtual ~ExecSymbol() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */
-    std::string& get_name() {return name;}
+    const std::string& get_name() {return name;}
     void set_name(std::string &s) {name=s;}
+    void set_name(const std::string &s) {name=s;}
     void set_name(const char *s) {name=s;}
     addr_t get_value() {return value;}
     void set_value(addr_t v) {value=v;}
@@ -553,6 +554,8 @@ class ExecSymbol {
     void set_size(addr_t sz) {size=sz;}
     SymbolType get_type() {return type;}
     void set_type(SymbolType t) {type=t;}
+    ExecSection *get_bound() {return bound;}
+    void set_bound(ExecSection *s) {bound=s;}
 
   protected:
     SymbolDefState      def_state;                      /* Undefined, created but not allocated, created and allocated, etc. */
@@ -560,6 +563,7 @@ class ExecSymbol {
     SymbolType          type;                           /* file, section, variable, function, etc. */
     addr_t              value;                          /* symbol value or address if defined */
     addr_t              size;                           /* size of symbol if defined */
+    ExecSection         *bound;                         /* section when defined locally */
 
   private:
     std::string         name;                           /* Symbol name may be the empty string */

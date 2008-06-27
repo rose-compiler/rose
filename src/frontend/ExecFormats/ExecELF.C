@@ -1230,13 +1230,40 @@ ElfSymbolSection::ctor(ElfSectionTableEntry *shdr)
     }
 }
 
-/* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated. */
+/* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated.
+ * Also update section pointers for locally-bound symbols since we know that the section table has been read and all
+ * non-synthesized sections have been created.
+ * 
+ * The st_shndx is the index (ID) of the section to which the symbol is bound. Special values are:
+ *   0x0000        no section (section table entry zero should be all zeros anyway)
+ *   0xff00-0xffff reserved values, not an index
+ *   0xff00-0xff1f processor specific values
+ *   0xfff1        symbol has absolute value not affected by relocation
+ *   0xfff2        symbol is fortran common or unallocated C extern */
 void
 ElfSymbolSection::set_linked_section(ElfSection *strtab)
 {
     ElfSection::set_linked_section(strtab);
     for (size_t i=0; i<symbols.size(); i++) {
-        symbols[i]->set_name(strtab->content_str(symbols[i]->st_name));
+        ElfSymbol *symbol = symbols[i];
+
+        /* Get symbol name */
+        symbol->set_name(strtab->content_str(symbol->st_name));
+
+        /* Get bound section ptr */
+        if (symbol->st_shndx>0 && symbol->st_shndx<0xff00) {
+            ExecSection *bound = get_file()->get_section_by_id(symbol->st_shndx);
+            ROSE_ASSERT(bound!=NULL);
+            symbol->set_bound(bound);
+        }
+
+        /* Section symbols may need names and sizes */
+        if (symbol->get_type()==SYM_SECTION && symbol->get_bound()) {
+            if (symbol->get_name().size()==0)
+                symbol->set_name(symbol->get_bound()->get_name());
+            if (symbol->get_size()==0)
+                symbol->set_size(symbol->get_bound()->get_size());
+        }
     }
 }
 

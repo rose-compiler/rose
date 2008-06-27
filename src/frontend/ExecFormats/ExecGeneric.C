@@ -669,7 +669,13 @@ ExecSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
       case SYM_ARRAY:    s_type = "array";    break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
-
+    if (bound) {
+        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "bound",
+                bound->get_id(), bound->get_name().c_str(), bound->get_offset(), bound->get_size());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "bound");
+    }
+    
     fprintf(f, "%s%-*s = 0x%08"PRIx64, p, w, "value", value);
     if (value>9) {
         fprintf(f, " (unsigned)%"PRIu64, value);

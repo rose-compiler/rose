@@ -737,6 +737,13 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
     st_storage_class   = le_to_host(disk->st_storage_class);
     st_num_aux_entries = le_to_host(disk->st_num_aux_entries);
 
+    /* Bind to section number. We can do this now because we've already parsed the PE Object Table */
+    ROSE_ASSERT(fhdr->get_object_table()!=NULL);
+    if (st_section_num>0) {
+        bound = fhdr->get_file()->get_section_by_id(st_section_num);
+        ROSE_ASSERT(bound!=NULL);
+    }
+    
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
     value = le_to_host(disk->st_value);
     def_state = SYM_DEFINED;
@@ -899,11 +906,10 @@ COFFSymbol::encode(COFFSymbol_disk *disk)
 
 /* Print some debugging info */
 void
-COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
+COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096], ss[128], tt[128];
     const char *s=NULL, *t=NULL;
-    ExecSection *section=NULL;
     if (idx>=0) {
         sprintf(p, "%sCOFFSymbol[%zd].", prefix, idx);
     } else {
@@ -913,23 +919,14 @@ COFFSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecFile *ef)
 
 
     ExecSymbol::dump(f, p, -1);
-    
-    if (st_section_num<=0) {
-        switch (st_section_num) {
-          case 0:  s = "external, not assigned";    break;
-          case -1: s = "absolute value";            break;
-          case -2: s = "general debug, no section"; break;
-          default: sprintf(ss, "%d", st_section_num); s = ss; break;
-        }
-        fprintf(f, "%s%-*s = %s\n", p, w, "st_section_num", s);
-    } else if (NULL==ef) {
-        fprintf(f, "%s%-*s = [%d] <section info not available here>\n", p, w, "st_section_num", st_section_num);
-    } else if (NULL==(section=ef->get_section_by_id(st_section_num))) {
-        fprintf(f, "%s%-*s = [%d] <not a valid section ID>\n", p, w, "st_section_num", st_section_num);
-    } else {
-        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_section_num", 
-                st_section_num, section->get_name().c_str(), section->get_offset(), section->get_size());
+
+    switch (st_section_num) {
+      case 0:  s = "external, not assigned";    break;
+      case -1: s = "absolute value";            break;
+      case -2: s = "general debug, no section"; break;
+      default: sprintf(ss, "%d", st_section_num); s = ss; break;
     }
+    fprintf(f, "%s%-*s = %s\n", p, w, "st_section_num", s);
 
     switch (st_type & 0xf0) {
       case 0x00: s = "none";     break;
@@ -1076,7 +1073,7 @@ COFFSymtab::dump(FILE *f, const char *prefix, ssize_t idx)
     ExecSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", symbols.size());
     for (size_t i=0; i<symbols.size(); i++) {
-        symbols[i]->dump(f, p, i, get_file());
+        symbols[i]->dump(f, p, i);
     }
 }
 
