@@ -5,8 +5,58 @@ more or less in decreasing order of priority.  Some TODO items are
 implicit from received email.  Significant contributions require
 written assignments and disclaimers.
 
-DONE * Multidimensional support is not finished yet (mostly there)
-  Could be made less dependent upon array objects (?)  
+-----------------
+June 27, 2008 Clean up the ROSE source tree for the public release
+SciDAC repository: 
+  ROSE (core)
+  EDG Binaries
+  Open Fortran Parser jar file
+Local repository:
+  EDG source
+  Testsuite: 
+    POP, 
+    OMP tests, 
+    developerscratch, 
+    Python example test, 
+    ROSEHPCT tests
+
+Old projects:
+  SimpleCallGraph
+  CompassDist
+  BinaryContextlookup
+  DatalogAnalysis
+  MOPS
+  A++1999/2003
+  OMPPreprocessor
+
+Sub directories : 
+  keep (Y)  ,
+    GNU_HEADERS Y
+    qmsh Y
+    Papers/talks Y
+    TAU headers Y
+    A++ Y
+    P++ Y
+    OvertureCode Y
+    SLA Y
+    MSTL Y
+  remove (N)
+    OpenAnalysis N
+    Open64 N
+    TXT2HTML N
+    aterm_bundle N
+    proposals N
+    Boost test N
+    mpich N
+    MySQL N
+    COCO N
+  undecided   
+    checkpoint Lib ?
+    PDFlib ?
+
+  -----------------
+  DONE * Multidimensional support is not finished yet (mostly there)
+    Could be made less dependent upon array objects (?)  
 
 DONE * Better unparser (in development by Gary Lee)
 
