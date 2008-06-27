@@ -1,0 +1,29 @@
+ROSE INSTALLATION GUIDE
+
+Prerequisites
+---------------
+- Download copy of ROSE (either with EDG source or binary version)
+- Download Boost C++ libraries: version >= 1.35.0 http://www.boost.org/users/download/
+- gcc version 3.6 or higher
+
+Quick Guide to install BOOST:
+-----------------------------
+- untar the BOOST files
+- create a installation directory (e.g. BOOST_INSTALL)
+- type in source directory: ./configure --prefix=[DIR]/BOOST_INSTALL
+- type in source directory: make and make install
+
+Further information can be found at http://www.boost.org/
+
+
+Quick Guide to install ROSE:
+-----------------------------
+- untar the ROSE files
+- create a installation directory (e.g. ROSE_INSTALL)
+- type in source directory: ./configure --prefix=[DIR]/ROSE_INSTALL --with-boost=[DIR]/BOOST_INSTALL
+- type in source directory: make and make install
+- type in source directory: make docs to create documentation
+
+NOTE there are many configure options for ROSE. Type ./configure --help for more information.
+
+
