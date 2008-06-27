@@ -1152,6 +1152,11 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
 
     // This will conflict with prototype in a header
    // prepend_statement(globalscope,funcDecl);
+   // Prepend a function prototype declaration in current scope, hide it from the unparser
+   // prependStatement(funcDecl,scope);
+   // Sg_File_Info* file_info = funcDecl->get_file_info();
+   // file_info->unsetOutputInCodeGeneration ();
+    
     symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
     ROSE_ASSERT(symbol);
 #endif

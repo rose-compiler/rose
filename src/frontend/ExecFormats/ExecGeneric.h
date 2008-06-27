@@ -598,7 +598,7 @@ inline uint16_t swap_bytes(uint16_t n) {
     return ((n>>8) & 0xff) | ((n<<8) & 0xff00);
 }
 inline uint32_t swap_bytes(uint32_t n) {
-    return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000);
+    return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000u);
 }
 inline uint64_t swap_bytes(uint64_t n) {
     return (((n>>56) & (0xffull<<0 )) | ((n>>40) & (0xffull<<8 )) | ((n>>24) & (0xffull<<16)) | ((n>>8 ) & (0xffull<<24)) |
@@ -655,7 +655,7 @@ inline void host_to_le(unsigned h, uint16_t &n) {
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(unsigned h, uint32_t &n) {
-    assert(0==(h & ~0xffffffff));
+    assert(0==(h & ~0xfffffffful));
     uint32_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
@@ -675,7 +675,7 @@ inline void host_to_le(int h, int16_t &n) {
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_le(int h, int32_t &n) {
-    assert((unsigned)h<=0x8fffffff || ((unsigned)h|0xffffffff)==(unsigned)-1);
+    assert((unsigned)h<=0x8fffffffu || ((unsigned)h|0xffffffffu)==(unsigned)-1);
     int32_t hh = h;
     n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
@@ -720,7 +720,7 @@ inline void host_to_be(unsigned h, uint16_t &n) {
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(unsigned h, uint32_t &n) {
-    assert(0==(h & ~0xffffffff));
+    assert(0==(h & ~0xfffffffful));
     uint32_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
@@ -740,7 +740,7 @@ inline void host_to_be(int h, int16_t &n) {
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
 inline void host_to_be(int h, int32_t &n) {
-    assert((unsigned)h<0x8fffffff || ((unsigned)h|0xffffffff)==(unsigned)-1);
+    assert((unsigned)h<0x8ffffffful || ((unsigned)h|0xfffffffful)==(unsigned)-1);
     int32_t hh = h;
     n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }

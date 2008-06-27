@@ -165,15 +165,28 @@ namespace StringUtility
        //  unsigned short int chksum(char *buffer, int len);
            unsigned long generate_checksum( std::string s );
 
-       // DQ (3/5/2006): Copies from ROSE class (depricated in there previous location)
-           std::string stripPathFromFileName           ( const std::string & fileNameWithPath );   //! get the filename from the full filename
-           std::string getPathFromFileName             ( const std::string & fileNameWithPath );   //! get the path from the full filename
-           std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); //! get the name without the ".C"
-           std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       //! get the absolute path from the relative path
-           std::string fileNameSuffix                  ( const std::string & fileName );           //! get the file name extension (suffix)
+//--------------------------------------------------------------
+//@{
+/*! @name File name strings
+  \brief Handling for /path/name.suffix. Namespace CommandlineProcessing also has some file name handling functions. 
 
-           bool isCppFileNameSuffix                    ( const std::string & fileName );           //! true only if this is a valid C++ source file name extension (suffix)
+*/
+       // DQ (3/5/2006): Copies from ROSE class (deprecated in there previous location)
+          //! Get name.suffix from /path/name.suffix
+           std::string stripPathFromFileName           ( const std::string & fileNameWithPath ); 
+           //! Get the path from the full file name: /path/name.suffix 
+           std::string getPathFromFileName             ( const std::string & fileNameWithPath );   
+           //! Get the file name without the ".suffix"
+           std::string stripFileSuffixFromFileName     ( const std::string & fileNameWithSuffix ); 
+           //! Get the absolute path from the relative path
+           std::string getAbsolutePathFromRelativePath ( const std::string & relativePath, bool printErrorIfAny /* = false */ );       
+           //! Get the file name suffix (extension)
+           std::string fileNameSuffix                  ( const std::string & fileName );          
 
+  // True only if this is a valid C++ source file name extension (suffix). Duplicate of CommandlineProcessing::isCppFileNameSuffix(). 
+//           bool isCppFileNameSuffix                    ( const std::string & fileName ); 
+
+//@}
        /*
         * The function 
         * findfile

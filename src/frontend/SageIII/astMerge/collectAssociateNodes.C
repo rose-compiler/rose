@@ -1563,6 +1563,10 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgSpawnStmt:
           case V_SgTryStmt:
           case V_SgVariantStatement:
+          case V_SgUpcBarrierStatement:
+          case V_SgUpcFenceStatement:
+          case V_SgUpcNotifyStatement:
+          case V_SgUpcWaitStatement:
              {
             // printf ("addAssociatedNodes(): ignoring this case of node = %p = %s = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
                break;
@@ -1755,6 +1759,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
           case V_SgBasicBlock:
           case V_SgNamespaceDefinitionStatement:
           case V_SgForStatement:
+          case V_SgUpcForAllStatement:
           case V_SgCatchOptionStmt:
           case V_SgDoWhileStmt:
           case V_SgSwitchStatement:
