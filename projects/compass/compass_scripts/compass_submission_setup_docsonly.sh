@@ -133,7 +133,7 @@ makeDocs()
   local tempfile=`mktemp -t compassXXXXXX`
   local -i highstat=`which highlight >& /dev/null; echo $?`
 
-  echo "Updating checker documentation (running highlight if available) ..."
+#  echo "Updating checker documentation (running highlight if available) ..."
 
   while read dir
   do

@@ -33,7 +33,7 @@ interface to Compass.  Mechanisms available include:
 
    \item CompassGUI: \\
          There is also a Compass GUI for reviewing Compass output and interactively
-         reruning compass and sifting through the output while relating them to the source
+         rerunning compass and sifting through the output while relating them to the source
          code \ref{Compass_GUI}. This work uses the QRose library produced at Imperial College
          London by Gabriel Coutinho, as part of their development of FPGA tools using ROSE.
          QRose is based on the Qt library and provides a wide number of ROSE aware components
@@ -100,7 +100,7 @@ FunctionDocumentation: /home/ROSE/projects/compass/tests/Cxx_tests/test2006_123.
 
 Compass as a checker is most useful when the user is notified as early as possible
 when he violates a desired software property. Although for many purposes it is
-sufficient to run Compass separately  it is possible to use compass
+sufficient to run Compass separately; it is possible to use compass
 seamlessly when developing in emacs. By using an emacs extension called {\em flymake} together
 with Compass erroneous lines can be highlighted while programming, and the relevant error messages displayed 
 in a dialog. Syntax errors from ROSE will be displayed as well, see figure \ref{Compass_Emacs_Screenshot}.
@@ -197,7 +197,7 @@ A short explanation of the code in figure \ref{compassEmacs} is that the first l
 the flymake extension to be available upon
 loading emacs while the second line will load the find-file-hook and flymake-find-file-hook
 functions. The "setq" sections that follows runs Compass for all files that are being edited
-that has the c and C extensions. The "list" section tells flymake to execute the check-syntax
+that has the c and C extensions. The ``list'' section tells flymake to execute the check-syntax
 rule in the makefile. 
 
 \subsubsection{Example check-syntax rule}
@@ -318,19 +318,20 @@ checker. This skeleton can be easily adapted to write all checkers.
 Follow these steps to generate a checker skeleton:
 \begin{enumerate}
    \item Enter a directory where you want the directory of your checker to be created
-   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/compassRepository/bin/gen\_checker.sh $<$name of your checker$>$}
+   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/compass\_scripts/gen\_checker.sh $<$name of your checker$>$}
 \end{enumerate}
 
-The results of executing gen\_checker.sh script is that a new directory name 'multipleCasesOnSameLine' 
+The results of executing gen\_checker.sh script is that a new directory name 
+``multipleCasesOnSameLine''
 (name of your checker in camel case) is created with the following files:
 
 \begin{verbatim}
-	compass.C           multipleCasesOnSameLine.C
-	compass.h           multipleCasesOnSameLineDocs.tex
-	compass_parameters  multipleCasesOnSameLine.h
-	compassTestMain.C   multipleCasesOnSameLine.inc
-	Makefile            multipleCasesOnSameLineMain.C
-	Makefile.am         multipleCasesOnSameLineTest1.C
+compass.C           multipleCasesOnSameLine.C
+compass.h           multipleCasesOnSameLineDocs.tex
+compass_parameters  multipleCasesOnSameLine.h
+compassTestMain.C   multipleCasesOnSameLine.inc
+Makefile            multipleCasesOnSameLineMain.C
+Makefile.am         multipleCasesOnSameLineTest1.C
 \end{verbatim}
 
 Some of these files (compass.[Ch], compass\_parameters, and compassTestMain.C)
@@ -356,7 +357,7 @@ this file will be added verbatim to the compass makefile.
 \end{itemize}
 
 \subsection{Integrating New Checkers Into Compass}
-\label{howToIntegrateNewChecker}
+\label{howToIntegrateNewCheckers}
 
 The process for integrating a new checker into Compass has been automated. These directions
 are meant for checkers generated using gen\_checker.sh.
@@ -369,17 +370,22 @@ The steps to integrate a new checker is
    \item Enter ROSE\_BUILD\_DIR/projects/compass/ 
    \item Execute 'make regenerate'
    \item After running 'make regenerate' in the build tree then you may run make as usual.
+   \item %Before executing compassMain or any Make rule that uses compassMain, 
+	Examine the RULE\_SELECTION file in projects/compass such that it 
+	reflects your most recent additional checker(s) choice of execution at
+	run-time; the default setting is ``on''. Please refer to section 
+	~\ref{ruleselection}.
 \end{enumerate}
 
 In the Makefile, the compass\_submission\_setup.sh handles adding/updating a Compass checker into
-an existing Compass source tree. "regenerate" is an argument that instructs the script to perform a 
+an existing Compass source tree. ``regenerate'' is an argument that instructs the script to perform a 
 read-only operation on the file CHECKER\_LIST in your projects/compass directory. This file contains 
 a list of checkers that will be integrated by compass\_submission\_setup.sh.
 
 The file `CHECKER\_LIST' can use the `\#' comment delimiter at the beginning of
 any checker name to remove that checker from compilation. The hash mark may
 only appear at the beginning of the line. The compass\_submission\_setup.sh
-script must be run again with the "regenerate" option if any checkers are
+script must be run again with the ``regenerate'' option if any checkers are
 commented out. {\bf Note that no space is permitted between the `\#' and the name
 of the checker.}
 
@@ -390,9 +396,29 @@ to compile Compass with the checkers located in $<$COMPASS SUBMIT DIR$>$. These
 files are:
 
 \begin{itemize}
-\item {\bf CHECKER\_LIST}: a file that keeps a running list of all checkers seen by
+\item {\bf CHECKER\_LIST}: 
+	a file that keeps a running list of all checkers seen by 
 	compass\_submission\_setup.sh.
+\item {\bf \${CHECKER}/\${CHECKER}.makefile}: An individual Make file is
+	generated per checker in its directory such that it may be separated
+	for individual development before being reincorporated with Compass.
+\end{itemize}
+%
+The \${CHECKER}.makefile file is generated such that any checker may be copied
+out of the source tree projects/compass and worked on separately. This feature
+speeds up development of single checkers as is removes the requirement to
+rebuild the entire compassMain tool.
 
+Many automatically generated files required for the build of Compass are 
+generated in the build tree. Rules for the generation of these files are found
+in the automake Makefile.am file in the Compass source tree directory 
+projects/compass. These file include:
+
+\begin{itemize}
+\item {\bf CHECKER\_LIST\_WITHOUT\_COMMENTS}: a version of CHECKER\_LIST
+	that expands in two columns those checkers built as part of Compass
+	in camel case starting with a lower-case letter and an upper-case
+	letter respectively.
 \item {\bf compass\_makefile.inc}: a Make include file that sets the Make environment
 	with the information for each checker. This environment specifies
 	the rules needed to compile each checker object, make the
@@ -455,11 +481,12 @@ tree refer to section \ref{howToIntegrateNewCheckers}.
 
 Usually the CHECKER\_LIST is only modified when a user or developer wants to 
 add a new checker or select a subset of trusted checkers.  Checkers can be
-commented out using a {\tt \#}, no space is allowed between the {tt \#} and the 
-checker name.
+commented out using a {\tt \#}, no space is allowed between the {\tt \#} 
+and the checker name.
 
 
 \section{Including/Excluding Checkers During Compass Execution}
+\label{ruleselection}
 
    This section describes how to execute a subset of the checkers provided in the build
 process (see section \ref{CompassBuildProcess}). This process is significantly more
@@ -508,7 +535,7 @@ tools build using ROSE may also be relevant.
 the codes being checked.  To support this Compass provides a simple
 mechanism for verifying specific properties of the checkers used in Compass.
 Compass implements a specific small number of checkers that are used for checking
-the checkers in Compass.  The directory compassVerity contains the implementation
+the checkers in Compass.  The directory compassVerify contains the implementation
 of this subset of Compass that is used on itself.  These checkers may not
 be modified and in the future MD-5 checksums will be provided to ensure the
 integrity of this subset of Compass.  To verify the compass checkers run:

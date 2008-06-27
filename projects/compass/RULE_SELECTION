@@ -8,8 +8,8 @@
 +:ByteByByteStructureComparison
 +:CharStarForString
 +:CommaOperator
-+:ComputationalFunctions
 -:Compass_defUseAnalysis
++:ComputationalFunctions
 +:ConstCast
 +:ConstructorDestructorCallsVirtualFunction
 +:ConstStringLiterals
@@ -45,8 +45,11 @@
 +:InductionVariableUpdate
 +:InternalDataSharing
 +:localizedVariables
++:LocalizedVariables
 +:locPerFunction
++:LocPerFunction
 +:lowerRangeLimit
++:LowerRangeLimit
 +:MagicNumber
 +:MallocReturnValueUsedInIfStmt
 +:MultiplePublicInheritance
@@ -92,6 +95,3 @@
 +:UpperRangeLimit
 +:VariableNameEqualsDatabaseName
 +:VoidStar
-+:LowerRangeLimit
-+:LocPerFunction
-+:LocalizedVariables

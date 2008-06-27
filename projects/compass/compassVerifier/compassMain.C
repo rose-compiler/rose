@@ -1,143 +1,135 @@
+#include "rose.h"
 #include "compass.h"
-#include <rose.h>
-#include <iostream>
-#include <fstream>
-#include <vector>
 
-#include "checkers.h"
+#ifdef USE_QROSE
+// This is part of incomplete GUI interface for Compass using QRose from Imperial.
+
+#include "qrose.h"
+#endif
+
+
+#ifdef USE_QROSE
+// This is part of incomplete GUI interface for Compass using QRose from Imperial.
+
+// A QRose specific output object which provides the information required to support the QRose GUI.
+class QRoseOutputObject
+   : public Compass::OutputObject
+   {
+  // This output object adds the ability to collect the output violations so that they can be presented in the GUI after all runs are complete.
+
+     public:
+          QRoseOutputObject() {}
+
+          virtual void addOutput(Compass::OutputViolationBase* theOutput)
+             {
+               outputList.push_back(theOutput);
+               printf ("In QRoseOutputObject::addOutput(): getString() = %s \n",theOutput->getString().c_str());
+             }
+   };
+#endif
+
 
 void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
 
-
-void outputTgui( std::string & tguiXML,
-                 std::vector<Compass::TraversalBase*> & checkers,
-                 Compass::PrintingOutputObject & output )
-{
-  std::fstream xml( tguiXML.c_str(), std::ios::out|std::ios::app );
-
-  if( xml.good() == false )
-  {
-    std::cerr << "Error: outputTgui()\n";
-    exit(1);
-  }
-
-  long pos = xml.tellp();
-
-  if( pos == 0 )
-  {
-    xml << "<tool_gear>\n"
-        << "<format>1</format>\n"
-        << "  <version>2.00</version>\n"
-        << "  <tool_title>Compass Analysis Static View</tool_title>\n";
-
-    for( std::vector<Compass::TraversalBase*>::const_iterator itr = 
-         checkers.begin(); itr != checkers.end(); itr++ )
-    {
-      std::string checkerName( (*itr)->getName() );
-
-      xml << "  <message_folder>\n"
-          << "    <tag>" << checkerName << "</tag>\n"
-          << "    <title>" << checkerName << " Checker</title>\n"
-          << "    <if_empty>hide</if_empty>\n"
-          << "  </message_folder>\n";
-    } //for, itr
-  } //if( pos == 0 )
-
-  const std::vector<Compass::OutputViolationBase*>& outputList = 
-    output.getOutputList();
-
-  for( std::vector<Compass::OutputViolationBase*>::const_iterator itr =
-         outputList.begin(); itr != outputList.end(); itr++ )
-  {
-    const Sg_File_Info *info = (*itr)->getNode()->get_file_info();
-
-    xml << "  <message>\n"
-        << "    <folder>" << (*itr)->getCheckerName() << "</folder>\n"
-        << "    <heading>" << (*itr)->getCheckerName() << ": " << info->get_filenameString() << " : " << info->get_line() << "</heading>\n"
-        << "    <body><![CDATA[" << (*itr)->getString() << "]]></body>\n"
-        << "    <annot>\n"
-        << "      <site>\n"
-        << "        <file>" << info->get_filenameString() << "</file>\n"
-        << "        <line>" << info->get_line() << "</line>\n"
-        << "        <desc><![CDATA[" << (*itr)->getShortDescription() << "]]></desc>\n" 
-        << "      </site>\n"
-        << "    </annot>\n"
-        << "  </message>\n";
-  } //for, itr
-
-  xml.close();
-
-  return;
-} //outputTgui()
-
-
-
 int main(int argc, char** argv)
-{
+   {
   // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
-     TimingPerformance timer ("Compass performance (main): time (sec) = ",true);
+     TimingPerformance timer_main ("Compass performance (main): time (sec) = ",true);
 
      std::ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
 
      if (SgProject::get_verbose() > 0)
           printf ("In compassMain.C: main() \n");
 
-  const bool remove = true;
-  std::string tguiXML;
+     Rose_STL_Container<std::string> commandLineArray = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
 
-  SgProject* sageProject = frontend(argc,argv);
-  std::vector<Compass::TraversalBase*> traversals;
+     Compass::commandLineProcessing(commandLineArray);
 
-  Compass::Parameters params(Compass::findParameterFile());
-  Compass::PrintingOutputObject output(std::cerr);
+  // Read the Compass parameter file (contains input data for all checkers)
+  // This has been moved ahead of the parsing of the AST so that it is more 
+  // obvious when it is a problem.
+     Compass::Parameters params(Compass::findParameterFile());
 
-  buildCheckers(traversals,params,output);
+  // Use a modified commandline that inserts specific additional options
+  // to the ROSE frontend to make use with Compass more appropriate.
+  // SgProject* project = frontend(argc,argv);
+     SgProject* project = frontend(commandLineArray);
 
-  std::vector<std::pair<std::string, std::string> > errors;
+#if 0
+     project->display("In Compass");
+#endif
 
-  for( std::vector<Compass::TraversalBase*>::iterator itr = traversals.begin();
-       itr != traversals.end(); itr++ )
-  {
-    if( (*itr) != NULL )
-    {
-      printf ("Running checker %s \n",(*itr)->getName().c_str());
-      try {
-        (*itr)->run( sageProject );
-      } catch (const std::exception& e) {
-        std::cerr << "error running checker " << (*itr)->getName()
-            << ": " << e.what() << std::endl;
-        errors.push_back(std::make_pair((*itr)->getName(), e.what()));
-      }
-    } //if( (*itr) != NULL )
-    else
-    {
-      std::cerr << "Error: Traversal failed to initialize" << std::endl;
-      return 1;
-    } //else
-  } //for()
+     std::vector<Compass::TraversalBase*> traversals;
 
-// This is the ToolGear Option
-// if( CommandlineProcessing::isOptionWithParameter( argc, argv, "--tgui", "*", tguiXML, remove ) )
-// if( CommandlineProcessing::isOptionWithParameter( CommandlineProcessing::generateArgListFromArgcArgv(argc, argv), std::string("--tgui"), std::string("*"), tguiXML, remove ) )
-  std::vector<std::string> argvList = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
-  if( CommandlineProcessing::isOptionWithParameter( argvList, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
-  {
-    outputTgui( tguiXML, traversals, output );
-  } //if
+#ifdef USE_QROSE
+  // This is part of incomplete GUI interface for Compass using QRose from Imperial.
 
-  if (!errors.empty()) {
-    std::cerr << "The following checkers failed due to internal errors:"
-        << std::endl;
-    std::vector<std::pair<std::string, std::string> >::iterator e_itr;
-    for (e_itr = errors.begin(); e_itr != errors.end(); ++e_itr) {
-      std::cerr << e_itr->first << ": " << e_itr->second << std::endl;
-    }
-  }
+  // Both of these output object work, but one is more useful for QRose.
+     QRoseOutputObject* output = new QRoseOutputObject();
+#endif
 
+     Compass::PrintingOutputObject output(std::cerr);
+     
+        {
+       // Make this in a nested scope so that we can time the buildCheckers function
+          TimingPerformance timer_build ("Compass performance (build checkers): time (sec) = ",false);
+
+          buildCheckers(traversals,params,output);
+        }
+
+     TimingPerformance timer_checkers ("Compass performance (checkers only): time (sec) = ",false);
+
+     std::vector<std::pair<std::string, std::string> > errors;
+     for ( std::vector<Compass::TraversalBase*>::iterator itr = traversals.begin(); itr != traversals.end(); itr++ )
+        {
+          if ( (*itr) != NULL )
+             {
+               if (Compass::verboseSetting >= 0)
+                    printf ("Running checker %s \n",(*itr)->getName().c_str());
+
+               try
+                  {
+                    int spaceAvailable = 40;
+                    std::string name = (*itr)->getName() + ":";
+                    int n = spaceAvailable - name.length();
+                    //Liao, 4/3/2008, bug 82, negative value
+                    if (n<0) n=0;
+                    std::string spaces(n,' ');
+                    TimingPerformance timer (name + spaces + " time (sec) = ",false);
+                    (*itr)->run( project );
+                  }
+               catch (const std::exception& e)
+                  {
+                    std::cerr << "error running checker : " << (*itr)->getName() << " - reason: " << e.what() << std::endl;
+                    errors.push_back(std::make_pair((*itr)->getName(), e.what()));
+                  }
+             } // if( (*itr) != NULL )
+            else
+             {
+               std::cerr << "Error: Traversal failed to initialize" << std::endl;
+               return 1;
+             } // else
+        } // for()
+
+  // Support for ToolGear
+     if (Compass::UseToolGear == true)
+        {
+          Compass::outputTgui( Compass::tguiXML, traversals, output );
+        }
+
+  // Output errors specific to any checkers that didn't initialize properly
+     if (!errors.empty())
+        {
+          std::cerr << "The following checkers failed due to internal errors:" << std::endl;
+          std::vector<std::pair<std::string, std::string> >::iterator e_itr;
+          for (e_itr = errors.begin(); e_itr != errors.end(); ++e_itr)
+             {
+               std::cerr << e_itr->first << ": " << e_itr->second << std::endl;
+             }
+        }
 
   // Just set the project, the report will be generated upon calling the destructor for "timer"
-     timer.set_project(sageProject);
+     timer_main.set_project(project);
 
-
-  return 0;
-} //main()
+     return 0;
+   }

@@ -52,7 +52,7 @@ magicNumber
 mallocReturnValueUsedInIfStmt
 multiplePublicInheritance
 nameAllParameters
-nameConsistency
+#nameConsistency
 newDelete
 noExceptions
 noExitInMpiCode
@@ -73,6 +73,7 @@ oneLinePerDeclaration
 operatorOverloading
 otherArgument
 placeConstantOnTheLhs
+#possiblyReplicatedVariables
 preferAlgorithms
 preferFseekToRewind
 preferSetvbufToSetbuf

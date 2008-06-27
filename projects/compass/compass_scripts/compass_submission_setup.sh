@@ -50,6 +50,19 @@ updateCheckerList()
 
 } #updateCheckerList() <checker name> <checker list path>
 
+updateRuleSelection()
+{
+  local checker=$1
+  local rule_selection=$2
+
+  local checker_exist=`grep "${checker}" $rule_selection`
+
+  if [[ $checker_exist == '' ]]; then
+    echo "Updating ${checker} to ${rule_selection}"
+    echo "+:${checker}" >> ${rule_selection}
+  fi
+}
+
 ###############################################################################
 extraDistMakefile()
 {
@@ -165,6 +178,14 @@ do
     SUBDIRS[$((SUBDIR_COUNT++))]=$checker
   fi #if [[ `echo $checker | grep -v "^#"` != '' ]], # is comment symbol
 done
+
+for checker in ${USUBDIRS[@]}
+do
+  updateRuleSelection $checker ${COMPASS_PROJECT}/RULE_SELECTION 
+done
+
+echo "Sorting ${COMPASS_PROJECT}/RULE_SELECTION"
+sort ${COMPASS_PROJECT}/RULE_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION 
 
 extraDist
 

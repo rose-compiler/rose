@@ -2,7 +2,7 @@
 \chapter{Design and Verification}
 
 Compass is a tool is used to analyze software (both source code and binaries). 
-A collection of {\em checkers} are build with each of them detecting the 
+A collection of {\em checkers} are built with each of them detecting the 
 violation of a rule.  By reporting on the violations of rules {\em Compass} provides 
 a way to enforce predefined or arbitrary user specified properties on software.
 This chapter covers the design of {\em Compass} and the design of the verification in 
@@ -63,7 +63,7 @@ a secure tool. We assume:
             tests all the files one checker at a time and thus can not miss 
             a file.  Note that even the counter examples are tests which can 
             be a problem when the counter example for the checker is detected
-            as a violation for \emph{Compass Verifier}.  Conter examples for
+            as a violation for \emph{Compass Verifier}.  Counter examples for
             checkers have to be carefull written to not represent examples that
             violate \emph{Compass Verifier}.
          \item Fast: once on the union of all the checkers ({\tt make oneBigVerify}).
@@ -143,7 +143,7 @@ its nodes and to output violations found in that code according to the local alg
 
 CompassMain is the main executable that initially calls ROSE to parse a program. Then
 \emph{buildCheckers} is called to load all checkers that are specified within a
-configuration file. The configuration file allows users to turn on and off specific
+configuration file. The configuration file allows users to turn on and turn off specific
 checkers for their run-time analyses. However, the configuration file only permits
 checkers to be loaded that were part of Compass at compile-time.
 
@@ -157,7 +157,7 @@ input and parameters provided to Compass, is provided within the Compass namespa
 
 Compass must be safe, so that analyses and their results can be trusted. 
 The {\em Compass Verifier} is used at build time to run a specific set of separate 
-compass rules offer the source cod eof all the checkers.  For simplicity it runs in two
+compass rules offer the source code of all the checkers.  For simplicity it runs in two
 modes: fast, for checking specific named checker source files; and slow, for testing 
 {\em all} checker source files.
 

@@ -1,0 +1,7 @@
+# This is a comment
+#
+# This is commented out but shows the way parameters are specified.
+# LineLengthChecker.maximumLineLength=80
+Compass.RuleSelection=/home/yuan5/ROSE/JUN1708/SRC/projects/compass/compassVerifier/allowedFunctions/RULE_SELECTION
+AllowedFunctions.OutFile=output.txt
+AllowedFunctions.FunctionNum=0
