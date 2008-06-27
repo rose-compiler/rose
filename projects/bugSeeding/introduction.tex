@@ -6,17 +6,16 @@
 tools designed to report security flaws in software.  By seeding bugs into
 real applications in many different ways, a tool's ability detect a high
 percentage of known (seeded) bugs can be predictive of the tool's
-ability to detect unknown bugs.  In principle seeding of flaws could be applied 
+ability to detect unknown bugs.  In principle, seeding of flaws could be applied 
 to either source code or binary executables, but we restrict our attention to 
 the seeding of security flaws in source code.  The seeding of security flaws 
-could be applied more generally to arbitrary bug seeding but we 
-restict our focus to only the seeding of security flaws into 
-arbitrary applications.
+could be applied more generally to arbitrary bug seeding, but we 
+restrict our focus to only the seeding of security flaws into arbitrary applications.
 
    This initial document is to permit a focus on the design of
 a translator built using ROSE for the source-to-source transformation
 of arbitrary applications to include security flaws for the purpose
-of testing arbitrary static analysis tools.  The issues are domenantly
+of testing arbitrary static analysis tools.  The issues are dominantly
 language independent and it should be possible to generate source
 code for input applications over a range of languages.
 
