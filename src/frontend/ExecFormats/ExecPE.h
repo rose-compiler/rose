@@ -10,6 +10,7 @@ namespace PE {
 /* Forwards */
 class COFFSymtab;
 class PEObjectTable;
+class PEImportHintName;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // MS-DOS Real Mode File Header
@@ -319,15 +320,46 @@ struct PEImportDirectory_disk {
 
 class PEImportDirectory {
   public:
-    PEImportDirectory(const PEImportDirectory_disk *disk) {ctor(disk);}
+    PEImportDirectory(const PEImportDirectory_disk *disk)
+        {ctor(disk);}
     virtual ~PEImportDirectory() {}
+    void *encode(PEImportDirectory_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Native versions of the fields in PEImportDirectory_disk */
     addr_t              hintnames_rva, bindings_rva, dll_name_rva;
     time_t              time;
     unsigned            forwarder_chain;
+
   private:
     void ctor(const PEImportDirectory_disk*);
 };
+
+class PEDLL : public ExecDLL {
+  public:
+    PEDLL(const std::string &name)
+        : ExecDLL(name), idir(NULL)
+        {}
+    virtual ~PEDLL() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    void add_hintname_rva(addr_t a) {hintname_rvas.push_back(a);}
+    void add_hintname(PEImportHintName *hn) {hintnames.push_back(hn);}
+    void add_binding(addr_t a) {bindings.push_back(a);}
+
+    /* Accessors for protected/private data members */
+    PEImportDirectory *get_idir() {return idir;}
+    void set_idir(PEImportDirectory *d) {idir=d;}
+    const std::vector<addr_t>& get_hintname_rvas() const {return hintname_rvas;}
+    const std::vector<PEImportHintName*>& get_hintnames() const {return hintnames;}
+    const std::vector<addr_t>& get_bindings() const {return bindings;}
+    
+  private:
+    PEImportDirectory *idir;
+    std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
+    std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
+    std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
+};
+
 
 /* Hint/name pairs */
 struct PEImportHintName_disk {
@@ -336,15 +368,20 @@ struct PEImportHintName_disk {
     /* Optional byte to pad struct to an even number of bytes */
 };
 
+    
 class PEImportHintName {
   public:
     PEImportHintName(ExecSection *section, addr_t offset)
         : hint(0), padding('\0')
         {ctor(section, offset);}
     virtual ~PEImportHintName() {};
+    void unparse(FILE *f, addr_t offset); /*not the standard unparse() function*/
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data members */
     void set_name(std::string name) {this->name=name;}
     std::string get_name() {return name;}
+    
   private:
     void ctor(ExecSection*, addr_t offset);
     unsigned hint;
@@ -358,10 +395,16 @@ class PEImportSection : public PESection {
         : PESection(fhdr->get_file(), offset, size)
         {ctor(fhdr, offset, size, mapped_rva);}
     virtual ~PEImportSection() {}
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    void add_dll(PEDLL *d) {dlls.push_back(d);}
+
+    /* Accessors for protected/private data members */
+    const std::vector<PEDLL*>& get_dlls() {return dlls;}
+
   private:
     void ctor(PEFileHeader*, addr_t offset, addr_t size, addr_t mapped_rva);
-    std::vector<PEImportDirectory*> dirs;
+    std::vector<PEDLL*> dlls;
 };
 
 

@@ -505,6 +505,11 @@ class ExecDLL {
     virtual ~ExecDLL() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     void add_function(std::string fname) {funcs.push_back(fname);} /* Add a needed function to the import list for this DLL */
+
+    /* Accessors for protected/private data members */
+    const std::string& get_name() const {return name;}
+    void set_name(const std::string &s) {name=s;}
+
   private:
     std::string         name;                           /* Name of library as stored in executable (usually a base name) */
     std::vector<std::string> funcs;                     /* List of functions needed from the library */

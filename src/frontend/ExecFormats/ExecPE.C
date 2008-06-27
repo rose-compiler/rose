@@ -596,6 +596,18 @@ PEImportDirectory::ctor(const PEImportDirectory_disk *disk)
     bindings_rva    = le_to_host(disk->bindings_rva);
 }
 
+/* Encode a directory entry back into disk format */
+void *
+PEImportDirectory::encode(PEImportDirectory_disk *disk)
+{
+    host_to_le(hintnames_rva,   disk->hintnames_rva);
+    host_to_le(time,            disk->time);
+    host_to_le(forwarder_chain, disk->forwarder_chain);
+    host_to_le(dll_name_rva,    disk->dll_name_rva);
+    host_to_le(bindings_rva,    disk->bindings_rva);
+    return disk;
+}
+
 /* Print debugging info */
 void
 PEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -622,7 +634,29 @@ PEImportHintName::ctor(ExecSection *section, addr_t offset)
     const PEImportHintName_disk *disk = (const PEImportHintName_disk*)section->content(offset, sizeof(*disk));
     hint = le_to_host(disk->hint);
     name = section->content_str(offset+sizeof(*disk));
-    padding = name.size() % 2 ? *(section->content(offset+sizeof(*disk)+name.size()+1, 1)) : '\0';
+    padding = (name.size()+1) % 2 ? *(section->content(offset+sizeof(*disk)+name.size()+1, 1)) : '\0';
+}
+
+/* Writes the hint/name back to disk at the specified offset */
+void
+PEImportHintName::unparse(FILE *f, addr_t offset)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+
+    /* The hint */
+    uint16_t hint_le;
+    host_to_le(hint, hint_le);
+    size_t nwrite = fwrite(&hint_le, sizeof hint_le, 1, f);
+    ROSE_ASSERT(1==nwrite);
+
+    /* NUL-terminated name */
+    fputs(name.c_str(), f);
+    fputc('\0', f);
+    
+    /* Padding to make an even size */
+    if ((name.size()+1) % 2)
+        fputc(padding, f);
 }
 
 /* Print debugging info */
@@ -642,6 +676,26 @@ PEImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%02x\n", p, w, "padding", padding);
 }
 
+/* Print debugging info */
+void
+PEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPEDLL[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEDLL.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    ExecDLL::dump(f, p, -1);
+    if (idir)
+        idir->dump(f, p, -1);
+    for (size_t i=0; i<hintname_rvas.size(); i++) {
+        fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64"\n", p, w, "hintname_rva", i, hintname_rvas[i]);
+        fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64"\n", p, w, "binding", i, bindings[i]);
+    }
+}
+
 /* Constructor */
 void
 PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
@@ -656,14 +710,15 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
         const PEImportDirectory_disk *idir_disk = (const PEImportDirectory_disk*)content(i*entry_size, entry_size);
         if (!memcmp(&zero, idir_disk, sizeof zero)) break;
         PEImportDirectory *idir = new PEImportDirectory(idir_disk);
-        dirs.push_back(idir);
 
         /* The library's name is indicated by RVA. We need a section offset instead. */
         ROSE_ASSERT(idir->dll_name_rva >= mapped_rva);
         addr_t dll_name_offset = idir->dll_name_rva - mapped_rva;
         std::string dll_name = content_str(dll_name_offset);
-        ExecDLL *dll = new ExecDLL(dll_name);
 
+        /* Create the DLL object */
+        PEDLL *dll = new PEDLL(dll_name);
+        dll->set_idir(idir);
 
         /* The thunks is an array of RVAs that point to hint/name pairs for the entities imported from the DLL that we're
          * currently processing. Each hint is a two-byte little-endian value. Each name is NUL-terminated. The array address
@@ -673,22 +728,113 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
             throw FormatError("hint/name RVA is before beginning of \".idata\" segment");
         if (idir->bindings_rva < mapped_rva)
             throw FormatError("bindings RVA is before beginning of \".idata\" segment");
-        addr_t hintnames_offset = idir->hintnames_rva - mapped_rva;
-        addr_t bindings_offset  = idir->bindings_rva  - mapped_rva;
+        addr_t hintname_rvas_offset = idir->hintnames_rva - mapped_rva; /*section offset of RVA array for hintnames*/
+        addr_t bindings_offset  = idir->bindings_rva  - mapped_rva; /*section offset of RVA array for bindings*/
         while (1) {
-            addr_t hint_rva = le_to_host(*(const uint32_t*)content(hintnames_offset, sizeof(uint32_t)));
-            hintnames_offset += sizeof(uint32_t);
-            if (0==hint_rva) break; /*list of RVAs is null terminated */
-            addr_t hint_offset = hint_rva - mapped_rva;
-            PEImportHintName *hintname = new PEImportHintName(this, hint_offset);
-            dll->add_function(hintname->get_name());
 
-            /* FIXME: do something with binding */
+            /* Get the RVA of the hint/name pair by reading a member from the hint/name RVA array */
+            addr_t hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
+            if (0==hintname_rva) break; /*list of RVAs is null terminated */
+            hintname_rvas_offset += sizeof(uint32_t);
+            dll->add_hintname_rva(hintname_rva);
+
+            /* Read the hint/name pair */
+            addr_t hintname_offset = hintname_rva - mapped_rva;
+            PEImportHintName *hintname = new PEImportHintName(this, hintname_offset);
+            dll->add_function(hintname->get_name());
+            dll->add_hintname(hintname);
+
+            /* Get the binding by reading a member of the bindings array */
             addr_t binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
+            dll->add_binding(binding);
             bindings_offset += sizeof(uint32_t);
         }
 
+        /* Add dll to both this section and to the file header */
+        add_dll(dll);
         fhdr->add_dll(dll);
+    }
+}
+
+/* Write the import section back to disk */
+void
+PEImportSection::unparse(FILE *f)
+{
+    const std::vector<PEDLL*> &dlls = get_dlls();
+    for (size_t dllno=0; dllno<dlls.size(); dllno++) {
+        PEDLL *dll = dlls[dllno];
+        PEImportDirectory *idir = dll->get_idir();
+        
+        /* Directory entry */
+        PEImportDirectory_disk idir_disk;
+        idir->encode(&idir_disk);
+        int status = fseek(f, offset+(dllno*sizeof idir_disk), SEEK_SET);
+        ROSE_ASSERT(status>=0);
+        size_t nwrite = fwrite(&idir_disk, sizeof idir_disk, 1, f);
+        ROSE_ASSERT(1==nwrite);
+
+        /* Library name */
+        ROSE_ASSERT(idir->dll_name_rva >= mapped_rva);
+        addr_t dll_name_offset = idir->dll_name_rva - mapped_rva;
+        ROSE_ASSERT(dll_name_offset + dll->get_name().size() + 1 < size);
+        status = fseek(f, offset+dll_name_offset, SEEK_SET);
+        ROSE_ASSERT(status>=0);
+        fputs(dll->get_name().c_str(), f);
+        fputc('\0', f);
+
+        /* Hint/name RVAs and their hint/name pairs */
+        ROSE_ASSERT(idir->hintnames_rva >= mapped_rva);
+        addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
+        ROSE_ASSERT(idir->bindings_rva >= mapped_rva);
+        addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
+        const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
+        const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
+        const std::vector<addr_t> &bindings = dll->get_bindings();
+        uint32_t rva_le, binding_le;
+        for (size_t i=0; i<hintname_rvas.size(); i++) {
+            /* RVA */
+            host_to_le(hintname_rvas[i], rva_le);
+            status = fseek(f, hintname_rvas_offset + i*sizeof rva_le, SEEK_SET);
+            ROSE_ASSERT(status>=0);
+            nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+            ROSE_ASSERT(1==nwrite);
+
+            /* Hint/name pair */
+            addr_t hintname_offset = offset + hintname_rvas[i] - mapped_rva; /*file offset of hint/name pair*/
+            hintnames[i]->unparse(f, hintname_offset);
+
+            /* Binding */
+            host_to_le(bindings[i], binding_le);
+            status = fseek(f, bindings_offset + i*sizeof binding_le, SEEK_SET);
+            ROSE_ASSERT(status>=0);
+            nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+            ROSE_ASSERT(1==nwrite);
+        }
+
+        /* hint/name pair rva array and binding array are null terminated */
+        rva_le = 0;
+        status = fseek(f, hintname_rvas_offset + (hintname_rvas.size()+1)*sizeof(rva_le), 1);
+        ROSE_ASSERT(status>=0);
+        nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+        ROSE_ASSERT(1==nwrite);
+        
+        binding_le = 0;
+        status = fseek(f, bindings_offset + (hintname_rvas.size()+1)*sizeof(binding_le), 1);
+        ROSE_ASSERT(status>=0);
+        nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+        ROSE_ASSERT(1==nwrite);
+        
+        
+    }
+
+    /* Directory list is zero terminated */
+    {
+        PEImportDirectory_disk zero;
+        memset(&zero, 0, sizeof zero);
+        int status = fseek(f, offset + (dlls.size()+1)*sizeof zero, SEEK_SET);
+        ROSE_ASSERT(status>=0);
+        size_t nwrite = fwrite(&zero, sizeof zero, 1, f);
+        ROSE_ASSERT(1==nwrite);
     }
 }
 
@@ -704,8 +850,6 @@ PEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     
     PESection::dump(f, p, -1);
-    for (size_t i=0; i<dirs.size(); i++)
-        dirs[i]->dump(f, p, i);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
