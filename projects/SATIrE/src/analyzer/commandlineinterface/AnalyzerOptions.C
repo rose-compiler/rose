@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.25 2008-06-02 12:05:50 markus Exp $
+// $Id: AnalyzerOptions.C,v 1.26 2008-06-27 10:20:59 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -64,6 +64,9 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "   --no-analysis-annotation do not annotate analysis results in AST\n"
     "   --number-expressions     number expressions and types in the ICFG\n"
     "   --no-number-expressions  do not number expressions and types in the ICFG\n"
+    "   --pag-memsize-mb=<num>   allocate <num> MB of memory for PAG analysis\n"
+    "   --pag-memsize-perc=<num> allocate <num>% of system memory (autodetected)\n"
+    "   --pag-memsize-grow=<num> grow memory if less than <num>% are free after GC\n"
     "\n"
     " Output options:\n"
     "   --statistics             output analyzer statistics on stdout\n"
@@ -105,7 +108,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     " Default options:           --language=c++ --no-gdl-preinfo --gdl-postinfo\n"
     "                            --callstringlength=0 --cfg-ordering=1\n"
     "                            --no-check-ast --no-check-icfg\n"
-    "                            --number-expressions --no-statistics\n"
+    "                            --number-expressions --pag-memsize-mb=5\n"
+    "                            --pag-memsize-grow=30 --no-statistics\n"
     "                            --analysis-files=all --analyis-annotation\n"
     "                            --verbose --gdl-nodeformat=no-asttext\n"
     "                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname\n"
@@ -164,7 +168,7 @@ std::string AnalyzerOptions::getOptionsInfo() {
 
 void AnalyzerOptions::setCfgOrdering(int ordering) { 
   if(ordering <1 || ordering>8) {
-    setOptionsErrorMessage("Cfg ordering must be a value between 1 to 8.");
+    setOptionsErrorMessage("ERROR: Cfg ordering must be a value between 1 to 8.");
   } else {
     _CfgOrdering=ordering; 
   }
@@ -172,7 +176,7 @@ void AnalyzerOptions::setCfgOrdering(int ordering) {
 void AnalyzerOptions::setGcLow(int perc) { 
   if(perc < 0 || perc>99) {
     _GcLow=30; 
-    setOptionsErrorMessage("GC Low-percentage of garbage collection must be within 0..99.");
+    setOptionsErrorMessage("ERROR: GC Low-percentage of garbage collection must be within 0..99.");
   } else {
     _GcLow=perc;
   }
@@ -180,9 +184,25 @@ void AnalyzerOptions::setGcLow(int perc) {
 void AnalyzerOptions::setGcHigh(int perc) { 
   if(perc < 0 || perc>99) {
     _GcHigh=30; 
-    setOptionsErrorMessage("GC High-percentage of garbage collection must be within 0..99.");
+    setOptionsErrorMessage("ERROR: GC High-percentage of garbage collection must be within 0..99.");
   } else {
     _GcHigh=perc;
+  }
+}
+void AnalyzerOptions::setMemsizeMB(int size) {
+  if (size < 0) {
+    _MemsizeMB = 5;
+    setOptionsErrorMessage("ERROR: Analyzer memory size must be positive");
+  } else {
+    _MemsizeMB = size;
+  }
+}
+void AnalyzerOptions::setMemsizePerc(int perc) {
+  if (perc < 1 || perc > 99) {
+    _MemsizePerc = 1;
+    setOptionsErrorMessage("ERROR: Analyzer memory percentage must be within 1..99");
+  } else {
+    _MemsizePerc = perc;
   }
 }
 

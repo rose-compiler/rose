@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.7 2008-05-30 13:44:07 markus Exp $
+// $Id: set_pag_options.C,v 1.8 2008-06-27 10:20:59 gergo Exp $
 
 // Author: Markus Schordan, 2006+
 
@@ -23,11 +23,27 @@ extern int global_proc_as_graphs;
 extern int verbose;
 extern int global_retfunc;
 
+extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
+
 void setPagOptions(AnalyzerOptions opt) {
   cfg_ordering=opt.getCfgOrdering();
+  debug_stat=opt.statistics(); // bool->int
+
+  // GB: memory options (low_perc is not documented, and probably need not be)
   low_perc=opt.getGcLow();
   high_perc=opt.getGcHigh();
-  debug_stat=opt.statistics(); // bool->int
+  if (opt.memsizeMBSet()) {
+    // memory size set as MB
+    pag_auto_configure_memsize(opt.quiet(), 100, opt.getMemsizeMB());
+  } else if (opt.memsizePercSet()) {
+    // memory size set as percentage of autodetected system memory size
+    pag_auto_configure_memsize(opt.quiet(), opt.getMemsizePerc(), 0);
+  } else {
+    // default: set memory size to 5 MB, which amounts to 10 half-MB banks
+    startbanks = 10;
+    // share_min and share_num appear to be set appropriately for a
+    // startbanks value of 10, so there is nothing else to do
+  }
 
   //output=(char*)(opt.getGdlFileName().c_str());
   animation=(char*)(opt.getOutputGdlAnimDirName().c_str());  

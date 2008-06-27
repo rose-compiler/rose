@@ -6,7 +6,7 @@
  * INT_ATTR(AttributeName, 42)
  * BOOL_ATTR(attributeName, On|Off)
  * 
- * INT_ATTR_NOSTUB unrolls to all the declaratsion but no method code
+ * INT_ATTR_NOSTUB unrolls to all the declarations but no method code
  */
 
 STRING_ATTR(ProgramName, "")
@@ -29,6 +29,10 @@ INT_ATTR_NOSTUB(GcHigh, 30)
 INT_ATTR(StartBank, 0) /* ?? */
 INT_ATTR(ShareMin,  0) /* ?? */
 INT_ATTR(ShareNum,  0) /* ?? */
+INT_ATTR_NOSTUB(MemsizeMB, 5)
+INT_ATTR_NOSTUB(MemsizePerc, 1)
+BOOL_ATTR(memsizeMBSet, Off)
+BOOL_ATTR(memsizePercSet, Off)
 
 BOOL_ATTR(frontendWarnings, Off)
 BOOL_ATTR(printCollectedFunctionNames, Off)

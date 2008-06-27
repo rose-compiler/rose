@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.20 2008-06-11 09:46:45 adrian Exp $
+// $Id: CommandLineParser.C,v 1.21 2008-06-27 10:20:59 gergo Exp $
 
 #include <config.h>
 
@@ -56,10 +56,6 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 
   if (optionMatchPrefix(argv[i], "--cfgordering=")) {
     cl->setCfgOrdering(atoi(argv[i]+prefixLength));
-  } else if (optionMatchPrefix(argv[i], "--pag-gc-lowperc=")) {
-    cl->setGcLow(atoi(argv[i]+prefixLength));
-  } else if (optionMatchPrefix(argv[i], "--pag-gc-highperc=")) {
-    cl->setGcHigh(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--statistics")) {
     cl->statisticsOn();
   } else if (optionMatch(argv[i], "--no-statistics")) {
@@ -79,6 +75,26 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--no-verbose")) {
     cl->verboseOff();
     cl->quietOn();
+  } else if (optionMatchPrefix(argv[i], "--pag-memsize-mb=")) {
+    if (cl->memsizeMBSet() || cl->memsizePercSet()) {
+      cl->setOptionsErrorMessage("ERROR: only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
+      return 1;
+    }
+    cl->memsizeMBSetOn();
+    cl->setMemsizeMB(atoi(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--pag-memsize-perc=")) {
+    if (cl->memsizeMBSet() || cl->memsizePercSet()) {
+      cl->setOptionsErrorMessage("ERROR: only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
+      return 1;
+    }
+    cl->memsizePercSetOn();
+    cl->setMemsizePerc(atoi(argv[i]+prefixLength));
+// GB (2008-06-27): Renamed highperc to a more descriptive external name.
+//} else if (optionMatchPrefix(argv[i], "--pag-gc-highperc=")) {
+  } else if (optionMatchPrefix(argv[i], "--pag-memsize-grow=")) {
+    cl->setGcHigh(atoi(argv[i]+prefixLength));
+  } else if (optionMatchPrefix(argv[i], "--pag-gc-lowperc=")) {
+    cl->setGcLow(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--pag-startbank")) {
     cl->setStartBank(atoi(argv[i]+prefixLength));
   } else if (optionMatch(argv[i], "--pag-sharemin")) {
