@@ -10,7 +10,7 @@ V0.8.3 (in progress)
 
 * ICFG builder changes [GB]
   - replaced function-specific $func$return, $func$arg_n, and $func$this
-    variables by generic $global$ variables; this allows for calling
+    variables by generic $tmpvar$ variables; this allows for calling
     functions without knowing their name (through pointers, for instance)
 
 * PAG memory management command line flags [GB]
