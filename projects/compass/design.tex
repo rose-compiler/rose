@@ -44,7 +44,7 @@ an administrative person but may run automatically in the future.
 By design we make a few assumptions about the use of Compass in order to define
 a secure tool. We assume:
 \begin{enumerate}
-   \item For now, there is an assuption of trust in the person writing the checker. \\
+   \item For now, there is an assumption of trust in the person writing the checker. \\
       We use the \emph{Compass Verifier} as a way to double check the 
       checkers so that we can eventually weaken the level of trust assumed for people 
       writing checkers. However, the design of the \emph{Compass Verifier} is not likely to
@@ -64,10 +64,10 @@ a secure tool. We assume:
             a file.  Note that even the counter examples are tests which can 
             be a problem when the counter example for the checker is detected
             as a violation for \emph{Compass Verifier}.  Counter examples for
-            checkers have to be carefull written to not represent examples that
+            checkers have to be carefully written to not represent examples that
             violate \emph{Compass Verifier}.
          \item Fast: once on the union of all the checkers ({\tt make oneBigVerify}).
-            This step forms a single file of all the checkers (and indoing so can
+            This step forms a single file of all the checkers (and in-doing so can
             miss some files, and so is less secure).  It is mostly for testing 
             purposes.
       \end{itemize}
@@ -243,7 +243,7 @@ mentioned above:
 
 \item \emph{Malicious Compass} \\
     Since Compass does not generate code, it can not be used to modify the input software
-    (source code or binary) or generate an new copy that could be confused with the input.
+    (source code or binary) or generate a new copy that could be confused with the input.
     However, future versions of Compass make make transformation to introduce greater
     levels of security; fix flaws, mitigate specific forms of threats, etc.  It will be
     important to make sure that such transformation can not change the behavior of an
