@@ -5,13 +5,22 @@ V0.8.3 (in progress)
 
 * New PAG analysis support features [GB]
   - TypeId as abstract type identifier
-  - experimental side-effecting add_tmpvarid support function
-  - implemented total ordering on each Id type
+  - side-effecting(!) add_tmpvarid support function
+  - total ordering on each Id type
 
 * ICFG builder changes [GB]
   - replaced function-specific $func$return, $func$arg_n, and $func$this
     variables by generic $global$ variables; this allows for calling
     functions without knowing their name (through pointers, for instance)
+
+* PAG memory management command line flags [GB]
+  - for setting initial memory size:
+      --pag-memsize-mb=N     allocate N MB of memory
+      --pag-memsize-perc=N   allocate N% of total system memory (autodetected)
+    default memory size is 5 MB
+  - for setting aggressivness of memory growth:
+      --pag-memsize-grow=N   grow memory if less than N% are free after a GC
+    default growth is 30%
 
 * Termite: [AP]
   - Support for multiple input files
