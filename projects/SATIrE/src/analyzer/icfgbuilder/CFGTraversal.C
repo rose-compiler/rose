@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.43 2008-06-26 08:08:06 gergo Exp $
+// $Id: CFGTraversal.C,v 1.44 2008-06-27 13:48:22 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -2391,7 +2391,7 @@ CFGTraversal::call_base_destructors(Procedure *p, BasicBlock *after) {
     std::string procname = (*cfg->procedures)[(*bi)->procnum]->name;
     std::string class_name = procname.substr(1);
     std::string destructor_name = class_name + "::~" + class_name;
-    std::string this_var_name = std::string() + "$~" + class_name + "$this";
+ // std::string this_var_name = std::string() + "$~" + class_name + "$this";
 
     SgPointerType* ptrType
       = Ir::createPointerType(p->class_type->get_declaration()->get_type());

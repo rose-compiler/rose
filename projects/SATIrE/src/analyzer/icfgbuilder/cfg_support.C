@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.24 2008-06-26 08:08:06 gergo Exp $
+// $Id: cfg_support.C,v 1.25 2008-06-27 13:48:22 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -632,7 +632,7 @@ BasicBlock *call_destructor(SgInitializedName *in, CFG *cfg,
   SgClassType *ct = isSgClassType(in->get_type());
   std::string class_name(ct->get_name().str());
   std::string destructor_name = class_name + "::~" + class_name;
-  std::string this_var_name = std::string("$~") + class_name + "$this";
+//std::string this_var_name = std::string("$~") + class_name + "$this";
   std::deque<Procedure *>::const_iterator i;
   for (i = cfg->procedures->begin(); i != cfg->procedures->end(); ++i) {
     /* we want member functions */

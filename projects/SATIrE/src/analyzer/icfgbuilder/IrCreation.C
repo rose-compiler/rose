@@ -284,8 +284,11 @@ SgVariableSymbol* Ir::createVariableSymbol(SgInitializedName* initializedName) {
 // All the other variables in the ROSE AST already have symbols, so use
 // those. Our data structures rely on correctly shared symbol nodes! The
 // $/this rule is therefore enforced here.
+// GB (2008-06-27): The name rule is now tightened, all temporary variables
+// must have names beginning with "$tmpvar$".
 SgVariableSymbol* Ir::createVariableSymbol(std::string name,SgType* type) {
-  if (name.find('$') == std::string::npos && name != "this")
+//if (name.find('$') == std::string::npos && name != "this")
+  if (name != "this" && (name.size() < 8 || name.substr(0, 8) != "$tmpvar$"))
   {
       std::cerr
           << __FILE__ << ":" << __LINE__ << ": "

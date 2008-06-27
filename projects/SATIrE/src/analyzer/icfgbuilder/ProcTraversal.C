@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.17 2008-06-26 08:08:06 gergo Exp $
+// $Id: ProcTraversal.C,v 1.18 2008-06-27 13:48:22 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -23,9 +23,9 @@ ProcTraversal::ProcTraversal()
   global_unknown_type
       = Ir::createPointerType(Ir::createPointerType(SgTypeVoid::createType()));
   global_return_variable_symbol
-      = Ir::createVariableSymbol("$global$retvar", global_unknown_type);
+      = Ir::createVariableSymbol("$tmpvar$retvar", global_unknown_type);
   global_this_variable_symbol
-      = Ir::createVariableSymbol("$global$this", global_unknown_type);
+      = Ir::createVariableSymbol("$tmpvar$this", global_unknown_type);
 }
 
 std::deque<Procedure *>*
@@ -128,8 +128,8 @@ ProcTraversal::visit(SgNode *node) {
        // beginning of building the procedure.
        // this_var = Ir::createVariableSymbol("this", this_type);
           this_var = proc->this_sym;
-          std::string varname
-            = std::string("$") + proc->name + "$this";
+       // std::string varname
+       //   = std::string("$") + proc->name + "$this";
        // this_temp_var = Ir::createVariableSymbol(varname, proc->this_type);
           this_temp_var = global_this_variable_symbol;
           ParamAssignment* paramAssignment
@@ -148,7 +148,7 @@ ProcTraversal::visit(SgNode *node) {
         for (i = params.begin(); i != params.end(); ++i) {
           SgVariableSymbol *i_var = Ir::createVariableSymbol(*i);
           std::stringstream varname;
-          varname << "$" << proc->name << "$arg_" << parnum++;
+       // varname << "$" << proc->name << "$arg_" << parnum++;
           SgVariableSymbol* var =
             Ir::createVariableSymbol(varname.str(),(*i)->get_type());
           proc->arg_block->statements.push_back(Ir::createParamAssignment(i_var, var));
@@ -165,7 +165,7 @@ ProcTraversal::visit(SgNode *node) {
         while (global_args < func_params)
         {
             varname.str("");
-            varname << "$global$arg_" << global_args++;
+            varname << "$tmpvar$arg_" << global_args++;
             SgVariableSymbol *var
                 = Ir::createVariableSymbol(varname.str(),
                         global_unknown_type);
@@ -205,7 +205,7 @@ ProcTraversal::visit(SgNode *node) {
              ++base) {
           SgClassDeclaration* baseclass = (*base)->get_base_class();
           SgVariableSymbol *lhs
-            = Ir::createVariableSymbol("$" + baseclass->get_name(),
+            = Ir::createVariableSymbol("$tmpvar$" + baseclass->get_name(),
                                        baseclass->get_type());
           SgMemberFunctionDeclaration* fd=get_default_constructor(baseclass);
           assert(fd);
@@ -217,8 +217,8 @@ ProcTraversal::visit(SgNode *node) {
             = Ir::createArgumentAssignment(lhs, sci);
           proc->arg_block->statements.push_back(a);
 
-          std::string this_called_varname
-            = std::string("$") + baseclass->get_name() + "$this";
+       // std::string this_called_varname
+       //   = std::string("$") + baseclass->get_name() + "$this";
           SgVariableSymbol *this_called_var
          // = Ir::createVariableSymbol(this_called_varname,
          //                            baseclass->get_type());
@@ -349,7 +349,7 @@ ProcTraversal::visit(SgNode *node) {
         }
       }
       std::stringstream varname;
-      varname << "$" << proc->name << "$return";
+   // varname << "$" << proc->name << "$return";
    // proc->returnvar = Ir::createVariableSymbol(varname.str(),
    //                                            decl->get_type()->get_return_type());
       proc->returnvar = global_return_variable_symbol;

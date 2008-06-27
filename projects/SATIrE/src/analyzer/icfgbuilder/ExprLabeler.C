@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.7 2008-06-26 08:08:06 gergo Exp $
+// $Id: ExprLabeler.C,v 1.8 2008-06-27 13:48:22 gergo Exp $
 
 #include "ExprLabeler.h"
 
@@ -24,14 +24,15 @@ void ExprLabeler::visit(SgNode *node)
     else if (isSgFunctionCallExp(node))
     {
         SgFunctionCallExp *call = isSgFunctionCallExp(node);
-        std::string *name = find_func_name(call);
-        std::stringstream varname;
-        varname << "$" << (name != NULL ? *name : "unknown_func")
-            << "$return_" << expnum++;
-        delete name;
-        SgVariableSymbol *varsym
-            = Ir::createVariableSymbol(varname.str(),
-                                       cfg->global_unknown_type);
+     // std::string *name = find_func_name(call);
+     // std::stringstream varname;
+     // varname << "$" << (name != NULL ? *name : "unknown_func")
+     //     << "$return_" << expnum++;
+     // delete name;
+     // SgVariableSymbol *varsym
+     //     = Ir::createVariableSymbol(varname.str(),
+     //                                cfg->global_unknown_type);
+        SgVariableSymbol *varsym = cfg->global_return_variable_symbol;
         RetvalAttribute *retval = new RetvalAttribute(varsym);
         node->addNewAttribute("return variable", retval);
     }
@@ -89,7 +90,7 @@ void ExprLabeler::visit(SgNode *node)
 #if 0
                 std::string name = namedType->get_name().str();
                 std::stringstream varname;
-                varname << "$" << name << "$this";
+             // varname << "$" << name << "$this";
                 RetvalAttribute *retval = new RetvalAttribute(varname.str());
 #endif
                 SgVariableSymbol *varsym = cfg->global_this_variable_symbol;
@@ -100,7 +101,7 @@ void ExprLabeler::visit(SgNode *node)
         else if (!isSgInitializedName(node->get_parent()))
         {
             std::stringstream varname;
-            varname << "$anonymous_var_" << expnum++;
+            varname << "$tmpvar$anonymous_var_" << expnum++;
             SgVariableSymbol *varsym
                 = Ir::createVariableSymbol(varname.str(),
                                            cfg->global_unknown_type);
@@ -111,7 +112,7 @@ void ExprLabeler::visit(SgNode *node)
     else if (isSgAndOp(node) || isSgOrOp(node) || isSgConditionalExp(node))
     {
         std::stringstream varname;
-        varname << "$logical_" << expnum++;
+        varname << "$tmpvar$logical_" << expnum++;
         SgVariableSymbol *varsym
             = Ir::createVariableSymbol(varname.str(),
                                        cfg->global_unknown_type);

@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.24 2008-06-26 08:08:06 gergo Exp $
+// $Id: ExprTransformer.C,v 1.25 2008-06-27 13:48:22 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -801,12 +801,12 @@ void ExprTransformer::visit(SgNode *node)
         const std::vector<CallBlock *> *d_entries
           = find_destructor_entries(ct);
         std::vector<std::string> *d_class_names = find_destructor_names(ct);
-        std::vector<std::string> *d_this_names
-          = find_destructor_this_names(ct);
+     // std::vector<std::string> *d_this_names
+     //   = find_destructor_this_names(ct);
         std::vector<std::string>::iterator destr_name
           = d_class_names->begin();
-        std::vector<std::string>::iterator this_name
-          = d_this_names->begin();
+     // std::vector<std::string>::iterator this_name
+     //   = d_this_names->begin();
         if (d_entries != NULL && !d_entries->empty()) {
           std::vector<BasicBlock *> afters, lasts;
           std::vector<CallBlock *>::const_iterator d;
@@ -1252,7 +1252,7 @@ ExprTransformer::evaluate_arguments(std::string name,
     = new std::vector<SgVariableSymbol *>();
   SgExpressionPtrList::const_iterator i = args.begin();
   if (member_func) {
-    std::string varname = std::string("$") + name + "$this";
+ // std::string varname = std::string("$") + name + "$this";
     SgExpression *new_expr = *i;
     SgVariableSymbol *varsym = 
    // Ir::createVariableSymbol(varname, (*i)->get_type());
@@ -1287,7 +1287,7 @@ ExprTransformer::evaluate_arguments(std::string name,
     if (n >= cfg->global_argument_variable_symbols.size())
     {
         varname.str("");
-        varname << "$global$arg_" << n;
+        varname << "$tmpvar$arg_" << n;
         SgVariableSymbol *varsym
             = Ir::createVariableSymbol(varname.str(),
                                        cfg->global_unknown_type);
@@ -1305,13 +1305,8 @@ ExprTransformer::evaluate_arguments(std::string name,
 }
 
 void ExprTransformer::assign_retval(std::string name, SgFunctionCallExp *call, BasicBlock *block) {
-#if 0
-// GB (2008-05-05): Removed this dead code.
-  std::stringstream varname;
-  varname << "$" << name << "$return_" << expnum;
-#endif
-  std::stringstream retname;
-  retname << "$" << name << "$return";
+//std::stringstream retname;
+//retname << "$" << name << "$return";
   RetvalAttribute *varnameattr = (RetvalAttribute *) call->getAttribute("return variable");
   // SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
   SgVariableSymbol *var = varnameattr->get_variable_symbol();
@@ -1408,6 +1403,7 @@ ExprTransformer::find_destructor_names(SgClassType *ct) {
     return names;
 }
 
+#if 0
 std::vector<std::string>*
 ExprTransformer::find_destructor_this_names(SgClassType *ct) {
     SgClassDefinition *cd
@@ -1434,13 +1430,14 @@ ExprTransformer::find_destructor_this_names(SgClassType *ct) {
             std::string class_name((*p)->class_type->get_declaration()
                     ->get_name().str());
             std::string this_var_name 
-                = std::string() + "$~" + class_name + "$this";
+         //     = std::string() + "$~" + class_name + "$this";
             names->push_back(this_var_name);
         }
     }
 
     return names;
 }
+#endif
 
 // GB (2008-03-10): See comment in header file satire/ExprTransformer.h
 void satireReplaceChild(SgNode *parent, SgNode *from, SgNode *to)
