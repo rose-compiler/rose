@@ -4575,6 +4575,18 @@ SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   return isSgStatement(n);
 }
 
+//! Replace a statement with another
+void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
+{
+  ROSE_ASSERT(oldStmt);  
+  ROSE_ASSERT(newStmt);  
+  if (oldStmt == newStmt) return;
+  SgStatement * p = isSgStatement(oldStmt->get_parent());
+  ROSE_ASSERT(p);
+  oldStmt->set_parent(p); // needed ?
+  p->replace_statement(oldStmt,newStmt);
+}
+
 // This code is based on OpenMP translator's ASTtools::replaceVarRefExp() and astInling's replaceExpressionWithExpression()
 // Motivation: It involves the parent node to replace a VarRefExp with a new node
 // Used to replace shared variables with the dereference expression of their addresses

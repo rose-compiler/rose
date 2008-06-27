@@ -694,8 +694,11 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
 //! insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
+//! Replace a statement with another
+void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
+
 //! append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
-/*! we recommend to build SgFunctionParameterList before building a function delcaration
+/*! we recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
  \todo function type , function symbol also need attention.
 */
@@ -710,10 +713,10 @@ void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paral
 //! set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
 void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
 
-  //! replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kepted.
+  //! Replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kept.
 void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp=false);
 
-//! set operandis for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
+//! Set operandis for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
 void setOperand(SgExpression* target, SgExpression* operand);
 
 //!set left hand operand for binary expressions, transparently downcasting target expressions when necessary
@@ -861,7 +864,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
   // replace= delete old + insert new (via building or copying)
 
   void replaceAst(SgNode* oldNode, SgNode* newNode);
-  void replaceStatement (SgStatement* s_cur, SgStatement* s_new);
 
    //void replaceChild(SgNode* parent, SgNode* from, SgNode* to);
    //bool AstInterface::ReplaceAst( const AstNodePtr& orig, const AstNodePtr& n)
@@ -976,8 +978,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
 
   void replaceSubexpressionWithStatement(SgExpression* from,
                                        StatementGenerator* to);
-
-  void replaceExpressionWithExpression(SgExpression* from, SgExpression* to);
 
   SgAssignInitializer* splitExpression(SgExpression* from,
                                      std::string newName = "");
