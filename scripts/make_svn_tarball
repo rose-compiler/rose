@@ -1,6 +1,14 @@
 #!/bin/sh
+
+versiontocheckout="$1"
+if [ "x$versiontocheckout" = "x" ]; then
+  versiontocheckout=""
+else
+  versiontocheckout="-r $1"
+fi
+
 svnrepository="`sed -n 5p < .svn/entries`"
-versioninfo="`svn -q -r HEAD log ${svnrepository} | sed -n 2p`"
+versioninfo="`svn -q ${versiontocheckout} log ${svnrepository} | sed -n 2p`"
 version=`echo "${versioninfo}" | cut -f1 -d \ `
 modificationdate=`echo "${versioninfo}" | cut -f5 -d \ `
 
@@ -22,7 +30,7 @@ if [ -e "${dirnameBase}.tar.gz" ]; then
   exit 1
 fi
 #svn export "${svnrepository}" "${dirnameBase}"
-svn checkout "${svnrepository}" "${dirnameBase}"
+svn checkout "-${version}" "${svnrepository}" "${dirnameBase}"; # $version has an "r" on the beginning already
 tar zcf "${dirnameBase}.tar.gz" "${dirnameBase}/"
 rm -rf "${dirnameBase}/"
 echo "Built tarball ${dirnameBase}.tar.gz from SVN revision ${version}"
