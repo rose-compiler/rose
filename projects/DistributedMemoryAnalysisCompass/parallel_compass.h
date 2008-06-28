@@ -39,6 +39,24 @@ int* dynamicFunctionsPerProcessor;
 DFAnalysis* defuse;
 
 
+class MemoryTraversal : public ROSE_VisitTraversal {
+ public:
+ MemoryTraversal():counter(0){}
+  unsigned int counter;
+  void visit ( SgNode* node );
+  std::map <unsigned int, SgNode* > nodeMap;
+  std::map <SgNode*, unsigned int > nodeMapInv;
+};
+
+void MemoryTraversal::visit ( SgNode* node )
+{
+  ROSE_ASSERT(node != NULL);
+  nodeMap[counter]=node;
+  nodeMapInv[node]=counter;
+  counter++;
+}
+
+
 
 // ************************************************************
 // check for the usage parameters

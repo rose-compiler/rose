@@ -4,6 +4,50 @@ using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
+void serializeDefUseResults(unsigned int *values,
+			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+			    std::map<SgNode*,unsigned int > &nodeMap) {
+  int counter=0;
+  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
+  for (it=defmap.begin();it!=defmap.end();++it) {
+    SgNode* first = it->first;
+    ROSE_ASSERT(first);
+    std::multimap < SgInitializedName* , SgNode* > mm = it->second;
+    std::multimap < SgInitializedName* , SgNode* >::const_iterator it2;
+    for (it2=mm.begin();it2!=mm.end();++it2) {
+      SgInitializedName* second = isSgInitializedName(it2->first);
+      SgNode* third = it2->second;
+      ROSE_ASSERT(second);
+      ROSE_ASSERT(third);
+      values[counter]=nodeMap.find(first)->second;
+      values[counter+1]=nodeMap.find(second)->second;
+      values[counter+2]=nodeMap.find(third)->second;
+      counter+=3;
+    }
+  }
+}
+
+void deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
+			      std::map<unsigned int, SgNode* > &nodeMap, bool definition) {
+  for (unsigned int i=0; i <arrsize;i+=3) {
+    unsigned int first = values[i];
+    unsigned int second = values[i+1];
+    unsigned int third = values[i+2];
+    //        cerr << i << "/"<<arrsize<<"::  first : " << first << " second : " << second << " third : " << third << endl;
+    SgNode* node1 = nodeMap.find(first)->second;
+    SgInitializedName* node2 = isSgInitializedName(nodeMap.find(second)->second);
+    SgNode* node3 = nodeMap.find(third)->second;
+    ROSE_ASSERT(node1);
+    ROSE_ASSERT(node2);
+    ROSE_ASSERT(node3);
+    if (definition)
+      defuse->addDefElement(node1, node2, node3);
+    else
+      defuse->addUseElement(node1, node2, node3);
+  }
+
+}
+
 // ************************************************************
 // NodeCounter to determine on how to split the nodes
 // ************************************************************
@@ -309,6 +353,12 @@ int main(int argc, char **argv)
   initPCompass(argc, argv);
   ROSE_ASSERT(root);
 
+  // create map with all nodes and indices
+  MemoryTraversal* memTrav = new MemoryTraversal();
+  memTrav->traverseMemoryPool();
+  cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << endl;
+  ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+
   /* setup checkers */
   std::vector<AstSimpleProcessing *> traversals;
   std::vector<AstSimpleProcessing *>::iterator t_itr;
@@ -369,11 +419,14 @@ int main(int argc, char **argv)
 #endif 
 
 
+  /* ---------------------------------------------------------- 
+   * MPI code 
+   * ----------------------------------------------------------*/
   // --------------------------------------------------------
   // (tps, 07/24/08): added support for dataflow analysis
   // this should run right before any other checker is executed.
   // Other checkers rely on this information.
-#if 0
+	//#if 0
   MPI_Barrier(MPI_COMM_WORLD);
   gettime(begin_time_node);
 
@@ -402,18 +455,19 @@ int main(int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << endl;
+
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
   ROSE_ASSERT(defuse);
   my_map defmap = defuse->getDefMap();
   my_map usemap = defuse->getUseMap();
-  std::cerr << my_rank << ": Def entries: " << defmap.size() << std::endl;
-
+  std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
   gettime(end_time_node);
   double my_time_node = timeDifference(end_time_node, begin_time_node);
 
-  double *times_defuse = new double[processes];
+
   /* communicate times */
+  double *times_defuse = new double[processes];
   MPI_Gather(&my_time_node, 1, MPI_DOUBLE, times_defuse, 1, MPI_DOUBLE, 0,
 	     MPI_COMM_WORLD);
   double totaltime=0;
@@ -421,18 +475,110 @@ int main(int argc, char **argv)
     if (times_defuse[i]>totaltime)
       totaltime=times_defuse[i];
 
-  if (my_rank==0)
+  if (my_rank==0) {
     cerr << "Time (max) needed for DefUse : " << totaltime << endl;
-
-  my_map res_defmap;
-  MPI_Gather(&defmap, 1, MPI_BYTE, res_defmap, 1, MPI_BYTE, 0,
-	     MPI_COMM_WORLD);
-
-  if (my_rank==0)
-    cerr <<  "Total number of defuse nodes: " <<  endl;
-#endif
+  }
+  //((DefUseAnalysis*)defuse)->printDefMap();
+  /* communicate times */
 
 
+  /* communicate arraysizes */
+  unsigned int arrsize = 0;
+  unsigned int arrsizeUse = 0;
+  my_map::const_iterator dit = defmap.begin();
+  for (;dit!=defmap.end();++dit) {
+    arrsize +=(dit->second).size()*3;
+  }
+  my_map::const_iterator dit2 = usemap.begin();
+  for (;dit2!=usemap.end();++dit2) {
+    arrsizeUse +=(dit2->second).size()*3;
+  }
+  cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
+       << ": defs : " << arrsize << "  uses: " << arrsizeUse << endl;
+  // communicate total size to allocate global arrsize
+  unsigned int global_arrsize = -1;
+  unsigned int global_arrsizeUse = -1;
+  MPI_Allreduce(&arrsize, &global_arrsize, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+  MPI_Allreduce(&arrsizeUse, &global_arrsizeUse, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+  /* communicate arraysizes */
+
+
+  /* serialize all results */
+  unsigned int *def_values_global = new unsigned int[global_arrsize];
+  unsigned int *def_values =new unsigned int[arrsize];
+  unsigned int *use_values_global = new unsigned int[global_arrsizeUse];
+  unsigned int *use_values =new unsigned int[arrsizeUse];
+  for (unsigned int i=0; i<arrsize;++i) 
+    def_values[i]=0;
+  for (unsigned int i=0; i<global_arrsize;++i) 
+    def_values_global[i]=0;
+  for (unsigned int i=0; i<arrsizeUse;++i) 
+    use_values[i]=0;
+  for (unsigned int i=0; i<global_arrsizeUse;++i) 
+    use_values_global[i]=0;
+
+  serializeDefUseResults(def_values, defmap, memTrav->nodeMapInv);
+  serializeDefUseResults(use_values, usemap, memTrav->nodeMapInv);
+  /* serialize all results */
+
+
+  /* communicate all results */
+  int* offset=new int[processes];
+  int* length=new int[processes];
+  int* global_length=new int [processes];
+  int* offsetUse=new int[processes];
+  int* lengthUse=new int[processes];
+  int* global_lengthUse=new int [processes];
+  MPI_Allgather(&arrsize, 1, MPI_INT, global_length, 1, MPI_INT, MPI_COMM_WORLD);
+  MPI_Allgather(&arrsizeUse, 1, MPI_INT, global_lengthUse, 1, MPI_INT, MPI_COMM_WORLD);
+
+  for (int j=0;j<processes;++j) {
+    if (j==0) {
+	offset[j]=0;
+	offsetUse[j]=0;
+    } else {
+	offset[j]=offset[j - 1] + global_length[j-1];
+	offsetUse[j]=offsetUse[j - 1] + global_lengthUse[j-1];
+    }
+    length[j]=global_length[j]; 
+    lengthUse[j]=global_lengthUse[j]; 
+  }
+  cerr << my_rank << " : serialization done."  
+       <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< endl;
+
+  MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
+		 offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
+  MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
+		 offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
+  /* communicate all results */
+
+
+  /* deserialize all results */
+  // write the global def_use_array back to the defmap (for each processor)
+  ((DefUseAnalysis*)defuse)->flushDefuse();
+  deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
+  deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
+  cerr << my_rank << " : deserialization done." << endl;
+  /* deserialize all results */
+
+
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  defmap = defuse->getDefMap();
+  usemap = defuse->getUseMap();
+
+  if (my_rank==0) {
+    cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << endl;
+    cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << endl;
+    //((DefUseAnalysis*)defuse)->printDefMap();
+  }
+  //#endif
+
+
+#if 0
+  /* ---------------------------------------------------------- 
+   * OpenMP code 
+   * ----------------------------------------------------------*/
   // we have to run the def-use analysis first
   // as some compass checkers rely on it
   // however, we cant communicate the results(pointers)
@@ -458,7 +604,7 @@ int main(int argc, char **argv)
     std::cerr << " finished defuse analysis.  nrDefUseNodes: " << resultDefUseNodes << std::endl;  
     std::cerr << " time for defuse : " << my_time_node << endl;
   }
-
+#endif
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
