@@ -103,6 +103,13 @@ class DefUseAnalysis : public DFAnalysis, Support {
    usetable.clear();
    globalVarList.clear();
    vizzhelp.clear();
+   sgNodeCounter=0;
+   //  nrOfNodesVisited=0;
+  }
+
+  void flushDefuse() {
+   table.clear();
+   usetable.clear();
   }
 };
 
