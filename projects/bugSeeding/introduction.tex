@@ -2,29 +2,107 @@
 
 \fixme{Need to identify top 30-40 security flaws with NIST.}
 
-   The purpose of security bug seeding is to automate the testing of static analysis
-tools designed to report security flaws in software.  By seeding bugs into
-real applications in many different ways, a tool's ability detect a high
-percentage of known (seeded) bugs can be predictive of the tool's
-ability to detect unknown bugs.  In principle, seeding of flaws could be applied 
-to either source code or binary executables, but we restrict our attention to 
-the seeding of security flaws in source code.  The seeding of security flaws 
-could be applied more generally to arbitrary bug seeding, but we 
-restrict our focus to only the seeding of security flaws into arbitrary applications.
+   The primary purpose of security flaw seeding is to automate the testing of static analysis
+tools designed to report security flaws in software.  
+% By seeding bugs into real applications in many different ways, a tool's ability to detect
+% a high percentage of known (seeded) bugs can be predictive of the tool's ability to detect
+% unknown bugs.
+Some details presented in this design document for such a tool are specific to capabilities
+within the ROSE compiler infrastructure.  ROSE is a source-to-source compiler
+infrastructure for the custom analysis and transformation of source code and binary 
+executables. ROSE is an open source project at Lawrence Livermore National Laboratory, 
+more information is available at \href{http://www.roseCompiler.org}{ROSE}.
+
+   Our purpose is first to define a simple compiler based approach to
+the construction of test suits to support the evaluation of static analysis
+tools; and provide some immediate help in this area to our collaborators.
+A second use of this technology is to evaluate the security of 
+applications, specifically if all possible known security flaws can be introduced and 
+a percentage identified by static analysis, then we could have some statistical
+certainty that a similar percentage of the unknown security flaws in the 
+same application have been identified (see subsection \ref{sec:NewResearchArea}).
+% This is the basis fo the theory behind
+% evaluations of applications with seeded security flaws.  This subject requires
+% substantial exporation to be validated in practice and this work provides a basis
+% for the supporting infrastructure for such research work.
+
+   In principle, seeding of flaws could be applied to either source code or binary
+executables, but we restrict our attention to the seeding of security flaws in source
+code. Note that ROSE as an infrastructure might be especially appropriate to both of
+these approaches, since it handles the analysis and transformation of both source code and binary
+executables.  The seeding of security flaws could be applied more generally to arbitrary
+bug seeding, but we restrict our focus to only the seeding of security flaws into
+arbitrary applications.
 
    This initial document is to permit a focus on the design of
 a translator built using ROSE for the source-to-source transformation
 of arbitrary applications to include security flaws for the purpose
 of testing arbitrary static analysis tools.  The issues are dominantly
 language independent and it should be possible to generate source
-code for input applications over a range of languages.
+code for input applications over a range of languages.  ROSE at present supports
+analysis and transformation of C, C++, Fortran 2003 (and older versions of Fortran), 
+OpenMP, UPC, and recent initial suport for PHP; support focused {\em only} on code
+generation could be added for Java, Ada, and oather languages, but such additional
+languages are generally not a target of our research work). Such support for only code
+generation would be of value for automated generation of test suits across multiple
+languages.
 
-\subsection{Benifits}
-   Outline benifits of automated generation of test codes.
+\subsection{Benefits}
+  % Outline benefits of automated generation of test codes.
+   The development of test suites for the evaluation of static analysis tools
+is labor intensive if done by hand.  Attempts to automate this have defined general code
+generators that generally lacked a compiler's deeper level understanding of 
+language specific code construction issues (e.g. with respect to what is valid code,
+and language specific details, e.g. template instantiation in C++).
+Specifically, the problem of enumerating
+the valid programs defined by a union of a language grammar and a grammar defined by 
+a set of security flaws is a fundamental programming language and compiler construction
+topic.  Further the evaluation of security flaws is significantly more complex in the
+context of real programs because of the more complex control flows (if not compounded by
+the compromises of handling the shear size of realistic applications, which can force 
+compromizes in the program analysis that change the results of evaluating only small 
+test codes).  It is likely
+critical to the evaluation of many static analysis tools to supplement their evaluation on
+small generated test codes with their evaluation on larger application codes; where
+the control flows and alias analysis are by definition more realistic.  Finally, the
+support for automated security flaw seeding is not just limited to evaluation of flaws but
+can likely be extended to handle the evaluation of false positive rates in static analysis
+tools as well (see section \ref{sec:FalsePositiveEvaluation}).
 
-1) Compare to automated approach to hand generated test codes (labor intensive)
+\subsection{A Statistical Basis for Software Assurance}
+\label{sec:NewResearchArea}
+    The evaluation of unknown security flaws in application may be able to
+be predicted with some degree of statistical confidence.  An approach for this
+is based on the ability to seed security flaws into a target application and 
+evaluate the number and types of security flaws that could be identified
+using state-of-the-art static (and maybe dynamic) analysis tools.  If, for example,
+only half of the seeded bugs can be identified, then some statistical basis
+can be derived for the an estimation of the number of remaining security flaws in 
+the application and as a result the degree of confidence that the application 
+can be trusted.  Variations of this technique can include:
+\begin{enumerate}
+   \item Counting unknown security flaws against the potential of an application for such
+         vulnerabilities (e.g. an application without any arrays may be less prone to
+         buffer overflows, similarly a language that automate bounds checking is similarly
+         less prone to buffer overflows). 
 
-2) Compare to test code to security flaw seeding of large scale applications
-   a) Access to realiztic control flows and pointer analysis requirements
-   b) Objuscation of tests based on what applications would be seeed.
+   \item Randomization in the seeding of security flaws may permit the same level of
+         statistical confidence in the evaluation of a static analysis tool (or an
+         application, see ref{}) but be significantly more efficient.  A degree of
+         coverage of all types of seeding of each security flaw must be maintained.
+         The randomization may also be a function of the percentage of vulnerabilities 
+         for each specific security flaw in the target application.  It can be expected
+         that the selection of a application to seed with security flaws may define a 
+         bias in the testing.  This likely has advantages and disadvantages in practice.
+ 
+\end{enumerate}
+
+This is ultimately a more complex subject that dealt with in this
+document and it seriously lacks data to back up this argument.  More that an argument
+that this is now software could be evaluated in the future, we define a research
+area for further exploration.  The point is that a basis for this work is the
+infrastructure required to seed security flaws into applications and that 
+this infrastructure could have immediate use as a basis for the development of
+automatically generated test suites for the evaluation of static analysis tools
+by others (e.g. NIST, CERT, etc.).
 

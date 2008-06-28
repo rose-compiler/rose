@@ -6,6 +6,9 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+#include "bugSeedingSupport.h"
+
+#if 0
 class InheritedAttribute
    {
      public:
@@ -80,6 +83,7 @@ BugSeeding::evaluateInheritedAttribute (
 
      return inheritedAttribute;
    }
+#endif
 
 int
 main (int argc, char *argv[])
@@ -87,12 +91,19 @@ main (int argc, char *argv[])
      SgProject *project = frontend (argc, argv);
      ROSE_ASSERT (project != NULL);
 
-     BugSeeding treeTraversal;
-     InheritedAttribute inheritedAttribute;
+  // Running internal tests (optional)
+     AstTests::runAllTests (project);
 
-     treeTraversal.traverseInputFiles (project,inheritedAttribute);
+  // Build a BufferOverFlowSecurityFlaw object
+     BufferOverFlowSecurityFlaw bufferOverFlowSecurityFlaw;
 
-  // Running interlan tests (optional)
+  // Call the member function to annotate the AST where BufferOverFlowSecurityFlaw vulnerabilities exist.
+     bufferOverFlowSecurityFlaw.detectVunerabilities(project);
+
+  // Call the member function to seed security flaws into the AST (at locations where vulnerabilities were previously detected).
+     bufferOverFlowSecurityFlaw.seedSecurityFlaws(project);
+
+  // Running internal tests (optional)
      AstTests::runAllTests (project);
 
   // Output the new code seeded with a specific form of bug.

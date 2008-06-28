@@ -42,10 +42,14 @@ void foobar()
 \end{verbatim}
 }
 
-The approach required to handle more general security flaws is as follows:
-\begin{enumerate}
-   \item We assume a range of 30-40 security flaws (yet to be identified)
-         which can be seeded independently of each other.  Some canidate lists of
+The design of a tool to seed security flaws and develop evaluation test suites requires
+addressing a range of related subjects.  The following subsections outline more detail.
+% required to handle more general security flaws is as follows:
+% \begin{enumerate}
+%   \item Range of Security Flaws \\
+\subsection{Range of Security Flaws}
+         We assume a range of 30-40 security flaws (yet to be identified)
+         which can be seeded independently of each other.  Some candidate lists of
          specific security flaws exist,
          for example, the \href{http://nvd.nist.gov/cwe.cfm}{NIST list of security flaws}, 
          and the 
@@ -56,7 +60,7 @@ The approach required to handle more general security flaws is as follows:
          \item Buffer Overflow \\
                There are a lot of different types of buffer overflow cases to address,
                more information is available at:
-               \href{http://en.wikipedia.org/wiki/Buffer_overflow}{Wiki: Buffer Overflow Security Flaws},
+               \href{http://en.wikipedia.org/wiki/Buffer_overflow}{Wikipedia: Buffer Overflow Security Flaws},
                see also:
                \href{http://cwe.mitre.org/data/definitions/119.html}{CWE-119}.
 
@@ -64,7 +68,7 @@ The approach required to handle more general security flaws is as follows:
                Code injection can be used by an attacker to introduce (or "inject") code
                into a computer program to change the course of execution, more information
                is available at:
-               \href{http://en.wikipedia.org/wiki/Command_injection}{Wiki: Command Injection},
+               \href{http://en.wikipedia.org/wiki/Command_injection}{Wikipedia: Command Injection},
                see also:
                \href{http://cwe.mitre.org/data/definitions/78.html}{CWE-78}.
 
@@ -77,7 +81,7 @@ The approach required to handle more general security flaws is as follows:
                The software uses externally-controlled format strings in printf-style
                functions, which can lead to buffer overflows or data representation
                problems. More information is available at:
-               \href{http://en.wikipedia.org/wiki/Format_string_vulnerabilities}{Wiki: Format string attack}, 
+               \href{http://en.wikipedia.org/wiki/Format_string_vulnerabilities}{Wikipedia: Format string attack}, 
                see also:
                \href{http://cwe.mitre.org/data/definitions/134.html}{CWE-134}.
 
@@ -90,7 +94,7 @@ The approach required to handle more general security flaws is as follows:
          \item Uninitialized variables \\
                The code uses a variable that has not been initialized, leading to
                unpredictable results, more information is available at:
-               \href{http://en.wikipedia.org/wiki/Uninitialized_variable}{Uninitialized variables}, 
+               \href{http://en.wikipedia.org/wiki/Uninitialized_variable}{Wikipedia: Uninitialized variables}, 
                see also:
                \href{http://cwe.mitre.org/data/definitions/457.html}{CWE-457}.
 
@@ -105,7 +109,7 @@ The approach required to handle more general security flaws is as follows:
                A NULL pointer dereference occurs when the application dereferences a
                pointer that it expects to be valid, but is NULL, typically causing a crash
                or exit, more information is available at:
-               \href{http://en.wikipedia.org/wiki/Pointer}{Null pointers}, 
+               \href{http://en.wikipedia.org/wiki/Pointer}{Wikipedia: Null pointers}, 
                see also:
                \href{http://cwe.mitre.org/data/definitions/476.html}{CWE-476}.
 
@@ -113,7 +117,7 @@ The approach required to handle more general security flaws is as follows:
                The software does not sufficiently verify the origin or authenticity of
                data, in a way that causes it to accept invalid data, more information is
                available at:
-               \href{http://en.wikipedia.org/wiki/Taint_checking}{Taint checking}, 
+               \href{http://en.wikipedia.org/wiki/Taint_checking}{Wikipedia: Taint checking}, 
                see also:
                \href{http://cwe.mitre.org/data/definitions/345.html}{CWE-345}.
 
@@ -128,7 +132,8 @@ The approach required to handle more general security flaws is as follows:
 
       \end{enumerate}
 
-   \item Classification of security flaws \\ 
+%  \item Classification of security flaws \\
+\subsection{Classification of Security Flaws}
          The development of seeding for security flaws is addressed using a specific 
          classification for security flaws: simple (local) security flaws, 
          security flaw chains (defined over the control flow) and composite security flaws
@@ -158,37 +163,68 @@ The approach required to handle more general security flaws is as follows:
                may not be a security flaw (e.g. same as for the links of a security flaw
                chain).  For the same reasons as for security flaw chains, we will be
                interested in seeding these sorts of flaws to test static analysis tools.
-               Further design work specific to the design for this is deferred.
+               The security flaw chain and the composite security flaw are likely related
+               but the composite security flaw may be defined over the control flow of the
+               whole program where as the security flaw chain is defined over a
+               significantly smaller, (and more readily characterizable, subset of the
+               control flow. Further design work specific to the design for this is
+               deferred.
+               \fixme{Need to verify/clarify the differences between the 
+               {\it security flaw chain} and the {\it composite security flaw}.}
       \end{enumerate}
 
-   \item Specification of vulnerabilities (domain) \\
-         \label{item:SpecificationOfVulnerabilities}
-         For each security flaw and input application code pairing, there is an evaluation of
-         the application code to identify where such security flaws could exist
-         (specifically, where such flaws could be seeded).  For example, if
+\subsection{A Database of Program Information}
+         \label{sec:SpecificationOfDatabase}
+         An aspect of the define to support security flaws seeding is recording
+where in the application seeding occurs and matching the detected security flaws
+back to the source code. Since the detection of the security flaws is an issues 
+associated with running the static analysis tools on the generated seeded application
+it is outside of the design goals for this design document.  However, the seeding
+for arbitrary applications does require managing information about what security flaw
+vulnerabilities were identified (see subsection \ref{sec:SpecificationOfVulnerabilities}) 
+and the location of seeded security flaws (see subsection \ref{sec:SeedingOfSecurityFlaws}).
+To support this we proposed a database (of some sort) to record such
+details.  Work at NIST may be helpful in defining an appropriate schema to support this
+(based on their experience with collecting related tool independent information specific
+to security flaws).
+
+%  \item Specification of vulnerabilities (domain) \\
+\subsection{Specification of Vulnerabilities (domain)}
+         \label{sec:SpecificationOfVulnerabilities}
+         For each security flaw and input application code pairing, there is an evaluation
+         of the application code to identify where such security flaws could exist
+         (specifically, where such flaws could be seeded).  This step defines the
+         domain (mathematically) from which the application vulnerabilities can be mapped
+         to versions of the application with seeded security flaws. For example, if
          an application does not contain arrays, then it might have no vulnerability
          to buffer overflow security flaws, and thus it may be inappropriate to seed 
          such an application with this type of security flaw.  It is not the goal
          of security flaw seeding to be a generator of every type of security flaw
-         independent of the input applications (security flaw generators can in prenciple
-         do this).  However, if a vulnerability for a security flaw is detected in the 
-         application code, then every possible variation of code that can seed that
+         independent of the input applications (security flaw generators can in principle
+         do this, but see subsection \ref{sec:SecurityFlawGenerator} for an alternative 
+         point of view).  However, if a vulnerability for a security flaw is detected in
+         the application code, then every possible variation of code that can seed that
          security flaw into the application may be appropriate. For each security flaw,
          the design of the security flaw seeding tool would:
             \begin{enumerate}
                \item Identify the location of where the vulnerabilities could exist.
                \item Classify the location of the vulnerabilities by what analysis is
                      required to resolve it as a vulnerability (loop analysis, pointer
-                     analysis, interprocedural analysis, etc.).
-               \item Record this information into a database so that the location of
+                     analysis, inter-procedural analysis, etc.).
+               \item Record this information into a database (see 
+                     subsection \ref{sec:SpecificationOfDatabase}) so that the location of
                      potential vulnerabilities can be saved separately from where
                      security flaws are seeded into the application.
             \end{enumerate}
 
-   \item Specification of search space (range) \\
-         \label{item:SpecificationOfSearchSpace}
-         The seeding of any single security flaws can happen in many ways.  For example,
-         a buffer overflow many be introduced using literal values, scalar variables,
+% \item Specification of search space (range) \\
+\subsection{Specification of Search Space (range)}
+         \label{sec:SpecificationOfSearchSpace}
+         The seeding of any single security flaws can happen in many ways. The mapping of
+         the vulnerabilities (domain) to the space of possible seeded security flaws
+         (range) may help define a convient mathematical basis for the description of
+         security flaw seeding.  For example, a buffer overflow many be introduced 
+         using transformed literal values, scalar variables,
          static declared arrays, heap declared arrays, dynamically differently
          defined arrays (along different paths), etc.  The number of fundamentally
          different ways in which a security flaw may be introduced (seeded) into source
@@ -196,8 +232,7 @@ The approach required to handle more general security flaws is as follows:
          ways on introducing security flaws are general and so can form a 
          security flaw invariant subspace. The dimensions of the search space can be
          considered to be the number of fundamentally different ways that a security flaw
-         can be hidden.  
-         Example search space dimensions are:
+         can be hidden. Example search space dimensions are:
          \begin{enumerate}
             \item For values associated with a security flaw, the values may be:
                \begin{enumerate}
@@ -218,6 +253,7 @@ The approach required to handle more general security flaws is as follows:
                   \item function arguments
                   \item array index expressions
                   \item declaration initializers
+                  \item template instantiations (template expressions)
                \end{enumerate}
 
             \item For statements containing vulnerabilities, the embedding of 
@@ -229,6 +265,7 @@ The approach required to handle more general security flaws is as follows:
                   \item declarations (variables, functions, classes, templates, etc.)
                   \item loop constructs
                   \item branch constructs
+                  \item template instantiations (template functions)
                \end{enumerate}
 
          \end{enumerate}
@@ -236,23 +273,27 @@ The approach required to handle more general security flaws is as follows:
          values can be hidden.  This defines a size along the respective
          dimension.
 
-   \item Security flaw generator \\
+% \item Security flaw generator \\
+\subsection{Security Flaw Test Code Generator}
+         \label{sec:SecurityFlawGenerator}
          It is reasonable that the same infrastructure used to seed security flaws into
          existing applications could be used to as a generator of security flaws
          independent of any input application.
          Certainly, and source-to-source compiler infrastructure can handle the generation
          of code as a trivial transformation, even if it is a larger hammer than required.
-         We could have the proposed seeding tool have a mode where it simplely generates
+         We could have the proposed seeding tool have a mode where it simply generates
          the different variations of the security flaws that it would otherwise seed into
          an input application.  This may even be a useful mode for debugging and
          presenting the security flaws that would be introduced.  From a compiler
          transformation perspective this adds little to the complexity of such a tool
          (at least if using ROSE).
 
-   \item Seeding of individual security flaws \\
+%  \item Seeding of individual security flaws \\
+\subsection{Seeding of Individual Security Flaws}
+         \label{sec:SeedingOfSecurityFlaws}
          An aspect of the design of a bug seeding tool is the seeding of individual
          security flaws within each classification. Specifically each security flaw can be
-         seeded in isolation; treated orthogally to all other security flaws. Addressing
+         seeded in isolation; treated orthogonally to all other security flaws. Addressing
          more sophisticated security flaws would be done by treating them a either as
          Security Flaw Chains or Composite Security Flaws.
          For each classification of security flaws, we define the following steps:
@@ -261,57 +302,59 @@ The approach required to handle more general security flaws is as follows:
                      flaw has a relevant domain (possible location in the input
                      application) a potential vulnerability where it 
                      can be introduced (seeded).  See item 
-                     \ref{item:SpecificationOfVulnerabilities} (above) for more details.
+                     \ref{sec:SpecificationOfVulnerabilities} (above) for more details.
 
                \item Identify the space of transformations \\ to represent the target bug.
                      This defines the size of the search space (the size of the 
                      space representing the code that could be generated). See item 
-                     \ref{item:SpecificationOfSearchSpace} (above) for more details.
+                     \ref{sec:SpecificationOfSearchSpace} (above) for more details.
 
                \item Define the subset of points in the space to evaluate \\ so that we can
                      avoid the exhaustive search of extremely large spaces; which might
                      generate too much code to test. This is our experience from 
                      the generation of code to test performance optimizations associated
                      with a research area in compiler optimization called {\em autotuning}
-                     (also reffered to as {\em empirical analysis}).
+                     (also referred to as {\em empirical analysis}).
 
                \item Identify the granularity of the security flaw seeding \\ 
                      where the security flaw should be applied
                      (e.g. expression, statement, basic block, function, file).
                      For example, a buffer overflow may be able to be applied to a loop
                      nest and either within each loop of the loop nest of the inner most
-                     loop depending on the grainularity.  Similarly, multiple versions
+                     loop depending on the granularity.  Similarly, multiple versions
                      of the code for any seeded security flaw may be copied at different
-                     levels of grainularity, from file level grainularity to function
-                     level granularity, or even block level grainularity.  Each have
-                     consiquences to the amount of code generated and the degree to which
+                     levels of granularity, from file level granularity to function
+                     level granularity, or even block level granularity.  Each have
+                     consequences to the amount of code generated and the degree to which
                      the seeding of the security flaw is allowed to change the input
                      application.
  
                \item Generate a copy of the relevant portion of the AST \\
                      to support the seeding of multiple variations of the security flaw.
                      AST copy mechanism in ROSE are well suited to this purpose; a copy of
-                     the AST subtree is a defined level or grainularity is generated and
+                     the AST subtree is a defined level or granularity is generated and
                      the security flaw is seeded into the copy. Attention should be
                      paid to the way this copy is woven back into the control flow so that
                      static analysis will not ignore the seeded bug as dead code.
 
                \item Apply transformation to modify each copy of the AST \\
-                     Each AST subtree is transformed to inser a single security flaw.
+                     Each AST subtree is transformed to insert a single security flaw.
 
             \end{enumerate}
 
-   \item Seeding likely to generate security flaw false positives \\
+% \item Seeding likely to generate security flaw false positives \\
+\subsection{Seeding of Security Flaw False Positives}
+         \label{sec:FalsePositiveEvaluation}
          Since many static analysis tools are overly conservative in their program
          analysis they are sensitive to falsely detecting security flaws (false
-         positives). Since detection of fase positives are a significant noise
+         positives). Since detection of false positives are a significant noise
          in the detection of real security flaws the seeding code which might
          appear to be a security flaw is yet another way to evaluated static 
          analysis tools.  The detection of any valid code seeded into an 
          application as a security flaw would count as a false positive.
          There are a few strategies to the introduction of good code that
          would appear as a security flaw, specifically such seeded code
-         should be introduced hidden behind different types of comlexities.
+         should be introduced hidden behind different types of complexities.
          Complexities that we think would be effective in fooling static analysis
          to report good code as false security flaws would be:
          \begin{enumerate}
@@ -326,10 +369,10 @@ The approach required to handle more general security flaws is as follows:
             specific template instantiation complexity)
             \item Hide valid code behind code requiring pointer analysis. 
             Hide valid code behind pointer manipulations of varying complexity that are
-            not easily analizable by different grades of pointer analysis.
+            not easily analyzable by different grades of pointer analysis.
          \end{enumerate}
 
-\end{enumerate}
+% \end{enumerate}
 
 
 

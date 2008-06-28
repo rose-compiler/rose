@@ -23,4 +23,7 @@ link_LaTeX_files:
 docs: bugSeeding.tex link_LaTeX_files
 	pdflatex bugSeeding.tex
 
+testBufferOverflow_arrayIndexing: bugSeeding
+	./bugSeeding -rose:verbose 0 -c $(srcdir)/inputCode_bufferOverflow_arrayIndexing.C
+
 

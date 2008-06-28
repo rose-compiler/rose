@@ -98,7 +98,9 @@
 % This draft mode eliminates the figures (leaves boxes for where they would be)
 %\psdraft
 
-\title{ {\bf Bug Seeding Design Document \\ \textcolor{red}{ Draft } } }
+\title{ {\bf Automated Seeding Of Security Flaws For The Construction Of Test Suites For The Evaluate Static Analysis Tools \\
+                              \textcolor{blue}{Design Document} \\
+                                  \textcolor{red}{ Draft } } }
 %\title{ {\bf \textcolor{red}{         Bug Seeding Design: \\
 %                       A Tool for the Evaluation of Static Analysis Tools \\
 %                                        (A ROSE Tool)} \\
@@ -107,6 +109,8 @@
 
 % This doesn't seem to work.  References to this label are not resolved.
 \label{BugSeeding:postscriptVersionOfUserManual}
+
+\author{Dan Quinlan, others to be defined on basis of collaborations}
 
 \begin{htmlonly}
    \centering \includegraphics[width=3in]{../compass_rose.gif}
@@ -126,6 +130,7 @@
 
 \input{design}
 
+\newpage
 \input{appendix}
 
 %\newpage

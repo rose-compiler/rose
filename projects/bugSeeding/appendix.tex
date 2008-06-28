@@ -1,6 +1,6 @@
-\section{Appendix}
+\section*{Appendix: Implementation Notes}
 
-\subsection{Implementation Notes}
+%\subsection{Implementation Notes}
 Notes on the design/implementation of a translator to seed security flaws:
 \begin{enumerate}
 
@@ -13,10 +13,11 @@ stack based implementation).  So then we assume:
       \begin{enumerate}
          \item Memory model:
             \begin{enumerate}
-               \item data: array $|$ scalar $|$ pointer $|$ literal $|$ function pointer
-               \item executable statements: branching control flow $|$ loops $|$ executable statements
-               \item function: data $|$ executable statements $|$ return address 
-               \item program: data $|$ function 
+               \item data declaration: array $|$ scalar $|$ pointer $|$ literal $|$ function pointer
+               \item executable statements: branching control flow $|$ loops $|$ function $|$ executable statements
+               \item code: data declaration $|$ executable statements 
+               \item function: code, return address
+             % \item program: data $|$ function
             \end{enumerate}
       \end{enumerate}
 In this memory model a write to the {\em return address} is a security flaw (violation).
@@ -35,16 +36,10 @@ number of programs.
          generate invalid programs.  It would be nice to prove this detail (or 
          at least argue it better).
 
-   \item ROSE is well suited to to construct this since it has a high level AST
-         represnetation, most of the program analysis required, the AST subtree copy
-         mechanisms, the transformation support to introduce the security flaws, and 
+   \item ROSE is well suited to construct these sorts of tools this since it has a high
+         level AST represnetation, most of the program analysis required, the AST subtree
+         copy mechanisms, the transformation support to introduce the security flaws, and 
          the code generation support to many different generate different versions of
          the security flaw.
-
-\commentout{
-   \item Note that it might be that parts 2b and 2c can be addressed by reusing
-part 2a and expanding the space to include all permutations defined
-buy the bug chain and/or the bug collection.
-}
 
 \end{enumerate}
