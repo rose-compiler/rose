@@ -126,6 +126,8 @@
 
 \input{design}
 
+\input{appendix}
+
 %\newpage
 
 \end{document}

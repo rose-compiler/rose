@@ -301,46 +301,35 @@ The approach required to handle more general security flaws is as follows:
 
             \end{enumerate}
 
-\end{enumerate}
-
-
-Notes on the design/implementation of a translator to seed security flaws:
-\begin{enumerate}
-
-   \item To support an implementation, it may be more useful to define a grammar for
-security flaws and in so doing define how it is nested in a language grammar in a formal
-way that allows for the enumeration of all variants for any security flaw.
-Such a grammar should assume a typical memory model for the languages
-where it is to be used (e.g general procedural languages which have a
-stack based implementation).  So then we assume:
-      \begin{enumerate}
-         \item Memory model:
-            \begin{enumerate}
-               \item data: array $|$ scalar $|$ pointer $|$ literal $|$ function pointer
-               \item function: data $|$ return address $|$ function call $|$ branching control flow
-            \end{enumerate}
-      \end{enumerate}
-
-   \item The previous item (above) is not the same as requiring an enumeration of all
-         valid  programs over
-         a defined grammar, because we start with an existing application which defines
-         the set of all vulnerabilities and we define only local modifications that
-         are used to generate a new program.  I expect that because of the local nature
-         of the transformations to an existing (valid) program, that we should not
-         generate invalid programs.  It would be nice to prove this detail (or 
-         at least argue it better).
-
-   \item ROSE is a well suited to to construct this since it has a high level AST
-         represnetation, most of the program analysis required, the AST subtree copy
-         mechanisms, the transformation support to introduce the security flaws, and 
-         the code generation support to many different generate different versions of
-         the security flaw.
-
-\commentout{
-   \item Note that it might be that parts 2b and 2c can be addressed by reusing
-part 2a and expanding the space to include all permutations defined
-buy the bug chain and/or the bug collection.
-}
+   \item Seeding likely to generate security flaw false positives \\
+         Since many static analysis tools are overly conservative in their program
+         analysis they are sensitive to falsely detecting security flaws (false
+         positives). Since detection of fase positives are a significant noise
+         in the detection of real security flaws the seeding code which might
+         appear to be a security flaw is yet another way to evaluated static 
+         analysis tools.  The detection of any valid code seeded into an 
+         application as a security flaw would count as a false positive.
+         There are a few strategies to the introduction of good code that
+         would appear as a security flaw, specifically such seeded code
+         should be introduced hidden behind different types of comlexities.
+         Complexities that we think would be effective in fooling static analysis
+         to report good code as false security flaws would be:
+         \begin{enumerate}
+            \item Introduction of code that uses variables defined (in use-def sense) over
+            complex paths (path sensitive complexity).
+            \item Introduction of code that uses variables defined (in use-def sense) over
+            complexity from different function calls (context sensitive complexity).
+            \item Introduce flaws in dead code (dead code complexity)
+            \item Introduce good code hidden behind code that appears dead (e.g. complex switch
+            statements; Duff's devise) (dead code complexity)
+            \item Introduce good code with parts assembled from template meta programming (C++
+            specific template instantiation complexity)
+            \item Hide valid code behind code requiring pointer analysis. 
+            Hide valid code behind pointer manipulations of varying complexity that are
+            not easily analizable by different grades of pointer analysis.
+         \end{enumerate}
 
 \end{enumerate}
+
+
 
