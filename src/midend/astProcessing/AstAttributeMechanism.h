@@ -6,27 +6,34 @@
 
 #include "AttributeMechanism.h"
 
-class AstAttribute {
-public:
-  AstAttribute() {}
-  virtual ~AstAttribute() {}
-  /*! This function is used by other components to print the value of an attribute. For example the pdf generation
-      calls this function to print the value of an attribute in the pdf file. The default implementation is to
-      return an empty string.
-  */
-  virtual std::string toString() { return ""; }
+class AstAttribute
+   {
+     public:
+          AstAttribute() {}
+          virtual ~AstAttribute() {}
+      /*! This function is used by other components to print the value of an attribute. For example the pdf generation
+          calls this function to print the value of an attribute in the pdf file. The default implementation is to
+          return an empty string.
+       */
+          virtual std::string toString() { return ""; }
 
-// JH (12/21/2005): Adding Methods for storing the Ast Attribute data
-  AstAttribute* constructor() {return new AstAttribute();}
-  std::string attribute_class_name() { return "AstAttribute"; }
-  virtual int packed_size() { return 0; }
-  virtual char* packed_data() { return NULL; }
-  virtual void unpacked_data( int size, char* data ) { ; }
+       // JH (12/21/2005): Adding Methods for storing the Ast Attribute data
+          AstAttribute* constructor() {return new AstAttribute();}
+          std::string attribute_class_name() { return "AstAttribute"; }
+          virtual int packed_size() { return 0; }
+          virtual char* packed_data() { return NULL; }
+          virtual void unpacked_data( int size, char* data ) { ; }
+   };
 
-
-};
-
-class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute*> {
-};
+// DQ (6/28/2008):
+// Since this is implemented using AttributeMechanism which is derived from 
+// std::map<Key,Value>, "Value" is a template parameter for "AstAttribute*"
+// And so the copy constructor will copy the pointer.  This is OK, but it 
+// means that the AstAttribute objects are shared.  Alternatively, a copy
+// constructor implemented in this class could be implemented to support
+// deep copies.  This might be a good idea.
+class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute*> 
+   {
+   };
 
 #endif
