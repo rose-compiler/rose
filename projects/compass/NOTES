@@ -34,6 +34,20 @@ DQ (5/14/2008): We need an automated test for the process that builds
 a new checker.
 
 ************************************************************************
+DQ (6/28/2008): We need some checker infrastructure to support the classification of
+source files and header files as being either:
+   1) user application (in same directory as input source file, sharing same directory
+      structure as user, etc.)
+   2) library specific (e.g. STL, Boost, MPI, usr/apps, etc.)
+   3) compiler specific (GNU specific vs. Intel, etc.)
+   4) langauge specific (C++, vs. C)
+   5) part of the OS (Linux, OSX, etc.)
+   6) part of the OS (Unix specific, Windows, etc.)
+   7) Some sort of default for anything unclassifiable.
+
+To test this we need to collect a list of the header files included when compiling
+under Linux, and OSX (and later Windows) and use then as input strings to test
+the filter that would be built to classify the file names.
 
 ************************************************************************
 

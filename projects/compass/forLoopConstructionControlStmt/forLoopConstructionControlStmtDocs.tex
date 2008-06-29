@@ -19,10 +19,10 @@ for() construction loops must only include statements that control the loop. In 
 \end{quote}
 
 \subsection{Parameter Requirements}
-This checker takes no parameters and inputs source file.
+This checker takes no parameters and inputs the source file.
 
 \subsection{Implementation}
-This pattern is checked using a simple AST traversal that seeks out for loop statement constructs. Once a for loop is found the for loop construction block, e.g. for( ; ; ) is string searched for instances of the comma operator that indicates the use of non-control expressions in for loop construction code.
+This pattern is checked using a simple AST traversal that seeks out for loop statement constructs. A list of variables set in the initialization block is generated.  A list of variables set in the increment/decrement block is generated.  Any variable in the increment/decrement list of variables must be in the initialization list of variables.
 
 \subsection{Non-Compliant Code Example}
 This non-compliant code initializes the array inside the for() control statement.
@@ -33,7 +33,11 @@ This non-compliant code initializes the array inside the for() control statement
 int main()
 {
   int *array = (int*)malloc( 100*sizeof(int) );
-  for( int i = 0; i < 100; i++, array[i] = i ){}
+  int j=100;
+
+  for( int i = 0; i < 100; i++, j-- ){
+     array[i] = j;
+  }
 
   free(array);
   return 0;
@@ -49,7 +53,10 @@ The compliant solution simply moves the array initialization inside the for() lo
 int main()
 {
   int *array = (int*)malloc( 100*sizeof(int) );
-  for( int i = 0; i < 100; i++ ){ array[i] = i; }
+
+  for( int i = 0; i < 100; i++ ){
+     array[i] = i;
+  }
 
   free(array);
   return 0;
@@ -62,9 +69,10 @@ int main()
 Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
 
 \begin{enumerate}
-\item Perform simple AST traversal visiting all comma operator expressions.
-\item For each comma operator expression node, if parent node is for loop statement then flag violation.
-\item Report any violations. 
+\item Perform simple AST traversal visiting all for statements.
+\item Generate a list of variables set in the initialization block.
+\item Generate a list of variables set in the increment/decrement block.
+\item Report any variable in the increment/decrement list of variables that are not in the initialization list of variables as a violation
 \end{enumerate}
 
 \subsection{References}

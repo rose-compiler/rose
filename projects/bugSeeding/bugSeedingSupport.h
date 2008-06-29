@@ -61,6 +61,9 @@ class SecurityFlaw
 class BufferOverFlowSecurityFlaw : public SecurityFlaw
    {
      public:
+
+       // Note that there can be many vulnerabilities for a single security flaw (arrays indexing inside
+       // a loop body, array indexing in a conditional test, indexing of a STL vector, etc.)
           class Vulnerability
              {
                public:
@@ -74,6 +77,7 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                               InheritedAttribute(const InheritedAttribute & X) : isLoop(X.isLoop) {}
                        };
 
+                 // This is the ROSE AST traversal mechanism (see ROE Tutorial for details).
                     class Traversal : public SgTopDownProcessing<InheritedAttribute>
                        {
                          public:
@@ -81,26 +85,48 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
                        };
 
-//             Vulnerability() {}
-
                void detector( SgProject *project );
-
              };
 
-
-          class SeedTraversal : public SgSimpleProcessing
+       // Note that there can be many ways to seed a security flaw into an application 
+       // (or generate it separately from it being seeded into an existing application).
+          class SeedSecurityFlaw
              {
+            // This class introduces a single kind of seeding at either a specific grainularity 
+            // (file, function, block, statement) or using a specific mechanism to hide it as a 
+            // security flaw (hidden behind modification of array indexing, or behind a modification 
+            // to the loop bound, etc.).
+
                public:
-                 // This function defines how to seed the security flaw at
-                 // the previously detected location of the vulnerability
-                    void visit( SgNode* node );
+
+                 // This is the ROSE AST traversal mechanism (see ROE Tutorial for details).
+                    class SeedTraversal : public SgSimpleProcessing
+                       {
+                         public:
+                           // This function defines how to seed the security flaw at
+                           // the previously detected location of the vulnerability
+                              void visit( SgNode* node );
+                       };
+
+            // For any security flaw marked previously as a vulnerability, back-track up the AST to a subtree 
+            // to copy so that the seeded security flaw can be introduced in the copy (so that we can leave 
+            // in place the original code associated with the security vulnerability.
+               static SgNode* grainularityOfSeededCode( SgNode* astNode );
+
+               void seed( SgProject *project );
              };
 
-         std::vector<Vulnerability*> vulnerabilityKindList;
+       // Collection of different sorts of vulnerabilities that we want to identify as a buffer over flow 
+       // security flaw (there can be many).
+          std::vector<Vulnerability*> vulnerabilityKindList;
 
-         void detectVunerabilities( SgProject *project );
+       // Collection of different way to seed buffer overflow security flaws into code (in a loop, in a 
+       // conditional test, etc.).
+          std::vector<SeedSecurityFlaw*> seedKindList;
 
-         void seedSecurityFlaws( SgProject *project );
+          void detectVunerabilities( SgProject *project );
+
+          void seedSecurityFlaws( SgProject *project );
    };
 
 

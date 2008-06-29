@@ -34,13 +34,21 @@ void foobar()
 {
 // Static array declaration
   float array[10UL];
-  array[4 + 10UL] = (0);
+  array[4] = (0);
   for (int i = 0; i < 5; i++) {
+// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw 
     array[i + 10UL] = (0);
   }
 }
 \end{verbatim}
 }
+Note that this example is from a more involved version of the bug seeding
+work (than what is in the ROSE Tutorial) (an initial prototype version being 
+built to explore bug seeding more throughly). This work is in the current 
+svn repository in the new {\em projects/bugSeeding} directory. Note that is
+focused on a single kind of buffer overflow (array indexing in loops) and
+that the transformed code adds a comment mark it clearly as a seeded security 
+flaw (an easy trick in ROSE).
 
 The design of a tool to seed security flaws and develop evaluation test suites requires
 addressing a range of related subjects.  The following subsections outline more detail.

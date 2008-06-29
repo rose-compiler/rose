@@ -265,7 +265,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
         {
           string constructArgCopy = "", constructArgList = "", postConstructCopy = "";
           string filename     = "../Grammar/copyMemberFunction.macro";
-	  StringUtility::FileWithLineNumbers functionTemplateString = Grammar::readFileWithPos (filename);
+          StringUtility::FileWithLineNumbers functionTemplateString = Grammar::readFileWithPos (filename);
           bool emptyConstructorArg = (!generateConstructor()) || getBuildDefaultConstructor ();
 
        // printf ("Derived Class terminal name = %s \n",name);

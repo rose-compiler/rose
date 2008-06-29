@@ -97,10 +97,7 @@ class AttributeMechanism : protected std::map<Key,Value>
          iterator end()
             {  return std::map<Key,Value>::end();}
 
-};
-
-// Author: Markus Schordan
-// $Id: AttributeMechanism.C,v 1.5 2008/01/08 02:56:19 dquinlan Exp $
+   };
 
 template<class Key, class Value> 
 AttributeMechanism<Key,Value>::AttributeMechanism() {
