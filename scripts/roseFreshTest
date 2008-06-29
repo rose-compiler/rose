@@ -39,9 +39,8 @@ set -e
 
 # SVNVERSIONOPTION is one of the -r options in "svn help checkout"
 if [ "x$SVNVERSIONOPTION" = "x" ]; then SVNVERSIONOPTION="HEAD"; fi
-svnversioninfo="`svn -q -r${SVNVERSIONOPTION} log ${ROSE_SVNROOT} | sed -n 2p`"
-svnversion=`echo "${svnversioninfo}" | cut -f1 -d \  | tr -d r`
-svnmodificationdate=`echo "${svnversioninfo}" | cut -f5 -d \ `
+svnversion=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Revision: ' | cut -f 2 -d \ `
+svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
 
 (
 echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1

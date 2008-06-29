@@ -27,7 +27,7 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov andreas.saebjoernsen@gmail.com yuan5@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.4.5/bin/svn
+SVN=/home/willcock2/svn-install/bin/svn
 
 MAKEFLAGS="-j4"
 
