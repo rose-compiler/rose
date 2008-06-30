@@ -259,6 +259,9 @@ copyWebPages: logo
 	cd ROSE_WebPages; rsync -avz * liaoch@web-dev.nersc.gov:/www/host/rosecompiler
 #	scp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz quinlan1@cmg-1.llnl.gov:/green_dev/www/casc/rose
 
+copyWebPagesPanas: logo
+	cd ROSE_WebPages; rsync -avz * panas2@web-dev.nersc.gov:/www/host/rosecompiler
+
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf html
 	@echo "Building Tutorial documentation (calling make in docs/Rose/Tutorial directory) ... "
 	cd Tutorial; $(MAKE) docs
