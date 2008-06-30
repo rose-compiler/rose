@@ -1,0 +1,445 @@
+\section{ROSE Installation}
+
+\subsection{Requirements and Options}
+\label{Requirements_Installation_Testing}
+   ROSE is general software and we ultimately hope to remove any specific software
+and hardware requirements.  However, our goal is to be specific about where and 
+how ROSE is developed and where it is regularly tested.
+% ROSE has been developed initially on the Sun workstations and later on Linux.
+% Since ROSE is written in C++, it requires a C++ compiler. Some optional features
+% within ROSE have some additional software requirements.
+
+\subsubsection{Required Hardware/Operating System}
+   ROSE has been developed on Linux/Intel platforms. We have not yet 
+addressed significant portability issues for ROSE. But EDG has addressed
+portability issues for their C++ frontend and it is available on nearly all
+platforms (see {\tt www.EDG.com} for details).  ROSE is currently developed on
+Linux/Intel platforms and works with all modern versions of the GNU compilers 
+(3.4.x, and later). ROSE also works on both 32-bit and 64-bit architectures, as well as
+with the Intel C and C++ compiler.
+Future work will focus on portability to other platforms important to users.
+% At a later point we will address portability of ROSE onto other platforms:
+% mostly likely IBM AIX will be next (at some point).
+
+\subsubsection{Software Requirements}
+   You will require {\bf ONLY} a C++ compiler to compile ROSE; ROSE is written in C++.
+% We use the GNU g++ compiler most often, but the Intel compiler (version 9.1) will also work.
+Present development work is done on Intel/Linux platforms
+%using the GNU g++ 3.3.x, 3.4.x, and 4.x; and the Intel compilers.  GNU compilers older
+using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.  
+%GNU compilers older
+%than 3.3.x are not supported within the ROSE project, but in some cases they might work 
+%(g++ 3.2.x is likely to work, but g++ 2.96 will not work).
+
+   ROSE users may either obtain a free research license from EDG and hence ROSE with EDG source code,
+or alternatively, obtain ROSE that contains a binary version of the EDG work.
+The latter is limited to specific platforms and versions of compilers. See EDG (www.edg.com) for details 
+and limitations on how their software may be used. \\
+
+\commentout{
+   We suggest that ROSE users obtain a free research license from EDG until we 
+regularly distribute binary versions of the libedg.so library (their software).
+Email us for details on our distributions of ROSE that contain a binary version
+of the EDG work (and that completely hide the EDG interface). These are limited
+to specific platforms and versions of compilers. See EDG (www.edg.com) for details 
+and limitations on how their software may be used.
+}
+
+{\bf Use of Required Software:} \\
+  The following software is required in order to build and use ROSE:
+\begin{itemize}
+   \item {\bf ROSE} : \\ 
+     There are two versions of ROSE supported: the 
+     {\it Distribution Version} for users (typical) and the {\it Development Version}
+     (intended only for ROSE development team), which is what is found in the ROSE software
+     repository and has additional software requirements (autoconf, automake, Doxygen, LaTeX,
+     etc.).  The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version 
+     numbers for each release of ROSE).
+     \begin{itemize}
+     \item {\bf Distribution Version} \\
+       Provided as a tared and compressed file in the form,
+       ROSE-\VersionNumber.tar.gz.  This is the most typical way that users will
+       see and work with ROSE.  Instructions are also located in the ROSE/README file.
+     \item {\bf Development Version} \\
+       Only available directly from the Subversion (SVN) repository. The details of building this
+       version are located in the Appendix \ref{gettingStarted:DeveloperInstructions}.
+     \end{itemize}  
+%     ROSE is delivered as either a development version (svn) or
+%     as a distribution for users. The (typical) user version comes either with EDG source or binary distribution.
+   \item {\bf g++} : version $>=$ 3.4.x  \\
+     In order to use OpenMP or gFortran g++ $>=$ 4.2.x is required.
+   \item {\bf BOOST} : version $>=$ 1.35.0  \\
+     Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
+     for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
+     for download and installation instructions.
+   \item {\bf Autoconf} : version $>=$ 2.59 . Needed \emph{ONLY} for development version.  \\
+     Autoconf is an extensible package of M4 macros that produce shell scripts to automatically configure software source code packages. 
+   \item {\bf Automake} : version $>=$ 1.96 . Needed \emph{ONLY} for development version.  \\
+     Automake is a tool for automatically generating `Makefile.in' files compliant with the GNU Coding Standards.
+\end{itemize}
+
+To simplify the descriptions of the build process, we define:
+\begin{itemize} 
+   \item {\bf Source Tree} \\
+         Location of source code directory (there is only one source tree).
+   \item {\bf Compile Tree} \\
+         Location of compiled object code and executables. There can be many compile trees
+         representing either different: configure options, compilers used to build ROSE
+         and ROSE translators, compilers specified as backends for ROSE (to compile ROSE
+         generated code), or architectures.
+\end{itemize}
+
+We {\em strongly} recommend that the {\bf Source Tree} and the {\bf Compile Tree} be
+different. This avoids many potential problems with the {\em make clean} rules.
+Note that the {\bf Compile Tree} will be the same as the {\bf Source Tree}
+if the user has {\em not} explicitly generated a separate directory in which to
+run {\em configure} and compile ROSE. If the {\bf Source Tree} and {\bf Compile Tree} 
+are the same, then there is only one combined {\bf Source/Compile Tree}.
+Alternatively, numerous different {\bf Compile Trees} can be used from 
+a single {\bf Source Tree}.  More than one {\bf Compile Tree} allows
+ROSE to be generated on different platforms from a single source 
+(either a generated distribution or checked out from SVN).  ROSE is developed 
+and tested internally using separate {\bf Compile Trees}. \\
+
+
+{\bf Use of Optional Software:} \\
+%ROSE does not presently require any special software, but more
+More functionality within ROSE is available if one has additional (freely available) software installed:
+\begin{itemize}
+   \item {\bf Doxygen} : \\
+          Most ROSE documentation is generated using LaTex and Doxygen, thus
+          Doxygen is required for ROSE developers that want to regenerate the ROSE
+          documentation. This is not required for ROSE users, since all documentation is 
+          included in the ROSE distribution. Visit {\it www.doxygen.org} for details and to
+          download software.  There are no ROSE-specific configure options to use Doxygen;
+          it must only be available within your path.
+   \item {\bf LaTeX} : \\
+          LaTeX is used for a significant portion of the ROSE documentation. LaTex is 
+          included on most Unix systems. There are no ROSE specific configure options 
+          to use LaTeX; it must only be available within your path.
+   \item {\bf DOT (GraphViz)} : \\
+          ROSE uses DOT for generating graphs of ASTs, Control Flow, etc.
+          DOT is also used internally by Doxygen.
+          Visit {\it www.graphviz.org} for details and to download software.
+          An example showing the use of the DOT to build graphs is in the ROSE Tutorial.
+          There are no ROSE-specific configure options to use dot; it must only be 
+          available within your path.
+   \item {\bf SQLite} : \\
+          ROSE users can store persistent data across separate compilation of files by
+          storing information in an SQLite database.  This is used by several features
+          in ROSE (call-graph generation, for example) and may be used directly by the
+          user for storage of user-defined analysis data.  Such database support is
+          one way to handle global analysis (the other way is to build the whole
+          application AST). Visit {\it www.sqlite.com} for details and to download
+          software. %Details are in section \ref{gettingStarted:Database}.
+          An example showing the use of the ROSE database mechanism is in the ROSE
+          Tutorial. Use of SQLite requires special ROSE configuration options (so that
+          the SQLite library can be added to the link line at compile time).  See ROSE
+          configuration options for more details ({\tt configure --help}).
+   \item {\bf mpicc} : \\
+          mpicc is a compiler for MPI development. If ROSE is configures with MPI
+          enabled, one can utilize features in ROSE that allow for distributed
+          parallel AST traversals.
+\end{itemize}
+
+% \subsection{Installation and Testing }
+
+%\subsection{How to Build ROSE}
+
+\commentout{
+%   This section addresses the building and installation of ROSE.  
+There are two versions of ROSE supported: the 
+{\it Distribution Version} for users (typical) and the {\it Development Version}
+(intended only for ROSE development team), which is what is found in the ROSE software
+repository and has additional software requirements (autoconf, automake, Doxygen, LaTeX,
+etc.).  The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version 
+numbers for each release of ROSE).
+\begin{itemize}
+   \item {\bf Distribution Version} \\
+         Provided as a tared and compressed file in the form,
+         ROSE-\VersionNumber.tar.gz.  This is the most typical way that users will
+         see and work with ROSE.  Instructions are also located in the ROSE/README file.
+
+   \item {\bf Development Version} \\
+         Only available directly from the Subversion (SVN) repository. The details of building this
+         version are located in the Appendix \ref{gettingStarted:DeveloperInstructions}.
+\end{itemize}  
+To simplify the descriptions of the build process, we define:
+\begin{itemize} 
+   \item {\bf Source Tree} \\
+         Location of source code directory (there is only one source tree).
+   \item {\bf Compile Tree} \\
+         Location of compiled object code and executables. There can be many compile trees
+         representing either different: configure options, compilers used to build ROSE
+         and ROSE translators, compilers specified as backends for ROSE (to compile ROSE
+         generated code), or architectures.
+   \item {\bf Install Tree} \\
+         Location of compiled object code when copied to a clean installation directory.
+         This is commonly used in order to refer to a project from outside, i.e. to 
+         use the provided interfaces. 
+\end{itemize}
+
+We {\em strongly} recommend that the {\bf Source Tree} and the {\bf Compile Tree} be
+different. This avoids many potential problems with the {\em make clean} rules.
+Note that the {\bf Compile Tree} will be the same as the {\bf Source Tree}
+if the user has {\em not} explicitly generated a separate directory in which to
+run {\em configure} and compile ROSE. If the {\bf Source Tree} and {\bf Compile Tree} 
+are the same, then there is only one combined {\bf Source/Compile Tree}.
+Alternatively, numerous different {\bf Compile Trees} can be used from 
+a single {\bf Source Tree}.  More than one {\bf Compile Tree} allows
+ROSE to be generated on different platforms from a single source 
+(either a generated distribution or checked out from SVN).  ROSE is developed 
+and tested internally using separate {\bf Compile Trees}.
+}
+
+\commentout{
+\subsection{Summary of Build Process}
+\label{gettingStarted:SummaryInstructions}
+   More specific information is available in the subsections below 
+(subsection \ref{gettingStarted:UserInstructions} and 
+subsection \ref{gettingStarted:DeveloperInstructions}), but in summary the steps are:
+% The general steps are (but use the more details instructions below, depending 
+% on the version of ROSE that you have):
+\begin{itemize}
+   \item Type {\tt \<Source Tree\>/configure;} \\
+         This can be done in a separate directory or in the source directory.
+         We suggest using a separate directory, but either will work. The 
+         {\bf Source Tree} may be specified with either an absolute or relative 
+         path.
+   \item type {\tt make} \\ to build the source code (you may also use the parallel make
+         option (e.g. {\tt make -j4} to run make using 4 processes).
+   \item Type {\tt make check} \\ to run internal tests to test your build.
+   \item Type {\tt make install} \\ to install the build library for more convenient use.
+         (default is {\tt /usr/local}, use {\tt --prefix=`pwd'} to specify the current directory).
+   \item Type {\tt make documentation} \\ to build both html and LaTeX documentation.
+\end{itemize}
+}
+
+\subsection{Building BOOST}
+\label{gettingStarted:BOOST}
+
+The following is a quick guide on how to install BOOST. For more details please 
+refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
+
+\begin{enumerate}
+     \item Download BOOST. \\
+       Download BOOST at \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}.
+     \item Untar BOOST. \\
+       Type {\tt tar -zxf BOOST-[VersionNumber].tar.gz} to untar the BOOST distribution.
+     \item Create a separate compile tree. \\
+           Type {\tt mkdir compileTree} to build a location for the object files and
+           documentation (use any name you like for this directory, e.g. BOOST\_BUILD).
+     \item Create a separate install tree. \\
+           Type {\tt mkdir installTree} to create a location for the install filesto reside (e.g. BOOST\_INSTALL).
+     \item Change directory to the new compile tree directory. \\
+           Type {\tt cd compileTree; }. This changes the current directory to the newly
+           created directory.
+     \item Run the {\tt configure} script. \\
+           Type {\tt \{AbsoluteOrRelativePathToSourceTree\}/configure --prefix=[installTree]} 
+           to run the BOOST {\tt configure} script.  The path to the configure script 
+           may be either relative or absolute. The prefix option specifies the installation directory (e.g. BOOST\_INSTALL).
+     \item Run {\tt make}. \\
+           Type {\tt make} to build all the source files. 
+     \item Run {\tt make install}. \\
+           Type {\tt make install} to copy all build files into the install directory. BOOST is now available in your 
+           installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
+\end{enumerate}          
+
+\subsection{Building ROSE From a Distribution (ROSE-\VersionNumber.tar.gz)}
+\label{gettingStarted:UserInstructions}
+   The process for building ROSE from a ROSE {\em Distribution Version} is the same as for
+    most standard software distributions (e.g those using autoconf tools):
+\begin{enumerate}
+     \item Untar ROSE. \\
+           Type {\tt tar -zxf ROSE-\VersionNumber.tar.gz} to untar the ROSE distribution.
+     \item Build a separate compile tree. \\
+           Type {\tt mkdir compileTree} to build a location for the object files and
+           documentation (use any name you like for this directory).
+     \item Change directory to the new compile tree directory. \\
+           Type {\tt cd compileTree; }. This changes the current directory to the newly
+           created directory.
+     \item Run the {\tt configure} script. \\
+           Type {\tt \{AbsoluteOrRelativePath\}/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} 
+           to run the ROSE {\tt configure} script.  The path to the configure script 
+           may be either relative or absolute. The prefix option on the configure 
+           command line is only required if you run {\tt make install} (suggested), because 
+           the default location for installation is {\tt \//usr\//local} and most users don't
+           have permission to write to that directory. This is common to all projects that
+           use autoconf.  ROSE follows the GNU Makefile Standards as a result of using
+           autoconf and automake tools for its build system. As of ROSE-0.8.9a, the
+           default setting for the install directory (prefix) is the build tree.
+           For more on ROSE configure options, see section \ref{gettingStarted:configureOptions}.
+     \item Run {\tt make}. \\
+           Type {\tt make} to build all the source files. See details of running 
+           {\tt make} in parallel in section \ref{gettingStarted:parallelMake}.
+     \item To test ROSE (optional). \\
+           Type {\tt make check} to test the ROSE library against a collection of test codes.
+           See details of running make in parallel \ref{gettingStarted:parallelMake}.
+     \item To install ROSE, type {\tt make install}. \\
+           Installation is optional, but suggested. Users can simplify their use of ROSE 
+           by using it from an installed version of ROSE.  This permits compilation 
+           using a single include directory and the specification of only two libraries.
+           See details of installing ROSE in section \ref{gettingStarted:installation}.
+     \item Testing the installation of ROSE (optional). \\
+           To test the installation and the location where ROSE is installed, against a
+           collection of test codes (the application examples in {\tt ROSE/tutorial}), 
+           type {\tt make installcheck}.
+         % To optionally test the installation of ROSE \\
+         % Type {\tt make installcheck} to test the location where ROSE is installed
+         % against a simple test code. 
+           A sample {\tt makefile} is generated; see section \ref{gettingStarted:compilingTranslator}.
+\end{enumerate}
+
+\subsection{ROSE Configure Options}
+\label{gettingStarted:configureOptions}
+     A few example configure options are:
+\begin{itemize}
+   \item {\tt ../ROSE/configure --with-boost=[BOOST\_installTree]} \\
+         This will configure ROSE to be compiled in the current directory (separate from
+         the {\bf Source Tree}).  The installation (from {\tt make install}) will be placed in
+         {\tt /usr/local}.  Most users don't have permission to write to this directory,
+         so we suggest always including the {\em prefix option} (e.g. {\tt --prefix=`pwd`}).
+   \item {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
+         Configure in the current directory so that installation will also happen in the
+         current  directory (a {\tt install} subdirectory will be built).
+   \item {\tt ../ROSE/configure --with-CXX\_DEBUG=-g --with-C\_DEBUG=-g 
+              --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
+         Configure as above, but with debugging and warnings turned on ({\tt -Wall} is
+         specific to the gnu compilers).
+   \item {\tt ../ROSE/configure --with-SQLite=/home/dquinlan/SQLite/sqliteCompileTree --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
+         Configure as above, but permit use of SQLite database for storage of analysis
+         results between compilation of separate files (one type of support in ROSE for
+         global analysis).
+   \item {\tt ../ROSE/configure --prefix=`pwd` --with-mpi --with-gcc-omp --with-boost=[BOOST\_installTree]} \\
+         Configure as above, but with MPI and OpenMP support for ROSE to run AST traversals
+         in parallel (distributed and shared memory).
+   \item {\tt ../ROSE/configure --prefix=`pwd` --with-binarysql --with-boost=[BOOST\_installTree]} \\
+         The binarysql flag allows ROSE to read a binary file previously stored as a sql file (e.g. fetched from
+         IDA Pro). 
+   \item {\tt ../ROSE/configure --prefix=`pwd` --with-javaport=yes SWIG=swig --with-boost=[BOOST\_installTree]} \\
+         This allows ROSE to be build with javaport, a support that connects ROSE to Java via SWIG.
+         The Eclipse plug-in to ROSE is based on this work.
+   \item Additional Examples \\ 
+         More detailed documentation on configure options can be found by typing 
+         {\tt configure --help}, or see figure
+         \ref{gettingStarted:configureHelpOptionOutputPart1} for complete
+         listing.
+\end{itemize}
+
+%\fixme{It is suggested by TID that we move the figures to this location.
+%       Checkout if this is possible.}
+
+Output of {\tt configure --help} is detailed in figures 
+\ref{gettingStarted:configureHelpOptionOutputPart1} (Part 1) and
+\ref{gettingStarted:configureHelpOptionOutputPart2} (Part 2):
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     {\tt configure --help} Option Output (Part 1)
+\\\hline\hline
+   \lstinputlisting{roseConfigureOptions.aa}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example output from configure --help in {\tt ROSE} directory (Part 1). }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{roseConfigureOptions.aa}
+   \vspace{0.5in}
+   Example output from configure --help in {\tt ROSE} directory (Part 1).
+\end{htmlonly}
+\label{gettingStarted:configureHelpOptionOutputPart1}
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+% Output of {\tt configure --help} (Part 2):
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+\begin{figure}[tb]
+\begin{center}
+\begin{tabular}{|c|} \hline
+     {\tt configure --help} Option Output (Part 2)
+\\\hline\hline
+   \lstinputlisting{roseConfigureOptions.ab}
+\\\hline
+\end{tabular}
+\end{center}
+\caption{ Example output from configure --help in {\tt ROSE} directory (Part 2). }
+\end{figure}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{roseConfigureOptions.ab}
+   \vspace{0.5in}
+   Example output from configure --help in {\tt ROSE} directory (Part 2).
+\end{htmlonly}
+\label{gettingStarted:configureHelpOptionOutputPart2}
+%end of scope in font size
+}
+% End of scope in indentation
+}
+
+
+\subsection{Running {\em GNU Make} in Parallel}
+\label{gettingStarted:parallelMake}
+     ROSE uses general {\tt Makefiles} and is not dependent on {\em GNU Make}.
+     However, {\em GNU Make} has an option to permit compilation in parallel and 
+     we support this. Thus you may use {\tt make} with the {\tt -j<n>} option if 
+     you want to run {\tt make} in parallel (a good value for {\tt n} is typically 
+     twice the number of processors in your computer).  We have paid special 
+     attention to the design of the ROSE {\em makefiles} to permit parallel 
+     {\tt make} to work; we also use it regularly within development work.
+
+\subsection{Installing ROSE}
+\label{gettingStarted:installation}
+     Installation (using {\tt make install}) is optional, but suggested. Users can
+simplify their use of ROSE by using it from an installed version of ROSE.  This permits
+compilation using a single include directory and the specification of only two libraries, 
+as in:
+% {\footnotesize
+\begin{verbatim}
+     g++ -I{\<install dir\>/include} -o executable executable.C 
+         -L{\<install dir\>/lib} -lrose -ledg -lm $(RT_LIBS)
+\end{verbatim}
+% }
+See the example makefile in \\
+{\tt ROSE/exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile} \\
+in Section \ref{gettingStarted:compilingTranslator}
+for exact details of building a translator on your machine (setup by configure and tested
+by {\tt make installcheck}).  Note that the tutorial example codes are also tested
+by {\tt make installcheck} and the {\tt example\_makefile} there can also serve as
+an example.
+
+     {\bf autoconf} uses {\tt /usr/local} as the default location for all 
+installations. Only {\em root} has write privileges to that directory, so you
+will likely get an error if you have not overridden the default value with a new
+location.  To change the location, you need to have used the 
+{\tt --prefix=\{install\_dir\}} to run the {\tt configure} script.  You can 
+rerun the {\tt configure} script without rebuilding ROSE.
+
+%\fixme{ROSE-0.8.9a now sets the default install path (prefix) to the build tree. The
+%    documentation does not yet really reflect this detail.  Also since the build process
+%    writes to the install directory we have to explain this in the documentation.}
+
+\subsection{Testing ROSE}
+     A set of test programs is available.  %More details are in section \ref{testing}.
+% written about this in later versions of the manual.  
+Type {\tt make check} to run your build version of ROSE using these test codes.  
+Several years of contributed bug reports and internal test codes have been accumulated 
+in the {\tt ROSE/tests} directory.
+
+\subsection{Getting Help}
+     You may use the following mailing list to ask for help from the ROSE development 
+team: {\it casc-rose *dot* llnl *dot* gov}.
