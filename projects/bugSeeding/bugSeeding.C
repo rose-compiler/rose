@@ -6,7 +6,7 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
-#include "bugSeedingSupport.h"
+#include "bugSeeding.h"
 
 int
 main (int argc, char *argv[])
@@ -17,6 +17,7 @@ main (int argc, char *argv[])
   // Running internal tests (optional)
      AstTests::runAllTests (project);
 
+#if 0
   // Build a BufferOverFlowSecurityFlaw object
      BufferOverFlowSecurityFlaw bufferOverFlowSecurityFlaw;
 
@@ -25,6 +26,11 @@ main (int argc, char *argv[])
 
   // Call the member function to seed security flaws into the AST (at locations where vulnerabilities were previously detected).
      bufferOverFlowSecurityFlaw.seedSecurityFlaws(project);
+#else
+     SecurityFlaw::buildAllVunerabilities();
+     SecurityFlaw::detectAllVunerabilities(project);
+     SecurityFlaw::seedAllSecurityFlaws(project); 
+#endif
 
   // Running internal tests (optional)
      AstTests::runAllTests (project);

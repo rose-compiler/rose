@@ -4,14 +4,18 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = bugSeeding
 
-bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C
+bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C bufferOverFlowSecurityFlaw.C
+
+# bugSeeding_HEADERS = bugSeeding.h bugSeedingSupport.h bufferOverFlowSecurityFlaw.h
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 clean-local:
-	rm -f *.o bugSeeding rose_*.C introduction.tex design.tex appendix.tex
+	rm -f *.o bugSeeding rose_*.C introduction.tex design.tex appendix.tex bugSeeding.pdf *.log *.aux *.tex *.sty *.out
 
-EXTRA_DIST = bugSeedingSupport.h introduction.tex design.tex appendix.tex
+EXTRA_DIST = introduction.tex design.tex appendix.tex \
+   bugSeeding.h bugSeedingSupport.h \
+   bufferOverFlowSecurityFlaw.h
 
 link_LaTeX_files:
 #	test -f bugSeeding.tex || ln -s $(top_srcdir)/projects/bugSeeding/bugSeeding.tex bugSeeding.tex

@@ -1,21 +1,8 @@
-// Bug Seeding Header
+// Bug Seeding Header 
 
+// This the supporting infrastructure (base class) for all security flaws.
+#include "bugSeedingSupport.h"
 
-class InheritedAttribute
-   {
-     public:
-          bool isLoop;
-          bool isVulnerability;
-          InheritedAttribute() : isLoop(false),isVulnerability(false) {}
-          InheritedAttribute(const InheritedAttribute & X) : isLoop(X.isLoop),isVulnerability(X.isVulnerability) {}
-   };
-
-class BugSeeding : public SgTopDownProcessing<InheritedAttribute>
-   {
-     public:
-          InheritedAttribute evaluateInheritedAttribute (
-             SgNode* astNode, 
-             InheritedAttribute inheritedAttribute );
-   };
-
+// This is a list of includes that represent individual security flaws.
+#include "bufferOverFlowSecurityFlaw.h"
 

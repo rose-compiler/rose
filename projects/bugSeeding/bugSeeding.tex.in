@@ -98,7 +98,7 @@
 % This draft mode eliminates the figures (leaves boxes for where they would be)
 %\psdraft
 
-\title{ {\bf Automated Seeding Of Security Flaws For The Construction Of Test Suites For The Evaluate Static Analysis Tools \\
+\title{ {\bf Automated Seeding Of Security Flaws For The Construction Of Test Suites To Evaluate Static Analysis Tools \\
                               \textcolor{blue}{Design Document} \\
                                   \textcolor{red}{ Draft } } }
 %\title{ {\bf \textcolor{red}{         Bug Seeding Design: \\
