@@ -36,7 +36,7 @@
         <tr>
           <td width="221" class="Header3"><p>&nbsp;</p>
             <p class="style3"><a href="../index.html">Home</a></p>
-            <p class="style3"><a href="../ROSE_InstallationInstructions.txt">Installation</a></p>
+            <p class="style3"><a href="../ROSE_InstallationInstructions.pdf">Installation</a></p>
             <p class="style3"><a href="../ROSE_UserManual/ROSE-@VERSION@-UserManual.pdf">User Manual (pdf)</a></p>
             <p class="style3"><a href="../ROSE_Tutorial/ROSE-@VERSION@-Tutorial.pdf">Tutorial (pdf)</a></p>
             <p class="style3"><a href="../Projects/projects.html">Projects</a></p>

@@ -243,10 +243,6 @@ logo: copyPublications rose.html projects.html $(COMPASS_MANUAL)
 	cp -f rose.html ROSE_WebPages/index.html
 	cp -f projects.html ROSE_WebPages/Projects/projects.html
 	cp -f $(COMPASS_MANUAL) ROSE_WebPages/Projects/
-# DQ (6/30/2008): This causes a failure in the "make docs" rule because $(top_srcdir)/INSTALL.txt is not present.
-# I will add something temporary
-#	cp -f $(top_srcdir)/INSTALL.txt ROSE_WebPages/INSTALL.txt
-	cp -f $(top_srcdir)/ROSE_InstallationInstructions.txt ROSE_WebPages/ROSE_InstallationInstructions.txt
 
 # Copy the ROSE research publication in the distribution into the web pages so that
 # the web pages can reference them with relative paths and the documentation can be
@@ -295,7 +291,16 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACK
 # Simpler rule
 latex-docs: latex-docs-manual
 
-latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
+latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf inst-pdf.pdf
+
+inst-pdf.pdf: logo  $(latexFiles) $(latexDependences) inst-pdf.tex
+	@echo "Building Latex inst-pdf.pdf ... "
+	pdflatex inst-pdf.tex; \
+	pdflatex inst-pdf.tex; \
+	pdflatex inst-pdf.tex; \
+	echo "Copy install files to HTML location ... "; \ 
+	mv inst-pdf.pdf ROSE_InstallationInstructions.pdf; \
+	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf;
 
 # Make a simple rule to remember
 force: force-latex-docs
@@ -435,7 +440,7 @@ docs:
 #   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf 
 EXTRA_DIST = \
    WEB_DOCS_README AvailableDocumentation.docs.in \
-   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf \
+   sage.cfg.in rose.cfg.in $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
    fixme.sty  listings.sty  lstlang1.sty lstlang2.sty  lstmisc.sty  multirow.sty acknowledgments.tex \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
@@ -464,6 +469,7 @@ cleanSourceTutorial:
 cleanSource: cleanSourceTutorial clean
 	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	rm -rf ROSE_WebPages
+	rm -f $(srcdir)/inst-pdf.pdf
 
 clean-local:
 	rm -rf roseDoxygen.tags SageIntermediateForm *.tex *.log *.aux *.dvi \
