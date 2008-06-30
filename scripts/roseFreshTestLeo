@@ -142,6 +142,8 @@ buildstatus=0
 # Report Section
 #------------------------------------------------------
 if [ $buildstatus == 0 ]; then
+# update rosecompiler.org
+  make -C docs/Rose copyWebPages
   echo "Subject: ROSE test ${TIMESTAMP} results (pass)" > mailtext
   echo "SVN repository version no is ${svnversion}" >> mailtext
   echo "" >> mailtext
