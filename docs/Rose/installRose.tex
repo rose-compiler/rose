@@ -62,7 +62,7 @@ and limitations on how their software may be used.
        see and work with ROSE.  Instructions are also located in the ROSE/README file.
      \item {\bf Development Version} \\
        Only available directly from the Subversion (SVN) repository. The details of building this
-       version are located in the Appendix \ref{gettingStarted:DeveloperInstructions}.
+       version are located in the Appendix of the Manual. %\ref{gettingStarted:DeveloperInstructions}.
      \end{itemize}  
 %     ROSE is delivered as either a development version (svn) or
 %     as a distribution for users. The (typical) user version comes either with EDG source or binary distribution.
@@ -284,10 +284,7 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
            To test the installation and the location where ROSE is installed, against a
            collection of test codes (the application examples in {\tt ROSE/tutorial}), 
            type {\tt make installcheck}.
-         % To optionally test the installation of ROSE \\
-         % Type {\tt make installcheck} to test the location where ROSE is installed
-         % against a simple test code. 
-           A sample {\tt makefile} is generated; see section \ref{gettingStarted:compilingTranslator}.
+           A sample {\tt makefile} is generated.%; see section \ref{gettingStarted:compilingTranslator}.
 \end{enumerate}
 
 \subsection{ROSE Configure Options}
@@ -329,7 +326,7 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
 %\fixme{It is suggested by TID that we move the figures to this location.
 %       Checkout if this is possible.}
 
-Output of {\tt configure --help} is detailed in figures 
+Output of {\tt configure --help} is detailed in Figures 
 \ref{gettingStarted:configureHelpOptionOutputPart1} (Part 1) and
 \ref{gettingStarted:configureHelpOptionOutputPart2} (Part 2):
 {\indent
@@ -341,7 +338,9 @@ Output of {\tt configure --help} is detailed in figures
 \begin{tabular}{|c|} \hline
      {\tt configure --help} Option Output (Part 1)
 \\\hline\hline
+{\tiny
    \lstinputlisting{roseConfigureOptions.aa}
+}
 \\\hline
 \end{tabular}
 \end{center}
@@ -371,7 +370,9 @@ Output of {\tt configure --help} is detailed in figures
 \begin{tabular}{|c|} \hline
      {\tt configure --help} Option Output (Part 2)
 \\\hline\hline
+{\tiny
    \lstinputlisting{roseConfigureOptions.ab}
+}
 \\\hline
 \end{tabular}
 \end{center}
