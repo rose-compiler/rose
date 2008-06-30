@@ -14,7 +14,7 @@ noinst_PROGRAMS = \
     buildFunctionCalls buildPragmaDeclaration attachComment \
     insertHeader buildExpression buildStructDeclaration \
     lookupNamedType buildFile movePreprocessingInfo buildIfStmt \
-    buildCpreprocessorDefineDeclaration
+    buildCpreprocessorDefineDeclaration instrumentEndOfFunction
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -33,6 +33,8 @@ buildFile_SOURCES                = buildFile.C
 movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
 buildIfStmt_SOURCES              = buildIfStmt.C
 buildCpreprocessorDefineDeclaration_SOURCES = buildCpreprocessorDefineDeclaration.C
+instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
+
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
 
@@ -56,7 +58,8 @@ generatedCodeExamples = \
   rose_inputbuildFile.C \
   rose_inputMovePreprocessingInfo.C \
   rose_inputbuildIfStmt.C \
-  rose_inputbuildCpreprocessorDefineDeclaration.C
+  rose_inputbuildCpreprocessorDefineDeclaration.C \
+  rose_inputinstrumentEndOfFunction.C 
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -96,13 +99,15 @@ rose_inputMovePreprocessingInfo.C:movePreprocessingInfo
 rose_inputbuildCpreprocessorDefineDeclaration.C:buildCpreprocessorDefineDeclaration
 	./buildCpreprocessorDefineDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildCpreprocessorDefineDeclaration.C
 
+rose_inputinstrumentEndOfFunction.C:instrumentEndOfFunction
+	./instrumentEndOfFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinstrumentEndOfFunction.C
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
        inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
        inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C \
        inputbuildFile.C inputMovePreprocessingInfo.C inputbuildIfStmt.C \
-       inputbuildCpreprocessorDefineDeclaration.C
+       inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."

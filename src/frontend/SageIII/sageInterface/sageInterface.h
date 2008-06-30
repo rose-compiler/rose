@@ -6,8 +6,8 @@
 std::string getVariantName (VariantT v);
 
 // DQ (12/9/2004): Qing, Rich and Dan have decided to start this namespace within ROSE
-// This namespace is specific to interface funcions that operate on the Sage III AST.
-// The name was choosen so as not to conflict with other classes within ROSE.
+// This namespace is specific to interface functions that operate on the Sage III AST.
+// The name was chosen so as not to conflict with other classes within ROSE.
 // This will become the future home of many interface functions which operate on
 // the AST and which are generally useful to users.  As a namespace multiple files can be used
 // to represent the compete interface and different developers may contribute interface
@@ -15,7 +15,7 @@ std::string getVariantName (VariantT v);
 
 // Constructor handling: (We have sageBuilder.h now for this purpose, Liao 2/1/2008)
 //     We could add simpler layers of support for construction of IR nodes by 
-// hidding many details in "makeSg***()" functions.  such functions would
+// hiding many details in "makeSg***()" functions.  such functions would
 // return pointers to the associated Sg*** objects and would be able to hide
 // many IR specific details, including:
 //      memory handling
@@ -24,7 +24,7 @@ std::string getVariantName (VariantT v);
 //      
 // namespace AST_Interface  (this name is taken already by some of Qing's work :-)
 
-//! an alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
+//! An alias for Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 #define TRANS_FILE Sg_File_Info::generateDefaultFileInfoForTransformationNode()
 
 //------------------------------------------------------------------------
@@ -35,7 +35,7 @@ std::string getVariantName (VariantT v);
 
     The Sage III IR design attempts to be minimalist.  thus additional functionality is
 intended to be presented using separate higher level interfaces which work with the IR.
-The namespace, SageInterface, collects functions that operate on the IR and are suppotive of numerous types of routine operations required to support general analysis and transformation of the AST.
+The namespace, SageInterface, collects functions that operate on the IR and are supportive of numerous types of routine operations required to support general analysis and transformation of the AST.
 
     \internal Further organization of the functions in this namespace is required.
 Major AST manipulation functions are scattered in the following directories 
@@ -53,13 +53,13 @@ Some other utility functions not related AST can be found in
 
     \todo A number of additional things to do:
          - Pull scope handling out of EDG/Sage III translation so that is is made 
-           available to anyone else building the Sage III IR from scratch (whch 
-           when it gets non-trivial, envolves the manipulation of scopes).
+           available to anyone else building the Sage III IR from scratch (which 
+           when it gets non-trivial, involves the manipulation of scopes).
          - Other stuff ...
  */
 namespace SageInterface
 {
-//! an internal counter for generating unqiue SgName
+//! An internal counter for generating unique SgName
 extern int gensym_counter;
 
 //------------------------------------------------------------------------
@@ -243,6 +243,8 @@ extern int gensym_counter;
   // DQ (8/27/2005):
   bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
 
+  //! Check if a SgNode is a main() function declaration
+  bool isMain (const SgNode* node);
   // DQ (6/22/2005):
   /*! \brief Generate unique name from C and C++ constructs.
 
@@ -258,11 +260,13 @@ extern int gensym_counter;
 				    bool
 				    ignoreDifferenceBetweenDefiningAndNondefiningDeclarations);
 
-  // DQ (3/10/2007): Generate a unique string from the source file position information
+  // DQ (3/10/2007): 
+  //! Generate a unique string from the source file position information
     std::string declarationPositionString (SgDeclarationStatement *
 					   declaration);
 
-  // DQ (1/20/2007): Added mechanism to generate project name from list of file names
+  // DQ (1/20/2007): 
+  //! Added mechanism to generate project name from list of file names
     std::string generateProjectName (const SgProject * project);
 
   /*! \brief Returns STL vector of SgFile IR node pointers. 
@@ -277,8 +281,8 @@ extern int gensym_counter;
    */
   void clearMangledNameCache (SgGlobal * globalScope);
   void resetMangledNameCache (SgGlobal * globalScope);
-    std::string getMangledNameFromCache (SgNode * astNode);
-    std::string addMangledNameToCache (SgNode * astNode,
+  std::string getMangledNameFromCache (SgNode * astNode);
+  std::string addMangledNameToCache (SgNode * astNode,
 				       const std::string & mangledName);
 
   SgDeclarationStatement * getNonInstantiatonDeclarationForClass
@@ -286,8 +290,8 @@ extern int gensym_counter;
 
 
   // DQ (10/14/2006): This function tests the AST to see if for a non-defining declaration, the 
-//! check if defining declaration comes before of after the non-defining declaration.
   // bool declarationPreceedsDefinition ( SgClassDeclaration* classNonDefiningDeclaration, SgClassDeclaration* classDefiningDeclaration );
+  //! Check if a defining declaration comes before of after the non-defining declaration.
   bool declarationPreceedsDefinition (SgDeclarationStatement *
 				      nonDefiningDeclaration,
 				      SgDeclarationStatement *
@@ -308,17 +312,20 @@ extern int gensym_counter;
   */
     std::vector < SgNode * >astIntersection (SgNode * original, SgNode * copy,
 					     SgCopyHelp * help = NULL);
+  //! Deep copy an arbitrary subtree
+   SgNode* deepCopyNode (const SgNode* subtree); 
 
-   SgNode* deepCopyNode (const SgNode* subtree); // private function
-
-//! deep copy a subtree
+//! An internal template function for deep copying a subtree, used to create deepcopy functions with specialized parameter and return types. e.g SgExpression* copyExpression(SgExpression* e);
    template <typename NodeType>
    NodeType* deepCopy (const NodeType* subtree) {
      return dynamic_cast<NodeType*>(deepCopyNode(subtree));
    }
 
-//! deep copy an expression
+//! Deep copy an expression
    SgExpression* copyExpression(SgExpression* e);
+
+//!Deep copy a statement
+   SgStatement* copyStatement(SgStatement* s);
 
 // from VarSym.cc in src/midend/astOutlining/src/ASTtools
 //! Get the variable symbol for the first initialized name of a declaration stmt.
@@ -332,6 +339,16 @@ bool isConstantFalse(SgExpression* e);
 
 bool isCallToParticularFunction(SgFunctionDeclaration* decl, SgExpression* e);
 bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, SgExpression* e);
+
+
+//! Interface for creating a statement whose computation writes its answer into
+//! a given variable.
+class StatementGenerator {
+  public:
+  virtual ~StatementGenerator() {};
+  virtual SgStatement* generate(SgExpression* where_to_write_answer) = 0;
+};
+
 //@}
 
 //------------------------------------------------------------------------
@@ -341,10 +358,11 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
 */
 
 //  std::string version();  // utility_functions.h, version number
-  /*! brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
+  /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
   bool is_C_language ();
   bool is_UPC_language ();
+  //! Check if dynamic threads compilation is used for UPC programs
   bool is_UPC_dynamic_threads();
   bool is_C99_language ();
   bool is_Cxx_language ();
@@ -633,10 +651,10 @@ SgScopeStatement* getScope(const SgNode* astNode);
   //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default
   SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
 
-//! get next statement within the same scope of current statement 
+//! Get next statement within the same scope of current statement 
   SgStatement* getNextStatement(SgStatement * currentStmt);
 
-//! get previous statement within the same scope of current statement 
+//! Get previous statement within the same scope of current statement 
   SgStatement* getPreviousStatement(SgStatement * currentStmt);
 #if 0 //TODO
   // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
@@ -649,7 +667,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
 /*! @name AST comparison
   \brief Compare AST nodes, subtree, etc
 */
-  //! check if a SgIntVal node has a given value 
+  //! Check if a SgIntVal node has a given value 
  bool isEqualToIntConst(SgExpression* e, int value); 
 //@}
 
@@ -716,7 +734,15 @@ void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
   //! Replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kept.
 void replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp=false);
 
-//! Set operandis for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
+//! Replace a given expression with a list of statements produced by a generator
+void replaceExpressionWithStatement(SgExpression* from,
+				    SageInterface::StatementGenerator* to);
+//! Similar to replaceExpressionWithStatement, but with more restrictions.
+//! Assumptions: from is not within the test of a loop or ifStmt,  not currently traversing from or the statement it is in
+void replaceSubexpressionWithStatement(SgExpression* from,
+				      SageInterface::StatementGenerator* to);
+
+//! Set operands for expressions with single operand, such as unary expressions. handle file info, lvalue, pointer downcasting, parent pointer etc.
 void setOperand(SgExpression* target, SgExpression* operand);
 
 //!set left hand operand for binary expressions, transparently downcasting target expressions when necessary
@@ -738,14 +764,14 @@ void removeAllOriginalExpressionTrees(SgNode* top);
 /*! In AST translation, it is possible to build a variable reference before the variable
  is being declared. buildVarRefExp() will use fake initialized name and symbol as placeholders
  to get the work done. Users should call fixVariableReference() when AST is complete and all
- variable decalations are in place.
+ variable declarations are in place.
 */
 int fixVariableReferences(SgNode* root);
 
 //!Patch up symbol, scope, and parent information when a SgVariableDeclaration's scope is known.
 /*!
 It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general. 
-In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usally used internally within appendStatment(), insertStatement().
+In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usually used internally within appendStatment(), insertStatement().
 */
 void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
@@ -757,8 +783,13 @@ void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scop
 //------------------------------------------------------------------------
 //@{
 /*! @name Advanced AST transformations and optimizations
-  \brief Some customized transformations, not sure if they are suitable for this namespace
-*/
+  \brief Some complex but commonly used AST transformations. 
+  */
+
+//!Instrument(Add a statement, often a function call) into a function right before the return points, handle multiple return statements and return expressions with side effects. Return the number of statements inserted. 
+/*! Useful when adding a runtime library call to terminate the runtime system right before the end of a program, especially for OpenMP and UPC runtime systems. Return with complex expressions with side effects are rewritten using an additional assignment statement. 
+ */
+int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s);
 
 //! Remove jumps whose label is immediately after the jump.  Used to clean up inlined code fragments.
 void removeJumpsToNextStatement(SgNode*);
@@ -766,22 +797,37 @@ void removeJumpsToNextStatement(SgNode*);
 //! Remove labels which are not targets of any goto statements
 void removeUnusedLabels(SgNode* top);
 
-//! Remove consecutive lables
+//! Remove consecutive labels
 void removeConsecutiveLabels(SgNode* top);
 
-//! split long expressions into blocks of statements
+//! Replace an expression with a temporary variable and an assignment statement
+/*!
+ Add a new temporary variable to contain the value of 'from'
+ Change reference to 'from' to use this new variable
+ Assumptions: 'from' is not within the test of a loop or 'if'
+              not currently traversing 'from' or the statement it is in
+
+ */
+ SgAssignInitializer* splitExpression(SgExpression* from, std::string newName = "");
+
+//! Split long expressions into blocks of statements
 void splitExpressionIntoBasicBlock(SgExpression* expr);
 
-//! remove labeled goto statements
+//! Remove labeled goto statements
 void removeLabeledGotos(SgNode* top);
 
 //! If the given statement contains any break statements in its body, add a new label below the statement and change the breaks into gotos to that new label.
 void changeBreakStatementsToGotos(SgStatement* loopOrSwitch);
 
+//! Check if the body of a 'for' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs);
+//! Check if the body of a 'while' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* ws);
+//! Check if the body of a 'do .. while' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* ws);
+//! Check if the true body of a 'if' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
+//! Check if the false body of a 'if' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
 SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
@@ -903,7 +949,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
 // misc. boolean functions
 // some of them could moved to SgXXX class as a member function
 
-  bool isMain (const SgFunctionDeclaration* decl);
   bool isOverloaded (SgFunctionDeclaration * functionDeclaration);
 
   bool isSwitchCond (const SgStatement* s);
@@ -978,10 +1023,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
 
   void replaceSubexpressionWithStatement(SgExpression* from,
                                        StatementGenerator* to);
-
-  SgAssignInitializer* splitExpression(SgExpression* from,
-                                     std::string newName = "");
-	  //src/midend/astInlining/replaceExpressionWithStatement.h:
   SgExpression* getRootOfExpression(SgExpression* n);
 
 //--------------------------preprocessing info. -------------------------

@@ -16,6 +16,7 @@ using namespace SageBuilder;
 
 
  int SageInterface::gensym_counter=0;
+ 
 // DQ: 09/23/03
 // We require a global function for getting the string associated 
 // with the definition of a variant (which is a global enum).
@@ -4014,6 +4015,18 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
   return stmt; 
 
 }
+
+bool SageInterface::isMain(const SgNode* n)
+{
+ bool result = false;
+ if (isSgFunctionDeclaration(n) &&
+     isSgGlobal(isSgStatement(n)->get_scope())&&
+     isSgFunctionDeclaration(n)->get_name() == "main") 
+   result = true;
+
+   return result;
+}
+
 // Originally from ompTranslator.C
 // DQ (1/6/2007): The correct qualified name for "main" is "::main", at least in C++.
 // however for C is should be "main".  Our name qualification is not language specific,
@@ -4026,12 +4039,10 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 // Revised by Jeremiah,
 // Added check to see if the scope is global: Liao
 
-//TODO: language specific implementation
+//TODO: Fortran language specific implementation
 SgFunctionDeclaration* SageInterface::findMain(SgNode* n) {
   if (!n) return 0;   
-  if (isSgFunctionDeclaration(n) &&
-    isSgGlobal(isSgStatement(n)->get_scope())&&
-  isSgFunctionDeclaration(n)->get_name() == "main") 
+  if (isMain(n)) 
   {
     return isSgFunctionDeclaration(n);
   }
@@ -4072,7 +4083,6 @@ void SageInterface::changeContinuesToGotos(SgStatement* stmt, SgLabelStatement* 
      std::vector<SgContinueStmt*> continues = SageInterface::findContinueStmts(stmt);
      for (std::vector<SgContinueStmt*>::iterator i = continues.begin(); i != continues.end(); ++i)
         {
-       // LowLevelRewrite::replace(*i, make_unit_list( new SgGotoStatement(SgNULL_FILE, label->get_declaration())));
           SgGotoStatement* gotoStatement = SageBuilder::buildGotoStatement(label, (*i)->get_scope());
        // printf ("Building gotoStatement #1 = %p \n",gotoStatement);
           LowLevelRewrite::replace(*i, make_unit_list( gotoStatement ) );
@@ -4914,6 +4924,157 @@ namespace SageInterface {
    }
   }
 
+
+class AndOpGenerator: public StatementGenerator
+   {
+     SgAndOp* op;
+
+     public:
+          AndOpGenerator(SgAndOp* op): op(op) {}
+
+          virtual SgStatement* generate(SgExpression* lhs)
+             {
+               SgTreeCopy treeCopy;
+               SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
+               ROSE_ASSERT (lhsCopy);
+               SgIfStmt* tree =
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_lhs_operand()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, op->get_rhs_operand())),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, SageBuilder::buildBoolValExp(false))));
+               return tree;
+             }
+   };
+
+class OrOpGenerator: public StatementGenerator
+   {
+     SgOrOp* op;
+
+     public:
+          OrOpGenerator(SgOrOp* op): op(op) {}
+
+          virtual SgStatement* generate(SgExpression* lhs)
+             {
+               SgTreeCopy treeCopy;
+               SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
+               ROSE_ASSERT (lhsCopy);
+               SgIfStmt* tree =
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_lhs_operand()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, SageBuilder::buildBoolValExp(true))),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, op->get_rhs_operand())));
+               return tree;
+             }
+   };
+
+class ConditionalExpGenerator: public StatementGenerator
+   {
+     SgConditionalExp* op;
+
+     public:
+          ConditionalExpGenerator(SgConditionalExp* op): op(op) {}
+
+          virtual SgStatement* generate(SgExpression* lhs)
+             {
+               SgTreeCopy treeCopy;
+               SgExpression* lhsCopy = isSgExpression(lhs->copy(treeCopy));
+               ROSE_ASSERT (lhsCopy);
+               SgIfStmt* tree =
+                 SageBuilder::buildIfStmt(
+                     SageBuilder::buildExprStatement(op->get_conditional_exp()),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhs, op->get_true_exp())),
+                     SageBuilder::buildBasicBlock(
+                       SageBuilder::buildAssignStatement(lhsCopy, op->get_false_exp())));
+               return tree;
+             }
+   };
+
+
+   // Merged from replaceExpressionWithStatement.C
+    SgAssignInitializer* splitExpression(SgExpression* from, string newName/* ="" */) 
+    {
+    if (!SageInterface::isCopyConstructible(from->get_type())) {
+      std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
+      ROSE_ASSERT (false);
+    }
+
+    assert (SageInterface::isCopyConstructible(from->get_type())); // How do we report errors?
+    SgStatement* stmt = getStatementOfExpression(from);
+    assert (stmt);
+    if (!isSgForInitStatement(stmt->get_parent())) {
+      SageInterface::ensureBasicBlockAsParent(stmt);
+    }
+
+    SgScopeStatement* parent = isSgScopeStatement(stmt->get_parent());
+    // cout << "parent is a " << (parent ? parent->sage_class_name() : "NULL") << endl;
+    if (!parent && isSgForInitStatement(stmt->get_parent()))
+      parent = isSgScopeStatement(stmt->get_parent()->get_parent()->get_parent());
+    assert (parent);
+    // cout << "parent is a " << parent->sage_class_name() << endl;
+    // cout << "parent is " << parent->unparseToString() << endl;
+    // cout << "stmt is " << stmt->unparseToString() << endl;
+    SgName varname = "rose_temp__";
+    if (newName == "") {
+      varname << ++SageInterface::gensym_counter;
+    } else {
+      varname = newName;
+    }
+
+    SgType* vartype = from->get_type();
+    SgNode* fromparent = from->get_parent();
+    vector<SgExpression*> ancestors;
+    for (SgExpression *expr = from, *anc = isSgExpression(fromparent); anc != 0;
+         expr = anc, anc = isSgExpression(anc->get_parent())) {
+      if ((isSgAndOp(anc) && expr != isSgAndOp(anc)->get_lhs_operand()) ||
+          (isSgOrOp(anc) && expr != isSgOrOp(anc)->get_lhs_operand()) ||
+          (isSgConditionalExp(anc) && expr != isSgConditionalExp(anc)->get_conditional_exp()))
+        ancestors.push_back(anc); // Closest first
+    }
+    // cout << "This expression to split has " << ancestors.size() << " ancestor(s)" << endl;
+    for (vector<SgExpression*>::reverse_iterator ai = ancestors.rbegin(); ai != ancestors.rend(); ++ai)
+    {
+      StatementGenerator* gen;
+      switch ((*ai)->variantT()) {
+        case V_SgAndOp: 
+           gen = new AndOpGenerator(isSgAndOp(*ai)); break;
+        case V_SgOrOp:
+           gen = new OrOpGenerator(isSgOrOp(*ai)); break;
+        case V_SgConditionalExp:
+           gen = new ConditionalExpGenerator(isSgConditionalExp(*ai)); break;
+        default: assert (!"Should not happen");
+      }
+      replaceExpressionWithStatement(*ai, gen);
+      delete gen;
+    } // for
+    if (ancestors.size() != 0) {
+      return splitExpression(from); 
+      // Need to recompute everything if there were ancestors
+    }
+    SgVariableDeclaration* vardecl = SageBuilder::buildVariableDeclaration(varname, vartype, NULL, parent);
+    SgVariableSymbol* sym = SageInterface::getFirstVarSym(vardecl);
+    ROSE_ASSERT (sym);
+    SgInitializedName* initname = sym->get_declaration();
+    ROSE_ASSERT (initname);
+    SgVarRefExp* varref = SageBuilder::buildVarRefExp(sym);
+    replaceExpressionWithExpression(from, varref);
+    // std::cout << "Unparsed 3: " << fromparent->sage_class_name() << " --- " << fromparent->unparseToString() << endl;
+    // cout << "From is a " << from->sage_class_name() << endl;
+       SgAssignInitializer* ai = SageBuilder::buildAssignInitializer(from);
+       initname->set_initializer(ai);
+       ai->set_parent(initname);
+    myStatementInsert(stmt, vardecl, true);
+    // vardecl->set_parent(stmt->get_parent());
+    // FixSgTree(vardecl);
+    // FixSgTree(parent);
+    return ai;
+  } //splitExpression()
+
+
   // This generalizes the normal splitExpression to allow loop tests and
   void splitExpressionIntoBasicBlock(SgExpression* expr) {
    struct SplitStatementGenerator: public StatementGenerator {
@@ -4999,6 +5160,11 @@ namespace SageInterface {
   SgExpression* copyExpression(SgExpression* e) 
   {
     return deepCopy(e);
+  }
+
+  SgStatement* copyStatement(SgStatement* s)
+  {
+    return deepCopy(s);
   }
 
   //----------------- add into AST tree --------------------
@@ -5224,19 +5390,50 @@ namespace SageInterface {
     }
   }
 
-  //TODO handle side effect like SageBuilder::append_statement() does
+  //TODO handle more side effect like SageBuilder::append_statement() does
+  //Merge myStatementInsert()
   void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
   {
 
     ROSE_ASSERT(targetStmt);
     ROSE_ASSERT(newStmt);
+    ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
     SgScopeStatement* scope= targetStmt->get_scope();
-    ROSE_ASSERT(scope);
+    SgNode* parent = targetStmt->get_parent();
+    ROSE_ASSERT(scope&&parent);
+
+    // We have single statement true/false body for IfStmt etc
+    // However, IfStmt::insert_child() is not implemented
+    // So we make SgBasicBlock out of them first and call SgBasicBlock::insert_child() instead
+    // TODO: add test cases for If, variable, variable/struct inside if, etc 
+    // use recursive call?   
+  #if 1
+    switch(parent->variantT())
+    {
+      case V_SgIfStmt:
+       {
+          if (targetStmt == isSgIfStmt(parent)->get_true_body())
+          {  
+            parent = ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(parent));
+            scope =  targetStmt->get_scope();
+          }
+          else if (targetStmt == isSgIfStmt(parent)->get_false_body())
+          {
+            parent = ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(parent));
+            scope =  targetStmt->get_scope();
+          }
+	  break;
+       }
+      default:
+        break;
+    }
+  #endif
 
     newStmt->set_parent(targetStmt->get_parent());
     if (isSgStatement(newStmt)==NULL) // not all SgNode can have explicit scope
       newStmt->set_scope(scope);
 
+    // bottom up construction of variable declaration 
     if (isSgVariableDeclaration(newStmt))
       fixVariableDeclaration(isSgVariableDeclaration(newStmt), scope); 
 
@@ -5244,20 +5441,7 @@ namespace SageInterface {
    if (isStructDeclaration(newStmt))
       fixStructDeclaration(isSgClassDeclaration(newStmt),scope);
 
-    isSgStatement(targetStmt->get_parent())->insert_statement(targetStmt,newStmt,insertBefore);
-  #if 0
-    ROSE_ASSERT(scope);
-    switch(scope->variantT())
-    {
-      case V_SgBasicBlock:
-      case V_SgScopeStatement:
-	  scope->insert_statement(targetStmt,newStmt,insertBefore);
-	  break;
-      default:
-	std::cout<<"default reached in SageBuilder::insert_statement()!"<<endl;
-	ROSE_ASSERT(false);
-    }
-  #endif
+    isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
 
   }
 
@@ -5818,6 +6002,341 @@ PreprocessingInfo* attachComment(
     };
     Visitor().traverse(top, postorder);
   }
+
+
+// Replace a given expression with a list of statements produced by a
+// generator.  The generator, when given a variable as input, must produce
+// some code which leaves its result in the given variable.  The output
+// from the generator is then inserted into the original program in such a
+// way that whenever the expression had previously been evaluated, the
+// statements produced by the generator are run instead and their result is
+// used in place of the expression.
+// Assumptions: not currently traversing from or the statement it is in
+void
+replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
+   {
+  // DQ (3/11/2006): The problem here is that the test expression for a "for loop" (SgForStmt)
+  // is assumed to be a SgExpression.  This was changed in Sage III as part of a bugfix and so 
+  // the original assumptions upon which this function was based are not incorrect, hence the bug!
+  // Note that a number of cases were changed when this fix was made to SageIII (see documentation 
+  // for SgScopeStatement).
+
+     SgStatement*           enclosingStatement      = getStatementOfExpression(from);
+     SgExprStatement*       exprStatement           = isSgExprStatement(enclosingStatement);
+
+     SgForStatement*        forStatement            = isSgForStatement(enclosingStatement);
+     SgReturnStmt*          returnStatement         = isSgReturnStmt(enclosingStatement);
+     SgVariableDeclaration* varDeclarationStatement = isSgVariableDeclaration(enclosingStatement);
+
+
+  // DQ (3/11/2006): Bugfix for special cases of conditional that are either SgStatement or SgExpression IR nodes.
+
+     ROSE_ASSERT (exprStatement || forStatement || returnStatement || varDeclarationStatement);
+
+     if (varDeclarationStatement)
+        {
+          replaceSubexpressionWithStatement(from, to);
+        }
+       else
+        {
+          SgExpression* root = getRootOfExpression(from);
+          ROSE_ASSERT (root);
+       // printf ("root = %p \n",root);
+             {
+               if (forStatement && forStatement->get_increment() == root)
+                  {
+                 // printf ("Convert step of for statement \n");
+                 // Convert step of for statement
+                 // for (init; test; e) body; (where e contains from) becomes
+                 // for (init; test; ) {
+                 //   body (with "continue" changed to "goto label");
+                 //   label: e;
+                 // }
+                 // std::cout << "Converting for step" << std::endl;
+		    SgExprStatement* incrStmt = SageBuilder::buildExprStatement(forStatement->get_increment());
+                    forStatement->get_increment()->set_parent(incrStmt);
+
+                    SageInterface::addStepToLoopBody(forStatement, incrStmt);
+		    SgNullExpression* ne = buildNullExpression();
+                    forStatement->set_increment(ne);
+                    ne->set_parent(forStatement);
+                    replaceSubexpressionWithStatement(from, to);
+                  }
+                 else
+                  {
+                    SgStatement* enclosingStmtParent = isSgStatement(enclosingStatement->get_parent());
+                    assert (enclosingStmtParent);
+                    SgWhileStmt* whileStatement = isSgWhileStmt(enclosingStmtParent);
+                    SgDoWhileStmt* doWhileStatement = isSgDoWhileStmt(enclosingStmtParent);
+                    SgIfStmt* ifStatement = isSgIfStmt(enclosingStmtParent);
+                    SgSwitchStatement* switchStatement = isSgSwitchStatement(enclosingStmtParent);
+                    SgForStatement* enclosingForStatement = isSgForStatement(enclosingStmtParent);
+                  if (enclosingForStatement && enclosingForStatement->get_test() == exprStatement)
+                     {
+                    // printf ("Found the test in the for loop \n");
+                    // ROSE_ASSERT(false);
+
+                    // Convert test of for statement:
+                    // for (init; e; step) body; (where e contains from) becomes
+                    // for (init; true; step) {
+                    //   bool temp;
+                    //   temp = e;
+                    //   if (!temp) break;
+                    //   body;
+                    // }
+                    // in which "temp = e;" is rewritten further
+                    // std::cout << "Converting for test" << std::endl;
+                       pushTestIntoBody(enclosingForStatement);
+                       replaceSubexpressionWithStatement(from, to);
+                     }
+                  else if (whileStatement && whileStatement->get_condition() == exprStatement)
+                     {
+                    // printf ("Convert while statements \n");
+                    // Convert while statement:
+                    // while (e) body; (where e contains from) becomes
+                    // while (true) {
+                    //   bool temp;
+                    //   temp = e;
+                    //   if (!temp) break;
+                    //   body;
+                    // }
+                    // in which "temp = e;" is rewritten further
+                    // std::cout << "Converting while test" << std::endl;
+                       pushTestIntoBody(whileStatement);
+                    // FixSgTree(whileStatement);
+                       replaceSubexpressionWithStatement(from, to);
+                     } 
+                  else if (doWhileStatement && doWhileStatement->get_condition() == exprStatement)
+                    {
+         // printf ("Convert do-while statements \n");
+                   // Convert do-while statement:
+                   // do body; while (e); (where e contains from) becomes
+                   // {bool temp = true;
+                   //  do {
+                   //    body (with "continue" changed to "goto label";
+                   //    label:
+                   //    temp = e;} while (temp);}
+                   // in which "temp = e;" is rewritten further
+                   // std::cout << "Converting do-while test" << std::endl;
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
+                   // printf ("Building IR node #14: new SgBasicBlock = %p \n",new_statement);
+                      assert (doWhileStatement->get_parent());
+                      new_statement->set_parent(doWhileStatement->get_parent());
+                      myStatementInsert(doWhileStatement, new_statement, false);
+                      SageInterface::myRemoveStatement(doWhileStatement);
+                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      SgAssignInitializer* assignInitializer = buildAssignInitializer( 
+                          buildBoolValExp(true)); 
+                      //SageInterface::getBoolType(doWhileStatement));
+                      SgVariableDeclaration* new_decl = buildVariableDeclaration(
+                        varname, buildBoolType(), assignInitializer, new_statement);
+
+                      SgInitializedName* initname = new_decl->get_variables().back();
+                      initname->set_scope(new_statement);
+
+         // DQ (12/14/2006): set the parent of the SgAssignInitializer to the variable (SgInitializedName).
+            assignInitializer->set_parent(initname);
+
+                      SgVariableSymbol* varsym = new SgVariableSymbol(initname);
+                      new_statement->insert_symbol(varname, varsym);
+                      varsym->set_parent(new_statement->get_symbol_table());
+                      SageInterface::appendStatement(new_decl, new_statement);
+                      SageInterface::appendStatement(doWhileStatement, new_statement);
+                      assert (varsym);
+                      SgCastExp* castExp1 = buildCastExp(root,buildBoolType());
+		      SgVarRefExp* vr = buildVarRefExp(varsym);
+                      vr->set_lvalue(true);
+
+                      SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp1);
+
+                      SageInterface::addStepToLoopBody(doWhileStatement, temp_setup);
+                      SgVarRefExp* varsymVr = buildVarRefExp(varsym);
+
+                      SgExprStatement* condStmt = SageBuilder::buildExprStatement(varsymVr);
+                      varsymVr->set_parent(condStmt);
+                      doWhileStatement->set_condition(condStmt);
+                      condStmt->set_parent(doWhileStatement);
+                      replaceSubexpressionWithStatement(from, to);
+                    }
+                  else if (ifStatement && ifStatement->get_conditional() == exprStatement)
+                    {
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
+                   // printf ("Building IR node #15: new SgBasicBlock = %p \n",new_statement);
+                      assert (ifStatement->get_parent());
+                      new_statement->set_parent(ifStatement->get_parent());
+                      myStatementInsert(ifStatement, new_statement, false);
+                      SageInterface::myRemoveStatement(ifStatement);
+                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      SgBoolValExp* trueVal = buildBoolValExp(true);
+
+                      SgAssignInitializer* ai = buildAssignInitializer(trueVal);
+
+                      SgVariableDeclaration* new_decl = buildVariableDeclaration(varname, 
+                         buildBoolType(), ai,new_statement);
+                      SgInitializedName* initname = new_decl->get_variables().back();
+                      ai->set_parent(initname);
+                      initname->set_scope(new_statement);
+                      SgVariableSymbol* varsym = new SgVariableSymbol(initname);
+                      new_statement->insert_symbol(varname, varsym);
+                      varsym->set_parent(new_statement->get_symbol_table());
+                      SageInterface::appendStatement(new_decl, new_statement);
+                      ifStatement->set_parent(new_statement);
+                      assert (varsym);
+
+                                        SgCastExp* castExp2 = SageBuilder::buildCastExp(root, SageInterface::getBoolType(ifStatement));
+		      SgVarRefExp* vr = buildVarRefExp(varsym);
+                      vr->set_lvalue(true);
+                      SgExprStatement* temp_setup = SageBuilder::buildAssignStatement(vr, castExp2 );
+                      SageInterface::appendStatement(temp_setup, new_statement);
+                      SageInterface::appendStatement(ifStatement, new_statement);
+                      SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
+                      SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
+                      ifStatement->set_conditional(es);
+                      es->set_parent(ifStatement);
+                      replaceSubexpressionWithStatement(from, to);
+                    }
+                  else if (switchStatement && switchStatement->get_item_selector() == exprStatement)
+                    {
+                      SgExpression* switchCond = exprStatement->get_expression();
+                      ROSE_ASSERT (switchCond);
+                      SgBasicBlock* new_statement = SageBuilder::buildBasicBlock();
+                   // printf ("Building IR node #15: new SgBasicBlock = %p \n",new_statement);
+                      assert (switchStatement->get_parent());
+                      new_statement->set_parent(switchStatement->get_parent());
+                      myStatementInsert(switchStatement, new_statement, false);
+                      SageInterface::myRemoveStatement(switchStatement);
+                      SgName varname = "rose__temp"; // Does not need to be unique, but must not be used in user code anywhere
+                      switchCond->set_parent(NULL);
+                      SgVariableDeclaration* new_decl = SageBuilder::buildVariableDeclaration(varname, switchCond->get_type(), SageBuilder::buildAssignInitializer(switchCond), new_statement);
+                      SgVariableSymbol* varsym = SageInterface::getFirstVarSym(new_decl);
+                      SageInterface::appendStatement(new_decl, new_statement);
+                      switchStatement->set_parent(new_statement);
+                      assert (varsym);
+
+                   
+                      SageInterface::appendStatement(switchStatement, new_statement);
+                      SgVarRefExp* vr2 = SageBuilder::buildVarRefExp(varsym);
+                      SgExprStatement* es = SageBuilder::buildExprStatement(vr2);
+                      switchStatement->set_item_selector(es);
+                      es->set_parent(switchStatement);
+                      replaceSubexpressionWithStatement(from, to);
+                    }
+                  else
+                    {
+                      // printf ("Handles expression and return statements \n");
+                      // Handles expression and return statements
+                      // std::cout << "Converting other statement" << std::endl;
+                      replaceSubexpressionWithStatement(from, to);
+                    }
+                  }
+             }
+        }
+
+  // printf ("Leaving replaceExpressionWithStatement(from,to) \n");
+   }
+
+//! Replace a given expression with a list of statements produced by a
+//! generator.  The generator, when given a variable as input, must produce
+//! some code which leaves its result in the given variable.  The output
+//! from the generator is then inserted into the original program in such a
+//! way that whenever the expression had previously been evaluated, the
+//! statements produced by the generator are run instead and their result is
+//! used in place of the expression.
+//! Assumptions: not currently traversing from or the statement it is in
+
+// Similar to replaceExpressionWithStatement, but with more restrictions.
+// Assumptions: from is not within the test of a loop or if
+//              not currently traversing from or the statement it is in
+void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* to)
+   {
+
+     SgStatement* stmt = getStatementOfExpression(from);
+
+
+     if (isSgExprStatement(stmt))
+        {
+          SgExpression* top = getRootOfExpression(from);
+
+
+          if (top == from)
+             {
+               SgStatement* generated = to->generate(0);
+               isSgStatement(stmt->get_parent())->replace_statement(stmt, generated);
+               generated->set_parent(stmt->get_parent());
+               return;
+             }
+            else
+             {
+               if (isSgAssignOp(top) && isSgAssignOp(top)->get_rhs_operand() == from)
+                  {
+                    SgAssignOp* t = isSgAssignOp(top);
+                    SgStatement* generated = to->generate(t->get_lhs_operand());
+                    isSgStatement(stmt->get_parent())->replace_statement(stmt, generated);
+                    generated->set_parent(stmt->get_parent());
+                    return;
+                  }
+                 else
+                  {
+                 // printf ("In replaceSubexpressionWithStatement(): Statement not generated \n");
+                  }
+             }
+        }
+
+  // cout << "1: " << getStatementOfExpression(from)->unparseToString() << endl;
+     SgAssignInitializer* init = splitExpression(from);
+  // cout << "2: " << getStatementOfExpression(from)->unparseToString() << endl;
+     convertInitializerIntoAssignment(init);
+  // cout << "3: " << getStatementOfExpression(from)->unparseToString() << endl;
+  // cout << "3a: " << getStatementOfExpression(from)->get_parent()->unparseToString() << endl;
+     SgExprStatement* new_stmt = isSgExprStatement(getStatementOfExpression(from));
+     assert (new_stmt != NULL); // Should now have this form because of conversion
+     replaceAssignmentStmtWithStatement(new_stmt, to);
+
+  // printf ("In replaceSubexpressionWithStatement: new_stmt = %p = %s \n",new_stmt,new_stmt->class_name().c_str());
+  // cout << "4: " << getStatementOfExpression(from)->get_parent()->unparseToString() << endl;
+   }
+
+
+  // Liao, 6/27/2008
+  //Tasks
+  //  find all return statements
+  //  rewrite it to  temp = expression; return temp; if expression is not a single value.
+  //  insert s right before 'return xxx;'
+  int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s) 
+  {
+    int result = 0;
+    ROSE_ASSERT(func&&s);
+    vector<SgReturnStmt* > stmts = findReturnStmts(func); 
+    vector<SgReturnStmt*>::iterator i;
+    for (i=stmts.begin();i!=stmts.end();i++)
+    {
+      SgReturnStmt* cur_stmt = isSgReturnStmt(*i); 
+      ROSE_ASSERT(cur_stmt);
+      SgExpression * exp = cur_stmt->get_expression();
+      bool needRewrite = !(isSgValueExp(exp));
+      if (needRewrite)
+      { 
+        splitExpression(exp);
+      }
+       // avoid reusing the statement
+      if (result>=1 ) 
+         s = copyStatement(s);
+       insertStatementBefore(cur_stmt,s);
+      result ++;
+    } // for
+    if (stmts.size()==0 ) // a function without any return at all, 
+    {
+      SgBasicBlock * body = func->get_definition()->get_body();
+      if (body== NULL) 
+       { 
+         cout<<"In instrumentEndOfFunction(), found an empty function body.! "<<endl;
+         ROSE_ASSERT(false);
+       } 
+      appendStatement(s,body);
+      result ++;
+    }  
+    return result;  
+  } // instrumentEndOfFunction
 
 } // end namespace SageInterface
 

@@ -460,7 +460,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
      if (needToMakeCachevar)
         {
           SgName cachevarname = "cachevar__";
-          cachevarname << ++gensym_counter;
+          cachevarname << ++SageInterface::gensym_counter;
 
        // printf ("Building variable name = %s \n",cachevarname.str());
 

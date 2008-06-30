@@ -24,7 +24,6 @@ From src/midend/astInlining/replaceExpressionWithStatement.h:
   pushTestIntoBody
   addStepToLoopBody
   myStatementInsert (should be renamed or merged into another function)
-  splitExpression
   convertInitializerIntoAssignment
   getStatementOfExpression
   replaceExpressionWithExpression (maybe)

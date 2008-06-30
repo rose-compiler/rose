@@ -13,6 +13,7 @@
 #include "replaceExpressionWithStatement.h"
 #include "inlinerSupport.h"
 
+using namespace SageInterface;
 // void FixSgTree(SgNode*);
 // void FixSgProject(SgProject&);
 
@@ -91,7 +92,7 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
 
 // One curried step of the inlining process.  This class just rearranges
 // the parameters and sends them on to ChangeReturnsToGotosVisitor.
-class ChangeReturnsToGotosPrevisitor: public StatementGenerator {
+class ChangeReturnsToGotosPrevisitor: public SageInterface::StatementGenerator {
   SgLabelStatement* end_of_inline_label;
   SgStatement* funbody_copy;
 
@@ -194,7 +195,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 	    if (isSgInitializer(lhs)) is_lvalue = false;
 
 	    if (!is_lvalue) {
-	      SgAssignInitializer* ai = splitExpression(lhs);
+	      SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
 	      ROSE_ASSERT (isSgInitializer(ai->get_operand()));
 	      SgInitializedName* in = isSgInitializedName(ai->get_parent());
 	      ROSE_ASSERT (in);
