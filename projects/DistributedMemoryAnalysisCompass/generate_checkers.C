@@ -48,7 +48,6 @@ generate_checker(MagicNumber);
 generate_checker(MallocReturnValueUsedInIfStmt);
 generate_checker(MultiplePublicInheritance);
 generate_checker(NameAllParameters);
-generate_checker(NameConsistency);
 generate_checker(NoExceptions);
 generate_checker(NoExitInMpiCode);
 generate_checker(NoGoto);

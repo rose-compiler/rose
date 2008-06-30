@@ -48,7 +48,6 @@ magicNumber
 mallocReturnValueUsedInIfStmt
 multiplePublicInheritance
 nameAllParameters
-nameConsistency
 noExceptions
 noExitInMpiCode
 noGoto
