@@ -340,6 +340,7 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex logo gettingStarte
 	test -f designOfRose.tex || ln -s $(top_srcdir)/docs/Rose/designOfRose.tex designOfRose.tex
 #	This is now built by configure from gettingStarted.tex.in (so that path names can be subsituted)
 #	test -f gettingStarted.tex || ln -s $(top_srcdir)/docs/Rose/gettingStarted.tex gettingStarted.tex
+	test -f installRose.tex || ln -s $(top_srcdir)/docs/Rose/installRose.tex installRose.tex
 	test -f writingYourFirstTranslator.tex || ln -s $(top_srcdir)/docs/Rose/writingYourFirstTranslator.tex writingYourFirstTranslator.tex
 	test -f overviewOfRose.tex || ln -s $(top_srcdir)/docs/Rose/overviewOfRose.tex overviewOfRose.tex
 	test -f preprocessorDesign.tex || ln -s $(top_srcdir)/docs/Rose/preprocessorDesign.tex preprocessorDesign.tex
