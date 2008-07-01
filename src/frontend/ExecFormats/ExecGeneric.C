@@ -606,9 +606,11 @@ ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "base_va",   base_va);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "entry_rva", entry_rva);
 
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecDLL.size", dlls.size());
     for (size_t i=0; i<dlls.size(); i++)
         dlls[i]->dump(f, p, i);
 
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecSymbol.size", symbols.size());
     for (size_t i=0; i<symbols.size(); i++)
         symbols[i]->dump(f, p, i);
 }

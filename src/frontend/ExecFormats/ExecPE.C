@@ -523,13 +523,12 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         section->set_header(fhdr);
         section->set_mapped_rva(entry->rva);
         section->set_st_entry(entry);
-
+        section->set_readable((entry->flags & OF_READABLE)==OF_READABLE);
+        section->set_writable((entry->flags & OF_WRITABLE)==OF_WRITABLE);
+        section->set_executable((entry->flags & OF_EXECUTABLE)==OF_EXECUTABLE);
+        
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
-        if (entry->flags & OF_EXECUTABLE)
-            section->set_executable(true);
-        if (entry->flags & OF_WRITABLE)
-            section->set_writable(true);
     }
 }
 

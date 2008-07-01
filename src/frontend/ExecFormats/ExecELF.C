@@ -495,6 +495,8 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
             section->set_st_entry(shdr);
             if (strtab)
                 section->set_name(strtab->content_str(shdr->sh_name));
+            section->set_writable((shdr->sh_flags & 0x01)==0x01);
+            section->set_executable((shdr->sh_flags & 0x04)==0x04);
         }
 
         /* Initialize links between sections */
@@ -690,7 +692,6 @@ ElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 ElfSegmentTable::ctor(ElfFileHeader *fhdr)
 {
-    
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name("ELF Segment Table");
     set_purpose(SP_HEADER);
@@ -1281,7 +1282,7 @@ ElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", symbols.size());
+    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "ElfSymbol.size", symbols.size());
     for (size_t i=0; i<symbols.size(); i++) {
         ExecSection *section = get_file()->get_section_by_id(symbols[i]->st_shndx);
         symbols[i]->dump(f, p, i, section);
