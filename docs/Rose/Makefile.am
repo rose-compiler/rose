@@ -294,10 +294,10 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACK
 # Simpler rule
 latex-docs: latex-docs-manual
 
-latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE-InstallationInstructions.pdf
+latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf
 
-ROSE-InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
-	@echo "Building Latex ROSE-InstallationInstructions.pdf ... "
+ROSE_InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
+	@echo "Building Latex ROSE_InstallationInstructions.pdf ... "
 	test -f installRose.tex || ln -s $(top_srcdir)/docs/Rose/installRose.tex installRose.tex
 	pdflatex ROSE_InstallationInstructions.tex; \
 	pdflatex ROSE_InstallationInstructions.tex; \
@@ -473,7 +473,7 @@ cleanSourceTutorial:
 cleanSource: cleanSourceTutorial clean
 	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	rm -rf ROSE_WebPages
-	rm -f $(srcdir)/ROSE-InstallationInstructions.pdf
+	rm -f $(srcdir)/ROSE_InstallationInstructions.pdf
 
 clean-local:
 	rm -rf roseDoxygen.tags SageIntermediateForm *.tex *.log *.aux *.dvi \
