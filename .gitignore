@@ -97,6 +97,7 @@
 /projects/binCompass/Makefile.in
 /projects/binCompass/analyses/Makefile.in
 /projects/binCompass/graphanalyses/Makefile.in
+/projects/bugSeeding/Makefile.in
 /projects/checkPointExample/Makefile.in
 /projects/compass/Makefile.in
 /projects/compass/compassRepository/Makefile.in
