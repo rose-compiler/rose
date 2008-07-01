@@ -199,6 +199,75 @@ namespace StringUtility
 
       //! Translates newline characters to linefeeds and escapes quotes (used to generate text for DOT nodes containing source code).
            std::string escapeNewLineCharaters ( const std::string & X );
+
+           // RSS 7/1/2008 New functionality to support filename processing
+           enum OSType { OS_TYPE_UNKNOWN,
+                         OS_TYPE_LINUX,
+                         OS_TYPE_OSX,
+                         OS_TYPE_WINDOWS };
+
+           // Return OSType based on uname kernel name results
+           OSType getOSType();
+
+           // Populate homeDir from $HOME environment var
+           void homeDir(std::string& homeDir);
+
+           enum FileNameLoc { FILENAME_LOC_UNKNOWN, // We don't know if it's user or system
+                              FILENAME_LOC_USER,    // It is a user (app) file
+                              FILENAME_LOC_LIB };   // It is a system lib
+           
+           enum FileNameLib { FILENAME_LIB_UNKNOWN, // We don't know which lib it is in
+                              FILENAME_LIB_USER,    // It isn't a lib, it's user code
+                              FILENAME_LIB_C,       // libc
+                              FILENAME_LIB_STDCXX,  // libstdc++
+                              FILENAME_LIB_LINUX,   // linux header
+                              FILENAME_LIB_GCC,     // gcc header file
+                              FILENAME_LIB_BOOST,   // boost
+                              FILENAME_LIB_ROSE };  // rose
+
+           // This is rather disappointing because C99 would have allowed
+           // this to be bounds checked in a typesafe way, alas, GCC C++
+           // doesn't implement it
+           // This check, unfortunately, doesn't catch the case when there
+           // are too few initializers, only too many, but at least the
+           // memory we do get is allocated
+           // TODO There has to be a better way to do this!
+           static const int NAMES_LEN = 8;
+           static char* FILENAME_LIBRARY_NAMES[NAMES_LEN] = { "UNKNOWN",
+                                                              "USER",
+                                                              "c",
+                                                              "stdc++",
+                                                              "linux",
+                                                              "gcc",
+                                                              "boost",
+                                                              "rose" };
+
+           class FileNameInfo
+           {
+           public:
+               FileNameLoc location;
+               FileNameLib library;
+               bool isUserCode() const
+                   { return location == FILENAME_LOC_USER; }
+               bool isLibraryCode() const
+                   { return location == FILENAME_LOC_LIB; }
+               const std::string getLibraryName() const;
+           };
+
+       	   // Given a fileName and a vector of appPaths that are part of
+       	   // of some application's source code, populate a FileNameInfo
+       	   // indicating whether the fileName is part of the source code
+		   // or some system library
+           void classifyFileName(const std::string& fileName,
+                                 FileNameInfo& result,
+                                 const std::vector<std::string>& appPaths);
+
+           // Not for public use, allows override of OS rules, for testing only
+           void classifyFileName(const std::string& fileName,
+                                 FileNameInfo& result,
+                                 const std::vector<std::string>& appPaths,
+                                 OSType os);
+
    };
 
 

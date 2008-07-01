@@ -7,7 +7,11 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 # This test program does not require the rest of ROSE so it can be handled locally
-bin_PROGRAMS  = testStrings filenameSupport
+bin_PROGRAMS  = testStrings filenameSupport testFileNameClassifier
+
+testFileNameClassifier_SOURCES = testFileNameClassifier.C
+testFileNameClassifier_LDADD   = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la
+
 testStrings_SOURCES = testStrings.C
 testStrings_LDADD   = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la
 
@@ -23,6 +27,7 @@ testFilenameSupport: filenameSupport
 check-local: $(TEST_Objects)
 	@echo "Executing ROSE string function tests ..."
 	./testStrings
+	./testFileNameClassifier
 	./filenameSupport
 	@echo "********************************************************************************************"
 	@echo "****** ROSE/tests/roseTests/utilTests: make check rule complete (terminated normally) ******"
