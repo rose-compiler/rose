@@ -21,8 +21,8 @@ namespace CompassAnalyses
    } //End of namespace CompassAnalyses.
 
 CompassAnalyses::AllowedFunctions::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+CheckerOutput::CheckerOutput ( SgNode* node, const std::string & what )
+   : OutputViolationBase(node,checkerName,shortDescription + " '" + what + "' is not allowed.")
    {}
 
 CompassAnalyses::AllowedFunctions::Traversal::
@@ -65,16 +65,55 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
          ss << "AllowedFunctions.Function" << i;
          allowedFunctionSet.insert(inputParameters[ss.str()]);
 
-         if( allowedFunctionIndex > 0 )
+/*         if( allowedFunctionIndex > 0 )
          {
            (*outf) << ss.str() << "=" 
                    << inputParameters[ss.str()] << std::endl;
-         } //if( allowedFunctionIndex > 0 )
+         } //if( allowedFunctionIndex > 0 ) */
        } //for
      } //try
      catch( const Compass::ParameterNotFoundException &e )
      {
-     } //catch( const Compass::ParameterNotFoundException &e ) 
+     } //catch( const Compass::ParameterNotFoundException &e )
+
+     try
+     {
+       for( int i = 0; ; ++i )
+       {
+         std::stringstream ss;
+         ss << "AllowedFunctions.Namespace" << i;
+         allowedNamespaces.push_back(inputParameters[ss.str()]);
+
+/*         if( allowedFunctionIndex > 0 )
+         {
+           (*outf) << ss.str() << "="
+                   << inputParameters[ss.str()] << std::endl;
+         } //if( allowedFunctionIndex > 0 ) */
+       } //for
+     } //try
+     catch( const Compass::ParameterNotFoundException &e )
+     {
+     } //catch( const Compass::ParameterNotFoundException &e )
+
+     if( allowedFunctionIndex > 0 )
+     {
+       int i = 0;
+       for( std::set<std::string>::iterator itr = allowedFunctionSet.begin();
+            itr != allowedFunctionSet.end(); itr++ )
+       {
+         (*outf) << "AllowedFunctions.Function" << i++ 
+                 << "=" << *itr << std::endl;
+       } //for, itr functions
+
+       i = 0;
+
+       for( std::vector<std::string>::iterator itr = allowedNamespaces.begin();
+            itr != allowedNamespaces.end(); itr++ )
+       {
+         (*outf) << "AllowedFunctions.Namespace" << i++
+                 << "=" << *itr << std::endl;
+       } //for, itr namespaces
+     } //if( allowedFunctionIndex > 0 ), re-write existing allow list
    }
 
 void 
@@ -193,9 +232,11 @@ typeVariantT( SgType *type, int vT )
 void CompassAnalyses::AllowedFunctions::Traversal::
 uniqueNameGenerator( 
   std::stringstream &ss, 
-  const SgFunctionDeclaration *fdecl )
+  const SgFunctionDeclaration *fdecl,
+  std::string &qname )
 {
   std::string qualifiedName( fdecl->get_qualified_name().str() );
+  qname.assign(qualifiedName);
 
   SgFunctionType *fType = isSgFunctionType( fdecl->get_type() );
   ROSE_ASSERT(fType != NULL);
@@ -207,7 +248,6 @@ uniqueNameGenerator(
   std::string fReturnTypeName(
     typeVariantT(fReturnType, fReturnType->variantT()) );
 
-  //ss << qualifiedName << "," << fReturnTypeName << ",";
   ss << fReturnTypeName << "," << qualifiedName << ",";
 
   const SgInitializedNamePtrList & arguments = fdecl->get_args();
@@ -223,6 +263,13 @@ uniqueNameGenerator(
   return;
 }
 
+/*std::string
+CompassAnalyses::AllowedFunctions::Traversal::
+getQualifiedNamespace( const std::string & fname )
+{
+  return fname.substr( 0, fname.find_last_of("::")-1 );
+} //getQualifiedNamespace( const std::string & fname ) */
+
 void
 CompassAnalyses::AllowedFunctions::Traversal::
 functionDeclarationHandler( 
@@ -232,34 +279,40 @@ functionDeclarationHandler(
 {
   ROSE_ASSERT(fdecl != NULL);
 
-  SgDeclarationStatement *firstNondefiningDecl = 
-    fdecl->get_firstNondefiningDeclaration();
-
-  if( firstNondefiningDecl == NULL || 
-      ( firstNondefiningDecl != NULL && 
-        frefFileName.substr(0, frefFileName.find_last_of('/')) == 
-        firstNondefiningDecl->getFilenameString().substr(0,
-        firstNondefiningDecl->getFilenameString().find_last_of('/')) ) ) return;
-
   std::stringstream ss;
-  this->uniqueNameGenerator(ss, fdecl);
+  std::string qname;
+  this->uniqueNameGenerator(ss, fdecl,qname);
   std::set<std::string>::iterator afItr = allowedFunctionSet.find(ss.str());
 
   if( isGenerateCurrentListOfAllowedFunctions == true && 
       afItr == allowedFunctionSet.end() )
   {
-    (*outf) << "AllowedFunctions.Function" << allowedFunctionIndex << "=";
-    (*outf) << ss.str() << std::endl;
+    std::set<std::string>::iterator localAfItr = allowedFunctionSet.find(qname);
 
-    allowedFunctionIndex++;
+    if( localAfItr == allowedFunctionSet.end() )
+    {
+      (*outf) << "AllowedFunctions.Function" << allowedFunctionIndex << "=";
+      (*outf) << ss.str() << std::endl;
+
+      allowedFunctionSet.insert( ss.str() ); 
+
+      allowedFunctionIndex++;
+    } //if( localAfItr == allowedFunctionSet.end() )
   } //if( isGenerateCurrentListOfAllowedFunctions == true )
   else
   {
     if( afItr == allowedFunctionSet.end() )
     {
-      output->addOutput(new CheckerOutput(node));
+      std::vector<std::string>::iterator nsItr = allowedNamespaces.begin();
+      for( ; nsItr != allowedNamespaces.end(); nsItr++ )
+      {
+        if( ss.str().find( *nsItr, 0 ) != std::string::npos ) break;
+      } //for, failed to find in functions--checking namespaces/classes 
+
+      if( nsItr == allowedNamespaces.end() )
+        output->addOutput(new CheckerOutput(node, ss.str()));
     } //if( afItr == allowedFunctionSet.end() )
-  } //else
+  } //else, check for allowed function, namespace, class
 
   return;
 } //functionReferenceHandler( const SgFunctionDeclaration *fdecl )

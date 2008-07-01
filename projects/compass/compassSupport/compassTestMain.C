@@ -34,7 +34,13 @@ int main(int argc, char** argv) {
   AstPDFGeneration pdf;
   pdf.generateInputFiles(sageProject);
 #else
-  SgProject* sageProject = frontend(argc,argv);
+  Rose_STL_Container<std::string> commandLineArray = CommandlineProcessing::generateArgListFromArgcArgv (argc,argv);
+
+  Compass::commandLineProcessing(commandLineArray);
+
+  SgProject* sageProject = frontend(commandLineArray);
+
+//  SgProject* sageProject = frontend(argc,argv);
 #endif
 
 // Factory factory;

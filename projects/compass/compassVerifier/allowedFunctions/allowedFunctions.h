@@ -22,7 +22,8 @@ namespace CompassAnalyses
           class CheckerOutput: public Compass::OutputViolationBase
              { 
                public:
-                    CheckerOutput(SgNode* node);
+                    CheckerOutput(
+                      SgNode* node, const std::string &what);
              };
 
        // Specification of Checker Traversal Implementation
@@ -38,8 +39,9 @@ namespace CompassAnalyses
                  int allowedFunctionIndex;
                  std::ofstream *outf;
                  std::set<std::string> allowedFunctionSet;
+                 std::vector<std::string> allowedNamespaces;
 
-//                 int parseParameter( const std::string & param );
+//               int parseParameter( const std::string & param );
 
                  void functionDeclarationHandler( 
                    const SgFunctionDeclaration *fdecl, 
@@ -48,7 +50,10 @@ namespace CompassAnalyses
 
                  void uniqueNameGenerator(
                    std::stringstream &ss,
-                   const SgFunctionDeclaration *fdecl );
+                   const SgFunctionDeclaration *fdecl,
+                   std::string &qname );
+
+//               std::string getQualifiedNamespace( const std::string &fname );
 
                  std::string typeVariantT( SgType *type, int vT ); 
 

@@ -55,6 +55,7 @@ compass_parameters: CHECKER_LIST_WITHOUT_COMMENTS
 	echo "Compass.RuleSelection=$(srcdir)/RULE_SELECTION" >> compass_parameters
 	echo '' >> compass_parameters
 	cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do if [ -f $(srcdir)/$$ch/compass_parameters ]; then grep -v '^#' $(srcdir)/$$ch/compass_parameters >> compass_parameters; echo ""; fi; done
+	$(MAKE) append_allowed_namespaces
 
 oneBigVerify: buildMe compassVerifier compass_parameters
 	rm -f catChecker.C catCheckerIncludes.txt catChecker.ti
@@ -116,26 +117,49 @@ verify.makefile: verify.inc
 verify: buildMe compassVerifier compass_parameters verify.makefile 
 	$(MAKE) -f verify.makefile -$${MAKEFLAGS}
 
-allow_wrapper.sh:
-	echo -e "env COMPASS_PARAMETERS=`pwd`/compass_parameters `pwd`/compassVerifier \$$@\ncp `pwd`/functions.allow `pwd`/compass_parameters\nexit 0" > $@
-	chmod +x $@
+#allow_wrapper.sh:
+#	echo -e "env COMPASS_PARAMETERS=`pwd`/compass_parameters `pwd`/compassVerifier \$$@\ncp `pwd`/functions.allow `pwd`/compass_parameters\nexit 0" > $@
+#	chmod +x $@
 
-new_short_allow_list: compassVerifier $(srcdir)/RULE_SELECTION
-	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
-	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow\nAllowedFunctions.FunctionNum=0" > compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(srcdir)/.. $(INCLUDES) $(srcdir)/../compassSupport/compass.C $(srcdir)/../compassMain.C
-	cp functions.allow compass_paramters
+../buildCheckers.C:
+	cd ..; make buildCheckers.C
+
+append_allowed_namespaces: ../CHECKER_LIST_WITHOUT_COMMENTS
+	sh -c '\
+        declare -i count=0 ;\
+        for namespace in `cut -f 2 -d \ < ../CHECKER_LIST_WITHOUT_COMMENTS` ;\
+        do \
+                echo "AllowedFunctions.Namespace$$count=::CompassAnalyses::$${namespace}" ;\
+                ((count++)) ;\
+        done ;\
+	' >> compass_parameters
+
+new_allow_list_setup: $(srcdir)/allowedFunctions/custom_parameters 
+	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION	
+	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow" > compass_parameters
+	@sh -c '\
+	\declare -i count=0 ;\
+	for custom in `cat $(srcdir)/allowedFunctions/custom_parameters` ;\
+	do \
+		echo "AllowedFunctions.Function$$count=$${custom}" ;\
+		((count++)) ;\
+	done ;\
+	echo "AllowedFunctions.FunctionNum=$$count" ;\
+	' >> compass_parameters
+
+new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION ../buildCheckers.C new_allow_list_setup
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(srcdir)/.. $(INCLUDES) $(srcdir)/../compassSupport/compass.C $(srcdir)/../compassMain.C ../buildCheckers.C ; cp functions.allow compass_parameters
 	$(MAKE) oneBigVerify
 	sed '$$d' functions.allow | sed -e '1d' > $(srcdir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | gawk -F= '{print $$1 "=-" $$2}' >> $(srcdir)/allowedFunctions/compass_parameters
 	rm -f compass_parameters RULE_SELECTION
 
-new_long_allow_list: compassVerifier $(srcdir)/RULE_SELECTION allow_wrapper.sh verify.makefile
-	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
-	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow\nAllowedFunctions.FunctionNum=0" > compass_parameters
-	./allow_wrapper.sh -I$(top_builddir) -I$(srcdir)/.. $(INCLUDES) $(srcdir)/../compassSupport/compass.C $(srcdir)/../compassMain.C
-	$(MAKE) -f verify.makefile COMPILER=allow_wrapper.sh
-	sed '$$d' functions.allow | sed -e '1d' > $(srcdir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | gawk -F= '{print $$1 "=-" $$2}' >> $(srcdir)/allowedFunctions/compass_parameters
-	rm -f compass_parameters RULE_SELECTION
+#new_long_allow_list: compassVerifier $(srcdir)/RULE_SELECTION allow_wrapper.sh verify.makefile
+#	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
+#	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow\nAllowedFunctions.FunctionNum=0" > compass_parameters
+#	./allow_wrapper.sh -I$(top_builddir) -I$(srcdir)/.. $(INCLUDES) $(srcdir)/../compassSupport/compass.C $(srcdir)/../compassMain.C
+#	$(MAKE) -f verify.makefile COMPILER=allow_wrapper.sh
+#	sed '$$d' functions.allow | sed -e '1d' > $(srcdir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | gawk -F= '{print $$1 "=-" $$2}' >> $(srcdir)/allowedFunctions/compass_parameters
+#	rm -f compass_parameters RULE_SELECTION
 
 test: compassVerifier compass_parameters 
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier $(srcdir)/tests/exampleTest_1.C
@@ -158,4 +182,4 @@ clean-local:
 	rm -f compass.* *.sty compass_parameters *.ti a.out *.tex *.lo *.la
 	rm -f *_tmp*.txt verify.makefile catChecker*
 
-CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow allow_wrapper.sh
+CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow #allow_wrapper.sh

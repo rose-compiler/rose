@@ -1,5 +1,6 @@
 #Set variable ROSE_INSTALL to your ROSE_INSTALL installation like this.
 ROSE_INSTALL = /home/yuan5/ROSE/WORKING_COPY/INSTALL
+COMPASS_PROJECT=/home/yuan5/ROSE/WORKING_COPY/SRC/projects/compass
 
 CHECKER_NAME = allowedFunctions
 
@@ -11,7 +12,7 @@ libcompass.so: compass.h compass.C
 	g++ -fPIC -Wall -shared -o libcompass.so compass.C -I$(ROSE_INSTALL)/include
 
 allowedFunctionsTest: allowedFunctions.C allowedFunctionsMain.C libcompass.so
-	g++ -fPIC -Wall -o allowedFunctionsTest allowedFunctions.C allowedFunctionsMain.C -I$(ROSE_INSTALL)/include $(LINKER_FLAGS)
+	g++ -fPIC -Wall -o allowedFunctionsTest -I$(COMPASS_PROJECT)/compassSupport allowedFunctions.C allowedFunctionsMain.C -I$(ROSE_INSTALL)/include $(LINKER_FLAGS)
 
 test: allowedFunctionsTest allowedFunctionsTest1.C
 	./allowedFunctionsTest allowedFunctionsTest1.C
