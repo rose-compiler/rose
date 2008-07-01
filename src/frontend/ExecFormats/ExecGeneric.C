@@ -363,7 +363,7 @@ ExecSection::content_str(addr_t offset)
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content() and
  * content_str() will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
-const ExecSection::HoleVector &
+const ExecSection::ExtentVector &
 ExecSection::congeal()
 {
 
@@ -393,7 +393,7 @@ ExecSection::uncongeal()
     if (congealed) {
         referenced.clear();
         addr_t old_end = 0;
-        for (HoleVector::iterator it=holes.begin(); it!=holes.end(); it++) {
+        for (ExtentVector::iterator it=holes.begin(); it!=holes.end(); it++) {
             ExtentPair value = *it;
             ROSE_ASSERT(value.first >= old_end);
             ROSE_ASSERT(value.first <= value.second);
@@ -452,6 +452,34 @@ ExecSection::unparse(FILE *f)
     ROSE_ASSERT(nwrite==size);
 }
 
+/* Write just the specified regions back to the file */
+void
+ExecSection::unparse(FILE *f, const ExtentVector &ev)
+{
+    for (size_t i=0; i<ev.size(); i++) {
+        ExtentPair p = ev[i];
+        ROSE_ASSERT(p.first<=p.second);
+        ROSE_ASSERT(p.second<=size);
+        addr_t extent_offset = p.first;
+        addr_t extent_size   = p.second - p.first;
+        const unsigned char *extent_data = content(extent_offset, extent_size);
+        int status = fseek(f, offset + extent_offset, SEEK_SET);
+        ROSE_ASSERT(status>=0);
+        size_t nwrite = fwrite(extent_data, 1, extent_size, f);
+        ROSE_ASSERT(nwrite==extent_size);
+    }
+}
+
+/* Write holes (unreferenced areas) back to the file */
+void
+ExecSection::unparse_holes(FILE *f)
+{
+    bool was_congealed = congealed;
+    unparse(f, congeal());
+    if (!was_congealed)
+        uncongeal();
+}
+
 /* Print some debugging info */
 void
 ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -499,7 +527,7 @@ ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
     /* Show holes based on what's been referenced so far */
     fprintf(f, "%s%-*s = %s\n", p, w, "congealed", congealed?"true":"false");
     bool was_congealed = congealed;
-    const HoleVector &holes = congeal();
+    const ExtentVector &holes = congeal();
     for (size_t i=0; i<holes.size(); i++) {
         ExtentPair extent = holes[i];
         addr_t hole_size = extent.second - extent.first;

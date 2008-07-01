@@ -344,6 +344,10 @@ class ExecFile {
  * sections. An ExecSection can also appear in other lists which it may not know about (i.e., be careful when destroying it). */
 class ExecSection {
   public:
+    typedef std::multimap<addr_t,addr_t> RefMap;        /* Used for keeping track of referenced areas */
+    typedef std::pair<addr_t,addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
+    typedef std::vector<ExtentPair> ExtentVector;       /* Vector of extents; usually non-overlapping, sorted by starting offset */
+
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
         : file(NULL), header(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
         id(-1), mapped(false), mapped_rva(0)
@@ -351,6 +355,7 @@ class ExecSection {
     virtual ~ExecSection();
     virtual void        dump(FILE*, const char *prefix, ssize_t idx);
     virtual void        unparse(FILE*);
+    void                unparse(FILE*, const ExtentVector&);
     ExecHeader          *is_file_header();              /* true if section represents a top level file header */
 
     /* Functions for section extent within the file */
@@ -361,12 +366,9 @@ class ExecSection {
     const unsigned char *extend(addr_t nbytes);         /* make section larger by extending the end */
 
     /* Functions for accessing content */
-    typedef std::multimap<addr_t,addr_t> RefMap;        /* Used for keeping track of referenced areas */
-    typedef std::pair<addr_t,addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
-    typedef std::vector<ExtentPair> HoleVector;         /* Vector of holes sorted by starting offset */
     const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
     const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
-    const HoleVector&   congeal();                      /* congeal referenced areas into holes */
+    const ExtentVector& congeal();                      /* congeal referenced areas into holes */
     const RefMap&       uncongeal();                    /* uncongeal holes back into references */
 
     /* Functions related to mapping of sections into executable memory */
@@ -395,6 +397,7 @@ class ExecSection {
 
   protected:
     void                ctor(ExecFile*, addr_t offset, addr_t size);
+    void                unparse_holes(FILE*);
 
     ExecFile            *file;                          /* The file to which this section belongs */
     ExecHeader          *header;                        /* Optional header associated with section */
@@ -410,7 +413,7 @@ class ExecSection {
     std::vector<ExecSegment*> segments;                 /* All segments belonging within this section */
     RefMap              referenced;                     /* Begin/end offsets for areas referenced by extent() and extent_str() */
     bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
-    HoleVector          holes;                      /* Unreferenced area (bigin/end offsets) */
+    ExtentVector        holes;                          /* Unreferenced area (bigin/end offsets) */
 };
 
 /* An ExecHeader represents any kind of top-level file header. File headers generally define other file data structures such

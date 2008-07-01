@@ -835,6 +835,8 @@ PEImportSection::unparse(FILE *f)
         size_t nwrite = fwrite(&zero, sizeof zero, 1, f);
         ROSE_ASSERT(1==nwrite);
     }
+
+    unparse_holes(f);
 }
 
 /* Print debugging info */
