@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.21 2008-06-27 10:20:59 gergo Exp $
+// $Id: CommandLineParser.C,v 1.22 2008-07-01 09:45:09 gergo Exp $
 
 #include <config.h>
 
@@ -214,6 +214,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->frontendWarningsOn();
   } else if (optionMatch(argv[i], "--no-frontend-warnings")) {
     cl->frontendWarningsOff();
+  } else if (optionMatch(argv[i], "--warn-deprecated")) {
+    cl->deprecatedWarningsOn();
+  } else if (optionMatch(argv[i], "--no-warn-deprecated")) {
+    cl->deprecatedWarningsOff();
   } else if (optionMatch(argv[i], "--pag-vivu")) {
     cl->vivuOn();
   } else if (optionMatchPrefix(argv[i], "--pag-vivuLoopUnrolling=")) {

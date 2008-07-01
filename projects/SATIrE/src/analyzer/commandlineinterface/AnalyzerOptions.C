@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.26 2008-06-27 10:20:59 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.27 2008-07-01 09:45:09 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
@@ -82,6 +82,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            program AST\n"
     "   --output-icfg=<FILENAME> output icfg of input program\n"
     "   --output-binary-ast=<FILENAME> write AST to binary file\n"
+    "   --warn-deprecated        warn about the use of deprecated features\n"
+    "   --no-warn-deprecated     do not warn about the use of deprecated features\n"
     "   --help                   print this help message on stdout\n"
     "   --help-rose              print the ROSE help message on stdout\n"
     "\n"
@@ -111,7 +113,8 @@ AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_n
     "                            --number-expressions --pag-memsize-mb=5\n"
     "                            --pag-memsize-grow=30 --no-statistics\n"
     "                            --analysis-files=all --analyis-annotation\n"
-    "                            --verbose --gdl-nodeformat=no-asttext\n"
+    "                            --verbose --warn-deprecated\n"
+    "                            --gdl-nodeformat=no-asttext\n"
     "                            --gdl-nodeformat=no-varid --gdl-nodeformat=varname\n"
     "                            --gdl-nodeformat=no-exprid\n"
     "                            --gdl-nodeformat=exprsource\n"

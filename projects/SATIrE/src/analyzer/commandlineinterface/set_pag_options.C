@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.8 2008-06-27 10:20:59 gergo Exp $
+// $Id: set_pag_options.C,v 1.9 2008-07-01 09:45:09 gergo Exp $
 
 // Author: Markus Schordan, 2006+
 
@@ -25,6 +25,11 @@ extern int global_retfunc;
 
 extern "C" int pag_auto_configure_memsize(int quiet, int perc, int size);
 
+// GB (2008-07-01): This global variable is accessed from deprecated support
+// functions to determine whether they should emit a warning about their
+// use; there is no other way to communicate this information to them.
+bool satire_warn_deprecated;
+
 void setPagOptions(AnalyzerOptions opt) {
   cfg_ordering=opt.getCfgOrdering();
   debug_stat=opt.statistics(); // bool->int
@@ -44,6 +49,8 @@ void setPagOptions(AnalyzerOptions opt) {
     // share_min and share_num appear to be set appropriately for a
     // startbanks value of 10, so there is nothing else to do
   }
+
+  satire_warn_deprecated = opt.deprecatedWarnings();
 
   //output=(char*)(opt.getGdlFileName().c_str());
   animation=(char*)(opt.getOutputGdlAnimDirName().c_str());  

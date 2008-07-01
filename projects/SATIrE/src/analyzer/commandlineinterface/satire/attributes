@@ -35,6 +35,7 @@ BOOL_ATTR(memsizeMBSet, Off)
 BOOL_ATTR(memsizePercSet, Off)
 
 BOOL_ATTR(frontendWarnings, Off)
+BOOL_ATTR(deprecatedWarnings, On)
 BOOL_ATTR(printCollectedFunctionNames, Off)
 BOOL_ATTR(analysisAnnotation, On)
 BOOL_ATTR(checkRoseAst, Off)
