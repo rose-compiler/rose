@@ -408,6 +408,7 @@ class ElfSymbol : public ExecSymbol {
     addr_t              st_name;
     unsigned char       st_info, st_res1;
     unsigned            st_shndx;
+    addr_t              st_size; /*original size for unparsing; superclass holds adjusted size*/
 
   private:
     void ctor(ByteOrder, const Elf32SymbolEntry_disk*);

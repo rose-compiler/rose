@@ -259,6 +259,8 @@ ElfFileHeader::unparse(FILE *f)
         ROSE_ASSERT(section_table->get_header()==this);
         segment_table->unparse(f);
     }
+
+    unparse_holes(f);
 }
 
 /* Print some debugging info */
@@ -580,6 +582,8 @@ ElfSectionTable::unparse(FILE *f)
             sections[i]->unparse(f);
         }
     }
+
+    unparse_holes(f);
 }
 
 /* Print some debugging info */
@@ -804,6 +808,8 @@ ElfSegmentTable::unparse(FILE *f)
             ROSE_ASSERT(nwrite==shdr->nextra);
         }
     }
+
+    unparse_holes(f);
 }
 
 /* Print some debugging info */
@@ -1026,6 +1032,8 @@ ElfDynamicSection::unparse(FILE *f)
         size_t nwrite = fwrite(disk, size, 1, f);
         ROSE_ASSERT(1==nwrite);
     }
+
+    unparse_holes(f);
 }
 
 /* Print some debugging info */
@@ -1073,25 +1081,27 @@ ElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 ElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 {
-    st_name =  disk_to_host(sex, disk->st_name);
-    st_info =  disk_to_host(sex, disk->st_info);
-    st_res1 =  disk_to_host(sex, disk->st_res1);
+    st_name  = disk_to_host(sex, disk->st_name);
+    st_info  = disk_to_host(sex, disk->st_info);
+    st_res1  = disk_to_host(sex, disk->st_res1);
     st_shndx = disk_to_host(sex, disk->st_shndx);
+    st_size  = disk_to_host(sex, disk->st_size);
 
-    value = disk_to_host(sex, disk->st_value);
-    size =  disk_to_host(sex, disk->st_size);
+    value    = disk_to_host(sex, disk->st_value);
+    size     = st_size;
     ctor_common();
 }
 void
 ElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 {
-    st_name =  disk_to_host(sex, disk->st_name);
-    st_info =  disk_to_host(sex, disk->st_info);
-    st_res1 =  disk_to_host(sex, disk->st_res1);
+    st_name  = disk_to_host(sex, disk->st_name);
+    st_info  = disk_to_host(sex, disk->st_info);
+    st_res1  = disk_to_host(sex, disk->st_res1);
     st_shndx = disk_to_host(sex, disk->st_shndx);
+    st_size  = disk_to_host(sex, disk->st_size);
 
-    value = disk_to_host(sex, disk->st_value);
-    size =  disk_to_host(sex, disk->st_size);
+    value    = disk_to_host(sex, disk->st_value);
+    size     = st_size;
     ctor_common();
 }
 void
@@ -1139,8 +1149,8 @@ ElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk)
     host_to_disk(sex, st_info,     &(disk->st_info));
     host_to_disk(sex, st_res1,     &(disk->st_res1));
     host_to_disk(sex, st_shndx,    &(disk->st_shndx));
+    host_to_disk(sex, st_size,     &(disk->st_size));
     host_to_disk(sex, get_value(), &(disk->st_value));
-    host_to_disk(sex, get_size(),  &(disk->st_size));
     return disk;
 }
 void *
@@ -1150,8 +1160,8 @@ ElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk)
     host_to_disk(sex, st_info,     &(disk->st_info));
     host_to_disk(sex, st_res1,     &(disk->st_res1));
     host_to_disk(sex, st_shndx,    &(disk->st_shndx));
+    host_to_disk(sex, st_size,     &(disk->st_size));
     host_to_disk(sex, get_value(), &(disk->st_value));
-    host_to_disk(sex, get_size(),  &(disk->st_size));
     return disk;
 }
 
@@ -1198,7 +1208,8 @@ ElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, ExecSection *section)
     fputs(s, f);
     fputs(")\n", f);
 
-    fprintf(f, "%s%-*s = %u\n",         p, w, "st_res1",  st_res1);
+    fprintf(f, "%s%-*s = %u\n",         p, w, "st_res1", st_res1);
+    fprintf(f, "%s%-*s = %"PRIu64"\n",  p, w, "st_size", st_size);
 
     if (section && section->get_id()==(int)st_shndx) {
         fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_shndx",
@@ -1296,6 +1307,8 @@ ElfSymbolSection::unparse(FILE *f)
         size_t nwrite = fwrite(disk, size, 1, f);
         ROSE_ASSERT(1==nwrite);
     }
+
+    unparse_holes(f);
 }
 
 /* Print some debugging info */
