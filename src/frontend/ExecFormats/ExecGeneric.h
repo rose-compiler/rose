@@ -3,6 +3,7 @@
 #define Exec_ExecFormats_h
 
 #include <assert.h>
+#include <map>
 #include <sys/stat.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -358,8 +359,15 @@ class ExecSection {
     addr_t              get_offset() {return offset;}   /* read-only */
     addr_t              end_offset() {return offset+size;} /* file offset for end of section */
     const unsigned char *extend(addr_t nbytes);         /* make section larger by extending the end */
+
+    /* Functions for accessing content */
+    typedef std::multimap<addr_t,addr_t> RefMap;        /* Used for keeping track of referenced areas */
+    typedef std::pair<addr_t,addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
+    typedef std::vector<ExtentPair> HoleVector;         /* Vector of holes sorted by starting offset */
     const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
     const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
+    const HoleVector&   congeal();                      /* congeal referenced areas into holes */
+    const RefMap&       uncongeal();                    /* uncongeal holes back into references */
 
     /* Functions related to mapping of sections into executable memory */
     bool                is_mapped() {return mapped;}
@@ -400,6 +408,9 @@ class ExecSection {
     bool                mapped;                         /* True if section should be mapped to program's address space */
     addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
     std::vector<ExecSegment*> segments;                 /* All segments belonging within this section */
+    RefMap              referenced;                     /* Begin/end offsets for areas referenced by extent() and extent_str() */
+    bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
+    HoleVector          holes;                      /* Unreferenced area (bigin/end offsets) */
 };
 
 /* An ExecHeader represents any kind of top-level file header. File headers generally define other file data structures such

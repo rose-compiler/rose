@@ -263,6 +263,7 @@ ExecFile::fill_holes()
         section->set_synthesized(true);
         section->set_name("hole");
         section->set_purpose(SP_UNSPECIFIED);
+        section->congeal();
     }
 }
 
@@ -339,6 +340,8 @@ ExecSection::content(addr_t offset, addr_t size)
 {
     if (offset > this->size || offset+size > this->size)
         throw ShortRead(this, offset, size);
+    if (!congealed && size>0)
+        referenced.insert(std::make_pair(offset, offset+size));
     return data + offset;
 }
 
@@ -349,9 +352,62 @@ ExecSection::content_str(addr_t offset)
     const char *ret = (const char*)content(offset, 0);
     size_t nchars=0;
     while (offset+nchars<size && ret[nchars]) nchars++;
-    if (offset+nchars>=size)
+    nchars++; /*NUL*/
+    if (offset+nchars>size)
         throw ShortRead(this, offset, nchars);
+    if (!congealed)
+        referenced.insert(std::make_pair(offset, offset+nchars));
     return ret;
+}
+
+/* Congeal the references to find the unreferenced areas. Once the references are congealed calling content() and
+ * content_str() will not affect references. This allows us to read the unreferenced areas without turning them into
+ * referenced areas. */
+const ExecSection::HoleVector &
+ExecSection::congeal()
+{
+
+    if (!congealed) {
+        holes.clear();
+        addr_t old_end = 0;
+        for (RefMap::iterator it=referenced.begin(); it!=referenced.end(); it++) {
+            ExtentPair value = *it;
+            ROSE_ASSERT(value.first <= value.second);
+            if (value.first > old_end)
+                holes.push_back(std::make_pair(old_end, value.first));
+            if (value.second > old_end)
+                old_end = value.second;
+        }
+        if (size > old_end)
+            holes.push_back(std::make_pair(old_end, size));
+        referenced.clear();
+        congealed = true;
+    }
+    return holes;
+}
+
+/* Uncongeal the holes */
+const ExecSection::RefMap &
+ExecSection::uncongeal()
+{
+    if (congealed) {
+        referenced.clear();
+        addr_t old_end = 0;
+        for (HoleVector::iterator it=holes.begin(); it!=holes.end(); it++) {
+            ExtentPair value = *it;
+            ROSE_ASSERT(value.first >= old_end);
+            ROSE_ASSERT(value.first <= value.second);
+            if (value.first > old_end)
+                referenced.insert(std::make_pair(old_end, value.first));
+            if (value.second > old_end)
+                old_end = value.second;
+        }
+        if (size > old_end)
+            referenced.insert(std::make_pair(old_end, size));
+        congealed = false;
+        holes.clear();
+    }
+    return referenced;
 }
 
 /* Extend a section by some number of bytes and return a pointer to the content of the newly extended area. Called with a zero
@@ -439,6 +495,18 @@ ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped_rva");
     }
+
+    /* Show holes based on what's been referenced so far */
+    fprintf(f, "%s%-*s = %s\n", p, w, "congealed", congealed?"true":"false");
+    bool was_congealed = congealed;
+    const HoleVector &holes = congeal();
+    for (size_t i=0; i<holes.size(); i++) {
+        ExtentPair extent = holes[i];
+        addr_t hole_size = extent.second - extent.first;
+        fprintf(f, "%s%-*s = [%zu] at %"PRIu64", %"PRIu64" bytes\n", p, w, "hole", i, extent.first, hole_size);
+    }
+    if (!was_congealed)
+        uncongeal();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
