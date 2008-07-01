@@ -294,15 +294,14 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: logo $(PACKAGE_NAME)-$(PACK
 # Simpler rule
 latex-docs: latex-docs-manual
 
-latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf inst-pdf.pdf
+latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE-InstallationInstructions.pdf
 
-inst-pdf.pdf: logo  $(latexFiles) $(latexDependences) inst-pdf.tex
-	@echo "Building Latex inst-pdf.pdf ... "
+ROSE-InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) inst-pdf.tex
+	@echo "Building Latex ROSE-InstallationInstructions.pdf ... "
 	pdflatex inst-pdf.tex; \
 	pdflatex inst-pdf.tex; \
 	pdflatex inst-pdf.tex; \
 	echo "Copy install files to HTML location ... "; \
-	mv inst-pdf.pdf ROSE_InstallationInstructions.pdf; \
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf;
 
 # Make a simple rule to remember
@@ -472,7 +471,7 @@ cleanSourceTutorial:
 cleanSource: cleanSourceTutorial clean
 	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	rm -rf ROSE_WebPages
-	rm -f $(srcdir)/inst-pdf.pdf
+	rm -f $(srcdir)/ROSE-InstallationInstructions.pdf
 
 clean-local:
 	rm -rf roseDoxygen.tags SageIntermediateForm *.tex *.log *.aux *.dvi \
