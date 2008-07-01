@@ -24,7 +24,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      strict.upc \
      test2004_22.upc \
      threads.upc \
-     threads_2.upc 
+     threads_2.upc \
+     typedef.upc
 
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in its IL
