@@ -304,7 +304,7 @@ ROSE-InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) ROSE_
 	pdflatex ROSE_InstallationInstructions.tex; \
 	echo "Copy install files to HTML location ... "; \
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf; \
-	cp -f ROSE_InstallationInstructions.pdf $(srcdir)/ROSE_InstallationInstructions.pdf; \
+	cp -f ROSE_InstallationInstructions.pdf $(srcdir)/ROSE_InstallationInstructions.pdf;
 
 # Make a simple rule to remember
 force: force-latex-docs
