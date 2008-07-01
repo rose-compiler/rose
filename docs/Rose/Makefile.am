@@ -301,7 +301,7 @@ inst-pdf.pdf: logo  $(latexFiles) $(latexDependences) inst-pdf.tex
 	pdflatex inst-pdf.tex; \
 	pdflatex inst-pdf.tex; \
 	pdflatex inst-pdf.tex; \
-	echo "Copy install files to HTML location ... "; \ 
+	echo "Copy install files to HTML location ... "; \
 	mv inst-pdf.pdf ROSE_InstallationInstructions.pdf; \
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf;
 
