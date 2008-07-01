@@ -1,5 +1,10 @@
 V0.8.3 (in progress)
 
+* strongly recommended user changes:
+  - change analysis specifications to use new Id types and associated
+    functions; the deprecated exprnum/typenum functions will be removed from
+    the next release
+
 * Better support for combined analyses [GB]
   - correct prefixing of SATIrE support functions
 
@@ -7,20 +12,24 @@ V0.8.3 (in progress)
   - TypeId as abstract type identifier
   - side-effecting(!) add_tmpvarid support function
   - total ordering on each Id type
+  - deprecated exprnum/typenum functions emit warnings; suppress with
+    --no-warn-deprecated command line flag (even better: change the analysis
+    specification!)
 
 * ICFG builder changes [GB]
   - replaced function-specific $func$return, $func$arg_n, and $func$this
     variables by generic $tmpvar$ variables; this allows for calling
     functions without knowing their name (through pointers, for instance)
+  - better resolution of calls to static functions
 
 * PAG memory management command line flags [GB]
   - for setting initial memory size:
       --pag-memsize-mb=N     allocate N MB of memory
       --pag-memsize-perc=N   allocate N% of total system memory (autodetected)
-    default memory size is 5 MB
-  - for setting aggressivness of memory growth:
+    (default memory size is 5 MB)
+  - for setting aggressiveness of memory growth:
       --pag-memsize-grow=N   grow memory if less than N% are free after a GC
-    default growth is 30%
+    (default growth is 30%)
 
 * Termite: [AP]
   - Support for multiple input files
