@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.26 2008-06-26 08:08:09 gergo Exp $
+// $Id: cfg_support.h,v 1.27 2008-07-01 09:45:27 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -752,6 +752,11 @@ public:
     SgType *this_type;
     SgVariableSymbol *this_sym;
     SgVarRefExp *this_exp;
+
+ // GB (2008-07-01): Used for resolution of calls to static functions. For
+ // static functions, this points to the file containing the function's
+ // definition. It is NULL otherwise.
+    SgFile *static_file;
 
     ~Procedure();
 };

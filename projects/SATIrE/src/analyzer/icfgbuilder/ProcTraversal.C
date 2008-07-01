@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.18 2008-06-27 13:48:22 gergo Exp $
+// $Id: ProcTraversal.C,v 1.19 2008-07-01 09:45:25 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -112,6 +112,30 @@ ProcTraversal::visit(SgNode *node) {
         proc->this_type = NULL;
         proc->this_sym = NULL;
         proc->this_exp = NULL;
+     // GB (2008-07-01): Better resolution of calls to static functions.
+     // This only makes sense for non-member functions.
+        SgStorageModifier &sm =
+            (fnd != NULL ? fnd : decl)->get_declarationModifier().get_storageModifier();
+        if (sm.isStatic())
+        {
+#if 0
+            std::cout << "static declaration for function "
+                << proc->name << "/" << proc->procnum << std::endl;
+#endif
+         // Note that we query the first nondefining declaration for the
+         // static modifier, but we save the file of the *defining*
+         // declaration. This is because the first declaration might be in
+         // some header file, but for call resolution, the actual source
+         // file with the definition is relevant.
+         // Trace back to the enclosing file node. The definition might be
+         // included in foo.c from bar.c, in which case the Sg_File_Info
+         // would refer to bar.c; but for function call resolution, foo.c is
+         // the relevant file.
+            SgNode *p = decl->get_parent();
+            while (p != NULL && !isSgFile(p))
+                p = p->get_parent();
+            proc->static_file = isSgFile(p);
+        }
       }
       proc_map.insert(std::make_pair(proc->name, proc));
       mangled_proc_map.insert(std::make_pair(proc->mangled_name, proc));

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprLabeler.C,v 1.8 2008-06-27 13:48:22 gergo Exp $
+// $Id: ExprLabeler.C,v 1.9 2008-07-01 09:45:25 gergo Exp $
 
 #include "ExprLabeler.h"
 
@@ -24,15 +24,17 @@ void ExprLabeler::visit(SgNode *node)
     else if (isSgFunctionCallExp(node))
     {
         SgFunctionCallExp *call = isSgFunctionCallExp(node);
-     // std::string *name = find_func_name(call);
-     // std::stringstream varname;
-     // varname << "$" << (name != NULL ? *name : "unknown_func")
-     //     << "$return_" << expnum++;
-     // delete name;
-     // SgVariableSymbol *varsym
-     //     = Ir::createVariableSymbol(varname.str(),
-     //                                cfg->global_unknown_type);
-        SgVariableSymbol *varsym = cfg->global_return_variable_symbol;
+        std::string *name = find_func_name(call);
+        std::stringstream varname;
+        varname << "$tmpvar$" << (name != NULL ? *name : "unknown_func")
+            << "$return_" << expnum++;
+        delete name;
+        SgVariableSymbol *varsym
+            = Ir::createVariableSymbol(varname.str(),
+                                       cfg->global_unknown_type);
+     // GB (2008-07-01): This is supposed to be the *unique* symbol for some
+     // call site, not the global symbol!
+     // SgVariableSymbol *varsym = cfg->global_return_variable_symbol;
         RetvalAttribute *retval = new RetvalAttribute(varsym);
         node->addNewAttribute("return variable", retval);
     }

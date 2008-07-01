@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.h,v 1.6 2008-06-26 08:08:09 gergo Exp $
+// $Id: ProcTraversal.h,v 1.7 2008-07-01 09:45:27 gergo Exp $
 
 #ifndef H_PROCTRAVERSAL
 #define H_PROCTRAVERSAL
@@ -25,7 +25,7 @@ public:
   std::vector<SgVariableSymbol *> global_argument_variable_symbols;
   SgVariableSymbol *global_this_variable_symbol;
   SgType *global_unknown_type;
-  
+
 protected:
   void visit(SgNode *);
   void atTraversalStart();

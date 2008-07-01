@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.25 2008-06-27 13:48:22 gergo Exp $
+// $Id: cfg_support.C,v 1.26 2008-07-01 09:45:25 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -759,7 +759,7 @@ Procedure::Procedure()
   : class_type(NULL), entry(NULL), exit(NULL),
     arg_block(NULL), first_arg_block(NULL), last_arg_block(NULL),
     this_assignment(NULL), returnvar(NULL),
-    params(NULL), decl(NULL)
+    params(NULL), decl(NULL), static_file(NULL)
 {
 }
 

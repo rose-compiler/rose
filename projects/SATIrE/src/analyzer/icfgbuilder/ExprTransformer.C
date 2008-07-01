@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.25 2008-06-27 13:48:22 gergo Exp $
+// $Id: ExprTransformer.C,v 1.26 2008-07-01 09:45:25 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -1132,7 +1132,51 @@ ExprTransformer::find_entries(SgFunctionCallExp *call)
         for (i = first; i != last; ++i)
         {
             Procedure *p = i->second;
-            blocks->push_back(p->entry);
+         // GB (2008-07-01): Added check for static functions. If the
+         // function is not declared static, call it; if it is declared
+         // static, only call it if the call and the definition are in the
+         // same file.
+            if (p->static_file == NULL)
+            {
+                blocks->push_back(p->entry);
+#if 0
+                std::cout << "pushed non-static call to function "
+                    << p->name << "/" << p->procnum << std::endl;
+#endif
+            }
+            else
+            {
+             // Trace back to enclosing file. There is probably a ROSE
+             // function for this...
+                SgNode *n = call->get_parent();
+                while (n != NULL && !isSgFile(n))
+                    n = n->get_parent();
+#if 0
+                if (n == NULL)
+                {
+                    std::cout << "interesting, call '"
+                        << Ir::fragmentToString(call) << "' (" << (void *) call
+                        << ") is from no file" << std::endl;
+                }
+#endif
+                SgFile *call_file = isSgFile(n);
+
+                if (p->static_file == call_file)
+                {
+                    blocks->push_back(p->entry);
+#if 0
+                    std::cout << "pushed static call to function "
+                        << p->name << "/" << p->procnum << std::endl;
+#endif
+                }
+#if 0
+                else
+                {
+                    std::cout << "did NOT push static call to function "
+                        << p->name << "/" << p->procnum << std::endl;
+                }
+#endif
+            }
         }
 #endif
         return blocks;
