@@ -296,13 +296,15 @@ latex-docs: latex-docs-manual
 
 latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE-InstallationInstructions.pdf
 
-ROSE-InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) inst-pdf.tex
+ROSE-InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	@echo "Building Latex ROSE-InstallationInstructions.pdf ... "
-	pdflatex inst-pdf.tex; \
-	pdflatex inst-pdf.tex; \
-	pdflatex inst-pdf.tex; \
+	test -f installRose.tex || ln -s $(top_srcdir)/docs/Rose/installRose.tex installRose.tex
+	pdflatex ROSE_InstallationInstructions.tex; \
+	pdflatex ROSE_InstallationInstructions.tex; \
+	pdflatex ROSE_InstallationInstructions.tex; \
 	echo "Copy install files to HTML location ... "; \
-	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf;
+	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf; \
+	cp -f ROSE_InstallationInstructions.pdf $(srcdir)/ROSE_InstallationInstructions.pdf; \
 
 # Make a simple rule to remember
 force: force-latex-docs
