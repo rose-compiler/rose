@@ -267,9 +267,6 @@ class ElfSegmentTableEntry {
     const unsigned char *extra;
     addr_t              nextra;                 /*extra size in bytes*/
 
-    /* The pointer to the actual segment on disk */
-    ExecSegment         *segment;
-
   private:
     void ctor(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk);
     void ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);

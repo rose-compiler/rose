@@ -725,49 +725,6 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
             entries.push_back(shdr);
         }
     }
-
-    /* Read the segments */
-    for (size_t i=0; i<entries.size(); i++) {
-        ElfSegmentTableEntry *shdr = entries[i];
-
-        /* Get (or synthesize) the section in which this segment lives. */
-        std::vector<ExecSection*> found = fhdr->get_file()->get_sections_by_offset(shdr->p_offset, shdr->p_filesz);
-        ExecSection *section = NULL;
-        if (found.size()>0) {
-            section = found[0];
-        } else {
-            section = new ExecSection(fhdr->get_file(), shdr->p_offset, shdr->p_filesz);
-            section->set_synthesized(true);
-            section->set_name("synthesized segment container");
-            section->set_purpose(SP_UNSPECIFIED);
-            section->set_header(fhdr);
-        }
-
-        /* Calculate offsets and sizes */
-        addr_t offset_wrt_section = shdr->p_offset - section->get_offset();
-        ROSE_ASSERT(shdr->p_vaddr >= fhdr->get_base_va());
-        addr_t rva = shdr->p_vaddr - fhdr->get_base_va();
-
-        /* Read the segment */
-        ExecSegment *segment = new ExecSegment(section, offset_wrt_section, shdr->p_filesz, rva, shdr->p_memsz);
-        switch (shdr->p_type) {
-          case PT_NULL:    segment->set_name("NULL");    break;
-          case PT_LOAD:    segment->set_name("LOAD");    break;
-          case PT_DYNAMIC: segment->set_name("DYNAMIC"); break;
-          case PT_INTERP:  segment->set_name("INPERP");  break;
-          case PT_NOTE:    segment->set_name("NOTE");    break;
-          case PT_SHLIB:   segment->set_name("SHLIB");   break;
-          case PT_PHDR:    segment->set_name("PHDR");    break;
-          default:
-            char s[128];
-            sprintf(s, "p_type=0x%08x", shdr->p_type);
-            segment->set_name(s);
-            break;
-        }
-
-        segment->set_executable(shdr->p_flags & 0x1 ? true : false);
-        segment->set_writable  (shdr->p_flags & 0x2 ? true : false);
-    }
 }
 
 /* Write the segment table to disk. */
@@ -1385,10 +1342,9 @@ parse(ExecFile *ef)
     ElfFileHeader *fhdr = new ElfFileHeader(ef, 0);
     ROSE_ASSERT(fhdr != NULL);
 
-    /* Read the optional section and segment tables and the sections/segments to which they point. */
+    /* Read the optional section and segment tables and the sections to which they point. */
     if (fhdr->e_shnum)
         fhdr->section_table = new ElfSectionTable(fhdr);
-
     if (fhdr->e_phnum)
         fhdr->segment_table = new ElfSegmentTable(fhdr);
 

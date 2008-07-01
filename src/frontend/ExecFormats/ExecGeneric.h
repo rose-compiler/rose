@@ -289,7 +289,6 @@ public:
 class ExecFile;                                         /* An executable file */
 class ExecSection;                                      /* One section of an executable file */
 class ExecHeader;                                       /* Executable file format header (e.g., Elf, PE, DOS, etc. file header */
-class ExecSegment;
 class ExecDLL;                                          /* One required dynamically-linked library and its functions */
 class ExecSymbol;
 
@@ -322,9 +321,6 @@ class ExecFile {
     void add_header(ExecHeader*);                       /* Add a new file header to the list of headers for this file */
     std::vector<ExecHeader*>& get_headers() {return headers;}/* all file header sections */
 
-    /* Functions for segments */
-    std::vector<ExecSegment*> get_segments();           /* all segments from all sections */
-
   private:
     void ctor(std::string file_name);
     int                 fd;                             /* File descriptor opened for read-only (or negative) */
@@ -350,7 +346,7 @@ class ExecSection {
 
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
         : file(NULL), header(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
-        id(-1), mapped(false), mapped_rva(0)
+        id(-1), mapped(false), mapped_rva(0), readable(true), writable(true), executable(false)
         {ctor(f, offset, size);}
     virtual ~ExecSection();
     virtual void        dump(FILE*, const char *prefix, ssize_t idx);
@@ -376,10 +372,12 @@ class ExecSection {
     addr_t              get_mapped_rva() {return mapped ? mapped_rva : 0;}
     void                set_mapped_rva(addr_t a) {mapped=true; mapped_rva=a;}
     void                clear_mapped_rva() {mapped=false; mapped_rva=0;}
-
-    /* Functions for segment children */
-    void add_segment(ExecSegment*);                     /* Add a new segment to this section */
-    std::vector<ExecSegment*>& get_segments() {return segments;}
+    bool                get_executable() {return executable;}
+    void                set_executable(bool b) {executable=b;}
+    bool                get_writable() {return writable;}
+    void                set_writable(bool b) {writable=b;}
+    bool                get_readable() {return readable;}
+    void                set_readable(bool b) {readable=b;}
 
     /* Accessors for private members */
     ExecHeader          *get_header() {return header;}
@@ -410,7 +408,9 @@ class ExecSection {
     std::string         name;                           /* Optional, non-unique name of section */
     bool                mapped;                         /* True if section should be mapped to program's address space */
     addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
-    std::vector<ExecSegment*> segments;                 /* All segments belonging within this section */
+    bool                readable;                       /* Mapped by loader into memory having read permission */
+    bool                writable;                       /* Mapped by loader into memory having write permission */
+    bool                executable;                     /* Mapped by loader into memory having execute permission */
     RefMap              referenced;                     /* Begin/end offsets for areas referenced by extent() and extent_str() */
     bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
     ExtentVector        holes;                          /* Unreferenced area (bigin/end offsets) */
@@ -459,56 +459,6 @@ class ExecHeader : public ExecSection {
 
   private:
     void ctor(ExecFile *f, addr_t offset, addr_t size);
-};
-
-/* An ExecSegment is the unit of granularity for the loader: the loader will map segments to memory addresses. An ExecSegment
- * always exists within the part of an ExecFile described by a single ExecSection, and an ExecSection may have zero or more
- * ExecSegments.
- *
- * Note that file formats don't always enforce the segment-within-a-section constraint (e.g., the ELF file format permits a
- * segment to span sections, although this would not conform to the ELF documentation), and in this situation the format
- * reader should synthesize a new section.  Likewise, if the file defines a segment outside of any section then the reader
- * will synthesize a section.  These synthesized sections will be just large enough to hold the segment.
- *
- * The notions of ExecSection and ExecSegment loosely correspond to sections and segments as defined by ELF. Other formats may
- * need more transformation in order to represent them using these same data structures. For instance, PE files have "objects"
- * that are mapped by the reader to ExecSegments and the ExecSections are synthesized to hold the segments. */
-class ExecSegment {
-  public:
-    ExecSegment(ExecSection *sect, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
-        : section(NULL), offset(0), disk_size(0), mapped_size(0), mapped_padding(0), mapped_rva(0),
-        writable(false), executable(false)
-        {ctor(sect, offset, size, rva, mapped_size);}
-    virtual ~ExecSegment();
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-    /* Address and size functions */
-    addr_t              get_disk_size() {return disk_size;}     /*read-only*/
-    addr_t              get_offset() {return offset;}           /*read-only*/
-    addr_t              get_mapped_rva() {return mapped_rva;}   /*read-only*/
-
-    /* Private member accessors */
-    bool                get_executable() {return executable;}
-    void                set_executable(bool b) {executable=b;}
-    const std::string&  get_name() {return name;}
-    void                set_name(const char *s) {name=s;}
-    void                set_name(const unsigned char *s) {name=(const char*)s;}
-    void                set_name(std::string &s) {name=s;}
-    ExecSection         *get_section() {return section;} /*read-only*/
-    bool                get_writable() {return writable;}
-    void                set_writable(bool b) {writable=b;}
-
-  private:
-    void ctor(ExecSection*, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size);
-    ExecSection         *section;                       /* Section in which this segment lives */
-    std::string         name;                           /* Optional name of segment */
-    addr_t              offset;                         /* Offset wrt. beginning of the section */
-    addr_t              disk_size;                      /* Bytes stored in the file, sans alignment padding */
-    addr_t              mapped_size;                    /* Intended size when mapped to memory */
-    int                 mapped_padding;                 /* Byte value (or negative for none) of memory padding */
-    addr_t              mapped_rva;                     /* Intended relative virtual address when mapped by loader */
-    bool                writable;                       /* Mapped by loader into memory having write permission */
-    bool                executable;                     /* Mapped by loader into memory having execute permission */
 };
 
 /* Represents information about a dynamic library that must be linked at runtime. */

@@ -162,18 +162,6 @@ ExecFile::add_section(ExecSection *section)
     sections.push_back(section);
 }
 
-/* Returns vector of all segments across all sections */
-std::vector<ExecSegment*>
-ExecFile::get_segments()
-{
-    std::vector<ExecSegment*> retval;
-    for (std::vector<ExecSection*>::iterator sec_i=sections.begin(); sec_i!=sections.end(); sec_i++) {
-        std::vector<ExecSegment*> segments = (*sec_i)->get_segments();
-        retval.insert(retval.end(), segments.begin(), segments.end());
-    }
-    return retval;
-}
-
 /* Returns the pointer to the first section with the specified ID. */
 ExecSection *
 ExecFile::get_section_by_id(int id)
@@ -305,7 +293,7 @@ ExecSection::ctor(ExecFile *ef, addr_t offset, addr_t size)
     ef->add_section(this);
 }
 
-/* Destructor must remove the section from its parent file's segment list */
+/* Destructor must remove the section from its parent file's section list */
 ExecSection::~ExecSection()
 {
     if (file) {
@@ -319,19 +307,6 @@ ExecSection::~ExecSection()
             }
         }
     }
-}
-
-/* Adds a new segment to a section. This is called implicitly by the segment constructor. */
-void
-ExecSection::add_segment(ExecSegment *segment)
-{
-#ifndef NDEBUG
-    /* New segment must not already be present. */
-    for (size_t i=0; i<segments.size(); i++) {
-        ROSE_ASSERT(segments[i]!=segment);
-    }
-#endif
-    segments.push_back(segment);
 }
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. */
@@ -520,6 +495,8 @@ ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     if (mapped) {
         fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "mapped_rva", mapped_rva);
+        fprintf(f, "%s%-*s = %c%c%c\n", p, w, "permissions",
+                readable?'r':'-', writable?'w':'-', executable?'x':'-');
     } else {
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped_rva");
     }
@@ -634,67 +611,6 @@ ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
     for (size_t i=0; i<symbols.size(); i++)
         symbols[i]->dump(f, p, i);
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ExecSegment
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/* Constructor adds segment to its parent section's segment list. */
-void
-ExecSegment::ctor(ExecSection *section, addr_t offset, addr_t size, addr_t rva, addr_t mapped_size)
-{
-    ROSE_ASSERT(section);
-    if (offset > section->get_size() || offset+size > section->get_size())
-        throw ShortRead(section, offset, size);
-    
-    this->section = section;
-    this->offset = offset;
-    this->disk_size = size;
-    this->mapped_size = mapped_size;
-    this->mapped_rva = rva;
-    this->writable = false;
-    this->executable = false;
-
-    section->add_segment(this);
-}
-
-/* The destructor removes the section from its ExecSegment parent. */
-ExecSegment::~ExecSegment()
-{
-    if (section) {
-        std::vector<ExecSegment*> &segments = section->get_segments();
-        std::vector<ExecSegment*>::iterator i = segments.begin();
-        while (i!=segments.end()) {
-            if (*i==this) {
-                i = segments.erase(i);
-            } else {
-                i++;
-            }
-        }
-    }
-}
-
-/* Print some debugging info about the segment */
-void
-ExecSegment::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sExecSegment[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sExecSegment.", prefix);
-    }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
-    fprintf(f, "%s%-*s = \"%s\"\n",                         p, w, "name",          name.c_str());
-    fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "section",
-            section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes into section\n", p, w, "offset",        offset);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",              p, w, "disk_size",     disk_size);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "address (rva)", mapped_rva);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",              p, w, "mapped_size",   mapped_size);
-    fprintf(f, "%s%-*s = %swritable, %sexecutable\n",       p, w, "permissions",   writable?"":"not-", executable?"":"not-");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

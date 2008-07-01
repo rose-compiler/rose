@@ -336,7 +336,7 @@ PEFileHeader::unparse(FILE *f)
         ROSE_ASSERT(1==nwrite);
     }
 
-    /* The object table and all the sections/segments */
+    /* The object table and all the non-synthesized sections */
     if (object_table)
         object_table->unparse(f);
 
@@ -418,7 +418,7 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Segments and segment table (a.k.a., "object table")
+// PE Object Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
@@ -509,7 +509,7 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         const PEObjectTableEntry_disk *disk = (const PEObjectTableEntry_disk*)content(i*entsize, entsize);
         PEObjectTableEntry *entry = new PEObjectTableEntry(disk);
 
-        /* The section to hold the segment */
+        /* The section (object) */
         PESection *section=NULL;
         if (0==entry->name.compare(".idata")) {
             section = new PEImportSection(fhdr, entry->physical_offset, entry->physical_size, entry->rva);
@@ -524,16 +524,12 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
         section->set_mapped_rva(entry->rva);
         section->set_st_entry(entry);
 
-        /* Define the segment */
-        ExecSegment *segment = new ExecSegment(section, 0, entry->physical_size, entry->rva, entry->virtual_size);
-        segment->set_name(entry->name);
-
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);
         if (entry->flags & OF_EXECUTABLE)
-            segment->set_executable(true);
+            section->set_executable(true);
         if (entry->flags & OF_WRITABLE)
-            segment->set_writable(true);
+            section->set_writable(true);
     }
 }
 
@@ -725,9 +721,9 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
          * and hint/name pair addresses are all specified with RVAs, but we need to convert them to section offsets in order
          * to read them since we've not mapped sections to their preferred base addresses. */
         if (idir->hintnames_rva < mapped_rva)
-            throw FormatError("hint/name RVA is before beginning of \".idata\" segment");
+            throw FormatError("hint/name RVA is before beginning of \".idata\" object");
         if (idir->bindings_rva < mapped_rva)
-            throw FormatError("bindings RVA is before beginning of \".idata\" segment");
+            throw FormatError("bindings RVA is before beginning of \".idata\" object");
         addr_t hintname_rvas_offset = idir->hintnames_rva - mapped_rva; /*section offset of RVA array for hintnames*/
         addr_t bindings_offset  = idir->bindings_rva  - mapped_rva; /*section offset of RVA array for bindings*/
         while (1) {
@@ -1314,7 +1310,7 @@ parse(ExecFile *ef)
     DOSFileHeader *dos_header = new DOSFileHeader(ef, 0);
 
     /* The MS-DOS real-mode stub program sits between the DOS file header and the PE file header */
-    /* FIXME: this should be an executable segment. What is the entry address? */
+    /* FIXME: this should be an executable section. What is the entry address? */
     size_t dos_stub_offset = dos_header->end_offset();
     ROSE_ASSERT(dos_header->e_lfanew > dos_stub_offset);
     size_t dos_stub_size = dos_header->e_lfanew - dos_stub_offset;
@@ -1324,6 +1320,7 @@ parse(ExecFile *ef)
         dos_stub->set_synthesized(true);
         dos_stub->set_purpose(SP_PROGRAM);
         dos_stub->set_header(dos_header);
+        dos_stub->set_executable(true);
         dos_header->set_rm_section(dos_stub);
     }
     
@@ -1332,7 +1329,7 @@ parse(ExecFile *ef)
     ROSE_ASSERT(pe_header->e_num_rvasize_pairs < 1000); /* just a sanity check before we allocate memory */
     pe_header->add_rvasize_pairs();
 
-    /* Construct the segments and their sections */
+    /* Construct the object table and its objects (non-synthesized sections) */
     pe_header->set_object_table(new PEObjectTable(pe_header));
 
     /* Parse the COFF symbol table and add symbols to the PE header */
