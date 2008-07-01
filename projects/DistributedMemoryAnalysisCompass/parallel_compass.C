@@ -413,9 +413,6 @@ int main(int argc, char **argv)
 	if (my_rank==0)
 	  std::cerr << "\n--------------- OPENMP enabled with " << threadsnr << 
 	    " threads!! processes = " << processes << " ------------" << std::endl;
-#elif
-	if (my_rank==0)
-	  std::cerr << "\n--------------- NO OPENMP !! ------------" << std::endl;
 #endif 
 
 
