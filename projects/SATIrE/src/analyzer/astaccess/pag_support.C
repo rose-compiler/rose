@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.15 2008-05-29 08:02:53 gergo Exp $
+// $Id: pag_support.C,v 1.16 2008-07-01 09:44:44 gergo Exp $
 
 #include <iostream>
 
@@ -283,13 +283,32 @@ CFG *get_global_cfg()
     return global_cfg;
 }
 
+// GB (2008-07-01): Global variables are not very elegant. I know.
+extern bool satire_warn_deprecated;
+
 extern "C" void *o_typenum_to_type(unum n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'typenum_to_type'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->numbers_types[unum_to_unsigned(n)];
 }
 
 extern "C" unum o_type_to_typenum(void *type)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'type_to_typenum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return int_to_unum(get_global_cfg()->types_numbers[isSgType((SgNode *) type)]);
 }
 
@@ -297,21 +316,53 @@ extern "C" unum o_type_to_typenum(void *type)
 
 extern "C" str o_typenum_to_str(unum n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'typenum_to_str'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return Ir::getCharPtr(Ir::fragmentToString(isSgType((SgNode *)o_typenum_to_type(n))));
 }
 
 extern "C" void *o_exprnum_to_expr(unum n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_to_expr'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->numbers_exprs[unum_to_unsigned(n)];
 }
 
 extern "C" unum o_expr_to_exprnum(void *expr)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'expr_to_exprnum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return int_to_unum(get_global_cfg()->exprs_numbers[isSgExpression((SgNode *) expr)]);
 }
 
 extern "C" str o_exprnum_to_str(unum n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_to_str'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return expr_to_string((SgExpression *) o_exprnum_to_expr(n));
 }
 
@@ -322,6 +373,14 @@ extern "C" void *o_expr_type(void *expr)
 
 extern "C" unum o_exprnum_typenum(unum n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_typenum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return o_type_to_typenum(o_expr_type(o_exprnum_to_expr(n)));
 }
 
@@ -351,6 +410,14 @@ extern "C" FLO_BOOL o_is_subtype_of(void *a, void *b)
 
 extern "C" FLO_BOOL o_is_subtypenum_of(unum a, unum b)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'is_subtypenum_of'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return o_is_subtype_of(o_typenum_to_type(a), o_typenum_to_type(b));
 }
 
@@ -384,12 +451,16 @@ extern "C" void *o_global_get_initializer(void *symbol)
 // numbered all expressions.
 // GB (2008-05-13): (Temporarily?) renamed "ID" to varnum because the
 // VariableID class was introduced.
+// GB (2008-07-01): This function apprears unnecessary because we have
+// varsym_varid and varref_varid; it was also never documented, apparently.
+#if 0
 extern "C" unum o_variable_varnum(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
     unsigned long id = get_global_cfg()->varsyms_ids[varsym];
     return int_to_unum(id);
 }
+#endif
 
 extern "C" str o_exp_root_str(void *exp)
 {
@@ -498,31 +569,79 @@ void syntax_init(void)
 // prefixes.
 SgType *typenum_to_type(unsigned long n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'typenum_to_type'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->numbers_types[n];
 }
 
 unsigned long type_to_typenum(SgType *type)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'type_to_typenum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->types_numbers[type];
 }
 
 std::string typenum_to_str(unsigned long n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'typenum_to_str'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return Ir::fragmentToString(typenum_to_type(n));
 }
 
 SgExpression *exprnum_to_expr(unsigned long n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_to_expr'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->numbers_exprs[n];
 }
 
 unsigned long expr_to_exprnum(SgExpression *expr)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'expr_to_exprnum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return get_global_cfg()->exprs_numbers[expr];
 }
 
 std::string exprnum_to_str(unsigned long n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_to_str'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return expr_to_string(exprnum_to_expr(n));
 }
 
@@ -533,6 +652,14 @@ SgType *expr_type(SgExpression *expr)
 
 unsigned long exprnum_typenum(unsigned long n)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'exprnum_typenum'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     return type_to_typenum(expr_type(exprnum_to_expr(n)));
 }
 
@@ -543,6 +670,14 @@ bool is_subtype_of(SgClassType *a, SgClassType *b)
 
 bool is_subtypenum_of(unsigned long a, unsigned long b)
 {
+    if (satire_warn_deprecated)
+    {
+        std::cerr
+            << "** Warning: calling deprecated SATIrE support function 'is_subtypenum_of'"
+            << std::endl
+            << "(use --no-warn-deprecated command line flag to suppress this warning)"
+            << std::endl;
+    }
     SgClassType *ta = isSgClassType(typenum_to_type(a));
     SgClassType *tb = isSgClassType(typenum_to_type(b));
     return (ta != NULL && tb != NULL && is_subtype_of(ta, tb));
