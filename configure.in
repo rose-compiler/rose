@@ -1020,7 +1020,7 @@ docs/Rose/projects.html
 docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
-docs/Rose/inst-pdf.tex
+docs/Rose/ROSE_InstallationInstructions.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
 docs/Rose/sage.cfg
