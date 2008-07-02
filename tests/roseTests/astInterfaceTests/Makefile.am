@@ -14,7 +14,8 @@ noinst_PROGRAMS = \
     buildFunctionCalls buildPragmaDeclaration attachComment \
     insertHeader buildExpression buildStructDeclaration \
     lookupNamedType buildFile movePreprocessingInfo buildIfStmt \
-    buildCpreprocessorDefineDeclaration instrumentEndOfFunction
+    buildCpreprocessorDefineDeclaration instrumentEndOfFunction \
+    isUpcSharedType isUpcPhaseLessSharedType
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -33,7 +34,9 @@ buildFile_SOURCES                = buildFile.C
 movePreprocessingInfo_SOURCES    = movePreprocessingInfo.C
 buildIfStmt_SOURCES              = buildIfStmt.C
 buildCpreprocessorDefineDeclaration_SOURCES = buildCpreprocessorDefineDeclaration.C
-instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
+instrumentEndOfFunction_SOURCES  = instrumentEndOfFunction.C
+isUpcSharedType_SOURCES          = isUpcSharedType.C
+isUpcPhaseLessSharedType_SOURCES = isUpcPhaseLessSharedType.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -59,7 +62,9 @@ generatedCodeExamples = \
   rose_inputMovePreprocessingInfo.C \
   rose_inputbuildIfStmt.C \
   rose_inputbuildCpreprocessorDefineDeclaration.C \
-  rose_inputinstrumentEndOfFunction.C 
+  rose_inputinstrumentEndOfFunction.C \
+  rose_inputisUpcSharedType.upc \
+  rose_inputisUpcPhaseLessSharedType.upc
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -98,16 +103,22 @@ rose_inputMovePreprocessingInfo.C:movePreprocessingInfo
 	./movePreprocessingInfo$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputMovePreprocessingInfo.C
 rose_inputbuildCpreprocessorDefineDeclaration.C:buildCpreprocessorDefineDeclaration
 	./buildCpreprocessorDefineDeclaration$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildCpreprocessorDefineDeclaration.C
-
 rose_inputinstrumentEndOfFunction.C:instrumentEndOfFunction
 	./instrumentEndOfFunction$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputinstrumentEndOfFunction.C
+rose_inputisUpcSharedType.upc:isUpcSharedType
+	./isUpcSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcSharedType.upc
+
+rose_inputisUpcPhaseLessSharedType.upc:isUpcPhaseLessSharedType
+	./isUpcPhaseLessSharedType$(EXEEXT) $(TEST_CXXFLAGS) -rose:skipfinalCompileStep -c $(srcdir)/inputisUpcPhaseLessSharedType.upc
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
        inputbuildPragmaDeclaration.c inputAttachComment.C inputInsertHeader.C \
        inputbuildExpression.C inputbuildStructDeclaration.C inputLookupNamedType.C \
        inputbuildFile.C inputMovePreprocessingInfo.C inputbuildIfStmt.C \
-       inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C
+       inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C \
+       inputisUpcSharedType.upc inputisUpcPhaseLessSharedType.upc
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
@@ -117,5 +128,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp  
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc 
 

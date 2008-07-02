@@ -112,10 +112,10 @@ SgPointerType* buildPointerType(SgType *base_type = NULL);
 SgReferenceType* buildReferenceType(SgType *base_type = NULL);
 
 //! Build a const type.
-SgType* buildConstType(SgType* base_type);
+SgType* buildConstType(SgType* base_type = NULL);
 
 //! Build a volatile type.
-SgType* buildVolatileType(SgType* base_type);
+SgType* buildVolatileType(SgType* base_type = NULL);
 
 //! Build a restrict type.
 SgType* buildRestrictType(SgType* base_type);
@@ -202,8 +202,15 @@ SgUpcThreads* buildUpcThreads();
 //! Build UPC  MYTHREAD (integer expression)
 SgUpcMythread* buildUpcMythread();
 
-//!  template function to build a unary expression of type T
+//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp(). 
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
 template <class T> T* buildUnaryExpression(SgExpression* operand = NULL);
+//!  Template function to build a unary expression of type T with advanced information specified such as parenthesis and file info. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp(). 
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
 template <class T> T* buildUnaryExpressionFi(SgExpression* operand, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
 #define BUILD_UNARY_PROTO(suffix) \
@@ -219,20 +226,27 @@ BUILD_UNARY_PROTO(UnaryAddOp)
 BUILD_UNARY_PROTO(MinusMinusOp)
 BUILD_UNARY_PROTO(PlusPlusOp)
 
-//! build a type casting expression
+//! Build a type casting expression
 SgCastExp * buildCastExp(SgExpression *  operand_i = NULL,
 		SgType * expression_type = NULL,
 		SgCastExp::cast_type_enum cast_type = SgCastExp::e_C_style_cast);
-//! build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
+//! Build -- expression, Sgop_mode is a value of either SgUnaryOp::prefix or SgUnaryOp::postfix
 SgMinusMinusOp *buildMinusMinusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
-//! build ++x or x++ , specify prefix or postfix using either SgUnaryOp::prefix or SgUnaryOp::postfix
+//! Build ++x or x++ , specify prefix or postfix using either SgUnaryOp::prefix or SgUnaryOp::postfix
 SgPlusPlusOp* buildPlusPlusOp(SgExpression* operand_i, SgUnaryOp::Sgop_mode  a_mode);
 
 #undef BUILD_UNARY_PROTO
 
-//! template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(lhs,rhs), AndAssignOp, AndOp, ArrowExp,EqualityOp, etc.
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
 template <class T> T* buildBinaryExpression(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+//! Template function to build a binary expression of type T,with extra information for parenthesis and file info,  Instantiated functions include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
 template <class T>
 T* buildBinaryExpressionFi(SgExpression* lhs, SgExpression* rhs, bool needParen, Sg_File_Info* start, Sg_File_Info* end, Sg_File_Info* opPos);
 
@@ -296,12 +310,12 @@ SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr
 //! build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*! 
-It is possible to build a reference to a variable with known name before the variable is declration, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is some get_type() operation may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension. 
+It is possible to build a reference to a variable with known name before the variable is declaration, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is some get_type() operation may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension. 
 */
 SgVarRefExp *
 buildVarRefExp(const SgName& name, SgScopeStatement* scope=NULL);
 
-//! build SgVarRefExp based on a variable's name. It will lookup symbol table internally starting from scope. A variable is unqiue so type can be inferred.
+//! Build SgVarRefExp based on a variable's name. It will lookup symbol table internally starting from scope. A variable is unique so type can be inferred.
 SgVarRefExp *
 buildVarRefExp(const std::string& varName, SgScopeStatement* scope=NULL);
 
@@ -309,7 +323,7 @@ buildVarRefExp(const std::string& varName, SgScopeStatement* scope=NULL);
 SgVarRefExp *
 buildVarRefExp(const char* varName, SgScopeStatement* scope=NULL);
 
-//! build a variable reference from an existing symbol
+//! Build a variable reference from an existing symbol
 SgVarRefExp *
 buildVarRefExp(SgVariableSymbol* varSymbol);
  
@@ -319,29 +333,34 @@ buildVarRefExp(SgVariableSymbol* varSymbol);
 SgVarRefExp *
 buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope=NULL);
 
-//! build SgFunctionRefExp based on a C++ function's name and function type. It will lookup symbol table internally starting from scope
+//! Build SgFunctionRefExp based on a C++ function's name and function type. It will lookup symbol table internally starting from scope. A hidden prototype will be created internally to introduce a new function symbol if the function symbol cannot be found. 
 SgFunctionRefExp *
 buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatement* scope=NULL);
 
-// not provided right now
-// build SgFunctionRefExp based on a C function's name. It will lookup symbol table internally starting from scope
-//SgFunctionRefExp *
-// buildFunctionRefExp(const SgName& name,SgScopeStatement* scope=NULL);
+SgFunctionRefExp *
+buildFunctionRefExp(const char* name, const SgType* func_type, SgScopeStatement* scope=NULL);
 
-//! build SgFunctionRefExp based on a function's symbol.
+//! Build SgFunctionRefExp based on a C function's name. It will lookup symbol table internally starting from scope and return the first matching function.
+SgFunctionRefExp *
+buildFunctionRefExp(const SgName& name,SgScopeStatement* scope=NULL);
+
+SgFunctionRefExp *
+buildFunctionRefExp(const char* name,SgScopeStatement* scope=NULL);
+
+//! Build SgFunctionRefExp based on a function's symbol.
 SgFunctionRefExp *
 buildFunctionRefExp(SgFunctionSymbol* sym);
 
-//! build a function call expression
+//! Build a function call expression
 SgFunctionCallExp* 
 buildFunctionCallExp(SgFunctionSymbol* sym, SgExprListExp* parameters);
 
-//! build a function call expression,it will automatically search for function symbols internally to build a right function reference etc.
+//! Build a function call expression,it will automatically search for function symbols internally to build a right function reference etc.
 SgFunctionCallExp* 
 buildFunctionCallExp(const SgName& name, SgType* return_type, \
                 SgExprListExp* parameters, SgScopeStatement* scope=NULL);
 
-//! build the rhs of a variable declaration wiich includes an assignment
+//! Build the rhs of a variable declaration which includes an assignment
 SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL);
 //@}
 
@@ -375,7 +394,7 @@ buildFunctionParameterTypeList(SgExprListExp * expList);
 
 */
 
-//! build a variable declaration, handle symbol table transparently
+//! Build a variable declaration, handle symbol table transparently
 SgVariableDeclaration* 
 buildVariableDeclaration(const SgName & name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
@@ -385,7 +404,7 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 SgVariableDeclaration* 
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
-//! build an empty SgFunctionParameterList, possibly with some initialized names filled in
+//! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
 
 //! Build an SgFunctionParameterList from SgFunctionParameterTypeList, like (int, float,...), used for parameter list of prototype functions when function type( including parameter type list) is known.
@@ -436,60 +455,63 @@ buildFunctionCallStmt(const SgName& name, SgType* return_type, \
 //! not the closest scope statement such as SgBasicBlock. 
 SgLabelStatement * buildLabelStatement(const SgName& name, SgStatement * stmt = NULL, SgScopeStatement* scope=NULL);
 
-//! build a goto statement
+//! Build a goto statement
 SgGotoStatement * buildGotoStatement(SgLabelStatement *  label=NULL,SgScopeStatement* scope=NULL);
 
-//! build a case option statement
+//! Build a case option statement
 SgCaseOptionStmt * buildCaseOptionStmt( SgExpression * key = NULL,SgStatement *body = NULL);
 
-//! build a default option statement
+//! Build a default option statement
 SgDefaultOptionStmt * buildDefaultOptionStmt( SgStatement *body = NULL);
 
-//! build a SgExprStatement, set File_Info automatically 
+//! Build a SgExprStatement, set File_Info automatically 
 SgExprStatement*
 buildExprStatement(SgExpression*  exp = NULL);
 
-//! build a switch statement
+//! Build a switch statement
 SgSwitchStatement* buildSwitchStatement(SgStatement *item_selector = NULL,SgBasicBlock *body = NULL);
 inline SgSwitchStatement* buildSwitchStatement(SgExpression *item_selector, SgBasicBlock *body = NULL) {
   return buildSwitchStatement(buildExprStatement(item_selector), body);
 }
 
-//! build if statement
+//! Build if statement
 SgIfStmt * buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStatement * false_body);
 inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body, SgStatement * false_body) {
   return buildIfStmt(buildExprStatement(conditional), true_body, false_body);
 }
 
-//! build while statement
+//! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);
 inline SgWhileStmt * buildWhileStmt(SgExpression *  condition, SgStatement *body) {
   return buildWhileStmt(buildExprStatement(condition), body);
 }
 
-//! build pragma declaration, handle SgPragma and defining/nondefining pointers internally
+//! Build pragma declaration, handle SgPragma and defining/nondefining pointers internally
 SgPragmaDeclaration * buildPragmaDeclaration(const std::string & name, SgScopeStatement* scope=NULL);
 
-//! build a SgBasicBlock, setting file info internally
+//! Build a SgBasicBlock, setting file info internally
 SgBasicBlock * buildBasicBlock(SgStatement * stmt1 = NULL, SgStatement* stmt2 = NULL, SgStatement* stmt3 = NULL, SgStatement* stmt4 = NULL, SgStatement* stmt5 = NULL, SgStatement* stmt6 = NULL, SgStatement* stmt7 = NULL, SgStatement* stmt8 = NULL, SgStatement* stmt9 = NULL, SgStatement* stmt10 = NULL);
 
-//! build an assignment statement from lefthand operand and right hand operand 
+//! Build an assignment statement from lefthand operand and right hand operand 
 SgExprStatement* 
 buildAssignStatement(SgExpression* lhs,SgExpression* rhs);
 
-//! build a break statement
+//! Build a break statement
 SgBreakStmt* buildBreakStmt();
 
-//! build a continue statement
+//! Build a continue statement
 SgContinueStmt* buildContinueStmt();
 
-//! build a class definition scope statement
+//! Build a class definition scope statement
 SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 
-//! build a structure, It is also a declaration statement in SAGE III
+//! Build a structure, It is also a declaration statement in SAGE III
 SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const std::string& name, SgScopeStatement* scope=NULL);
 SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope=NULL);
+
+//! Build a return statement
+SgReturnStmt* buildReturnStmt(SgExpression* expression = NULL);
 
 //@}
 

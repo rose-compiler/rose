@@ -485,6 +485,23 @@ bool isConstType(SgType* t);
 //! Is this a scalar type?
 bool isScalarType(SgType* t);
 
+//! Is a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
+/*!
+  AST graph for some examples:
+    - shared scalar: SgModifierType -->base type
+    - shared array: SgArrayType --> SgModiferType --> base type
+    - shared to shared: SgModifierType --> SgPointerType --> SgModifierType ->SgTypeInt
+    - shared to private: SgModifierType --> SgPointerType --> base type
+    - private to shared: SgPointerType --> SgModifierType --> base type
+ */
+bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
+
+//! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Input parameter must be a UPC shared type.
+bool isUpcPhaseLessSharedType (SgType* t);
+
+//! Is a UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
+bool isUpcPrivateToSharedType(SgType* t);
+
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
 SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
 
