@@ -474,7 +474,7 @@ cleanSourceTutorial:
 cleanSource: cleanSourceTutorial clean
 	rm -rf $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz $(srcdir)/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 	rm -rf ROSE_WebPages
-	rm -f $(srcdir)/ROSE_InstallationInstructions.pdf
+
 
 clean-local:
 	rm -rf roseDoxygen.tags SageIntermediateForm *.tex *.log *.aux *.dvi \
