@@ -18,6 +18,8 @@ class SecurityFlaw
   // This design permits us to organize the design by security flaw, which should scale better.
 
      public:
+          static int uniqueValue();
+
        // This is the static collection of all security flaws (each is derived from the SecurityFlaw class)
           static std::vector<SecurityFlaw*> securityFlawCollection;
 
@@ -29,7 +31,8 @@ class SecurityFlaw
           virtual void defineSearchSpace();
 
        // This function need not be defined  (since we migh only want to detect vulnerabilities).
-          virtual void seedSecurityFlaws( SgProject *project );
+       // virtual void seedSecurityFlaws( SgProject *project );
+          virtual void seedWithGrainularity( SgProject *project );
 
        // This constructs the securityFlawCollection
           static void buildAllVunerabilities();
@@ -39,6 +42,8 @@ class SecurityFlaw
 
        // This calls the seedSecurityFlaws() member function for each SecurityFlaw
           static void seedAllSecurityFlaws( SgProject *project );
+
+          static void addComment( SgNode* astNode, std::string comment );
    };
 
 

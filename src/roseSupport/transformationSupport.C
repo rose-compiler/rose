@@ -2126,12 +2126,14 @@ TransformationSupport::getStatement( const SgNode* astNode )
           dynamic_cast<const SgType*>(parentNode) == NULL &&
           dynamic_cast<const SgSymbol*>(parentNode) == NULL )
         {
-          if (astNode==NULL)
-          printf ("Error: could not trace back to SgStatement node \n");
-          else 
-            printf ("Warning: could not trace back to SgStatement node from %s \n",
+          if (astNode == NULL)
+               printf ("Error: could not trace back to SgStatement node \n");
+            else 
+               printf ("Warning: could not trace back to SgStatement node from %s \n",
+
           astNode->class_name().c_str());
-        //ROSE_ABORT();
+
+       // ROSE_ABORT();
           return NULL;
         }
        else

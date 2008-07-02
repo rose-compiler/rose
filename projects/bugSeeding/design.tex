@@ -63,7 +63,12 @@ addressing a range of related subjects.  The following subsections outline more 
          and the 
          \href{https://www.securecoding.cert.org/confluence/display/seccode/CERT+Secure+Coding+Standards}{CERT Secure Coding Rules}.
          A simple list of ten used in a recent study will be used until we have
-         collectively can agree on a better list.
+         collectively can agree on a better list. Note that some of the descriptions
+         are taken from the summaries for each security flaw on the CWE website, the 
+         links to more information where it is available on Wikipedia, plus
+         links to the relevant CWE web pages are also provided.  The goal is to be
+         as clear as possible, at this early point in the design, about the definitions of
+         the security flaws that might be targets for this seeding research.
       \begin{enumerate}
          \item Buffer Overflow \\
                There are a lot of different types of buffer overflow cases to address,
@@ -83,7 +88,7 @@ addressing a range of related subjects.  The following subsections outline more 
          \item Use after {\em free} \\
                Referencing memory after it has been freed can cause a program to crash,
                use unexpected values, or execute code, more information is available at:
-               \href{http://cwe.mitre.org/data/definitions/463.html}{CWE-463}.
+               \href{http://cwe.mitre.org/data/definitions/416.html}{CWE-416}.
 
          \item Format string vulnerability \\
                The software uses externally-controlled format strings in printf-style
@@ -122,19 +127,24 @@ addressing a range of related subjects.  The following subsections outline more 
                \href{http://cwe.mitre.org/data/definitions/476.html}{CWE-476}.
 
          \item Tainted Data / Unvalidated user input \\
-               The software does not sufficiently verify the origin or authenticity of
-               data, in a way that causes it to accept invalid data, more information is
-               available at:
+             % The software does not sufficiently verify the origin or authenticity of
+             % data, in a way that causes it to accept invalid data,
+               The software has an absent or incorrect protection mechanism that fails to
+               properly validate input that can affect the control flow or data flow of a
+               program,
+               more information is available at:
                \href{http://en.wikipedia.org/wiki/Taint_checking}{Wikipedia: Taint checking}, 
                see also:
-               \href{http://cwe.mitre.org/data/definitions/345.html}{CWE-345}.
+             % NIST has suggested that CWE-20 be used instead of CWE-345.
+             % \href{http://cwe.mitre.org/data/definitions/345.html}{CWE-345}.
+               \href{http://cwe.mitre.org/data/definitions/20.html}{CWE-20}.
 
          \item TOCTOU (Time-of-check-to-time-of-use) \\
                Time-of-check, time-of-use race conditions occur when between the time in
                which a given resource (or its reference) is checked, and the time that
                resource is used, a change occurs in the resource to invalidate the results
                of the check, more details on this security flaw is available at:
-               \href{http://en.wikipedia.org/wiki/Time-of-check-to-time-of-use}{Wikipedia: Time-of-check-to-time-of-use}
+               \href{http://en.wikipedia.org/wiki/Time-of-check-to-time-of-use}{Wikipedia: Time-of-check-to-time-of-use},
                see also:
                \href{http://cwe.mitre.org/data/definitions/367.html}{CWE-367}.
 
@@ -286,20 +296,27 @@ to security flaws).
          \label{sec:SecurityFlawGenerator}
          It is reasonable that the same infrastructure used to seed security flaws into
          existing applications could be used to as a generator of security flaws
-         independent of any input application.
-         Certainly, and source-to-source compiler infrastructure can handle the generation
-         of code as a trivial transformation, even if it is a larger hammer than required.
+         independent of any input application.  A simple code generator can be written
+         using a range of techniques, from macros in m4, scripting languages such as Perl
+         and Python, to CPP macros using C/C++.  However, leveraging the proposed work
+         to build seeding via a source-to-source compiler may permit a trivial mode
+         of operation as a simple code generator for the same security flaws without the 
+         seeding.
+       % Certainly a source-to-source compiler infrastructure can handle the generation
+       % of code as a trivial transformation, even if it is a larger hammer than required.
          We could have the proposed seeding tool have a mode where it simply generates
          the different variations of the security flaws that it would otherwise seed into
          an input application.  This may even be a useful mode for debugging and
          presenting the security flaws that would be introduced.  From a compiler
          transformation perspective this adds little to the complexity of such a tool
-         (at least if using ROSE).
+         (at least if using ROSE); however the transformation can't be associated with
+         a site in the source code for the recognized security flaw vulnerability. It is
+         not yet clear if this detail is important.
 
 %  \item Seeding of individual security flaws \\
 \subsection{Seeding of Individual Security Flaws}
          \label{sec:SeedingOfSecurityFlaws}
-         An aspect of the design of a bug seeding tool is the seeding of individual
+         An aspect of the design of a security flaw seeding tool is the seeding of individual
          security flaws within each classification. Specifically each security flaw can be
          seeded in isolation; treated orthogonally to all other security flaws. Addressing
          more sophisticated security flaws would be done by treating them a either as
@@ -312,17 +329,21 @@ to security flaws).
                      can be introduced (seeded).  See item 
                      \ref{sec:SpecificationOfVulnerabilities} (above) for more details.
 
-               \item Identify the space of transformations \\ to represent the target bug.
+               \item Identify the space of transformations to represent the target bug \\
                      This defines the size of the search space (the size of the 
                      space representing the code that could be generated). See item 
                      \ref{sec:SpecificationOfSearchSpace} (above) for more details.
 
-               \item Define the subset of points in the space to evaluate \\ so that we can
+               \item Define the subset of points in the space to evaluate \\ 
+                     The space of transformations can be expected to be unreasonably
+                     large. It is reasonable define subspaces and explicitly define 
+                     generated security flaws for only the subspece so that we can
                      avoid the exhaustive search of extremely large spaces; which might
-                     generate too much code to test. This is our experience from 
-                     the generation of code to test performance optimizations associated
-                     with a research area in compiler optimization called {\em autotuning}
-                     (also referred to as {\em empirical analysis}).
+                     generate too much code to test or take an unreasonable amount of time
+                     to evaluate using the static analysis tools. This is our experience
+                     from the generation of code to test performance optimizations
+                     associated with a research area in compiler optimization called 
+                     {\em autotuning} (also referred to as {\em empirical analysis}).
 
                \item Identify the granularity of the security flaw seeding \\ 
                      where the security flaw should be applied
@@ -336,7 +357,7 @@ to security flaws).
                      consequences to the amount of code generated and the degree to which
                      the seeding of the security flaw is allowed to change the input
                      application.
- 
+
                \item Generate a copy of the relevant portion of the AST \\
                      to support the seeding of multiple variations of the security flaw.
                      AST copy mechanism in ROSE are well suited to this purpose; a copy of
