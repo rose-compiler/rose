@@ -877,21 +877,44 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
         while (1) {
 
             /* Get the RVA of the hint/name pair by reading a member from the hint/name RVA array */
-            addr_t hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
-            if (0==hintname_rva) break; /*list of RVAs is null terminated */
-            hintname_rvas_offset += sizeof(uint32_t);
-            dll->add_hintname_rva(hintname_rva);
-
-            /* Read the hint/name pair */
-            addr_t hintname_offset = hintname_rva - mapped_rva;
-            PEImportHintName *hintname = new PEImportHintName(this, hintname_offset);
-            dll->add_function(hintname->get_name());
-            dll->add_hintname(hintname);
+            addr_t hintname_rva;
+            bool import_by_ordinal;
+            if (4==fhdr->get_word_size()) {
+                hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
+                import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+            } else if (8==fhdr->get_word_size()) {
+                hintname_rva = le_to_host(*(const uint64_t*)content(hintname_rvas_offset, sizeof(uint64_t)));
+                import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+            } else {
+                ROSE_ASSERT(!"unsupported word size");
+            }
 
             /* Get the binding by reading a member of the bindings array */
-            addr_t binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
+            addr_t binding;
+            if (4==fhdr->get_word_size()) {
+                binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
+            } else if (8==fhdr->get_word_size()) {
+                binding = le_to_host(*(const uint64_t*)content(bindings_offset, sizeof(uint64_t)));
+            } else {
+                ROSE_ASSERT(!"unsupported word size");
+            }
+
+            /* Add hint/name RVA and binding to list; list is zero terminated in the file but we do not store the zero entries
+             * in the vectors. */
+            if (0==hintname_rva) break; /*list of RVAs is null terminated */
+            dll->add_hintname_rva(hintname_rva);
             dll->add_binding(binding);
-            bindings_offset += sizeof(uint32_t);
+            hintname_rvas_offset += fhdr->get_word_size();
+            bindings_offset += fhdr->get_word_size();
+
+            /* Read the hint/name pair */
+            if (!import_by_ordinal) {
+                addr_t hintname_offset = (hintname_rva & 0x7fffffff) - mapped_rva;
+                PEImportHintName *hintname = new PEImportHintName(this, hintname_offset);
+                dll->add_function(hintname->get_name());
+                dll->add_hintname(hintname);
+            }
+            
         }
 
         /* Add dll to both this section and to the file header */
@@ -904,6 +927,7 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
 void
 PEImportSection::unparse(FILE *f)
 {
+    ExecHeader *fhdr = get_header();
     const std::vector<PEDLL*> &dlls = get_dlls();
     for (size_t dllno=0; dllno<dlls.size(); dllno++) {
         PEDLL *dll = dlls[dllno];
@@ -934,39 +958,51 @@ PEImportSection::unparse(FILE *f)
         const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
         const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
         const std::vector<addr_t> &bindings = dll->get_bindings();
-        uint32_t rva_le, binding_le;
-        for (size_t i=0; i<hintname_rvas.size(); i++) {
-            /* RVA */
-            host_to_le(hintname_rvas[i], &rva_le);
-            status = fseek(f, hintname_rvas_offset + i*sizeof rva_le, SEEK_SET);
+        ROSE_ASSERT(hintname_rvas.size()==bindings.size());
+        for (size_t i=0; i<=hintname_rvas.size(); i++) {
+            /* Hint/name RVA */
+            addr_t hintname_rva = i<hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
+            bool import_by_ordinal;
+            status = fseek(f, hintname_rvas_offset + i*fhdr->get_word_size(), SEEK_SET);
             ROSE_ASSERT(status>=0);
-            nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+            if (4==fhdr->get_word_size()) {
+                uint32_t rva_le;
+                host_to_le(hintname_rva, &rva_le);
+                nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+            } else if (8==fhdr->get_word_size()) {
+                uint64_t rva_le;
+                host_to_le(hintname_rva, &rva_le);
+                nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+            } else {
+                ROSE_ASSERT(!"unsupported word size");
+            }
             ROSE_ASSERT(1==nwrite);
-
+            
             /* Hint/name pair */
-            addr_t hintname_offset = offset + hintname_rvas[i] - mapped_rva; /*file offset of hint/name pair*/
-            hintnames[i]->unparse(f, hintname_offset);
+            if (i<hintname_rvas.size() && !import_by_ordinal) {
+                addr_t hintname_offset = offset + (hintname_rvas[i] & 0x7fffffff) - mapped_rva; /*file offset of hint/name pair*/
+                hintnames[i]->unparse(f, hintname_offset);
+            }
 
-            /* Binding */
-            host_to_le(bindings[i], &binding_le);
-            status = fseek(f, bindings_offset + i*sizeof binding_le, SEEK_SET);
+            /* Binding (typically same values as in the Hint/name RVA table) */
+            addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
+            status = fseek(f, bindings_offset + i*fhdr->get_word_size(), SEEK_SET);
             ROSE_ASSERT(status>=0);
-            nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+            if (4==fhdr->get_word_size()) {
+                uint32_t binding_le;
+                host_to_le(binding, &binding_le);
+                nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+            } else if (8==fhdr->get_word_size()) {
+                uint64_t binding_le;
+                host_to_le(binding, &binding_le);
+                nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+            } else {
+                ROSE_ASSERT(!"unsupported word size");
+            }
             ROSE_ASSERT(1==nwrite);
         }
-
-        /* hint/name pair rva array and binding array are null terminated */
-        rva_le = 0;
-        status = fseek(f, hintname_rvas_offset + hintname_rvas.size()*sizeof(rva_le), 1);
-        ROSE_ASSERT(status>=0);
-        nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
-        ROSE_ASSERT(1==nwrite);
-        
-        binding_le = 0;
-        status = fseek(f, bindings_offset + hintname_rvas.size()*sizeof(binding_le), 1);
-        ROSE_ASSERT(status>=0);
-        nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
-        ROSE_ASSERT(1==nwrite);
     }
 
     /* Directory list is zero terminated */
