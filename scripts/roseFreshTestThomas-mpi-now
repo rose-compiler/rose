@@ -101,13 +101,13 @@ buildstatus=0
   
 #------------------------------------------------------
 # make and check
-  make -j8 && \
-  make docs && \
-  make check && \
-  make install && \
-  make installcheck && \
-  make dist && \
-  make distcheck
+  make -j14 && \
+  make -j4 docs && \
+  make -j8 check && \
+  make -j4 install && \
+  make -j4 installcheck && \
+  make -j8 dist && \
+  make -j8 distcheck
 ) >buildlog 2>&1 || buildstatus=1
 
 if [ $buildstatus == 0 ]; then
