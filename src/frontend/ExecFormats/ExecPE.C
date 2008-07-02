@@ -578,14 +578,14 @@ PESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
     this->name = name;
 
     /* Decode file format */
-    virtual_size    = le_to_host(disk->virtual_size);
-    rva             = le_to_host(disk->rva);
-    physical_size   = le_to_host(disk->physical_size);
-    physical_offset = le_to_host(disk->physical_offset);
-    reserved[0]     = le_to_host(disk->reserved[0]);
-    reserved[1]     = le_to_host(disk->reserved[1]);
-    reserved[2]     = le_to_host(disk->reserved[2]);
-    flags           = le_to_host(disk->flags);
+    virtual_size     = le_to_host(disk->virtual_size);
+    rva              = le_to_host(disk->rva);
+    physical_size    = le_to_host(disk->physical_size);
+    physical_offset  = le_to_host(disk->physical_offset);
+    coff_line_nums   = le_to_host(disk->coff_line_nums);
+    n_relocs         = le_to_host(disk->n_relocs);
+    n_coff_line_nums = le_to_host(disk->n_coff_line_nums);
+    flags            = le_to_host(disk->flags);
 }
 
 /* Encodes a section table entry back into disk format. */
@@ -595,13 +595,14 @@ PESectionTableEntry::encode(PESectionTableEntry_disk *disk)
     memset(disk->name, 0, sizeof(disk->name));
     memcpy(disk->name, name.c_str(), std::min(sizeof(name), name.size()));
 
-    host_to_le(virtual_size,    &(disk->virtual_size));
-    host_to_le(rva,             &(disk->rva));
-    host_to_le(physical_size,   &(disk->physical_size));
-    host_to_le(physical_offset, &(disk->physical_offset));
-    for (size_t i=0; i<NELMTS(reserved); i++)
-        host_to_le(reserved[i], &(disk->reserved[i]));
-    host_to_le(flags, &(disk->flags));
+    host_to_le(virtual_size,     &(disk->virtual_size));
+    host_to_le(rva,              &(disk->rva));
+    host_to_le(physical_size,    &(disk->physical_size));
+    host_to_le(physical_offset,  &(disk->physical_offset));
+    host_to_le(coff_line_nums,   &(disk->coff_line_nums));
+    host_to_le(n_relocs,         &(disk->n_relocs));
+    host_to_le(n_coff_line_nums, &(disk->n_coff_line_nums));
+    host_to_le(flags,            &(disk->flags));
     return disk;
 }
 
@@ -617,14 +618,14 @@ PESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "virtual_size",    virtual_size);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",              p, w, "rva",             rva);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "physical_size",   physical_size);
-    fprintf(f, "%s%-*s = %" PRIu64 " file byte offset\n", p, w, "physical_offset", physical_offset);
-    fprintf(f, "%s%-*s = %u\n",                  p, w, "reserved[0]",     reserved[0]);
-    fprintf(f, "%s%-*s = %u\n",                  p, w, "reserved[1]",     reserved[1]);
-    fprintf(f, "%s%-*s = %u\n",                  p, w, "reserved[2]",     reserved[2]);
-    fprintf(f, "%s%-*s = 0x%08x\n",              p, w, "flags",           flags);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "virtual_size",     virtual_size);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",              p, w, "rva",              rva);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",            p, w, "physical_size",    physical_size);
+    fprintf(f, "%s%-*s = %" PRIu64 " file byte offset\n", p, w, "physical_offset",  physical_offset);
+    fprintf(f, "%s%-*s = %u byte offset\n",               p, w, "coff_line_nums",   coff_line_nums);
+    fprintf(f, "%s%-*s = %u\n",                           p, w, "n_relocs",         n_relocs);
+    fprintf(f, "%s%-*s = %u\n",                           p, w, "n_coff_line_nums", n_coff_line_nums);
+    fprintf(f, "%s%-*s = 0x%08x\n",                       p, w, "flags",            flags);
 }
 
 /* Print some debugging info. */

@@ -238,7 +238,9 @@ struct PESectionTableEntry_disk {
     uint32_t    rva;                    /* relative virtual address wrt Image Base; multiple of section_align; dense space */
     uint32_t    physical_size;          /* bytes of initialized data on disk; multiple of file_align & <= virtual_size */
     uint32_t    physical_offset;        /* location of initialized data on disk; multiple of file_align */
-    uint32_t    reserved[3];
+    uint32_t    coff_line_nums;         /* file offset of COFF line number info or zero */
+    uint32_t    n_relocs;               /* number of relocation entries; should be zero for executables */
+    uint32_t    n_coff_line_nums;       /* number of COFF line number entries */
     uint32_t    flags;                  /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc. */
 } __attribute__((packed));
 
@@ -288,7 +290,7 @@ class PESectionTableEntry {
     /* These are the native-format versions of the same members described in the PESectionTableEntry_disk struct. */
     std::string name;
     addr_t      virtual_size, rva, physical_size, physical_offset;
-    unsigned    reserved[3], flags;
+    unsigned    coff_line_nums, n_relocs, n_coff_line_nums, flags;
 
   private:
     void ctor(const PESectionTableEntry_disk*);
