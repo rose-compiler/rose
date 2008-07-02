@@ -181,14 +181,14 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     e_coff_nsyms         = le_to_host(disk->e_coff_nsyms);
     e_nt_hdr_size        = le_to_host(disk->e_nt_hdr_size);
     e_flags              = le_to_host(disk->e_flags);
-    e_reserved3          = le_to_host(disk->e_reserved3);
+    e_opt_magic          = le_to_host(disk->e_opt_magic);
     e_lmajor             = le_to_host(disk->e_lmajor);
     e_lminor             = le_to_host(disk->e_lminor);
-    e_reserved4          = le_to_host(disk->e_reserved4);
-    e_reserved5          = le_to_host(disk->e_reserved5);
-    e_reserved6          = le_to_host(disk->e_reserved6);
+    e_code_size          = le_to_host(disk->e_code_size);
+    e_data_size          = le_to_host(disk->e_data_size);
+    e_bss_size           = le_to_host(disk->e_bss_size);
     e_entrypoint_rva     = le_to_host(disk->e_entrypoint_rva);
-    e_reserved7          = le_to_host(disk->e_reserved7);
+    e_code_rva           = le_to_host(disk->e_code_rva);
     e_reserved8          = le_to_host(disk->e_reserved8);
     e_image_base         = le_to_host(disk->e_image_base);
     e_object_align       = le_to_host(disk->e_object_align);
@@ -222,7 +222,16 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     exec_format.sex         = ORDER_LSB;
     exec_format.abi         = ABI_NT;
     exec_format.abi_version = 0;
-    exec_format.word_size   = 4;
+    switch (e_opt_magic) {
+      case 0x010b:
+        exec_format.word_size   = 4;
+        break;
+      case 0x020b:
+        exec_format.word_size = 8;
+        break;
+      default:
+        throw FormatError("unrecognized Windows PE optional header magic number");
+    }
     ROSE_ASSERT(e_lmajor<=0xffff && e_lminor<=0xffff);
     exec_format.version     = (e_lmajor<<16) | e_lminor;
     exec_format.is_current_version = true; /*FIXME*/
@@ -311,14 +320,14 @@ PEFileHeader::encode(PEFileHeader_disk *disk)
     host_to_le(e_coff_nsyms,         disk->e_coff_nsyms);
     host_to_le(e_nt_hdr_size,        disk->e_nt_hdr_size);
     host_to_le(e_flags,              disk->e_flags);
-    host_to_le(e_reserved3,          disk->e_reserved3);
+    host_to_le(e_opt_magic,          disk->e_opt_magic);
     host_to_le(e_lmajor,             disk->e_lmajor);
     host_to_le(e_lminor,             disk->e_lminor);
-    host_to_le(e_reserved4,          disk->e_reserved4);
-    host_to_le(e_reserved5,          disk->e_reserved5);
-    host_to_le(e_reserved6,          disk->e_reserved6);
+    host_to_le(e_code_size,          disk->e_code_size);
+    host_to_le(e_data_size,          disk->e_data_size);
+    host_to_le(e_bss_size,           disk->e_bss_size);
     host_to_le(e_entrypoint_rva,     disk->e_entrypoint_rva);
-    host_to_le(e_reserved7,          disk->e_reserved7);
+    host_to_le(e_code_rva,           disk->e_code_rva);
     host_to_le(e_reserved8,          disk->e_reserved8);
     host_to_le(e_image_base,         disk->e_image_base);
     host_to_le(e_object_align,       disk->e_object_align);
@@ -412,14 +421,15 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_nt_hdr_size",       e_nt_hdr_size);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_flags",             e_flags);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved3",         e_reserved3);
+    fprintf(f, "%s%-*s = 0x%04x %s\n", p, w, "e_opt_magic",         e_opt_magic,
+            0x10b==e_opt_magic ? "PE32" : (0x20b==e_opt_magic ? "PE32+" : "other"));
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_lmajor",            e_lmajor);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_lminor",            e_lminor);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved4",         e_reserved4);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved5",         e_reserved5);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved6",         e_reserved6);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_entrypoint_rva",    e_entrypoint_rva);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved7",         e_reserved7);
+    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_code_size",         e_code_size);
+    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_data_size",         e_data_size);
+    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_bss_size",          e_bss_size);
+    fprintf(f, "%s%-*s = 0x%08x\n",    p, w, "e_entrypoint_rva",    e_entrypoint_rva);
+    fprintf(f, "%s%-*s = 0x%08x\n",    p, w, "e_code_rva",          e_code_rva);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved8",         e_reserved8);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_image_base",        e_image_base);
     fprintf(f, "%s%-*s = %u\n",        p, w, "e_object_align",      e_object_align);

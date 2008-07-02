@@ -135,7 +135,7 @@ enum InsSetArchitecture {
     ISA_MIPS_R16000A            = 0x0613,
     ISA_MIPS_16                 = 0x0614,               /* Unknown. Windows PE architecture 0x266 "MIPS16" */
     ISA_MIPS_FPU                = 0x0615,               /* Unknown. Windows PE architecture 0x366 "MIPS with FPU" */
-    ISA_MPIS_16FPU              = 0x0616,               /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
+    ISA_MIPS_16FPU              = 0x0616,               /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
 
     ISA_I860_Family             = 0x0700,               /* Intel i860 family; 1989-mid 90's; RISC VLIW */
     ISA_I860_860XR              = 0x0701,               /* (code named N10) 25-40MHz */

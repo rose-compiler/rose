@@ -95,14 +95,14 @@ struct PEFileHeader_disk {
     uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
     uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
     uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
-    uint16_t    e_reserved3;
+    uint16_t    e_opt_magic;            /* Optional header magic (0x10b=>PE32, 0x20b=>PE32+) */
     uint16_t    e_lmajor;               /* linker version */
     uint16_t    e_lminor;
-    uint16_t    e_reserved4;
-    uint32_t    e_reserved5;
-    uint32_t    e_reserved6;
+    uint16_t    e_code_size;            /* Size of .text or sum of all code sections */
+    uint32_t    e_data_size;            /* Sum size of initialized data */
+    uint32_t    e_bss_size;             /* Sum size of uninitialized data */
     uint32_t    e_entrypoint_rva;       /* RVA="relative virtual address"; relative to 'image_base', below */
-    uint32_t    e_reserved7;
+    uint32_t    e_code_rva;             /* Address relative to image base for code section when memory mapped */
     uint32_t    e_reserved8;
     uint32_t    e_image_base;           /* Virtual base of the image (first byte of file, DOS header). Multiple of 64k. */
     uint32_t    e_object_align;         /* Alignment of Objects in memory. Power of two 512<=x<=256M */
@@ -187,8 +187,8 @@ class PEFileHeader : public ExecHeader {
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
     unsigned    e_cpu_type, e_nobjects, e_time;
     addr_t      e_coff_symtab;
-    unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_reserved3;
-    unsigned    e_lmajor, e_lminor, e_reserved4, e_reserved5, e_reserved6, e_entrypoint_rva, e_reserved7, e_reserved8;
+    unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_opt_magic;
+    unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_reserved8;
     unsigned    e_image_base, e_object_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
     unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
     unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
