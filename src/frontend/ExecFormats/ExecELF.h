@@ -33,7 +33,7 @@ struct Elf32FileHeader_disk {
     uint16_t            e_shentsize;            /* size in bytes of each entry in the section header table */
     uint16_t            e_shnum;                /* number of entries in the section header table, or zero for extended entries */
     uint16_t            e_shstrndx;             /* index of section containing section name strings, or SHN_UNDEF, or SHN_XINDEX */
-};
+} __attribute__((packed));
 struct Elf64FileHeader_disk {
     unsigned char       e_ident_magic[4];
     unsigned char       e_ident_file_class;
@@ -53,7 +53,7 @@ struct Elf64FileHeader_disk {
     uint16_t            e_shentsize;
     uint16_t            e_shnum;
     uint16_t            e_shstrndx;
-};
+} __attribute__((packed));
 
 class ElfFileHeader : public ExecHeader {
   public:
@@ -118,7 +118,7 @@ struct Elf32SectionTableEntry_disk {
     uint32_t            sh_info;                /* Extra info depending on section type */
     uint32_t            sh_addralign;           /* Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned */
     uint32_t            sh_entsize;             /* If non-zero, size in bytes of each array member in the section */
-};
+} __attribute__((packed));
 struct Elf64SectionTableEntry_disk {
     uint32_t            sh_name;
     uint32_t            sh_type;
@@ -130,7 +130,7 @@ struct Elf64SectionTableEntry_disk {
     uint32_t            sh_info;
     uint64_t            sh_addralign;
     uint64_t            sh_entsize;
-};
+} __attribute__((packed));
 
 class ElfSectionTableEntry {
   public:
@@ -234,7 +234,7 @@ struct Elf32SegmentTableEntry_disk {
     uint32_t            p_memsz;                /* number of bytes when mapped (may be zero) */
     uint32_t            p_flags;
     uint32_t            p_align;                /* alignment for file and memory (0,1=>none); must be a power of two */
-};
+} __attribute__((packed));
 struct Elf64SegmentTableEntry_disk {
     uint32_t            p_type;
     uint32_t            p_flags;
@@ -244,7 +244,7 @@ struct Elf64SegmentTableEntry_disk {
     uint64_t            p_filesz;
     uint64_t            p_memsz;
     uint64_t            p_align;
-};
+} __attribute__((packed));
 
 class ElfSegmentTableEntry {
   public:
@@ -294,12 +294,12 @@ class ElfSegmentTable : public ExecSection {
 struct Elf32DynamicEntry_disk {
     uint32_t            d_tag;                  /* Entry type, one of the DT_* constants */
     uint32_t            d_val;                  /* Tag's value */
-};
+} __attribute__((packed));
 
 struct Elf64DynamicEntry_disk {
     uint64_t            d_tag;                  /* Entry type, one of the DT_* constants */
     uint64_t            d_val;                  /* Tag's value */
-};
+} __attribute__((packed));
 
 class ElfDynamicEntry {
   public:
@@ -376,7 +376,7 @@ struct Elf32SymbolEntry_disk {
     unsigned char       st_info;                        /* Type and binding attributes */
     unsigned char       st_res1;                        /* Reserved; always zero */
     uint16_t            st_shndx;                       /* Section index or special meaning */
-};
+} __attribute__((packed));
 
 struct Elf64SymbolEntry_disk {
     uint32_t            st_name;
@@ -385,7 +385,7 @@ struct Elf64SymbolEntry_disk {
     uint16_t            st_shndx;
     uint64_t            st_value;
     uint64_t            st_size;
-};
+} __attribute__((packed));
 
 class ElfSymbol : public ExecSymbol {
   public:

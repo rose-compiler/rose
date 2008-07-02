@@ -37,7 +37,7 @@ struct DOSFileHeader_disk {
     uint16_t    e_oeminfo;              /* other OEM information; oemid specific */
     uint16_t    e_res2[10];             /* reserved */
     uint32_t    e_lfanew;               /* file offset of new exe (PE) header */
-};
+} __attribute__((packed));
 
 class DOSFileHeader : public ExecHeader {
   public:
@@ -69,7 +69,7 @@ class DOSFileHeader : public ExecHeader {
 struct RVASizePair_disk {
     uint32_t    e_rva;
     uint32_t    e_size;
-};
+} __attribute__((packed));
 
 class RVASizePair {
   public:
@@ -78,8 +78,8 @@ class RVASizePair {
         e_size = le_to_host(disk->e_size);
     }
     void *encode(RVASizePair_disk *disk) {
-        host_to_le(e_rva,  disk->e_rva);
-        host_to_le(e_size, disk->e_size);
+        host_to_le(e_rva,  &(disk->e_rva));
+        host_to_le(e_size, &(disk->e_size));
         return disk;
     }
     addr_t      e_rva, e_size;

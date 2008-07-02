@@ -70,26 +70,26 @@ DOSFileHeader::encode(DOSFileHeader_disk *disk)
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    host_to_le(e_cblp,     disk->e_cblp);
-    host_to_le(e_cp,       disk->e_cp);
-    host_to_le(e_crlc,     disk->e_crlc);
-    host_to_le(e_cparhdr,  disk->e_cparhdr);
-    host_to_le(e_minalloc, disk->e_minalloc);
-    host_to_le(e_maxalloc, disk->e_maxalloc);
-    host_to_le(e_ss,       disk->e_ss);
-    host_to_le(e_sp,       disk->e_sp);
-    host_to_le(e_csum,     disk->e_csum);
-    host_to_le(e_ip,       disk->e_ip);
-    host_to_le(e_cs,       disk->e_cs);
-    host_to_le(e_lfarlc,   disk->e_lfarlc);
-    host_to_le(e_ovno,     disk->e_ovno);
+    host_to_le(e_cblp,     &(disk->e_cblp));
+    host_to_le(e_cp,       &(disk->e_cp));
+    host_to_le(e_crlc,     &(disk->e_crlc));
+    host_to_le(e_cparhdr,  &(disk->e_cparhdr));
+    host_to_le(e_minalloc, &(disk->e_minalloc));
+    host_to_le(e_maxalloc, &(disk->e_maxalloc));
+    host_to_le(e_ss,       &(disk->e_ss));
+    host_to_le(e_sp,       &(disk->e_sp));
+    host_to_le(e_csum,     &(disk->e_csum));
+    host_to_le(e_ip,       &(disk->e_ip));
+    host_to_le(e_cs,       &(disk->e_cs));
+    host_to_le(e_lfarlc,   &(disk->e_lfarlc));
+    host_to_le(e_ovno,     &(disk->e_ovno));
     for (size_t i=0; i<NELMTS(disk->e_res1); i++)
-        host_to_le(e_res1[i], disk->e_res1[i]);
-    host_to_le(e_oemid,    disk->e_oemid);
-    host_to_le(e_oeminfo,  disk->e_oeminfo);
+        host_to_le(e_res1[i], &(disk->e_res1[i]));
+    host_to_le(e_oemid,    &(disk->e_oemid));
+    host_to_le(e_oeminfo,  &(disk->e_oeminfo));
     for (size_t i=0; i<NELMTS(disk->e_res2); i++)
-        host_to_le(e_res2[i], disk->e_res2[i]);
-    host_to_le(e_lfanew,   disk->e_lfanew);
+        host_to_le(e_res2[i], &(disk->e_res2[i]));
+    host_to_le(e_lfanew,   &(disk->e_lfanew));
     return disk;
 }
     
@@ -454,7 +454,7 @@ PEFileHeader::unparse(FILE *f)
     void *oh=NULL;
     size_t oh_size=0;
     uint16_t oh_magic;
-    host_to_le(e_opt_magic, oh_magic);
+    host_to_le(e_opt_magic, &oh_magic);
     if (4==get_word_size()) {
         oh = encode(&oh32);
         oh_size = sizeof oh32;
@@ -789,7 +789,7 @@ PEImportHintName::unparse(FILE *f, addr_t offset)
 
     /* The hint */
     uint16_t hint_le;
-    host_to_le(hint, hint_le);
+    host_to_le(hint, &hint_le);
     size_t nwrite = fwrite(&hint_le, sizeof hint_le, 1, f);
     ROSE_ASSERT(1==nwrite);
 
@@ -936,7 +936,7 @@ PEImportSection::unparse(FILE *f)
         uint32_t rva_le, binding_le;
         for (size_t i=0; i<hintname_rvas.size(); i++) {
             /* RVA */
-            host_to_le(hintname_rvas[i], rva_le);
+            host_to_le(hintname_rvas[i], &rva_le);
             status = fseek(f, hintname_rvas_offset + i*sizeof rva_le, SEEK_SET);
             ROSE_ASSERT(status>=0);
             nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
@@ -947,7 +947,7 @@ PEImportSection::unparse(FILE *f)
             hintnames[i]->unparse(f, hintname_offset);
 
             /* Binding */
-            host_to_le(bindings[i], binding_le);
+            host_to_le(bindings[i], &binding_le);
             status = fseek(f, bindings_offset + i*sizeof binding_le, SEEK_SET);
             ROSE_ASSERT(status>=0);
             nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
