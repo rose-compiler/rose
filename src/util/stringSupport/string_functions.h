@@ -225,23 +225,6 @@ namespace StringUtility
                               FILENAME_LIB_BOOST,   // boost
                               FILENAME_LIB_ROSE };  // rose
 
-           // This is rather disappointing because C99 would have allowed
-           // this to be bounds checked in a typesafe way, alas, GCC C++
-           // doesn't implement it
-           // This check, unfortunately, doesn't catch the case when there
-           // are too few initializers, only too many, but at least the
-           // memory we do get is allocated
-           // TODO There has to be a better way to do this!
-           static const int NAMES_LEN = 8;
-           static const char* FILENAME_LIBRARY_NAMES[NAMES_LEN] = { "UNKNOWN",
-                                                                    "USER",
-                                                                    "c",
-                                                                    "stdc++",
-                                                                    "linux",
-                                                                    "gcc",
-                                                                    "boost",
-                                                                    "rose" };
-
            class FileNameInfo
            {
            public:

@@ -336,11 +336,21 @@ namespace StringUtility {
         return;
     }
 
+    static const char* FILENAME_LIBRARY_NAMES[] = { "UNKNOWN",
+                                                    "USER",
+                                                    "c",
+                                                    "stdc++",
+                                                    "linux",
+                                                    "gcc",
+                                                    "boost",
+                                                    "rose" };
+    static const size_t NAMES_LEN = sizeof(FILENAME_LIBRARY_NAMES) / sizeof(FILENAME_LIBRARY_NAMES[0]);
+
     const string
     FileNameInfo::getLibraryName() const
     {
         ROSE_ASSERT(this);
-        ROSE_ASSERT(library >= 0 and library < NAMES_LEN);
+        ROSE_ASSERT(library >= 0 && library < (int)NAMES_LEN);
         return FILENAME_LIBRARY_NAMES[library];
     }
 
