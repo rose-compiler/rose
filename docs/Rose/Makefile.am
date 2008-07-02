@@ -141,7 +141,8 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
              loopTransformDoc.tex mm.tex lu.tex \
              tridvpk.tex appendix.tex glossary.tex bibliography.tex \
              rose-processing-phases.pdf testing.tex \
-             writingYourFirstTranslator.tex overviewOfRose.tex developersAppendix.tex astMerge.tex
+             writingYourFirstTranslator.tex overviewOfRose.tex \
+             developersAppendix.tex astMerge.tex installRose.tex
 
 roseDirectoryMap.pdf: Makefile
 	@echo "Building directory graph of $(top_srcdir) as a postscript file for LaTeX documentation ... "
@@ -449,7 +450,8 @@ EXTRA_DIST = \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
    developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex preface.tex \
    requirements.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
-   AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex roseExecutionOutput.txt roseHelpOutput.txt
+   AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
+   roseExecutionOutput.txt roseHelpOutput.txt 
 
 # DQ (3/27/2006):
 # This can't re in the EXTRA_DIST list while we have a link to it, and we need to link to
