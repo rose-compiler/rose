@@ -1116,8 +1116,7 @@ SageBuilder::buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeLi
 
 // lookup function symbol to create a reference to it
 SgFunctionRefExp *
-SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgScopeStatement* scope)
-//SageBuilder::buildFunctionRefExp(const SgName& name,SgScopeStatement* scope=NULL)
+SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgScopeStatement* scope /*=NULL*/)
 {
   ROSE_ASSERT(funcType); // function type cannot be NULL
   SgFunctionType* func_type = isSgFunctionType(const_cast<SgType*>(funcType));
@@ -1125,10 +1124,10 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
 
   if (scope == NULL)
      scope = SageBuilder::topScopeStack();
-   ROSE_ASSERT(scope != NULL);
+  ROSE_ASSERT(scope != NULL);
   SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,func_type,scope);
   if (symbol==NULL) 
-// in rare cases when function calls are inserted before prototypes exist
+// in rare cases when function calls are inserted before any prototypes exist
   {
 #if 0
 // MiddleLevelRewrite::insert() does not merge content of headers into current AST
@@ -1168,6 +1167,13 @@ SageBuilder::buildFunctionRefExp(const SgName& name,const SgType* funcType, SgSc
   return func_ref;
 }
 
+SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp(const char* name,const SgType* funcType, SgScopeStatement* scope /*=NULL*/)
+{
+  SgName name2(name);
+  return buildFunctionRefExp(name2,funcType,scope);
+}
+
 // lookup function symbol to create a reference to it
 SgFunctionRefExp *
 SageBuilder::buildFunctionRefExp(SgFunctionSymbol* sym)
@@ -1177,6 +1183,47 @@ SageBuilder::buildFunctionRefExp(SgFunctionSymbol* sym)
   ROSE_ASSERT(func_ref);
   return func_ref;
 }
+
+//! Lookup a C style function symbol to create a function reference expression to it
+SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+{
+  if (scope == NULL)
+     scope = SageBuilder::topScopeStack();
+  ROSE_ASSERT(scope != NULL);
+  SgFunctionSymbol* symbol = lookupFunctionSymbolInParentScopes(name,scope);
+
+
+  if (symbol==NULL) 
+// in rare cases when function calls are inserted before any prototypes exist
+  {
+// assume int return type, and empty parameter list
+    SgType* return_type = buildIntType();
+    SgFunctionParameterList *parList = buildFunctionParameterList();
+
+    SgGlobal* globalscope = getGlobalScope(scope);
+    SgFunctionDeclaration * funcDecl= buildNondefiningFunctionDeclaration(name,return_type,parList,globalscope);
+     funcDecl->get_declarationModifier().get_storageModifier().setExtern();
+
+   
+    symbol = lookupFunctionSymbolInParentScopes(name,scope);
+    ROSE_ASSERT(symbol);
+  }
+
+  SgFunctionRefExp* func_ref = buildFunctionRefExp(symbol);
+  setOneSourcePositionForTransformation(func_ref);
+
+  ROSE_ASSERT(func_ref);
+  return func_ref;
+}
+
+SgFunctionRefExp *
+SageBuilder::buildFunctionRefExp(const char* name, SgScopeStatement* scope /*=NULL*/)
+{
+  SgName name2(name); 
+  return buildFunctionRefExp(name2,scope);
+}
+
 
 // no actual usage of scope argument, but put it here for consistence
 SgExprStatement*
@@ -1380,6 +1427,15 @@ SageBuilder::buildGotoStatement(SgLabelStatement *  label,SgScopeStatement* scop
   return result;
 }
 
+//! Build a return statement
+SgReturnStmt* SageBuilder::buildReturnStmt(SgExpression* expression /* = NULL */)
+{
+  SgReturnStmt * result = new SgReturnStmt(expression);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
 SgCaseOptionStmt * SageBuilder::buildCaseOptionStmt( SgExpression * key,SgStatement *body)
 {
   SgCaseOptionStmt* result = new SgCaseOptionStmt(key,body);
@@ -1411,9 +1467,6 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
 
   return result;
 }
-
-
-
 
 SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
 {
@@ -1593,25 +1646,19 @@ namespace SageBuilder{
 
 
   //! Build a constant type.
-  SgType* buildConstType(SgType* base_type)
+  SgType* buildConstType(SgType* base_type /*=NULL*/)
  {
-   ROSE_ASSERT(base_type!=NULL);
-
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
-
    result->get_typeModifier().get_constVolatileModifier().setConst();
    return result;
  }
 
   //! Build a volatile type.
-  SgType* buildVolatileType(SgType* base_type)
+  SgType* buildVolatileType(SgType* base_type /*=NULL*/)
  {
-   ROSE_ASSERT(base_type!=NULL);
-
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
-
    result->get_typeModifier().get_constVolatileModifier().setVolatile();
    return result;
 

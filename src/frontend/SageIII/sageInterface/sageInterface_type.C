@@ -410,6 +410,87 @@ bool hasTrivialDestructor(SgType* t) {
   }
 }
 
+  //! Is UPC shared type?
+  bool isUpcSharedType(SgType* sg_type,SgModifierType ** mod_type_out/*=NULL*/)
+  {
+    ROSE_ASSERT(sg_type);
+    bool result = false;
+
+    if (isSgModifierType(sg_type))
+    {
+      SgModifierType * mod_type = isSgModifierType(sg_type);
+      if (mod_type->get_typeModifier().get_upcModifier().get_isShared())
+      {  
+        if (mod_type_out) *mod_type_out = mod_type;
+        result = true;
+      }  
+      else 
+        result = isUpcSharedType( (isSgModifierType(sg_type))->get_base_type(), mod_type_out);
+    }  
+    else if (isSgPointerType(sg_type))
+      result = isUpcSharedType( (isSgPointerType(sg_type))->get_base_type(),mod_type_out );
+    else if (isSgReferenceType(sg_type))
+      result = isUpcSharedType( (isSgReferenceType(sg_type))->get_base_type(),mod_type_out );
+    else if (isSgArrayType(sg_type))
+      result = isUpcSharedType( (isSgArrayType(sg_type))->get_base_type(),mod_type_out );
+    else if (isSgTypedefType(sg_type))
+      result = isUpcSharedType( (isSgTypedefType(sg_type))->get_base_type(), mod_type_out);
+
+    if ((result == false) &&(mod_type_out))  *mod_type_out = NULL;
+    return result;
+  } //isUpcSharedType
+
+  //! Is UPC private-to-shared type? Judge the order of SgPointer and SgUPC_AccessModifier
+  bool isUpcPrivateToSharedType(SgType* t)
+  {
+    bool check = isUpcSharedType(t);
+    ROSE_ASSERT(check);
+    bool pointerFirst = false;
+    SgType* currentType = t;
+
+    while (true) 
+    {
+       if (isSgModifierType(currentType))
+       {
+          SgModifierType * mod_type = isSgModifierType(currentType);
+         if (mod_type->get_typeModifier().get_upcModifier().get_isShared())
+           break; //Reaches SgUPC_AccessModifier,exit the while loop
+          else 
+            currentType = isSgModifierType(currentType)->get_base_type();
+       } // if SgModifierType
+       else if (isSgPointerType(currentType))
+       {
+         pointerFirst = true; // reach pointer before reaching UPC modifier!
+         currentType = isSgPointerType(currentType)->get_base_type();
+       } // if Pointer
+      else if (isSgReferenceType(currentType))
+         currentType = isSgReferenceType(currentType)->get_base_type();
+      else if (isSgArrayType(currentType))
+         currentType =  isSgArrayType(currentType)->get_base_type();
+      else if (isSgTypedefType(currentType))
+          currentType =  isSgTypedefType(currentType)->get_base_type();
+    } // while
+
+   return pointerFirst;
+  }// isUpcPrivateToSharedType()
+
+  //! Phase-less means block size ==1, or 0, or unspecified(-1). 
+  bool isUpcPhaseLessSharedType (SgType* t)
+  {
+    SgModifierType * mod_type_out;
+    int block_size;
+
+    bool check = isUpcSharedType(t,&mod_type_out);
+    //ROSE_ASSERT(isUpcSharedType(t,mod)); // avoid side effect for assertion!!
+    ROSE_ASSERT(check&&mod_type_out); 
+
+    block_size =  mod_type_out->get_typeModifier().get_upcModifier().get_layout();
+   // cout<<"block size is "<<block_size<<endl;
+    if ((block_size==1)||(block_size == -1)|| (block_size == 0))
+      return true;
+    else 
+      return false;
+  } // isUpcPhaseLessSharedType
 
 } //end of namespace 
 

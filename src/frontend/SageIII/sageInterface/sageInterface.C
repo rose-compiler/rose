@@ -5392,6 +5392,7 @@ class ConditionalExpGenerator: public StatementGenerator
 
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
+  // insert 
   void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
   {
 
@@ -5402,11 +5403,11 @@ class ConditionalExpGenerator: public StatementGenerator
     SgNode* parent = targetStmt->get_parent();
     ROSE_ASSERT(scope&&parent);
 
-    // We have single statement true/false body for IfStmt etc
-    // However, IfStmt::insert_child() is not implemented
-    // So we make SgBasicBlock out of them first and call SgBasicBlock::insert_child() instead
+    // We now have single statement true/false body for IfStmt etc
+    // However, IfStmt::insert_child() is ambiguous and not implemented
+    // So we make SgBasicBlock out of the single statement and 
+    // essentially call SgBasicBlock::insert_child() instead.
     // TODO: add test cases for If, variable, variable/struct inside if, etc 
-    // use recursive call?   
   #if 1
     switch(parent->variantT())
     {
@@ -5415,14 +5416,64 @@ class ConditionalExpGenerator: public StatementGenerator
           if (targetStmt == isSgIfStmt(parent)->get_true_body())
           {  
             parent = ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(parent));
+            //targetStmt has a new scope (SgBasicBlock) now 
             scope =  targetStmt->get_scope();
           }
           else if (targetStmt == isSgIfStmt(parent)->get_false_body())
           {
             parent = ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(parent));
             scope =  targetStmt->get_scope();
+          } 
+          // We decide insert before a conditional statement is ambiguous and not allowed here.
+          // Users should make it clear what should be done. 
+          else if  (targetStmt == isSgIfStmt(parent)->get_conditional())
+          {
+             cout<<"Error: insert a statement before/after a conditional statement of a If statement is not allowed."<<endl;
+             ROSE_ASSERT(false);
           }
 	  break;
+       }
+       case V_SgForStatement:
+       {
+         if (targetStmt == isSgForStatement(parent)->get_loop_body())
+         {
+           parent = ensureBasicBlockAsBodyOfFor(isSgForStatement(parent));
+           scope =  targetStmt->get_scope();
+         } // let SgStatement::insert_statement() report errors for other cases
+         break;
+       }
+       case V_SgWhileStmt:
+       {
+         SgWhileStmt* stmt = isSgWhileStmt(parent);
+         ROSE_ASSERT(stmt);
+         if (targetStmt == stmt-> get_body() )
+         {
+           parent = ensureBasicBlockAsBodyOfWhile(stmt);
+           scope =  targetStmt->get_scope();
+         }
+         break;
+       }
+       case V_SgDoWhileStmt:
+       {
+         SgDoWhileStmt* stmt = isSgDoWhileStmt(parent);
+         ROSE_ASSERT(stmt);
+         if (targetStmt == stmt-> get_body() )
+         {
+           parent = ensureBasicBlockAsBodyOfDoWhile(stmt);
+           scope =  targetStmt->get_scope();
+         }
+         break;
+       }
+       case V_SgCatchOptionStmt:
+       {
+         SgCatchOptionStmt* stmt = isSgCatchOptionStmt(parent);
+         ROSE_ASSERT(stmt);
+         if (targetStmt == stmt-> get_body() )
+         {
+           parent = ensureBasicBlockAsBodyOfCatch(stmt);
+           scope =  targetStmt->get_scope();
+         }
+         break;
        }
       default:
         break;
