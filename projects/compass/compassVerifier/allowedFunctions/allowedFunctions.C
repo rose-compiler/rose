@@ -65,7 +65,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
          ss << "AllowedFunctions.Function" << i;
          allowedFunctionSet.insert(inputParameters[ss.str()]);
 
-/*         if( allowedFunctionIndex > 0 )
+         if( allowedFunctionIndex > 0 )
          {
            (*outf) << ss.str() << "=" 
                    << inputParameters[ss.str()] << std::endl;
@@ -84,7 +84,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
          ss << "AllowedFunctions.Namespace" << i;
          allowedNamespaces.push_back(inputParameters[ss.str()]);
 
-/*         if( allowedFunctionIndex > 0 )
+         if( allowedFunctionIndex > 0 )
          {
            (*outf) << ss.str() << "="
                    << inputParameters[ss.str()] << std::endl;
@@ -95,7 +95,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
      {
      } //catch( const Compass::ParameterNotFoundException &e )
 
-     if( allowedFunctionIndex > 0 )
+/*     if( allowedFunctionIndex > 0 )
      {
        int i = 0;
        for( std::set<std::string>::iterator itr = allowedFunctionSet.begin();
@@ -113,7 +113,9 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
          (*outf) << "AllowedFunctions.Namespace" << i++
                  << "=" << *itr << std::endl;
        } //for, itr namespaces
-     } //if( allowedFunctionIndex > 0 ), re-write existing allow list
+
+       std::cout << "i vs index " << i << "\t" << allowedFunctionIndex << "\n";
+     } //if( allowedFunctionIndex > 0 ), re-write existing allow list */
    }
 
 void 
@@ -309,8 +311,19 @@ functionDeclarationHandler(
         if( ss.str().find( *nsItr, 0 ) != std::string::npos ) break;
       } //for, failed to find in functions--checking namespaces/classes 
 
-      if( nsItr == allowedNamespaces.end() )
+      SgFunctionDefinition *fdef = fdecl->get_definition();
+
+      if( fdef != NULL && 
+          fdef->getFilenameString() == 
+          currentFile->get_sourceFileNameWithPath() )
+      {
+      } //if, local function found
+      else if( nsItr != allowedNamespaces.end() )
+      {
+      } //else if, namespace entry
+      else
         output->addOutput(new CheckerOutput(node, ss.str()));
+
     } //if( afItr == allowedFunctionSet.end() )
   } //else, check for allowed function, namespace, class
 
@@ -323,6 +336,11 @@ visit(SgNode* node)
    {
      switch( node->variantT() )
      {
+       case V_SgFile:
+       {
+         currentFile = isSgFile(node);
+         ROSE_ASSERT(currentFile != NULL);
+       } break; //case V_SgFile
        case V_SgFunctionRefExp:
        {
          SgFunctionRefExp *fref = isSgFunctionRefExp(node);

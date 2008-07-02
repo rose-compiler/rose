@@ -40,6 +40,7 @@ namespace CompassAnalyses
                  std::ofstream *outf;
                  std::set<std::string> allowedFunctionSet;
                  std::vector<std::string> allowedNamespaces;
+                 SgFile *currentFile;
 
 //               int parseParameter( const std::string & param );
 
