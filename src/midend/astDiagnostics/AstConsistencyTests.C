@@ -3384,6 +3384,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
 
      ROSE_ASSERT(node != NULL);
      SgNode *parent = node->get_parent();
+
 #if ROSE_USE_VALGRIND
      VALGRIND_CHECK_DEFINED(parent);
 #endif
@@ -3392,7 +3393,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
         {
           bool nodeFound = false;
 #if 0
-#if 0
+       // This is the really nieve implementation, but simple.
           vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
           for (unsigned int i = 0; i < v.size(); i++)
              {
@@ -3402,8 +3403,9 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                       return;
                     }
              }
-#else
-       // DQ (3/8/2007): Newer more efficent implementation (and then abstracted to a simpler function)
+#endif
+#if 0
+       // DQ (3/8/2007): This is a newer more efficent implementation (and then abstracted to a simpler function)
        // This is 8=9 times faster than the previous implementation, however still a significant 
        // performance problem.
 
@@ -3411,14 +3413,24 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
        // nodeFound = parent->getChildIndex(node) != -1;
           nodeFound = parent->isChild(node);
 #endif
-#else
-       // DQ (3/12/2007): Look for the child set in a staticlly defined childMap.
-       // This should be a more efficient implementation.
+
+       // DQ (3/12/2007): This is the latest implementation, here we look for the child set 
+       // in a staticlly defined childMap. This should be a more efficient implementation.
+       // Since it uses a static map it is a problem when the function if called twice.
           std::map<SgNode*,std::set<SgNode*> >::iterator it = childMap.find(parent);
+
           if (it != childMap.end())
              {
             // Reuse the set that was build the first time
                nodeFound = it->second.find(node) != it->second.end();
+
+            // DQ (7/1/2008): When this function is called a second time, (typically as part
+            // of calling AstTests::runAllTests (SgProject*); with a modified AST,
+            // the childMap has already been set and any new declaration that was added and 
+            // which generated a symbol is not in the previously defined static childMap.
+            // So the test above fails and we need to use the more expensive dynamic test.
+               if (nodeFound == false)
+                    nodeFound = parent->isChild(node);
              }
             else
              {
@@ -3454,7 +3466,7 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                          }
                   }
              }
-#endif
+
        // DQ (3/3/2007): Note that some IR nodes are not to be found in the parent list (e.g. "typedef struct {} X;")
        // The special cases are listed explicitly below.  Anything else will at some point be an error.
 
