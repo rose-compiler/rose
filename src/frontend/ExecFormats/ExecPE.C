@@ -1136,7 +1136,7 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
             }
             set_type(SYM_FILE);
 
-        } else if (st_storage_class==3/*static*/ && NULL!=fhdr->get_file()->get_section_by_name(st_name)) {
+        } else if (st_storage_class==3/*static*/ && NULL!=fhdr->get_file()->get_section_by_name(st_name, '$')) {
             /* Section */
             unsigned size         = le_to_host(*(const uint32_t*)(aux_data+0)); /*same as section header SizeOfRawData */
             unsigned nrel         = le_to_host(*(const uint16_t*)(aux_data+4)); /*number of relocations*/

@@ -319,7 +319,7 @@ class ExecFile {
     void add_section(ExecSection*);                     /* Add new section to the file; called implicitly by section constructor */
     std::vector<ExecSection*>& get_sections() {return sections;}/* all sections (including file headers) */
     ExecSection *get_section_by_id(int id);             /* Returns first section having specified ID */
-    ExecSection *get_section_by_name(const std::string&);/* Find section within file by name */
+    ExecSection *get_section_by_name(std::string, char sep='\0');/* Find section within file by name */
     std::vector<ExecSection*> get_sections_by_offset(addr_t offset, addr_t size);
     std::vector<ExecSection*> get_sections_by_rva(addr_t rva);
     addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */

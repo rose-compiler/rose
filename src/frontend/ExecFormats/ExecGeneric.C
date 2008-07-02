@@ -174,10 +174,18 @@ ExecFile::get_section_by_id(int id)
     return NULL;
 }
 
-/* Returns pointer to the first section with the specified name. */
+/* Returns pointer to the first section with the specified name. Any characters in the name after the first occurrence of SEP
+ * are ignored (default is NUL). For instance, if sep=='$' then the following names are all equivalent: .idata, .idata$,
+ * .idata$1 */
 ExecSection *
-ExecFile::get_section_by_name(const std::string &name)
+ExecFile::get_section_by_name(std::string name, char sep)
 {
+    if (sep) {
+        size_t pos = name.find(sep);
+        if (pos!=name.npos)
+            name.erase(pos);
+    }
+    
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
         if (0==(*i)->get_name().compare(name))
             return *i;
