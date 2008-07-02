@@ -42,7 +42,7 @@ AstPDFGeneration::generateInputFiles(SgProject* projectNode) {
 void
 AstPDFGeneration::generateWithinFile(const string& pdffilename, SgFile* node) {
   AstNodeVisitMapping addrPageMappingTrav(1);
-  addrPageMappingTrav.traverse/*WithinFile*/(node,preorder);
+  addrPageMappingTrav.traverseWithinFile(node,preorder);
   addrPageMapping=addrPageMappingTrav.address_pagenum;
 // cout << "generating PDF file: " << pdffilename << " ... ";
   pdf_setup(pdffilename + ".pdf");
