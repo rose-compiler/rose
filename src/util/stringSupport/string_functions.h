@@ -233,14 +233,14 @@ namespace StringUtility
            // memory we do get is allocated
            // TODO There has to be a better way to do this!
            static const int NAMES_LEN = 8;
-           static char* FILENAME_LIBRARY_NAMES[NAMES_LEN] = { "UNKNOWN",
-                                                              "USER",
-                                                              "c",
-                                                              "stdc++",
-                                                              "linux",
-                                                              "gcc",
-                                                              "boost",
-                                                              "rose" };
+           static const char* FILENAME_LIBRARY_NAMES[NAMES_LEN] = { "UNKNOWN",
+                                                                    "USER",
+                                                                    "c",
+                                                                    "stdc++",
+                                                                    "linux",
+                                                                    "gcc",
+                                                                    "boost",
+                                                                    "rose" };
 
            class FileNameInfo
            {

@@ -81,7 +81,7 @@ StringUtility::getAbsolutePathFromRelativePath ( const std::string & relativePat
   // can return an error if it processes a file or directory that does not exist.  This is 
   // a problem for include paths that are specified on the commadline and which don't exist; 
   // most compilers silently ignore these and we have to at least ignore them.
-     char* resultingPath = realpath( relativePath.c_str(), resolved_path);
+     const char* resultingPath = realpath( relativePath.c_str(), resolved_path);
 
   // If there was an error then resultingPath is NULL, else it points to resolved_path.
      if ( resultingPath == NULL )
