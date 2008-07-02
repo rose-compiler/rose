@@ -298,7 +298,6 @@ latex-docs-manual: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_Instal
 
 ROSE_InstallationInstructions.pdf: logo  $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	@echo "Building Latex ROSE_InstallationInstructions.pdf ... "
-	test -f installRose.tex || ln -s $(top_srcdir)/docs/Rose/installRose.tex installRose.tex
 	pdflatex ROSE_InstallationInstructions.tex; \
 	pdflatex ROSE_InstallationInstructions.tex; \
 	pdflatex ROSE_InstallationInstructions.tex; \
