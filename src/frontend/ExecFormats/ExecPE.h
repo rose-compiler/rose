@@ -95,6 +95,9 @@ struct PEFileHeader_disk {
     uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
     uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
     uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
+};
+
+struct PE32OptHeader_disk {
     uint16_t    e_opt_magic;            /* Optional header magic (0x10b=>PE32, 0x20b=>PE32+) */
     uint16_t    e_lmajor;               /* linker version */
     uint16_t    e_lminor;
@@ -170,7 +173,7 @@ enum DLLFlags {
 class PEFileHeader : public ExecHeader {
   public:
     PEFileHeader(ExecFile *f, addr_t offset)
-        : ExecHeader(f, offset, sizeof(PEFileHeader_disk)),
+        : ExecHeader(f, offset, sizeof(PEFileHeader_disk)), /*extended in ctor()*/
         object_table(NULL), coff_symtab(NULL)
         {ctor(f, offset);}
     virtual ~PEFileHeader() {}
@@ -198,6 +201,7 @@ class PEFileHeader : public ExecHeader {
   private:
     void ctor(ExecFile *f, addr_t offset);
     void *encode(PEFileHeader_disk*);
+    void *encode(PE32OptHeader_disk*);
     PEObjectTable *object_table;
     COFFSymtab *coff_symtab;
 };
