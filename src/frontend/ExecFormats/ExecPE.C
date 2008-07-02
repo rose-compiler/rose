@@ -182,39 +182,83 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     e_nt_hdr_size        = le_to_host(fh->e_nt_hdr_size);
     e_flags              = le_to_host(fh->e_flags);
 
-    /* Decode optional header */
-    extend(sizeof(PE32OptHeader_disk));
-    const PE32OptHeader_disk *oh32 = (const PE32OptHeader_disk*)content(sizeof(PEFileHeader_disk), sizeof(PE32OptHeader_disk));
-    e_opt_magic          = le_to_host(oh32->e_opt_magic);
-    e_lmajor             = le_to_host(oh32->e_lmajor);
-    e_lminor             = le_to_host(oh32->e_lminor);
-    e_code_size          = le_to_host(oh32->e_code_size);
-    e_data_size          = le_to_host(oh32->e_data_size);
-    e_bss_size           = le_to_host(oh32->e_bss_size);
-    e_entrypoint_rva     = le_to_host(oh32->e_entrypoint_rva);
-    e_code_rva           = le_to_host(oh32->e_code_rva);
-    e_reserved8          = le_to_host(oh32->e_reserved8);
-    e_image_base         = le_to_host(oh32->e_image_base);
-    e_object_align       = le_to_host(oh32->e_object_align);
-    e_file_align         = le_to_host(oh32->e_file_align);
-    e_os_major           = le_to_host(oh32->e_os_major);
-    e_os_minor           = le_to_host(oh32->e_os_minor);
-    e_user_major         = le_to_host(oh32->e_user_major);
-    e_user_minor         = le_to_host(oh32->e_user_minor);
-    e_subsys_major       = le_to_host(oh32->e_subsys_major);
-    e_subsys_minor       = le_to_host(oh32->e_subsys_minor);
-    e_reserved9          = le_to_host(oh32->e_reserved9);
-    e_image_size         = le_to_host(oh32->e_image_size);
-    e_header_size        = le_to_host(oh32->e_header_size);
-    e_file_checksum      = le_to_host(oh32->e_file_checksum);
-    e_subsystem          = le_to_host(oh32->e_subsystem);
-    e_dll_flags          = le_to_host(oh32->e_dll_flags);
-    e_stack_reserve_size = le_to_host(oh32->e_stack_reserve_size);
-    e_stack_commit_size  = le_to_host(oh32->e_stack_commit_size);
-    e_heap_reserve_size  = le_to_host(oh32->e_heap_reserve_size);
-    e_heap_commit_size   = le_to_host(oh32->e_heap_commit_size);
-    e_reserved10         = le_to_host(oh32->e_reserved10);
-    e_num_rvasize_pairs  = le_to_host(oh32->e_num_rvasize_pairs);
+    /* Decode optional header. The version of header is based on a magic number */
+    extend(2);
+    e_opt_magic = le_to_host(*(const uint16_t*)content(sizeof(PEFileHeader_disk), 2));
+    addr_t oh_offset = size;
+    if (0x010b==e_opt_magic) {
+        exec_format.word_size = 4;
+        const PE32OptHeader_disk *oh;
+        size_t oh_size = sizeof(*oh);
+        extend(oh_size);
+        oh = (const PE32OptHeader_disk*)content(oh_offset, oh_size);
+        e_lmajor             = le_to_host(oh->e_lmajor);
+        e_lminor             = le_to_host(oh->e_lminor);
+        e_code_size          = le_to_host(oh->e_code_size);
+        e_data_size          = le_to_host(oh->e_data_size);
+        e_bss_size           = le_to_host(oh->e_bss_size);
+        e_entrypoint_rva     = le_to_host(oh->e_entrypoint_rva);
+        e_code_rva           = le_to_host(oh->e_code_rva);
+        e_data_rva           = le_to_host(oh->e_data_rva);
+        e_image_base         = le_to_host(oh->e_image_base);
+        e_object_align       = le_to_host(oh->e_object_align);
+        e_file_align         = le_to_host(oh->e_file_align);
+        e_os_major           = le_to_host(oh->e_os_major);
+        e_os_minor           = le_to_host(oh->e_os_minor);
+        e_user_major         = le_to_host(oh->e_user_major);
+        e_user_minor         = le_to_host(oh->e_user_minor);
+        e_subsys_major       = le_to_host(oh->e_subsys_major);
+        e_subsys_minor       = le_to_host(oh->e_subsys_minor);
+        e_reserved9          = le_to_host(oh->e_reserved9);
+        e_image_size         = le_to_host(oh->e_image_size);
+        e_header_size        = le_to_host(oh->e_header_size);
+        e_file_checksum      = le_to_host(oh->e_file_checksum);
+        e_subsystem          = le_to_host(oh->e_subsystem);
+        e_dll_flags          = le_to_host(oh->e_dll_flags);
+        e_stack_reserve_size = le_to_host(oh->e_stack_reserve_size);
+        e_stack_commit_size  = le_to_host(oh->e_stack_commit_size);
+        e_heap_reserve_size  = le_to_host(oh->e_heap_reserve_size);
+        e_heap_commit_size   = le_to_host(oh->e_heap_commit_size);
+        e_loader_flags       = le_to_host(oh->e_loader_flags);
+        e_num_rvasize_pairs  = le_to_host(oh->e_num_rvasize_pairs);
+    } else if (0x020b==e_opt_magic) {
+        exec_format.word_size = 8;
+        const PE64OptHeader_disk *oh;
+        size_t oh_size = sizeof(*oh);
+        extend(oh_size);
+        oh = (const PE64OptHeader_disk*)content(oh_offset, oh_size);
+        e_lmajor             = le_to_host(oh->e_lmajor);
+        e_lminor             = le_to_host(oh->e_lminor);
+        e_code_size          = le_to_host(oh->e_code_size);
+        e_data_size          = le_to_host(oh->e_data_size);
+        e_bss_size           = le_to_host(oh->e_bss_size);
+        e_entrypoint_rva     = le_to_host(oh->e_entrypoint_rva);
+        e_code_rva           = le_to_host(oh->e_code_rva);
+        //e_data_rva         = le_to_host(oh->e_data_rva); /* not in PE32+ */
+        e_image_base         = le_to_host(oh->e_image_base);
+        e_object_align       = le_to_host(oh->e_object_align);
+        e_file_align         = le_to_host(oh->e_file_align);
+        e_os_major           = le_to_host(oh->e_os_major);
+        e_os_minor           = le_to_host(oh->e_os_minor);
+        e_user_major         = le_to_host(oh->e_user_major);
+        e_user_minor         = le_to_host(oh->e_user_minor);
+        e_subsys_major       = le_to_host(oh->e_subsys_major);
+        e_subsys_minor       = le_to_host(oh->e_subsys_minor);
+        e_reserved9          = le_to_host(oh->e_reserved9);
+        e_image_size         = le_to_host(oh->e_image_size);
+        e_header_size        = le_to_host(oh->e_header_size);
+        e_file_checksum      = le_to_host(oh->e_file_checksum);
+        e_subsystem          = le_to_host(oh->e_subsystem);
+        e_dll_flags          = le_to_host(oh->e_dll_flags);
+        e_stack_reserve_size = le_to_host(oh->e_stack_reserve_size);
+        e_stack_commit_size  = le_to_host(oh->e_stack_commit_size);
+        e_heap_reserve_size  = le_to_host(oh->e_heap_reserve_size);
+        e_heap_commit_size   = le_to_host(oh->e_heap_commit_size);
+        e_loader_flags       = le_to_host(oh->e_loader_flags);
+        e_num_rvasize_pairs  = le_to_host(oh->e_num_rvasize_pairs);
+    } else {
+        throw FormatError("unrecognized Windows PE optional header magic number");
+    }
 
     /* Magic number */
     for (size_t i=0; i<sizeof(fh->e_magic); ++i)
@@ -226,16 +270,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     exec_format.sex         = ORDER_LSB;
     exec_format.abi         = ABI_NT;
     exec_format.abi_version = 0;
-    switch (e_opt_magic) {
-      case 0x010b:
-        exec_format.word_size   = 4;
-        break;
-      case 0x020b:
-        exec_format.word_size = 8;
-        break;
-      default:
-        throw FormatError("unrecognized Windows PE optional header magic number");
-    }
+    //exec_format.word_size   = ???; /*word size was set above*/
     ROSE_ASSERT(e_lmajor<=0xffff && e_lminor<=0xffff);
     exec_format.version     = (e_lmajor<<16) | e_lminor;
     exec_format.is_current_version = true; /*FIXME*/
@@ -317,48 +352,81 @@ PEFileHeader::encode(PEFileHeader_disk *disk)
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
-    host_to_le(e_cpu_type,           disk->e_cpu_type);
-    host_to_le(e_nobjects,           disk->e_nobjects);
-    host_to_le(e_time,               disk->e_time);
-    host_to_le(e_coff_symtab,        disk->e_coff_symtab);
-    host_to_le(e_coff_nsyms,         disk->e_coff_nsyms);
-    host_to_le(e_nt_hdr_size,        disk->e_nt_hdr_size);
-    host_to_le(e_flags,              disk->e_flags);
+    host_to_le(e_cpu_type,           &(disk->e_cpu_type));
+    host_to_le(e_nobjects,           &(disk->e_nobjects));
+    host_to_le(e_time,               &(disk->e_time));
+    host_to_le(e_coff_symtab,        &(disk->e_coff_symtab));
+    host_to_le(e_coff_nsyms,         &(disk->e_coff_nsyms));
+    host_to_le(e_nt_hdr_size,        &(disk->e_nt_hdr_size));
+    host_to_le(e_flags,              &(disk->e_flags));
     return disk;
 }
 void *
 PEFileHeader::encode(PE32OptHeader_disk *disk)
 {
-    host_to_le(e_opt_magic,          disk->e_opt_magic);
-    host_to_le(e_lmajor,             disk->e_lmajor);
-    host_to_le(e_lminor,             disk->e_lminor);
-    host_to_le(e_code_size,          disk->e_code_size);
-    host_to_le(e_data_size,          disk->e_data_size);
-    host_to_le(e_bss_size,           disk->e_bss_size);
-    host_to_le(e_entrypoint_rva,     disk->e_entrypoint_rva);
-    host_to_le(e_code_rva,           disk->e_code_rva);
-    host_to_le(e_reserved8,          disk->e_reserved8);
-    host_to_le(e_image_base,         disk->e_image_base);
-    host_to_le(e_object_align,       disk->e_object_align);
-    host_to_le(e_file_align,         disk->e_file_align);
-    host_to_le(e_os_major,           disk->e_os_major);
-    host_to_le(e_os_minor,           disk->e_os_minor);
-    host_to_le(e_user_major,         disk->e_user_major);
-    host_to_le(e_user_minor,         disk->e_user_minor);
-    host_to_le(e_subsys_major,       disk->e_subsys_major);
-    host_to_le(e_subsys_minor,       disk->e_subsys_minor);
-    host_to_le(e_reserved9,          disk->e_reserved9);
-    host_to_le(e_image_size,         disk->e_image_size);
-    host_to_le(e_header_size,        disk->e_header_size);
-    host_to_le(e_file_checksum,      disk->e_file_checksum);
-    host_to_le(e_subsystem,          disk->e_subsystem);
-    host_to_le(e_dll_flags,          disk->e_dll_flags);
-    host_to_le(e_stack_reserve_size, disk->e_stack_reserve_size);
-    host_to_le(e_stack_commit_size,  disk->e_stack_commit_size);
-    host_to_le(e_heap_reserve_size,  disk->e_heap_reserve_size);
-    host_to_le(e_heap_commit_size,   disk->e_heap_commit_size);
-    host_to_le(e_reserved10,         disk->e_reserved10);
-    host_to_le(e_num_rvasize_pairs,  disk->e_num_rvasize_pairs);
+    host_to_le(e_lmajor,             &(disk->e_lmajor));
+    host_to_le(e_lminor,             &(disk->e_lminor));
+    host_to_le(e_code_size,          &(disk->e_code_size));
+    host_to_le(e_data_size,          &(disk->e_data_size));
+    host_to_le(e_bss_size,           &(disk->e_bss_size));
+    host_to_le(e_entrypoint_rva,     &(disk->e_entrypoint_rva));
+    host_to_le(e_code_rva,           &(disk->e_code_rva));
+    host_to_le(e_data_rva,           &(disk->e_data_rva));
+    host_to_le(e_image_base,         &(disk->e_image_base));
+    host_to_le(e_object_align,       &(disk->e_object_align));
+    host_to_le(e_file_align,         &(disk->e_file_align));
+    host_to_le(e_os_major,           &(disk->e_os_major));
+    host_to_le(e_os_minor,           &(disk->e_os_minor));
+    host_to_le(e_user_major,         &(disk->e_user_major));
+    host_to_le(e_user_minor,         &(disk->e_user_minor));
+    host_to_le(e_subsys_major,       &(disk->e_subsys_major));
+    host_to_le(e_subsys_minor,       &(disk->e_subsys_minor));
+    host_to_le(e_reserved9,          &(disk->e_reserved9));
+    host_to_le(e_image_size,         &(disk->e_image_size));
+    host_to_le(e_header_size,        &(disk->e_header_size));
+    host_to_le(e_file_checksum,      &(disk->e_file_checksum));
+    host_to_le(e_subsystem,          &(disk->e_subsystem));
+    host_to_le(e_dll_flags,          &(disk->e_dll_flags));
+    host_to_le(e_stack_reserve_size, &(disk->e_stack_reserve_size));
+    host_to_le(e_stack_commit_size,  &(disk->e_stack_commit_size));
+    host_to_le(e_heap_reserve_size,  &(disk->e_heap_reserve_size));
+    host_to_le(e_heap_commit_size,   &(disk->e_heap_commit_size));
+    host_to_le(e_loader_flags,       &(disk->e_loader_flags));
+    host_to_le(e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
+    return disk;
+}
+void *
+PEFileHeader::encode(PE64OptHeader_disk *disk)
+{
+    host_to_le(e_lmajor,             &(disk->e_lmajor));
+    host_to_le(e_lminor,             &(disk->e_lminor));
+    host_to_le(e_code_size,          &(disk->e_code_size));
+    host_to_le(e_data_size,          &(disk->e_data_size));
+    host_to_le(e_bss_size,           &(disk->e_bss_size));
+    host_to_le(e_entrypoint_rva,     &(disk->e_entrypoint_rva));
+    host_to_le(e_code_rva,           &(disk->e_code_rva));
+    //host_to_le(e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
+    host_to_le(e_image_base,         &(disk->e_image_base));
+    host_to_le(e_object_align,       &(disk->e_object_align));
+    host_to_le(e_file_align,         &(disk->e_file_align));
+    host_to_le(e_os_major,           &(disk->e_os_major));
+    host_to_le(e_os_minor,           &(disk->e_os_minor));
+    host_to_le(e_user_major,         &(disk->e_user_major));
+    host_to_le(e_user_minor,         &(disk->e_user_minor));
+    host_to_le(e_subsys_major,       &(disk->e_subsys_major));
+    host_to_le(e_subsys_minor,       &(disk->e_subsys_minor));
+    host_to_le(e_reserved9,          &(disk->e_reserved9));
+    host_to_le(e_image_size,         &(disk->e_image_size));
+    host_to_le(e_header_size,        &(disk->e_header_size));
+    host_to_le(e_file_checksum,      &(disk->e_file_checksum));
+    host_to_le(e_subsystem,          &(disk->e_subsystem));
+    host_to_le(e_dll_flags,          &(disk->e_dll_flags));
+    host_to_le(e_stack_reserve_size, &(disk->e_stack_reserve_size));
+    host_to_le(e_stack_commit_size,  &(disk->e_stack_commit_size));
+    host_to_le(e_heap_reserve_size,  &(disk->e_heap_reserve_size));
+    host_to_le(e_heap_commit_size,   &(disk->e_heap_commit_size));
+    host_to_le(e_loader_flags,       &(disk->e_loader_flags));
+    host_to_le(e_num_rvasize_pairs,  &(disk->e_num_rvasize_pairs));
     return disk;
 }
     
@@ -379,14 +447,32 @@ PEFileHeader::unparse(FILE *f)
     /* The fixed length part of the header */
     PEFileHeader_disk fh;
     encode(&fh);
-    PE32OptHeader_disk oh32;
-    encode(&oh32);
 
+    /* The optional header */
+    PE32OptHeader_disk oh32;
+    PE64OptHeader_disk oh64;
+    void *oh=NULL;
+    size_t oh_size=0;
+    uint16_t oh_magic;
+    host_to_le(e_opt_magic, oh_magic);
+    if (4==get_word_size()) {
+        oh = encode(&oh32);
+        oh_size = sizeof oh32;
+    } else if (8==get_word_size()) {
+        oh = encode(&oh64);
+        oh_size = sizeof oh64;
+    } else {
+        ROSE_ASSERT(!"unsupported word size");
+    }
+    
+    /* Write file and optional header to disk */
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(&fh, sizeof fh, 1, f);
     ROSE_ASSERT(1==nwrite);
-    nwrite = fwrite(&oh32, sizeof oh32, 1, f);
+    nwrite = fwrite(&oh_magic, sizeof oh_magic, 1, f);
+    ROSE_ASSERT(1==nwrite);
+    nwrite = fwrite(oh, oh_size, 1, f);
     ROSE_ASSERT(1==nwrite);
 
     /* The variable length RVA/size pair table */
@@ -423,49 +509,49 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     strftime(time_str, sizeof time_str, "%c", localtime(&t));
 
     ExecHeader::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_cpu_type",          e_cpu_type);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_nobjects",          e_nobjects);
-    fprintf(f, "%s%-*s = %u (%s)\n",   p, w, "e_time",              e_time, time_str);
-    fprintf(f, "%s%-*s = %"PRIu64"\n", p, w, "e_coff_symtab",       e_coff_symtab);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_coff_nsyms",        e_coff_nsyms);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_cpu_type",          e_cpu_type);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nobjects",          e_nobjects);
+    fprintf(f, "%s%-*s = %u (%s)\n",       p, w, "e_time",              e_time, time_str);
+    fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_coff_symtab",       e_coff_symtab);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_coff_nsyms",        e_coff_nsyms);
     if (coff_symtab) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "coff_symtab", coff_symtab->get_id(), coff_symtab->get_name().c_str());
     } else {
-        fprintf(f, "%s%-*s = none\n", p, w, "coff_symtab");
+        fprintf(f, "%s%-*s = none\n",      p, w, "coff_symtab");
     }
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_nt_hdr_size",       e_nt_hdr_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_flags",             e_flags);
-    fprintf(f, "%s%-*s = 0x%04x %s\n", p, w, "e_opt_magic",         e_opt_magic,
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nt_hdr_size",       e_nt_hdr_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_flags",             e_flags);
+    fprintf(f, "%s%-*s = 0x%04x %s\n",     p, w, "e_opt_magic",         e_opt_magic,
             0x10b==e_opt_magic ? "PE32" : (0x20b==e_opt_magic ? "PE32+" : "other"));
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_lmajor",            e_lmajor);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_lminor",            e_lminor);
-    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_code_size",         e_code_size);
-    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_data_size",         e_data_size);
-    fprintf(f, "%s%-*s = %u bytes\n",  p, w, "e_bss_size",          e_bss_size);
-    fprintf(f, "%s%-*s = 0x%08x\n",    p, w, "e_entrypoint_rva",    e_entrypoint_rva);
-    fprintf(f, "%s%-*s = 0x%08x\n",    p, w, "e_code_rva",          e_code_rva);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved8",         e_reserved8);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_image_base",        e_image_base);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_object_align",      e_object_align);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_file_align",        e_file_align);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_os_major",          e_os_major);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_os_minor",          e_os_minor);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_user_major",        e_user_major);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_user_minor",        e_user_minor);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_subsys_major",      e_subsys_major);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_subsys_minor",      e_subsys_minor);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved9",         e_reserved9);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_image_size",        e_image_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_header_size",       e_header_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_file_checksum",     e_file_checksum);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_subsystem",         e_subsystem);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_dll_flags",         e_dll_flags);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_stack_reserve_size",e_stack_reserve_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_stack_commit_size", e_stack_commit_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_heap_reserve_size", e_heap_reserve_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_heap_commit_size",  e_heap_commit_size);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_reserved10",        e_reserved10);
-    fprintf(f, "%s%-*s = %u\n",        p, w, "e_num_rvasize_pairs", e_num_rvasize_pairs);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_lmajor",            e_lmajor);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_lminor",            e_lminor);
+    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_code_size",         e_code_size);
+    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_data_size",         e_data_size);
+    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_bss_size",          e_bss_size);
+    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_entrypoint_rva",    e_entrypoint_rva);
+    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_code_rva",          e_code_rva);
+    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_data_rva",          e_data_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "e_image_base",        e_image_base);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_object_align",      e_object_align);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_file_align",        e_file_align);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_major",          e_os_major);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_minor",          e_os_minor);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_user_major",        e_user_major);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_user_minor",        e_user_minor);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsys_major",      e_subsys_major);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsys_minor",      e_subsys_minor);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_reserved9",         e_reserved9);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_image_size",        e_image_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_header_size",       e_header_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_file_checksum",     e_file_checksum);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsystem",         e_subsystem);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_dll_flags",         e_dll_flags);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_stack_reserve_size",e_stack_reserve_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_stack_commit_size", e_stack_commit_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_heap_reserve_size", e_heap_reserve_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_heap_commit_size",  e_heap_commit_size);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_loader_flags",      e_loader_flags);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_num_rvasize_pairs", e_num_rvasize_pairs);
     for (unsigned i=0; i<e_num_rvasize_pairs; i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));        
@@ -509,13 +595,13 @@ PEObjectTableEntry::encode(PEObjectTableEntry_disk *disk)
     memset(disk->name, 0, sizeof(disk->name));
     memcpy(disk->name, name.c_str(), std::min(sizeof(name), name.size()));
 
-    host_to_le(virtual_size,    disk->virtual_size);
-    host_to_le(rva,             disk->rva);
-    host_to_le(physical_size,   disk->physical_size);
-    host_to_le(physical_offset, disk->physical_offset);
+    host_to_le(virtual_size,    &(disk->virtual_size));
+    host_to_le(rva,             &(disk->rva));
+    host_to_le(physical_size,   &(disk->physical_size));
+    host_to_le(physical_offset, &(disk->physical_offset));
     for (size_t i=0; i<NELMTS(reserved); i++)
-        host_to_le(reserved[i], disk->reserved[i]);
-    host_to_le(flags, disk->flags);
+        host_to_le(reserved[i], &(disk->reserved[i]));
+    host_to_le(flags, &(disk->flags));
     return disk;
 }
 
@@ -657,11 +743,11 @@ PEImportDirectory::ctor(const PEImportDirectory_disk *disk)
 void *
 PEImportDirectory::encode(PEImportDirectory_disk *disk)
 {
-    host_to_le(hintnames_rva,   disk->hintnames_rva);
-    host_to_le(time,            disk->time);
-    host_to_le(forwarder_chain, disk->forwarder_chain);
-    host_to_le(dll_name_rva,    disk->dll_name_rva);
-    host_to_le(bindings_rva,    disk->bindings_rva);
+    host_to_le(hintnames_rva,   &(disk->hintnames_rva));
+    host_to_le(time,            &(disk->time));
+    host_to_le(forwarder_chain, &(disk->forwarder_chain));
+    host_to_le(dll_name_rva,    &(disk->dll_name_rva));
+    host_to_le(bindings_rva,    &(disk->bindings_rva));
     return disk;
 }
 
@@ -1095,14 +1181,14 @@ COFFSymbol::encode(COFFSymbol_disk *disk)
     } else {
         /* Name is an offset into the string table */
         disk->st_zero = 0;
-        host_to_le(st_name_offset, disk->st_offset);
+        host_to_le(st_name_offset, &(disk->st_offset));
     }
     
-    host_to_le(get_value(),        disk->st_value);
-    host_to_le(st_section_num,     disk->st_section_num);
-    host_to_le(st_type,            disk->st_type);
-    host_to_le(st_storage_class,   disk->st_storage_class);
-    host_to_le(st_num_aux_entries, disk->st_num_aux_entries);
+    host_to_le(get_value(),        &(disk->st_value));
+    host_to_le(st_section_num,     &(disk->st_section_num));
+    host_to_le(st_type,            &(disk->st_type));
+    host_to_le(st_storage_class,   &(disk->st_storage_class));
+    host_to_le(st_num_aux_entries, &(disk->st_num_aux_entries));
     return disk;
 }
 

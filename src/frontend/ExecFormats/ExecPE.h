@@ -95,10 +95,9 @@ struct PEFileHeader_disk {
     uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
     uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
     uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
-};
+} __attribute__((packed));
 
 struct PE32OptHeader_disk {
-    uint16_t    e_opt_magic;            /* Optional header magic (0x10b=>PE32, 0x20b=>PE32+) */
     uint16_t    e_lmajor;               /* linker version */
     uint16_t    e_lminor;
     uint16_t    e_code_size;            /* Size of .text or sum of all code sections */
@@ -106,7 +105,7 @@ struct PE32OptHeader_disk {
     uint32_t    e_bss_size;             /* Sum size of uninitialized data */
     uint32_t    e_entrypoint_rva;       /* RVA="relative virtual address"; relative to 'image_base', below */
     uint32_t    e_code_rva;             /* Address relative to image base for code section when memory mapped */
-    uint32_t    e_reserved8;
+    uint32_t    e_data_rva;             /* Address relative to image base for data section */
     uint32_t    e_image_base;           /* Virtual base of the image (first byte of file, DOS header). Multiple of 64k. */
     uint32_t    e_object_align;         /* Alignment of Objects in memory. Power of two 512<=x<=256M */
     uint32_t    e_file_align;           /* Alignment factor (in bytes) for image pages */
@@ -126,21 +125,40 @@ struct PE32OptHeader_disk {
     uint32_t    e_stack_commit_size;    /* Size (bytes) of valid stack; other pages are guards; <= 'stack_reserve_size' */
     uint32_t    e_heap_reserve_size;    /* Size (bytes) of local heap to reserve */
     uint32_t    e_heap_commit_size;     /* Size (bytes) of valid local heap */
-    uint32_t    e_reserved10;
+    uint32_t    e_loader_flags;         /* Reserved, must be zero */
     uint32_t    e_num_rvasize_pairs;    /* Number of RVASizePair entries that follow this member; also part of the PE header */
-    /* RVA/Size pairs follow, typically for:
-     *     - export table
-     *     - import table
-     *     - resource table
-     *     - exception table
-     *     - security table
-     *     - fixup table
-     *     - debug table
-     *     - image description
-     *     - machine specific
-     *     - thread local storage */
-    
-};
+} __attribute__((packed));
+
+struct PE64OptHeader_disk {
+    uint16_t    e_lmajor;
+    uint16_t    e_lminor;
+    uint16_t    e_code_size;
+    uint32_t    e_data_size;
+    uint32_t    e_bss_size;
+    uint32_t    e_entrypoint_rva;
+    uint32_t    e_code_rva;
+    uint64_t    e_image_base;
+    uint32_t    e_object_align;
+    uint32_t    e_file_align;
+    uint16_t    e_os_major;
+    uint16_t    e_os_minor;
+    uint16_t    e_user_major;
+    uint16_t    e_user_minor;
+    uint16_t    e_subsys_major;
+    uint16_t    e_subsys_minor;
+    uint32_t    e_reserved9;
+    uint32_t    e_image_size;
+    uint32_t    e_header_size;
+    uint32_t    e_file_checksum;
+    uint16_t    e_subsystem;
+    uint16_t    e_dll_flags;
+    uint64_t    e_stack_reserve_size;
+    uint64_t    e_stack_commit_size;
+    uint64_t    e_heap_reserve_size;
+    uint64_t    e_heap_commit_size;
+    uint32_t    e_loader_flags;
+    uint32_t    e_num_rvasize_pairs;
+} __attribute__((packed));
 
 /* Bit flags for the PE header 'flags' member */
 enum HeaderFlags {
@@ -191,17 +209,19 @@ class PEFileHeader : public ExecHeader {
     unsigned    e_cpu_type, e_nobjects, e_time;
     addr_t      e_coff_symtab;
     unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_opt_magic;
-    unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_reserved8;
-    unsigned    e_image_base, e_object_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
+    unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
+    addr_t      e_image_base;
+    unsigned    e_object_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
     unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
     unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
-    unsigned    e_reserved10, e_num_rvasize_pairs;
+    unsigned    e_loader_flags, e_num_rvasize_pairs;
     std::vector<RVASizePair> rvasize_pairs;
 
   private:
     void ctor(ExecFile *f, addr_t offset);
     void *encode(PEFileHeader_disk*);
     void *encode(PE32OptHeader_disk*);
+    void *encode(PE64OptHeader_disk*);
     PEObjectTable *object_table;
     COFFSymtab *coff_symtab;
 };
@@ -220,7 +240,7 @@ struct PEObjectTableEntry_disk {
     uint32_t    physical_offset;        /* location of initialized data on disk; multiple of file_align */
     uint32_t    reserved[3];
     uint32_t    flags;                  /* ObjectFlags bits: code, data, caching, paging, shared, permissions, etc. */
-};
+} __attribute__((packed));
 
 /* These come from the windows PE documentation and http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
 enum PEObjectFlags {
@@ -320,7 +340,7 @@ struct PEImportDirectory_disk {
     uint32_t            forwarder_chain;
     uint32_t            dll_name_rva;           /* address of NUL-terminated library name */
     uint32_t            bindings_rva;           /* address (RVA) of array of object addresses after binding to DLL */
-};
+} __attribute__((packed));
 
 class PEImportDirectory {
   public:
@@ -431,7 +451,7 @@ struct COFFSymbol_disk {
     uint16_t            st_type;
     unsigned char       st_storage_class;
     unsigned char       st_num_aux_entries;
-};
+} __attribute__((packed));
 
 class COFFSymbol : public ExecSymbol {
   public:
