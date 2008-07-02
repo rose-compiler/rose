@@ -229,28 +229,66 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
 
     /* Target architecture */
     switch (e_cpu_type) {
-    case 0x0000:
+      case 0x0000:
         target.set_isa(ISA_UNSPECIFIED);
         break;
-    case 0x014c:
+      case 0x014c:
         target.set_isa(ISA_IA32_386);
         break;
-    case 0x014d:
+      case 0x014d:
         target.set_isa(ISA_IA32_486);
         break;
-    case 0x014e:
+      case 0x014e:
         target.set_isa(ISA_IA32_Pentium);
         break;
-    case 0x0162:
+      case 0x0162:
         target.set_isa(ISA_MIPS_MarkI); /* R2000, R3000 */
         break;
-    case 0x0163:
+      case 0x0163:
         target.set_isa(ISA_MIPS_MarkII); /* R6000 */
         break;
-    case 0x0166:
+      case 0x0166:
         target.set_isa(ISA_MIPS_MarkIII); /* R4000 */
         break;
-    default:
+      case 0x01a2: /*Hitachi SH3*/
+      case 0x01a3: /*Hitachi SH3 with FPU*/
+      case 0x01a6: /*Hitachi SH4*/
+      case 0x01a8: /*Hitachi SH5*/
+        target.set_isa(ISA_Hitachi_SH);
+        break;
+      case 0x01c0:
+        target.set_isa(ISA_ARM);
+        break;
+      case 0x01d3:
+        target.set_isa(ISA_Matsushita_AM33);
+        break;
+      case 0x01f0: /*w/o FPU*/
+      case 0x01f1: /*with FPU*/
+        target.set_isa(ISA_PowerPC);
+        break;
+      case 0x0200:
+        target.set_isa(ISA_IA64_Family);
+        break;
+      case 0x0266:
+        target.set_isa(ISA_MIPS_16);
+        break;
+      case 0x0366:
+        target.set_isa(ISA_MIPS_FPU);
+        break;
+      case 0x0466:
+        target.set_isa(ISA_MIPS_16FPU);
+        break;
+      case 0x0ebc:
+        target.set_isa(ISA_EFI_ByteCode);
+        break;
+      case 0x8664:
+        target.set_isa(ISA_X8664_Family);
+        break;
+      case 0x9041:
+        target.set_isa(ISA_Mitsubishi_M32R);
+        break;
+        
+      default:
         target.set_isa(ISA_OTHER, e_cpu_type);
         break;
     }

@@ -133,12 +133,18 @@ enum InsSetArchitecture {
     ISA_MIPS_R14000             = 0x0611,               /* R12000 + support for DDR SRAM; 200MHz front side bus */
     ISA_MIPS_R16000             = 0x0612,               /* R14000 + increased freq, more L1, smaller die */
     ISA_MIPS_R16000A            = 0x0613,
+    ISA_MIPS_16                 = 0x0614,               /* Unknown. Windows PE architecture 0x266 "MIPS16" */
+    ISA_MIPS_FPU                = 0x0615,               /* Unknown. Windows PE architecture 0x366 "MIPS with FPU" */
+    ISA_MPIS_16FPU              = 0x0616,               /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
 
     ISA_I860_Family             = 0x0700,               /* Intel i860 family; 1989-mid 90's; RISC VLIW */
     ISA_I860_860XR              = 0x0701,               /* (code named N10) 25-40MHz */
     ISA_I860_860XP              = 0x0702,               /* (code named N11) larger caches; 40-50MHz; same IS as XR */
-    
-    
+
+    ISA_IA64_Family             = 0x0800,               /* Intel 64-bit architecture */
+    ISA_IA64_Itanium            = 0x0801,               /* First generation */
+    ISA_IA64_Itanium2           = 0x0802,               /* Second generation starting Nov 2007 */
+
     /* Others, not yet incorporated into this enum */
     ISA_OTHER_Family            = 0xf000,
 
@@ -204,7 +210,9 @@ enum InsSetArchitecture {
     ISA_OpenRISC_32bit_embedded_processor=0xf03c,
     ISA_ARC_Cores_Tangent_A5    = 0xf03d,
     ISA_Tensilica_Xtensa_Architecture=0xf03e,
-    ISA_Digital_Alpha		= 0xf03f
+    ISA_Digital_Alpha		= 0xf03f,
+    ISA_Matsushita_AM33         = 0xf040,
+    ISA_EFI_ByteCode            = 0xf041
 };
 
 class Architecture {

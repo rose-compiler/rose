@@ -89,7 +89,7 @@ class RVASizePair {
 struct PEFileHeader_disk {
     unsigned char e_magic[4];           /* magic number "PE\0\0" */
     uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
-    uint16_t    e_nobjects;             /* number of objects (segments) defined in the Object Table */
+    uint16_t    e_nobjects;             /* number of objects (sections) defined in the Object Table */
     uint32_t    e_time;                 /* time and date file was created or modified by the linker */
     uint32_t    e_coff_symtab;          /* offset to COFF symbol table */
     uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
