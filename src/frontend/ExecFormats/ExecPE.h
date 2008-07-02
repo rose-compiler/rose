@@ -9,7 +9,7 @@ namespace PE {
 
 /* Forwards */
 class COFFSymtab;
-class PEObjectTable;
+class PESectionTable;
 class PEImportHintName;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,7 +89,7 @@ class RVASizePair {
 struct PEFileHeader_disk {
     unsigned char e_magic[4];           /* magic number "PE\0\0" */
     uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
-    uint16_t    e_nobjects;             /* number of objects (sections) defined in the Object Table */
+    uint16_t    e_nsections;            /* number of sections defined in the Section Table */
     uint32_t    e_time;                 /* time and date file was created or modified by the linker */
     uint32_t    e_coff_symtab;          /* offset to COFF symbol table */
     uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
@@ -107,7 +107,7 @@ struct PE32OptHeader_disk {
     uint32_t    e_code_rva;             /* Address relative to image base for code section when memory mapped */
     uint32_t    e_data_rva;             /* Address relative to image base for data section */
     uint32_t    e_image_base;           /* Virtual base of the image (first byte of file, DOS header). Multiple of 64k. */
-    uint32_t    e_object_align;         /* Alignment of Objects in memory. Power of two 512<=x<=256M */
+    uint32_t    e_section_align;        /* Alignment of sections in memory. Power of two 512<=x<=256M */
     uint32_t    e_file_align;           /* Alignment factor (in bytes) for image pages */
     uint16_t    e_os_major;             /* OS version number required to run this image */
     uint16_t    e_os_minor;
@@ -116,8 +116,8 @@ struct PE32OptHeader_disk {
     uint16_t    e_subsys_major;         /* Subsystem version number */
     uint16_t    e_subsys_minor;
     uint32_t    e_reserved9;
-    uint32_t    e_image_size;           /* Virtual size (bytes) of the image inc. all headers; multiple of 'object_align' */
-    uint32_t    e_header_size;          /* Total header size (DOS Header + PE Header + Object table */
+    uint32_t    e_image_size;           /* Virtual size (bytes) of the image inc. all headers; multiple of 'section_align' */
+    uint32_t    e_header_size;          /* Total header size (DOS Header + PE Header + Section table */
     uint32_t    e_file_checksum;        /* Checksum for entire file; Set to zero by the linker */
     uint16_t    e_subsystem;            /* Unknown, Native, WindowsGUI, WindowsCharacter, OS/2 Character, POSIX Character */
     uint16_t    e_dll_flags;            /* Bit flags for library init/terminate per process or thread */
@@ -138,7 +138,7 @@ struct PE64OptHeader_disk {
     uint32_t    e_entrypoint_rva;
     uint32_t    e_code_rva;
     uint64_t    e_image_base;
-    uint32_t    e_object_align;
+    uint32_t    e_section_align;
     uint32_t    e_file_align;
     uint16_t    e_os_major;
     uint16_t    e_os_minor;
@@ -192,7 +192,7 @@ class PEFileHeader : public ExecHeader {
   public:
     PEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(PEFileHeader_disk)), /*extended in ctor()*/
-        object_table(NULL), coff_symtab(NULL)
+        section_table(NULL), coff_symtab(NULL)
         {ctor(f, offset);}
     virtual ~PEFileHeader() {}
     void add_rvasize_pairs();
@@ -200,18 +200,18 @@ class PEFileHeader : public ExecHeader {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */
-    PEObjectTable *get_object_table() {return object_table;}
-    void set_object_table(PEObjectTable *ot) {object_table=ot;}
+    PESectionTable *get_section_table() {return section_table;}
+    void set_section_table(PESectionTable *ot) {section_table=ot;}
     COFFSymtab *get_coff_symtab() {return coff_symtab;}
     void set_coff_symtab(COFFSymtab *st) {coff_symtab=st;}
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
-    unsigned    e_cpu_type, e_nobjects, e_time;
+    unsigned    e_cpu_type, e_nsections, e_time;
     addr_t      e_coff_symtab;
     unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_opt_magic;
     unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
     addr_t      e_image_base;
-    unsigned    e_object_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
+    unsigned    e_section_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
     unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
     unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
     unsigned    e_loader_flags, e_num_rvasize_pairs;
@@ -222,28 +222,28 @@ class PEFileHeader : public ExecHeader {
     void *encode(PEFileHeader_disk*);
     void *encode(PE32OptHeader_disk*);
     void *encode(PE64OptHeader_disk*);
-    PEObjectTable *object_table;
+    PESectionTable *section_table;
     COFFSymtab *coff_symtab;
 };
 
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Objects (segments) and table
+// PE Section Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* File format of an object table entry. All fields are little endian. Objects are ordered by RVA. */
-struct PEObjectTableEntry_disk {
+/* File format of a section table entry. All fields are little endian. Sections are ordered by RVA. */
+struct PESectionTableEntry_disk {
     char        name[8];                /* NUL-padded */
     uint32_t    virtual_size;           /* virtual memory size (bytes), >= physical_size and difference is zero filled */
-    uint32_t    rva;                    /* relative virtual address wrt Image Base; multiple of object_align; dense space */
+    uint32_t    rva;                    /* relative virtual address wrt Image Base; multiple of section_align; dense space */
     uint32_t    physical_size;          /* bytes of initialized data on disk; multiple of file_align & <= virtual_size */
     uint32_t    physical_offset;        /* location of initialized data on disk; multiple of file_align */
     uint32_t    reserved[3];
-    uint32_t    flags;                  /* ObjectFlags bits: code, data, caching, paging, shared, permissions, etc. */
+    uint32_t    flags;                  /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc. */
 } __attribute__((packed));
 
 /* These come from the windows PE documentation and http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
-enum PEObjectFlags {
+enum PESectionFlags {
     OF_CODE             = 0x00000020,   /* section contains code */
     OF_IDATA            = 0x00000040,   /* initialized data */
     OF_UDATA            = 0x00000080,   /* uninitialized data */
@@ -269,32 +269,32 @@ enum PEObjectFlags {
     OF_ALIGN_MASK       = 0x00f00000,   /* mask for alignment value */
     OF_NRELOC_OVFL      = 0x01000000,   /* section contains extended relocations */
     OF_DISCARDABLE      = 0x02000000,   /* can be discarded */
-    OF_NO_CACHE         = 0x04000000,   /* object must not be cached */
-    OF_NO_PAGING        = 0x08000000,   /* object is not pageable */
-    OF_SHARED           = 0x10000000,   /* object is shared */
+    OF_NO_CACHE         = 0x04000000,   /* section must not be cached */
+    OF_NO_PAGING        = 0x08000000,   /* section is not pageable */
+    OF_SHARED           = 0x10000000,   /* section is shared */
     OF_EXECUTABLE       = 0x20000000,   /* execute permission */
     OF_READABLE         = 0x40000000,   /* read permission */
     OF_WRITABLE         = 0x80000000,   /* write permission */
 };
 
-class PEObjectTableEntry {
+class PESectionTableEntry {
   public:
-    PEObjectTableEntry(const PEObjectTableEntry_disk *disk)
+    PESectionTableEntry(const PESectionTableEntry_disk *disk)
         {ctor(disk);}
-    virtual ~PEObjectTableEntry() {};
-    void *encode(PEObjectTableEntry_disk*);
+    virtual ~PESectionTableEntry() {};
+    void *encode(PESectionTableEntry_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     
-    /* These are the native-format versions of the same members described in the ObjectTableEntry_disk struct. */
+    /* These are the native-format versions of the same members described in the PESectionTableEntry_disk struct. */
     std::string name;
     addr_t      virtual_size, rva, physical_size, physical_offset;
     unsigned    reserved[3], flags;
 
   private:
-    void ctor(const PEObjectTableEntry_disk*);
+    void ctor(const PESectionTableEntry_disk*);
 };
 
-/* Non-synthesized PE sections (i.e., present in the object table) */
+/* Non-synthesized PE sections (i.e., present in the section table) */
 class PESection : public ExecSection {
   public:
     PESection(ExecFile *ef, addr_t offset, addr_t size)
@@ -305,21 +305,21 @@ class PESection : public ExecSection {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data */
-    PEObjectTableEntry *get_st_entry() {return st_entry;}
-    void set_st_entry(PEObjectTableEntry *e) {st_entry=e;}
+    PESectionTableEntry *get_st_entry() {return st_entry;}
+    void set_st_entry(PESectionTableEntry *e) {st_entry=e;}
 
   private:
-    PEObjectTableEntry    *st_entry;
+    PESectionTableEntry *st_entry;
 };
 
 /* The table entries are stored in the segments themselves. We can reconstruct the table by realizing that the segments each
  * live in their own section and the section IDs are generated from the table entry indices. */
-class PEObjectTable : public ExecSection {
+class PESectionTable : public ExecSection {
   public:
-    PEObjectTable(PEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nobjects*sizeof(PEObjectTableEntry_disk))
+    PESectionTable(PEFileHeader *fhdr)
+        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nsections*sizeof(PESectionTableEntry_disk))
         {ctor(fhdr);}
-    virtual ~PEObjectTable() {}
+    virtual ~PESectionTable() {}
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:

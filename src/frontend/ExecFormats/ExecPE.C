@@ -175,7 +175,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     /* Decode file header */
     const PEFileHeader_disk *fh = (const PEFileHeader_disk*)content(0, sizeof(PEFileHeader_disk));
     e_cpu_type           = le_to_host(fh->e_cpu_type);
-    e_nobjects           = le_to_host(fh->e_nobjects);
+    e_nsections          = le_to_host(fh->e_nsections);
     e_time               = le_to_host(fh->e_time);
     e_coff_symtab        = le_to_host(fh->e_coff_symtab);
     e_coff_nsyms         = le_to_host(fh->e_coff_nsyms);
@@ -201,7 +201,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         e_code_rva           = le_to_host(oh->e_code_rva);
         e_data_rva           = le_to_host(oh->e_data_rva);
         e_image_base         = le_to_host(oh->e_image_base);
-        e_object_align       = le_to_host(oh->e_object_align);
+        e_section_align      = le_to_host(oh->e_section_align);
         e_file_align         = le_to_host(oh->e_file_align);
         e_os_major           = le_to_host(oh->e_os_major);
         e_os_minor           = le_to_host(oh->e_os_minor);
@@ -236,7 +236,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         e_code_rva           = le_to_host(oh->e_code_rva);
         //e_data_rva         = le_to_host(oh->e_data_rva); /* not in PE32+ */
         e_image_base         = le_to_host(oh->e_image_base);
-        e_object_align       = le_to_host(oh->e_object_align);
+        e_section_align      = le_to_host(oh->e_section_align);
         e_file_align         = le_to_host(oh->e_file_align);
         e_os_major           = le_to_host(oh->e_os_major);
         e_os_minor           = le_to_host(oh->e_os_minor);
@@ -353,7 +353,7 @@ PEFileHeader::encode(PEFileHeader_disk *disk)
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
     host_to_le(e_cpu_type,           &(disk->e_cpu_type));
-    host_to_le(e_nobjects,           &(disk->e_nobjects));
+    host_to_le(e_nsections,          &(disk->e_nsections));
     host_to_le(e_time,               &(disk->e_time));
     host_to_le(e_coff_symtab,        &(disk->e_coff_symtab));
     host_to_le(e_coff_nsyms,         &(disk->e_coff_nsyms));
@@ -373,7 +373,7 @@ PEFileHeader::encode(PE32OptHeader_disk *disk)
     host_to_le(e_code_rva,           &(disk->e_code_rva));
     host_to_le(e_data_rva,           &(disk->e_data_rva));
     host_to_le(e_image_base,         &(disk->e_image_base));
-    host_to_le(e_object_align,       &(disk->e_object_align));
+    host_to_le(e_section_align,      &(disk->e_section_align));
     host_to_le(e_file_align,         &(disk->e_file_align));
     host_to_le(e_os_major,           &(disk->e_os_major));
     host_to_le(e_os_minor,           &(disk->e_os_minor));
@@ -407,7 +407,7 @@ PEFileHeader::encode(PE64OptHeader_disk *disk)
     host_to_le(e_code_rva,           &(disk->e_code_rva));
     //host_to_le(e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
     host_to_le(e_image_base,         &(disk->e_image_base));
-    host_to_le(e_object_align,       &(disk->e_object_align));
+    host_to_le(e_section_align,      &(disk->e_section_align));
     host_to_le(e_file_align,         &(disk->e_file_align));
     host_to_le(e_os_major,           &(disk->e_os_major));
     host_to_le(e_os_minor,           &(disk->e_os_minor));
@@ -483,11 +483,11 @@ PEFileHeader::unparse(FILE *f)
         ROSE_ASSERT(1==nwrite);
     }
 
-    /* The object table and all the non-synthesized sections */
-    if (object_table)
-        object_table->unparse(f);
+    /* The section table and all the non-synthesized sections */
+    if (section_table)
+        section_table->unparse(f);
 
-    /* Sections that aren't in the object table */
+    /* Sections that aren't in the section table */
     if (coff_symtab)
         coff_symtab->unparse(f);
 }
@@ -510,7 +510,7 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
     ExecHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_cpu_type",          e_cpu_type);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nobjects",          e_nobjects);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nsections",         e_nsections);
     fprintf(f, "%s%-*s = %u (%s)\n",       p, w, "e_time",              e_time, time_str);
     fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_coff_symtab",       e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_coff_nsyms",        e_coff_nsyms);
@@ -532,7 +532,7 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_code_rva",          e_code_rva);
     fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_data_rva",          e_data_rva);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "e_image_base",        e_image_base);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_object_align",      e_object_align);
+    fprintf(f, "%s%-*s = %u\n",            p, w, "e_section_align",     e_section_align);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_file_align",        e_file_align);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_major",          e_os_major);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_minor",          e_os_minor);
@@ -558,19 +558,19 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",  p, w, "e_rva",  rvasize_pairs[i].e_rva);
         fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "e_size", rvasize_pairs[i].e_size);
     }
-    if (object_table) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "object_table", object_table->get_id(), object_table->get_name().c_str());
+    if (section_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", section_table->get_id(), section_table->get_name().c_str());
     } else {
-        fprintf(f, "%s%-*s = none\n", p, w, "object_table");
+        fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// PE Object Table
+// PE Section Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-PEObjectTableEntry::ctor(const PEObjectTableEntry_disk *disk)
+PESectionTableEntry::ctor(const PESectionTableEntry_disk *disk)
 {
     char name[9];
     strncpy(name, disk->name, 8);
@@ -588,9 +588,9 @@ PEObjectTableEntry::ctor(const PEObjectTableEntry_disk *disk)
     flags           = le_to_host(disk->flags);
 }
 
-/* Encodes an object table entry back into disk format. */
+/* Encodes a section table entry back into disk format. */
 void *
-PEObjectTableEntry::encode(PEObjectTableEntry_disk *disk)
+PESectionTableEntry::encode(PESectionTableEntry_disk *disk)
 {
     memset(disk->name, 0, sizeof(disk->name));
     memcpy(disk->name, name.c_str(), std::min(sizeof(name), name.size()));
@@ -607,13 +607,13 @@ PEObjectTableEntry::encode(PEObjectTableEntry_disk *disk)
 
 /* Prints some debugging info */
 void
-PEObjectTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+PESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEObjectTableEntry[%zd].", prefix, idx);
+        sprintf(p, "%sPESectionTableEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEObjectTableEntry.", prefix);
+        sprintf(p, "%sPESectionTableEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -644,20 +644,20 @@ PESection::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-PEObjectTable::ctor(PEFileHeader *fhdr)
+PESectionTable::ctor(PEFileHeader *fhdr)
 {
     set_synthesized(true);
-    set_name("PE Object Table");
+    set_name("PE Section Table");
     set_purpose(SP_HEADER);
     set_header(fhdr);
     
-    const size_t entsize = sizeof(PEObjectTableEntry_disk);
-    for (size_t i=0; i<fhdr->e_nobjects; i++) {
-        /* Parse the object table entry */
-        const PEObjectTableEntry_disk *disk = (const PEObjectTableEntry_disk*)content(i*entsize, entsize);
-        PEObjectTableEntry *entry = new PEObjectTableEntry(disk);
+    const size_t entsize = sizeof(PESectionTableEntry_disk);
+    for (size_t i=0; i<fhdr->e_nsections; i++) {
+        /* Parse the section table entry */
+        const PESectionTableEntry_disk *disk = (const PESectionTableEntry_disk*)content(i*entsize, entsize);
+        PESectionTableEntry *entry = new PESectionTableEntry(disk);
 
-        /* The section (object) */
+        /* The section */
         PESection *section=NULL;
         if (0==entry->name.compare(".idata")) {
             section = new PEImportSection(fhdr, entry->physical_offset, entry->physical_size, entry->rva);
@@ -680,9 +680,9 @@ PEObjectTable::ctor(PEFileHeader *fhdr)
     }
 }
 
-/* Writes the object table back to disk along with each of the objects. */
+/* Writes the section table back to disk along with each of the sections. */
 void
-PEObjectTable::unparse(FILE *f)
+PESectionTable::unparse(FILE *f)
 {
     ExecFile *ef = get_file();
     PEFileHeader *fhdr = dynamic_cast<PEFileHeader*>(get_header());
@@ -696,8 +696,8 @@ PEObjectTable::unparse(FILE *f)
             /* Write the table entry */
             ROSE_ASSERT(section->get_id()>0); /*ID's are 1-origin in PE*/
             size_t slot = section->get_id()-1;
-            PEObjectTableEntry *shdr = section->get_st_entry();
-            PEObjectTableEntry_disk disk;
+            PESectionTableEntry *shdr = section->get_st_entry();
+            PESectionTableEntry_disk disk;
             shdr->encode(&disk);
             addr_t entry_offset = offset + slot * sizeof disk;
             int status = fseek(f, entry_offset, SEEK_SET);
@@ -713,13 +713,13 @@ PEObjectTable::unparse(FILE *f)
 
 /* Prints some debugging info */
 void
-PEObjectTable::dump(FILE *f, const char *prefix, ssize_t idx)
+PESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sPEObjectTable[%zd].", prefix, idx);
+        sprintf(p, "%sPESectionTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sPEObjectTable.", prefix);
+        sprintf(p, "%sPESectionTable.", prefix);
     }
     ExecSection::dump(f, p, -1);
 }
@@ -859,7 +859,7 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
         addr_t dll_name_offset = idir->dll_name_rva - mapped_rva;
         std::string dll_name = content_str(dll_name_offset);
 
-        /* Create the DLL object */
+        /* Create the DLL objects */
         PEDLL *dll = new PEDLL(dll_name);
         dll->set_idir(idir);
 
@@ -1025,8 +1025,8 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
     st_storage_class   = le_to_host(disk->st_storage_class);
     st_num_aux_entries = le_to_host(disk->st_num_aux_entries);
 
-    /* Bind to section number. We can do this now because we've already parsed the PE Object Table */
-    ROSE_ASSERT(fhdr->get_object_table()!=NULL);
+    /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
+    ROSE_ASSERT(fhdr->get_section_table()!=NULL);
     if (st_section_num>0) {
         bound = fhdr->get_file()->get_section_by_id(st_section_num);
         ROSE_ASSERT(bound!=NULL);
@@ -1141,7 +1141,7 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
             unsigned nrel         = le_to_host(*(const uint16_t*)(aux_data+4)); /*number of relocations*/
             unsigned nln_ents     = le_to_host(*(const uint16_t*)(aux_data+6)); /*number of line number entries */
             unsigned cksum        = le_to_host(*(const uint32_t*)(aux_data+8));
-            unsigned sect_id      = le_to_host(*(const uint16_t*)(aux_data+12)); /*1-base index into object table*/
+            unsigned sect_id      = le_to_host(*(const uint16_t*)(aux_data+12)); /*1-base index into section table*/
             unsigned comdat       = aux_data[14]; /*comdat selection number if section is a COMDAT section*/
             unsigned res1         = aux_data[15];
             unsigned res2         = le_to_host(*(const uint16_t*)(aux_data+16));
@@ -1436,7 +1436,7 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
      pe_header->add_rvasize_pairs();
 
   /* Construct the segments and their sections */
-     new PEObjectTable(pe_header);
+     new PESectionTable(pe_header);
 
   /* Parse the COFF symbol table */
      if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms)
@@ -1476,8 +1476,8 @@ parse(ExecFile *ef)
     ROSE_ASSERT(pe_header->e_num_rvasize_pairs < 1000); /* just a sanity check before we allocate memory */
     pe_header->add_rvasize_pairs();
 
-    /* Construct the object table and its objects (non-synthesized sections) */
-    pe_header->set_object_table(new PEObjectTable(pe_header));
+    /* Construct the section table and its sections (non-synthesized sections) */
+    pe_header->set_section_table(new PESectionTable(pe_header));
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms) {
