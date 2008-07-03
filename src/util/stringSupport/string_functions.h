@@ -253,16 +253,16 @@ namespace StringUtility
                const std::string getLibraryName() const;
            };
 
-       	   // Given a fileName and a vector of appPaths that are part
-       	   // of of some application's source code, return a
+       	   // Given a fileName and an appPath that is a path to
+       	   // some application's source code directory, return a
        	   // FileNameClassification indicating whether the fileName
        	   // is part of the source code or some system library
            FileNameClassification classifyFileName(const std::string& fileName,
-                                                   const std::vector<std::string>& appPaths);
+                                                   const std::string& appPath);
 
            // Not for public use, allows override of OS rules, for testing only
            FileNameClassification classifyFileName(const std::string& fileName,
-                                                   const std::vector<std::string>& appPaths,
+                                                   const std::string& appPath,
                                                    OSType os);
 
    };
