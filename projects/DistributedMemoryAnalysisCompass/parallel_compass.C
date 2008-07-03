@@ -1,5 +1,6 @@
 #include "parallel_compass.h"
 
+
 using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
@@ -415,9 +416,10 @@ int main(int argc, char **argv)
 	    " threads!! processes = " << processes << " ------------" << std::endl;
 #endif 
 
-
+#define DEFUSE
+#ifdef DEFUSE
   /* ---------------------------------------------------------- 
-   * MPI code 
+   * MPI code for DEFUSE
    * ----------------------------------------------------------*/
   // --------------------------------------------------------
   // (tps, 07/24/08): added support for dataflow analysis
@@ -438,7 +440,7 @@ int main(int argc, char **argv)
     int start = funcs.size()/processes*p;
     int end = funcs.size()/processes*(p+1);
     if (my_rank==p) {
-    cerr << my_rank <<": start: "<<start<<"  end: " << end<<endl;
+      //    cerr << my_rank <<": start: "<<start<<"  end: " << end<<endl;
       for (int i=start; i< end; ++i) {
 	//      for (Rose_STL_Container<SgNode *>::iterator i = 
 	//     funcs.begin(); i != funcs.end(); i++) {
@@ -566,15 +568,16 @@ int main(int argc, char **argv)
 
   if (my_rank==0) {
     cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << endl;
-    cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << endl;
+    cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << endl << endl;
     //((DefUseAnalysis*)defuse)->printDefMap();
   }
   //#endif
+#endif
 
 
 #if 0
   /* ---------------------------------------------------------- 
-   * OpenMP code 
+   * OpenMP code for defuse -- not scalable but good for up to 8 processors
    * ----------------------------------------------------------*/
   // we have to run the def-use analysis first
   // as some compass checkers rely on it
@@ -602,6 +605,8 @@ int main(int argc, char **argv)
     std::cerr << " time for defuse : " << my_time_node << endl;
   }
 #endif
+
+
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
@@ -688,6 +693,7 @@ int main(int argc, char **argv)
 
 	// OPENMP START-------------------------------------------------------
 	int i=-1;
+	gettime(begin_time_defuse);
 #pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
 	for (i=min; i<max;i++) { 
 	  gettime(begin_time_node);
@@ -703,8 +709,10 @@ int main(int argc, char **argv)
 	    max_time=my_time_node;
 	    max_time_nr = i;
 	  }
-	  total_node += my_time_node;
 	}
+	gettime(end_time_defuse);
+	total_node = timeDifference(end_time_defuse, begin_time_defuse);
+
 
 	// OPENMP END -------------------------------------------------------
 
@@ -758,7 +766,9 @@ int main(int argc, char **argv)
   double memusage = memusage_e-memusage_b;
   gettime(end_time);
   double my_time = timeDifference(end_time, begin_time);
-  std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
+  double commtime = my_time-calc_time_processor;
+  std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << 
+    "    CalcTime: " << calc_time_processor << "   CommTime: " << commtime << std::endl;
 
   unsigned int *output_values = new unsigned int[outputs.size()];
   double *times = new double[processes];
@@ -770,7 +780,7 @@ int main(int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD);
 
   communicateResult(outputs, times, memory, output_values, my_time, memusage, maxtime_nr, max_time_nr, maxtime_val, max_time,
-		    calctimes, calc_time_processor, commtimes, (my_time-calc_time_processor));
+		    calctimes, calc_time_processor, commtimes, commtime);
   double my_time_0;
   if (my_rank==0) {
     gettime(end_time_0);
