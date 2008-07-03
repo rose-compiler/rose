@@ -262,16 +262,16 @@ namespace StringUtility
     // file comes from and what library it might be a part of
     FileNameClassification
     classifyFileName(const string& fileName,
-                     const vector<string>& appPaths)
+                     const string& appPath)
     {
-        return classifyFileName(fileName, appPaths, getOSType());
+        return classifyFileName(fileName, appPath, getOSType());
     }
 
 	// Internal function to above public interface, this version
 	// is exposed just for testing purposes
     FileNameClassification
     classifyFileName(const string& fileName,
-                     const vector<string>& appPaths, OSType os)
+                     const string& appPath, OSType os)
     {
         // Consider all non-absolute paths to be application code
         if (os == OS_TYPE_WINDOWS)
@@ -295,13 +295,10 @@ namespace StringUtility
 
         // If this is anywhere in the home dir or whitelist
         // then return that it's part of the application/user code
-        BOOST_FOREACH(const string &dir, appPaths)
+        if (startsWith(fileName, appPath))
         {
-            if (startsWith(fileName, dir))
-            {
-                return FileNameClassification(FILENAME_LOCATION_USER,
-                                              FILENAME_LIBRARY_USER);
-            }
+            return FileNameClassification(FILENAME_LOCATION_USER,
+                                          FILENAME_LIBRARY_USER);
         }
 
         if (os == OS_TYPE_LINUX)
