@@ -5334,14 +5334,9 @@ class ConditionalExpGenerator: public StatementGenerator
       }
     #endif
 
-    // A variable declaration could be built without known scope information 
-    // during bottom-up construction TODO: possible conflicting with copied vardecl
-    if (isSgVariableDeclaration(stmt)) 
-      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
-     
-    // fix symbol table,parent, scope pointers for a struct declaration
-    if (isStructDeclaration(stmt))
-      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+    //catch-all for statement fixup 
+   // Must fix it before insert it into the scope, 
+    fixStatements(stmt,scope);
 
     //TODO: try lowlevel rewrite mechanism to handle preprocessing info.
     //several cases:
@@ -5356,23 +5351,6 @@ class ConditionalExpGenerator: public StatementGenerator
     //scope->append_statement (stmt);
     scope->insertStatementInScope(stmt,false);
     stmt->set_parent(scope); // needed?
-   //only meaningful on IR statements that store the scope explicitly
-   switch (stmt->variantT())
-   {
-     case V_SgEnumDeclaration: 
-     case V_SgTemplateDeclaration:
-     case V_SgTypedefDeclaration:
-     case V_SgClassDeclaration:
-     case V_SgFunctionDeclaration:
-     case V_SgLabelStatement:
-     {
-        stmt->set_scope(scope);
-       break;
-     }
-     default:
-     break;
-   } // switch
-
   }
 
   void appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -5390,32 +5368,9 @@ class ConditionalExpGenerator: public StatementGenerator
 
    // Must fix it before insert it into the scope, 
    // otherwise assertions in insertStatementInScope() would fail
-  if (isSgVariableDeclaration(stmt))
-      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope); 
-
-    // fix symbol table,parent, scope pointers for a struct declaration
-   if (isStructDeclaration(stmt))
-      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+   fixStatements(stmt,scope); 
 
    scope->insertStatementInScope(stmt,true);
-
-   //only meaningful on IR statements that store the scope explicitly
-   switch (stmt->variantT())
-   {
-     case V_SgEnumDeclaration: 
-     case V_SgTemplateDeclaration:
-     case V_SgTypedefDeclaration:
-     case V_SgClassDeclaration:
-     case V_SgFunctionDeclaration:
-     case V_SgLabelStatement:
-     {
-        stmt->set_scope(scope);
-       break;
-     }
-     default:
-     break;
-   } // switch
-
   } //prependStatement()
 
   void prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -5426,7 +5381,7 @@ class ConditionalExpGenerator: public StatementGenerator
 
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
-  // insert 
+  // insert  SageInterface::insertStatement()
   void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
   {
 
@@ -5515,19 +5470,9 @@ class ConditionalExpGenerator: public StatementGenerator
   #endif
 
     newStmt->set_parent(targetStmt->get_parent());
-    if (isSgStatement(newStmt)==NULL) // not all SgNode can have explicit scope
-      newStmt->set_scope(scope);
-
-    // bottom up construction of variable declaration 
-    if (isSgVariableDeclaration(newStmt))
-      fixVariableDeclaration(isSgVariableDeclaration(newStmt), scope); 
-
-    // fix symbol table,parent, scope pointers for a struct declaration
-   if (isStructDeclaration(newStmt))
-      fixStructDeclaration(isSgClassDeclaration(newStmt),scope);
+    fixStatements(newStmt,scope);
 
     isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
-
   }
 
   void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
@@ -5774,6 +5719,60 @@ class ConditionalExpGenerator: public StatementGenerator
     } // end for
     return counter;
   }
+
+
+//! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
+/*
+ * label statement has special scope: the closest function definition , not SgBasicBlock or others!
+ */
+void fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
+{
+   SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
+   ROSE_ASSERT(label_stmt); 
+   SgName name = label_stmt->get_label();
+
+   SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
+   if (label_scope) //Should we assert this instead? No for bottom up AST building
+    { 
+     label_stmt->set_scope(label_scope);
+     SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
+     if (!lsymbol)
+      { 
+        lsymbol= new SgLabelSymbol(label_stmt);
+        ROSE_ASSERT(lsymbol);
+        label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
+      }
+    }// end label_scope   
+} // fixLabelStatement()
+
+//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
+void fixStatements(SgStatement* stmt, SgScopeStatement* scope)
+{ 
+  // fix symbol table
+  if (isSgVariableDeclaration(stmt))
+      fixVariableDeclaration(isSgVariableDeclaration(stmt), scope);
+  if (isStructDeclaration(stmt))
+      fixStructDeclaration(isSgClassDeclaration(stmt),scope);
+  if (isSgLabelStatement(stmt)) 
+      fixLabelStatement(isSgLabelStatement(stmt),scope);      
+
+  // fix scope pointer for statements explicitly storing scope pointer 
+  switch (stmt->variantT())
+   {
+     case V_SgEnumDeclaration: 
+     case V_SgTemplateDeclaration:
+     case V_SgTypedefDeclaration:
+     case V_SgClassDeclaration:
+     case V_SgFunctionDeclaration:
+  //   case V_SgLabelStatement: 
+  //   Label statement' scope is special, handled in fixLabelStatement()
+      stmt->set_scope(scope);
+      break;
+    default:
+      break;
+   } // switch
+  
+} // fixStatements()
 
 PreprocessingInfo* attachComment(
            SgLocatedNode* target, const string& content,

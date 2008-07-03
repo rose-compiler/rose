@@ -778,7 +778,9 @@ void removeAllOriginalExpressionTrees(SgNode* top);
 //------------------------------------------------------------------------
 //@{
 /*! @name AST repair, fixup, and postprocessing.
-  \brief 
+  \brief Mostly used when some AST pieces are built without knowing their target scope/parent,
+   especially during bottom-up construction of AST. A set of utility functions are provided to
+   patch up scope, parent, symbol for them when the target scope/parent become know.
 */
 //! Connect variable reference to the right variable symbols when feasible, return the number of references being fixed.
 /*! In AST translation, it is possible to build a variable reference before the variable
@@ -795,9 +797,14 @@ In this case, we have to patch up symbol table, scope and parent information whe
 */
 void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
-//! fixup symobls, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
+//! fixup symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
 void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 
+//! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
+void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+
+//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
+void fixStatements(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
 //------------------------------------------------------------------------
