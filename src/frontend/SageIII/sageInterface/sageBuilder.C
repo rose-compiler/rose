@@ -1333,24 +1333,28 @@ SgLabelStatement * SageBuilder::buildLabelStatement(const SgName& name,  SgState
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
-  ROSE_ASSERT(scope != NULL);
+ //  ROSE_ASSERT(scope != NULL); // We support bottom up building of label statements now
+ 
    // should including current scope when searching for the function definition
    // since users can only pass FunctionDefinition when the function body is not yet attached
-  SgFunctionDefinition * label_scope = getEnclosingFunctionDefinition(scope,true);
-  ROSE_ASSERT (label_scope);
   SgLabelStatement * labelstmt = new SgLabelStatement(name,stmt);
   ROSE_ASSERT(labelstmt);
   setOneSourcePositionForTransformation(labelstmt);
   
  if(stmt!=NULL) 
    stmt->set_parent(labelstmt);
-  
+ #if 0  // moved to fixLabelStatement()
+  SgFunctionDefinition * label_scope = getEnclosingFunctionDefinition(scope,true);
+  ROSE_ASSERT (label_scope);
   labelstmt->set_scope(label_scope);
   SgLabelSymbol* lsymbol= new SgLabelSymbol(labelstmt);
   ROSE_ASSERT(lsymbol); 
   // TODO should we prevent duplicated insertion ?
   label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
+ #endif 
 
+  if (scope)
+    fixLabelStatement(labelstmt,scope);
   // we don't want to set parent here yet
   // delay it until append_statement() or alike
   return labelstmt;
