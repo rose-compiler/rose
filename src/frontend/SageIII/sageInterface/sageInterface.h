@@ -454,15 +454,18 @@ PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & cont
 
 //------------------------------------------------------------------------
 //@{
-/*! @name Data type
+/*! @name Data types
   \brief
 */
 
 // from src/midend/astInlining/typeTraits.h
 // src/midend/astUtil/astInterface/AstInterface.h
 
-//! get the right bool type according to C or C++ language input
+//! Get the right bool type according to C or C++ language input
 SgType* getBoolType(SgNode* n);
+
+//!Get the data type of the first initialized name of a declaration statement
+SgType* getFirstVarType(SgVariableDeclaration* decl);
 
 //! Is a type default constructible?  This may not quite work properly.
 bool isDefaultConstructible(SgType* type);

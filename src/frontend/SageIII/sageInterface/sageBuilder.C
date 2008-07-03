@@ -256,6 +256,25 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList 
 
   return funcType;
 }
+ //----------------------------------------------------
+ //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type.
+ SgType * SageBuilder::buildOpaqueType(std::string const name, SgScopeStatement * scope)
+ {
+   ROSE_ASSERT(scope);
+   SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(name,buildIntType(),NULL, NULL, NULL);
+   ROSE_ASSERT(type_decl);
+   type_decl->set_firstNondefiningDeclaration (type_decl);
+   setOneSourcePositionForTransformation(type_decl);
+   prependStatement(type_decl,scope);
+   // Hide it from unparser
+   Sg_File_Info* file_info = type_decl->get_file_info();
+   file_info->unsetOutputInCodeGeneration ();
+    
+   SgTypedefType* result = new SgTypedefType(type_decl);
+   ROSE_ASSERT(result);
+   return result;
+ }
+
 
 //----------------- function type------------
 // same function declarations (defining or nondefining) should share the same function type!
