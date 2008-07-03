@@ -230,20 +230,26 @@ namespace StringUtility
            private:
                FileNameLocation location;
                FileNameLibrary library;
+               int distance;
 
            public:
                FileNameClassification(FileNameLocation loc,
-                                      FileNameLibrary lib) : location(loc),
-                                                             library(lib)
+                                      FileNameLibrary lib,
+                                      int dist) : location(loc),
+                                                  library(lib),
+                                                  distance(dist)
                    {}
                FileNameClassification() : location(FILENAME_LOCATION_UNKNOWN),
-                                          library(FILENAME_LIBRARY_UNKNOWN)
+                                          library(FILENAME_LIBRARY_UNKNOWN),
+                                          distance(0)
                    {}
 
                FileNameLocation getLocation() const
                    { return location; }
                FileNameLibrary getLibrary() const
                    { return library; }
+               int getDistanceFromSourceDirectory() const
+                   { return distance; }
 
                bool isUserCode() const
                    { return location == FILENAME_LOCATION_USER; }

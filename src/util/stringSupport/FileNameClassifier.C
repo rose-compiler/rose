@@ -1,7 +1,6 @@
 #include "string_functions.h"
 
 #include <sys/utsname.h>
-#include <boost/foreach.hpp>
 
 using namespace std;
 
@@ -25,6 +24,30 @@ namespace StringUtility
             int result = str.compare(str.length() - substr.length(),
                                      substr.length(), substr);
             return (result == 0);
+        }
+
+        int
+        directoryDistance(const string& left, const string& right)
+        {
+            vector<string> lvec;
+            splitStringIntoStrings(left, '/', lvec);
+            vector<string> rvec;
+            splitStringIntoStrings(right, '/', rvec);
+
+            assert(!lvec.empty());
+            assert(!rvec.empty());
+
+            lvec.erase(lvec.end());
+            rvec.erase(rvec.end());
+
+            vector<string>::iterator l = lvec.begin();
+            vector<string>::iterator r = rvec.begin();
+            // empty body, this is just to advance the iters as long
+            // as elts match
+            for (; l != lvec.end() && r != rvec.end() && *l == *r; l++, r++)
+                ;
+
+            return distance(l, lvec.end()) + distance(r, rvec.end());
         }
 
         // TODO can we static initialize stl structures?
@@ -271,25 +294,39 @@ namespace StringUtility
 	// is exposed just for testing purposes
     FileNameClassification
     classifyFileName(const string& fileName,
-                     const string& appPath, OSType os)
+                     const string& appPathConst, OSType os)
     {
+        string appPath = appPathConst;
+
         // Consider all non-absolute paths to be application code
         if (os == OS_TYPE_WINDOWS)
         {
+            // Ensure all appPaths are given with a trailing slash since
+            // they represent directories
+            if (appPath.empty() || *(appPath.end() - 1) != '\\')
+                appPath += '\\';
+
             // Tricky for Windows, make sure it doesn't just start
             // with a drive letter
             if (fileName.length() < 2 || fileName[1] != ':')
             {
                 return FileNameClassification(FILENAME_LOCATION_USER,
-                                              FILENAME_LIBRARY_USER);
+                                              FILENAME_LIBRARY_USER,
+                                              0);
             }
         }
         else
         {
+            // Ensure all appPaths are given with a trailing slash since
+            // they represent directories
+            if (appPath.empty() || *(appPath.end() - 1) != '/')
+                appPath += '/';
+
             if (!startsWith(fileName, "/"))
             {
                 return FileNameClassification(FILENAME_LOCATION_USER,
-                                              FILENAME_LIBRARY_USER);
+                                              FILENAME_LIBRARY_USER,
+                                              0);
             }
         }
 
@@ -298,7 +335,8 @@ namespace StringUtility
         if (startsWith(fileName, appPath))
         {
             return FileNameClassification(FILENAME_LOCATION_USER,
-                                          FILENAME_LIBRARY_USER);
+                                          FILENAME_LIBRARY_USER,
+                                          0);
         }
 
         if (os == OS_TYPE_LINUX)
@@ -307,7 +345,9 @@ namespace StringUtility
                 startsWith(fileName, "/opt"))
             {
                 return FileNameClassification(FILENAME_LOCATION_LIBRARY,
-                                              classifyLibrary(fileName));
+                                              classifyLibrary(fileName),
+                                              directoryDistance(fileName,
+                                                                appPath));
             }
         }
         else if (os == OS_TYPE_OSX)
@@ -317,19 +357,26 @@ namespace StringUtility
                 startsWith(fileName, "/System"))
             {
                 return FileNameClassification(FILENAME_LOCATION_LIBRARY,
-                                              classifyLibrary(fileName));
+                                              classifyLibrary(fileName),
+                                              directoryDistance(fileName,
+                                                                appPath));
             }
         }
         else if (os == OS_TYPE_WINDOWS)
         {
+            // TODO Need to convert Windows fileName and appPath to be
+            // UNIX style to run directoryDistance on it
             if (startsWith(fileName, "C:\\Program Files"))
             {
                 return FileNameClassification(FILENAME_LOCATION_LIBRARY,
-                                              classifyLibrary(fileName));
+                                              classifyLibrary(fileName),
+                                              directoryDistance(fileName,
+                                                                appPath));
             }
         }
         return FileNameClassification(FILENAME_LOCATION_UNKNOWN,
-                                      FILENAME_LIBRARY_UNKNOWN);
+                                      FILENAME_LIBRARY_UNKNOWN,
+                                      directoryDistance(fileName, appPath));
     }
 
     // Possible return values for FileNameClassification::getLibraryName
