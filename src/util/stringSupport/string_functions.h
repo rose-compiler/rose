@@ -212,44 +212,58 @@ namespace StringUtility
            // Populate homeDir from $HOME environment var
            void homeDir(std::string& homeDir);
 
-           enum FileNameLoc { FILENAME_LOC_UNKNOWN, // We don't know if it's user or system
-                              FILENAME_LOC_USER,    // It is a user (app) file
-                              FILENAME_LOC_LIB };   // It is a system lib
+           enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, // We don't know if it's user or system
+                                   FILENAME_LOCATION_USER,    // It is a user (app) file
+                                   FILENAME_LOCATION_LIBRARY };   // It is a system lib
            
-           enum FileNameLib { FILENAME_LIB_UNKNOWN, // We don't know which lib it is in
-                              FILENAME_LIB_USER,    // It isn't a lib, it's user code
-                              FILENAME_LIB_C,       // libc
-                              FILENAME_LIB_STDCXX,  // libstdc++
-                              FILENAME_LIB_LINUX,   // linux header
-                              FILENAME_LIB_GCC,     // gcc header file
-                              FILENAME_LIB_BOOST,   // boost
-                              FILENAME_LIB_ROSE };  // rose
+           enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN, // We don't know which lib it is in
+                                  FILENAME_LIBRARY_USER,    // It isn't a lib, it's user code
+                                  FILENAME_LIBRARY_C,       // libc
+                                  FILENAME_LIBRARY_STDCXX,  // libstdc++
+                                  FILENAME_LIBRARY_LINUX,   // linux header
+                                  FILENAME_LIBRARY_GCC,     // gcc header file
+                                  FILENAME_LIBRARY_BOOST,   // boost
+                                  FILENAME_LIBRARY_ROSE };  // rose
 
-           class FileNameInfo
+           class FileNameClassification
            {
+           private:
+               FileNameLocation location;
+               FileNameLibrary library;
+
            public:
-               FileNameLoc location;
-               FileNameLib library;
+               FileNameClassification(FileNameLocation loc,
+                                      FileNameLibrary lib) : location(loc),
+                                                             library(lib)
+                   {}
+               FileNameClassification() : location(FILENAME_LOCATION_UNKNOWN),
+                                          library(FILENAME_LIBRARY_UNKNOWN)
+                   {}
+
+               FileNameLocation getLocation() const
+                   { return location; }
+               FileNameLibrary getLibrary() const
+                   { return library; }
+
                bool isUserCode() const
-                   { return location == FILENAME_LOC_USER; }
+                   { return location == FILENAME_LOCATION_USER; }
                bool isLibraryCode() const
-                   { return location == FILENAME_LOC_LIB; }
+                   { return location == FILENAME_LOCATION_LIBRARY; }
+
                const std::string getLibraryName() const;
            };
 
-       	   // Given a fileName and a vector of appPaths that are part of
-       	   // of some application's source code, populate a FileNameInfo
-       	   // indicating whether the fileName is part of the source code
-		   // or some system library
-           void classifyFileName(const std::string& fileName,
-                                 FileNameInfo& result,
-                                 const std::vector<std::string>& appPaths);
+       	   // Given a fileName and a vector of appPaths that are part
+       	   // of of some application's source code, return a
+       	   // FileNameClassification indicating whether the fileName
+       	   // is part of the source code or some system library
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::vector<std::string>& appPaths);
 
            // Not for public use, allows override of OS rules, for testing only
-           void classifyFileName(const std::string& fileName,
-                                 FileNameInfo& result,
-                                 const std::vector<std::string>& appPaths,
-                                 OSType os);
+           FileNameClassification classifyFileName(const std::string& fileName,
+                                                   const std::vector<std::string>& appPaths,
+                                                   OSType os);
 
    };
 

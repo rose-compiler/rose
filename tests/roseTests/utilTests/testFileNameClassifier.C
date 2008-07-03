@@ -9,59 +9,64 @@ using namespace StringUtility;
 int
 main(int argc, char** argv)
 {
-    FileNameInfo r;
+    FileNameClassification classification;
 
-    vector<string> a;
+    vector<string> applicationPaths;
     string home;
     
     // One would generally populate home here, but we fix the value
     // to make sure these tests are deterministic on across machines
     // homeDir(home);
     home = "/home/stutsman1";
-    a.push_back(home);
+    applicationPaths.push_back(home);
 
     string slashes = "/////";
 
-    classifyFileName("/usr/include/stdio.h", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_C);
-    ROSE_ASSERT(r.getLibraryName() == "c");
+    classification = classifyFileName("/usr/include/stdio.h",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_C);
+    ROSE_ASSERT(classification.getLibraryName() == "c");
 
-    classifyFileName(home + "/include/stdio.h", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_USER);
-    ROSE_ASSERT(r.library == FILENAME_LIB_USER);
+    classification = classifyFileName(home + "/include/stdio.h",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
 
     // TODO leading slashes are legal UNIX paths, but its doubtful
     // that the compiler will generate such paths anyways so
     // perhaps this doesn't matter
-    classifyFileName(slashes + home + "/include/stdio.h", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_UNKNOWN);
-    ROSE_ASSERT(r.library == FILENAME_LIB_UNKNOWN);
-    ROSE_ASSERT(r.getLibraryName() == "UNKNOWN");
+    classification = classifyFileName(slashes + home + "/include/stdio.h",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_UNKNOWN);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_UNKNOWN);
+    ROSE_ASSERT(classification.getLibraryName() == "UNKNOWN");
 
     // TODO we'd like this to be able to classifyFileName this as a library
     // still instead of lumping it in with the application
     // for now this may be okay, though
-    classifyFileName(home + "/usr/include/boot/boost-1_35/filesystem.hpp",
-                     r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_USER);
-    ROSE_ASSERT(r.library == FILENAME_LIB_USER);
-    ROSE_ASSERT(r.getLibraryName() == "USER");
+    classification = classifyFileName(home + "/usr/include/boost/boost-1_35/filesystem.hpp",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
+    ROSE_ASSERT(classification.getLibraryName() == "USER");
 
-    classifyFileName("/usr/include/boot/boost-1_35/filesystem.hpp", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_BOOST);
-    ROSE_ASSERT(r.getLibraryName() == "boost");
+    classification = classifyFileName("/usr/include/boost/boost-1_35/filesystem.hpp",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_BOOST);
+    ROSE_ASSERT(classification.getLibraryName() == "boost");
 
-    classifyFileName("/usr/include/rose.h", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_ROSE);
-    ROSE_ASSERT(r.getLibraryName() == "rose");
+    classification = classifyFileName("/usr/include/rose.h", applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_ROSE);
+    ROSE_ASSERT(classification.getLibraryName() == "rose");
 
-    classifyFileName("/usr/include/c++/3.4.3/string", r, a);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_STDCXX);
-    ROSE_ASSERT(r.getLibraryName() == "stdc++");
+    classification = classifyFileName("/usr/include/c++/3.4.3/string",
+                                      applicationPaths);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_STDCXX);
+    ROSE_ASSERT(classification.getLibraryName() == "stdc++");
 
     // #### OS X tests ####
 
@@ -70,54 +75,55 @@ main(int argc, char** argv)
     // on GNU/Linux
 
     home = "/Users/stutsman1";
-    a.clear();
-    a.push_back(home);
+    applicationPaths.clear();
+    applicationPaths.push_back(home);
 
     OSType os = OS_TYPE_OSX;
 
-    classifyFileName("/System/include/stdio.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_C);
+    classification = classifyFileName("/System/Library/Frameworks/Tk.framework/Headers/tk.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_UNKNOWN);
 
-    classifyFileName(home + "/include/stdio.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_USER);
-    ROSE_ASSERT(r.library == FILENAME_LIB_USER);
+    classification = classifyFileName("/usr/include/stdio.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_C);
 
-    classifyFileName(slashes + home + "/include/stdio.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_UNKNOWN);
-    ROSE_ASSERT(r.library == FILENAME_LIB_UNKNOWN);
+    classification = classifyFileName(home + "/include/stdio.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
 
-    classifyFileName(home + "/usr/include/boot/boost-1_35/filesystem.hpp",
-                     r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_USER);
-    ROSE_ASSERT(r.library == FILENAME_LIB_USER);
+    classification = classifyFileName(slashes + home + "/include/stdio.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_UNKNOWN);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_UNKNOWN);
 
-    classifyFileName("/System/include/boot/boost-1_35/filesystem.hpp",
-                     r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_BOOST);
-
-    classifyFileName("/System/include/rose.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_ROSE);
+    classification = classifyFileName(home + "/usr/include/boost/boost-1_35/filesystem.hpp",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
 
     // #### Windows tests ####
 
     home = "C:\\Documents and Settings\\stutsman1";
-    a.clear();
-    a.push_back(home);
+    applicationPaths.clear();
+    applicationPaths.push_back(home);
 
     os = OS_TYPE_WINDOWS;
 
-    classifyFileName("C:\\Program Files\\Microsoft Visual Studio"
-                     "\\MSVC\\Include\\stdio.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_LIB);
-    ROSE_ASSERT(r.library == FILENAME_LIB_UNKNOWN);
+    classification = classifyFileName("C:\\Program Files\\Microsoft Visual Studio"
+                                      "\\MSVC\\Include\\stdio.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_LIBRARY);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_UNKNOWN);
 
-    classifyFileName("C:\\Documents and Settings\\stutsman1"
-                     "\\Includes\\stdio.h", r, a, os);
-    ROSE_ASSERT(r.location == FILENAME_LOC_USER);
-    ROSE_ASSERT(r.library == FILENAME_LIB_USER);
+    classification = classifyFileName("C:\\Documents and Settings\\stutsman1"
+                                      "\\Includes\\stdio.h",
+                                      applicationPaths, os);
+    ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
+    ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
 
     return 0;
 }
