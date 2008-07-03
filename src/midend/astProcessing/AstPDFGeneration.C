@@ -145,6 +145,10 @@ AstPDFGeneration::edit_page(SgNode* node, PDFInheritedAttribute inheritedValue)
      RTIReturnType rti=node->roseRTI();
      for(RTIReturnType::iterator i=rti.begin(); i<rti.end(); i++)
         {
+          if ((*i)->type.size() >= 7 &&
+              (*i)->type.substr(0, 7) == "static ") {
+            continue; // Skip static fields
+          }
           PDF_setrgbcolor(pdfFile, 0.5, 0, 0.1);
           PDF_continue_text(pdfFile, ((*i)->type+" ").c_str());
           PDF_setrgbcolor(pdfFile, 0.0, 0.5, 0.5);
@@ -152,6 +156,9 @@ AstPDFGeneration::edit_page(SgNode* node, PDFInheritedAttribute inheritedValue)
           PDF_setrgbcolor(pdfFile, 0.0, 0.0, 0.0);
       
           string value=(*i)->value;
+          if (value.size() >= 80) {
+            value = "<too long>: " + value.substr(0, 80);
+          }
           AstNodeVisitMapping::MappingType::iterator mapit;
       
       // ensure that mapping value exists (otherwise it would be added to the map)
