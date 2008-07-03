@@ -30,9 +30,13 @@ TESTCODES_REQUIRED_TO_PASS = \
 #upc_XXXsizeof() has two issues:
 # 1. They are evaluated by EDG, operators are not preserved in its IL
 # 2. EDG 3.3 wrongfully evaluate them,  EDG 3.10 fixes the mistakes.
+# sharedInit.upc: EDG 3.10 does not allow shared UPC variables with initializers 
+# sharedArrayInit.upc: Berkeley UPC compiler does not support shared arrays with initializer
 TESTCODE_CURRENTLY_FAILING = \
      sizeof.upc \
-     sizeof_2.upc 
+     sizeof_2.upc \
+     sharedInit.upc \
+     sharedArrayInit.upc
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \

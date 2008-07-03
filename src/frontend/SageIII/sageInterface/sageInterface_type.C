@@ -492,5 +492,12 @@ bool hasTrivialDestructor(SgType* t) {
       return false;
   } // isUpcPhaseLessSharedType
 
+  SgType* getFirstVarType(SgVariableDeclaration* decl)
+  {
+    ROSE_ASSERT(decl);
+    SgVariableSymbol * sym = getFirstVarSym(decl);
+    ROSE_ASSERT(sym);
+    return sym->get_type();
+  }
 } //end of namespace 
 

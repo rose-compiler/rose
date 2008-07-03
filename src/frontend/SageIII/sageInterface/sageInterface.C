@@ -5356,6 +5356,23 @@ class ConditionalExpGenerator: public StatementGenerator
     //scope->append_statement (stmt);
     scope->insertStatementInScope(stmt,false);
     stmt->set_parent(scope); // needed?
+   //only meaningful on IR statements that store the scope explicitly
+   switch (stmt->variantT())
+   {
+     case V_SgEnumDeclaration: 
+     case V_SgTemplateDeclaration:
+     case V_SgTypedefDeclaration:
+     case V_SgClassDeclaration:
+     case V_SgFunctionDeclaration:
+     case V_SgLabelStatement:
+     {
+        stmt->set_scope(scope);
+       break;
+     }
+     default:
+     break;
+   } // switch
+
   }
 
   void appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -5369,7 +5386,7 @@ class ConditionalExpGenerator: public StatementGenerator
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope != NULL);
-    //TODO handle side effect like SageBuilder::append_statement() does
+    //TODO handle side effect like SageBuilder::appendStatement() does
 
    // Must fix it before insert it into the scope, 
    // otherwise assertions in insertStatementInScope() would fail
@@ -5382,7 +5399,24 @@ class ConditionalExpGenerator: public StatementGenerator
 
    scope->insertStatementInScope(stmt,true);
 
-  }
+   //only meaningful on IR statements that store the scope explicitly
+   switch (stmt->variantT())
+   {
+     case V_SgEnumDeclaration: 
+     case V_SgTemplateDeclaration:
+     case V_SgTypedefDeclaration:
+     case V_SgClassDeclaration:
+     case V_SgFunctionDeclaration:
+     case V_SgLabelStatement:
+     {
+        stmt->set_scope(scope);
+       break;
+     }
+     default:
+     break;
+   } // switch
+
+  } //prependStatement()
 
   void prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
     for (size_t i = stmts.size(); i > 0; --i) {

@@ -130,7 +130,14 @@ buildFunctionType(SgType* return_type, SgFunctionParameterTypeList * typeList=NU
 //! Build function type from return type and parameter list
 SgFunctionType * 
 buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
-
+ //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type. Must provide scope here. 
+ /*! Some types are not known during translation but nevertheless are needed. For example, some 
+  * internal types from a runtime library.  To work around this problem: this function prepends a hidden typedef declaration into scope
+  * 'typedef int OpaqueTypeName;' 
+  * The translation-generated code is expected to include the runtime library's headers to 
+  * have the real type declarations. 
+  */
+SgType* buildOpaqueType(std::string const name, SgScopeStatement * scope);
 //@}
 
 //--------------------------------------------------------------
