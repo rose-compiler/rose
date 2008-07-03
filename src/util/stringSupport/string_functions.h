@@ -212,19 +212,29 @@ namespace StringUtility
            // Populate homeDir from $HOME environment var
            void homeDir(std::string& homeDir);
 
-           enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, // We don't know if it's user or system
-                                   FILENAME_LOCATION_USER,    // It is a user (app) file
-                                   FILENAME_LOCATION_LIBRARY };   // It is a system lib
+           /* Files can be classified as being in one of three
+            * locations: We don't know if it's user or system It is a
+            * user (application) file It is a system library */
+           enum FileNameLocation { FILENAME_LOCATION_UNKNOWN, 
+                                   FILENAME_LOCATION_USER,    
+                                   FILENAME_LOCATION_LIBRARY };
            
-           enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN, // We don't know which lib it is in
-                                  FILENAME_LIBRARY_USER,    // It isn't a lib, it's user code
-                                  FILENAME_LIBRARY_C,       // libc
-                                  FILENAME_LIBRARY_STDCXX,  // libstdc++
-                                  FILENAME_LIBRARY_LINUX,   // linux header
-                                  FILENAME_LIBRARY_GCC,     // gcc header file
-                                  FILENAME_LIBRARY_BOOST,   // boost
-                                  FILENAME_LIBRARY_ROSE };  // rose
+           /* Files can be classified as being part of one of these
+            * libraries: Unknown, it isn't a library - it's part of
+            * the user application, or any of the libraries that the
+            * enum values imply, this list will likely be added to
+            * over time */
+           enum FileNameLibrary { FILENAME_LIBRARY_UNKNOWN,
+                                  FILENAME_LIBRARY_USER,
+                                  FILENAME_LIBRARY_C,
+                                  FILENAME_LIBRARY_STDCXX,
+                                  FILENAME_LIBRARY_LINUX,
+                                  FILENAME_LIBRARY_GCC,
+                                  FILENAME_LIBRARY_BOOST,
+                                  FILENAME_LIBRARY_ROSE };
 
+           /* This is the return type of classifyFileName, which
+            * provides all the details it infers */
            class FileNameClassification
            {
            private:
@@ -244,10 +254,34 @@ namespace StringUtility
                                           distance(0)
                    {}
 
+               /* Return the FileNameLocation which is described above
+                * with the definition of the enum */
                FileNameLocation getLocation() const
                    { return location; }
+
+               /* Return the FileNameLibrary which is described above
+                * with the definition of the enum */
                FileNameLibrary getLibrary() const
                    { return library; }
+
+               /* Return the "distance" of the filename from the
+                * appPath that was supplied during the call.  The
+                * distance is defined as the number of cd's that only
+                * move up or down one directory that it would take to
+                * move from the directory of the filename to the
+                * directory that was given by appPath.  This is
+                * intended as a heuristic to gage whether or not one
+                * believes that the filename is related to the source
+                * (appPath) directory.  Examples:
+                *
+                * Between /a/b/c/file.h and /a/b/d/e/ the distance is 3
+                * because one must cd ..; cd d; cd e; to get to appPath
+                *
+                * *EXCEPTION*: if the filename is an ancestor of appPath
+                * then the distance will be 0.  The idea being that this
+                * filename is "in" the appPath somewhere and thus part
+                * of the application.
+                */
                int getDistanceFromSourceDirectory() const
                    { return distance; }
 
@@ -256,13 +290,15 @@ namespace StringUtility
                bool isLibraryCode() const
                    { return location == FILENAME_LOCATION_LIBRARY; }
 
+               /* Return a string name for the library indicated by
+                * getLibrary() */
                const std::string getLibraryName() const;
            };
 
-       	   // Given a fileName and an appPath that is a path to
-       	   // some application's source code directory, return a
-       	   // FileNameClassification indicating whether the fileName
-       	   // is part of the source code or some system library
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, return a
+       	    * FileNameClassification indicating whether the fileName
+       	    * is part of the source code or some system library */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath);
 
@@ -270,6 +306,11 @@ namespace StringUtility
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
                                                    OSType os);
+
+           /* Remove leading dots plus a space from a header file name
+            * that is fiven in the format that g++ -H returns */
+           const std::string
+           stripDotsFromHeaderFileName(const std::string& name);
 
    };
 

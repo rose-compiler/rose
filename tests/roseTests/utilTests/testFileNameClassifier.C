@@ -135,5 +135,16 @@ main(int argc, char** argv)
     ROSE_ASSERT(classification.getLocation() == FILENAME_LOCATION_USER);
     ROSE_ASSERT(classification.getLibrary() == FILENAME_LIBRARY_USER);
 
+    // Test header filename cleanup routine
+
+    ROSE_ASSERT(stripDotsFromHeaderFileName(". FileNameClassifier.h") ==
+                "FileNameClassifier.h");
+    ROSE_ASSERT(stripDotsFromHeaderFileName(".................. /usr/lib/gcc/i386-redhat-linux/3.4.6/../../../../include/c++/3.4.6/string") ==
+                "/usr/lib/gcc/i386-redhat-linux/3.4.6/../../../../include/c++/3.4.6/string");
+    ROSE_ASSERT(stripDotsFromHeaderFileName("") == "");
+    ROSE_ASSERT(stripDotsFromHeaderFileName("test.h") == "test.h");
+    ROSE_ASSERT(stripDotsFromHeaderFileName(" test.h") == "test.h");
+    ROSE_ASSERT(stripDotsFromHeaderFileName("test... .h") == "test... .h");
+
     return 0;
 }

@@ -399,4 +399,12 @@ namespace StringUtility
         return FILENAME_NAMES[library];
     }
 
+    const string
+    stripDotsFromHeaderFileName(const string& name)
+    {
+        if (name.empty() || (name[0] != '.' && name[0] != ' '))
+            return name;
+        return name.substr(name.find(" ") + 1);
+    }
+
 } // end namespace StringUtility
