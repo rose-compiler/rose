@@ -7,6 +7,15 @@ using namespace SageInterface;
 
 #include "bugSeeding.h"
 
+SecurityFlaw::SecurityFlaw()
+   {
+     seedOriginalCode = false;
+   }
+
+SecurityFlaw::~SecurityFlaw()
+{
+}
+
 void
 SecurityFlaw::detectVunerabilities( SgProject *project )
    {
@@ -21,14 +30,6 @@ SecurityFlaw::defineSearchSpace()
      printf ("Base class function called: SecurityFlaw::defineSearchSpace() \n");
    }
 
-#if 0
-void
-SecurityFlaw::seedSecurityFlaws( SgProject *project )
-   {
-     printf ("Base class function called: SecurityFlaw::seedSecurityFlaws() \n");
-   }
-#endif
-
 void
 SecurityFlaw::seedWithGrainularity( SgProject *project )
    {
@@ -42,6 +43,8 @@ std::vector<SecurityFlaw*> SecurityFlaw::securityFlawCollection;
 void
 SecurityFlaw::buildAllVunerabilities()
    {
+  // When there is support for many different kinds of security flaws the list will be assembled here!
+
   // Build a BufferOverFlowSecurityFlaw object
      BufferOverFlowSecurityFlaw* bufferOverFlowSecurityFlaw = new BufferOverFlowSecurityFlaw();
 
@@ -102,7 +105,63 @@ SecurityFlaw::uniqueValue()
 
 
 
+GrainularitySpecification::GrainularitySpecification()
+   {
+  // Select a default:
+  //    e_unknown
+  //    e_expression
+  //    e_statement
+  //    e_function
+  //    e_class
+  //    e_file
 
+     grainularityLevel   = e_function;
+
+     testAllLevels       = false;
+     enclosingScopeDepth = 0;
+   }
+
+GrainularitySpecification::~GrainularitySpecification()
+   {
+  // Nothing to do here!
+   }
+
+
+void
+GrainularitySpecification::set_enclosingScopeDepth( int n ) 
+   {
+     enclosingScopeDepth = n;
+   }
+
+int
+GrainularitySpecification::get_enclosingScopeDepth() 
+   {
+     return enclosingScopeDepth;
+   }
+
+void
+GrainularitySpecification::set_testAllLevels( bool t ) 
+   {
+     testAllLevels = t;
+   }
+
+bool
+GrainularitySpecification::get_testAllLevels() 
+   {
+     return testAllLevels;
+   }
+
+void
+GrainularitySpecification::set_grainularityLevel( GrainularitySpecification::GranularityLevelEnum t ) 
+   {
+     testAllLevels = t;
+   }
+
+GrainularitySpecification::GranularityLevelEnum
+GrainularitySpecification::get_grainularityLevel() 
+   {
+     return grainularityLevel;
+   }
 
 
 

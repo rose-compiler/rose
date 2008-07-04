@@ -148,6 +148,53 @@ addressing a range of related subjects.  The following subsections outline more 
                see also:
                \href{http://cwe.mitre.org/data/definitions/367.html}{CWE-367}.
 
+\commentout{
+List that just arrived from NIST:
+
+Here is a list of weaknesses we are most interested in.  Many come
+from our source code sec. spec.  (We kept some from the spec off this
+list, because we are not as interested in researching them.)  We
+grouped them into categories with CWE IDs.
+
+We do *not* consider this list Frozen Forever.  Rather it is a
+"living" document that you, we, and other will occasionally update
+with times and circumstances.
+
+* Insufficient input validation #20
+   - OS Command Injection	 	 #78
+   - Path Manipulation		 	 #73
+   - Format string vulnerability 	#134
+* Memory problems (we consider overflow and underflow the same problem):
+   - Failure to Constrain Operations within Bounds ... #119 
+      - Heap Overflow			#122
+      - Stack Overflow			#121
+   - Improper Null Termination		#170
+   - Use After Free			#416
+   - Double Free			#415
+   - Sensitive information uncleared before release #266 (and #244)
+   - Memory Leak			#401
+   - Null Pointer Dereference		#476
+* Numeric Errors
+   - Integer Overflow			#190
+   - Integer Coercion Error (cast problem) #192
+   - Divide by zero			#369
+* Timing issues
+   - TOCTOU race			#367
+   - Race condition Within threads 	#366
+   - Unrestricted Critical Resource Lock #412
+* Security Features
+   - Hard coded password		#259
+   - Leftover Debug Code		#489
+   - Backdoors				#510
+* Coding errors
+   - Error Conditions, Return Values, Status Codes #389
+      - Unchecked Return Value		#252
+      - Unchecked Error Condition	#248
+   - Dead code				#561
+   - Uninitialized Variable		#457
+
+}
+
       \end{enumerate}
 
 %  \item Classification of security flaws \\

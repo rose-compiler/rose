@@ -31,21 +31,15 @@ main (int argc, char *argv[])
   // printf ("DONE: Generate whole AST graph if small enough \n");
 #endif
 
-#if 0
-  // Build a BufferOverFlowSecurityFlaw object
-     BufferOverFlowSecurityFlaw bufferOverFlowSecurityFlaw;
-
-  // Call the member function to annotate the AST where BufferOverFlowSecurityFlaw vulnerabilities exist.
-     bufferOverFlowSecurityFlaw.detectVunerabilities(project);
-
-  // Call the member function to seed security flaws into the AST (at locations where vulnerabilities were previously detected).
-     bufferOverFlowSecurityFlaw.seedSecurityFlaws(project);
-#else
+  // Construct internal list of security flaw to consider for vulnerability detection and seeding
      SecurityFlaw::buildAllVunerabilities();
+
+  // Identify locations in the source code where security flaw vulnerabilities COULD exist.
      SecurityFlaw::detectAllVunerabilities(project);
+
+  // Modify the source code to introduce security flaws for the selected types of security flaws 
+  // selected and at the location in the source code where the associated vulnerabilities could be seeded.
      SecurityFlaw::seedAllSecurityFlaws(project);
-  // SecurityFlaw::seedConedTrees(project);
-#endif
 
   // Running internal tests (optional)
      AstTests::runAllTests (project);

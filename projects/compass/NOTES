@@ -51,6 +51,50 @@ the filter that would be built to classify the file names.
 
 ************************************************************************
 
+DQ (7/3/2008): Email from Gary Yuan, we will want to get the 
+unparseToString() function out of these checkers at some point.
+
+I was able to run through `make verify` last night using compassVerifier without any
+unexpected errors. I found the following list of checkers used unparseToString() in
+their traversal:
+
+assignmentReturnConstThis
+constCast
+dynamicCast
+emptyInsteadOfSize
+magicNumber
+mallocReturnValueUsedInIfStmt
+newDelete
+nonStandardTypeRefArgs
+nonStandardTypedefReturns
+nullDeref
+pushBack
+sizeOfPointer
+typeTypedef
+
+Thanks,
+Gary
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
+************************************************************************
+
 ************************************************************************
 
 ************************************************************************

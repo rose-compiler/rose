@@ -2,7 +2,14 @@
 void foobar()
    {
   // Static array declaration
-//   float array[10];
+     float array[10];
+     array[4] = 0;
+     array[7] = 0;
+   }
+
+#if 0
+void foobar()
+   {
      float array2D[10][10];
      float array3D[10][10][10];
      float array4D[10][10][10][10];
@@ -10,16 +17,8 @@ void foobar()
      float array6D[10][10][10][10][10][10];
      float array7D[10][10][10][10][10][10][10];
 
-//   array[4] = 0;
      array2D[4][7] = 0;
 
-#if 0
-     for (int i=0; i < 5; i++)
-        {
-          array[i] = 0;
-        }
-#endif
-#if 1
      for (int i=0; i < 5; i++)
         {
           for (int j=0; j < 5; i++)
@@ -32,6 +31,5 @@ void foobar()
                array7D[i][j][0][0][0][0][0] = 0;
              }
         }
-#endif
    }
-
+#endif
