@@ -205,8 +205,8 @@ docs: compass.tex compassCheckerDocs.tex highlight
 	test -f appendix.tex || ln -s $(srcdir)/appendix.tex appendix.tex
 	test -f compassDocs.tex || ln -s $(srcdir)/compassSupport/compassDocs.tex compassDocs.tex
 	test -f emacs_screenshot.jpg || ln -s $(srcdir)/emacs_screenshot.jpg emacs_screenshot.jpg
-	pdflatex compass.tex
-	pdflatex compass.tex
+	pdflatex --interaction=batchmode compass.tex
+	pdflatex --interaction=batchmode compass.tex
 
 clean:
 	find . -maxdepth 1 -type l -exec rm {} \;
