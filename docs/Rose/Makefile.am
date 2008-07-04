@@ -134,7 +134,7 @@ COMPASS_MANUAL = $(top_builddir)/projects/compass/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(top_builddir)/projects/compass; $(MAKE) docs
 
-make-web-pages: rose.html projects.html $(COMPASS_MANUAL) pdf
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf rose.html projects.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
 	mkdir -p ROSE_WebPages/Projects;
@@ -169,16 +169,16 @@ latex-docs: pdf
 pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
-	$(PDFLATEX) ROSE_InstallationInstructions.tex
-	$(PDFLATEX) ROSE_InstallationInstructions.tex
+	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
+	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
-	$(PDFLATEX) manual.tex
-	$(PDFLATEX) manual.tex
-	$(PDFLATEX) manual.tex
+	$(PDFLATEX) manual.tex && \
+	$(PDFLATEX) manual.tex && \
+	$(PDFLATEX) manual.tex && \
 	mv -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
 docs: html-docs latex-docs

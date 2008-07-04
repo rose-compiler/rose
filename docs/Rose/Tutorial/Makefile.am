@@ -39,20 +39,22 @@ $(generatedCodeExamples):
 
 latex-docs: pdf
 
-pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
+TUTORIAL_NAME = $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
 
-make-web-pages: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
+pdf-local: $(TUTORIAL_NAME)
+
+make-web-pages: $(TUTORIAL_NAME)
 	mkdir -p ../ROSE_WebPages/ROSE_Tutorial
-	cp -fp $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf ../ROSE_WebPages/ROSE_Tutorial/
+	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/
 
-$(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf: tutorial.tex gettingStarted.tex
+$(TUTORIAL_NAME): tutorial.tex gettingStarted.tex
 	cd $(top_builddir)/tutorial; $(MAKE) docs
-	$(PDFLATEX) tutorial.tex
-	$(PDFLATEX) tutorial.tex
-	$(PDFLATEX) tutorial.tex
-	mv tutorial.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
+	$(PDFLATEX) tutorial.tex && \
+	$(PDFLATEX) tutorial.tex && \
+	$(PDFLATEX) tutorial.tex && \
+	mv tutorial.pdf $(TUTORIAL_NAME)
 
-docs: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-Tutorial.pdf
+docs: pdf
 
 EXTRA_DIST = $(latexFiles)
 
