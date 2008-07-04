@@ -684,11 +684,17 @@ SgScopeStatement* getScope(const SgNode* astNode);
 
 //------------------------------------------------------------------------
 //@{
-/*! @name AST comparison
+/*! @name AST Comparison
   \brief Compare AST nodes, subtree, etc
 */
   //! Check if a SgIntVal node has a given value 
  bool isEqualToIntConst(SgExpression* e, int value); 
+
+ //! Check if two function declarations refer to the same one. Two function declarations are the same when they are a) identical, b) same name in C c) same qualified named and mangled name in C++. A nondefining (prototype) declaration and a defining declaration of a same function are treated as the same. 
+ /*!
+  * There is a similar function bool compareFunctionDeclarations(SgFunctionDeclaration *f1, SgFunctionDeclaration *f2) from Classhierarchy.C
+  */
+ bool isSameFunction(SgFunctionDeclaration* func1, SgFunctionDeclaration* func2);
 //@}
 
 //------------------------------------------------------------------------
@@ -777,9 +783,11 @@ void removeAllOriginalExpressionTrees(SgNode* top);
 //@}
 //------------------------------------------------------------------------
 //@{
-/*! @name AST repair, fixup, and postprocessing.
-  \brief Mostly used when some AST pieces are built without knowing their target scope/parent,
-   especially during bottom-up construction of AST. A set of utility functions are provided to
+/*! @name AST repair, fix, and postprocessing.
+  \brief Mostly used internally when some AST pieces are built without knowing their target 
+  scope/parent, especially during bottom-up construction of AST. The associated symbols, 
+   parent and scope  pointers cannot be set on construction then. 
+   A set of utility functions are provided to
    patch up scope, parent, symbol for them when the target scope/parent become know.
 */
 //! Connect variable reference to the right variable symbols when feasible, return the number of references being fixed.
@@ -797,15 +805,23 @@ In this case, we have to patch up symbol table, scope and parent information whe
 */
 void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
-//! fixup symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
+//! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
 void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 
-//! fixup symbol table for SgLableStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
+//! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL. 
 void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
-//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
-void fixStatements(SgStatement* stmt, SgScopeStatement* scope);
+//! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
+void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
+
+//! Update defining and nondefining links due to a newly introduced function declaration. 
+/*! This function not only set the defining and nondefining links of the newly introduced 
+ *  function declaration inside a scope, but also update other same function declarations' links
+ *  accordingly if there are any. 
+ *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function. 
+ */
+void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
 
 //------------------------------------------------------------------------
 //@{
@@ -857,7 +873,9 @@ SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 //! Check if the false body of a 'if' statement is a SgBasicBlcok, create one if not. 
 SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
 SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
-SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
+//! A wrapper of all ensureBasicBlockAs*() above to ensure the parent of s is a scopestatement with list of statements as children, otherwise generate a SgBasicBlock in between. 
+SgStatement* ensureBasicBlockAsParent(SgStatement* s);
+//SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s);
 
 //! Fix up ifs, loops, etc. to have blocks as all components and add dummy else
 //! clauses to if statements that don't have them

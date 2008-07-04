@@ -4710,6 +4710,38 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
      return isSgIntVal(e) && isSgIntVal(e)->get_value() == value;
   }
 
+ bool SageInterface::isSameFunction(SgFunctionDeclaration* func1, SgFunctionDeclaration* func2)
+ {
+   ROSE_ASSERT(func1&& func2);
+   bool result = false; 
+   if (func1 == func2)
+     result = true;
+   else  
+    {
+      if (is_C_language()||is_C99_language())
+      {
+        if (func1->get_name() == func2->get_name())
+          result = true;
+      }
+      else if (is_Cxx_language())
+      {
+         if (func1->get_qualified_name().getString() + 
+            func1->get_mangled_name().getString() ==
+            func2->get_qualified_name().getString() + 
+            func2->get_mangled_name().getString()
+            )
+         result = true; 
+      }
+      else
+      {
+        cout<<"Error: SageInterface::isSameFunction(): unhandled language"<<endl;
+        ROSE_ASSERT(false);
+      }
+
+    } // not identical
+  return result;  
+ } // isSameFunction()
+
 //-----------------------------------------------
 // Remove original expression trees from expressions, so you can change
 // the value and have it unparsed correctly.
@@ -5241,74 +5273,15 @@ class ConditionalExpGenerator: public StatementGenerator
     decl->set_pragma(pragma);
     pragma->set_parent(decl);
   }
-
+//! SageInterface::appendStatement()
+//TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
+//It might be well legal to append the first and only statement in a scope!
   void appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(stmt);
     ROSE_ASSERT(scope != NULL);
-
-    // handle side effect for function declaration insertion.
-    // case 1: for a defining function declaration,
-    //    fix up definingDeclaration pointers from all previous decs.
-    // case 2: for a nondifining function declaration,
-    //    fix up the firstNondefining pointer of a defining declaration appeared before.
-    //TODO put it into a function, and consider insert in the middle later on
-    if(isSgFunctionDeclaration(stmt))
-    {
-      SgFunctionDeclaration * func = isSgFunctionDeclaration(stmt);
-
-      if (scope->containsOnlyDeclarations()) {
-          SgDeclarationStatementPtrList declList = scope->getDeclarationList();
-          SgDeclarationStatementPtrList::iterator i;
-          SgFunctionType* func_type = func->get_type();
-          for (i=declList.begin();i!=declList.end();i++)
-          {
-            SgFunctionDeclaration* prevDecl = isSgFunctionDeclaration(*i);
-            if ((prevDecl) &&(prevDecl->get_type() == func_type)) {
-              if(func->get_definingDeclaration()==func)
-              { // case 1: defining declaration
-      //std::cout<<"debug highLevelInterface.C:445.....decl with definition!"<<std::endl;
-                if(prevDecl->get_definingDeclaration()==NULL)
-                  prevDecl->set_definingDeclaration(func);
-               }
-               else // case 2: nonefining declaration
-               {  // multiple nondefining declaration may exist
-      //std::cout<<"debug highLevelInterface.C:450.....decl without definition!"<<std::endl;
-                if(prevDecl->get_firstNondefiningDeclaration()==NULL)
-                    prevDecl->set_firstNondefiningDeclaration(func);
-               }
-            } // end if prevDecl is a function dec. with the same type
-          } // end for
-         }
-       // It is legal to have a function declarations inside the code as a forward declaration
-       else
-        {
-          SgStatementPtrList declList = scope->getStatementList();
-          SgStatementPtrList::iterator i;
-          SgFunctionType* func_type = func->get_type();
-          for (i=declList.begin();i!=declList.end();i++)
-          {
-            SgFunctionDeclaration* prevDecl = isSgFunctionDeclaration(*i);
-            if ((prevDecl) &&(prevDecl->get_type() == func_type)) {
-              if(func->get_definingDeclaration()==func)
-              { // case 1: defining declaration
-                if(prevDecl->get_definingDeclaration()==NULL)
-                  prevDecl->set_definingDeclaration(func);
-               }
-               else // case 2: nonefining declaration
-               {  // multiple nondefining declaration may exist
-                if(prevDecl->get_firstNondefiningDeclaration()==NULL)
-                    prevDecl->set_firstNondefiningDeclaration(func);
-               }
-            } // end if prevDecl is a function dec. with the same type
-          } // end for
-
-        }
-
-      } // end if functionDecl
-      //-----------------------
 
     #if 0
        //  case 3:
@@ -5333,24 +5306,20 @@ class ConditionalExpGenerator: public StatementGenerator
 	}// end for
       }
     #endif
-
+    
     //catch-all for statement fixup 
    // Must fix it before insert it into the scope, 
-    fixStatements(stmt,scope);
-
-    //TODO: try lowlevel rewrite mechanism to handle preprocessing info.
-    //several cases:
-    //1. comments of empty file is attached AFTER SgGlobal,
-    //     should move it inside and attach it BEFORE the inserted stmt
-    //2. preprocessing Info attached INSIDE an empty scope
-    //     should remove from the scope stmt, and attach it before the inserted stmt
-    //3. preprocessing Info attached  after a located node: #endif,what to do?
+    fixStatement(stmt,scope);
 
     //-----------------------
     // append the statement finally
     //scope->append_statement (stmt);
     scope->insertStatementInScope(stmt,false);
     stmt->set_parent(scope); // needed?
+
+   // update the links after insertion!
+    if (isSgFunctionDeclaration(stmt))
+     updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
   }
 
   void appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -5358,7 +5327,7 @@ class ConditionalExpGenerator: public StatementGenerator
       appendStatement(stmts[i], scope);
     }
   }
-
+//!SageInterface::prependStatement()
   void prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
    if (scope == NULL)
@@ -5368,9 +5337,13 @@ class ConditionalExpGenerator: public StatementGenerator
 
    // Must fix it before insert it into the scope, 
    // otherwise assertions in insertStatementInScope() would fail
-   fixStatements(stmt,scope); 
+   fixStatement(stmt,scope); 
 
    scope->insertStatementInScope(stmt,true);
+    // update the links after insertion!
+   if (isSgFunctionDeclaration(stmt))
+     updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
+
   } //prependStatement()
 
   void prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
@@ -5385,94 +5358,30 @@ class ConditionalExpGenerator: public StatementGenerator
   void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
   {
 
-    ROSE_ASSERT(targetStmt);
-    ROSE_ASSERT(newStmt);
+    ROSE_ASSERT(targetStmt &&newStmt);
     ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
-    SgScopeStatement* scope= targetStmt->get_scope();
     SgNode* parent = targetStmt->get_parent();
-    ROSE_ASSERT(scope&&parent);
+    ROSE_ASSERT(parent);
 
     // We now have single statement true/false body for IfStmt etc
     // However, IfStmt::insert_child() is ambiguous and not implemented
     // So we make SgBasicBlock out of the single statement and 
     // essentially call SgBasicBlock::insert_child() instead.
     // TODO: add test cases for If, variable, variable/struct inside if, etc 
-  #if 1
-    switch(parent->variantT())
-    {
-      case V_SgIfStmt:
-       {
-          if (targetStmt == isSgIfStmt(parent)->get_true_body())
-          {  
-            parent = ensureBasicBlockAsTrueBodyOfIf(isSgIfStmt(parent));
-            //targetStmt has a new scope (SgBasicBlock) now 
-            scope =  targetStmt->get_scope();
-          }
-          else if (targetStmt == isSgIfStmt(parent)->get_false_body())
-          {
-            parent = ensureBasicBlockAsFalseBodyOfIf(isSgIfStmt(parent));
-            scope =  targetStmt->get_scope();
-          } 
-          // We decide insert before a conditional statement is ambiguous and not allowed here.
-          // Users should make it clear what should be done. 
-          else if  (targetStmt == isSgIfStmt(parent)->get_conditional())
-          {
-             cout<<"Error: insert a statement before/after a conditional statement of a If statement is not allowed."<<endl;
-             ROSE_ASSERT(false);
-          }
-	  break;
-       }
-       case V_SgForStatement:
-       {
-         if (targetStmt == isSgForStatement(parent)->get_loop_body())
-         {
-           parent = ensureBasicBlockAsBodyOfFor(isSgForStatement(parent));
-           scope =  targetStmt->get_scope();
-         } // let SgStatement::insert_statement() report errors for other cases
-         break;
-       }
-       case V_SgWhileStmt:
-       {
-         SgWhileStmt* stmt = isSgWhileStmt(parent);
-         ROSE_ASSERT(stmt);
-         if (targetStmt == stmt-> get_body() )
-         {
-           parent = ensureBasicBlockAsBodyOfWhile(stmt);
-           scope =  targetStmt->get_scope();
-         }
-         break;
-       }
-       case V_SgDoWhileStmt:
-       {
-         SgDoWhileStmt* stmt = isSgDoWhileStmt(parent);
-         ROSE_ASSERT(stmt);
-         if (targetStmt == stmt-> get_body() )
-         {
-           parent = ensureBasicBlockAsBodyOfDoWhile(stmt);
-           scope =  targetStmt->get_scope();
-         }
-         break;
-       }
-       case V_SgCatchOptionStmt:
-       {
-         SgCatchOptionStmt* stmt = isSgCatchOptionStmt(parent);
-         ROSE_ASSERT(stmt);
-         if (targetStmt == stmt-> get_body() )
-         {
-           parent = ensureBasicBlockAsBodyOfCatch(stmt);
-           scope =  targetStmt->get_scope();
-         }
-         break;
-       }
-      default:
-        break;
-    }
-  #endif
+    
+    parent = ensureBasicBlockAsParent(targetStmt);
+    // must get the new scope after ensureBasicBlockAsParent ()
+    SgScopeStatement* scope= targetStmt->get_scope();
+    ROSE_ASSERT(scope);
 
     newStmt->set_parent(targetStmt->get_parent());
-    fixStatements(newStmt,scope);
+    fixStatement(newStmt,scope);
 
     isSgStatement(parent)->insert_statement(targetStmt,newStmt,insertBefore);
+
+    // update the links after insertion!
+    if (isSgFunctionDeclaration(newStmt))
+     updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
   }
 
   void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
@@ -5746,7 +5655,7 @@ void fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
 } // fixLabelStatement()
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
-void fixStatements(SgStatement* stmt, SgScopeStatement* scope)
+void fixStatement(SgStatement* stmt, SgScopeStatement* scope)
 { 
   // fix symbol table
   if (isSgVariableDeclaration(stmt))
@@ -5772,8 +5681,69 @@ void fixStatements(SgStatement* stmt, SgScopeStatement* scope)
       break;
    } // switch
   
-} // fixStatements()
+} // fixStatement()
 
+/*! Liao, 7/3/2008
+ * Update a list of function declarations inside a scope according to a newly introduced one 
+ *
+ * Algorithm: 
+ * iterate declaration list for the same functions
+ * func is defining: 
+ *       set_defining for all
+ * func is nondefining: 
+ *       is first ?  set_first_nondefining for all
+ *       not the first ? set first nondefining for itself only
+ */
+void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
+{
+  ROSE_ASSERT(func&&scope);
+  SgStatementPtrList stmtList, sameFuncList;
+  //SgFunctionDeclaration* first_nondef = NULL;
+  // Some annoying part of scope
+  if (scope->containsOnlyDeclarations())
+  {  
+    SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+    SgDeclarationStatementPtrList::iterator i;
+    for (i=declList.begin();i!=declList.end();i++)
+      stmtList.push_back(*i);
+  }
+  else
+    stmtList = scope->getStatementList();
+  
+  // Find the same function declaration list, including func itself
+  SgStatementPtrList::iterator j;
+  for (j=stmtList.begin();j!=stmtList.end();j++)
+  {
+    SgFunctionDeclaration* func_decl = isSgFunctionDeclaration(*j);
+    if (func_decl)
+    {
+      if (isSameFunction(func_decl, func))
+      {  
+        // Assume all defining functions have definingdeclaration links set properly already!!
+        //if ((first_nondef == NULL) && (func_decl->get_definingDeclaration() == NULL))
+        //  first_nondef = func_decl; 
+        sameFuncList.push_back(func_decl);
+      }
+    } // if (func_decl)
+  } // for 
+  
+  if(func->get_definingDeclaration()==func)
+  {
+    for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+      isSgFunctionDeclaration(*j)->set_definingDeclaration(func);
+  }
+  else if (func==isSgFunctionDeclaration(*(sameFuncList.begin()))) // is first_nondefining declaration
+  { 
+    for (j=sameFuncList.begin();j!=sameFuncList.end();j++)
+      isSgFunctionDeclaration(*j)->set_firstNondefiningDeclaration(func);
+  } else // is a following nondefining declaration, grab any other's first nondefining link then
+  {
+     func->set_firstNondefiningDeclaration(isSgFunctionDeclaration(*(sameFuncList.begin()))
+                      ->get_firstNondefiningDeclaration());
+  }// if
+} // updateDefiningNondefiningLinks()
+
+//---------------------------------------------------------------
 PreprocessingInfo* attachComment(
            SgLocatedNode* target, const string& content,
            PreprocessingInfo::RelativePositionType  position /*=PreprocessingInfo::before*/,
@@ -6016,7 +5986,8 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
+  SgStatement* ensureBasicBlockAsParent(SgStatement* s) {
+  //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
     SgStatement* p = isSgStatement(s->get_parent());
     ROSE_ASSERT (p);
     switch (p->variantT()) {
@@ -6049,10 +6020,14 @@ PreprocessingInfo* attachComment(
         else ROSE_ASSERT (false);
       }
       default: {
-        cerr << p->class_name() << endl;
-        ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
+        // Liao, 7/3/2008 We allow other conditions to fall through, 
+        // they are legal parents with list of statements as children. 
+        //cerr << "Unhandled parent block:"<< p->class_name() << endl;
+        // ROSE_ASSERT (!"Bad parent in ensureBasicBlockAsParent");
+       break;
       }
     }
+    return p;
   }
 
   void changeAllLoopBodiesToBlocks(SgNode* top) {
