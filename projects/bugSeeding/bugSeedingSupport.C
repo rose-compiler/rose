@@ -7,15 +7,26 @@ using namespace SageInterface;
 
 #include "bugSeeding.h"
 
+
 SecurityFlaw::SecurityFlaw()
    {
+  // I think that we will discover that seeding the original input application without 
+  // cloning code fragements will be messy and unanalizable by static analysis tools.
+  // So the value for seedOriginalCode is FALSE by default.
      seedOriginalCode = false;
    }
 
 SecurityFlaw::~SecurityFlaw()
-{
-}
+   {
+  // Nothing to do here!
+   }
 
+
+// ************************
+// Virtual Member Functions
+// ************************
+
+// This is a virtual member function
 void
 SecurityFlaw::detectVunerabilities( SgProject *project )
    {
@@ -24,6 +35,7 @@ SecurityFlaw::detectVunerabilities( SgProject *project )
      ROSE_ASSERT(false);
    }
 
+// This is a virtual member function
 void
 SecurityFlaw::defineSearchSpace()
    {
@@ -33,6 +45,7 @@ SecurityFlaw::defineSearchSpace()
      ROSE_ASSERT(false);
    }
 
+// This is a virtual member function
 void
 SecurityFlaw::codeCloneGeneration( SgProject *project )
    {
@@ -42,6 +55,7 @@ SecurityFlaw::codeCloneGeneration( SgProject *project )
      ROSE_ASSERT(false);
    }
 
+// This is a virtual member function
 void
 SecurityFlaw::seedSecurityFlaws( SgProject *project )
    {
@@ -51,8 +65,20 @@ SecurityFlaw::seedSecurityFlaws( SgProject *project )
      ROSE_ASSERT(false);
    }
 
+
+
+// ******************
+// Static Member Data
+// ******************
+
 // Declaration of static data member (collection of all security flaws).
 std::vector<SecurityFlaw*> SecurityFlaw::securityFlawCollection;
+
+
+
+// ***********************
+// Static Member Functions
+// ***********************
 
 // This is a static member function
 void
@@ -64,6 +90,14 @@ SecurityFlaw::buildAllVunerabilities()
      BufferOverFlowSecurityFlaw* bufferOverFlowSecurityFlaw = new BufferOverFlowSecurityFlaw();
 
      securityFlawCollection.push_back(bufferOverFlowSecurityFlaw);
+   }
+
+// This is a static member function
+void
+SecurityFlaw::defineAllSearchSpaces()
+   {
+  // Not clear no how to implement this part of the plan.
+  // For now I am leaving the search space specification out of the implementation.
    }
 
 // This is a static member function
@@ -103,6 +137,10 @@ SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
    }
 
 
+// ***************************
+// Supporting Member Functions
+// ***************************
+
 void
 SecurityFlaw::addComment( SgNode* astNode, std::string comment )
    {
@@ -130,9 +168,10 @@ SecurityFlaw::uniqueValue()
 
 
 
+
 GrainularitySpecification::GrainularitySpecification()
    {
-  // Select a default:
+  // Select a default (not all are implemented):
   //    e_unknown
   //    e_expression
   //    e_statement
@@ -140,9 +179,13 @@ GrainularitySpecification::GrainularitySpecification()
   //    e_class
   //    e_file
 
+  // I think this should be the default, since it is the most useful
      grainularityLevel   = e_function;
 
+  // This option generates messy code in general (default == false).
      testAllLevels       = false;
+
+  // This option only makes sense for e_expression, e_statement, and maybe e_class (where classes are nested)
      enclosingScopeDepth = 0;
    }
 
@@ -219,6 +262,8 @@ SecurityVulnerabilityAttribute::set_securityVulnerabilityNode(SgNode* node)
      securityVulnerabilityNode = node;
    }
 
+// DOT graph support for attributes to add additional edges to AST dot graphs
+// (useful for debugging)
 std::vector<AstAttribute::AttributeEdgeInfo>
 SecurityVulnerabilityAttribute::additionalEdgeInfo()
    {
@@ -279,6 +324,8 @@ SeededSecurityFlawCloneAttribute::set_rootOfCloneInOriginalCode(SgNode* node)
      rootOfCloneInOriginalCode = node;
    }
 
+// DOT graph support for attributes to add additional edges to AST dot graphs
+// (useful for debugging)
 std::vector<AstAttribute::AttributeEdgeInfo>
 SeededSecurityFlawCloneAttribute::additionalEdgeInfo()
    {
@@ -336,6 +383,8 @@ PrimarySecurityVulnerabilityForCloneAttribute::get_primaryVulnerabilityInOrigina
      return primaryVulnerabilityInOriginalCode;
    }
 
+// DOT graph support for attributes to add additional edges to AST dot graphs
+// (useful for debugging)
 std::vector<AstAttribute::AttributeEdgeInfo>
 PrimarySecurityVulnerabilityForCloneAttribute::additionalEdgeInfo()
    {
@@ -389,12 +438,14 @@ goldenrod 	goldenrod1 	goldenrod2 	goldenrod3 	goldenrod4
 gray
 */
 
+// DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
 std::string
 SecurityVulnerabilityAttribute::additionalNodeOptions()
    {
      return "fillcolor=\"red\",style=filled";
    }
 
+// DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
 std::string
 SecurityFlawOriginalSubtreeAttribute::additionalNodeOptions()
    {
@@ -402,6 +453,7 @@ SecurityFlawOriginalSubtreeAttribute::additionalNodeOptions()
      return "fillcolor=\"darkorange\",style=filled";
    }
 
+// DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
 std::string
 SeededSecurityFlawCloneAttribute::additionalNodeOptions()
    {
@@ -410,6 +462,7 @@ SeededSecurityFlawCloneAttribute::additionalNodeOptions()
 
    }
 
+// DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
 std::string
 PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeOptions()
    {

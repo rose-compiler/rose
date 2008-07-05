@@ -183,6 +183,9 @@ class SecurityFlaw
           static void buildAllVunerabilities();
 
        // This function need not be defined  (since we migh only want to detect vulnerabilities).
+          static void defineAllSearchSpaces();
+
+       // This function need not be defined  (since we migh only want to detect vulnerabilities).
           static void generationAllClones( SgProject *project );
 
        // This calls the detectVunerabilities() member function for each SecurityFlaw.

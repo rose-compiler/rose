@@ -1,54 +1,50 @@
-\section{Design}
+\section{Definitions}
 
-   This section lays out a design for the construction of a source-to-source
-translator that will automatically insert security flaws into existing application codes.
-The design is meant to be collaborative effort with NIST.
+%  \item Classification of security flaws \\
+% \subsection{Classification of Security Flaws}
+         The development of seeding for security flaws is addressed using a specific 
+         classification for security flaws: simple (local) security flaws, 
+         security flaw chains (defined over the control flow) and composite security flaws
+         (defined via state over the execution of the whole program).
+         We define these according to discussions at NIST of classification work by MITRE.
+      \begin{enumerate}
+         \item Simple Security Flaws \\ 
+               A simple security flaw is defined as an isolated single security flaw
+               which can be locally defined in an application source code. It can be
+               roughly characterized as a security flaw for which the fix is a local 
+               modification.
 
-An initial tutorial example of a translator that introduces a 
-buffer overflow to an existing application is available in the ROSE Tutorial
-(Chapter 41) at {\em http://www.roseCompiler.org}.  This example detects a
-vulnerability first (any place where an array is indexed in a loop construct)
-and then modifies the indexing to guarantee a buffer overflow for all
-array accesses.  The example represents an extremely narrow range of
-the ways in which this specific security flaw can be introduced in an
-arbitrary input application code.  To provide a concrete example, the code 
-before seeding is:
-{\mySmallFontSize
-\begin{verbatim}
-void foobar()
-   {
-  // Static array declaration
-     float array[10];
-     array[4] = 0;
-     for (int i=0; i < 5; i++)
-        {
-          array[i] = 0;
-        }
-   }
-\end{verbatim}
-}
-And the code after translation (with the seeded security flaw) is:
-{\mySmallFontSize
-\begin{verbatim}
-void foobar()
-{
-// Static array declaration
-  float array[10UL];
-  array[4] = (0);
-  for (int i = 0; i < 5; i++) {
-// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw 
-    array[i + 10UL] = (0);
-  }
-}
-\end{verbatim}
-}
-Note that this example is from a more involved version of the bug seeding
-work (than what is in the ROSE Tutorial) (an initial prototype version being 
-built to explore bug seeding more throughly). This work is in the current 
-svn repository in the new {\em projects/bugSeeding} directory. Note that is
-focused on a single kind of buffer overflow (array indexing in loops) and
-that the transformed code adds a comment mark it clearly as a seeded security 
-flaw (an easy trick in ROSE).
+         \item Security Flaw Chains \\ 
+               A security flaw chain is a sequential set of operations along the control
+               flow which collectively for a security flaw.  Each link in the chain may or
+               may not be a security flaw, and may or may not even be a bad practice (a
+               bug effecting maintainability or violating a specific style guide).
+               Collectively, the set of operations form a security flaw.  We will be
+               interested in evaluating a tools ability to identifying such security flaw 
+               chains, so seeding such flaws will be a focus of this work. However,
+               since such work is likely to use the same infrastructure as the 
+               seeding of simple security flaws, the design of this support can be
+               deferred to later.
+
+         \item Composite Security Flaws \\
+               A composite security flaw is a set of operations each of which may or 
+               may not be a security flaw (e.g. same as for the links of a security flaw
+               chain).  For the same reasons as for security flaw chains, we will be
+               interested in seeding these sorts of flaws to test static analysis tools.
+               The security flaw chain and the composite security flaw are likely related
+               but the composite security flaw may be defined over the control flow of the
+               whole program where as the security flaw chain is defined over a
+               significantly smaller, (and more readily characterizable, subset of the
+               control flow. Further design work specific to the design for this is
+               deferred.
+               \fixme{Need to verify/clarify the differences between the 
+               {\it security flaw chain} and the {\it composite security flaw}.}
+      \end{enumerate}
+
+
+
+
+\section{Scope}
 
 The design of a tool to seed security flaws and develop evaluation test suites requires
 addressing a range of related subjects.  The following subsections outline more detail.
@@ -197,46 +193,15 @@ with times and circumstances.
 
       \end{enumerate}
 
-%  \item Classification of security flaws \\
-\subsection{Classification of Security Flaws}
-         The development of seeding for security flaws is addressed using a specific 
-         classification for security flaws: simple (local) security flaws, 
-         security flaw chains (defined over the control flow) and composite security flaws
-         (defined via state over the execution of the whole program).
-         We define these according to discussions at NIST of classification work by MITRE.
-      \begin{enumerate}
-         \item Simple Security Flaws \\ 
-               A simple security flaw is defined as an isolated single security flaw
-               which can be locally defined in an application source code. It can be
-               roughly characterized as a security flaw for which the fix is a local 
-               modification.
 
-         \item Security Flaw Chains \\ 
-               A security flaw chain is a sequential set of operations along the control
-               flow which collectively for a security flaw.  Each link in the chain may or
-               may not be a security flaw, and may or may not even be a bad practice (a
-               bug effecting maintainability or violating a specific style guide).
-               Collectively, the set of operations form a security flaw.  We will be
-               interested in evaluating a tools ability to identifying such security flaw 
-               chains, so seeding such flaws will be a focus of this work. However,
-               since such work is likely to use the same infrastructure as the 
-               seeding of simple security flaws, the design of this support can be
-               deferred to later.
 
-         \item Composite Security Flaws \\
-               A composite security flaw is a set of operations each of which may or 
-               may not be a security flaw (e.g. same as for the links of a security flaw
-               chain).  For the same reasons as for security flaw chains, we will be
-               interested in seeding these sorts of flaws to test static analysis tools.
-               The security flaw chain and the composite security flaw are likely related
-               but the composite security flaw may be defined over the control flow of the
-               whole program where as the security flaw chain is defined over a
-               significantly smaller, (and more readily characterizable, subset of the
-               control flow. Further design work specific to the design for this is
-               deferred.
-               \fixme{Need to verify/clarify the differences between the 
-               {\it security flaw chain} and the {\it composite security flaw}.}
-      \end{enumerate}
+
+\section{Requirements}
+
+   This section lays out a design for the construction of a source-to-source
+translator that will automatically insert security flaws into existing application codes.
+The design is meant to be collaborative effort with NIST.
+
 
 \subsection{A Database of Program Information}
          \label{sec:SpecificationOfDatabase}
@@ -452,3 +417,24 @@ to security flaws).
 
 
 
+\section{Design}
+
+The define of a tranlator to seed bugs into existing applications will be based on 
+the ROSE source-to-source compiler infrastructure.  Likely any source-to-source
+compiler infrastructure might alternatively work as well, or could be adapted.
+The design will address:
+\begin{enumerate}
+   \item Identification of security flaw vulnerabilities \\
+   This work identifies where in the source code a specific security flaw {\em could}
+be seeded, it does not detect an existing security flaw in the input application.
+
+   \item Clone fragements of code in the application to support seeding \\
+   The user decides if flaws will be seeded into the application or into copied pieces 
+of the applications (clones). It is expected that if all possible security flaws were to
+be seeded into a single application that this would confuse the static analysis and 
+we would not have a meaningful evaluation of static analysis tools.  To support 
+a more refined approach fragements of different sizes are copied to support the 
+seeding of flaws (with a definable number of flaws per clone).
+
+
+\end{enumerate}

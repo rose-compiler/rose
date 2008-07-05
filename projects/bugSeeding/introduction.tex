@@ -106,3 +106,51 @@ this infrastructure could have immediate use as a basis for the development of
 automatically generated test suites for the evaluation of static analysis tools
 by others (e.g. NIST, CERT, etc.).
 
+
+\subsection{A Trivial Example}
+
+   An initial tutorial example of a translator that introduces a 
+buffer overflow to an existing application is available in the ROSE Tutorial
+(Chapter 41) at {\em http://www.roseCompiler.org}.  This example detects a
+vulnerability first (any place where an array is indexed in a loop construct)
+and then modifies the indexing to guarantee a buffer overflow for all
+array accesses.  The example represents an extremely narrow range of
+the ways in which this specific security flaw can be introduced in an
+arbitrary input application code.  To provide a concrete example, the code 
+before seeding is:
+{\mySmallFontSize
+\begin{verbatim}
+void foobar()
+   {
+  // Static array declaration
+     float array[10];
+     array[4] = 0;
+     for (int i=0; i < 5; i++)
+        {
+          array[i] = 0;
+        }
+   }
+\end{verbatim}
+}
+And the code after translation (with the seeded security flaw) is:
+{\mySmallFontSize
+\begin{verbatim}
+void foobar()
+{
+// Static array declaration
+  float array[10UL];
+  array[4] = (0);
+  for (int i = 0; i < 5; i++) {
+// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw 
+    array[i + 10UL] = (0);
+  }
+}
+\end{verbatim}
+}
+Note that this example is from a more involved version of the bug seeding
+work (than what is in the ROSE Tutorial) (an initial prototype version being 
+built to explore bug seeding more throughly). This work is in the current 
+svn repository in the new {\em projects/bugSeeding} directory. Note that is
+focused on a single kind of buffer overflow (array indexing in loops) and
+that the transformed code adds a comment mark it clearly as a seeded security 
+flaw (an easy trick in ROSE).
