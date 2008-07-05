@@ -172,7 +172,7 @@ BufferOverFlowSecurityFlaw::Vulnerability::Traversal::evaluateInheritedAttribute
      return inheritedAttribute;
    }
 
-
+#if 0
 // **********************************************************************
 //       BufferOverFlowSecurityFlaw::CloneVulnerabilityTraversal
 // **********************************************************************
@@ -447,8 +447,9 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::eva
 
      return inheritedAttribute;
    }
+#endif
 
-
+#if 0
 // **********************************************************************
 //           BufferOverFlowSecurityFlaw::MarkClonesTraversal
 // **********************************************************************
@@ -542,7 +543,7 @@ BufferOverFlowSecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAt
 
      return inheritedAttribute;
    }
-
+#endif
 
 
 // **********************************************************
