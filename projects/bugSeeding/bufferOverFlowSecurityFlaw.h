@@ -20,7 +20,7 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
        // a loop body, array indexing in a conditional test, indexing of a STL vector, etc.).
        // In general, vulnerabilities can be independent of the ways in which a security flaw can be seeded,
        // so this is no one-to-one mapping of Vulnerability classes to SeedSecurityFlaw classes.
-          class Vulnerability
+          class BufferOverflowVulnerability : public SecurityFlaw::Vulnerability
              {
                public:
                  // This class is only required where the specific security flaw's vulnerability detection requires it.
@@ -52,9 +52,6 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                void detector( SgProject *project );
              };
 
-       // Forward declaration (required for next two class declarations)
-       // class SeedSecurityFlaw;
-
        // This is an attempt to refactor the code to make the code per flaw as simple as possible.
           class SeedBufferOverflowSecurityFlaw : public SecurityFlaw::SeedSecurityFlaw
              {
@@ -71,8 +68,6 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                            // This function defines how to seed the security flaw at
                            // the previously detected location of the vulnerability
                               void visit( SgNode* node );
-
-                           // std::vector<SgNode*> grainularityOfSeededCode( SgNode* astNode );
                        };
 
             // Constructor and virtual destructor
@@ -81,11 +76,6 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
 
                void seed( SgNode *astNode );
              };
-
-       // Collection of different sorts of vulnerabilities that we want to identify as a buffer over flow 
-       // security flaw (there can be many).  This data member might be placed into the base class and
-       // a base class provided for the Vulnerability class.
-          std::vector<Vulnerability*> vulnerabilityKindList;
 
        // Constructor
           BufferOverFlowSecurityFlaw();

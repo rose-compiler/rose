@@ -144,6 +144,13 @@ class SecurityFlaw
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
           bool seedOriginalCode;
 
+          class Vulnerability
+             {
+               public:
+                 // This abstracts the details of setting up a call to the AST traversal.
+                    virtual void detector( SgProject *project ) = 0;
+             };
+
       // Forward declaration
          class SeedSecurityFlaw;
 
@@ -319,6 +326,11 @@ class SecurityFlaw
 
        // This is the static collection of all security flaws (each is derived from the SecurityFlaw class)
           static std::vector<SecurityFlaw*> securityFlawCollection;
+
+       // Collection of different sorts of vulnerabilities that we want to identify as a buffer over flow 
+       // security flaw (there can be many).  This data member might be placed into the base class and
+       // a base class provided for the Vulnerability class.
+          std::vector<Vulnerability*> vulnerabilityKindList;
 
        // Collection of different way to seed buffer overflow security flaws into code (in a loop, in a 
        // conditional test, etc.).  This data member might be placed into the base class and
