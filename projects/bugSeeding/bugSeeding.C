@@ -39,6 +39,12 @@ main (int argc, char *argv[])
      generateDOT ( *project, "_afterIdentificationOfVulnerabilities" );
 #endif
 
+     SecurityFlaw::generationAllClones(project);
+
+#if 1
+     generateDOT ( *project, "_afterCloneGeneration" );
+#endif
+
   // Modify the source code to introduce security flaws for the selected types of security flaws 
   // selected and at the location in the source code where the associated vulnerabilities could be seeded.
      SecurityFlaw::seedAllSecurityFlaws(project);

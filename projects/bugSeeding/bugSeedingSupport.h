@@ -144,18 +144,20 @@ class SecurityFlaw
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
           bool seedOriginalCode;
 
-       // This value is used to control to AST clone generation to support seeding, but only 
-       // when (seedOriginalCode == false).
-       // GrainularitySpecification seedGrainulatity;
-
+       // Constructor and destructor
           SecurityFlaw();
           virtual ~SecurityFlaw();
 
-       // Support for generating a unique integer values used to build names of things (e.g. cloned function namens)
-          static int uniqueValue();
+       // ***********
+       // Static Data 
+       // ***********
 
        // This is the static collection of all security flaws (each is derived from the SecurityFlaw class)
           static std::vector<SecurityFlaw*> securityFlawCollection;
+
+       // **************************
+       // Virtual Function Interface
+       // **************************
 
        // This function must be defined since we at least have to detect the vulnerabilities 
        // (unless we just want to generate simple test codes).
@@ -167,12 +169,21 @@ class SecurityFlaw
           virtual void defineSearchSpace();
 
        // This function need not be defined  (since we migh only want to detect vulnerabilities).
-       // virtual void seedSecurityFlaws( SgProject *project );
-          virtual void seedWithGrainularity( SgProject *project );
+          virtual void codeCloneGeneration( SgProject *project );
+
+       // This function need not be defined  (since we migh only want to detect vulnerabilities).
+          virtual void seedSecurityFlaws( SgProject *project );
+
+       // *************************
+       // Static Function Interface
+       // *************************
 
        // This constructs the securityFlawCollection (at a later point this collection can be 
        // tailored using some mechanism not yet defined)
           static void buildAllVunerabilities();
+
+       // This function need not be defined  (since we migh only want to detect vulnerabilities).
+          static void generationAllClones( SgProject *project );
 
        // This calls the detectVunerabilities() member function for each SecurityFlaw.
           static void detectAllVunerabilities( SgProject *project );
@@ -183,5 +194,8 @@ class SecurityFlaw
        // Low level support for adding comments to locations in the source code where security 
        // vulnerabilities are identified or where security flaws are seeded.
           static void addComment( SgNode* astNode, std::string comment );
+
+       // Support for generating a unique integer values used to build names of things (e.g. cloned function namens)
+          static int uniqueValue();
    };
 

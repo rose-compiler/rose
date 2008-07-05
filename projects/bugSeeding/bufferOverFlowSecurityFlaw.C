@@ -42,12 +42,20 @@ void BufferOverFlowSecurityFlaw::detectVunerabilities( SgProject *project )
         }
    }
 
+// void BufferOverFlowSecurityFlaw::seedWithGrainularity( SgProject *project )
 void
-BufferOverFlowSecurityFlaw::seedWithGrainularity( SgProject *project )
+BufferOverFlowSecurityFlaw::codeCloneGeneration( SgProject *project )
    {
      ROSE_ASSERT (project != NULL);
 
   // Build all the different types of seeding techniques for this security flaw (could be many)
+  // Not that the SeedSecurityFlaw object contain information and functionality required to
+  // construct the clones.  Each clone is built at a specific level of grainularity as required
+  // to support the security flaw seeding transformation.  E.g. a buffer overflow that appears
+  // as an array write in a loop might be seeded by adjusting the loop bounds, to support this
+  // the grainularity of the cloning operation must be at least that of the loop level grainularity
+  // or greater.  Alternatively, to seed the buffer overflow via an array subscript manipulation
+  // we only need to clone the array expression (the finest possible level of grainularity).
      seedKindList.push_back(new SeedSecurityFlaw());
 
   // Now iterate over the list
@@ -64,28 +72,27 @@ BufferOverFlowSecurityFlaw::seedWithGrainularity( SgProject *project )
             // Make all the required clones to support the security flaw seeding for each specific SeedSecurityFlaw
                CloneVulnerability::makeClones(project,*j);
 
-#if 1
                MarkClones::markVulnerabilitiesInClones(project,*j);
-#endif
              }
 #if 0
        // Transform the new statment (the copy)
           (*j)->seed(project);
-#else
-          printf ("Warning, seeding of security flaws turned OFF! \n");
 #endif
           j++;
         }
    }
 
-#if 0
 void
-BufferOverFlowSecurityFlaw::seedConedTrees( SgProject *project )
+BufferOverFlowSecurityFlaw::seedSecurityFlaws( SgProject *project )
    {
      ROSE_ASSERT (project != NULL);
 
+     printf ("In BufferOverFlowSecurityFlaw::seedSecurityFlaws() \n");
+
   // Build all the different types of seeding techniques for this security flaw (could be many)
-     seedKindList.push_back(new SeedSecurityFlaw());
+  // seedKindList.push_back(new SeedSecurityFlaw());
+
+     ROSE_ASSERT(seedKindList.empty() == false);
 
   // Now iterate over the list
      std::vector<SeedSecurityFlaw*>::iterator j = seedKindList.begin();
@@ -96,7 +103,6 @@ BufferOverFlowSecurityFlaw::seedConedTrees( SgProject *project )
           j++;
         }
    }
-#endif
 
 
 // **********************************************************************

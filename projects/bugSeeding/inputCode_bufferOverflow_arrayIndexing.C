@@ -1,5 +1,6 @@
 
-void foobar()
+
+void foobar(int x)
    {
   // Static array declaration
      float array[10];

@@ -256,10 +256,11 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
        // This relocates the positions of marked vulnerabilities so that we can trace backup the AST to a specific 
        // level of grainularity, make a copy of the subtree, and then seed the subtree instead of the original code.
        // This way all security flaws are not forced into a single instatiation of the code.
-          void seedWithGrainularity( SgProject *project );
+       // void seedWithGrainularity( SgProject *project );
+          void codeCloneGeneration( SgProject *project );
 
        // Seeds this security flaw into the marked location of a potential vulnerability (using multiple 
        // ways of seeding the flaw as defined in the seedKindList).
-       // void seedSecurityFlaws( SgProject *project );
+          void seedSecurityFlaws( SgProject *project );
    };
 

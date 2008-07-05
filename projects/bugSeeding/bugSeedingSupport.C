@@ -28,12 +28,27 @@ void
 SecurityFlaw::defineSearchSpace()
    {
      printf ("Base class function called: SecurityFlaw::defineSearchSpace() \n");
+
+     printf ("For now make this an error... \n");
+     ROSE_ASSERT(false);
    }
 
 void
-SecurityFlaw::seedWithGrainularity( SgProject *project )
+SecurityFlaw::codeCloneGeneration( SgProject *project )
+   {
+     printf ("Base class function called: SecurityFlaw::codeCloneGeneration() \n");
+
+     printf ("For now make this an error... \n");
+     ROSE_ASSERT(false);
+   }
+
+void
+SecurityFlaw::seedSecurityFlaws( SgProject *project )
    {
      printf ("Base class function called: SecurityFlaw::seedSecurityFlaws() \n");
+
+     printf ("For now make this an error... \n");
+     ROSE_ASSERT(false);
    }
 
 // Declaration of static data member (collection of all security flaws).
@@ -66,13 +81,23 @@ SecurityFlaw::detectAllVunerabilities( SgProject *project )
 
 // This is a static member function
 void
+SecurityFlaw::generationAllClones( SgProject *project )
+   {
+     std::vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
+     while (i != securityFlawCollection.end())
+        {
+          (*i)->codeCloneGeneration(project);
+          i++;
+        }
+   }
+
+void
 SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
    {
      std::vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
      while (i != securityFlawCollection.end())
         {
-       // (*i)->seedSecurityFlaws(project);
-          (*i)->seedWithGrainularity(project);
+          (*i)->seedSecurityFlaws(project);
           i++;
         }
    }
