@@ -11,7 +11,7 @@ bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C bufferOverFlowSecurityFlaw
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 clean-local:
-	rm -f *.o bugSeeding rose_*.C introduction.tex design.tex appendix.tex bugSeeding.pdf *.log *.aux *.tex *.sty *.out
+	rm -f *.o bugSeeding rose_*.C introduction.tex design.tex appendix.tex bugSeeding.pdf *.log *.aux *.tex *.sty *.out *.dot
 
 EXTRA_DIST = introduction.tex design.tex appendix.tex \
    bugSeeding.h bugSeedingSupport.h \
