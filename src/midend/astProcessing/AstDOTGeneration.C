@@ -232,14 +232,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                AstAttribute* attribute = i->second;
                ROSE_ASSERT(attribute != NULL);
 
-               printf ("Calling attribute->additionalEdgeInfo() \n");
+            // printf ("Calling attribute->additionalEdgeInfo() \n");
                std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
-               printf ("edgeList.size() = %lu \n",edgeList.size());
+            // printf ("edgeList.size() = %lu \n",edgeList.size());
                for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i = edgeList.begin(); i != edgeList.end(); i++)
                   {
                     string edgelabel  = i->label;
                     string edgeoption = i->options;
-                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i->fromNode = %p to i->toNode = %p edgelabel = %s edgeoption = %s \n",i->fromNode,i->toNode,edgelabel.c_str(),edgeoption.c_str());
+                 // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i->fromNode = %p to i->toNode = %p edgelabel = %s edgeoption = %s \n",i->fromNode,i->toNode,edgelabel.c_str(),edgeoption.c_str());
                     dotrep.addEdge(i->fromNode,edgelabel,i->toNode,edgeoption + "dir=forward");
                   }
              }
