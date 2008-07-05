@@ -110,23 +110,35 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                              ~CloneVulnerabilityTraversal();
                        };
 
-                 //       PrimaryVulnerabilityTraversal
                     class PrimaryVulnerabilityTraversal : public SgSimpleProcessing
                        {
                          public:
-                              SgNode* xNode;
+                              SgNode* primaryVulnerabilityNodeInClone;
+                              SgNode* primaryVulnerabilityNodeInOriginalCode;
+                              SgNode* rootOfClone;
 
                               void visit( SgNode* astNode );
 
                            // Constructor
-                              PrimaryVulnerabilityTraversal(SgNode* node) { xNode = node; };
-                             ~PrimaryVulnerabilityTraversal() {};
+                              PrimaryVulnerabilityTraversal(SgNode* primaryVulnerabilityNodeInClone, SgNode* primaryVulnerabilityNodeInOriginalCode, SgNode* rootOfClone )
+                                 : primaryVulnerabilityNodeInClone(primaryVulnerabilityNodeInClone), 
+                                   primaryVulnerabilityNodeInOriginalCode(primaryVulnerabilityNodeInOriginalCode), 
+                                   rootOfClone(rootOfClone)
+                                 {
+                                // This function could not be defined in the source file (g++ 3.4.6 problem)
+                                 }
+
+                             ~PrimaryVulnerabilityTraversal()
+                                 {
+                                // This function could not be defined in the source file (g++ 3.4.6 problem)
+                                 }
                        };
 
                  // Hide details of calling the traversal
                     static void makeClones( SgProject* project, SeedSecurityFlaw* flaw );
 
-                    static void markPrimaryCloneVulnerability( SgNode* primaryNode, SgNode* node );
+                 // If primaryNodeInClonedCode is always NULL then we should remove it from the argument parameter list.
+                    static void markPrimaryCloneVulnerability( SgNode* primaryNodeInClonedCode, SgNode* primaryNodeInOriginalCode, SgNode* rootOfClone );
              };
 
 

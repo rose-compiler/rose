@@ -18,12 +18,10 @@ main (int argc, char *argv[])
      AstTests::runAllTests (project);
 
 #if 1
-  // printf ("Generate the dot output of the SAGE III AST \n");
-     generateDOT ( *project );
-  // printf ("DONE: Generate the dot output of the SAGE III AST \n");
+     generateDOT ( *project, "_before" );
 #endif
 
-#if 1
+#if 0
   // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
   // printf ("Generate whole AST graph if small enough \n");
@@ -37,9 +35,25 @@ main (int argc, char *argv[])
   // Identify locations in the source code where security flaw vulnerabilities COULD exist.
      SecurityFlaw::detectAllVunerabilities(project);
 
+#if 1
+     generateDOT ( *project, "_afterIdentificationOfVulnerabilities" );
+#endif
+
   // Modify the source code to introduce security flaws for the selected types of security flaws 
   // selected and at the location in the source code where the associated vulnerabilities could be seeded.
      SecurityFlaw::seedAllSecurityFlaws(project);
+
+#if 1
+     generateDOT ( *project, "_afterSeedingOfSecurityFlaws" );
+#endif
+
+#if 0
+  // DQ (6/14/2007): Added support for simpler function for generation of graph of whole AST.
+     const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 8000;
+  // printf ("Generate whole AST graph if small enough \n");
+     generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
+  // printf ("DONE: Generate whole AST graph if small enough \n");
+#endif
 
   // Running internal tests (optional)
      AstTests::runAllTests (project);

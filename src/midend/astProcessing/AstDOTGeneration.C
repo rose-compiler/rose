@@ -12,18 +12,16 @@
 using namespace std;
 
 void
-AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix) {
-  init();
-  traversal=tt;
-  this->filenamePostfix=filenamePostfix;
-  DOTInheritedAttribute ia;
-  traverse(node,ia);
-  string filename2=string("./")+filename+"."+filenamePostfix+"dot";
-  dotrep.writeToFileAsGraph(filename2);
-
-}
-
-
+AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
+   {
+     init();
+     traversal=tt;
+     this->filenamePostfix=filenamePostfix;
+     DOTInheritedAttribute ia;
+     traverse(node,ia);
+     string filename2=string("./")+filename+"."+filenamePostfix+"dot";
+     dotrep.writeToFileAsGraph(filename2);
+   }
 
 void
 AstDOTGeneration::generate(SgProject* node, traversalType tt, string filenamePostfix) {
@@ -130,7 +128,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodeoption="color=\"orange\" ";
         }
      string nodelabel=string("\\n")+node->sage_class_name();
-     nodelabel+=additionalNodeInfo(node);
+     nodelabel += additionalNodeInfo(node);
 
   // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)
   // nodeoption += additionalNodeOptions(node);
@@ -167,10 +165,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
   // add edges or null values
      int testnum=0;
-     for(iter=l.begin();iter!=l.end();iter++)
+     for (iter = l.begin(); iter != l.end(); iter++)
         {
-          string edgelabel=string(node->get_traversalSuccessorNamesContainer()[testnum]);
-          string toErasePrefix="p_";
+          string edgelabel = string(node->get_traversalSuccessorNamesContainer()[testnum]);
+          string toErasePrefix = "p_";
+
           if (AstTests::isPrefix(toErasePrefix,edgelabel))
              {
                edgelabel.erase(0, toErasePrefix.size());
@@ -223,6 +222,31 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           testnum++;
         }
 
+  // DQ (7/4/2008): Support for edges specified in AST attributes
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+
+               printf ("Calling attribute->additionalEdgeInfo() \n");
+               std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
+               printf ("edgeList.size() = %lu \n",edgeList.size());
+               for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i = edgeList.begin(); i != edgeList.end(); i++)
+                  {
+                    string edgelabel  = i->label;
+                    string edgeoption = i->options;
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i->fromNode = %p to i->toNode = %p edgelabel = %s edgeoption = %s \n",i->fromNode,i->toNode,edgelabel.c_str(),edgeoption.c_str());
+                    dotrep.addEdge(i->fromNode,edgelabel,i->toNode,edgeoption + "dir=forward");
+                  }
+             }
+        }
+
+
+
      switch(node->variantT())
         {
           case V_SgFile: 
@@ -271,6 +295,22 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
   // add memory location of node to dot output
      ss << node << "\\n";
 
+  // DQ (7/4/2008): Added support for output of information about attributes
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+          ss << "Attribute list:" << "\\n";
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // pair<std::string,AstAttribute*>
+               std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+
+               ss << name << "\\n";
+             }
+        }
+
      return ss.str();
    }
 
@@ -279,6 +319,25 @@ string
 AstDOTGeneration::additionalEdgeInfo(SgNode* from, SgNode* to, string label)
    {
   // return an empty string for default implementation
+#if 0
+     ostringstream ss;
+
+  // DQ (7/4/2008): Added support for output of information about attributes
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+
+               ss << attribute->additionalEdgeInfo();
+             }
+        }
+
+     return ss.str();
+#endif
      return "";
    }
 
@@ -287,7 +346,23 @@ string
 AstDOTGeneration::additionalNodeOptions(SgNode* node)
    {
   // return an empty string for default implementation
-     return "";
+     ostringstream ss;
+
+  // DQ (7/4/2008): Added support for output of information about attributes
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+
+               ss << attribute->additionalNodeOptions();
+             }
+        }
+
+     return ss.str();
    }
 
 // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)
@@ -295,7 +370,7 @@ string
 AstDOTGeneration::additionalEdgeOptions(SgNode* from, SgNode* to, string label)
    {
   // return an empty string for default implementation, but set the parent edge to blue
-     return string("");
+     return "";
    }
 
 

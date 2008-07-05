@@ -6,9 +6,29 @@
 
 #include "AttributeMechanism.h"
 
+class SgNode;
+
 class AstAttribute
    {
      public:
+
+      // DQ (7/4/2008): Added support for attibutes to specify edges in the dot graphs.
+          class AttributeEdgeInfo
+             {
+               public:
+                    SgNode* fromNode;
+                    SgNode* toNode;
+                    std::string label;
+                    std::string options;
+
+                    AttributeEdgeInfo (SgNode* fromNode, SgNode* toNode, std::string label, std::string options )
+                       : fromNode(fromNode), toNode(toNode), label(label), options(options)
+                       {
+                       }
+
+                   ~AttributeEdgeInfo () { fromNode = NULL; toNode = NULL; };
+             };
+
           AstAttribute() {}
           virtual ~AstAttribute() {}
       /*! This function is used by other components to print the value of an attribute. For example the pdf generation
@@ -20,9 +40,18 @@ class AstAttribute
        // JH (12/21/2005): Adding Methods for storing the Ast Attribute data
           AstAttribute* constructor() {return new AstAttribute();}
           std::string attribute_class_name() { return "AstAttribute"; }
+
+       // Packing support (by JH)
           virtual int packed_size() { return 0; }
           virtual char* packed_data() { return NULL; }
-          virtual void unpacked_data( int size, char* data ) { ; }
+          virtual void unpacked_data( int size, char* data ) {}
+
+       // DQ (7/4/2008): Added DOT support.
+          virtual std::string additionalNodeOptions() { return ""; }
+       // virtual std::string additionalEdgeInfo()    { return ""; }
+
+       // virtual std::vector<std::pair<SgNode*,SgNode*> > additionalEdgeInfo();
+          virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo() { std::vector<AttributeEdgeInfo> v; return v; }
    };
 
 // DQ (6/28/2008):

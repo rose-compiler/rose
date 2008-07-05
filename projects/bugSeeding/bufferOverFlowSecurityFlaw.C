@@ -154,7 +154,7 @@ BufferOverFlowSecurityFlaw::Vulnerability::Traversal::evaluateInheritedAttribute
                printf ("Found a buffer overflow vulnerability \n");
 
             // Build an attribute (on the heap)
-               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(5);
+               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode);
                ROSE_ASSERT(newAttribute != NULL);
 
             // We need to name the attributes, but all the VulnerabilityAttributes can all have the same name.
@@ -185,6 +185,8 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::~Cl
    }
 
 #if 0
+// This code does not appear to compile, I don't know why.  I have alternatively
+// worked around the problem by specifying the code in the header file since it is trivial.
 BufferOverFlowSecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal(SgNode* node)
    {
      xNode = node;
@@ -211,14 +213,22 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::makeClones( SgProject* project, 
    }
 
 void
-BufferOverFlowSecurityFlaw::CloneVulnerability::markPrimaryCloneVulnerability( SgNode* primaryNode, SgNode* node )
+BufferOverFlowSecurityFlaw::CloneVulnerability::markPrimaryCloneVulnerability( SgNode* primaryNodeInClonedCode, SgNode* primaryNodeInOriginalCode, SgNode* rootOfClone )
    {
   // Build an AST traversal object
-     PrimaryVulnerabilityTraversal treeTraversal(primaryNode);
+     PrimaryVulnerabilityTraversal treeTraversal(primaryNodeInClonedCode,primaryNodeInOriginalCode,rootOfClone);
+
+     ROSE_ASSERT(primaryNodeInClonedCode == NULL);
+  // printf ("primaryNodeInClonedCode   = %p = %s \n",primaryNodeInClonedCode,primaryNodeInClonedCode->class_name().c_str());
+     printf ("primaryNodeInOriginalCode = %p = %s \n",primaryNodeInOriginalCode,primaryNodeInOriginalCode->class_name().c_str());
+     printf ("rootOfClone               = %p = %s \n",rootOfClone,rootOfClone->class_name().c_str());
+
+     printf ("treeTraversal.primaryVulnerabilityNodeInOriginalCode = %p = %s \n",treeTraversal.primaryVulnerabilityNodeInOriginalCode,treeTraversal.primaryVulnerabilityNodeInOriginalCode->class_name().c_str());
+     printf ("treeTraversal.rootOfClone                            = %p = %s \n",treeTraversal.rootOfClone,treeTraversal.rootOfClone->class_name().c_str());
 
   // This traverses only the input source file (to traverse all header file 
   // and the source file call "traverse" instead of "traverseInputFiles").
-     treeTraversal.traverse (node,preorder);
+     treeTraversal.traverse (rootOfClone,preorder);
    }
 
 
@@ -228,23 +238,58 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::v
      ROSE_ASSERT(astNode != NULL);
 
      AstAttribute* attributeInClonedCode = astNode->getAttribute("SecurityVulnerabilityAttribute");
-     SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInClonedCode);
+     SecurityVulnerabilityAttribute* securityVulnerabilityAttributeInClonedCode = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInClonedCode);
 
   // Use the value to code specific types of vulnerabilities
-     if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+  // if (securityVulnerabilityAttributeInClonedCode != NULL && securityVulnerabilityAttributeInClonedCode->get_value() == 5)
+  // if (securityVulnerabilityAttributeInClonedCode != NULL && securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNode() == astNode)
+     if (securityVulnerabilityAttributeInClonedCode != NULL)
         {
-          SgNode* primaryNodeInOriginalCode = xNode;
+       // SgNode* primaryNodeInOriginalCode = primaryVulnerabilityNodeInOriginalCode;
+          ROSE_ASSERT(primaryVulnerabilityNodeInOriginalCode != NULL);
+
+          ROSE_ASSERT(securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNode() != astNode);
+
+          printf ("primaryVulnerabilityNodeInOriginalCode = %p = %s \n",primaryVulnerabilityNodeInOriginalCode,primaryVulnerabilityNodeInOriginalCode->class_name().c_str());
 
        // Now get the AstAttribute on the primaryNodeInOriginalCode and see if it is the same, if so then we have identified the primary vulnerability in this clone.
-          AstAttribute* attributeInOriginalCode = primaryNodeInOriginalCode->getAttribute("SecurityVulnerabilityAttribute");
-       // SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInOriginalCode);
+          AstAttribute* attributeInOriginalCode = primaryVulnerabilityNodeInOriginalCode->getAttribute("SecurityVulnerabilityAttribute");
+          SecurityVulnerabilityAttribute* securityVulnerabilityAttributeInOriginalCode = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInOriginalCode);
+          ROSE_ASSERT(securityVulnerabilityAttributeInOriginalCode != NULL);
 
-          if (attributeInOriginalCode == attributeInClonedCode)
+       // Since AstAttribute are presently shared this is a way of verifying that we have 
+       // linked the location in the clone with the location in the original source code.
+          if (securityVulnerabilityAttributeInOriginalCode == securityVulnerabilityAttributeInClonedCode)
              {
-               printf ("***** Found primary vulnerability in clone ***** astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+               printf ("***** Found primary vulnerability in clone ***** astNode = %p = %s rootOfClone = %p = %s \n",astNode,astNode->class_name().c_str(),rootOfClone,rootOfClone->class_name().c_str());
             // SgStatement* statement = isSgStatement(astNode);
             // ROSE_ASSERT(statement != NULL);
                addComment (astNode,"// *** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ");
+
+            // Add pointer to root of clone for this security vulnerability to the list
+            // securityVulnerabilityAttributeInOriginalCode->set_associatedClones(rootOfClone);
+
+            // Remove the SecurityVulnerabilityAttribute attribute (this should not call the descructor for the AstAttribute object)
+               astNode->removeAttribute("SecurityVulnerabilityAttribute");
+
+               if (astNode->attributeExists("PrimarySecurityVulnerabilityForCloneAttribute") == false)
+                  {
+                 // AstAttribute* primaryVulnerabilityAttribute = new PrimarySecurityVulnerabilityForCloneAttribute(astNode);
+                    PrimarySecurityVulnerabilityForCloneAttribute* primaryVulnerabilityAttribute = new PrimarySecurityVulnerabilityForCloneAttribute(astNode,rootOfClone);
+                    ROSE_ASSERT(primaryVulnerabilityAttribute != NULL);
+
+                    astNode->addNewAttribute("SeededSecurityFlawCloneAttribute",primaryVulnerabilityAttribute);
+
+                    ROSE_ASSERT(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode() != NULL);
+                    primaryVulnerabilityAttribute->set_primaryVulnerabilityInOriginalCode(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode());
+                  }
+                 else
+                  {
+                 // We may have to deal with a single IR node having several PrimarySecurityVulnerabilityForCloneAttribute 
+                 // associated with different security flaws.  But for now I want to make this an error!
+                    printf ("Error: this IR nodes already has a PrimarySecurityVulnerabilityForCloneAttribute \n");
+                    ROSE_ASSERT(false);
+                  }
              }
         }
    }
@@ -265,13 +310,16 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::eva
      SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
   // Use the value to code specific types of vulnerabilities
-     if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+  // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+     if (securityVulnerabilityAttribute != NULL)
         {
        // This is a marked security flaw, now backup to a position from which to build a copy so  
        // that we can introduce a version with the seeded security flaw.  This is the grainularity 
        // option for the seeding.  We can support many different levels of grainularity, but the 
        // results appear more useful if one one is selected.  It is unclear if more that one will
        // ever be useful (more than one level of grainularity gets messy).
+
+          ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() == astNode);
 
        // std::vector<SgNode*> grainularityAxis = SeedSecurityFlaw::grainularityOfSeededCode(astNode);
           ROSE_ASSERT(associtedSeedSecurityFlaw != NULL);
@@ -283,6 +331,7 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::eva
           printf ("grainularityAxis.size() = %lu \n",grainularityAxis.size());
 
 #if 1
+       // I think this is the better choice but I am not certain.
           std::vector<SgNode*>::reverse_iterator i = grainularityAxis.rbegin();
           while (i != grainularityAxis.rend())
 #else
@@ -315,7 +364,8 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::eva
                   }
 
             // Mark the copy as a copy built only for seeding security flaws (record the primary flaw in the original AST).
-               AstAttribute* cloneSubtreeAttribute = new SeededSecurityFlawCloneAttribute(astNode);
+            // AstAttribute* cloneSubtreeAttribute = new SeededSecurityFlawCloneAttribute(astNode,subtree);
+               AstAttribute* cloneSubtreeAttribute = new SeededSecurityFlawCloneAttribute(nearestWholeStatementCopy,subtree);
                ROSE_ASSERT(cloneSubtreeAttribute != NULL);
             // nearestWholeStatementCopy->addNewAttribute("SeededSecurityFlawCloneAttribute",cloneSubtreeAttribute);
                if (nearestWholeStatementCopy->attributeExists("SeededSecurityFlawCloneAttribute") == false)
@@ -328,8 +378,12 @@ BufferOverFlowSecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::eva
                        }
                     nearestWholeStatementCopy->addNewAttribute("SeededSecurityFlawCloneAttribute",cloneSubtreeAttribute);
 
+                 // Link from SecurityVulnerabilityAttribute to the clone that was generated to support its seeding.
+                 // securityVulnerabilityAttribute->set_associatedClone(nearestWholeStatementCopy);
+
                  // Mark the clone's primary vulnerability (i.e. the reason why we bothered to make the clone).
-                    markPrimaryCloneVulnerability(astNode,nearestWholeStatementCopy);
+                    SgNode* locationOfPrimaryVulnerabilityInClone = NULL;
+                    markPrimaryCloneVulnerability(locationOfPrimaryVulnerabilityInClone,astNode,nearestWholeStatementCopy);
                   }
 
             // Insert the new statement after the statement with the security vulnerability (at the defined level of grainularity)
@@ -435,9 +489,11 @@ BufferOverFlowSecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAt
 
      ROSE_ASSERT(astNode != NULL);
 
+#if 0
      printf ("astNode                           = %p = %s \n",astNode,astNode->class_name().c_str());
      printf ("inheritedAttribute.inOriginalCode = %s \n",inheritedAttribute.inOriginalCode ? "true" : "false");
      printf ("inheritedAttribute.inClonedCode   = %s \n",inheritedAttribute.inClonedCode   ? "true" : "false");
+#endif
 
      if (astNode->attributeExists("SecurityFlawOriginalSubtreeAttribute") == true)
         {
@@ -457,14 +513,19 @@ BufferOverFlowSecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAt
      SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
   // Use the value to code specific types of vulnerabilities
-     if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+  // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+     if (securityVulnerabilityAttribute != NULL)
         {
           if (inheritedAttribute.inOriginalCode == true)
              {
+               ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() == astNode);
+
                addComment (astNode,"// *** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
              }
             else
              {
+               ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() != astNode);
+
                if (inheritedAttribute.inClonedCode == true)
                   {
                     addComment (astNode,"// *** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
@@ -533,7 +594,8 @@ BufferOverFlowSecurityFlaw::SeedSecurityFlaw::SeedTraversal::visit( SgNode* astN
      AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
      SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
-     if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+  // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+     if (securityVulnerabilityAttribute != NULL)
         {
 #if 0
        // The inherited attribute is true iff we are inside a loop and this is a SgPntrArrRefExp.
