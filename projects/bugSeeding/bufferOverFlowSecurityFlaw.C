@@ -15,12 +15,57 @@ using namespace SageInterface;
 
 BufferOverFlowSecurityFlaw::BufferOverFlowSecurityFlaw()
    {
+  // Build all the different types of vulnerabilities for this security flaw (could be many)
+  // E.g. an array access in a loop body might be one, and an array access in an index 
+  // expression (indirect addressing) might be another.  The point is that there can be many.
+  // vulnerabilityKindList.push_back(new BufferOverflowVulnerability());
+     SecurityFlaw::Vulnerability* vulnerability = new BufferOverflowVulnerability();
+     vulnerabilityKindList.push_back(vulnerability);
+
+  // Build all the different types of seeding techniques for this security flaw (could be many)
+  // Not that the SeedSecurityFlaw object contain information and functionality required to
+  // construct the clones.  Each clone is built at a specific level of grainularity as required
+  // to support the security flaw seeding transformation.  E.g. a buffer overflow that appears
+  // as an array write in a loop might be seeded by adjusting the loop bounds, to support this
+  // the grainularity of the cloning operation must be at least that of the loop level grainularity
+  // or greater.  Alternatively, to seed the buffer overflow via an array subscript manipulation
+  // we only need to clone the array expression (the finest possible level of grainularity).
+  // seedKindList.push_back(new SeedBufferOverflowSecurityFlaw());
+     SecurityFlaw::SeedSecurityFlaw* flaw = new SeedBufferOverflowSecurityFlaw();
+     seedKindList.push_back(flaw);
    }
 
 BufferOverFlowSecurityFlaw::~BufferOverFlowSecurityFlaw()
    {
+  // Nothing to do here!
    }
 
+#if 0
+void
+BufferOverFlowSecurityFlaw::initialize()
+   {
+  // Build all the different types of vulnerabilities for this security flaw (could be many)
+  // E.g. an array access in a loop body might be one, and an array access in an index 
+  // expression (indirect addressing) might be another.  The point is that there can be many.
+  // vulnerabilityKindList.push_back(new BufferOverflowVulnerability());
+     SecurityFlaw::Vulnerability* vulnerability = new BufferOverflowVulnerability();
+     vulnerabilityKindList.push_back(vulnerability);
+
+  // Build all the different types of seeding techniques for this security flaw (could be many)
+  // Not that the SeedSecurityFlaw object contain information and functionality required to
+  // construct the clones.  Each clone is built at a specific level of grainularity as required
+  // to support the security flaw seeding transformation.  E.g. a buffer overflow that appears
+  // as an array write in a loop might be seeded by adjusting the loop bounds, to support this
+  // the grainularity of the cloning operation must be at least that of the loop level grainularity
+  // or greater.  Alternatively, to seed the buffer overflow via an array subscript manipulation
+  // we only need to clone the array expression (the finest possible level of grainularity).
+  // seedKindList.push_back(new SeedBufferOverflowSecurityFlaw());
+     SecurityFlaw::SeedSecurityFlaw* flaw = new SeedBufferOverflowSecurityFlaw();
+     seedKindList.push_back(flaw);
+   }
+#endif
+
+#if 0
 void BufferOverFlowSecurityFlaw::detectVunerabilities( SgProject *project )
    {
   // Build the list of ways to detect this security flaw in source code and 
@@ -82,28 +127,7 @@ BufferOverFlowSecurityFlaw::codeCloneGeneration( SgProject *project )
           j++;
         }
    }
-
-void
-BufferOverFlowSecurityFlaw::seedSecurityFlaws( SgProject *project )
-   {
-  // Note that the container of SeedSecurityFlaw was built in BufferOverFlowSecurityFlaw::codeCloneGeneration()
-
-     ROSE_ASSERT (project != NULL);
-
-     printf ("In BufferOverFlowSecurityFlaw::seedSecurityFlaws() \n");
-
-     ROSE_ASSERT(seedKindList.empty() == false);
-
-  // Now iterate over the list
-     std::vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
-     while (j != seedKindList.end())
-        {
-       // Transform the new statment (the copy)
-          (*j)->seed(project);
-          j++;
-        }
-   }
-
+#endif
 
 // **********************************************************************
 //              BufferOverFlowSecurityFlaw::Vulnerability
@@ -142,7 +166,7 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability::Traversal::evaluateInhe
   // Added Fortran support
      isLoop = isLoop || (isSgFortranDo(astNode) != NULL);
 
-  // Mark future noes in this subtree as being part of a loop
+  // Mark future nodes in this subtree as being part of a loop
      inheritedAttribute.isLoop = isLoop;
 
 #if 1
@@ -173,6 +197,7 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability::Traversal::evaluateInhe
 
      return inheritedAttribute;
    }
+
 
 
 

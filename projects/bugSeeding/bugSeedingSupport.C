@@ -32,7 +32,19 @@ SecurityFlaw::detectVunerabilities( SgProject *project )
    {
   // This is a pure virtual function in the bae class, so it should not be called.
      printf ("Error: Base class function called: SecurityFlaw::detectVunerabilities() \n");
+#if 0
      ROSE_ASSERT(false);
+#else
+     ROSE_ASSERT(vulnerabilityKindList.empty() == false);
+
+  // Now iterate over the list
+     std::vector<SecurityFlaw::Vulnerability*>::iterator i = vulnerabilityKindList.begin();
+     while (i != vulnerabilityKindList.end())
+        {
+          (*i)->detector(project);
+          i++;
+        }
+#endif
    }
 
 // This is a virtual member function
@@ -50,9 +62,32 @@ void
 SecurityFlaw::codeCloneGeneration( SgProject *project )
    {
      printf ("Base class function called: SecurityFlaw::codeCloneGeneration() \n");
-
+#if 0
      printf ("For now make this an error... \n");
      ROSE_ASSERT(false);
+#else
+     ROSE_ASSERT(seedKindList.empty() == false);
+
+  // Now iterate over the list
+     std::vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
+     while (j != seedKindList.end())
+        {
+       // How we clone subtrees depends upon which seeding appraoch is being used, so first
+       // we build the SeedSecurityFlaw object and then build any clones if required.
+
+       // User option to permit seeding of original code or a separate code fragement and a selected 
+       // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
+          if ((*j)->get_seedOriginalCode() == false)
+             {
+            // Make all the required clones to support the security flaw seeding for each specific SeedSecurityFlaw
+               CloneVulnerability::makeClones(project,*j);
+
+               MarkClones::markVulnerabilitiesInClones(project,*j);
+             }
+
+          j++;
+        }
+#endif
    }
 
 // This is a virtual member function
@@ -61,8 +96,22 @@ SecurityFlaw::seedSecurityFlaws( SgProject *project )
    {
      printf ("Base class function called: SecurityFlaw::seedSecurityFlaws() \n");
 
-     printf ("For now make this an error... \n");
-     ROSE_ASSERT(false);
+  // Note that the container of SeedSecurityFlaw was built in BufferOverFlowSecurityFlaw::codeCloneGeneration()
+
+     ROSE_ASSERT (project != NULL);
+
+     printf ("In BufferOverFlowSecurityFlaw::seedSecurityFlaws() \n");
+
+     ROSE_ASSERT(seedKindList.empty() == false);
+
+  // Now iterate over the list
+     std::vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
+     while (j != seedKindList.end())
+        {
+       // Transform the new statment (the copy)
+          (*j)->seed(project);
+          j++;
+        }
    }
 
 
@@ -82,12 +131,15 @@ std::vector<SecurityFlaw*> SecurityFlaw::securityFlawCollection;
 
 // This is a static member function
 void
-SecurityFlaw::buildAllVunerabilities()
+SecurityFlaw::initialize()
    {
   // When there is support for many different kinds of security flaws the list will be assembled here!
 
   // Build a BufferOverFlowSecurityFlaw object
      BufferOverFlowSecurityFlaw* bufferOverFlowSecurityFlaw = new BufferOverFlowSecurityFlaw();
+
+  // Call initialize function
+  // bufferOverFlowSecurityFlaw->initialize ();
 
      securityFlawCollection.push_back(bufferOverFlowSecurityFlaw);
    }

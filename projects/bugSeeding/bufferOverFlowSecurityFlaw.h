@@ -2,28 +2,24 @@
 // defined, one for each security flaw. The attempt is to define a scalable system for handling 
 // lots of security flaws.
 
-// This file represents a single type of security flaw, with both locations in source code where 
-// such flaws can be present, and ways in which such flaws can be seeded into source code:
-//    1) The class BufferOverFlowSecurityFlaw
-//       can have many nested classes to represent different ways in which the security flaw can
-//       appear in source code (locations in the source code where it could exist).  The 
-//       Vulnerability class is just one instance. 
-//    2) The class BufferOverFlowSecurityFlaw can also have many nested classes to represent ways
-//       in which the security flaw could be seeded into an application.  The SeedSecurityFlaw class
-//       is just one instance.
-// It may or may not be a one-to-one mapping between these nested classes.
-
 class BufferOverFlowSecurityFlaw : public SecurityFlaw
    {
+  // This is the class defined for the detection of potential buffer overflow vulnerabilities 
+  // and seeding of
+
      public:
        // Note that there can be many vulnerabilities for a single security flaw (arrays indexing inside
        // a loop body, array indexing in a conditional test, indexing of a STL vector, etc.).
        // In general, vulnerabilities can be independent of the ways in which a security flaw can be seeded,
-       // so this is no one-to-one mapping of Vulnerability classes to SeedSecurityFlaw classes.
+       // so there is no one-to-one mapping of SecurityFlaw::Vulnerability derived classes to 
+       // SecurityFlaw::SeedSecurityFlaw classes. Each class abstracts the details of detecting a specific
+       // kind of vulnerability (potential security vulnerability), there can be many classes.
           class BufferOverflowVulnerability : public SecurityFlaw::Vulnerability
              {
                public:
                  // This class is only required where the specific security flaw's vulnerability detection requires it.
+                 // Since this cases is detecting buffer overflow optional vunlerabilities in loops we use an inherited 
+                 // attribute to detect when we are in a loop.
                     class InheritedAttribute
                        {
                       // This class defines the constraints under which a vulnerability is defined. In this case
@@ -44,21 +40,23 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                     class Traversal : public SgTopDownProcessing<InheritedAttribute>
                        {
                          public:
-                           // This function defines how to recognise the vulnerability (array accesses in loops)
+                           // This function defines how to recognise the vulnerability (array accesses only in loops)
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
                        };
 
-            // This abstracts the details of setting up a call to the AST traversal.
+            // This overloads a base class virtual function and abstracts the details of setting up a call to the 
+            // AST traversal (a few lines of code).
                void detector( SgProject *project );
              };
 
-       // This is an attempt to refactor the code to make the code per flaw as simple as possible.
+      //  This class abstracts the operations about seeding (there could be more than one class).
           class SeedBufferOverflowSecurityFlaw : public SecurityFlaw::SeedSecurityFlaw
              {
             // This class introduces a single kind of seeding at either a specific grainularity 
             // (file, function, block, statement) or using a specific mechanism to hide it as a 
             // security flaw (hidden behind modification of array indexing, or behind a modification 
-            // to the loop bound, etc.).
+            // to the loop bound, etc.). Set the grainularity via the 
+            // SeedSecurityFlaw::GrainularitySpecification type member variable seedGrainulatity.
 
                public:
                  // This is the ROSE AST traversal mechanism (see ROSE Tutorial for details).
@@ -74,28 +72,17 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                SeedBufferOverflowSecurityFlaw();
                virtual ~SeedBufferOverflowSecurityFlaw();
 
+            // This overloads a base class virtual function and abstracts the details of setting up a call to the 
+            // AST traversal (a few lines of code).
                void seed( SgNode *astNode );
              };
 
-       // Constructor
+       // Constructor (constucts all classes derived from SecurityFlaw::Vulnerability and 
+       // SecurityFlaw::SeedSecurityFlaw and inserst them into containers in the base class)
           BufferOverFlowSecurityFlaw();
 
-       // Virtual destructor (since we have virtual functions in this class)
-          virtual ~BufferOverFlowSecurityFlaw();
-
-       // Marks all locations in source code where this type of security flaw could exist (marks with AST 
-       // attribute). This function uses the vulnerabilityKindList to address each kind of source code 
-       // vulnerability for this specific type of security flaw.
-          void detectVunerabilities( SgProject *project );
-
-       // This relocates the positions of marked vulnerabilities so that we can trace backup the AST to a specific 
-       // level of grainularity, make a copy of the subtree, and then seed the subtree instead of the original code.
-       // This way all security flaws are not forced into a single instatiation of the code.
-       // void seedWithGrainularity( SgProject *project );
-          void codeCloneGeneration( SgProject *project );
-
-       // Seeds this security flaw into the marked location of a potential vulnerability (using multiple 
-       // ways of seeding the flaw as defined in the seedKindList).
-          void seedSecurityFlaws( SgProject *project );
+       // Destructor (not really required since there are no data members)
+         ~BufferOverFlowSecurityFlaw();
    };
+
 

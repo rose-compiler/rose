@@ -30,7 +30,7 @@ main (int argc, char *argv[])
 #endif
 
   // Construct internal list of security flaw to consider for vulnerability detection and seeding
-     SecurityFlaw::buildAllVunerabilities();
+     SecurityFlaw::initialize();
 
   // Identify locations in the source code where security flaw vulnerabilities COULD exist.
      SecurityFlaw::detectAllVunerabilities(project);
