@@ -144,6 +144,37 @@ class SecurityFlaw
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
           bool seedOriginalCode;
 
+          class SeedSecurityFlaw
+             {
+            // This class introduces a single kind of seeding at either a specific grainularity 
+            // (file, function, block, statement) or using a specific mechanism to hide it as a 
+            // security flaw (hidden behind modification of array indexing, or behind a modification 
+            // to the loop bound, etc.).
+
+               public:
+                 // This value is used to control to AST clone generation to support seeding, but only 
+                 // when (seedOriginalCode == false).
+                    GrainularitySpecification seedGrainulatity;
+
+                    bool seedOriginalCode;
+
+                 // Constructor and virtual destructor
+                    SeedSecurityFlaw();
+                    virtual ~SeedSecurityFlaw();
+
+                    bool get_seedOriginalCode();
+                    void set_seedOriginalCode( bool t );
+
+                 // For any security flaw marked previously as a vulnerability, back-track up the AST to a subtree 
+                 // to copy so that the seeded security flaw can be introduced in the copy (so that we can leave 
+                 // in place the original code associated with the security vulnerability.
+                 // New function to generate a vector of positions at which to build subtrees.
+                 // static std::vector<SgNode*> grainularityOfSeededCode( SgNode* astNode );
+                    std::vector<SgNode*> grainularityOfSeededCode( SgNode* astNode );
+
+                    virtual void seed( SgNode *astNode ) = 0;
+             };
+
        // Constructor and destructor
           SecurityFlaw();
           virtual ~SecurityFlaw();

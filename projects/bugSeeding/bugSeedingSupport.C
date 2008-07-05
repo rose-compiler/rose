@@ -169,6 +169,122 @@ SecurityFlaw::uniqueValue()
 
 
 
+
+
+// **********************************************************************
+//            SecurityFlaw::SeedSecurityFlaw
+// **********************************************************************
+
+SecurityFlaw::SeedSecurityFlaw::SeedSecurityFlaw()
+   {
+     seedOriginalCode = false;
+   }
+
+SecurityFlaw::SeedSecurityFlaw::~SeedSecurityFlaw()
+   {
+  // Nothing to do here
+   }
+
+bool
+SecurityFlaw::SeedSecurityFlaw::get_seedOriginalCode()
+   {
+     return seedOriginalCode;
+   }
+
+void
+SecurityFlaw::SeedSecurityFlaw::set_seedOriginalCode( bool t )
+   {
+     seedOriginalCode = t;
+   }
+
+std::vector<SgNode*>
+SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
+   {
+  // Loop through the parents of the input node to gather the locations of possible subtrees 
+  // that we will copy and transform (to seed security flaws into).  It could be all subtrees,
+  // it perhaps only the expressions or statements where the security flaw vulnerability is
+  // defined.
+
+     std::vector<SgNode*> returnVector;
+
+     printf ("seedGrainulatity.get_testAllLevels()     = %s \n",seedGrainulatity.get_testAllLevels()     ? "true" : "false");
+     printf ("seedGrainulatity.get_grainularityLevel() = %d \n",seedGrainulatity.get_grainularityLevel());
+
+     bool atRoot = false;
+     while ( atRoot == false )
+        {
+          SgStatement* statement = isSgStatement(astNode);
+          if (statement != NULL)
+             {
+               printf ("seed statement = %p = %s \n",statement,statement->class_name().c_str());
+
+            // Make sure this is a statement which we can insert as a subtree.  For example, it is useless to
+            // clone a body of a "for" loop since we can't insert it into the for loop (because a for loop can 
+            // have only a single body).
+               if ( isSgBasicBlock(statement) == NULL && isSgFunctionDefinition(statement) == NULL )
+                  {
+                    if ( seedGrainulatity.get_testAllLevels() == true)
+                       {
+                         printf ("Adding this statement to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
+                         returnVector.push_back(statement);
+                       }
+                      else
+                       {
+                      // Check if this is a function declaration and the grainularity specified ask for the function level
+                         if ( seedGrainulatity.get_grainularityLevel() == GrainularitySpecification::e_function && isSgFunctionDeclaration(statement) != NULL )
+                            {
+                              printf ("Adding this statement (SgFunctionDeclaration) to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
+                              returnVector.push_back(statement);
+                            }
+                           else
+                            {
+                              if ( seedGrainulatity.get_grainularityLevel() == GrainularitySpecification::e_statement && isSgStatement(statement) != NULL )
+                                 {
+                                   printf ("Adding this statement to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
+                                   returnVector.push_back(statement);
+                                 }
+                                else
+                                 {
+                                // nothing to do
+                                   printf ("This case for where to support levels of grainulatity is not implemented! statement = %p = %s \n",statement,statement->class_name().c_str());
+                                 }
+                            }
+                       }
+
+                 // Use this to just execute a single case!
+                 // break;
+                  }
+             }
+
+          astNode = astNode->get_parent();
+          ROSE_ASSERT(astNode != NULL);
+
+       // Stop when we get to the global scope.
+          atRoot = (isSgGlobal(astNode) != NULL);
+        }
+
+#if 0
+     printf ("Exiting at base of grainularity generator \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return returnVector;
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ***********************************************************
+
 GrainularitySpecification::GrainularitySpecification()
    {
   // Select a default (not all are implemented):

@@ -422,11 +422,28 @@ to security flaws).
 The define of a tranlator to seed bugs into existing applications will be based on 
 the ROSE source-to-source compiler infrastructure.  Likely any source-to-source
 compiler infrastructure might alternatively work as well, or could be adapted.
-The design will address:
+
+   The steps are implemented via a traversal over the AST, additional graphs
+for more interesting program analysis may also be consulted.  Information is passed 
+between phases of the bug seeding via AST attributes placed on IR nodes of the 
+AST.  This approach is supporting in many program analysis infrastructures, and is
+well supported in ROSE (ROSE includes visualization support as well to simplify
+understanding the security flaw seeding process and debugging).
+
+The design will addressed using a few phases:
 \begin{enumerate}
    \item Identification of security flaw vulnerabilities \\
    This work identifies where in the source code a specific security flaw {\em could}
 be seeded, it does not detect an existing security flaw in the input application.
+this part of the project is expected to be of value all alone as a way to count
+and record the locations of opportunities for flaw so that the number of identified
+flaws by static analysis tools can be reasoned via a percentable of the opportunities
+for the flaw instead of just a totla count.  This sort of evaluation does not
+require the security flaw seeding that is much of the purpose of the rest of the
+design.  Note that markes (AST Attributes) are attached to relevant IR nodes during this
+phase.  A data structure called {\tt SecurityVulnerabilityAttribute} is placed at
+each location in the source code where a specific type of vulnerability could exist
+(see figure xxx).
 
    \item Clone fragements of code in the application to support seeding \\
    The user decides if flaws will be seeded into the application or into copied pieces 

@@ -54,7 +54,7 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
              };
 
        // Forward declaration (required for next two class declarations)
-          class SeedSecurityFlaw;
+       // class SeedSecurityFlaw;
 
        // Since we first find all the vulnerabilities and then seed them, this refinds the marked vulnerabilities 
        // after the first pass as part of the seeding process.  Since we have to find the vulnerability and then
@@ -103,10 +103,10 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
 
                            // Pointer to the BufferOverFlowSecurityFlaw (required in traversal visit() function)
-                              SeedSecurityFlaw* associtedSeedSecurityFlaw;
+                              SecurityFlaw::SeedSecurityFlaw* associtedSeedSecurityFlaw;
 
                            // Constructor
-                              CloneVulnerabilityTraversal(SeedSecurityFlaw* X);
+                              CloneVulnerabilityTraversal(SecurityFlaw::SeedSecurityFlaw* X);
                              ~CloneVulnerabilityTraversal();
                        };
 
@@ -135,13 +135,13 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                        };
 
                  // Hide details of calling the traversal
-                    static void makeClones( SgProject* project, SeedSecurityFlaw* flaw );
+                    static void makeClones( SgProject* project, SecurityFlaw::SeedSecurityFlaw* flaw );
 
                  // If primaryNodeInClonedCode is always NULL then we should remove it from the argument parameter list.
                     static void markPrimaryCloneVulnerability( SgNode* primaryNodeInClonedCode, SgNode* primaryNodeInOriginalCode, SgNode* rootOfClone );
              };
 
-
+#if 1
           class MarkClones
              {
             // Note that the cloned vulnerability have all vulnerabilities marked (copied from the original code).
@@ -177,17 +177,19 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
 
                            // Pointer to the BufferOverFlowSecurityFlaw (required in traversal visit() function)
-                              SeedSecurityFlaw* associtedSeedSecurityFlaw;
+                              SecurityFlaw::SeedSecurityFlaw* associtedSeedSecurityFlaw;
 
                            // Constructor
-                              MarkClonesTraversal(SeedSecurityFlaw* X);
+                              MarkClonesTraversal(SecurityFlaw::SeedSecurityFlaw* X);
                              ~MarkClonesTraversal();
                        };
 
                 // Hide details of calling the traversal
-                   static void markVulnerabilitiesInClones( SgProject* project, SeedSecurityFlaw* flaw );
+                   static void markVulnerabilitiesInClones( SgProject* project, SecurityFlaw::SeedSecurityFlaw* flaw );
              };
+#endif
 
+#if 0
        // Note that there can be many ways to seed a security flaw into an application 
        // (or generate it separately from it being seeded into an existing application).
           class SeedSecurityFlaw
@@ -231,6 +233,34 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
 
                void seed( SgNode *astNode );
              };
+#else
+       // This is an attempt to refactor the code to make the code per flaw as simple as possible.
+          class SeedBufferOverflowSecurityFlaw : public SecurityFlaw::SeedSecurityFlaw
+             {
+            // This class introduces a single kind of seeding at either a specific grainularity 
+            // (file, function, block, statement) or using a specific mechanism to hide it as a 
+            // security flaw (hidden behind modification of array indexing, or behind a modification 
+            // to the loop bound, etc.).
+
+               public:
+                 // This is the ROSE AST traversal mechanism (see ROSE Tutorial for details).
+                    class SeedTraversal : public SgSimpleProcessing
+                       {
+                         public:
+                           // This function defines how to seed the security flaw at
+                           // the previously detected location of the vulnerability
+                              void visit( SgNode* node );
+
+                           // std::vector<SgNode*> grainularityOfSeededCode( SgNode* astNode );
+                       };
+
+            // Constructor and virtual destructor
+               SeedBufferOverflowSecurityFlaw();
+               virtual ~SeedBufferOverflowSecurityFlaw();
+
+               void seed( SgNode *astNode );
+             };
+#endif
 
        // Collection of different sorts of vulnerabilities that we want to identify as a buffer over flow 
        // security flaw (there can be many).  This data member might be placed into the base class and
@@ -240,7 +270,7 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
        // Collection of different way to seed buffer overflow security flaws into code (in a loop, in a 
        // conditional test, etc.).  This data member might be placed into the base class and
        // a base class provided for the SeedSecurityFlaw class.
-          std::vector<SeedSecurityFlaw*> seedKindList;
+          std::vector<SecurityFlaw::SeedSecurityFlaw*> seedKindList;
 
        // Constructor
           BufferOverFlowSecurityFlaw();
