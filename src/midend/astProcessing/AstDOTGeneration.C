@@ -251,8 +251,12 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
           case V_SgFile: 
              {
-               string filename=(static_cast<SgFile*>(node))->getFileName();
-               string filename2=string("./")+ROSE::stripPathFromFileName(filename)+"."+filenamePostfix+"dot";
+               string filename = (static_cast<SgFile*>(node))->getFileName();
+
+            // DQ (7/4/2008): Fix filenamePostfix to go before the "."
+            // string filename2=string("./")+ROSE::stripPathFromFileName(filename)+"."+filenamePostfix+"dot";
+               string filename2=string("./")+ROSE::stripPathFromFileName(filename)+filenamePostfix+".dot";
+
             // cout << "generating DOT file: " << filename2 << " ... ";
                dotrep.writeToFileAsGraph(filename2);
             // cout << "done." << endl;
