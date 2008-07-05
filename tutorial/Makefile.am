@@ -96,6 +96,7 @@ noinst_PROGRAMS = \
    virtualFunctionIdentification \
    visitorMemoryPoolTraversal \
    visitorTraversal \
+   volatileTypeModifier \
    wholeASTGraphGenerator \
    wholeGraphAST \
    wholeGraphFilterOnPersistantAttributes
@@ -357,6 +358,9 @@ sprintf_to_snprintf_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 seedBugsExample_arrayIndexing_SOURCES = seedBugsExample_arrayIndexing.C
 seedBugsExample_arrayIndexing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+volatileTypeModifier_SOURCES = volatileTypeModifier.C
+volatileTypeModifier_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.
@@ -645,6 +649,9 @@ testsnprintf: sprintf_to_snprintf
 testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
 	./seedBugsExample_arrayIndexing -rose:verbose 0 -c $(srcdir)/inputCode_seedBugsExample_arrayIndexing.C
 
+testVolatileTypeModifier: volatileTypeModifier
+	./volatileTypeModifier -rose:verbose 0 -c $(srcdir)/inputCode_volatileTypeModifier.C
+
 # #####################################
 # Output files use in tutorial
 # #####################################
@@ -731,7 +738,8 @@ generatedCodeExamples = \
    binaryAnalysis_pic1.pdf \
    rose_input_runtimeErrorCheck.C \
    rose_input_runtimeErrorCheck2.C \
-   rose_inputCode_seedBugsExample_arrayIndexing.C
+   rose_inputCode_seedBugsExample_arrayIndexing.C \
+   rose_inputCode_VolatileTypeModifier.C
 
 # DQ (9/8/2007): These currently fail due to more agressive internal symbol table testing
 #   rose_inputCode_inlineTransformations.C
@@ -1152,6 +1160,9 @@ wholeGraphAST.pdf: wholeGraphAST
 rose_inputCode_seedBugsExample_arrayIndexing.C: seedBugsExample_arrayIndexing
 	./seedBugsExample_arrayIndexing $(ROSE_FLAGS) -c $(srcdir)/inputCode_seedBugsExample_arrayIndexing.C
 
+rose_inputCode_VolatileTypeModifier.C: volatileTypeModifier
+	./volatileTypeModifier $(ROSE_FLAGS) -c $(srcdir)/inputCode_VolatileTypeModifier.C
+
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
 EXTRA_DIST = \
@@ -1232,6 +1243,7 @@ EXTRA_DIST = \
    inputCode_traversalShortCircuit.C \
    inputCode_collectComments.C \
    inputCode_ClassHierarchyGraph.C \
+   inputCode_VolatileTypeModifier.C \
    input_defuseAnalysis.C \
    input_runtimeErrorCheck.C \
    input_runtimeErrorCheck2.C \
