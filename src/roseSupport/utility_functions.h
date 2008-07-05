@@ -34,7 +34,7 @@ int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NUL
 // SgProject & frontend ( int argc, char * argv[] );
 
 void generatePDF ( const SgProject & project );
-void generateDOT ( const SgProject & project );
+void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
 
 // DQ (6/14/2007): Support for whole AST graphs output with attributes (types, symbols, all edges, etc.)
 // We define a default value for the maximum graph size (number of nodes).

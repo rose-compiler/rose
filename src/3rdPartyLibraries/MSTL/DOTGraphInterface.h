@@ -138,74 +138,98 @@ DOTGraphInterface<VertexType, EdgeType, VertexIterator, EdgeIterator>::writeToDO
      if (debug == true)
           std::cerr << " dot output to " << filename << std::endl; // debug
 
-	mDotRep.clear();
+     mDotRep.clear();
 
-	// init subgraphs (this might just be empty, that also works)
-	std::map<int,std::string> subgraphs( getSubgraphList() );
-	for(std::map<int,std::string>::iterator s=subgraphs.begin(); s!=subgraphs.end(); s++) {
-		//cerr << " adding subgrph " << endl;
-		//cerr << " adding " << (*s).first <<" as "<< (*s).second <<endl;
-		mDotRep.addSubgraph( (*s).first, (*s).second );
-	}
+  // init subgraphs (this might just be empty, that also works)
+     std::map<int,std::string> subgraphs( getSubgraphList() );
+     for(std::map<int,std::string>::iterator s=subgraphs.begin(); s!=subgraphs.end(); s++)
+        {
+       // cerr << " adding subgrph " << endl;
+       // cerr << " adding " << (*s).first <<" as "<< (*s).second <<endl;
+          mDotRep.addSubgraph( (*s).first, (*s).second );
+        }
 	
-	// create all nodes
-	for(VertexIterator i=getVertices(); i!=getVerticesEnd(); i++) {
-		int subgraphId = getVertexSubgraphId( *i );
-   // printf ("In writeToDOTFile(): subgraphId = %d \n",subgraphId);
-		if(subgraphId>=0) {
-			mDotRep.addNode( vertexToString(&(*i)), getVertexName( (*i) ), "", subgraphId );
-		} else {
-			mDotRep.addNode( vertexToString(&(*i)), getVertexName( (*i) ), "" );
-		}
-		if(debug) std::cerr << " add node " << vertexToString(&(*i)) << " as " << getVertexName( (*i) ) << std::endl; // debug
-	}
+  // create all nodes
+     for(VertexIterator i=getVertices(); i!=getVerticesEnd(); i++)
+        {
+          int subgraphId = getVertexSubgraphId( *i );
+       // printf ("In writeToDOTFile(): subgraphId = %d \n",subgraphId);
+          if(subgraphId>=0)
+             {
+               mDotRep.addNode( vertexToString(&(*i)), getVertexName( (*i) ), "", subgraphId );
+             }
+            else
+             {
+               mDotRep.addNode( vertexToString(&(*i)), getVertexName( (*i) ), "" );
+             }
 
+          if(debug)
+             {
+               std::cerr << " add node " << vertexToString(&(*i)) << " as " << getVertexName( (*i) ) << std::endl; // debug
+             }
+        }
 
-	// create edges
-	for(VertexIterator i=getVertices(); i!=getVerticesEnd(); i++) {
-		// sort nodes? or problem of the user?
+  // create edges
+     for (VertexIterator i=getVertices(); i!=getVerticesEnd(); i++)
+        {
+       // sort nodes? or problem of the user?
 
-		if(debug) std::cerr << " add edge vertices ... " << std::endl; // debug
-		EdgeIterator estart = getEdges(*i);
-		EdgeIterator eend = getEdgesEnd(*i);
-		for(EdgeIterator j=estart; j!=eend; j++) {
-			EdgeType& e = *j;
-			std::string label = getEdgeLabel( e );
+          if (debug)
+               std::cerr << " add edge vertices ... " << std::endl; // debug
 
-                        //AS(032006) Fixed it so that the corect edge is made. Earlier a call was made towards
-                        //mDotRep.addEdge( vertexToString(&(*i)),vertexToString(getTargetVertex(e)),"" ) which
-                        //would result in the second paramater implemented as a label and third as a node id. 
-                        //Therefore I decided to simplify the implementation
-			mDotRep.addEdge( vertexToString(&(*i)), label, vertexToString(getTargetVertex(e)) , "");
-			if(debug) std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " as " << label << std::endl; // debug
-	#if 0
-            //AS(032006) There is no way to implement this logic in the current implementation of DOTSubgraphRepresentation.
-            //Also as a design-desition I think it would be better to create an edge without a label when the label is of length
-            //0 in the DOTSubgraphRepresentation. From my opinion that is a better design.
-           
-			if(label.length()>0) {
-				// insert with label
-				mDotRep.addEdge( vertexToString(&(*i)), label, vertexToString(getTargetVertex(e)) , "");
-				if(debug) std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " as " << label << std::endl; // debug
-			} else {
-				// insert without label
-                                //AS(032006) Fixed it so that the corect edge is made. Earlier a call was made towards
-                                //mDotRep.addEdge( vertexToString(&(*i)),vertexToString(getTargetVertex(e)),"" ) which
-                                //would result in the second paramater implemented as a label and third as a node id. 
-				mDotRep.addEdge( vertexToString(&(*i)),"", vertexToString(getTargetVertex(e)),"" );
-				if(debug) std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " without label " << std::endl; // debug
-			}
+          EdgeIterator estart = getEdges(*i);
+          EdgeIterator eend = getEdgesEnd(*i);
+
+          for (EdgeIterator j=estart; j!=eend; j++)
+             {
+               EdgeType& e = *j;
+               std::string label = getEdgeLabel( e );
+
+            // AS(032006) Fixed it so that the corect edge is made. Earlier a call was made towards
+            // mDotRep.addEdge( vertexToString(&(*i)),vertexToString(getTargetVertex(e)),"" ) which
+            // would result in the second paramater implemented as a label and third as a node id. 
+            // Therefore I decided to simplify the implementation
+               mDotRep.addEdge( vertexToString(&(*i)), label, vertexToString(getTargetVertex(e)) , "");
+               if (debug)
+                    std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " as " << label << std::endl; // debug
+#if 0
+            // AS(032006) There is no way to implement this logic in the current implementation of DOTSubgraphRepresentation.
+            // Also as a design-desition I think it would be better to create an edge without a label when the label is of length
+            // zero in the DOTSubgraphRepresentation. From my opinion that is a better design.
+
+               if (label.length()>0)
+                  {
+                 // insert with label
+                    mDotRep.addEdge( vertexToString(&(*i)), label, vertexToString(getTargetVertex(e)) , "");
+                    if(debug)
+                         std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " as " << label << std::endl; // debug
+                  }
+                 else
+                  {
+                 // insert without label
+                 // AS(032006) Fixed it so that the corect edge is made. Earlier a call was made towards
+                 // mDotRep.addEdge( vertexToString(&(*i)),vertexToString(getTargetVertex(e)),"" ) which
+                 // would result in the second paramater implemented as a label and third as a node id. 
+                    mDotRep.addEdge( vertexToString(&(*i)),"", vertexToString(getTargetVertex(e)),"" );
+                    if (debug)
+                         std::cerr << " add edge from " << vertexToString(&(*i)) << " to " << vertexToString(getTargetVertex(e)) << " without label " << std::endl; // debug
+                  }
 #endif
-			if(debug) std::cerr << " edge added " << std::endl; // debug
-		} // edges
-		if(debug) std::cerr << " edge for vertex added " << std::endl; // debug
+               if (debug)
+                    std::cerr << " edge added " << std::endl; // debug
+             } // edges
 
-		} // nodes
+          if (debug)
+               std::cerr << " edge for vertex added " << std::endl; // debug
+        } // nodes
 
-		if(debug) std::cerr << " writing content to " << filename << std::endl; // debug
-		mDotRep.writeToFileAsGraph( filename );
-		if(debug) std::cerr << " output to " << filename << " done " << std::endl; // debug
-	}
+     if (debug)
+          std::cerr << " writing content to " << filename << std::endl; // debug
 
+     mDotRep.writeToFileAsGraph( filename );
+
+     if (debug)
+          std::cerr << " output to " << filename << " done " << std::endl; // debug
+   }
 
 #endif

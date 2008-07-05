@@ -361,16 +361,23 @@ generatePDF ( const SgProject & project )
    }
 
 void
-generateDOT ( const SgProject & project )
+generateDOT ( const SgProject & project, std::string filenamePostfix )
    {
+  // DQ (7/4/2008): Added default parameter to support the filenamePostfix 
+  // mechanism in AstDOTGeneration
+
   // DQ (6/14/2007): Added support for timing of the generateDOT() function.
      TimingPerformance timer ("ROSE generateDOT():");
 
   // test ROSE specific class
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
-     astdotgen.generateInputFiles(&nonconstProject);
+
+  // Note that the use of generateInputFiles cause the graph to be generated 
+  // for only the input source file and not any included header files. The 
+  // result is a much smaller file (and generally a more useful one).
   // astdotgen.generate(&nonconstProject);
+     astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
    }
 
 void
