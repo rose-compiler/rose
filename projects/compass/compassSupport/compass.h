@@ -156,7 +156,7 @@ namespace Compass {
 
            /// Run the given checker starting at a top node
                virtual void run(SgNode* n) = 0;
-	       virtual void visit(SgNode* n) = 0;
+               virtual void visit(SgNode* n) = 0;
                Compass::OutputObject* getOutput() { return output; };
         };
 

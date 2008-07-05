@@ -999,3 +999,13 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeOptions()
   // return "fillcolor=\"magenta\",style=filled";
      return "fillcolor=\"purple\",style=filled";
    }
+
+
+void foo ()
+{
+   volatile int x;
+   for (volatile int y; y < 10; y++)
+   {
+      x = 0;
+   }
+}

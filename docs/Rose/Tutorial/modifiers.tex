@@ -1,0 +1,104 @@
+\chapter{Type and Declaration Modifiers}
+
+   Most languages support the general concept of modifiers to
+types, declarations, etc.  The keyword {\em volatile} for
+example is a modifier to the type where it is used in a 
+declaration.  Searching for the modifiers for types and 
+declarations can however be confusing.  They are often not
+where one would expect, and most often because of corner
+cases in the language that force them to be handled in specific 
+ways.
+
+   This example tutorial code is a demonstration of a how to access the
+{\em volatile} modifier used in the declaration of types for variables.
+We demonstrate that the modifier is not present in the SgVariableDeclaration
+or the SgVariableDefinitoon, but is located in the SgModifierType used
+to wrap the type returned from the SgInitializedName (the variable in the
+variable declaration).
+
+\section{Input For Example Showing use of {\em Volatile} type modifier}
+
+   Figure~\ref{Tutorial:exampleInputCode_volatileTypeModifier}
+shows the example input used for demonstration of test for the {\em volatile} 
+type modifier.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_VolatileTypeModifier.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_VolatileTypeModifier.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to program in codes used in this chapter.}
+\label{Tutorial:exampleInputCode_volatileTypeModifier}
+\end{figure}
+
+
+\section{Generating the code representing the seeded bug}
+
+    Figure~\ref{Tutorial:example_volatileTypeModifier}
+shows a code that traverses each IR node and for and
+SgInitializedName IR node checks it type.
+The input code is shown in figure \ref{Tutorial:exampleInputCode_volatileTypeModifier},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_volatileTypeModifier}.
+
+
+\begin{figure}[!h]
+{\indent
+{
+%\mySmallFontSize
+\mySmallestFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/volatileTypeModifier.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/volatileTypeModifier.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how to detect {\em volatile} modifier. }
+\label{Tutorial:example_volatileTypeModifier}
+\end{figure}
+
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_VolatileTypeModifier.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_VolatileTypeModifier.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code using volatileTypeModifier.C}
+\label{Tutorial:exampleOutput_volatileTypeModifier}
+\end{figure}
+
