@@ -8,13 +8,15 @@ class SecurityFlaw
      public:
        // User option to permit seeding of original code or a separate code fragement and a selected 
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
-          bool seedOriginalCode;
+       // bool seedOriginalCode;
 
           class Vulnerability
              {
                public:
                  // This abstracts the details of setting up a call to the AST traversal.
                     virtual void detector( SgProject *project ) = 0;
+
+                    virtual std::string get_name() { return "SecurityFlaw::Vulnerability"; }
              };
 
       // Forward declaration
@@ -180,6 +182,8 @@ class SecurityFlaw
                     std::vector<SgNode*> grainularityOfSeededCode( SgNode* astNode );
 
                     virtual void seed( SgNode *astNode ) = 0;
+
+                    virtual std::string get_name() { return "SecurityFlaw::SeedSecurityFlaw"; }
              };
 
        // Constructor and destructor

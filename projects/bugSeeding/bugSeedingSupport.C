@@ -2,6 +2,7 @@
 
 #include "rose.h"
 
+using namespace std;
 using namespace SageBuilder;
 using namespace SageInterface;
 
@@ -13,7 +14,7 @@ SecurityFlaw::SecurityFlaw()
   // I think that we will discover that seeding the original input application without 
   // cloning code fragements will be messy and unanalizable by static analysis tools.
   // So the value for seedOriginalCode is FALSE by default.
-     seedOriginalCode = false;
+  // seedOriginalCode = false;
    }
 
 SecurityFlaw::~SecurityFlaw()
@@ -32,19 +33,16 @@ SecurityFlaw::detectVunerabilities( SgProject *project )
    {
   // This is a pure virtual function in the bae class, so it should not be called.
      printf ("Error: Base class function called: SecurityFlaw::detectVunerabilities() \n");
-#if 0
-     ROSE_ASSERT(false);
-#else
+
      ROSE_ASSERT(vulnerabilityKindList.empty() == false);
 
   // Now iterate over the list
-     std::vector<SecurityFlaw::Vulnerability*>::iterator i = vulnerabilityKindList.begin();
+     vector<SecurityFlaw::Vulnerability*>::iterator i = vulnerabilityKindList.begin();
      while (i != vulnerabilityKindList.end())
         {
           (*i)->detector(project);
           i++;
         }
-#endif
    }
 
 // This is a virtual member function
@@ -62,19 +60,21 @@ void
 SecurityFlaw::codeCloneGeneration( SgProject *project )
    {
      printf ("Base class function called: SecurityFlaw::codeCloneGeneration() \n");
-#if 0
-     printf ("For now make this an error... \n");
-     ROSE_ASSERT(false);
-#else
+
      ROSE_ASSERT(seedKindList.empty() == false);
 
+#if 0
   // Now iterate over the list
-     std::vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
+     vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
      while (j != seedKindList.end())
         {
        // How we clone subtrees depends upon which seeding appraoch is being used, so first
        // we build the SeedSecurityFlaw object and then build any clones if required.
 
+          printf ("In SecurityFlaw::codeCloneGeneration(): SecurityFlaw::SeedSecurityFlaw = %s \n",(*j)->get_name().c_str());
+#if 1
+          generateDOT ( *project, string("before_") + (*j)->get_name().c_str() );
+#endif
        // User option to permit seeding of original code or a separate code fragement and a selected 
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
           if ((*j)->get_seedOriginalCode() == false)
@@ -87,6 +87,16 @@ SecurityFlaw::codeCloneGeneration( SgProject *project )
 
           j++;
         }
+#else
+  // These shuld only be called once, not in a loop over all SecurityFlaw::SeedSecurityFlaw objects.
+ 
+  // For now provide a pointer to the first SecurityFlaw::SeedSecurityFlaw base class.
+  // But these functions should only be called once to generate all clones on a per
+  // identified security flaw basis.  Any more AST copies shouldbe done to support the
+  // specific requirements of each SecurityFlaw::SeedSecurityFlaw object (defined mechanism).
+     vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
+     CloneVulnerability::makeClones(project,*j);
+     MarkClones::markVulnerabilitiesInClones(project,*j);
 #endif
    }
 
@@ -105,10 +115,12 @@ SecurityFlaw::seedSecurityFlaws( SgProject *project )
      ROSE_ASSERT(seedKindList.empty() == false);
 
   // Now iterate over the list
-     std::vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
+     vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
      while (j != seedKindList.end())
         {
        // Transform the new statment (the copy)
+          printf ("In SecurityFlaw::seedSecurityFlaws(): SecurityFlaw::SeedSecurityFlaw = %s \n",(*j)->get_name().c_str());
+
           (*j)->seed(project);
           j++;
         }
@@ -121,7 +133,7 @@ SecurityFlaw::seedSecurityFlaws( SgProject *project )
 // ******************
 
 // Declaration of static data member (collection of all security flaws).
-std::vector<SecurityFlaw*> SecurityFlaw::securityFlawCollection;
+vector<SecurityFlaw*> SecurityFlaw::securityFlawCollection;
 
 
 
@@ -157,7 +169,7 @@ void
 SecurityFlaw::detectAllVunerabilities( SgProject *project )
    {
   // Call the member function to annotate the AST where each security flaw vulnerabilities exists.
-     std::vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
+     vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
      while (i != securityFlawCollection.end())
         {
           (*i)->detectVunerabilities(project);
@@ -169,7 +181,7 @@ SecurityFlaw::detectAllVunerabilities( SgProject *project )
 void
 SecurityFlaw::generationAllClones( SgProject *project )
    {
-     std::vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
+     vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
      while (i != securityFlawCollection.end())
         {
           (*i)->codeCloneGeneration(project);
@@ -180,7 +192,7 @@ SecurityFlaw::generationAllClones( SgProject *project )
 void
 SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
    {
-     std::vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
+     vector<SecurityFlaw*>::iterator i = securityFlawCollection.begin();
      while (i != securityFlawCollection.end())
         {
           (*i)->seedSecurityFlaws(project);
@@ -194,12 +206,12 @@ SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
 // ***************************
 
 void
-SecurityFlaw::addComment( SgNode* astNode, std::string comment )
+SecurityFlaw::addComment( SgNode* astNode, string comment )
    {
   // This function adds a comment before the statement contained by the input IR node.
 
   // Now add a comment to make clear that this is a location of a seeded security flaw
-  // std::string comment = "// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ";
+  // string comment = "// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ";
      PreprocessingInfo* commentInfo = new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
                comment,"user-generated",0, 0, 0, PreprocessingInfo::before, false, true);
      SgStatement* associatedStatement = TransformationSupport::getStatement(astNode);
@@ -376,7 +388,7 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
           ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() == astNode);
 
           ROSE_ASSERT(associtedSeedSecurityFlaw != NULL);
-          std::vector<SgNode*> grainularityAxis = associtedSeedSecurityFlaw->grainularityOfSeededCode(astNode);
+          vector<SgNode*> grainularityAxis = associtedSeedSecurityFlaw->grainularityOfSeededCode(astNode);
 
        // Iterate from finest level of grainularity (e.g. SgExpression or SgStatement) to largest 
        // level of grainularity (e.g. SgFunctionDeclaration or SgFile).  This is most often a 
@@ -385,10 +397,10 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
 
 #if 1
        // I think this is the better choice but I am not certain.
-          std::vector<SgNode*>::reverse_iterator i = grainularityAxis.rbegin();
+          vector<SgNode*>::reverse_iterator i = grainularityAxis.rbegin();
           while (i != grainularityAxis.rend())
 #else
-          std::vector<SgNode*>::iterator i = grainularityAxis.begin();
+          vector<SgNode*>::iterator i = grainularityAxis.begin();
           while (i != grainularityAxis.end())
 #endif
              {
@@ -456,7 +468,7 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
                if (functionDeclaration != NULL)
                   {
                     SgName functionName = functionDeclaration->get_name();
-                    functionName += std::string("_SecurityFlawSeeded_function_") + StringUtility::numberToString(uniqueValue());
+                    functionName += string("_SecurityFlawSeeded_function_") + StringUtility::numberToString(uniqueValue());
                     functionDeclaration->set_name(functionName);
 
                     printf ("functionName = %s \n",functionName.str());
@@ -619,7 +631,7 @@ SecurityFlaw::SeedSecurityFlaw::set_seedOriginalCode( bool t )
      seedOriginalCode = t;
    }
 
-std::vector<SgNode*>
+vector<SgNode*>
 SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
    {
   // Loop through the parents of the input node to gather the locations of possible subtrees 
@@ -627,7 +639,7 @@ SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
   // it perhaps only the expressions or statements where the security flaw vulnerability is
   // defined.
 
-     std::vector<SgNode*> returnVector;
+     vector<SgNode*> returnVector;
 
      printf ("seedGrainulatity.get_testAllLevels()     = %s \n",seedGrainulatity.get_testAllLevels()     ? "true" : "false");
      printf ("seedGrainulatity.get_grainularityLevel() = %d \n",seedGrainulatity.get_grainularityLevel());
@@ -793,12 +805,12 @@ SecurityVulnerabilityAttribute::set_securityVulnerabilityNode(SgNode* node)
 
 // DOT graph support for attributes to add additional edges to AST dot graphs
 // (useful for debugging)
-std::vector<AstAttribute::AttributeEdgeInfo>
+vector<AstAttribute::AttributeEdgeInfo>
 SecurityVulnerabilityAttribute::additionalEdgeInfo()
    {
-     std::vector<AstAttribute::AttributeEdgeInfo> v;
+     vector<AstAttribute::AttributeEdgeInfo> v;
 
-     std::set<SgNode*>::iterator i = associtedClones.begin();
+     set<SgNode*>::iterator i = associtedClones.begin();
      while ( i != associtedClones.end() )
         {
           ROSE_ASSERT(securityVulnerabilityNode != NULL);
@@ -855,10 +867,10 @@ SeededSecurityFlawCloneAttribute::set_rootOfCloneInOriginalCode(SgNode* node)
 
 // DOT graph support for attributes to add additional edges to AST dot graphs
 // (useful for debugging)
-std::vector<AstAttribute::AttributeEdgeInfo>
+vector<AstAttribute::AttributeEdgeInfo>
 SeededSecurityFlawCloneAttribute::additionalEdgeInfo()
    {
-     std::vector<AstAttribute::AttributeEdgeInfo> v;
+     vector<AstAttribute::AttributeEdgeInfo> v;
 
      ROSE_ASSERT(primarySecurityFlawInClone != NULL);
      ROSE_ASSERT(rootOfCloneInOriginalCode != NULL);
@@ -914,10 +926,10 @@ PrimarySecurityVulnerabilityForCloneAttribute::get_primaryVulnerabilityInOrigina
 
 // DOT graph support for attributes to add additional edges to AST dot graphs
 // (useful for debugging)
-std::vector<AstAttribute::AttributeEdgeInfo>
+vector<AstAttribute::AttributeEdgeInfo>
 PrimarySecurityVulnerabilityForCloneAttribute::additionalEdgeInfo()
    {
-     std::vector<AstAttribute::AttributeEdgeInfo> v;
+     vector<AstAttribute::AttributeEdgeInfo> v;
 
      ROSE_ASSERT(primarySecurityFlawInClone != NULL);
      ROSE_ASSERT(primaryVulnerabilityInOriginalCode != NULL);
@@ -968,14 +980,14 @@ gray
 */
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
-std::string
+string
 SecurityVulnerabilityAttribute::additionalNodeOptions()
    {
      return "fillcolor=\"red\",style=filled";
    }
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
-std::string
+string
 SecurityFlawOriginalSubtreeAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"deepskyblue\",style=filled";
@@ -983,7 +995,7 @@ SecurityFlawOriginalSubtreeAttribute::additionalNodeOptions()
    }
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
-std::string
+string
 SeededSecurityFlawCloneAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"yellow\",style=filled";
@@ -992,7 +1004,7 @@ SeededSecurityFlawCloneAttribute::additionalNodeOptions()
    }
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
-std::string
+string
 PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"greenyellow\",style=filled";
@@ -1000,12 +1012,3 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeOptions()
      return "fillcolor=\"purple\",style=filled";
    }
 
-
-void foo ()
-{
-   volatile int x;
-   for (volatile int y; y < 10; y++)
-   {
-      x = 0;
-   }
-}

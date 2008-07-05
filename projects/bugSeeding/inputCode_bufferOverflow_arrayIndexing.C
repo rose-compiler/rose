@@ -7,6 +7,9 @@ void foobar(int x)
      array[4] = 0;
      array[7] = 0;
   // array[9] = 0;
+
+     for (int i=0; i < 5; i++)
+          array[i] = 0;
    }
 
 #if 0
