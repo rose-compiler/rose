@@ -16,8 +16,9 @@ clean-local:
 	rm -f *.o bugSeeding rose_*.C bugSeeding.pdf *.log *.aux *.out *.dot
 
 EXTRA_DIST = introduction.tex design.tex appendix.tex \
-   bugSeeding.h bugSeedingSupport.h \
-   bufferOverFlowSecurityFlaw.h
+   bugSeeding.h bugSeedingSupport.h bugSeedingAttributes.h \
+   cloneGrainularity.h  vulnerabilityDetection.h \
+   bufferOverFlowSecurityFlaw.h 
 
 docs: bugSeeding.tex
 	$(PDFLATEX) bugSeeding.tex
