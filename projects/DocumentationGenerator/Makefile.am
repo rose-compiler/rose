@@ -32,8 +32,9 @@ doxygenComment.C: doxygenComment.lex
 	$(LEX) -Pdx -odoxygenComment.C $(srcdir)/doxygenComment.lex
 
 # This tests the generation of the Doxygen *.docs file separate from the sorce code
-test1: correctExternalComments $(srcdir)/testAutoDocumentation_01.C $(srcdir)/testAutoDocumentation_01.docs
-	./correctExternalComments $(srcdir)/testAutoDocumentation_01.C $(srcdir)/testAutoDocumentation_01.docs
+test1: correctExternalComments $(srcdir)/testAutoDocumentation_01.C $(srcdir)/testAutoDocumentation_01.docsz
+	cp $(srcdir)/testAutoDocumentation_01.docsz testAutoDocumentation_01.docs
+	./correctExternalComments $(srcdir)/testAutoDocumentation_01.C testAutoDocumentation_01.docs
 
 # This tests the updating of any Doxygen comments into the generated source code.
 test2: correctAllComments $(srcdir)/testAutoDocumentation_02.C
@@ -120,7 +121,7 @@ testClassifyDeprecatedSmall: docs/SgNode.docs sage_doxygen_documentation.h class
 	mv -f *.docs $(top_srcdir)/docs/testDoxygen_copy
 
 EXTRA_DIST = doxygenComment.lex testAutoDocumentation_01.C \
-     testAutoDocumentation_02.C testAutoDocumentation_01.docs $(bin_SCRIPTS) \
+     testAutoDocumentation_02.C testAutoDocumentation_01.docsz $(bin_SCRIPTS) \
      testParser01.C testParser02.C testParser03.C testParser06.C testParser08.C \
      testParser09.C testParser10.C testParser11.C testParser12.C
 
@@ -136,9 +137,6 @@ check-local:
 	@echo "********************************************************************************************"
 	@echo "*** ROSE/projects/DocumentationGenerator: make check rule complete (terminated normally) ***"
 	@echo "********************************************************************************************"
-
-distclean-local:
-	rm -rf testAutoDocumentation_01.docs
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
