@@ -46,7 +46,7 @@ OLD_EXTRA_DIST = \
    expression_templates.h inline_expression_templates.h $(TESTCODES)
 
 clean-local:
-	rm -f *.o rose_*.C *.sage.C test2001_??.C.show *.ti \
+	rm -f *.o rose_test2001_11.C *.sage.C test2001_??.C.show *.ti \
               *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
 	rm -rf ti_files
 

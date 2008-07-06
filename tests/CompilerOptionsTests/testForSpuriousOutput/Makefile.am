@@ -42,7 +42,7 @@ EXTRA_DIST = \
    $(TESTCODES)
 
 clean-local:
-	rm -f *.o *.C rose_*.C *.sage.C test2001_??.C.show outputFile \
+	rm -f *.o rose_*.C *.sage.C test2001_??.C.show outputFile \
               *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
 	rm -rf ti_files
 
