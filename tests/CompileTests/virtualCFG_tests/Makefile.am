@@ -462,12 +462,12 @@ $(CXX_FILES): testVirtualCFG
 
 # ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
 $(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
-	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.c) && touch $@
+	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
+	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
 
 $(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
-	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.c) && touch $@
+	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
+	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
 $(F90_FILES): ./testVirtualCFG
@@ -513,6 +513,6 @@ check-local: check-cxx check-c check-c99 check-fortran
 	@echo "******************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.c *-o *.mod graph.dot
+	rm -f *.o *.temp.c *-o *.mod graph.dot
 	rm -rf QMTest
 

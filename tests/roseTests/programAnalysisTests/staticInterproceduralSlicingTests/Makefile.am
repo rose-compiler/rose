@@ -99,8 +99,5 @@ check-local:
 	@echo "*********************************************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) test* rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
-
-distclean-local:
-	rm -rf Templates.DB 
+	rm -rf $(CXX_TEMPLATE_OBJECTS) testSlicing *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
 

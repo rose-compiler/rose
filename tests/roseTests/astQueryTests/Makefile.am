@@ -71,7 +71,7 @@ check-local:
 	@echo "****************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files input* rose_input*.C
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.o rose_input*.C
 
 distclean-local:
 	rm -rf Templates.DB 

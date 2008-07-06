@@ -33,7 +33,7 @@ TESTCODE_INCLUDES =
 #	@echo "Compiling test code using $(TEST_TRANSLATOR) ..."
 #	env SRCDIR="$(srcdir)" $(TEST_TRANSLATOR)
 
-CLEANFILES = unparsed.s buffer2.bin callgraph.gml output
+CLEANFILES = unparsed.s callgraph.gml output
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
