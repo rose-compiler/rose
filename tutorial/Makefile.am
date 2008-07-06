@@ -1248,7 +1248,6 @@ EXTRA_DIST = \
    input_runtimeErrorCheck2.C \
    attributeCopyExamples.C \
    TAU_INCLUDE_DIR \
-   default_error_graph.dot \
    inputCode_addStruct.C \
    rose_bin_example_backup.s \
    buffer2.bin \
