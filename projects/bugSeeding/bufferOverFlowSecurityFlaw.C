@@ -52,13 +52,14 @@ BufferOverFlowSecurityFlaw::~BufferOverFlowSecurityFlaw()
 //              BufferOverFlowSecurityFlaw_InLoop::Vulnerability
 // **********************************************************************
 
+
 void
 BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::detector( SgProject *project )
    {
      ROSE_ASSERT (project != NULL);
 
   // Build an AST traversal object
-     Traversal treeTraversal;
+     Traversal treeTraversal(this);
 
   // Build the initial inherited attribute
      InheritedAttribute inheritedAttribute;
@@ -68,6 +69,10 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::detector( SgProj
      treeTraversal.traverseInputFiles (project,inheritedAttribute);
    }
 
+BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::Traversal::Traversal( SecurityFlaw::Vulnerability* vulnerabilityPointer )
+   : vulnerabilityPointer(vulnerabilityPointer)
+   {
+   }
 
 BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::InheritedAttribute
 BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::Traversal::evaluateInheritedAttribute (
@@ -98,7 +103,7 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_InLoop::Traversal::evalu
                printf ("Found a buffer overflow vulnerability in a loop \n");
 
             // Build an attribute (on the heap)
-               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode);
+               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode,vulnerabilityPointer);
                ROSE_ASSERT(newAttribute != NULL);
 
             // We need to name the attributes, but all the VulnerabilityAttributes can all have the same name.
@@ -125,7 +130,7 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::detector
      ROSE_ASSERT (project != NULL);
 
   // Build an AST traversal object
-     Traversal treeTraversal;
+     Traversal treeTraversal(this);
 
   // Build the initial inherited attribute
      InheritedAttribute inheritedAttribute;
@@ -135,6 +140,10 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::detector
      treeTraversal.traverseInputFiles (project,inheritedAttribute);
    }
 
+BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::Traversal::Traversal( SecurityFlaw::Vulnerability* vulnerabilityPointer )
+   : vulnerabilityPointer(vulnerabilityPointer)
+   {
+   }
 
 BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::InheritedAttribute
 BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::Traversal::evaluateInheritedAttribute (
@@ -165,7 +174,7 @@ BufferOverFlowSecurityFlaw::BufferOverflowVulnerability_ExternalToLoop::Traversa
                printf ("Found a buffer overflow vulnerability external to a loop \n");
 
             // Build an attribute (on the heap)
-               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode);
+               AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode,vulnerabilityPointer);
                ROSE_ASSERT(newAttribute != NULL);
 
             // We need to name the attributes, but all the VulnerabilityAttributes can all have the same name.

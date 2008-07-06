@@ -232,15 +232,28 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                AstAttribute* attribute = i->second;
                ROSE_ASSERT(attribute != NULL);
 
+               printf ("Calling attribute->additionalNodeInfo() \n");
+               std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
+               printf ("nodeList.size() = %lu \n",nodeList.size());
+               for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
+                  {
+                    SgNode* nodePtr   = i_node->nodePtr;
+                    string nodelabel  = i_node->label;
+                    string nodeoption = i_node->options;
+                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
+                 // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
+                    dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
+                  }
+
             // printf ("Calling attribute->additionalEdgeInfo() \n");
                std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
             // printf ("edgeList.size() = %lu \n",edgeList.size());
-               for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i = edgeList.begin(); i != edgeList.end(); i++)
+               for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
                   {
-                    string edgelabel  = i->label;
-                    string edgeoption = i->options;
-                 // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i->fromNode = %p to i->toNode = %p edgelabel = %s edgeoption = %s \n",i->fromNode,i->toNode,edgelabel.c_str(),edgeoption.c_str());
-                    dotrep.addEdge(i->fromNode,edgelabel,i->toNode,edgeoption + "dir=forward");
+                    string edgelabel  = i_edge->label;
+                    string edgeoption = i_edge->options;
+                 // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
+                    dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
                   }
              }
         }

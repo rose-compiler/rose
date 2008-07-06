@@ -786,8 +786,8 @@ SecurityVulnerabilityAttribute::set_associatedClones(SgNode* node)
         }
    }
 
-SecurityVulnerabilityAttribute::SecurityVulnerabilityAttribute (SgNode* securityVulnerabilityNode)
-   : securityVulnerabilityNode(securityVulnerabilityNode)
+SecurityVulnerabilityAttribute::SecurityVulnerabilityAttribute (SgNode* securityVulnerabilityNode, SecurityFlaw::Vulnerability* vulnerabilityPointer)
+   : securityVulnerabilityNode(securityVulnerabilityNode), vulnerabilityPointer(vulnerabilityPointer)
    {
    }
 
@@ -821,10 +821,60 @@ SecurityVulnerabilityAttribute::additionalEdgeInfo()
 
           i++;
         }
+
+     AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute","");
+     v.push_back(additional_edge);
+
 #if 0
      printf ("Exiting at base of SecurityVulnerabilityAttribute::additionalEdgeInfo() \n");
      ROSE_ASSERT(false);
 #endif
+     return v;
+   }
+
+std::vector<AstAttribute::AttributeNodeInfo>
+SecurityVulnerabilityAttribute::additionalNodeInfo()
+   {
+     vector<AstAttribute::AttributeNodeInfo> v;
+
+     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, "SecurityVulnerabilityAttribute"," fillcolor=\"red\",style=filled ");
+     v.push_back(vulnerabilityNode);
+
+     return v;
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// DOT graph support for attributes to add additional edges to AST dot graphs
+// (useful for debugging)
+vector<AstAttribute::AttributeEdgeInfo>
+SecurityFlawOriginalSubtreeAttribute::additionalEdgeInfo()
+   {
+     vector<AstAttribute::AttributeEdgeInfo> v;
+
+     return v;
+   }
+
+std::vector<AstAttribute::AttributeNodeInfo>
+SecurityFlawOriginalSubtreeAttribute::additionalNodeInfo()
+   {
+     vector<AstAttribute::AttributeNodeInfo> v;
+
+     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "SecurityFlawOriginalSubtreeAttribute"," fillcolor=\"darkorange\",style=filled ");
+     v.push_back(vulnerabilityNode);
+
      return v;
    }
 
@@ -878,6 +928,21 @@ SeededSecurityFlawCloneAttribute::additionalEdgeInfo()
      AstAttribute::AttributeEdgeInfo edgeToRootOfCloneInOriginalCode (primarySecurityFlawInClone,rootOfCloneInOriginalCode,"root of clone in original code"," wieght=10.0 arrowsize=7.0 style=\"setlinewidth(7)\" color=orange ");
 
      v.push_back(edgeToRootOfCloneInOriginalCode);
+
+     return v;
+   }
+
+std::vector<AstAttribute::AttributeNodeInfo>
+SeededSecurityFlawCloneAttribute::additionalNodeInfo()
+   {
+     vector<AstAttribute::AttributeNodeInfo> v;
+
+     ROSE_ASSERT(primarySecurityFlawInClone != NULL);
+     ROSE_ASSERT(rootOfCloneInOriginalCode != NULL);
+
+     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "SeededSecurityFlawCloneAttribute"," fillcolor=\"springgreen\",style=filled ");
+
+     v.push_back(vulnerabilityNode);
 
      return v;
    }
@@ -940,6 +1005,21 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalEdgeInfo()
 
      v.push_back(edgeToOriginalCode);
      v.push_back(edgeToRootOfClone);
+
+     return v;
+   }
+
+std::vector<AstAttribute::AttributeNodeInfo>
+PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeInfo()
+   {
+     vector<AstAttribute::AttributeNodeInfo> v;
+
+     ROSE_ASSERT(primarySecurityFlawInClone != NULL);
+     ROSE_ASSERT(primaryVulnerabilityInOriginalCode != NULL);
+
+     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "PrimarySecurityVulnerabilityForCloneAttribute"," fillcolor=\"purple\",style=filled ");
+
+     v.push_back(vulnerabilityNode);
 
      return v;
    }

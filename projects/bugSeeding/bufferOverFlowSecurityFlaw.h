@@ -40,8 +40,12 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                     class Traversal : public SgTopDownProcessing<InheritedAttribute>
                        {
                          public:
+                              SecurityFlaw::Vulnerability* vulnerabilityPointer;
+
                            // This function defines how to recognise the vulnerability (array accesses only in loops)
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
+
+                              Traversal(SecurityFlaw::Vulnerability* vulnerabilityPointer );
                        };
 
             // This overloads a base class virtual function and abstracts the details of setting up a call to the 
@@ -77,8 +81,12 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                     class Traversal : public SgTopDownProcessing<InheritedAttribute>
                        {
                          public:
+                              SecurityFlaw::Vulnerability* vulnerabilityPointer;
+
                            // This function defines how to recognise the vulnerability (array accesses only in loops)
                               InheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, InheritedAttribute inheritedAttribute );
+
+                              Traversal(SecurityFlaw::Vulnerability* vulnerabilityPointer );
                        };
 
             // This overloads a base class virtual function and abstracts the details of setting up a call to the 

@@ -1,4 +1,7 @@
 
+class SecurityFlaw;
+class SecurityFlaw::Vulnerability;
+
 // Note that instead of having multiple classes we could have one and use an enum for the value
 // data member to distinquish the functionality.
 class SecurityVulnerabilityAttribute : public AstAttribute
@@ -10,6 +13,7 @@ class SecurityVulnerabilityAttribute : public AstAttribute
      public:
        // I am not sure that we will really use this value
           SgNode* securityVulnerabilityNode;
+          SecurityFlaw::Vulnerability* vulnerabilityPointer;
 
        // Store a set of clones that have been constructed to support the analysis of this security 
        // flaw at this vulnerability point in the source code.
@@ -17,7 +21,7 @@ class SecurityVulnerabilityAttribute : public AstAttribute
 
           void set_associatedClones(SgNode* node);
 
-          SecurityVulnerabilityAttribute (SgNode* securityVulnerabilityNode);
+          SecurityVulnerabilityAttribute (SgNode* securityVulnerabilityNode, SecurityFlaw::Vulnerability* vulnerabilityPointer );
 
           SgNode* get_securityVulnerabilityNode();
           void set_securityVulnerabilityNode(SgNode* node);
@@ -25,6 +29,7 @@ class SecurityVulnerabilityAttribute : public AstAttribute
           virtual std::string additionalNodeOptions();
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
    };
 
 class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
@@ -40,6 +45,9 @@ class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
           int get_value() { return value; }
 
           virtual std::string additionalNodeOptions();
+
+          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
    };
 
 
@@ -63,6 +71,7 @@ class SeededSecurityFlawCloneAttribute : public AstAttribute
           virtual std::string additionalNodeOptions();
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
    };
 
 class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
@@ -85,5 +94,6 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
           virtual std::string additionalNodeOptions();
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
    };
 
