@@ -77,5 +77,5 @@ EXTRA_DIST = bcl_writer.C bcl_reader.C README example1.C example2.C example3.1.C
 endif
 
 clean-local:
-	rm -f a.out rose_*.C *.xml *.bin *.in
+	rm -f a.out rose_*.C *.xml *.bin example*.in
 
