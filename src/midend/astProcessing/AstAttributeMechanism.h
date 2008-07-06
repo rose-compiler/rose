@@ -29,6 +29,22 @@ class AstAttribute
                    ~AttributeEdgeInfo () { fromNode = NULL; toNode = NULL; };
              };
 
+       // DQ (7/5/2008): Added support for adding nodes to DOT graphs
+          class AttributeNodeInfo
+             {
+               public:
+                    SgNode* nodePtr;
+                    std::string label;
+                    std::string options;
+
+                    AttributeNodeInfo (SgNode* nodePtr, std::string label, std::string options )
+                       : nodePtr(nodePtr), label(label), options(options)
+                       {
+                       }
+
+                   ~AttributeNodeInfo () {};
+             };
+
           AstAttribute() {}
           virtual ~AstAttribute() {}
       /*! This function is used by other components to print the value of an attribute. For example the pdf generation
@@ -52,6 +68,7 @@ class AstAttribute
 
        // virtual std::vector<std::pair<SgNode*,SgNode*> > additionalEdgeInfo();
           virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo() { std::vector<AttributeEdgeInfo> v; return v; }
+          virtual std::vector<AttributeNodeInfo> additionalNodeInfo() { std::vector<AttributeNodeInfo> v; return v; }
    };
 
 // DQ (6/28/2008):
