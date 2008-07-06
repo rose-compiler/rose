@@ -10,17 +10,25 @@ class SecurityFlaw
        // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
        // bool seedOriginalCode;
 
+       // Forward declaration
+          class SeedSecurityFlaw;
+
           class Vulnerability
              {
                public:
+                    std::set<SeedSecurityFlaw*> associatedSeedingTechniques;
+
+                    Vulnerability();
+                    virtual ~Vulnerability();
+
                  // This abstracts the details of setting up a call to the AST traversal.
                     virtual void detector( SgProject *project ) = 0;
 
-                    virtual std::string get_name() { return "SecurityFlaw::Vulnerability"; }
-             };
+                    virtual std::string get_name();
+                    virtual std::string get_color();
 
-      // Forward declaration
-         class SeedSecurityFlaw;
+                    void associateSeeding ( SeedSecurityFlaw* seedingApproach );
+             };
 
        // Since we first find all the vulnerabilities and then seed them, this refinds the marked vulnerabilities 
        // after the first pass as part of the seeding process.  Since we have to find the vulnerability and then

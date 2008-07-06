@@ -11,14 +11,18 @@ class SecurityVulnerabilityAttribute : public AstAttribute
   // (that is explicitly not the goal of the security bug seeding).
 
      public:
-       // I am not sure that we will really use this value
+
+       // This is the pointer to the IR node with the potential for a security vulnerability
           SgNode* securityVulnerabilityNode;
+
+       // The pointer to the mechanism used to detect the potential vulnerability
           SecurityFlaw::Vulnerability* vulnerabilityPointer;
 
        // Store a set of clones that have been constructed to support the analysis of this security 
        // flaw at this vulnerability point in the source code.
           std::set<SgNode*> associtedClones;
 
+       // Member function declarations
           void set_associatedClones(SgNode* node);
 
           SecurityVulnerabilityAttribute (SgNode* securityVulnerabilityNode, SecurityFlaw::Vulnerability* vulnerabilityPointer );
@@ -84,7 +88,10 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
           SgNode* primaryVulnerabilityInOriginalCode;
           SgNode* rootOfClone;
 
-          PrimarySecurityVulnerabilityForCloneAttribute (SgNode* primarySecurityFlawInClone, SgNode* rootOfClone);
+       // The pointer to the mechanism used to detect the potential vulnerability
+          SecurityFlaw::Vulnerability* vulnerabilityPointer;
+
+          PrimarySecurityVulnerabilityForCloneAttribute (SgNode* primarySecurityFlawInClone, SgNode* rootOfClone, SecurityFlaw::Vulnerability* vulnerabilityPointer );
 
           SgNode* get_primarySecurityFlawInClone();
 

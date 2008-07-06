@@ -231,8 +231,35 @@ SecurityFlaw::uniqueValue()
    }
 
 
+// **********************************************************************
+//             SecurityFlaw::Vulnerability
+// **********************************************************************
 
+SecurityFlaw::Vulnerability::Vulnerability()
+   {
+   }
 
+SecurityFlaw::Vulnerability::~Vulnerability()
+   {
+   }
+
+string
+SecurityFlaw::Vulnerability::get_name()
+   {
+     return "SecurityFlaw::Vulnerability";
+   }
+
+string
+SecurityFlaw::Vulnerability::get_color()
+   {
+     return "blue";
+   }
+
+void
+SecurityFlaw::Vulnerability::associateSeeding ( SecurityFlaw::SeedSecurityFlaw* seedingApproach )
+   {
+     associatedSeedingTechniques.insert(seedingApproach);
+   }
 
 
 // **********************************************************************
@@ -341,7 +368,9 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
                if (astNode->attributeExists("PrimarySecurityVulnerabilityForCloneAttribute") == false)
                   {
                  // AstAttribute* primaryVulnerabilityAttribute = new PrimarySecurityVulnerabilityForCloneAttribute(astNode);
-                    PrimarySecurityVulnerabilityForCloneAttribute* primaryVulnerabilityAttribute = new PrimarySecurityVulnerabilityForCloneAttribute(astNode,rootOfClone);
+                    ROSE_ASSERT(securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer != NULL);
+                    PrimarySecurityVulnerabilityForCloneAttribute* primaryVulnerabilityAttribute =
+                         new PrimarySecurityVulnerabilityForCloneAttribute(astNode,rootOfClone,securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer);
                     ROSE_ASSERT(primaryVulnerabilityAttribute != NULL);
 
                     astNode->addNewAttribute("SeededSecurityFlawCloneAttribute",primaryVulnerabilityAttribute);
@@ -593,6 +622,19 @@ SecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAttribute ( SgNo
                if (inheritedAttribute.inClonedCode == true)
                   {
                     addComment (astNode,"// *** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
+
+                    astNode->removeAttribute("SecurityVulnerabilityAttribute");
+
+                 // Build a new SecurityVulnerabilityAttribute attribute to replace the one that was shared 
+                 // with the origial AST (copy of AST attributes is not deep).
+                    AstAttribute* newAttribute = new SecurityVulnerabilityAttribute(astNode,securityVulnerabilityAttribute->vulnerabilityPointer);
+                    ROSE_ASSERT(newAttribute != NULL);
+
+                 // We need to name the attributes, but all the VulnerabilityAttributes can all have the same name.
+                 // It is easier to distinquish them by value (stored internally in the attribute). The use of
+                 // names for attributes permits other forms of analysis to use attributes in the same AST and
+                 // for all the forms of analysis to co-exist (so long as the select unique names).
+                    astNode->addNewAttribute("SecurityVulnerabilityAttribute",newAttribute);
                   }
                  else
                   {
@@ -822,7 +864,23 @@ SecurityVulnerabilityAttribute::additionalEdgeInfo()
           i++;
         }
 
-     AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute","");
+  // string vulnerabilityName = "SecurityVulnerabilityAttribute" + vulnerabilityPointer->get_name();
+     string vulnerabilityName = vulnerabilityPointer->get_name();
+     string vulnerabilityColor = vulnerabilityPointer->get_color();
+
+  // Note that we need the trailing " "
+     string vulnerabilityOptions = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=" + vulnerabilityColor + " ";
+  // string options = " constraint=false color=deepskyblue4";
+  // string options = " constraint=false color=deepskyblue4 ";
+  // printf ("vulnerabilityOptions = %s \n",vulnerabilityOptions.c_str());
+
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute"," minlen=1 splines=\"false\" arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=deepskyblue4 ");
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute"," maxlen=\"1\" arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=deepskyblue4 ");
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute"," maxlen=\"1\" arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=" + color );
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute",options);
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute","");
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,"SecurityVulnerabilityAttribute",options);
+     AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,securityVulnerabilityNode,vulnerabilityName,vulnerabilityOptions);
      v.push_back(additional_edge);
 
 #if 0
@@ -837,7 +895,12 @@ SecurityVulnerabilityAttribute::additionalNodeInfo()
    {
      vector<AstAttribute::AttributeNodeInfo> v;
 
-     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, "SecurityVulnerabilityAttribute"," fillcolor=\"red\",style=filled ");
+     string vulnerabilityName    = " " + vulnerabilityPointer->get_name();
+     string vulnerabilityColor   = vulnerabilityPointer->get_color();
+     string vulnerabilityOptions = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false fillcolor=" + vulnerabilityColor + ",style=filled ";
+
+  // AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, "SecurityVulnerabilityAttribute"," fillcolor=\"red\",style=filled ");
+     AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) vulnerabilityPointer, vulnerabilityName, vulnerabilityOptions);
      v.push_back(vulnerabilityNode);
 
      return v;
@@ -871,10 +934,10 @@ std::vector<AstAttribute::AttributeNodeInfo>
 SecurityFlawOriginalSubtreeAttribute::additionalNodeInfo()
    {
      vector<AstAttribute::AttributeNodeInfo> v;
-
+#if 0
      AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "SecurityFlawOriginalSubtreeAttribute"," fillcolor=\"darkorange\",style=filled ");
      v.push_back(vulnerabilityNode);
-
+#endif
      return v;
    }
 
@@ -939,11 +1002,10 @@ SeededSecurityFlawCloneAttribute::additionalNodeInfo()
 
      ROSE_ASSERT(primarySecurityFlawInClone != NULL);
      ROSE_ASSERT(rootOfCloneInOriginalCode != NULL);
-
+#if 0
      AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "SeededSecurityFlawCloneAttribute"," fillcolor=\"springgreen\",style=filled ");
-
      v.push_back(vulnerabilityNode);
-
+#endif
      return v;
    }
 
@@ -964,11 +1026,12 @@ SeededSecurityFlawCloneAttribute::additionalNodeInfo()
 
 
 
-PrimarySecurityVulnerabilityForCloneAttribute::PrimarySecurityVulnerabilityForCloneAttribute(SgNode* primarySecurityFlawInClone, SgNode* rootOfClone)
-   : primarySecurityFlawInClone(primarySecurityFlawInClone), rootOfClone(rootOfClone)
+PrimarySecurityVulnerabilityForCloneAttribute::PrimarySecurityVulnerabilityForCloneAttribute(SgNode* primarySecurityFlawInClone, SgNode* rootOfClone, SecurityFlaw::Vulnerability* vulnerabilityPointer)
+   : primarySecurityFlawInClone(primarySecurityFlawInClone), rootOfClone(rootOfClone), vulnerabilityPointer(vulnerabilityPointer)
    {
      ROSE_ASSERT(primarySecurityFlawInClone != NULL);
      ROSE_ASSERT(rootOfClone != NULL);
+     ROSE_ASSERT(vulnerabilityPointer != NULL);
    }
 
 SgNode*
@@ -1006,8 +1069,20 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalEdgeInfo()
      v.push_back(edgeToOriginalCode);
      v.push_back(edgeToRootOfClone);
 
+     ROSE_ASSERT(vulnerabilityPointer != NULL);
+     string vulnerabilityName  = vulnerabilityPointer->get_name();
+     string vulnerabilityColor = vulnerabilityPointer->get_color();
+
+  // Note that we need the trailing " ", plus forcing constraint=true places the node nearest the original node
+     string vulnerabilityOptions = " arrowsize=7.0 style=\"setlinewidth(7)\" constraint=true color=" + vulnerabilityColor + " ";
+#if 1
+     AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,primarySecurityFlawInClone,vulnerabilityName,vulnerabilityOptions);
+  // AstAttribute::AttributeEdgeInfo additional_edge ( (SgNode*) vulnerabilityPointer,primaryVulnerabilityInOriginalCode,vulnerabilityName,vulnerabilityOptions);
+     v.push_back(additional_edge);
+#endif
      return v;
    }
+
 
 std::vector<AstAttribute::AttributeNodeInfo>
 PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeInfo()
@@ -1017,9 +1092,10 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeInfo()
      ROSE_ASSERT(primarySecurityFlawInClone != NULL);
      ROSE_ASSERT(primaryVulnerabilityInOriginalCode != NULL);
 
+#if 0
      AstAttribute::AttributeNodeInfo vulnerabilityNode ( (SgNode*) this, "PrimarySecurityVulnerabilityForCloneAttribute"," fillcolor=\"purple\",style=filled ");
-
      v.push_back(vulnerabilityNode);
+#endif
 
      return v;
    }

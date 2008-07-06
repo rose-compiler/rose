@@ -8,6 +8,10 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
   // and seeding of
 
      public:
+       // *********************
+       // Vulnerability classes
+       // *********************
+
        // Note that there can be many vulnerabilities for a single security flaw (arrays indexing inside
        // a loop body, array indexing in a conditional test, indexing of a STL vector, etc.).
        // In general, vulnerabilities can be independent of the ways in which a security flaw can be seeded,
@@ -53,6 +57,7 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                void detector( SgProject *project );
 
                std::string get_name() { return "BufferOverflowVulnerability_InLoop"; }
+               std::string get_color(){ return "blue1"; }
              };
 
           class BufferOverflowVulnerability_ExternalToLoop : public SecurityFlaw::Vulnerability
@@ -94,7 +99,13 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                void detector( SgProject *project );
 
                std::string get_name() { return "BufferOverflowVulnerability_ExternalToLoop"; }
+               std::string get_color(){ return "green"; }
              };
+
+
+       // ***************
+       // Seeding classes
+       // ***************
 
        // This class abstracts the operations about seeding (there could be more than one class).
           class SeedBufferOverflowSecurityFlaw_ModifyArrayIndex : public SecurityFlaw::SeedSecurityFlaw
@@ -110,6 +121,10 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                     class SeedTraversal : public SgSimpleProcessing
                        {
                          public:
+                              SecurityFlaw::SeedSecurityFlaw* seedingSecurityFlaw;
+
+                              SeedTraversal(SecurityFlaw::SeedSecurityFlaw* seedingSecurityFlaw );
+
                            // This function defines how to seed the security flaw at
                            // the previously detected location of the vulnerability
                               void visit( SgNode* node );
@@ -133,6 +148,9 @@ class BufferOverFlowSecurityFlaw : public SecurityFlaw
                     class SeedTraversal : public SgSimpleProcessing
                        {
                          public:
+                              SecurityFlaw::SeedSecurityFlaw* seedingSecurityFlaw;
+
+                              SeedTraversal(SecurityFlaw::SeedSecurityFlaw* seedingSecurityFlaw );
                               void visit( SgNode* node );
                        };
 

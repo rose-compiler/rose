@@ -5,11 +5,12 @@ void foobar(int x)
   // Static array declaration
      float array[10];
      array[4] = 0;
-     array[7] = 0;
+  // array[7] = 0;
   // array[9] = 0;
-
+#if 1
      for (int i=0; i < 5; i++)
           array[i] = 0;
+#endif
    }
 
 #if 0
