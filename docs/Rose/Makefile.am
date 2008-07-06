@@ -203,8 +203,9 @@ clean-web-pages:
 clean-local: clean-web-pages
 
 CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
-	     AstProcessing AstRewrite *.ps *.pdf *.gz a.out \
+	     AstProcessing AstRewrite *.gz a.out roseDirectoryMap.ps roseDirectoryMap.pdf \
+	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz rose.html index.html \
-	     AvailableDocumentation.docs compass_rose.gif projects.html
+	     AvailableDocumentation.docs projects.html
