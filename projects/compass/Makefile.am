@@ -159,7 +159,6 @@ distclean-local:
 	rm -rf Templates.DB ale3d-typedefs.sn *.sn 
 
 clean-local:
-	rm -f compass.* *.sty *.ti a.out *.tex *.lo *.la emacs_screenshot.jpg compass_vim7.jpg *.png
-	rm -f CHECKER_LIST $(COMPASS_CHECKER_TEX_FILES)
+	rm -f compass.* *.ti a.out *.lo *.la
 
 CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_parameters buildCheckers.C checkers.h compassCheckerDocs.tex
