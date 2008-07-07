@@ -30,7 +30,6 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport $(JA
 #	-I$(top_srcdir)/src/frontend/SageIII/sageInterface	\
 #	-I$(top_srcdir)/src/midend/astDiagnostics		\
 #	-I$(top_srcdir)/src/backend/unparser			\
-#	-I$(top_srcdir)/src/3rdPartyLibraries/PDFLibrary	\
 #	-I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2	\
 #	-I$(top_srcdir)/src/midend/astRewriteMechanism		\
 #	-I$(top_srcdir)/src/midend/astQuery			\
@@ -41,8 +40,7 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport $(JA
 #	-I$(top_srcdir)/src/midend/programTransformation/constantFolding	\
 #	-I$(top_srcdir)/src/midend/programAnalysis/CFG		\
 #	-I$(top_srcdir)/src/midend/astUtil/astInterface		\
-#	-I$(top_srcdir)/src/util/support			\
-#	-I$(top_srcdir)/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/libs/pdflib
+#	-I$(top_srcdir)/src/util/support			
 
 # This is just to get the environment for Java.
 dummy_JAVA=

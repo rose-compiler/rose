@@ -3057,7 +3057,7 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
                ss << "_ss << p_" << memberVariableName << ";";
           }
      }
-     ss << dataMemberContainerName << ".push_back(new RTIMemberData(" 
+     ss << dataMemberContainerName << ".push_back(RTIMemberData(" 
      << "\"" << typeString << "\"" << ", "
      << "\"p_" << memberVariableName << "\"" << ", "
      << "_ss.str()"

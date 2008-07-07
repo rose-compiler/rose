@@ -17,7 +17,6 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/astProcessing \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
-     -I$(top_srcdir)/src/3rdPartyLibraries/PDFLibrary \
      -I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2 \
      -I$(top_srcdir)/projects/dataBase
 

@@ -81,9 +81,6 @@ libroseBinaryLibraries = \
 # related to the test program that is compiled to test the
 # ROSE libraries (librose.a librose.so)
 #
-# RV (8/11/2005): Removed reference to PDFLibrary
-#   $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/*.lo
-#
 libroseObjects = \
    $(top_builddir)/src/util/support/*.lo \
    $(top_builddir)/src/util/graphs/*.lo \
@@ -169,7 +166,6 @@ endif
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/coco/cplus2/libcr.la \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
-   $(top_builddir)/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/libs/pdflib/libpdf.la \
    $(top_builddir)/src/backend/unparser/libunparse.la \
    $(top_builddir)/src/backend/unparser/languageIndependenceSupport/libunparseLanguageIndependenceSupport.la \
    $(top_builddir)/src/backend/unparser/CxxCodeGeneration/libunparseCxx.la \
@@ -228,8 +224,6 @@ libroseLibraries = \
 #  $(ROSE_DATABASE_OBJS)
 
 # Old way of specifying libraries (test it to make sure it still works)
-# RV (8/11/2005): Removed reference to PDFLibrary
-#   $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/libpdf.a
 #OLD_MULTI_ROSE_LIBS = \
 #   $(top_builddir)/src/frontend/SageIII/libsage3.a \
 #   $(top_builddir)/src/midend/astRewriteMechanism/librewrite.a \
@@ -250,7 +244,6 @@ libroseLibraries = \
 #   $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.a \
 #   $(EDG_LIBS) \
 #   $(top_builddir)/src/util/libroseutil.a \
-#   $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/libpdf.a \
 #   $(top_builddir)/src/3rdPartyLibraries/coco/cplus2/libcr.a \
 #   $(top_builddir)/src/midend/astProcessing/libastprocessing.a \
 #   $(top_builddir)/src/midend/astQuery/libquery.a \
@@ -349,8 +342,6 @@ $(libdir)/libmstl.so: $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.so
 
 $(libdir)/libpdf.so:
 	@echo "Adding links to separate dynamic libraries to simplify development ... (link to .so)"
-# RV (8/11/2005): Removed reference to PDFLibrary
-#  test -f libpdf.so                 || ln -s $(top_builddir)/src/3rdPartyLibraries/PDFLibrary/libpdf.so libpdf.so
 	pdfdir=$(top_builddir)/src/3rdPartyLibraries/$(PDFLIB_BASE)/libs/pdflib/.libs ; \
 	for f in $$pdfdir/libpdf*.so* ; do \
 		bf=`basename $$f` ; \
@@ -734,7 +725,8 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-		    $(BOOST_WAVE_LIB) 
+		    $(BOOST_WAVE_LIB) \
+		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
 #		    $(ROSEHPCT_DEP_LIBS)
 librose_la_LDFLAGS = -no-undefined
 librose_la_DEPENDENCIES = $(libroseLibraries)

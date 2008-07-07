@@ -732,10 +732,7 @@ AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 #AC_DEFINE_UNQUOTED([ROSE_DIST_DIR],"$distdir",[Path specified by automake distdir.])
 
 
-# RV 8/11/2005
-#   Replaced PDFLibrary with latest version, PDFlib-Lite-6.0.2(rv).
-#src/3rdPartyLibraries/PDFLibrary/Makefile
-AC_CONFIG_SUBDIRS(src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv src/3rdPartyLibraries/libltdl)
+AC_CONFIG_SUBDIRS([src/3rdPartyLibraries/libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
 # JJW 1/30/2008: Removed rose_paths.h as it is now built by a separate Makefile included from $(top_srcdir)/Makefile.am

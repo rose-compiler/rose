@@ -881,7 +881,7 @@ SEARCH_INCLUDES        = YES
 # the preprocessor.
 
 # INCLUDE_PATH           = 
-INCLUDE_PATH           = @top_pwd@ @top_pwd@/src/frontend/SageIII @top_srcdir@/src/midend/astProcessing @top_srcdir@/src @top_srcdir@/src/backend/unparser @top_srcdir@/src/midend/astRewriteMechanism @top_srcdir@/src/util @top_srcdir@/src/3rdPartyLibraries/MSTL @top_srcdir@/src/midend/astQuery @top_srcdir@/src/3rdPartyLibraries/PDFLibrary
+INCLUDE_PATH           = @top_pwd@ @top_pwd@/src/frontend/SageIII @top_srcdir@/src/midend/astProcessing @top_srcdir@/src @top_srcdir@/src/backend/unparser @top_srcdir@/src/midend/astRewriteMechanism @top_srcdir@/src/util @top_srcdir@/src/3rdPartyLibraries/MSTL @top_srcdir@/src/midend/astQuery
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard 
 # patterns (like *.h and *.hpp) to filter out the header-files in the 

@@ -21,12 +21,9 @@ done
 # Debugging output is provided using the -x option as in "#! /bin/sh -x"
 
 # DQ (12/22/2005): remove the autoconf caches
-rm -rf autom4te.cache src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/autom4te.cache
+rm -rf autom4te.cache
 
 ./makelinks
-
-# RV 9/14/2005 -- Upgrade of PDF library
-(cd src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv ; ./bootstrap)
 
 aclocal -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal || : exit 1
 
@@ -48,11 +45,13 @@ touch stamp-h1.in || : exit 1
 
 # Do the same steps in libltdl
 (cd src/3rdPartyLibraries/libltdl && aclocal && automake --add-missing && autoconf)
+# We can't reconfigure their code yet (autoconf too old)
+# (cd src/3rdPartyLibraries/libharu-2.1.0 && autoreconf)
 
 # Rewrite a couple of makefile rules to be less verbose so (1) we can actually see the warning messages
 # and (2) XEmacs doesn't get regexp stack overflows when parsing compiler output.
 if [ "$do_quiet" = "yes" ]; then
-    find . -name Makefile.in |xargs sed -i~ \
+    find . -name Makefile.in | grep -v libharu | xargs sed -i~ \
 	-e 's/^\(LT\)\{0,1\}\(CXX\)\{0,1\}COMPILE =/& @echo "  COMPILE $@";/' \
 	-e 's/^\(CXX\)\{0,1\}LINK =/& @echo "  LINK    $@";/'       \
 	-e 's/@LIBTOOL@/& --quiet/g'

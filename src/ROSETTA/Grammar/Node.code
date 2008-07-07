@@ -306,12 +306,14 @@ class RTIMemberData
           RTIMemberData(std::string type0, std::string name0, std::string value0)
              : type(type0), name(name0), value(value0)
              {}
+#if 0 // JJW this should not be used
           RTIMemberData(char* type0, char* name0, char* value0)
              : type(std::string(type0)), name(std::string(name0)), value(std::string(value0))
              {}
+#endif
    };
 
-typedef std::vector<RTIMemberData*> RTIReturnType;
+typedef std::vector<RTIMemberData> RTIReturnType;
 
 
 /*! \brief Supporting class from copy mechanism within ROSE.

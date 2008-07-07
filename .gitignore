@@ -21,8 +21,6 @@ Makefile.in
 /config/install-sh
 /configure
 /rose_config.h.in
-/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/autom4te.cache
-/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/configure
 /src/3rdPartyLibraries/libltdl/aclocal.m4
 /src/3rdPartyLibraries/libltdl/autom4te.cache/
 /src/3rdPartyLibraries/libltdl/config.guess

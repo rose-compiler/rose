@@ -7,14 +7,15 @@
 #include <iostream>
 #include <typeinfo>
 #include "AstProcessing.h"
-#include "pdflib.h"
+#include "hpdf.h"
 
 class PDFInheritedAttribute {
  public:
-  PDFInheritedAttribute():parent(0) {};
-  ~PDFInheritedAttribute() {};
-  PDFInheritedAttribute(unsigned int p):parent(p) {};
-  unsigned int parent;
+  explicit PDFInheritedAttribute(HPDF_Outline currentOutline, HPDF_Destination parentPage):currentOutline(currentOutline), parentPage(parentPage) {}
+  explicit PDFInheritedAttribute(HPDF_Doc pdfFile):currentOutline(NULL), parentPage(NULL) {}
+  ~PDFInheritedAttribute() {}
+  HPDF_Outline currentOutline;
+  HPDF_Destination parentPage;
 };
 
 namespace PDFGenerationHelpers {
@@ -22,18 +23,26 @@ namespace PDFGenerationHelpers {
 
 class PDFGeneration : public SgTopDownProcessing<PDFInheritedAttribute> {
 public:
-  PDFGeneration(): pdfFile(NULL) {}
+  PDFGeneration(): currentPageNumber(0), topMargin(0), leftMargin(0) {}
   virtual void generate(std::string filename, SgNode* node);
 protected:
   virtual PDFInheritedAttribute evaluateInheritedAttribute(SgNode* node, PDFInheritedAttribute inheritedValue);
-  PDF* pdfFile;
+  HPDF_Doc pdfFile;
+  HPDF_Font theFont;
+  std::vector<HPDF_Page> pages;
+  std::vector<HPDF_Destination> pageDests;
+  std::string filename;
+  size_t currentPageNumber;
+  HPDF_Page currentPage;
   int topMargin;
   int leftMargin;
+  HPDF_Rect fontBBox;
 
   std::string text_page(SgNode* node);
-  virtual void edit_page(SgNode* node, PDFInheritedAttribute inheritedValue);
-  void create_textlink(const char* text, int targetpage,int hitboxextender=0);
-  void pdf_setup(std::string filename);
+  virtual void edit_page(size_t pageNumber, SgNode* node, PDFInheritedAttribute inheritedValue);
+  virtual std::string get_bookmark_name(SgNode* node);
+  void create_textlink(const std::string& text, HPDF_Destination target,int hitboxextender=0);
+  void pdf_setup(std::string filename, size_t numPages);
   void pdf_finalize();
   void begin_page();
   void end_page();

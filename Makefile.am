@@ -75,6 +75,7 @@ install-exec-local:
 
 install-data-local:
 	-rm -rf $(DESTDIR)$(includedir)/*_HEADERS
+	-mkdir $(DESTDIR)$(includedir)
 	cp -R $(top_builddir)/include-staging/* $(DESTDIR)$(includedir)/
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'
