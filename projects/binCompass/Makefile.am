@@ -14,33 +14,32 @@ binCompassMain_SOURCES = binCompassMain.cpp
 binCompassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 check-local: binCompassMain 
-	cp $(srcdir)/buffer2.bin .
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -printTree -cfa ****************************************************"
-	./binCompassMain buffer2.bin -cfa >output
+	./binCompassMain $(srcdir)/buffer2.bin -cfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -callgraph  ****************************************************"
-	./binCompassMain buffer2.bin -cfa >output
+	./binCompassMain $(srcdir)/buffer2.bin -cfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa -inter ****************************************************"
-	./binCompassMain buffer2.bin -dfa -inter >output
+	./binCompassMain $(srcdir)/buffer2.bin -dfa -inter >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa -inter -gml****************************************************"
-	./binCompassMain buffer2.bin -dfa -inter -gml >output
+	./binCompassMain $(srcdir)/buffer2.bin -dfa -inter -gml >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -dfa ****************************************************"
-	./binCompassMain buffer2.bin -dfa >output
+	./binCompassMain $(srcdir)/buffer2.bin -dfa >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -checkAST -inter ****************************************************"
-	./binCompassMain buffer2.bin -checkAST -inter >output
+	./binCompassMain $(srcdir)/buffer2.bin -checkAST -inter >output
 	@echo " "
 	@echo " *** 	./binCompassMain buffer2.bin -checkGraph -inter ****************************************************"
-	./binCompassMain buffer2.bin -checkGraph -inter > output
+	./binCompassMain $(srcdir)/buffer2.bin -checkGraph -inter > output
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
-CLEANFILES = dfg.dot cfg.dot unparsed.s buffer2.bin dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
+CLEANFILES = dfg.dot cfg.dot unparsed.s dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
 
 binCompassMain.o: binCompassMain.cpp
 

@@ -913,5 +913,5 @@ clean-local:
 	rm -rf QMTest
 
 distclean-local:
-	rm -rf Templates.DB *.C *_copy_graph_old_nodes *.dot
+	rm -rf Templates.DB *_copy_graph_old_nodes *.dot
 

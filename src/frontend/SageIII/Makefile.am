@@ -148,11 +148,12 @@ nodist_include_HEADERS = \
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
-	rm -rf Cxx_Grammar*
+	rm -rf Cxx_Grammar* AST_FILE_IO.C StorageClasses.C
+	rm -rf AST_FILE_IO.h StorageClasses.h AstQueryMemoryPool.h
 	rm -rf generated_abstractcppgrammar.atg
 
 distclean-local:
-	rm -rf Templates.DB *.C *.h 
+	rm -rf Templates.DB
 
 removeHashLineDirectivesFromGeneratedCode:
 	cp Cxx_Grammar.h  Cxx_Grammar.h.withLineDirectives
