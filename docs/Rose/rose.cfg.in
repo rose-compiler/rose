@@ -447,7 +447,6 @@ INPUT                  = \
                          @top_srcdir@/src/util/commandlineProcessing \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
-                         @top_srcdir@/src/3rdPartyLibraries/PDFlib-Lite-6.0.2rv/PDFlib.docs \
                          @top_srcdir@/src/extra.docs \
                          @top_srcdir@/projects/projects.docs
 
@@ -1021,7 +1020,6 @@ INCLUDE_PATH           = @top_pwd@ \
                          @top_srcdir@/src/util \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL \
                          @top_srcdir@/src/midend/astQuery \
-                         @top_srcdir@/src/3rdPartyLibraries/PDFLibrary \
                          @top_srcdir@/src/roseExtensions/roseHPCToolkit
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard 
