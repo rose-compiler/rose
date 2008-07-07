@@ -43,8 +43,8 @@ check-local:
 
 # Test the -E option with all of these example files
 $(TEST_Objects): $(TESTCODES)
-	$(TEST_TRANSLATOR) -E -DHAVE_CONFIG_H -I$(srcdir) -c $(srcdir)/$(@:.o=.C) > $(@:.o=.C)
-	$(CXX) -DHAVE_CONFIG_H -c $(@:.o=.C)
+	$(TEST_TRANSLATOR) -E -DHAVE_CONFIG_H -I$(srcdir) -c $(srcdir)/$(@:.o=.C) > $(@:.o=.out.C)
+	$(CXX) -DHAVE_CONFIG_H -c $(@:.o=.out.C)
 
 EXTRA_DIST = \
    A++.h array_domain.h data_hash.h dimension_macros.h lazy_expression.h lazy_taskset.h \
@@ -55,7 +55,7 @@ EXTRA_DIST = \
    expression_templates.h inline_expression_templates.h $(TESTCODES)
 
 clean-local:
-	rm -f *.o rose_*.C *.sage.C test2001_??.C.show outputFile \
+	rm -f *.o rose_*.C *.sage.C test2001_??.C.show outputFile *.out.C \
               *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
 	rm -rf ti_files
 

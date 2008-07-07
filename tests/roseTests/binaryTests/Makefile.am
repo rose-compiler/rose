@@ -37,8 +37,7 @@ CLEANFILES = unparsed.s callgraph.gml output
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
-	cp $(srcdir)/buffer2.bin .
-	./runTest buffer2.bin > output
+	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"

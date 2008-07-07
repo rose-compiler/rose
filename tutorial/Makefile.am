@@ -1273,7 +1273,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C *.out *.a[ab] *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck*
+	rm -f rose_*.C *.out *.a[a-l] *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck*
 
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck*
