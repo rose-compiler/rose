@@ -991,6 +991,7 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/binaryTests/Makefile
+tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile
 tutorial/database/Makefile

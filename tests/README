@@ -7,7 +7,7 @@ use to be in the ROSE/src directory but could not be colocated there under the
 new directory structure.
 
 Since ROSE optimizes the use of libraries and A++ is the only current library that
-ROSE can optimize, tests that test the ability of ROSe to optimize performance
+ROSE can optimize, tests that test the ability of ROSE to optimize performance
 are located in the RunTests directory.  Before any optimization can occur, we have to
 be able to process the code through ROSE, this is sufficiently significant as a problem
 that we have a separate directory of compile tests to test the ability of the preprocessor 
@@ -34,5 +34,8 @@ roseTests:
    This directory tests the internal ROSE infrastructure. It contains separate 
 subdirectories for individual parts of ROSE. See ROSE/tests/roseTests/README 
 for details.
+
+translatorTests:
+   This directory contains test translators and their input codes for regression tests of ROSE.
 
 

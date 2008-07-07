@@ -9,7 +9,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #      SUBDIRS = CompileTests RunTests
 # endif
 
-SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests
+SUBDIRS = CompileTests roseTests RunTests PerformanceTests CompilerOptionsTests \
+           translatorTests
 
 # CompileTests
 
