@@ -32,7 +32,7 @@ MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov andreas.saebjoer
 # the right version of subversion is essential!!
 SVN=/home/willcock2/svn-install/bin/svn
 
-MAKEFLAGS="-j8"
+MAKEFLAGS="-j8 -w"
 
 set -e
 set -o pipefail
