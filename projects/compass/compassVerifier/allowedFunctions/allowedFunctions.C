@@ -8,6 +8,8 @@
 #include "compass.h"
 #include "allowedFunctions.h"
 
+using namespace StringUtility;
+
 namespace CompassAnalyses
    { 
      namespace AllowedFunctions
@@ -29,8 +31,7 @@ CompassAnalyses::AllowedFunctions::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
    : Compass::TraversalBase(output, checkerName, shortDescription, longDescription), isGenerateCurrentListOfAllowedFunctions(false), allowedFunctionIndex(0), outf(0)
    {
-  // Initalize checker specific parameters here, for example: 
-  // YourParameter = Compass::parseInteger(inputParameters["AllowedFunctions.YourParameter"]);
+     homeDir( sourceDirectory );
 
      try
      {
@@ -94,28 +95,6 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
      catch( const Compass::ParameterNotFoundException &e )
      {
      } //catch( const Compass::ParameterNotFoundException &e )
-
-/*     if( allowedFunctionIndex > 0 )
-     {
-       int i = 0;
-       for( std::set<std::string>::iterator itr = allowedFunctionSet.begin();
-            itr != allowedFunctionSet.end(); itr++ )
-       {
-         (*outf) << "AllowedFunctions.Function" << i++ 
-                 << "=" << *itr << std::endl;
-       } //for, itr functions
-
-       i = 0;
-
-       for( std::vector<std::string>::iterator itr = allowedNamespaces.begin();
-            itr != allowedNamespaces.end(); itr++ )
-       {
-         (*outf) << "AllowedFunctions.Namespace" << i++
-                 << "=" << *itr << std::endl;
-       } //for, itr namespaces
-
-       std::cout << "i vs index " << i << "\t" << allowedFunctionIndex << "\n";
-     } //if( allowedFunctionIndex > 0 ), re-write existing allow list */
    }
 
 void 
@@ -265,13 +244,6 @@ uniqueNameGenerator(
   return;
 }
 
-/*std::string
-CompassAnalyses::AllowedFunctions::Traversal::
-getQualifiedNamespace( const std::string & fname )
-{
-  return fname.substr( 0, fname.find_last_of("::")-1 );
-} //getQualifiedNamespace( const std::string & fname ) */
-
 void
 CompassAnalyses::AllowedFunctions::Traversal::
 functionDeclarationHandler( 
@@ -313,11 +285,13 @@ functionDeclarationHandler(
 
       SgFunctionDefinition *fdef = fdecl->get_definition();
 
+      if( fdef != NULL )
+        classification = classifyFileName( fdef->getFilenameString(), sourceDirectory );
+
       if( fdef != NULL && 
-          fdef->getFilenameString() == 
-          currentFile->get_sourceFileNameWithPath() )
+          (classification.getLocation() == FILENAME_LOCATION_USER) )
       {
-      } //if, local function found
+      } // */
       else if( nsItr != allowedNamespaces.end() )
       {
       } //else if, namespace entry
@@ -336,11 +310,6 @@ visit(SgNode* node)
    {
      switch( node->variantT() )
      {
-       case V_SgFile:
-       {
-         currentFile = isSgFile(node);
-         ROSE_ASSERT(currentFile != NULL);
-       } break; //case V_SgFile
        case V_SgFunctionRefExp:
        {
          SgFunctionRefExp *fref = isSgFunctionRefExp(node);

@@ -3,6 +3,7 @@
 // Date: 19-June-2008
 
 #include "compass.h"
+#include "string_functions.h"
 
 #ifndef COMPASS_ALLOWED_FUNCTIONS_H
 #define COMPASS_ALLOWED_FUNCTIONS_H
@@ -37,10 +38,11 @@ namespace CompassAnalyses
                private:
                  bool isGenerateCurrentListOfAllowedFunctions;
                  int allowedFunctionIndex;
+                 std::string sourceDirectory;
                  std::ofstream *outf;
                  std::set<std::string> allowedFunctionSet;
                  std::vector<std::string> allowedNamespaces;
-                 SgFile *currentFile;
+                 StringUtility::FileNameClassification classification;
 
 //               int parseParameter( const std::string & param );
 
