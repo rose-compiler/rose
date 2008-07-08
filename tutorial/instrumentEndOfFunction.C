@@ -9,7 +9,7 @@ int main (int argc, char *argv[])
 {
   SgProject *project = frontend (argc, argv);
 
-  // Find all function definition we want to instrument
+  // Find all function definitions we want to instrument
   std::vector<SgNode* > funcDefList = 
     NodeQuery::querySubTree (project, V_SgFunctionDefinition);
 
@@ -19,11 +19,11 @@ int main (int argc, char *argv[])
    SgFunctionDefinition* cur_def = isSgFunctionDefinition(*iter);
    ROSE_ASSERT(cur_def);
   SgBasicBlock* body = cur_def->get_body();
-
+  // Build the call statement for each place
   SgExprStatement* callStmt1 = buildFunctionCallStmt("call1",
                buildIntType(),buildExprListExp() ,body);  
 
-  // instrument the main function
+  // instrument the function
   int i= instrumentEndOfFunction(cur_def->get_declaration(), callStmt1); 
   std::cout<<"Instrumented "<<i<<" places. "<<std::endl;
 
