@@ -26,30 +26,6 @@ namespace StringUtility
             return (result == 0);
         }
 
-        int
-        directoryDistance(const string& left, const string& right)
-        {
-            vector<string> lvec;
-            splitStringIntoStrings(left, '/', lvec);
-            vector<string> rvec;
-            splitStringIntoStrings(right, '/', rvec);
-
-            assert(!lvec.empty());
-            assert(!rvec.empty());
-
-            lvec.erase(lvec.end());
-            rvec.erase(rvec.end());
-
-            vector<string>::iterator l = lvec.begin();
-            vector<string>::iterator r = rvec.begin();
-            // empty body, this is just to advance the iters as long
-            // as elts match
-            for (; l != lvec.end() && r != rvec.end() && *l == *r; l++, r++)
-                ;
-
-            return distance(l, lvec.end()) + distance(r, rvec.end());
-        }
-
         // TODO can we static initialize stl structures?
         // if so it'd be better to create these as sets
         // test for existance, which would be *much* faster (and safer)
@@ -253,6 +229,30 @@ namespace StringUtility
             return FILENAME_LIBRARY_UNKNOWN;
         }
     } // end unnamed namespace for file location definitions
+
+    int
+    directoryDistance(const string& left, const string& right)
+    {
+        vector<string> lvec;
+        splitStringIntoStrings(left, '/', lvec);
+        vector<string> rvec;
+        splitStringIntoStrings(right, '/', rvec);
+
+        assert(!lvec.empty());
+        assert(!rvec.empty());
+
+        lvec.erase(lvec.end());
+        rvec.erase(rvec.end());
+
+        vector<string>::iterator l = lvec.begin();
+        vector<string>::iterator r = rvec.begin();
+        // empty body, this is just to advance the iters as long
+        // as elts match
+        for (; l != lvec.end() && r != rvec.end() && *l == *r; l++, r++)
+            ;
+
+        return distance(l, lvec.end()) + distance(r, rvec.end());
+    }
 
     OSType
     getOSType()
