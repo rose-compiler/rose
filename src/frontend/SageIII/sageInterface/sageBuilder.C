@@ -1078,8 +1078,7 @@ SageBuilder::buildVarRefExp(const std::string& varName, SgScopeStatement* scope)
 }
 
 SgVarRefExp *
-SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope)
-//SageBuilder::buildVarRefExp(std::string& varName, SgScopeStatement* scope=NULL)
+SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/)
 {
   if (scope == NULL)
     scope = SageBuilder::topScopeStack();
@@ -1108,13 +1107,40 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope)
 
 SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
-//SageBuilder::buildVarRefExp(std::string& varName, SgScopeStatement* scope=NULL)
 {
   SgVarRefExp *varRef = new SgVarRefExp(sym);
   setOneSourcePositionForTransformation(varRef);
   ROSE_ASSERT(varRef);
   return varRef; 
 }
+//!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType(); 
+/*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
+ */
+SgVarRefExp*
+SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scope/* =NULL */)
+{
+  SgVarRefExp *result = NULL;
+
+  if (scope == NULL)
+    scope = SageBuilder::topScopeStack();
+  ROSE_ASSERT(scope != NULL);
+
+  SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
+  if (symbol)
+  {
+    cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
+    ROSE_ASSERT(false);
+  }
+  else
+  {
+    SgVariableDeclaration* fakeVar = buildVariableDeclaration(name, buildIntType(),NULL, scope);
+    Sg_File_Info* file_info = fakeVar->get_file_info();
+    file_info->unsetOutputInCodeGeneration ();
+    SgVariableSymbol * 	fakeSymbol = getFirstVarSym (fakeVar);   
+    result = buildVarRefExp(fakeSymbol);
+  } // if
+  return result;
+} // buildOpaqueVarRefExp()
 
 SgFunctionParameterList*
 SageBuilder::buildFunctionParameterList(SgFunctionParameterTypeList * paraTypeList)

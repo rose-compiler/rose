@@ -490,6 +490,7 @@ bool isScalarType(SgType* t);
 
 //! Is a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
+ * Note: we classify private-to-shared as a shared type for convenience here. It is indeed a private type in strict sense. 
   AST graph for some examples:
     - shared scalar: SgModifierType -->base type
     - shared array: SgArrayType --> SgModiferType --> base type
@@ -549,7 +550,7 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
   \brief Top-down traversal from current node to find a node of a specified type
 */
 
-//! query a subtree to get all nodes of a given type.
+//! Query a subtree to get all nodes of a given type.
 template <typename NodeType>
 std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant);
 
