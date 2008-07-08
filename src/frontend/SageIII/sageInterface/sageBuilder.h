@@ -340,6 +340,12 @@ buildVarRefExp(SgVariableSymbol* varSymbol);
 SgVarRefExp *
 buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope=NULL);
 
+//!Build a variable reference expression at scope to an opaque variable which has unknown information except for its name.  Used when referring to an internal variable defined in some headers of runtime libraries.(The headers are not yet inserted into the file during translation). Similar to buildOpaqueType(); 
+/*! It will declare a hidden int varName  at the specified scope to cheat the AST consistence tests.
+ */
+SgVarRefExp* 
+buildOpaqueVarRefExp(const std::string& varName,SgScopeStatement* scope=NULL);
+
 //! Build SgFunctionRefExp based on a C++ function's name and function type. It will lookup symbol table internally starting from scope. A hidden prototype will be created internally to introduce a new function symbol if the function symbol cannot be found. 
 SgFunctionRefExp *
 buildFunctionRefExp(const SgName& name, const SgType* func_type, SgScopeStatement* scope=NULL);

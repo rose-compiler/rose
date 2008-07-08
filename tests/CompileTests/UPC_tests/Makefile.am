@@ -5,6 +5,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #####################################################################################
 
 # affinity &arr[i] is parsed to arr+i, may hurt the later translation
+# sharedArrayInit.upc: Berkeley UPC compiler 1.6 does not support shared arrays with initializer
 TESTCODES_REQUIRED_TO_PASS = \
      barrier.upc \
      consistency.upc \
@@ -21,6 +22,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      restrict.upc \
      shared.upc \
      shared_2.upc \
+     sharedArrayInit.upc \
+     sharedInit.upc \
      strict.upc \
      test2004_22.upc \
      threads.upc \
@@ -28,15 +31,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      typedef.upc
 
 #upc_XXXsizeof() has two issues:
-# 1. They are evaluated by EDG, operators are not preserved in its IL
-# 2. EDG 3.3 wrongfully evaluate them,  EDG 3.10 fixes the mistakes.
-# sharedInit.upc: EDG 3.10 does not allow shared UPC variables with initializers 
-# sharedArrayInit.upc: Berkeley UPC compiler does not support shared arrays with initializer
+# 1. They are evaluated by EDG, operators are not preserved in EDG's IL
+# 2. EDG 3.3 get wrong evaluation values,  EDG 3.10 fixes the bug though.
 TESTCODE_CURRENTLY_FAILING = \
      sizeof.upc \
-     sizeof_2.upc \
-     sharedInit.upc \
-     sharedArrayInit.upc
+     sizeof_2.upc 
 
 # Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
 TESTCODES = \
