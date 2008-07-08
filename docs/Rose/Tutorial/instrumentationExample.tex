@@ -13,6 +13,16 @@ the AST builder interface to do the same instrumentation work.
 input code used to get the translator.
 Figure~\ref{Tutorial:exampleOutput_InstrumentationTranslator} shows the resulting output.
 
+Another example shows how to add a function call at the end of each
+function body. A utility function, \textit{instrumentEndOfFunction()}, from SageInterface name space is used. 
+The interface tries to locate all return statements of a target function 
+ and rewriting return expressions with side effects, if there are any. 
+ Figure~\ref{Tutorial:instrumentEndOfFunction} shows the translator code. 
+ Figure~\ref{Tutorial:inputCode_instrumentEndOfFunction} shows the input
+ code. The instrumented code is shown in
+ Figure~\ref{Tutorial:rose_inputCode_instrumentEndOfFunction}.
+
+ 
 %\fixme{Consider making subsections for this section, so that we can present the high-level
 %       and mid-level AST rewrite mechanisms. Fix input example to work correctly with
 %       functions returning values (this should work).}
@@ -108,7 +118,84 @@ Figure~\ref{Tutorial:exampleOutput_InstrumentationTranslator} shows the resultin
 }
 % End of scope in indentation
 }
+
+
 \caption{Output of input to instrumenting translator.}
 \label{Tutorial:exampleOutput_InstrumentationTranslator}
+\end{figure}
+
+
+%------------------end of function example
+%----------------------- translator 3--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code instrumenting end of functions}
+\label{Tutorial:instrumentEndOfFunction}
+\end{figure}
+
+
+%----------------------- input code 3--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example input code of the instrumenting translator for end of
+functions.}
+\label{Tutorial:inputCode_instrumentEndOfFunction}
+\end{figure}
+
+%----------------------- output code--------------------------       
+\begin{figure}[!ht]
+{\indent
+{\mySmallFontSize
+
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_instrumentEndOfFunction.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_instrumentEndOfFunction.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+
+\caption{Output of instrumenting translator for end of functions.}
+\label{Tutorial:rose_inputCode_instrumentEndOfFunction}
 \end{figure}
 

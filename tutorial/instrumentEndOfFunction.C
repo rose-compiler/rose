@@ -1,5 +1,4 @@
 /*! \brief  test instrumentation right before the end of a function
-
 */
 #include "rose.h"
 #include <iostream>
@@ -10,24 +9,28 @@ int main (int argc, char *argv[])
 {
   SgProject *project = frontend (argc, argv);
 
-  // go to the function body
-  SgFunctionDeclaration* mainFunc= findMain(project);
-  std::cout<<mainFunc->unparseToString()<<std::endl;
-  
-  // prepare the function call statement we want to use
-  SgBasicBlock* body = mainFunc->get_definition()->get_body();
+  // Find all function definition we want to instrument
+  std::vector<SgNode* > funcDefList = 
+    NodeQuery::querySubTree (project, V_SgFunctionDefinition);
+
+ std::vector<SgNode*>::iterator iter;
+ for (iter = funcDefList.begin(); iter!= funcDefList.end(); iter++)
+ { 
+   SgFunctionDefinition* cur_def = isSgFunctionDefinition(*iter);
+   ROSE_ASSERT(cur_def);
+  SgBasicBlock* body = cur_def->get_body();
+
   SgExprStatement* callStmt1 = buildFunctionCallStmt("call1",
                buildIntType(),buildExprListExp() ,body);  
 
   // instrument the main function
-  int i= instrumentEndOfFunction(mainFunc, callStmt1); 
-
+  int i= instrumentEndOfFunction(cur_def->get_declaration(), callStmt1); 
   std::cout<<"Instrumented "<<i<<" places. "<<std::endl;
+
+ }  // end of instrumentation
+
   AstTests::runAllTests(project); 
   // translation only
    project->unparse();
-
-  //invoke backend compiler to generate object/binary files
-  // return backend (project);
 }
 
