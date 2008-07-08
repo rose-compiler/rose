@@ -765,7 +765,8 @@ inputCode_ASTGraphGenerator.pdf: ASTGraphGenerator
 inputCode_AST_PDF_Generator.pdf: AST_PDF_Generator
 	@echo "Generating required documentation for tutorial (inputCode_AST_PDF_Generator.pdf) ..."
 	@echo "Reusing the same inputCode_ASTGraphGenerator.C as for the DOT graph (but copy to new name) ..."
-	./AST_PDF_Generator $(ROSE_FLAGS) $(srcdir)/inputCode_AST_PDF_Generator.C
+	cp $(srcdir)/inputCode_ASTGraphGenerator.C inputCode_AST_PDF_Generator.C
+	./AST_PDF_Generator $(ROSE_FLAGS) inputCode_AST_PDF_Generator.C
 	cp -f inputCode_AST_PDF_Generator.C.pdf inputCode_AST_PDF_Generator.pdf
 
 inputCode_ASTWholeGraphGenerator_small.pdf: wholeASTGraphGenerator
@@ -1272,7 +1273,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C *.out *.a[a-l] *.dot *.pdf *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck*
+	rm -f rose_*.C *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C
 
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck*
