@@ -29,5 +29,5 @@ check-local:
 EXTRA_DIST = compass.h  compass_parameters
 
 clean-local:
-	rm -f compass.* *.sty *.ti a.out *.tex
+	rm -f *.sty *.ti a.out
 
