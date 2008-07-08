@@ -818,9 +818,7 @@ $(TEST_Objects): copyExample
 # $(EXTRA_TEST_Objects): copyExample $(srcdir)/$(@:.o=.C)
 $(EXTRA_TEST_Objects): copyExample
 	@echo "Copy the file to the local build tree so that we can change the file name suffix (to be a C language file) ..."
-	cp $(srcdir)/../Cxx_tests/$(@:.o=.C) $(@:.o=.C)
-	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.o=.C)
-#	rm -f $(@:.o=.C)
+	$(VALGRIND) ./copyExample $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.o=.C)
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
