@@ -72,7 +72,7 @@ OPENMP_RUNTIME_LIBRARY = @omp_runtime_support_path@
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
-$(TEST_Objects): ../../ompTranslator $(srcdir)/$(@:.o=.c)
+$(TEST_Objects): ../../ompTranslator $(@:.o=.c)
 	$(VALGRIND) ../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir)/../.. -I$(srcdir)/../../includes -c $(srcdir)/$(@:.o=.c)
 QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 
@@ -103,7 +103,7 @@ endif
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../ompTranslator $(srcdir)/$(@:.qmt=.c)
+$(QMTEST_Objects): ../../ompTranslator $(@:.qmt=.c)
 	@echo "Calling QMTEST_Objects rule: "
 	qm.sh o rose.RoseTest $(CURRENT_DIRECTORY)/../../ompTranslator NULL $(ROSE_FLAGS) -I$(srcdir)/../.. -c $(srcdir)/$(@:.qmt=.c)
 
