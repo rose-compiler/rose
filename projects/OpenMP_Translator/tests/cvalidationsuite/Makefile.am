@@ -80,7 +80,7 @@ VALGRIND =
 PASSING_TEST_Objects = ${TESTCODES:.c=.o}
 TEST_Objects = ${ALL_TESTCODES:.c=.o}
 
-$(TEST_Objects): ../../ompTranslator $(srcdir)/$(@:.o=.c)
+$(TEST_Objects): ../../ompTranslator $(@:.o=.c)
 #	@echo "Calling Copy AST mechanism using TEST_Objects rule: "
 	$(VALGRIND) ../../ompTranslator -D_OPENMP $(ROSE_FLAGS) -I$(srcdir)/../.. -I$(srcdir)/../../includes -c $(srcdir)/$(@:.o=.c)
 
@@ -88,7 +88,7 @@ QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../ompTranslator $(srcdir)/$(@:.qmt=.c)
+$(QMTEST_Objects): ../../ompTranslator $(@:.qmt=.c)
 	@echo "Calling QMTEST_Objects rule: "
 	qm.sh o rose.RoseTest $(CURRENT_DIRECTORY)/../../ompTranslator NULL $(ROSE_FLAGS) -I$(srcdir)/../.. -c $(srcdir)/$(@:.qmt=.c)
 
@@ -123,7 +123,7 @@ check-local:
 	@echo "Test for ROSE OpenMP Translator."
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These C programs must be called externally to the test codes in the "TESTCODES" make variable
-	@$(MAKE) $(PASSING_TEST_Objects)
+	$(MAKE) $(PASSING_TEST_Objects)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/projects/OpenMP_Translator/tests/cvalidationsuite: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
