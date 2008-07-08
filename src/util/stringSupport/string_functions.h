@@ -277,7 +277,7 @@ namespace StringUtility
                 * Between /a/b/c/file.h and /a/b/d/e/ the distance is 3
                 * because one must cd ..; cd d; cd e; to get to appPath
                 *
-                * *EXCEPTION*: if the filename is an ancestor of appPath
+                * *EXCEPTION*: if the appPath is an ancestor of filename
                 * then the distance will be 0.  The idea being that this
                 * filename is "in" the appPath somewhere and thus part
                 * of the application.
@@ -298,11 +298,16 @@ namespace StringUtility
            /* Given a fileName and an appPath that is a path to some
        	    * application's source code directory, return a
        	    * FileNameClassification indicating whether the fileName
-       	    * is part of the source code or some system library */
+       	    * is part of the source code or some system library and
+       	    * automatically determine the operating system from the
+       	    * host uname */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath);
 
-           // Not for public use, allows override of OS rules, for testing only
+           /* Given a fileName and an appPath that is a path to some
+       	    * application's source code directory, return a
+       	    * FileNameClassification indicating whether the fileName
+       	    * is part of the source code or some system library */
            FileNameClassification classifyFileName(const std::string& fileName,
                                                    const std::string& appPath,
                                                    OSType os);
@@ -311,6 +316,21 @@ namespace StringUtility
             * that is fiven in the format that g++ -H returns */
            const std::string
            stripDotsFromHeaderFileName(const std::string& name);
+
+           /* Essentially the edit distance without substituion in
+            * directory name tokens between two directories. Returns
+            * the "distance" between left and right. The distance is
+            * defined as the number of cd's that only move up or down
+            * one directory that it would take to move from the
+            * directory of the filename to the directory that was
+            * given by appPath.  This is intended as a heuristic to
+            * gage whether or not one believes that the left is
+            * related to the right directory.  Examples:
+            *
+            * Between /a/b/c/file.h and /a/b/d/e/ the distance is 3
+            * because one must cd ..; cd d; cd e */
+            int directoryDistance(const std::string& left,
+                                  const std::string& right);
 
    };
 
