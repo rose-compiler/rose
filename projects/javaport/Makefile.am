@@ -78,8 +78,8 @@ sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 	  -o sage3_wrap.cxx \
 	  $(srcdir)/sage3.i
 
-casts.i: generate_casts.sh
-	$<
+casts.i: $(srcdir)/generate_casts.sh
+	$(srcdir)/generate_casts.sh
 
 # gov/llnl/casc/rose/GenericVector.java: GenericVector.java
 # 	mkdir -p gov/llnl/casc/rose
