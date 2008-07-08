@@ -65,6 +65,7 @@ noinst_PROGRAMS = \
    inheritedAttributeTraversal \
    inlineTransformations \
    instrumentationExample \
+   instrumentEndOfFunction \
    interveneAtVariables \
    lineReplacement \
    loopNestingInfoProcessing \
@@ -177,6 +178,9 @@ resolveOverloadedFunction_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 templateParameter_SOURCES = templateParameter.C
 templateParameter_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
+instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
+instrumentEndOfFunction_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 instrumentationExample_SOURCES = instrumentationExample.C
 instrumentationExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
@@ -408,8 +412,9 @@ testInstantiatedTemplate: templateParameter
 
 testInstrumentationExample: instrumentationExample
 	./instrumentationExample -rose:verbose 0 -c $(srcdir)/inputCode_InstrumentationTranslator.C
-#	./instrumentationExample -rose:verbose 0 -c $(srcdir)/inputCode_1.C
 
+testInstrumentEndOfFunction: instrumentEndOfFunction
+	./instrumentEndOfFunction -rose:verbose 0 -c $(srcdir)/inputCode_instrumentEndOfFunction.C
 # turn off the warning for input code with unused variable declarations
 testAddVariableDeclaration: addVariableDeclaration
 	./addVariableDeclaration --edg:no_warnings -c $(srcdir)/inputCode_AddVariableDeclaration.C
@@ -694,6 +699,7 @@ generatedCodeExamples = \
    rose_inputCode_AddExpression.C \
    rose_inputCode_AddFunctionCalls.C \
    rose_inputCode_InstrumentationTranslator.C \
+   rose_inputCode_instrumentEndOfFunction.C \
    loopRecognition.out \
    typeInfoFromFunctionParameters.out \
    resolveOverloadedFunction.out \
@@ -740,13 +746,6 @@ generatedCodeExamples = \
    rose_input_runtimeErrorCheck2.C \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
    rose_inputCode_VolatileTypeModifier.C
-
-# DQ (9/8/2007): These currently fail due to more agressive internal symbol table testing
-#   rose_inputCode_inlineTransformations.C
-#   rose_inputCode_partialRedundancyElimination.C
-
-# DQ (7/25/2005): I don't think we need this!
-#   rose_transformation_inputCode_InstrumentationTranslator1.C
 
 # #####################################
 # Output file generation rules
@@ -887,10 +886,6 @@ traverseIRnodeTypes.out: traverseIRnodeTypes
 	./traverseIRnodeTypes $(ROSE_FLAGS) -c $(srcdir)/inputCode_ExampleTraversals_15.C > traverseIRnodeTypes.out
 
 
-#rose_transformation_inputCode_InstrumentationTranslator1.C: instrumentationExample
-#	@echo "Generate executable from compilation of input code (instrumentationExample) ..."
-#	./instrumentationExample -c $(srcdir)/inputCode_InstrumentationTranslator.C
-
 rose_inputCode_AddFunctionDeclaration.C: addFunctionDeclaration
 	@echo "Generate executable from compilation of input code (addFunctionDeclaration) ..."
 	./addFunctionDeclaration $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddFunctionDeclaration.C
@@ -926,8 +921,10 @@ rose_inputCode_AddFunctionCalls.C: addFunctionCalls
 rose_inputCode_InstrumentationTranslator.C: instrumentationExample
 	@echo "Generate executable from compilation of input code ..."
 	./instrumentationExample $(ROSE_FLAGS) -c $(srcdir)/inputCode_InstrumentationTranslator.C
-#	echo "Error: Current tutorial example is broken!" > rose_inputCode_InstrumentationTranslator.C
 
+rose_inputCode_instrumentEndOfFunction.C: instrumentEndOfFunction
+	@echo "Generate executable from compilation of input code ..."
+	./instrumentEndOfFunction $(ROSE_FLAGS) -c $(srcdir)/inputCode_instrumentEndOfFunction.C
 loopRecognition.out: loopRecognition
 	@echo "Generate executable from compilation of input code (loopRecognition) ..."
 	./loopRecognition $(ROSE_FLAGS) -c $(srcdir)/inputCode_LoopRecognition.C > loopRecognition.out
@@ -1169,6 +1166,7 @@ EXTRA_DIST = \
    inputCode_1.C \
    inputCode_BuildCFG.C \
    inputCode_InstrumentationTranslator.C \
+   inputCode_instrumentEndOfFunction.C \
    inputCode_wholeAST_1.C \
    inputCode_wholeAST_2.C \
    inputCode_QueryLibrary.C \
