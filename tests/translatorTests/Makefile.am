@@ -28,7 +28,7 @@ distclean-local:
 	rm -rf Makefile
 
 clean-local:
-	rm -rf *.o *.ps *.dot rose_*.C rose_*.c core *.int.c *.ti a.out roseTestProgram.C
+	rm -rf *.o *.ps *.pdf *.dot rose_*.C rose_*.c core *.int.c *.ti a.out roseTestProgram.C
 
 cleandata:
 	rm -f *.ti *.ii rose_*.C rose_*.c *.dot test*.o rose_*.o
