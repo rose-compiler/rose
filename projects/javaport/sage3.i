@@ -258,10 +258,10 @@ namespace __gnu_cxx {}
 %template(OutputObjectVector) std::vector<Compass::OutputObject*>;
 %typemap(javainterfaces) std::vector<Compass::OutputObject*> "GenericVector<OutputObject>"
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 
 %{
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 %}
 
 %include "casts.i"
