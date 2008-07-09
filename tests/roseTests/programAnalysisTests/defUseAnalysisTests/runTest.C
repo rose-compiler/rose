@@ -44,7 +44,7 @@ void testOneFunction( std::string funcParamName,
     cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
     if (maxNodes!=nrOfNodes) {
       cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
-      exit(0);
+      exit(1);
     }
     cout << " Test has nodes:  " << nrOfNodes <<  endl;
 
@@ -75,12 +75,12 @@ void testOneFunction( std::string funcParamName,
       }
       if (hit!=results.size()) {
 	cout << " Error: No hit! ... DFA values of node " << nrOfNodes << " are not correct! " << endl;
-	exit(0);
+	exit(1);
       }
     } else {
       if (results.size()!=0) {
 	cout << " Error: Test node " << defuse->getIntForSgNode(func) << " should have a multimap. " << endl;
-	exit(0);
+	exit(1);
       }
     }
   
@@ -185,7 +185,7 @@ void usage() {
   cout << " Usage: " << endl;
   cout << "   runTest all [startNr]   --- to test all testcases" << endl;
   cout << "   runTest [file]          --- to test one file" << endl;
-  exit(0);
+  exit(1);
 }
 
 int strToInt(string str) {
@@ -242,9 +242,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test1.C";
       results.clear();      useresults.clear();
-      results.insert(pair<string,int>("a", 7));
-      results.insert(pair<string,int>("a", 16));    
-      results.insert(pair<string,int>("c", 17));
+      results.insert(pair<string,int>("a", 8));
+      results.insert(pair<string,int>("a", 17));    
+      results.insert(pair<string,int>("c", 18));
       testOneFunction("::main",argvList, debug, 21, results,useresults);
     }
 
@@ -252,9 +252,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 2 -----------------------------------------
       argvList[1]=srcdir+"tests/test2.C";
       results.clear();      useresults.clear();
-      results.insert(pair<string,int>("a", 7));
-      results.insert(pair<string,int>("a", 16));    
-      results.insert(pair<string,int>("c", 17));
+      results.insert(pair<string,int>("a", 8));
+      results.insert(pair<string,int>("a", 17));    
+      results.insert(pair<string,int>("c", 18));
       testOneFunction("::main",argvList, debug, 19, results,useresults);
     }
 
@@ -262,7 +262,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 3 -----------------------------------------
       argvList[1]=srcdir+"tests/test3.C";
       results.clear();       useresults.clear();
-      results.insert(pair<string,int>("d", 14));
+      results.insert(pair<string,int>("d", 15));
       testOneFunction("::main", argvList, debug, 17, results,useresults);
     }
 
@@ -270,7 +270,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 4 -----------------------------------------
       argvList[1]=srcdir+"tests/test4.C";
       results.clear();       useresults.clear();
-      results.insert(pair<string,int>("::globalvar", 11));
+      results.insert(pair<string,int>("::globalvar", 12));
       testOneFunction("::main", argvList, debug, 14, results, useresults);
     }
 
@@ -278,9 +278,9 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 5 -----------------------------------------
       argvList[1]=srcdir+"tests/test5.C";
       results.clear();       useresults.clear();
-      results.insert(pair<string,int>("x", 9));
-      results.insert(pair<string,int>("y", 15));    
-      useresults.insert(pair<string,int>("x", 12));    
+      results.insert(pair<string,int>("x", 10));
+      results.insert(pair<string,int>("y", 16));    
+      useresults.insert(pair<string,int>("x", 13));    
       testOneFunction("::main", argvList, debug, 18, results, useresults);
     }
 
@@ -288,12 +288,12 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 6 -----------------------------------------
       argvList[1]=srcdir+"tests/test6.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("x", 13));
-      results.insert(pair<string,int>("x", 24));
-      results.insert(pair<string,int>("z", 25));    
-      results.insert(pair<string,int>("z", 9));    
-      useresults.insert(pair<string,int>("x", 15));    
-      useresults.insert(pair<string,int>("z", 21));    
+      results.insert(pair<string,int>("x", 14));
+      results.insert(pair<string,int>("x", 25));
+      results.insert(pair<string,int>("z", 26));    
+      results.insert(pair<string,int>("z", 10));    
+      useresults.insert(pair<string,int>("x", 16));    
+      useresults.insert(pair<string,int>("z", 22));    
       testOneFunction("::main", argvList, debug, 26, results,useresults);
     }
 
@@ -301,10 +301,10 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 7 -----------------------------------------
       argvList[1]=srcdir+"tests/test7.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("i", 5));
-      results.insert(pair<string,int>("i", 14));
-      useresults.insert(pair<string,int>("i", 7));    
-      useresults.insert(pair<string,int>("i", 13));    
+      results.insert(pair<string,int>("i", 6));
+      results.insert(pair<string,int>("i", 15));
+      useresults.insert(pair<string,int>("i", 8));    
+      useresults.insert(pair<string,int>("i", 14));    
       testOneFunction("::main", argvList, debug, 16, results,useresults);
     }
 
@@ -312,12 +312,12 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 8 -----------------------------------------
       argvList[1]=srcdir+"tests/test8.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("x", 23));
-      results.insert(pair<string,int>("i", 11));
-      results.insert(pair<string,int>("i", 31));
-      useresults.insert(pair<string,int>("i", 14));    
-      useresults.insert(pair<string,int>("p", 25));    
-      useresults.insert(pair<string,int>("x", 27));    
+      results.insert(pair<string,int>("x", 24));
+      results.insert(pair<string,int>("i", 12));
+      results.insert(pair<string,int>("i", 32));
+      useresults.insert(pair<string,int>("i", 15));    
+      useresults.insert(pair<string,int>("p", 26));    
+      useresults.insert(pair<string,int>("x", 28));    
       testOneFunction("::main", argvList, debug, 31, results,useresults);
     }
 
@@ -325,11 +325,11 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 9 -----------------------------------------
       argvList[1]=srcdir+"tests/test9.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("array", 3));
-      results.insert(pair<string,int>("i", 11));
-      results.insert(pair<string,int>("i", 30));
-      useresults.insert(pair<string,int>("i", 14));    
-      useresults.insert(pair<string,int>("array", 20));    
+      results.insert(pair<string,int>("array", 4));
+      results.insert(pair<string,int>("i", 12));
+      results.insert(pair<string,int>("i", 31));
+      useresults.insert(pair<string,int>("i", 15));    
+      useresults.insert(pair<string,int>("array", 21));    
       testOneFunction("::main", argvList, debug, 30, results,useresults);
     }
 
@@ -337,14 +337,14 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 10 -----------------------------------------
       argvList[1]=srcdir+"tests/test10.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("z", 12));
-      results.insert(pair<string,int>("z", 21));
-      results.insert(pair<string,int>("res", 22));
+      results.insert(pair<string,int>("z", 13));
+      results.insert(pair<string,int>("z", 22));
+      results.insert(pair<string,int>("res", 23));
       testOneFunction("::main", argvList, debug, 25, results,useresults);
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("x", 2));
-      results.insert(pair<string,int>("y", 3));
-      results.insert(pair<string,int>("z", 4));
+      results.insert(pair<string,int>("x", 3));
+      results.insert(pair<string,int>("y", 4));
+      results.insert(pair<string,int>("z", 5));
       testOneFunction("::f2", argvList, debug, 25, results,useresults);
     }
 
@@ -352,22 +352,22 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 11 -----------------------------------------
       argvList[1]=srcdir+"tests/test11.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("z", 18));
-      results.insert(pair<string,int>("z", 62));
-      results.insert(pair<string,int>("z", 72));
-      results.insert(pair<string,int>("p", 23));
-      results.insert(pair<string,int>("i", 27));
-      results.insert(pair<string,int>("i", 55));
-      results.insert(pair<string,int>("j", 40));
-      results.insert(pair<string,int>("j", 76));
-      results.insert(pair<string,int>("res", 41));
+      results.insert(pair<string,int>("z", 19));
+      results.insert(pair<string,int>("z", 63));
+      results.insert(pair<string,int>("z", 73));
+      results.insert(pair<string,int>("p", 24));
+      results.insert(pair<string,int>("i", 28));
+      results.insert(pair<string,int>("i", 56));
+      results.insert(pair<string,int>("j", 41));
+      results.insert(pair<string,int>("j", 77));
+      results.insert(pair<string,int>("res", 42));
       testOneFunction("::main", argvList, debug, 76, results,useresults);
       results.clear();  useresults.clear();
       testOneFunction("::f1", argvList, debug, 76, results,useresults);
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("x", 6));
-      results.insert(pair<string,int>("y", 7));
-      results.insert(pair<string,int>("z", 8));
+      results.insert(pair<string,int>("x", 7));
+      results.insert(pair<string,int>("y", 8));
+      results.insert(pair<string,int>("z", 9));
       testOneFunction("::f2", argvList, debug, 76, results,useresults);
     }
 
@@ -375,7 +375,7 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 13 -----------------------------------------
       argvList[1]=srcdir+"tests/test13.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("::global", 6));
+      results.insert(pair<string,int>("::global", 7));
       testOneFunction("::main", argvList, debug, 9, results,useresults);
     }
 
@@ -383,8 +383,8 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 14 -----------------------------------------
       argvList[1]=srcdir+"tests/test14.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("a", 11));
-      results.insert(pair<string,int>("b", 5));
+      results.insert(pair<string,int>("a", 12));
+      results.insert(pair<string,int>("b", 6));
       testOneFunction("::main", argvList, debug, 14, results,useresults);
     }
 
@@ -392,10 +392,10 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 15 -----------------------------------------
       argvList[1]=srcdir+"tests/test15.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("i", 11));
-      results.insert(pair<string,int>("i", 25));
-      results.insert(pair<string,int>("index", 25));
-      results.insert(pair<string,int>("index", 7));
+      results.insert(pair<string,int>("i", 12));
+      results.insert(pair<string,int>("i", 26));
+      results.insert(pair<string,int>("index", 26));
+      results.insert(pair<string,int>("index", 8));
       testOneFunction("::main", argvList, debug, 26, results,useresults);
     }
 
@@ -403,15 +403,15 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 18 -----------------------------------------
       argvList[1]=srcdir+"tests/test18.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("i", 11));
-      results.insert(pair<string,int>("i", 48));
-      results.insert(pair<string,int>("p", 7));
-      results.insert(pair<string,int>("p", 45));
-      results.insert(pair<string,int>("x", 23));
-      results.insert(pair<string,int>("z", 38));
-      results.insert(pair<string,int>("e", 40));
-      useresults.insert(pair<string,int>("i", 14));    
-      useresults.insert(pair<string,int>("x", 27));    
+      results.insert(pair<string,int>("i", 12));
+      results.insert(pair<string,int>("i", 49));
+      results.insert(pair<string,int>("p", 8));
+      results.insert(pair<string,int>("p", 46));
+      results.insert(pair<string,int>("x", 24));
+      results.insert(pair<string,int>("z", 39));
+      results.insert(pair<string,int>("e", 41));
+      useresults.insert(pair<string,int>("i", 15));    
+      useresults.insert(pair<string,int>("x", 28));    
       testOneFunction("::main", argvList, debug, 48, results,useresults);
     }
 
@@ -419,14 +419,14 @@ int main( int argc, char * argv[] )
       // ------------------------------ TESTCASE 19 -----------------------------------------
       argvList[1]=srcdir+"tests/test19.C";
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("::global", 1));
-      results.insert(pair<string,int>("::global", 7));
-      results.insert(pair<string,int>("::global2", 27));
-      results.insert(pair<string,int>("a", 23));
+      results.insert(pair<string,int>("::global", 2));
+      results.insert(pair<string,int>("::global", 8));
+      results.insert(pair<string,int>("::global2", 28));
+      results.insert(pair<string,int>("a", 24));
       testOneFunction("::main", argvList, debug, 30, results,useresults);
       results.clear();  useresults.clear();
-      results.insert(pair<string,int>("::global", 7));
-      results.insert(pair<string,int>("::global2", 11));
+      results.insert(pair<string,int>("::global", 8));
+      results.insert(pair<string,int>("::global2", 12));
       testOneFunction("::setMe", argvList, debug, 30, results,useresults);
     }
 

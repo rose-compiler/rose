@@ -15,7 +15,7 @@ runTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-TESTCODES = test1.C 
+TESTCODES = test1.C
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
@@ -39,6 +39,7 @@ check-local:
 	@echo "*********************************************************************************************************************"
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
+
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) *.o rose_*.C *.dot Templates.DB ii_files ti_files DATABASE DATABASE.dot
