@@ -8,7 +8,7 @@
 #ifndef COMPASS_NEW_DELETE_H
 #define COMPASS_NEW_DELETE_H
 
-#include "BoostGraphInterface.hxx"
+//#include "BoostGraphInterface.hxx"
 
 namespace CompassAnalyses
 { 
@@ -16,11 +16,11 @@ namespace CompassAnalyses
     { 
       /*! \brief New Delete: Add your description here 
        */
-
-
       extern const std::string checkerName;
       extern const std::string shortDescription;
       extern const std::string longDescription;
+
+
 
       // Specification of Checker Output Implementation
       class CheckerOutput: public Compass::OutputViolationBase
@@ -31,25 +31,14 @@ namespace CompassAnalyses
 
       // Specification of Checker Traversal Implementation
       class Traversal 
-	: public AstSimpleProcessing, public Compass::TraversalBase,  BOOSTGraphInterface::tps_graph_interface
+	: public AstSimpleProcessing, public Compass::TraversalBase
 	{
 	  // Checker specific parameters should be allocated here.
 
-
-	  std::string getFileName(SgFile* src);
+	  typedef std::pair<bool, std::vector<SgExpression*> > BoolWithTrace;
+	  std::map<SgExpression*, BoolWithTrace> traces;
+	  BoolWithTrace expressionIsNewExpr(SgExpression* expr);
 	  void checkNewDelForFunction(SgDeleteExp* delExpr, std::string name);
-	  void switchForAssignment(std::vector<BOOSTGraphInterface::tps_node> &vec, 
-				   BOOSTGraphInterface::tps_node n, 
-				   BOOSTGraphInterface::tps_node oldN, SgExpression* rhs) const;
-	  std::vector <BOOSTGraphInterface::tps_node> tps_out_edges(BOOSTGraphInterface::tps_node node) const;
-
-	  static std::string printTrace(const std::vector<BOOSTGraphInterface::tps_node>& trace);
-	  static std::string print_tps_error(std::string error, BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN) ;
-
-	  static std::string trimIfNeeded(const std::string& s);
-	  static SgStatement* getStatement(SgNode* n);
-
-	  
 
 	  template<typename T>    
 	    static std::string ToString(T t){
@@ -61,12 +50,9 @@ namespace CompassAnalyses
 	public:
 	  Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
 
-	  // The implementation of the run function has to match the traversal being called.
-	  void run(SgNode* n){ 
 
-	    //if (Compass::verboseSetting >= 0)
-	    //std::cout << " TURN ON BOOST FOR THIS ANALYSIS. " << std::endl;
-	    this->traverse(n, preorder); };
+	  // The implementation of the run function has to match the traversal being called.
+	  void run(SgNode* n){  this->traverse(n, preorder); };
 
 	  void visit(SgNode* n);
 	};

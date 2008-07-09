@@ -17,12 +17,10 @@ std::string Compass::tguiXML;
 
 DefUseAnalysis* Compass::defuse = NULL;
 void Compass::runDefUseAnalysis(SgProject* root) {
-  if (defuse==NULL) {
-        defuse = new DefUseAnalysis(root);
-    ((DefUseAnalysis*)defuse)->run(false);
 
+  if (defuse==NULL) {
     //#define DEFUSE
-#ifdef DEFUSE
+#if ROSE_MPI
   /* ---------------------------------------------------------- 
    * MPI code for DEFUSE
    * ----------------------------------------------------------*/
@@ -38,7 +36,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   Rose_STL_Container<SgNode *> funcs = 
     NodeQuery::querySubTree(root, V_SgFunctionDefinition);
   if (my_rank==0)
-    std::cerr << " running defuse analysis ...  functions: " << funcs.size() << std::endl;
+    std::cerr << ">>>>> running defuse analysis (parallel)...  functions: " << funcs.size() << std::endl;
   int resultDefUseNodes=0;
   // run the following in parallel
   for (int p=0; p<processes;++p) {
@@ -177,8 +175,12 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     //((DefUseAnalysis*)defuse)->printDefMap();
   }
   //#endif
+#else
+  std::cerr << ">>>>>> running defuse analysis in sequence. "  << std::endl;
+        defuse = new DefUseAnalysis(root);
+    ((DefUseAnalysis*)defuse)->run(false);
+  
 #endif
-
 
   }
 }

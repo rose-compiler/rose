@@ -8,7 +8,8 @@
 
 void buildCheckers( std::vector<Compass::TraversalBase*> &retVal, 
 		    Compass::Parameters &params, 
-		    Compass::OutputObject &output );
+		    Compass::OutputObject &output,
+		    SgProject* pr);
 
 int main(int argc, char** argv)
 {
@@ -18,7 +19,7 @@ int main(int argc, char** argv)
   Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
 
-  buildCheckers( traversals, params, output );
+  buildCheckers( traversals, params, output, sageProject );
 
   for( std::vector<Compass::TraversalBase*>::iterator itr = traversals.begin();
        itr != traversals.end(); itr++ )

@@ -197,14 +197,11 @@ CompassAnalyses::NullDeref::Traversal::expressionIsNull(SgExpression* expr) {
  *  and print the results (locally and to output)
  *********************************************************/
 void CompassAnalyses::NullDeref::Traversal::
-checkNullDeref(string analysisname, SgExpression* theExp,  string name) {
+checkNullDeref(string analysisname, SgExpression* expr,  string name) {
   // get the line number of the expression
 #pragma omp critical (runDefUseAnalysisCompass)
   { 
-    std::string lineNrDelete=ToString(theExp->get_file_info()->get_line());
-
-    //SgInitializedName* initName ;
-    SgExpression* expr =  theExp;
+    std::string lineNrDelete=ToString(expr->get_file_info()->get_line());
     BoolWithTrace tr;
     cout << "Expression " << expr->unparseToString() << " at line " << 
       expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;

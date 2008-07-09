@@ -10,7 +10,11 @@ SUBDIRS = compassSupport util compassVerifier tests
 
 BUILT_SOURCES = buildCheckers.C checkers.h
 
+if ROSE_MPI
+INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
+else
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
+endif
 
 bin_PROGRAMS = compassMain
 

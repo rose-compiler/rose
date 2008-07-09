@@ -55,7 +55,7 @@
 -:MultiplePublicInheritance
 -:NameAllParameters
 -:NameConsistency
--:NewDelete
++:NewDelete
 -:NoExceptions
 -:NoExitInMpiCode
 -:NoGoto

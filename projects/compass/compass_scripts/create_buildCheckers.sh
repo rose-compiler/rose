@@ -114,7 +114,7 @@ readFile( std::string filename){
 
 
 void
-buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, Compass::OutputObject &output )
+buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, Compass::OutputObject &output, SgProject* pr )
 {
 ' >> $source
 

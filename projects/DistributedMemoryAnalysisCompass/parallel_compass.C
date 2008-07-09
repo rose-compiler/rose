@@ -391,7 +391,7 @@ int main(int argc, char **argv)
 
   if (sequential)
     if (my_rank==0) {
-      std::cout << "\n>>> Running in sequence ... " << std::endl;
+      //      std::cout << "\n>>> Running in sequence ... " << std::endl;
       std::cout << "\n>>> Initializing data ... " << std::endl;
     }
 
