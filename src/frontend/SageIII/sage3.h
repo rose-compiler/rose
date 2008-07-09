@@ -158,6 +158,7 @@ using namespace __gnu_cxx;
 
 // Include ROSE common utility function library
 #include <string_functions.h>
+#include "processSupport.h"
 
 // Include support for Brian Gunney's command line parser tool (nice work)
 #include "sla.h"

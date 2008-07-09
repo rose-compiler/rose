@@ -20,12 +20,12 @@ else
 noinst_LTLIBRARIES = libroseutil.la
 endif
 
-libroseutil_la_SOURCES =
+libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
 	commandlineProcessing/libRoseCommandlineUtil.la
 
-include_HEADERS = setup.h
+include_HEADERS = setup.h processSupport.h
 
 EXTRA_DIST = setup.h utilDocumentation.docs
 
