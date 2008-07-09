@@ -238,7 +238,4 @@ namespace VirtualCFG {
   std::vector<VirtualCFG::CFGEdge> doForallCfgInEdges(SgForAllStatement* me, unsigned int idx);
 }
 
-std::string escapeString(const std::string& s);
-
- // VIRTUAL_CFG_H
-#endif
+#endif // VIRTUAL_CFG_H

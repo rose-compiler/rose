@@ -1,11 +1,14 @@
-#include "rose.h"
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <vector>
+#include <string>
+#include <unistd.h>
+#include <cassert>
 
 using namespace std;
 
 int systemFromVector(const vector<string>& argv) {
-  ROSE_ASSERT (!argv.empty());
+  assert (!argv.empty());
   pid_t pid = fork();
   if (pid == -1) {perror("fork"); abort();}
   if (pid == 0) { // Child
@@ -28,7 +31,7 @@ int systemFromVector(const vector<string>& argv) {
 // EOF is not handled correctly here -- EOF is normally set when the child
 // process exits
 FILE* popenReadFromVector(const vector<string>& argv) {
-  ROSE_ASSERT (!argv.empty());
+  assert (!argv.empty());
   int pipeDescriptors[2];
   int pipeErr = pipe(pipeDescriptors);
   if (pipeErr == -1) {perror("pipe"); abort();}
