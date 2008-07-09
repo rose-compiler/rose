@@ -165,7 +165,7 @@ Sg_Options& Sg_options()
 // #include "AstFixParentTraversal.h"
 #include "compass.h"
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 
 typedef std::vector<SgNode*> AstNodePointersList;
 
