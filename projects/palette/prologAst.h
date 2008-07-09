@@ -6,7 +6,8 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include "string_support.h"
+#include "string_functions.h"
+#include "escape.h"
 
 namespace PrologAst {
 
