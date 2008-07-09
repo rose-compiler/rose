@@ -39,7 +39,7 @@ CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-
 #CONFIGURE_FLAGS=(--without-binary_analysis --with-edg_source_code=true --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --enable-rosehpct --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/ofp_install --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --with-boost=${BOOST_INSTALL} --with-boost-wave=yes --prefix=${ROSE_INSTALL} "$@")
 
 # make using multiple processes
-MAKEFLAGS="-j4"
+MAKEFLAGS="-j16"
 #------------------------------------------------------
 #  Preparation Section
 #------------------------------------------------------
@@ -149,6 +149,8 @@ if [ $buildstatus == 0 ]; then
   echo "" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
+  cd ${ROSE_BUILD}/docs/Rose
+  make copyWebPages
 else
   echo "Subject: ROSE test ${TIMESTAMP} results (fail)" > mailtext
   echo "SVN repository version no is ${svnversion}" >> mailtext
