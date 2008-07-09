@@ -2,6 +2,9 @@
 #define ROSE_COMPASS_H
 
 #include <rose.h>
+#include "DefUseAnalysis.h"
+#include "DefUseAnalysis_perFunction.h"
+
 
 namespace Compass {
  //! Silent setting is -1, default is 0, and values greater than zero indicate different levels of detail to be output.
@@ -20,7 +23,10 @@ namespace Compass {
      extern bool UseToolGear;
      extern std::string tguiXML;
 
-
+     // Support for DefUse Analysis
+     extern DefUseAnalysis*  defuse;
+     void runDefUseAnalysis(SgProject* root);
+     
      void commandLineProcessing(Rose_STL_Container<std::string> & commandLineArray);
 
   ///Andreas' function

@@ -10,7 +10,7 @@ using namespace std;
 
 
 
-void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> &outputs,
+void printPCResults(MyAnalysis& myanalysis, CountingOutputObject &outputs,
 		    unsigned int* output_values,
 		    double* times, double* memory
 		    ) {
@@ -19,8 +19,9 @@ void printPCResults(MyAnalysis& myanalysis, std::vector<CountingOutputObject *> 
   if (my_rank == 0) {
 
     std::cout << "\n>>>>> results:" << std::endl;
-    for (size_t i = 0; i < outputs.size(); i++)
-      std::cout << "  " << outputs[i]->name << " " << output_values[i] << std::endl;
+    std::map<std::string, unsigned int> ::iterator o_itr;
+    for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr) 
+      std::cout << "  " << o_itr->first << " " << o_itr->second << std::endl;
     std::cout << std::endl;
 
     double total_time = 0.0;
@@ -87,12 +88,14 @@ int main(int argc, char **argv)
   std::vector<AstSimpleProcessing *>::iterator t_itr;
   std::vector<Compass::TraversalBase *> bases;
   std::vector<Compass::TraversalBase *>::iterator b_itr;
-  std::vector<CountingOutputObject *> outputs;
-  std::vector<CountingOutputObject *>::iterator o_itr;
+  CountingOutputObject  outputs ;
 
-  compassCheckers(traversals, bases, outputs);
+  //  compassCheckers(traversals, bases, outputs);
+  Compass::Parameters params(Compass::findParameterFile());
+  buildCheckers(bases, params, outputs, root);
+  outputs.fillOutputList(bases);
 
-  ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
+  //  ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
   if (DEBUG_OUTPUT_MORE) 
     if (my_rank == 0)
       {
@@ -240,7 +243,7 @@ int main(int argc, char **argv)
   double my_time = timeDifference(end_time, begin_time);
   std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
 
-  unsigned int *output_values = new unsigned int[outputs.size()];
+  unsigned int *output_values = new unsigned int[outputs.counts.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
   MPI_Barrier(MPI_COMM_WORLD);

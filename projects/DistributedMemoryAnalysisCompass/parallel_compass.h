@@ -38,6 +38,10 @@ int* dynamicFunctionsPerProcessor;
 // before compass is started.
 DFAnalysis* defuse;
 
+// prototype. Implementation is in Compass.
+void
+buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, 
+	       Compass::OutputObject &output, SgProject* pr );
 
 class MemoryTraversal : public ROSE_VisitTraversal {
  public:
@@ -170,12 +174,23 @@ protected:
 class CountingOutputObject: public Compass::OutputObject
 {
 public:
-  CountingOutputObject(std::string name = ""): outputs(0), name(name){}
-  virtual void addOutput(Compass::OutputViolationBase *) {outputs++; }
-  void reset(){outputs = 0;}
-  unsigned int outputs;
-  std::string name;
+  CountingOutputObject(){
+    
+  }
+  virtual void addOutput(Compass::OutputViolationBase *obj) {
+    ++counts[obj->getCheckerName()];
+   }
+  void fillOutputList(  std::vector<Compass::TraversalBase *> bases) {
+    std::vector<Compass::TraversalBase *>::iterator it = bases.begin();
+    for (;it!=bases.end();++it) {
+      Compass::TraversalBase* checker = *it;
+      counts[checker->getName()]=0;
+    }
+  }
+  std::map<std::string, unsigned int> counts;
 };
+
+
 
 //	Compass::OutputObject* output = new Compass::PrintingOutputObject(std::cerr); 
 
@@ -198,6 +213,7 @@ public:
 // ************************************************************
 // This is a description of all checkers.
 // ************************************************************
+/*
 void compassCheckers(std::vector<AstSimpleProcessing *> &traversals,
 		     std::vector<Compass::TraversalBase *> &bases,
 		     //        std::vector<Compass::OutputObject *> &outputs)
@@ -210,32 +226,35 @@ void compassCheckers(std::vector<AstSimpleProcessing *> &traversals,
   }
   //    outputs.push_back(new Compass::PrintingOutputObject(std::cerr));
 }
-
+*/
 
 
 // ************************************************************
 // output all the results
 // ************************************************************
-void output_results(std::vector<CountingOutputObject *> &outputs) {
-  std::vector<CountingOutputObject *>::iterator o_itr;
+void output_results(CountingOutputObject * &outputs) {
+  std::map<std::string, unsigned int> out = outputs->counts;
+  std::map<std::string, unsigned int> ::iterator o_itr;
   std::cout << "results: " << std::endl;
-  for (o_itr = outputs.begin(); o_itr != outputs.end(); ++o_itr) {
-    std::cout << (*o_itr)->name << " : " << (*o_itr)->outputs << " " << std::endl;
-    (*o_itr)->reset();
+  for (o_itr = out.begin(); o_itr != out.end(); ++o_itr) {
+    std::cout << (*o_itr).first << " : " << (*o_itr).second << " " << std::endl;
   }
 }
 
 
-void communicateResult(std::vector<CountingOutputObject *> &outputs, 
+void communicateResult(CountingOutputObject  &outputs, 
 		       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage) {
   /* communicate results */
-  unsigned int *my_output_values = new unsigned int[outputs.size()];
-  for (size_t i = 0; i < outputs.size(); i++)
-    my_output_values[i] = outputs[i]->outputs;
+  unsigned int *my_output_values = new unsigned int[outputs.counts.size()];
+  std::map<std::string, unsigned int> ::iterator o_itr;
+  int i=0;
+  for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr,++i) {
+    my_output_values[i] = o_itr->second;
+  }
 
-  MPI_Reduce(my_output_values, output_values, outputs.size(), MPI_UNSIGNED,
+  MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
 	     MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */
@@ -246,16 +265,19 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 	     MPI_COMM_WORLD);
 }
 
-void communicateResult(std::vector<CountingOutputObject *> &outputs, 
+void communicateResult(CountingOutputObject  &outputs, 
 		       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage, double* nr_func, double thisfunction) {
   /* communicate results */
-  unsigned int *my_output_values = new unsigned int[outputs.size()];
-  for (size_t i = 0; i < outputs.size(); i++)
-    my_output_values[i] = outputs[i]->outputs;
+  unsigned int *my_output_values = new unsigned int[outputs.counts.size()];
+  std::map<std::string, unsigned int> ::iterator o_itr;
+  int i=0;
+  for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr,++i) {
+    my_output_values[i] = o_itr->second;
+  }
 
-  MPI_Reduce(my_output_values, output_values, outputs.size(), MPI_UNSIGNED,
+  MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
 	     MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */
@@ -271,7 +293,7 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 }
 
 
-void communicateResult(std::vector<CountingOutputObject *> &outputs, 
+void communicateResult(CountingOutputObject  &outputs, 
 		       double* times, double* memory, 
 		       unsigned int* output_values, 
 		       double my_time, double memusage, int* maxtime_nr, int max_time_i,  
@@ -280,11 +302,14 @@ void communicateResult(std::vector<CountingOutputObject *> &outputs,
 		       double* commtimes, double comm_time_processor
 		       ) {
   /* communicate results */
-  unsigned int *my_output_values = new unsigned int[outputs.size()];
-  for (size_t i = 0; i < outputs.size(); i++)
-    my_output_values[i] = outputs[i]->outputs;
+  unsigned int *my_output_values = new unsigned int[outputs.counts.size()];
+  std::map<std::string, unsigned int> ::iterator o_itr;
+  int i=0;
+  for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr,++i) {
+    my_output_values[i] = o_itr->second;
+  }
 
-  MPI_Reduce(my_output_values, output_values, outputs.size(), MPI_UNSIGNED,
+  MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
 	     MPI_SUM, 0, MPI_COMM_WORLD);
 
   /* communicate times */

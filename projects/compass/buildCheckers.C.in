@@ -12,7 +12,7 @@ readFile( std::string filename){
   std::ifstream* file_op = Compass::openFile( filename );
 
   std::string current_word;
-  bool is_first_word = true;
+  //bool is_first_word = true;
   //read file
   char dummyString[2000];
 
@@ -40,8 +40,15 @@ readFile( std::string filename){
 
 
 void
-buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, Compass::OutputObject &output )
+buildCheckers( std::vector<Compass::TraversalBase*> &retVal, 
+	       Compass::Parameters &params, 
+	       Compass::OutputObject &output,
+	       SgProject* pr)
 {
+
+ROSE_ASSERT(pr);
+#pragma omp critical (runDefUseAnalysisCompass)
+Compass::runDefUseAnalysis(pr);
 
 #define BUILD_ONE_CHECKER(NameCapitalized) \
     try { \

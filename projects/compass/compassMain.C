@@ -29,7 +29,8 @@ class QRoseOutputObject
 #endif
 
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output );
+void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, 
+		    Compass::OutputObject & output, SgProject* pr );
 
 int main(int argc, char** argv)
    {
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
        // Make this in a nested scope so that we can time the buildCheckers function
           TimingPerformance timer_build ("Compass performance (build checkers): time (sec) = ",false);
 
-          buildCheckers(traversals,params,output);
+          buildCheckers(traversals,params,output, project);
         }
 
      TimingPerformance timer_checkers ("Compass performance (checkers only): time (sec) = ",false);

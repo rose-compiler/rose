@@ -5,6 +5,8 @@ using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
+
+
 void serializeDefUseResults(unsigned int *values,
 			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
 			    std::map<SgNode*,unsigned int > &nodeMap) {
@@ -274,7 +276,7 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
 
 
 
-void printPCResults(std::vector<CountingOutputObject *> &outputs,
+void printPCResults(CountingOutputObject  &outputs,
 		    unsigned int* output_values,
 		    double* times, double* memory, int* maxtime_i, double* maxtime_val,
 		    double* calctimes, double* commtimes,
@@ -284,8 +286,9 @@ void printPCResults(std::vector<CountingOutputObject *> &outputs,
   if (my_rank == 0) {
 
     std::cout << "\n>>>>> results:" << std::endl;
-    for (size_t i = 0; i < outputs.size(); i++)
-      std::cout << "  " << outputs[i]->name << " " << output_values[i] << std::endl;
+    std::map<std::string, unsigned int> ::iterator o_itr;
+    for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr) 
+      std::cout << "  " << o_itr->first << " " << o_itr->second << std::endl;
     std::cout << std::endl;
 
     double total_time = 0.0;
@@ -365,13 +368,15 @@ int main(int argc, char **argv)
   std::vector<AstSimpleProcessing *>::iterator t_itr;
   std::vector<Compass::TraversalBase *> bases;
   std::vector<Compass::TraversalBase *>::iterator b_itr;
-  std::vector<CountingOutputObject *> outputs;
-  std::vector<CountingOutputObject *>::iterator o_itr;
+  CountingOutputObject  outputs ;
 
-  compassCheckers(traversals, bases, outputs);
+  //  compassCheckers(traversals, bases, outputs);
+  Compass::Parameters params(Compass::findParameterFile());
+  buildCheckers(bases, params, outputs,root);
+  outputs.fillOutputList(bases);
 
-  ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
-  if (DEBUG_OUTPUT_MORE) 
+  //ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
+  //  if (DEBUG_OUTPUT_MORE) 
     if (my_rank == 0)
       {
 	std::cout << std::endl << "got " << bases.size() << " checkers:";
@@ -416,7 +421,8 @@ int main(int argc, char **argv)
 	    " threads!! processes = " << processes << " ------------" << std::endl;
 #endif 
 
-#define DEFUSE
+
+	//#define DEFUSE
 #ifdef DEFUSE
   /* ---------------------------------------------------------- 
    * MPI code for DEFUSE
@@ -606,7 +612,7 @@ int main(int argc, char **argv)
   }
 #endif
 
-
+  ROSE_ASSERT(Compass::defuse);
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
@@ -770,7 +776,7 @@ int main(int argc, char **argv)
   std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << 
     "    CalcTime: " << calc_time_processor << "   CommTime: " << commtime << std::endl;
 
-  unsigned int *output_values = new unsigned int[outputs.size()];
+  unsigned int *output_values = new unsigned int[outputs.counts.size()];
   double *times = new double[processes];
   double *memory = new double[processes];
   int *maxtime_nr = new int[processes];

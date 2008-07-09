@@ -13,9 +13,6 @@ namespace CompassAnalyses
 { 
   namespace NullDeref
     { 
-      /*! \brief Null Deref: Add your description here 
-       */
-
       extern const std::string checkerName;
       extern const std::string shortDescription;
       extern const std::string longDescription;
@@ -28,26 +25,17 @@ namespace CompassAnalyses
 	};
 
       // Specification of Checker Traversal Implementation
-
       class Traversal
-	: public AstSimpleProcessing, public Compass::TraversalBase,  BOOSTGraphInterface::tps_graph_interface
+	: public AstSimpleProcessing, public Compass::TraversalBase
 	{
 	  // Checker specific parameters should be allocated here.
+	  typedef std::pair<bool, std::vector<SgExpression*> > BoolWithTrace;
+	  std::map<SgExpression*, BoolWithTrace> traces;
 
-	  std::string getFileName(SgFile* src);
-	  bool isNULL(SgExpression* rightSide) const;
-	  bool isLegitimateNullPointerCheck(SgExpression* expr, SgInitializedName* pointerVar, bool invertCheck) const;
+	  BoolWithTrace expressionIsNull(SgExpression* expr);
+
+	  //	  bool isLegitimateNullPointerCheck(SgExpression* expr, SgInitializedName* pointerVar, bool invertCheck) const;
 	  void checkNullDeref(std::string analysisname, SgExpression* theExp, std::string name);
-
-	  bool switchForAssignment(std::vector<BOOSTGraphInterface::tps_node> &vec, 
-					  BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN, SgExpression* rhs) const;
-	  std::vector <BOOSTGraphInterface::tps_node> tps_out_edges(BOOSTGraphInterface::tps_node node) const;
-
-	  static std::string printTrace(const std::vector<BOOSTGraphInterface::tps_node>& trace);
-	  static std::string print_tps_error(std::string error, BOOSTGraphInterface::tps_node n, BOOSTGraphInterface::tps_node oldN);
-
-	  static std::string trimIfNeeded(const std::string& s);
-	  static SgStatement* getStatement(SgNode* n);
 
 	  template<typename T>    
 	    static std::string ToString(T t){
@@ -58,7 +46,6 @@ namespace CompassAnalyses
 
 	  int counter;
 	  int max;
-	  static bool addressOp;
 	  static bool debug;
 
 	public:
@@ -66,14 +53,17 @@ namespace CompassAnalyses
 
 	  // The implementation of the run function has to match the traversal being called.
 	  void run(SgNode* n){ 
+	    //SgProject* pr = isSgProject(n);
+	    //ROSE_ASSERT(pr);
+	    //	    Compass::runDefUseAnalysis(pr);
 	    counter=0;
-	    debug=false;
+	    debug=true;
 	    std::vector<SgNode*> exprList = NodeQuery:: querySubTree (n, V_SgFunctionDeclaration);
 	    max = exprList.size();
 	    this->traverse(n, preorder); 
 	  };
 
-	 	  void visit(SgNode* n);
+	  void visit(SgNode* n);
 	};
     }
 }

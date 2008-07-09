@@ -53,7 +53,7 @@ compass_parameters: CHECKER_LIST_WITHOUT_COMMENTS
 	echo "# this is an automatically generated file " > compass_parameters
 	echo "Compass.RuleSelection=RULE_SELECTION" >> compass_parameters
 	echo '' >> compass_parameters
-	cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do if [ -f $(srcdir)/$$ch/compass_parameters ]; then grep -v '^#' $(srcdir)/$$ch/compass_parameters >> compass_parameters; fi; done
+	cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do if [ -f $(srcdir)/$$ch/compass_parameters ]; then grep -v '^#' $(srcdir)/$$ch/compass_parameters >> compass_parameters || true; fi; done
 
 # Verify that all checkers conform to specific rules (fast, copies checkers to a single file)
 oneBigVerify:

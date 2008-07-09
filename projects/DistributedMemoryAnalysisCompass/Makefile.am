@@ -79,7 +79,7 @@ check-local: parallel_functionBased_dynamicBalance parallel_file_compass paralle
 	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C -shared
 	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C -combined
 
-compass_parameters: $(srcdir)/compass_parameters_x
-	$(LN_S) $(srcdir)/compass_parameters_x compass_parameters
+compass_parameters:
+	$(LN_S) ../compass/compass_parameters compass_parameters
 
 endif

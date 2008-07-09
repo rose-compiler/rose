@@ -636,7 +636,22 @@ Unparser::set_generateSourcePositionCodes( int x )
                of functions.
   */
 string
+globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer );
+
+string
 globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
+   {
+     string returnString;
+// tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
+#pragma omp critical (unparser)
+     {
+       returnString=globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+     }
+     return returnString;
+   }
+
+string
+globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
    {
   // This global function permits any SgNode (including it's subtree) to be turned into a string
 
@@ -644,10 +659,6 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
      ROSE_ASSERT(astNode != NULL);
 
      string returnString;
-
-// tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
-#pragma omp critical (unparser)
-     {
 
   // all options are now defined to be false. When these options can be passed in
   // from the prompt, these options will be set accordingly.
@@ -855,7 +866,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
                   {
                     SgFile* file = &(project->get_file(i));
                     ROSE_ASSERT(file != NULL);
-                    string unparsedFileString = globalUnparseToString(file,inputUnparseInfoPointer);
+                    string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
                     string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
                     string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
@@ -869,7 +880,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
                ROSE_ASSERT(file != NULL);
                SgGlobal* globalScope = file->get_root();
                ROSE_ASSERT(globalScope != NULL);
-               returnString = globalUnparseToString(globalScope,inputUnparseInfoPointer);
+               returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
              }
         }
        else
@@ -928,7 +939,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
                             {
                               SgFile* file = &(project->get_file(i));
                               ROSE_ASSERT(file != NULL);
-                              string unparsedFileString = globalUnparseToString(file,inputUnparseInfoPointer);
+                              string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
                               string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
                               string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
                               returnString += prefixString + unparsedFileString + suffixString;
@@ -941,7 +952,7 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
                          ROSE_ASSERT(file != NULL);
                          SgGlobal* globalScope = file->get_root();
                          ROSE_ASSERT(globalScope != NULL);
-                         returnString = globalUnparseToString(globalScope,inputUnparseInfoPointer);
+                         returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
                          break;
                        }
 #endif
@@ -1017,7 +1028,6 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
           if (inputUnparseInfoPointer == NULL)
                delete inheritedAttributeInfoPointer;
         }
-     } // pragma omp critical
      return returnString;
    }
 
