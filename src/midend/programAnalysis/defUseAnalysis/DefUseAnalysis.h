@@ -52,8 +52,8 @@ class DefUseAnalysis : public DFAnalysis, Support {
   void printAnyMap(tabletype* tabl);
 
  public:
-  DefUseAnalysis(SgProject* proj): project(proj), DEBUG_MODE(true), DEBUG_MODE_EXTRA(false){};
-       virtual ~DefUseAnalysis() {}
+  DefUseAnalysis(SgProject* proj): project(proj), DEBUG_MODE(false), DEBUG_MODE_EXTRA(false){};
+  virtual ~DefUseAnalysis() {}
 
   std::map< SgNode* , std::multimap <SgInitializedName* , SgNode* >  > getDefMap() { return table;}
   std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* >  > getUseMap() { return usetable;}
