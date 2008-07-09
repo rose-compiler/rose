@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash  
 #####  !/bin/bash -x
 #
 # This script does a fresh checkout of ROSE and conducts a series tests.
@@ -143,12 +143,16 @@ buildstatus=0
 #------------------------------------------------------
 if [ $buildstatus == 0 ]; then
 # update rosecompiler.org
-  make -C docs/Rose copyWebPages
   echo "Subject: ROSE test ${TIMESTAMP} results (pass)" > mailtext
   echo "SVN repository version no is ${svnversion}" >> mailtext
   echo "" >> mailtext
   echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
   echo "Make flags = ${MAKEFLAGS}" >> mailtext
+
+  /usr/sbin/sendmail -i $MAILADDRS < mailtext
+# SSH now have restrictions, tolerate the failure here
+  cd ${ROSE_BUILD}/docs/Rose
+  make copyWebPages
 else
   echo "Subject: ROSE test ${TIMESTAMP} results (fail)" > mailtext
   echo "SVN repository version no is ${svnversion}" >> mailtext
@@ -159,8 +163,8 @@ else
   echo "" >> mailtext
   tail -100 ${ROSE_LOG} >> mailtext
   echo "" >> mailtext
+  /usr/sbin/sendmail -i $MAILADDRS < mailtext
 fi
-/usr/sbin/sendmail -i $MAILADDRS < mailtext
 # Delete test directories if the test passed
 #if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}" ; fi 
 
