@@ -6,10 +6,9 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
+#include "string_support.h"
 
 namespace PrologAst {
-
-  std::string escapeString(const std::string& str);
 
   class Node {
     public:
@@ -98,23 +97,6 @@ namespace PrologAst {
   inline std::ostream& operator<<(std::ostream& os, Node* n) {
     n->unparse(os);
     return os;
-  }
-
-  inline std::string escapeString(const std::string& str) {
-    std::string result;
-    for (unsigned int i = 0; i < str.size(); ++i) {
-      char c = str[i];
-      if (c == '"' || c == '\\') {
-	result += '\\'; result += c;
-      } else if (c >= 32 && c <= 126) {
-	result += c;
-      } else {
-	std::ostringstream os;
-	os << "\\0" << std::oct << c;
-	result += os.str();
-      }
-    }
-    return result;
   }
 
 }

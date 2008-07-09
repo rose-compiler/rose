@@ -6,7 +6,7 @@ INCLUDES = $(ROSE_INCLUDES)
 ## Don't use the repository in ../src
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-libRoseStringSupportSources = string_functions.C FileNameClassifier.C
+libRoseStringSupportSources = string_functions.C FileNameClassifier.C escape.C
 
 # lib_LIBRARIES = libRoseStringSupport.a
 # libRoseStringSupport_a_SOURCES  = $(libRoseStringSupportSources)
@@ -36,7 +36,7 @@ libRoseStringSupport_la_SOURCES = $(libRoseStringSupportSources)
 #	$(CXX_SHARED_LIB_UPDATE) $@ $(libRoseStringSupport_so_OBJECTS)
 #	test -f $@ || exit 1
 
-include_HEADERS = string_functions.h
+include_HEADERS = string_functions.h escape.h
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files

@@ -157,7 +157,8 @@ using namespace __gnu_cxx;
 #include <string>
 
 // Include ROSE common utility function library
-#include <string_functions.h>
+#include "string_functions.h"
+#include "escape.h"
 #include "processSupport.h"
 
 // Include support for Brian Gunney's command line parser tool (nice work)
