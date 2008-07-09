@@ -84,7 +84,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
   void printDefMap();  
   void printUseMap();
 
-  void addID(SgNode* sgNode);
+  bool addID(SgNode* sgNode);
   void addDefElement(SgNode* sgNode, SgInitializedName* initName, SgNode* defNode);
   void addUseElement(SgNode* sgNode, SgInitializedName* initName, SgNode* defNode);
   void replaceElement(SgNode* sgNode, SgInitializedName* initName);

@@ -430,6 +430,13 @@ int main( int argc, char * argv[] )
       testOneFunction("::setMe", argvList, debug, 30, results,useresults);
     }
 
+    if (startNrInt<=20 || testAll) {
+      // ------------------------------ TESTCASE 1 -----------------------------------------
+      argvList[1]=srcdir+"tests/test20.C";
+      results.clear();      useresults.clear();
+      testOneFunction("::bar",argvList, debug, 5, results,useresults);
+    }
+
   }
 
   return 0;

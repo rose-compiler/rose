@@ -31,15 +31,18 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
 /**********************************************************
  *  Add helping ID to each node for vizz purpose
  *********************************************************/
-void DefUseAnalysis::addID(SgNode* sgNode) { 
+bool DefUseAnalysis::addID(SgNode* sgNode) { 
   if (searchVizzMap(sgNode)==false) {
 #pragma omp critical (DefUseAnalysisaddID) 
       {
       sgNodeCounter++;
       vizzhelp[sgNode] = sgNodeCounter;
       }
+      return true;
   }
+  return false;
 }
+
 
 /**********************************************************
  *  Add an element to the indirect definition table
