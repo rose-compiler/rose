@@ -160,10 +160,11 @@ checkNewDelForFunction(SgDeleteExp* expr, string name) {
   cout << "Expression " << expr->unparseToString() << " at line " << 
     expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;
 
+  ROSE_ASSERT(isSgDeleteExp(expr));
   isCFGArrayDelete = expr->get_is_array();
-  SgExpression* expr = ((SgDeleteExp*)expr)->get_variable();
-  if (isSgVarRefExp(expr)) 
-    tr = expressionIsNewExpr(expr);
+  SgExpression* exprV = expr->get_variable();
+  if (isSgVarRefExp(exprV)) 
+    tr = expressionIsNewExpr(exprV);
 
   if (tr.first) {
     string trace = "delete is dangerous: stack is:\n";
@@ -177,7 +178,7 @@ checkNewDelForFunction(SgDeleteExp* expr, string name) {
     }
     trace += "End of stack\n";
     cout << trace ;
-    output->addOutput(new CheckerOutput(trace ,expr));
+    output->addOutput(new CheckerOutput(trace ,exprV));
   } else {
     //cout << "can not be NULL *************************************************************\n";
   }
