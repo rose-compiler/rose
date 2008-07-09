@@ -254,6 +254,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
   SgInitializedName* initName =NULL;
 
   if (isSgUnaryOp(sgNode)) {
+    breakPoint=0;
     SgUnaryOp* unary = isSgUnaryOp(sgNode);
     SgExpression* l_expr = unary->get_operand();
     SgVarRefExp* varRefExp = NULL;
@@ -292,6 +293,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
   }
 
   else if (isSgBinaryOp(sgNode)) {
+    breakPoint=0;
     SgBinaryOp* binary = isSgBinaryOp(sgNode);
     SgExpression* l_expr = binary->get_lhs_operand();
     SgVarRefExp* varRefExp = NULL;
@@ -345,6 +347,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
   }  
   
   else if (isSgAssignInitializer(sgNode)) {
+    breakPoint=0;
     if (DEBUG_MODE)
       cout << " **********  ASSIGNINITIALIZER " << endl;
     SgNode* l_expr = isSgAssignInitializer(sgNode)->get_parent();
@@ -375,6 +378,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
   }  
   
   else if (isSgInitializedName(sgNode)) {
+    breakPoint=0;
     initName =isSgInitializedName(sgNode);
     if (DEBUG_MODE)
       cout << " **********  INITNAME. " << initName << endl;    
@@ -387,6 +391,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 
 
   else if (isSgVarRefExp(sgNode)) {
+    breakPoint=0;
     SgVarRefExp* varRefExp = isSgVarRefExp(sgNode);
     initName = varRefExp->get_symbol()->get_declaration();
     string name = initName->get_qualified_name().str();
@@ -407,6 +412,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
   } // else if 
 
   else if (isSgFunctionCallExp(sgNode)) {
+    breakPoint=0;
     SgFunctionCallExp* fcallExp = isSgFunctionCallExp(sgNode);
     isDefinition=false;
     //isUse=false;
@@ -464,7 +470,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 						     tmpBefore, dont_replace, cfgNode);
 	  if (changedTable) {
 	    if (DEBUG_MODE)
-	    cerr << "TableChanged" << endl;
+	    cout << "TableChanged" << endl;
 	  }
 	  tmpBefore=sgNode;
 	  hit=false;
@@ -485,7 +491,7 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
       if (DEBUG_MODE)
 	cout << " Checking of Paramters done: done_handle: " << resBool(dont_handle) <<endl;
     } // function call exp
-  } 
+  } //else if 
 
   else if (isSgFunctionDefinition(sgNode)) {
     // make sure global variables are added to the node
@@ -520,20 +526,45 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 	  cout << "\n >> %%%%% handling globalvar: " << initNameTmp->get_qualified_name().str() << endl;
       }
       return true;
-    } else
+    } else {
       dont_handle=true;
-    
-  }
+    }    
+  } // else if
   
-  else dont_handle=true;
+  else {
+    // none of the above breakPoints is hit 
+    dont_handle=true;
+      if (isSgWhileStmt(sgNode) || isSgForStatement(sgNode)) {
+	if (breakPointNode==NULL) {
+	  breakPointNode=sgNode;
+	  breakPoint++;
+	  cout << ">>>Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
+	} else if (sgNode==breakPointNode) {
+	  breakPoint++;
+	  cout << ">>> Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
+	} else {
+	  cout << ">>> Skipping unhandled node ... " << endl;
+	}
+      }
+  }
 
   // nodes that are not of interest are handled here
   // i.e they are just copied
   if (dont_handle) {
     if (DEBUG_MODE)
       cout << " ********** UNHANDLED.  This is an unhandled node " << sgNode->class_name() << endl;
+    bool success = dfa->addID(sgNode);
     *unhandled = true;
-    dfa->addID(sgNode);
+    // take care of the case where we have none of the above within a loop (breakPoint)
+    // i.e. no : VarRefExp, InitializedName, FunctionDefinition ...
+    // If this unhandled node has been added to the map before (visited)
+    // then we do want to mark it as handled.
+    if (!success && breakPoint>2) {
+      *unhandled = false;
+      breakPointNode=NULL;
+      breakPoint=0;
+      cout << ">>> Resetting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
+    }
     handleDefCopy(sgNode, cfgNode.inEdges().size(), sgNodeBefore, cfgNode);
     handleUseCopy(sgNode, cfgNode.inEdges().size(), sgNodeBefore, cfgNode);
     return false;
@@ -838,6 +869,8 @@ int DefUseAnalysisPF::getNumberOfNodesVisited() {
 FilteredCFGNode < IsDFAFilter > DefUseAnalysisPF::run(SgFunctionDefinition* funcDecl) {
   // filter functions -- to only functions in analyzed file  
   nrOfNodesVisitedPF= 0;
+  breakPointNode=NULL;
+  breakPoint=0;
   string funcName = getFullName(funcDecl);
   //  DEBUG_MODE = false;
   DEBUG_MODE_EXTRA=false;

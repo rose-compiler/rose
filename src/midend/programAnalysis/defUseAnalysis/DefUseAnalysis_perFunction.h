@@ -65,10 +65,12 @@ class DefUseAnalysisPF : public Support {
   template <typename T> SgNode* getOtherInNode(T source, SgNode* oneNode);
 
   int nrOfNodesVisitedPF;
-
+  int breakPoint;
+  SgNode* breakPointNode;
+  
  public:
   DefUseAnalysisPF(bool debug, DefUseAnalysis* dfa_p):DEBUG_MODE(debug),
-    DEBUG_MODE_EXTRA(false),dfa(dfa_p){};
+    DEBUG_MODE_EXTRA(false),dfa(dfa_p){breakPoint=0; breakPointNode=NULL;};
   FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function);
   int getNumberOfNodesVisited();
 };
