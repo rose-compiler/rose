@@ -43,7 +43,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     int start = funcs.size()/processes*p;
     int end = funcs.size()/processes*(p+1);
     if (my_rank==p) {
-      //    cerr << my_rank <<": start: "<<start<<"  end: " << end<<endl;
+      //    std::cerr << my_rank <<": start: "<<start<<"  end: " << end<<std::endl;
       for (int i=start; i< end; ++i) {
 	//      for (Rose_STL_Container<SgNode *>::iterator i = 
 	//     funcs.begin(); i != funcs.end(); i++) {
@@ -56,7 +56,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   std::cerr << my_rank << ": DefUse Analysis complete. Nr of Nodes: " << resultDefUseNodes << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
-    std::cerr << "\n>> Collecting defuse results ... " << endl;
+    std::cerr << "\n>> Collecting defuse results ... " << std::endl;
 
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
@@ -78,7 +78,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       totaltime=times_defuse[i];
 
   if (my_rank==0) {
-    cerr << "Time (max) needed for DefUse : " << totaltime << endl;
+    std::cerr << "Time (max) needed for DefUse : " << totaltime << std::endl;
   }
   //((DefUseAnalysis*)defuse)->printDefMap();
   /* communicate times */
@@ -95,8 +95,8 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   for (;dit2!=usemap.end();++dit2) {
     arrsizeUse +=(dit2->second).size()*3;
   }
-  cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
-       << ": defs : " << arrsize << "  uses: " << arrsizeUse << endl;
+  std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
+       << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
   // communicate total size to allocate global arrsize
   unsigned int global_arrsize = -1;
   unsigned int global_arrsizeUse = -1;
@@ -145,8 +145,8 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     length[j]=global_length[j]; 
     lengthUse[j]=global_lengthUse[j]; 
   }
-  cerr << my_rank << " : serialization done."  
-       <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< endl;
+  std::cerr << my_rank << " : serialization done."  
+       <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
 
   MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
 		 offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
@@ -160,7 +160,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   ((DefUseAnalysis*)defuse)->flushDefuse();
   deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
   deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
-  cerr << my_rank << " : deserialization done." << endl;
+  std::cerr << my_rank << " : deserialization done." << std::endl;
   /* deserialize all results */
 
 
@@ -170,8 +170,8 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   usemap = defuse->getUseMap();
 
   if (my_rank==0) {
-    cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << endl;
-    cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << endl << endl;
+    std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
+    std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
     //((DefUseAnalysis*)defuse)->printDefMap();
   }
   //#endif
@@ -179,10 +179,14 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   std::cerr << ">>>>>> running defuse analysis in sequence. "  << std::endl;
         defuse = new DefUseAnalysis(root);
     ((DefUseAnalysis*)defuse)->run(false);
+    std::cerr <<  "Total number of def nodes: " << defuse->getDefMap().size() << std::endl;
+    std::cerr <<  "Total number of use nodes: " << defuse->getUseMap().size() << std::endl << std::endl;
   
 #endif
 
   }
+
+  ROSE_ASSERT(defuse->getDefMap().size()!=0);
 }
 
 
