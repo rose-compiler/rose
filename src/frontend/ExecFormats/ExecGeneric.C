@@ -239,21 +239,35 @@ ExecFile::get_next_section_offset(addr_t offset)
 void
 ExecFile::fill_holes()
 {
-    std::vector<std::pair<addr_t,addr_t> > extents;
 
+    /* Find the holes and store their extent info */
+    ExecSection::ExtentVector extents;
     addr_t offset = 0;
     while (offset < (uint64_t)sb.st_size) {
-        std::vector<ExecSection*> sections = get_sections_by_offset(offset, 1);
-        if (0==sections.size()) {
-            addr_t next_offset = get_next_section_offset(offset);
-            if (next_offset==(addr_t)-1) next_offset = sb.st_size;
-            extents.push_back(std::pair<addr_t,addr_t>(offset, next_offset-offset));
-            offset = next_offset;
-        } else {
-            offset += sections[0]->get_size();
+        std::vector<ExecSection*> sections = get_sections_by_offset(offset, 0); /*all sections at this file offset*/
+        
+        /* Find the maximum ending offset */
+        addr_t end_offset = 0;
+        for (size_t i=0; i<sections.size(); i++) {
+            addr_t tmp = sections[i]->get_offset() + sections[i]->get_size();
+            if (tmp>end_offset)
+                end_offset = tmp;
         }
+        ROSE_ASSERT(end_offset <= (addr_t)sb.st_size);
+        
+        /* Is there a hole here? */
+        if (end_offset<=offset) {
+            end_offset = get_next_section_offset(offset+1);
+            if (end_offset==(addr_t)-1)
+                end_offset = sb.st_size;
+            extents.push_back(ExecSection::ExtentPair(offset, end_offset-offset));
+        }
+        
+        /* Advance */
+        offset = end_offset;
     }
 
+    /* Create the sections representing the holes */
     for (size_t i=0; i<extents.size(); i++) {
         ExecSection *section = new ExecSection(this, extents[i].first, extents[i].second);
         section->set_synthesized(true);
