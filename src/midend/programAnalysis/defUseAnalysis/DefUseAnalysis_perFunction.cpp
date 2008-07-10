@@ -538,12 +538,15 @@ bool DefUseAnalysisPF::defuse(T cfgNode, bool *unhandled) {
 	if (breakPointNode==NULL) {
 	  breakPointNode=sgNode;
 	  breakPoint++;
-	  cout << ">>>Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
+	  if (DEBUG_MODE)
+	    cout << ">>>Setting Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
 	} else if (sgNode==breakPointNode) {
 	  breakPoint++;
-	  cout << ">>> Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
+	  if (DEBUG_MODE)
+	    cout << ">>> Breakpoint : " << sgNode->class_name() << " " <<sgNode << " " << breakPoint <<endl;
 	} else {
-	  cout << ">>> Skipping unhandled node ... " << endl;
+	  if (DEBUG_MODE)
+	    cout << ">>> Skipping unhandled node ... " << endl;
 	}
       }
   }
