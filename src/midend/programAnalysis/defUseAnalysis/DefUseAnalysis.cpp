@@ -477,7 +477,7 @@ int DefUseAnalysis::run() {
   cout <<     ">>>>> Total CFG nodes: " << getDefSize() << 
     "  --  #CFG nodes visited: "<< nrOfNodesVisited << endl;
 
-  if (DEBUG_MODE) 
-    cout << "FINISH: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
-  return 1;
+  //if (DEBUG_MODE) 
+  //cout << "FINISH: DefUse Analysis " <<  (DEBUG_MODE ? "True" : "False") << endl;
+  return 0;
 }
