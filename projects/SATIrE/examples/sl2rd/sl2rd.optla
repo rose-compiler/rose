@@ -170,7 +170,7 @@ AssignOp(VarRefExp(cvarname) as varRef,rhsexp)
 
        /* we ensure that the rhs expression is an sl1 expression, otherwise an error is reported */
        if is_sl1_expression(rhsexp) then
-	 lift(update_info(x,lab,info))
+	 lift(update_info(x,lab,kill_tmpvars_in_expression(rhsexp,info)))
        else 
          print("Unknown expression on rhs of assignment: Node ") print(lab) print(": ") print(exp)
          error("This is not an SL2 program.")
@@ -226,6 +226,54 @@ case exp of
      CastExp(_, _), PlusAssignOp(_, _), MinusAssignOp(_, _),  MultAssignOp(_, _),
      DivAssignOp(_, _) ,  ModAssignOp(_, _), MinusMinusOp(_), PlusPlusOp(_)
   */
+endcase;
+
+kill_tmpvars_in_expression::Expression,VarLabPairSet -> VarLabPairSet;
+kill_tmpvars_in_expression(exp,info) =
+case exp of
+  /* arithmetic SL1 operators */
+  AddOp(a,b)              => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  MultiplyOp(a,b)         => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  SubtractOp(a,b)         => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  DivideOp(a,b)           => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  ModOp(a,b)              => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  MinusOp(a)              => kill_tmpvars_in_expression(a,info); /* unary minus */
+  UnaryAddOp(a)           => kill_tmpvars_in_expression(a,info); /* unary plus */
+
+  /* relational SL1 operators */
+  EqualityOp(a,b)         => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  LessThanOp(a,b)         => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  GreaterThanOp(a,b)      => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  NotEqualOp(a,b)         => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  LessOrEqualOp(a,b)      => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  GreaterOrEqualOp(a,b)   => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+
+  /* logical operators */
+  AndOp(a,b)              => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  OrOp(a,b)               => kill_tmpvars_in_expression(a,info) glb kill_tmpvars_in_expression(b,info);
+  NotOp(a)                => kill_tmpvars_in_expression(a,info);
+
+  /* int value; use val-int(value) for converting value to snum */
+  IntVal(value)           => info;     
+
+  /* match a variable ref node */
+  VarRefExp(varname) as varRef     =>   
+    let x=varref_varid(varRef); in
+      if is_temp_var(x) then
+         rdkill(x,info)
+      else
+        info
+      endif
+  ;
+
+  /* boolean value */
+  BoolValExp(value)       => info; 
+
+  /* initializer; this is a "wrapper" AST node around the initializer expression */
+  AssignInitializer(e)    => kill_tmpvars_in_expression(e,info);
+
+  /* default case: no expression matches; not an SL1 program */
+  _                       => info;
 endcase;
 
 /* update the analysis information with kill and gen functions */
