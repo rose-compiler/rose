@@ -8,32 +8,18 @@ namespace Exec {
 namespace PE {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MS-DOS Real Mode File Header
+// Extended DOS File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-DOSFileHeader::ctor(ExecFile *f, addr_t offset)
+ExtendedDOSHeader::ctor(ExecFile *f, addr_t offset)
 {
-    const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*)content(0, sizeof(DOSFileHeader_disk));
-
-    set_name("DOS File Header");
+    set_name("Extended DOS Header");
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    /* Decode file format */
-    e_cblp              = le_to_host(disk->e_cblp);
-    e_cp                = le_to_host(disk->e_cp);
-    e_crlc              = le_to_host(disk->e_crlc);
-    e_cparhdr           = le_to_host(disk->e_cparhdr);
-    e_minalloc          = le_to_host(disk->e_minalloc);
-    e_maxalloc          = le_to_host(disk->e_maxalloc);
-    e_ss                = le_to_host(disk->e_ss);
-    e_sp                = le_to_host(disk->e_sp);
-    e_csum              = le_to_host(disk->e_csum);
-    e_ip                = le_to_host(disk->e_ip);
-    e_cs                = le_to_host(disk->e_cs);
-    e_lfarlc            = le_to_host(disk->e_lfarlc);
-    e_ovno              = le_to_host(disk->e_ovno);
+    /* Decode */
+    const ExtendedDOSHeader_disk *disk = (const ExtendedDOSHeader_disk*)content(0, sizeof(ExtendedDOSHeader_disk));
     for (size_t i=0; i<NELMTS(e_res1); i++)
         e_res1[i]       = le_to_host(disk->e_res1[i]);
     e_oemid             = le_to_host(disk->e_oemid);
@@ -41,48 +27,12 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     for (size_t i=0; i<NELMTS(e_res2); i++)
         e_res2[i]       = le_to_host(disk->e_res2[i]);
     e_lfanew            = le_to_host(disk->e_lfanew);
-
-    /* Magic number */
-    magic.push_back(disk->e_magic[0]);
-    magic.push_back(disk->e_magic[1]);
-
-    /* File format */
-    exec_format.family      = FAMILY_DOS;
-    exec_format.purpose     = PURPOSE_EXECUTABLE;
-    exec_format.sex         = ORDER_LSB;
-    exec_format.abi         = ABI_MSDOS;
-    exec_format.abi_version = 0;
-    exec_format.word_size   = 2;
-    exec_format.version     = 0;
-    exec_format.is_current_version = true;
-
-    /* Target architecture */
-    target.set_isa(ISA_IA32_386);
-
-    /* Entry point */
-    base_va = 0;
-    entry_rva = le_to_host(disk->e_ip);
 }
 
-/* Encode the DOS file header into disk format */
+/* Encode the extended header back into disk format */
 void *
-DOSFileHeader::encode(DOSFileHeader_disk *disk)
+ExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk)
 {
-    for (size_t i=0; i<NELMTS(disk->e_magic); i++)
-        disk->e_magic[i] = get_magic()[i];
-    host_to_le(e_cblp,     &(disk->e_cblp));
-    host_to_le(e_cp,       &(disk->e_cp));
-    host_to_le(e_crlc,     &(disk->e_crlc));
-    host_to_le(e_cparhdr,  &(disk->e_cparhdr));
-    host_to_le(e_minalloc, &(disk->e_minalloc));
-    host_to_le(e_maxalloc, &(disk->e_maxalloc));
-    host_to_le(e_ss,       &(disk->e_ss));
-    host_to_le(e_sp,       &(disk->e_sp));
-    host_to_le(e_csum,     &(disk->e_csum));
-    host_to_le(e_ip,       &(disk->e_ip));
-    host_to_le(e_cs,       &(disk->e_cs));
-    host_to_le(e_lfarlc,   &(disk->e_lfarlc));
-    host_to_le(e_ovno,     &(disk->e_ovno));
     for (size_t i=0; i<NELMTS(disk->e_res1); i++)
         host_to_le(e_res1[i], &(disk->e_res1[i]));
     host_to_le(e_oemid,    &(disk->e_oemid));
@@ -92,73 +42,49 @@ DOSFileHeader::encode(DOSFileHeader_disk *disk)
     host_to_le(e_lfanew,   &(disk->e_lfanew));
     return disk;
 }
-    
-/* Write the DOS file header back to disk */
-void
-DOSFileHeader::unparse(FILE *f)
-{
-    DOSFileHeader_disk disk;
-    encode(&disk);
 
+/* Write an extended header back to disk */
+void
+ExtendedDOSHeader::unparse(FILE *f)
+{
+    ExtendedDOSHeader_disk disk;
+    encode(&disk);
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
     ROSE_ASSERT(1==nwrite);
-
-    if (rm_section)
-        rm_section->unparse(f);
 }
     
-/* Print some debugging info */
 void
-DOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
+ExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sDOSFileHeader[%zd].", prefix, idx);
+        sprintf(p, "%sExtendedDOSHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sDOSFileHeader.", prefix);
+        sprintf(p, "%sExtendedDOSHeader.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    ExecHeader::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "e_cblp",     e_cblp);
-    fprintf(f, "%s%-*s = %u pages\n",        p, w, "e_cp",       e_cp);
-    fprintf(f, "%s%-*s = %u relocations\n",  p, w, "e_crlc",     e_crlc);
-    fprintf(f, "%s%-*s = %u paragraphs\n",   p, w, "e_cparhdr",  e_cparhdr);
-    fprintf(f, "%s%-*s = %u paragraphs\n",   p, w, "e_minalloc", e_minalloc);
-    fprintf(f, "%s%-*s = %u paragraphs\n",   p, w, "e_maxalloc", e_maxalloc);
-    fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "e_ss",       e_ss);
-    fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "e_sp",       e_sp);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_csum",     e_csum);
-    fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "e_ip",       e_ip);
-    fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "e_cs",       e_cs);
-    fprintf(f, "%s%-*s = %u byte offset\n",  p, w, "e_lfarlc",   e_lfarlc);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_ovno",     e_ovno);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res[0]",   e_res1[0]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res[1]",   e_res1[1]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res[2]",   e_res1[2]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res[3]",   e_res1[3]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_oemid",    e_oemid);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_oeminfo",  e_oeminfo);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[0]",  e_res2[0]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[1]",  e_res2[1]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[2]",  e_res2[2]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[3]",  e_res2[3]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[4]",  e_res2[4]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[5]",  e_res2[5]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[6]",  e_res2[6]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[7]",  e_res2[7]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[8]",  e_res2[8]);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "e_res2[9]",  e_res2[9]);
-    fprintf(f, "%s%-*s = %u byte offset\n",  p, w, "e_lfanew",   e_lfanew);
-    if (rm_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section", rm_section->get_id(), rm_section->get_name().c_str());
-    } else {
-        fprintf(f, "%s%-*s = none\n", p, w, "rm_section");
-    }
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[0]",   e_res1[0]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[1]",   e_res1[1]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[2]",   e_res1[2]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[3]",   e_res1[3]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oemid",    e_oemid);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oeminfo",  e_oeminfo);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[0]",  e_res2[0]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[1]",  e_res2[1]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[2]",  e_res2[2]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[3]",  e_res2[3]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[4]",  e_res2[4]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[5]",  e_res2[5]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[6]",  e_res2[6]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[7]",  e_res2[7]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[8]",  e_res2[8]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  e_res2[9]);
+    fprintf(f, "%s%-*s = %"PRIu64" byte offset\n",  p, w, "e_lfanew",   e_lfanew);
 }
-    
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PE File Header
@@ -483,6 +409,10 @@ PEFileHeader::unparse(FILE *f)
         ROSE_ASSERT(1==nwrite);
     }
 
+    /* The extended DOS header */
+    if (dos2_header)
+        dos2_header->unparse(f);
+
     /* The section table and all the non-synthesized sections */
     if (section_table)
         section_table->unparse(f);
@@ -557,6 +487,11 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));        
         fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",  p, w, "e_rva",  rvasize_pairs[i].e_rva);
         fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "e_size", rvasize_pairs[i].e_size);
+    }
+    if (dos2_header) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", dos2_header->get_id(), dos2_header->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", section_table->get_id(), section_table->get_name().c_str());
@@ -1408,14 +1343,18 @@ COFFSymtab::dump(FILE *f, const char *prefix, ssize_t idx)
 bool
 is_PE(ExecFile *f)
 {
-    DOSFileHeader *dos_hdr = NULL;
-    PEFileHeader  *pe_hdr  = NULL;
-    bool           retval  = false;
+    DOS::DOSFileHeader  *dos_hdr = NULL;
+    ExtendedDOSHeader   *dos2_hdr = NULL;
+    PEFileHeader        *pe_hdr  = NULL;
+    bool                retval  = false;
 
     try {
-        dos_hdr = new DOSFileHeader(f, 0);
+        dos_hdr = new DOS::DOSFileHeader(f, 0);
         if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-        pe_hdr = new PEFileHeader(f, dos_hdr->e_lfanew);
+        if (dos_hdr->e_relocs_offset!=0x40) goto done;
+
+        dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
+        pe_hdr = new PEFileHeader(f, dos2_hdr->e_lfanew);
         if (pe_hdr->get_magic().size()<4 ||
             pe_hdr->get_magic()[0]!=0x50 || pe_hdr->get_magic()[1]!=0x45 ||
             pe_hdr->get_magic()[2]!=0x00 || pe_hdr->get_magic()[3]!=0x00) goto done;
@@ -1425,11 +1364,12 @@ is_PE(ExecFile *f)
     }
 done:
     delete dos_hdr;
+    delete dos2_hdr;
     delete pe_hdr;
     return retval;
 }
 
-#if 0
+#if 1
 // DQ (6/16/2008): This is an alternative form of the parseBinaryFormat suggested by Robb.
 // It is equivalent, but does not reflect that I expect future changes later (once I am done
 // with getting the ELF work into use in ROSE).
@@ -1441,8 +1381,8 @@ parseBinaryFormat(ExecFile *ef, SgAsmFile* asmFile)
      ROSE_ASSERT(asmFile != NULL);
      parse(ef);
    }
-#endif
-
+#else
+// RPM (2008-06-09) This cut-n-pasted version of Exec::PE::parse() is now out-of-date.
 /* Parses the structure of a PE file and adds the information to the ExecFile. */
 void
 parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
@@ -1451,8 +1391,8 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
      ROSE_ASSERT(asmFile != NULL);
 
   /* The MS-DOS real-mode "MZ" file header, which is always the first 64 bytes of the file */
-     ROSE_ASSERT(sizeof(DOSFileHeader_disk)==64);
-     DOSFileHeader *dos_header = new DOSFileHeader(f, 0);
+     ROSE_ASSERT(sizeof(DOS::DOSFileHeader_disk)==64);
+     DOS::DOSFileHeader *dos_header = new DOS::DOSFileHeader(f, 0);
 
   /* The MS-DOS real-mode stub program sits between the DOS file header and the PE file header */
   /* FIXME: this should be an executable segment. What is the entry address? */
@@ -1482,36 +1422,30 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
   /* Identify parts of the file that we haven't encountered during parsing */
      f->fill_holes();
    }
+#endif
 
 /* Parses the structure of a PE file and adds the information to the ExecFile. */
 PEFileHeader *
 parse(ExecFile *ef)
 {
     ROSE_ASSERT(ef);
-    
-    /* The MS-DOS real-mode "MZ" file header, which is always the first 64 bytes of the file */
-    ROSE_ASSERT(sizeof(DOSFileHeader_disk)==64);
-    DOSFileHeader *dos_header = new DOSFileHeader(ef, 0);
 
-    /* The MS-DOS real-mode stub program sits between the DOS file header and the PE file header */
-    /* FIXME: this should be an executable section. What is the entry address? */
-    size_t dos_stub_offset = dos_header->end_offset();
-    ROSE_ASSERT(dos_header->e_lfanew > dos_stub_offset);
-    size_t dos_stub_size = dos_header->e_lfanew - dos_stub_offset;
-    if (dos_stub_size>0) {
-        ExecSection *dos_stub = new ExecSection(ef, dos_stub_offset, dos_stub_size);
-        dos_stub->set_name("DOS real-mode stub");
-        dos_stub->set_synthesized(true);
-        dos_stub->set_purpose(SP_PROGRAM);
-        dos_stub->set_header(dos_header);
-        dos_stub->set_executable(true);
-        dos_header->set_rm_section(dos_stub);
-    }
+    /* All PE files are also DOS files, so parse the DOS part first */
+    DOS::DOSFileHeader *dos_header = DOS::parse(ef);
+    ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
+    ef->unfill_holes(); /*they probably contain PE information*/
+
+    /* PE files extend the DOS header with some additional info */
+    ExtendedDOSHeader *dos2_header = new ExtendedDOSHeader(ef, dos_header->get_size());
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
-    PEFileHeader *pe_header = new PEFileHeader(ef, dos_header->e_lfanew);
+    PEFileHeader *pe_header = new PEFileHeader(ef, dos2_header->e_lfanew);
     ROSE_ASSERT(pe_header->e_num_rvasize_pairs < 1000); /* just a sanity check before we allocate memory */
     pe_header->add_rvasize_pairs();
+
+    /* The extended part of the DOS header is owned by the PE header */
+    dos2_header->set_header(pe_header);
+    pe_header->set_dos2_header(dos2_header);
 
     /* Construct the section table and its sections (non-synthesized sections) */
     pe_header->set_section_table(new PESectionTable(pe_header));

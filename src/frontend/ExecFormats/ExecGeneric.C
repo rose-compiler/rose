@@ -277,6 +277,22 @@ ExecFile::fill_holes()
     }
 }
 
+/* Deletes "hole" sections */
+void
+ExecFile::unfill_holes()
+{
+    /* Get a list of holes */
+    std::vector<ExecSection*> holes;
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id()<0 && sections[i]->get_name().compare("hole")==0)
+            holes.push_back(sections[i]);
+    }
+
+    /* Destroy the holes, removing them from the "sections" vector */
+    for (std::vector<ExecSection*>::iterator it=holes.begin(); it!=holes.end(); it++)
+        delete *it;
+}
+
 /* Mirror image of parsing an executable file. The result should be identical to the original file. */
 void
 ExecFile::unparse(const char *filename)
@@ -288,6 +304,13 @@ ExecFile::unparse(const char *filename)
     fwrite(data, 1, sb.st_size, f);
 #endif
 
+    /* Write unreferenced sections (i.e., "holes") back to disk */
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id()<0 && sections[i]->get_name().compare("hole")==0)
+            sections[i]->unparse(f);
+    }
+    
+    /* Write file headers (and indirectly, all that they reference) */
     for (size_t i=0; i<headers.size(); i++) {
         headers[i]->unparse(f);
     }
@@ -437,7 +460,7 @@ ExecSection::is_file_header()
 void
 ExecSection::unparse(FILE *f)
 {
-#if 1
+#if 0
     /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
      *        have subclasses that override this method. */
     fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
@@ -793,6 +816,9 @@ parse(const char *name)
         ELF::parse(ef);
     } else if (PE::is_PE(ef)) {
         PE::parse(ef);
+    } else if (DOS::is_DOS(ef)) {
+        /* Must be after PE::is_PE since all PE files are also DOS files */
+        DOS::parse(ef);
     } else {
         delete ef;
         throw FormatError("unrecognized file format");

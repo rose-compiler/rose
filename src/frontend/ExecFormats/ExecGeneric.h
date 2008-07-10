@@ -324,6 +324,7 @@ class ExecFile {
     std::vector<ExecSection*> get_sections_by_rva(addr_t rva);
     addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
     void fill_holes();                                  /* Find holes in file and create sections to fill them */
+    void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
 
     /* Functions for file headers (a kind of section) */
     void add_header(ExecHeader*);                       /* Add a new file header to the list of headers for this file */

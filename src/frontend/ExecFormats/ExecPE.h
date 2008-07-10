@@ -2,7 +2,7 @@
 #ifndef Exec_ExecPE_h
 #define Exec_ExecPE_h
 
-#include "ExecGeneric.h"
+#include "ExecDOS.h"
 
 namespace Exec {
 namespace PE {
@@ -13,25 +13,10 @@ class PESectionTable;
 class PEImportHintName;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MS-DOS Real Mode File Header
+// ExtendedDOSHeader -- extra components of the DOS header when used in a PE file
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* File format of an MS-DOS Real Mode File Header. All fields are little endian. */
-struct DOSFileHeader_disk {
-    unsigned char e_magic[2];           /* 0x54, 0xAD */
-    uint16_t    e_cblp;                 /* bytes on last page of file */
-    uint16_t    e_cp;                   /* number of pages in file */
-    uint16_t    e_crlc;                 /* relocations */
-    uint16_t    e_cparhdr;              /* header size in paragraphs */
-    uint16_t    e_minalloc;             /* number of extra paragraphs needed */
-    uint16_t    e_maxalloc;
-    uint16_t    e_ss;                   /* initial relative SS value */
-    uint16_t    e_sp;                   /* initial relative SP value */
-    uint16_t    e_csum;                 /* checksum */
-    uint16_t    e_ip;                   /* initial IP value */
-    uint16_t    e_cs;                   /* initial relative CS value */
-    uint16_t    e_lfarlc;               /* file address of relocation table */
-    uint16_t    e_ovno;                 /* overlay number */
+struct ExtendedDOSHeader_disk {
     uint16_t    e_res1[4];              /* reserved */
     uint16_t    e_oemid;                /* OEM Identifier */
     uint16_t    e_oeminfo;              /* other OEM information; oemid specific */
@@ -39,31 +24,28 @@ struct DOSFileHeader_disk {
     uint32_t    e_lfanew;               /* file offset of new exe (PE) header */
 } __attribute__((packed));
 
-class DOSFileHeader : public ExecHeader {
+class ExtendedDOSHeader : public ExecSection {
   public:
-    DOSFileHeader(ExecFile *f, addr_t offset)
-        : ExecHeader(f, offset, sizeof(DOSFileHeader_disk)) {ctor(f, offset);}
-    virtual ~DOSFileHeader() {}
+    ExtendedDOSHeader(ExecFile *f, addr_t offset)
+        : ExecSection(f, offset, sizeof(ExtendedDOSHeader_disk))
+        {ctor(f, offset);}
+    virtual ~ExtendedDOSHeader() {};
+    void *encode(ExtendedDOSHeader_disk*);
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
-    /* Accessors for protected/private data members */
-    ExecSection *get_rm_section() {return rm_section;}
-    void set_rm_section(ExecSection *s) {rm_section=s;}
+    /* These are the native-format versions of the same members described in the ExtendedDOSHeader_disk struct. */
+    unsigned e_res1[4], e_oemid, e_oeminfo, e_res2[10];
+    addr_t e_lfanew;
 
-    /* These are the native-format versions of the same members described in the DOSFileHeader_disk format struct */
-    unsigned            e_cblp, e_cp, e_crlc, e_cparhdr, e_minalloc, e_maxalloc, e_ss, e_sp, e_csum, e_ip, e_cs, e_lfarlc, e_ovno;
-    unsigned            e_res1[4], e_oemid, e_oeminfo, e_res2[10], e_lfanew;
-    
   private:
     void ctor(ExecFile *f, addr_t offset);
-    void *encode(DOSFileHeader_disk*);
-    ExecSection         *rm_section;    /* Real mode code segment */
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // PE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 /* File format for an RVA/Size pair. Such pairs are considered to be part of the PE file header. All fields are little endian. */
 struct RVASizePair_disk {
@@ -200,6 +182,8 @@ class PEFileHeader : public ExecHeader {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */
+    ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
+    void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
     PESectionTable *get_section_table() {return section_table;}
     void set_section_table(PESectionTable *ot) {section_table=ot;}
     COFFSymtab *get_coff_symtab() {return coff_symtab;}
@@ -222,6 +206,7 @@ class PEFileHeader : public ExecHeader {
     void *encode(PEFileHeader_disk*);
     void *encode(PE32OptHeader_disk*);
     void *encode(PE64OptHeader_disk*);
+    ExtendedDOSHeader *dos2_header;
     PESectionTable *section_table;
     COFFSymtab *coff_symtab;
 };
