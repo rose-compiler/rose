@@ -162,8 +162,14 @@ class ElfSectionTableEntry {
 /* An ELF (non-synthesized) section */
 class ElfSection : public ExecSection {
   public:
+    /* Constructor for size based on section table entry (normal sections) */
     ElfSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
         : ExecSection(fhdr->get_file(), shdr->sh_offset, shdr->sh_size),
+        linked_section(NULL), st_entry(NULL)
+        {ctor(fhdr, shdr);}
+    /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
+    ElfSection(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr, addr_t file_size)
+        : ExecSection(fhdr->get_file(), shdr->sh_offset, file_size),
         linked_section(NULL), st_entry(NULL)
         {ctor(fhdr, shdr);}
     virtual ~ElfSection() {}

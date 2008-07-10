@@ -8,8 +8,10 @@
 #include <inttypes.h>
 
 #include <algorithm>
+#include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/wait.h>
 
 namespace Exec {
 
@@ -107,10 +109,12 @@ void
 ExecFile::ctor(std::string fileName)
 {
     if ((fd=open(fileName.c_str(), O_RDONLY))<0 || fstat64(fd, &sb)<0) {
-        throw FormatError("Could not open binary file: " + fileName);
+        std::string mesg = "Could not open binary file";
+        throw FormatError(mesg + ": " + strerror(errno));
     }
     if (NULL==(data=(unsigned char*)mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0))) {
-        throw FormatError("Could not mmap binary file: " + fileName);
+        std::string mesg = "Could not mmap binary file";
+        throw FormatError(mesg + ": " + strerror(errno));
     }
 }
 
@@ -775,11 +779,12 @@ hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data
     }
 }
 
+// FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
 void
 parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
-   {
+{
      ExecFile *ef = new ExecFile(name.c_str());
     
      asmFile->set_name(name);
@@ -802,7 +807,7 @@ parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
         }
 
   // return ef;
-   }
+}
 
 // DQ (6/15/2008): Old function name (confirmed to not be called in ROSE)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
@@ -821,7 +826,30 @@ parse(const char *name)
         DOS::parse(ef);
     } else {
         delete ef;
-        throw FormatError("unrecognized file format");
+        /* Use file(1) to try to figure out the file type to report in the exception */
+        int child_stdout[2];
+        pipe(child_stdout);
+        pid_t pid = fork();
+        if (0==pid) {
+            close(0);
+            dup2(child_stdout[1], 1);
+            close(child_stdout[0]);
+            close(child_stdout[1]);
+            execlp("file", "file", "-b", name, NULL);
+            exit(1);
+        } else if (pid>0) {
+            char buf[4096];
+            memset(buf, 0, sizeof buf);
+            read(child_stdout[0], buf, sizeof buf);
+            buf[sizeof(buf)-1] = '\0';
+            if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
+            waitpid(pid, NULL, 0);
+            char mesg[64+sizeof buf];
+            sprintf(mesg, "unrecognized file format: %s", buf);
+            throw FormatError(mesg);
+        } else {
+            throw FormatError("unrecognized file format");
+        }
     }
     return ef;
 }

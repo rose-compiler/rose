@@ -478,7 +478,8 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
               case SHT_NULL:
                 continue;
               case SHT_NOBITS:
-                section = new ElfSection(fhdr, shdr);
+                /* These types of sections don't occupy any file space (e.g., BSS) */
+                section = new ElfSection(fhdr, shdr, 0);
                 break;
               case SHT_DYNAMIC:
                 section = new ElfDynamicSection(fhdr, shdr);
