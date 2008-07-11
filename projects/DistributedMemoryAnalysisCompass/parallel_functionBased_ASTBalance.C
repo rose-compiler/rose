@@ -117,7 +117,7 @@ int main(int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD);
 
   /* traverse the files */
-  gettime(begin_time);
+  Compass::gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
 
@@ -170,10 +170,10 @@ int main(int argc, char **argv)
     }
   }
 
-  gettime(end_time);
+  Compass::gettime(end_time);
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memusage = memusage_e-memusage_b;
-  double my_time = timeDifference(end_time, begin_time);
+  double my_time = Compass::timeDifference(end_time, begin_time);
   std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << std::endl;
 
 

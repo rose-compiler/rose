@@ -7,6 +7,15 @@ INCLUDES = -I$(srcdir)/.. -I$(srcdir)/../../compassSupport $(ROSE_INCLUDES)
 #==========================================================================
 # Auxiliary library.
 
+if ROSE_MPI
+LTCXXCOMPILE = \
+	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+endif
+
 C_API_SRCS = C-API.C SigBase.C FuncSig.C Recognizer.C
 C_API_HDRS = $(C_API_SRCS:.C=.h) ConstSig.h TypeSig.h
 

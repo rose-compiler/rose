@@ -7,6 +7,32 @@
 
 
 namespace Compass {
+#if ROSE_MPI
+  /****************************************************************************/
+  // (tps - 11Jul08) : needed for MPI run of Compass
+  void serializeDefUseResults(unsigned int *values,
+			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+			      std::map<SgNode*,unsigned int > &nodeMap);
+  void deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
+				std::map<unsigned int, SgNode* > &nodeMap, bool definition);
+
+  double timeDifference(struct timespec end, struct timespec begin);
+  inline void gettime(struct timespec &t) {
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
+  }
+  class MemoryTraversal : public ROSE_VisitTraversal {
+  public:
+  MemoryTraversal():counter(0){}
+    unsigned int counter;
+    void visit ( SgNode* node );
+    std::map <unsigned int, SgNode* > nodeMap;
+  std::map <SgNode*, unsigned int > nodeMapInv;
+  };
+  
+#endif
+  /****************************************************************************/
+
+
  //! Silent setting is -1, default is 0, and values greater than zero indicate different levels of detail to be output.
      extern int verboseSetting;
 

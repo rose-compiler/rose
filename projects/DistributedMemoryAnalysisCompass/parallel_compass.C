@@ -5,51 +5,8 @@ using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
+using namespace Compass;
 
-
-void serializeDefUseResults(unsigned int *values,
-			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
-			    std::map<SgNode*,unsigned int > &nodeMap) {
-  int counter=0;
-  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
-  for (it=defmap.begin();it!=defmap.end();++it) {
-    SgNode* first = it->first;
-    ROSE_ASSERT(first);
-    std::multimap < SgInitializedName* , SgNode* > mm = it->second;
-    std::multimap < SgInitializedName* , SgNode* >::const_iterator it2;
-    for (it2=mm.begin();it2!=mm.end();++it2) {
-      SgInitializedName* second = isSgInitializedName(it2->first);
-      SgNode* third = it2->second;
-      ROSE_ASSERT(second);
-      ROSE_ASSERT(third);
-      values[counter]=nodeMap.find(first)->second;
-      values[counter+1]=nodeMap.find(second)->second;
-      values[counter+2]=nodeMap.find(third)->second;
-      counter+=3;
-    }
-  }
-}
-
-void deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
-			      std::map<unsigned int, SgNode* > &nodeMap, bool definition) {
-  for (unsigned int i=0; i <arrsize;i+=3) {
-    unsigned int first = values[i];
-    unsigned int second = values[i+1];
-    unsigned int third = values[i+2];
-    //        cerr << i << "/"<<arrsize<<"::  first : " << first << " second : " << second << " third : " << third << endl;
-    SgNode* node1 = nodeMap.find(first)->second;
-    SgInitializedName* node2 = isSgInitializedName(nodeMap.find(second)->second);
-    SgNode* node3 = nodeMap.find(third)->second;
-    ROSE_ASSERT(node1);
-    ROSE_ASSERT(node2);
-    ROSE_ASSERT(node3);
-    if (definition)
-      defuse->addDefElement(node1, node2, node3);
-    else
-      defuse->addUseElement(node1, node2, node3);
-  }
-
-}
 
 // ************************************************************
 // NodeCounter to determine on how to split the nodes
@@ -709,7 +666,7 @@ int main(int argc, char **argv)
 	    (*b_itr)->visit(mynode);
 	  }
 	  gettime(end_time_node);
-	  double my_time_node = timeDifference(end_time_node, begin_time_node);
+	  double my_time_node = Compass::timeDifference(end_time_node, begin_time_node);
 #pragma omp critical (parallelcompassmulti)
 	  if (my_time_node>max_time) {
 	    max_time=my_time_node;

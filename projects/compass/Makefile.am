@@ -16,6 +16,15 @@ else
 INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
 endif
 
+if ROSE_MPI
+LTCXXCOMPILE = \
+	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+endif
+
 bin_PROGRAMS = compassMain
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) compassSupport/libCompass.la

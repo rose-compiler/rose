@@ -1,7 +1,12 @@
+#if ROSE_MPI
+#include <mpi.h>
+#endif
+
 #include "compass.h"
 #include <rose.h>
 #include <sstream>
 #include <fstream>
+
 
 // Default setting for verbosity level (-1 is silent, and values greater then zero indicate different levels of verbosity)
 int  Compass::verboseSetting   = 0;
@@ -15,7 +20,77 @@ bool Compass::UseFlymake       = false;
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
+
+/******************************************************************
+ * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI
+ ******************************************************************/
 DefUseAnalysis* Compass::defuse = NULL;
+
+#if ROSE_MPI
+void Compass::serializeDefUseResults(unsigned int *values,
+			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+			    std::map<SgNode*,unsigned int > &nodeMap) {
+  int counter=0;
+  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
+  for (it=defmap.begin();it!=defmap.end();++it) {
+    SgNode* first = it->first;
+    ROSE_ASSERT(first);
+    std::multimap < SgInitializedName* , SgNode* > mm = it->second;
+    std::multimap < SgInitializedName* , SgNode* >::const_iterator it2;
+    for (it2=mm.begin();it2!=mm.end();++it2) {
+      SgInitializedName* second = isSgInitializedName(it2->first);
+      SgNode* third = it2->second;
+      ROSE_ASSERT(second);
+      ROSE_ASSERT(third);
+      values[counter]=nodeMap.find(first)->second;
+      values[counter+1]=nodeMap.find(second)->second;
+      values[counter+2]=nodeMap.find(third)->second;
+      counter+=3;
+    }
+  }
+}
+
+void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
+			      std::map<unsigned int, SgNode* > &nodeMap, bool definition) {
+  for (unsigned int i=0; i <arrsize;i+=3) {
+    unsigned int first = values[i];
+    unsigned int second = values[i+1];
+    unsigned int third = values[i+2];
+    //        cerr << i << "/"<<arrsize<<"::  first : " << first << " second : " << second << " third : " << third << endl;
+    SgNode* node1 = nodeMap.find(first)->second;
+    SgInitializedName* node2 = isSgInitializedName(nodeMap.find(second)->second);
+    SgNode* node3 = nodeMap.find(third)->second;
+    ROSE_ASSERT(node1);
+    ROSE_ASSERT(node2);
+    ROSE_ASSERT(node3);
+    if (definition)
+      defuse->addDefElement(node1, node2, node3);
+    else
+      defuse->addUseElement(node1, node2, node3);
+  }
+
+}
+
+  // ************************************************************
+  // Time Measurement
+  // ************************************************************
+double Compass::timeDifference(struct timespec end, struct timespec begin) {
+    return (end.tv_sec + end.tv_nsec / 1.0e9)
+      - (begin.tv_sec + begin.tv_nsec / 1.0e9);
+  }
+  void Compass::MemoryTraversal::visit ( SgNode* node )
+  {
+    ROSE_ASSERT(node != NULL);
+    nodeMap[counter]=node;
+    nodeMapInv[node]=counter;
+    counter++;
+  }
+
+  /******************************************************************/
+#endif
+
+
+
 void Compass::runDefUseAnalysis(SgProject* root) {
 
   if (defuse==NULL) {
@@ -28,7 +103,15 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // (tps, 07/24/08): added support for dataflow analysis
   // this should run right before any other checker is executed.
   // Other checkers rely on this information.
-	//#if 0
+  struct timespec begin_time_node, end_time_node;
+  int my_rank, processes;
+
+  // create map with all nodes and indices
+  MemoryTraversal* memTrav = new MemoryTraversal();
+  memTrav->traverseMemoryPool();
+  std::cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+  ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+
   MPI_Barrier(MPI_COMM_WORLD);
   gettime(begin_time_node);
 
@@ -36,7 +119,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   Rose_STL_Container<SgNode *> funcs = 
     NodeQuery::querySubTree(root, V_SgFunctionDefinition);
   if (my_rank==0)
-    std::cerr << ">>>>> running defuse analysis (parallel)...  functions: " << funcs.size() << std::endl;
+    std::cerr << ">>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << std::endl;
   int resultDefUseNodes=0;
   // run the following in parallel
   for (int p=0; p<processes;++p) {
@@ -57,6 +140,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << std::endl;
+
 
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
@@ -176,7 +260,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   }
   //#endif
 #else
-  std::cerr << ">>>>>> running defuse analysis in sequence. "  << std::endl;
+  std::cerr << ">>>>>> running defuse analysis in SEQUENCE (NO MPI). "  << std::endl;
         defuse = new DefUseAnalysis(root);
 
 	// tps: fixme (9 Jul 2008)

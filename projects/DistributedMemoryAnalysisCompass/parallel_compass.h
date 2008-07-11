@@ -43,6 +43,7 @@ void
 buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, 
 	       Compass::OutputObject &output, SgProject* pr );
 
+/*
 class MemoryTraversal : public ROSE_VisitTraversal {
  public:
  MemoryTraversal():counter(0){}
@@ -59,8 +60,7 @@ void MemoryTraversal::visit ( SgNode* node )
   nodeMapInv[node]=counter;
   counter++;
 }
-
-
+*/
 
 // ************************************************************
 // check for the usage parameters
@@ -77,6 +77,7 @@ bool containsArgument(int argc, char** argv, std::string pattern) {
   return false;
 }
 
+/*
 // ************************************************************
 // Time Measurement
 // ************************************************************
@@ -88,7 +89,7 @@ double timeDifference(struct timespec end, struct timespec begin) {
 inline void gettime(struct timespec &t) {
   clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
 }
-
+*/
 
 void initPCompass(int argc, char **argv) {
   if (my_rank == 0) {
@@ -124,7 +125,7 @@ void initPCompass(int argc, char **argv) {
   /* read the AST, either from a binary file or from sources */
   if (saveAST) {
     if (my_rank == 0) {
-      gettime(begin_time);
+      Compass::gettime(begin_time);
       if (argc>3) {
 	char** argv2 = new char*[argc];
 	argv2[0] = argv[0];
@@ -137,21 +138,21 @@ void initPCompass(int argc, char **argv) {
 	std::string out_filename = argv[2];//"ast.ast";
 	LoadSaveAST::saveAST(out_filename, root); 
       }
-      gettime(end_time);
+      Compass::gettime(end_time);
       exit(0);
     }
   } else if (loadAST) {
     std::cout << "ROSE loading .... " << argv[2] << std::endl;
-    gettime(begin_time);
+    Compass::gettime(begin_time);
     root = LoadSaveAST::loadAST(argv[2]); 
-    gettime(end_time);
+    Compass::gettime(end_time);
   } 
 
   if (!saveAST && !loadAST) {
-    gettime(begin_time);
+    Compass::gettime(begin_time);
     std::cout << "ROSE frontend .... " << std::endl;
     root = frontend(argc, argv);
-    gettime(end_time);
+    Compass::gettime(end_time);
   }
 
 }
@@ -209,24 +210,6 @@ public:
     std::cerr << e.what() << std::endl;					\
   }
 
-
-// ************************************************************
-// This is a description of all checkers.
-// ************************************************************
-/*
-void compassCheckers(std::vector<AstSimpleProcessing *> &traversals,
-		     std::vector<Compass::TraversalBase *> &bases,
-		     //        std::vector<Compass::OutputObject *> &outputs)
-		     std::vector<CountingOutputObject *> &outputs) {
-  try {
-    Compass::Parameters params("compass_parameters");
-#include "generate_checkers.C"
-  } catch (const Compass::ParseError &e) {
-    std::cerr << e.what() << std::endl;
-  }
-  //    outputs.push_back(new Compass::PrintingOutputObject(std::cerr));
-}
-*/
 
 
 // ************************************************************
