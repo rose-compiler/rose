@@ -181,7 +181,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
 	// tps: fixme (9 Jul 2008)
     // skipping defuse tests until they pass all compass tests
-    //    ((DefUseAnalysis*)defuse)->run(false);
+    //((DefUseAnalysis*)defuse)->run(false);
     std::cerr <<  "Total number of def nodes: " << defuse->getDefMap().size() << std::endl;
     std::cerr <<  "Total number of use nodes: " << defuse->getUseMap().size() << std::endl << std::endl;
   

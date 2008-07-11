@@ -374,7 +374,7 @@ void  DefUseAnalysis::find_all_global_variables() {
 
   GlobalVarAnalysis* globalVars = new GlobalVarAnalysis(DEBUG_MODE, project, this);
   globalVarList = globalVars->run();
-
+  delete globalVars;
   //bool test = isNodeGlobalVariable(*(globalVarList.begin()));
   //cerr << "isGlobalVar : " << resBool(test) << endl; 
 
@@ -416,6 +416,7 @@ void  DefUseAnalysis::start_traversal_of_functions() {
     if (rem_source.getNode()!=NULL)
       dfaFunctions.push_back(rem_source);
   }
+  delete defuse_perfunc;
 
   if (DEBUG_MODE) {
     dfaToDOT();

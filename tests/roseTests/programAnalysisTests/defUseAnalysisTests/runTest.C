@@ -20,7 +20,8 @@ void testOneFunction( std::string funcParamName,
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
   int val = defuse->run(debug);
-  std::cout << "Analysis run is : " << (val ? "success" : "failure") << std::endl;
+  std::cout << "Analysis run is : " << (val ?  "failure" : "success" ) << " " << val << std::endl;
+  if (val==1) exit(1);
 
   if (debug==false)
     defuse->dfaToDOT();
@@ -119,7 +120,7 @@ void testOneFunction( std::string funcParamName,
 }
 
 
-void runCurrentFile(vector<string> argvList) {
+void runCurrentFile(vector<string> &argvList, bool debug, bool debug_map) {
   // Build the AST used by ROSE
   std::cout << ">>>> Starting ROSE frontend ... " << endl;
   SgProject* project = frontend(argvList);
@@ -129,16 +130,14 @@ void runCurrentFile(vector<string> argvList) {
 
   // Call the Def-Use Analysis
   DFAnalysis* defuse = new DefUseAnalysis(project);
-  bool debug = true;
   int val = defuse->run(debug);
-  std::cout << "Analysis is : " << (val ? "success" : "failure") << std::endl;
+  std::cout << "Analysis is : " << (val ?  "failure" : "success" ) << " " << val <<std::endl;
+  if (val==1) exit(1);
   if (debug==false)
     defuse->dfaToDOT();
   
   //example usage
   // testing
-//std::list<SgNode*> vars = NodeQuery::querySubTree(project, V_SgInitializedName); 
-//std::list<SgNode*>::const_iterator i = vars.begin();
   NodeQuerySynthesizedAttributeType vars = NodeQuery::querySubTree(project, V_SgInitializedName); 
   NodeQuerySynthesizedAttributeType::const_iterator i = vars.begin();
   for (; i!=vars.end();++i) {
@@ -175,10 +174,14 @@ void runCurrentFile(vector<string> argvList) {
     }
   }
   // print resulting table
-  cout << "\nDEFMAP" << endl;
-  defuse->printDefMap();
-  cout << "\nUSEMAP" << endl;
-  defuse->printUseMap();
+  if (debug_map) {
+    cout << "\nDEFMAP" << endl;
+    defuse->printDefMap();
+    cout << "\nUSEMAP" << endl;
+    defuse->printUseMap();
+  }
+  delete project;
+  delete defuse;
 }
 
 void usage() {
@@ -211,12 +214,16 @@ int main( int argc, char * argv[] )
 
   vector<string> argvList(argv, argv + argc);
 
+
   if (allTests==false) {
-    runCurrentFile(argvList);
+  // change here if you want debug
+    bool debug_map = false;
+    bool debug = true;
+    runCurrentFile(argvList, debug, debug_map);
   }  
   
   if (allTests==true) {
-    bool debug = false;
+    bool debug =false;
     string startNr = "";
     if (argc>2)
       startNr = argv[2];
@@ -437,7 +444,32 @@ int main( int argc, char * argv[] )
       testOneFunction("::bar",argvList, debug, 5, results,useresults);
     }
 
-  }
+    if (startNrInt<=21 || testAll) {
+      // ------------------------------ TESTCASE 1 -----------------------------------------
+      argvList[1]=srcdir+"tests/test21.C";
+      results.clear();      useresults.clear();
+      testOneFunction("::func",argvList, debug, 9, results,useresults);
+    }
 
+    if (startNrInt<=22 || testAll) {
+      // ------------------------------ TESTCASE 1 -----------------------------------------
+      argvList[1]=srcdir+"tests/test22.C";
+      results.clear();      useresults.clear();
+      results.insert(pair<string,int>("b", 7));
+      testOneFunction("::func",argvList, debug, 12, results,useresults);
+    }
+
+    if (startNrInt<=23 || testAll) {
+      // ------------------------------ TESTCASE 1 -----------------------------------------
+      argvList[1]=srcdir+"tests/test23.C";
+      results.clear();      useresults.clear();
+      results.insert(pair<string,int>("a",11));
+      testOneFunction("::func",argvList, debug, 30, results,useresults);
+    }
+
+  }
+  
+  cout << ">> TEST END ... " << endl;
+  argvList.clear();
   return 0;
 }
