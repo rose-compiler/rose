@@ -97,7 +97,7 @@ void PDFGeneration::pdf_finalize()
 {
   // Now close the PDF file
   HPDF_SaveToFile(pdfFile, filename.c_str());
-  HPDF_FreeDocAll(pdfFile);
+  HPDF_Free(pdfFile);
 }
 
 std::string PDFGeneration::text_page(SgNode* node)
