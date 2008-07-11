@@ -375,6 +375,18 @@ buildFunctionCallExp(const SgName& name, SgType* return_type, \
 
 //! Build the rhs of a variable declaration which includes an assignment
 SgAssignInitializer * buildAssignInitializer(SgExpression * operand_i = NULL);
+
+//! Build an aggregate initializer
+SgAggregateInitializer * buildAggregateInitializer(SgExprListExp * initializers = NULL);
+
+//! Build sizeof() expression with an expression parameter
+SgSizeOfOp* buildSizeOfOp(SgExpression* exp= NULL);
+
+//! Build sizeof() expression with a type parameter
+SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
+
+
+
 //@}
 
 //--------------------------------------------------------------
@@ -459,8 +471,7 @@ buildDefiningFunctionDeclaration (const char* name, SgType* return_type, SgFunct
 
 //! Build a function call statement
 SgExprStatement*
-buildFunctionCallStmt(const SgName& name, SgType* return_type, \
-                SgExprListExp* parameters, SgScopeStatement* scope=NULL);
+buildFunctionCallStmt(const SgName& name, SgType* return_type, SgExprListExp* parameters, SgScopeStatement* scope=NULL);
 
 //! Build a label statement, handling label symbol and scope internally.
 

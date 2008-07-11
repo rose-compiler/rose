@@ -4365,6 +4365,17 @@ SageInterface::getFirstVarSym (SgVariableDeclaration* decl)
 }
 
 
+SgInitializedName* 
+SageInterface::getFirstInitializedName (SgVariableDeclaration* decl)
+{
+  ROSE_ASSERT(decl);
+  SgInitializedNamePtrList& names = decl->get_variables ();
+  if (names.begin () != names.end ())
+    return *(names.begin ());
+  else
+    return NULL;
+}
+
 
 static void findBreakStmtsHelper(SgStatement* code, const std::string& fortranLabel, bool inOutermostBody, vector<SgBreakStmt*>& breakStmts) {
   if (isSgWhileStmt(code) || isSgDoWhileStmt(code) || isSgForStatement(code) || isSgSwitchStatement(code)) {
@@ -4675,6 +4686,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   
 }
 
+#if 0 // move to header 
 // Contributed by Jeremiah
 //! Get all nodes with a certain variant, with an appropriate downcast. FIXME:
 //! there needs to be a static method in each SgNode subclass that returns the
@@ -4693,6 +4705,7 @@ std::vector<NodeType*> SageInterface::querySubTree(SgNode* top, VariantT variant
   }
   return result;
 }
+#endif
 
  SgStatement* SageInterface::getNextStatement(SgStatement * currentStmt)
 {
@@ -6396,6 +6409,18 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
     }  
     return result;  
   } // instrumentEndOfFunction
+
+  bool isStatic(SgDeclarationStatement* stmt)
+  {
+    ROSE_ASSERT(stmt);
+    return ((stmt->get_declarationModifier()).get_storageModifier()).isStatic();
+  } // isStatic()
+
+  bool isExtern(SgDeclarationStatement* stmt)
+  {
+    ROSE_ASSERT(stmt);
+    return ((stmt->get_declarationModifier()).get_storageModifier()).isExtern();
+  } // isExtern()
 
 } // end namespace SageInterface
 
