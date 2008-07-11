@@ -8,7 +8,6 @@ bufferOverflowFunctions
 byteByByteStructureComparison
 charStarForString
 commaOperator
-compass_defUseAnalysis
 computationalFunctions
 constCast
 constructorDestructorCallsVirtualFunction
