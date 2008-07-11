@@ -244,8 +244,9 @@ void printPCResults(CountingOutputObject  &outputs,
 
     std::cout << "\n>>>>> results:" << std::endl;
     std::map<std::string, unsigned int> ::iterator o_itr;
-    for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr) 
-      std::cout << "  " << o_itr->first << " " << o_itr->second << std::endl;
+    int j=0;
+    for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr, ++j) 
+      std::cout << "  " << o_itr->first << " " << output_values[j] << std::endl;
     std::cout << std::endl;
 
     double total_time = 0.0;
@@ -742,15 +743,20 @@ int main(int argc, char **argv)
   double *commtimes = new double[processes];
   MPI_Barrier(MPI_COMM_WORLD);
 
-  communicateResult(outputs, times, memory, output_values, my_time, memusage, maxtime_nr, max_time_nr, maxtime_val, max_time,
-		    calctimes, calc_time_processor, commtimes, commtime);
+  communicateResult(outputs, 
+		    times,  memory, output_values, my_time, memusage, 
+		    maxtime_nr, max_time_nr, 
+		    maxtime_val, max_time,
+		    calctimes, calc_time_processor, 
+		    commtimes, commtime);
   double my_time_0;
   if (my_rank==0) {
     gettime(end_time_0);
     my_time_0 = timeDifference(end_time_0, begin_time_0);
   }
 
-  printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, calctimes, commtimes, nodeDecls);
+  printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
+		 calctimes, commtimes, nodeDecls);
 
   if (my_rank==0)
     cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;

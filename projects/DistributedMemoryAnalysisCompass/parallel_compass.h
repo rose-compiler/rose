@@ -287,10 +287,10 @@ void communicateResult(CountingOutputObject  &outputs,
   /* communicate results */
   unsigned int *my_output_values = new unsigned int[outputs.counts.size()];
   std::map<std::string, unsigned int> ::iterator o_itr;
-  int i=0;
-  for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr,++i) {
-    my_output_values[i] = o_itr->second;
-  }
+  int j=0;
+  for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr, ++j) 
+    my_output_values[j]=o_itr->second;
+
 
   MPI_Reduce(my_output_values, output_values, outputs.counts.size(), MPI_UNSIGNED,
 	     MPI_SUM, 0, MPI_COMM_WORLD);
