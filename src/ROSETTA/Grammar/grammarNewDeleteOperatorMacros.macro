@@ -97,8 +97,8 @@ void *$CLASSNAME::operator new ( size_t Size )
             // Current_Link = ($CLASSNAME*) new char [ CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) ];
                Current_Link = ($CLASSNAME*) ROSE_MALLOC ( CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
 #if ROSE_USE_VALGRIND
-	       VALGRIND_FREELIKE_BLOCK(Current_Link, 0); // To trick Valgrind into not having overlapping heap blocks
-               VALGRIND_MAKE_NOACCESS(Current_Link, CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
+	       // VALGRIND_FREELIKE_BLOCK(Current_Link, 0); // To trick Valgrind into not having overlapping heap blocks
+               // VALGRIND_MAKE_NOACCESS(Current_Link, CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
 #endif
 
 #if COMPILE_DEBUG_STATEMENTS
@@ -150,14 +150,14 @@ void *$CLASSNAME::operator new ( size_t Size )
                for (int i=0; i < CLASS_ALLOCATION_POOL_SIZE-1; i++)
                   {
 #if ROSE_USE_VALGRIND
-                    VALGRIND_MAKE_WRITABLE(&Current_Link[i].p_freepointer, sizeof(&Current_Link[i].p_freepointer));
+                    // VALGRIND_MAKE_WRITABLE(&Current_Link[i].p_freepointer, sizeof(&Current_Link[i].p_freepointer));
 #endif
                     Current_Link[i].p_freepointer = &(Current_Link[i+1]);
                   }
 
             // Set the pointer of the last one to NULL!
 #if ROSE_USE_VALGRIND
-               VALGRIND_MAKE_WRITABLE(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer, sizeof(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer));
+               // VALGRIND_MAKE_WRITABLE(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer, sizeof(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer));
 #endif
                Current_Link [CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
 
@@ -178,9 +178,9 @@ void *$CLASSNAME::operator new ( size_t Size )
   // DQ (10/21/2005): I would have liked to have used a dynamic_cast<>() here!
   // Current_Link = dynamic_cast<$CLASSNAME*>(Current_Link->p_freepointer);
 #if ROSE_USE_VALGRIND
-     VALGRIND_MALLOCLIKE_BLOCK(Forward_Link, sizeof($CLASSNAME), 0, 0);
-     VALGRIND_MAKE_WRITABLE(Forward_Link, sizeof($CLASSNAME));
-     VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
+     // VALGRIND_MALLOCLIKE_BLOCK(Forward_Link, sizeof($CLASSNAME), 0, 0);
+     // VALGRIND_MAKE_WRITABLE(Forward_Link, sizeof($CLASSNAME));
+     // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
      // VALGRIND_PRINTF_BACKTRACE("Allocating block at %p size %u for $CLASSNAME\n", Forward_Link, sizeof($CLASSNAME));
 #endif
      Current_Link = ($CLASSNAME*)(Current_Link->p_freepointer);
@@ -274,9 +274,9 @@ void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
                Current_Link = New_Link;
 #if ROSE_USE_VALGRIND
                // VALGRIND_PRINTF_BACKTRACE("Deallocating block at %p size %u (for $CLASSNAME)\n", Current_Link, sizeof($CLASSNAME));
-	       VALGRIND_FREELIKE_BLOCK(Current_Link, 0);
-               VALGRIND_MAKE_NOACCESS(Current_Link, sizeof(*Current_Link));
-               VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
+	       // VALGRIND_FREELIKE_BLOCK(Current_Link, 0);
+               // VALGRIND_MAKE_NOACCESS(Current_Link, sizeof(*Current_Link));
+               // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
 #endif
              }
 #if EXTRA_ERROR_CHECKING

@@ -305,7 +305,7 @@ class Grammar
 							     std::string successorContainerAccessOperator);
 	  std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
-	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName);
+	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className);
 	  void buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
 	  StringUtility::FileWithLineNumbers buildVariants ();
 	  StringUtility::FileWithLineNumbers buildForwardDeclarations ();

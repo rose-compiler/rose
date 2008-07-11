@@ -2966,6 +2966,11 @@ void Grammar::buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumber
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::generateRTIImplementation);
   string result;
   result += "// generated file\n";
+  result += "#if ROSE_USE_VALGRIND\n";
+  result += "#include <valgrind/valgrind.h>\n";
+  result += "#include <valgrind/memcheck.h>\n";
+  result += "#include <stdio.h>\n";
+  result += "#endif\n";
   // container in file scope to avoid multiple (200) template instantiation
   result += "static " + RTIreturnType + " " + RTIContainerName + ";\n\n";
   result += a.text; // synthesized attribute
@@ -3000,7 +3005,7 @@ Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesi
        // s += string(grammarnode->getName())+" -> "+type
        //   +" [label="+(*stringListIterator)->getVariableNameString()+"];\n";
 #if COMPLETERTI
-          ss << generateRTICode(*stringListIterator, RTIContainerName);
+          ss << generateRTICode(*stringListIterator, RTIContainerName, grammarnode->getName());
 #endif
         }
 
@@ -3022,7 +3027,7 @@ Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesi
 
 // MS: 2002: generate source for adding RTI information to node (more detailed than C++ RTI info!)
 // this info is used in PDF and dot output
-string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerName) {
+string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerName, string className) {
   string memberVariableName=gs->getVariableNameString();
   string typeString=string(gs->getTypeNameString());
   {
@@ -3031,6 +3036,11 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   }
   ostringstream ss;
   
+  ss << "#if ROSE_USE_VALGRIND\n";
+  ss << "if (VALGRIND_CHECK_DEFINED(p_" << memberVariableName << ")) {\n";
+  ss << "  fprintf(stderr, \"Warning: uninitialized field p_" << memberVariableName << " of object %p of class " << className << "\\n\", this);\n";
+  ss << "}\n";
+  ss << "#endif\n";
   ss << "{ostringstream _ss; ";
 // JW (inserted by DQ) (7/23/2004): Allows STL containers to be output and permits 
 // more information to be generated for variables.
