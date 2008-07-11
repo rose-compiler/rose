@@ -25,8 +25,10 @@ std::string Compass::tguiXML;
  * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI
  ******************************************************************/
 DefUseAnalysis* Compass::defuse = NULL;
-
 #if ROSE_MPI
+int Compass::my_rank=0;
+int Compass::processes=0;
+
 void Compass::serializeDefUseResults(unsigned int *values,
 			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
 			    std::map<SgNode*,unsigned int > &nodeMap) {
@@ -103,8 +105,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // (tps, 07/24/08): added support for dataflow analysis
   // this should run right before any other checker is executed.
   // Other checkers rely on this information.
-  struct timespec begin_time_node, end_time_node;
-  int my_rank, processes;
+    struct timespec begin_time_node, end_time_node;
 
   // create map with all nodes and indices
   MemoryTraversal* memTrav = new MemoryTraversal();

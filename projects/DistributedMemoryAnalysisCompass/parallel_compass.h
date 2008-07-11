@@ -28,7 +28,7 @@ struct timespec begin_time, end_time;
 struct timespec begin_time_node, end_time_node;
 struct timespec begin_time_0, end_time_0;
 struct timespec begin_time_defuse, end_time_defuse;
-int my_rank, processes;
+//int my_rank, processes;
 bool sequential=false;
 bool combined=false;
 int nrOfThreads = 3;
@@ -92,7 +92,7 @@ inline void gettime(struct timespec &t) {
 */
 
 void initPCompass(int argc, char **argv) {
-  if (my_rank == 0) {
+  if (Compass::my_rank == 0) {
     if (argc < 2)
       {
 	std::cerr << "USAGE: "  << std::endl;
@@ -124,7 +124,7 @@ void initPCompass(int argc, char **argv) {
 
   /* read the AST, either from a binary file or from sources */
   if (saveAST) {
-    if (my_rank == 0) {
+    if (Compass::my_rank == 0) {
       Compass::gettime(begin_time);
       if (argc>3) {
 	char** argv2 = new char*[argc];

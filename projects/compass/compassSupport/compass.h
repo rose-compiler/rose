@@ -8,6 +8,9 @@
 
 namespace Compass {
 #if ROSE_MPI
+  //  struct timespec begin_time_node, end_time_node;
+  extern int my_rank, processes;
+
   /****************************************************************************/
   // (tps - 11Jul08) : needed for MPI run of Compass
   void serializeDefUseResults(unsigned int *values,

@@ -6,7 +6,7 @@ using namespace std;
 #define DEBUG_OUTPUT true
 #define DEBUG_OUTPUT_MORE false
 
-
+using namespace Compass;
 
 
 // ************************************************************
