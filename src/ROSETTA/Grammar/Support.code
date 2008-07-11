@@ -4387,7 +4387,9 @@ std::ostream & operator<< ( std::ostream & os, const rose_hash_multimap::iterato
    {
   // DQ (1/19/2006): Error reported by Michelle Strout when compiled with g++ 4.0.2 on 64 bit machines
   // os << " pair (" << (*rhm_it).first.str() << "," << (int)((*rhm_it).second) << ")";
-     os << " pair (" << (*rhm_it).first.str() << "," << ((*rhm_it).second) << ")";
+  // os << " pair (" << (*rhm_it).first.str() << "," << ((*rhm_it).second) << ")";
+  // JJW (7/10/2008): The iterator may not be valid, so don't try to print what it points to
+     os << "<iterator>";
      return os;
    }
 

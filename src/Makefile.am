@@ -143,7 +143,8 @@ libroseObjects = \
    $(top_builddir)/src/roseSupport/*.lo \
    $(ROSE_DATABASE_OBJS) \
    $(ROSE_SQLITE_DATABASE_OBJS) \
-   $(ROSE_GUI_OBJS)
+   $(ROSE_GUI_OBJS) \
+   $(VALGRIND_LIBS)
 
 # DQ (1/16/2007): The binary release of ROSE requires some libraries to be distributed.
 if ROSE_USE_EDG_SOURCE

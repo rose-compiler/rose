@@ -1,11 +1,13 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if USE_VALGRIND
+
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = testVirtualCFG
+bin_PROGRAMS = testUninitializedFields
 
-testVirtualCFG_SOURCES = testVirtualCFG.C
-testVirtualCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+testUninitializedFields_SOURCES = testUninitializedFields.C
+testUninitializedFields_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
@@ -14,7 +16,6 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 #   EXAMPLE_TESTCODES_REQUIRED_TO_PASS_SHORT
 #
 include $(srcdir)/../Cxx_tests/Makefile-pass.inc
-
 
 EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS = \
 test_CplusplusMacro_C.C \
@@ -457,37 +458,45 @@ F90_FILES = ${F90_TESTCODES_REQUIRED_TO_PASS:.f90=.F90-o}
 F77_FILES = ${F77_FIXED_FORMAT_TESTCODES_REQUIRED_TO_PASS:.f=.F-o}
 F03_FILES = ${F03_TESTCODES_REQUIRED_TO_PASS:.f03=.F03-o}
 
-$(CXX_FILES): testVirtualCFG
-	./testVirtualCFG $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) && touch $@
+RUN_VALGRIND = $(LIBTOOL) --mode=execute $(VALGRIND_BINARY) --tool=memcheck -q
 
-# ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testVirtualCFG
-$(C_FILES): testVirtualCFG $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
+$(CXX_FILES): testUninitializedFields
+	-rm -f $(@:.CXX-o=.CXX-log)
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\" -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(srcdir)/../Cxx_tests/$(@:.CXX-o=.C) 2>$(@:.CXX-o=.CXX-log) && touch $@
+
+# ${EXAMPLE_C_TESTCODES_VERIFIED_TO_PASS:.C.o}: testUninitializedFields
+$(C_FILES): testUninitializedFields $(srcdir)/../Cxx_tests/$(@:.C-o=.C)
+	-rm -f $(@:.C-o=.C-log)
 	cp $(srcdir)/../Cxx_tests/$(@:.C-o=.C) $(@:.C-o=.temp.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) && touch $@
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../Cxx_tests $(TESTCODE_INCLUDES) -c $(@:.C-o=.temp.c) 2>$(@:.C-o=.C-log) && touch $@
 
-$(C99_FILES): testVirtualCFG $(srcdir)/../C99_tests/$(@:.C99-o=.c)
+$(C99_FILES): testUninitializedFields $(srcdir)/../C99_tests/$(@:.C99-o=.c)
+	-rm -f $(@:.C99-o=.C99-log)
 	cp $(srcdir)/../C99_tests/$(@:.C99-o=.c) $(@:.C99-o=.temp.c)
-	./testVirtualCFG $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) && touch $@
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -I$(srcdir)/../C99_tests $(TESTCODE_INCLUDES) -c $(@:.C99-o=.temp.c) 2>$(@:.C99-o=.C99-log) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F90_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) && touch $@
+$(F90_FILES): ./testUninitializedFields
+	-rm -f $(@:.F90-o=.F90-log)
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/../Fortran_tests/$(@:.F90-o=.f90) 2>$(@:.F90-o=.F90-log) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F77_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) && touch $@
+$(F77_FILES): ./testUninitializedFields
+	-rm -f $(@:.F-o=.F-log)
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/../Fortran_tests/$(@:.F-o=.f) 2>$(@:.F-o=.F-log) && touch $@
 
 # DQ (6/4/2008): I have commented these out while we do more development of ROSE Fortran support.
-$(F03_FILES): ./testVirtualCFG
-#	./testVirtualCFG $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) && touch $@
+$(F03_FILES): ./testUninitializedFields
+	-rm -f $(@:.F03-o=.F03-log)
+	$(RUN_VALGRIND) ./testUninitializedFields $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/../Fortran_tests/$(@:.F03-o=.f03) 2>$(@:.F03-o=.F03-log) && touch $@
 
 
 QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
 
 # Make rule to build the QMTest database files
 CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): testVirtualCFG $(srcdir)/$(@:.qmt=.C)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/testVirtualCFG NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
+$(QMTEST_Objects): testUninitializedFields $(srcdir)/$(@:.qmt=.C)
+	qm.sh f rose.RoseTest $(RUN_VALGRIND) $(CURRENT_DIRECTORY)/testUninitializedFields NULL $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.qmt=.C)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
@@ -509,10 +518,16 @@ endif
 check-local: check-cxx check-c check-c99 check-fortran
 # check-local: $(CXX_FILES) $(C_FILES)
 	@echo "******************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/virtualCFG_tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/CompileTests/uninitializedField_tests: make check rule complete (terminated normally) ******"
 	@echo "******************************************************************************************************"
 
 clean-local:
-	rm -f *.o *.temp.c *-o *.mod graph.dot
+	rm -f *.o *.temp.c *-o *-log *.mod
 	rm -rf QMTest
 
+else
+# None of this file is included when USE_VALGRIND is off
+check-local:
+	@echo "Skipping tests/CompileTests/uninitializedField_tests because Valgrind was not found" >&2
+
+endif

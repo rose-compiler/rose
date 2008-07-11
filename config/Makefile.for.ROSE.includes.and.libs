@@ -75,6 +75,8 @@ EDG_LIBS = @EDG_LIBS@
 
 RT_LIBS = @RT_LIBS@
 
+VALGRIND_BINARY = @VALGRIND_BINARY@
+
 # Conditional support for Gabriel's QRose GUI Library 
 if ROSE_USE_QROSE
 ROSE_GUI_INCLUDE = \
@@ -196,6 +198,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
+     $(VALGRIND_CFLAGS) \
 	 $(BOOST_CPPFLAGS) ${SQLITE3_CFLAGS} -DBOOST_REGEX_MATCH_EXTRA
 #     $(WAVE_INCLUDES) \
 #     $(ROSE_YICES_INCLUDES) \
