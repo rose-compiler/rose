@@ -120,14 +120,15 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   Rose_STL_Container<SgNode *> funcs = 
     NodeQuery::querySubTree(root, V_SgFunctionDefinition);
   if (my_rank==0)
-    std::cerr << ">>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << std::endl;
+    std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << 
+      "  processes : " << processes << std::endl;
   int resultDefUseNodes=0;
   // run the following in parallel
   for (int p=0; p<processes;++p) {
-    int start = funcs.size()/processes*p;
-    int end = funcs.size()/processes*(p+1);
+    size_t start = ((double)funcs.size()/processes)*p;
+    size_t end = ((double)funcs.size()/processes)*(p+1);
     if (my_rank==p) {
-      //    std::cerr << my_rank <<": start: "<<start<<"  end: " << end<<std::endl;
+      std::cerr << my_rank <<": start: "<<start<<"  end: " << end << std::endl;
       for (int i=start; i< end; ++i) {
 	//      for (Rose_STL_Container<SgNode *>::iterator i = 
 	//     funcs.begin(); i != funcs.end(); i++) {
@@ -136,12 +137,17 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 	resultDefUseNodes+=nrNodes;
       }
     }
+    if (p==(processes-1)) {
+      if (my_rank==(processes-1))
+	std::cout << my_rank << "/" << (processes-1) << 
+	  " Verifying that end==funcs.size() : " << end << " = " << funcs.size() << std::endl;
+      ROSE_ASSERT(end==funcs.size());
+    }
   }
   std::cerr << my_rank << ": DefUse Analysis complete. Nr of Nodes: " << resultDefUseNodes << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << std::endl;
-
 
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
