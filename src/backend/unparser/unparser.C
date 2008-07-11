@@ -90,7 +90,16 @@ Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormat
 //  Destructor
 //-----------------------------------------------------------------------------------
 Unparser::~Unparser()
-   {}
+   {
+     delete u_type;
+     delete u_name;
+     delete u_sym;
+     delete u_debug;
+     delete u_sage;
+     delete u_exprStmt;
+     delete u_fortran_type;
+     delete u_fortran_locatedNode;
+   }
 
 UnparseFormat& Unparser::get_output_stream()
    {

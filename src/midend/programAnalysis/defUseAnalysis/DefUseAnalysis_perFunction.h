@@ -32,6 +32,9 @@ class DefUseAnalysisPF : public Support {
   typedef FilteredCFGEdge < IsDFAFilter > filteredCFGEdgeType;
   typedef FilteredCFGNode < IsDFAFilter > filteredCFGNodeType;
 
+  std::set <SgNode*> doNotVisitMap;
+  std::map <SgNode*, bool> nodeChangedMap;
+
   // printing --------------------------
   template <typename T> void printCFGVector(std::vector<T > worklist);
 
@@ -40,6 +43,9 @@ class DefUseAnalysisPF : public Support {
   SgExpression* resolveCast(SgExpression* expr);
   bool makeSureThatTheUseIsInTable(SgInitializedName* initName);
   bool makeSureThatTheDefIsInTable(SgInitializedName* initName);
+
+  template <typename T>
+    bool hasANodeAboveCurrentChanged(T cfgNode);
 
   template <typename T> 
     bool performUseAndDefinition(SgNode* sgNode, SgInitializedName* initName,
@@ -65,12 +71,17 @@ class DefUseAnalysisPF : public Support {
   template <typename T> SgNode* getOtherInNode(T source, SgNode* oneNode);
 
   int nrOfNodesVisitedPF;
-  int breakPoint;
-  SgNode* breakPointNode;
+  int breakPointForWhile;
+  SgNode* breakPointForWhileNode;
   
  public:
   DefUseAnalysisPF(bool debug, DefUseAnalysis* dfa_p):DEBUG_MODE(debug),
-    DEBUG_MODE_EXTRA(false),dfa(dfa_p){breakPoint=0; breakPointNode=NULL;};
+    DEBUG_MODE_EXTRA(false),dfa(dfa_p){
+    breakPointForWhile=0;
+    breakPointForWhileNode=NULL;
+    doNotVisitMap.clear();
+    nodeChangedMap.clear();
+  };
   FilteredCFGNode < IsDFAFilter > run(SgFunctionDefinition* function);
   int getNumberOfNodesVisited();
 };
