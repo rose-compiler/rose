@@ -1,6 +1,7 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
-
+#include "sage3.h"
+#include "rewrite.h"
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
 std::string getVariantName (VariantT v);
@@ -15,7 +16,7 @@ std::string getVariantName (VariantT v);
 
 // Constructor handling: (We have sageBuilder.h now for this purpose, Liao 2/1/2008)
 //     We could add simpler layers of support for construction of IR nodes by 
-// hiding many details in "makeSg***()" functions.  such functions would
+// hiding many details in "makeSg***()" functions. Such functions would
 // return pointers to the associated Sg*** objects and would be able to hide
 // many IR specific details, including:
 //      memory handling
@@ -33,7 +34,7 @@ std::string getVariantName (VariantT v);
   \defgroup frontendSageUtilityFunctions SAGE III utility functions(SageInterface)
   \ingroup ROSE_FrontEndGroup
 
-    The Sage III IR design attempts to be minimalist.  thus additional functionality is
+    The Sage III IR design attempts to be minimalist. Thus additional functionality is
 intended to be presented using separate higher level interfaces which work with the IR.
 The namespace, SageInterface, collects functions that operate on the IR and are supportive of numerous types of routine operations required to support general analysis and transformation of the AST.
 
@@ -71,7 +72,7 @@ extern int gensym_counter;
   // ! Find a variable symbol in current and ancestor scopes for a given name
   SgVariableSymbol *lookupVariableSymbolInParentScopes (const SgName &	name,
 							SgScopeStatement *currentScope=NULL);
-  //! find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
+  //! Find a symbol in current and ancestor scopes for a given variable name, starting from top of ScopeStack if currentscope is not given or NULL.
   SgSymbol *lookupSymbolInParentScopes (const SgName &	name,
 							SgScopeStatement *currentScope=NULL);
 
@@ -246,7 +247,7 @@ extern int gensym_counter;
   //! Check if a SgNode is a main() function declaration
   bool isMain (const SgNode* node);
   // DQ (6/22/2005):
-  /*! \brief Generate unique name from C and C++ constructs.
+  /*! \brief Generate unique name from C and C++ constructs. The name may contain space. 
 
       This is support for the AST merge, but is generally useful as a more general mechanism than 
       name mangling which is more closely ties to the generation of names to support link-time function name 
@@ -315,7 +316,7 @@ extern int gensym_counter;
   //! Deep copy an arbitrary subtree
    SgNode* deepCopyNode (const SgNode* subtree); 
 
-//! An internal template function for deep copying a subtree, used to create deepcopy functions with specialized parameter and return types. e.g SgExpression* copyExpression(SgExpression* e);
+//! A template function for deep copying a subtree. It is also  used to create deepcopy functions with specialized parameter and return types. e.g SgExpression* copyExpression(SgExpression* e);
    template <typename NodeType>
    NodeType* deepCopy (const NodeType* subtree) {
      return dynamic_cast<NodeType*>(deepCopyNode(subtree));
@@ -331,6 +332,9 @@ extern int gensym_counter;
 //! Get the variable symbol for the first initialized name of a declaration stmt.
   SgVariableSymbol* getFirstVarSym (SgVariableDeclaration* decl);
 
+//! Get the first initialized name of a declaration statement
+  SgInitializedName* getFirstInitializedName (SgVariableDeclaration* decl);
+
 //! A special purpose statement removal function, originally from inlinerSupport.h, Need Jeremiah's attention to refine it. Please don't use it for now.
 void myRemoveStatement(SgStatement* stmt);
 
@@ -340,6 +344,10 @@ bool isConstantFalse(SgExpression* e);
 bool isCallToParticularFunction(SgFunctionDeclaration* decl, SgExpression* e);
 bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, SgExpression* e);
 
+//! Check if a declaration has a "static' modifier
+bool isStatic(SgDeclarationStatement* stmt);
+//! Check if a declaration has an "extern" modifier
+bool isExtern(SgDeclarationStatement* stmt);
 
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
@@ -348,6 +356,7 @@ class StatementGenerator {
   virtual ~StatementGenerator() {};
   virtual SgStatement* generate(SgExpression* where_to_write_answer) = 0;
 };
+
 
 //@}
 
@@ -550,9 +559,21 @@ void setLoopCondition(SgScopeStatement* loop, SgStatement* cond);
   \brief Top-down traversal from current node to find a node of a specified type
 */
 
-//! Query a subtree to get all nodes of a given type.
+//! Query a subtree to get all nodes of a given type, with an appropriate downcast.
 template <typename NodeType>
-std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant);
+std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant)
+{
+  Rose_STL_Container<SgNode*> nodes = NodeQuery::querySubTree(top,variant);
+  std::vector<NodeType*> result(nodes.size(), NULL);
+  int count = 0;
+  for (Rose_STL_Container<SgNode*>::const_iterator i = nodes.begin();
+       i != nodes.end(); ++i, ++count) {
+    NodeType* node = dynamic_cast<NodeType*>(*i);
+    ROSE_ASSERT (node);
+    result[count] = node;
+  }
+  return result;
+}
 
 /*! \brief top-down traversal from current node to find the main() function declaration
 */
@@ -706,13 +727,13 @@ SgScopeStatement* getScope(const SgNode* astNode);
   scope->append_statement(), exprListExp->append_expression() etc. are not enough to handle side effect of parent pointers, symbol tables, preprocessing info, defining/nondefining pointers etc.
 */
 
-//! append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
+//! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
-//! append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
+//! Append a list of statements to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 void appendStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
-//! prepend a statement to the beginning of the current scope, handling side
+//! Prepend a statement to the beginning of the current scope, handling side
 //! effects as appropriate
 void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
@@ -720,42 +741,42 @@ void prependStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 //! handling side effects as appropriate
 void prependStatementList(const std::vector<SgStatement*>& stmt, SgScopeStatement* scope=NULL);
 
-//! insert a statement before or after the target statement within the target's scope
+//! Insert a statement before or after the target statement within the target's scope
 void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore= true);
 
-//! insert a list of statements before or after the target statement within the
+//! Insert a list of statements before or after the target statement within the
 //target's scope
 void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore= true);
 
-//! insert a statement before a target statement
+//! Insert a statement before a target statement
 void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt);
 
-//! insert a list of statements before a target statement
+//! Insert a list of statements before a target statement
 void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts);
 
-//! insert a statement after a target statement
+//! Insert a statement after a target statement
 void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
 
-//! insert a list of statements after a target statement
+//! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
 
 //! Replace a statement with another
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
 
-//! append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
+//! Append an argument to SgFunctionParameterList, transparently set parent,scope, and symbols for arguments when possible
 /*! we recommend to build SgFunctionParameterList before building a function declaration
  However, it is still allowed to append new arguments for existing function declarations.
  \todo function type , function symbol also need attention.
 */
 SgVariableSymbol* appendArg(SgFunctionParameterList *, SgInitializedName*);
 
-//! append an expression to a SgExprListExp, set the parent pointer also
+//! Append an expression to a SgExprListExp, set the parent pointer also
 void appendExpression(SgExprListExp *, SgExpression*);
 
-//! set parameter list for a function declaration, considering existing parameter list etc.
+//! Set parameter list for a function declaration, considering existing parameter list etc.
 void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paralist);
 
-//! set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
+//! Set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
 void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
 
   //! Replace an expression with another, used for variable reference substitution and others. the old expression can be deleted (default case)  or kept.
@@ -816,7 +837,7 @@ void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
-//! Update defining and nondefining links due to a newly introduced function declaration. 
+//! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
 /*! This function not only set the defining and nondefining links of the newly introduced 
  *  function declaration inside a scope, but also update other same function declarations' links
  *  accordingly if there are any. 
@@ -1017,14 +1038,11 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
   //  generic ones, or move to the SgXXX class as a member function
 
   bool isConst(SgNode* node); // const type, variable, function, etc.
-  bool isStatic(SgNode* node); // const type, variable, function, etc.
   // .... and more
 
   bool isConstType (const SgType* type);
   bool isConstFunction (const SgFunctionDeclaration* decl);
 
-  bool isStaticFunction (const SgFunctionDeclaration* func);
-  bool isExternC (const SgFunctionDeclaration* func);
 
   bool isMemberVariable(const SgInitializedName & var);
   //bool isMemberVariable(const SgNode& in);
@@ -1098,7 +1116,7 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
   //! Dumps a statement's preprocessing information.
   void dumpPreprocInfo (const SgStatement* s, std::ostream& o);
 
-//--------------------------------opeartor--------------------------------
+//--------------------------------operator--------------------------------
 //------------------------------------------------------------------------
   from transformationSupport.h, not sure if they should be included here
   /* return enum code for SAGE operators */
@@ -1135,7 +1153,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
   // get/set some property: should moved to SgXXX as an inherent memeber function?
   // access modifier
   void  setExtern (SgFunctionDeclartion*)
-  bool  isExtern()
   void  clearExtern()
 
    // similarly for other declarations and other properties

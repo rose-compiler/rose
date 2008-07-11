@@ -80,13 +80,13 @@ namespace StringUtility
           std::string getVariantName ( int v );
 #endif
 
-      //! generate a file
+      //! Generate a file
           void  writeFile ( const std::string& outputString, const std::string& fileNameString, const std::string& directoryName );
 
-      //! read an existing file
+      //! Read an existing file
            std::string readFile ( const std::string& fileName );
 
-      //! read a file, keeping source line number information
+      //! Read a file, keeping source line number information
            FileWithLineNumbers readFileWithPos(const std::string& fileName);
 
        /*! @{ */
@@ -96,34 +96,34 @@ namespace StringUtility
            Supporting functions for string operations common within ROSE.
            \internal Uses C++ string interface.
        */
-       //! substring replacement function
+       //! Substring replacement function
            std::string copyEdit ( const std::string& inputString, const std::string & oldToken, const std::string & newToken );
-       //! convert a number to a string
+       //! Convert a number to a string
            std::string numberToString ( long x );
            std::string numberToString ( unsigned long x );
            std::string numberToString ( int x );
            std::string numberToString ( unsigned int x );
-       //! convert an integer to a Hex string
+       //! Convert an integer to a Hex string
            std::string intToHex(uint64_t i);
-       //! convert a unsigned integer (size_t) to a string
+       //! Convert a unsigned integer (size_t) to a string
        //  string numberToString ( unsigned int x );
        //  std::string numberToString ( size_t x );
-       //! convert a pointer value to a string
+       //! Convert a pointer value to a string
            std::string numberToString ( void* x );
-       //! convert a number to a string
+       //! Convert a number to a string
            std::string numberToString ( double x );
 
-       //! formatting support for generated code strings
+       //! Formatting support for generated code strings
 	   std::string indentMultilineString ( const std::string& inputString, int statementColumnNumber );
 
-      //! generate a string from a list of ints
+      //! Generate a string from a list of ints
            std::string listToString ( const std::list<int> & X, bool separateStrings = false );
-      //! generate a string from a list of strings
+      //! Generate a string from a list of strings
            std::string listToString ( const std::list<std::string> & X, bool separateStrings = false );
-      //! generate a list of strings from a string (list elements are delimited by "\n")
+      //! Generate a list of strings from a string (list elements are delimited by "\n")
            std::list<std::string> stringToList ( const std::string & X );
 
-      //! generate a string from a vector of strings
+      //! Generate a string from a vector of strings
            std::string listToString ( const std::vector<std::string> & X, bool separateStrings = false );
 
        //! Remove redundent lines (substrings must be separated by "\n"
@@ -141,7 +141,7 @@ namespace StringUtility
           This function was used before moving to C++ strings.  It remains in use in some
           places where the code still uses the older C style strings.
        */
-       //! replaced by equality operator in C++ string class
+       //! Replaced by equality operator in C++ string class
            // int isSameName ( const std::string& s1, const std::string& s2 );
 
            // char* stringDuplicate ( const char* tempString );

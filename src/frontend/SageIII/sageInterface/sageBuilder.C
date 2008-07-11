@@ -1019,7 +1019,45 @@ SgAssignInitializer * SageBuilder::buildAssignInitializer(SgExpression * operand
   return buildUnaryExpression<SgAssignInitializer>(operand_i);
 }
 
+//! Build an aggregate initializer
+SgAggregateInitializer * SageBuilder::buildAggregateInitializer(SgExprListExp * initializers/* = NULL*/)
+{
+  SgAggregateInitializer* result = new SgAggregateInitializer(initializers);
+  ROSE_ASSERT(result);
+  if (initializers!=NULL)
+  {
+    initializers->set_parent(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+//! Build sizeof() expression with an expression parameter
+SgSizeOfOp* SageBuilder::buildSizeOfOp(SgExpression* exp/*= NULL*/)
+{
+  SgType* exp_type =NULL;
+  if (exp) exp_type = exp->get_type();
 
+  SgSizeOfOp* result = new SgSizeOfOp(exp,NULL, NULL);
+  //SgSizeOfOp* result = new SgSizeOfOp(exp,NULL, exp_type);
+  ROSE_ASSERT(result);
+  if (exp)
+  {
+    exp->set_parent(result);
+    markLhsValues(result);
+  }
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build sizeof() expression with a type parameter
+SgSizeOfOp* SageBuilder::buildSizeOfOp(SgType* type /* = NULL*/)
+{
+  SgSizeOfOp* result = new SgSizeOfOp((SgExpression*)NULL,type,NULL);
+  //SgSizeOfOp* result = new SgSizeOfOp((SgExpression*)NULL,type,type);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
 
 SgExprListExp * SageBuilder::buildExprListExp(SgExpression * expr1, SgExpression* expr2, SgExpression* expr3, SgExpression* expr4, SgExpression* expr5, SgExpression* expr6, SgExpression* expr7, SgExpression* expr8, SgExpression* expr9, SgExpression* expr10)
 {
@@ -1128,8 +1166,11 @@ SageBuilder::buildOpaqueVarRefExp(const std::string& name,SgScopeStatement* scop
   SgSymbol * symbol = lookupSymbolInParentScopes(name,scope); 
   if (symbol)
   {
-    cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
-    ROSE_ASSERT(false);
+    // Can be the same opaque var ref built before
+  //  cerr<<"Error: trying to build an opaque var ref when the variable is actual explicit!"<<endl;
+   //    ROSE_ASSERT(false);
+     ROSE_ASSERT(isSgVariableSymbol(symbol));
+     result = buildVarRefExp(isSgVariableSymbol(symbol));  
   }
   else
   {
