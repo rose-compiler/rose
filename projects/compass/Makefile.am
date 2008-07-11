@@ -54,7 +54,7 @@ compass_makefile.inc: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compass_scripts/bu
 compassCheckerDocs.tex: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/compass_scripts/compass_submission_setup_docsonly.sh
 	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | $(srcdir)/compass_scripts/compass_submission_setup_docsonly.sh $(srcdir) > compassCheckerDocs.tex
 
-buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS
+buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS compass_parameters
 	sed -n '1,/@@@/p' < $(srcdir)/buildCheckers.C.in > buildCheckers.C
 	cut -f 2 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,BUILD_ONE_CHECKER(&),' >> buildCheckers.C
 	sed -n '/@@@/,$$p' < $(srcdir)/buildCheckers.C.in >> buildCheckers.C
