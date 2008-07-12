@@ -257,7 +257,8 @@ BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw_ModifyArrayIndex::See
 
      ROSE_ASSERT(astNode != NULL);
 
-     AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
+  // AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
+     AstAttribute* existingAttribute = astNode->getAttribute("PrimarySecurityVulnerabilityForCloneAttribute");
      SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
   // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
@@ -388,7 +389,8 @@ BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw_AlterLoopBounds::Seed
 
      ROSE_ASSERT(astNode != NULL);
 
-     AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
+  // AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
+     AstAttribute* existingAttribute = astNode->getAttribute("PrimarySecurityVulnerabilityForCloneAttribute");
      SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
   // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
