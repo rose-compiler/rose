@@ -2,8 +2,6 @@
   #include <mpi.h>
 #endif
 
-int x = (int)MPI_COMM_WORLD;
-
 #include "rose.h"
 #include "compass.h"
 
