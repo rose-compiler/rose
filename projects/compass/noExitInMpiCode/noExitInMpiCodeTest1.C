@@ -1,5 +1,12 @@
 #include <stdlib.h>
-#include "mpi.h"
+
+void MPI_Init( int* argc, char*** argv )
+{
+}
+
+void MPI_Finalize()
+{
+}
 
 int main( int argc, char **argv )
 {
