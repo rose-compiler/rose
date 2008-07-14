@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.44 2008-06-27 13:48:22 gergo Exp $
+// $Id: CFGTraversal.C,v 1.45 2008-07-14 09:22:03 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -2019,8 +2019,11 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	    /* incoming information at the incoming edge
 	     * of et.after, outgoing on the incoming
 	     * edge of after */
-	    stmt_start
-	      = new StatementAttribute(et.get_after(), POS_PRE);
+     // GB (2008-07-14): This made the declaration's post info identical
+     // with the pre info. Which is not a surprise, since the declaration
+     // statement ICFG node hat not even been created yet.
+	 // stmt_start
+	 //   = new StatementAttribute(et.get_after(), POS_PRE);
 	    after = et.get_after();
                 
 	    /*
@@ -2037,12 +2040,16 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	    /* if we do not produce a block, the
 	     * declaration is a no-op, so we can just
 	     * use the post info as pre info */
-	    stmt_start = stmt_end;
+     // GB (2008-07-14): See above and below. The pre info should be the
+     // DeclareStmt's pre info, of course.
+	 // stmt_start = stmt_end;
 	  }
 	  /* declare the variable */
 	  new_block = allocate_new_block(new_block, after);
 	  new_block->statements.push_front(Ir::createDeclareStmt(declared_var,
 							   declared_var->get_type()));
+   // GB (2008-07-14): *Now* we can set the pre info attribute.
+      stmt_start = new StatementAttribute(new_block, POS_PRE);
 	  after = new_block;
 	  new_block = NULL;
 	}

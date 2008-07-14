@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.11 2008-06-27 13:47:46 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.12 2008-07-14 09:22:01 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -504,3 +504,16 @@ Fix:
     combination operator, which will map the above case to top.
 Status:
     Resolved 2008-06-25, GB
+
+
+Logged:
+    2008-07-14, GB
+Symptoms:
+    A DeclareStmt's pre and post info are identical (spotted by Markus).
+Reason:
+    In the ICFG builder, the declaration's pre info position was computed
+    from a wrong ICFG node, before the correct one had even been created.
+Fix:
+    Compute the pre info attribute from the correct ICFG node.
+Status:
+    Resolved 2008-07-14, GB
