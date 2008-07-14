@@ -1,3 +1,9 @@
+#ifdef ROSE_MPI
+  #include <mpi.h>
+#endif
+
+int x = (int)MPI_COMM_WORLD;
+
 #include "rose.h"
 #include "compass.h"
 
@@ -50,6 +56,15 @@ int main(int argc, char** argv)
   // This has been moved ahead of the parsing of the AST so that it is more 
   // obvious when it is a problem.
      Compass::Parameters params(Compass::findParameterFile());
+
+#ifdef ROSE_MPI
+     // Initialize MPI if needed...
+     // need to do this to make test cases pass with MPI. 
+     /* setup MPI */
+     MPI_Init(&argc, &argv);
+     MPI_Comm_rank(MPI_COMM_WORLD, &Compass::my_rank);
+     MPI_Comm_size(MPI_COMM_WORLD, &Compass::processes);
+#endif
 
   // Use a modified commandline that inserts specific additional options
   // to the ROSE frontend to make use with Compass more appropriate.
@@ -133,5 +148,8 @@ int main(int argc, char** argv)
   // Just set the project, the report will be generated upon calling the destructor for "timer"
      timer_main.set_project(project);
 
+#ifdef ROSE_MPI
+  MPI_Finalize();
+#endif
      return 0;
    }
