@@ -47,8 +47,6 @@ buildCheckers( std::vector<Compass::TraversalBase*> &retVal,
 {
 
 ROSE_ASSERT(pr);
-#pragma omp critical (runDefUseAnalysisCompass)
-Compass::runDefUseAnalysis(pr);
 
 #define BUILD_ONE_CHECKER(NameCapitalized) \
     try { \
@@ -85,9 +83,32 @@ Compass::runDefUseAnalysis(pr);
 	  iItr != ruleDeselected.end(); iItr++ )
   {
 	retVal.erase(std::find(retVal.begin(),retVal.end(),*iItr));
+
   }
 
+   bool useDefAnalysis = false;
 
+   std::vector<Compass::TraversalBase*>::const_iterator it;
+   for (it= retVal.begin(); it!=retVal.end(); ++it) {
+     Compass::TraversalBase* base = *it;
+     try {
+       std::string result = 
+	 Compass::parseString(params[base->getName()+".defUseAnalysis"]);
+       if (result=="true") {
+	 useDefAnalysis = true;
+	 std::cout << " DefUse Analysis is used in " << base->getName() << std::endl;
+       }
+     } catch (const std::exception &e) { 
+     }     
+     
+   }
+   if (useDefAnalysis) {
+     std::cout << "Using DefUse Analysis ... " << std::endl;
+#pragma omp critical (runDefUseAnalysisCompass)
+     Compass::runDefUseAnalysis(pr);
+   } else {
+     std::cout << "DefUse Analysis disabled... " << std::endl;
+   }
 
   return;
 } //buildCheckers()
