@@ -178,6 +178,10 @@ NEFileHeader::unparse(FILE *f)
     /* The extended DOS header */
     if (dos2_header)
         dos2_header->unparse(f);
+
+    /* The section table and all the non-synthesized sections */
+    if (section_table)
+        section_table->unparse(f);
 }
     
 /* Print some debugging information */
@@ -229,6 +233,11 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", dos2_header->get_id(), dos2_header->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
+    }
+    if (section_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", section_table->get_id(), section_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
 }
 
@@ -434,8 +443,7 @@ parse(ExecFile *ef)
     ne_header->set_dos2_header(dos2_header);
 
     /* Construct the section table and its sections (non-synthesized sections) */
-    new NESectionTable(ne_header);
-//    ne_header->set_section_table(new NESectionTable(ne_header));
+    ne_header->set_section_table(new NESectionTable(ne_header));
 
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();

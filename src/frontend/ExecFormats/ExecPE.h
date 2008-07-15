@@ -174,7 +174,7 @@ class PEFileHeader : public ExecHeader {
   public:
     PEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(PEFileHeader_disk)), /*extended in ctor()*/
-        section_table(NULL), coff_symtab(NULL)
+        dos2_header(NULL), section_table(NULL), coff_symtab(NULL)
         {ctor(f, offset);}
     virtual ~PEFileHeader() {}
     void add_rvasize_pairs();

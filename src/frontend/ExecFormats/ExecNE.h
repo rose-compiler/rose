@@ -7,6 +7,10 @@
 namespace Exec {
 namespace NE {
 
+/* Forwards */
+class NEFileHeader;
+class NESectionTable;
+    
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an NE file
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,7 +84,7 @@ class NEFileHeader : public ExecHeader {
   public:
     NEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(NEFileHeader_disk)),
-        dos2_header(NULL)
+        dos2_header(NULL), section_table(NULL)
         {ctor(f, offset);}
     virtual ~NEFileHeader() {}
     virtual void unparse(FILE*);
@@ -90,6 +94,8 @@ class NEFileHeader : public ExecHeader {
     /* Accessors for protected/private data members */
     ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
     void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
+    NESectionTable *get_section_table() {return section_table;}
+    void set_section_table(NESectionTable *ot) {section_table=ot;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned char e_res1[9];
@@ -103,6 +109,7 @@ class NEFileHeader : public ExecHeader {
     void ctor(ExecFile *f, addr_t offset);
     void *encode(NEFileHeader_disk*);
     ExtendedDOSHeader *dos2_header;
+    NESectionTable *section_table;
 };
 
 
