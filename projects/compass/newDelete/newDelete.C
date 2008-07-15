@@ -9,7 +9,6 @@
 #include "compass.h"
 #include "newDelete.h"
 
-#include <mpi.h>
 
 using namespace std;
 
