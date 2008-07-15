@@ -31,8 +31,9 @@ enum ByteOrder {
     
 enum ExecFamily {
     FAMILY_UNSPECIFIED,
-    FAMILY_ELF,                                         /* Unix Executable and Linking Format */
     FAMILY_DOS,                                         /* Microsoft DOS format */
+    FAMILY_ELF,                                         /* Unix Executable and Linking Format */
+    FAMILY_NE,                                          /* Microsoft New Executable Format */
     FAMILY_PE                                           /* Microsoft Portable Executable Format */
 };
 

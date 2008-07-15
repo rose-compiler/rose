@@ -34,6 +34,8 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     e_cs                = le_to_host(disk->e_cs);
     e_relocs_offset     = le_to_host(disk->e_relocs_offset);
     e_overlay           = le_to_host(disk->e_overlay);
+    for (size_t i=0; i<NELMTS(e_res1); i++)
+        e_res1[i]       = le_to_host(disk->e_res1[i]);
 
     /* Magic number */
     magic.push_back(disk->e_magic[0]);
@@ -76,6 +78,8 @@ DOSFileHeader::encode(DOSFileHeader_disk *disk)
     host_to_le(e_cs,                 &(disk->e_cs));
     host_to_le(e_relocs_offset,      &(disk->e_relocs_offset));
     host_to_le(e_overlay,            &(disk->e_overlay));
+    for (size_t i=0; i<NELMTS(e_res1); i++)
+        host_to_le(e_res1[i],        &(disk->e_res1[i]));
     return disk;
 }
     
@@ -124,6 +128,9 @@ DOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_cs",                 e_cs);
     fprintf(f, "%s%-*s = byte %"PRIu64"\n",        p, w, "e_relocs_offset",      e_relocs_offset);
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            e_overlay);
+    for (size_t i=0; i<NELMTS(e_res1); i++) {
+        fprintf(f, "%s%-*s = [%zd] %u\n",          p, w, "e_res1",               i, e_res1[i]);
+    }
     if (relocs) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "relocs", relocs->get_id(), relocs->get_name().c_str());
     } else {

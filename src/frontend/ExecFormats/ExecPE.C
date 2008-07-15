@@ -67,10 +67,10 @@ ExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ExecSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[0]",   e_res1[0]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[1]",   e_res1[1]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[2]",   e_res1[2]);
-    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res[3]",   e_res1[3]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[0]",   e_res1[0]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[1]",   e_res1[1]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[2]",   e_res1[2]);
+    fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res1[3]",   e_res1[3]);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oemid",    e_oemid);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_oeminfo",  e_oeminfo);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[0]",  e_res2[0]);
@@ -600,7 +600,7 @@ PESectionTable::ctor(PEFileHeader *fhdr)
         } else {
             section = new PESection(fhdr->get_file(), entry->physical_offset, entry->physical_size);
         }
-        section->set_synthesized(true);
+        section->set_synthesized(false);
         section->set_name(entry->name);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);

@@ -17,12 +17,12 @@ class PEImportHintName;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct ExtendedDOSHeader_disk {
-    uint16_t    e_res1[4];              /* reserved */
-    uint16_t    e_oemid;                /* OEM Identifier */
-    uint16_t    e_oeminfo;              /* other OEM information; oemid specific */
-    uint16_t    e_res2[10];             /* reserved */
-    uint32_t    e_lfanew;               /* file offset of new exe (PE) header */
-} __attribute__((packed));
+    unsigned char e_res1[4];            /* 0x00 reserved */
+    uint16_t    e_oemid;                /* 0x04 OEM Identifier */
+    uint16_t    e_oeminfo;              /* 0x06 other OEM information; oemid specific */
+    uint16_t    e_res2[10];             /* 0x08 reserved */
+    uint32_t    e_lfanew;               /* 0x1c file offset of new exe (PE) header */
+} __attribute__((packed));              /* 0x20 */
 
 class ExtendedDOSHeader : public ExecSection {
   public:
