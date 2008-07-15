@@ -180,6 +180,7 @@ class PEFileHeader : public ExecHeader {
     void add_rvasize_pairs();
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    virtual const char *format_name() {return "PE";}
 
     /* Accessors for protected/private data members */
     ExtendedDOSHeader *get_dos2_header() {return dos2_header;}

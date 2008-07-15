@@ -329,6 +329,7 @@ class ExecFile {
     /* Functions for file headers (a kind of section) */
     void add_header(ExecHeader*);                       /* Add a new file header to the list of headers for this file */
     std::vector<ExecHeader*>& get_headers() {return headers;}/* all file header sections */
+    const char *format_name();                          /* Return a string describing the file format */
 
   private:
     void ctor(std::string file_name);
@@ -439,6 +440,7 @@ class ExecHeader : public ExecSection {
         {ctor(ef, offset, size);}
     virtual ~ExecHeader();
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    virtual const char *format_name() = 0;
     
     /* Functions for dynamically linked libraries (DLLs) */
     void add_dll(ExecDLL *dll);                         /* Add new DLL to list of DLLs for this file */

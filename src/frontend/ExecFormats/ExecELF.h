@@ -65,6 +65,7 @@ class ElfFileHeader : public ExecHeader {
     void *encode(ByteOrder, Elf32FileHeader_disk*);
     void *encode(ByteOrder, Elf64FileHeader_disk*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    virtual const char *format_name() {return "ELF";}
 
     /* These are the native-format versions of the same members described in Elf*FileHeader_disk */
     unsigned char       e_ident_file_class, e_ident_data_encoding, e_ident_file_version, e_ident_padding[9];
