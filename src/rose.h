@@ -1,3 +1,4 @@
+/* Copyright © 2008 Robb Matzke. All rights reserved. */
 // rose.h -- header file for the ROSE Optimizing Preprocessor
 
 #ifndef ROSE_H
@@ -126,6 +127,7 @@ namespace ELF{
   #include "ExecGeneric.h"
   #include "ExecELF.h"
   #include "ExecPE.h"
+  #include "ExecNE.h"
 #endif
 
 // added .h file for error check transformations
