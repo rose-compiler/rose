@@ -194,7 +194,7 @@ rm -f $AWKFILE
 echo
 echo "########################################################################"
 
-if [ "$BAD" != "0" ]; then
+if [ "$BAD" != "0" && x$SATIRE_BATCH_TESTING != xtrue ]; then
     echo "Press <Ctrl-C> to abort or <Return> to continue"
     read
 fi
