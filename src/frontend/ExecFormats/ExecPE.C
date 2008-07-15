@@ -799,57 +799,63 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
         PEDLL *dll = new PEDLL(dll_name);
         dll->set_idir(idir);
 
-        /* The thunks is an array of RVAs that point to hint/name pairs for the entities imported from the DLL that we're
-         * currently processing. Each hint is a two-byte little-endian value. Each name is NUL-terminated. The array address
-         * and hint/name pair addresses are all specified with RVAs, but we need to convert them to section offsets in order
-         * to read them since we've not mapped sections to their preferred base addresses. */
-        if (idir->hintnames_rva < mapped_rva)
-            throw FormatError("hint/name RVA is before beginning of \".idata\" object");
-        if (idir->bindings_rva < mapped_rva)
-            throw FormatError("bindings RVA is before beginning of \".idata\" object");
-        addr_t hintname_rvas_offset = idir->hintnames_rva - mapped_rva; /*section offset of RVA array for hintnames*/
-        addr_t bindings_offset  = idir->bindings_rva  - mapped_rva; /*section offset of RVA array for bindings*/
-        while (1) {
+        /* The idir->hintname_rvas is an (optional) RVA for a NULL-terminated array whose members are either:
+         *    1. an RVA of a hint/name pair (if the high-order bit of the array member is clear)
+         *    2. an ordinal if the high-order bit is set */
+        if (idir->hintnames_rva!=0) {
+            if (idir->hintnames_rva < mapped_rva)
+                throw FormatError("hint/name RVA is before beginning of \".idata\" object");
+            for (addr_t hintname_rvas_offset = idir->hintnames_rva - mapped_rva; /*section offset of RVA/ordinal array */
+                 1; 
+                 hintname_rvas_offset += fhdr->get_word_size()) {
+                addr_t hintname_rva = 0; /*RVA of the hint/name pair*/
+                bool import_by_ordinal=false; /*was high-order bit of array element set?*/
+                if (4==fhdr->get_word_size()) {
+                    hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
+                    import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+                } else if (8==fhdr->get_word_size()) {
+                    hintname_rva = le_to_host(*(const uint64_t*)content(hintname_rvas_offset, sizeof(uint64_t)));
+                    import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+                } else {
+                    ROSE_ASSERT(!"unsupported word size");
+                }
 
-            /* Get the RVA of the hint/name pair by reading a member from the hint/name RVA array */
-            addr_t hintname_rva;
-            bool import_by_ordinal;
-            if (4==fhdr->get_word_size()) {
-                hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
-                import_by_ordinal = (hintname_rva & 0x80000000) != 0;
-            } else if (8==fhdr->get_word_size()) {
-                hintname_rva = le_to_host(*(const uint64_t*)content(hintname_rvas_offset, sizeof(uint64_t)));
-                import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
-            } else {
-                ROSE_ASSERT(!"unsupported word size");
+                /* Array is NULL terminated */
+                if (0==hintname_rva)
+                    break;
+
+                /* Add arrary value and hint/name pair to the DLL object */
+                dll->add_hintname_rva(hintname_rva);
+                if (!import_by_ordinal) {
+                    addr_t hintname_offset = (hintname_rva & 0x7fffffff) - mapped_rva;
+                    PEImportHintName *hintname = new PEImportHintName(this, hintname_offset);
+                    dll->add_function(hintname->get_name());
+                    dll->add_hintname(hintname);
+                }
             }
+        }
+        
+        /* The idir->bindings_rva is a NULL-terminated array of RVAs */
+        if (idir->bindings_rva!=0) {
+            if (idir->bindings_rva < mapped_rva)
+                throw FormatError("bindings RVA is before beginning of \".idata\" object");
+            for (addr_t bindings_offset  = idir->bindings_rva  - mapped_rva; /*section offset of RVA array for bindings*/
+                 1; 
+                 bindings_offset += fhdr->get_word_size()) {
+                addr_t binding=0;
+                if (4==fhdr->get_word_size()) {
+                    binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
+                } else if (8==fhdr->get_word_size()) {
+                    binding = le_to_host(*(const uint64_t*)content(bindings_offset, sizeof(uint64_t)));
+                } else {
+                    ROSE_ASSERT(!"unsupported word size");
+                }
 
-            /* Get the binding by reading a member of the bindings array */
-            addr_t binding;
-            if (4==fhdr->get_word_size()) {
-                binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
-            } else if (8==fhdr->get_word_size()) {
-                binding = le_to_host(*(const uint64_t*)content(bindings_offset, sizeof(uint64_t)));
-            } else {
-                ROSE_ASSERT(!"unsupported word size");
+                /* Array is NULL terminated; otherwise add binding to DLL object */
+                if (0==binding)
+                    break;
+                dll->add_binding(binding);
             }
-
-            /* Add hint/name RVA and binding to list; list is zero terminated in the file but we do not store the zero entries
-             * in the vectors. */
-            if (0==hintname_rva) break; /*list of RVAs is null terminated */
-            dll->add_hintname_rva(hintname_rva);
-            dll->add_binding(binding);
-            hintname_rvas_offset += fhdr->get_word_size();
-            bindings_offset += fhdr->get_word_size();
-
-            /* Read the hint/name pair */
-            if (!import_by_ordinal) {
-                addr_t hintname_offset = (hintname_rva & 0x7fffffff) - mapped_rva;
-                PEImportHintName *hintname = new PEImportHintName(this, hintname_offset);
-                dll->add_function(hintname->get_name());
-                dll->add_hintname(hintname);
-            }
-            
         }
 
         /* Add dll to both this section and to the file header */
@@ -885,66 +891,70 @@ PEImportSection::unparse(FILE *f)
         fputs(dll->get_name().c_str(), f);
         fputc('\0', f);
 
-        /* Hint/name RVAs and their hint/name pairs */
-        ROSE_ASSERT(idir->hintnames_rva >= mapped_rva);
-        const addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
-        ROSE_ASSERT(idir->bindings_rva >= mapped_rva);
-        const addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
-        const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
-        const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
-        const std::vector<addr_t> &bindings = dll->get_bindings();
-        ROSE_ASSERT(hintname_rvas.size()==bindings.size());
-        for (size_t i=0; i<=hintname_rvas.size(); i++) {
-            /* Hint/name RVA */
-            addr_t hintname_rva = i<hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
-            bool import_by_ordinal;
-            status = fseek(f, hintname_rvas_offset + i*fhdr->get_word_size(), SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            if (4==fhdr->get_word_size()) {
-                uint32_t rva_le;
-                host_to_le(hintname_rva, &rva_le);
-                nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
-                import_by_ordinal = (hintname_rva & 0x80000000) != 0;
-            } else if (8==fhdr->get_word_size()) {
-                uint64_t rva_le;
-                host_to_le(hintname_rva, &rva_le);
-                nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
-                import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
-            } else {
-                ROSE_ASSERT(!"unsupported word size");
-            }
-            ROSE_ASSERT(1==nwrite);
+        /* Write the hint/name pairs and the array entries that point to them. */
+        if (idir->hintnames_rva!=0) {
+            ROSE_ASSERT(idir->hintnames_rva >= mapped_rva);
+            addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
+            const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
+            const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
+            for (size_t i=0; i<=hintname_rvas.size(); i++) {
+                /* Hint/name RVA */
+                addr_t hintname_rva = i<hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
+                bool import_by_ordinal=false;
+                status = fseek(f, hintname_rvas_offset + i*fhdr->get_word_size(), SEEK_SET);
+                ROSE_ASSERT(status>=0);
+                if (4==fhdr->get_word_size()) {
+                    uint32_t rva_le;
+                    host_to_le(hintname_rva, &rva_le);
+                    nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                    import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+                } else if (8==fhdr->get_word_size()) {
+                    uint64_t rva_le;
+                    host_to_le(hintname_rva, &rva_le);
+                    nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                    import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+                } else {
+                    ROSE_ASSERT(!"unsupported word size");
+                }
+                ROSE_ASSERT(1==nwrite);
             
-            /* Hint/name pair */
-            if (i<hintname_rvas.size() && !import_by_ordinal) {
-                addr_t hintname_offset = offset + (hintname_rvas[i] & 0x7fffffff) - mapped_rva; /*file offset of hint/name pair*/
-                hintnames[i]->unparse(f, hintname_offset);
+                /* Hint/name pair */
+                if (i<hintname_rvas.size() && !import_by_ordinal) {
+                    addr_t hintname_offset = offset + (hintname_rvas[i] & 0x7fffffff) - mapped_rva; /*file offset*/
+                    hintnames[i]->unparse(f, hintname_offset);
+                }
             }
-
-            /* Binding (typically same values as in the Hint/name RVA table) */
-            addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
-            status = fseek(f, bindings_offset + i*fhdr->get_word_size(), SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            if (4==fhdr->get_word_size()) {
-                uint32_t binding_le;
-                host_to_le(binding, &binding_le);
-                nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
-            } else if (8==fhdr->get_word_size()) {
-                uint64_t binding_le;
-                host_to_le(binding, &binding_le);
-                nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
-            } else {
-                ROSE_ASSERT(!"unsupported word size");
+        }
+        
+        /* Write the bindings array */
+        if (idir->bindings_rva!=0) {
+            ROSE_ASSERT(idir->bindings_rva >= mapped_rva);
+            const addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
+            const std::vector<addr_t> &bindings = dll->get_bindings();
+            for (size_t i=0; i<=bindings.size(); i++) {
+                addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
+                status = fseek(f, bindings_offset + i*fhdr->get_word_size(), SEEK_SET);
+                ROSE_ASSERT(status>=0);
+                if (4==fhdr->get_word_size()) {
+                    uint32_t binding_le;
+                    host_to_le(binding, &binding_le);
+                    nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+                } else if (8==fhdr->get_word_size()) {
+                    uint64_t binding_le;
+                    host_to_le(binding, &binding_le);
+                    nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+                } else {
+                    ROSE_ASSERT(!"unsupported word size");
+                }
+                ROSE_ASSERT(1==nwrite);
             }
-            ROSE_ASSERT(1==nwrite);
         }
     }
 
-    /* Directory list is zero terminated */
+    /* DLL list is zero terminated */
     {
         PEImportDirectory_disk zero;
         memset(&zero, 0, sizeof zero);
-        fprintf(stderr, "ROBB: dlls.size=%zu, sizeof=%zu\n", dlls.size(), sizeof zero);
         int status = fseek(f, offset + dlls.size()*sizeof zero, SEEK_SET);
         ROSE_ASSERT(status>=0);
         size_t nwrite = fwrite(&zero, sizeof zero, 1, f);
