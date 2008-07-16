@@ -133,11 +133,16 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   FunctionNamesPreTraversal preTraversal;
   MyAnalysis myanalysis;
   int initialDepth=0;
-  std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
-  for (int i = bounds.first; i < bounds.second; i++) {
-    std::cout << my_rank << ": DEFUSE bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ in range length: " 
-	      << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
+  std::vector<int> bounds;
+
+  myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
+  /*
+    std::pair<int, int> bounds = myanalysis.computeFunctionIndicesPerNode(root, initialDepth, &preTraversal);
+    for (int i = bounds.first; i < bounds.second; i++) {
+      std::cerr << my_rank << ": DEFUSE bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ in range length: " 
+    	      << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
       "   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
+
     SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
     SgFunctionDefinition* funcDef = NULL;
     if (funcDecl)
@@ -147,6 +152,24 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       resultDefUseNodes+=nrNodes;
     }
   }
+  */
+
+
+  for (int i = 0; i<(int)bounds.size();i++) {
+    //std::cerr << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << std::endl;
+    if (bounds[i]== my_rank) {
+
+      SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
+      SgFunctionDefinition* funcDef = NULL;
+      if (funcDecl)
+	funcDef = funcDecl->get_definition();
+      if (funcDef) {
+	int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+	resultDefUseNodes+=nrNodes;
+      }
+    }
+  }
+
   // ---------------- LOAD BALANCING of DEFUSE -------------------
 
 #if 0

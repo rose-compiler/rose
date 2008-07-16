@@ -24,7 +24,7 @@ else
 noinst_LTLIBRARIES = libdistributedMemoryAnalysis.la
 endif
 libdistributedMemoryAnalysis_la_SOURCES = DistributedMemoryAnalysis.C functionNames.C
-libdistributedMemoryAnalysis_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
+libdistributedMemoryAnalysis_la_LIBADD = $(LIBS_WITH_RPATH) #$(ROSE_LIBS) 
 
 libdistributedMemoryAnalysis.la: $(libdistributedMemoryAnalysis_la_OBJECTS) $(libdistributedMemoryAnalysis_la_DEPENDENCIES) 
 	$(CXXLINK) -rpath $(libdir) $(libdistributedMemoryAnalysis_la_LDFLAGS) $(libdistributedMemoryAnalysis_la_OBJECTS) $($(COMPASS_CHECKER_la_LIBADD) $(LIBS)
