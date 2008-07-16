@@ -492,12 +492,28 @@ bool isNonconstReference(SgType* t);
 bool isReferenceType(SgType* t);
 
 //! Is this a const type?
+/* const char* p = "aa"; is not treated as having a const type. It is a pointer to const char.
+ * Similarly, neither for const int b[10]; or const int & c =10;
+ * The standard says, "A compound type is not cv-qualified by the cv-qualifiers (if any) of
+the types from which it is compounded. Any cv-qualifiers applied to an array type affect the array element type, not the array type". 
+ */
 bool isConstType(SgType* t);
 
+//! Is this a volatile type?
+bool isVolatileType(SgType* t);
+
+//! Is this a restrict type?
+bool isRestrictType(SgType* t);
+
 //! Is this a scalar type?
+/*! We define the following SgType as scalar types: char, short, int, long , void, Wchar, Float, double, long long, string, bool, complex, imaginary
+ */
 bool isScalarType(SgType* t);
 
-//! Is a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
+//! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is an UPC array. 
+size_t getArrayElementCount(SgArrayType* t);
+
+//! Is an UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
  * Note: we classify private-to-shared as a shared type for convenience here. It is indeed a private type in strict sense. 
   AST graph for some examples:
@@ -512,8 +528,11 @@ bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
 //! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Input parameter must be a UPC shared type.
 bool isUpcPhaseLessSharedType (SgType* t);
 
-//! Is a UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
+//! Is an UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
 bool isUpcPrivateToSharedType(SgType* t);
+
+//! Is an UPC array with dimension of X*THREADS
+bool isUpcArrayWithThreads(SgArrayType* t);
 
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
 SgType* lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope=NULL);
