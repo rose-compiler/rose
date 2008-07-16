@@ -232,7 +232,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                AstAttribute* attribute = i->second;
                ROSE_ASSERT(attribute != NULL);
 
-               printf ("Calling attribute->additionalNodeInfo() \n");
+            // printf ("Calling attribute->additionalNodeInfo() \n");
                std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
                printf ("nodeList.size() = %lu \n",nodeList.size());
                for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
@@ -240,7 +240,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                     SgNode* nodePtr   = i_node->nodePtr;
                     string nodelabel  = i_node->label;
                     string nodeoption = i_node->options;
-                    printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
+                 // printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
                  // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
                     dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
                   }

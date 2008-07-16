@@ -259,94 +259,118 @@ BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw_ModifyArrayIndex::See
 
   // AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
      AstAttribute* existingAttribute = astNode->getAttribute("PrimarySecurityVulnerabilityForCloneAttribute");
-     SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
+  // SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
+     PrimarySecurityVulnerabilityForCloneAttribute* securityVulnerabilityAttribute = dynamic_cast<PrimarySecurityVulnerabilityForCloneAttribute*>(existingAttribute);
 
-  // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
-  // if (securityVulnerabilityAttribute != NULL)
-
+#if 0
   // Make sure this is the set of security flaws that is intended to use this seeding approach.
      ROSE_ASSERT(securityVulnerabilityAttribute == NULL || securityVulnerabilityAttribute->vulnerabilityPointer != NULL);
      bool isAnAssociatedVulnerability = securityVulnerabilityAttribute != NULL && 
           ( securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.find(seedingSecurityFlaw) != 
             securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.end());
-     if (securityVulnerabilityAttribute != NULL && isAnAssociatedVulnerability == true)
+#else
+  // if (securityVulnerabilityAttribute != NULL && securityVulnerabilityAttribute->get_value() == 5)
+  // if (securityVulnerabilityAttribute != NULL)
+     if (securityVulnerabilityAttribute != NULL)
         {
-
-          SgPntrArrRefExp *arrayReference = isSgPntrArrRefExp(astNode);
-
-       // The following code is unexpectedly complex because we have to handle multi-dimensional arrays.
-
-       // We need to recurse down to where the lhs is finally a SgVarRefExp (so that we can get the 
-       // array name, so that we can get the type information for the array (then we will travrse the 
-       // type information to get the array bounds for each dimension.
-          std::vector<SgPntrArrRefExp*> arrayReferenceStack;
-          SgArrayType* arrayType = NULL;
-          while (arrayReference != NULL && arrayType == NULL)
+          ROSE_ASSERT(securityVulnerabilityAttribute->vulnerabilityPointer != NULL);
+          printf ("seedingSecurityFlaw = %p \n",seedingSecurityFlaw);
+          for (std::set<SeedSecurityFlaw*>::iterator i = securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.begin(); i != securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.end(); i++)
              {
-               arrayReferenceStack.push_back(arrayReference);
-
-               SgVarRefExp* arrayVarRef = isSgVarRefExp(arrayReference->get_lhs_operand());
-               if (arrayVarRef != NULL)
-                  {
-                    ROSE_ASSERT(arrayVarRef->get_symbol() != NULL);
-                    SgInitializedName* arrayName = isSgInitializedName(arrayVarRef->get_symbol()->get_declaration());
-                    ROSE_ASSERT(arrayName != NULL);
-                 // printf ("arrayName->get_name() = %s \n",arrayName->get_name().str());
-                    arrayType = isSgArrayType(arrayName->get_type());
-                    ROSE_ASSERT(arrayType != NULL);
-                  }
-                 else
-                  {
-                 // printf ("Recursing one more level into the multi-dimensional array indexing... \n");
-                    arrayReference = isSgPntrArrRefExp(arrayReference->get_lhs_operand());
-                    ROSE_ASSERT(arrayReference != NULL);
-                  }
+               printf ("associatedSeedingTechniques i = %p \n",*i);
              }
+          bool isAnAssociatedVulnerability = securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.find(seedingSecurityFlaw) != 
+                                        securityVulnerabilityAttribute->vulnerabilityPointer->associatedSeedingTechniques.end();
 
-          ROSE_ASSERT(arrayType != NULL);
-
-       // Now recurse back up the stack to do the actual transformations 
-          while (arrayReferenceStack.empty() == false)
+          printf ("isAnAssociatedVulnerability = %s \n",isAnAssociatedVulnerability ? "true" : "false");
+          if (isAnAssociatedVulnerability == true)
+#endif
              {
-               ROSE_ASSERT(arrayType->get_base_type() != NULL);
-            // printf ("arrayReferenceStack.size() = %ld arrayType->get_base_type() = %p = %s \n",arrayReferenceStack.size(),arrayType->get_base_type(),arrayType->get_base_type()->class_name().c_str());
 
-               arrayReference = arrayReferenceStack.back();
+               SgPntrArrRefExp *arrayReference = isSgPntrArrRefExp(astNode);
 
-               if (arrayType != NULL && arrayReference == isSgPntrArrRefExp(astNode))
+            // The following code is unexpectedly complex because we have to handle multi-dimensional arrays.
+
+            // We need to recurse down to where the lhs is finally a SgVarRefExp (so that we can get the 
+            // array name, so that we can get the type information for the array (then we will travrse the 
+            // type information to get the array bounds for each dimension.
+               std::vector<SgPntrArrRefExp*> arrayReferenceStack;
+               SgArrayType* arrayType = NULL;
+               while (arrayReference != NULL && arrayType == NULL)
                   {
-                    SgExpression* arraySize = arrayType->get_index();
-                    SgTreeCopy copyHelp;
-                 // Make a copy of the expression used to hold the array size in the array declaration.
-                    SgExpression* arraySizeCopy = isSgExpression(arraySize->copy(copyHelp));
-                    ROSE_ASSERT(arraySizeCopy != NULL);
+                    arrayReferenceStack.push_back(arrayReference);
 
-                 // This is the existing index expression
-                    SgExpression* indexExpression = arrayReference->get_rhs_operand();
-                    ROSE_ASSERT(indexExpression != NULL);
-
-                 // Build a new expression: "array[n]" --> "array[n+arraySizeCopy]", where the arraySizeCopy is a size of "array"
-                    SgExpression* newIndexExpression = buildAddOp(indexExpression,arraySizeCopy);
-
-                 // Subsitute the new expression for the old expression
-                    arrayReference->set_rhs_operand(newIndexExpression);
+                    SgVarRefExp* arrayVarRef = isSgVarRefExp(arrayReference->get_lhs_operand());
+                    if (arrayVarRef != NULL)
+                       {
+                         ROSE_ASSERT(arrayVarRef->get_symbol() != NULL);
+                         SgInitializedName* arrayName = isSgInitializedName(arrayVarRef->get_symbol()->get_declaration());
+                         ROSE_ASSERT(arrayName != NULL);
+                      // printf ("arrayName->get_name() = %s \n",arrayName->get_name().str());
+                         arrayType = isSgArrayType(arrayName->get_type());
+                         ROSE_ASSERT(arrayType != NULL);
+                       }
+                      else
+                       {
+                      // printf ("Recursing one more level into the multi-dimensional array indexing... \n");
+                         arrayReference = isSgPntrArrRefExp(arrayReference->get_lhs_operand());
+                         ROSE_ASSERT(arrayReference != NULL);
+                       }
                   }
 
-               ROSE_ASSERT(arrayType->get_base_type() != NULL);
-               arrayType = isSgArrayType(arrayType->get_base_type());
+               ROSE_ASSERT(arrayType != NULL);
 
-               arrayReferenceStack.pop_back();
+            // Now recurse back up the stack to do the actual transformations 
+               while (arrayReferenceStack.empty() == false)
+                  {
+                    ROSE_ASSERT(arrayType->get_base_type() != NULL);
+                 // printf ("arrayReferenceStack.size() = %ld arrayType->get_base_type() = %p = %s \n",arrayReferenceStack.size(),arrayType->get_base_type(),arrayType->get_base_type()->class_name().c_str());
+
+                    arrayReference = arrayReferenceStack.back();
+
+                    if (arrayType != NULL && arrayReference == isSgPntrArrRefExp(astNode))
+                       {
+                         SgExpression* arraySize = arrayType->get_index();
+                         SgTreeCopy copyHelp;
+                      // Make a copy of the expression used to hold the array size in the array declaration.
+                         SgExpression* arraySizeCopy = isSgExpression(arraySize->copy(copyHelp));
+                         ROSE_ASSERT(arraySizeCopy != NULL);
+
+                      // This is the existing index expression
+                         SgExpression* indexExpression = arrayReference->get_rhs_operand();
+                         ROSE_ASSERT(indexExpression != NULL);
+
+                      // Build a new expression: "array[n]" --> "array[n+arraySizeCopy]", where the arraySizeCopy is a size of "array"
+                         SgExpression* newIndexExpression = buildAddOp(indexExpression,arraySizeCopy);
+
+                      // Subsitute the new expression for the old expression
+                         arrayReference->set_rhs_operand(newIndexExpression);
+                       }
+
+                    ROSE_ASSERT(arrayType->get_base_type() != NULL);
+                    arrayType = isSgArrayType(arrayType->get_base_type());
+
+                    arrayReferenceStack.pop_back();
+                  }
+
+            // printf ("At base of BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw::SeedTraversal::visit()! \n");
+
+               addComment (astNode,"// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ");
+
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
              }
-
-       // printf ("At base of BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw::SeedTraversal::visit()! \n");
-
-          addComment (astNode,"// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ");
-
-#if 0
+#if 1
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
         }
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 // **************************************************************************
