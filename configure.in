@@ -331,9 +331,6 @@ ROSE_SUPPORT_PYTHON
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 ROSE_SUPPORT_JAVA
 
-# Call supporting macro for the Java JVM required by the Open Fortran Parser (for Fortran 2003 support)
-ROSE_SUPPORT_JAVA_JVM
-
 # Call supporting macro for the Open Fortran Parser (for Fortran 2003 support)
 ROSE_SUPPORT_FORTRAN
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER,test ! "$with_openFortranParser" = no)
