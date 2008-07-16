@@ -257,7 +257,9 @@ computeFunctionIndicesPerNode(
 	//#endif
     }
 
-    int start_rank=1;
+    // changed this so it can be used for defuse for all processors
+    //    int start_rank=1;
+    int start_rank=0;
     //    std::cerr << " *********** processes : " << processes << std::endl;
     // if only one processor is defined then processor 0 does NOT have to do communication
     // and can hence perform the analysis
@@ -292,7 +294,7 @@ computeFunctionIndicesPerNode(
     }
     for (int rank = 0; rank < processes; rank++) {
       if (my_rank ==0 ) {
-	std::cout << " Processor : " << rank << "  has " << nrOfFunctions[rank] <<
+	std::cerr << " Processor : " << rank << "  has " << nrOfFunctions[rank] <<
 	  " functions. Processor weight: " << processorWeight[rank] << std::endl;
       }
     }
@@ -598,7 +600,7 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
     else
     {
 #if DIS_DEBUG_OUTPUT
-      std::cout << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount << 
+      std::cerr << "     inside function: " << node->class_name() << "  nodeCount =" << nodeCount << 
 	"   depth=" << inheritedValue << std::endl;
 #endif
         nodeCount++;
@@ -606,7 +608,11 @@ evaluateInheritedAttribute(SgNode *node, InheritedAttributeType inheritedValue)
 	// this weight is mostly used for the def-use checker
 	if (isSgNode(node))
 	  weightAssignOp++;
-
+	// for defuse we weight loops heigher
+	if (isSgWhileStmt(node) || isSgForStatement(node)
+	    || isSgDoWhileStmt(node)) {
+	    weightAssignOp+=(weightAssignOp)/5;
+	}
 	// the following weight should be used if null-deref is checked for
 	/*
 	if (isSgArrowExp(node) || isSgPointerDerefExp(node) ||
@@ -652,7 +658,8 @@ destroyInheritedValue(SgNode *node, InheritedAttributeType inheritedValue)
         nodeCounts.push_back(nodeCount);
 	//	double result = (double)weightAssignOp*(double)1/log((double)weightNullDeref+1);
 	//	funcWeights.push_back((int)result);
-	funcWeights.push_back(weightAssignOp*weightNullDeref);
+	//	funcWeights.push_back(weightAssignOp*weightNullDeref);
+	funcWeights.push_back(weightAssignOp);
 	//	std::cout << " pushing back func : " << funcDecl->get_name().str() << "   weightAssignOp : " << weightAssignOp << "  weightNullDeref : " << weightNullDeref <<
 	//  "  1/log(weightNullDeref) : " << (1/(log(weightNullDeref))) << "   result = " << result << std::endl;
         inFunc = false;
