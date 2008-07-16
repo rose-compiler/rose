@@ -18,25 +18,31 @@ bool isScalarType( SgType* t)
   case V_SgTypeChar :
   case V_SgTypeSignedChar :
   case V_SgTypeUnsignedChar :
+
   case V_SgTypeShort :
   case V_SgTypeSignedShort :
   case V_SgTypeUnsignedShort :
+
   case V_SgTypeInt :
   case V_SgTypeSignedInt :
   case V_SgTypeUnsignedInt :
+
   case V_SgTypeLong :
   case V_SgTypeSignedLong :
   case V_SgTypeUnsignedLong :
+
   case V_SgTypeVoid :
   case V_SgTypeWchar:
   case V_SgTypeFloat:
   case V_SgTypeDouble:
+
   case V_SgTypeLongLong:
   case V_SgTypeUnsignedLongLong:
   case V_SgTypeLongDouble:
+
   case V_SgTypeString:
   case V_SgTypeBool:
-// DQ (8/27/2006): change name of SgComplex to SgTypeComplex (for consistancy) and added SgTypeImaginary (C99 type).
+// DQ (8/27/2006): change name of SgComplex to SgTypeComplex (for consistency) and added SgTypeImaginary (C99 type).
   case V_SgTypeComplex:
   case V_SgTypeImaginary:
      return true;
@@ -56,8 +62,8 @@ bool isScalarType( SgType* t)
 
 // Is this a const type?
 bool isConstType(SgType* t) {
-  if (isSgReferenceType(t))
-    return isConstType(isSgReferenceType(t)->get_base_type());
+//  if (isSgReferenceType(t)) // reference type cannot be cv-qualified usually, 
+//    return isConstType(isSgReferenceType(t)->get_base_type());
   if (isSgTypedefType(t))
     return isConstType(isSgTypedefType(t)->get_base_type());
   if (isSgModifierType(t)) {
@@ -70,6 +76,36 @@ bool isConstType(SgType* t) {
   }
   return false;
 }
+
+// Is this a volatile type?
+bool isVolatileType(SgType* t) {
+  if (isSgTypedefType(t))
+    return isVolatileType(isSgTypedefType(t)->get_base_type());
+  if (isSgModifierType(t)) {
+    SgTypeModifier& modifier = isSgModifierType(t)->get_typeModifier();
+    SgConstVolatileModifier& cv = modifier.get_constVolatileModifier();
+    if (cv.isVolatile())
+      return true;
+    else
+      return isVolatileType(isSgModifierType(t)->get_base_type());
+  }
+  return false;
+}
+
+// Is this a restrict type?
+bool isRestrictType(SgType* t) {
+  if (isSgTypedefType(t))
+    return isRestrictType(isSgTypedefType(t)->get_base_type());
+  if (isSgModifierType(t)) {
+    SgTypeModifier& modifier = isSgModifierType(t)->get_typeModifier();
+    if (modifier.isRestrict())
+      return true;
+    else
+      return isRestrictType(isSgModifierType(t)->get_base_type());
+  }
+  return false;
+}
+
 
 // Is this type a non-constant reference type?
 bool isNonconstReference(SgType* t) {
@@ -99,6 +135,41 @@ bool isReferenceType(SgType* t) {
   }
   return false;
 }
+
+  //! Calculate the number of elements of an array type
+  
+  size_t getArrayElementCount(SgArrayType* t)
+  {
+    ROSE_ASSERT(t);
+    size_t result=1; 
+    SgExpression * indexExp =  t->get_index();
+
+    //strip off THREADS for UPC array with a dimension like dim*THREADS
+    if (isUpcArrayWithThreads(t))
+     {
+       SgMultiplyOp* multiply = isSgMultiplyOp(indexExp);
+       ROSE_ASSERT(multiply);
+       indexExp = multiply->get_lhs_operand();
+     }
+
+    // assume dimension default to 1 if not specified ,such as a[] 
+    if (indexExp == NULL) 
+      result = 1;
+    else 
+    { 
+      //Take advantage of the fact that the value expression is always SgUnsignedLongVal in AST
+      SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
+      ROSE_ASSERT(valExp); // TODO: return -1 is better ?
+      result = valExp->get_value(); 
+    }
+
+    // consider multi dimensional case 
+    SgArrayType* arraybase = isSgArrayType(t->get_base_type());
+    if (arraybase)
+      result = result * getArrayElementCount(arraybase);
+
+    return result;
+  } // getArrayElementCount()
 
 // Returns true if args is a valid argument type list for decl
 // Requires the exact argument list given -- conversions not handled
@@ -491,6 +562,25 @@ bool hasTrivialDestructor(SgType* t) {
     else 
       return false;
   } // isUpcPhaseLessSharedType
+
+  //! Is an UPC array with dimension of X*THREADS
+  /*!
+   * EDG-SAGE connection ensures that UPC array using THREADS dimension 
+   *  has an index expression of type SgMultiplyOp
+   * and operands (X and SgUpcThreads)
+   * TODO multi dimensional arrays
+   */
+  bool isUpcArrayWithThreads(SgArrayType* t)
+  {
+    ROSE_ASSERT(t!=NULL);
+    bool result = false;
+    SgExpression * exp = t->get_index();
+    SgMultiplyOp* multiply = isSgMultiplyOp(exp);
+    if (multiply)
+      if (isSgUpcThreads(multiply->get_rhs_operand()))
+        result = true;
+    return result;  
+  }
 
   SgType* getFirstVarType(SgVariableDeclaration* decl)
   {
