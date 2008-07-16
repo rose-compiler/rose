@@ -1,0 +1,2 @@
+public :: ASSIGNMENT( =)
+end
