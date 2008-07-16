@@ -314,6 +314,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   MPI_Barrier(MPI_COMM_WORLD);
   Compass::gettime(end_time_node);
   double restime = Compass::timeDifference(end_time_node, begin_time_node);
+  if (my_rank==0)
   std::cerr << ">> ---- DefUse Analysis - time for communication :  " << restime << " sec " << std::endl;
   
   defmap = defuse->getDefMap();
