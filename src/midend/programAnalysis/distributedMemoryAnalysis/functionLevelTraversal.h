@@ -2,6 +2,9 @@
 #ifndef PARALLEL_COMPASS_FUNCTIONLEVEL_H
 #define PARALLEL_COMPASS_FUNCTIONLEVEL_H
 
+// LOAD THIS FILE ONLY IF ROSE_MPI IS ENABLED
+#include <string>
+#include "DistributedMemoryAnalysis.h"
 
 // ************************************************************
 // Use this class to run on function granulty instead of files

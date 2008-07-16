@@ -16,7 +16,7 @@
 #ifndef DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
 #define DISTRIBUTED_MEMORY_ANALYSIS_IMPLEMENTATION_H
 
-#include <mpi.h>
+//#include <mpi.h>
 #include <math.h>
 
 #define DIS_DEBUG_OUTPUT false

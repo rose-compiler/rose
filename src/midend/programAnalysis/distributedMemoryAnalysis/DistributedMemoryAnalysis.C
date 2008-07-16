@@ -3,7 +3,6 @@
 // $Id: DistributedMemoryAnalysis.C,v 1.1 2008/01/08 02:55:52 dquinlan Exp $
 
 #include "DistributedMemoryAnalysis.h"
-#include <mpi.h>
 
 void initializeDistributedMemoryProcessing(int *argc, char ***argv)
 {

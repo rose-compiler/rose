@@ -7,6 +7,10 @@
 #include <sstream>
 #include <fstream>
 
+#if ROSE_MPI
+#include "functionLevelTraversal.h"
+#include "functionNames.h"
+#endif
 
 // Default setting for verbosity level (-1 is silent, and values greater then zero indicate different levels of verbosity)
 int  Compass::verboseSetting   = 0;
@@ -123,13 +127,37 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << 
       "  processes : " << processes << std::endl;
   int resultDefUseNodes=0;
+
+  // ---------------- LOAD BALANCING of DEFUSE -------------------
+  // todo: try to make the load balancing for DEFUSE better
+  FunctionNamesPreTraversal preTraversal;
+  MyAnalysis myanalysis;
+  int initialDepth=0;
+  std::pair<int, int> bounds = myanalysis.computeFunctionIndices(root, initialDepth, &preTraversal);
+  for (int i = bounds.first; i < bounds.second; i++) {
+    std::cout << my_rank << ": DEFUSE bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ in range length: " 
+	      << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
+      "   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
+    SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
+    SgFunctionDefinition* funcDef = NULL;
+    if (funcDecl)
+      funcDef = funcDecl->get_definition();
+    if (funcDef) {
+      int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+      resultDefUseNodes+=nrNodes;
+    }
+  }
+  // ---------------- LOAD BALANCING of DEFUSE -------------------
+
+#if 0
+  // ---------------- LOAD BALANCING of DEFUSE -------------------
   // run the following in parallel
   for (int p=0; p<processes;++p) {
     size_t start = ((double)funcs.size()/processes)*p;
     size_t end = ((double)funcs.size()/processes)*(p+1);
     if (my_rank==p) {
       std::cerr << my_rank <<": start: "<<start<<"  end: " << end << std::endl;
-      for (int i=start; i< end; ++i) {
+      for (size_t i=start; i< end; ++i) {
 	//      for (Rose_STL_Container<SgNode *>::iterator i = 
 	//     funcs.begin(); i != funcs.end(); i++) {
 	SgFunctionDefinition* funcDef = isSgFunctionDefinition(funcs[i]);
@@ -144,6 +172,9 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       ROSE_ASSERT(end==funcs.size());
     }
   }
+  // ---------------- LOAD BALANCING of DEFUSE -------------------
+#endif
+
   std::cerr << my_rank << ": DefUse Analysis complete. Nr of Nodes: " << resultDefUseNodes << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
@@ -169,11 +200,12 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       totaltime=times_defuse[i];
 
   if (my_rank==0) {
-    std::cerr << "Time (max) needed for DefUse : " << totaltime << std::endl;
+    std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
   }
   //((DefUseAnalysis*)defuse)->printDefMap();
   /* communicate times */
 
+  Compass::gettime(begin_time_node);
 
   /* communicate arraysizes */
   unsigned int arrsize = 0;
@@ -257,6 +289,10 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
 
   MPI_Barrier(MPI_COMM_WORLD);
+  Compass::gettime(end_time_node);
+  double restime = Compass::timeDifference(end_time_node, begin_time_node);
+  std::cerr << ">> ---- DefUse Analysis - time for communication :  " << restime << " sec " << std::endl;
+  
   defmap = defuse->getDefMap();
   usemap = defuse->getUseMap();
 

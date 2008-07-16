@@ -5,6 +5,8 @@
 #ifndef DISTRIBUTED_MEMORY_ANALYSIS_H
 #define DISTRIBUTED_MEMORY_ANALYSIS_H
 
+#if ROSE_MPI
+
 #include <mpi.h>
 #include <rose.h>
 #include <utility>
@@ -32,22 +34,22 @@ public:
   std::vector<size_t> myNodeCounts;
   std::vector<size_t> myFuncWeights;
 
-    std::vector<SgFunctionDeclaration *> funcDecls;
-    std::vector<InheritedAttributeType> initialInheritedValues;
-    std::vector<int> functionsPerProcess;
-    static const int root_process = 0;
-    std::pair<int, int> computeFunctionIndices(SgNode *root,
-                                               InheritedAttributeType rootInheritedValue,
-                                               AstTopDownProcessing<InheritedAttributeType> *preTraversal);
-    void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
-                                               InheritedAttributeType rootInheritedValue,
-                                               AstTopDownProcessing<InheritedAttributeType> *preTraversal);
-    void sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inhertiedValues,
-		       std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
-
-    private:
-    int my_rank;
-    int processes;
+  std::vector<SgFunctionDeclaration *> funcDecls;
+  std::vector<InheritedAttributeType> initialInheritedValues;
+  std::vector<int> functionsPerProcess;
+  static const int root_process = 0;
+  std::pair<int, int> computeFunctionIndices(SgNode *root,
+					     InheritedAttributeType rootInheritedValue,
+					     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+  void computeFunctionIndicesPerNode(SgNode *root, std::vector<int>& functionToProcessor,  
+				     InheritedAttributeType rootInheritedValue,
+				     AstTopDownProcessing<InheritedAttributeType> *preTraversal);
+  void sortFunctions(std::vector<SgFunctionDeclaration*>& funcDecls, std::vector<InheritedAttributeType>& inhertiedValues,
+		     std::vector<size_t>& nodeCounts, std::vector<size_t>& funcWeights);
+  
+ private:
+  int my_rank;
+  int processes;
 };
 
 
@@ -170,5 +172,7 @@ private:
 
 
 #include "DistributedMemoryAnalysisImplementation.h"
+
+#endif
 
 #endif

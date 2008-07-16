@@ -818,6 +818,7 @@ src/midend/programAnalysis/dominanceAnalysis/Makefile
 src/midend/programAnalysis/staticInterproceduralSlicing/Makefile
 src/midend/programAnalysis/annotationLanguageParser/Makefile
 src/midend/programAnalysis/sideEffectAnalysis/Makefile
+src/midend/programAnalysis/distributedMemoryAnalysis/Makefile
 src/midend/programTransformation/Makefile
 src/midend/programTransformation/partialRedundancyElimination/Makefile
 src/midend/programTransformation/finiteDifferencing/Makefile
@@ -1209,12 +1210,6 @@ developersScratchSpace/Dan/Compass_tests/Makefile
 
 # DQ (10/22/2004): Could not get these to work with "make distcheck" rule (try again later)
 # src/3rdPartyLibraries/checkPointLibrary/Makefile
-
-# JJW 3-7-2008 -- these are not listed as SUBDIRS in programAnalysisTests
-# tests/roseTests/programAnalysisTests/staticInterproceduralSlicingTests/Makefile
-# TP 4-22-2008 This is actually a valid and important test of the defUse work
-# tests/roseTests/programAnalysisTests/defUseAnalysisTests/Makefile
-
 
 # Relocated to ROSE/src/roseExtensions/databaseConnection
 # projects/dataBase/Makefile

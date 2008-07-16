@@ -103,11 +103,12 @@ ROSE_ASSERT(pr);
      
    }
    if (useDefAnalysis) {
-     std::cout << "Using DefUse Analysis ... " << std::endl;
+     std::cout << "  >> Using DefUse Analysis ... " << std::endl;
+
 #pragma omp critical (runDefUseAnalysisCompass)
      Compass::runDefUseAnalysis(pr);
    } else {
-     std::cout << "DefUse Analysis disabled... " << std::endl;
+     std::cout << "  >> DefUse Analysis disabled... " << std::endl;
    }
 
   return;

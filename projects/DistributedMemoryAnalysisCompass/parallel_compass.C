@@ -80,9 +80,9 @@ std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int
   ROSE_ASSERT(nullderefCounter.nullDerefNodes[nrOfInterestingNodes ] == nullderefCounter.totalNodes );
 
   if (my_rank == 0) {
-    std::cout <<  "0: File: The total amount of interesting nodes is : " << nrOfInterestingNodes << std::endl;
-    std::cout <<  "0: File: The total amount of functions is : " << nullderefCounter.totalFunctions << std::endl;
-    std::cout <<  "0: File: The total amount of nodes is : " << nullderefCounter.totalNodes << std::endl;
+    std::cerr <<  "0: File: The total amount of interesting nodes is : " << nrOfInterestingNodes << std::endl;
+    std::cerr <<  "0: File: The total amount of functions is : " << nullderefCounter.totalFunctions << std::endl;
+    std::cerr <<  "0: File: The total amount of nodes is : " << nullderefCounter.totalNodes << std::endl;
   }
 
   // split algorithm
@@ -264,14 +264,14 @@ void printPCResults(CountingOutputObject  &outputs,
 
       int perc = 0;
       if (times[i]>0) 
-	if (i==0)
+	if (i==0 && processes>1)
 	  perc = (int) (commtimes[i]/times[i]*10000);
 	else
 	  perc = (int) (calctimes[i]/times[i]*10000);
 
       double perc_d = (double) perc/100;
 
-      std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
+      std::cerr << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
 	"  real # nodes:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
 	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << 
 	"   => " << perc_d << " % "  << std::endl;
@@ -288,7 +288,7 @@ void printPCResults(CountingOutputObject  &outputs,
     }
     std::cout << std::endl;
 
-    std::cout << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
+    std::cerr << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
       	      << "\n    fastest process: " << min_time // << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
       	      << "\n    slowest process: " << max_time //<< " slowest   in file: " << root->get_file(slowest_func).getFileName()
       //	      << "\n    fastest process: " << min_time  << " fastest " << fastest_func << "   in node: " << nodeDecls[fastest_func]->class_name() << ": " <<namef<< " : " <<namef2
@@ -418,8 +418,6 @@ int main(int argc, char **argv)
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
 
-  gettime(begin_time_0);
-  gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
   // which node is the most expensive?
@@ -427,17 +425,18 @@ int main(int argc, char **argv)
   double max_time=0;
   double calc_time_processor=0;
 
-
-
-  //  std::pair<int, int> bounds;
   std::vector<int> bounds;
+
+  computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
+  //  gettime(begin_time_0);
+  gettime(begin_time);
+
   if (processes==1) {
     /* figure out which files to process on this process */
-    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
-    //   bounds = computeNullDerefIndices(root, my_rank, processes, nullderefCounter);
     if (DEBUG_OUTPUT_MORE) 
       cout << "bounds size = " << bounds.size() << endl;
     int i=-1;
+    gettime(begin_time_defuse);
     #pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
     for (i = 0; i<(int)bounds.size();i++) {
       if (DEBUG_OUTPUT_MORE) 
@@ -449,14 +448,11 @@ int main(int argc, char **argv)
 	  (*b_itr)->visit(mynode);
 	}
     }
-
+    gettime(end_time_defuse);
+    calc_time_processor = timeDifference(end_time_defuse, begin_time_defuse);
   } else {
     // apply runtime algorithm to def_use
     cout << " Dynamic scheduling ..." << endl;
-
-    // apply run-time load balancing
-    //      std::vector<int> bounds;
-    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
     // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
     int currentJob = -1;
     MPI_Status Stat;
@@ -569,9 +565,9 @@ int main(int argc, char **argv)
   }
 
 
+  gettime(end_time);
   double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memusage = memusage_e-memusage_b;
-  gettime(end_time);
   double my_time = timeDifference(end_time, begin_time);
   double commtime = my_time-calc_time_processor;
   std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << 
@@ -592,17 +588,18 @@ int main(int argc, char **argv)
 		    maxtime_val, max_time,
 		    calctimes, calc_time_processor, 
 		    commtimes, commtime);
-  double my_time_0;
-  if (my_rank==0) {
-    gettime(end_time_0);
-    my_time_0 = timeDifference(end_time_0, begin_time_0);
-  }
+
+  //  double my_time_0;
+  //  if (my_rank==0) {
+  //   gettime(end_time_0);
+  //    my_time_0 = timeDifference(end_time_0, begin_time_0);
+  // }
 
   printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
 		 calctimes, commtimes, nodeDecls);
 
-  if (my_rank==0)
-    cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
+  //if (my_rank==0)
+  //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
 
   /* all done */
   MPI_Finalize();

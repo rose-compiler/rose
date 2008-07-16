@@ -12,7 +12,7 @@
 #include <limits>
 
 #include "LoadSaveAST.h"
-#include "../DistributedMemoryAnalysis/DistributedMemoryAnalysis.h"
+#include "DistributedMemoryAnalysis.h"
 
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
@@ -43,24 +43,6 @@ void
 buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, 
 	       Compass::OutputObject &output, SgProject* pr );
 
-/*
-class MemoryTraversal : public ROSE_VisitTraversal {
- public:
- MemoryTraversal():counter(0){}
-  unsigned int counter;
-  void visit ( SgNode* node );
-  std::map <unsigned int, SgNode* > nodeMap;
-  std::map <SgNode*, unsigned int > nodeMapInv;
-};
-
-void MemoryTraversal::visit ( SgNode* node )
-{
-  ROSE_ASSERT(node != NULL);
-  nodeMap[counter]=node;
-  nodeMapInv[node]=counter;
-  counter++;
-}
-*/
 
 // ************************************************************
 // check for the usage parameters
@@ -77,19 +59,6 @@ bool containsArgument(int argc, char** argv, std::string pattern) {
   return false;
 }
 
-/*
-// ************************************************************
-// Time Measurement
-// ************************************************************
-double timeDifference(struct timespec end, struct timespec begin) {
-  return (end.tv_sec + end.tv_nsec / 1.0e9)
-    - (begin.tv_sec + begin.tv_nsec / 1.0e9);
-}
-
-inline void gettime(struct timespec &t) {
-  clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t);
-}
-*/
 
 void initPCompass(int argc, char **argv) {
   if (Compass::my_rank == 0) {
