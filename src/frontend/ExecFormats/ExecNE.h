@@ -161,19 +161,27 @@ class NEFileHeader : public ExecHeader {
 /* File format of a section table entry. All fields are little endian. */
 struct NESectionTableEntry_disk {
     uint16_t    sector;                 /* 0x00 File offset (sector size defined in hdr); zero means no file data */
-    uint16_t    physical_size;          /* 0x02 Length of segment in file; zero means 64k */
+    uint16_t    physical_size;          /* 0x02 Length of segment in file; zero means 64k if sector is non-zero */
     uint16_t    flags;                  /* 0x04 Segment bit flags */
     uint16_t    virtual_size;           /* 0x06 Total size of segment when mapped to memory; zero means 64k */
 } __attribute__((packed));              /* 0x08 */
 
 enum NESectionFlags {
-    SF_TYPE_MASK = 0x0007,              /* segment-type field */
-    SF_CODE      = 0x0000,              /* code-segment type */
-    SF_DATA      = 0x0001,              /* data-segment type */
-    SF_MOVABLE   = 0x0010,              /* segment is not fixed */
-    SF_PRELOAD   = 0x0040,              /* segment will be preloaded; read-only if this is a data segment */
-    SF_RELOCINFO = 0x0100,              /* segment has relocation records */
-    SF_DISCARD   = 0xf000               /* discard priority */
+    SF_RESERVED         = 0x0e08,       /* these bits are reserved */
+
+    SF_TYPE_MASK        = 0x0007,       /* segment-type field */
+    SF_CODE             = 0x0000,       /* code-segment type */
+    SF_DATA             = 0x0001,       /* data-segment (otherwise segment is code) */
+    SF_ALLOC            = 0x0002,       /* loader allocates memory */
+    SF_LOAD             = 0x0004,       /* load the segment */
+
+    SF_MOVABLE          = 0x0010,       /* segment is not fixed */
+    SF_PURE             = 0x0020,       /* segment is pure, or sharable; otherwise impure or non-sharable */
+    SF_PRELOAD          = 0x0040,       /* segment will be preloaded; read-only if this is a data segment */
+    SF_NOT_WRITABLE     = 0x0080,       /* code segment is execute only; data segment is read-only */
+    SF_RELOCINFO        = 0x0100,       /* segment has relocation records */
+    SF_DISCARDABLE      = 0x1000,       /* discardable */
+    SF_DISCARD          = 0xf000        /* discard priority */
 };
 
 class NESectionTableEntry {

@@ -311,7 +311,7 @@ NESectionTableEntry::ctor(const NESectionTableEntry_disk *disk)
 {
     sector          = le_to_host(disk->sector);
     physical_size   = le_to_host(disk->physical_size);
-    if (0==physical_size) physical_size = 64*1024;
+    if (0==physical_size && sector!=0) physical_size = 64*1024;
     flags           = le_to_host(disk->flags);
     virtual_size    = le_to_host(disk->virtual_size);
     if (0==virtual_size) virtual_size = 64*1024;
@@ -402,17 +402,17 @@ NESectionTable::ctor(NEFileHeader *fhdr)
         if (0==section_offset) {
             section->set_name(".bss");
             section->set_readable(true);
-            section->set_writable(true);
+            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
             section->set_executable(false);
         } else if (0==section_type) {
             section->set_name(".text");
             section->set_readable(true);
-            section->set_writable(false);
+            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
             section->set_executable(true);
         } else if (section_type & SF_DATA) {
             section->set_name(".data");
             section->set_readable(true);
-            section->set_writable((entry->flags & SF_PRELOAD)==SF_PRELOAD ? false : true);
+            section->set_writable(entry->flags & (SF_PRELOAD|SF_NOT_WRITABLE) ? false : true);
             section->set_executable(false);
         }
 
