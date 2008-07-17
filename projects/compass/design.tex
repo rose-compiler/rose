@@ -50,9 +50,10 @@ a secure tool. We assume:
       writing checkers. However, the design of the \emph{Compass Verifier} is not likely to
       ever be robust enough to guarantee an automated proof of security for each checker.  
       Thus, we also assume that someone trusted will also review the checker.
-      {\em not implemented: We expect that a digital signature is possible to associate 
-      a trusted reviewer with a review of the checker together with an MD5 hash that
-      verifies the checker source code.}
+      {\em not implemented: We expect that a digital signature (using a key mechanism) 
+           is possible to associate a trusted reviewer with a review of 
+           the checker together with a strong hash function that
+           digitally signs the checker source code.}
 
    \item Since running \emph{Compass Verifier} is an optional part of building 
       the Compass executable, the person running these test is trusted. There are
