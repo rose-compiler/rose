@@ -376,7 +376,7 @@ ExecFile::unparse(const char *filename)
     FILE *f = fopen(filename, "w");
     ROSE_ASSERT(f);
 
-#if 1
+#if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
     addr_t remaining = sb.st_size;
