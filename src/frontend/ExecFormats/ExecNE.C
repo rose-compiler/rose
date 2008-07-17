@@ -186,8 +186,8 @@ NEFileHeader::unparse(FILE *f)
     /* Sections defined in the NE file header */
     if (resname_table)
         resname_table->unparse(f);
-    if (importname_table)
-        importname_table->unparse(f);
+    if (module_table)
+        module_table->unparse(f);
     
 }
     
@@ -251,11 +251,11 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
-    if (importname_table) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "importname_table",
-                importname_table->get_id(), importname_table->get_name().c_str());
+    if (module_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "module_table",
+                module_table->get_id(), module_table->get_name().c_str());
     } else {
-        fprintf(f, "%s%-*s = none\n", p, w, "importname_table");
+        fprintf(f, "%s%-*s = none\n", p, w, "module_table");
     }
 }
 
@@ -439,7 +439,7 @@ NEResNameTable::ctor(NEFileHeader *fhdr)
         at += length;
 
         extend(2);
-        ordinals.push_back(le_to_host(*(uint16_t*)content(at, 2)));
+        ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
         at += 2;
     }
 }
@@ -493,13 +493,77 @@ NEResNameTable::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Module Reference Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+NEModuleTable::ctor(NEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    set_name("NE Module Reference Table");
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+
+    ROSE_ASSERT(NULL!=strtab);
+
+    for (addr_t at=0; at<size; at+=2) {
+        addr_t name_offset = le_to_host(*(const uint16_t*)content(at, 2));
+        name_offsets.push_back(name_offset);
+        names.push_back(strtab->get_string(name_offset));
+    }
+}
+
+/* Writes the section back to disk. */
+void
+NEModuleTable::unparse(FILE *f)
+{
+    strtab->unparse(f);
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    for (size_t i=0; i<name_offsets.size(); i++) {
+        uint16_t name_offset_le;
+        host_to_le(name_offsets[i], &name_offset_le);
+        ssize_t nwrite = fwrite(&name_offset_le, sizeof name_offset_le, 1, f);
+        ROSE_ASSERT(1==nwrite);
+    }
+}
+    
+/* Prints some debugging info */
+void
+NEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNEModuleTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNEModuleTable.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+
+    if (strtab) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", strtab->get_id(), strtab->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "strtab");
+    }
+
+    for (size_t i=0; i<names.size(); i++) {
+        fprintf(f, "%s%-*s = [%zu] (offset %"PRIu64", %zu bytes) \"%s\"\n",
+                p, w, "name", i, name_offsets[i], names[i].size(), names[i].c_str());
+    }
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // NE String Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor. We don't parse out the strings here because we want to keep track of what strings are actually referenced by
  * other parts of the file. We can get that information with the congeal() method. */
 void
-NEStringTable::ctor(NEFileHeader *fhdr, addr_t offset, addr_t size)
+NEStringTable::ctor(NEFileHeader *fhdr)
 {
     set_synthesized(true);
     set_name("NE String Table");
@@ -532,11 +596,12 @@ NEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
     ExecSection::dump(f, p, -1);
 
     congeal();
-    for (addr_t at=0; at<get_size(); /*void*/) {
+    addr_t at=0;
+    for (size_t i=0; at<get_size(); i++) {
         std::string s = get_string(at);
         char label[64];
-        sprintf(label, "string-%"PRIu64, at);
-        fprintf(f, "%s%-*s = \"%s\"\n", p, w, label, s.c_str());
+        sprintf(label, "string-at-%"PRIu64, at);
+        fprintf(f, "%s%-*s = [%zu] (offset %"PRIu64", %zu bytes) \"%s\"\n", p, w, "string", i, at, s.size(), s.c_str());
         at += 1 + s.size();
     }
     uncongeal();
@@ -598,13 +663,21 @@ parse(ExecFile *ef)
     if (ne_header->e_resnametab_rfo>0) {
         ne_header->set_resname_table(new NEResNameTable(ne_header));
     }
-    if (ne_header->e_importnametab_rfo>0 && 
-        ne_header->e_entry_table_rfo > ne_header->e_importnametab_rfo) {
-        /* String table comes before the entry table */
-        addr_t offset = ne_header->get_offset() + ne_header->e_importnametab_rfo;
-        addr_t size   = ne_header->e_entry_table_rfo - ne_header->e_importnametab_rfo;
-        NEStringTable *strtab = new NEStringTable(ne_header, offset, size);
-        ne_header->set_importname_table(strtab);
+    if (ne_header->e_modreftab_rfo>0 &&
+        ne_header->e_importnametab_rfo > ne_header->e_modreftab_rfo) {
+        /* Imported Name Table must be read before the Module Reference Table since the latter references the former. However,
+         * the Imported Name Table comes immediately after the Module Reference Table and before the Entry Table in the file. */
+        ROSE_ASSERT(ne_header->e_importnametab_rfo>0);
+        ROSE_ASSERT(ne_header->e_entry_table_rfo > ne_header->e_importnametab_rfo);
+        addr_t strtab_offset = ne_header->get_offset() + ne_header->e_importnametab_rfo;
+        addr_t strtab_size   = ne_header->e_entry_table_rfo - ne_header->e_importnametab_rfo;
+        NEStringTable *strtab = new NEStringTable(ne_header, strtab_offset, strtab_size);
+
+        /* Module reference table */
+        addr_t modref_offset = ne_header->get_offset() + ne_header->e_modreftab_rfo;
+        addr_t modref_size   = ne_header->e_importnametab_rfo - ne_header->e_modreftab_rfo;
+        NEModuleTable *modtab = new NEModuleTable(ne_header, modref_offset, modref_size, strtab);
+        ne_header->set_module_table(modtab);
     }
     
     /* Construct the section table and its sections (non-synthesized sections) */

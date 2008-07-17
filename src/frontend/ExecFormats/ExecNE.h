@@ -12,6 +12,7 @@ class NEFileHeader;
 class NESectionTable;
 class NEResNameTable;
 class NEStringTable;
+class NEModuleTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an NE file
@@ -86,7 +87,7 @@ class NEFileHeader : public ExecHeader {
   public:
     NEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(NEFileHeader_disk)),
-        dos2_header(NULL), section_table(NULL), resname_table(NULL), importname_table(NULL)
+        dos2_header(NULL), section_table(NULL), resname_table(NULL), module_table(NULL)
         {ctor(f, offset);}
     virtual ~NEFileHeader() {}
     virtual void unparse(FILE*);
@@ -100,8 +101,8 @@ class NEFileHeader : public ExecHeader {
     void set_section_table(NESectionTable *ot) {section_table=ot;}
     NEResNameTable *get_resname_table() {return resname_table;}
     void set_resname_table(NEResNameTable *ot) {resname_table=ot;}
-    NEStringTable *get_importname_table() {return importname_table;}
-    void set_importname_table(NEStringTable *ot) {importname_table=ot;}
+    NEModuleTable *get_module_table() {return module_table;}
+    void set_module_table(NEModuleTable *ot) {module_table=ot;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned char e_res1[9];
@@ -117,7 +118,7 @@ class NEFileHeader : public ExecHeader {
     ExtendedDOSHeader *dos2_header;
     NESectionTable *section_table;
     NEResNameTable *resname_table;
-    NEStringTable *importname_table;
+    NEModuleTable *module_table;
 };
 
 
@@ -210,6 +211,26 @@ class NEResNameTable : public ExecSection {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Module Reference Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* The module-reference table comes after the resident name table. */
+class NEModuleTable : public ExecSection {
+  public:
+    NEModuleTable(NEFileHeader *fhdr, addr_t offset, addr_t size, NEStringTable *strtab)
+        : ExecSection(fhdr->get_file(), offset, size), strtab(strtab)
+        {ctor(fhdr);}
+    virtual ~NEModuleTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(NEFileHeader *fhdr);
+    NEStringTable *strtab;
+    std::vector<addr_t> name_offsets;
+    std::vector<std::string> names;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // NE String Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -219,12 +240,13 @@ class NEStringTable : public ExecSection {
   public:
     NEStringTable(NEFileHeader *fhdr, addr_t offset, addr_t length)
         : ExecSection(fhdr->get_file(), offset, length)
-        {ctor(fhdr, offset, length);}
+        {ctor(fhdr);}
     virtual ~NEStringTable() {}
+    //virtual void unparse(FILE*); /*not needed; use parent's implementation*/
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     std::string get_string(addr_t offset);
   private:
-    void ctor(NEFileHeader*, addr_t offset, addr_t length);
+    void ctor(NEFileHeader*);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
