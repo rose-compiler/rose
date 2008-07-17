@@ -333,9 +333,11 @@ AC_CHECK_PROGS(PERL, [perl])
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 ROSE_SUPPORT_JAVA
 
-JAVA_HOME="${JAVA_PATH}"
-JAVA="${JAVA_PATH}/bin/java"
-JAVAC="${JAVA_PATH}/bin/javac"
+if test "x$JAVA_HOME" = "x"; then
+  JAVA_HOME="${JAVA_PATH}"
+fi
+JAVA="${JAVA_HOME}/bin/java"
+JAVAC="${JAVA_HOME}/bin/javac"
 AC_CHECK_CLASSPATH
 AC_PROG_JAVAC
 AC_PROG_JAVA
