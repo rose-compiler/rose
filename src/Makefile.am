@@ -717,7 +717,7 @@ LINK = $(CXXLINK)
 lib_LTLIBRARIES = librose.la
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
-JAVA_JVM_FLAGS = $(JAVA_JVM_PATH)
+JAVA_JVM_FLAGS = -L$(JAVA_JVM_PATH) -ljvm
 endif
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
