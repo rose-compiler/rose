@@ -67,13 +67,14 @@ java-stuff:
 	$(JAR) cf OpenFortranParser.jar -C build fortran/
 	touch java-stuff
 
-lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
+# lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
 java_DATA = OpenFortranParser.jar
 
 c_actions_jni.c: java-stuff
+OpenFortranParser.jar: java-stuff
 
-libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = c_actions_jni.c
-libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_CPPFLAGS = -I. -I./tmp/c -I$(srcdir)/src/fortran/ofp/parser/c -I$(srcdir)/src/fortran/ofp/parser/c/jni
+# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = c_actions_jni.c
+# libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_CPPFLAGS = -I. -I./tmp/c -I$(srcdir)/src/fortran/ofp/parser/c -I$(srcdir)/src/fortran/ofp/parser/c/jni
 
 CLEANFILES = java-stuff OpenFortranParser.jar c_actions_jni.c FortranParserActionJNI.java RuleStackTrace.java FortranLexer.java FortranParser.java FortranParserAction.h
 
