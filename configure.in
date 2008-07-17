@@ -338,6 +338,7 @@ if test "x$JAVA_HOME" = "x"; then
 fi
 JAVA="${JAVA_HOME}/bin/java"
 JAVAC="${JAVA_HOME}/bin/javac"
+JAR="${JAVA_HOME}/bin/jar"
 AC_CHECK_CLASSPATH
 AC_PROG_JAVAC
 AC_PROG_JAVA
