@@ -186,6 +186,8 @@ NEFileHeader::unparse(FILE *f)
     /* Sections defined in the NE file header */
     if (resname_table)
         resname_table->unparse(f);
+    if (nonresname_table)
+        nonresname_table->unparse(f);
     if (module_table)
         module_table->unparse(f);
     if (entry_table)
@@ -238,19 +240,28 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i=0; i<NELMTS(e_res1); i++)
         fprintf(f, "%s%-*s = [%zd] 0x%02x\n",           p, w, "e_res1", i, e_res1[i]);
     if (dos2_header) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", dos2_header->get_id(), dos2_header->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
+                dos2_header->get_id(), dos2_header->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (section_table) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", section_table->get_id(), section_table->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
+                section_table->get_id(), section_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
     if (resname_table) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table", resname_table->get_id(), resname_table->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
+                resname_table->get_id(), resname_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
+    }
+    if (nonresname_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
+                nonresname_table->get_id(), nonresname_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
     if (module_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "module_table",
@@ -421,15 +432,15 @@ NESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// NE Resident-Name Table (exported symbols)
+// NE Resident and Non-Resident Name Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor assumes ExecSection is zero bytes long so far */
 void
-NEResNameTable::ctor(NEFileHeader *fhdr)
+NENameTable::ctor(NEFileHeader *fhdr)
 {
     set_synthesized(true);
-    set_name("NE Resident Name Table");
+    set_name("NE Name Table");
     set_purpose(SP_HEADER);
     set_header(fhdr);
     
@@ -453,7 +464,7 @@ NEResNameTable::ctor(NEFileHeader *fhdr)
 
 /* Writes the section back to disk. */
 void
-NEResNameTable::unparse(FILE *f)
+NENameTable::unparse(FILE *f)
 {
     ROSE_ASSERT(names.size()==ordinals.size());
 
@@ -481,13 +492,13 @@ NEResNameTable::unparse(FILE *f)
 
 /* Prints some debugging info */
 void
-NEResNameTable::dump(FILE *f, const char *prefix, ssize_t idx)
+NENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNEResNameTable[%zd].", prefix, idx);
+        sprintf(p, "%sNENameTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEResNameTable.", prefix);
+        sprintf(p, "%sNENameTable.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -811,7 +822,10 @@ parse(ExecFile *ef)
 
     /* Sections defined by the NE file header */
     if (ne_header->e_resnametab_rfo>0) {
-        ne_header->set_resname_table(new NEResNameTable(ne_header));
+        addr_t resnames_offset = ne_header->get_offset() + ne_header->e_resnametab_rfo;
+        NENameTable *resnames = new NENameTable(ne_header, resnames_offset);
+        resnames->set_name("NE Resident Name Table");
+        ne_header->set_resname_table(resnames);
     }
     if (ne_header->e_modreftab_rfo>0 &&
         ne_header->e_importnametab_rfo > ne_header->e_modreftab_rfo) {
@@ -833,7 +847,12 @@ parse(ExecFile *ef)
         NEEntryTable *enttab = new NEEntryTable(ne_header);
         ne_header->set_entry_table(enttab);
     }
-    
+    if (ne_header->e_nonresnametab_offset>0) {
+        NENameTable *nonres = new NENameTable(ne_header, ne_header->e_nonresnametab_offset);
+        nonres->set_name("NE Non-Resident Name Table");
+        ne_header->set_nonresname_table(nonres);
+    }
+
     /* Construct the section table and its sections (non-synthesized sections) */
     ne_header->set_section_table(new NESectionTable(ne_header));
     

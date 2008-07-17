@@ -10,7 +10,7 @@ namespace NE {
 /* Forwards */
 class NEFileHeader;
 class NESectionTable;
-class NEResNameTable;
+class NENameTable;
 class NEStringTable;
 class NEModuleTable;
 class NEEntryTable;
@@ -88,7 +88,7 @@ class NEFileHeader : public ExecHeader {
   public:
     NEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(NEFileHeader_disk)),
-        dos2_header(NULL), section_table(NULL), resname_table(NULL), module_table(NULL)
+        dos2_header(NULL), section_table(NULL), resname_table(NULL), nonresname_table(NULL), module_table(NULL), entry_table(NULL)
         {ctor(f, offset);}
     virtual ~NEFileHeader() {}
     virtual void unparse(FILE*);
@@ -100,8 +100,10 @@ class NEFileHeader : public ExecHeader {
     void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
     NESectionTable *get_section_table() {return section_table;}
     void set_section_table(NESectionTable *ot) {section_table=ot;}
-    NEResNameTable *get_resname_table() {return resname_table;}
-    void set_resname_table(NEResNameTable *ot) {resname_table=ot;}
+    NENameTable *get_resname_table() {return resname_table;}
+    void set_resname_table(NENameTable *ot) {resname_table=ot;}
+    NENameTable *get_nonresname_table() {return nonresname_table;}
+    void set_nonresname_table(NENameTable *ot) {nonresname_table=ot;}
     NEModuleTable *get_module_table() {return module_table;}
     void set_module_table(NEModuleTable *ot) {module_table=ot;}
     NEEntryTable *get_entry_table() {return entry_table;}
@@ -120,7 +122,8 @@ class NEFileHeader : public ExecHeader {
     void *encode(NEFileHeader_disk*);
     ExtendedDOSHeader *dos2_header;
     NESectionTable *section_table;
-    NEResNameTable *resname_table;
+    NENameTable *resname_table;
+    NENameTable *nonresname_table;
     NEModuleTable *module_table;
     NEEntryTable *entry_table;
 };
@@ -197,21 +200,24 @@ class NESectionTable : public ExecSection {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Resident-Name Table (exported symbols)
+// Resident and Non-Resident Name Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class NEResNameTable : public ExecSection {
+/* This table contains a module name followed by a list of procedure name strings. Each name is associated with an "ordinal"
+ * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
+ * zero. In the non-resident name table the first entry is a module description. */
+class NENameTable : public ExecSection {
   public:
-    NEResNameTable(NEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->e_resnametab_rfo+fhdr->get_offset(), 0)
+    NENameTable(NEFileHeader *fhdr, addr_t offset)
+        : ExecSection(fhdr->get_file(), offset, 0)
         {ctor(fhdr);}
-    virtual ~NEResNameTable() {}
+    virtual ~NENameTable() {}
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(NEFileHeader*);
-    std::vector<std::string> names;
-    std::vector<unsigned> ordinals;
+    std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
+    std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
