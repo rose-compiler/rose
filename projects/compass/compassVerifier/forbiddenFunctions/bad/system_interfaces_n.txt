@@ -1,4 +1,0 @@
-### 00 System Interfaces -- N
-nanosleep
-nftw
-nice

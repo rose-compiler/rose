@@ -1,9 +1,0 @@
-### 00 System Interfaces -- B
-#basename
-bcmp
-bcopy
-brk
-bsd_signal
-bsearch
-btowc
-bzero

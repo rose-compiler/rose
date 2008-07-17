@@ -1,3 +1,0 @@
-### 00 System Interfaces -- K
-kill
-killpg

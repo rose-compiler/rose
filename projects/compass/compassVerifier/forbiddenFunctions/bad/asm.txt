@@ -1,5 +1,0 @@
-## 00 Inlined Assembly
-asm
-__asm__
-__volatile__
-volatile

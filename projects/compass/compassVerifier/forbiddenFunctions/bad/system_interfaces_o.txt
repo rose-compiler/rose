@@ -1,4 +1,0 @@
-### 00 System Interfaces -- O
-open
-opendir
-openlog
