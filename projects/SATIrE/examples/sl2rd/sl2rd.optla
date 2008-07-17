@@ -1,20 +1,22 @@
+
 /********************************************************************************\
 *                                                                                *
 *  Inter-procedural reaching definitions analysis                                *
 *  for C++SL2, a sublangage of C++                                               *
 *                                                                                *
-*  C++SL2 extends C++SL1 with function calls                                     *
-*                                                                                *
-*  Note that global variables are not in C++SL2                                  *
+*  C++SL2 extends C++SL1 with function calls and global variables                *
 *                                                                                *
 *  This analysis  specification  ensures that  the analysis  operates on an SL2  *
 *  program. Otherwise an error is reported  by the generated analyzer. If it is  *
 *  assumed that the front end only passes SL2 programs to the analyzer then all  *
 *  those tests can be removed.                                                   *
 *                                                                                *
-*  Author: Markus Schordan, 2006.                                                *
+*  Author: Markus Schordan, 2006                                                 *
 *                                                                                *
 \********************************************************************************/
+
+GLOBAL
+globals   : *VariableSymbolNT#
 
 BLOCK
 label     : snum#
@@ -23,7 +25,7 @@ PROBLEM Reaching_Definitions
     direction:  forward
     carrier:    VarLabPairSetLifted
     init:       bot
-    init_start: lift({})
+    init_start: myinit()
     combine:    comb
     retfunc:    comb
     widening:   wide
@@ -82,8 +84,12 @@ ReturnAssignment(VariableSymbol(var) as varSym, VariableSymbol(retvar) as retvar
     let info <= @; in
     lift(update_info(x,label,rdkill(y,info)));
 
-FunctionCall(funcname,actualParams),local_edge: bot;
-FunctionCall(funcname,actualParams),call_edge: @;
+FunctionCall(funcname,actualParams),local_edge:
+    let info <= @; in
+    lift(rd_local_vars(info));
+FunctionCall(funcname,actualParams),call_edge:
+    let info <= @; in
+    lift(rd_nonlocal_vars(info));
 
 FunctionEntry(funcname), _: @;
 FunctionExit(_, vars), _:
@@ -295,6 +301,17 @@ kill_vars(s, [!]) =
 kill_vars(s, v::vars) = /* v is a VariableSymbol */
   kill_vars(rdkill(varsym_varid(v),s), vars);
 
+is_global_var:: VariableId -> bool;
+is_global_var(v) = v ? global_vars();
+
+global_vars:: -> VarSet;
+global_vars() = global_vars_collector(globals);
+
+global_vars_collector:: *VariableSymbolNT -> VarSet;
+global_vars_collector([!]) = {};
+global_vars_collector(v::vars) =
+  union(global_vars_collector(vars),{varsym_varid(v)});
+
 is_temp_var :: VariableId -> bool;
 is_temp_var(varId) = 
   is_tmpvarid(varId);
@@ -319,6 +336,20 @@ kill_temporary_variable(var,infoLifted) =
     print("Variable used where only a generated auxiliary variable is expected.")
     error("This is not an SL2 program.")
   endif;
+
+/* filter local vars that can be passed on local edge
+   to pass on temorary argument-vars. Since we have no test-function for local tmpvars introduced in boolean
+   expressions we pass those on as well. */
+rd_local_vars::VarLabPairSet -> VarLabPairSet;
+rd_local_vars(varset) = {(var1,lab1) !! (var1,lab1) <-- varset, if !(is_tmpvarid(var1)) && !(is_global_var(var1))};
+
+rd_nonlocal_vars::VarLabPairSet -> VarLabPairSet;
+rd_nonlocal_vars(varset) = 
+  let localvars = rd_local_vars(varset); in
+  {(var1,lab1) !! (var1,lab1) <-- varset, if !((var1,lab1) ? localvars) || is_global_var(var1)};
+
+myinit:: -> VarLabPairSetLifted;
+myinit() = lift({(v,-1)!! v <-- global_vars()});
 
 /* Predefined SATIrE Support Functions */
 varsym_varid :: VariableSymbolNT -> VariableId;
