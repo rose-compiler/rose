@@ -29,7 +29,7 @@ OFP_TOOLS_DIR=$(OFP_SRC_DIR)/fortran/tools
 OFP_JARFILE=OpenFortranParser.jar
 OFP_C_ACTION_SO=libfortran_ofp_parser_c_jni_FortranParserActionJNI.so 
 
-OFP_CLASSPATH=-classpath $(CLASSPATH):./build:.
+OFP_CLASSPATH=-classpath @CLASSPATH@:./build:.
 OFP_JFLAGS=$(OFP_CLASSPATH)
 
 javadir=$(libdir)
