@@ -182,6 +182,10 @@ NEFileHeader::unparse(FILE *f)
     /* The section table and all the non-synthesized sections */
     if (section_table)
         section_table->unparse(f);
+
+    /* Sections defined in the NE file header */
+    if (resname_table)
+        resname_table->unparse(f);
 }
     
 /* Print some debugging information */
@@ -212,7 +216,7 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nsections",            e_nsections);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nmodrefs",             e_nmodrefs);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nnonresnames",         e_nnonresnames);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_segtab_rfo",           
+    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_sectab_rfo",           
                                                        e_sectab_rfo, e_sectab_rfo+offset);
     fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_rsrctab_rfo",
                                                        e_rsrctab_rfo, e_rsrctab_rfo+offset);
@@ -238,6 +242,11 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", section_table->get_id(), section_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
+    }
+    if (resname_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table", resname_table->get_id(), resname_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
 }
 
@@ -396,6 +405,85 @@ NESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Resident-Name Table (exported symbols)
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor assumes ExecSection is zero bytes long so far */
+void
+NEResNameTable::ctor(NEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    set_name("NE Resident Name Table");
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+    
+    /* Resident exported procedure names, until we hit a zero length name. The first name
+     * is for the library itself and the corresponding ordinal has no meaning. */
+    addr_t at = 0;
+    while (1) {
+        extend(1);
+        size_t length = content(at++, 1)[0];
+        if (0==length) break;
+
+        extend(length);
+        names.push_back(std::string((const char*)content(at, length), length));
+        at += length;
+
+        extend(2);
+        ordinals.push_back(le_to_host(*(uint16_t*)content(at, 2)));
+        at += 2;
+    }
+}
+
+/* Writes the section back to disk. */
+void
+NEResNameTable::unparse(FILE *f)
+{
+    ROSE_ASSERT(names.size()==ordinals.size());
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    for (size_t i=0; i<names.size(); i++) {
+        /* Name length */
+        ROSE_ASSERT(names[i].size()<=0xff);
+        unsigned char len = names[i].size();
+        fputc(len, f);
+
+        /* Name */
+        fputs(names[i].c_str(), f);
+
+        /* Ordinal */
+        ROSE_ASSERT(ordinals[i]<=0xffff);
+        uint16_t ordinal_le;
+        host_to_le(ordinals[i], &ordinal_le);
+        fwrite(&ordinal_le, sizeof ordinal_le, 1, f);
+    }
+    
+    /* Zero-terminated */
+    fputc('\0', f);
+}
+
+/* Prints some debugging info */
+void
+NEResNameTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNEResNameTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNEResNameTabe.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    ROSE_ASSERT(names.size()==ordinals.size());
+    for (size_t i=0; i<names.size(); i++) {
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, names[i].c_str());
+        fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, ordinals[i]);
+    }
+}
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns true if a cursory look at the file indicates that it could be a NE file. */
 bool
@@ -447,8 +535,14 @@ parse(ExecFile *ef)
     dos2_header->set_header(ne_header);
     ne_header->set_dos2_header(dos2_header);
 
+    /* Sections defined by the NE file header */
+    if (ne_header->e_resnametab_rfo>0)
+        ne_header->set_resname_table(new NEResNameTable(ne_header));
+
     /* Construct the section table and its sections (non-synthesized sections) */
     ne_header->set_section_table(new NESectionTable(ne_header));
+
+    
 
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
