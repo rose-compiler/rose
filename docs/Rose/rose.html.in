@@ -102,7 +102,7 @@
         interchange, unrolling, and blocking).</p>
   
         <p> ROSE is released under a BSD-style license and is portable to Linux and Mac OS X
-        on IA32 and X86\_64 platforms. It has attracted more than three dozen user groups
+        on IA32 and X86_64 platforms. It has attracted more than three dozen user groups
         worldwide for various research, development, and education purposes. For example, 
         internal users at Lawrence Livermore National Laboratory are using it for optimizing
         data structure abstractions and components. External users from other national
