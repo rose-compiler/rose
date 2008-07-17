@@ -512,6 +512,11 @@ NEModuleTable::ctor(NEFileHeader *fhdr)
         name_offsets.push_back(name_offset);
         names.push_back(strtab->get_string(name_offset));
     }
+
+    /* Add libraries to file header */
+    for (size_t i=0; i<names.size(); i++) {
+        fhdr->add_dll(new ExecDLL(names[i]));
+    }
 }
 
 /* Writes the section back to disk. */
