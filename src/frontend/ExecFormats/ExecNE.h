@@ -209,6 +209,7 @@ class NESection : public ExecSection {
         st_entry(NULL), reloc_table(NULL)
         {}
     virtual ~NESection() {}
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data */
@@ -336,6 +337,8 @@ class NERelocEntry {
     NERelocEntry(NERelocTable *relocs, addr_t at)
         {ctor(relocs, at);}
     void ctor(NERelocTable*, addr_t at);
+    void unparse(FILE*);
+    void dump(FILE*, const char *prefix, ssize_t idx);
   public:
     unsigned            src_type;
     unsigned            res1;
@@ -344,20 +347,20 @@ class NERelocEntry {
     unsigned            res2;
     addr_t              src_offset;
     union {
-        struct {
+        struct { /*tgt_type==0x00: internal reference*/
             unsigned    segno;
             unsigned    res3;
-            unsigned    tgt_offset;
+            addr_t      tgt_offset;
         } iref;
-        struct {
+        struct { /*tgt_type==0x01: imported ordinal*/
             unsigned    modref;
             unsigned    ordinal;
         } iord;
-        struct {
+        struct { /*tgt_type==0x02: imported name*/
             unsigned    modref;
             unsigned    nm_off;
         } iname;
-        struct {
+        struct { /*tgt_type==0x03: operating system fixup*/
             unsigned    type;
             unsigned    res3;
         } osfixup;
@@ -370,6 +373,8 @@ class NERelocTable : public ExecSection {
         : ExecSection(fhdr->get_file(), offset, 0)
         {ctor(fhdr);}
     virtual ~NERelocTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(NEFileHeader*);
     std::vector<NERelocEntry> entries;

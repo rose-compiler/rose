@@ -351,6 +351,15 @@ NESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, NEFileHeader
     fprintf(f, "%s%-*s = 0x%08x\n",                p, w, "flags",           flags);
 }
 
+/* Write section back to disk */
+void
+NESection::unparse(FILE *f)
+{
+    ExecSection::unparse(f);
+    if (reloc_table)
+        reloc_table->unparse(f);
+}
+    
 /* Print some debugging info. */
 void
 NESection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -867,6 +876,119 @@ NERelocEntry::ctor(NERelocTable *relocs, addr_t at)
     }
 }
 
+/* Write entry back to disk at current file offset */
+void
+NERelocEntry::unparse(FILE *f)
+{
+    unsigned char byte;
+    byte = (res1 & ~0x0f) | (src_type & 0x0f);
+    fputc(byte, f);
+    byte = (res2 & ~0x07) | (additive?0x04:0x00) | (tgt_type & 0x03);
+    fputc(byte, f);
+    
+    uint16_t word;
+    host_to_le(src_offset, &word);
+    fwrite(&word, sizeof word, 1, f);
+    
+    switch (tgt_type) {
+      case 0x00:
+        host_to_le(iref.segno, &byte);
+        fputc(byte, f);
+        host_to_le(iref.res3, &byte);
+        fputc(byte, f);
+        host_to_le(iref.tgt_offset, &word);
+        fwrite(&word, sizeof word, 1, f);
+        break;
+      case 0x01:
+        host_to_le(iord.modref, &word);
+        fwrite(&word, sizeof word, 1, f);
+        host_to_le(iord.ordinal, &word);
+        fwrite(&word, sizeof word, 1, f);
+        break;
+      case 0x02:
+        host_to_le(iname.modref, &word);
+        fwrite(&word, sizeof word, 1, f);
+        host_to_le(iname.nm_off, &word);
+        fwrite(&word, sizeof word, 1, f);
+        break;
+      case 0x03:
+        host_to_le(osfixup.type, &word);
+        fwrite(&word, sizeof word, 1, f);
+        host_to_le(osfixup.res3, &word);
+        fwrite(&word, sizeof word, 1, f);
+        break;
+      default:
+        ROSE_ASSERT(!"unknown relocation target type");
+    }
+}
+    
+/* Print some debugging info */
+void
+NERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNERelocEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNERelocEntry.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    const char *s;
+    char sbuf[128];
+    switch (src_type) {
+      case 0x00: s = "low byte";        break;
+      case 0x02: s = "16-bit selector"; break;
+      case 0x03: s = "32-bit pointer";  break;
+      case 0x05: s = "16-bit offset";   break;
+      case 0x0b: s = "48-bit pointer";  break;
+      case 0x0d: s = "32-bit offset";   break;
+      default:
+        sprintf(sbuf, "%u", src_type);
+        s = sbuf;
+        break;
+    }
+    fprintf(f, "%s%-*s = %s\n",     p, w, "src_type", s);
+    fprintf(f, "%s%-*s = 0x%04u\n", p, w, "res1",     res1);
+    
+    switch (tgt_type) {
+      case 0x00: s = "internal reference"; break;
+      case 0x01: s = "imported ordinal";   break;
+      case 0x02: s = "imported name";      break;
+      case 0x03: s = "OS fixup";           break;
+      default:
+        sprintf(sbuf, "%u", tgt_type);
+        s = sbuf;
+        break;
+    }
+    fprintf(f, "%s%-*s = %s\n",            p, w, "tgt_type",   s);
+    fprintf(f, "%s%-*s = %s\n",            p, w, "additive",   additive?"true":"false");
+    fprintf(f, "%s%-*s = 0x%04x\n",        p, w, "res2",       res2);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "src_offset", src_offset);
+
+    switch (tgt_type) {
+      case 0x00:
+        fprintf(f, "%s%-*s = %u\n",            p, w, "segno",      iref.segno);
+        fprintf(f, "%s%-*s = 0x%02x\n",        p, w, "res3",       iref.res3);
+        fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "tgt_offset", iref.tgt_offset);
+        break;
+      case 0x01:
+        fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     iord.modref);
+        fprintf(f, "%s%-*s = %u\n",            p, w, "ordinal",    iord.ordinal);
+        break;
+      case 0x02:
+        fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     iname.modref);
+        fprintf(f, "%s%-*s = %u\n",            p, w, "nm_off",     iname.nm_off);
+        break;
+      case 0x03:
+        fprintf(f, "%s%-*s = %u\n",            p, w, "type",       osfixup.type);
+        fprintf(f, "%s%-*s = 0x%04x\n",        p, w, "res3",       osfixup.res3);
+        break;
+      default:
+        ROSE_ASSERT(!"unknown relocation target type");
+    }
+}
+    
 /* Constructor. We don't know how large the relocation table is until we're parsing it (specifically, after we've read the
  * number of entries stored in the first two bytes), therefore the section should have an initial size of zero and we extend
  * it as we parse it. */
@@ -891,6 +1013,41 @@ NERelocTable::ctor(NEFileHeader *fhdr)
     for (size_t i=0; i<nrelocs; i++, at+=8) {
         extend(8);
         entries.push_back(NERelocEntry(this, at));
+    }
+}
+
+/* Write relocation table back to disk */
+void
+NERelocTable::unparse(FILE *f)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    
+    uint16_t size_le;
+    host_to_le(entries.size(), &size_le);
+    fwrite(&size_le, sizeof size_le, 1, f);
+    
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].unparse(f);
+    }
+}
+    
+/* Print some debugging info */
+void
+NERelocTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNERelocTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNERelocTable.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", entries.size());
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].dump(f, p, i);
     }
 }
     
