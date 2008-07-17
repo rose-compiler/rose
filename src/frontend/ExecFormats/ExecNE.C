@@ -85,7 +85,7 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
     e_entrytab_rfo         = le_to_host(fh->e_entrytab_rfo);
     e_entrytab_size        = le_to_host(fh->e_entrytab_size);
     e_checksum             = le_to_host(fh->e_checksum);
-    e_flags                = le_to_host(fh->e_flags);
+    e_flags1               = le_to_host(fh->e_flags1);
     e_autodata_sn          = le_to_host(fh->e_autodata_sn);
     e_bss_size             = le_to_host(fh->e_bss_size);
     e_stack_size           = le_to_host(fh->e_stack_size);
@@ -104,8 +104,11 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
     e_sector_align         = le_to_host(fh->e_sector_align);
     e_nresources           = le_to_host(fh->e_nresources);
     e_exetype              = le_to_host(fh->e_exetype);
-    for (size_t i=0; i<NELMTS(fh->e_res1); i++)
-        e_res1[i]          = le_to_host(fh->e_res1[i]);
+    e_flags2               = le_to_host(fh->e_flags2); 
+    e_fastload_sector      = le_to_host(fh->e_fastload_sector);
+    e_fastload_nsectors    = le_to_host(fh->e_fastload_nsectors);
+    e_res1                 = le_to_host(fh->e_res1);
+    e_winvers              = le_to_host(fh->e_winvers);
 
     /* Magic number */
     for (size_t i=0; i<sizeof(fh->e_magic); ++i)
@@ -113,7 +116,7 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
 
     /* File format */
     exec_format.family      = FAMILY_NE;
-    exec_format.purpose     = e_flags & HF_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE;
+    exec_format.purpose     = e_flags1 & HF1_LIBRARY ? PURPOSE_LIBRARY : PURPOSE_EXECUTABLE;
     exec_format.sex         = ORDER_LSB;
     exec_format.abi         = ABI_NT;
     exec_format.abi_version = 0;
@@ -123,7 +126,22 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
     exec_format.is_current_version = true; /*FIXME*/
 
     /* Target architecture */
-    target.set_isa(ISA_IA32_386);
+    switch (e_exetype) {
+      case 0:
+        target.set_isa(ISA_UNSPECIFIED);
+        break;
+      case 1:
+        throw FormatError("use of reserved value for Windows NE header e_exetype");
+      case 2:
+        target.set_isa(ISA_IA32_386);
+        break;
+      case 3:
+      case 4:
+        throw FormatError("use of reserved value for Windows NE header e_exetype");
+      default:
+        target.set_isa(ISA_OTHER, e_exetype);
+        break;
+    }
 
     /* Entry point */
 //    entry_rva = e_entrypoint_rva; /*FIXME*/
@@ -140,7 +158,7 @@ NEFileHeader::encode(NEFileHeader_disk *disk)
     host_to_le(e_entrytab_rfo,         &(disk->e_entrytab_rfo));
     host_to_le(e_entrytab_size,        &(disk->e_entrytab_size));
     host_to_le(e_checksum,             &(disk->e_checksum));
-    host_to_le(e_flags,                &(disk->e_flags));
+    host_to_le(e_flags1,               &(disk->e_flags1));
     host_to_le(e_autodata_sn,          &(disk->e_autodata_sn));
     host_to_le(e_bss_size,             &(disk->e_bss_size));
     host_to_le(e_stack_size,           &(disk->e_stack_size));
@@ -159,8 +177,11 @@ NEFileHeader::encode(NEFileHeader_disk *disk)
     host_to_le(e_sector_align,         &(disk->e_sector_align));
     host_to_le(e_nresources,           &(disk->e_nresources));
     host_to_le(e_exetype,              &(disk->e_exetype));
-    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
-        host_to_le(e_res1[i], &(disk->e_res1[i]));
+    host_to_le(e_flags2,               &(disk->e_flags2));
+    host_to_le(e_fastload_sector,      &(disk->e_fastload_sector));
+    host_to_le(e_fastload_nsectors,    &(disk->e_fastload_nsectors));
+    host_to_le(e_res1,                 &(disk->e_res1));
+    host_to_le(e_winvers,              &(disk->e_winvers));
     return disk;
 }
 
@@ -213,7 +234,7 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
                                                        e_entrytab_rfo, e_entrytab_rfo+offset);
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n",           p, w, "e_entrytab_size",        e_entrytab_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_checksum",             e_checksum);
-    fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_flags",                e_flags);
+    fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_flags1",               e_flags1);
     fprintf(f, "%s%-*s = %u (1-origin)\n",             p, w, "e_autodata_sn",          e_autodata_sn);
     fprintf(f, "%s%-*s = %u bytes\n",                  p, w, "e_bss_size",             e_bss_size);
     fprintf(f, "%s%-*s = %u bytes\n",                  p, w, "e_stack_size",           e_stack_size);
@@ -237,8 +258,12 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u (log2)\n",                 p, w, "e_sector_align",         e_sector_align);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nresources",           e_nresources);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_exetype",              e_exetype);
-    for (size_t i=0; i<NELMTS(e_res1); i++)
-        fprintf(f, "%s%-*s = [%zd] 0x%02x\n",           p, w, "e_res1", i, e_res1[i]);
+    fprintf(f, "%s%-*s = 0x%02x\n",                    p, w, "e_flags2",               e_flags2);
+    fprintf(f, "%s%-*s = sector %"PRIu64"\n",          p, w, "e_fastload_sector",      e_fastload_sector); 
+    fprintf(f, "%s%-*s = %"PRIu64" sectors\n",         p, w, "e_fastload_nsectors",    e_fastload_nsectors); 
+    fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_res1",                 e_res1);
+    fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_winvers",              e_winvers);
+
     if (dos2_header) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
                 dos2_header->get_id(), dos2_header->get_name().c_str());
@@ -317,7 +342,6 @@ NESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, NEFileHeader
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-
     fprintf(f, "%s%-*s = %u",                      p, w, "sector",          sector);
     if (fhdr)
         fprintf(f, " (%"PRIu64" byte offset)", (addr_t)sector << fhdr->e_sector_align);
@@ -337,10 +361,17 @@ NESection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sNESection.", prefix);
     }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     ExecSection::dump(f, p, -1);
     NEFileHeader *fhdr = dynamic_cast<NEFileHeader*>(get_header());
     st_entry->dump(f, p, -1, fhdr);
+    if (reloc_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
+                reloc_table->get_id(), reloc_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
+    }
 }
 
 /* Constructor */
@@ -360,7 +391,7 @@ NESectionTable::ctor(NEFileHeader *fhdr)
 
         /* The section */
         addr_t section_offset = entry->sector << fhdr->e_sector_align;
-        NESection *section = new NESection(fhdr->get_file(), section_offset, section_offset==0?0:entry->physical_size);
+        NESection *section = new NESection(fhdr->get_file(), section_offset, 0==section_offset?0:entry->physical_size);
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
@@ -383,6 +414,11 @@ NESectionTable::ctor(NEFileHeader *fhdr)
             section->set_readable(true);
             section->set_writable((entry->flags & SF_PRELOAD)==SF_PRELOAD ? false : true);
             section->set_executable(false);
+        }
+
+        if (entry->flags & SF_RELOCINFO) {
+            NERelocTable *relocs = new NERelocTable(fhdr, section->get_offset() + section->get_size());
+            section->set_reloc_table(relocs);
         }
     }
 }
@@ -412,8 +448,10 @@ NESectionTable::unparse(FILE *f)
             size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
             ROSE_ASSERT(1==nwrite);
 
-            /* Write the section */
+            /* Write the section and it's optional relocation table */
             section->unparse(f);
+            if (section->get_reloc_table())
+                section->get_reloc_table()->unparse(f);
         }
     }
 }
@@ -767,6 +805,40 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
         }
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Relocation Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+NERelocTable::ctor(NEFileHeader *fhdr)
+{
+    char name[64];
+    sprintf(name, "NE Relocation Table %"PRIu64, offset);
+    set_synthesized(true);
+    set_name(name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+
+    ROSE_ASSERT(0==size);
+    addr_t at=0;
+
+    extend(2);
+    size_t nrelocs = le_to_host(*(const uint16_t*)content(at, 2));
+    at += 2;
+    fprintf(stderr, "ROBB: nrelocs=%zu\n", nrelocs);
+    
+    for (size_t i=0; i<nrelocs; i++) {
+        extend(4);
+        unsigned src_type = content(at++, 1)[0];
+        unsigned flags    = content(at++, 1)[0];
+        addr_t src_chain  = le_to_host(*(const uint16_t*)content(at, 2));
+        at += 2;
+
+        fprintf(stderr, "ROBB:   src_type=0x%02x, flags=0x%02x, chain=%"PRIu64"\n", src_type, flags, src_chain);
+    }
+}
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -844,7 +916,9 @@ parse(ExecFile *ef)
         ne_header->set_module_table(modtab);
     }
     if (ne_header->e_entrytab_rfo>0 && ne_header->e_entrytab_size>0) {
-        NEEntryTable *enttab = new NEEntryTable(ne_header);
+        addr_t enttab_offset = ne_header->get_offset() + ne_header->e_entrytab_rfo;
+        addr_t enttab_size = ne_header->e_entrytab_size;
+        NEEntryTable *enttab = new NEEntryTable(ne_header, enttab_offset, enttab_size);
         ne_header->set_entry_table(enttab);
     }
     if (ne_header->e_nonresnametab_offset>0) {

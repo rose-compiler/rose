@@ -14,6 +14,7 @@ class NENameTable;
 class NEStringTable;
 class NEModuleTable;
 class NEEntryTable;
+class NERelocTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an NE file
@@ -46,7 +47,13 @@ class ExtendedDOSHeader : public ExecSection {
 // NE File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* File format of an NE File Header. All fields are little endian. */
+/* File format of an NE File Header. All fields are little endian.
+ *
+ * NOTES
+ * 
+ * e_sssp: The value specified in SS is an index (1-origin) into the segment table. If SS addresses the automatic data segment
+ *         and SP is zero then SP is set to the address obtained by adding the size of the automatic data segment to the size
+ *         of the stack. */
 struct NEFileHeader_disk {
     unsigned char e_magic[2];           /* 0x00 magic number "NE" */
     unsigned char e_linker_major;       /* 0x02 linker major version number */
@@ -54,12 +61,12 @@ struct NEFileHeader_disk {
     uint16_t    e_entrytab_rfo;         /* 0x04 entry table offset relative to start of header */
     uint16_t    e_entrytab_size;        /* 0x06 size of entry table in bytes */
     uint32_t    e_checksum;             /* 0x08 32-bit CRC of entire file (this word is taken a zero during the calculation) */
-    uint16_t    e_flags;                /* 0x0c file-level bit flags */
+    uint16_t    e_flags1;               /* 0x0c file-level bit flags (see HeaderFlags1) */
     uint16_t    e_autodata_sn;          /* 0x0e auto data section number if (flags & 0x3)==0; else zero */
     uint16_t    e_bss_size;             /* 0x10 num bytes added to data segment for BSS */
-    uint16_t    e_stack_size;           /* 0x12 num bytes added to data segment for stack */
+    uint16_t    e_stack_size;           /* 0x12 num bytes added to data segment for stack (zero of SS!=DS registers) */
     uint32_t    e_csip;                 /* 0x14 section number:offset of CS:IP */
-    uint32_t    e_sssp;                 /* 0x18 section number:offset of SS:SP */
+    uint32_t    e_sssp;                 /* 0x18 section number:offset of SS:SP (see note 1 above) */
     uint16_t    e_nsections;            /* 0x1c number of entries in the section table */
     uint16_t    e_nmodrefs;             /* 0x1e number of entries in the module reference table */
     uint16_t    e_nnonresnames;         /* 0x20 number of entries in the non-resident name table */
@@ -73,15 +80,34 @@ struct NEFileHeader_disk {
     uint16_t    e_sector_align;         /* 0x32 sector alignment shift count (log2 of segment sector size) */
     uint16_t    e_nresources;           /* 0x34 number of resource entries */
     unsigned char e_exetype;            /* 0x36 executable type (2==windows) */
-    unsigned char e_res1[9];            /* 0x37 reserved */
+    unsigned char e_flags2;             /* 0x37 additional flags (see HeaderFlags2) */
+    uint16_t    e_fastload_sector;      /* 0x38 sector offset to fast-load area (only for Windows) */
+    uint16_t    e_fastload_nsectors;    /* 0x3a size of fast-load area in sectors (only for Windows) */
+    uint16_t    e_res1;                 /* 0x3c reserved */
+    uint16_t    e_winvers;              /* 0x3e expected version number for Windows (only for Windows) */
 } __attribute__((packed));              /* 0x40 */
 
-/* Bit flags for the NE header 'flags' member */
-enum HeaderFlags {
-    HF_SINGLE_DATA      = 0x0001,       /* Shared automatic data segment */
-    HF_MULTIPLE_DATA    = 0x0002,       /* Instanced automatic data segment */
-    HF_FATAL_ERRORS     = 0x2000,       /* Errors detected at link time; module will not load */
-    HF_LIBRARY          = 0x8000,       /* Module is a library */
+/* Bit flags for the NE header 'e_flags' member.
+ *
+ * If HF_LIBRARY (bit 15) is set then the CS:IP registers point to an initialization procedure called with the value in the AX
+ * register equal to the module handle. The initialization procedure must execute a far return to the caller. The resulting
+ * value in AX is a status indicator (non-zero for success, zero for failure). */
+enum HeaderFlags1 {
+    HF1_RESERVED         = 0x57f4,      /* Reserved bits */
+    HF1_NO_DATA          = 0x0000,      /* (flags&0x03==0) => an exe not containing a data segment */
+    HF1_SINGLE_DATA      = 0x0001,      /* Executable contains one data segment; set if file is a DLL */
+    HF1_MULTIPLE_DATA    = 0x0002,      /* Exe with multiple data segments; set if a windows application */
+    HF1_LOADER_SEGMENT   = 0x0800,      /* First segment contains code that loads the application */
+    HF1_FATAL_ERRORS     = 0x2000,      /* Errors detected at link time; module will not load */
+    HF1_LIBRARY          = 0x8000,      /* Module is a library */
+};
+
+/* Bit flags for the NE header 'e_flags2' member. */
+enum HeaderFlags2 {
+    HF2_RESERVED         = 0xf1,        /* Reserved bits */
+    HF2_PROTECTED_MODE   = 0x02,        /* Windows 2.x application that runs in 3.x protected mode */
+    HF2_PFONTS           = 0x04,        /* Windows 2.x application that supports proportional fonts */
+    HF2_FASTLOAD         = 0x08         /* Executable contains a fast-load area */
 };
 
 class NEFileHeader : public ExecHeader {
@@ -110,12 +136,11 @@ class NEFileHeader : public ExecHeader {
     void set_entry_table(NEEntryTable *ot) {entry_table=ot;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
-    unsigned char e_res1[9];
-    unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags, e_autodata_sn, e_bss_size, e_stack_size;
+    unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags1, e_autodata_sn, e_bss_size, e_stack_size;
     unsigned    e_csip, e_sssp, e_nsections, e_nmodrefs, e_nnonresnames, e_nmovable_entries, e_sector_align;
-    unsigned    e_exetype, e_nresources;
+    unsigned    e_nresources, e_exetype, e_flags2, e_res1, e_winvers;
     addr_t      e_entrytab_rfo, e_entrytab_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
-    addr_t      e_importnametab_rfo, e_nonresnametab_offset;
+    addr_t      e_importnametab_rfo, e_nonresnametab_offset, e_fastload_sector, e_fastload_nsectors;
 
   private:
     void ctor(ExecFile *f, addr_t offset);
@@ -173,7 +198,7 @@ class NESection : public ExecSection {
   public:
     NESection(ExecFile *ef, addr_t offset, addr_t size)
         : ExecSection(ef, offset, size),
-        st_entry(NULL)
+        st_entry(NULL), reloc_table(NULL)
         {}
     virtual ~NESection() {}
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -181,9 +206,12 @@ class NESection : public ExecSection {
     /* Accessors for protected/private data */
     NESectionTableEntry *get_st_entry() {return st_entry;}
     void set_st_entry(NESectionTableEntry *e) {st_entry=e;}
+    NERelocTable *get_reloc_table() {return reloc_table;}
+    void set_reloc_table(NERelocTable *t) {reloc_table=t;}
 
   private:
     NESectionTableEntry *st_entry;
+    NERelocTable *reloc_table;
 };
 
 /* The table entries are stored in the sections themselves. */
@@ -276,11 +304,10 @@ struct NEEntryPoint {
     unsigned segoffset;
 };
 
-
 class NEEntryTable : public ExecSection {
   public:
-    NEEntryTable(NEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->get_offset()+fhdr->e_entrytab_rfo, fhdr->e_entrytab_size)
+    NEEntryTable(NEFileHeader *fhdr, addr_t offset, addr_t size)
+        : ExecSection(fhdr->get_file(), offset, size)
         {ctor(fhdr);}
     virtual ~NEEntryTable() {}
     virtual void unparse(FILE*);
@@ -289,6 +316,20 @@ class NEEntryTable : public ExecSection {
     void ctor(NEFileHeader*);
     std::vector<size_t> bundle_sizes;
     std::vector<NEEntryPoint> entries;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Relocation Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class NERelocTable : public ExecSection {
+  public:
+    NERelocTable(NEFileHeader *fhdr, addr_t offset)
+        : ExecSection(fhdr->get_file(), offset, 0)
+        {ctor(fhdr);}
+    virtual ~NERelocTable() {}
+  private:
+    void ctor(NEFileHeader*);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
