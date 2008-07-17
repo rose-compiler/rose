@@ -261,10 +261,10 @@ void *
 NESectionTableEntry::encode(NESectionTableEntry_disk *disk)
 {
     host_to_le(sector,          &(disk->sector));
-    unsigned x_physical_size = physical_size==16*1024 ? 0 : physical_size;
+    unsigned x_physical_size = physical_size==64*1024 ? 0 : physical_size;
     host_to_le(x_physical_size, &(disk->physical_size));
     host_to_le(flags,           &(disk->flags));
-    unsigned x_virtual_size = virtual_size==16*1024 ? 0 : virtual_size;
+    unsigned x_virtual_size = virtual_size==64*1024 ? 0 : virtual_size;
     host_to_le(x_virtual_size,  &(disk->virtual_size));
     return disk;
 }
@@ -324,7 +324,7 @@ NESectionTable::ctor(NEFileHeader *fhdr)
 
         /* The section */
         addr_t section_offset = entry->sector << fhdr->e_sector_align;
-        NESection *section = new NESection(fhdr->get_file(), section_offset, entry->physical_size);
+        NESection *section = new NESection(fhdr->get_file(), section_offset, section_offset==0?0:entry->physical_size);
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
@@ -332,7 +332,12 @@ NESectionTable::ctor(NEFileHeader *fhdr)
         section->set_st_entry(entry);
 
         unsigned section_type = entry->flags & SF_TYPE_MASK;
-        if (0==section_type) {
+        if (0==section_offset) {
+            section->set_name(".bss");
+            section->set_readable(true);
+            section->set_writable(true);
+            section->set_executable(false);
+        } else if (0==section_type) {
             section->set_name(".text");
             section->set_readable(true);
             section->set_writable(false);
