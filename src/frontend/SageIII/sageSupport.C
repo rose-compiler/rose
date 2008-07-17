@@ -4294,7 +4294,7 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 //    ROSE/src/frontend/OpenFortranParser_SAGE_Connection/openFortranParser_main.c
 // This function calls the Java JVM to load the Java implemented parser (written 
 // using ANTLR, a parser generator).
-extern "C" int openFortranParser_main(int argc, char **argv );
+int openFortranParser_main(int argc, char **argv );
 
 int
 SgFile::callFrontEnd ()

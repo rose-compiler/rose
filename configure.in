@@ -350,9 +350,10 @@ done
 AC_CHECK_CLASS([org.antlr.Tool], [:], [AC_MSG_ERROR([Antlr generator not in CLASSPATH])])
 AC_CHECK_CLASS([org.antlr.runtime.Token], [:], [AC_MSG_ERROR([Antlr runtime not in CLASSPATH])])
 
-# Call supporting macro for the Open Fortran Parser (for Fortran 2003 support)
-ROSE_SUPPORT_FORTRAN
-AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER,test ! "$with_openFortranParser" = no)
+OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
+AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
+AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], 1, [Always enable Fortran support whenever Java is present])
+AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER,true)
 
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB
