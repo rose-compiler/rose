@@ -11,6 +11,7 @@ namespace NE {
 class NEFileHeader;
 class NESectionTable;
 class NEResNameTable;
+class NEStringTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an NE file
@@ -85,7 +86,7 @@ class NEFileHeader : public ExecHeader {
   public:
     NEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(NEFileHeader_disk)),
-        dos2_header(NULL), section_table(NULL)
+        dos2_header(NULL), section_table(NULL), resname_table(NULL), importname_table(NULL)
         {ctor(f, offset);}
     virtual ~NEFileHeader() {}
     virtual void unparse(FILE*);
@@ -99,6 +100,8 @@ class NEFileHeader : public ExecHeader {
     void set_section_table(NESectionTable *ot) {section_table=ot;}
     NEResNameTable *get_resname_table() {return resname_table;}
     void set_resname_table(NEResNameTable *ot) {resname_table=ot;}
+    NEStringTable *get_importname_table() {return importname_table;}
+    void set_importname_table(NEStringTable *ot) {importname_table=ot;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned char e_res1[9];
@@ -114,6 +117,7 @@ class NEFileHeader : public ExecHeader {
     ExtendedDOSHeader *dos2_header;
     NESectionTable *section_table;
     NEResNameTable *resname_table;
+    NEStringTable *importname_table;
 };
 
 
@@ -191,8 +195,7 @@ class NESectionTable : public ExecSection {
 // Resident-Name Table (exported symbols)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class NEResNameTable : public ExecSection 
-{
+class NEResNameTable : public ExecSection {
   public:
     NEResNameTable(NEFileHeader *fhdr)
         : ExecSection(fhdr->get_file(), fhdr->e_resnametab_rfo+fhdr->get_offset(), 0)
@@ -204,6 +207,24 @@ class NEResNameTable : public ExecSection
     void ctor(NEFileHeader*);
     std::vector<std::string> names;
     std::vector<unsigned> ordinals;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE String Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* A section whose contents consist of strings. Each string is introduced by a one-byte length and followed by that number
+ * of ASCII characters. Strings are not NUL-terminated. */
+class NEStringTable : public ExecSection {
+  public:
+    NEStringTable(NEFileHeader *fhdr, addr_t offset, addr_t length)
+        : ExecSection(fhdr->get_file(), offset, length)
+        {ctor(fhdr, offset, length);}
+    virtual ~NEStringTable() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    std::string get_string(addr_t offset);
+  private:
+    void ctor(NEFileHeader*, addr_t offset, addr_t length);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

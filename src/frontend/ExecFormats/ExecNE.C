@@ -186,6 +186,9 @@ NEFileHeader::unparse(FILE *f)
     /* Sections defined in the NE file header */
     if (resname_table)
         resname_table->unparse(f);
+    if (importname_table)
+        importname_table->unparse(f);
+    
 }
     
 /* Print some debugging information */
@@ -247,6 +250,12 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table", resname_table->get_id(), resname_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
+    }
+    if (importname_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "importname_table",
+                importname_table->get_id(), importname_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "importname_table");
     }
 }
 
@@ -471,7 +480,7 @@ NEResNameTable::dump(FILE *f, const char *prefix, ssize_t idx)
     if (idx>=0) {
         sprintf(p, "%sNEResNameTable[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNEResNameTabe.", prefix);
+        sprintf(p, "%sNEResNameTable.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -482,7 +491,57 @@ NEResNameTable::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, ordinals[i]);
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE String Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor. We don't parse out the strings here because we want to keep track of what strings are actually referenced by
+ * other parts of the file. We can get that information with the congeal() method. */
+void
+NEStringTable::ctor(NEFileHeader *fhdr, addr_t offset, addr_t size)
+{
+    set_synthesized(true);
+    set_name("NE String Table");
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+}
     
+/* Returns the string whose size indicator is at the specified offset within the table. There's nothing that prevents OFFSET
+ * from pointing to some random location within the string table (but we will throw an exception if offset or the described
+ * following string falls outside the string table). */
+std::string
+NEStringTable::get_string(addr_t offset)
+{
+    size_t length = content(offset, 1)[0];
+    return std::string((const char*)content(offset+1, length), length);
+}
+    
+/* Prints some debugging info */
+void
+NEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNEStringTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNEStringTable.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+
+    congeal();
+    for (addr_t at=0; at<get_size(); /*void*/) {
+        std::string s = get_string(at);
+        char label[64];
+        sprintf(label, "string-%"PRIu64, at);
+        fprintf(f, "%s%-*s = \"%s\"\n", p, w, label, s.c_str());
+        at += 1 + s.size();
+    }
+    uncongeal();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns true if a cursory look at the file indicates that it could be a NE file. */
@@ -536,14 +595,21 @@ parse(ExecFile *ef)
     ne_header->set_dos2_header(dos2_header);
 
     /* Sections defined by the NE file header */
-    if (ne_header->e_resnametab_rfo>0)
+    if (ne_header->e_resnametab_rfo>0) {
         ne_header->set_resname_table(new NEResNameTable(ne_header));
-
+    }
+    if (ne_header->e_importnametab_rfo>0 && 
+        ne_header->e_entry_table_rfo > ne_header->e_importnametab_rfo) {
+        /* String table comes before the entry table */
+        addr_t offset = ne_header->get_offset() + ne_header->e_importnametab_rfo;
+        addr_t size   = ne_header->e_entry_table_rfo - ne_header->e_importnametab_rfo;
+        NEStringTable *strtab = new NEStringTable(ne_header, offset, size);
+        ne_header->set_importname_table(strtab);
+    }
+    
     /* Construct the section table and its sections (non-synthesized sections) */
     ne_header->set_section_table(new NESectionTable(ne_header));
-
     
-
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
 
