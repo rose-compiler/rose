@@ -146,7 +146,7 @@ int runOFP(int argc, char **argv)
 	 jboolean retval = JNI_TRUE; // Error by default
 
 	 string classpathEnvVar = getenvString("CLASSPATH");
-	 string classpath = "-Djava.class.path=" + string(ROSE_AUTOMAKE_TOP_BUILDDIR "/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar") + ":" + classpathEnvVar;
+	 string classpath = "-Djava.class.path=" + string(ROSE_AUTOMAKE_TOP_BUILDDIR "/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar") + ":.";
 
 	 /* Set up the VM initialization args.  */
 	 string jni_version = getenvString("JNI_VERSION");

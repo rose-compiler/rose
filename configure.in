@@ -331,9 +331,15 @@ ROSE_SUPPORT_PYTHON
 AC_CHECK_PROGS(PERL, [perl])
 
 if test "x$JAVA_HOME" = "x"; then
-  JAVA_HOME="${JAVA_PATH}"
+  JAVA="`which java`"
+  JAVA_HOME="`dirname $JAVA`/.."
 fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
+# Use our classpath in case the user's is messed up
+AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
+CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar:${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar:.
+export CLASSPATH
+AC_SUBST(CLASSPATH)
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 JAVA="${JAVA_HOME}/bin/java"
 JAVAC="${JAVA_HOME}/bin/javac"
@@ -349,8 +355,8 @@ do
         CPPFLAGS="$CPPFLAGS -I$JNI_INCLUDE_DIR"
 done
 
-AC_CHECK_CLASS([org.antlr.Tool], [:], [AC_MSG_ERROR([Antlr generator not in CLASSPATH])])
-AC_CHECK_CLASS([org.antlr.runtime.Token], [:], [AC_MSG_ERROR([Antlr runtime not in CLASSPATH])])
+AC_CHECK_CLASS([org.antlr.Tool], [:], [AC_MSG_ERROR([ANTLR generator not in CLASSPATH])])
+AC_CHECK_CLASS([org.antlr.runtime.Token], [:], [AC_MSG_ERROR([ANTLR runtime not in CLASSPATH])])
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
 AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
@@ -786,6 +792,7 @@ src/3rdPartyLibraries/coco/cplus2/Makefile
 src/3rdPartyLibraries/coco/sources/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
+src/3rdPartyLibraries/antlr-jars/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
