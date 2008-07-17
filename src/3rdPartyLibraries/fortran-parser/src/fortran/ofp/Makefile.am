@@ -15,48 +15,10 @@
 # accompanies this distribution, and is available at
 # http://www.eclipse.org/legal/epl-v10.html
 
-OFP_HOME=../../..
+SUBDIRS=parser
 
-include $(OFP_HOME)/make.inc
+java_files_made: FrontEnd.java
+	$(JAVAC) $(srcdir)/FrontEnd.java
+	touch java_files_made
 
-CD=cd
-
-JAVAC=$(OFP_JAVAC) #javac
-JAVA=$(OFP_JAVA) #java
-JAR=$(OFP_JAR) #jar
-SRCDIR=$(OFP_SRC_DIR)/src
-BUILDDIR=$(OFP_BUILD_DIR)
-PARSERDIR=parser
-
-CLASSDIR = $(BUILDDIR)/fortran/ofp
-JFLAGS = -d $(BUILDDIR) $(OFP_JFLAGS)
-
-JARFILE=$(OFP_JARFILE)
-
-CLASS_FILES = $(CLASSDIR)/FrontEnd.class
-
-all: 
-	$(CD) $(PARSERDIR) ; $(MAKE) ; $(MAKE) jarfile
-	$(MAKE) classes
-	$(MAKE) jarfile
-
-classes: $(CLASS_FILES) 
-
-$(CLASSDIR)/FrontEnd.class: FrontEnd.java
-	$(JAVAC) $(JFLAGS) $<
-
-jarfile:
-	cd $(BUILDDIR) ; $(JAR) cf $(JARFILE) fortran/
-
-FAKE:
-
-############################ clean up ##############################
-clean:
-	$(CD) $(PARSERDIR) ; $(MAKE) clean
-	rm -f $(CLASS_FILES) 
-
-allclean:
-	$(MAKE) clean
-	$(CD) $(PARSERDIR) ; $(MAKE) clean
-	cd $(BUILDDIR) ; rm -f $(JARFILE)
-
+CLEANFILES = *.class java_files_made

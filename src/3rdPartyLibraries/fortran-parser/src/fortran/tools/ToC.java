@@ -122,8 +122,6 @@ public class ToC {
          // Print the static code block that loads the shared object with 
          // the C JNI code.
          javaFile.write("\n");
-         javaFile.write("\tstatic {\n"+ "\t\tSystem.loadLibrary(" +
-                        "\"" + jniPackage + "_" + className + "\");\n\t}\n");
 
          // Close the class definition
          javaFile.write("}\n");

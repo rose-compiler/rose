@@ -328,8 +328,27 @@ AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 # Call supporting macro for python
 ROSE_SUPPORT_PYTHON
 
+AC_CHECK_PROGS(PERL, [perl])
+
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 ROSE_SUPPORT_JAVA
+
+JAVA_HOME="${JAVA_PATH}"
+JAVA="${JAVA_PATH}/bin/java"
+JAVAC="${JAVA_PATH}/bin/javac"
+AC_CHECK_CLASSPATH
+AC_PROG_JAVAC
+AC_PROG_JAVA
+AC_PROG_JAR
+_ACJNI_JAVAC=${JAVAC} # Hack to work around bug in AC_JNI_INCLUDE_DIR
+AC_JNI_INCLUDE_DIR
+for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+do
+        CPPFLAGS="$CPPFLAGS -I$JNI_INCLUDE_DIR"
+done
+
+AC_CHECK_CLASS([org.antlr.Tool], [:], [AC_MSG_ERROR([Antlr generator not in CLASSPATH])])
+AC_CHECK_CLASS([org.antlr.runtime.Token], [:], [AC_MSG_ERROR([Antlr runtime not in CLASSPATH])])
 
 # Call supporting macro for the Open Fortran Parser (for Fortran 2003 support)
 ROSE_SUPPORT_FORTRAN
@@ -763,6 +782,7 @@ src/3rdPartyLibraries/coco/Makefile
 src/3rdPartyLibraries/coco/cplus2/Makefile
 src/3rdPartyLibraries/coco/sources/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
+src/3rdPartyLibraries/fortran-parser/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile

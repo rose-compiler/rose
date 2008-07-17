@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection $(JAVA_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection
 
 # This is the free format lexical analyzer
 $(srcdir)/preproc-fortran.C : preproc-fortran.lex 

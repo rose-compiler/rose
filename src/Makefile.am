@@ -717,7 +717,7 @@ LINK = $(CXXLINK)
 lib_LTLIBRARIES = librose.la
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
-JAVA_JVM_FLAGS = -L$(JAVA_JVM_PATH) -ljvm
+JAVA_JVM_FLAGS = $(JAVA_JVM_PATH)
 endif
 
 librose_la_SOURCES = dummyCppFileForLibrose.C
@@ -728,6 +728,7 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
+		    -L$(top_builddir)/src/3rdPartyLibraries/fortran-parser -lfortran_ofp_parser_c_jni_FortranParserActionJNI
 #		    $(ROSEHPCT_DEP_LIBS)
 librose_la_LDFLAGS = -no-undefined
 librose_la_DEPENDENCIES = $(libroseLibraries)
