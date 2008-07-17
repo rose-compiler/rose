@@ -770,6 +770,11 @@ AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile
 #AC_DEFINE_UNQUOTED([ROSE_MAN_DIR],"$mandir",[Path specified by automake mandir.])
 #AC_DEFINE_UNQUOTED([ROSE_DIST_DIR],"$distdir",[Path specified by automake distdir.])
 
+# This block turns off features of libharu that don't work with Java
+with_png=no
+export with_png
+with_zlib=no
+export with_zlib
 
 AC_CONFIG_SUBDIRS([src/3rdPartyLibraries/libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
