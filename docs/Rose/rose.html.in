@@ -62,26 +62,54 @@
       <!--DWLayoutTable-->
       <tr>
         <td width="567" height="388" class="plaintext14">    
-        <p>ROSE is a project to define a new type of compiler technology which allows
-        compilation techniques to address the optimization of user-defined abstractions.
-        Due to the nature of the solution we provide, it is also an open compiler 
-        infrastructure that can be used for a wide number of other purposes.
-        The software developed to support ROSE research work provides an open general
-        purpose and robust compiler infrastructure to support numerous tools and external
-        collaborations in C, C++, and F90.</p>
-        <p> User-defined abstractions are built from within an existing base language and
-        carry specific semantic information which can't be communicated to the base
-        language's compiler.  In many situations, the semantic information could be useful 
-        within program optimization, but the base-language compiler is forced to ignore 
-        this semantic information because there is no way for applications to pass such 
-        additional information to base-language compiler.  ROSE is a part of general 
-        compiler research related to Telescoping Languages (a term coined by Ken Kennedy at Rice
-        University) and Plus-Minus Languages (a term coined by Bjarne Stroustrup at 
-        Texas A&M), it is also related to work under several other names: semantic
-        inlining, semantic extension of languages.  ROSE research is language independent 
-        but develops tools for specifically addressing the languages used for large-scale 
-        applications within scientific computing: C, C++, and Fortran 2003 (F2003 work is being 
-        done in collaboration with Los Alamos National Laboratory).</p>
+        <p>ROSE is an open source compiler infrastructure to build source-to-source program 
+        transformation and analysis tools for large-scale Fortran 77/95/2003, C, C++, OpenMP, 
+        and UPC applications. The intended users of ROSE could be either experienced compiler 
+        researchers or library and tool developers who may have minimal compiler experience. 
+        ROSE is particularly well suited for building custom tools for static analysis, program
+        optimization, arbitrary program transformation, domain-specific optimizations, complex
+        loop optimizations, performance analysis, and cyber-security.</p>
+
+        <p>Like other compiler infrastructures, ROSE consists of front-ends, a midend, 
+        unparsers, along with a set of analyses and optimizations. The Edison Design Group 
+        (EDG) front-end is used to parse C and C++ applications. Although the EDG 
+        source code and interfaces are protected, they may be distributed freely in binary 
+        form. Language support for Fortran 2003 and earlier versions (including Fortran 90/95,
+        F77, F66, and Fortran 4) is based on the Open Fortran Parser developed at Los Alamos 
+        National Laboratory. ROSE converts the intermediate representations (IRs) produced by
+        the front-ends into abstract syntax trees. The Sage AST used by ROSE is an intuitive,
+        object-oriented IR with several levels of interfaces for building source-to-source 
+        translators. All information in the original application is carefully preserved in
+        its ROSE AST, including C preprocessor control structure, source comments, source
+        position information, and template information (e.g., template arguments). Generic
+        and custom program analysis and optimization tools can be built on top of the Sage 
+        III AST, after an optional phase to recognize high-level abstractions found in
+        scientific applications. The ROSE unparsers generate source code in the original
+        source languages from the optimized AST, with all original comments and C preprocessor
+        control structures preserved. Finally, vendor compilers can be used to compile the 
+        optimized source code into executables for different platforms.</p>
+
+        <p>A number of program analyses and transformations have been developed for ROSE. 
+        They are designed to be utilized by users via simple function calls to interfaces.
+        The program analyses available include call graph analysis, control flow analysis,
+        data flow analysis (live variables, def-use chain, reaching definition, alias 
+        analysis, etc.), class hierarchy analysis, data dependence and system dependence
+        analysis, and MPI communication pattern analysis. Representative program 
+        optimizations and translations developed with ROSE are partial redundancy 
+        elimination, constant folding, inlining, outlining (separating out a portion of 
+        code as a function), OpenMP directive lowering, and loop transformations (a loop 
+        optimizer supporting aggressive loop optimizations such as fusion, fission, 
+        interchange, unrolling, and blocking).</p>
+  
+        <p> ROSE is released under a BSD-style license and is portable to Linux and Mac OS X
+        on IA32 and X86\_64 platforms. It has attracted more than three dozen user groups
+        worldwide for various research, development, and education purposes. For example, 
+        internal users at Lawrence Livermore National Laboratory are using it for optimizing
+        data structure abstractions and components. External users from other national
+        laboratories and universities have been using ROSE for code instrumentation,
+        static analysis, formal rewrite systems, empirical tuning, MPI verification, etc. 
+        It also is being used by five universities for teaching and seven companies to
+        support the development of commercial products.</p>
       </td>
       </tr>
     </table></td>
