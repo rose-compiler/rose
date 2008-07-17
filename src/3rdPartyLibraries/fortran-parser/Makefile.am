@@ -32,7 +32,7 @@ OFP_C_ACTION_SO=libfortran_ofp_parser_c_jni_FortranParserActionJNI.so
 OFP_CLASSPATH=-classpath $(CLASSPATH):./build:.
 OFP_JFLAGS=$(OFP_CLASSPATH)
 
-javadir=$(libdir)/java
+javadir=$(libdir)
 
 JARFILE=$(OFP_JARFILE)
 
