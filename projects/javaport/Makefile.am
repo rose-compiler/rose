@@ -111,7 +111,7 @@ compile_java_files: sage3_wrap.cxx \
 	touch compile_java_files
 
 sage3.jar: compile_java_files
-	jar cf $@ -C class .
+	$(JAR) cf $@ -C class .
 
 # TESTS=testjava.sh
 
@@ -119,10 +119,10 @@ check-local: test
 
 test: test.class sage3.jar .libs/libsage3_wrap.so input.cc
 	env LD_LIBRARY_PATH="../.libs:.libs:${LD_LIBRARY_PATH}" \
-	  java -classpath sage3.jar:. test $(srcdir)/input.cc -o /dev/null
+	  $(JAVA) -classpath sage3.jar:. test $(srcdir)/input.cc -o /dev/null
 
 test.class: test.java sage3.jar
-	javac -classpath sage3.jar:. $(srcdir)/test.java -d .
+	$(JAVAC) -classpath sage3.jar:. $(srcdir)/test.java -d .
 
 Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	echo '// vim: syn=cpp:' > Cxx_Grammar.i
