@@ -107,7 +107,7 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 # the path specified by $JAVA_JVM_PATH
 #JAVA_JVM_LIB = -L$(JAVA_JVM_PATH) -ljvm
 #JAVA_JVM_LIB = -ljvm
-JAVA_JVM_LIB = $(JAVA_JVM_PATH)/libjvm.so
+JAVA_JVM_LIB = $(JAVA_JVM_PATH)
 endif
 
 # ROSE-YICES Package (destributed by SRI as a static library)
