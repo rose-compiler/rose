@@ -145,8 +145,13 @@ int runOFP(int argc, char **argv)
 	 JavaVMInitArgs jvm_args;  /* VM initialization args.  */
 	 jboolean retval = JNI_TRUE; // Error by default
 
-	 string classpathEnvVar = getenvString("CLASSPATH");
-	 string classpath = "-Djava.class.path=" + string(ROSE_AUTOMAKE_TOP_BUILDDIR "/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar") + ":.";
+	 string classpath = "-Djava.class.path=";
+         classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
+         classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
+         classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
+         classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
+         classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
+         classpath += ".";
 
 	 /* Set up the VM initialization args.  */
 	 string jni_version = getenvString("JNI_VERSION");
