@@ -13,6 +13,7 @@ class NESectionTable;
 class NEResNameTable;
 class NEStringTable;
 class NEModuleTable;
+class NEEntryTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an NE file
@@ -50,8 +51,8 @@ struct NEFileHeader_disk {
     unsigned char e_magic[2];           /* 0x00 magic number "NE" */
     unsigned char e_linker_major;       /* 0x02 linker major version number */
     unsigned char e_linker_minor;       /* 0x03 linker minor version number */
-    uint16_t    e_entry_table_rfo;      /* 0x04 entry table offset relative to start of header */
-    uint16_t    e_entry_table_size;     /* 0x06 size of entry table in bytes */
+    uint16_t    e_entrytab_rfo;         /* 0x04 entry table offset relative to start of header */
+    uint16_t    e_entrytab_size;        /* 0x06 size of entry table in bytes */
     uint32_t    e_checksum;             /* 0x08 32-bit CRC of entire file (this word is taken a zero during the calculation) */
     uint16_t    e_flags;                /* 0x0c file-level bit flags */
     uint16_t    e_autodata_sn;          /* 0x0e auto data section number if (flags & 0x3)==0; else zero */
@@ -103,13 +104,15 @@ class NEFileHeader : public ExecHeader {
     void set_resname_table(NEResNameTable *ot) {resname_table=ot;}
     NEModuleTable *get_module_table() {return module_table;}
     void set_module_table(NEModuleTable *ot) {module_table=ot;}
+    NEEntryTable *get_entry_table() {return entry_table;}
+    void set_entry_table(NEEntryTable *ot) {entry_table=ot;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned char e_res1[9];
     unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags, e_autodata_sn, e_bss_size, e_stack_size;
     unsigned    e_csip, e_sssp, e_nsections, e_nmodrefs, e_nnonresnames, e_nmovable_entries, e_sector_align;
     unsigned    e_exetype, e_nresources;
-    addr_t      e_entry_table_rfo, e_entry_table_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
+    addr_t      e_entrytab_rfo, e_entrytab_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
     addr_t      e_importnametab_rfo, e_nonresnametab_offset;
 
   private:
@@ -119,6 +122,7 @@ class NEFileHeader : public ExecHeader {
     NESectionTable *section_table;
     NEResNameTable *resname_table;
     NEModuleTable *module_table;
+    NEEntryTable *entry_table;
 };
 
 
@@ -247,6 +251,38 @@ class NEStringTable : public ExecSection {
     std::string get_string(addr_t offset);
   private:
     void ctor(NEFileHeader*);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Entry Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct NEEntryPoint {
+    NEEntryPoint()
+        : flags(0), int3f(0), segno(0), segoffset(0)
+        {}
+    NEEntryPoint(unsigned flags, unsigned int3f, unsigned segno, unsigned segoffset)
+        : flags(flags), int3f(int3f), segno(segno), segoffset(segoffset)
+        {}
+    unsigned flags;             /* 0x01=>exported, 0x02=>uses a global (shared) data segment */
+    unsigned int3f;             /* always 0x3f** */
+    unsigned segno;             /* zero indicates unused entry */
+    unsigned segoffset;
+};
+
+
+class NEEntryTable : public ExecSection {
+  public:
+    NEEntryTable(NEFileHeader *fhdr)
+        : ExecSection(fhdr->get_file(), fhdr->get_offset()+fhdr->e_entrytab_rfo, fhdr->e_entrytab_size)
+        {ctor(fhdr);}
+    virtual ~NEEntryTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(NEFileHeader*);
+    std::vector<size_t> bundle_sizes;
+    std::vector<NEEntryPoint> entries;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

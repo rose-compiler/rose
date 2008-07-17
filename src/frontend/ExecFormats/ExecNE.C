@@ -82,8 +82,8 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
     const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
     e_linker_major         = le_to_host(fh->e_linker_major);
     e_linker_minor         = le_to_host(fh->e_linker_minor);
-    e_entry_table_rfo      = le_to_host(fh->e_entry_table_rfo);
-    e_entry_table_size     = le_to_host(fh->e_entry_table_size);
+    e_entrytab_rfo         = le_to_host(fh->e_entrytab_rfo);
+    e_entrytab_size        = le_to_host(fh->e_entrytab_size);
     e_checksum             = le_to_host(fh->e_checksum);
     e_flags                = le_to_host(fh->e_flags);
     e_autodata_sn          = le_to_host(fh->e_autodata_sn);
@@ -137,8 +137,8 @@ NEFileHeader::encode(NEFileHeader_disk *disk)
         disk->e_magic[i] = get_magic()[i];
     host_to_le(e_linker_major,         &(disk->e_linker_major));
     host_to_le(e_linker_minor,         &(disk->e_linker_minor));
-    host_to_le(e_entry_table_rfo,      &(disk->e_entry_table_rfo));
-    host_to_le(e_entry_table_size,     &(disk->e_entry_table_size));
+    host_to_le(e_entrytab_rfo,         &(disk->e_entrytab_rfo));
+    host_to_le(e_entrytab_size,        &(disk->e_entrytab_size));
     host_to_le(e_checksum,             &(disk->e_checksum));
     host_to_le(e_flags,                &(disk->e_flags));
     host_to_le(e_autodata_sn,          &(disk->e_autodata_sn));
@@ -188,7 +188,8 @@ NEFileHeader::unparse(FILE *f)
         resname_table->unparse(f);
     if (module_table)
         module_table->unparse(f);
-    
+    if (entry_table)
+        entry_table->unparse(f);
 }
     
 /* Print some debugging information */
@@ -206,9 +207,9 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     ExecHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_major",         e_linker_major);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_linker_minor",         e_linker_minor);
-    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_entry_table_rfo",      
-                                                       e_entry_table_rfo, e_entry_table_rfo+offset);
-    fprintf(f, "%s%-*s = %"PRIu64" bytes\n",           p, w, "e_entry_table_size",     e_entry_table_size);
+    fprintf(f, "%s%-*s = %"PRIu64" (%"PRIu64" abs)\n", p, w, "e_entrytab_rfo",      
+                                                       e_entrytab_rfo, e_entrytab_rfo+offset);
+    fprintf(f, "%s%-*s = %"PRIu64" bytes\n",           p, w, "e_entrytab_size",        e_entrytab_size);
     fprintf(f, "%s%-*s = 0x%08x\n",                    p, w, "e_checksum",             e_checksum);
     fprintf(f, "%s%-*s = 0x%04x\n",                    p, w, "e_flags",                e_flags);
     fprintf(f, "%s%-*s = %u (1-origin)\n",             p, w, "e_autodata_sn",          e_autodata_sn);
@@ -256,6 +257,12 @@ NEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
                 module_table->get_id(), module_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "module_table");
+    }
+    if (entry_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
+                entry_table->get_id(), entry_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
 }
 
@@ -613,6 +620,144 @@ NEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// NE Entry Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+NEEntryTable::ctor(NEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    set_name("NE Entry Table");
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+
+    addr_t at=0;
+    size_t bundle_nentries = content(at++, 1)[0];
+    while (bundle_nentries>0) {
+        bundle_sizes.push_back(bundle_nentries);
+        unsigned segment_indicator = content(at++, 1)[0];
+        if (0==segment_indicator) {
+            /* Unused entries */
+            for (size_t i=0; i<bundle_nentries; i++) {
+                entries.push_back(NEEntryPoint());
+            }
+        } else if (0xff==segment_indicator) {
+            /* Movable segment entries. */
+            for (size_t i=0; i<bundle_nentries; i++, at+=6) {
+                unsigned flags = content(at+0, 1)[0];
+                unsigned int3f = le_to_host(*(const uint16_t*)content(at+1, 2));
+                ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
+                unsigned segno = content(at+3, 1)[0];
+                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+4, 2));
+                entries.push_back(NEEntryPoint(flags, int3f, segno, segoffset));
+            }
+        } else {
+            /* Fixed segment entries */
+            for (size_t i=0; i<bundle_nentries; i++, at+=3) {
+                unsigned flags = content(at+0, 1)[0];
+                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+1, 2));
+                entries.push_back(NEEntryPoint(flags, 0, segment_indicator, segoffset));
+            }
+        }
+        
+        bundle_nentries = content(at++, 1)[0];
+    }
+}
+
+/* Write section back to disk */
+void
+NEEntryTable::unparse(FILE *f)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+
+    for (size_t bi=0, ei=0; bi<bundle_sizes.size(); ei+=bundle_sizes[bi++]) {
+        ROSE_ASSERT(bundle_sizes[bi]>0 && bundle_sizes[bi]<=0xff);
+        unsigned char n = bundle_sizes[bi];
+        fputc(n, f);
+
+        ROSE_ASSERT(ei+bundle_sizes[bi]<=entries.size());
+        if (0==entries[ei].segno) {
+            /* Unused entries */
+            fputc('\0', f);
+        } else if (0==entries[ei].int3f) {
+            /* Fixed entries */
+            ROSE_ASSERT(entries[ei].segno<=0xff);
+            unsigned char n = entries[ei].segno;
+            fputc(n, f);
+            for (size_t i=0; i<bundle_sizes[bi]; i++) {
+                ROSE_ASSERT(entries[ei].segno==entries[ei+i].segno);
+                ROSE_ASSERT(entries[ei+i].int3f==0);
+                ROSE_ASSERT(entries[ei+i].flags<=0xff);
+                n = entries[ei+i].flags;
+                fputc(n, f);
+                uint16_t eoff_le;
+                host_to_le(entries[ei+i].segoffset, &eoff_le);
+                fwrite(&eoff_le, sizeof eoff_le, 1, f);
+            }
+        } else {
+            /* Movable entries */
+            fputc(0xff, f);
+            for (size_t i=0; i<bundle_sizes[bi]; i++) {
+                ROSE_ASSERT(entries[ei+i].segno>0);
+                ROSE_ASSERT(entries[ei+i].int3f!=0);
+                ROSE_ASSERT(entries[ei+i].flags<=0xff);
+                n = entries[ei+i].flags;
+                fputc(n, f);
+                uint16_t word;
+                host_to_le(entries[ei+i].int3f, &word);
+                fwrite(&word, sizeof word, 1, f);
+                ROSE_ASSERT(entries[ei+i].segno<=0xff);
+                n = entries[ei+i].segno;
+                fputc(n, f);
+                host_to_le(entries[ei+i].segoffset, &word);
+                fwrite(&word, sizeof word, 1, f);
+            }
+        }
+    }
+    fputc('\0', f);
+}
+
+/* Print some debugging info */
+void
+NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNEEntryTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNEEntryTable.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %zu bundles\n", p, w, "nbundles", bundle_sizes.size());
+    for (size_t bi=0, ei=0; bi<bundle_sizes.size(); ei+=bundle_sizes[bi++]) {
+        fprintf(f, "%s%-*s = [%zu] %zu entries\n", p, w, "bundle_size", bi, bundle_sizes[bi]);
+        for (size_t i=0; i<bundle_sizes[bi]; i++) {
+            if (0==entries[ei+i].segno) {
+                fprintf(f, "%s%-*s = [%zu] %s\n", p, w, "entry_type", ei+i, "unused");
+                ROSE_ASSERT(0==entries[ei+i].flags);
+                ROSE_ASSERT(0==entries[ei+i].int3f);
+                ROSE_ASSERT(0==entries[ei+i].segoffset);
+            } else if (0==entries[ei+i].int3f) {
+                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry_type",   ei+i, "fixed");
+                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry_flags",  ei+i, entries[ei+i].flags);
+                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry_segno",  ei+i, entries[ei+i].segno);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_offset", ei+i, entries[ei+i].segoffset);
+            } else {
+                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry_type",   ei+i, "movable");
+                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry_flags",  ei+i, entries[ei+i].flags);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_int3f",  ei+i, entries[ei+i].int3f);
+                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry_segno",  ei+i, entries[ei+i].segno);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_offset", ei+i, entries[ei+i].segoffset);
+            }
+        }
+    }
+}
+    
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns true if a cursory look at the file indicates that it could be a NE file. */
 bool
@@ -673,9 +818,9 @@ parse(ExecFile *ef)
         /* Imported Name Table must be read before the Module Reference Table since the latter references the former. However,
          * the Imported Name Table comes immediately after the Module Reference Table and before the Entry Table in the file. */
         ROSE_ASSERT(ne_header->e_importnametab_rfo>0);
-        ROSE_ASSERT(ne_header->e_entry_table_rfo > ne_header->e_importnametab_rfo);
+        ROSE_ASSERT(ne_header->e_entrytab_rfo > ne_header->e_importnametab_rfo);
         addr_t strtab_offset = ne_header->get_offset() + ne_header->e_importnametab_rfo;
-        addr_t strtab_size   = ne_header->e_entry_table_rfo - ne_header->e_importnametab_rfo;
+        addr_t strtab_size   = ne_header->e_entrytab_rfo - ne_header->e_importnametab_rfo;
         NEStringTable *strtab = new NEStringTable(ne_header, strtab_offset, strtab_size);
 
         /* Module reference table */
@@ -683,6 +828,10 @@ parse(ExecFile *ef)
         addr_t modref_size   = ne_header->e_importnametab_rfo - ne_header->e_modreftab_rfo;
         NEModuleTable *modtab = new NEModuleTable(ne_header, modref_offset, modref_size, strtab);
         ne_header->set_module_table(modtab);
+    }
+    if (ne_header->e_entrytab_rfo>0 && ne_header->e_entrytab_size>0) {
+        NEEntryTable *enttab = new NEEntryTable(ne_header);
+        ne_header->set_entry_table(enttab);
     }
     
     /* Construct the section table and its sections (non-synthesized sections) */
