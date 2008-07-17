@@ -1,7 +1,8 @@
 # Set Variables ROSE_INSTALL to your ROSE_INSTALL installation and
 # COMPASS_SUPPORT to your compassSupport directory like this:
-#ROSE_INSTALL= /home/dquinlan/rose-install
-#COMPASS_SUPPORT = /home/dquinlan/ROSE/NEW_ROSE/projects/compass/compassVerifier/compassSupport
+#ROSE_INSTALL= ROSE-INSTALL-DIRECTORY
+#COMPASS_PROJECT = COMPASS-PROJECT-DIRECTORY 
+#COMPASS_SUPPORT = ${COMPASS_PROJECT}/compassSupport
 
 CHECKER_NAME = noAsmStmtsOpsTest
 

@@ -11,7 +11,7 @@ echo "COMPASS_CHECKER_DIRECTORIES = \\"
 cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's/^.*$/	& \\/'
 echo ""
 echo "COMPASS_INCLUDES = \\"
-cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	-I$(srcdir)/& \\,'
+cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	-I$(compass_srcdir)/& \\,'
 echo ""
 echo "COMPASS_CHECKER_SRCS = \\"
 cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	&/&.C \\,'
@@ -30,8 +30,8 @@ cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	&Docs.tex \\,'
 echo ""
 echo "docs: compass.tex compassCheckerDocs.tex"
 echo '	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty'
-for i in compass_arc.png compassdesign.png compass_pic.png acknowledgments.tex introduction.tex design.tex usingCompass.tex emacs_screenshot.jpg compass_vim7.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(srcdir)/$i $i" ; done
-echo '	test -f compassDocs.tex || ln -s $(srcdir)/compassSupport/compassDocs.tex compassDocs.tex'
+for i in compass_arc.png compassdesign.png compass_pic.png acknowledgments.tex introduction.tex design.tex usingCompass.tex emacs_screenshot.jpg compass_vim7.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(compass_srcdir)/$i $i" ; done
+echo '	test -f compassDocs.tex || ln -s $(compass_srcdir)/compassSupport/compassDocs.tex compassDocs.tex'
 echo '	pdflatex --interaction=batchmode compass.tex'
 echo '	pdflatex --interaction=batchmode compass.tex'
 echo ""
@@ -52,4 +52,4 @@ cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do sed "s,@CHECKER@,$
 echo "archiveCheckers: \$(COMPASS_CHECKER_ARCHIVES)"
 echo ""
 echo "# Compass checker object file build rules"
-cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(srcdir)/&/&.C@	$(LTCXXCOMPILE) -c -o &.lo $(srcdir)/&/&.C@,' | tr '@' '\n'
+cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(compass_srcdir)/&/&.C@	$(LTCXXCOMPILE) -c -o &.lo $(compass_srcdir)/&/&.C@,' | tr '@' '\n'

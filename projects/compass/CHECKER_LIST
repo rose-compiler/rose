@@ -1,4 +1,5 @@
 allocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+allowedFunctions
 assignmentOperatorCheckSelf
 assignmentReturnConstThis
 asynchronousSignalHandler
@@ -31,6 +32,7 @@ enumDeclarationNamespaceClassScope
 explicitCharSign
 explicitCopy
 explicitTestForNonBooleanValue
+fileReadOnlyAccess
 floatForLoopCounter
 floatingPointExactComparison
 fopenFormatParameter
@@ -53,6 +55,7 @@ multiplePublicInheritance
 nameAllParameters
 #nameConsistency
 newDelete
+noAsmStmtsOps
 noExceptions
 noExitInMpiCode
 noGoto

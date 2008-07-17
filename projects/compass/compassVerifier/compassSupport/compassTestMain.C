@@ -1,1 +1,0 @@
-../../compassSupport/compassTestMain.C

@@ -1,4 +1,5 @@
 -:AllocateAndFreeMemoryInTheSameModuleAtTheSameLevelOfAbstraction
+-:AllowedFunctions
 -:AssignmentOperatorCheckSelf
 -:AssignmentReturnConstThis
 -:AsynchronousSignalHandler
@@ -32,6 +33,7 @@
 -:ExplicitCharSign
 -:ExplicitCopy
 -:ExplicitTestForNonBooleanValue
+-:FileReadOnlyAccess
 -:FloatForLoopCounter
 -:FloatingPointExactComparison
 -:FopenFormatParameter
@@ -56,6 +58,7 @@
 -:NameAllParameters
 -:NameConsistency
 +:NewDelete
++:NoAsmStmtsOps
 -:NoExceptions
 -:NoExitInMpiCode
 -:NoGoto
