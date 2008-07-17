@@ -154,31 +154,7 @@ int runOFP(int argc, char **argv)
          classpath += ".";
 
 	 /* Set up the VM initialization args.  */
-	 string jni_version = getenvString("JNI_VERSION");
-	 if(jni_version != "")
-	 {
-		if(jni_version == "1.6")
-		  jvm_args.version = JNI_VERSION_1_6;
-		else if(jni_version == "1.4")
-		  jvm_args.version = JNI_VERSION_1_4;
-		else if(jni_version == "1.2")
-		  jvm_args.version = JNI_VERSION_1_2;
-		else if(jni_version == "1.1")
-		  jvm_args.version = JNI_VERSION_1_1;
-		else
-		{
-		  /* We got an *invalid* JNI_VERSION.  Try defaulting to 1_4.  */
-		  fprintf(stderr, "Warning: Invalid JNI_VERSION.\nDefaulting to 1.4!\n");
-		  jvm_args.version = JNI_VERSION_1_4;
-		}
-	 }
-	 else
-	 {
-   /* The user did not set JNI_VERSION in their environment.  Warn them and then try defaulting to 1_4.  */
-		fprintf(stderr, "Warning: JNI_VERSION environment variable is not set! Defaulting to 1.4!\n");
-		jvm_args.version = JNI_VERSION_1_4;
-	 }
-
+         jvm_args.version = JNI_VERSION_1_4;
 	 jvm_args.nOptions = 1;
 	 jvm_args.options = new JavaVMOption[jvm_args.nOptions];
 	 jvm_args.options[0].optionString = strdup(classpath.c_str());
