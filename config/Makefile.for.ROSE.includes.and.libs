@@ -221,7 +221,7 @@ ROSE_INCLUDES = \
 # ROSE_LIBS_WITH_PATH = $(libdir)/librose.so $(libdir)/libedg.so
 # ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la
 # ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB)
-ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB) $(ROSE_YICES_LIBS_WITH_PATH)
+ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(ROSE_YICES_LIBS_WITH_PATH)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
