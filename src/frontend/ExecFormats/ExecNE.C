@@ -812,6 +812,65 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
+NERelocEntry::ctor(NERelocTable *relocs, addr_t at)
+{
+    /* The source type:
+     *   0x0 => low byte at the specified offset
+     *   0x2 => 16-bit selector
+     *   0x3 => 32-bit pointer
+     *   0x5 => 16-bit offset
+     *   0xb => 48-bit pointer
+     *   0xd => 32-bit offset
+     * Only the low-order 4 bits are used; the high-order bits are reserved. */
+    unsigned n = relocs->content(at+0, 1)[0];
+    src_type = n & 0x0f;
+    res1 = n & ~0x0f;
+
+    /* The target type:
+     *   0x0 => internal reference
+     *   0x1 => imported ordinal
+     *   0x2 => imported name
+     *   0x3 => OS fixup
+     * Only the low-order 3 bits are used. The fourth bit is the "additive" flag; remaining bits are reserved. */
+    n = relocs->content(at+1, 1)[0];
+    tgt_type = n & 0x03;
+    additive = n & 0x04 ? true : false;
+    res2 = n & ~0x07;
+    
+    /* src_offset is the byte offset into the source section that needs to be patched. If this is an additive relocation then
+     * the source will be patched by adding the target value to the value stored at the source. Otherwise the target value is
+     * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
+    src_offset = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+
+    switch (tgt_type) {
+      case 0x00:
+        /* Internal reference */
+        iref.segno = relocs->content(at+4, 1)[0];
+        iref.res3  = relocs->content(at+5, 1)[0];
+        iref.tgt_offset = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        break;
+      case 0x01:
+        /* Imported ordinal */
+        iord.modref  = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
+        iord.ordinal = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        break;
+      case 0x02:
+        /* Imported name */
+        iname.modref = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
+        iname.nm_off = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        break;
+      case 0x03:
+        /* Operating system fixup */
+        osfixup.type = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
+        osfixup.res3 = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        break;
+    }
+}
+
+/* Constructor. We don't know how large the relocation table is until we're parsing it (specifically, after we've read the
+ * number of entries stored in the first two bytes), therefore the section should have an initial size of zero and we extend
+ * it as we parse it. */
+void
 NERelocTable::ctor(NEFileHeader *fhdr)
 {
     char name[64];
@@ -829,14 +888,9 @@ NERelocTable::ctor(NEFileHeader *fhdr)
     at += 2;
     fprintf(stderr, "ROBB: nrelocs=%zu\n", nrelocs);
     
-    for (size_t i=0; i<nrelocs; i++) {
-        extend(4);
-        unsigned src_type = content(at++, 1)[0];
-        unsigned flags    = content(at++, 1)[0];
-        addr_t src_chain  = le_to_host(*(const uint16_t*)content(at, 2));
-        at += 2;
-
-        fprintf(stderr, "ROBB:   src_type=0x%02x, flags=0x%02x, chain=%"PRIu64"\n", src_type, flags, src_chain);
+    for (size_t i=0; i<nrelocs; i++, at+=8) {
+        extend(8);
+        entries.push_back(NERelocEntry(this, at));
     }
 }
     

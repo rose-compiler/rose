@@ -331,6 +331,39 @@ class NEEntryTable : public ExecSection {
 // NE Relocation Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class NERelocEntry {
+  public:
+    NERelocEntry(NERelocTable *relocs, addr_t at)
+        {ctor(relocs, at);}
+    void ctor(NERelocTable*, addr_t at);
+  public:
+    unsigned            src_type;
+    unsigned            res1;
+    unsigned            tgt_type;
+    bool                additive;
+    unsigned            res2;
+    addr_t              src_offset;
+    union {
+        struct {
+            unsigned    segno;
+            unsigned    res3;
+            unsigned    tgt_offset;
+        } iref;
+        struct {
+            unsigned    modref;
+            unsigned    ordinal;
+        } iord;
+        struct {
+            unsigned    modref;
+            unsigned    nm_off;
+        } iname;
+        struct {
+            unsigned    type;
+            unsigned    res3;
+        } osfixup;
+    };
+};
+
 class NERelocTable : public ExecSection {
   public:
     NERelocTable(NEFileHeader *fhdr, addr_t offset)
@@ -339,6 +372,7 @@ class NERelocTable : public ExecSection {
     virtual ~NERelocTable() {}
   private:
     void ctor(NEFileHeader*);
+    std::vector<NERelocEntry> entries;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
