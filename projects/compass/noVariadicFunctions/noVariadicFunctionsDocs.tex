@@ -1,0 +1,78 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Variadic Functions}
+\label{NoVariadicFunctions::overview}
+
+``CERT Secure Coding DCL33-C.'' states
+\begin{quote}
+A variadic function – a function declared with a parameter list ending with ellipsis (...) – can accept a varying number of arguments of differing types. Variadic functions are flexible, but they are also hazardous. The compiler can't verify that a given call to a variadic function passes an appropriate number of arguments or that those arguments have appropriate types. Consequently, a runtime call to a variadic function that passes inappropriate arguments yields undefined behavior. Such undefined behavior could be exploited to run arbitrary code.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that visits all function
+and member function references checking the function declaration for arguments of variadic type. Those defined functions with variadic arguments flag violations of this rule.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+#include <cstdarg>
+
+char *concatenate(char const *s, ...)
+{
+  return 0;
+}
+
+int main()
+{
+  char *separator = "\t";
+  char *t = concatenate("hello", separator, "world", 0);
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution uses a chain of string binary operations instead of a
+variadic function.
+
+\begin{verbatim}
+#include <string>
+
+string separator = /* some reasonable value */;
+
+string s = "hello" + separator + "world";
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal on all function and member function references.
+\item For each function reference check the function declaration and existence of function definition.
+\item If function definition does not exist then stop check.
+\item Else check function declaration arguments for variadic types.
+\item Report any violations.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{DCL33-C. Do not define variadic functions}{https://www.securecoding.cert.org/confluence/display/cplusplus/DCL33-C.+Do+not+define+variadic+functions}

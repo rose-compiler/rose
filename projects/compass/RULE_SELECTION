@@ -72,6 +72,7 @@
 -:NoSecondTermSideEffects
 -:NoSideEffectInSizeof
 -:NoTemplateUsage
++:NoVariadicFunctions
 -:NoVfork
 +:NullDeref
 -:OneLinePerDeclaration
