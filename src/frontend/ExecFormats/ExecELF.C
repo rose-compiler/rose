@@ -476,7 +476,9 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
             if (i==fhdr->e_shstrndx) continue; /*we already read string table*/
             switch (shdr->sh_type) {
               case SHT_NULL:
-                continue;
+                /* Null entry. We still create the section just to hold the section header. */
+                section = new ElfSection(fhdr, shdr, 0);
+                break;
               case SHT_NOBITS:
                 /* These types of sections don't occupy any file space (e.g., BSS) */
                 section = new ElfSection(fhdr, shdr, 0);
@@ -549,6 +551,7 @@ ElfSectionTable::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     std::vector<ExecSection*> sections = ef->get_sections();
 
+    /* Write the remaining entries */
     for (size_t i=0; i<sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
             ElfSection *section = dynamic_cast<ElfSection*>(sections[i]);
@@ -569,6 +572,7 @@ ElfSectionTable::unparse(FILE *f)
             }
 
             /* The disk struct */
+            ROSE_ASSERT(section->get_id()>=0);
             addr_t entry_offset = get_offset() + section->get_id() * fhdr->e_shentsize;
             int status = fseek(f, entry_offset, SEEK_SET);
             ROSE_ASSERT(status>=0);

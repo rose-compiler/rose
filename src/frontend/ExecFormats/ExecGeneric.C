@@ -376,8 +376,17 @@ ExecFile::unparse(const char *filename)
     FILE *f = fopen(filename, "w");
     ROSE_ASSERT(f);
 
-#if 0 /*FIXME: this is here during development so we can see whether any of the section writers doesn't work. */
-    fwrite(data, 1, sb.st_size, f);
+#if 1
+    /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
+     * that all data is written back to the file, including things that are zero. */
+    addr_t remaining = sb.st_size;
+    unsigned char fill=0xaa, buf[4096];
+    memset(buf, fill, sizeof buf);
+    while (remaining>=sizeof buf) {
+        fwrite(buf, sizeof buf, 1, f);
+        remaining -= sizeof buf;
+    }
+    fwrite(buf, remaining, 1, f);
 #endif
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
