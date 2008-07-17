@@ -728,7 +728,6 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 		    $(BOOST_WAVE_LIB) \
 		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
-		    -L$(top_builddir)/src/3rdPartyLibraries/fortran-parser -lfortran_ofp_parser_c_jni_FortranParserActionJNI
 #		    $(ROSEHPCT_DEP_LIBS)
 librose_la_LDFLAGS = -no-undefined
 librose_la_DEPENDENCIES = $(libroseLibraries)

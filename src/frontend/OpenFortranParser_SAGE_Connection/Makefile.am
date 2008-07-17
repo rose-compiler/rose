@@ -54,7 +54,7 @@ endif
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
 # Compile using the function to call the Open Fortran Parser (should be a C file, since it will not compile currently as a C++ file)
-openFortranParserMain = openFortranParser_main.c
+openFortranParserMain = openFortranParser_main.C
 # libroseFortran_la_LIBADD = -L$(JAVA_JVM_PATH) -ljvm
 libroseFortran_la_LIBADD =
 else
