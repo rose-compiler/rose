@@ -239,9 +239,10 @@ class NESectionTable : public ExecSection {
 // Resident and Non-Resident Name Tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* This table contains a module name followed by a list of procedure name strings. Each name is associated with an "ordinal"
+/* This table contains a module name followed by the list of exported function names. Each name is associated with an "ordinal"
  * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
- * zero. In the non-resident name table the first entry is a module description. */
+ * zero. In the non-resident name table the first entry is a module description and the functions are not always resident in
+ * system memory (they are discardable). */
 class NENameTable : public ExecSection {
   public:
     NENameTable(NEFileHeader *fhdr, addr_t offset)
