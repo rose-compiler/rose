@@ -240,6 +240,77 @@ ExecFile::get_next_section_offset(addr_t offset)
     return found;
 }
 
+/* Print basic info about the sections of a file */
+void
+ExecFile::dump(FILE *f)
+{
+    if (sections.size()==0) {
+        fprintf(f, "No sections defined for file.\n");
+        return;
+    }
+    
+    /* Sort sections by offset and size */
+    std::vector<ExecSection*> sections = this->sections;
+    for (size_t i=1; i<sections.size(); i++) {
+        for (size_t j=0; j<i; j++) {
+            if (sections[j]->get_offset() == sections[i]->get_offset()) {
+                if (sections[j]->get_size() > sections[i]->get_size()) {
+                    ExecSection *x = sections[j];
+                    sections[j] = sections[i];
+                    sections[i] = x;
+                }
+            } else if (sections[j]->get_offset() > sections[i]->get_offset()) {
+                ExecSection *x = sections[j];
+                sections[j] = sections[i];
+                sections[i] = x;
+            }
+        }
+    }
+    
+    /* Print results */
+    fprintf(f, "File sections:\n");
+    fprintf(f, "  Flg Offset     Size       End         ID  Section Name\n");
+    fprintf(f, "  --- ---------- ---------- ----------  --  -------------------------------------\n");
+    addr_t high_water = 0;
+    for (size_t i=0; i<sections.size(); i++) {
+        
+        /* Does section[i] overlap with any other (before or after)? */
+        char overlap[4] = "   "; /* status characters: overlap prior, overlap subsequent, hole */
+        for (size_t j=0; overlap[0]==' ' && j<i; j++) {
+            if (sections[j]->get_offset()+sections[j]->get_size() > sections[i]->get_offset()) {
+                overlap[0] = '<';
+            }
+        }
+        for (size_t j=i+1; overlap[1]==' ' && j<sections.size(); j++) {
+            if (sections[i]->get_offset()+sections[i]->get_size() > sections[j]->get_offset()) {
+                overlap[1] = '>';
+            }
+        }
+
+        /* Is there a hole before section[i]? */
+        if (high_water < sections[i]->get_offset()) {
+            overlap[2] = 'H'; /* truly unaccounted region of the file */
+        } else if (i>0 && sections[i-1]->get_offset()+sections[i-1]->get_size() < sections[i]->get_offset()) {
+            overlap[2] = 'h'; /* unaccounted only if overlaps are not allowed */
+        }
+        high_water = std::max(high_water, sections[i]->get_offset() + sections[i]->get_size());
+        
+        fprintf(f, "  %3s 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64"  %2d  %s\n", 
+                overlap,
+                sections[i]->get_offset(), sections[i]->get_size(), sections[i]->get_offset()+sections[i]->get_size(), 
+                sections[i]->get_id(), sections[i]->get_name().c_str());
+    }
+
+    char overlap[4] = "   ";
+    if (high_water < (addr_t)sb.st_size) {
+        overlap[2] = 'H';
+    } else if (sections.back()->get_offset() + sections.back()->get_size() < (addr_t)sb.st_size) {
+        overlap[2] = 'h';
+    }
+    fprintf(f, "  %3s 0x%08"PRIx64"                            EOF\n", overlap, (addr_t)sb.st_size);
+    fprintf(f, "  --- ---------- ---------- ----------  --  -------------------------------------\n");
+}
+
 /* Synthesizes sections to describe the parts of the file that are not yet referenced by other sections. */
 void
 ExecFile::fill_holes()
@@ -248,7 +319,7 @@ ExecFile::fill_holes()
     /* Find the holes and store their extent info */
     ExecSection::ExtentVector extents;
     addr_t offset = 0;
-    while (offset < (uint64_t)sb.st_size) {
+    while (offset < (addr_t)sb.st_size) {
         std::vector<ExecSection*> sections = get_sections_by_offset(offset, 0); /*all sections at this file offset*/
         
         /* Find the maximum ending offset */

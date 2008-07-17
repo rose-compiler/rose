@@ -311,6 +311,7 @@ class ExecFile {
         {ctor(file_name);}
     virtual ~ExecFile();                                /* Destructor deletes children and munmaps and closes file */
     void unparse(const char *filename);                 /* Unparse the file -- mirror image of parsing */
+    void dump(FILE*);                                   /* Print some debugging info */
 
     /* File contents */
     addr_t get_size() {return sb.st_size;}              /* Size of file in bytes as of time it was opened */
