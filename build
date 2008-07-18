@@ -23,6 +23,14 @@ done
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
 
+if -f ./config/ltmain.sh; then
+  :
+elif -x /usr/bin/glibtoolize; then
+  /usr/bin/glibtoolize
+else
+  libtoolize
+fi
+
 ./makelinks
 
 aclocal -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal || : exit 1
