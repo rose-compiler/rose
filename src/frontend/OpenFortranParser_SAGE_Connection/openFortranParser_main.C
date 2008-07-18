@@ -58,7 +58,7 @@ using namespace std;
 #include "rose_config.h"
 
 /* This is defined if ROSE is configured to use the Java Open Fortran Parser */
-// #ifdef USE_ROSE_JAVA_SUPPORT
+#ifdef USE_ROSE_JAVA_SUPPORT
 
 #include "rose_paths.h"
 #include "commandline_processing.h"
@@ -119,7 +119,7 @@ int openFortranParser_main(int argc, char **argv)
 	 return status;
   }
 
-// #else
+#else
 
 int main(int argc, char **argv)
   {
@@ -130,7 +130,9 @@ int main(int argc, char **argv)
 	 
 	 return retval;
   }
-// #endif
+#endif
+
+#ifdef USE_ROSE_JAVA_SUPPORT
 
 string getenvString(const string& key, const string& def = "") {
   const char* val = getenv(key.c_str());
@@ -286,3 +288,4 @@ int runOFP(int argc, char **argv)
 	 exit(1);
   }
 
+#endif // USE_ROSE_JAVA_SUPPORT

@@ -291,9 +291,6 @@ AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
 
 
 # Call supporting macro for Binary Analysis
-ROSE_SUPPORT_BINARY_ANALYSIS
-
-# Call supporting macro for Binary Analysis
 ROSE_SUPPORT_WINDOWS_BINARY_ANALYSIS
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
@@ -340,27 +337,14 @@ CLASSPATH=${ABSOLUTE_SRCDIR}/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar:${
 export CLASSPATH
 AC_SUBST(CLASSPATH)
 ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
-JAVA="${JAVA_HOME}/bin/java"
-JAVAC="${JAVA_HOME}/bin/javac"
-JAR="${JAVA_HOME}/bin/jar"
-AC_CHECK_CLASSPATH
-AC_PROG_JAVAC
-AC_PROG_JAVA
-AC_PROG_JAR
-_ACJNI_JAVAC=${JAVAC} # Hack to work around bug in AC_JNI_INCLUDE_DIR
-AC_JNI_INCLUDE_DIR
-for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
-do
-        CPPFLAGS="$CPPFLAGS -I$JNI_INCLUDE_DIR"
-done
-
-AC_CHECK_CLASS([org.antlr.Tool], [:], [AC_MSG_ERROR([ANTLR generator not in CLASSPATH])])
-AC_CHECK_CLASS([org.antlr.runtime.Token], [:], [AC_MSG_ERROR([ANTLR runtime not in CLASSPATH])])
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
 AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
-AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], 1, [Always enable Fortran support whenever Java is present])
-AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER,true)
+if test "x$USE_JAVA" = x1; then
+  AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [$USE_JAVA], [Always enable Fortran support whenever Java is present])
+  CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+fi
+AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$USE_JAVA" = x1])
 
 # Call supporting macro for bddbddb
 ROSE_SUPPORT_BDDBDDB

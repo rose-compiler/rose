@@ -59,7 +59,7 @@ openFortranParserMain = openFortranParser_main.C
 libroseFortran_la_LIBADD =
 else
 # Compile using a function that represents the API of the Open Fortran Parser
-openFortranParserMain = dummy_openFortranParser_main.c
+openFortranParserMain = dummy_openFortranParser_main.C
 libroseFortran_la_LIBADD =
 endif
 

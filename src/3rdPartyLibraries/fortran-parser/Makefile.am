@@ -68,10 +68,13 @@ java-stuff:
 	touch java-stuff
 
 # lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
+if ROSE_USE_OPEN_FORTRAN_PARSER
 java_DATA = OpenFortranParser.jar
-
 c_actions_jni.c: java-stuff
 OpenFortranParser.jar: java-stuff
+else
+java_DATA =
+endif
 
 # libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_SOURCES = c_actions_jni.c
 # libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_CPPFLAGS = -I. -I./tmp/c -I$(srcdir)/src/fortran/ofp/parser/c -I$(srcdir)/src/fortran/ofp/parser/c/jni
