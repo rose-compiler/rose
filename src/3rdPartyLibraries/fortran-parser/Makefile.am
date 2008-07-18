@@ -78,5 +78,7 @@ OpenFortranParser.jar: java-stuff
 
 CLEANFILES = java-stuff OpenFortranParser.jar c_actions_jni.c FortranParserActionJNI.java RuleStackTrace.java FortranLexer.java FortranParser.java FortranParserAction.h
 
+EXTRA_DIST = INSTALL README get_antlr.sh config src tests
+
 clean-local:
 	rm -rf build/ tmp/
