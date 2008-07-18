@@ -140,6 +140,9 @@ More functionality within ROSE is available if one has additional (freely availa
           mpicc is a compiler for MPI development. If ROSE is configures with MPI
           enabled, one can utilize features in ROSE that allow for distributed
           parallel AST traversals.
+   \item {\bf Java} : \\
+          A Java compiler and virtual machine are required to use the Open
+          Fortran Parser and other Java-based parts of ROSE.
 \end{itemize}
 
 % \subsection{Installation and Testing }
@@ -291,11 +294,15 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
 \label{gettingStarted:configureOptions}
      A few example configure options are:
 \begin{itemize}
-   \item {\tt ../ROSE/configure --with-boost=[BOOST\_installTree]} \\
+   \item {\tt ../ROSE/configure --with-boost=[BOOST\_installTree] --with-java} \\
          This will configure ROSE to be compiled in the current directory (separate from
          the {\bf Source Tree}).  The installation (from {\tt make install}) will be placed in
          {\tt /usr/local}.  Most users don't have permission to write to this directory,
-         so we suggest always including the {\em prefix option} (e.g. {\tt --prefix=`pwd`}).
+         so we suggest always including the {\em prefix option} (e.g. {\tt
+         --prefix=`pwd`}).  The Open Fortran Parser will also be enabled,
+         allowing ROSE to process Fortran code.  The programs {\tt java},
+         {\tt javac}, and {\tt jar} must be either in your PATH or in {\tt
+         \$JAVA\_HOME/bin}.
    \item {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
          Configure in the current directory so that installation will also happen in the
          current  directory (a {\tt install} subdirectory will be built).
@@ -313,7 +320,7 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
    \item {\tt ../ROSE/configure --prefix=`pwd` --with-binarysql --with-boost=[BOOST\_installTree]} \\
          The binarysql flag allows ROSE to read a binary file previously stored as a sql file (e.g. fetched from
          IDA Pro). 
-   \item {\tt ../ROSE/configure --prefix=`pwd` --with-javaport=yes SWIG=swig --with-boost=[BOOST\_installTree]} \\
+   \item {\tt ../ROSE/configure --prefix=`pwd` --with-javaport=yes SWIG=swig --with-boost=[BOOST\_installTree] --with-java} \\
          This allows ROSE to be build with javaport, a support that connects ROSE to Java via SWIG.
          The Eclipse plug-in to ROSE is based on this work.
    \item Additional Examples \\ 
