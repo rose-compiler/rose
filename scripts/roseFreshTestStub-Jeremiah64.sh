@@ -5,6 +5,7 @@
 source /usr/apps/graphviz/2.6/setup.sh
 # source /usr/apps/python/2.5/setup.sh
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
+export LD_LIBRARY_PATH="${JAVA_HOME}/lib/jre/lib/amd64/server:${LD_LIBRARY_PATH}"
 # source /usr/apps/gcc/4.2.2/setup.sh
 export PATH="/usr/apps/gcc/4.2.2-64bit/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/apps/gcc/4.2.2-64bit/lib:$LD_LIBRARY_PATH"
