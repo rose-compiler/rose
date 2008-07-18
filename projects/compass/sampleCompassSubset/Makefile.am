@@ -6,15 +6,23 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# Define PATHS up to the projects/compass directory in the source and build tree
 compass_srcdir=$(srcdir)/../
 compass_builddir=$(top_builddir)/projects/compass/
 
+# Include necessary rules common to all compass builds to create 
+# compass_makefile.inc, compass_parameters, etc.
 include $(compass_srcdir)/compass_infrastructure.inc
 
+# Include the projects/compass and projects/compass/compassSupport 
+# directory in the source tree
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_srcdir)/compassSupport $(COMPASS_INCLUDES) -I$(compass_srcdir) -I.
 
+# Link with the projects/compass/compassSupport/libCompass.la of the build
+# tree
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_builddir)/compassSupport/libCompass.la
 
+# This library will only contain checkers specific to this subdirectory
 lib_LTLIBRARIES = libCompassCheckers.la
 libCompassCheckers_la_SOURCES = buildCheckers.C checkers.h
 libCompassCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_builddir)/compassSupport/libCompass.la

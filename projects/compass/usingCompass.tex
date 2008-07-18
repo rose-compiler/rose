@@ -568,4 +568,99 @@ To run these tests type {\tt make check} at any level on the Compass directory
 hierarchy of the build tree.
 
 
+\section{Extending the Compass Infrastructure}
 
+Compass, as well as being a tool for software analysis, is also a capable
+infrastructure for building other tools like Compass that utilizes the work
+put into Compass checkers. There are many reasons why one would like to have 
+a separate executable tool beneath Compass rather than simply customizing a
+particular build of the Compass tool. An individual or organization may
+consider a specific subset of Compass checker rules to be particularly
+relevant; thus would like to have a custom tool to check only these rules.
+Another scenario may find that the particular interface for Compass through
+the command line needs to be changed; but, it is not advisable to alter
+Compass main directly! 
+
+This section will demonstrate how to extend the Compass
+infrastructure and checkers to build a separate executable tool beneath
+the Compass project. A simple tutorial will detail the steps necessary
+to instantiate the Compass infrastructure.
+
+Suppose one wishes to build a version of Compass with only those checker rules
+authored by an individual for debugging purposes. Certainly, it would not
+be desirable for Compass to only consist of this subset of rules; yet
+this version is required regularly enough for repeatedly altering
+the static or dynamic checker rule selection files to become troublesome.
+The solution is to extend Compass into a separate tool
+by creating a subdirectory under Compass with a small portion of Compass 
+infrastructure files.
+
+Assume that the present working directory is {\tt projects/compass} of the ROSE
+source tree. First, create a directory for the new Compass subset tool.
+%
+\begin{verbatim}
+mkdir sampleCompassSubset
+\end{verbatim}
+%
+then add this directory in the {\tt SUBDIRS} variable of the automake file
+{\tt projects/compass/Makefile.am}. Additionally, introduce this new Makefile
+into the top level source tree {\tt configure.in} file. A snippet concerning
+these changes is given below:
+%
+\begin{verbatim}
+projects/compass/Makefile.am:
+SUBDIRS = compassSupport util tests compassVerifier sampleCompassSubset
+\end{verbatim}
+%
+\begin{verbatim}
+configure.in:
+projects/compass/compassVerifier/Makefile
+projects/compass/sampleCompassSubset/Makefile
+projects/compass/Makefile
+\end{verbatim}
+%
+
+Specify how this tool is to be configured and built by creating
+{\tt projects/compass/sampleCompassSubset/Makefile.am}. A blank template
+is already provided for this file and may be used in general for any
+Compass-like tool. Any tool that is an extension of Compass will reuse much of 
+the Compass infrastructure such as compassSupport pulling specific sources in
+the {\tt projects/compass} source tree and libraries located in the 
+corresponding build tree directory. Furthermore, much of the Compass build
+process requires the automatic generation of files in the build tree such
+as {\tt compass\_makefile.inc}, {\tt compass\_parameters}, etc. Thus an
+include file has been provided in Compass to define these common rules--
+{\tt compass\_infrastructure.inc}; and is included in this {\tt Makefile.am}.
+An advanced implementation of this automake file template is located in
+Compass Verifier; which is itself another tool extended off Compass.
+
+So far, a blank Compass-like tool has been created and configured to build with
+ROSE. Still missing are a few Compass files that produce a successful
+compile and linked executable. The next step is to populate the empty 
+Compass-like tool with checkers from Compass. Create a new file called
+{\tt CHECKER\_LIST} under the {\tt sampleCompassSubset} directory (an
+example has been provided) and insert the names of the desired checkers into
+this file. One may also create the dynamic rule selection file 
+{\tt RULE\_SELECTION} or defer this file to be automatically generated with
+all checker rules activated by default. Finally, it is necessary to write or
+copy the {\tt compassMain.C} file that defines (among other function)
+the command line processing options where one may alter the interface. 
+For {\tt sampleCompassSubset} the {\tt compassMain.C} of {\tt projects/compass} 
+is symbolically linked in place. The complete directory list for 
+{\tt sampleCompassSubset} now looks like
+
+\newpage
+\begin{verbatim}
+CHECKER_LIST
+compassMain.C->../compassMain.C
+Makefile.am
+RULE_SELECTION
+\end{verbatim}
+%
+
+The source tree creation and configuration of a new Compass-like tool is 
+complete with {\tt Makefile.am}, {\tt CHECKER\_LIST}, {\tt RULE\_SELECTION},
+and {\tt compassMain.C}. Build and configure ROSE as usual and then invoke
+Make at the top level build tree or {\tt projects/compass} subdirectory to
+compile and link the new Compass-like tool executable. The new target location
+will be {\tt projects/compass/sampleCompassSubset}.
