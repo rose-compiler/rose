@@ -19,6 +19,7 @@ Makefile.in
 /config/config.guess
 /config/config.sub
 /config/install-sh
+/config/ltmain.sh
 /configure
 /rose_config.h.in
 /src/3rdPartyLibraries/libltdl/aclocal.m4
