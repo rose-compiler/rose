@@ -510,12 +510,21 @@ bool isRestrictType(SgType* t);
  */
 bool isScalarType(SgType* t);
 
+//! Generate a mangled string for a given type based on Itanium C++ ABI
+std::string mangleType(SgType* type);
+
+//! Generate mangled scalar type names according to Itanium C++ ABI, the input type should pass isScalarType() in ROSE
+  std::string mangleScalarType(SgType* type);
+
+//! Generated mangled modifier types, include const, volatile,according to Itanium C++ ABI, with extension to handle UPC shared types.  
+  std::string mangleModifierType(SgModifierType* type);
+
 //! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is an UPC array. 
 size_t getArrayElementCount(SgArrayType* t);
 
-//! Is an UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
+//! Has an UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
- * Note: we classify private-to-shared as a shared type for convenience here. It is indeed a private type in strict sense. 
+ * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense. 
   AST graph for some examples:
     - shared scalar: SgModifierType -->base type
     - shared array: SgArrayType --> SgModiferType --> base type
@@ -523,7 +532,16 @@ size_t getArrayElementCount(SgArrayType* t);
     - shared to private: SgModifierType --> SgPointerType --> base type
     - private to shared: SgPointerType --> SgModifierType --> base type
  */
-bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
+bool hasUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
+
+//! Check if a modifier type is an UPC shared type.
+bool isUpcSharedModifierType (SgModifierType* mod_type);
+
+//! Check if a shared UPC type is strict memory consistency or not. Return false if it is relaxed. (So isUpcRelaxedSharedModifierType() is not necessary.)
+bool isUpcStrictSharedModifierType(SgModifierType* mode_type);
+
+//! Get the block size of an UPC shared modifier type
+size_t getUpcSharedBlockSize(SgModifierType* mod_type);
 
 //! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Input parameter must be a UPC shared type.
 bool isUpcPhaseLessSharedType (SgType* t);

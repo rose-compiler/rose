@@ -2,7 +2,7 @@
 #include <sstream>
 #include <iostream>
 #include "sageInterface.h"
-
+#include <map>
 using namespace std;
 
 
@@ -10,6 +10,12 @@ using namespace std;
 // src/midend/astUtil/astInterface/AstInterface.C
 namespace SageInterface
 {
+
+ 
+  //! Internal map between SgType and the corresponding type string specific to GASnet
+  // support mangled type names according to Itanium C++ ABI
+  map <SgType*,string> type_string_map; 
+  map <string, SgType*> string_type_map; 
 
 bool isScalarType( SgType* t)
 {
@@ -481,8 +487,36 @@ bool hasTrivialDestructor(SgType* t) {
   }
 }
 
+  bool isUpcSharedModifierType (SgModifierType* mod_type)
+  {
+    ROSE_ASSERT(mod_type);
+    if (mod_type->get_typeModifier().get_upcModifier().get_isShared())
+      return true;
+    else 
+      return false;
+  }
+
+  bool isUpcStrictSharedModifierType(SgModifierType* mod_type)
+  {
+
+    ROSE_ASSERT(isUpcSharedModifierType(mod_type));
+    bool result = false;
+    result = mod_type->get_typeModifier().get_upcModifier().isUPC_Strict();
+    return result;
+  }
+ 
+  size_t getUpcSharedBlockSize(SgModifierType* mod_type)
+  {
+    ROSE_ASSERT(isUpcSharedModifierType(mod_type));
+
+    int result =  mod_type->get_typeModifier().get_upcModifier().get_layout();
+    if (result == -1 ) // unspecified block size is treated as size 1
+      result = 1;
+      return result;
+  }
+
   //! Is UPC shared type?
-  bool isUpcSharedType(SgType* sg_type,SgModifierType ** mod_type_out/*=NULL*/)
+  bool hasUpcSharedType(SgType* sg_type,SgModifierType ** mod_type_out/*=NULL*/)
   {
     ROSE_ASSERT(sg_type);
     bool result = false;
@@ -490,31 +524,31 @@ bool hasTrivialDestructor(SgType* t) {
     if (isSgModifierType(sg_type))
     {
       SgModifierType * mod_type = isSgModifierType(sg_type);
-      if (mod_type->get_typeModifier().get_upcModifier().get_isShared())
+      if (isUpcSharedModifierType(mod_type))
       {  
         if (mod_type_out) *mod_type_out = mod_type;
         result = true;
       }  
       else 
-        result = isUpcSharedType( (isSgModifierType(sg_type))->get_base_type(), mod_type_out);
+        result = hasUpcSharedType( (isSgModifierType(sg_type))->get_base_type(), mod_type_out);
     }  
     else if (isSgPointerType(sg_type))
-      result = isUpcSharedType( (isSgPointerType(sg_type))->get_base_type(),mod_type_out );
+      result = hasUpcSharedType( (isSgPointerType(sg_type))->get_base_type(),mod_type_out );
     else if (isSgReferenceType(sg_type))
-      result = isUpcSharedType( (isSgReferenceType(sg_type))->get_base_type(),mod_type_out );
+      result = hasUpcSharedType( (isSgReferenceType(sg_type))->get_base_type(),mod_type_out );
     else if (isSgArrayType(sg_type))
-      result = isUpcSharedType( (isSgArrayType(sg_type))->get_base_type(),mod_type_out );
+      result = hasUpcSharedType( (isSgArrayType(sg_type))->get_base_type(),mod_type_out );
     else if (isSgTypedefType(sg_type))
-      result = isUpcSharedType( (isSgTypedefType(sg_type))->get_base_type(), mod_type_out);
+      result = hasUpcSharedType( (isSgTypedefType(sg_type))->get_base_type(), mod_type_out);
 
     if ((result == false) &&(mod_type_out))  *mod_type_out = NULL;
     return result;
-  } //isUpcSharedType
+  } //hasUpcSharedType
 
   //! Is UPC private-to-shared type? Judge the order of SgPointer and SgUPC_AccessModifier
   bool isUpcPrivateToSharedType(SgType* t)
   {
-    bool check = isUpcSharedType(t);
+    bool check = hasUpcSharedType(t);
     ROSE_ASSERT(check);
     bool pointerFirst = false;
     SgType* currentType = t;
@@ -551,8 +585,8 @@ bool hasTrivialDestructor(SgType* t) {
     SgModifierType * mod_type_out;
     int block_size;
 
-    bool check = isUpcSharedType(t,&mod_type_out);
-    //ROSE_ASSERT(isUpcSharedType(t,mod)); // avoid side effect for assertion!!
+    bool check = hasUpcSharedType(t,&mod_type_out);
+    //ROSE_ASSERT(hasUpcSharedType(t,mod)); // avoid side effect for assertion!!
     ROSE_ASSERT(check&&mod_type_out); 
 
     block_size =  mod_type_out->get_typeModifier().get_upcModifier().get_layout();
@@ -589,5 +623,178 @@ bool hasTrivialDestructor(SgType* t) {
     ROSE_ASSERT(sym);
     return sym->get_type();
   }
+
+    //! Generate a type string for a given type 
+  //TODO put it into sageInterface when ready 
+  string mangleType(SgType* type)
+  {
+    string result;
+    result = type_string_map[type];
+    if (result.empty())
+    {
+      if (isScalarType(type))
+        result = mangleScalarType(type);
+      else if (isSgModifierType(type))  
+        result = mangleModifierType(isSgModifierType(type));
+      else if (isSgPointerType(type))  
+        result = 'P' + mangleType(isSgPointerType(type)->get_base_type());
+      else if (isSgReferenceType(type))  
+        result = 'R' + mangleType(isSgPointerType(type)->get_base_type());
+      //rvalue reference is not yet supported in EDG/ROSE/GCC  
+      else if (isSgTypedefType(type))
+        result = mangleType(isSgTypedefType(type)->get_base_type());
+      else if (isSgArrayType(type))  
+      {  
+        size_t element_count = getArrayElementCount(isSgArrayType(type));
+        stringstream ss;
+        ss<<element_count;
+        string len=ss.str();
+        if (isUpcArrayWithThreads(isSgArrayType(type))) len = len+"H";
+        result = "A" + len + "_" + mangleType(isSgArrayType(type)->get_base_type());
+      }  
+      else
+      {  
+        //TODO function-type, class-enum-type, pointer-to-member-type, template-param, etc
+         cerr<<"Unhandled type mangling for "<<type->sage_class_name()<<endl;
+         result = "*Unhandled*";
+      }
+
+      type_string_map[type] =  result;
+      if (string_type_map[result] == 0)
+        string_type_map[result] = type; 
+    }     // end if
+    return result;
+
+  } // mangeType()
+    //! Mangle builtin scalar types
+  /*
+   * isScalarType() return true for:
+   *   char, short, int, long , void, Wchar, Float, double, 
+   *   long long, string, bool, complex, imaginary, 
+   *   including their signed and unsigned variants, if any.
+   *
+   * Refer to http://www.codesourcery.com/public/cxx-abi/abi.html#mangling
+   *  
+   */
+  string mangleScalarType(SgType* type)
+  { 
+    string result;
+    ROSE_ASSERT(isScalarType(type)); //? Not exact match to specification
+
+    switch (type->variantT())
+    {
+     /* Keep the order as the same as the specification */
+      case V_SgTypeVoid :
+        result += "v";
+        break;
+      case V_SgTypeWchar:
+        result += "w";
+        break;
+      case V_SgTypeBool:
+        result += "b";
+        break;
+      case V_SgTypeChar :
+        result += "c";
+        break;
+      case V_SgTypeSignedChar :
+        result += "a";
+        break;
+      case V_SgTypeUnsignedChar :
+        result += "h";
+        break;
+      case V_SgTypeShort :
+      case V_SgTypeSignedShort: // ? 
+        result += "s";
+        break;
+      case V_SgTypeUnsignedShort:
+        result += "t";
+        break;
+      case V_SgTypeInt:
+      case V_SgTypeSignedInt : //?
+        result += "i";
+        break;
+      case V_SgTypeUnsignedInt :
+        result += "j";
+        break;
+      case V_SgTypeLong :
+      case V_SgTypeSignedLong :
+        result += "l";
+        break;
+      case V_SgTypeUnsignedLong :
+        result += "m";
+        break;
+      case V_SgTypeLongLong:
+        result += "x";
+        break;
+      case V_SgTypeUnsignedLongLong:
+        result += "y";
+        break;
+      // unsigned int128 // not exist in ROSE
+      case V_SgTypeFloat:
+        result += "f";
+        break;
+      case V_SgTypeDouble:
+        result += "d";
+        break;
+      case V_SgTypeLongDouble:
+        result += "e";
+        break;
+     /* Missing in ROSE
+        n  # __int128
+        o  # unsigned __int128
+        g  # float 128, 
+        z  # ellipsis
+        Dd # IEEE 754r decimal floating point (64 bits)
+        De # IEEE 754r decimal floating point (128 bits)
+        Df # IEEE 754r decimal floating point (32 bits)
+        Dh # IEEE 754r half-precision floating point (16 bits)
+        u <source-name>	# vendor extended type
+      */
+      case V_SgTypeComplex:
+         result += "C";
+         break;
+      case V_SgTypeImaginary:
+         result += "G";
+         break;
+      case V_SgTypeString: //? TODO Not for char*: array of char ? or pointer to char ?
+                           // only for SgStringVal
+         result = ".unhandledSgTypeString." ;
+         break; 
+      default:
+        result = "Invalid.mtype"; //?
+    } // switch
+
+    return result;
+  }
+  //! <CV-qualifiers> ::= [r] [V] [K] 	# restrict (C99), volatile, const
+  // the order of handling const, volatile, and restric matters
+  // Quote of the specification:
+  // "In cases where multiple order-insensitive qualifiers are present, 
+  // they should be ordered 'K' (closest to the base type), 'V', 'r', and 'U' (farthest from the base type)"
+  // also UPC shared type
+  string mangleModifierType(SgModifierType* type)
+  {
+    string result;
+   if (isConstType(type))
+      result = "K" ; 
+    if (isVolatileType(type))
+      result = "V" + result;
+    if (isRestrictType(type))
+      result = "r" + result;
+    if (isUpcSharedModifierType(type))
+    {
+      size_t blocksize = getUpcSharedBlockSize(type);
+      stringstream ss;
+      ss << blocksize;
+      result = ss.str() + "_" + result;
+      if (isUpcStrictSharedModifierType(type))
+        result = "S" + result;
+      else
+        result = "R" + result;
+    }
+    return result + mangleType(type->get_base_type());  
+  }
+
+
 } //end of namespace 
 
