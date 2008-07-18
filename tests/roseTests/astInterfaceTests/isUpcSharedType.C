@@ -1,5 +1,5 @@
 /*
- * Test if a variable declaration's type is a UPC shared type
+ * Test if a variable declaration's type has a UPC shared modifier
  *
  * Liao, 7/1/2008
  */
@@ -18,7 +18,7 @@ class visitorTraversal : public AstSimpleProcessing
     if (isSgVariableDeclaration(n)!=NULL){
 //        cout<<"Found SgVariable declaration !"<<endl;
         SgType* t = SageInterface::getFirstVarSym((isSgVariableDeclaration(n)))->get_type();
-        if (SageInterface::isUpcSharedType(t)) 
+        if (SageInterface::hasUpcSharedType(t)) 
         {
           counter ++;
         }

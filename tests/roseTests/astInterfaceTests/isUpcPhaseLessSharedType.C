@@ -19,7 +19,7 @@ class visitorTraversal : public AstSimpleProcessing
     if (isSgVariableDeclaration(n)!=NULL){
 //        cout<<"Found SgVariable declaration !"<<endl;
         SgType* t = SageInterface::getFirstVarSym((isSgVariableDeclaration(n)))->get_type();
-        if (SageInterface::isUpcSharedType(t)) 
+        if (SageInterface::hasUpcSharedType(t)) 
         {
           if (isUpcPhaseLessSharedType(t))
           {
