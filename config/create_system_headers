@@ -367,8 +367,11 @@ for dirName in $compilerHeadersDir
          iDir=`expr "$iDir" + 1 `
         echo "processing header file directory $dirName to be mapped to $mainTargetDir/hdrs${iDir}"
 
-      # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines).
-        process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" &
+      # DQ (1/14/2007): Added "&" so that this would happen in parallel (to improve performance of configure on multi-core machines). 
+      # JJW (7/18/2008): Commented it out because the process does not take too
+      # long and these commands mess up configure output and cause trouble if
+      # you try Ctrl-C when configure is running
+        process_headers "$1" "$dirName" "$mainTargetDir/hdrs${iDir}" "$roseHome" # &
    done
 
 # DQ (1/14/2007): It is not required to wait until the calls to process_headers complete
