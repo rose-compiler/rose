@@ -19,6 +19,8 @@
 # For more info on C++ "Concepts" consult some of Bjarne's
 # technical papers.
 
+#### JJW 7/18/2008: This script does not do anything (all nontrivial parts are
+#### in an if (0) block), so it is not called anymore
 
 @lineArray = <>;
 $lineNumber = 0;
