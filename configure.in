@@ -234,17 +234,16 @@ AC_ARG_WITH(javaport,
    [  --with-javaport ... Enable Java bindings using Swig],with_javaport=yes, with_javaport=no )
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
 
-PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
+# PKG_CHECK_MODULES([VALGRIND], [valgrind], [with_valgrind=yes; AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])], [with_valgrind=no])
+VALGRIND_BINARY=""
+AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that use Valgrind],
+            [AC_DEFINE([ROSE_USE_VALGRIND], 1, [Use Valgrind calls in ROSE])
+             if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
 # Don't set VALGRIND here because that turns on actually running valgrind in
 # many tests, as opposed to just having the path available for
 # uninitializedField_tests
-if test "$with_valgrind" = yes; then
-  VALGRIND_BINARY="`pkg-config --variable=exec_prefix valgrind`/bin/valgrind"
-else
-  VALGRIND_BINARY="/usr/bin/env"
-fi
 AC_SUBST(VALGRIND_BINARY)
-AM_CONDITIONAL(USE_VALGRIND, [test "$with_valgrind" = yes])
+AM_CONDITIONAL(USE_VALGRIND, [test "x$VALGRIND_BINARY" != "x"])
 
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))

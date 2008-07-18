@@ -105,7 +105,7 @@ endif
 if ROSE_USE_OPEN_FORTRAN_PARSER
 # This usage (without rpath) assumes that that LD_LIBRARY_PATH contains 
 # the path specified by $JAVA_JVM_PATH
-JAVA_JVM_LIB = -L$(JAVA_JVM_PATH) -ljvm
+JAVA_JVM_LIB = $(JAVA_JVM_LINK)
 #JAVA_JVM_LIB = -ljvm
 #JAVA_JVM_LIB = $(JAVA_JVM_PATH)
 endif
