@@ -52,7 +52,7 @@ if test "x$USE_JAVA" = x1; then
 # This is a hack, but it seems to work to find the JVM library
   if test -x /usr/bin/javaconfig; then # We are on a Mac
     JAVA_JVM_LINK="-framework JavaVM"
-    JAVA_JVM_INCLUDE="-framework JavaVM"
+    JAVA_JVM_INCLUDE="-I`/usr/bin/javaconfig Headers`"
   else
     JAVA_JVM_FULL_PATH="`env _JAVA_LAUNCHER_DEBUG=x ${JAVA} | grep '^JVM path is' | cut -c 13-`"
     if test "x$JAVA_JVM_FULL_PATH" = x; then
