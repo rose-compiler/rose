@@ -139,7 +139,7 @@ typedef SgFilePtrList*                      SgFilePtrListPtr;
 
 // DQ (5/22/2006): Added this support so that we could have general way of interpreting STL 
 // containers so that we could simplify that code used to generated code for the destructors.
-// JJW (8/21/2008): Changed to a unordered vector for performance
+// JJW (6/21/2008): Changed to a unordered vector for performance
 typedef int                                 SgFileId;
 typedef std::vector<SgFileId>               SgFileIdList;
 
