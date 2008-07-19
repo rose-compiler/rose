@@ -398,7 +398,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
-  // JJW (8/23/2008): Move check for statement-within-file here rather than in individual procedures
+  // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
      if (!statementFromFile(stmt, getFileName())) {
        return;
      }
