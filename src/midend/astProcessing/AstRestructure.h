@@ -10,12 +10,44 @@
 #include <set>
 #include <utility>
 
-class AstUnparseAttribute : public AstAttribute {
- public:
-  AstUnparseAttribute(std::string s):unparseReplacement(s) {}
-  virtual std::string toString() { return unparseReplacement; }
-  std::string unparseReplacement;
-};
+#if 0
+// This has been moved to the unparser...
+class AstUnparseAttribute : public AstAttribute
+   {
+     public:
+
+       // DQ (7/19/2008): I think we should not reuse the PreprocessingInfo::RelativePositionType
+       // since it does not make sense to "replace" an IR node with a comment or CPP directive, I think.
+       // typedef PreprocessingInfo::RelativePositionType RelativeLocation;
+          enum RelativePositionType
+             {
+               defaultValue = 0, // let the zero value be an error value
+               undef        = 1, // Position of the directive is only going to be defined
+                                 // when the preprocessing object is copied into the AST,
+                                 // it remains undefined before that
+               before       = 2, // Directive goes before the correponding code segment
+               after        = 3, // Directive goes after the correponding code segment
+               inside       = 4, // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+
+            // DQ (7/19/2008): Added additional fields so that we could use this enum type in the AstUnparseAttribute
+               replace       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
+               before_syntax = 6, // We still have to specify the syntax
+               after_syntax  = 7  // We still have to specify the syntax
+             };
+
+          RelativePositionType location;
+          std::string unparseReplacement;
+          std::vector< std::pair<std::string,RelativePositionType> > stringList;
+
+          AstUnparseAttribute(std::string s, RelativePositionType inputlocation )
+             : location(inputlocation), unparseReplacement(s)
+             {
+            // Add the string location pair to the list.
+               stringList.push_back(std::pair<std::string,RelativePositionType>(s,inputlocation));
+             }
+          virtual std::string toString() { return unparseReplacement; }
+   };
+#endif
 
 /*
 class RestructureInhType : public AST_Rewrite::InheritedAttribute {
@@ -42,14 +74,14 @@ public:
 */
 
 class AstRestructure 
-{
- public:
-  AstRestructure(SgProject* project) {}
-  AstRestructure(SgProject* project,std::string incheader) {}
+   {
+     public:
+          AstRestructure(SgProject* project) {}
+          AstRestructure(SgProject* project,std::string incheader) {}
 
 
-  // replaces the AST with astNode as root node with the AST representing string s
-  void immediateReplace(SgStatement* astNode,std::string s);
+       // replaces the AST with astNode as root node with the AST representing string s
+          void immediateReplace(SgStatement* astNode,std::string s);
 
   // attaches a string s to the AST such that when 'unparse' or
   // unparseToString or unparseToCompleteString is called, the string

@@ -1,11 +1,14 @@
-\chapter{Handling Comments and Preprocessor Directives}
+\chapter{Handling Comments, Preprocessor Directives, And Adding Arbitrary Text to Generated Code}
 
 \paragraph{What To Learn From These Examples}
 Learn how to access existing comments and CPP directives
 and modify programs to include new ones. Where such comments 
 can be automated they can be used to explain transformations 
 or for more complex transformations using other tools
-designed to read the generated comments.
+designed to read the generated comments.  Also included is
+how to add arbitrary text to the generated code (often useful
+for embedded system programming to support back-end compiler 
+specific functionality).
 
    This chapter deals with comments and preprocessor directives.
 These are often dropped from compiler infrastructures and ignored
@@ -259,7 +262,8 @@ source file and all headers (with -rose:collectAllCommentsAndDirectives).
 
 
 
-\section{Source Code Showing Automated Comment Generation}
+\section{Automated Generation of Comments}
+\label{sec:AutomatedGenerationOfComments}
 
    Figure~\ref{Tutorial:example_addComments} shows an
 example of how to introduce comments into the AST which will
@@ -373,6 +377,132 @@ shows the results from the addition of comments to the generated source code.
 }
 \caption{Output of input code after automating generation of comments.}
 \label{Tutorial:exampleOutput_addComments}
+\end{figure}
+
+
+
+\section{Addition of Arbitrary Text to Unparsed Code Generation}
+
+   This section is different from the comment generation 
+(section~\ref{sec:AutomatedGenerationOfComments}) because it 
+is more flexible and does not introduce any formatting.  It also
+does not use the same internal mechanism, this mechanism supports
+the addition of new strings or the replacement of the IR node
+(where the string is attached) with the new string.  It is 
+fundamentally lower level and a more powerful mechanism to
+support generation of tailored output where more than 
+comments, CPP directives, or AST transformation are required.
+It is also much more dangerous to use.
+
+   This mechanism is expected to be used rarely and sparingly
+since no analysis of the AST is likely to leverage this mechanism 
+and search for code that introduced as a transformation here.
+Code introduced using this mechanism is for the most part
+unanalyzable since it would have to be reparsed in the
+context of the location in the AST were it is attached.
+(Technically this is possible and is the subject of the existing
+ROSE AST Rewrite mechanism, but that is a different subject).
+
+   Figure~\ref{Tutorial:example_addArbitraryText} shows an example of 
+how to introduce arbitrary text into the AST for output by the unparser 
+which will then show up in the generated source code. The purpose for 
+this is generally to add backend compiler or tool specific code 
+generation which don't map to any formal language constructs and so 
+cannot be represented in the AST.  However, since most tools that
+require specialized annotations read them as comments, the mechanism
+in the previous section~\ref{sec:AutomatedGenerationOfComments} may be more appropriate. It is 
+because this is not always that case that we have provide this more 
+general mechanism (often useful for embedded system compilers).
+
+\subsection{Source Code Showing Automated Arbitrary Text Generation}
+
+    Figure~\ref{Tutorial:example_addArbitraryText}
+shows an example translator which calls the mechanism to 
+add a arbitrary text to the IR node representing a function 
+declaration (SgFunctionDeclaration).
+
+The input code is shown in figure~\ref{Tutorial:exampleInputCode_addArbitraryText},
+the output of this code is shown in 
+figure~\ref{Tutorial:exampleOutput_addArbitraryText}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/addArbitraryTextForUnparser.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/addArbitraryTextForUnparser.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code showing how automate the introduction of arbitrary text. }
+\label{Tutorial:example_addArbitraryText}
+\end{figure}
+
+
+\subsection{Input to Automated Addition of Arbitrary Text}
+
+   Figure~\ref{Tutorial:exampleInputCode_addArbitraryText}
+shows the example input used for demonstration of the automated introduction of text via
+the unparser.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_addArbitraryTextForUnparser.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_addArbitraryTextForUnparser.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used as input to automate generation of arbitrary text.}
+\label{Tutorial:exampleInputCode_addArbitraryText}
+\end{figure}
+
+
+
+\subsection{Final Code After Automatically Adding Arbitrary Text}
+
+   Figure~\ref{Tutorial:exampleOutput_addArbitraryText} 
+shows the results from the addition of arbitrary text to the generated source code.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_addArbitraryTextForUnparser.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_addArbitraryTextForUnparser.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of input code after automating generation of arbitrary text.}
+\label{Tutorial:exampleOutput_addArbitraryText}
 \end{figure}
 
 

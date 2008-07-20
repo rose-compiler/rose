@@ -395,11 +395,12 @@ PreprocessingInfo::PreprocessingInfo()
 
 // Typical constructor used by lex-based code retrieve comments and preprocessor control directives
 PreprocessingInfo::PreprocessingInfo (
-    DirectiveType dt, 
-    const string & inputString,
-    const string & inputFileName,
-    int line_no, int col_no, int nol, RelativePositionType relPos,
-    bool copiedFlag, bool unparsedFlag )
+     DirectiveType dt, 
+     const string & inputString,
+     const string & inputFileName,
+     int line_no, int col_no, int nol, RelativePositionType relPos
+  // DQ (7/19/2008): Removed these: bool copiedFlag, bool unparsedFlag
+   )
    : 
      file_info(NULL),
   // lineNumber(line_no), columnNumber (col_no),
@@ -414,7 +415,7 @@ PreprocessingInfo::PreprocessingInfo (
           ROSE_ASSERT(true);
         }
 
-  // printf ("In PreprocessingInfo (constructor): dt = %d line_no = %d col_no = %d nol = %d s = %s \n",dt,line_no,col_no,nol,inputStringPointer.c_str());
+  // printf ("In PreprocessingInfo (constructor): dt = %d line_no = %d col_no = %d nol = %d s = %s \n",dt,line_no,col_no,nol,inputString.c_str());
      file_info = new Sg_File_Info(inputFileName,line_no,col_no);
 
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know
@@ -839,8 +840,8 @@ ROSEAttributesList::addElement(
      ROSE_ASSERT(lineNumber    >  0);
      ROSE_ASSERT(columnNumber  >  0); 
      ROSE_ASSERT(numOfLines    >= 0); // == 0, if cpp_comment in a single line
-     PreprocessingInfo *pElem = new PreprocessingInfo(dt, pLine, filename, lineNumber, columnNumber,
-         numOfLines, PreprocessingInfo::undef, false, false);
+  // PreprocessingInfo *pElem = new PreprocessingInfo(dt, pLine, filename, lineNumber, columnNumber, numOfLines, PreprocessingInfo::undef, false, false);
+     PreprocessingInfo *pElem = new PreprocessingInfo(dt, pLine, filename, lineNumber, columnNumber, numOfLines, PreprocessingInfo::undef);
 
   // PreprocessingInfo &pRef = *pElem;
   // insertElement(pRef);
@@ -1088,12 +1089,14 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
             //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
 
                int numberOfLines = 1;
-               bool copiedFlag   = false;
-               bool unparsedFlag = false;
+            // bool copiedFlag   = false;
+            // bool unparsedFlag = false;
             // PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,file->get_sourceFileNameWithPath(),
             //                                                    start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before,copiedFlag,unparsedFlag);
+            // PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,filename,
+            //                                                    start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before,copiedFlag,unparsedFlag);
                PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,token->token_lexeme,filename,
-                                                                  start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before,copiedFlag,unparsedFlag);
+                                                                  start.line_num,start.column_num,numberOfLines,PreprocessingInfo::before);
                ROSE_ASSERT(comment != NULL);
                attributeList.push_back(comment);
              }
@@ -1212,11 +1215,12 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
                  //      int line_no , int col_no, int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
 
                     int numberOfLines = 1;
-                    bool copiedFlag   = false;
-                    bool unparsedFlag = false;
+                 // bool copiedFlag   = false;
+                 // bool unparsedFlag = false;
+                 // PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,line,filename,
+                 //                                                    lineCounter,0,numberOfLines,PreprocessingInfo::before, copiedFlag,unparsedFlag);
                     PreprocessingInfo* comment = new PreprocessingInfo(PreprocessingInfo::FortranStyleComment,line,filename,
-                                                                       lineCounter,0,numberOfLines,PreprocessingInfo::before,
-                                                                       copiedFlag,unparsedFlag);
+                                                                       lineCounter,0,numberOfLines,PreprocessingInfo::before);
                     ROSE_ASSERT(comment != NULL);
                     attributeList.push_back(comment);
                   }

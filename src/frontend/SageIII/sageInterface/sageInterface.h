@@ -1,7 +1,12 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
+
 #include "sage3.h"
 #include "rewrite.h"
+
+// DQ (7/20/2008): Added support for unparsing abitrary strings in the unparser.
+#include "astUnparseAttribute.h"
+
 // DQ (8/19/2004): Moved from ROSE/src/midend/astRewriteMechanism/rewrite.h
 //! A global function for getting the string associated with an enum (which is defined in global scope)
 std::string getVariantName (VariantT v);
@@ -445,14 +450,19 @@ PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & cont
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
 
+// DQ (7/20/2008): I am not clear were I should put this function, candidates include: SgLocatedNode or SgInterface
+//! Add a string to be unparsed to support code generation for back-end specific tools or compilers.
+  void addTextForUnparser ( SgNode* astNode, std::string s, AstUnparseAttribute::RelativePositionType inputlocation );
+
+
   // Liao, 1/8/2007, set file info. for a whole subtree as transformation generated
-//! set current node's source position as transformation generated
+//! Set current node's source position as transformation generated
   void setOneSourcePositionForTransformation(SgNode *node);
 
-//! recursively set source position info(Sg_File_Info) as transformation generated
+//! Recursively set source position info(Sg_File_Info) as transformation generated
   void setSourcePositionForTransformation (SgNode * root);
 
-//! set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
+//! Set source position info(Sg_File_Info) as transformation generated for all SgNodes in memory pool
   void setSourcePositionForTransformation_memoryPool();
 
 //! Set the source position of SgLocatedNode to Sg_File_Info::generateDefaultFileInfo(). These nodes WILL be unparsed. Not for transformation usage.

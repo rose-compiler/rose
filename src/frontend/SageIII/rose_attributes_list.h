@@ -138,18 +138,23 @@ class  PreprocessingInfo
 
      public:
 
-       // DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).
-       //! MK: Enum type to store if the directive goes before or after the
-       //! corresponding line of source code
-	  enum RelativePositionType
-	     {
-	       defaultValue = 0, // let the zero value be an error value
-	       undef        = 1, // Position of the directive is only going to be defined
-	    // when the preprocessing object is copied into the AST,
-	    // it remains undefined before that
-	       before       = 2, // Directive goes before the correponding code segment
-	       after        = 3, // Directive goes after the correponding code segment
-	       inside       = 4  // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+      //  DQ (10/15/2002) moved this to nested scope to avoid global name pollution :-).
+      //! MK: Enum type to store if the directive goes before or after the
+      //! corresponding line of source code
+          enum RelativePositionType
+             {
+               defaultValue = 0, // let the zero value be an error value
+               undef        = 1, // Position of the directive is only going to be defined
+                                 // when the preprocessing object is copied into the AST,
+                                 // it remains undefined before that
+               before       = 2, // Directive goes before the correponding code segment
+               after        = 3, // Directive goes after the correponding code segment
+               inside       = 4, // Directive goes inside the correponding code segment (as in between "{" and "}" of an empty basic block)
+
+            // DQ (7/19/2008): Added additional fields so that we could use this enum type in the AstUnparseAttribute
+            // replace       = 5, // Support for replacing the IR node in the unparsing of any associated subtree
+               before_syntax = 6, // We still have to specify the syntax
+               after_syntax  = 7  // We still have to specify the syntax
 	     };
 
        // Enum type to help classify the type for string that has been saved.
@@ -233,14 +238,21 @@ class  PreprocessingInfo
        // PreprocessingInfo(DirectiveType, const char *inputStringPointer, int line_no , int col_no,
        //                   int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag) ROSE_DEPRECATED_FUNCTION;
 
+       // DQ (7/19/2008): I have removed the bool copiedFlag and bool unparsedFlag parameters because they are not used 
+       // and are present only because in an older implementation of the unparser it would make the PreprocessingInfo 
+       // as unparsed (and maybe copied) but this sort of side-effect of the unparser was later removed to make the 
+       // unparsing side-effect free.
        // DQ (4/19/2006): Use the SgFileInfo object to hold the more complete 
        // information about the filename, line number, and column number.
        // DQ (3/15/2006): Build constructor that uses C++ string as input (to replace the char* based constructor)
        // PreprocessingInfo(DirectiveType, const std::string inputString, int line_no , int col_no,
        //                   int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
+       // PreprocessingInfo(DirectiveType, const std::string & inputString,
+       //      const std::string & filenameString, int line_no , int col_no,
+       //      int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag );
           PreprocessingInfo(DirectiveType, const std::string & inputString,
                const std::string & filenameString, int line_no , int col_no,
-               int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag);
+               int nol, RelativePositionType relPos );
 
        // Copy constructor
           PreprocessingInfo(const PreprocessingInfo &prepInfo);

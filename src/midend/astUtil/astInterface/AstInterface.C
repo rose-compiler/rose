@@ -2934,13 +2934,15 @@ InsertAnnot(AstNodePtr const& _n, const std::string& annot, bool insertbefore)
   assert (loc != 0);
    {
      Sg_File_Info* nf = loc->get_file_info();
+
+  // DQ (7/19/2008): Modified interface to PreprocessingInfo
+  // Note that this function could directly call SageInterface::attachComment(SgLocatedNode*,std::string);
      PreprocessingInfo * info = 
        new PreprocessingInfo( PreprocessingInfo::C_StyleComment, 
                               annot, nf->get_filename(),
                               nf->get_line(), nf->get_col(), 1, 
                               (insertbefore)? (PreprocessingInfo::before) 
-                                            :  (PreprocessingInfo::after),
-                              false, false);
+                                            :  (PreprocessingInfo::after));
      loc->addToAttachedPreprocessingInfo( info);
    }
 

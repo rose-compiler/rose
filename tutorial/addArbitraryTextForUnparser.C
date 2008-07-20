@@ -15,24 +15,17 @@ void visitorTraversal::visit(SgNode* n)
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
      if (functionDeclaration != NULL)
         {
-          string comment = string("Auto-comment function name: ") + 
-                           functionDeclaration->get_name().str() + 
-                           " is now a commented function";
-
-       // Note that this function will add the "//" or "/* */" comment syntax as required for C or C++, or Fortran.
-          SageInterface::attachComment(functionDeclaration,comment);
+       // This is an example of a XYZ tool specific annotation
+          string compilerSpecificDirective = "\n#if XYZ_TOOL \n   \"builtin\"\n#endif\n";
+          SageInterface::addTextForUnparser(functionDeclaration,compilerSpecificDirective,AstUnparseAttribute::e_before);
         }
 
      SgValueExp* valueExp = isSgValueExp(n);
      if (valueExp != NULL)
         {
-       // Check if there is an expression tree from the original unfolded expression.
-       // This is a trivial example ouf the output of an analysis result.
-          string comment = string("Auto-comment value: ") + 
-               ((valueExp->get_originalExpressionTree() != NULL) ? 
-                    " this IS a constant folded value" : " this is NOT a constant folded value");
-
-          SageInterface::attachComment(valueExp,comment);
+       // Add a backend specific compiler directive
+          string compilerSpecificDirective = "\n#if CRAY \n   cray_specific_attribute \n#endif\n";
+          SageInterface::addTextForUnparser(valueExp,compilerSpecificDirective,AstUnparseAttribute::e_before);
         }
 
    }

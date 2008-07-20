@@ -234,7 +234,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
             // printf ("Calling attribute->additionalNodeInfo() \n");
                std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
-               printf ("nodeList.size() = %lu \n",nodeList.size());
+            // printf ("nodeList.size() = %lu \n",nodeList.size());
                for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
                   {
                     SgNode* nodePtr   = i_node->nodePtr;
@@ -320,12 +320,16 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
             // pair<std::string,AstAttribute*>
-               std::string name = i->first;
                AstAttribute* attribute = i->second;
                ROSE_ASSERT(attribute != NULL);
 
-               ss << name << "\\n";
+            // Note cast to void*
+               std::string name = i->first;
+               std::string label = name + " : " + StringUtility::numberToString((void*)(attribute));
+               ss << label << "\\n";
              }
+          ss << "\\n";
+          ss << "\\n";
         }
 
      return ss.str();

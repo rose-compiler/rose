@@ -23,6 +23,10 @@
 #include "unparseFortran.h"
 #include "unparseFortran_types.h"
 
+// DQ (7/20/2008): New mechanism to permit unparsing of arbitrary strings at IR nodes.
+// This is intended to suppport non standard backend compiler annotations.
+#include "astUnparseAttribute.h"
+
 class Unparser_Nameq;
 
 // Macro used for debugging.  If TRUE it fixes the anonymous typedef and anonymous declaration
