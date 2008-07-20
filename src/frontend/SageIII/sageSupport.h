@@ -7,3 +7,10 @@
 int buildAstMergeCommandFile ( SgProject* project );
 
 int AstMergeSupport ( SgProject* project );
+
+// Temporary function to be later put into Sg_FileInfo
+StringUtility::FileNameLocation get_location    ( Sg_File_Info* X );
+StringUtility::FileNameLibrary  get_library     ( Sg_File_Info* X );
+std::string                     get_libraryName ( Sg_File_Info* X );
+StringUtility::OSType           get_OS_type      ();
+int                             get_distanceFromSourceDirectory ( Sg_File_Info* X );

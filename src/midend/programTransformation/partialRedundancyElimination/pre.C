@@ -480,7 +480,7 @@ void PRE::partialRedundancyEliminationOne( SgExpression* expr, SgBasicBlock* roo
                new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
                (string("// Partial redundancy elimination: ") + cachevarname.str() + 
                " is a cache of " + expr->unparseToString()).c_str(),
-               "Compiler-Generated in PRE", 0, 0, 0, PreprocessingInfo::before, false, true));
+               "Compiler-Generated in PRE", 0, 0, 0, PreprocessingInfo::before));
           SgVariableSymbol* cachevarsym = new SgVariableSymbol(initname);
           decl->set_parent(root);
 

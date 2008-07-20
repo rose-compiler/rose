@@ -19,7 +19,7 @@ void visitorTraversal::visit(SgNode* n)
 			forStmt->getAttachedPreprocessingInfo() = new AttachedPreprocessingInfoType();
 
           forStmt->getAttachedPreprocessingInfo()->push_back(new PreprocessingInfo(PreprocessingInfo::LineReplacement,
-          	                   "/* REPLACED FOR LOOP WITH IF */ if (0);",forStmt->get_file_info()->get_filenameString(),1,1,1,PreprocessingInfo::before, false, false  ));
+          	                   "/* REPLACED FOR LOOP WITH IF */ if (0);",forStmt->get_file_info()->get_filenameString(),1,1,1,PreprocessingInfo::before));
         }
      if (SgLocatedNode* forStmt = isSgLocatedNode(n))
         {
@@ -30,7 +30,7 @@ void visitorTraversal::visit(SgNode* n)
 			forStmt->getAttachedPreprocessingInfo() = new AttachedPreprocessingInfoType();
 
           forStmt->getAttachedPreprocessingInfo()->push_back(new PreprocessingInfo(PreprocessingInfo::LineReplacement,
-          	                   "/* REPLACED FOR LOOP WITH IF */ if (0);",forStmt->get_file_info()->get_filenameString(),1,1,1,PreprocessingInfo::before, false, false  ));
+          	                   "/* REPLACED FOR LOOP WITH IF */ if (0);",forStmt->get_file_info()->get_filenameString(),1,1,1,PreprocessingInfo::before));
         }
 
    }

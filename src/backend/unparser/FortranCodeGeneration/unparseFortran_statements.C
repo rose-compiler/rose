@@ -3409,6 +3409,8 @@ FortranCodeGeneration_locatedNode::unparsePragmaDeclStmt (SgStatement* stmt, SgU
 //  FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo
 //----------------------------------------------------------------------------
 
+// DQ (8/19/2008): This is defined in the base class and is language independent.
+
 void
 FortranCodeGeneration_locatedNode::unparseAttachedPreprocessingInfo(SgStatement* stmt,SgUnparse_Info& info,PreprocessingInfo::RelativePositionType whereToUnparse)
    {

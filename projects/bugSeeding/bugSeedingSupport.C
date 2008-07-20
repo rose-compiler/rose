@@ -63,33 +63,8 @@ SecurityFlaw::codeCloneGeneration( SgProject *project )
 
      ROSE_ASSERT(seedKindList.empty() == false);
 
-#if 0
-  // Now iterate over the list
-     vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
-     while (j != seedKindList.end())
-        {
-       // How we clone subtrees depends upon which seeding appraoch is being used, so first
-       // we build the SeedSecurityFlaw object and then build any clones if required.
+  // These should only be called once, not in a loop over all SecurityFlaw::SeedSecurityFlaw objects.
 
-          printf ("In SecurityFlaw::codeCloneGeneration(): SecurityFlaw::SeedSecurityFlaw = %s \n",(*j)->get_name().c_str());
-#if 1
-          generateDOT ( *project, string("before_") + (*j)->get_name().c_str() );
-#endif
-       // User option to permit seeding of original code or a separate code fragement and a selected 
-       // level of grainularity (e.g. alternate statement, enclosing statement, function, class, file, etc.).
-          if ((*j)->get_seedOriginalCode() == false)
-             {
-            // Make all the required clones to support the security flaw seeding for each specific SeedSecurityFlaw
-               CloneVulnerability::makeClones(project,*j);
-
-               MarkClones::markVulnerabilitiesInClones(project,*j);
-             }
-
-          j++;
-        }
-#else
-  // These shuld only be called once, not in a loop over all SecurityFlaw::SeedSecurityFlaw objects.
- 
   // For now provide a pointer to the first SecurityFlaw::SeedSecurityFlaw base class.
   // But these functions should only be called once to generate all clones on a per
   // identified security flaw basis.  Any more AST copies shouldbe done to support the
@@ -97,7 +72,6 @@ SecurityFlaw::codeCloneGeneration( SgProject *project )
      vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
      CloneVulnerability::makeClones(project,*j);
      MarkClones::markVulnerabilitiesInClones(project,*j);
-#endif
    }
 
 // This is a virtual member function
@@ -208,14 +182,10 @@ SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
 void
 SecurityFlaw::addComment( SgNode* astNode, string comment )
    {
-  // This function adds a comment before the statement contained by the input IR node.
-
-  // Now add a comment to make clear that this is a location of a seeded security flaw
-  // string comment = "// *** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ";
-     PreprocessingInfo* commentInfo = new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
-               comment,"user-generated",0, 0, 0, PreprocessingInfo::before, false, true);
+  // This function adds a comment before the statement contained by the input IR node's associated statement IR node.
      SgStatement* associatedStatement = TransformationSupport::getStatement(astNode);
-     associatedStatement->addToAttachedPreprocessingInfo(commentInfo);
+
+     SageInterface::attachComment(associatedStatement,comment);
    }
 
 int
@@ -357,7 +327,8 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
                printf ("***** Found primary vulnerability in clone ***** astNode = %p = %s rootOfClone = %p = %s \n",astNode,astNode->class_name().c_str(),rootOfClone,rootOfClone->class_name().c_str());
             // SgStatement* statement = isSgStatement(astNode);
             // ROSE_ASSERT(statement != NULL);
-               addComment (astNode,"// *** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ");
+            // if (astNode == primaryVulnerabilityNodeInClone)
+            //      addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer->get_name() );
 
             // Add pointer to root of clone for this security vulnerability to the list
             // securityVulnerabilityAttributeInOriginalCode->set_associatedClones(rootOfClone);
@@ -373,10 +344,14 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
                          new PrimarySecurityVulnerabilityForCloneAttribute(astNode,rootOfClone,securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer);
                     ROSE_ASSERT(primaryVulnerabilityAttribute != NULL);
 
-                    astNode->addNewAttribute("SeededSecurityFlawCloneAttribute",primaryVulnerabilityAttribute);
+                 // astNode->addNewAttribute("SeededSecurityFlawCloneAttribute",primaryVulnerabilityAttribute);
+                    astNode->addNewAttribute("PrimarySecurityVulnerabilityForCloneAttribute",primaryVulnerabilityAttribute);
 
                     ROSE_ASSERT(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode() != NULL);
                     primaryVulnerabilityAttribute->set_primaryVulnerabilityInOriginalCode(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode());
+
+                 // if (astNode == primaryVulnerabilityNodeInClone)
+                    addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer->get_name() );
                   }
                  else
                   {
@@ -509,7 +484,7 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
                  // functionDeclaration->get_scope()->insert_symbol(mangledName,functionSymbol);
                     functionSymbol->set_parent(functionDeclaration->get_scope()->get_symbol_table());
 
-                 // addComment (nearestWholeStatementCopy,"// *** NOTE Function Containing Seeded Security Flaw: BufferOverFlowSecurityFlaw ");
+                 // addComment (nearestWholeStatementCopy,"*** NOTE Function Containing Seeded Security Flaw: BufferOverFlowSecurityFlaw ");
 
                  // error checking
                     SgSymbol* local_symbol = functionDeclaration->get_symbol_from_symbol_table();
@@ -518,22 +493,6 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
 
                i++;
              }
-
-#if 0
-       // Now that the clones have been made remove the original attribute so that we will not
-       // seed the original version of the code that was marked for seeding.  This leaves a
-       // single version of the original code in place in the generated source code.
-       // astNode->removeAttribute("SecurityVulnerabilityAttribute");
-       // addComment (astNode,"// *** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
-
-       // Remove the finest grainularity statement (the original statement, since it has already been added and transformed).
-          ROSE_ASSERT(grainularityAxis.empty() == false);
-          SgStatement* subTreeStatement = isSgStatement(*(grainularityAxis.rbegin()));
-          ROSE_ASSERT(subTreeStatement != NULL);
-
-       // This is an error to call it on itself (subTreeStatement), so call it from the scope.
-          subTreeStatement->get_scope()->remove_statement(subTreeStatement);
-#endif
         }
 
      return inheritedAttribute;
@@ -613,7 +572,7 @@ SecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAttribute ( SgNo
              {
                ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() == astNode);
 
-               addComment (astNode,"// *** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
+               addComment (astNode,std::string("*** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
              }
             else
              {
@@ -621,7 +580,7 @@ SecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAttribute ( SgNo
 
                if (inheritedAttribute.inClonedCode == true)
                   {
-                    addComment (astNode,"// *** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ");
+                    addComment (astNode,std::string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
 
                     astNode->removeAttribute("SecurityVulnerabilityAttribute");
 
@@ -1064,7 +1023,8 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalEdgeInfo()
 
      AstAttribute::AttributeEdgeInfo edgeToOriginalCode (primarySecurityFlawInClone,primaryVulnerabilityInOriginalCode,"vulnerabilities in original code"," arrowsize=7.0 style=\"setlinewidth(7)\" constraint=false color=red ");
   // AstAttribute::AttributeEdgeInfo edgeToOriginalCode (primarySecurityFlawInClone,primaryVulnerabilityInOriginalCode,"vulnerabilities in original code"," arrowsize=7.0 style=\"setlinewidth(7)\" color=red ");
-     AstAttribute::AttributeEdgeInfo edgeToRootOfClone (primarySecurityFlawInClone,rootOfClone,"root of clone"," wieght=10.0 arrowsize=7.0 style=\"setlinewidth(7)\" color=springgreen ");
+  // AstAttribute::AttributeEdgeInfo edgeToRootOfClone (primarySecurityFlawInClone,rootOfClone,"root of clone"," wieght=10.0 arrowsize=7.0 style=\"setlinewidth(7)\" color=springgreen ");
+     AstAttribute::AttributeEdgeInfo edgeToRootOfClone (primarySecurityFlawInClone,rootOfClone,"root of clone"," wieght=10.0 arrowsize=7.0 style=\"setlinewidth(7)\" color=firebrick ");
 
      v.push_back(edgeToOriginalCode);
      v.push_back(edgeToRootOfClone);
@@ -1147,7 +1107,7 @@ string
 SecurityFlawOriginalSubtreeAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"deepskyblue\",style=filled";
-     return "fillcolor=\"darkorange\",style=filled";
+     return "fillcolor=\"orange\",style=filled";
    }
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
@@ -1155,8 +1115,9 @@ string
 SeededSecurityFlawCloneAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"yellow\",style=filled";
-     return "fillcolor=\"springgreen\",style=filled";
-
+  // return "fillcolor=\"springgreen\",style=filled";
+  // return "fillcolor=\"firebrick\",style=filled";
+     return "fillcolor=\"cyan\",style=filled";
    }
 
 // DOT graph support for attributes to color AST IR nodes in AST dot graphs (useful for debugging)
@@ -1165,6 +1126,8 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeOptions()
    {
   // return "fillcolor=\"greenyellow\",style=filled";
   // return "fillcolor=\"magenta\",style=filled";
-     return "fillcolor=\"purple\",style=filled";
+  // return "fillcolor=\"aquamarine\",style=filled";
+  // return "fillcolor=\"cyan\",style=filled";
+     return "fillcolor=\"firebrick\",style=filled";
    }
 

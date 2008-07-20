@@ -191,9 +191,7 @@ genCloseDirectives (const CPreproc::If::Case* c,
                                closer,
                                string ("transformation"), 0, 0,
                                1 /* no. of lines */,
-                               pos,
-                               false,
-                               true);
+                               pos);
       ROSE_ASSERT (d);
       D.push_back (d);
 
@@ -235,9 +233,7 @@ genOpenDirectives (const CPreproc::If::Case* c,
                                opener,
                                string ("transformation"), 0, 0,
                                1 /* no. of lines */,
-                               pos,
-                               false,
-                               true);
+                               pos);
 
       ROSE_ASSERT (d);
       d->setRelativePosition (pos);

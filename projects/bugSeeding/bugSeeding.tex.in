@@ -2,6 +2,7 @@
 %\documentclass[10pt]{book}
 
 \usepackage[draft]{fixme}
+%\usepackage[final]{fixme}
 
 \usepackage{listings}
 
@@ -13,6 +14,8 @@
 
 \usepackage{graphicx}
 \usepackage{alltt}
+
+\usepackage{pdfpages}
 
 \newcommand{\hlstd}[1]{\textcolor[rgb]{0,0,0}{#1}}
 \newcommand{\hlkey}[1]{\textcolor[rgb]{0,0,0}{\bf{#1}}}
@@ -31,6 +34,9 @@
 
 \newcommand{\codeFontSize}{\scriptsize}
 \newcommand{\code}[1]{{\scriptsize #1}}
+
+\newcommand{\SeedingExampleDirectory}{@top_srcdir@/projects/bugSeeding}
+\newcommand{\SeedingExampleBuildDirectory}{@top_builddir@/projects/bugSeeding}
 
 % Software version number
 \newcommand{\VersionNumber}{@VERSION@}
@@ -126,9 +132,12 @@
 
 \input{introduction}
 
-%\newpage
+\newpage
 
 \input{design}
+
+\newpage
+\input{implementation}
 
 \newpage
 \input{appendix}

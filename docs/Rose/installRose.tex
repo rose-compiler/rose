@@ -34,7 +34,9 @@ using the GNU g++ 3.4.x, and 4.x; and the Intel compilers.
    ROSE users may either obtain a free research license from EDG and hence ROSE with EDG source code,
 or alternatively, obtain ROSE that contains a binary version of the EDG work.
 The latter is limited to specific platforms and versions of compilers. See EDG (www.edg.com) for details 
-and limitations on how their software may be used. \\
+and limitations on how their software may be used. There is more information in the 
+ROSE Manual (see chapter {\em Getting Started}
+section {\em Getting a Version of the EDG License for Research Use}).
 
 \commentout{
    We suggest that ROSE users obtain a free research license from EDG until we 
@@ -72,9 +74,9 @@ and limitations on how their software may be used.
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
      for download and installation instructions.
-   \item {\bf Autoconf} : version $>=$ 2.59 . Needed \emph{ONLY} for development version.  \\
+   \item {\bf Autoconf} : version $>=$ 2.59. Needed \emph{ONLY} for development version.  \\
      Autoconf is an extensible package of M4 macros that produce shell scripts to automatically configure software source code packages. 
-   \item {\bf Automake} : version $>=$ 1.96 . Needed \emph{ONLY} for development version.  \\
+   \item {\bf Automake} : version $>=$ 1.96. Needed \emph{ONLY} for development version.  \\
      Automake is a tool for automatically generating `Makefile.in' files compliant with the GNU Coding Standards.
 \end{itemize}
 
@@ -246,7 +248,12 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
      \item Run {\tt make install}. \\
            Type {\tt make install} to copy all build files into the install directory. BOOST is now available in your 
            installTree (e.g. BOOST\_INSTALL) to be used by ROSE.
-\end{enumerate}          
+\end{enumerate}
+
+% DQ (7/19/2008): Added the subject which stopped at least one user from LSU.
+  Note that the installation of Boost will frequently output 
+warnings (e.g. {\em *(Unicode/ICU support for boost.regex?..not found).*},
+these can be ignored.
 
 \subsection{Building ROSE From a Distribution (ROSE-\VersionNumber.tar.gz)}
 \label{gettingStarted:UserInstructions}
@@ -294,33 +301,42 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
 \label{gettingStarted:configureOptions}
      A few example configure options are:
 \begin{itemize}
-   \item {\tt ../ROSE/configure --with-boost=[BOOST\_installTree] --with-java} \\
+   \item Minimal configuration \\
+         {\tt ../ROSE/configure --with-boost=[BOOST\_installTree]} \\
          This will configure ROSE to be compiled in the current directory (separate from
          the {\bf Source Tree}).  The installation (from {\tt make install}) will be placed in
          {\tt /usr/local}.  Most users don't have permission to write to this directory,
          so we suggest always including the {\em prefix option} (e.g. {\tt
-         --prefix=`pwd`}).  The Open Fortran Parser will also be enabled,
-         allowing ROSE to process Fortran code.  The programs {\tt java},
-         {\tt javac}, and {\tt jar} must be either in your PATH or in {\tt
-         \$JAVA\_HOME/bin}.
-   \item {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
+         --prefix=`pwd`}).
+   \item Minimal configuration (prefered) \\
+         {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
          Configure in the current directory so that installation will also happen in the
          current  directory (a {\tt install} subdirectory will be built).
-   \item {\tt ../ROSE/configure --with-CXX\_DEBUG=-g --with-C\_DEBUG=-g 
+   \item Turning on compiler debugging options (prefered) \\
+         {\tt ../ROSE/configure --with-CXX\_DEBUG=-g --with-C\_DEBUG=-g 
               --with-CXX\_WARNINGS=-Wall --prefix=`pwd`--with-boost=[BOOST\_installTree]} \\
          Configure as above, but with debugging and warnings turned on ({\tt -Wall} is
          specific to the gnu compilers).
-   \item {\tt ../ROSE/configure --with-SQLite=/home/dquinlan/SQLite/sqliteCompileTree --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
+   \item Adding Fortran support \\
+         {\tt ../ROSE/configure --prefix=`pwd` --with-boost=[BOOST\_installTree] --with-java} \\
+         The Open Fortran Parser will also be enabled, allowing ROSE to process Fortran
+         code.  The programs {\tt java}, {\tt javac}, and {\tt jar} must be either in your 
+         PATH or in {\tt \$JAVA\_HOME/bin}.
+   \item Adding SQLite support \\
+         {\tt ../ROSE/configure --with-SQLite=/home/dquinlan/SQLite/sqliteCompileTree --prefix=`pwd` --with-boost=[BOOST\_installTree]} \\
          Configure as above, but permit use of SQLite database for storage of analysis
          results between compilation of separate files (one type of support in ROSE for
          global analysis).
-   \item {\tt ../ROSE/configure --prefix=`pwd` --with-mpi --with-gcc-omp --with-boost=[BOOST\_installTree]} \\
+   \item Adding parallel distributed memory analysis support (using MPI) \\
+         {\tt ../ROSE/configure --prefix=`pwd` --with-mpi --with-gcc-omp --with-boost=[BOOST\_installTree]} \\
          Configure as above, but with MPI and OpenMP support for ROSE to run AST traversals
          in parallel (distributed and shared memory).
-   \item {\tt ../ROSE/configure --prefix=`pwd` --with-binarysql --with-boost=[BOOST\_installTree]} \\
+   \item Adding IDA Pro support \\
+         {\tt ../ROSE/configure --prefix=`pwd` --with-binarysql --with-boost=[BOOST\_installTree]} \\
          The binarysql flag allows ROSE to read a binary file previously stored as a sql file (e.g. fetched from
          IDA Pro). 
-   \item {\tt ../ROSE/configure --prefix=`pwd` --with-javaport=yes SWIG=swig --with-boost=[BOOST\_installTree] --with-java} \\
+   \item Adding support for SWIG (Python connection) \\
+         {\tt ../ROSE/configure --prefix=`pwd` --with-javaport=yes SWIG=swig --with-boost=[BOOST\_installTree] --with-java} \\
          This allows ROSE to be build with javaport, a support that connects ROSE to Java via SWIG.
          The Eclipse plug-in to ROSE is based on this work.
    \item Additional Examples \\ 

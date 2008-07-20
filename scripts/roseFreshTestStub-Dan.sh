@@ -14,7 +14,9 @@ export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 export BOOST_ROOT="/home/dquinlan/local/boost_1_35_0_install"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
-ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
+# DQ (7/19/2008): Permissions were not reset after my 3rd striped disk was added! So use another directory for now.
+# ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
+ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose-alt/$$/"
 
 CONFIGURE_FLAGS=(--with-edg_source_code=true --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 

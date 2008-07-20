@@ -3739,6 +3739,38 @@ SageInterface::lookupFunctionSymbolInParentScopes(const SgName & functionName, S
      return functionSymbol;
    }
 
+
+void
+SageInterface::addTextForUnparser ( SgNode* astNode, string s, AstUnparseAttribute::RelativePositionType inputlocation )
+   {
+     printf ("addText(): using new attribute interface (s = %s) \n",s.c_str());
+
+     if (isSgType(astNode) != NULL)
+        {
+          printf ("Error: the mechanism to add text to be unparsed at IR nodes is not intended to operate on SgType IR nodes (since they are shared) \n");
+          ROSE_ASSERT(false);
+        }
+
+     if (astNode->attributeExists(AstUnparseAttribute::markerName) == true)
+        {
+          AstUnparseAttribute* code = dynamic_cast<AstUnparseAttribute*>(astNode->getAttribute(AstUnparseAttribute::markerName));
+          ROSE_ASSERT(code != NULL);
+
+          code->addString(s,inputlocation);
+        }
+       else
+        {
+          AstUnparseAttribute* code = new AstUnparseAttribute(s,AstUnparseAttribute::e_before);
+          ROSE_ASSERT(code != NULL);
+          astNode->addNewAttribute(AstUnparseAttribute::markerName,code);
+        }
+   }
+
+
+
+
+
+
 SgType* SageInterface::lookupNamedTypeInParentScopes(const std::string& type_name, SgScopeStatement* scope/*=NULL*/)
 {
   if (scope== NULL)
@@ -5788,8 +5820,9 @@ PreprocessingInfo* attachComment(
     }
   }
 
-  result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0,
-                               position, false, true);
+// DQ (7/19/2008): Modified interface to PreprocessingInfo
+// result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position, false, true);
+  result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position);
   ROSE_ASSERT(result);
   target->addToAttachedPreprocessingInfo(result);
   return result;
@@ -5818,9 +5851,11 @@ PreprocessingInfo* attachComment(
 	    //must have this judgement, otherwise wrong file will be modified!
 	if (((*j)->get_file_info ())->isSameFile (globalScope->get_file_info ()))
 	 {
-	    result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-			    content, "Transformation generated",0, 0, 0,
-			    PreprocessingInfo::before,false, false);
+    // DQ (7/19/2008): Modified interface to PreprocessingInfo
+    // result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+    //          content, "Transformation generated",0, 0, 0, PreprocessingInfo::before,false, false);
+       result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+                content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
 	   ROSE_ASSERT(result);
 	   (*j)->addToAttachedPreprocessingInfo(result);
 	    break;
@@ -5828,9 +5863,11 @@ PreprocessingInfo* attachComment(
       }
     else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
      {
+    // DQ (7/19/2008): Modified interface to PreprocessingInfo
+    // result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
+    //          content, "Transformation generated",0, 0, 0, PreprocessingInfo::after,false, false);
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-			    content, "Transformation generated",0, 0, 0,
-			    PreprocessingInfo::after,false, false);
+                content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result);
     }

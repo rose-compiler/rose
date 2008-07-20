@@ -98,9 +98,9 @@ class UnparseLanguageIndependentConstructs
        // lower level member function called by unparseDirectives() and unparseFinalDirectives()
           void unparseDirectives ( char* currentFilename, int currentPositionInListOfDirectives, int currentStatementLineNumber );
 #else
-      //! This is the new member function
-          virtual void unparseAttachedPreprocessingInfo(SgStatement* stmt, SgUnparse_Info& info,
-                                                PreprocessingInfo::RelativePositionType whereToUnparse);
+      // virtual void unparseAttachedPreprocessingInfo(SgStatement* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
+      //! This function unparses any attached comments or CPP directives.
+          virtual void unparseAttachedPreprocessingInfo(SgLocatedNode* stmt, SgUnparse_Info& info, PreprocessingInfo::RelativePositionType whereToUnparse);
 #endif
   
           bool RemoveArgs(SgExpression* expr);

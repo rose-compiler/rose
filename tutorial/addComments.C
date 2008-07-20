@@ -15,16 +15,29 @@ void visitorTraversal::visit(SgNode* n)
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
      if (functionDeclaration != NULL)
         {
-          string comment = string("// Auto-comment function name: ") + 
+          string comment = string("Auto-comment function name: ") + 
                            functionDeclaration->get_name().str() + 
                            " is now a commented function";
-          PreprocessingInfo* commentInfo = 
-               new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
-               comment,"user-generated",0, 0, 0, PreprocessingInfo::before, false, true);
-          functionDeclaration->addToAttachedPreprocessingInfo(commentInfo);
+
+       // Note that this function will add the "//" or "/* */" comment syntax as required for C or C++, or Fortran.
+          SageInterface::attachComment(functionDeclaration,comment);
         }
+
+     SgValueExp* valueExp = isSgValueExp(n);
+     if (valueExp != NULL)
+        {
+       // Check if there is an expression tree from the original unfolded expression.
+       // This is a trivial example ouf the output of an analysis result.
+          string comment = string("Auto-comment value: ") + 
+               ((valueExp->get_originalExpressionTree() != NULL) ? 
+                    " this IS a constant folded value" : " this is NOT a constant folded value");
+
+          SageInterface::attachComment(valueExp,comment);
+        }
+
    }
 
+// Typical main function for ROSE translator
 int main( int argc, char * argv[] )
    {
   // Build the AST used by ROSE

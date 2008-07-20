@@ -6,7 +6,7 @@ SUBDIRS = CxxCodeGeneration FortranCodeGeneration languageIndependenceSupport fo
 INCLUDES = $(ROSE_INCLUDES)
 
 # unparser_headers = copy_unparser.h unparser.h unparse_sym.h
-unparser_headers = unparser.h unparse_sym.h
+unparser_headers = unparser.h unparse_sym.h astUnparseAttribute.h
 unparser_sources = $(unparser_headers:.h=.C)
 
 if DEV_LIBS

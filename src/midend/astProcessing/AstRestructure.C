@@ -50,19 +50,12 @@ void
 AstRestructure::unparserReplace(SgExpression* astNode,string s)
    {
      cout <<"AstRestructure::unsafeReplace:" << s << endl;
-     AstUnparseAttribute* newa = new AstUnparseAttribute(s);
+
+  // DQ (7/19/2008): Modified interface to AstUnparseAttribute
+  // AstUnparseAttribute* newa = new AstUnparseAttribute(s);
+     AstUnparseAttribute* newa = new AstUnparseAttribute(s,AstUnparseAttribute::replace);
 
      printf ("AstRestructure::unparserReplace(): using new attribute interface \n");
-#if 0
-     if (astNode->get_attribute() == NULL)
-        {
-          AstAttributeMechanism* attributePtr = new AstAttributeMechanism();
-          ROSE_ASSERT(attributePtr != NULL);
-          astNode->set_attribute(attributePtr);
-        }
-#endif
-  // astNode->attribute.add("_UnparserSourceReplacement",newa);
-  // astNode->attribute().add("_UnparserSourceReplacement",newa);
      astNode->addNewAttribute("_UnparserSourceReplacement",newa);
 
   // DQ (4/8/2004): This variable declaration does not appear to serve any 

@@ -234,7 +234,7 @@ void doFiniteDifferencingOne(SgExpression* e,
      cachedecl->addToAttachedPreprocessingInfo( 
           new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment,(string("// Finite differencing: ") + 
                cachename.str() + " is a cache of " + 
-               e->unparseToString()).c_str(),"Compiler-Generated in Finite Differencing",0, 0, 0, PreprocessingInfo::before, false, true));
+               e->unparseToString()).c_str(),"Compiler-Generated in Finite Differencing",0, 0, 0, PreprocessingInfo::before));
 
      if (modifications_to_used_symbols.size() == 0)
         {

@@ -307,7 +307,7 @@ DoxygenComment::DoxygenComment(SgLocatedNode *n, PreprocessingInfo *comm) : entr
    }
 
 DoxygenComment::DoxygenComment(SgLocatedNode *n) : entry(DoxygenEntry::None),
-                                                   originalComment(new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, "/*!*/", n->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before, false, false)), originalNode(n), originalFile(0)
+                                                   originalComment(new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, "/*!*/", n->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before)), originalNode(n), originalFile(0)
    {
      n->addToAttachedPreprocessingInfo(originalComment, PreprocessingInfo::after);
      commentMap[originalComment] = this;
@@ -999,7 +999,7 @@ Doxygen::unparse(SgProject *p, bool (*shouldBeUnparsed)(DoxygenFile*, std::strin
 
 		  //AS(091207) Insert warning into the top of the file saying people should not edit it
           i->second->commentParent->getAttachedPreprocessingInfo()->insert(i->second->commentParent->getAttachedPreprocessingInfo()->begin(),new PreprocessingInfo(PreprocessingInfo::C_StyleComment,
-				"/* GENERATED FILE - DO NOT MODIFY */",outputFile,1,1,1,PreprocessingInfo::before, false, false ));
+				"/* GENERATED FILE - DO NOT MODIFY */",outputFile,1,1,1,PreprocessingInfo::before));
 
           //std::cout << "Outputfile:" <<  outputFile << std::endl;
           ofstream docs(outputFile.c_str());
@@ -1040,11 +1040,11 @@ DoxygenFile::createGroup(string name)
    {
      if (!hasGroup(name))
         {
-          PreprocessingInfo *nameComment = new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, "/*! \\name "+name+"*/", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before, false, false);
+          PreprocessingInfo *nameComment = new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, "/*! \\name "+name+"*/", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before);
           DoxygenGroup *newGroup = new DoxygenGroup();
 
-          PreprocessingInfo *beginComment = new PreprocessingInfo(PreprocessingInfo::C_StyleComment, "//@{\n", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before, false, false);
-          PreprocessingInfo *endComment = new PreprocessingInfo(PreprocessingInfo::C_StyleComment, "//@}\n", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before, false, false);
+          PreprocessingInfo *beginComment = new PreprocessingInfo(PreprocessingInfo::C_StyleComment, "//@{\n", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before);
+          PreprocessingInfo *endComment = new PreprocessingInfo(PreprocessingInfo::C_StyleComment, "//@}\n", commentParent->get_file_info()->get_filenameString(), 0, 0, 0, PreprocessingInfo::before);
           commentParent->addToAttachedPreprocessingInfo(nameComment, PreprocessingInfo::after);
           commentParent->addToAttachedPreprocessingInfo(beginComment, PreprocessingInfo::after);
           commentParent->addToAttachedPreprocessingInfo(endComment, PreprocessingInfo::after);

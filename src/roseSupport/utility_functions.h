@@ -45,7 +45,6 @@ void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::strin
 // void generatePDFofEDG ( const SgProject & project );
 
 
-#if 1
 namespace ROSE
    {
   // This class serves as a catch all location for functions of general use within ROSE
@@ -62,7 +61,7 @@ namespace ROSE
        // void ROSE_Unparse ( SgFile *f , std::ostream *of );
 
        // This function helps isolate the details of the UNIX strcmp function
-          // static int isSameName ( const std::string& s1, const std::string& s2 );
+       // static int isSameName ( const std::string& s1, const std::string& s2 );
           int containsString ( const std::string& masterString, const std::string& targetString );
 
           std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
@@ -73,20 +72,15 @@ namespace ROSE
           int   getLineNumber   ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
           int   getColumnNumber ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
           bool  isPartOfTransformation( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;
-#if 0
-          static char* getWorkingDirectory (); //! get the current directory
-          static char* getSourceDirectory  ( char* fileNameWithPath ); //! get the sourceDirectory directory
-#else
+
           std::string getWorkingDirectory (); //! get the current directory
           std::string getSourceDirectory  ( std::string fileNameWithPath ); //! get the sourceDirectory directory
-#endif
+
           std::string getFileNameWithoutPath ( SgStatement* statementPointer );
           std::string stripPathFromFileName ( const std::string& fileNameWithPath ); //! get the filename from the full filename
-#if 0
-          char* getPathFromFileName   ( const char* fileNameWithPath ); //! get the path from the full filename
-#else
+
           std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
-#endif
+
           std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
 
        // std::string getPragmaString ( SgStatement  *stmt );
@@ -107,15 +101,8 @@ namespace ROSE
       //! Functions to move to SgStatement object in SAGE III later
           SgStatement* getPreviousStatement ( SgStatement *targetStatement );
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
-#if 0
-       // Moved to ROSE/src/midend/astDiagnostics/astPerformance.[hC].
-       // DQ (12/11/2006): Added simpler function than ramust mechanism, used for computing the memory in use.
-      //! Function that I got from Bill Henshaw (originally from PetSc), for computing current memory in use.
-       // static double getCurrentMemoryUsage();
-          static long int getCurrentMemoryUsage();
-#endif
+
    };
-#endif
 
 #endif // ifndef UTILITY_FUNCTIONS_H
 

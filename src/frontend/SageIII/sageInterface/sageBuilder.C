@@ -1976,10 +1976,10 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
     PreprocessingInfo* result = NULL;
 
     PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
-    
 
-    result = new PreprocessingInfo (mytype,content, "transformation-generated", 0, 0, 0,
-                               position, false, true);
+ // DQ (7/19/2008): Modified interface to PreprocessingInfo
+ // result = new PreprocessingInfo (mytype,content, "transformation-generated", 0, 0, 0, position, false, true);
+    result = new PreprocessingInfo (mytype,content, "transformation-generated", 0, 0, 0, position);
     ROSE_ASSERT(result);
     target->addToAttachedPreprocessingInfo(result);
     return result;

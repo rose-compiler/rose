@@ -6094,6 +6094,69 @@ print_pragma(SgAttributePtrList& pattr, std::ostream& os)
 
 
 
+// Temporary function to be later put into Sg_FileInfo
+StringUtility::FileNameLocation
+get_location ( Sg_File_Info* X )
+   {
+     SgFile* file = TransformationSupport::getFile(X->get_parent());
+     ROSE_ASSERT(file != NULL);
+     string sourceFilename = file->getFileName();
+     string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
+
+     StringUtility::FileNameClassification classification = StringUtility::classifyFileName(X->get_filenameString(),sourceDirectory,StringUtility::getOSType());
+
+  // return StringUtility::FILENAME_LOCATION_UNKNOWN;
+     return classification.getLocation();
+   }
+
+StringUtility::FileNameLibrary
+get_library ( Sg_File_Info* X )
+   {
+     SgFile* file = TransformationSupport::getFile(X->get_parent());
+     ROSE_ASSERT(file != NULL);
+     string sourceFilename = file->getFileName();
+     string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
+
+     StringUtility::FileNameClassification classification = StringUtility::classifyFileName(X->get_filenameString(),sourceDirectory,StringUtility::getOSType());
+
+  // return StringUtility::FILENAME_LIBRARY_UNKNOWN;
+     return classification.getLibrary();
+   }
+
+std::string
+get_libraryName ( Sg_File_Info* X )
+   {
+     SgFile* file = TransformationSupport::getFile(X->get_parent());
+     ROSE_ASSERT(file != NULL);
+     string sourceFilename = file->getFileName();
+     string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
+
+     StringUtility::FileNameClassification classification = StringUtility::classifyFileName(X->get_filenameString(),sourceDirectory,StringUtility::getOSType());
+
+  // return "";
+     return classification.getLibraryName();
+   }
+
+StringUtility::OSType
+get_OS_type ()
+   {
+  // return StringUtility::OS_TYPE_UNKNOWN;
+     return StringUtility::getOSType();
+   }
+
+int
+get_distanceFromSourceDirectory ( Sg_File_Info* X )
+   {
+     SgFile* file = TransformationSupport::getFile(X->get_parent());
+     ROSE_ASSERT(file != NULL);
+     string sourceFilename = file->getFileName();
+     string sourceDirectory = StringUtility::getPathFromFileName(sourceFilename);
+
+     StringUtility::FileNameClassification classification = StringUtility::classifyFileName(X->get_filenameString(),sourceDirectory,StringUtility::getOSType());
+
+  // return 0;
+     return classification.getDistanceFromSourceDirectory();
+   }
 
 
 

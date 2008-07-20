@@ -18,6 +18,7 @@ noinst_PROGRAMS = \
    accumulatorAttributeTraversal \
    addAssignmentStmt \
    addComments \
+   addArbitraryTextForUnparser \
    addExpression \
    addFunctionCalls \
    addFunctionDeclaration \
@@ -294,6 +295,9 @@ inlineTransformations_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 addComments_SOURCES = addComments.C
 addComments_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
+addArbitraryTextForUnparser_SOURCES = addArbitraryTextForUnparser.C
+addArbitraryTextForUnparser_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
+
 collectComments_SOURCES = collectComments.C
 collectComments_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
@@ -569,6 +573,9 @@ testInlineTransformations: inlineTransformations
 testAddComments: addComments
 	./addComments -c $(srcdir)/inputCode_addComments.C
 
+testAddArbitraryTextForUnparser:
+	./addArbitraryTextForUnparser -c $(srcdir)/inputCode_addArbitraryTextForUnparser.C
+
 testCollectComments: collectComments
 	./collectComments -rose:collectAllCommentsAndDirectives -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C
 
@@ -733,6 +740,7 @@ generatedCodeExamples = \
    customGraphWithFiltering.pdf \
    graphTraversal.pdf \
    rose_inputCode_addComments.C \
+   rose_inputCode_addArbitraryTextForUnparser.C \
    rose_inputCode_codeGenerationFormatControl.C \
    rose_inputCode_addStruct.C \
    traversalShortCircuit.out \
@@ -1120,6 +1128,9 @@ rose_inputCode_addStruct.C:addStruct
 rose_inputCode_addComments.C: addComments
 	./addComments $(ROSE_FLAGS) -c $(srcdir)/inputCode_addComments.C
 
+rose_inputCode_addArbitraryTextForUnparser.C: addArbitraryTextForUnparser
+	./addArbitraryTextForUnparser $(ROSE_FLAGS) -c $(srcdir)/inputCode_addArbitraryTextForUnparser.C
+
 collectCommentsSkipHeaderFiles.out: collectComments
 	./collectComments $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/inputCode_collectComments.C > collectCommentsSkipHeaderFiles.out
 
@@ -1232,6 +1243,7 @@ EXTRA_DIST = \
    inputCode_NestedQuery.C \
    inputCode_ControlFlowGraphAnalysis.C \
    inputCode_addComments.C \
+   inputCode_addArbitraryTextForUnparser.C \
    inputCode_partialRedundancyElimination.C \
    inputCode_codeGenerationFormatControl.C \
    inputCode_dataFlowGraphAnalysis.C \

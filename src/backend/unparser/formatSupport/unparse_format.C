@@ -105,27 +105,40 @@ UnparseFormat::insert_space(int num)
 UnparseFormat& UnparseFormat::operator << ( string out)
    {
      const char* p  = out.c_str();
-     const char* p2 = p + strlen(p)-1;
 
-  // DQ (3/18/2006): The default is TABINDENT but we get a value from formatHelp if available
+  // DQ (7/20/2008): Better to fix it here then use the code "++p2;" (below)
+  // const char* p2 = p + strlen(p)-1;
+     const char* p2 = p + strlen(p);
+
+  // DQ (3/18/2006): The default is TABINDENT, but we get a value from formatHelp if available
      int tabIndentSize = TABINDENT;
      if (formatHelpInfo != NULL)
           tabIndentSize = formatHelpInfo->tabIndent();
+
+#if 0
+  // DQ (7/20/2008): I have always wanted to turn this off...I can't figure 
+  // out why it is a great idea to eat explicit trailing CRs.
 
   // DQ (3/18/2006): I think that this is the cause of the famous "\n" eating
   // problem for strings output using "cur" in the code generation.  I makes
   // since that this would be handled this way, but I always wondered why the
   // "\n" at the end of a string was ignored in the implementation of the code
   // generation.
-     for ( ; (*p2 == '\n'); --p2) {}
+     for ( ; (*p2 == '\n'); --p2)
+        {
+        }
           ++p2;
+#endif
 
+  // DQ: Better code might use "strlen(p)" instead of "(p2 - p)"
      if (linewrap > 0 && chars_on_line + (p2 - p) >= linewrap) 
+        {
           insert_newline(1, stmtIndent + 2 * tabIndentSize);
+        }
 
   // printf ("p = %p p2 = %p \n",p,p2);
 
-  // DQ (12/3/2006): This is related to a 64 bit bug where p starts as p2+1 and this foor loop ends in a seg fault!
+  // DQ (12/3/2006): This is related to a 64 bit bug where p starts as p2+1 and this for loop ends in a seg fault!
   // for ( ; p != p2; p++)
      for ( ; p < p2; p++)
         {
