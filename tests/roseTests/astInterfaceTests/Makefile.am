@@ -16,7 +16,7 @@ noinst_PROGRAMS = \
     lookupNamedType buildFile movePreprocessingInfo buildIfStmt \
     buildCpreprocessorDefineDeclaration instrumentEndOfFunction \
     isUpcSharedType isUpcPhaseLessSharedType buildLabelStatement \
-    buildSizeOfOp 
+    buildSizeOfOp abiStuffTest
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -40,6 +40,7 @@ isUpcSharedType_SOURCES          = isUpcSharedType.C
 isUpcPhaseLessSharedType_SOURCES = isUpcPhaseLessSharedType.C
 buildLabelStatement_SOURCES      = buildLabelStatement.C
 buildSizeOfOp_SOURCES            = buildSizeOfOp.C
+astStuffTest_SOURCES             = astStuffTest.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
