@@ -70,7 +70,8 @@ generatedCodeExamples = \
   rose_inputisUpcSharedType.upc \
   rose_inputisUpcPhaseLessSharedType.upc \
   rose_inputbuildLabelStatement.C \
-  rose_inputbuildSizeOfOp.C
+  rose_inputbuildSizeOfOp.C \
+  abiStuffTestDone
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -123,6 +124,9 @@ rose_inputbuildLabelStatement.C:buildLabelStatement
 rose_inputbuildSizeOfOp.C:buildSizeOfOp
 	./buildSizeOfOp$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildSizeOfOp.C
 
+abiStuffTestDone: abiStuffTest inputAbiStuffTest.c
+	./abiStuffTest$(EXEEXT) $(srcdir)/inputAbiStuffTest.c && touch abiStuffTestDone
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -131,7 +135,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildFile.C inputMovePreprocessingInfo.C inputbuildIfStmt.C \
        inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C \
        inputisUpcSharedType.upc inputisUpcPhaseLessSharedType.upc inputbuildLabelStatement.C \
-       inputbuildSizeOfOp.C
+       inputbuildSizeOfOp.C inputAbiStuffTest.c
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
@@ -141,5 +145,5 @@ check-local:
 	@echo "***********************************************************************************************************"
 
 clean-local:
-	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc 
+	rm -f *.o test*.C rose_*.c rose_*.C rose_*.cpp *.C.pdf *.c.pdf testfile525.cpp testfile626.cpp rose_*.upc abiStuffTestDone
 
