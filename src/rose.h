@@ -120,6 +120,9 @@ namespace ELF{
 // Endian access wrappers in src/frontend/SageIII/sageInterface
   #include "endianWrappers.h"
 
+// ABI struct layout and similar helpers in src/frontend/SageIII/sageInterface
+  #include "abiStuff.h"
+
 #define USE_NEW_BINARY_FORMAT_READER 0
 
 #if 0

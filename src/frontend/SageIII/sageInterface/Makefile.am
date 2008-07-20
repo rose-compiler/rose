@@ -12,7 +12,8 @@ libsageInterface_la_SOURCES      = \
      sageInterface_type.C \
      generateUniqueName.C \
      sageBuilder.C \
-     sageBuilderAsm.C
+     sageBuilderAsm.C \
+     abiStuff.C
 #     highLevelInterface.C
 
 #     buildSetOfFrontendSpecificNodes.C
@@ -24,7 +25,8 @@ include_HEADERS = \
      sageInterface.h \
      sageBuilder.h \
      sageBuilderAsm.h \
-     endianWrappers.h
+     endianWrappers.h \
+     abiStuff.h
 #     highLevelInterface.h
 #     loopHelpers.h 
 
