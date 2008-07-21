@@ -53,7 +53,7 @@ AstRestructure::unparserReplace(SgExpression* astNode,string s)
 
   // DQ (7/19/2008): Modified interface to AstUnparseAttribute
   // AstUnparseAttribute* newa = new AstUnparseAttribute(s);
-     AstUnparseAttribute* newa = new AstUnparseAttribute(s,AstUnparseAttribute::replace);
+     AstUnparseAttribute* newa = new AstUnparseAttribute(s,AstUnparseAttribute::e_replace);
 
      printf ("AstRestructure::unparserReplace(): using new attribute interface \n");
      astNode->addNewAttribute("_UnparserSourceReplacement",newa);
