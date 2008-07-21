@@ -259,10 +259,13 @@ mentioned above:
     exchanged against unsafe versions at run-time. Furthermore, we allow only the Compass
     tool builder (admin) to build versions of Compass that must pass the Compass Verifier.
 
-\item \emph{Binary Replacement} \\ Our goal is to perform a MD5 checksum on all the checkers
+\item \emph{Binary Replacement} \\ 
+    Our goal is to perform a strong hash (e.g. Secure Hash Algorithm - SHA2) as a 
+    checksum on all the checkers
     part of the binary Compass distribution before Compass is executed. In this way
     Compass will not run if parts of it were modified. {\em This is not implemented yet.}
-\fixme{We should describe the policy for allowing MD5 checksums to be verified.}
+\fixme{We should describe the policy for allowing SHA2 to be verified. Where the SHA2
+    results for checkers would be published (e.g. web site), etc.}
 
 \end{itemize} 
 
@@ -272,4 +275,10 @@ mentioned above:
 %In the future, a checker submitted to Compass, should go first through the automatic verifier, before it is either 
 %added to Compass or denied.  
 
+
+\section{Future Work}
+
+    Currently we are engaged in design reviews with CERT, we expect that this will lead to 
+improvements in the security to support a key based approach to a trusted execution of
+tools built within the compass infrastructure, including Compass itself.
 
