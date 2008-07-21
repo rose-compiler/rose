@@ -133,6 +133,16 @@ StructLayoutInfo I386PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   return layout;
 }
 
+StructLayoutInfo I386_VSPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
+  StructLayoutInfo layout;
+  switch (t->variantT()) {
+    case V_SgTypeDouble: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeLongDouble: {layout.size = 8; layout.alignment = 8; break;}
+    default: return I386PrimitiveTypeLayoutGenerator::layoutType(t);
+  }
+  return layout;
+}
+
 StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   StructLayoutInfo layout;
   switch (t->variantT()) {
@@ -157,6 +167,16 @@ StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
     case V_SgReferenceType: {layout.size = 8; layout.alignment = 8; break;}
 
     default: return ChainableTypeLayoutGenerator::layoutType(t);
+  }
+  return layout;
+}
+
+StructLayoutInfo X86_64_VSPrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
+  StructLayoutInfo layout;
+  switch (t->variantT()) {
+    case V_SgTypeLong: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeUnsignedLong: {layout.size = 4; layout.alignment = 4; break;}
+    default: return X86_64PrimitiveTypeLayoutGenerator::layoutType(t);
   }
   return layout;
 }

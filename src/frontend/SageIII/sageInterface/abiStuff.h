@@ -85,11 +85,29 @@ class I386PrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   virtual StructLayoutInfo layoutType(SgType* t) const;
 };
 
+// Slight modification for Visual Studio -- doubles are 8-byte aligned
+class I386_VSPrimitiveTypeLayoutGenerator: public I386PrimitiveTypeLayoutGenerator {
+  public:
+  I386_VSPrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
+      : I386PrimitiveTypeLayoutGenerator(next)
+    {}
+  virtual StructLayoutInfo layoutType(SgType* t) const;
+};
+
 // Layout generator for x86-64 primitive types
 class X86_64PrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
   X86_64PrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
       : ChainableTypeLayoutGenerator(next)
+    {}
+  virtual StructLayoutInfo layoutType(SgType* t) const;
+};
+
+// Slight modification for Visual Studio -- long is 4 bytes, not 8
+class X86_64_VSPrimitiveTypeLayoutGenerator: public X86_64PrimitiveTypeLayoutGenerator {
+  public:
+  X86_64_VSPrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
+      : X86_64PrimitiveTypeLayoutGenerator(next)
     {}
   virtual StructLayoutInfo layoutType(SgType* t) const;
 };
