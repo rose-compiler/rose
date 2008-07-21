@@ -40,7 +40,7 @@ isUpcSharedType_SOURCES          = isUpcSharedType.C
 isUpcPhaseLessSharedType_SOURCES = isUpcPhaseLessSharedType.C
 buildLabelStatement_SOURCES      = buildLabelStatement.C
 buildSizeOfOp_SOURCES            = buildSizeOfOp.C
-astStuffTest_SOURCES             = astStuffTest.C
+abiStuffTest_SOURCES             = abiStuffTest.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
