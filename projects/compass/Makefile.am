@@ -132,6 +132,25 @@ testEmacsSize: compassMain alwaysPerformThis compass_parameters
 testCompass:
 	$(MAKE) "CHK_SOURCES=/home/dquinlan/ROSE/NEW_ROSE/projects/compass/compassMain.C" check-syntax
 
+docs: compass.tex compassCheckerDocs.tex
+	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty
+	test -f compass_arc.png || ln -s $(compass_srcdir)/compass_arc.png compass_arc.png
+	test -f compassdesign.png || ln -s $(compass_srcdir)/compassdesign.png compassdesign.png
+	test -f compass_pic.png || ln -s $(compass_srcdir)/compass_pic.png compass_pic.png
+	test -f acknowledgments.tex || ln -s $(compass_srcdir)/acknowledgments.tex acknowledgments.tex
+	test -f introduction.tex || ln -s $(compass_srcdir)/introduction.tex introduction.tex
+	test -f design.tex || ln -s $(compass_srcdir)/design.tex design.tex
+	test -f usingCompass.tex || ln -s $(compass_srcdir)/usingCompass.tex usingCompass.tex
+	test -f usingCompassVerifier.tex || ln -s $(compass_srcdir)/usingCompassVerifier.tex usingCompassVerifier.tex
+	test -f emacs_screenshot.jpg || ln -s $(compass_srcdir)/emacs_screenshot.jpg emacs_screenshot.jpg
+	test -f compass_vim7.jpg || ln -s $(compass_srcdir)/compass_vim7.jpg compass_vim7.jpg
+	test -f CompassScreenshot.pdf || ln -s $(compass_srcdir)/CompassScreenshot.pdf CompassScreenshot.pdf
+	test -f ToolGear_gui_compass_01.pdf || ln -s $(compass_srcdir)/ToolGear_gui_compass_01.pdf ToolGear_gui_compass_01.pdf
+	test -f appendix.tex || ln -s $(compass_srcdir)/appendix.tex appendix.tex
+	test -f compassDocs.tex || ln -s $(compass_srcdir)/compassSupport/compassDocs.tex compassDocs.tex
+	pdflatex --interaction=batchmode compass.tex
+	pdflatex --interaction=batchmode compass.tex
+
 check-local:
 	@$(MAKE) test
 	@echo "*****************************************************************************"
@@ -174,7 +193,7 @@ regenerate_skip_compass_makefile_inc:
 # EXTRA_DIST = compass_parameters tests checkers.h compassRepository $(COMPASS_CHECKER_DIRECTORIES) CHECKER_LIST acknowledgments.tex addYourOwnDetector.tex instructions.txt 
 # EXTRA_DIST = compass_parameters tests checkers.h compassRepository CHECKER_LIST acknowledgments.tex emacs.tex new_checkers.tex addYourOwnDetector.tex instructions.txt RULE_SELECTION
 #EXTRA_DIST = CHECKER_LIST introduction.tex design.tex acknowledgments.tex usingCompass.tex appendix.tex instructions.txt RULE_SELECTION emacs_screenshot.jpg compass_vim7.jpg emacs_compass_config.el CompassScreenshot.pdf ToolGear_gui_compass_01.pdf compassQRoseMain.C QRose.txt buildCompassMakefileInc.sh archiveMakefile.in testMakefile.in buildCheckers.C.in compass_pic.png compassdesign.png compass_arc.png
-EXTRA_DIST = CHECKER_LIST introduction.tex design.tex acknowledgments.tex usingCompass.tex appendix.tex instructions.txt RULE_SELECTION emacs_screenshot.jpg compass_vim7.jpg emacs_compass_config.el CompassScreenshot.pdf ToolGear_gui_compass_01.pdf compassQRoseMain.C QRose.txt archiveMakefile.in testMakefile.in buildCheckers.C.in compass_pic.png compassdesign.png compass_arc.png compassRepository compass_scripts compass_infrastructure.inc
+EXTRA_DIST = CHECKER_LIST introduction.tex design.tex acknowledgments.tex usingCompass.tex usingCompassVerifier.tex appendix.tex instructions.txt RULE_SELECTION emacs_screenshot.jpg compass_vim7.jpg emacs_compass_config.el CompassScreenshot.pdf ToolGear_gui_compass_01.pdf compassQRoseMain.C QRose.txt archiveMakefile.in testMakefile.in buildCheckers.C.in compass.tex.in compass_pic.png compassdesign.png compass_arc.png compassRepository compass_scripts compass_infrastructure.inc
 
 # We have to copy all the header files, latex files, test codes, etc. This can't be put 
 # on the EXTRA_DIST line because it make the line too long and that causes problems.

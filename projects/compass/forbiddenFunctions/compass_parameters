@@ -15,3 +15,5 @@ ForbiddenFunctions.Function13=atol,Use strtol() for converting strings to number
 ForbiddenFunctions.Function14=atoll,Use strtoll() for converting strings to numbers
 ForbiddenFunctions.Function15=atof,Use strtod() for converting strings to numbers
 ForbiddenFunctions.Function16=compass_forbidden_function_vfork,This is our sample forbidden function
+ForbiddenFunctions.Function17=unparse,leads to performance degredation in Compass
+ForbiddenFunctions.Function18=unparseToString,leads to performance degredation in Compass

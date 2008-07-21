@@ -28,13 +28,14 @@ echo ""
 echo "COMPASS_CHECKER_TEX_FILES = \\"
 cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,	&Docs.tex \\,'
 echo ""
-echo "docs: compass.tex compassCheckerDocs.tex"
-echo '	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty'
-for i in compass_arc.png compassdesign.png compass_pic.png acknowledgments.tex introduction.tex design.tex usingCompass.tex emacs_screenshot.jpg compass_vim7.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(compass_srcdir)/$i $i" ; done
-echo '	test -f compassDocs.tex || ln -s $(compass_srcdir)/compassSupport/compassDocs.tex compassDocs.tex'
-echo '	pdflatex --interaction=batchmode compass.tex'
-echo '	pdflatex --interaction=batchmode compass.tex'
-echo ""
+# GMY Jul. 2008 refactored this code directly into projects/compass/Makefile.am
+#echo "docs: compass.tex compassCheckerDocs.tex"
+#echo '	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty'
+#for i in compass_arc.png compassdesign.png compass_pic.png acknowledgments.tex introduction.tex design.tex usingCompass.tex emacs_screenshot.jpg compass_vim7.jpg CompassScreenshot.pdf ToolGear_gui_compass_01.pdf appendix.tex; do echo "	test -f $i || ln -s \$(compass_srcdir)/$i $i" ; done
+#echo '	test -f compassDocs.tex || ln -s $(compass_srcdir)/compassSupport/compassDocs.tex compassDocs.tex'
+#echo '	pdflatex --interaction=batchmode compass.tex'
+#echo '	pdflatex --interaction=batchmode compass.tex'
+#echo ""
 echo "TGUI="
 echo ""
 cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do sed "s,@CHECKER@,$ch,g" < $srcdir/testMakefile.in | sed "s,@UCHECKER@,$chupper,g" ; done

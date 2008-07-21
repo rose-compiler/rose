@@ -42,6 +42,9 @@ sampleCompassSubset_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) $(compass_builddir)/co
 test: sampleCompassSubset compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset $(compass_srcdir)/tests/exampleTest_1.C
 
+docs:
+	@echo "Write your documentation rule here"
+
 check-local:
 	@$(MAKE) test
 	@echo "*****************************************************************************"

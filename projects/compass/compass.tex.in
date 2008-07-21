@@ -178,6 +178,10 @@
 
 \input{usingCompass}
 
+\newpage
+
+\input{usingCompassVerifier}
+
 
 
 
