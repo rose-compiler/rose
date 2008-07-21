@@ -6,8 +6,10 @@
 #include <iosfwd>
 
 struct StructLayoutEntry {
-  //! The field being laid out, or NULL for padding
-  SgInitializedName* decl;
+  //! If a SgInitializedName, the field represented by this entry
+  //! If a SgClassDeclaration, the anonymous union represented by this entry
+  //! If NULL, this entry is padding
+  SgNode* decl;
   //! The byte offset of this field (or its containing word for bit fields) in
   //! the structure
   size_t byteOffset;
@@ -19,7 +21,7 @@ struct StructLayoutEntry {
   //! starting at position byteOffset in the struct
   size_t bitOffset;
 
-  StructLayoutEntry(SgInitializedName* decl, size_t byteOffset, size_t fieldSize, size_t bitFieldContainerSize = 0, size_t bitOffset = 0):
+  StructLayoutEntry(SgNode* decl, size_t byteOffset, size_t fieldSize, size_t bitFieldContainerSize = 0, size_t bitOffset = 0):
     decl(decl), byteOffset(byteOffset), fieldSize(fieldSize), bitFieldContainerSize(bitFieldContainerSize), bitOffset(bitOffset) {}
 };
 
@@ -70,12 +72,23 @@ class NonpackedTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
       : ChainableTypeLayoutGenerator(next)
     {}
   virtual StructLayoutInfo layoutType(SgType* t) const;
+  private:
+  void layoutOneField(SgType* fieldType, SgNode* decl, bool isUnion /* Is type being laid out a union? */, size_t& currentOffset, StructLayoutInfo& layout) const;
 };
 
 // Layout generator for i386 primitive types
 class I386PrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
   public:
   I386PrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
+      : ChainableTypeLayoutGenerator(next)
+    {}
+  virtual StructLayoutInfo layoutType(SgType* t) const;
+};
+
+// Layout generator for x86-64 primitive types
+class X86_64PrimitiveTypeLayoutGenerator: public ChainableTypeLayoutGenerator {
+  public:
+  X86_64PrimitiveTypeLayoutGenerator(ChainableTypeLayoutGenerator* next)
       : ChainableTypeLayoutGenerator(next)
     {}
   virtual StructLayoutInfo layoutType(SgType* t) const;
