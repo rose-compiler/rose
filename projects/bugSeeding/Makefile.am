@@ -17,7 +17,7 @@ clean-local:
 EXTRA_DIST = introduction.tex design.tex appendix.tex \
    bugSeeding.h bugSeedingSupport.h bugSeedingAttributes.h \
    cloneGrainularity.h  vulnerabilityDetection.h \
-   bufferOverFlowSecurityFlaw.h 
+   bufferOverFlowSecurityFlaw.h inputCode_bufferOverflow_arrayIndexing.C
 
 
 docFiles = \
@@ -52,6 +52,14 @@ inputCode_bufferOverflow_arrayIndexing_C_afterSeedingOfSecurityFlaws.pdf: inputC
 #	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_bufferOverflow_arrayIndexing.C_afterSeedingOfSecurityFlaws.dot inputCode_bufferOverflow_arrayIndexing_C_afterSeedingOfSecurityFlaws.pdf
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_bufferOverflow_arrayIndexing.C_afterSeedingOfSecurityFlaws.dot inputCode_bufferOverflow_arrayIndexing_C_afterSeedingOfSecurityFlaws.pdf
 
+
+dotFiles = \
+   inputCode_bufferOverflow_arrayIndexing.C_before.dot \
+   inputCode_bufferOverflow_arrayIndexing.C_afterCloneGeneration.dot \
+   inputCode_bufferOverflow_arrayIndexing.C_afterIdentificationOfVulnerabilities.dot \
+   inputCode_bufferOverflow_arrayIndexing.C_afterSeedingOfSecurityFlaws.dot
+
+$(dotFiles) : testBufferOverflow_arrayIndexing
 
 check-local: testBufferOverflow_arrayIndexing
 

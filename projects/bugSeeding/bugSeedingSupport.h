@@ -161,6 +161,26 @@ class SecurityFlaw
                    static void markVulnerabilitiesInClones( SgProject* project, SeedSecurityFlaw* flaw );
              };
 
+          class CommentClones
+             {
+            // This supports the annotation of clones and seciroty flaws in the AST so that the output code 
+            // generated with have appropriate comments to identify the different pieces.
+
+               public:
+
+                 // This is the ROSE AST traversal mechanism (see ROSE Tutorial for details).
+                    class CommentClonesTraversal : public SgSimpleProcessing
+                       {
+                         public:
+                           // This function defines what level of graniulatity to seed the security flaw (by building the clones).
+                           // This function defines how to recognise the vulnerability (array accesses in loops)
+                              void visit ( SgNode* astNode );
+                       };
+
+                // Hide details of calling the traversal
+                   static void commentClones( SgProject* project );
+             };
+
           class SeedSecurityFlaw
              {
             // This class introduces a single kind of seeding at either a specific grainularity 

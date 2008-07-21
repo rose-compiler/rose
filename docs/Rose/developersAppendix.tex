@@ -629,9 +629,12 @@ we have to maintain your code after you leave, so there are a few rules:
    \item If you use a {\em for loop} and break out of the loop (using {\tt break;} 
          at some point in the iteration, then consider a {\em while loop} instead.
    \item Don't forget a default statement within switch statements.
+   \item Please don't open namespaces in source files, i.e. use the fully qualified
+         function name in the function definition to make the scope of the function
+         as explicitly clear as possible.
    \item Think about your variable names. I too often see {\tt Node}, {\tt node}, 
-         and {\tt n} in the same function.  Make your code {\em obvious} so that I can understand it when I'm tired
-         or stupid (or both).
+         and {\tt n} in the same function.  Make your code {\em obvious} so that I 
+         can understand it when I'm tired or stupid (or both).
    \item Write good code so that we don't have to debug it after you leave.
    \item Indent your code blocks.
 \end{enumerate}
