@@ -950,6 +950,10 @@ SgStatement* ensureBasicBlockAsParent(SgStatement* s);
 //! clauses to if statements that don't have them
 void changeAllLoopBodiesToBlocks(SgNode* top);
 
+//! Get the constant value from a constant integer expression; abort on
+//! everything else.  Note that signed long longs are converted to unsigned.
+unsigned long long getIntegerConstantValue(SgValueExp* expr);
+
 //@}
 
 

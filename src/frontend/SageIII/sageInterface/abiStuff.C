@@ -26,6 +26,29 @@ StructLayoutInfo ChainableTypeLayoutGenerator::layoutType(SgType* t) const {
   }
 }
 
+void NonpackedTypeLayoutGenerator::layoutOneField(SgType* fieldType, SgNode* decl, bool isUnion, size_t& currentOffset, StructLayoutInfo& layout) const {
+  StructLayoutInfo fieldInfo = this->beginning->layoutType(fieldType);
+  if (fieldInfo.alignment > layout.alignment) {
+    layout.alignment = fieldInfo.alignment;
+  }
+  if (currentOffset % fieldInfo.alignment != 0) {
+    size_t paddingNeeded = fieldInfo.alignment - (currentOffset % fieldInfo.alignment);
+    if (!isUnion) {
+      layout.fields.push_back(StructLayoutEntry(NULL, currentOffset, paddingNeeded));
+    }
+    currentOffset += paddingNeeded;
+  }
+  layout.fields.push_back(StructLayoutEntry(decl, currentOffset, fieldInfo.size));
+  currentOffset += fieldInfo.size; // We need to do this even for unions to set the object size
+  if (currentOffset > layout.size) {
+    layout.size = currentOffset;
+  }
+  if (isUnion) {
+    ROSE_ASSERT (currentOffset == fieldInfo.size);
+    currentOffset = 0;
+  }
+}
+
 StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
   switch (t->variantT()) {
     case V_SgClassType: { // Also covers structs and unions
@@ -43,34 +66,20 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
            i != body.end(); ++i) {
         SgDeclarationStatement* mem = *i;
         SgVariableDeclaration* vardecl = isSgVariableDeclaration(mem);
-        if (!vardecl) continue;
-        if (!vardecl->get_declarationModifier().isDefault()) continue; // Static fields and friends
-        ROSE_ASSERT (!vardecl->get_bitfield());
-        const SgInitializedNamePtrList& vars = isSgVariableDeclaration(mem)->get_variables();
-        for (SgInitializedNamePtrList::const_iterator j = vars.begin();
-             j != vars.end(); ++j) {
-          SgInitializedName* var = *j;
-          StructLayoutInfo fieldInfo = this->beginning->layoutType(var->get_type());
-          if (fieldInfo.alignment > layout.alignment) {
-            layout.alignment = fieldInfo.alignment;
+        SgClassDeclaration* classdecl = isSgClassDeclaration(mem);
+        bool isUnnamedUnion = classdecl ? classdecl->get_isUnNamed() : false;
+        if (vardecl) {
+          if (!vardecl->get_declarationModifier().isDefault()) continue; // Static fields and friends
+          ROSE_ASSERT (!vardecl->get_bitfield());
+          const SgInitializedNamePtrList& vars = isSgVariableDeclaration(mem)->get_variables();
+          for (SgInitializedNamePtrList::const_iterator j = vars.begin();
+               j != vars.end(); ++j) {
+            SgInitializedName* var = *j;
+            layoutOneField(var->get_type(), var, isUnion, currentOffset, layout);
           }
-          if (currentOffset % fieldInfo.alignment != 0) {
-            size_t paddingNeeded = fieldInfo.alignment - (currentOffset % fieldInfo.alignment);
-            if (!isUnion) {
-              layout.fields.push_back(StructLayoutEntry(NULL, currentOffset, paddingNeeded));
-            }
-            currentOffset += paddingNeeded;
-          }
-          layout.fields.push_back(StructLayoutEntry(var, currentOffset, fieldInfo.size));
-          currentOffset += fieldInfo.size; // We need to do this even for unions to set the object size
-          if (currentOffset > layout.size) {
-            layout.size = currentOffset;
-          }
-          if (isUnion) {
-            ROSE_ASSERT (currentOffset == fieldInfo.size);
-            currentOffset = 0;
-          }
-        }
+        } else if (isUnnamedUnion) {
+          layoutOneField(classdecl->get_type(), classdecl, isUnion, currentOffset, layout);
+        } // else continue;
       }
       if (layout.size % layout.alignment != 0) {
         size_t paddingNeeded = layout.alignment - (layout.size % layout.alignment);
@@ -79,6 +88,17 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
         }
         layout.size += paddingNeeded;
       }
+      return layout;
+    }
+    case V_SgArrayType: {
+      StructLayoutInfo layout = beginning->layoutType(isSgArrayType(t)->get_base_type());
+      layout.fields.clear();
+      SgExpression* numElements = isSgArrayType(t)->get_index();
+      if (!isSgValueExp(numElements)) {
+        cerr << "Error: trying to compute static size of an array with non-constant size" << endl;
+        abort();
+      }
+      layout.size *= SageInterface::getIntegerConstantValue(isSgValueExp(numElements));
       return layout;
     }
     default: return ChainableTypeLayoutGenerator::layoutType(t);
@@ -113,8 +133,47 @@ StructLayoutInfo I386PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   return layout;
 }
 
+StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
+  StructLayoutInfo layout;
+  switch (t->variantT()) {
+    case V_SgTypeBool: {layout.size = 1; layout.alignment = 1; break;}
+    case V_SgTypeChar: {layout.size = 1; layout.alignment = 1; break;}
+    case V_SgTypeSignedChar: {layout.size = 1; layout.alignment = 1; break;}
+    case V_SgTypeUnsignedChar: {layout.size = 1; layout.alignment = 1; break;}
+    case V_SgTypeShort: {layout.size = 2; layout.alignment = 2; break;}
+    case V_SgTypeUnsignedShort: {layout.size = 2; layout.alignment = 2; break;}
+    case V_SgTypeInt: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeUnsignedInt: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeLong: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeUnsignedLong: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeLongLong: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeUnsignedLongLong: {layout.size = 8; layout.alignment = 8; break;}
+
+    case V_SgTypeFloat: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeDouble: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeLongDouble: {layout.size = 16; layout.alignment = 16; break;}
+
+    case V_SgPointerType: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgReferenceType: {layout.size = 8; layout.alignment = 8; break;}
+
+    default: return ChainableTypeLayoutGenerator::layoutType(t);
+  }
+  return layout;
+}
+
 ostream& operator<<(ostream& o, const StructLayoutEntry& e) {
-  o << (e.decl ? "Field " + e.decl->get_name().getString() : "Padding") << " at " << e.byteOffset << " size " << e.fieldSize;
+  string label;
+  if (isSgInitializedName(e.decl)) {
+    label = "Field " + isSgInitializedName(e.decl)->get_name().getString();
+  } else if (isSgClassDeclaration(e.decl)) {
+    label = "Anonymous union";
+  } else if (!e.decl) {
+    label = "Padding";
+  } else {
+    cerr << "Bad decl kind " << e.decl->class_name() << endl;
+    abort();
+  }
+  o << label << " at " << e.byteOffset << " size " << e.fieldSize;
   if (e.bitFieldContainerSize != 0) {
     o << " (bit field at bit " << e.bitOffset << " of word of size " << e.bitFieldContainerSize << ")";
   }

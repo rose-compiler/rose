@@ -6459,5 +6459,21 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
     return ((stmt->get_declarationModifier()).get_storageModifier()).isExtern();
   } // isExtern()
 
+  unsigned long long getIntegerConstantValue(SgValueExp* expr) {
+    switch (expr->variantT()) {
+      case V_SgCharVal: return (long long)(isSgCharVal(expr)->get_value());
+      case V_SgUnsignedCharVal: return isSgUnsignedCharVal(expr)->get_value();
+      case V_SgShortVal: return (long long)(isSgShortVal(expr)->get_value());
+      case V_SgUnsignedShortVal: return isSgUnsignedShortVal(expr)->get_value();
+      case V_SgIntVal: return (long long)(isSgIntVal(expr)->get_value());
+      case V_SgUnsignedIntVal: return isSgUnsignedIntVal(expr)->get_value();
+      case V_SgLongIntVal: return (long long)(isSgLongIntVal(expr)->get_value());
+      case V_SgUnsignedLongVal: return isSgUnsignedLongVal(expr)->get_value();
+      case V_SgLongLongIntVal: return isSgLongLongIntVal(expr)->get_value();
+      case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
+      default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
+    }
+  }
+
 } // end namespace SageInterface
 
