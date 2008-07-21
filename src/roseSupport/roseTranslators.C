@@ -62,7 +62,7 @@ void CppToCppTranslator::setAstRoot(SgProject* p) {
 
 void CppToPdfTranslator::backend() {
   AstPDFGeneration pdf;
-  pdf.generate("foo.pdf", getAstRoot());
+  pdf.generateInputFiles(getAstRoot());
 }
 
 /********************************************************/
