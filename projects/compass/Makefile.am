@@ -87,6 +87,20 @@ alwaysPerformThis:
 #	the $(srcdir)/typeTypedef is unavailable, plus we don't need this file!
 #	cp -f $(srcdir)/typeTypedef/ale3d-typedefs.sn $(top_builddir)/projects/compass/.
 
+# GMY Jul. 2008 Test for new checker integration of Compass
+testNewChecker: $(srcdir)/compass_scripts/gen_checker.sh
+	cd $(srcdir); compass_scripts/gen_checker.sh blank test checker; tar -zcvf blankTestChecker.tar.gz blankTestChecker; mv blankTestChecker.tar.gz compassRepository
+	cp $(srcdir)/CHECKER_LIST $(srcdir)/CHECKER_LIST.testNewChecker.bk
+	cp $(srcdir)/RULE_SELECTION $(srcdir)/RULE_SELECTION.testNewChecker.bk
+	echo "blankTestChecker" >> $(srcdir)/CHECKER_LIST
+	$(MAKE) regenerate
+	rm compass_makefile.inc; $(MAKE) compass_makefile.inc
+	$(MAKE); $(MAKE) test
+	mv $(srcdir)/CHECKER_LIST.testNewChecker.bk $(srcdir)/CHECKER_LIST
+	mv $(srcdir)/RULE_SELECTION.testNewChecker.bk $(srcdir)/RULE_SELECTION
+	rm -rf $(srcdir)/blankTestChecker $(srcdir)/compassRepository/blankTestChecker.tar.gz blankTestChecker.lo
+	$(MAKE) regenerate; $(MAKE)
+
 # Test Compass using a small test file
 test: compassMain alwaysPerformThis compass_parameters
 	./compassMain $(srcdir)/tests/exampleTest_1.C

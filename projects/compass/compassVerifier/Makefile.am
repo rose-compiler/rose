@@ -124,7 +124,7 @@ new_allow_list_setup: $(compass_srcdir)/allowedFunctions/custom_parameters
 new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION $(compass_builddir)/buildCheckers.C new_allow_list_setup
 	sed -e 's@new Checker@0; //@' $(compass_srcdir)/compassSupport/compassTestMain.C > compassTestMain.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_srcdir)/compassSupport/compass.C ; cp functions.allow compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass-srcdir) $(INCLUDES) $(compass_srcdir)/compassMain.C ; cp functions.allow compass_parameters
+#	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass-srcdir) $(INCLUDES) $(compass_srcdir)/compassMain.C ; cp functions.allow compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_builddir)/buildCheckers.C ; cp functions.allow compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) compassTestMain.C ; cp functions.allow compass_parameters
 	$(MAKE) oneBigVerify

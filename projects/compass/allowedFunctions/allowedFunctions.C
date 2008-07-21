@@ -286,7 +286,10 @@ functionDeclarationHandler(
       SgFunctionDefinition *fdef = fdecl->get_definition();
 
       if( fdef != NULL )
-        classification = classifyFileName( fdef->getFilenameString(), sourceDirectory );
+      {
+        classification = 
+          classifyFileName( fdef->getFilenameString(), sourceDirectory );
+      }
 
       if( fdef != NULL && 
           (classification.getLocation() == FILENAME_LOCATION_USER) )
