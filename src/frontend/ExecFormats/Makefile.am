@@ -13,9 +13,10 @@ libroseExecFormats_la_DEPENDENCIES =
 libroseExecFormats_la_SOURCES = ExecGeneric.C ExecGeneric.h \
                                 ExecDOS.C     ExecDOS.h     \
                                 ExecELF.C     ExecELF.h     \
+				ExecLX.C      ExecLX.h      \
                                 ExecNE.C      ExecNE.h      \
                                 ExecPE.C      ExecPE.h 
 
-dist_include_HEADERS = ExecGeneric.h ExecDOS.h  ExecELF.h ExecNE.h ExecPE.h
+dist_include_HEADERS = ExecGeneric.h ExecDOS.h  ExecELF.h ExecLX.h ExecNE.h ExecPE.h
 
 include_HEADERS = 

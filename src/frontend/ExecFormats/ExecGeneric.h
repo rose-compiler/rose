@@ -33,6 +33,7 @@ enum ExecFamily {
     FAMILY_UNSPECIFIED,
     FAMILY_DOS,                                         /* Microsoft DOS format */
     FAMILY_ELF,                                         /* Unix Executable and Linking Format */
+    FAMILY_LX,                                          /* OS/2 LX (Windows 9x VxD device drivers) */
     FAMILY_NE,                                          /* Microsoft New Executable Format */
     FAMILY_PE                                           /* Microsoft Portable Executable Format */
 };
@@ -53,9 +54,11 @@ enum ExecABI {
     ABI_MSDOS,                                          /* Microsoft DOS */
     ABI_NT,                                             /* Windows NT */
     ABI_NETBSD,                                         /* NetBSD */
+    ABI_OS2,                                            /* OS/2 */
     ABI_SOLARIS,                                        /* Sun Solaris */
     ABI_SYSV,                                           /* SysV R4 */
-    ABI_TRU64                                           /* Compaq TRU64 UNIX */
+    ABI_TRU64,                                          /* Compaq TRU64 UNIX */
+    ABI_WIN386                                          /* Microsoft Windows */
 };
 
 /* Instruction sets organized by families */
@@ -64,16 +67,17 @@ enum InsSetArchitecture {
     ISA_OTHER                   = 0xffff,               /* Architecture is something other than below */
 
     ISA_IA32_Family             = 0x0100,               /* x86 IA-32 family of architectures; Intel, AMD, VIA, ... */
-    ISA_IA32_386                = 0x0101,               /* MMU with paging */
-    ISA_IA32_486                = 0x0102,               /* risc-like pipelining, integrated FPU, on-chip cache */
-    ISA_IA32_Pentium            = 0x0103,               /* superscalar, 64-bit databus, MMX */
-    ISA_IA32_Cyrix6x86          = 0x0104,               /* register renaming, speculative execution */
-    ISA_IA32_AMDK5              = 0x0105,               /* micro-op translation */
-    ISA_IA32_PentiumPro         = 0x0106,               /* PAE, integrated L2 cache */
-    ISA_IA32_PentiumII          = 0x0107,               /* L3-cache, 3D Now, SSE */
-    ISA_IA32_Athlon             = 0x0108,               /* superscalar FPU, wide design */
-    ISA_IA32_Pentium4           = 0x0109,               /* deeply pipelined, high frequency, SSE2, hyper-threading */
-    ISA_IA32_PentiumM           = 0x010a,               /* low power */
+    ISA_IA32_286                = 0x0101,               /* 80286 */
+    ISA_IA32_386                = 0x0102,               /* MMU with paging */
+    ISA_IA32_486                = 0x0103,               /* risc-like pipelining, integrated FPU, on-chip cache */
+    ISA_IA32_Pentium            = 0x0104,               /* superscalar, 64-bit databus, MMX */
+    ISA_IA32_Cyrix6x86          = 0x0105,               /* register renaming, speculative execution */
+    ISA_IA32_AMDK5              = 0x0106,               /* micro-op translation */
+    ISA_IA32_PentiumPro         = 0x0107,               /* PAE, integrated L2 cache */
+    ISA_IA32_PentiumII          = 0x0108,               /* L3-cache, 3D Now, SSE */
+    ISA_IA32_Athlon             = 0x0109,               /* superscalar FPU, wide design */
+    ISA_IA32_Pentium4           = 0x010a,               /* deeply pipelined, high frequency, SSE2, hyper-threading */
+    ISA_IA32_PentiumM           = 0x010b,               /* low power */
 
     ISA_X8664_Family            = 0x0200,               /* x86-64 family of architectures: Intel, AMD, VIA, ... */
     ISA_X8664_Athlon64          = 0x0201,               /* on-die memory controller, 40-bit phys address space */

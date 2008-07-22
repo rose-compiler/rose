@@ -1,6 +1,7 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
 #include "ExecELF.h"
+#include "ExecLX.h"
 #include "ExecNE.h"
 #include "ExecPE.h"
 
@@ -911,6 +912,8 @@ parse(const char *name)
         PE::parse(ef);
     } else if (NE::is_NE(ef)) {
         NE::parse(ef);
+    } else if (LX::is_LX(ef)) {
+        LX::parse(ef);
     } else if (DOS::is_DOS(ef)) {
         /* Must be after PE and NE all PE and NE files are also DOS files */
         DOS::parse(ef);
