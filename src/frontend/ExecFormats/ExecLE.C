@@ -750,6 +750,14 @@ LEEntryTable::ctor(LEFileHeader *fhdr)
     set_header(fhdr);
     
     ROSE_ASSERT(0==size);
+
+    if (FAMILY_LX==fhdr->get_exec_format().family) {
+        /* FIXME: LX Entry tables have a different format than LE (they are similar to NE Entry Tables). See
+         *        http://members.rediff.com/pguptaji/executable.htm (among others) for the format. We don't parse them
+         *        at this time since it's not a Windows format and we leave the section size at zero to make this more
+         *        obvious. */
+        return;
+    }
     
     addr_t at=0;
     extend(1);
