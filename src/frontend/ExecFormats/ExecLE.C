@@ -203,6 +203,8 @@ LEFileHeader::unparse(FILE *f)
         page_table->unparse(f);
     if (resname_table)
         resname_table->unparse(f);
+    if (entry_table)
+        entry_table->unparse(f);
 }
 
 /* Format name */
@@ -316,6 +318,12 @@ LEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
                 resname_table->get_id(), resname_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
+    }
+    if (entry_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
+                entry_table->get_id(), entry_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
 }
 
@@ -502,9 +510,13 @@ LESectionTable::ctor(LEFileHeader *fhdr)
         LESectionTableEntry *entry = new LESectionTableEntry(fhdr->get_sex(), disk);
 
         /* The section */
-        /* FIXME: I suspect section_offset and section_size are not calculated correctly! */
         addr_t section_offset, section_size; /*offset and size of section within file */
         LEPageTableEntry *page = pages->get_page(entry->pagemap_index);
+#if 1 /* FIXME: The section_offset and section_size are not calculated correctly! */
+        if (1) {
+            section_offset = section_size = 0;
+        } else
+#endif
         if (FAMILY_LE==fhdr->get_exec_format().family) {
             section_offset = page->get_pageno() * fhdr->e_page_size;
             section_size = entry->pagemap_nentries * fhdr->e_page_size;
@@ -659,6 +671,107 @@ LENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, ordinals[i]);
     }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Entry Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+LEEntryPoint::ctor(ByteOrder sex, const LEEntryPoint_disk *disk)
+{
+    flags        = disk_to_host(sex, disk->flags);
+    objnum       = disk_to_host(sex, disk->objnum);
+    entry_type   = disk_to_host(sex, disk->entry_type);
+    entry_offset = disk_to_host(sex, disk->entry_offset);
+    res1         = disk_to_host(sex, disk->res1);
+}
+
+/* Print some debugging info */
+void
+LEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sEntryPoint[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sEntryPoint.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = 0x%02x",    p, w, "flags",        flags);
+    if (flags & 0x01)
+        fprintf(f, " 32-bit");
+    if (flags & 0x01) {
+        fprintf(f, " non-empty\n");
+        fprintf(f, "%s%-*s = %u\n", p, w, "objnum",       objnum);
+        fprintf(f, "%s%-*s = 0x%02x", p, w, "entry_type",   entry_type);
+        if (entry_type & 0x01) fputs(" exported", f);
+        if (entry_type & 0x02) fputs(" shared-data", f);
+        fprintf(f, " stack-params=%u\n", (entry_type >> 3) & 0x1f);
+        fprintf(f, "%s%-*s = %"PRIu64"\n", p, w, "entry_offset", entry_offset);
+        fprintf(f, "%s%-*s = 0x%04x\n",    p, w, "res1",         res1);
+    } else {
+        fprintf(f, " empty\n");
+    }
+}
+
+/* Constructor. We don't know the size of the LE Entry table until after reading the first byte. Therefore the ExecSection is
+ * created with an initial size of zero. */
+void
+LEEntryTable::ctor(LEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    char section_name[64];
+    sprintf(section_name, "%s Entry Table", fhdr->format_name());
+    set_name(section_name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+    
+    ROSE_ASSERT(0==size);
+    
+    addr_t at=0;
+    extend(1);
+    size_t nentries = content(at++, 1)[0];
+    for (size_t i=0; i<nentries; i++) {
+        extend(1);
+        uint8_t flags = content(at, 1)[0];
+        if (flags & 0x01) {
+            extend(sizeof(LEEntryPoint_disk)-1);
+            const LEEntryPoint_disk *disk = (const LEEntryPoint_disk*)content(at, sizeof(LEEntryPoint_disk));
+            entries.push_back(LEEntryPoint(fhdr->get_sex(), disk));
+        } else {
+            entries.push_back(LEEntryPoint(fhdr->get_sex(), flags));
+        }
+    }
+}
+
+/* Write entry table back to file */
+void
+LEEntryTable::unparse(FILE *f)
+{
+    fprintf(stderr, "Exec::LE::LEEntryTable::unparse() FIXME\n");
+}
+
+/* Print some debugging info */
+void
+LEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%s%sEntryTable[%zd].", prefix, get_header()->format_name(), idx);
+    } else {
+        sprintf(p, "%s%sEntryTable.", prefix, get_header()->format_name());
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %zu entry points\n", p, w, "size", entries.size());
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].dump(f, p, i);
+    }
+}
+
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -699,7 +812,7 @@ parse(ExecFile *ef)
     ROSE_ASSERT(ef);
 
     /* All LE files are also DOS files, so parse the DOS part first */
-    DOS::DOSFileHeader *dos_header = DOS::parse(ef);
+    DOS::DOSFileHeader *dos_header = DOS::parse(ef, false);
     ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
     ef->unfill_holes(); /*they probably contain NE information*/
 
@@ -713,13 +826,16 @@ parse(ExecFile *ef)
     dos2_header->set_header(le_header);
     le_header->set_dos2_header(dos2_header);
 
+    /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
+     * to not extend beyond the beginning of the LE file header. This makes detecting holes in the LE format much easier. */
+    dos_header->add_rm_section(le_header->get_offset());
+
     /* Page Table */
     if (le_header->e_pagetab_rfo > 0 && le_header->e_npages > 0) {
         addr_t table_offset = le_header->get_offset() + le_header->e_pagetab_rfo;
         addr_t table_size = le_header->e_npages * sizeof(LEPageTableEntry_disk);
         LEPageTable *table = new LEPageTable(le_header, table_offset, table_size);
         le_header->set_page_table(table);
-        table->dump(stderr, "ROBB: ", -1);
     }
 
     /* Section (Object) Table */
@@ -745,6 +861,12 @@ parse(ExecFile *ef)
         le_header->set_resname_table(table);
     }
 
+    /* Entry Table */
+    if (le_header->e_entrytab_rfo > 0) {
+        addr_t table_offset = le_header->get_offset() + le_header->e_entrytab_rfo;
+        LEEntryTable *table = new LEEntryTable(le_header, table_offset);
+        le_header->set_entry_table(table);
+    }
 
 //    /*
 //     * The table locations are indicated in the header but sizes are not stored. Any table whose offset is zero or whose
@@ -778,19 +900,6 @@ parse(ExecFile *ef)
 //        table->set_purpose(SP_HEADER);
 //        table->set_header(le_header);
 //        end_rfo = le_header->e_fmtdirtab_rfo;
-//    }
-//    if (le_header->e_entrytab_rfo > 0 && le_header->e_entrytab_rfo < end_rfo) {
-//        /* Entry Table */
-//        addr_t table_offset = le_header->get_offset() + le_header->e_entrytab_rfo;
-//        addr_t table_size = end_rfo - le_header->e_entrytab_rfo;
-//        ExecSection *table = new ExecSection(ef, table_offset, table_size);
-//        table->set_synthesized(true);
-//        char section_name[64];
-//        sprintf(section_name, "%s Entry Table", le_header->format_name());
-//        table->set_name(section_name);
-//        table->set_purpose(SP_HEADER);
-//        table->set_header(le_header);
-//        end_rfo = le_header->e_entrytab_rfo;
 //    }
     
     /* Identify parts of the file that we haven't encountered during parsing */

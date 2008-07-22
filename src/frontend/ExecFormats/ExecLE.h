@@ -14,6 +14,7 @@ class LEFileHeader;
 class LESectionTable;
 class LEPageTable;
 class LENameTable;
+class LEEntryTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an LE/LX file
@@ -99,7 +100,7 @@ class LEFileHeader : public ExecHeader {
   public:
     LEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(LEFileHeader_disk)),
-        dos2_header(NULL), section_table(NULL), page_table(NULL), resname_table(NULL)
+        dos2_header(NULL), section_table(NULL), page_table(NULL), resname_table(NULL), entry_table(NULL)
         {ctor(f, offset);}
     virtual ~LEFileHeader() {}
     virtual void unparse(FILE*);
@@ -115,6 +116,8 @@ class LEFileHeader : public ExecHeader {
     void set_page_table(LEPageTable *t) {page_table=t;}
     LENameTable *get_resname_table() {return resname_table;}
     void set_resname_table(LENameTable *t) {resname_table=t;}
+    LEEntryTable *get_entry_table() {return entry_table;}
+    void set_entry_table(LEEntryTable *t) {entry_table=t;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
@@ -135,6 +138,7 @@ class LEFileHeader : public ExecHeader {
     LESectionTable *section_table;
     LEPageTable *page_table;
     LENameTable *resname_table;
+    LEEntryTable *entry_table;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -296,6 +300,50 @@ class LENameTable : public ExecSection {
     void ctor(LEFileHeader*);
     std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
     std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Entry Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* If 0x01 bit of "flags" is clear then the remainder (next 9 bytes) of the entry point is not stored in the file and the
+ * next entry point description follows immediately after the flag. */
+struct LEEntryPoint_disk {
+    uint8_t     flags;          /* 0x00 Bit flags (0x01=>non-empty bundle; 0x02=>32-bit entry*/
+    uint16_t    objnum;         /* 0x01 Object number */
+    uint8_t     entry_type;     /* 0x03 Flags for entry type */
+    uint32_t    entry_offset;   /* 0x04 Offset of entry point */
+    uint16_t    res1;           /* 0x08 Reserved */
+} __attribute__((packed));      /* 0x0a */
+
+class LEEntryPoint {
+  public:
+    LEEntryPoint(ByteOrder sex, const LEEntryPoint_disk *disk)
+        : flags(0), objnum(0), entry_type(0), res1(0), entry_offset(0)
+        {ctor(sex, disk);}
+    LEEntryPoint(ByteOrder sex, unsigned flags)
+        : flags(flags), objnum(0), entry_type(0), res1(0), entry_offset(0)
+        {}
+    void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(ByteOrder, const LEEntryPoint_disk*);
+    std::vector<LEEntryPoint> entries;
+    unsigned flags, objnum, entry_type, res1;
+    addr_t entry_offset;
+};
+  
+class LEEntryTable : public ExecSection {
+  public:
+    LEEntryTable(LEFileHeader *fhdr, addr_t offset)
+        : ExecSection(fhdr->get_file(), offset, 0)
+        {ctor(fhdr);}
+    virtual ~LEEntryTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(LEFileHeader*);
+    std::vector<size_t> bundle_sizes;
+    std::vector<LEEntryPoint> entries;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
