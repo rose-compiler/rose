@@ -126,6 +126,94 @@ class LEFileHeader : public ExecHeader {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Section (Object) Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* File format of a section table entry. Fields are big- or little-endian depending on file header. */
+struct LESectionTableEntry_disk {
+    uint32_t    mapped_size;            /* 0x00 virtual segment size in bytes */
+    uint32_t    base_addr;              /* 0x04 relocation base address */
+    uint32_t    flags;                  /* 0x08 bit flags, see LESectionFlags */
+    uint32_t    pagemap_index;          /* 0x0c */
+    uint32_t    pagemap_nentries;       /* 0x10 number of entries in the page map */
+    uint32_t    res1;                   /* 0x14 reserved */
+} __attribute__((packed));              /* 0x18 */
+
+/* SF_BIT_BIT: The "big/default" bit, for data segments, controls the setting of the Big bit in the segment descriptor. (The
+ *             Big bit, or B-bit, determines whether ESP or SP is used as the stack pointer.) For code segments, this bit
+ *             controls the setting of the Default bit in the segment descriptor. (The Default bit, or D-bit, determines
+ *             whether the default word size is 32-bits or 16-bits. It also affects the interpretation of the instruction
+ *             stream.) */
+enum LESectionFlags {
+    SF_RESERVED         = 0x00000000,   /* Reserved bits (FIXME) */
+    
+    SF_READABLE         = 0x00000001,   /* Read permission granted when mapped */
+    SF_WRITABLE         = 0x00000002,   /* Write permission granted when mapped */
+    SF_EXECUTABLE       = 0x00000004,   /* Execute permission granted when mapped */
+    
+    SF_RESOURCE         = 0x00000008,   /* Section contains resource objects */
+    SF_DISCARDABLE      = 0x00000010,   /* Discardable section */
+    SF_SHARED           = 0x00000020,   /* Section is shared */
+    SF_PRELOAD_PAGES    = 0x00000040,   /* Section has preload pages */
+    SF_INVALID_PAGES    = 0x00000080,   /* Section has invalid pages */
+    SF_ZERO_PAGES       = 0x00000100,   /* Section has zero-filled pages */
+    SF_RESIDENT         = 0x00000200,   /* Section is resident (valid for VDDs and PDDs only) */
+    SF_RES_LONG_LOCK    = 0x00000400,   /* Section is resident and "long-lockable" (VDDs and PDDs only) */
+    SF_1616_ALIAS       = 0x00001000,   /* 16:16 alias required (80x86 specific) */
+    SF_BIG_BIT          = 0x00002000,   /* Big/default bit setting (80x86 specific); see note above */
+    SF_CODE_CONFORM     = 0x00004000,   /* Section is conforming for code (80x86 specific) */
+    SF_IO_PRIV          = 0x00008000,   /* Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
+};
+
+class LESectionTableEntry {
+  public:
+    LESectionTableEntry(ByteOrder sex, const LESectionTableEntry_disk *disk)
+        {ctor(sex, disk);}
+    virtual ~LESectionTableEntry() {};
+    void *encode(ByteOrder, LESectionTableEntry_disk*);
+    virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+    
+    /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
+    unsigned    flags, pagemap_index, pagemap_nentries, res1;
+    addr_t      mapped_size, base_addr;
+
+  private:
+    void ctor(ByteOrder, const LESectionTableEntry_disk*);
+};
+
+/* Non-synthesized LE/LX sections (i.e., present in the section table) */
+class LESection : public ExecSection {
+  public:
+    LESection(ExecFile *ef, addr_t offset, addr_t size)
+        : ExecSection(ef, offset, size),
+        st_entry(NULL)
+        {}
+    virtual ~LESection() {}
+    //virtual void unparse(FILE*); /*nothing special to do*/
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors for protected/private data */
+    LESectionTableEntry *get_st_entry() {return st_entry;}
+    void set_st_entry(LESectionTableEntry *e) {st_entry=e;}
+
+  private:
+    LESectionTableEntry *st_entry;
+};
+
+/* The table entries are stored in the sections themselves. */
+class LESectionTable : public ExecSection {
+  public:
+    LESectionTable(LEFileHeader *fhdr, addr_t offset, addr_t size)
+        : ExecSection(fhdr->get_file(), offset, size)
+        {ctor(fhdr);}
+    virtual ~LESectionTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(LEFileHeader*);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Functions */
 bool is_LE(ExecFile*);

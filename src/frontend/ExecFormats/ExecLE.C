@@ -294,6 +294,168 @@ LEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Section Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+LESectionTableEntry::ctor(ByteOrder sex, const LESectionTableEntry_disk *disk)
+{
+    mapped_size      = disk_to_host(sex, disk->mapped_size);
+    base_addr        = disk_to_host(sex, disk->base_addr);
+    flags            = disk_to_host(sex, disk->flags);
+    pagemap_index    = disk_to_host(sex, disk->pagemap_index);
+    pagemap_nentries = disk_to_host(sex, disk->pagemap_nentries);
+    res1             = disk_to_host(sex, disk->res1);
+}
+
+/* Encodes a section table entry back into disk format. */
+void *
+LESectionTableEntry::encode(ByteOrder sex, LESectionTableEntry_disk *disk)
+{
+    host_to_disk(sex, mapped_size,      &(disk->mapped_size));
+    host_to_disk(sex, base_addr,        &(disk->base_addr));
+    host_to_disk(sex, flags,            &(disk->flags));
+    host_to_disk(sex, pagemap_index,    &(disk->pagemap_index));
+    host_to_disk(sex, pagemap_nentries, &(disk->pagemap_nentries));
+    host_to_disk(sex, res1,             &(disk->res1));
+    return disk;
+}
+
+/* Prints some debugging info */
+void
+LESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sLESectionTableEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sLESectionTableEntry.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      mapped_size);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        base_addr);
+    fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "flags",            flags);
+    fprintf(f, "%s%-*s = %u\n",              p, w, "pagemap_index",    pagemap_index);
+    fprintf(f, "%s%-*s = %u entries\n",      p, w, "pagemap_nentries", pagemap_nentries);
+    fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "res1",             res1);
+}
+    
+/* Print some debugging info. */
+void
+LESection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    LEFileHeader *fhdr = dynamic_cast<LEFileHeader*>(get_header());
+
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%s%sSection[%zd].", prefix, fhdr->format_name(), idx);
+    } else {
+        sprintf(p, "%s%sSection.", prefix, fhdr->format_name());
+    }
+
+    ExecSection::dump(f, p, -1);
+    st_entry->dump(f, p, -1);
+}
+
+/* Constructor */
+void
+LESectionTable::ctor(LEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    char section_name[64];
+    sprintf(section_name, "%s Section Table", format_name());
+    set_name(section_name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+    
+    const size_t entsize = sizeof(LESectionTableEntry_disk);
+    for (size_t i=0; i<fhdr->e_secttab_nentries; i++) {
+        /* Parse the section table entry */
+        const LESectionTableEntry_disk *disk = (const LESectionTableEntry_disk*)content(i*entsize, entsize);
+        LESectionTableEntry *entry = new LESectionTableEntry(get_sex(), disk);
+
+#if 0 /*FIXME*/
+        /* The section */
+        addr_t section_offset = entry->sector << fhdr->e_sector_align;
+        NESection *section = new NESection(fhdr->get_file(), section_offset, 0==section_offset?0:entry->physical_size);
+        section->set_synthesized(false);
+        section->set_id(i+1); /*numbered starting at 1, not zero*/
+        section->set_purpose(SP_PROGRAM);
+        section->set_header(fhdr);
+        section->set_st_entry(entry);
+
+        unsigned section_type = entry->flags & SF_TYPE_MASK;
+        if (0==section_offset) {
+            section->set_name(".bss");
+            section->set_readable(true);
+            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
+            section->set_executable(false);
+        } else if (0==section_type) {
+            section->set_name(".text");
+            section->set_readable(true);
+            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
+            section->set_executable(true);
+        } else if (section_type & SF_DATA) {
+            section->set_name(".data");
+            section->set_readable(true);
+            section->set_writable(entry->flags & (SF_PRELOAD|SF_NOT_WRITABLE) ? false : true);
+            section->set_executable(false);
+        }
+
+        if (entry->flags & SF_RELOCINFO) {
+            NERelocTable *relocs = new NERelocTable(fhdr, section->get_offset() + section->get_size());
+            section->set_reloc_table(relocs);
+        }
+#endif
+    }
+}
+
+/* Writes the section table back to disk along with each of the sections. */
+void
+LESectionTable::unparse(FILE *f)
+{
+    ExecFile *ef = get_file();
+    LEFileHeader *fhdr = dynamic_cast<LEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+    std::vector<ExecSection*> sections = ef->get_sections();
+
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id()>=0) {
+            LESection *section = dynamic_cast<LESection*>(sections[i]);
+
+            /* Write the table entry */
+            ROSE_ASSERT(section->get_id()>0); /*ID's are 1-origin in LE*/
+            size_t slot = section->get_id()-1;
+            LESectionTableEntry *shdr = section->get_st_entry();
+            LESectionTableEntry_disk disk;
+            shdr->encode(sex, &disk);
+            addr_t entry_offset = offset + slot * sizeof disk;
+            int status = fseek(f, entry_offset, SEEK_SET);
+            ROSE_ASSERT(status>=0);
+            size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
+            ROSE_ASSERT(1==nwrite);
+
+            /* Write the section */
+            section->unparse(f);
+        }
+    }
+}
+
+/* Prints some debugging info */
+void
+LESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%s%sSectionTable[%zd].", prefix, format_name(), idx);
+    } else {
+        sprintf(p, "%s%sSectionTable.", prefix, format_name());
+    }
+    ExecSection::dump(f, p, -1);
+}
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
