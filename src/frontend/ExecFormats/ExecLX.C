@@ -311,11 +311,13 @@ parse(ExecFile *ef)
     lx_header->set_dos2_header(dos2_header);
 
     /* Sections defined by the NE file header */
+    /*FIXME*/
 
     /* Construct the section table and its sections (non-synthesized sections) */
+    /*FIXME*/
     
     /* Identify parts of the file that we haven't encountered during parsing */
-//    ef->fill_holes();
+    ef->fill_holes();
 
     return lx_header;
 }
