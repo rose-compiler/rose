@@ -22,7 +22,7 @@ class NERelocTable;
 
 struct ExtendedDOSHeader_disk {
     uint16_t    e_res1[14];             /* reserved */
-    uint32_t    e_nehdr_offset;         /* file offset for NE header */
+    uint32_t    e_lfanew;               /* file offset for NE header */
 } __attribute__((packed));
 
 class ExtendedDOSHeader : public ExecSection {
@@ -37,7 +37,7 @@ class ExtendedDOSHeader : public ExecSection {
 
     /* These are the native-format versions of the same members described in the ExtendedDOSHeader_disk struct. */
     unsigned e_res1[14];
-    addr_t e_nehdr_offset;
+    addr_t e_lfanew;
 
   private:
     void ctor(ExecFile *f, addr_t offset);

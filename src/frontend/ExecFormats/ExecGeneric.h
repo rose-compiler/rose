@@ -33,7 +33,8 @@ enum ExecFamily {
     FAMILY_UNSPECIFIED,
     FAMILY_DOS,                                         /* Microsoft DOS format */
     FAMILY_ELF,                                         /* Unix Executable and Linking Format */
-    FAMILY_LX,                                          /* OS/2 LX (Windows 9x VxD device drivers) */
+    FAMILY_LE,                                          /* Microsft Linear Executable format */
+    FAMILY_LX,                                          /* OS/2 LX (Windows 9x VxD device drivers, extension of LE) */
     FAMILY_NE,                                          /* Microsoft New Executable Format */
     FAMILY_PE                                           /* Microsoft Portable Executable Format */
 };

@@ -24,7 +24,7 @@ ExtendedDOSHeader::ctor(ExecFile *f, addr_t offset)
     const ExtendedDOSHeader_disk *disk = (const ExtendedDOSHeader_disk*)content(0, sizeof(ExtendedDOSHeader_disk));
     for (size_t i=0; i<NELMTS(e_res1); i++)
         e_res1[i]  = le_to_host(disk->e_res1[i]);
-    e_nehdr_offset = le_to_host(disk->e_nehdr_offset);
+    e_lfanew = le_to_host(disk->e_lfanew);
 }
 
 /* Encode the extended header back into disk format */
@@ -33,7 +33,7 @@ ExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk)
 {
     for (size_t i=0; i<NELMTS(disk->e_res1); i++)
         host_to_le(e_res1[i], &(disk->e_res1[i]));
-    host_to_le(e_nehdr_offset,   &(disk->e_nehdr_offset));
+    host_to_le(e_lfanew, &(disk->e_lfanew));
     return disk;
 }
 
@@ -63,7 +63,7 @@ ExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     ExecSection::dump(f, p, -1);
     for (size_t i=0; i<NELMTS(e_res1); i++)
         fprintf(f, "%s%-*s = [%zd] %u\n", p, w, "e_res1", i, e_res1[i]);
-    fprintf(f, "%s%-*s = %"PRIu64" byte offset\n",  p, w, "e_nehdr_offset",   e_nehdr_offset);
+    fprintf(f, "%s%-*s = %"PRIu64" byte offset\n",  p, w, "e_lfanew",   e_lfanew);
 }
 
 
@@ -1068,7 +1068,7 @@ is_NE(ExecFile *f)
         if (dos_hdr->e_relocs_offset!=0x40) goto done;
 
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
-        ne_hdr = new NEFileHeader(f, dos2_hdr->e_nehdr_offset);
+        ne_hdr = new NEFileHeader(f, dos2_hdr->e_lfanew);
         if (ne_hdr->get_magic().size()!=2 || ne_hdr->get_magic()[0]!=0x4e /*N*/ || ne_hdr->get_magic()[1]!=0x45 /*E*/)
             goto done;
         retval = true;
@@ -1097,7 +1097,7 @@ parse(ExecFile *ef)
     ExtendedDOSHeader *dos2_header = new ExtendedDOSHeader(ef, dos_header->get_size());
     
     /* The NE header */
-    NEFileHeader *ne_header = new NEFileHeader(ef, dos2_header->e_nehdr_offset);
+    NEFileHeader *ne_header = new NEFileHeader(ef, dos2_header->e_lfanew);
 
     /* The extended part of the DOS header is owned by the NE header */
     dos2_header->set_header(ne_header);

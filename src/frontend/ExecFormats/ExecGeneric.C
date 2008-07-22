@@ -1,7 +1,7 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
 #include "ExecELF.h"
-#include "ExecLX.h"
+#include "ExecLE.h"
 #include "ExecNE.h"
 #include "ExecPE.h"
 
@@ -35,10 +35,13 @@ ExecFormat::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     switch (family) {
-      case FAMILY_UNSPECIFIED: s = "unspecified"; break;
-      case FAMILY_ELF:         s = "ELF";         break;
-      case FAMILY_DOS:         s = "DOS";         break;
-      case FAMILY_PE:          s = "PE";          break;
+      case FAMILY_UNSPECIFIED:  s = "unspecified";                          break;
+      case FAMILY_DOS:          s = "Microsoft DOS";                        break;
+      case FAMILY_ELF:          s = "Executable and Linking Format (ELF)";  break;
+      case FAMILY_LE:           s = "Microsoft Linear Executable (LE)";     break;
+      case FAMILY_LX:           s = "OS/2 Extended Linear Executable (LX)"; break;
+      case FAMILY_NE:           s = "Microsoft New Executable (NE)";        break;
+      case FAMILY_PE:           s = "Microsoft Portable Executable (PE)";   break;
       default:
         sprintf(sbuf, "%u", family);
         s = sbuf;
@@ -912,8 +915,8 @@ parse(const char *name)
         PE::parse(ef);
     } else if (NE::is_NE(ef)) {
         NE::parse(ef);
-    } else if (LX::is_LX(ef)) {
-        LX::parse(ef);
+    } else if (LE::is_LE(ef)) { /*or LX*/
+        LE::parse(ef);
     } else if (DOS::is_DOS(ef)) {
         /* Must be after PE and NE all PE and NE files are also DOS files */
         DOS::parse(ef);
