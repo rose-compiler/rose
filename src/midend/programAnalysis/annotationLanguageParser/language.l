@@ -5,6 +5,9 @@
 
 #include "assert.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 // --- Fix the names from the C parser
 
 #define cblval annlval
