@@ -4,6 +4,8 @@
 #include <string>
 #include <unistd.h>
 #include <cassert>
+#include <stdlib.h>
+#include <string.h>
 
 using namespace std;
 
