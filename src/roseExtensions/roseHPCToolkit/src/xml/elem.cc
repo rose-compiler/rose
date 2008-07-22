@@ -8,6 +8,7 @@
  */
 
 #include "rosehpct/xml/xml.hh"
+#include <algorithm>
 
 using namespace std;
 using namespace XMLUtil;
