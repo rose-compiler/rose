@@ -1441,7 +1441,7 @@ parse(ExecFile *ef)
     ROSE_ASSERT(ef);
 
     /* All PE files are also DOS files, so parse the DOS part first */
-    DOS::DOSFileHeader *dos_header = DOS::parse(ef);
+    DOS::DOSFileHeader *dos_header = DOS::parse(ef, false);
     ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
     ef->unfill_holes(); /*they probably contain PE information*/
 
@@ -1456,6 +1456,10 @@ parse(ExecFile *ef)
     /* The extended part of the DOS header is owned by the PE header */
     dos2_header->set_header(pe_header);
     pe_header->set_dos2_header(dos2_header);
+
+    /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
+     * to not extend beyond the beginning of the PE file header. This makes detecting holes in the PE format much easier. */
+    dos_header->add_rm_section(pe_header->get_offset());
 
     /* Construct the section table and its sections (non-synthesized sections) */
     pe_header->set_section_table(new PESectionTable(pe_header));

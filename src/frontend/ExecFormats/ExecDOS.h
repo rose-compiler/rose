@@ -40,6 +40,7 @@ class DOSFileHeader : public ExecHeader {
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
     virtual const char *format_name() {return "DOS";}
+    void add_rm_section(addr_t max_offset=0);
 
     /* Accessors for protected/private data members */
     ExecSection *get_relocs() {return relocs;}
@@ -70,7 +71,7 @@ struct DOSRelocEntry_disk {
 
 /* Functions */
 bool is_DOS(ExecFile*);
-DOSFileHeader *parse(ExecFile*);
+DOSFileHeader *parse(ExecFile*, bool define_rm_section=true);
 
 }; //namespace DOS
 }; //namespace Exec

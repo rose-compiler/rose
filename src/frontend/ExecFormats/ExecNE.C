@@ -1089,7 +1089,7 @@ parse(ExecFile *ef)
     ROSE_ASSERT(ef);
 
     /* All NE files are also DOS files, so parse the DOS part first */
-    DOS::DOSFileHeader *dos_header = DOS::parse(ef);
+    DOS::DOSFileHeader *dos_header = DOS::parse(ef, false);
     ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
     ef->unfill_holes(); /*they probably contain NE information*/
 
@@ -1102,6 +1102,10 @@ parse(ExecFile *ef)
     /* The extended part of the DOS header is owned by the NE header */
     dos2_header->set_header(ne_header);
     ne_header->set_dos2_header(dos2_header);
+
+    /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
+     * to not extend beyond the beginning of the NE file header. This makes detecting holes in the NE format much easier. */
+    dos_header->add_rm_section(ne_header->get_offset());
 
     /* Sections defined by the NE file header */
     if (ne_header->e_resnametab_rfo>0) {

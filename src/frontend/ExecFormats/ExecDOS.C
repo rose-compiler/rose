@@ -101,6 +101,30 @@ DOSFileHeader::unparse(FILE *f)
     if (rm_section)
         rm_section->unparse(f);
 }
+
+/* Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
+ * real-mode section. */
+void
+DOSFileHeader::add_rm_section(addr_t max_offset)
+{
+    ROSE_ASSERT(NULL==rm_section);
+    
+    addr_t rm_offset = e_header_paragraphs * 16;
+    addr_t rm_end = e_total_pages * 512 - (512 - e_last_page_size % 512);
+    ROSE_ASSERT(rm_end > rm_offset);
+    addr_t rm_size = rm_end - rm_offset;
+    if (max_offset>0) {
+        ROSE_ASSERT(max_offset >= rm_offset);
+        if (rm_offset + rm_size > max_offset)
+            rm_size = max_offset - rm_offset;
+    }
+    rm_section = new ExecSection(get_file(), rm_offset, rm_size);
+    rm_section->set_name("DOS real-mode text/data");
+    rm_section->set_synthesized(true);
+    rm_section->set_purpose(SP_PROGRAM);
+    rm_section->set_header(this);
+    rm_section->set_executable(true);
+}
     
 /* Print some debugging info */
 void
@@ -166,7 +190,7 @@ done:
 
 /* Parses the structure of a DOS file and adds the information to the ExecFile. */
 DOSFileHeader *
-parse(ExecFile *ef)
+parse(ExecFile *ef, bool define_rm_section)
 {
     ROSE_ASSERT(ef);
     
@@ -183,18 +207,9 @@ parse(ExecFile *ef)
     }
 
     /* DOS real-mode text/data/etc. */
-    addr_t rm_offset = fhdr->e_header_paragraphs * 16;
-    addr_t rm_end = fhdr->e_total_pages * 512 - (512 - fhdr->e_last_page_size % 512);
-    ROSE_ASSERT(rm_end > rm_offset);
-    addr_t rm_size = rm_end - rm_offset;
-    ExecSection *rm_section = new ExecSection(ef, rm_offset, rm_size);
-    rm_section->set_name("DOS real-mode text/data");
-    rm_section->set_synthesized(true);
-    rm_section->set_purpose(SP_PROGRAM);
-    rm_section->set_header(fhdr);
-    rm_section->set_executable(true);
-    fhdr->set_rm_section(rm_section);
-
+    if (define_rm_section)
+        fhdr->add_rm_section();
+    
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
 
