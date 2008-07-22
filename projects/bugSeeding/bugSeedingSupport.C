@@ -646,9 +646,10 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
      if (astNode->attributeExists("SeededSecurityFlawCloneAttribute") == true)
         {
           printf ("Found a SeededSecurityFlawCloneAttribute \n");
+#if 0
           AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
           SeededSecurityFlawCloneAttribute* securityVulnerabilityAttribute = dynamic_cast<SeededSecurityFlawCloneAttribute*>(existingAttribute);
-
+#endif
        // addComment(astNode,"This is a SeededSecurityFlawCloneAttribute");
        // addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
           addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") );

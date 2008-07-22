@@ -1,6 +1,6 @@
 
 class SecurityFlaw;
-class SecurityFlaw::Vulnerability;
+// class SecurityFlaw::Vulnerability;
 
 // Note that instead of having multiple classes we could have one and use an enum for the value
 // data member to distinquish the functionality.
