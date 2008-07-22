@@ -821,7 +821,7 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-NERelocEntry::ctor(NERelocTable *relocs, addr_t at)
+NERelocEntry::ctor(ExecSection *relocs, addr_t at)
 {
     /* The source type:
      *   0x0 => low byte at the specified offset
@@ -928,9 +928,9 @@ NERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sNERelocEntry[%zd].", prefix, idx);
+        sprintf(p, "%sRelocEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sNERelocEntry.", prefix);
+        sprintf(p, "%sRelocEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -1008,7 +1008,6 @@ NERelocTable::ctor(NEFileHeader *fhdr)
     extend(2);
     size_t nrelocs = le_to_host(*(const uint16_t*)content(at, 2));
     at += 2;
-    fprintf(stderr, "ROBB: nrelocs=%zu\n", nrelocs);
     
     for (size_t i=0; i<nrelocs; i++, at+=8) {
         extend(8);

@@ -334,9 +334,9 @@ class NEEntryTable : public ExecSection {
 
 class NERelocEntry {
   public:
-    NERelocEntry(NERelocTable *relocs, addr_t at)
+    NERelocEntry(ExecSection *relocs, addr_t at)
         {ctor(relocs, at);}
-    void ctor(NERelocTable*, addr_t at);
+    void ctor(ExecSection*, addr_t at);
     void unparse(FILE*);
     void dump(FILE*, const char *prefix, ssize_t idx);
   public:
