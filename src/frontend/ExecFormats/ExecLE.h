@@ -11,6 +11,9 @@ namespace LE {
 
 /* Forwards */
 class LEFileHeader;
+class LESectionTable;
+class LEPageTable;
+class LENameTable;
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an LE/LX file
@@ -96,7 +99,7 @@ class LEFileHeader : public ExecHeader {
   public:
     LEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(LEFileHeader_disk)),
-        dos2_header(NULL)
+        dos2_header(NULL), section_table(NULL), page_table(NULL), resname_table(NULL)
         {ctor(f, offset);}
     virtual ~LEFileHeader() {}
     virtual void unparse(FILE*);
@@ -106,6 +109,12 @@ class LEFileHeader : public ExecHeader {
     /* Accessors for protected/private data members */
     ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
     void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
+    LESectionTable *get_section_table() {return section_table;}
+    void set_section_table(LESectionTable *t) {section_table=t;}
+    LEPageTable *get_page_table() {return page_table;}
+    void set_page_table(LEPageTable *t) {page_table=t;}
+    LENameTable *get_resname_table() {return resname_table;}
+    void set_resname_table(LENameTable *t) {resname_table=t;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
@@ -123,6 +132,55 @@ class LEFileHeader : public ExecHeader {
     void ctor(ExecFile *f, addr_t offset);
     void *encode(ByteOrder sex, LEFileHeader_disk*);
     ExtendedDOSHeader *dos2_header;
+    LESectionTable *section_table;
+    LEPageTable *page_table;
+    LENameTable *resname_table;
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Section (Object) Page Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* The object page table provides information about a logical page in a section. A logical page may be an enumerated page, a
+ * pseudo page, or an iterated page. The page table allows for efficient access to a page when a page fault occurs, while
+ * still allowing the physical page to be located in the preload page, demand load page, or iterated data page sections of the
+ * executable file. Entries in the page table use 1-origin indices.  This table is parallel with the Fixup Page Table (they
+ * are both indexed by the logical page number). */
+
+/* File format for a page table entry */
+struct LEPageTableEntry_disk {
+    uint16_t            pageno_hi;
+    unsigned char       pageno_lo;
+    unsigned char       flags;
+} __attribute__((packed));
+
+class LEPageTableEntry {
+  public:
+    LEPageTableEntry(ByteOrder sex, const LEPageTableEntry_disk *disk)
+        : pageno(0), flags(0)
+        {ctor(sex, disk);}
+    void dump(FILE*, const char *prefix, ssize_t idx);
+    void *encode(ByteOrder, LEPageTableEntry_disk*);
+
+    unsigned get_pageno() {return pageno;}
+  private:
+    void ctor(ByteOrder, const LEPageTableEntry_disk*);
+    unsigned    pageno;
+    unsigned    flags;
+};
+
+class LEPageTable : public ExecSection {
+  public:
+    LEPageTable(LEFileHeader *fhdr, addr_t offset, addr_t size)
+        : ExecSection(fhdr->get_file(), offset, size)
+        {ctor(fhdr);}
+    virtual ~LEPageTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    LEPageTableEntry *get_page(size_t idx);
+  private:
+    void ctor(LEFileHeader*);
+    std::vector<LEPageTableEntry*> entries;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,13 +197,13 @@ struct LESectionTableEntry_disk {
     uint32_t    res1;                   /* 0x14 reserved */
 } __attribute__((packed));              /* 0x18 */
 
-/* SF_BIT_BIT: The "big/default" bit, for data segments, controls the setting of the Big bit in the segment descriptor. (The
+/* SF_BIG_BIT: The "big/default" bit, for data segments, controls the setting of the Big bit in the segment descriptor. (The
  *             Big bit, or B-bit, determines whether ESP or SP is used as the stack pointer.) For code segments, this bit
  *             controls the setting of the Default bit in the segment descriptor. (The Default bit, or D-bit, determines
  *             whether the default word size is 32-bits or 16-bits. It also affects the interpretation of the instruction
  *             stream.) */
 enum LESectionFlags {
-    SF_RESERVED         = 0x00000000,   /* Reserved bits (FIXME) */
+    SF_RESERVED         = 0xffff0800,   /* Reserved bits (FIXME) */
     
     SF_READABLE         = 0x00000001,   /* Read permission granted when mapped */
     SF_WRITABLE         = 0x00000002,   /* Write permission granted when mapped */
@@ -156,8 +214,13 @@ enum LESectionFlags {
     SF_SHARED           = 0x00000020,   /* Section is shared */
     SF_PRELOAD_PAGES    = 0x00000040,   /* Section has preload pages */
     SF_INVALID_PAGES    = 0x00000080,   /* Section has invalid pages */
-    SF_ZERO_PAGES       = 0x00000100,   /* Section has zero-filled pages */
-    SF_RESIDENT         = 0x00000200,   /* Section is resident (valid for VDDs and PDDs only) */
+
+    SF_TYPE_MASK        = 0x00000300,
+    SF_TYPE_NORMAL      = 0x00000000,
+    SF_TYPE_ZERO        = 0x00000100,   /* Section has zero-filled pages */
+    SF_TYPE_RESIDENT    = 0x00000200,   /* Section is resident (valid for VDDs and PDDs only) */
+    SF_TYPE_RESCONT     = 0x00000300,   /* Section is resident and contiguous */
+    
     SF_RES_LONG_LOCK    = 0x00000400,   /* Section is resident and "long-lockable" (VDDs and PDDs only) */
     SF_1616_ALIAS       = 0x00001000,   /* 16:16 alias required (80x86 specific) */
     SF_BIG_BIT          = 0x00002000,   /* Big/default bit setting (80x86 specific); see note above */
@@ -211,6 +274,28 @@ class LESectionTable : public ExecSection {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(LEFileHeader*);
+};
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Resident and Non-Resident Name Tables
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* This table contains a module name followed by the list of exported function names. Each name is associated with an "ordinal"
+ * which serves as an index into the Entry Table. The ordinal for the first string (module name) is meaningless and should be
+ * zero. In the non-resident name table the first entry is a module description and the functions are not always resident in
+ * system memory (they are discardable). */
+class LENameTable : public ExecSection {
+  public:
+    LENameTable(LEFileHeader *fhdr, addr_t offset)
+        : ExecSection(fhdr->get_file(), offset, 0)
+        {ctor(fhdr);}
+    virtual ~LENameTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(LEFileHeader*);
+    std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
+    std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

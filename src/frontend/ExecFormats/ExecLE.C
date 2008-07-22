@@ -195,8 +195,14 @@ LEFileHeader::unparse(FILE *f)
         dos2_header->unparse(f);
 
     /* The section table and all the non-synthesized sections */
+    if (section_table)
+        section_table->unparse(f);
 
-    /* Sections defined in the LX file header */
+    /* Sections defined in the file header */
+    if (page_table)
+        page_table->unparse(f);
+    if (resname_table)
+        resname_table->unparse(f);
 }
 
 /* Format name */
@@ -293,7 +299,123 @@ LEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
+    if (section_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
+                section_table->get_id(), section_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "section_table");
+    }
+    if (page_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "page_table",
+                page_table->get_id(), page_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "page_table");
+    }
+    if (resname_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
+                resname_table->get_id(), resname_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
+    }
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Page Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+LEPageTableEntry::ctor(ByteOrder sex, const LEPageTableEntry_disk *disk)
+{
+    unsigned pageno_lo = disk_to_host(sex, disk->pageno_lo);
+    unsigned pageno_hi = disk_to_host(sex, disk->pageno_hi);
+    pageno      = (pageno_hi << 8) | pageno_lo;
+    flags       = disk_to_host(sex, disk->flags);
+}
+
+/* Encode page table entry to disk format */
+void *
+LEPageTableEntry::encode(ByteOrder sex, LEPageTableEntry_disk *disk)
+{
+    host_to_disk(sex, (pageno & 0xff),    &(disk->pageno_lo));
+    host_to_disk(sex, (pageno>>8)&0xffff, &(disk->pageno_hi));
+    host_to_disk(sex, flags,              &(disk->flags));
+    return disk;
+}
+
+/* Print some debugging information */
+void
+LEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPageTableEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPageTableEntry.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = 0x%04x\n", p, w, "flags",          flags);
+    fprintf(f, "%s%-*s = %u\n",     p, w, "pageno", pageno);
+}
+
+/* Constructor */
+void
+LEPageTable::ctor(LEFileHeader *fhdr)
+{
+    char section_name[64];
+    sprintf(section_name, "%s Page Table", fhdr->format_name());
+
+    set_synthesized(true);
+    set_name(section_name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+
+    const addr_t entry_size = sizeof(LEPageTableEntry_disk);
+    for (addr_t entry_offset=0; entry_offset+entry_size<=size; entry_offset+=entry_size) {
+        const LEPageTableEntry_disk *disk = (const LEPageTableEntry_disk*)content(entry_offset, entry_size);
+        entries.push_back(new LEPageTableEntry(fhdr->get_sex(), disk));
+    }
+}
+
+/* Returns info about a particular page. Indices are 1-origin */
+LEPageTableEntry *
+LEPageTable::get_page(size_t idx)
+{
+    ROSE_ASSERT(idx>0);
+    ROSE_ASSERT(idx<=entries.size());
+    return entries[idx-1];
+}
+
+/* Write page table back to disk */
+void
+LEPageTable::unparse(FILE *f)
+{
+    fseek(f, offset, SEEK_SET);
+    for (size_t i=0; i<entries.size(); i++) {
+        LEPageTableEntry_disk disk;
+        entries[i]->encode(get_header()->get_sex(), &disk);
+        fwrite(&disk, sizeof disk, 1, f);
+    }
+}
+
+/* Print some debugging information */
+void
+LEPageTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%s%sPageTable[%zd].", prefix, get_header()->format_name(), idx);
+    } else {
+        sprintf(p, "%s%sPageTable.", prefix, get_header()->format_name());
+    }
+
+    ExecSection::dump(f, p, -1);
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i]->dump(f, p, i);
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LE/LX Section Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,50 +488,50 @@ LESectionTable::ctor(LEFileHeader *fhdr)
 {
     set_synthesized(true);
     char section_name[64];
-    sprintf(section_name, "%s Section Table", format_name());
+    sprintf(section_name, "%s Section Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
     set_header(fhdr);
+
+    LEPageTable *pages = fhdr->get_page_table();
     
     const size_t entsize = sizeof(LESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->e_secttab_nentries; i++) {
         /* Parse the section table entry */
         const LESectionTableEntry_disk *disk = (const LESectionTableEntry_disk*)content(i*entsize, entsize);
-        LESectionTableEntry *entry = new LESectionTableEntry(get_sex(), disk);
+        LESectionTableEntry *entry = new LESectionTableEntry(fhdr->get_sex(), disk);
 
-#if 0 /*FIXME*/
         /* The section */
-        addr_t section_offset = entry->sector << fhdr->e_sector_align;
-        NESection *section = new NESection(fhdr->get_file(), section_offset, 0==section_offset?0:entry->physical_size);
+        /* FIXME: I suspect section_offset and section_size are not calculated correctly! */
+        addr_t section_offset, section_size; /*offset and size of section within file */
+        LEPageTableEntry *page = pages->get_page(entry->pagemap_index);
+        if (FAMILY_LE==fhdr->get_exec_format().family) {
+            section_offset = page->get_pageno() * fhdr->e_page_size;
+            section_size = entry->pagemap_nentries * fhdr->e_page_size;
+        } else {
+            ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format().family);
+            section_offset = page->get_pageno() << fhdr->e_page_offset_shift;
+            section_size = entry->pagemap_nentries * (1<<fhdr->e_page_offset_shift);
+        }
+
+        LESection *section = new LESection(fhdr->get_file(), section_offset, section_size);
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
         section->set_header(fhdr);
         section->set_st_entry(entry);
 
-        unsigned section_type = entry->flags & SF_TYPE_MASK;
-        if (0==section_offset) {
-            section->set_name(".bss");
-            section->set_readable(true);
-            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
-            section->set_executable(false);
-        } else if (0==section_type) {
-            section->set_name(".text");
-            section->set_readable(true);
-            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
-            section->set_executable(true);
-        } else if (section_type & SF_DATA) {
-            section->set_name(".data");
-            section->set_readable(true);
-            section->set_writable(entry->flags & (SF_PRELOAD|SF_NOT_WRITABLE) ? false : true);
-            section->set_executable(false);
-        }
+        /* Section permissions */
+        section->set_readable((entry->flags & SF_READABLE)==SF_READABLE);
+        section->set_writable((entry->flags & SF_WRITABLE)==SF_WRITABLE);
+        section->set_executable((entry->flags & SF_EXECUTABLE)==SF_EXECUTABLE);
 
-        if (entry->flags & SF_RELOCINFO) {
-            NERelocTable *relocs = new NERelocTable(fhdr, section->get_offset() + section->get_size());
-            section->set_reloc_table(relocs);
+        unsigned section_type = entry->flags & SF_TYPE_MASK;
+        if (SF_TYPE_ZERO==section_type) {
+            section->set_name(".bss");
+        } else if (entry->flags & SF_EXECUTABLE) {
+            section->set_name(".text");
         }
-#endif
     }
 }
 
@@ -431,7 +553,7 @@ LESectionTable::unparse(FILE *f)
             size_t slot = section->get_id()-1;
             LESectionTableEntry *shdr = section->get_st_entry();
             LESectionTableEntry_disk disk;
-            shdr->encode(sex, &disk);
+            shdr->encode(get_header()->get_sex(), &disk);
             addr_t entry_offset = offset + slot * sizeof disk;
             int status = fseek(f, entry_offset, SEEK_SET);
             ROSE_ASSERT(status>=0);
@@ -450,11 +572,92 @@ LESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%s%sSectionTable[%zd].", prefix, format_name(), idx);
+        sprintf(p, "%s%sSectionTable[%zd].", prefix, get_header()->format_name(), idx);
     } else {
-        sprintf(p, "%s%sSectionTable.", prefix, format_name());
+        sprintf(p, "%s%sSectionTable.", prefix, get_header()->format_name());
     }
     ExecSection::dump(f, p, -1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Resident and Non-Resident Name Tables
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor assumes ExecSection is zero bytes long so far */
+void
+LENameTable::ctor(LEFileHeader *fhdr)
+{
+    set_synthesized(true);
+    char section_name[64];
+    sprintf(section_name, "%s Name Table", fhdr->format_name());
+    set_name(section_name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+    
+    /* Resident exported procedure names, until we hit a zero length name. The first name
+     * is for the library itself and the corresponding ordinal has no meaning. */
+    addr_t at = 0;
+    while (1) {
+        extend(1);
+        size_t length = content(at++, 1)[0];
+        if (0==length) break;
+
+        extend(length);
+        names.push_back(std::string((const char*)content(at, length), length));
+        at += length;
+
+        extend(2);
+        ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
+        at += 2;
+    }
+}
+
+/* Writes the section back to disk. */
+void
+LENameTable::unparse(FILE *f)
+{
+    ROSE_ASSERT(names.size()==ordinals.size());
+
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    for (size_t i=0; i<names.size(); i++) {
+        /* Name length */
+        ROSE_ASSERT(names[i].size()<=0xff);
+        unsigned char len = names[i].size();
+        fputc(len, f);
+
+        /* Name */
+        fputs(names[i].c_str(), f);
+
+        /* Ordinal */
+        ROSE_ASSERT(ordinals[i]<=0xffff);
+        uint16_t ordinal_le;
+        host_to_le(ordinals[i], &ordinal_le);
+        fwrite(&ordinal_le, sizeof ordinal_le, 1, f);
+    }
+    
+    /* Zero-terminated */
+    fputc('\0', f);
+}
+
+/* Prints some debugging info */
+void
+LENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sLENameTable[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sLENameTable.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    ROSE_ASSERT(names.size()==ordinals.size());
+    for (size_t i=0; i<names.size(); i++) {
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "names",    i, names[i].c_str());
+        fprintf(f, "%s%-*s = [%zd] %u\n",     p, w, "ordinals", i, ordinals[i]);
+    }
 }
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,11 +713,85 @@ parse(ExecFile *ef)
     dos2_header->set_header(le_header);
     le_header->set_dos2_header(dos2_header);
 
-    /* Sections defined by the NE file header */
-    /*FIXME*/
+    /* Page Table */
+    if (le_header->e_pagetab_rfo > 0 && le_header->e_npages > 0) {
+        addr_t table_offset = le_header->get_offset() + le_header->e_pagetab_rfo;
+        addr_t table_size = le_header->e_npages * sizeof(LEPageTableEntry_disk);
+        LEPageTable *table = new LEPageTable(le_header, table_offset, table_size);
+        le_header->set_page_table(table);
+        table->dump(stderr, "ROBB: ", -1);
+    }
 
-    /* Construct the section table and its sections (non-synthesized sections) */
-    /*FIXME*/
+    /* Section (Object) Table */
+    if (le_header->e_secttab_rfo > 0 && le_header->e_secttab_nentries > 0) {
+        addr_t table_offset = le_header->get_offset() + le_header->e_secttab_rfo;
+        addr_t table_size = le_header->e_secttab_nentries * sizeof(LESectionTableEntry_disk);
+        LESectionTable *table = new LESectionTable(le_header, table_offset, table_size);
+        le_header->set_section_table(table);
+    }
+    
+    /* Resource Table */
+    if (le_header->e_rsrctab_rfo > 0 && le_header->e_rsrctab_nentries > 0) {
+        /*FIXME*/
+    }
+
+    /* Resident Names Table */
+    if (le_header->e_resnametab_rfo > 0) {
+        addr_t table_offset = le_header->get_offset() + le_header->e_resnametab_rfo;
+        LENameTable *table = new LENameTable(le_header, table_offset);
+        char section_name[64];
+        sprintf(section_name, "%s Resident Name Table", le_header->format_name());
+        table->set_name(section_name);
+        le_header->set_resname_table(table);
+    }
+
+
+//    /*
+//     * The table locations are indicated in the header but sizes are not stored. Any table whose offset is zero or whose
+//     * size, calculated from the location of the following table, is zero is not present. */
+//    addr_t end_rfo = le_header->get_size() + le_header->e_loader_sect_size;
+//    if (le_header->e_ppcksumtab_rfo > 0 && le_header->e_ppcksumtab_rfo < end_rfo) {
+//        /* Per-Page Checksum */
+//        addr_t table_offset = le_header->get_offset() + le_header->e_ppcksumtab_rfo;
+//        addr_t table_size   = end_rfo - le_header->e_ppcksumtab_rfo;
+//        ExecSection *table = new ExecSection(ef, table_offset, table_size);
+//        table->set_synthesized(true);
+//        char section_name[64];
+//        sprintf(section_name, "%s Per-Page Checksum Table", le_header->format_name());
+//        table->set_name(section_name);
+//        table->set_purpose(SP_HEADER);
+//        table->set_header(le_header);
+//        end_rfo = le_header->e_ppcksumtab_rfo;
+//    }
+//    if (0) {
+//        /* FIXME: "Resident Directives Data" goes here! */
+//    }       
+//    if (le_header->e_fmtdirtab_rfo > 0 && le_header->e_fmtdirtab_rfo < end_rfo) {
+//        /* Module Format Directives Table */
+//        addr_t table_offset = le_header->get_offset() + le_header->e_fmtdirtab_rfo;
+//        addr_t table_size   = end_rfo - le_header->e_fmtdirtab_rfo;
+//        ExecSection *table = new ExecSection(ef, table_offset, table_size);
+//        table->set_synthesized(true);
+//        char section_name[64];
+//        sprintf(section_name, "%s Module Format Directives Table", le_header->format_name());
+//        table->set_name(section_name);
+//        table->set_purpose(SP_HEADER);
+//        table->set_header(le_header);
+//        end_rfo = le_header->e_fmtdirtab_rfo;
+//    }
+//    if (le_header->e_entrytab_rfo > 0 && le_header->e_entrytab_rfo < end_rfo) {
+//        /* Entry Table */
+//        addr_t table_offset = le_header->get_offset() + le_header->e_entrytab_rfo;
+//        addr_t table_size = end_rfo - le_header->e_entrytab_rfo;
+//        ExecSection *table = new ExecSection(ef, table_offset, table_size);
+//        table->set_synthesized(true);
+//        char section_name[64];
+//        sprintf(section_name, "%s Entry Table", le_header->format_name());
+//        table->set_name(section_name);
+//        table->set_purpose(SP_HEADER);
+//        table->set_header(le_header);
+//        end_rfo = le_header->e_entrytab_rfo;
+//    }
     
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
