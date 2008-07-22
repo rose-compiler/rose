@@ -15,7 +15,8 @@ class LESectionTable;
 class LEPageTable;
 class LENameTable;
 class LEEntryTable;
-    
+class LERelocTable;
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExtendedDOSHeader -- extra components of the DOS header when used in an LE/LX file
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +101,8 @@ class LEFileHeader : public ExecHeader {
   public:
     LEFileHeader(ExecFile *f, addr_t offset)
         : ExecHeader(f, offset, sizeof(LEFileHeader_disk)),
-        dos2_header(NULL), section_table(NULL), page_table(NULL), resname_table(NULL), entry_table(NULL)
+        dos2_header(NULL), section_table(NULL), page_table(NULL), resname_table(NULL), nonresname_table(NULL),
+        entry_table(NULL), reloc_table(NULL)
         {ctor(f, offset);}
     virtual ~LEFileHeader() {}
     virtual void unparse(FILE*);
@@ -116,8 +118,12 @@ class LEFileHeader : public ExecHeader {
     void set_page_table(LEPageTable *t) {page_table=t;}
     LENameTable *get_resname_table() {return resname_table;}
     void set_resname_table(LENameTable *t) {resname_table=t;}
+    LENameTable *get_nonresname_table() {return nonresname_table;}
+    void set_nonresname_table(LENameTable *t) {nonresname_table=t;}
     LEEntryTable *get_entry_table() {return entry_table;}
     void set_entry_table(LEEntryTable *t) {entry_table=t;}
+    LERelocTable *get_reloc_table() {return reloc_table;}
+    void set_reloc_table(LERelocTable *t) {reloc_table=t;}
     
     /* These are the native-format versions of the same members described in the NEFileHeader_disk format struct. */
     unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
@@ -138,7 +144,9 @@ class LEFileHeader : public ExecHeader {
     LESectionTable *section_table;
     LEPageTable *page_table;
     LENameTable *resname_table;
+    LENameTable *nonresname_table;
     LEEntryTable *entry_table;
+    LERelocTable *reloc_table;
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -346,6 +354,26 @@ class LEEntryTable : public ExecSection {
     std::vector<size_t> bundle_sizes;
     std::vector<LEEntryPoint> entries;
 };
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Relocation Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef NE::NERelocEntry LERelocEntry;
+
+class LERelocTable : public ExecSection {
+  public:
+    LERelocTable(LEFileHeader *fhdr, addr_t offset)
+        : ExecSection(fhdr->get_file(), offset, 0)
+        {ctor(fhdr);}
+    virtual ~LERelocTable() {}
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    void ctor(LEFileHeader*);
+    std::vector<LERelocEntry> entries;
+};
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

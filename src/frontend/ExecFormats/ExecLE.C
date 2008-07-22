@@ -203,8 +203,12 @@ LEFileHeader::unparse(FILE *f)
         page_table->unparse(f);
     if (resname_table)
         resname_table->unparse(f);
+    if (nonresname_table)
+        nonresname_table->unparse(f);
     if (entry_table)
         entry_table->unparse(f);
+    if (reloc_table)
+        reloc_table->unparse(f);
 }
 
 /* Format name */
@@ -319,11 +323,23 @@ LEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
+    if (nonresname_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
+                nonresname_table->get_id(), nonresname_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
+    }
     if (entry_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
                 entry_table->get_id(), entry_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
+    }
+    if (reloc_table) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
+                reloc_table->get_id(), reloc_table->get_name().c_str());
+    } else {
+        fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
 }
 
@@ -467,7 +483,31 @@ LESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n", p, w, "mapped_size",      mapped_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",   p, w, "base_addr",        base_addr);
-    fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "flags",            flags);
+
+    fprintf(f, "%s%-*s = 0x%08x",            p, w, "flags",            flags);
+    switch (flags & SF_TYPE_MASK) {
+      case SF_TYPE_NORMAL:   fputs(" normal",   f); break;
+      case SF_TYPE_ZERO:     fputs(" zero",     f); break;
+      case SF_TYPE_RESIDENT: fputs(" resident", f); break;
+      case SF_TYPE_RESCONT:  fputs(" res-cont", f); break;
+      default: fprintf(f, "type=%u", flags & SF_TYPE_MASK); break;
+    }
+    fputs(" perm=", f);
+    fputc(flags & SF_READABLE   ? 'r' : '-', f);
+    fputc(flags & SF_WRITABLE   ? 'w' : '-', f);
+    fputc(flags & SF_EXECUTABLE ? 'x' : '-', f);
+    if (flags & SF_RESOURCE)      fputs(" resource",      f);
+    if (flags & SF_DISCARDABLE)   fputs(" discardable",   f);
+    if (flags & SF_SHARED)        fputs(" shared",        f);
+    if (flags & SF_PRELOAD_PAGES) fputs(" preload",       f);
+    if (flags & SF_INVALID_PAGES) fputs(" invalid",       f);
+    if (flags & SF_RES_LONG_LOCK) fputs(" res-long-lock", f);
+    if (flags & SF_1616_ALIAS)    fputs(" 16:16-alias",   f);
+    if (flags & SF_BIG_BIT)       fputs(" big-bit",       f);
+    if (flags & SF_CODE_CONFORM)  fputs(" code-conform",  f);
+    if (flags & SF_IO_PRIV)       fputs(" io-priv",       f);
+    fputc('\n', f);
+    
     fprintf(f, "%s%-*s = %u\n",              p, w, "pagemap_index",    pagemap_index);
     fprintf(f, "%s%-*s = %u entries\n",      p, w, "pagemap_nentries", pagemap_nentries);
     fprintf(f, "%s%-*s = 0x%08x\n",          p, w, "res1",             res1);
@@ -509,21 +549,26 @@ LESectionTable::ctor(LEFileHeader *fhdr)
         const LESectionTableEntry_disk *disk = (const LESectionTableEntry_disk*)content(i*entsize, entsize);
         LESectionTableEntry *entry = new LESectionTableEntry(fhdr->get_sex(), disk);
 
-        /* The section */
+        /* The section pages in the executable file. For now we require that the entries in the page table for the section
+         * being defined are contiguous in the executable file, otherwise we'd have to define more than one actual section to
+         * represent this section table entry. */
         addr_t section_offset, section_size; /*offset and size of section within file */
         LEPageTableEntry *page = pages->get_page(entry->pagemap_index);
-#if 1 /* FIXME: The section_offset and section_size are not calculated correctly! */
-        if (1) {
-            section_offset = section_size = 0;
-        } else
+#ifndef NDEBUG
+        for (size_t j=1; j<entry->pagemap_nentries; j++) {
+            LEPageTableEntry *p2 = pages->get_page(entry->pagemap_index+j);
+            ROSE_ASSERT(page->get_pageno()+j == p2->get_pageno());
+        }
 #endif
+        addr_t pageno = page->get_pageno();
+        ROSE_ASSERT(pageno>0);
         if (FAMILY_LE==fhdr->get_exec_format().family) {
-            section_offset = page->get_pageno() * fhdr->e_page_size;
-            section_size = entry->pagemap_nentries * fhdr->e_page_size;
+            section_offset = fhdr->e_data_pages_offset + (pageno-1) * fhdr->e_page_size;
+            section_size = std::min(entry->mapped_size, entry->pagemap_nentries * fhdr->e_page_size);
         } else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format().family);
-            section_offset = page->get_pageno() << fhdr->e_page_offset_shift;
-            section_size = entry->pagemap_nentries * (1<<fhdr->e_page_offset_shift);
+            section_offset = fhdr->e_data_pages_offset + (pageno-1) << fhdr->e_page_offset_shift;
+            section_size = std::min(entry->mapped_size, (addr_t)(entry->pagemap_nentries * (1<<fhdr->e_page_offset_shift)));
         }
 
         LESection *section = new LESection(fhdr->get_file(), section_offset, section_size);
@@ -809,6 +854,67 @@ LEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LE/LX Relocation Table
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor. */
+void
+LERelocTable::ctor(LEFileHeader *fhdr)
+{
+    char name[64];
+    sprintf(name, "%s Relocation Table", fhdr->format_name());
+    set_synthesized(true);
+    set_name(name);
+    set_purpose(SP_HEADER);
+    set_header(fhdr);
+
+    ROSE_ASSERT(0==size);
+
+
+#if 0 /*FIXME: How do we know how many entries are in the relocation table? */
+    size_t nrelocs=0;
+    addr_t at=0, reloc_size;
+    for (size_t i=0; i<nrelocs; i++, at+=reloc_size) {
+        entries.push_back(LERelocEntry(this, at, &reloc_size));
+    }
+#endif
+}
+
+/* Write relocation table back to disk */
+void
+LERelocTable::unparse(FILE *f)
+{
+    int status = fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    
+    uint16_t size_le;
+    host_to_le(entries.size(), &size_le);
+    fwrite(&size_le, sizeof size_le, 1, f);
+    
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].unparse(f);
+    }
+}
+    
+/* Print some debugging info */
+void
+LERelocTable::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%s%sRelocTable[%zd].", prefix, get_header()->format_name(), idx);
+    } else {
+        sprintf(p, "%s%sRelocTable.", prefix, get_header()->format_name());
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    ExecSection::dump(f, p, -1);
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", entries.size());
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].dump(f, p, i);
+    }
+}
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -898,6 +1004,16 @@ parse(ExecFile *ef)
         le_header->set_resname_table(table);
     }
 
+    /* Non-resident Names Table */
+    if (le_header->e_nonresnametab_offset > 0) {
+        addr_t table_offset = le_header->e_nonresnametab_offset;
+        LENameTable *table = new LENameTable(le_header, table_offset);
+        char section_name[64];
+        sprintf(section_name, "%s Non-resident Name Table", le_header->format_name());
+        table->set_name(section_name);
+        le_header->set_nonresname_table(table);
+    }
+    
     /* Entry Table */
     if (le_header->e_entrytab_rfo > 0) {
         addr_t table_offset = le_header->get_offset() + le_header->e_entrytab_rfo;
@@ -905,6 +1021,13 @@ parse(ExecFile *ef)
         le_header->set_entry_table(table);
     }
 
+    /* Fixup (Relocation) Table */
+    if (le_header->e_fixup_rectab_rfo > 0) {
+        addr_t table_offset = le_header->get_offset() + le_header->e_fixup_rectab_rfo;
+        LERelocTable *table = new LERelocTable(le_header, table_offset);
+        le_header->set_reloc_table(table);
+    }
+    
 //    /*
 //     * The table locations are indicated in the header but sizes are not stored. Any table whose offset is zero or whose
 //     * size, calculated from the location of the following table, is zero is not present. */
