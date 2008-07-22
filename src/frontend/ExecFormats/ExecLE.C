@@ -687,6 +687,27 @@ LEEntryPoint::ctor(ByteOrder sex, const LEEntryPoint_disk *disk)
     res1         = disk_to_host(sex, disk->res1);
 }
 
+/* Write the entry information back to the disk at the current file offset */
+void
+LEEntryPoint::unparse(FILE *f, ByteOrder sex)
+{
+    if (0==(flags & 0x01)) {
+        /* Empty entry; write only the flag byte */
+        uint8_t byte;
+        host_to_disk(sex, flags, &byte);
+        fputc(byte, f);
+    } else {
+        /* Non-empty entry */
+        LEEntryPoint_disk disk;
+        host_to_disk(sex, flags,        &(disk.flags));
+        host_to_disk(sex, objnum,       &(disk.objnum));
+        host_to_disk(sex, entry_type,   &(disk.entry_type));
+        host_to_disk(sex, entry_offset, &(disk.entry_offset));
+        host_to_disk(sex, res1,         &(disk.res1));
+        fwrite(&disk, sizeof disk, 1, f);
+    }
+}
+
 /* Print some debugging info */
 void
 LEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -750,7 +771,15 @@ LEEntryTable::ctor(LEFileHeader *fhdr)
 void
 LEEntryTable::unparse(FILE *f)
 {
-    fprintf(stderr, "Exec::LE::LEEntryTable::unparse() FIXME\n");
+    fseek(f, offset, SEEK_SET);
+    ROSE_ASSERT(entries.size()<=0xff);
+    uint8_t byte = entries.size();
+    fputc(byte, f);
+    
+    ByteOrder sex = get_header()->get_sex();
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].unparse(f, sex);
+    }
 }
 
 /* Print some debugging info */

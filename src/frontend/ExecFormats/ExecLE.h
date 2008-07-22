@@ -324,6 +324,7 @@ class LEEntryPoint {
     LEEntryPoint(ByteOrder sex, unsigned flags)
         : flags(flags), objnum(0), entry_type(0), res1(0), entry_offset(0)
         {}
+    void unparse(FILE*, ByteOrder);
     void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(ByteOrder, const LEEntryPoint_disk*);
