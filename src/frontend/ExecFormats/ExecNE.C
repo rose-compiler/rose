@@ -819,61 +819,92 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
 // NE Relocation Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor */
+/* Constructor. */
 void
-NERelocEntry::ctor(ExecSection *relocs, addr_t at)
+NERelocEntry::ctor(ExecSection *relocs, addr_t at, addr_t *rec_size/*out*/)
 {
-    /* The source type:
-     *   0x0 => low byte at the specified offset
-     *   0x2 => 16-bit selector
-     *   0x3 => 32-bit pointer
-     *   0x5 => 16-bit offset
-     *   0xb => 48-bit pointer
-     *   0xd => 32-bit offset
-     * Only the low-order 4 bits are used; the high-order bits are reserved. */
-    unsigned n = relocs->content(at+0, 1)[0];
-    src_type = n & 0x0f;
-    res1 = n & ~0x0f;
+    addr_t orig_at = at;
+    ROSE_ASSERT(at==relocs->get_size()); /*the section is extended as we parse*/
 
-    /* The target type:
-     *   0x0 => internal reference
-     *   0x1 => imported ordinal
-     *   0x2 => imported name
-     *   0x3 => OS fixup
-     * Only the low-order 3 bits are used. The fourth bit is the "additive" flag; remaining bits are reserved. */
-    n = relocs->content(at+1, 1)[0];
-    tgt_type = n & 0x03;
-    additive = n & 0x04 ? true : false;
-    res2 = n & ~0x07;
+    /* Only the low nibble is used for source type; the high nibble is modifier bits */
+    relocs->extend(1);
+    unsigned n = relocs->content(at++, 1)[0];                              
+    src_type = (NERelocSrcType)(n & 0x0f);
+    modifier = (NERelocModifiers)(n>>8);
+
+    /* The target type (3 bits), additive flag (1 bit), and target flags */
+    relocs->extend(1);
+    n = relocs->content(at++, 1)[0];
+    tgt_type = (NERelocTgtType)(n & 0x03);
+    flags = (NERelocFlags)(n>>2);
     
     /* src_offset is the byte offset into the source section that needs to be patched. If this is an additive relocation then
      * the source will be patched by adding the target value to the value stored at the source. Otherwise the target value is
      * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
-    src_offset = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+    relocs->extend(2);
+    src_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
+    at += 2;
 
     switch (tgt_type) {
-      case 0x00:
+      case RF_TGTTYPE_IREF:
         /* Internal reference */
-        iref.segno = relocs->content(at+4, 1)[0];
-        iref.res3  = relocs->content(at+5, 1)[0];
-        iref.tgt_offset = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        relocs->extend(4);
+        iref.sect_idx = relocs->content(at++, 1)[0];
+        iref.res1  = relocs->content(at++, 1)[0];
+        iref.tgt_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
+        at += 2;
         break;
-      case 0x01:
+      case RF_TGTTYPE_IORD:
         /* Imported ordinal */
-        iord.modref  = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
-        iord.ordinal = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        relocs->extend(4);
+        iord.modref  = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        iord.ordinal = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        at += 4;
+        if (flags & RF_2EXTRA) {
+            if (flags & RF_32ADD) {
+                relocs->extend(4);
+                iord.addend = le_to_host(*(const uint32_t*)relocs->content(at+8, 4));
+                at += 4;
+            } else {
+                relocs->extend(2);
+                iord.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
+                at += 2;
+            }
+        } else {
+            iord.addend = 0;
+        }
         break;
-      case 0x02:
+      case RF_TGTTYPE_INAME:
         /* Imported name */
-        iname.modref = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
-        iname.nm_off = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        relocs->extend(4);
+        iname.modref = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        iname.nm_off = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        at += 4;
+        if (flags & RF_2EXTRA) {
+            if (flags & RF_32ADD) {
+                relocs->extend(4);
+                iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 4));
+                at += 4;
+            } else {
+                relocs->extend(2);
+                iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
+                at += 2;
+            }
+        } else {
+            iname.addend = 0;
+        }
         break;
-      case 0x03:
+      case RF_TGTTYPE_OSFIXUP:
         /* Operating system fixup */
-        osfixup.type = le_to_host(*(const uint16_t*)relocs->content(at+4, 2));
-        osfixup.res3 = le_to_host(*(const uint16_t*)relocs->content(at+6, 2));
+        relocs->extend(4);
+        osfixup.type = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        osfixup.res3 = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
+        at += 4;
         break;
     }
+
+    if (rec_size)
+        *rec_size = at - orig_at;
 }
 
 /* Write entry back to disk at current file offset */
@@ -881,37 +912,60 @@ void
 NERelocEntry::unparse(FILE *f)
 {
     unsigned char byte;
-    byte = (res1 & ~0x0f) | (src_type & 0x0f);
+    byte = (modifier << 8) | (src_type & 0x0f);
     fputc(byte, f);
-    byte = (res2 & ~0x07) | (additive?0x04:0x00) | (tgt_type & 0x03);
+    byte = (flags << 2) | (tgt_type & 0x03);
     fputc(byte, f);
     
     uint16_t word;
+    uint32_t dword;
     host_to_le(src_offset, &word);
     fwrite(&word, sizeof word, 1, f);
     
     switch (tgt_type) {
-      case 0x00:
-        host_to_le(iref.segno, &byte);
+      case RF_TGTTYPE_IREF:
+        host_to_le(iref.sect_idx, &byte);
         fputc(byte, f);
-        host_to_le(iref.res3, &byte);
+        host_to_le(iref.res1, &byte);
         fputc(byte, f);
         host_to_le(iref.tgt_offset, &word);
         fwrite(&word, sizeof word, 1, f);
         break;
-      case 0x01:
+      case RF_TGTTYPE_IORD:
         host_to_le(iord.modref, &word);
         fwrite(&word, sizeof word, 1, f);
         host_to_le(iord.ordinal, &word);
         fwrite(&word, sizeof word, 1, f);
+        if (flags & RF_2EXTRA) {
+            if (flags & RF_32ADD) {
+                host_to_le(iord.addend, &dword);
+                fwrite(&dword, sizeof dword, 1, f);
+            } else {
+                host_to_le(iord.addend, &word);
+                fwrite(&word, sizeof word, 1, f);
+            }
+        } else {
+            ROSE_ASSERT(iord.addend==0);
+        }
         break;
-      case 0x02:
+      case RF_TGTTYPE_INAME:
         host_to_le(iname.modref, &word);
         fwrite(&word, sizeof word, 1, f);
         host_to_le(iname.nm_off, &word);
         fwrite(&word, sizeof word, 1, f);
+        if (flags & RF_2EXTRA) {
+            if (flags & RF_32ADD) {
+                host_to_le(iname.addend, &dword);
+                fwrite(&dword, sizeof dword, 1, f);
+            } else {
+                host_to_le(iname.addend, &word);
+                fwrite(&word, sizeof word, 1, f);
+            }
+        } else {
+            ROSE_ASSERT(iname.addend==0);
+        }
         break;
-      case 0x03:
+      case RF_TGTTYPE_OSFIXUP:
         host_to_le(osfixup.type, &word);
         fwrite(&word, sizeof word, 1, f);
         host_to_le(osfixup.res3, &word);
@@ -935,52 +989,63 @@ NERelocEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     const char *s;
-    char sbuf[128];
     switch (src_type) {
-      case 0x00: s = "low byte";        break;
-      case 0x02: s = "16-bit selector"; break;
-      case 0x03: s = "32-bit pointer";  break;
-      case 0x05: s = "16-bit offset";   break;
-      case 0x0b: s = "48-bit pointer";  break;
-      case 0x0d: s = "32-bit offset";   break;
-      default:
-        sprintf(sbuf, "%u", src_type);
-        s = sbuf;
-        break;
+      case RF_SRCTYPE_8OFF:     s = "byte offset";     break;
+      case RF_SRCTYPE_WORDSEG:  s = "16-bit selector"; break;
+      case RF_SRCTYPE_16PTR:    s = "16-bit pointer";  break;
+      case RF_SRCTYPE_16OFF:    s = "16-bit offset";   break;
+      case RF_SRCTYPE_32PTR:    s = "32-bit pointer";  break;
+      case RF_SRCTYPE_32OFF:    s = "32-bit offset";   break;
+      case RF_SRCTYPE_NEARCALL: s = "near call/jump";  break;
+      case RF_SRCTYPE_48PTR:    s = "48-bit pointer";  break;
+      case RF_SRCTYPE_32OFF_b:  s = "32-bit offset";   break;
+      default:                  s = "unknown";         break;
     }
-    fprintf(f, "%s%-*s = %s\n",     p, w, "src_type", s);
-    fprintf(f, "%s%-*s = 0x%04u\n", p, w, "res1",     res1);
+    fprintf(f, "%s%-*s = %u (%s)\n", p, w, "src_type", src_type, s);
+
+    switch (modifier) {
+      case RF_MODIFIER_SINGLE:  s = "single";          break;
+      case RF_MODIFIER_MULTI:   s = "multiple";        break;
+      default:                  s = "unknown";         break;
+    }
+    fprintf(f, "%s%-*s = 0x%04u (%s)\n", p, w, "modifier", modifier, s);
     
     switch (tgt_type) {
-      case 0x00: s = "internal reference"; break;
-      case 0x01: s = "imported ordinal";   break;
-      case 0x02: s = "imported name";      break;
-      case 0x03: s = "OS fixup";           break;
-      default:
-        sprintf(sbuf, "%u", tgt_type);
-        s = sbuf;
-        break;
+      case RF_TGTTYPE_IREF:    s = "internal reference"; break;
+      case RF_TGTTYPE_IORD:    s = "imported ordinal";   break;
+      case RF_TGTTYPE_INAME:   s = "imported name";      break;
+      case RF_TGTTYPE_OSFIXUP: s = "OS fixup";           break;
+      default:                 s = "unknown";            break;
     }
-    fprintf(f, "%s%-*s = %s\n",            p, w, "tgt_type",   s);
-    fprintf(f, "%s%-*s = %s\n",            p, w, "additive",   additive?"true":"false");
-    fprintf(f, "%s%-*s = 0x%04x\n",        p, w, "res2",       res2);
+    fprintf(f, "%s%-*s = %u (%s)\n",       p, w, "tgt_type",   tgt_type, s);
+
+    fprintf(f, "%s%-*s = 0x%04x",          p, w, "flags", flags);
+    if (flags & RF_ADDITIVE)  fputs(" additive",  f);
+    if (flags & RF_2EXTRA)    fputs(" 2-extra",   f);
+    if (flags & RF_32ADD)     fputs(" 32-add",    f);
+    if (flags & RF_16SECTION) fputs(" 16-sect",   f);
+    if (flags & RF_8ORDINAL)  fputs(" 8-ordinal", f);
+    fputc('\n', f);
+
     fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "src_offset", src_offset);
 
     switch (tgt_type) {
-      case 0x00:
-        fprintf(f, "%s%-*s = %u\n",            p, w, "segno",      iref.segno);
-        fprintf(f, "%s%-*s = 0x%02x\n",        p, w, "res3",       iref.res3);
+      case RF_TGTTYPE_IREF:
+        fprintf(f, "%s%-*s = %u\n",            p, w, "sect_idx",   iref.sect_idx);
+        fprintf(f, "%s%-*s = 0x%02x\n",        p, w, "res3",       iref.res1);
         fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "tgt_offset", iref.tgt_offset);
         break;
-      case 0x01:
+      case RF_TGTTYPE_IORD:
         fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     iord.modref);
         fprintf(f, "%s%-*s = %u\n",            p, w, "ordinal",    iord.ordinal);
+        fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "addend",     iord.addend);
         break;
-      case 0x02:
+      case RF_TGTTYPE_INAME:
         fprintf(f, "%s%-*s = %u\n",            p, w, "modref",     iname.modref);
         fprintf(f, "%s%-*s = %u\n",            p, w, "nm_off",     iname.nm_off);
+        fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "addend",     iname.addend);
         break;
-      case 0x03:
+      case RF_TGTTYPE_OSFIXUP:
         fprintf(f, "%s%-*s = %u\n",            p, w, "type",       osfixup.type);
         fprintf(f, "%s%-*s = 0x%04x\n",        p, w, "res3",       osfixup.res3);
         break;
@@ -1003,15 +1068,14 @@ NERelocTable::ctor(NEFileHeader *fhdr)
     set_header(fhdr);
 
     ROSE_ASSERT(0==size);
-    addr_t at=0;
+    addr_t at=0, reloc_size;
 
     extend(2);
     size_t nrelocs = le_to_host(*(const uint16_t*)content(at, 2));
     at += 2;
     
-    for (size_t i=0; i<nrelocs; i++, at+=8) {
-        extend(8);
-        entries.push_back(NERelocEntry(this, at));
+    for (size_t i=0; i<nrelocs; i++, at+=reloc_size) {
+        entries.push_back(NERelocEntry(this, at, &reloc_size));
     }
 }
 

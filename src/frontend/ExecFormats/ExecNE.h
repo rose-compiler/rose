@@ -332,33 +332,70 @@ class NEEntryTable : public ExecSection {
 // NE Relocation Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* NERelocEntry_disk -- variable size with multiple levels of 'union'. It's easier to just parse it in NERelocEntry::ctor()
+ * than defining it here as a struct. */
+
+enum NERelocSrcType {
+    RF_SRCTYPE_8OFF     = 0,            /* Byte offset */
+    RF_SRCTYPE_WORDSEG  = 2,            /* Word segment, 16-bit selector */
+    RF_SRCTYPE_16PTR    = 3,            /* 16-bit far pointer */
+    RF_SRCTYPE_16OFF    = 5,            /* 16-bit offset */
+    RF_SRCTYPE_32PTR    = 6,            /* 32-bit far pointer */
+    RF_SRCTYPE_32OFF    = 7,            /* 32-bit offset */
+    RF_SRCTYPE_NEARCALL = 8,            /* near call or jump, WORD/DWROD based on section attribute */
+    RF_SRCTYPE_48PTR    = 11,           /* 48-bit pointer */
+    RF_SRCTYPE_32OFF_b  = 13            /* 32-bit offset (not sure how this differs from case 7) */
+};
+
+enum NERelocTgtType {
+    RF_TGTTYPE_IREF     = 0,            /* Internal reference */
+    RF_TGTTYPE_IORD     = 1,            /* Imported (extern) ordinal */
+    RF_TGTTYPE_INAME    = 2,            /* Imported (extern) name */
+    RF_TGTTYPE_OSFIXUP  = 3             /* Operating system fixup */ 
+};
+
+enum NERelocModifiers {
+    RF_MODIFIER_SINGLE  = 1,
+    RF_MODIFIER_MULTI   = 3
+};
+
+enum NERelocFlags {
+    RF_ADDITIVE         = 0x01,         /* add target to source rather than replace source with target */
+    RF_RESERVED         = 0x02,         /* reserved bits */
+    RF_2EXTRA           = 0x04,         /* relocation info has size with new two bytes at end */
+    RF_32ADD            = 0x08,         /* addition with 32-bits rather than 16 */
+    RF_16SECTION        = 0x10,         /* 16-bit object number & module name rather than 8-bit */
+    RF_8ORDINAL         = 0x20,         /* Ordinal is 8-bits rather than 16 */
+};
+
 class NERelocEntry {
   public:
-    NERelocEntry(ExecSection *relocs, addr_t at)
-        {ctor(relocs, at);}
-    void ctor(ExecSection*, addr_t at);
+    NERelocEntry(ExecSection *relocs, addr_t at, addr_t *rec_size)
+        {ctor(relocs, at, rec_size);}
+    void ctor(ExecSection*, addr_t at, addr_t *rec_size);
     void unparse(FILE*);
     void dump(FILE*, const char *prefix, ssize_t idx);
   public:
-    unsigned            src_type;
-    unsigned            res1;
-    unsigned            tgt_type;
-    bool                additive;
-    unsigned            res2;
+    NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
+    NERelocModifiers    modifier;       /* high nibble of first byte */
+    NERelocTgtType      tgt_type;       /* low two bits of second byte */
+    NERelocFlags        flags;          /* high six bits of second byte */
     addr_t              src_offset;
     union {
         struct { /*tgt_type==0x00: internal reference*/
-            unsigned    segno;
-            unsigned    res3;
+            unsigned    sect_idx;       /* section index (1-origin) */
+            unsigned    res1;           /* reserved */
             addr_t      tgt_offset;
         } iref;
         struct { /*tgt_type==0x01: imported ordinal*/
-            unsigned    modref;
+            unsigned    modref;         /* 1-based index into import module table */
             unsigned    ordinal;
+            addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
         } iord;
         struct { /*tgt_type==0x02: imported name*/
-            unsigned    modref;
-            unsigned    nm_off;
+            unsigned    modref;         /* 1-based index into import module table */
+            unsigned    nm_off;         /* offset into import procedure names */
+            addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
         } iname;
         struct { /*tgt_type==0x03: operating system fixup*/
             unsigned    type;
