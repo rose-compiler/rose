@@ -2145,7 +2145,7 @@ typedef struct _IMAGE_SECTION_HEADER {
 #if USE_NEW_BINARY_FORMAT_READER == 0
 // Older Binary file format support (from before Robb's newer version)
 
-void
+bool
 generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
    {
      ROSE_ASSERT(asmFile != NULL);
@@ -2165,7 +2165,11 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
         }
 
      int firstCharacter = fgetc(f);
-     ROSE_ASSERT(firstCharacter == 127);
+     // ROSE_ASSERT(firstCharacter == 127);
+     if (firstCharacter != 127) {
+       // Not ELF
+       return false; // Let something else handle this
+     }
 
   // This is likely a binary executable
   // fread(void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
@@ -2720,6 +2724,7 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
 
   // printf ("Exiting as a test in generateBinaryExecutableFileInformation() \n");
   // ROSE_ASSERT(false);
+     return true; // This file was handled
    }
 // Older Binary file format support
 #endif
@@ -2763,11 +2768,16 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 #else
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
   // printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
-  // generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
-  // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
-     asmFile->set_name(sourceFilename);
-  // Hard wire this for the moment while I work on getting Robb's work into place...
-     asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+     bool handled = false;
+     if (!handled) handled = generateBinaryExecutableFileInformation_ELF( sourceFilename, asmFile );
+     if (!handled) {} // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+     if (!handled) {
+       asmFile->set_name(sourceFilename);
+    // Hard wire this for the moment while I work on getting Robb's work into place...
+       asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+       handled = true;
+     }
+     ROSE_ASSERT (handled);
 #endif
    }
 

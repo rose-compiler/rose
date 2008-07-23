@@ -3035,10 +3035,12 @@ done:
       }
       size_t fileOffset = getFileOffsetOfAddress(addr);
       try {
+        ROSE_ASSERT (fileOffset < ef->get_size());
         SgAsmx86Instruction* insn = disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
         ROSE_ASSERT (insn);
         return insn;
       } catch (BadInstruction) {
+        knownSuccessors.clear();
         return 0;
       } catch (OverflowOfInstructionVector) {
         return 0;
