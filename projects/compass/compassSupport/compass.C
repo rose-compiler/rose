@@ -35,7 +35,7 @@ int Compass::processes=0;
 
 void Compass::serializeDefUseResults(unsigned int *values,
 			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
-			    std::map<SgNode*,unsigned int > &nodeMap) {
+			    std::map<SgNode*,unsigned int > &nodeMapInv) {
   int counter=0;
   std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
   for (it=defmap.begin();it!=defmap.end();++it) {
@@ -48,24 +48,31 @@ void Compass::serializeDefUseResults(unsigned int *values,
       SgNode* third = it2->second;
       ROSE_ASSERT(second);
       ROSE_ASSERT(third);
-      values[counter]=nodeMap.find(first)->second;
-      values[counter+1]=nodeMap.find(second)->second;
-      values[counter+2]=nodeMap.find(third)->second;
+      values[counter]=nodeMapInv.find(first)->second;
+      values[counter+1]=nodeMapInv.find(second)->second;
+      values[counter+2]=nodeMapInv.find(third)->second;
       counter+=3;
     }
   }
 }
 
 void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
-			      std::map<unsigned int, SgNode* > &nodeMap, bool definition) {
+				       //      std::map<unsigned int, SgNode* > &nodeMap, 
+				       std::vector<SgNode* > &nodeMap, 
+				       bool definition) {
   for (unsigned int i=0; i <arrsize;i+=3) {
     unsigned int first = values[i];
     unsigned int second = values[i+1];
     unsigned int third = values[i+2];
     //        cerr << i << "/"<<arrsize<<"::  first : " << first << " second : " << second << " third : " << third << endl;
+    /*
     SgNode* node1 = nodeMap.find(first)->second;
     SgInitializedName* node2 = isSgInitializedName(nodeMap.find(second)->second);
     SgNode* node3 = nodeMap.find(third)->second;
+    */
+    SgNode* node1 = nodeMap[first];
+    SgInitializedName* node2 = isSgInitializedName(nodeMap[second]);
+    SgNode* node3 = nodeMap[third];
     ROSE_ASSERT(node1);
     ROSE_ASSERT(node2);
     ROSE_ASSERT(node3);
@@ -84,10 +91,12 @@ double Compass::timeDifference(struct timespec end, struct timespec begin) {
     return (end.tv_sec + end.tv_nsec / 1.0e9)
       - (begin.tv_sec + begin.tv_nsec / 1.0e9);
   }
-  void Compass::MemoryTraversal::visit ( SgNode* node )
+
+void Compass::MemoryTraversal::visit ( SgNode* node )
   {
     ROSE_ASSERT(node != NULL);
-    nodeMap[counter]=node;
+    //    nodeMap[counter]=node;
+    nodeMap.push_back(node);
     nodeMapInv[node]=counter;
     counter++;
   }
@@ -110,6 +119,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // this should run right before any other checker is executed.
   // Other checkers rely on this information.
     struct timespec begin_time_node, end_time_node;
+    struct timespec b_time_node, e_time_node;
 
   // create map with all nodes and indices
   MemoryTraversal* memTrav = new MemoryTraversal();
@@ -198,7 +208,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // ---------------- LOAD BALANCING of DEFUSE -------------------
 #endif
 
-  std::cerr << my_rank << ": DefUse Analysis complete. Nr of Nodes: " << resultDefUseNodes << std::endl;
+  std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << std::endl;
@@ -224,11 +234,13 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
   if (my_rank==0) {
     std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
+    Compass::gettime(begin_time_node);
+    Compass::gettime(b_time_node);
   }
   //((DefUseAnalysis*)defuse)->printDefMap();
   /* communicate times */
 
-  Compass::gettime(begin_time_node);
+
 
   /* communicate arraysizes */
   unsigned int arrsize = 0;
@@ -250,7 +262,6 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   MPI_Allreduce(&arrsizeUse, &global_arrsizeUse, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   /* communicate arraysizes */
 
-
   /* serialize all results */
   unsigned int *def_values_global = new unsigned int[global_arrsize];
   unsigned int *def_values =new unsigned int[arrsize];
@@ -268,7 +279,15 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   serializeDefUseResults(def_values, defmap, memTrav->nodeMapInv);
   serializeDefUseResults(use_values, usemap, memTrav->nodeMapInv);
   /* serialize all results */
+  std::cerr << my_rank << " : serialization done."  << std::endl;
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0) {
+    Compass::gettime(e_time_node);
+    double restime = Compass::timeDifference(e_time_node, b_time_node);
+    std::cerr << "\n >>> serialization done. TIME : " << restime << std::endl;
+    Compass::gettime(b_time_node);
+  }
 
   /* communicate all results */
   int* offset=new int[processes];
@@ -294,12 +313,45 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   std::cerr << my_rank << " : serialization done."  
        <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
 
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0) {
+    Compass::gettime(e_time_node);
+    double restime = Compass::timeDifference(e_time_node, b_time_node);
+    std::cerr << "\n >>> communication (ARRSIZE) done. TIME : " << restime << "  BROADCASTING ... " << std::endl;
+    Compass::gettime(b_time_node);
+  }
+
+  /*
   MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
 		 offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
   MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
 		 offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
-  /* communicate all results */
+  */
+  // alternative faster algorithm
+  MPI_Gatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
+	      offset, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
+	      offsetUse, MPI_UNSIGNED, 0,  MPI_COMM_WORLD);
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0) {
+    Compass::gettime(e_time_node);
+    double restime = Compass::timeDifference(e_time_node, b_time_node);
+    std::cerr << "\n >>> Gatherv to 0 done. TIME : " << restime << std::endl;
+    Compass::gettime(b_time_node);
+  }
+  MPI_Bcast(def_values_global, global_arrsize, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+  MPI_Bcast(use_values_global, global_arrsizeUse, MPI_UNSIGNED,  0,  MPI_COMM_WORLD);
 
+  /* communicate all results */
+  std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0) {
+    Compass::gettime(e_time_node);
+    double restime = Compass::timeDifference(e_time_node, b_time_node);
+    std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime << 
+      "   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
+  }
 
   /* deserialize all results */
   // write the global def_use_array back to the defmap (for each processor)
@@ -312,11 +364,12 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
 
   MPI_Barrier(MPI_COMM_WORLD);
-  Compass::gettime(end_time_node);
-  double restime = Compass::timeDifference(end_time_node, begin_time_node);
-  if (my_rank==0)
-  std::cerr << ">> ---- DefUse Analysis - time for communication :  " << restime << " sec " << std::endl;
-  
+  if (my_rank==0) {
+    Compass::gettime(end_time_node);
+    double restime = Compass::timeDifference(end_time_node, begin_time_node);
+    std::cerr << ">> ---- DefUse Analysis - time for ALL communication :  " << restime << " sec " << std::endl;
+  }
+
   defmap = defuse->getDefMap();
   usemap = defuse->getUseMap();
 

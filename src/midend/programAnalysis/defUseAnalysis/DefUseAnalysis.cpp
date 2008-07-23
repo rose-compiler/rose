@@ -20,7 +20,6 @@ int DefUseAnalysis::sgNodeCounter = 1;
  *********************************************************/
 int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
   bool contained = searchVizzMap (sgNode);
-  //#pragma omg critical (DefUseMapgetIntForSgNode)
   if (contained) {
     int nr = vizzhelp[sgNode];
     return nr;

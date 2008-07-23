@@ -17,7 +17,9 @@ namespace Compass {
 			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
 			      std::map<SgNode*,unsigned int > &nodeMap);
   void deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
-				std::map<unsigned int, SgNode* > &nodeMap, bool definition);
+				//std::map<unsigned int, SgNode* > &nodeMap, 
+				std::vector<SgNode* > &nodeMap, 
+				bool definition);
 
   double timeDifference(struct timespec end, struct timespec begin);
   inline void gettime(struct timespec &t) {
@@ -28,8 +30,9 @@ namespace Compass {
   MemoryTraversal():counter(0){}
     unsigned int counter;
     void visit ( SgNode* node );
-    std::map <unsigned int, SgNode* > nodeMap;
-  std::map <SgNode*, unsigned int > nodeMapInv;
+    //std::map <unsigned int, SgNode* > nodeMap;
+    std::vector <SgNode* > nodeMap;
+    std::map <SgNode*, unsigned int > nodeMapInv;
   };
   
 #endif
