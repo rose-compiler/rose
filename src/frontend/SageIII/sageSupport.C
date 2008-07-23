@@ -2761,9 +2761,13 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
      ROSE_ASSERT(false);
 
 #else
-     printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
-     generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
+  // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
+  // printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
+  // generateBinaryExecutableFileInformation_ELF     ( sourceFilename, asmFile );
   // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+     asmFile->set_name(sourceFilename);
+  // Hard wire this for the moment while I work on getting Robb's work into place...
+     asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
 #endif
    }
 
@@ -4127,7 +4131,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
                  // The first character of an ELF binary is '\177' and for a PE binary it is 'M'
                  // if (character0 == 127)
                     if ((character0 == 0x7F && character1 == 0x45) ||
-                        (character0 == 0x4D && character1 == 0x56))
+                        (character0 == 0x4D && character1 == 0x5A))
                        {
                          returnValue = true;
                        }

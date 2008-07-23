@@ -3,9 +3,11 @@
 #include <vector>
 #include "rose.h"
 #include "freebsd_elf_combined.h"
+#include "ExecGeneric.h"
 
 using namespace std;
 using namespace SageBuilderAsm;
+using namespace Exec;
 
 namespace X86Disassembler {
 
@@ -132,7 +134,8 @@ namespace X86Disassembler {
     set<uint64_t>* knownSuccessorsReturn;
 
     // The instruction
-    const vector<uint8_t>& insn;
+    const uint8_t* const insn;
+    const size_t insnSize;
     size_t positionInVector;
 
     // Temporary flags set by the instruction
@@ -152,10 +155,11 @@ namespace X86Disassembler {
     SgAsmExpression* reg;
     bool isUnconditionalJump; // True for jmp, farjmp, ret, retf, iret, and hlt; false for everything else
 
-    SingleInstructionDisassembler(const Parameters& p, const vector<uint8_t>& insn, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn):
+    SingleInstructionDisassembler(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn):
       p(p),
       knownSuccessorsReturn(knownSuccessorsReturn),
       insn(insn),
+      insnSize(insnSize),
       positionInVector(positionInVector),
       positionInInstruction(0),
       segOverride(x86_segreg_none),
@@ -256,7 +260,7 @@ namespace X86Disassembler {
     void getByte(uint8_t& var) {
       if (positionInInstruction >= 15)
         throw BadInstruction();
-      if (positionInVector + positionInInstruction >= insn.size())
+      if (positionInVector + positionInInstruction >= insnSize)
         throw OverflowOfInstructionVector();
       var = insn[positionInVector + positionInInstruction++];
     }
@@ -459,7 +463,7 @@ namespace X86Disassembler {
 
     SgAsmx86Instruction* makeNullaryInstruction(const string& mnemonic, X86InstructionKind kind) {
       SgAsmx86Instruction* newInsn = makeInstructionWithoutOperands(p.ip, mnemonic, kind, p.insnSize, effectiveOperandSize(), effectiveAddressSize(), lock);
-      newInsn->set_raw_bytes(string(insn.begin() + positionInVector, insn.begin() + positionInVector + positionInInstruction));
+      newInsn->set_raw_bytes(string(insn + positionInVector, insn + positionInVector + positionInInstruction));
       SgAsmOperandList* operands = new SgAsmOperandList();
       newInsn->set_operandList(operands);
       operands->set_parent(newInsn);
@@ -657,8 +661,8 @@ namespace X86Disassembler {
 
   };
 
-  SgAsmx86Instruction* disassemble(const Parameters& p, const vector<uint8_t>& insn, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn) {
-    SingleInstructionDisassembler dis(p, insn, positionInVector, knownSuccessorsReturn);
+  SgAsmx86Instruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn) {
+    SingleInstructionDisassembler dis(p, insn, insnSize, positionInVector, knownSuccessorsReturn);
     return dis.disassemble();
   }
 
@@ -797,6 +801,7 @@ namespace X86Disassembler {
               case rpRepe: insn = MAKE_INSN0(rep_insd, rep_insd); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0x6E: {
@@ -821,6 +826,7 @@ namespace X86Disassembler {
               case rpRepe: insn = MAKE_INSN0(rep_outsd, rep_outsd); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0x70: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jo , jo , /* prediction, */ imm); goto done;}
@@ -941,6 +947,7 @@ namespace X86Disassembler {
               case rpRepe: insn = MAKE_INSN0(rep_movsq, rep_movsq); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0xA6: {
@@ -974,6 +981,7 @@ namespace X86Disassembler {
               case rpRepne: insn = MAKE_INSN0(repne_cmpsq, repne_cmpsq); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0xA8: {SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN2(test, test, makeRegister(0, rmLegacyByte), imm); goto done;}
@@ -1005,6 +1013,7 @@ namespace X86Disassembler {
               case rpRepe: insn = MAKE_INSN0(rep_stosq, rep_stosq); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0xAC: {
@@ -1034,6 +1043,7 @@ namespace X86Disassembler {
               case rpRepe: insn = MAKE_INSN0(rep_lodsq, rep_lodsq); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0xAE: {
@@ -1067,6 +1077,7 @@ namespace X86Disassembler {
               case rpRepne: insn = MAKE_INSN0(repne_scasq, repne_scasq); goto done;
               default: throw BadInstruction();
             }
+          default: ROSE_ASSERT (false);
         }
       }
       case 0xB0: {SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN2(mov, mov, makeOperandRegisterByte(rexB, 0), imm); goto done;}
@@ -2984,122 +2995,47 @@ done:
   }
 
   struct AsmFileWithData {
-    SgAsmFile* f;
-    vector<uint8_t> data;
-#if USE_NEW_BINARY_FORMAT_READER
-    map<uint64_t, SgAsmGenericSection*> sectionsByAddress;
-#else
-    map<uint64_t, SgAsmSectionHeader*> sectionsByAddress;
-#endif
+    ExecFile* ef;
     mutable size_t instructionsDisassembled;
 
-    AsmFileWithData(SgAsmFile* f): f(f), instructionsDisassembled(0) {
-      int fd = open(f->get_name().c_str(), O_RDONLY);
-      if (fd == -1) {
-        perror(("open of " + f->get_name()).c_str());
+    AsmFileWithData(ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
+
+    ExecSection* getSectionOfAddress(uint64_t addr) const {
+      const vector<ExecSection*> possibleSections = ef->get_sections_by_rva(addr);
+      if (possibleSections.empty()) {
+        return NULL;
+      } else if (possibleSections.size() != 1) {
+        cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
         abort();
       }
-      uint8_t buffer[1048576];
-      while (true) {
-        int status = read(fd, buffer, 1048576);
-        if (status == -1) {
-          perror("read");
-          abort();
-        }
-        if (status == 0) break; // EOF
-        data.insert(data.end(), buffer, buffer + status);
-      }
-      close(fd);
-
-#if USE_NEW_BINARY_FORMAT_READER
-   // Moving to the use of Robb's newer executable format reader...
-   // const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
-      const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
-#else
-      ROSE_ASSERT (f->get_sectionHeaderList());
-      const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
-#endif
-
-
-      for (size_t i = 0; i < sections.size(); ++i) {
-        if (sections[i]) {
-          sectionsByAddress.insert(std::make_pair(sections[i]->get_starting_memory_address(), sections[i]));
-        }
-      }
-    }
-
-#if USE_NEW_BINARY_FORMAT_READER
-    SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const
-#else
-    SgAsmSectionHeader* getSectionOfAddress(uint64_t addr) const
-#endif
-       {
-      // map<uint64_t, SgAsmSectionHeader*>::const_iterator i = sectionsByAddress.lower_bound(addr);
-      // if (i == sectionsByAddress.end()) return NULL;
-
-#if USE_NEW_BINARY_FORMAT_READER
-   // Moving to the use of Robb's newer executable format reader...
-   // const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
-      const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
-#else
-      ROSE_ASSERT (f->get_sectionHeaderList());
-      const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
-#endif
-
-      for (size_t i = 0; i < sections.size(); ++i) {
-#if USE_NEW_BINARY_FORMAT_READER
-        SgAsmGenericSection* section = sections[i];
-#else
-     // SgAsmSectionHeader* section = i->second;
-        SgAsmSectionHeader* section = sections[i];
-#endif
-        if (addr >= section->get_starting_memory_address() &&
-            addr < section->get_starting_memory_address() + section->get_size() &&
-            (section->get_flags() & 2) != 0 /* ALLOC */)
-           {
-             return section;
-           }
-      }
-      return NULL;
+      return possibleSections[0];
     }
 
     bool inCodeSegment(uint64_t addr) const {
-#if USE_NEW_BINARY_FORMAT_READER
-      SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
-#else
-      SgAsmSectionHeader* sectionOfThisPtr = getSectionOfAddress(addr);
-#endif
+      ExecSection* sectionOfThisPtr = getSectionOfAddress(addr);
       if (sectionOfThisPtr != NULL &&
-          (sectionOfThisPtr->get_type() == SHT_PROGBITS) &&
-          (sectionOfThisPtr->get_flags() & 2) != 0 /* ALLOC */ &&
-          (sectionOfThisPtr->get_flags() & 4) != 0 /* EXECINSTR */) {
+          sectionOfThisPtr->is_mapped() &&
+          sectionOfThisPtr->get_executable()) {
         return true;
       }
       return false;
     }
 
     size_t getFileOffsetOfAddress(uint64_t addr) const {
-#if USE_NEW_BINARY_FORMAT_READER
-      SgAsmGenericSection* section = getSectionOfAddress(addr);
-#else
-      SgAsmSectionHeader* section = getSectionOfAddress(addr);
-#endif
+      ExecSection* section = getSectionOfAddress(addr);
       if (!section) abort();
-      ROSE_ASSERT (section->get_type() != SHT_NOBITS);
-      return addr - section->get_starting_memory_address() + section->get_starting_file_offset();
+      ROSE_ASSERT (section->is_mapped());
+      return addr - section->get_mapped_rva() + section->get_offset();
     }
 
     SgAsmx86Instruction* disassembleOneAtAddress(uint64_t addr, Parameters params, set<uint64_t>& knownSuccessors) const {
       params.ip = addr;
-#if USE_NEW_BINARY_FORMAT_READER
-      SgAsmGenericSection* section = getSectionOfAddress(addr);
-#else
-      SgAsmSectionHeader* section = getSectionOfAddress(addr);
-#endif
-      if (!section) return 0;
-      size_t fileOffset = addr - section->get_starting_memory_address() + section->get_starting_file_offset();
+      if (!inCodeSegment(addr)) {
+        return 0;
+      }
+      size_t fileOffset = getFileOffsetOfAddress(addr);
       try {
-        SgAsmx86Instruction* insn = disassemble(params, data, fileOffset, &knownSuccessors);
+        SgAsmx86Instruction* insn = disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
         ROSE_ASSERT (insn);
         return insn;
       } catch (BadInstruction) {
@@ -3242,44 +3178,55 @@ done:
   }
 
   void disassembleFile(SgAsmFile* f) {
-    AsmFileWithData file(f);
-    ROSE_ASSERT (f->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386 || f->get_machine_architecture() == SgAsmFile::e_machine_architecture_AMD_x86_64_architecture);
-    Parameters p(0x0, x86_insnsize_32);
-    if (f->get_machine_architecture() == SgAsmFile::e_machine_architecture_AMD_x86_64_architecture) {
-      p.insnSize = x86_insnsize_64;
+    ExecFile* ef = Exec::parse(f->get_name().c_str());
+    AsmFileWithData file(ef);
+    // FIXME: Does not handle multi-architecture binaries
+    InsSetArchitecture isaFamily = ISA_UNSPECIFIED;
+    const vector<ExecHeader*>& headers = ef->get_headers();
+    ROSE_ASSERT (!headers.empty());
+    for (size_t i = 0; i < headers.size(); ++i) {
+      ExecHeader* hdr = headers[i];
+      const Architecture& arch = hdr->get_target();
+      InsSetArchitecture isa = arch.get_isa();
+      InsSetArchitecture thisIsaFamily = (InsSetArchitecture)(isa & ISA_FAMILY_MASK);
+      if (isaFamily == ISA_UNSPECIFIED) {
+        isaFamily = thisIsaFamily;
+      }
+      ROSE_ASSERT (isaFamily == thisIsaFamily);
     }
+    ROSE_ASSERT (isaFamily == ISA_IA32_Family || isaFamily == ISA_X8664_Family);
+    X86InstructionSize insnSize = x86_insnsize_none;
+    if (isaFamily == ISA_IA32_Family) {
+      insnSize = x86_insnsize_32;
+    } else if (isaFamily == ISA_X8664_Family) {
+      insnSize = x86_insnsize_64;
+    } else {
+      ROSE_ASSERT (!"Bad ISA family");
+    }
+    Parameters p(0x0, insnSize);
     map<uint64_t, SgAsmInstruction*> insns;
     map<uint64_t, bool> basicBlockStarts;
     set<uint64_t> functionStarts;
-    basicBlockStarts[f->get_associated_entry_point()] = true;
-    functionStarts.insert(f->get_associated_entry_point());
-    file.disassembleRecursively(f->get_associated_entry_point(), p, insns, basicBlockStarts, functionStarts);
+    uint64_t entryPoint = headers[0]->get_entry_rva();
+    basicBlockStarts[entryPoint] = true;
+    functionStarts.insert(entryPoint);
+    file.disassembleRecursively(entryPoint, p, insns, basicBlockStarts, functionStarts);
 
-#if USE_NEW_BINARY_FORMAT_READER
-    const vector<SgAsmGenericSection*>& sections = f->get_sectionList();
-#else
-    ROSE_ASSERT (f->get_sectionHeaderList());
-    const vector<SgAsmSectionHeader*>& sections = f->get_sectionHeaderList()->get_section_headers();
-#endif
-
+    const vector<ExecSection*>& sections = ef->get_sections();
     size_t pointerSize = (p.insnSize == x86_insnsize_64 ? 8 : p.insnSize == x86_insnsize_32 ? 4 : 2);
     for (size_t i = 0; i < sections.size(); ++i) {
-#if USE_NEW_BINARY_FORMAT_READER
-      SgAsmGenericSection* sect = sections[i];
-#else
-      SgAsmSectionHeader* sect = sections[i];
-#endif
-      if (sect->get_type() != SHT_NOBITS && sect->get_type() != SHT_NULL) {
+      ExecSection* sect = sections[i];
+      if (sect->is_mapped()) { // FIXME: Look for NOBITS sections
         // Scan for pointers to code
-        uint64_t endOffset = sect->get_starting_file_offset() + sect->get_size();
-        ROSE_ASSERT (endOffset <= file.data.size());
-        for (uint64_t j = sect->get_starting_file_offset();
+        uint64_t endOffset = sect->end_offset();
+        ROSE_ASSERT (endOffset <= ef->get_size());
+        for (uint64_t j = sect->get_offset();
              j + pointerSize <= endOffset;
              j += pointerSize) {
           uint64_t addr = 0;
           for (size_t k = pointerSize; k > 0; --k) {
             addr <<= 8;
-            addr |= file.data[j + k - 1];
+            addr |= ef->content()[j + k - 1];
           }
           if (file.inCodeSegment(addr)) {
             basicBlockStarts[addr] = true;

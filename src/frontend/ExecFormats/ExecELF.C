@@ -146,6 +146,9 @@ ElfFileHeader::ctor(ExecFile *f, addr_t offset)
       case 8:
         target.set_isa(ISA_MIPS_Family);
         break;
+      case 62:
+        target.set_isa(ISA_X8664_Family);
+        break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
         target.set_isa(ISA_OTHER, e_machine);

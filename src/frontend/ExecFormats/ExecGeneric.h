@@ -66,6 +66,7 @@ enum ExecABI {
 enum InsSetArchitecture {
     ISA_UNSPECIFIED             = 0x0000,               /* File does not specify an architecture */
     ISA_OTHER                   = 0xffff,               /* Architecture is something other than below */
+    ISA_FAMILY_MASK             = 0xff00,               /* Mask to get family part of ISA */
 
     ISA_IA32_Family             = 0x0100,               /* x86 IA-32 family of architectures; Intel, AMD, VIA, ... */
     ISA_IA32_286                = 0x0101,               /* 80286 */
@@ -227,6 +228,7 @@ class Architecture {
     Architecture(InsSetArchitecture isa) {set_isa(isa);}
     void set_isa(InsSetArchitecture isa) {this->isa=isa; other=0;}
     void set_isa(InsSetArchitecture isa, unsigned data) {this->isa = isa; this->other=data;}
+    InsSetArchitecture get_isa() const {return isa;}
   private:
     InsSetArchitecture  isa;                            /* Instruction set architecture */
     unsigned            other;                          /* Actual stored value if isa==ISA_OTHER */
@@ -460,11 +462,13 @@ class ExecHeader : public ExecSection {
     /* Accessors for protected/private members */
     ExecFormat& get_exec_format() {return exec_format;}
     std::vector<unsigned char>& get_magic() {return magic;}
+    const Architecture& get_target() const {return target;}
 
     /* Convenience functions */
     ByteOrder get_sex() {return exec_format.sex;}
     size_t get_word_size() {return exec_format.word_size;}
     addr_t get_base_va() {return base_va;}
+    addr_t get_entry_rva() const {return entry_rva;}
 
   protected:
     ExecFormat          exec_format;                    /* General info about the executable format */
