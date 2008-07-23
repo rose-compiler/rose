@@ -2,6 +2,7 @@
 #include <vector>
 
 using namespace std;
+using namespace SageBuilder;
 
 StructLayoutInfo ChainableTypeLayoutGenerator::layoutType(SgType* t) const {
   // Default implementation just passes everything (except typedefs and
@@ -105,29 +106,103 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
   }
 }
 
+//! There is a nice summary for ABI from
+// http://developers.sun.com/solaris/articles/about_amd64_abi.html
+// Liao, 7/22/2008
 StructLayoutInfo I386PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const {
   StructLayoutInfo layout;
   switch (t->variantT()) {
     case V_SgTypeBool: {layout.size = 1; layout.alignment = 1; break;}
+
     case V_SgTypeChar: {layout.size = 1; layout.alignment = 1; break;}
     case V_SgTypeSignedChar: {layout.size = 1; layout.alignment = 1; break;}
     case V_SgTypeUnsignedChar: {layout.size = 1; layout.alignment = 1; break;}
+
     case V_SgTypeShort: {layout.size = 2; layout.alignment = 2; break;}
+    case V_SgTypeSignedShort: {layout.size = 2; layout.alignment = 2; break;}
     case V_SgTypeUnsignedShort: {layout.size = 2; layout.alignment = 2; break;}
+
     case V_SgTypeInt: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgEnumType: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeSignedInt: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeUnsignedInt: {layout.size = 4; layout.alignment = 4; break;}
+
     case V_SgTypeLong: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeSignedLong: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeUnsignedLong: {layout.size = 4; layout.alignment = 4; break;}
+
     case V_SgTypeLongLong: {layout.size = 8; layout.alignment = 4; break;}
+    // No this node in ROSE yet
+    //case V_SgTypeSignedLongLong: {layout.size = 8; layout.alignment = 4; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = 8; layout.alignment = 4; break;}
 
     case V_SgTypeFloat: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeDouble: {layout.size = 8; layout.alignment = 4; break;}
     case V_SgTypeLongDouble: {layout.size = 12; layout.alignment = 4; break;}
 
-    case V_SgPointerType: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgPointerType: {layout.size = 4; layout.alignment = 4; break;} //TODO UPC case
     case V_SgReferenceType: {layout.size = 4; layout.alignment = 4; break;}
+#if 1    
+    //TODO what is the specification for them?
+    //case V_SgTypeVoid: {layout.size = 1; layout.alignment = 1; break;}
+    //case V_SgTypeWchar: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeComplex: 
+    //"Each complex type has the same representation and alignment requirements as 
+    //an array type containing exactly two elements of the corresponding real type"
+    {
+      SgTypeComplex::floating_point_precision_enum precision = 
+                       isSgTypeComplex(t)->get_precision();
+      if (precision == SgTypeComplex::e_floatPrecision)
+      { // recursive call to reuse modified float size/alignment by VS ABI. 
+        layout.size = 2*I386PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).size; 
+       layout.alignment = 
+             I386PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).alignment;
+      }
+      else if (precision == SgTypeComplex::e_doublePrecision)
+      {
+        layout.size = 2*I386PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).size; 
+        layout.alignment =I386PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).alignment;
+      }
+      else if (precision ==SgTypeComplex::e_longDoublePrecision)
+      {
+        layout.size = 2* I386PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).size; 
+        layout.alignment =I386PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).alignment;
+      }
+      else 
+      {
+        cerr<<"Unrecognized Complex type, must be one of float, double, and long double Complex"<<endl;
+        ROSE_ASSERT(false);  
+      }
+      break;
+    }
+    case V_SgTypeImaginary: 
+    {
+      SgTypeImaginary::floating_point_precision_enum precision = 
+                       isSgTypeImaginary(t)->get_precision();
+      if (precision == SgTypeImaginary::e_floatPrecision)
+      {
+        layout.size = I386PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).size; 
+        layout.alignment = I386PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).alignment;
+      }
+      else if (precision == SgTypeImaginary::e_doublePrecision)
+      {
+        layout.size = I386PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).size; 
+        layout.alignment = I386PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).alignment;
+      }
+      else if (precision ==SgTypeImaginary::e_longDoublePrecision)
+      {
+        layout.size = I386PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).size; 
+        layout.alignment = I386PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).alignment;
+      }
+      else 
+      {
+        cerr<<"Unrecognized Imaginary type, must be one of float, double, and long double _Imaginary"<<endl;
+        ROSE_ASSERT(false);  
+      }
+      break;
+    }
 
+#endif
     default: return ChainableTypeLayoutGenerator::layoutType(t);
   }
   return layout;
@@ -147,16 +222,26 @@ StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
   StructLayoutInfo layout;
   switch (t->variantT()) {
     case V_SgTypeBool: {layout.size = 1; layout.alignment = 1; break;}
+
     case V_SgTypeChar: {layout.size = 1; layout.alignment = 1; break;}
     case V_SgTypeSignedChar: {layout.size = 1; layout.alignment = 1; break;}
     case V_SgTypeUnsignedChar: {layout.size = 1; layout.alignment = 1; break;}
+
     case V_SgTypeShort: {layout.size = 2; layout.alignment = 2; break;}
+    case V_SgTypeSignedShort: {layout.size = 2; layout.alignment = 2; break;}
     case V_SgTypeUnsignedShort: {layout.size = 2; layout.alignment = 2; break;}
+
     case V_SgTypeInt: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgEnumType: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeSignedInt: {layout.size = 4; layout.alignment = 4; break;}
     case V_SgTypeUnsignedInt: {layout.size = 4; layout.alignment = 4; break;}
+
     case V_SgTypeLong: {layout.size = 8; layout.alignment = 8; break;}
+    case V_SgTypeSignedLong: {layout.size = 8; layout.alignment = 8; break;}
     case V_SgTypeUnsignedLong: {layout.size = 8; layout.alignment = 8; break;}
+
     case V_SgTypeLongLong: {layout.size = 8; layout.alignment = 8; break;}
+    //case V_SgTypeSignedLongLong: {layout.size = 8; layout.alignment = 8; break;}
     case V_SgTypeUnsignedLongLong: {layout.size = 8; layout.alignment = 8; break;}
 
     case V_SgTypeFloat: {layout.size = 4; layout.alignment = 4; break;}
@@ -165,6 +250,66 @@ StructLayoutInfo X86_64PrimitiveTypeLayoutGenerator::layoutType(SgType* t) const
 
     case V_SgPointerType: {layout.size = 8; layout.alignment = 8; break;}
     case V_SgReferenceType: {layout.size = 8; layout.alignment = 8; break;}
+#if 1    
+    //case V_SgTypeVoid: {layout.size = 1; layout.alignment = 1; break;}
+    //case V_SgTypeWchar: {layout.size = 4; layout.alignment = 4; break;}
+    case V_SgTypeComplex: 
+    //"Each complex type has the same representation and alignment requirements as 
+    //an array type containing exactly two elements of the corresponding real type"
+    {
+      SgTypeComplex::floating_point_precision_enum precision = 
+                       isSgTypeComplex(t)->get_precision();
+      if (precision == SgTypeComplex::e_floatPrecision)
+      { // recursive call to reuse modified float size/alignment by VS ABI. 
+        layout.size = 2*X86_64PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).size; 
+       layout.alignment = 
+             X86_64PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).alignment;
+      }
+      else if (precision == SgTypeComplex::e_doublePrecision)
+      {
+        layout.size = 2*X86_64PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).size; 
+        layout.alignment =X86_64PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).alignment;
+      }
+      else if (precision ==SgTypeComplex::e_longDoublePrecision)
+      {
+        layout.size = 2* X86_64PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).size; 
+        layout.alignment =X86_64PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).alignment;
+      }
+      else 
+      {
+        cerr<<"Unrecognized Complex type, must be one of float, double, and long double Complex"<<endl;
+        ROSE_ASSERT(false);  
+      }
+      break;
+    }
+    case V_SgTypeImaginary: 
+    {
+      SgTypeImaginary::floating_point_precision_enum precision = 
+                       isSgTypeImaginary(t)->get_precision();
+      if (precision == SgTypeImaginary::e_floatPrecision)
+      {
+        layout.size = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).size; 
+        layout.alignment = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildFloatType()).alignment;
+      }
+      else if (precision == SgTypeImaginary::e_doublePrecision)
+      {
+        layout.size = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).size; 
+        layout.alignment = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildDoubleType()).alignment;
+      }
+      else if (precision ==SgTypeImaginary::e_longDoublePrecision)
+      {
+        layout.size = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).size; 
+        layout.alignment = X86_64PrimitiveTypeLayoutGenerator::layoutType(buildLongDoubleType()).alignment;
+      }
+      else 
+      {
+        cerr<<"Unrecognized Imaginary type, must be one of float, double, and long double _Imaginary"<<endl;
+        ROSE_ASSERT(false);  
+      }
+      break;
+    }
+
+#endif
 
     default: return ChainableTypeLayoutGenerator::layoutType(t);
   }

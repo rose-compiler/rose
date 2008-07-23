@@ -1,9 +1,17 @@
 #include <stdbool.h>
+enum MyEnumType { ALPHA, BETA, GAMMA };
+enum MyEnumType myenum1;
 
+int array2[5][10];
+_Bool mybool;
 int a;
 float b;
 double c;
 long double d;
+
+double _Complex cplx;
+long double _Imaginary imgry;
+
 struct A {
   long v;
   int x;
@@ -44,3 +52,5 @@ struct D {
   int t;
 };
 struct D h;
+
+
