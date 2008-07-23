@@ -2,7 +2,10 @@
 # \
 exec tclsh "$0" "$@"
 
+if {[llength $argv] < 2} {error "Usage: $argv0 baseClassPairsFile outputFile"}
 set baseClassPairs [exec grep "class Sg.*: public .*" [lindex $argv 0] | cut -f 2,5 -d \ ]
+set outputFile [lindex $argv 1]
+set of [open $outputFile w]
 
 foreach {child base} $baseClassPairs {
   lappend children($base) $child
@@ -51,6 +54,7 @@ proc iterateMemoryPools {fields pools} {
 proc treeNode {tableName sageName fieldTypesAndNames} {
   # A field name beginning with - does not have its parent set to the
   # containing node, so we cannot find the containing node from it
+  global of
   set fieldTypes ""
   set fieldNames ""
   foreach {t n} $fieldTypesAndNames {
@@ -58,26 +62,26 @@ proc treeNode {tableName sageName fieldTypesAndNames} {
     if {[string index $n 0] == "-"} {set n [string range $n 1 end]}
     lappend fieldNames $n
   }
-  puts ":- prim(${tableName}, [llength [concat x $fieldTypes]],"
+  puts $of ":- prim(${tableName}, [llength [concat x $fieldTypes]],"
   set mainModeStr "+('SgNode*')"
   foreach i $fieldTypes {lappend mainModeStr "-('$i')"}
-  puts "\[rule(\[[join $mainModeStr ,\ ]\], \[cond(\"is${sageName}(\$0)\")"
+  puts $of "\[rule(\[[join $mainModeStr ,\ ]\], \[cond(\"is${sageName}(\$0)\")"
   set i 0
   foreach {t n} $fieldTypesAndNames {
     incr i ;# Done first to offset for extra $0 entry in param list
     if {[string index $n 0] == "-"} {set n [string range $n 1 end]}
-    puts ,[getField $sageName $t $n $i]
+    puts $of ,[getField $sageName $t $n $i]
   }
-  puts "\])"
+  puts $of "\])"
   set i 0
   foreach {t n} $fieldTypesAndNames {
     if {[string index $n 0] != "-"} {
-      puts ,[redirToParent $fieldTypes $i]
+      puts $of ,[redirToParent $fieldTypes $i]
     }
     incr i
   }
-  puts ,[iterateMemoryPools $fieldTypes [descendents $sageName]]
-  puts "\])."
+  puts $of ,[iterateMemoryPools $fieldTypes [descendents $sageName]]
+  puts $of "\])."
 }
 
 treeNode expression SgExpression {SgNode* -type}
@@ -145,6 +149,7 @@ unaryOp dereferenceOperator SgPointerDerefExp
 unaryOp throwOperator SgThrowOp
 
 proc listNode {tableName sageName otherFields args} {
+  global of
   set listFields $args
   set fields $otherFields
   foreach {ourName roseName roseType} $listFields {
@@ -152,10 +157,10 @@ proc listNode {tableName sageName otherFields args} {
   }
   treeNode $tableName $sageName $fields
   foreach {ourName roseName roseType} $listFields {
-    puts ":- prim(${tableName}${ourName}, 3,"
-    puts "        \[rule(\[+('SgNode*'), +('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0) && \$1 >= 0 && \$1 < is${sageName}(\$0)->get_${roseName}().size()\"), let('${roseType}::const_iterator', \$100, \"is${sageName}(\$0)->get_${roseName}().begin()\"), do(\"std::advance(\$100, \$1)\"), let('SgNode*', \$2, \"*(\$100)\")\]),"
-    puts "         rule(\[+('SgNode*'), -('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0)\"), iterRange(\$1, 0, \"is${sageName}(\$0)->get_${roseName}().size()\"), makeGround(\$1, 'int'), rescan\]),"
-    puts "         [iterateMemoryPools {int SgNode*} $sageName]\])."
+    puts $of ":- prim(${tableName}${ourName}, 3,"
+    puts $of "        \[rule(\[+('SgNode*'), +('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0) && \$1 >= 0 && \$1 < is${sageName}(\$0)->get_${roseName}().size()\"), let('${roseType}::const_iterator', \$100, \"is${sageName}(\$0)->get_${roseName}().begin()\"), do(\"std::advance(\$100, \$1)\"), let('SgNode*', \$2, \"*(\$100)\")\]),"
+    puts $of "         rule(\[+('SgNode*'), -('int'), -('SgNode*')\], \[cond(\"is${sageName}(\$0)\"), iterRange(\$1, 0, \"is${sageName}(\$0)->get_${roseName}().size()\"), makeGround(\$1, 'int'), rescan\]),"
+    puts $of "         [iterateMemoryPools {int SgNode*} $sageName]\])."
   }
 }
 
@@ -245,7 +250,7 @@ treeNode wcharType SgTypeWchar {}
 # Predicates
 
 # CFG
-puts {
+puts $of {
 :- prim(splitCfgNode, 3,
         [rule([+('VirtualCFG::CFGNode'), -('SgNode*'), -(int)],
 	      [let('SgNode*', $1, "$0.getNode()"),
@@ -266,7 +271,7 @@ treeNode node SgNode {}
 treeNode supportNode SgSupport {}
 treeNode locatedNode SgLocatedNode {}
 
-puts {
+puts $of {
 :- prim(parent, 2, % Parent then child
         [rule([-('SgNode*'), +('SgNode*')],
 	      [cond("$1"), let('SgNode*', $0, "$1->get_parent()")]),
@@ -277,7 +282,7 @@ puts {
 }
 
 # Compass
-puts {
+puts $of {
 :- prim(compassParameter, 2, % +ParamName, -Value
         [rule([+('std::string'), -('std::string')],
 	      [let('std::string', $1, "inputParameters[$0]")])]).
@@ -286,3 +291,6 @@ puts {
         [rule([+('SgNode*'), +('std::string'), +('std::string')],
               [do("output->addOutput(new Palette::CheckerOutput($0, $1, $2))")])]).
 }
+
+close $of
+exit 0

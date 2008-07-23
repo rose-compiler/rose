@@ -5,7 +5,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 PALETTEFLAGS = 
 
-BUILT_SOURCES = palette2cpp rose.P
+BUILT_SOURCES = palette2cpp $(srcdir)/rose.P
 
 bin_PROGRAMS = palette2cpp
 
@@ -37,10 +37,8 @@ sortTest_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 
 SUFFIXES = .P
 
-rose.P: $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h
-	tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h > rose.P
-
-CLEANFILES = rose.P
+$(srcdir)/rose.P: $(srcdir)/gen_rose_tables.tcl $(top_srcdir)/src/ROSETTA/src/*.C
+	${SHELL} $(top_srcdir)/config/missing --run tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h $(srcdir)/rose.P
 
 check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
