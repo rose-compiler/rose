@@ -268,6 +268,9 @@ these can be ignored.
      \item Change directory to the new compile tree directory. \\
            Type {\tt cd compileTree; }. This changes the current directory to the newly
            created directory.
+     \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
+           For example: {\tt
+           LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_35\_0/lib}
      \item Run the {\tt configure} script. \\
            Type {\tt \{AbsoluteOrRelativePath\}/configure --prefix=`pwd` --with-boost=[BOOST\_installTree]} 
            to run the ROSE {\tt configure} script.  The path to the configure script 
