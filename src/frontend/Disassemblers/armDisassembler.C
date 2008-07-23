@@ -229,11 +229,11 @@ namespace ArmDisassembler {
       SgAsmExpression* memref = makeMemoryReference(addr);
       uint8_t lsh = (bit20 ? 4 : 0) | (bit6 ? 2 : 0) | (bit5 ? 1 : 0);
       switch (lsh) {
-        case 0: ROSE_ASSERT (false); // Should have been handled in multiply code above
+        case 0: throw BadInstruction(); // FIXME ROSE_ASSERT (false); // Should have been handled in multiply code above
         case 1: return MAKE_INSN2(strh, 3, rd, memref);
         case 2: return MAKE_INSN2(ldrd, 3, rd, memref);
         case 3: return MAKE_INSN2(strd, 3, rd, memref);
-        case 4: ROSE_ASSERT (false); // Should have been handled in multiply code above
+        case 4: throw BadInstruction(); // FIXME ROSE_ASSERT (false); // Should have been handled in multiply code above
         case 5: return MAKE_INSN2(ldruh, 3, rd, memref);
         case 6: return MAKE_INSN2(ldrsb, 3, rd, memref);
         case 7: return MAKE_INSN2(ldrsh, 3, rd, memref);
@@ -531,7 +531,7 @@ namespace ArmDisassembler {
         return 0;
       }
       size_t fileOffset = getFileOffsetOfAddress(addr);
-      ROSE_ASSERT (fileOffset % 4 == 0);
+      if (addr % 4 != 0) {return NULL;}
       try {
         ROSE_ASSERT (fileOffset < ef->get_size());
         SgAsmArmInstruction* insn = disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
@@ -611,10 +611,7 @@ namespace ArmDisassembler {
       ExecHeader* hdr = headers[i];
       const Architecture& arch = hdr->get_target();
       InsSetArchitecture thisIsa = arch.get_isa();
-      if (isa == ISA_UNSPECIFIED) {
-        isa = thisIsa;
-      }
-      ROSE_ASSERT (isa == thisIsa);
+      isa = thisIsa;
     }
     ROSE_ASSERT (isa == ISA_ARM);
     Parameters p(0x0, true);

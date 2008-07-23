@@ -87,7 +87,7 @@ string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing
       result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs()) + ", ror " + unparseArmExpression(isSgAsmBinaryExpression(expr)->get_rhs());
       break;
     case V_SgAsmUnaryRrx:
-      result = unparseArmExpression(isSgAsmBinaryExpression(expr)->get_lhs()) + ", rrx";
+      result = unparseArmExpression(isSgAsmUnaryExpression(expr)->get_operand()) + ", rrx";
       break;
     case V_SgAsmBinaryAddPostupdate: // These are only used outside memory refs in LDM* and STM* instructions
     case V_SgAsmBinarySubtractPostupdate:
