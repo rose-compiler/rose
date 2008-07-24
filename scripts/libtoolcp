@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# This script copies libtool libraries (.la) and object files (.lo)
+# to a new location.  It is used by the ROSE build system and
+# supports the binary distribution of ROSE.
+
 set -e
 . $1
 
@@ -7,9 +11,16 @@ LA=$1
 LADIR=`dirname $LA`
 LAFILE=`basename $LA`
 
+echo "In libtoolcp: paramter 1 = $1  parameter 2 = $2 pic_object = $pic_object old_library = $old_library"
+
 mkdir -p $2
 cp -a $LA $2
+
+# du -a $2
+
+# DQ (7/23/2008): Fixed this since $2 has already been built ("-p" is not required).
 mkdir -p $2/.libs
+# mkdir $2/.libs
 
 # Set SRCFILE to be the file in '.libs' to copy.
 if test x"$pic_object" = x ; then  # Copying a '.la' file
@@ -18,7 +29,10 @@ else # Copying a '.lo' file
     SRCFILE=$LADIR/$pic_object
 fi
 
+echo "SRCFILE = $SRCFILE"
+
 cp -a $SRCFILE $2/.libs
+# cp -a $SRCFILE $2
 ln -s ../$LAFILE $2/.libs/$LAFILE
 
 # eof
