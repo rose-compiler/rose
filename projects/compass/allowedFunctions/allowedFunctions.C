@@ -5,6 +5,9 @@
 // Author: Gary M. Yuan
 // Date: 19-June-2008
 
+#include <stdlib.h>
+#include <errno.h>
+
 #include "compass.h"
 #include "allowedFunctions.h"
 
@@ -32,6 +35,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
    : Compass::TraversalBase(output, checkerName, shortDescription, longDescription), isGenerateCurrentListOfAllowedFunctions(false), allowedFunctionIndex(0), outf(0)
    {
      homeDir( sourceDirectory );
+//     sourceDirectory = "/home/yuan5/ROSE/JUN1708/SRC/projects/compass";
 
      try
      {
@@ -85,7 +89,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
          ss << "AllowedFunctions.Namespace" << i;
          allowedNamespaces.push_back(inputParameters[ss.str()]);
 
-         if( allowedFunctionIndex > 0 )
+         if( allowedFunctionIndex >= 0 )
          {
            (*outf) << ss.str() << "="
                    << inputParameters[ss.str()] << std::endl;
@@ -95,6 +99,30 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
      catch( const Compass::ParameterNotFoundException &e )
      {
      } //catch( const Compass::ParameterNotFoundException &e )
+
+     try
+     {
+       for( int i = 0; ; ++i )
+       {
+         std::stringstream ss;
+         ss << "AllowedFunctions.Library" << i;
+         std::string path( inputParameters[ss.str()] );
+
+         libraryPaths.push_back( path );
+         if( allowedFunctionIndex >= 0 )
+           (*outf) << ss.str() << "=" << path << std::endl;
+
+/*         char rpath[4096] = "\0";
+         realpath(path.c_str(), rpath); 
+         libraryPaths.push_back( std::string( rpath ) );
+
+         if( allowedFunctionIndex >= 0 )
+           (*outf) << ss.str() << "=" << rpath << std::endl; */
+       } //for i
+     } //try
+     catch( const Compass::ParameterNotFoundException &e )
+     {
+     } //catch( const Compass::ParameterNotFoundException &e ) 
    }
 
 void 
@@ -253,6 +281,34 @@ functionDeclarationHandler(
 {
   ROSE_ASSERT(fdecl != NULL);
 
+  StringUtility::FileNameClassification fdef_classification;
+  StringUtility::FileNameClassification fref_classification;
+
+  fref_classification = classifyFileName( frefFileName, sourceDirectory );
+
+
+// CHECKS FOR USER DEFINED FUNCTIONS AND CALLS ORIGINATING FROM LIBRARIES
+  if( fref_classification.getLocation() == FILENAME_LOCATION_LIBRARY )
+    return;
+  else if( fdecl->get_definition() != NULL )
+  {
+    fdef_classification = classifyFileName( 
+      fdecl->get_definition()->getFilenameString(), sourceDirectory );
+
+    if( fdef_classification.getLocation() == FILENAME_LOCATION_USER ) return;
+  } //else if( fdecl->get_definition() != NULL )
+  else
+  {
+    for( std::vector< std::string >::iterator itr = libraryPaths.begin();
+         itr != libraryPaths.end(); itr++ )
+    {
+      if( frefFileName.find( *itr ) != std::string::npos ) return;
+    } //for
+  } //else
+// CHECKS FOR USER DEFINED FUNCTIONS AND CALLS ORIGINATING FROM LIBRARIES END
+
+//  std::cout << "RefFname: " << frefFileName << "\t" << fref_classification.getLibraryName() << std::endl;
+
   std::stringstream ss;
   std::string qname;
   this->uniqueNameGenerator(ss, fdecl,qname);
@@ -283,23 +339,27 @@ functionDeclarationHandler(
         if( ss.str().find( *nsItr, 0 ) != std::string::npos ) break;
       } //for, failed to find in functions--checking namespaces/classes 
 
-      SgFunctionDefinition *fdef = fdecl->get_definition();
+/*      SgFunctionDefinition *fdef = fdecl->get_definition();
 
       if( fdef != NULL )
       {
-        classification = 
+        fdef_classification = 
           classifyFileName( fdef->getFilenameString(), sourceDirectory );
       }
 
       if( fdef != NULL && 
-          (classification.getLocation() == FILENAME_LOCATION_USER) )
+          (fdef_classification.getLocation() == FILENAME_LOCATION_USER) )
       {
       } // */
-      else if( nsItr != allowedNamespaces.end() )
+      //else if( nsItr != allowedNamespaces.end() )
+      if( nsItr != allowedNamespaces.end() )
       {
       } //else if, namespace entry
       else
+      {
+        std::cout << "RefFname: " << frefFileName << "\t" << fref_classification.getLibraryName() << std::endl;
         output->addOutput(new CheckerOutput(node, ss.str()));
+      }
 
     } //if( afItr == allowedFunctionSet.end() )
   } //else, check for allowed function, namespace, class

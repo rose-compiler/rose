@@ -45,6 +45,9 @@ including
 	switches the checker into detection mode where all function references
 	not read from the list in compass\_parameters are flagged as 
 	violations.
+\item AllowedFunctions.Library\# adds to a list of paths treated as safe
+	libraries. Any sources found in these paths will be ignored by 
+	allowedFunctions.
 \end{itemize}
 
 \subsection{Implementation}
@@ -88,3 +91,9 @@ for the function. This mangled string is looked up in the set of all allowed
 functions. If the function is found then execution continues; but a function
 that is not found in the set of allowed functions is reported as a violation.
 In general, this will be the mode most users will run AllowedFunctions under.
+
+Several exclusion mechanism are implemented by allowedFunctions for ignoring
+local function definitions and function calls occuring from source designated
+as a safe library. Their implementation relies on the file classification
+mechanism in ROSE string support to distinguish between user, system, and
+library sources.

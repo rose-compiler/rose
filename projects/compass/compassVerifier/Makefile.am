@@ -113,13 +113,16 @@ verify.makefile: verify.inc
 new_allow_list_setup: $(compass_srcdir)/allowedFunctions/custom_parameters
 	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
 	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow" > compass_parameters
-	declare -i count=`wc -l $(compass_srcdir)/allowedFunctions/custom_parameters | gawk '{print $$1}'` ;\
+#	declare -i count=`wc -l $(compass_srcdir)/allowedFunctions/custom_parameters | gawk '{print $$1}'` ;\
 	echo "AllowedFunctions.FunctionNum=$$count" >> compass_parameters ;\
 	while ((count > 0)) ;\
 	do \
 		echo "AllowedFunctions.Function$$((count-1))=`head -$$count $(compass_srcdir)/allowedFunctions/custom_parameters | tail -1`" >> compass_parameters ;\
 		((count--)) ;\
 	done
+	echo "AllowedFunctions.Library0=$(prefix)/include" >> compass_parameters
+	echo "AllowedFunctions.Library1=$(top_builddir)/include-staging" >> compass_parameters
+	echo "AllowedFunctions.FunctionNum=0" >> compass_parameters
 
 new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION $(compass_builddir)/buildCheckers.C new_allow_list_setup
 	sed -e 's@new Checker@0; //@' $(compass_srcdir)/compassSupport/compassTestMain.C > compassTestMain.C

@@ -36,13 +36,14 @@ namespace CompassAnalyses
              {
             // Checker specific parameters should be allocated here.
                private:
+                 std::vector< std::string > libraryPaths;
                  bool isGenerateCurrentListOfAllowedFunctions;
                  int allowedFunctionIndex;
                  std::string sourceDirectory;
                  std::ofstream *outf;
                  std::set<std::string> allowedFunctionSet;
                  std::vector<std::string> allowedNamespaces;
-                 StringUtility::FileNameClassification classification;
+//                 StringUtility::FileNameClassification classification;
 
 //               int parseParameter( const std::string & param );
 
