@@ -19,11 +19,13 @@ int DefUseAnalysis::sgNodeCounter = 1;
  * according to its dataflow (sequence)
  *********************************************************/
 int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
-  bool contained = searchVizzMap (sgNode);
-  if (contained) {
-    int nr = vizzhelp[sgNode];
-    return nr;
-  }
+  //  if (visualizationEnabled) {
+    bool contained = searchVizzMap (sgNode);
+    if (contained) {
+      int nr = vizzhelp[sgNode];
+      return nr;
+    }
+    //  }
   return -1;
 }
 
@@ -31,14 +33,17 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
  *  Add helping ID to each node for vizz purpose
  *********************************************************/
 bool DefUseAnalysis::addID(SgNode* sgNode) { 
+  //  if (visualizationEnabled) {
   if (searchVizzMap(sgNode)==false) {
 #pragma omp critical (DefUseAnalysisaddID) 
       {
+	ROSE_ASSERT(sgNode);
       sgNodeCounter++;
       vizzhelp[sgNode] = sgNodeCounter;
       }
       return true;
   }
+  //  }
   return false;
 }
 
@@ -78,7 +83,7 @@ void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode,
 				SgNode* defNode) { 
 #pragma omp critical (DefUseAnalysisaddUseE) 
   (*tabl)[sgNode].insert(make_pair(initName, defNode));
-  addID(sgNode);
+   addID(sgNode);
 }
 
 /**********************************************************
@@ -257,19 +262,32 @@ bool DefUseAnalysis::searchMap(SgNode* node) {
   return searchMap(&table, node);
 }
 
+
+
 /**********************************************************
  *  Search for the value for a certain key in the vizzmap
  *********************************************************/
 bool DefUseAnalysis::searchVizzMap(SgNode* node) {
   bool isCurrentValueContained=false;
+  //  std::cerr << " size of vizzhelp " << vizzhelp.size() << std::endl;
+  ROSE_ASSERT(node);
+
+  convtype::iterator i= vizzhelp.find(node);
+  if (i!=vizzhelp.end()) {
+    isCurrentValueContained=true;
+  }
+#if 0
     convtype::const_iterator i = vizzhelp.begin();
     i = vizzhelp.begin();
     //SgNode* sgNodeMM = NULL;
     for (; i != vizzhelp.end(); ++i) {
       SgNode* initNameMM = (*i).first;
-      if (initNameMM==node)
+      if (initNameMM==node) {
 	isCurrentValueContained=true;
+	break;
+      }
     } 
+#endif
   return isCurrentValueContained;
 }
 
@@ -278,14 +296,17 @@ bool DefUseAnalysis::searchVizzMap(SgNode* node) {
  *********************************************************/
 bool DefUseAnalysis::searchMap(const tabletype* ltable, SgNode* node) {
   bool isCurrentValueContained=false;
+  //  std::cerr << " size map : " << ltable->size() << std::endl;
+  if (ltable->size()>0) {
     tabletype::const_iterator i = ltable->begin();
-    //i = ltable.begin();
-    //SgNode* sgNodeMM = NULL;
     for (; i != ltable->end(); ++i) {
       SgNode* initNameMM = (*i).first;
-      if (initNameMM==node)
+      if (initNameMM==node) {
 	isCurrentValueContained=true;
+	break;
+      }
     } 
+  }
   return isCurrentValueContained;
 }
 
@@ -466,6 +487,7 @@ int DefUseAnalysis::run() {
   ROSE_ASSERT(project != NULL);
 
   table.clear();
+  vizzhelp.clear();
 
   clock_t start = clock();
   find_all_global_variables();
