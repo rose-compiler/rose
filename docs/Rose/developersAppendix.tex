@@ -743,4 +743,44 @@ Details: \\
 \end{enumerate}
 
 
+\section{How To Build a Binary Distribution}
+
+   The construction of a binary distribution is done as part of making
+ROSE available externally on the web to users who do not have an EDG
+licence.  We make only the EDG part of ROSE available as a binary (library) 
+and the rest is left as source code (just as in an all source distribution).
+
+There are a few steps:
+\begin{enumerate}
+   \item Configure and build ROSE normally, using configure (use all options that you
+    require in the binary distribution).  
+   \item (optional) Run {\tt make dist}, this will build an {\em all source distribution} of ROSE.
+   \item Rerun configure without the {\tt --with-edg_source_code=true} option.
+   \item Run {\tt make dist}, this will build a binary distribution using the 
+    binary libraries build in step one.
+
+\end{enumerate}
+
+
+\section{Avoiding Nightly Backups of Unrequired ROSE Files at LLNL}
+
+   If your at LLNL and participating in the nightly builds and
+regression testing of ROSE, then it is kind to the admin staff
+to avoid having your testing directory 
+(\em often many gigabytes of files} backed up nightly.
+
+   There is a file {\tt .nsr} that you can put into
+any directory that you don't need to have backed up.
+The syntax of the text in the file is:
+{\tt skip: .}
+
+Additional examples are:
+# The directives in this file are for the legato backup system
+# Here we specify not to backup any of the following file types:
++skip: *.ppm *.o *.show*
+
+More information can be found at: \\
+   www.ipnom.com/Legato-NetWorker-Commands/nsr.5.html
+
+Thanks for saving a number of people a lot of work.
 

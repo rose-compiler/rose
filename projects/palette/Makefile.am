@@ -38,7 +38,7 @@ sortTest_DEPENDENCIES = $(dist_data_DATA) palette2cpp
 SUFFIXES = .P
 
 $(srcdir)/rose.P: $(srcdir)/gen_rose_tables.tcl $(top_srcdir)/src/ROSETTA/src/*.C
-	${SHELL} $(top_srcdir)/config/missing --run tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h $(srcdir)/rose.P
+	if test -w $(srcdir)/rose.P; then ${SHELL} $(top_srcdir)/config/missing --run tclsh $(srcdir)/gen_rose_tables.tcl $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h $(srcdir)/rose.P; fi
 
 check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@if [ -e compass_parameters ]; then echo "Please remove compass_parameters before running \"make check\"" 1>&2; exit 1; fi
@@ -58,4 +58,4 @@ check-local: switch_without_default null_deref qsolve simple_example sortTest
 	@rm compass_parameters current_answers current_answers.temp
 	@echo "Test passed"
 
-EXTRA_DIST = check_correct_answers gen_rose_tables.tcl
+EXTRA_DIST = check_correct_answers gen_rose_tables.tcl rose.P

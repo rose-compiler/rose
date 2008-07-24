@@ -1103,241 +1103,6 @@ developersScratchSpace/Dan/Yices_tests/Makefile
 developersScratchSpace/Dan/Compass_tests/Makefile
 ])
 
-#AS(03/12/2008) NameConsistancyChecker is now part of compass
-#projects/NameConsistancyChecker/Makefile
-
-# DQ (1/24/2008): Removed these directories and consolidated the files.
-# src/midend/astOutlining/src/Makefile
-# src/midend/astOutlining/src/ASTtools/Makefile
-# src/midend/astOutlining/src/CPreproc/Makefile
-# src/midend/astOutlining/src/Preprocess/Makefile
-# src/midend/astOutlining/src/Transform/Makefile
-
-# DQ (1/18/2008): I have removed this since it is old code superseded by zgrviewer.
-# (zgrviewer is a dot file viewer available on the web, SourceForge).
-# src/roseIndependentSupport/visualization/Makefile
-
-# DQ (1/18/2008): I have removed this since it is old code superseded by a newer design.
-# src/roseIndependentSupport/graphics/Makefile
-
-# JJW 5-22-2008 ROSE can't be compiled (even without --with-gcj) without gcj when these are included
-# projects/FiniteStateModelChecker/MopsForROSE/Makefile
-# projects/FiniteStateModelChecker/src/Makefile
-
-# DQ (1/7/2008): I would like to have compassVerify not use a util directory.
-# At least I would like to not reproduce the MPI stuff which is not required.
-# projects/compass/compassVerifier/util/Makefile
-# projects/compass/compassVerifier/util/C-API/Makefile
-# projects/compass/compassVerifier/util/MPIAbstraction/Makefile
-# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/Makefile
-# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/Makefile
-# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/Makefile
-# projects/compass/compassVerifier/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/mpi2c++/Makefile
-
-
-# DQ (1/4/2008): Removed while Liao works on getting this test directory to compile.
-# projects/OpenMP_Translator/tests/cvalidationsuite/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/CG/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/EP/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/FT/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
-# projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
-
-
-
-# DQ (1/2/2008): Removed since it is not used anymore.
-# developersScratchSpace/Dan/FortranParserInterface/Makefile
-# developersScratchSpace/Dan/FortranUnparser_tests/Makefile
-# src/midend/astProcessing/CocoPreprocessor/Makefile
-
-# DQ (1/2/2008): Removed in favor of new Open Fortran Parser based Fortran support in ROSE
-# (saved for possible later use).
-# src/frontend/Open64_SAGE_Connection/Makefile
-# src/frontend/Open64_SAGE_Connection/lib/Makefile
-# src/frontend/Open64_SAGE_Connection/lib/support/Makefile
-# src/frontend/Open64_SAGE_Connection/whirl2rose/Makefile
-
-# DQ (5/3/2007): Removed older versions of program analysis in favor of Christian's newer work.
-#src/midend/programAnalysis/dominatorTreesAndDominanceFrontiers/Makefile
-#src/midend/programAnalysis/proceduralSlicing/Makefile
-#src/midend/programAnalysis/staticProgramSlicing/Makefile
-
-# DQ (1/2/2007): Removed (astProcessingExamples are in the tutorial and the absolute 
-# paths are too long for the poxis standard GNU tar 1.14.
-# docs/testDoxygen_copy/test.cfg
-# docs/testDoxygen_copy/Makefile
-# exampleTranslators/documentedExamples/astProcessingExamples/Makefile
-# exampleTranslators/documentedExamples/astProcessingExamples/printVars/Makefile
-# exampleTranslators/documentedExamples/astProcessingExamples/printLoopInfo/Makefile
-# projects/containerParallelizer/Makefile
-# projects/containerParallelizer/test/Makefile
-# projects/containerParallelizer/CPAnalysis/Makefile
-# projects/containerParallelizer/CPTransformation/Makefile
-
-# DQ (9/11/2006): Remove these directories of old performance tests, but leave the 
-# tests/PerformanceTests directory for future use.
-# tests/PerformanceTests/A++Tests/Makefile
-# tests/PerformanceTests/P++Tests/Makefile
-
-# DQ (9/11/2006): ROSE is an internal tool and not documented in 
-# the more public distribution of ROSE.
-# docs/Rosetta/Makefile
-
-# DQ (9/3/2006): This is now redundant with the Cxx_tests directory (and a few others)
-# tests/CompileTests/C++Code/Makefile
-
-# DQ (9/3/2006): Removed in preference to the newer work on OpenMP.
-# projects/OpenMPPreprocessor/Makefile
-
-# DQ (5/31/2006): Added new tests and reorganized how we test ROSE options
-# tests/CompilerOptionsTests/A++Code/Makefile
-
-# DQ (3/27/2006): Removed these make testing go faster (put them back in after we pass all other tests cleanly) 
-# tests/CompileTests/Makefile
-# tests/CompileTests/A++Tests/Makefile
-# tests/CompileTests/P++Tests/Makefile
-# tests/CompileTests/A++Code/Makefile
-# tests/CompileTests/C++Code/Makefile
-# tests/CompileTests/OvertureCode/Makefile
-
-# DQ (3/27/2006): Removed these until I get a betterMakefile.am (fails: make distcheck)
-# tests/CompileTests/ElsaTestCases/Makefile
-
-# DQ (3/25/2006): Removed these until I hear from Qing and Markus
-# developersScratchSpace/Qing/Makefile
-# developersScratchSpace/Markus/Makefile
-# developersScratchSpace/Markus/OmpTransformations/Makefile
-
-# DQ (3/3/2006): Removed from use (very old documentation)
-# docs/Rose/reference.tex
-
-# DQ (1/30/2006): Removed from use (very old documentation)
-# src/frontend/SageIII/sage.docs
-
-# DQ (5/3/2005): This should be moved to ROSE/src (where libraries live)
-# src/roseIndependentSupport/graphicalUserInterface/src/QRoseLib/Makefile
-# DQ (5/3/2005): These have to be moved to the ROSE/exampleTranslators
-# src/roseIndependentSupport/graphicalUserInterface/src/samples/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/samples/slicing/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/samples/attributes/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/samples/query/Makefile
-# src/roseIndependentSupport/graphicalUserInterface/src/samples/layout/Makefile
-
-# removed to permit compilation of ROSE 0.8.0a->b, MS:10/26/04
-# projects/AtermTranslation/Makefile
-
-
-# Removed to permit test of distcheck as part of preparation for checking in the rewrite
-# mechanism.  Files in these directories either use the old rewrite mechanism or 
-# demonstrate some problem with the latest work (at any rate, some collaboration within
-# the ROSE team is required to check out the problems).
-#
-
-# DQ (10/22/2004): Could not get these to work with "make distcheck" rule (try again later)
-# src/3rdPartyLibraries/checkPointLibrary/Makefile
-
-# Relocated to ROSE/src/roseExtensions/databaseConnection
-# projects/dataBase/Makefile
-# projects/dataBase/GlobalDatabaseConnection.C
-
-# roseLibs/Makefile
-# src/midend/loopProcessing/test/Makefile
-
-# src/midend/loopProcessing/Makefile 
-# src/midend/programAnalysis/Makefile
-# src/command_line_options/Makefile
-
-# MSTL/Makefile
-# AstProcessingLib/Makefile
-# AstProcessingLib/CocoPreprocessor/Makefile
-# ProgramAnalysis/Makefile
-# ProgramAnalysis/OAWrap/Makefile
-# ProgramAnalysis/CFG/Makefile
-# ProgramAnalysis/dataflowAnalysis/Makefile
-# ProgramAnalysis/valuePropagation/Makefile
-
-# AST_RewriteMechanism/Makefile
-# ROSETTA_EXAMPLES/Makefile
-# ROSETTA_EXAMPLES/ArrayASTRestructuringTool/Makefile
-# ROSETTA_EXAMPLES/Cxx_ASTRestructuringTool/Makefile
-# EXAMPLES/Makefile
-
-# coco/Makefile
-# coco/sources/Makefile
-# coco/cplus2/Makefile
-# QueryLibs/Makefile
-# QueryLibs/BooleanQuery/Makefile
-# QueryLibs/NodeQuery/Makefile
-# QueryLibs/NameQuery/Makefile
-# QueryLibs/NumberQuery/Makefile
-# PDF/Makefile
-
-# config/Makefile
-# GNU_HEADERS/Makefile
-# GNU_HEADERS/hdrs1/Makefile
-# GNU_HEADERS/hdrs1/std/Makefile
-# GNU_HEADERS/hdrs3/Makefile
-# GNU_HEADERS/hdrs3/objc/Makefile
-# midend/Makefile
-# midend/astUtil/Makefile
-# midend/astUtil/annotation/Makefile
-# midend/astUtil/astInterface/Makefile
-# midend/astUtil/astSupport/Makefile
-# midend/astUtil/symbolicVal/Makefile
-
-# ExamplePreprocessors/A++P++Preprocessor/Makefile
-# ExamplePreprocessors/A++P++Preprocessor/IndexOffsetQuery/Makefile
-# ExamplePreprocessors/A++P++Preprocessor/ArrayAssignmentStatementQuery/Makefile
-# ExamplePreprocessors/A++P++Preprocessor/ScalarIndexingStatementQuery/Makefile
-
-# src/exampleTranslators/OpenMPPreprocessor/Makefile
-# src/exampleTranslators/PDFGenerator/Makefile
-# src/exampleTranslators/AstCopyReplTester/Makefile
-# src/exampleTranslators/DOTGenerator/Makefile
-# src/exampleTranslators/AnalysisPreprocessor/Makefile
-# src/exampleTranslators/SvPabloPreprocessor/Makefile
-# src/exampleTranslators/DataStructurePreprocessor/Makefile
-# src/exampleTranslators/BabelPreprocessor/Makefile
-
-# SAGE/Makefile
-# SAGE/sage.docs
-
-# ROSETTA/Makefile
-# ROSETTA/src/Makefile
-
-# util/Makefile
-# util/support/Makefile
-# util/graphs/Makefile
-
-# ExamplePreprocessors/Makefile
-# ExamplePreprocessors/DefaultPreprocessor/Makefile
-# ExamplePreprocessors/OpenMPPreprocessor/Makefile
-# ExamplePreprocessors/PDFGenerator/Makefile
-# ExamplePreprocessors/AstCopyReplTester/Makefile
-# ExamplePreprocessors/DOTGenerator/Makefile
-# ExamplePreprocessors/AnalysisPreprocessor/Makefile
-# ExamplePreprocessors/SvPabloPreprocessor/Makefile
-# ExamplePreprocessors/DataStructurePreprocessor/Makefile
-# ExamplePreprocessors/BabelPreprocessor/Makefile
-# ExamplePreprocessors/DocumentedExamples/Makefile
-# ExamplePreprocessors/DocumentedExamples/SimplePreprocessorExamples/Makefile
-# ExamplePreprocessors/DocumentedExamples/SimplePreprocessorExamples/exampleMakefile
-# ExamplePreprocessors/DocumentedExamples/AstRewriteExamples/Makefile
-# ExamplePreprocessors/DocumentedExamples/AstProcessingExamples/Makefile
-# ExamplePreprocessors/DocumentedExamples/DataBaseExamples/Makefile
-
-# src/EDG_Connection/Makefile
-# EDG_3.3/Makefile
-# EDG_3.3/misc/Makefile
-# EDG_3.3/src/Makefile
-# EDG_3.3/util/Makefile
-# EDG/Makefile
-# EDG/misc/Makefile
-# EDG/errinfo/Makefile
-# EDG/src/Makefile
-# EDG/util/Makefile
-
 # echo "At bottom of configure.in: with_edg_source_code = $with_edg_source_code"
 
 AC_CONFIG_COMMANDS([default],[[
@@ -1345,31 +1110,32 @@ AC_CONFIG_COMMANDS([default],[[
      pathToSourceDir=`cd $srcdir && pwd`
      test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s $pathToSourceDir/src/ROSETTA/Grammar src/ROSETTA/Grammar )
 
-   # Note that the value of $with_edg_source_code is not available here unless it is exported (now fixed)
-   # echo "How is this set: with_edg_source_code = $with_edg_source_code"
-     if test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
-          echo "Copying $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/CxxFrontend/EDG_3.3/src"
-        # cp -p $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.a  src/frontend/CxxFrontend/EDG_3.3/src
-          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la src/frontend/CxxFrontend/EDG_3.3/src
-     else
-          if test "$with_edg_source_code" = true; then
-               echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
-#           else
-#              echo "$pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
-          fi
-     fi
+# DQ (7/23/2008): Now that we handle this in the Makefile.am we don't need it here, I think.
+#    # Note that the value of $with_edg_source_code is not available here unless it is exported (now fixed)
+#    # echo "How is this set: with_edg_source_code = $with_edg_source_code"
+#      if test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
+#           echo "Copying $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/CxxFrontend/EDG_3.3/src"
+#         # cp -p $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.a  src/frontend/CxxFrontend/EDG_3.3/src
+#           $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la src/frontend/CxxFrontend/EDG_3.3/src
+#      else
+#           if test "$with_edg_source_code" = true; then
+#                echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
+# #           else
+# #              echo "$pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
+#           fi
+#      fi
 
-     if test -r $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo ; then
-          echo "Copying $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo binary to compile tree src/frontend/EDG_SAGE_Connection"
-        # cp -p $pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so  src/frontend/EDG_SAGE_Connection
-          $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo src/frontend/EDG_SAGE_Connection
-     else
-          if test "$with_edg_source_code" = true; then
-               echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
-#           else
-#              echo "$pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so not found, rerun configure --with-edg_source_code ..."
-          fi
-     fi
+#      if test -r $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo ; then
+#           echo "Copying $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo binary to compile tree src/frontend/EDG_SAGE_Connection"
+#         # cp -p $pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so  src/frontend/EDG_SAGE_Connection
+#           $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo src/frontend/EDG_SAGE_Connection
+#      else
+#           if test "$with_edg_source_code" = true; then
+#                echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
+# #           else
+# #              echo "$pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so not found, rerun configure --with-edg_source_code ..."
+#           fi
+#      fi
 ]],[[
 # These set the environment for commands executing after file generations.
 srcdir=$srcdir
