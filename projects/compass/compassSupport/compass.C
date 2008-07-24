@@ -68,20 +68,11 @@ void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* def
   }
 
 
-  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
-  typedef std::map< SgNode* , multitype > tabletype;
-  tabletype tabl;
-
   for (unsigned int i=0; i <arrsize;i+=3) {
     unsigned int first = values[i];
     unsigned int second = values[i+1];
     unsigned int third = values[i+2];
     //        cerr << i << "/"<<arrsize<<"::  first : " << first << " second : " << second << " third : " << third << endl;
-    /*
-    SgNode* node1 = nodeMap.find(first)->second;
-    SgInitializedName* node2 = isSgInitializedName(nodeMap.find(second)->second);
-    SgNode* node3 = nodeMap.find(third)->second;
-    */
     SgNode* node1 = nodeMap[first];
     SgInitializedName* node2 = isSgInitializedName(nodeMap[second]);
     SgNode* node3 = nodeMap[third];
@@ -90,14 +81,9 @@ void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* def
     ROSE_ASSERT(node3);
 
     if (definition)
-      //      (tabl)[node1].insert(std::make_pair(node2, node3));
-      defuse->addDefElement(node1, node2, node3);
-#if 0
-    if (definition)
       defuse->addDefElement(node1, node2, node3);
     else
       defuse->addUseElement(node1, node2, node3);
-#endif
   }
 
   if (my_rank==0) {
@@ -346,12 +332,14 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     Compass::gettime(b_time_node);
   }
 
-  /*
+
+  // tps: This version seems slightly faster than the one following
   MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
 		 offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
   MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
 		 offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
-  */
+
+  /*
   // alternative faster algorithm
   MPI_Gatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
 	      offset, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
@@ -366,7 +354,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   }
   MPI_Bcast(def_values_global, global_arrsize, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
   MPI_Bcast(use_values_global, global_arrsizeUse, MPI_UNSIGNED,  0,  MPI_COMM_WORLD);
-
+  */
 
   /* communicate all results */
   std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;

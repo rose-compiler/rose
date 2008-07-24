@@ -13,6 +13,26 @@
 #include "support.h"
 #include "DFAFilter.h"
 
+#include <iostream>
+
+#include <ext/hash_map>
+#include <ext/hash_set>
+
+namespace __gnu_cxx {
+  template <> struct hash <SgNode*> {
+    size_t operator()(SgNode* const & n) const {
+      return (size_t) n;
+    }
+    size_t operator()(SgNode* const & n1, SgNode* const & n2) const {
+      ROSE_ASSERT(n1);
+      ROSE_ASSERT(n2);
+      return ( n1==n2);
+    }
+  };
+}
+
+
+
 class DefUseAnalysis : public DFAnalysis, Support {
  private:
   SgProject* project;
@@ -20,11 +40,13 @@ class DefUseAnalysis : public DFAnalysis, Support {
   bool DEBUG_MODE_EXTRA;
   std::vector<SgInitializedName*> globalVarList;
 
+  bool visualizationEnabled;
+
   // def-use-specific --------------------
   typedef std::multimap < SgInitializedName* , SgNode* > multitype;
   typedef std::map< SgNode* , multitype > tabletype;
-  typedef std::map< SgNode* , int > convtype;
-  //typedef std::multimap< SgNode* , SgInitializedName* > ideftype;
+  // typedef std::map< SgNode* , int > convtype;
+  typedef __gnu_cxx::hash_map< SgNode* , int > convtype;
 
 
   // local functions ---------------------
@@ -52,7 +74,15 @@ class DefUseAnalysis : public DFAnalysis, Support {
   void printAnyMap(tabletype* tabl);
 
  public:
-  DefUseAnalysis(SgProject* proj): project(proj), DEBUG_MODE(false), DEBUG_MODE_EXTRA(false){};
+  DefUseAnalysis(SgProject* proj): project(proj), 
+    DEBUG_MODE(false), DEBUG_MODE_EXTRA(false){
+    //visualizationEnabled=true;
+    //table.clear();
+    //usetable.clear();
+    //globalVarList.clear();
+    //vizzhelp.clear();
+    //sgNodeCounter=0;
+  };
   virtual ~DefUseAnalysis() {}
 
   std::map< SgNode* , std::multimap <SgInitializedName* , SgNode* >  > getDefMap() { return table;}
@@ -103,13 +133,24 @@ class DefUseAnalysis : public DFAnalysis, Support {
    usetable.clear();
    globalVarList.clear();
    vizzhelp.clear();
-   sgNodeCounter=0;
+   sgNodeCounter=1;
    //  nrOfNodesVisited=0;
+  }
+
+  void flushHelp() {
+   vizzhelp.clear();
+   sgNodeCounter=1;
+  }
+
+  void disableVisualization() {
+    visualizationEnabled=false;
   }
 
   void flushDefuse() {
    table.clear();
    usetable.clear();
+   //   vizzhelp.clear();
+   //sgNodeCounter=1;
   }
 };
 
