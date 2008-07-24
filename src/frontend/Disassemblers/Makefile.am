@@ -10,7 +10,7 @@ noinst_LTLIBRARIES = libroseDisassemblers.la
 endif
 
 libroseDisassemblers_la_DEPENDENCIES =
-libroseDisassemblers_la_SOURCES = x86Disassembler.C armDisassembler.C putInstructionsIntoBasicBlocks.C disassemblers.h
+libroseDisassemblers_la_SOURCES = x86Disassembler.C armDisassembler.C putInstructionsIntoBasicBlocks.C disassemblers.h disassemblerCommon.C
 
 dist_include_HEADERS = disassemblers.h
 

@@ -326,7 +326,7 @@ namespace ArmDisassembler {
     }
 
     SgAsmArmInstruction* disassemble() {
-      fprintf(stderr, "Disassembling insn 0x%08" PRIx32 " at addr 0x%08" PRIx32 "\n", insn, p.ip);
+      // fprintf(stderr, "Disassembling insn 0x%08" PRIx32 " at addr 0x%08" PRIx32 "\n", insn, p.ip);
       uint8_t condField = (insn >> 28) & 0xF;
       bool bit4 = (insn >> 4) & 1;
       bool bit7 = (insn >> 7) & 1;
@@ -482,200 +482,13 @@ namespace ArmDisassembler {
     if (positionInVector >= insnSize || positionInVector + 4 > insnSize) {
       abort();
     }
+    // FIXME: This code assumes a little-endian ARM system
     uint32_t c = insn[positionInVector + 3];
     c = (c << 8) | insn[positionInVector + 2];
     c = (c << 8) | insn[positionInVector + 1];
     c = (c << 8) | insn[positionInVector];
     SingleInstructionDisassembler sid(p, c, knownSuccessorsReturn);
     return sid.disassemble();
-  }
-
-
-  struct AsmFileWithData {
-    ExecFile* ef;
-    mutable size_t instructionsDisassembled;
-
-    AsmFileWithData(ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
-
-    ExecSection* getSectionOfAddress(uint64_t addr) const {
-      const vector<ExecSection*>& sections = ef->get_sections();
-      vector<ExecSection*> possibleSections;
-      for (size_t i = 0; i < sections.size(); ++i) {
-        ExecSection* section = sections[i];
-        if (!section->is_mapped()) continue;
-        ExecHeader* header = section->get_header();
-        ROSE_ASSERT (header);
-        uint64_t rva = addr - header->get_base_va();
-        bool isInSection = (rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_size());
-        if (isInSection) possibleSections.push_back(section);
-      }
-      if (possibleSections.empty()) {
-        return NULL;
-      } else if (possibleSections.size() != 1) {
-        cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
-        abort();
-      }
-      return possibleSections[0];
-    }
-
-    bool inCodeSegment(uint64_t addr) const {
-      ExecSection* sectionOfThisPtr = getSectionOfAddress(addr);
-      if (sectionOfThisPtr != NULL &&
-          sectionOfThisPtr->is_mapped() &&
-          sectionOfThisPtr->get_eperm()) {
-        return true;
-      }
-      return false;
-    }
-
-    size_t getFileOffsetOfAddress(uint64_t addr) const {
-      ExecSection* section = getSectionOfAddress(addr);
-      if (!section) abort();
-      ROSE_ASSERT (section->is_mapped());
-      ExecHeader* header = section->get_header();
-      ROSE_ASSERT (header);
-      uint64_t rva = addr - header->get_base_va();
-      return rva - section->get_mapped_rva() + section->get_offset();
-    }
-
-    SgAsmArmInstruction* disassembleOneAtAddress(uint64_t addr, Parameters params, set<uint64_t>& knownSuccessors) const {
-      params.ip = addr;
-      if (!inCodeSegment(addr)) {
-        return 0;
-      }
-      size_t fileOffset = getFileOffsetOfAddress(addr);
-      if (addr % 4 != 0) {return NULL;}
-      try {
-        ROSE_ASSERT (fileOffset < ef->get_size());
-        SgAsmArmInstruction* insn = disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
-        ROSE_ASSERT (insn);
-        return insn;
-      } catch (BadInstruction) {
-        knownSuccessors.clear();
-        return 0;
-      } catch (OverflowOfInstructionVector) {
-        return 0;
-      }
-    }
-
-    // Value field of basicBlockStarts is whether the block came from a
-    // parameter, or just a constant jump target or fallthrough (when true, it
-    // states that an indirect jump may be pointing there)
-
-    void disassembleRecursively(uint64_t addr, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
-      vector<uint64_t> worklist(1, addr);
-      disassembleRecursively(worklist, params, insns, basicBlockStarts, functionStarts);
-    }
-
-    void disassembleRecursively(vector<uint64_t>& worklist, Parameters params, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
-      while (!worklist.empty()) {
-        uint64_t addr = worklist.back();
-        worklist.pop_back();
-        if (insns.find(addr) != insns.end()) continue;
-        ++instructionsDisassembled;
-        if (instructionsDisassembled % 10000 == 0) {
-          cerr << instructionsDisassembled << " disassembling " << addr << " worklist size = " << worklist.size() << ", done = " << insns.size() << endl;
-        }
-        set<uint64_t> knownSuccessors;
-        SgAsmArmInstruction* insn = disassembleOneAtAddress(addr, params, knownSuccessors);
-        if (!insn) {cerr << "Bad instruction at 0x" << hex << addr << endl; continue;}
-        insns.insert(make_pair(addr, insn));
-        for (set<uint64_t>::const_iterator i = knownSuccessors.begin(); i != knownSuccessors.end(); ++i) {
-          if (!inCodeSegment(*i)) { /* cerr << "Found succ outside code segment at 0x" << hex << *i << endl; */ continue;} // Assume no jumps to data segments
-          if (knownSuccessors.size() != 1 || *i != addr + insn->get_raw_bytes().size()) {
-            basicBlockStarts[*i] |= false; // Ensure it exists, but don't change its value if it was already true
-            // basicBlockStarts[*i] = true; // Be more conservative
-          }
-          if (insns.find(*i) == insns.end()) {
-            worklist.push_back(*i);
-          }
-        }
-        // Scan for constant operands that are code pointers
-        SgAsmOperandList* ol = insn->get_operandList();
-        const vector<SgAsmExpression*>& operands = ol->get_operands();
-        for (size_t i = 0; i < operands.size(); ++i) {
-          uint64_t constant = 0;
-          switch (operands[i]->variantT()) {
-            case V_SgAsmWordValueExpression: constant = isSgAsmWordValueExpression(operands[i])->get_value(); break;
-            case V_SgAsmDoubleWordValueExpression: constant = isSgAsmDoubleWordValueExpression(operands[i])->get_value(); break;
-            case V_SgAsmQuadWordValueExpression: constant = isSgAsmQuadWordValueExpression(operands[i])->get_value(); break;
-            default: continue; // Not an appropriately-sized constant
-          }
-          if (inCodeSegment(constant)) {
-            basicBlockStarts[constant] = true;
-            if (insns.find(constant) == insns.end()) {
-              worklist.push_back(constant);
-            }
-          }
-        }
-      }
-    }
-
-  };
-
-  void disassembleFile(SgAsmFile* f) {
-    ExecFile* ef = Exec::parse(f->get_name().c_str());
-    AsmFileWithData file(ef);
-    // FIXME: Does not handle multi-architecture binaries
-    InsSetArchitecture isa = ISA_UNSPECIFIED;
-    const vector<ExecHeader*>& headers = ef->get_headers();
-    ROSE_ASSERT (!headers.empty());
-    for (size_t i = 0; i < headers.size(); ++i) {
-      ExecHeader* hdr = headers[i];
-      const Architecture& arch = hdr->get_target();
-      InsSetArchitecture thisIsa = arch.get_isa();
-      isa = thisIsa;
-    }
-    ROSE_ASSERT (isa == ISA_ARM);
-    Parameters p(0x0, true);
-    map<uint64_t, SgAsmInstruction*> insns;
-    map<uint64_t, bool> basicBlockStarts;
-    set<uint64_t> functionStarts;
-    uint64_t entryPoint = headers[0]->get_entry_rva() + headers[0]->get_base_va();
-    basicBlockStarts[entryPoint] = true;
-    functionStarts.insert(entryPoint);
-    file.disassembleRecursively(entryPoint, p, insns, basicBlockStarts, functionStarts);
-
-    const vector<ExecSection*>& sections = ef->get_sections();
-    size_t pointerSize = 4;
-    for (size_t i = 0; i < sections.size(); ++i) {
-      ExecSection* sect = sections[i];
-      if (sect->is_mapped()) { // FIXME: Look for NOBITS sections
-        // Scan for pointers to code
-        uint64_t endOffset = sect->end_offset();
-        ROSE_ASSERT (endOffset <= ef->get_size());
-        for (uint64_t j = sect->get_offset();
-             j + pointerSize <= endOffset;
-             j += pointerSize) {
-          uint64_t addr = 0;
-          // FIXME: assumes file is little endian
-          for (size_t k = pointerSize; k > 0; --k) {
-            addr <<= 8;
-            addr |= ef->content()[j + k - 1];
-          }
-          ExecHeader* header = sect->get_header();
-          ROSE_ASSERT (header);
-          addr += header->get_base_va();
-          if (file.inCodeSegment(addr)) {
-            basicBlockStarts[addr] = true;
-            file.disassembleRecursively(addr, p, insns, basicBlockStarts, functionStarts);
-          }
-        }
-      }
-    }
-    map<uint64_t, SgAsmBlock*> basicBlocks;
-    for (map<uint64_t, bool>::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
-      uint64_t addr = i->first;
-      SgAsmBlock* b = new SgAsmBlock();
-      b->set_address(addr);
-      b->set_id(addr);
-      b->set_externallyVisible(i->second);
-      basicBlocks[addr] = b;
-    }
-    SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
-    f->set_global_block(blk);
-    blk->set_parent(f);
-    blk->set_externallyVisible(true);
   }
 
 }

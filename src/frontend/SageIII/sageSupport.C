@@ -4947,28 +4947,7 @@ SgFile::callFrontEnd ()
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
-                         switch (asmFile->get_machine_architecture())
-                            {
-                              case SgAsmFile::e_machine_architecture_Intel_80386:
-                              case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:
-                                   X86Disassembler::disassembleFile(asmFile);
-                                   break;
-
-                              case SgAsmFile::e_machine_architecture_ARM:
-                                   ArmDisassembler::disassembleFile(asmFile);
-                                   break;
-
-                              default:
-                                 {
-                                   cerr << "Cannot handle files with this architecture -- not disassembling" << endl;
-
-                                // To prevent crashes
-                                   asmFile->set_global_block(new SgAsmBlock());
-
-                                   printf ("This is an error, machine_architecture was not recognised as supported \n");
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
+                         Disassembler::disassembleFile(asmFile);
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);

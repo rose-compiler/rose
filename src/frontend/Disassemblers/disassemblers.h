@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 #include <vector>
+#include <map>
+#include <set>
+#include "rose.h"
+#include "ExecGeneric.h"
 
 struct OverflowOfInstructionVector {};
 struct BadInstruction {};
@@ -15,8 +19,9 @@ namespace X86Disassembler {
     Parameters(uint64_t ip = 0, X86InstructionSize insnSize = x86_insnsize_32): ip(ip), insnSize(insnSize) {}
   };
 
-  SgAsmx86Instruction* disassemble(const Parameters& p, const std::vector<uint8_t>& insn, size_t positionInVector, std::vector<uint64_t>* knownSuccessorsReturn = 0); // *knownSuccessorsReturn will be appended to
+  SgAsmx86Instruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
   void disassembleFile(SgAsmFile* f);
+  bool doesBBStartFunction(SgAsmBlock* bb, bool use64bit);
 
   inline SgAsmType* sizeToType(X86InstructionSize s) {
     switch (s) {
@@ -49,9 +54,36 @@ namespace ArmDisassembler {
   };
 
   SgAsmArmRegisterReferenceExpression* makeRegister(uint8_t reg);
-  SgAsmArmInstruction* disassemble(const Parameters& p, uint32_t insn, std::vector<uint64_t>* knownSuccessorsReturn = 0); // *knownSuccessorsReturn will be appended to
+  SgAsmArmInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
   void disassembleFile(SgAsmFile* f);
 
+}
+
+namespace DisassemblerCommon {
+
+  struct AsmFileWithData {
+    Exec::ExecFile* ef;
+    mutable size_t instructionsDisassembled;
+
+    AsmFileWithData(Exec::ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
+
+    Exec::ExecSection* getSectionOfAddress(uint64_t addr) const;
+    bool inCodeSegment(uint64_t addr) const;
+    size_t getFileOffsetOfAddress(uint64_t addr) const;
+    SgAsmInstruction* disassembleOneAtAddress(uint64_t addr, std::set<uint64_t>& knownSuccessors) const;
+
+    // Value field of basicBlockStarts is whether the block came from a
+    // parameter, or just a constant jump target or fallthrough (when true, it
+    // states that an indirect jump may be pointing there)
+
+    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, std::set<uint64_t>& functionStarts) const;
+    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, std::set<uint64_t>& functionStarts) const;
+  };
+
+}
+
+namespace Disassembler {
+  void disassembleFile(SgAsmFile* f);
 }
 
 #endif // ROSE_DISASSEMBLERS_H
