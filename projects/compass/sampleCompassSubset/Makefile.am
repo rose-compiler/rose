@@ -16,7 +16,26 @@ include $(compass_srcdir)/compass_infrastructure.inc
 
 # Include the projects/compass and projects/compass/compassSupport 
 # directory in the source tree
+
+if ROSE_MPI
+INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_srcdir)/compassSupport $(COMPASS_INCLUDES) -I$(compass_srcdir) -I.
+else
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_srcdir)/compassSupport $(COMPASS_INCLUDES) -I$(compass_srcdir) -I.
+endif
+
+if ROSE_MPI
+LTCXXCOMPILE = \
+	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXCOMPILE = \
+	$(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+endif
+
 
 # Link with the projects/compass/compassSupport/libCompass.la of the build
 # tree
