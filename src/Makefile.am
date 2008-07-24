@@ -32,7 +32,9 @@ if ROSE_USE_EDG_SOURCE
    libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
 else
  # Note that this is the wrong location for libroseEDG.la if one mistakenly configures
- # a development version or ROSE without specifying "--with-edg_source_code=true"
+ # a development version (from svn) of ROSE without specifying "--with-edg_source_code=true"
+ # (as is the case when preparing a binary distribution, but then only "make dist" 
+ # or "make distcheck" should be run).
    libroseEDGlibraries = $(top_srcdir)/src/frontend/CxxFrontend/libroseEDG.la
  # libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
 endif
