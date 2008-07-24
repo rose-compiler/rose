@@ -219,7 +219,10 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // ---------------- LOAD BALANCING of DEFUSE -------------------
 #endif
 
-  std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes << std::endl;
+  gettime(end_time_node);
+  double my_time_node = timeDifference(end_time_node, begin_time_node);
+  std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes << 
+    "  time: " << my_time_node << std::endl;
   MPI_Barrier(MPI_COMM_WORLD);
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << std::endl;
@@ -231,7 +234,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   my_map usemap = defuse->getUseMap();
   std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
   gettime(end_time_node);
-  double my_time_node = timeDifference(end_time_node, begin_time_node);
+  my_time_node = timeDifference(end_time_node, begin_time_node);
 
 
   /* communicate times */
