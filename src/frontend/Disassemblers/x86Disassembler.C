@@ -3001,7 +3001,17 @@ done:
     AsmFileWithData(ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
 
     ExecSection* getSectionOfAddress(uint64_t addr) const {
-      const vector<ExecSection*> possibleSections = ef->get_sections_by_rva(addr);
+      const vector<ExecSection*>& sections = ef->get_sections();
+      vector<ExecSection*> possibleSections;
+      for (size_t i = 0; i < sections.size(); ++i) {
+        ExecSection* section = sections[i];
+        if (!section->is_mapped()) continue;
+        ExecHeader* header = section->get_header();
+        ROSE_ASSERT (header);
+        uint64_t rva = addr - header->get_base_va();
+        bool isInSection = (rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_size());
+        if (isInSection) possibleSections.push_back(section);
+      }
       if (possibleSections.empty()) {
         return NULL;
       } else if (possibleSections.size() != 1) {
@@ -3025,7 +3035,10 @@ done:
       ExecSection* section = getSectionOfAddress(addr);
       if (!section) abort();
       ROSE_ASSERT (section->is_mapped());
-      return addr - section->get_mapped_rva() + section->get_offset();
+      ExecHeader* header = section->get_header();
+      ROSE_ASSERT (header);
+      uint64_t rva = addr - header->get_base_va();
+      return rva - section->get_mapped_rva() + section->get_offset();
     }
 
     SgAsmx86Instruction* disassembleOneAtAddress(uint64_t addr, Parameters params, set<uint64_t>& knownSuccessors) const {
@@ -3209,7 +3222,7 @@ done:
     map<uint64_t, SgAsmInstruction*> insns;
     map<uint64_t, bool> basicBlockStarts;
     set<uint64_t> functionStarts;
-    uint64_t entryPoint = headers[0]->get_entry_rva();
+    uint64_t entryPoint = headers[0]->get_entry_rva() + headers[0]->get_base_va();
     basicBlockStarts[entryPoint] = true;
     functionStarts.insert(entryPoint);
     file.disassembleRecursively(entryPoint, p, insns, basicBlockStarts, functionStarts);
@@ -3230,6 +3243,9 @@ done:
             addr <<= 8;
             addr |= ef->content()[j + k - 1];
           }
+          ExecHeader* header = sect->get_header();
+          ROSE_ASSERT (header);
+          addr += header->get_base_va();
           if (file.inCodeSegment(addr)) {
             basicBlockStarts[addr] = true;
             file.disassembleRecursively(addr, p, insns, basicBlockStarts, functionStarts);
