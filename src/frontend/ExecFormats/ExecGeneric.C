@@ -273,36 +273,49 @@ ExecFile::dump(FILE *f)
     
     /* Print results */
     fprintf(f, "File sections:\n");
-    fprintf(f, "  Flg Offset     Size       End         ID  Section Name\n");
-    fprintf(f, "  --- ---------- ---------- ----------  --  -------------------------------------\n");
+    fprintf(f, "  Flg Offset     Size       End         ID Perm Section Name\n");
+    fprintf(f, "  --- ---------- ---------- ----------  -- ---- -------------------------------------\n");
     addr_t high_water = 0;
     for (size_t i=0; i<sections.size(); i++) {
+        ExecSection *section = sections[i];
         
-        /* Does section[i] overlap with any other (before or after)? */
+        /* Does section overlap with any other (before or after)? */
         char overlap[4] = "   "; /* status characters: overlap prior, overlap subsequent, hole */
         for (size_t j=0; overlap[0]==' ' && j<i; j++) {
-            if (sections[j]->get_offset()+sections[j]->get_size() > sections[i]->get_offset()) {
+            if (sections[j]->get_offset()+sections[j]->get_size() > section->get_offset()) {
                 overlap[0] = '<';
             }
         }
         for (size_t j=i+1; overlap[1]==' ' && j<sections.size(); j++) {
-            if (sections[i]->get_offset()+sections[i]->get_size() > sections[j]->get_offset()) {
+            if (section->get_offset()+section->get_size() > sections[j]->get_offset()) {
                 overlap[1] = '>';
             }
         }
 
         /* Is there a hole before section[i]? */
-        if (high_water < sections[i]->get_offset()) {
+        if (high_water < section->get_offset()) {
             overlap[2] = 'H'; /* truly unaccounted region of the file */
-        } else if (i>0 && sections[i-1]->get_offset()+sections[i-1]->get_size() < sections[i]->get_offset()) {
+        } else if (i>0 && sections[i-1]->get_offset()+sections[i-1]->get_size() < section->get_offset()) {
             overlap[2] = 'h'; /* unaccounted only if overlaps are not allowed */
         }
-        high_water = std::max(high_water, sections[i]->get_offset() + sections[i]->get_size());
+        high_water = std::max(high_water, section->get_offset() + section->get_size());
         
-        fprintf(f, "  %3s 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64"  %2d  %s\n", 
-                overlap,
-                sections[i]->get_offset(), sections[i]->get_size(), sections[i]->get_offset()+sections[i]->get_size(), 
-                sections[i]->get_id(), sections[i]->get_name().c_str());
+        fprintf(f, "  %3s 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
+                overlap, section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
+        if (section->get_id()>=0) {
+            fprintf(f, "  %2d", section->get_id());
+        } else {
+            fputs("    ", f);
+        }
+        if (section->is_mapped()) {
+            fprintf(f, " %c%c%c ",
+                    section->get_readable()  ?'r':'-',
+                    section->get_writable()  ?'w':'-', 
+                    section->get_executable()?'x':'-');
+        } else {
+            fputs("     ", f);
+        }
+        fprintf(f, " %s\n", section->get_name().c_str());
     }
 
     char overlap[4] = "   ";
@@ -311,8 +324,8 @@ ExecFile::dump(FILE *f)
     } else if (sections.back()->get_offset() + sections.back()->get_size() < (addr_t)sb.st_size) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"                            EOF\n", overlap, (addr_t)sb.st_size);
-    fprintf(f, "  --- ---------- ---------- ----------  --  -------------------------------------\n");
+    fprintf(f, "  %3s 0x%08"PRIx64"                                EOF\n", overlap, (addr_t)sb.st_size);
+    fprintf(f, "  --- ---------- ---------- ----------  -- ---- -------------------------------------\n");
 }
 
 /* Synthesizes sections to describe the parts of the file that are not yet referenced by other sections. */
