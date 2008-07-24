@@ -303,15 +303,15 @@ class NEStringTable : public ExecSection {
 
 struct NEEntryPoint {
     NEEntryPoint()
-        : flags(0), int3f(0), segno(0), segoffset(0)
+        : flags(0), int3f(0), section_idx(0), section_offset(0)
         {}
-    NEEntryPoint(unsigned flags, unsigned int3f, unsigned segno, unsigned segoffset)
-        : flags(flags), int3f(int3f), segno(segno), segoffset(segoffset)
+    NEEntryPoint(unsigned flags, unsigned int3f, unsigned s_idx, unsigned s_off)
+        : flags(flags), int3f(int3f), section_idx(s_idx), section_offset(s_off)
         {}
     unsigned flags;             /* 0x01=>exported, 0x02=>uses a global (shared) data segment */
     unsigned int3f;             /* always 0x3f** */
-    unsigned segno;             /* zero indicates unused entry */
-    unsigned segoffset;
+    unsigned section_idx;       /* zero indicates unused entry */
+    unsigned section_offset;    /* byte offset into section */
 };
 
 class NEEntryTable : public ExecSection {

@@ -365,7 +365,7 @@ class ExecSection {
 
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
         : file(NULL), header(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
-        id(-1), mapped(false), mapped_rva(0), readable(true), writable(true), executable(false)
+        id(-1), mapped(false), mapped_rva(0), rperm(true), wperm(true), eperm(false)
         {ctor(f, offset, size);}
     virtual ~ExecSection();
     virtual void        dump(FILE*, const char *prefix, ssize_t idx);
@@ -388,15 +388,16 @@ class ExecSection {
 
     /* Functions related to mapping of sections into executable memory */
     bool                is_mapped() {return mapped;}
+    void                set_mapped(addr_t rva, addr_t size) {mapped=true; mapped_rva=rva; mapped_size=size;}
+    void                clear_mapped() {mapped=false; mapped_rva=mapped_size=0;}
     addr_t              get_mapped_rva() {return mapped ? mapped_rva : 0;}
-    void                set_mapped_rva(addr_t a) {mapped=true; mapped_rva=a;}
-    void                clear_mapped_rva() {mapped=false; mapped_rva=0;}
-    bool                get_executable() {return executable;}
-    void                set_executable(bool b) {executable=b;}
-    bool                get_writable() {return writable;}
-    void                set_writable(bool b) {writable=b;}
-    bool                get_readable() {return readable;}
-    void                set_readable(bool b) {readable=b;}
+    addr_t              get_mapped_size() {return mapped ? mapped_size : 0;}
+    bool                get_eperm() {return eperm;}
+    void                set_eperm(bool b) {eperm=b;}
+    bool                get_wperm() {return wperm;}
+    void                set_wperm(bool b) {wperm=b;}
+    bool                get_rperm() {return rperm;}
+    void                set_rperm(bool b) {rperm=b;}
 
     /* Accessors for private members */
     ExecHeader          *get_header() {return header;}
@@ -427,9 +428,10 @@ class ExecSection {
     std::string         name;                           /* Optional, non-unique name of section */
     bool                mapped;                         /* True if section should be mapped to program's address space */
     addr_t              mapped_rva;                     /* Intended relative virtual address if `mapped' is true */
-    bool                readable;                       /* Mapped by loader into memory having read permission */
-    bool                writable;                       /* Mapped by loader into memory having write permission */
-    bool                executable;                     /* Mapped by loader into memory having execute permission */
+    addr_t              mapped_size;                    /* Intended virtual size if 'mapped' is true */
+    bool                rperm;                          /* Mapped by loader into memory having read permission */
+    bool                wperm;                          /* Mapped by loader into memory having write permission */
+    bool                eperm;                          /* Mapped by loader into memory having execute permission */
     RefMap              referenced;                     /* Begin/end offsets for areas referenced by extent() and extent_str() */
     bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
     ExtentVector        holes;                          /* Unreferenced area (bigin/end offsets) */

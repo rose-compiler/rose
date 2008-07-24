@@ -348,7 +348,23 @@ NESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, NEFileHeader
     fputc('\n', f);
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n",       p, w, "physical_size",   physical_size);
     fprintf(f, "%s%-*s = %"PRIu64" bytes\n",       p, w, "virtual_size",    virtual_size);
-    fprintf(f, "%s%-*s = 0x%08x\n",                p, w, "flags",           flags);
+    fprintf(f, "%s%-*s = 0x%08x",                  p, w, "flags",           flags);
+    switch (flags & SF_TYPE_MASK) {
+      case SF_CODE:  fputs(" code", f);  break;
+      case SF_DATA:  fputs(" data", f);  break;
+      case SF_ALLOC: fputs(" alloc", f); break;
+      case SF_LOAD:  fputs(" load", f);  break;
+      default: fprintf(f, " type=%u", flags & SF_TYPE_MASK); break;
+    }
+    if (flags & SF_MOVABLE)      fputs(" movable",     f);
+    if (flags & SF_PURE)         fputs(" pure",        f);
+    if (flags & SF_PRELOAD)      fputs(" preload",     f);
+    if (flags & SF_NOT_WRITABLE) fputs(" const",       f);
+    if (flags & SF_RELOCINFO)    fputs(" reloc",       f);
+    if (flags & SF_DISCARDABLE)  fputs(" discardable", f);
+    if (flags & SF_DISCARD)      fputs(" discard",     f);
+    if (flags & SF_RESERVED)     fputs(" *",           f);
+    fputc('\n', f);
 }
 
 /* Write section back to disk */
@@ -407,22 +423,26 @@ NESectionTable::ctor(NEFileHeader *fhdr)
         section->set_header(fhdr);
         section->set_st_entry(entry);
 
+        /* All NE sections are mapped. There desired address is apparently based on their file offset. */
+        addr_t mapped_rva = section_offset - fhdr->get_offset();
+        section->set_mapped(mapped_rva, entry->virtual_size);
+
         unsigned section_type = entry->flags & SF_TYPE_MASK;
         if (0==section_offset) {
             section->set_name(".bss");
-            section->set_readable(true);
-            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
-            section->set_executable(false);
+            section->set_rperm(true);
+            section->set_wperm(entry->flags & SF_NOT_WRITABLE ? false : true);
+            section->set_eperm(false);
         } else if (0==section_type) {
             section->set_name(".text");
-            section->set_readable(true);
-            section->set_writable(entry->flags & SF_NOT_WRITABLE ? false : true);
-            section->set_executable(true);
+            section->set_rperm(true);
+            section->set_wperm(entry->flags & SF_NOT_WRITABLE ? false : true);
+            section->set_eperm(true);
         } else if (section_type & SF_DATA) {
             section->set_name(".data");
-            section->set_readable(true);
-            section->set_writable(entry->flags & (SF_PRELOAD|SF_NOT_WRITABLE) ? false : true);
-            section->set_executable(false);
+            section->set_rperm(true);
+            section->set_wperm(entry->flags & (SF_PRELOAD|SF_NOT_WRITABLE) ? false : true);
+            section->set_eperm(false);
         }
 
         if (entry->flags & SF_RELOCINFO) {
@@ -736,29 +756,29 @@ NEEntryTable::unparse(FILE *f)
         fputc(n, f);
 
         ROSE_ASSERT(ei+bundle_sizes[bi]<=entries.size());
-        if (0==entries[ei].segno) {
+        if (0==entries[ei].section_idx) {
             /* Unused entries */
             fputc('\0', f);
         } else if (0==entries[ei].int3f) {
             /* Fixed entries */
-            ROSE_ASSERT(entries[ei].segno<=0xff);
-            unsigned char n = entries[ei].segno;
+            ROSE_ASSERT(entries[ei].section_idx<=0xff);
+            unsigned char n = entries[ei].section_idx;
             fputc(n, f);
             for (size_t i=0; i<bundle_sizes[bi]; i++) {
-                ROSE_ASSERT(entries[ei].segno==entries[ei+i].segno);
+                ROSE_ASSERT(entries[ei].section_idx==entries[ei+i].section_idx);
                 ROSE_ASSERT(entries[ei+i].int3f==0);
                 ROSE_ASSERT(entries[ei+i].flags<=0xff);
                 n = entries[ei+i].flags;
                 fputc(n, f);
                 uint16_t eoff_le;
-                host_to_le(entries[ei+i].segoffset, &eoff_le);
+                host_to_le(entries[ei+i].section_offset, &eoff_le);
                 fwrite(&eoff_le, sizeof eoff_le, 1, f);
             }
         } else {
             /* Movable entries */
             fputc(0xff, f);
             for (size_t i=0; i<bundle_sizes[bi]; i++) {
-                ROSE_ASSERT(entries[ei+i].segno>0);
+                ROSE_ASSERT(entries[ei+i].section_idx>0);
                 ROSE_ASSERT(entries[ei+i].int3f!=0);
                 ROSE_ASSERT(entries[ei+i].flags<=0xff);
                 n = entries[ei+i].flags;
@@ -766,10 +786,10 @@ NEEntryTable::unparse(FILE *f)
                 uint16_t word;
                 host_to_le(entries[ei+i].int3f, &word);
                 fwrite(&word, sizeof word, 1, f);
-                ROSE_ASSERT(entries[ei+i].segno<=0xff);
-                n = entries[ei+i].segno;
+                ROSE_ASSERT(entries[ei+i].section_idx<=0xff);
+                n = entries[ei+i].section_idx;
                 fputc(n, f);
-                host_to_le(entries[ei+i].segoffset, &word);
+                host_to_le(entries[ei+i].section_offset, &word);
                 fwrite(&word, sizeof word, 1, f);
             }
         }
@@ -794,22 +814,22 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t bi=0, ei=0; bi<bundle_sizes.size(); ei+=bundle_sizes[bi++]) {
         fprintf(f, "%s%-*s = [%zu] %zu entries\n", p, w, "bundle_size", bi, bundle_sizes[bi]);
         for (size_t i=0; i<bundle_sizes[bi]; i++) {
-            if (0==entries[ei+i].segno) {
-                fprintf(f, "%s%-*s = [%zu] %s\n", p, w, "entry_type", ei+i, "unused");
+            if (0==entries[ei+i].section_idx) {
+                fprintf(f, "%s%-*s = [%zu] %s\n", p, w, "entry.type", ei+i, "unused");
                 ROSE_ASSERT(0==entries[ei+i].flags);
                 ROSE_ASSERT(0==entries[ei+i].int3f);
-                ROSE_ASSERT(0==entries[ei+i].segoffset);
+                ROSE_ASSERT(0==entries[ei+i].section_offset);
             } else if (0==entries[ei+i].int3f) {
-                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry_type",   ei+i, "fixed");
-                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry_flags",  ei+i, entries[ei+i].flags);
-                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry_segno",  ei+i, entries[ei+i].segno);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_offset", ei+i, entries[ei+i].segoffset);
+                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry.type",           ei+i, "fixed");
+                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry.flags",          ei+i, entries[ei+i].flags);
+                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry.section_idx",    ei+i, entries[ei+i].section_idx);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.section_offset", ei+i, entries[ei+i].section_offset);
             } else {
-                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry_type",   ei+i, "movable");
-                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry_flags",  ei+i, entries[ei+i].flags);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_int3f",  ei+i, entries[ei+i].int3f);
-                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry_segno",  ei+i, entries[ei+i].segno);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry_offset", ei+i, entries[ei+i].segoffset);
+                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry.type",           ei+i, "movable");
+                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry.flags",          ei+i, entries[ei+i].flags);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.int3f",          ei+i, entries[ei+i].int3f);
+                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry.section_idx",    ei+i, entries[ei+i].section_idx);
+                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.section_offset", ei+i, entries[ei+i].section_offset);
             }
         }
     }

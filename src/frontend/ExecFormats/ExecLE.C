@@ -579,9 +579,10 @@ LESectionTable::ctor(LEFileHeader *fhdr)
         section->set_st_entry(entry);
 
         /* Section permissions */
-        section->set_readable((entry->flags & SF_READABLE)==SF_READABLE);
-        section->set_writable((entry->flags & SF_WRITABLE)==SF_WRITABLE);
-        section->set_executable((entry->flags & SF_EXECUTABLE)==SF_EXECUTABLE);
+        section->set_mapped(entry->base_addr, entry->mapped_size);
+        section->set_rperm((entry->flags & SF_READABLE)==SF_READABLE);
+        section->set_wperm((entry->flags & SF_WRITABLE)==SF_WRITABLE);
+        section->set_eperm((entry->flags & SF_EXECUTABLE)==SF_EXECUTABLE);
 
         unsigned section_type = entry->flags & SF_TYPE_MASK;
         if (SF_TYPE_ZERO==section_type) {

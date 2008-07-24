@@ -332,7 +332,7 @@ ElfSection::ctor(ElfFileHeader *fhdr, ElfSectionTableEntry *shdr)
 
     /* Section mapping */
     if (shdr->sh_addr>0)
-        set_mapped_rva(shdr->sh_addr);
+        set_mapped(shdr->sh_addr, shdr->sh_size);
 }
 
 /* Print some debugging info */
@@ -504,8 +504,8 @@ ElfSectionTable::ctor(ElfFileHeader *fhdr)
             section->set_st_entry(shdr);
             if (strtab)
                 section->set_name(strtab->content_str(shdr->sh_name));
-            section->set_writable((shdr->sh_flags & 0x01)==0x01);
-            section->set_executable((shdr->sh_flags & 0x04)==0x04);
+            section->set_wperm((shdr->sh_flags & 0x01)==0x01);
+            section->set_eperm((shdr->sh_flags & 0x04)==0x04);
         }
 
         /* Initialize links between sections */

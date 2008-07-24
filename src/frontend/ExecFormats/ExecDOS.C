@@ -123,7 +123,7 @@ DOSFileHeader::add_rm_section(addr_t max_offset)
     rm_section->set_synthesized(true);
     rm_section->set_purpose(SP_PROGRAM);
     rm_section->set_header(this);
-    rm_section->set_executable(true);
+    rm_section->set_eperm(true);
 }
     
 /* Print some debugging info */

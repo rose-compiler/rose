@@ -605,11 +605,11 @@ PESectionTable::ctor(PEFileHeader *fhdr)
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
         section->set_header(fhdr);
-        section->set_mapped_rva(entry->rva);
+        section->set_mapped(entry->rva, entry->virtual_size);
         section->set_st_entry(entry);
-        section->set_readable((entry->flags & OF_READABLE)==OF_READABLE);
-        section->set_writable((entry->flags & OF_WRITABLE)==OF_WRITABLE);
-        section->set_executable((entry->flags & OF_EXECUTABLE)==OF_EXECUTABLE);
+        section->set_rperm((entry->flags & OF_READABLE)==OF_READABLE);
+        section->set_wperm((entry->flags & OF_WRITABLE)==OF_WRITABLE);
+        section->set_eperm((entry->flags & OF_EXECUTABLE)==OF_EXECUTABLE);
         
         if (entry->flags & (OF_CODE|OF_IDATA|OF_UDATA))
             section->set_purpose(SP_PROGRAM);

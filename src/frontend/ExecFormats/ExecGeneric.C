@@ -308,10 +308,21 @@ ExecFile::dump(FILE *f)
             fputs("    ", f);
         }
         if (section->is_mapped()) {
+#if 0
             fprintf(f, " %c%c%c ",
                     section->get_readable()  ?'r':'-',
                     section->get_writable()  ?'w':'-', 
                     section->get_executable()?'x':'-');
+#else
+            fputc(' ', f);
+            bool b = section->get_rperm();
+            fputc(b ? 'r' : '-', f);
+            b = section->get_wperm();
+            fputc(b ? 'w' : '-', f);
+            b = section->get_eperm();
+            fputc(b ? 'x' : '-', f);
+            fputc(' ', f);
+#endif
         } else {
             fputs("     ", f);
         }
@@ -648,11 +659,11 @@ ExecSection::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", s);
 
     if (mapped) {
-        fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "mapped_rva", mapped_rva);
+        fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  mapped_rva, mapped_size);
         fprintf(f, "%s%-*s = %c%c%c\n", p, w, "permissions",
-                readable?'r':'-', writable?'w':'-', executable?'x':'-');
+                rperm?'r':'-', wperm?'w':'-', eperm?'x':'-');
     } else {
-        fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped_rva");
+        fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped");
     }
 
     /* Show holes based on what's been referenced so far */
