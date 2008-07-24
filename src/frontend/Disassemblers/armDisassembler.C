@@ -512,7 +512,7 @@ namespace ArmDisassembler {
       ExecSection* sectionOfThisPtr = getSectionOfAddress(addr);
       if (sectionOfThisPtr != NULL &&
           sectionOfThisPtr->is_mapped() &&
-          sectionOfThisPtr->get_executable()) {
+          sectionOfThisPtr->get_eperm()) {
         return true;
       }
       return false;
