@@ -52,7 +52,7 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     exec_format.is_current_version = true;
 
     /* Target architecture */
-    target.set_isa(ISA_IA32_386);
+    target.set_isa(ISA_UNSPECIFIED);
 
     /* Entry point */
     base_va = 0;
