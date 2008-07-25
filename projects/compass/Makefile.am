@@ -13,10 +13,15 @@ SUBDIRS = compassSupport util tests compassVerifier sampleCompassSubset
 BUILT_SOURCES = buildCheckers.C checkers.h
 
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
-else
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I.
+INCLUDES_MPI = -DROSE_MPI 
 endif
+
+if ROSE_USE_GCC_OMP
+INCLUDES_OMP = -DROSE_GCC_OMP 
+endif
+
+INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -I. $(INCLUDES_MPI) $(INCLUDES_OMP) 
+
 
 if ROSE_MPI
 LTCXXCOMPILE = \

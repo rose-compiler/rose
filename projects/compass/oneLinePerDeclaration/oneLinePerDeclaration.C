@@ -46,7 +46,9 @@ visit(SgNode* node)
        if( node->get_file_info()->isCompilerGenerated() == true )
          return;
      }
+#if ROSE_GCC_OMP
 #pragma omp critical (oneLinePDclear) 
+#endif
      if( sgVarDecl != NULL )
      {
        std::string file = node->get_file_info()->get_filenameString();

@@ -46,7 +46,9 @@ visit(SgNode* node)
         std::string thingName;
         if (fn)
           {
+#if ROSE_GCC_OMP
 #pragma omp critical (BooleanIsHasvisit)
+#endif
             thingName = fn->get_name().str();
             SgFunctionType* s = fn->get_type();
             t = s->get_return_type();
@@ -64,7 +66,9 @@ visit(SgNode* node)
                 SgInitializedName* initName = isSgInitializedName (*j);
                 if(!initName) {return;}
                 t = initName->get_type();
+#if ROSE_GCC_OMP
 #pragma omp critical (BooleanIsHasthingname)
+#endif
                 thingName  = initName->get_qualified_name().str();
               }
           }

@@ -199,7 +199,10 @@ CompassAnalyses::NullDeref::Traversal::expressionIsNull(SgExpression* expr) {
 void CompassAnalyses::NullDeref::Traversal::
 checkNullDeref(string analysisname, SgExpression* expr,  string name) {
   // get the line number of the expression
+
+#if ROSE_GCC_OMP
 #pragma omp critical (runDefUseAnalysisCompass)
+#endif
   { 
     std::string lineNrDelete=ToString(expr->get_file_info()->get_line());
     BoolWithTrace tr;

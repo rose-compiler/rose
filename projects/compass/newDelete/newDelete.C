@@ -151,7 +151,9 @@ CompassAnalyses::NewDelete::Traversal::expressionIsNewExpr(SgExpression* expr) {
  *********************************************************/
 void CompassAnalyses::NewDelete::Traversal::
 checkNewDelForFunction(SgDeleteExp* expr, string name) {
+#if ROSE_GCC_OMP
 #pragma omp critical (runDefUseAnalysisCompass)
+#endif
   { 
   std::string lineNrDelete=ToString(expr->get_file_info()->get_line());
 

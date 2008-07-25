@@ -36,7 +36,9 @@ namespace VirtualCFG
 
             if (visitedNodes.find(end) != visitedNodes.end())
                   return;
+#if ROSE_GCC_OMP
 #pragma omp critical (filteredCFGImplgo)
+#endif
 	    {
               visitedNodes.insert(end);
               visitedPaths.insert(p);
@@ -165,7 +167,9 @@ namespace VirtualCFG
             if (i->second == n)
                 return;
         }
+#if ROSE_GCC_OMP
 #pragma omp critical (filteredCFGImpltoDot)
+#endif
         exploredNodes.insert(make_pair(n.getNode(), n));
         std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)

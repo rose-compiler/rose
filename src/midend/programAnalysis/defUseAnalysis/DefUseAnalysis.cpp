@@ -35,7 +35,9 @@ int DefUseAnalysis::getIntForSgNode(SgNode* sgNode) {
 bool DefUseAnalysis::addID(SgNode* sgNode) { 
   //  if (visualizationEnabled) {
   if (searchVizzMap(sgNode)==false) {
+#if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddID) 
+#endif
       {
 	ROSE_ASSERT(sgNode);
       sgNodeCounter++;
@@ -81,7 +83,9 @@ void DefUseAnalysis::addUseElement(SgNode* sgNode,
 void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode, 
 				SgInitializedName* initName,
 				SgNode* defNode) { 
+#if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddUseE) 
+#endif
   (*tabl)[sgNode].insert(make_pair(initName, defNode));
    addID(sgNode);
 }
@@ -94,7 +98,9 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
   //table[sgNode].erase(table[sgNode].lower_bound(initName), table[sgNode].upper_bound(initName));
+#if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisreplaceE1) 
+#endif
   {
     table[sgNode].erase(initName);
     table[sgNode].insert(make_pair(initName,sgNode));
@@ -106,7 +112,9 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
  *********************************************************/
 void DefUseAnalysis::clearUseOfElement(SgNode* sgNode, 
 				    SgInitializedName* initName) {
+#if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisclearUse) 
+#endif
   usetable[sgNode].erase(initName);
 }
 
@@ -138,7 +146,9 @@ void DefUseAnalysis::mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other,
 
   addID(sgNode);
 
+#if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysismapUse)
+#endif
   if (!beforeFound) {
     if (!otherFound)
       (*tabl)[sgNode].clear();
