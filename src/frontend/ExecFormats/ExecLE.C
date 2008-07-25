@@ -931,7 +931,6 @@ is_LE(ExecFile *f)
     try {
         dos_hdr = new DOS::DOSFileHeader(f, 0);
         if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-        if (dos_hdr->e_relocs_offset!=0x40) goto done;
 
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
         le_hdr = new LEFileHeader(f, dos2_hdr->e_lfanew);
@@ -957,7 +956,6 @@ parse(ExecFile *ef)
 
     /* All LE files are also DOS files, so parse the DOS part first */
     DOS::DOSFileHeader *dos_header = DOS::parse(ef, false);
-    ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
     ef->unfill_holes(); /*they probably contain NE information*/
 
     /* LE files extend the DOS header with some additional info */

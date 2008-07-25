@@ -1361,8 +1361,6 @@ is_PE(ExecFile *f)
     try {
         dos_hdr = new DOS::DOSFileHeader(f, 0);
         if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-        // JJW (7/23/2008): It seems like this isn't always true of PE files
-        // if (dos_hdr->e_relocs_offset!=0x40) goto done;
 
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
         pe_hdr = new PEFileHeader(f, dos2_hdr->e_lfanew);
@@ -1443,8 +1441,6 @@ parse(ExecFile *ef)
 
     /* All PE files are also DOS files, so parse the DOS part first */
     DOS::DOSFileHeader *dos_header = DOS::parse(ef, false);
-    // JJW (7/23/2008): Not all PEs seem to have this satisfied
-    // ROSE_ASSERT(dos_header->e_relocs_offset==0x40);
     ef->unfill_holes(); /*they probably contain PE information*/
 
     /* PE files extend the DOS header with some additional info */
