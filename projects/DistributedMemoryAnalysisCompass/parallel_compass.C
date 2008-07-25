@@ -317,10 +317,12 @@ int main(int argc, char **argv)
   ROSE_ASSERT(root);
 
   // create map with all nodes and indices
+  /*
   MemoryTraversal* memTrav = new MemoryTraversal();
   memTrav->traverseMemoryPool();
   cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << endl;
   ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+  */
 
   /* setup checkers */
   std::vector<AstSimpleProcessing *> traversals;

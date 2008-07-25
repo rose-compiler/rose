@@ -134,7 +134,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   // create map with all nodes and indices
   MemoryTraversal* memTrav = new MemoryTraversal();
   memTrav->traverseMemoryPool();
-  std::cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+  std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
   ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
 
   MPI_Barrier(MPI_COMM_WORLD);
