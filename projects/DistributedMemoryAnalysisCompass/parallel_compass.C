@@ -163,7 +163,7 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
     } else if (isSgFile(node)) {
       NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
       nrNiF.traverse(node, postorder);
-      currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile+0.1;
+      currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile+0.01;
       if (currentWeight<=0.06)
 	currentWeight=0.07;
     }
