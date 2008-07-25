@@ -103,6 +103,25 @@ install-data-local:
 # this copy of ROSE was originally configured.
 DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost=$(ac_boost_path)
 
+# DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning 
+# on the java support) then make sure it is tested as part of the distcheck rule.
+if ROSE_USE_OPEN_FORTRAN_PARSER
+   DISTCHECK_CONFIGURE_FLAGS += --with-java
+endif
+
+# DQ (7/25/2008): If ROSE was originallly configured to use the HPC Toolkit
+# then make sure it is tested as part of the distcheck rule.
+if ROSE_BUILD_ROSEHPCT
+   DISTCHECK_CONFIGURE_FLAGS += --enable-rosehpct
+endif
+
+# DQ (7/25/2008): If ROSE was originallly configured to use the javaport
+# work (generation of Java interface functions for ROSE using SWIG) then 
+# make sure it is tested as part of the distcheck rule.
+if ENABLE_JAVAPORT
+   DISTCHECK_CONFIGURE_FLAGS += --with-javaport
+endif
+
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final generated distribution.
 rename_distribution:
