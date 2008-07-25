@@ -6,7 +6,7 @@ endif
 
 if ROSE_MPI
 
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass $(INCLUDES_OMP)
+INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass $(INCLUDES_OMP) 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la 
 
 if ROSE_USE_GCC_OMP
@@ -70,6 +70,9 @@ parallel_functionBased_ASTBalance_SOURCES = parallel_functionBased_ASTBalance.C
 nodist_noinst_DATA = compass_parameters
 
 CLEANFILES = gmon.out *.parse *.run *.ast *.ti compass_parameters
+
+EXTRA_DIST = parseLine_smg2000.parse
+include_HEADERS = LoadSaveAST.h parallel_compass.h
 
 check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass parallel_functionBased_ASTBalance $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C compass_parameters
 	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
