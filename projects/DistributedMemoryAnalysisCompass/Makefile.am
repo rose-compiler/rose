@@ -71,7 +71,7 @@ nodist_noinst_DATA = compass_parameters
 
 CLEANFILES = gmon.out *.parse *.run *.ast *.ti compass_parameters
 
-EXTRA_DIST = parseLine_smg2000.parse
+EXTRA_DIST = parseLine_smg2000.parse exampleBuildcxxgrammar.run create_checkers.py run.sh
 include_HEADERS = LoadSaveAST.h parallel_compass.h
 
 check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass parallel_functionBased_ASTBalance $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C compass_parameters
