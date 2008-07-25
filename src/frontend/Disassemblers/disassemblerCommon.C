@@ -4,17 +4,7 @@ using namespace std;
 using namespace Exec;
 
 ExecSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const {
-  const vector<ExecSection*>& sections = ef->get_sections();
-  vector<ExecSection*> possibleSections;
-  for (size_t i = 0; i < sections.size(); ++i) {
-    ExecSection* section = sections[i];
-    if (!section->is_mapped()) continue;
-    ExecHeader* header = section->get_header();
-    ROSE_ASSERT (header);
-    uint64_t rva = addr - header->get_base_va();
-    bool isInSection = (rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_size());
-    if (isInSection) possibleSections.push_back(section);
-  }
+  vector<ExecSection*> possibleSections = ef->get_sections_by_va(addr);
   if (possibleSections.empty()) {
     return NULL;
   } else if (possibleSections.size() != 1) {
@@ -66,7 +56,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
     } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
       insn = X86Disassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
-    } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
+    } else if (isa == ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
       insn = ArmDisassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
     } else {
@@ -174,7 +164,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
         pointerSize = 4;
       } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
         pointerSize = 8;
-      } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
+      } else if (isa == ISA_ARM_Family) {
         pointerSize = 4;
       } else {
         cerr << "Bad architecture to disassemble" << endl;
@@ -227,7 +217,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
     } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-    } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
+    } else if (isa == ISA_ARM_Family) {
       isFunctionStart = false; // FIXME
     } else {
       cerr << "Bad architecture to disassemble" << endl;
