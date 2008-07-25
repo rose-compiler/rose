@@ -22,7 +22,8 @@
 # force ranlib to just call touch so that *.so (dynamic libraries) will not
 # be run with ranlib (which is a error).  This allows us to use dynamic 
 # libraries as the default within ROSE.
-RANLIB = touch
+# JJW 7/25/2008: Do we really need this?
+## RANLIB = touch
 
 # JJW (2/25/2008): set a flag (only used when running ROSE applications) to
 # have them run using the build tree rather than the install tree -- this is
@@ -93,21 +94,6 @@ if ROSE_BUILD_ROSEHPCT
   ROSE_ROSEHPCT_LIBS = -lrosehpct
   ROSE_ROSEHPCT_LIBS_WITH_PATH = $(top_builddir)/src/roseExtensions/roseHPCToolkit/src/librosehpct.la
   ROSE_ROSEHPCT_LIB_FILE = librosehpct.so
-endif
-
-# DQ and AS (4/6/2006): Boost Wave CPP project
-if ROSE_USE_BOOST_WAVE
-# WAVE_INCLUDES is already defined (or is left empty)
-# WAVE_LIBS = $(LIB_WAVE) -lboost_filesystem-gcc
-  WAVE_LIBS = $(LIB_WAVE) -lboost_filesystem-@BOOST_LIB_SUFFIX@
-endif
-
-if ROSE_USE_OPEN_FORTRAN_PARSER
-# This usage (without rpath) assumes that that LD_LIBRARY_PATH contains 
-# the path specified by $JAVA_JVM_PATH
-JAVA_JVM_LIB = $(JAVA_JVM_LINK)
-#JAVA_JVM_LIB = -ljvm
-#JAVA_JVM_LIB = $(JAVA_JVM_PATH)
 endif
 
 # ROSE-YICES Package (destributed by SRI as a static library)
@@ -200,7 +186,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      $(VALGRIND_CFLAGS) \
-	 $(BOOST_CPPFLAGS) ${SQLITE3_CFLAGS} -DBOOST_REGEX_MATCH_EXTRA
+	 $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
 #     $(WAVE_INCLUDES) \
 #     $(ROSE_YICES_INCLUDES) \
 #     $(ROSE_WINE_INCLUDES)
@@ -221,29 +207,33 @@ ROSE_INCLUDES = \
 # ROSE_LIBS_WITH_PATH = $(libdir)/librose.so $(libdir)/libedg.so
 # ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la
 # ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(JAVA_JVM_LIB)
-ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(ROSE_YICES_LIBS_WITH_PATH)
+# JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
+ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
+## ROSE_LIBS_WITH_PATH = $(top_builddir)/src/librose.la $(ROSE_YICES_LIBS_WITH_PATH)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
     $(SQLITE_DATABASE_LIBS) $(LIB_QT)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
 	$(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
 	$(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-	$(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LIB) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) 
+	$(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) 
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
 # development. The use of the seperate libraries make the linking faster where the
 # main librose library is not built.  Libtool may have changed this so that we could
 # just link to librose now just as easily, but one has to rebuild librose each time
 # instead of just the individual shared library.
-ROSE_SEPARATE_LIBS = \
-   $(top_builddir)/src/librose.la \
-   $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
-   $(MYSQL_DATABASE_LIBS) $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
-   $(LIB_QT) $(JAVA_JVM_LIB) \
-   $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) \
-   $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
-   $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-   $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS) 
+# JJW 7/25/2008: This should probably just be the same as ROSE_LIBS
+ROSE_SEPARATE_LIBS = $(ROSE_LIBS)
+## ROSE_SEPARATE_LIBS = \
+##    $(top_builddir)/src/librose.la \
+##    $(ROSE_SIDEEFFECTS_LIBS) $(ROSE_DATABASE_LIBS) \
+##    $(MYSQL_DATABASE_LIBS) $(ROSE_SQLITE_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) \
+##    $(LIB_QT) $(JAVA_JVM_LIB) \
+##    $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) \
+##    $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
+##    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
+##    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS) 
 #   $(LIB_QT) $(JAVA_JVM_LIB) 
 
 
