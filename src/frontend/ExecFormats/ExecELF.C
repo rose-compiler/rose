@@ -147,7 +147,7 @@ ElfFileHeader::ctor(ExecFile *f, addr_t offset)
         target.set_isa(ISA_MIPS_Family);
         break;
       case 40:
-        target.set_isa(ISA_ARM);
+        target.set_isa(ISA_ARM_Family);
         break;
       case 62:
         target.set_isa(ISA_X8664_Family);

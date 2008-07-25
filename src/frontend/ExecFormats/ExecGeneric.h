@@ -152,6 +152,26 @@ enum InsSetArchitecture {
     ISA_IA64_Itanium            = 0x0801,               /* First generation */
     ISA_IA64_Itanium2           = 0x0802,               /* Second generation starting Nov 2007 */
 
+    /* See http://en.wikipedia.org/wiki/ARM_architecture */
+    ISA_ARM_Family              = 0x0900,               /* Acorn RISC Machine, Advanced RISC Machines, ARM Limited */
+    ISA_ARM_ARM1                = 0x0901,               /* ARM evaluation system */
+    ISA_ARM_ARM2                = 0x0902,               /* ARM2, ARM250 cores */
+    ISA_ARM_ARM3                = 0x0903,               /* ARM2a core */
+    ISA_ARM_ARM6                = 0x0904,               /* ARM60, ARM600, ARM610 cores */
+    ISA_ARM_ARM7                = 0x0905,               /* ARM{700,710,710a,7100,7500,7500FE} cores */
+    ISA_ARM_ARM7TDMI            = 0x0906,               /* ARM{7TDMI,7TDMI-S,710T,720T,740T,7EJ-S} cores */
+    ISA_ARM_StrongARM           = 0x0907,               /* SA-110, SA-1110 cores */
+    ISA_ARM_ARM8                = 0x0908,               /* ARM810 core */
+    ISA_ARM_ARM9TDMI            = 0x0909,               /* ARM{9TDMI,920T,922T,940T} cores */
+    ISA_ARM_ARM9E               = 0x090a,               /* ARM{946E-S,966E-S,968E-S,926EJ-S,966HS} cores */
+    ISA_ARM_ARM10E              = 0x090b,               /* ARM{1020E,1022E,1026EJ-S} cores */
+    ISA_ARM_XScale              = 0x090c,               /* 80200, IOP310, IOP315, 80219, IOP321, IOP33x, IOP34x, PXA210,
+                                                         * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
+                                                         * IXC1100, IXP2400, IXP2800, IXP2850, IXP2325, IXP2350, IXP42x,
+                                                         * IXP460, IXP465 cores */
+    ISA_ARM_ARM11               = 0x090d,               /* ARMv{6,6T2,6KZ,6K} cores */
+    ISA_ARM_Cortex              = 0x090e,               /* Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
+
     /* Others, not yet incorporated into this enum */
     ISA_OTHER_Family            = 0xf000,
 
@@ -167,7 +187,6 @@ enum InsSetArchitecture {
     ISA_Fujitsu_FR20            = 0xf00a,
     ISA_TRW_RH_32               = 0xf00b,
     ISA_Motorola_RCE            = 0xf00c,
-    ISA_ARM                     = 0xf00d,
     ISA_Digital_Alpha_fake      = 0xf00e,
     ISA_Hitachi_SH              = 0xf00f,
     ISA_Siemens_Tricore         = 0xf010,
@@ -331,6 +350,7 @@ class ExecFile {
     ExecSection *get_section_by_name(std::string, char sep='\0');/* Find section within file by name */
     std::vector<ExecSection*> get_sections_by_offset(addr_t offset, addr_t size);
     std::vector<ExecSection*> get_sections_by_rva(addr_t rva);
+    std::vector<ExecSection*> get_sections_by_va(addr_t va);
     addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
     void fill_holes();                                  /* Find holes in file and create sections to fill them */
     void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */

@@ -231,7 +231,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         target.set_isa(ISA_Hitachi_SH);
         break;
       case 0x01c0:
-        target.set_isa(ISA_ARM);
+        target.set_isa(ISA_ARM_Family);
         break;
       case 0x01d3:
         target.set_isa(ISA_Matsushita_AM33);
