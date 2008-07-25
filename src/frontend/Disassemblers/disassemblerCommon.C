@@ -66,7 +66,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
     } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
       insn = X86Disassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
-    } else if (isa == ISA_ARM) {
+    } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
       insn = ArmDisassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
     } else {
@@ -174,7 +174,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
         pointerSize = 4;
       } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
         pointerSize = 8;
-      } else if (isa == ISA_ARM) {
+      } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
         pointerSize = 4;
       } else {
         cerr << "Bad architecture to disassemble" << endl;
@@ -227,7 +227,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
     } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-    } else if (isa == ISA_ARM) {
+    } else if ((isa & ISA_FAMILY_MASK) == ISA_ARM_Family) {
       isFunctionStart = false; // FIXME
     } else {
       cerr << "Bad architecture to disassemble" << endl;
