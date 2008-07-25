@@ -1683,8 +1683,8 @@ machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_archit
           case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:              s = "AMD x86-64 architecture";            break;
           case SgAsmFile::e_machine_architecture_Sony_DSP_Processor:                   s = "Sony DSP Processor";                 break;
           case SgAsmFile::e_machine_architecture_Siemens_FX66_microcontroller:         s = "Siemens FX66 microcontroller";       break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_micocontroler: s = "STMicroelectronics ST9+ 8/16 mc";   break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_micocontroler:      s = "STmicroelectronics ST7 8 bit mc";   break;
+          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_microcontroller: s = "STMicroelectronics ST9+ 8/16 mc";   break;
+          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_microcontroller:      s = "STmicroelectronics ST7 8 bit mc";   break;
           case SgAsmFile::e_machine_architecture_Motorola_MC68HC16_microcontroller:              s = "Motorola MC68HC16 microcontroller"; break;
           case SgAsmFile::e_machine_architecture_Motorola_MC68HC11_microcontroller:              s = "Motorola MC68HC11 microcontroller"; break;
           case SgAsmFile::e_machine_architecture_Motorola_MC68HC08_microcontroller:              s = "Motorola MC68HC08 microcontroller"; break;
@@ -2452,8 +2452,8 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
           case EM_X86_64:      machine_architecture_kind = SgAsmFile::e_machine_architecture_AMD_x86_64_architecture;              break;
           case EM_PDSP:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Sony_DSP_Processor;                   break;
           case EM_FX66:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Siemens_FX66_microcontroller;         break;
-          case EM_ST9PLUS:     machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_micocontroler; break;
-          case EM_ST7:         machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_micocontroler;      break;
+          case EM_ST9PLUS:     machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_microcontroller; break;
+          case EM_ST7:         machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_microcontroller;      break;
           case EM_68HC16:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC16_microcontroller;              break;
           case EM_68HC11:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC11_microcontroller;              break;
           case EM_68HC08:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC08_microcontroller;              break;
