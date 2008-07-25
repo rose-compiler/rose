@@ -635,6 +635,10 @@ AC_SUBST(RT_LIBS)
 AC_ARG_ENABLE(dq-developer-tests,
 [--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
 [ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
+if test "$with_edg_source_code" = no; then
+   echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
+   $enable_dq_developer_tests=no
+fi
 ])
 AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
 

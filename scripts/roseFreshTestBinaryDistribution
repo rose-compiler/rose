@@ -117,15 +117,15 @@ buildstatus=0
   echo "############ make install (for source distribution) done" && \
 #  make $MAKEFLAGS installcheck && \
   echo "############ make installcheck (for source distribution) done" && \
-#  make $MAKEFLAGS dist DOT_SVNREV=-source-${svnversion} && \
+  make $MAKEFLAGS dist DOT_SVNREV=-source-${svnversion} && \
   echo "############ make dist (for source distribution) done" && \
 #  make $MAKEFLAGS distcheck DOT_SVNREV=-source-${svnversion} && \
   echo "############ make distcheck (for source distribution) done" && \
   ../sourcetree/configure "${BINARY_CONFIGURE_FLAGS[@]}" && \
   echo "############ reconfigured for binary distribution done" && \
-  make $MAKEFLAGS dist DOT_SVNREV=-binary-${svnversion} && \
+  make $MAKEFLAGS dist DOT_SVNREV=-source-with-EDG-binary-${svnversion} && \
   echo "############ make dist (for binary distribution) done" && \
-  make $MAKEFLAGS distcheck DOT_SVNREV=-binary-${svnversion} && \
+  make $MAKEFLAGS distcheck DOT_SVNREV=-source-with-EDG-binary-${svnversion} && \
   echo "############ make distcheck (for binary distribution) done"
 ) >buildlog 2>&1 || buildstatus=1
 
@@ -157,7 +157,11 @@ else
   tail -100 buildlog >> mailtext
   echo "" >> mailtext
 fi
+
 # echo "-------------------- Full log      --------------------" >> mailtext
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
+
+# DQ (7/24/2008): Never delete this since then we can't save the source and binary distributions
+# (or copy them out to a special location when they pass...).
 # if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed

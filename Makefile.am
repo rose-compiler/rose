@@ -1,14 +1,20 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# Use automake conditional to build Public and Developer distributions
+#    Public: includes all of ROSE and binary of EDG work and parts that
+#            are more restricted.
+#    Developer: This version includes all EDG source code and some parts that
+#             might be more restricted.
+if ROSE_USE_EDG_SOURCE
+    DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
+endif
+
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
 # they generate data that is subsequently used in the generated 
-# documentation.
-# SUBDIRS = config tools proposals scripts
+# ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-# SUBDIRS = config src projects tests
-# SUBDIRS = config src tests
-SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
+SUBDIRS = config src projects tests tutorial exampleTranslators docs tools scripts $(DEVELOPER_DISTRIBUTION_DIRECTORY)
 
 ## Generate fast compression while we test the configuration 
 GZIP_ENV = --fast
@@ -98,17 +104,17 @@ install-data-local:
 DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost=$(ac_boost_path)
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
-# opposed to EDG source code we rename the final gnerated distribution.
+# opposed to EDG source code we rename the final generated distribution.
 rename_distribution:
 	@echo "DISTCHECK_CONFIGURE_FLAGS = $(DISTCHECK_CONFIGURE_FLAGS)"
 	@if test "$(with_edg_source_code)" = true; then \
 	  echo "ROSE distribution built using EDG source code (with_edg_source_code = $(with_edg_source_code))"; \
-     new_name="$(distdir)-with-EDG-source.tar.gz"; \
+     new_name="$(distdir)-source-with-EDG-source.tar.gz"; \
      echo "copying $(distdir).tar.gz to $$new_name"; \
      cp $(distdir).tar.gz $$new_name; \
 	else \
      echo "ROSE distribution built using binaries in place of EDG source code (with_edg_source_code = $(with_edg_source_code))"; \
-     new_name="$(distdir)-with-EDG-binaries.tar.gz"; \
+     new_name="$(distdir)-source-with-EDG-binaries.tar.gz"; \
      echo "copying $(distdir).tar.gz to $$new_name"; \
      cp $(distdir).tar.gz $$new_name; \
    fi
@@ -119,7 +125,7 @@ rename_distribution:
 distdir = $(PACKAGE)-$(VERSION)$(DOT_SVNREV)
 
 # Automake hook-ish rule to be run after dist rule (but hook runs before gzip so we can't use hook)
-# We could build out own ROSE specific wrapper for dist and distcheck.
+# We could build our own ROSE specific wrapper for dist and distcheck.
 dist-after:
 	@echo "Running dist hook rule ..."
 	@$(MAKE) rename_distribution
