@@ -56,7 +56,7 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
 
     /* Entry point */
     base_va = 0;
-    entry_rva = le_to_host(disk->e_ip);
+    add_entry_rva(le_to_host(disk->e_ip));
 }
 
 /* Encode the DOS file header into disk format */

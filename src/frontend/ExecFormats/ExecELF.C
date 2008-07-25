@@ -163,7 +163,7 @@ ElfFileHeader::ctor(ExecFile *f, addr_t offset)
 
     /* Entry point */
     base_va = 0;
-    entry_rva = e_entry;
+    add_entry_rva(e_entry);
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts

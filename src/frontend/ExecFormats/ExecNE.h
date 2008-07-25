@@ -252,6 +252,7 @@ class NENameTable : public ExecSection {
     virtual ~NENameTable() {}
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
   private:
     void ctor(NEFileHeader*);
     std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
@@ -301,15 +302,22 @@ class NEStringTable : public ExecSection {
 // NE Entry Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+enum NEEntryFlags {
+    EF_RESERVED         = 0xfc, /* Reserved bits */
+    EF_EXPORTED         = 0x01, /* Exported */
+    EF_GLOBAL           = 0x02  /* Uses a global (shared) data section */
+};
+
 struct NEEntryPoint {
     NEEntryPoint()
-        : flags(0), int3f(0), section_idx(0), section_offset(0)
+        : flags((NEEntryFlags)0), int3f(0), section_idx(0), section_offset(0)
         {}
-    NEEntryPoint(unsigned flags, unsigned int3f, unsigned s_idx, unsigned s_off)
+    NEEntryPoint(NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off)
         : flags(flags), int3f(int3f), section_idx(s_idx), section_offset(s_off)
         {}
-    unsigned flags;             /* 0x01=>exported, 0x02=>uses a global (shared) data segment */
-    unsigned int3f;             /* always 0x3f** */
+    void dump(FILE*, const char *prefix, ssize_t idx) const;
+    NEEntryFlags flags;         /* bit flags */
+    unsigned int3f;             /* always 0x3fxx */
     unsigned section_idx;       /* zero indicates unused entry */
     unsigned section_offset;    /* byte offset into section */
 };
@@ -320,6 +328,7 @@ class NEEntryTable : public ExecSection {
         : ExecSection(fhdr->get_file(), offset, size)
         {ctor(fhdr);}
     virtual ~NEEntryTable() {}
+    void populate_entries();
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:

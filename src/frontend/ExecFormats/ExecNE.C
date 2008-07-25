@@ -577,6 +577,19 @@ NENameTable::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 }
 
+/* Returns all names associated with a particular ordinal */
+std::vector<std::string>
+NENameTable::get_names_by_ordinal(unsigned ordinal)
+{
+    std::vector<std::string> retval;
+    for (size_t i=0; i<ordinals.size(); i++) {
+        if (ordinals[i]==ordinal) {
+            retval.push_back(names[i]);
+        }
+    }
+    return retval;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // NE Module Reference Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -701,6 +714,37 @@ NEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
 // NE Entry Table
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* Print some debugging info */
+void
+NEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sNEEntryPoint[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sNEEntryPoint.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    if (0==section_idx) {
+        fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
+        ROSE_ASSERT(0==flags);
+        ROSE_ASSERT(0==int3f);
+        ROSE_ASSERT(0==section_offset);
+    } else {
+        fprintf(f, "%s%-*s = %s\n",         p, w, "type",           0==int3f ? "fixed" : "movable");
+        fprintf(f, "%s%-*s = 0x%02x",       p, w, "flags",          flags);
+        if (flags & EF_EXPORTED) fputs(" exported", f);
+        if (flags & EF_GLOBAL)   fputs(" global",   f);
+        if (flags & EF_RESERVED) fputs(" *",        f);
+        fputc('\n', f);
+        if (int3f)
+            fprintf(f, "%s%-*s = 0x%04x\n", p, w, "int3f",          int3f);
+        fprintf(f, "%s%-*s = %d\n",         p, w, "section_idx",    section_idx);
+        fprintf(f, "%s%-*s = 0x%04x\n",     p, w, "section_offset", section_offset);
+    }
+}
+
 /* Constructor */
 void
 NEEntryTable::ctor(NEFileHeader *fhdr)
@@ -723,7 +767,7 @@ NEEntryTable::ctor(NEFileHeader *fhdr)
         } else if (0xff==segment_indicator) {
             /* Movable segment entries. */
             for (size_t i=0; i<bundle_nentries; i++, at+=6) {
-                unsigned flags = content(at+0, 1)[0];
+                NEEntryFlags flags = (NEEntryFlags)content(at+0, 1)[0];
                 unsigned int3f = le_to_host(*(const uint16_t*)content(at+1, 2));
                 ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
                 unsigned segno = content(at+3, 1)[0];
@@ -733,13 +777,45 @@ NEEntryTable::ctor(NEFileHeader *fhdr)
         } else {
             /* Fixed segment entries */
             for (size_t i=0; i<bundle_nentries; i++, at+=3) {
-                unsigned flags = content(at+0, 1)[0];
+                NEEntryFlags flags = (NEEntryFlags)content(at+0, 1)[0];
                 unsigned segoffset = le_to_host(*(const uint16_t*)content(at+1, 2));
                 entries.push_back(NEEntryPoint(flags, 0, segment_indicator, segoffset));
             }
         }
         
         bundle_nentries = content(at++, 1)[0];
+    }
+}
+
+/* Populates the entry_rvas vector of the NE header based on the contents of this Entry Table. The Section (Object) Table must
+ * have already been parsed and nonsynthesized sections constructed. */
+void
+NEEntryTable::populate_entries()
+{
+    ExecHeader *fhdr = get_header();
+    for (size_t i=0; i<entries.size(); i++) {
+        const NEEntryPoint& entry = entries[i];
+        ExecSection *section;
+        if (0==entry.section_idx) {
+            /* Unused entry */
+        } else if (NULL==(section = get_file()->get_section_by_id(entry.section_idx))) {
+            fprintf(stderr, "Ignoring bad entry section_idx (FIXME)\n");
+            entry.dump(stderr, "      ", i);
+        } else {
+            ROSE_ASSERT(section->is_mapped());
+            addr_t entry_rva = section->get_mapped_rva() + entry.section_offset;
+            fhdr->add_entry_rva(entry_rva);
+#if 0 /*DEBUGGING*/
+            /* Entry points often have names. Here's how to get them. */
+            NEFileHeader *ne_header = dynamic_cast<NEFileHeader*>(fhdr);
+            NENameTable *nametab = ne_header->get_nonresname_table();
+            std::vector<std::string> names = nametab->get_names_by_ordinal(i+1);
+            fprintf(stderr, "ROBB: entry[%zu] (ordinal %zu)\n", i, i+1);
+            for (size_t j=0; j<names.size(); j++) {
+                fprintf(stderr, "ROBB:     name=\"%s\"\n", names[j].c_str());
+            }
+#endif
+        }
     }
 }
 
@@ -811,27 +887,11 @@ NEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     ExecSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %zu bundles\n", p, w, "nbundles", bundle_sizes.size());
-    for (size_t bi=0, ei=0; bi<bundle_sizes.size(); ei+=bundle_sizes[bi++]) {
-        fprintf(f, "%s%-*s = [%zu] %zu entries\n", p, w, "bundle_size", bi, bundle_sizes[bi]);
-        for (size_t i=0; i<bundle_sizes[bi]; i++) {
-            if (0==entries[ei+i].section_idx) {
-                fprintf(f, "%s%-*s = [%zu] %s\n", p, w, "entry.type", ei+i, "unused");
-                ROSE_ASSERT(0==entries[ei+i].flags);
-                ROSE_ASSERT(0==entries[ei+i].int3f);
-                ROSE_ASSERT(0==entries[ei+i].section_offset);
-            } else if (0==entries[ei+i].int3f) {
-                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry.type",           ei+i, "fixed");
-                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry.flags",          ei+i, entries[ei+i].flags);
-                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry.section_idx",    ei+i, entries[ei+i].section_idx);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.section_offset", ei+i, entries[ei+i].section_offset);
-            } else {
-                fprintf(f, "%s%-*s = [%zu] %s\n",     p, w, "entry.type",           ei+i, "movable");
-                fprintf(f, "%s%-*s = [%zu] 0x%02x\n", p, w, "entry.flags",          ei+i, entries[ei+i].flags);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.int3f",          ei+i, entries[ei+i].int3f);
-                fprintf(f, "%s%-*s = [%zu] %d\n",     p, w, "entry.section_idx",    ei+i, entries[ei+i].section_idx);
-                fprintf(f, "%s%-*s = [%zu] 0x%04x\n", p, w, "entry.section_offset", ei+i, entries[ei+i].section_offset);
-            }
-        }
+    for (size_t i=0; i<bundle_sizes.size(); i++) {
+        fprintf(f, "%s%-*s = [%zu] %zu entries\n", p, w, "bundle_size", i, bundle_sizes[i]);
+    }
+    for (size_t i=0; i<entries.size(); i++) {
+        entries[i].dump(f, p, i);
     }
 }
 
@@ -1227,6 +1287,10 @@ parse(ExecFile *ef)
 
     /* Construct the section table and its sections (non-synthesized sections) */
     ne_header->set_section_table(new NESectionTable(ne_header));
+
+    /* NE files have multiple entry points that are defined in the Entry Table */
+    if (NEEntryTable *enttab = ne_header->get_entry_table())
+        enttab->populate_entries();
     
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();

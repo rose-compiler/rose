@@ -269,7 +269,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
 
     /* Entry point */
     base_va = e_image_base;
-    entry_rva = e_entrypoint_rva;
+    add_entry_rva(e_entrypoint_rva);
 }
 
 /* Encode the PE header into disk format */

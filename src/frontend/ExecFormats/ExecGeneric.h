@@ -447,7 +447,7 @@ class ExecHeader : public ExecSection {
   public:
     ExecHeader(ExecFile *ef, addr_t offset, addr_t size)
         : ExecSection(ef, offset, size),
-        base_va(0), entry_rva(0)
+        base_va(0)
         {ctor(ef, offset, size);}
     virtual ~ExecHeader();
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -465,19 +465,21 @@ class ExecHeader : public ExecSection {
     ExecFormat& get_exec_format() {return exec_format;}
     std::vector<unsigned char>& get_magic() {return magic;}
     const Architecture& get_target() const {return target;}
+    addr_t get_base_va() const {return base_va;}
+    addr_t get_entry_rva() const {return entry_rvas[0];}
+    const std::vector<addr_t>& get_entry_rvas() const {return entry_rvas;}
+    void add_entry_rva(addr_t rva) {entry_rvas.push_back(rva);}
 
     /* Convenience functions */
-    ByteOrder get_sex() {return exec_format.sex;}
-    size_t get_word_size() {return exec_format.word_size;}
-    addr_t get_base_va() {return base_va;}
-    addr_t get_entry_rva() const {return entry_rva;}
+    ByteOrder get_sex() const {return exec_format.sex;}
+    size_t get_word_size() const {return exec_format.word_size;}
 
   protected:
     ExecFormat          exec_format;                    /* General info about the executable format */
     std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
     Architecture        target;                         /* Machine for which this header and its sections, etc. was compiled */
     addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
-    addr_t              entry_rva;                      /* Code entry point wrt base_va */
+    std::vector<addr_t> entry_rvas;                     /* Code entry points wrt base_va */
     std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
     std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
 
