@@ -152,12 +152,7 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
     double currentWeight = 0.0001;
     if (isSgArrowExp(node) || isSgPointerDerefExp(node)
     	|| isSgAssignInitializer(node) || isSgFunctionCallExp(node)) {
-      //SgNode* parent = node->get_parent();
-      //while (!isSgFunctionDefinition(parent) && !isSgProject(parent))
-      //  parent=parent->get_parent();
-      //NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
-      //nrNiF.traverse(node, postorder);
-      currentWeight = 0.05;//*nrNiF.totalNodes;
+      currentWeight = 0.05;
     } else if (isSgFunctionDefinition(node)) {
       NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
       nrNiF.traverse(node, postorder);
@@ -165,6 +160,10 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
       // make sure a function is weighted more than all other nodes
       if (currentWeight<=0.05)
 	currentWeight=0.06;
+    } else if (isSgFile(node)) {
+      NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
+      nrNiF.traverse(node, postorder);
+      currentWeight = 0.02*nrNiF.totalNodes;
     }
     weights[i].first = currentWeight;
     weights[i].second = i;
@@ -437,7 +436,9 @@ int main(int argc, char **argv)
       cout << "bounds size = " << bounds.size() << endl;
     int i=-1;
     gettime(begin_time_defuse);
+#if ROSE_GCC_OMP
     #pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
+#endif
     for (i = 0; i<(int)bounds.size();i++) {
       if (DEBUG_OUTPUT_MORE) 
 	cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
@@ -497,7 +498,9 @@ int main(int argc, char **argv)
 	// OPENMP START-------------------------------------------------------
 	int i=-1;
 	gettime(begin_time_defuse);
+#if ROSE_GCC_OMP
 #pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
+#endif
 	for (i=min; i<max;i++) { 
 	  gettime(begin_time_node);
 	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
@@ -507,7 +510,9 @@ int main(int argc, char **argv)
 	  }
 	  gettime(end_time_node);
 	  double my_time_node = Compass::timeDifference(end_time_node, begin_time_node);
+#if ROSE_GCC_OMP
 #pragma omp critical (parallelcompassmulti)
+#endif
 	  if (my_time_node>max_time) {
 	    max_time=my_time_node;
 	    max_time_nr = i;

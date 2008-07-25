@@ -1,8 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_USE_GCC_OMP
+ INCLUDES_OMP = -DROSE_GCC_OMP 
+endif
+
 if ROSE_MPI
 
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass
+INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass $(INCLUDES_OMP)
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la 
 
 if ROSE_USE_GCC_OMP
