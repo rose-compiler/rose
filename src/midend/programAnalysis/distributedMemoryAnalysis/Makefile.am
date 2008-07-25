@@ -4,9 +4,6 @@ if ROSE_MPI
 
 INCLUDES =  $(ROSE_INCLUDES) -DROSE_MPI 
 
-## The grammar generator (ROSETTA) should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
-
 LTCXXCOMPILE = \
 	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
         $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
