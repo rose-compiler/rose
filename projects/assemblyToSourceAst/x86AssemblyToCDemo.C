@@ -1757,6 +1757,11 @@ void renumberVariableDefinitions(SgNode* top, const X86AssemblyToCWithVariables&
         }
         break;
       }
+
+      default: {
+        cerr << "Bad statement kind " << stmt->class_name() << endl;
+        abort();
+      }
     }
 #if 0
     cerr << "For statement " << stmt->unparseToString() << " got localDefs=";

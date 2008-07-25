@@ -17,7 +17,7 @@
 using namespace std;
 using namespace SageInterface;
 
-bool containsArgument(int argc, char** argv, char* pattern) {
+bool containsArgument(int argc, char** argv, const char* pattern) {
   for (int i = 2; i < argc ; i++) {
     if (!strcmp(argv[i], pattern)) {
       return true;

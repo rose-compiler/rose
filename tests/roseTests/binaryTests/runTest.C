@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(project);
   RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
   RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
-  char* cfgFileName = "cfg.dot";
+  const char* cfgFileName = "cfg.dot";
   RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
   cout << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
 
   // call graph analysis  *******************************************************
   cerr << " creating call graph ... " << endl;
-  char* callFileName = "callgraph.gml";
+  const char* callFileName = "callgraph.gml";
   forward = true;
   RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);

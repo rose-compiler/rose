@@ -865,7 +865,6 @@ void SingleInstructionTranslator::translate() {
        {
          ROSE_ASSERT (operands.size() == 1);
          SgVariableSymbol* op1sym = cacheValue(operands[0]);
-         SgVariableSymbol* subtractOpSym = cacheValue(buildIntValHex(0));
          SgVariableSymbol* resultsym =
            makeNewVariableInBlock(
              asmTypeToCType(operands[0]->get_type()),
@@ -1495,6 +1494,8 @@ void SingleInstructionTranslator::translate() {
              asmResultLow = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_qword);
              asmResultHigh = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_qword);
              break;
+
+             default: ROSE_ASSERT (!"Bad type variant");
            }
            break;
          }
