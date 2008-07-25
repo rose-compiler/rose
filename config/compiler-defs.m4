@@ -24,7 +24,8 @@ dnl predefined by a specific compiler
   case $compilerName in
 
   # Support for GNU gcc or g++ as a backend for compiling ROSE generated code
-    g++|gcc)
+  # JJW 7/25/2008: Added mpi* in here, assuming they are like gcc
+    g++|gcc|mpicc|mpic++|mpicxx|mpiCC)
              tmpFile="/tmp/tmp`uname -n`$$.C"
              echo "int main(int argc, char **argv){return 0;}" > "$tmpFile"
              macroString=`"$BACKEND_CXX_COMPILER" -v -E "$tmpFile" 2>&1 | awk '{for(i=1; i<=NF; i++){if ($i ~ /-D[^ ]/){mcStr=mcStr" " $i}}} END{ print mcStr}'`
@@ -109,21 +110,6 @@ dnl predefined by a specific compiler
              BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
              BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
              BACKEND_GCC_PATCHLEVEL=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f3` ;;
-
-  # Support for KAI KCC as a backend for compiling ROSE generated code (KAI was bought by Intel and KCC was discontinued)
-    KCC)
-             macroString=`"$BACKEND_CXX_COMPILER" -v 2>&1 | awk '{for(i=1; i<=NF; i++){if ($i ~ /^-D[^ ]/){mcStr=mcStr" " $i}}} END{ print mcStr}'`;;
-
-  # Support for SUN CC as a backend for compiling ROSE generated code
-  # for CC we assume for now that the hardware is sparc, later we can deal with x86 if need be
-  # I am also not treating the compat=4,5 issue correctly at this time
-  # CC unfortunately gives no cute option to output a list of predefined macros, so
-  # we resort to explicitly specifying almost all of them
-  # -D__DATE__ -D__FILE__ -D__LINE__ -D__TIME__ -D__SUNPRO_CC=0x500 were originally in there but we remove them for now
-    CC)
-             macroString="-D__BUILTIN_VA_ARG_INCR -D__cplusplus -D__STDC__=0 -D__SVR4"
-             macroString=$macroString" -D__sun -Dsun -D__`uname -s`_`uname -r | sed 'y/-./__/'`"
-             macroString=$macroString" -D__unix -Dunix -D_WCHAR_T -D__ARRAYNEW -D__sparc -Dsparc";;
 
     *)
              echo "we reached here for some reason (cannot identify back-end C++ compiler \"$BACKEND_CXX_COMPILER\")";
