@@ -1,2 +1,0 @@
-parallelize loop for(class list::iterator i = l.begin();i!=(l.end());i++) {foo(*i);for(class list::iterator i = l.begin();i!=(l.end());i++) {foo(5);}foo(*i);int k;}
-parallelize loop for(class list::iterator i = l.begin();i!=(l.end());i++) {foo(5);}

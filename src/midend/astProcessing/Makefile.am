@@ -1,7 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-# DQ (11/19/2007): Removed the use of Coco
-# SUBDIRS = CocoPreprocessor
 SUBDIRS =
 
 INCLUDES = $(ROSE_INCLUDES)
@@ -16,12 +14,6 @@ libastprocessingSources = \
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
    AstSharedMemoryParallelSimpleProcessing.C
-
-# DQ (1/3/2008): I think we can remove this Coco dependent file.
-# sgnodep.cpp AgProcessing.C AgDefaultError.C 
-
-# DQ (11/19/2007): Removed the use of Coco
-# AstNodeScanner.C
 
 # Removed AstTests.C AstStatistics.C 
 
@@ -51,7 +43,7 @@ distclean-local:
 include_HEADERS = \
    AstPDFGeneration.h AstNodeVisitMapping.h AstAttributeMechanism.h \
    AstTextAttributesHandling.h AstDOTGeneration.h AstProcessing.h \
-   AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h AstNodeScanner.h \
+   AstSimpleProcessing.h AstTraverseToRoot.h AstNodePtrs.h \
    AstSuccessorsSelectors.h AstReverseProcessing.h \
    AstReverseSimpleProcessing.h Ast.h AstRestructure.h AstClearVisitFlags.h \
    AstTraversal.h AstCombinedProcessing.h AstCombinedProcessingImpl.h \
@@ -59,9 +51,6 @@ include_HEADERS = \
    AstSharedMemoryParallelProcessingImpl.h AstSharedMemoryParallelSimpleProcessing.h
 
 # Removed AstTests.h AstStatistics.h 
-
-# DQ (1/3/2007): Removed use of Coco parser generator.
-# AgProcessing.h AgProcessing.C AgDefaultError.h sgnodec.hpp sgnodep.hpp sgnodes.hpp sgnodee.hpp 
 
 EXTRA_DIST = AstProcessing.docs
 

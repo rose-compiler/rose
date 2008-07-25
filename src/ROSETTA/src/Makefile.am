@@ -95,10 +95,6 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 	mv Cxx_GrammarTreeTraversalAccessEnums.h $(CXX_GRAMMAR_DIR)/Cxx_GrammarTreeTraversalAccessEnums.h
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarVariantEnumNames.C
 	mv Cxx_GrammarVariantEnumNames.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarVariantEnumNames.C
-#	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
-#	mv Cxx_GrammarCocoSymbolsMapping.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarCocoSymbolsMapping.C
-# rm -f $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
-# mv generated_abstractcppgrammar.atg $(CXX_GRAMMAR_DIR)/generated_abstractcppgrammar.atg
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarNewAndDeleteOperators.C
 	mv Cxx_GrammarNewAndDeleteOperators.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarNewAndDeleteOperators.C
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarCopyMemberFunctions.C

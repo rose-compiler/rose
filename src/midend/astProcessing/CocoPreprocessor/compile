@@ -1,6 +1,0 @@
-cocor -DCRFRAMES=. agpp.atg;
-echo "All Coco Preprocessor files generated."
-
-
-
-

@@ -83,12 +83,6 @@ Generated files include (complete list as of 5/27/2007):
       to support computation of unique index values in to the global memory pool of all IR
       nodes.  These are called in a way that makes there semantics unclear.
  
-   Cxx_GrammarCocoSymbolsMapping.C
-      Generated support for Coco parser generator (no longer used, but similar input could
-      be used for other parser generator to permit parsers on the AST to be automatically
-      generated).  This should be considered to be the grammar for the AST.
-
-
 **********************************************************************
 *                    Summaries of directories                        *
 **********************************************************************

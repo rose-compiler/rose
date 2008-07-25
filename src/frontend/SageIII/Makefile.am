@@ -54,8 +54,6 @@ GENERATED_SOURCE  = \
    Cxx_GrammarGetChildIndex.C \
    AST_FILE_IO.C StorageClasses.C
 
-#  Cxx_GrammarCocoSymbolsMapping.C 
-
 haveRosettaGeneratedSource:
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 	touch haveRosettaGeneratedSource

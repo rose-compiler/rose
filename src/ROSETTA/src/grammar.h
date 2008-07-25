@@ -548,8 +548,6 @@ class Grammar
        std::set<std::string> traversedTerminals;
        GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
        bool isAbstractGrammarSymbol(std::string);
-       std::string cocoScannerDefineName(std::string s);
-       std::string cocoScannerDefines();
 
    // JH (01/13/2006) Added to build code for ast file IO
       public:

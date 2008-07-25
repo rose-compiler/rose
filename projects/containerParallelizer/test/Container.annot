@@ -1,8 +1,0 @@
-class list { container; }
-operator foo (int) { modify none; }
-operator list::begin() { modify none; }
-operator list::end() { modify none ; }
-operator list::iterator::operator*() { modify none; }
-operator list::iterator::operator++(int) { modify {this}; }
-operator list::iterator::operator==(const list::iterator& that) { modify none; }
-operator list::iterator::operator!=(const list::iterator& that) { modify none; }

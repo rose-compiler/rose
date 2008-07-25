@@ -30,11 +30,6 @@ SUBDIRS = \
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
 #     NameConsistancyChecker 
 
-# DQ (1/2/2007): Removed because it is a dated example (using Coco, circa 2004).
-# Also the file names are too long and this would have to be fixed before 
-# using GNU tar (posix standard enforces 100 character limit).
-#    containerParallelizer
-
 # DQ (9/3/2006): Removed in preference to the newer work on OpenMP.
 # Removed the older incomplete (initial attempt) at an OpenMP processor.
 #    OpenMPPreprocessor

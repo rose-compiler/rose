@@ -30,7 +30,6 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport $(JA
 #	-I$(top_srcdir)/src/frontend/SageIII/sageInterface	\
 #	-I$(top_srcdir)/src/midend/astDiagnostics		\
 #	-I$(top_srcdir)/src/backend/unparser			\
-#	-I$(top_srcdir)/src/3rdPartyLibraries/coco/cplus2	\
 #	-I$(top_srcdir)/src/midend/astRewriteMechanism		\
 #	-I$(top_srcdir)/src/midend/astQuery			\
 #	-I$(top_srcdir)/src/frontend/SageIII/astMerge		\

@@ -30,12 +30,6 @@ lsviz : visualizes a directory structure as a graph (by using dot) and
         It translates the output of ls to a dot tree description and 
         invokes dot. Several parameters allow to customize the output.
 
-* Experimental (Markus Schordan)
-cocorpp :  uses agpp to preprocess a coco grammar file and generates
-           properly names source files (which can then be used and compiled
-           in a source-to-source translator).
-           - for installation of agpp see ROSE/AstProcessingLib/CocoPreprocessor
-
 pragmarize: workaround for a bug in ROSE (fixed in a later internal release)
             - replaces strings '//#pragma' with 'pragma'
                        
