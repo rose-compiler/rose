@@ -786,3 +786,63 @@ More information can be found at: \\
 
 Thanks for saving a number of people a lot of work.
 
+
+\section{Setting Up Nightly Tests}
+
+Directions for using roseFreshTest to set up periodic regression tests:
+
+\begin{enumerate}
+   \item Get an account on the machine you are going to run the tests on.
+   \item Get a scratch directory (normally /export/0/tmp.<your username>) on that
+         machine.
+   \item Copy (using svn cp) a stub script (scripts/roseFreshTestStub-*) to one
+   with your name.
+   \item Edit your new stub script as appropriate:
+   \begin{enumerate}
+      \item Set the versions of the different tools you want to use (compiler,
+     ...).
+      \item Change ROSE\_TOP to be in your scratch directory.
+      \item Set ROSE\_SVNROOT to be the URL of the trunk or branch you want to
+     test.
+      \item Set MAILADDRS to the people you want to be sent messages about the
+     progress and results of your test.
+      \item MAKEFLAGS should be set for most peoples' needs, but the -j setting
+     might need to be modified if you have a slower or faster computer.
+      \item If you would like the copy of ROSE that you test to be checked out
+     using "svn checkout" (rather than the default of "svn export"), add a
+     line "SVNOP=checkout" to the stub file.
+      \item The default mode of roseFreshTest is to use the most current version
+     of ROSE on your branch as the one to test.  If you would like to test
+     a previous version, you can set SVNVERSIONOPTION to the revision
+     specification to use (one of the arguments to -r in "svn help
+     checkout").
+   \end{enumerate}
+   \item Check your stub script in so that it will be backed up, and so that other
+   people can copy from it or update it to match (infrequent) changes in the
+   underlying scripts.
+   \item Run "crontab -e" on the machine you will be testing on:
+   \begin{enumerate}
+      \item Make sure there is a line with "MAILTO=<your email>".
+      \item Add new lines for each test you would like to run:
+      \begin{enumerate}
+         \item If other people are using the machine you are running tests on, be
+               sure to coordinate the time your scripts are going to run with them.
+         \item See "man crontab" for the format of the time and date specification.
+         \item The command to use is (all one line):
+\begin{verbatim}
+           cd <your ROSE source tree>/scripts && \
+           ./roseFreshTest ./roseFreshTestStub-<your stub name>.sh \
+           <extra configure options>
+         Where <extra configure options> are things like
+         --enable-edg\_union\_struct\_debugging, --with-C\_DEBUG=...,
+         --with-java, etc.
+\end{verbatim}
+      \end{enumerate}
+   \end{enumerate}
+   \item Your tests should then run on the times and dates specified.
+   \item If you would ever like to run a test immediately, copy and paste the
+   correct line in "crontab -e" and set the time to the next minute (note
+   that the minute comes first, and the hour is in 24-hour format); ensure
+   the date specification includes today's date.  Be sure to quit your
+   editor -- just suspending it prevents your changes from taking effect.
+\end{enumerate}
