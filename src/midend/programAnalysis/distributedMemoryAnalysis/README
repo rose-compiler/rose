@@ -1,0 +1,5 @@
+DQ (1/7/2008):
+   This is the support for parallel distributed attribute evaluation.
+   This work has yet to be formally into ROSE and has dominately
+   been used with an installed version of ROSE.
+
