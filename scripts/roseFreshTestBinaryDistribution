@@ -108,18 +108,18 @@ buildstatus=0
   echo "############ configure done" && \
   make $MAKEFLAGS && \
   echo "############ make ((for source distribution; building libraries for binary distribution) done" && \
-# make $MAKEFLAGS docs && \
+  make $MAKEFLAGS docs && \
   echo "############ make docs ((for source distribution) done" && \
-#  make $MAKEFLAGS check && \
+  make $MAKEFLAGS check && \
   echo "############ make check (for source distribution) done" && \
-#  rmdir ../install && \
-#  make $MAKEFLAGS install && \
+  rmdir ../install && \
+  make $MAKEFLAGS install && \
   echo "############ make install (for source distribution) done" && \
-#  make $MAKEFLAGS installcheck && \
+  make $MAKEFLAGS installcheck && \
   echo "############ make installcheck (for source distribution) done" && \
   make $MAKEFLAGS dist DOT_SVNREV=-source-${svnversion} && \
   echo "############ make dist (for source distribution) done" && \
-#  make $MAKEFLAGS distcheck DOT_SVNREV=-source-${svnversion} && \
+  make $MAKEFLAGS distcheck DOT_SVNREV=-source-${svnversion} && \
   echo "############ make distcheck (for source distribution) done" && \
   ../sourcetree/configure "${BINARY_CONFIGURE_FLAGS[@]}" && \
   echo "############ reconfigured for binary distribution done" && \
