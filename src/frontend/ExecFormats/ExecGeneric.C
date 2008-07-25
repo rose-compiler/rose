@@ -224,8 +224,28 @@ ExecFile::get_sections_by_rva(addr_t rva)
     std::vector<ExecSection*> retval;
     for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
         ExecSection *section = *i;
-        if (section->is_mapped() && rva>=section->get_mapped_rva() && rva<section->get_mapped_rva()+section->get_size()) {
+        if (section->is_mapped() && rva>=section->get_mapped_rva() && rva<section->get_mapped_rva()+section->get_mapped_size()) {
             retval.push_back(section);
+        }
+    }
+    return retval;
+}
+
+/* Returns a vector of sections that are mapped to the specified virtual address (VA). Sections are mapped by relative virtual
+ * addresses (RVAs) that are based on the base VA of the section's file header. If the section is mapped but has no associated
+ * file header then we assume zero for the base VA. */
+std::vector<ExecSection*>
+ExecFile::get_sections_by_va(addr_t va)
+{
+    std::vector<ExecSection*> retval;
+    for (std::vector<ExecSection*>::iterator i=sections.begin(); i!=sections.end(); i++) {
+        ExecSection *section = *i;
+        if (section->is_mapped()) {
+            ExecHeader *hdr = section->get_header();
+            addr_t base_va = hdr ? hdr->get_base_va() : 0;
+            if (va>=base_va+section->get_mapped_rva() && va<base_va+section->get_mapped_rva()+section->get_mapped_size()) {
+                retval.push_back(section);
+            }
         }
     }
     return retval;
