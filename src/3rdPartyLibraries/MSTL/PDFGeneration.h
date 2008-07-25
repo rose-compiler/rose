@@ -7,6 +7,13 @@
 #include <iostream>
 #include <typeinfo>
 #include "AstProcessing.h"
+
+#undef PACKAGE
+#undef PACKAGE_BUGREPORT
+#undef PACKAGE_NAME
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+#undef PACKAGE_VERSION
 #include "hpdf.h"
 
 class PDFInheritedAttribute {
@@ -17,9 +24,6 @@ class PDFInheritedAttribute {
   HPDF_Outline currentOutline;
   HPDF_Destination parentPage;
 };
-
-namespace PDFGenerationHelpers {
-}
 
 class PDFGeneration : public SgTopDownProcessing<PDFInheritedAttribute> {
 public:

@@ -6,7 +6,6 @@
 #include "sage3.h"
 #include "roseInternal.h"
 
-#include "hpdf.h"
 #include "PDFGeneration.h"
 
 #include <iostream>
