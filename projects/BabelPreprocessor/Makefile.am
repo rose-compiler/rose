@@ -8,11 +8,6 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 bin_PROGRAMS = babelPreprocessor
 
-# list of dependencies for all example programs
-EXAMPLE_PROGRAMS_DEPENDENCY_LIST = \
-     babelPreprocessor.o \
-     $(ROSE_LIBS_WITH_PATH)
-
 # version of A++ preprocessor (initial development)
 babelPreprocessor_SOURCES = \
      sidlFunction.C \

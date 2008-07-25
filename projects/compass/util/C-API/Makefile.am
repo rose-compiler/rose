@@ -36,7 +36,6 @@ LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../../compassSupport/libCompass.la \
   libC-API.la
 
 testC_API_SOURCES = libC-API.la testC-API.C
-testC_API_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libC-API.la
 
 test: libC-API.la testC-API$(EXEEXT) \
 	    $(srcdir)/c-string.api $(srcdir)/c-string.c

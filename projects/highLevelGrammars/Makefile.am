@@ -9,21 +9,15 @@ bin_PROGRAMS = \
      highLevelGrammarGenerator \
      exampleTranslator
 
-exampleDEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
 overloadedOperatorRepresentation_SOURCES = overloadedOperatorRepresentation.C AbstractionAttribute.C
-overloadedOperatorRepresentation_DEPENDENCIES = $(exampleDEPENDENCIES)
 
 highLevelGrammarGenerator_SOURCES = highLevelGrammarGenerator.C
-highLevelGrammarGenerator_DEPENDENCIES = $(exampleDEPENDENCIES)
 
 exampleTranslator_SOURCES = \
      exampleTranslator.C
 
 #    AplusplusAbstractionGeneratedSource.h
 #    AplusplusAbstractionGeneratedSource.C
-
-exampleTranslator_DEPENDENCIES = $(exampleDEPENDENCIES)
 
 #     AplusplusAbstractionGeneratedSource.h
 #     AplusplusAbstractionGeneratedSource.C

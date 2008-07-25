@@ -8,9 +8,6 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = cgraphpp
 
-# list of dependencies for all example programs
-EXAMPLE_PROGRAMS_DEPENDENCY_LIST = $(ROSE_LIBS_WITH_PATH)
-
 # version of A++ preprocessor (initial development)
 cgraphpp_SOURCES = \
      ControlStructure.C \
@@ -21,8 +18,6 @@ cgraphpp_SOURCES = \
 
 #    handle.C
 #    helpMethods.C
-
-cgraphpp_DEPENDENCIES = $(EXAMPLE_PROGRAMS_DEPENDENCY_LIST)
 
 # Need to get together with Andreas to get this working.
 # He will be here in another week, so I will not worry about this now!

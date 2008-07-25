@@ -27,25 +27,11 @@ lib_LIBRARIES = libarrayOptimization.a
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libarrayOptimization_a_SOURCES = ArrayAnnot.C  ArrayInterface.C  ArrayRewrite.C 
-libarrayOptimization_a_DEPENDENCIES = \
-     ArrayAnnot.o  ArrayInterface.o ArrayRewrite.o
-libarrayOptimization_a_LIBADD =  \
-     ArrayAnnot.o  ArrayInterface.o ArrayRewrite.o
-
 
 bin_PROGRAMS = ArrayProcessor
 ArrayProcessor_SOURCES = ArrayProcessor.C
-ArrayProcessor_DEPENDENCIES = libarrayOptimization.a $(ROSE_LIBS_WITH_PATH)
 
 LDADD = libarrayOptimization.a $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-
-# We have to explicily build this rule since we want to avoid the use of "ar cru" 
-# (need to use the C++ compiler so that templates will be built)
-libarrayOptimization.a: $(libarrayOptimization_a_DEPENDENCIES)
-	rm -f $@
-	$(CXX_STATIC_LIB_UPDATE) $@ $(libarrayOptimization_a_LIBADD)
-	test -f $@ || exit 1
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates

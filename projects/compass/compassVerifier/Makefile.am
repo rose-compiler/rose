@@ -52,7 +52,7 @@ compassVerifier_SOURCES = compassMain.C checkers.h
 compassVerifier_LDADD = -lCompassCheckers $(ROSE_LIBS)
 
 # This does not contribute to the link line
-compassVerifier_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) $(compass_builddir)/compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
+compassVerifier_DEPENDENCIES = $(compass_builddir)/compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
 
 test: compassVerifier compass_parameters 
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier $(compass_srcdir)/tests/exampleTest_1.C

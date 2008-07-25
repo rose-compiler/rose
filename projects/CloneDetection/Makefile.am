@@ -6,10 +6,8 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = cloneDetection getSubVariants
 cloneDetection_SOURCES      = cloneDetection.C
-cloneDetection_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 getSubVariants_SOURCES      = getSubVariants.C
-getSubVariants_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

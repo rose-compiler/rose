@@ -36,7 +36,7 @@ endif
 
 
 compassEmptyMain_SOURCES = compassEmptyMain.C
-compassEmptyMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) libCompass.la
+compassEmptyMain_LDADD = $(ROSE_LIBS_WITH_PATH) libCompass.la
 
 test: compassEmptyMain 
 	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(srcdir)/../tests/exampleTest_1.C

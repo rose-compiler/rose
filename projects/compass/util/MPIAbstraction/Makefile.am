@@ -27,8 +27,6 @@ LDADD = libMPIAbstraction.la ../C-API/libC-API.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 testMPIAbstraction_SOURCES = testMPIAbstraction.C
-testMPIAbstraction_DEPENDENCIES = \
-  libMPIAbstraction.la ../C-API/libC-API.la $(ROSE_LIBS_WITH_PATH)
 
 #==========================================================================
 

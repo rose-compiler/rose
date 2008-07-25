@@ -56,7 +56,7 @@ bin_PROGRAMS = sampleCompassSubset
 sampleCompassSubset_SOURCES = compassMain.C checkers.h
 sampleCompassSubset_LDADD = -lCompassCheckers $(ROSE_LIBS)
 
-sampleCompassSubset_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) $(compass_builddir)/compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
+sampleCompassSubset_DEPENDENCIES = $(compass_builddir)/compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
 
 test: sampleCompassSubset compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset $(compass_srcdir)/tests/exampleTest_1.C

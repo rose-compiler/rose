@@ -54,7 +54,7 @@ compassMain_SOURCES = compassMain.C checkers.h
 compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS)
 
 # This does not contribute to the link line
-compassMain_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
+compassMain_DEPENDENCIES = compassSupport/libCompass.la $(compass_detector_libs) libCompassCheckers.la
 
 CHECKER_LIST_WITHOUT_COMMENTS: $(srcdir)/CHECKER_LIST
 	grep -v '^#' < $(srcdir)/CHECKER_LIST | awk '{print $$0 " " toupper(substr($$0, 0, 1)) substr($$0, 2)}' > CHECKER_LIST_WITHOUT_COMMENTS
