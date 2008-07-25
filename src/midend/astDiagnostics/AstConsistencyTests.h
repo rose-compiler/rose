@@ -12,9 +12,6 @@
 // #include "AstPDFGeneration.h"
 #include "AstTextAttributesHandling.h"
 
-// DQ (1/3/2008): Removed Coco support.
-// #include "AgProcessing.h"
-
 #include "AstNodePtrs.h"
 
 

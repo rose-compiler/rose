@@ -47,7 +47,6 @@ libroseBinaryLibraries = \
 
 # TODO: correct list!
 libroseLibraries = \
-   $(top_builddir)/src/3rdPartyLibraries/coco/cplus2/libcr.la \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
    $(top_builddir)/src/backend/unparser/libunparse.la \
    $(top_builddir)/src/backend/unparser/languageIndependenceSupport/libunparseLanguageIndependenceSupport.la \

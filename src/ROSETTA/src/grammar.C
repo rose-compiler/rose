@@ -2163,51 +2163,6 @@ Grammar::buildMiscSupportDeclarations()
      return returnString;
    }
 
-#if 0
-// MS: the Coco scanner requires Scanner Symbols built such
-// 1) an underscore in the name is replaced with the string "Underscore"
-// 2) the string is truncated to 28 characters.
-string 
-Grammar::cocoScannerDefineName(string s)
-   {
-  // 1) replace "_" with "Underscore"
-     string::size_type posIter;
-     while((posIter = s.find("_")) != string::npos)
-        {
-          if (posIter != string::npos)
-               s.replace(posIter, 1, "Underscore");
-        }
-
-  // DQ (3/23/2004): Truncated names were not being found properly (not ssure why they had to be truncated)
-  // return s.substr(0,28)+"Sym";
-     return s + "Sym";
-   }
-  
-string
-Grammar::cocoScannerDefines() {
-  ostringstream os;
-  string prefix="case ";
-  string postfix="break;\n";
-
-  unsigned int nextCode=1;
-  for (unsigned int i=0; i < terminalList.size(); i++) {
-    os << prefix << "V_" << terminalList[i]->name << " : code = "
-       << cocoScannerDefineName(terminalList[i]->name) << "; "
-       << postfix;
-  }
-  nextCode+=terminalList.size();
-#if 0
-os << prefix << "LparenSym" << nextCode++ << " /* \"(\" */"+postfix;
-  os << prefix << "RparenSym" << nextCode++ << " /* \")\" */"+postfix;
-  os << prefix << "No_Sym" << nextCode++ << "/ * not */"+postfix;
-  os << prefix << "MAXT    No_Sym /* Max Terminals */"+postfix;
-#endif
-
-  return os.str(); // returns string
-}
-#endif
-
-
 // MS: new automatically generated variant. Replaces variant().
 // used in variantT()
 string
@@ -2821,10 +2776,6 @@ Grammar::buildCode ()
      Grammar::writeFile(rtiFile, ".", getGrammarName() + "RTI", ".C");
 
 #if 0
-     ofstream CocoScannerSymbolsFile((string(getGrammarName())+"CocoSymbolsMapping.C").c_str());
-     ROSE_ASSERT (CocoScannerSymbolsFile.good() == TRUE);
-     CocoScannerSymbolsFile << cocoScannerDefines();
-
   // DQ (11/27/2005): Support for renaming transformations for ROSE project 
   // part of pre-release work to fixup interface and names of objects within ROSE. 
      string transformationSupportFileName = "translationSupport.code";
