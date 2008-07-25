@@ -350,7 +350,7 @@ if test "x$with_javaport" = "xyes"; then
   if test "x$USE_JAVA" = "x0"; then
     AC_MSG_ERROR([Trying to enable --with-javaport without --with-java also being set])
   fi
-  if $SWIG -version >& /dev/null; then
+  if /bin/sh -c "$SWIG -version" >& /dev/null; then
     :
   else
     AC_MSG_ERROR([Trying to enable --with-javaport without SWIG installed])
