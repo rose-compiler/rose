@@ -166,8 +166,8 @@ fi
 # no src dir specified, try to determine automatically based on compiler name
  case "$compilerName" in
   # Support for compiling ROSE with GNU g++ compiler
-    g++|gcc|icpc|icc)
-         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" ]
+    g++|gcc|icpc|icc|mpicc|mpic++|mpiCC|mpicxx)
+         if [ "$compilerName" = "gcc" -o "$compilerName" = "icc" -o "$compilerName" = "mpicc" ]
          then
             is_C_compiler="yes"
             language="c"
