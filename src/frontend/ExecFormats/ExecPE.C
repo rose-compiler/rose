@@ -98,8 +98,13 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    /* Decode file header */
     const PEFileHeader_disk *fh = (const PEFileHeader_disk*)content(0, sizeof(PEFileHeader_disk));
+
+    /* Check magic number before getting too far */
+    if (fh->e_magic[0]!='P' || fh->e_magic[1]!='E' || fh->e_magic[2]!='\0' || fh->e_magic[3]!='\0')
+        throw FormatError("Bad PE magic number");
+
+    /* Decode file header */
     e_cpu_type           = le_to_host(fh->e_cpu_type);
     e_nsections          = le_to_host(fh->e_nsections);
     e_time               = le_to_host(fh->e_time);
@@ -1360,18 +1365,13 @@ is_PE(ExecFile *f)
 
     try {
         dos_hdr = new DOS::DOSFileHeader(f, 0);
-        if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
         pe_hdr = new PEFileHeader(f, dos2_hdr->e_lfanew);
-        if (pe_hdr->get_magic().size()<4 ||
-            pe_hdr->get_magic()[0]!=0x50 || pe_hdr->get_magic()[1]!=0x45 ||
-            pe_hdr->get_magic()[2]!=0x00 || pe_hdr->get_magic()[3]!=0x00) goto done;
         retval = true;
     } catch (...) {
         /* cleanup is below */
     }
-done:
+
     delete dos_hdr;
     delete dos2_hdr;
     delete pe_hdr;

@@ -78,8 +78,13 @@ NEFileHeader::ctor(ExecFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    /* Decode file header */
     const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
+
+    /* Check magic number early */
+    if (fh->e_magic[0]!='N' || fh->e_magic[1]!='E')
+        throw FormatError("Bad NE magic number");
+
+    /* Decode file header */
     e_linker_major         = le_to_host(fh->e_linker_major);
     e_linker_minor         = le_to_host(fh->e_linker_minor);
     e_entrytab_rfo         = le_to_host(fh->e_entrytab_rfo);
@@ -1207,17 +1212,13 @@ is_NE(ExecFile *f)
 
     try {
         dos_hdr = new DOS::DOSFileHeader(f, 0);
-        if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
         ne_hdr = new NEFileHeader(f, dos2_hdr->e_lfanew);
-        if (ne_hdr->get_magic().size()!=2 || ne_hdr->get_magic()[0]!=0x4e /*N*/ || ne_hdr->get_magic()[1]!=0x45 /*E*/)
-            goto done;
         retval = true;
     } catch (...) {
         /* cleanup is below */
     }
-done:
+
     delete dos_hdr;
     delete dos2_hdr;
     delete ne_hdr;

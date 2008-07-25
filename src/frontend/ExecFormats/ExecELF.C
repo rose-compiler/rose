@@ -28,6 +28,11 @@ ElfFileHeader::ctor(ExecFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+    /* Check magic number early */
+    if (disk32->e_ident_magic[0]!=0x7f || disk32->e_ident_magic[1]!='E' ||
+        disk32->e_ident_magic[2]!='L'  || disk32->e_ident_magic[3]!='F')
+        throw FormatError("Bad ELF magic number");
+
     /* File byte order */
     if (1!=disk32->e_ident_data_encoding && 2!=disk32->e_ident_data_encoding)
         throw FormatError("invalid ELF header data encoding");
@@ -1313,12 +1318,8 @@ is_ELF(ExecFile *f)
     } catch (...) {
         return false;
     }
-
-    bool ret = (hdr->get_magic().size()==4 &&
-                hdr->get_magic()[0]==0x7f && hdr->get_magic()[1]=='E' &&
-                hdr->get_magic()[2]=='L'  && hdr->get_magic()[3]=='F');
     delete hdr;
-    return ret;
+    return true;
 }
 
 /* Parses the structure of an ELF file and adds the information to the asmFile */

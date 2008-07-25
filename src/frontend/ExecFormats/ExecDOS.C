@@ -20,6 +20,10 @@ DOSFileHeader::ctor(ExecFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+    /* Check magic number early */
+    if (disk->e_magic[0]!='M' || disk->e_magic[1]!='Z')
+        throw FormatError("Bad DOS magic number");
+
     /* Decode file format */
     e_last_page_size    = le_to_host(disk->e_last_page_size);
     e_total_pages       = le_to_host(disk->e_total_pages);
@@ -178,12 +182,11 @@ is_DOS(ExecFile *f)
 
     try {
         fhdr = new DOSFileHeader(f, 0);
-        if (fhdr->get_magic().size()<2 || fhdr->get_magic()[0]!='M' || fhdr->get_magic()[1]!='Z') goto done;
         retval = true;
     } catch (...) {
         /* cleanup is below */
     }
-done:
+
     delete fhdr;
     return retval;
 }

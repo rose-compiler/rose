@@ -17,14 +17,19 @@ void
 LEFileHeader::ctor(ExecFile *f, addr_t offset)
 {
 
-    /* Decode file header */
     const LEFileHeader_disk *fh = (const LEFileHeader_disk*)content(0, sizeof(LEFileHeader_disk));
+
+    /* Check magic number early */
+    if (fh->e_magic[0]!='L' ||
+        (fh->e_magic[1]!='E' && fh->e_magic[1]!='X'))
+        throw FormatError("Bad LE/LX magic number");
+
+    /* Decode file header */
     exec_format.family      = fh->e_magic[1]=='E' ? FAMILY_LE : FAMILY_LX;
     const char *section_name = FAMILY_LE==exec_format.family ? "LE File Header" : "LX File Header";
     set_name(section_name);
     set_synthesized(true);
     set_purpose(SP_HEADER);
-
     e_byte_order = le_to_host(fh->e_byte_order);
     e_word_order = le_to_host(fh->e_word_order);
     ROSE_ASSERT(e_byte_order==e_word_order);
@@ -930,18 +935,13 @@ is_LE(ExecFile *f)
 
     try {
         dos_hdr = new DOS::DOSFileHeader(f, 0);
-        if (dos_hdr->get_magic().size()<2 || dos_hdr->get_magic()[0]!='M' || dos_hdr->get_magic()[1]!='Z') goto done;
-
         dos2_hdr = new ExtendedDOSHeader(f, dos_hdr->get_size());
         le_hdr = new LEFileHeader(f, dos2_hdr->e_lfanew);
-        if (le_hdr->get_magic().size()!=2 || le_hdr->get_magic()[0]!=0x4c /*L*/ ||
-            (le_hdr->get_magic()[1]!=0x45 /*E*/ && le_hdr->get_magic()[1]!=0x58 /*X*/))
-            goto done;
         retval = true;
     } catch (...) {
         /* cleanup is below */
     }
-done:
+
     delete dos_hdr;
     delete dos2_hdr;
     delete le_hdr;
