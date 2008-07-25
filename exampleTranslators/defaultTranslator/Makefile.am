@@ -5,7 +5,6 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = defaultTranslator
 
 defaultTranslator_SOURCES = defaultTranslator.C
-defaultTranslator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

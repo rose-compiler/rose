@@ -5,7 +5,6 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = pdfGenerator
 
 pdfGenerator_SOURCES = pdfGenerator.C
-pdfGenerator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
