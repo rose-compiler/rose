@@ -15,9 +15,9 @@
 #include <sys/types.h>
 using namespace std;
 
-bool containsArgument(int argc, char** argv, char* pattern) {
+bool containsArgument(int argc, char** argv, string pattern) {
   for (int i = 2; i < argc ; i++) {
-    if (!strcmp(argv[i], pattern)) {
+    if (argv[i]== pattern) {
       return true;
     }
   }
@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
   if (containsArgument(argc, argv, "-callgraph")) {
     cerr << " creating call graph ... " << endl;
     graph= new RoseBin_DotGraph(info);
-    char* callFileName = "callgraph.dot";
+    string callFileName = "callgraph.dot";
     if (dot==false) {
       callFileName = "callgraph.gml";
       graph= new RoseBin_GMLGraph(info);
@@ -198,7 +198,7 @@ int main(int argc, char** argv) {
 
   // control flow analysis  *******************************************************
   if (containsArgument(argc, argv, "-cfa")) {
-    char* cfgFileName = "cfg.dot";
+    string cfgFileName = "cfg.dot";
     graph= new RoseBin_DotGraph(info);
     if (dot==false) {
       cfgFileName = "cfg.gml";
