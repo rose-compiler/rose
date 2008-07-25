@@ -7,7 +7,6 @@ bin_PROGRAMS = statements
 
 # This transltor output source position info
 statements_SOURCES = statements.C
-statements_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # DQ (8/14/2004) Developer's Note:
 # This permits the use of the pair of libraries -lrose -ledg OR the longer 

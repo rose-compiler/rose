@@ -14,7 +14,6 @@ bin_PROGRAMS  = astTraversalTest
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 astTraversalTest_SOURCES      = astTraversalTest.C
-astTraversalTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 astTraversalTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 # source files don't contain anything that would be merged

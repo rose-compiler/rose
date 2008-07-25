@@ -27,8 +27,6 @@ bin_PROGRAMS = \
      tauifyPreprocessor \
      testTranslator2004_01
 
-exampleDEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
 ## Add tests to be run by make check here:
 testCommentInsertion_SOURCES               = testCommentInsertion.C
 testIncludeDirectiveInsertion_SOURCES      = testIncludeDirectiveInsertion.C
@@ -40,18 +38,6 @@ testDeclarationPrefixGeneration_SOURCES    = testDeclarationPrefixGeneration.C
 testReplacementStatements_SOURCES          = testReplacementStatements.C
 testRemoveStatements_SOURCES               = testRemoveStatements.C
 testTranslator2004_01_SOURCES              = testTranslator2004_01.C
-
-# Dependences within this directory
-testCommentInsertion_DEPENDENCIES               = $(exampleDEPENDENCIES)
-testIncludeDirectiveInsertion_DEPENDENCIES      = $(exampleDEPENDENCIES)
-testMidLevelInterface_DEPENDENCIES              = $(exampleDEPENDENCIES)
-testRewritePermutations_DEPENDENCIES            = $(exampleDEPENDENCIES)
-testRewriteReplacementPermutations_DEPENDENCIES = $(exampleDEPENDENCIES)
-testExample1_DEPENDENCIES                       = $(exampleDEPENDENCIES)
-testDeclarationPrefixGeneration_DEPENDENCIES    = $(exampleDEPENDENCIES)
-testReplacementStatements_DEPENDENCIES          = $(exampleDEPENDENCIES)
-testRemoveStatements_DEPENDENCIES               = $(exampleDEPENDENCIES)
-testTranslator2004_01_DEPENDENCIES              = $(exampleDEPENDENCIES)
 
 # DQ (10/18/2004): Switch to using multiple libs (since it is faster)
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
@@ -180,7 +166,6 @@ RewriteReplacementPermutations: testRewriteReplacementPermutations
 	echo "Commented out call to testRewriteReplacementPermutations ..."
 
 tauifyPreprocessor_SOURCES = tauifyPreprocessor.C TauMidTraversal.h
-tauifyPreprocessor_DEPENDENCIES = $(exampleDEPENDENCIES) $(srcdir)/TauMidTraversal.h
 
 # Force tauifyPreprocessor.C to be recompiled when TauMidTraversal.h is modified
 tauifyPreprocessor.o : $(srcdir)/tauTestProgram.C TauMidTraversal.h

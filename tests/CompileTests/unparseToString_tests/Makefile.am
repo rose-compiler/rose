@@ -5,9 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = unparseToString_Type unparseToString_All
 
 unparseToString_Type_SOURCES = unparseToString_Type.C
-unparseToString_Type_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 unparseToString_All_SOURCES = unparseToString_All.C
-unparseToString_All_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 

@@ -13,10 +13,8 @@ bin_PROGRAMS  = \
    testCG
 
 testCallGraph_SOURCES = testCallGraph.C
-testCallGraph_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 testCG_SOURCES = CG.C
-testCG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)

@@ -17,10 +17,6 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 # ROSE_DEVELOPMENT_LIBS = $(ROSE_LIBS)
 
 testMerge_SOURCES = testMerge.C
-# DQ (7/18/2004): Shared libraries don't force executable to be relinked
-# DQ (7/20/2004): Must be relinked to catch changes to the libunparse.so library
-testMerge_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# testQuery_DEPENDENCIES = 
 testMerge_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 # source files don't contain anything that would be merged

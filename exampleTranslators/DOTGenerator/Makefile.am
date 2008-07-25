@@ -5,10 +5,8 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = dotGenerator dotGeneratorWholeASTGraph
 
 dotGenerator_SOURCES = dotGenerator.C
-dotGenerator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 dotGeneratorWholeASTGraph_SOURCES = dotGeneratorWholeASTGraph.C
-dotGeneratorWholeASTGraph_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

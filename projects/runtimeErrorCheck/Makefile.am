@@ -11,7 +11,6 @@ bin_PROGRAMS  = runtimeCheck
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl
 
 runtimeCheck_SOURCES = runtimeCheck.cpp 
-runtimeCheck_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 runtimeCheck_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS) 
 

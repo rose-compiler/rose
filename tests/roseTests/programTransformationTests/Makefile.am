@@ -19,31 +19,24 @@ bin_PROGRAMS = \
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 preTest_SOURCES = preTest.C
-preTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 preTest_LDADD = $(LDADD)
 
 patternRewriteTest_SOURCES = patternRewriteTest.C
-patternRewriteTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 patternRewriteTest_LDADD = $(LDADD)
 
 finiteDifferencingTest_SOURCES = finiteDifferencingTest.C
-finiteDifferencingTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 finiteDifferencingTest_LDADD = $(LDADD)
 
 finiteDifferencingDemo_SOURCES = finiteDifferencingDemo.C
-finiteDifferencingDemo_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 finiteDifferencingDemo_LDADD = $(LDADD)
 
 testFunctionNormalization_SOURCES = testFunctionNormalization.C
-testFunctionNormalization_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 testFunctionNormalization_LDADD = $(LDADD)
 
 constantFoldingTest_SOURCES = constantFoldingTest.C
-constantFoldingTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 constantFoldingTest_LDADD = $(LDADD)
 
 implicitCodeGenerationTest_SOURCES = implicitCodeGenerationTest.C
-implicitCodeGenerationTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 implicitCodeGenerationTest_LDADD = $(LDADD)
 
 # test to always compile the test code

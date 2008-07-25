@@ -16,36 +16,28 @@ bin_PROGRAMS = CFGTest DataFlowTest StmtRefTest PtrAnalTest steensgaardTest1 ste
 # AnnotationLanguageParserTest
 
 PtrAnalTest_SOURCES = PtrAnalTest.C
-PtrAnalTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 PtrAnalTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #PtrAnalTest2_SOURCES = PtrAnalTest2.C
-#PtrAnalTest2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 #PtrAnalTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
 steensgaardTest1_SOURCES = steensgaardTest1.C
-steensgaardTest1_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 steensgaardTest1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 steensgaardTest2_SOURCES = steensgaardTest2.C
-steensgaardTest2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 steensgaardTest2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 CFGTest_SOURCES = CFGTest.C
-CFGTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 CFGTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 DataFlowTest_SOURCES = DataFlowTest.C
-DataFlowTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH) 
 DataFlowTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 StmtRefTest_SOURCES = StmtRefTest.C
-StmtRefTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 StmtRefTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # Added to support Brian White's work with the parts of the Broadway compiler
 #AnnotationLanguageParserTest_SOURCES = AnnotationLanguageParserTest.C
-#AnnotationLanguageParserTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 #AnnotationLanguageParserTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # This is specific to compiling AnnotationLanguageParserTest.C

@@ -8,7 +8,6 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 bin_PROGRAMS = LoopProcessor
 
 LoopProcessor_SOURCES = LoopProcessor.C
-LoopProcessor_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # DQ (10/18/2004): Switch to using multiple libs (since it is faster)
 # LoopProcessor_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)

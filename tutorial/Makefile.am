@@ -104,271 +104,183 @@ noinst_PROGRAMS = \
    wholeGraphFilterOnPersistantAttributes
 
 ASTGraphGenerator_SOURCES = ASTGraphGenerator.C
-ASTGraphGenerator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 AST_PDF_Generator_SOURCES = AST_PDF_Generator.C
-AST_PDF_Generator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 wholeASTGraphGenerator_SOURCES = wholeASTGraphGenerator.C
-wholeASTGraphGenerator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 identityTranslator_SOURCES = identityTranslator.C
-identityTranslator_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 lineReplacement_SOURCES = lineReplacement.C
-lineReplacement_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 queryLibraryExample_SOURCES = queryLibraryExample.C
-queryLibraryExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 nestedQueryExample_SOURCES = nestedQueryExample.C
-nestedQueryExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # need to call this something different since it is likely
 # to be easily confused with the visitorPatternTraversal.C
 visitorTraversal_SOURCES = visitorTraversal.C
-visitorTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 prePostTraversal_SOURCES = prePostTraversal.C
-prePostTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 combinedTraversals_SOURCES = combinedTraversals.C
-combinedTraversals_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 sharedMemoryTraversals_SOURCES = sharedMemoryTraversals.C
-sharedMemoryTraversals_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 traverseIRnodeTypes_SOURCES = traverseIRnodeTypes.C
-traverseIRnodeTypes_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 classicObjectOrientedVisitorPatternTraversal_SOURCES = classicObjectOrientedVisitorPatternTraversal.C
-classicObjectOrientedVisitorPatternTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 inheritedAttributeTraversal_SOURCES = inheritedAttributeTraversal.C
-inheritedAttributeTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 synthesizedAttributeTraversal_SOURCES = synthesizedAttributeTraversal.C
-synthesizedAttributeTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 inheritedAndSynthesizedAttributeTraversal_SOURCES = inheritedAndSynthesizedAttributeTraversal.C
-inheritedAndSynthesizedAttributeTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 accumulatorAttributeTraversal_SOURCES = accumulatorAttributeTraversal.C
-accumulatorAttributeTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 persistantAttributes_SOURCES = persistantAttributes.C
-persistantAttributes_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 nestedTraversal_SOURCES = nestedTraversal.C
-nestedTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 visitorMemoryPoolTraversal_SOURCES = visitorMemoryPoolTraversal.C
-visitorMemoryPoolTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 classicObjectOrientedVisitorPatternMemoryPoolTraversal_SOURCES = classicObjectOrientedVisitorPatternMemoryPoolTraversal.C
-classicObjectOrientedVisitorPatternMemoryPoolTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 loopRecognition_SOURCES = loopRecognition.C
-loopRecognition_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 typeInfoFromFunctionParameters_SOURCES = typeInfoFromFunctionParameters.C
-typeInfoFromFunctionParameters_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 resolveOverloadedFunction_SOURCES = resolveOverloadedFunction.C
-resolveOverloadedFunction_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 templateParameter_SOURCES = templateParameter.C
-templateParameter_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
-instrumentEndOfFunction_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 instrumentationExample_SOURCES = instrumentationExample.C
-instrumentationExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addVariableDeclaration_SOURCES = addVariableDeclaration.C
-addVariableDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addVariableDeclaration2_SOURCES = addVariableDeclaration2.C
-addVariableDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addAssignmentStmt_SOURCES = addAssignmentStmt.C
-addAssignmentStmt_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addExpression_SOURCES = addExpression.C
-addExpression_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionCalls_SOURCES = addFunctionCalls.C
-addFunctionCalls_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration_SOURCES = addFunctionDeclaration.C
-addFunctionDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration2_SOURCES = addFunctionDeclaration2.C
-addFunctionDeclaration2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addFunctionDeclaration3_SOURCES = addFunctionDeclaration3.C
-addFunctionDeclaration3_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 
 loopOptimization_SOURCES = loopOptimization.C
-loopOptimization_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 loopProcessor_SOURCES = LoopProcessor.C
-loopProcessor_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 buildCFG_SOURCES = buildCFG.C
-buildCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 defuseAnalysis_SOURCES = defuseAnalysis.C
-defuseAnalysis_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 runtimeCheck_SOURCES = runtimeCheck.cpp
-runtimeCheck_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 binaryAnalysis_SOURCES = binaryAnalysis.C
-binaryAnalysis_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 bin_example_SOURCES = bin_example.C
-bin_example_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 buildCG_SOURCES = buildCG.C
-buildCG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 charmSupport_SOURCES = CharmSupport.C
-charmSupport_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 debuggingIRnodeToString_SOURCES = debuggingIRnodeToString.C
-debuggingIRnodeToString_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 debuggingSourceCodePositionInformation_SOURCES = debuggingSourceCodePositionInformation.C
-debuggingSourceCodePositionInformation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 commandlineProcessing_SOURCES = commandlineProcessing.C
-commandlineProcessing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 codeCoverage_SOURCES = codeCoverage.C coverageCodeFromShmuel.c
-codeCoverage_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 interveneAtVariables_SOURCES = interveneAtVariables.C
-interveneAtVariables_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 changeFunction_SOURCES = changeFunction.C
-changeFunction_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 callGraphAnalysis_SOURCES = callGraphAnalysis.C
-callGraphAnalysis_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 classHierarchyGraph_SOURCES = classHierarchyGraph.C
-classHierarchyGraph_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 dataBaseUsage_SOURCES = dataBaseUsage.C
-dataBaseUsage_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 loopNestingInfoProcessing_SOURCES = loopNestingInfoProcessing.C
-loopNestingInfoProcessing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 tauInstrumenter_SOURCES = tauInstrumenter.C
-tauInstrumenter_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 typeTransformation_SOURCES = typeTransformation.C
-typeTransformation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 astFileIO_GenerateBinaryFile_SOURCES = astFileIO_GenerateBinaryFile.C
-astFileIO_GenerateBinaryFile_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 generatingUniqueNamesFromDeclaration_SOURCES = generatingUniqueNamesFromDeclaration.C
-generatingUniqueNamesFromDeclaration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 symbolTableHandling_SOURCES = symbolTableHandling.C
-symbolTableHandling_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 scopeInformation_SOURCES = scopeInformation.C
-scopeInformation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 customGraphGeneration_SOURCES = customGraphGeneration.C
-customGraphGeneration_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 inlineTransformations_SOURCES = inlineTransformations.C
-inlineTransformations_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addComments_SOURCES = addComments.C
-addComments_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addArbitraryTextForUnparser_SOURCES = addArbitraryTextForUnparser.C
-addArbitraryTextForUnparser_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 collectComments_SOURCES = collectComments.C
-collectComments_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 collectDefineDirectives_SOURCES = collectDefineDirectives.C
-collectDefineDirectives_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 partialRedundancyElimination_SOURCES = partialRedundancyElimination.C
-partialRedundancyElimination_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 codeGenerationFormatControl_SOURCES = codeGenerationFormatControl.C
-codeGenerationFormatControl_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 dataFlowGraph_SOURCES = dataFlowGraph.C
-dataFlowGraph_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 customGraphGenerationWithFiltering_SOURCES = customGraphGenerationWithFiltering.C
-customGraphGenerationWithFiltering_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 graphTraversal_SOURCES = graphTraversal.C
-graphTraversal_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 wholeGraphAST_SOURCES = wholeGraphAST.C
-wholeGraphAST_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 traversalShortCircuit_SOURCES = traversalShortCircuit.C
-traversalShortCircuit_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 customGraphGenerationWithColors_SOURCES = customGraphGenerationWithColors.C
-customGraphGenerationWithColors_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 astFileIO_ReadMultipleASTs_SOURCES = astFileIO_ReadMultipleASTs.C
-astFileIO_ReadMultipleASTs_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 constantFoldingTransformation_SOURCES = constantFoldingTransformation.C
-constantFoldingTransformation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 constantUnFoldingTransformation_SOURCES = constantUnFoldingTransformation.C
-constantUnFoldingTransformation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 selectedFileTranslation_SOURCES = selectedFileTranslation.C
-selectedFileTranslation_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 wholeGraphFilterOnPersistantAttributes_SOURCES = wholeGraphFilterOnPersistantAttributes.C
-wholeGraphFilterOnPersistantAttributes_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 graphGenerationOfSubtree_SOURCES = graphGenerationOfSubtree.C
-graphGenerationOfSubtree_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 virtualCFG_SOURCES = virtualCFG.C
-virtualCFG_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 virtualFunctionIdentification_SOURCES = virtualFunctionIdentification.C
-virtualFunctionIdentification_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 #varSubstCopy_SOURCES = varSubstCopy.C
-#varSubstCopy_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 switchWithoutDefault_SOURCES = switchWithoutDefault.C
-switchWithoutDefault_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 addStruct_SOURCES = addStruct.C
-addStruct_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 sprintf_to_snprintf_SOURCES = sprintf_to_snprintf.C
-sprintf_to_snprintf_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 seedBugsExample_arrayIndexing_SOURCES = seedBugsExample_arrayIndexing.C
-seedBugsExample_arrayIndexing_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 volatileTypeModifier_SOURCES = volatileTypeModifier.C
-volatileTypeModifier_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # Use this to control use of -lrose -ledg vs. the very long list 
 # of separate libraries which is faster to use in development.

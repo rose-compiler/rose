@@ -11,7 +11,6 @@ bin_PROGRAMS  = \
    inlineEverything
 
 inlineEverything_SOURCES = inlineEverything.C
-inlineEverything_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 # inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)

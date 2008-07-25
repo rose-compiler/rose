@@ -6,7 +6,6 @@ bin_PROGRAMS = \
    testAstVisualization
 
 testAstVisualization_SOURCES = testAstVisualization.C
-testAstVisualization_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 

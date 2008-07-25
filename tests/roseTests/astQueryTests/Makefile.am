@@ -16,24 +16,12 @@ ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 # ROSE_DEVELOPMENT_LIBS = $(ROSE_LIBS)
 
 testQuery_SOURCES = testQuery.C
-# DQ (7/18/2004): Shared libraries don't force executable to be relinked
-# DQ (7/20/2004): Must be relinked to catch changes to the libunparse.so library
-testQuery_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# testQuery_DEPENDENCIES = 
 testQuery_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 testQuery2_SOURCES = testQuery2.C
-# DQ (7/18/2004): Shared libraries don't force executable to be relinked
-# DQ (7/20/2004): Must be relinked to catch changes to the libunparse.so library
-testQuery2_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# testQuery_DEPENDENCIES = 
 testQuery2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 testQuery3_SOURCES = testQuery3.C
-# DQ (7/18/2004): Shared libraries don't force executable to be relinked
-# DQ (7/20/2004): Must be relinked to catch changes to the libunparse.so library
-testQuery3_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-# testQuery_DEPENDENCIES = 
 testQuery3_LDADD = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 

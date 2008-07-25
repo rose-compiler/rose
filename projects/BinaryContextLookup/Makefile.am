@@ -13,11 +13,8 @@ bin_PROGRAMS = bcl_writer bcl_reader
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(XML_LIBS)
 
 bcl_writer_SOURCES = bcl_writer.C
-bcl_writer_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 bcl_reader_SOURCES = bcl_reader.C
-bcl_reader_DEPENDENCIES = 
-
 
 # If $(srcdir) is a relative path then we need this version
 # becuae filenames in Sg_File_Info are absolute paths in ROSE.

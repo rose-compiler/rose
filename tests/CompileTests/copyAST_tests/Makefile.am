@@ -5,17 +5,12 @@ INCLUDES = $(ROSE_INCLUDES)
 bin_PROGRAMS = copyExample copyLoops copyBlocks copyFunctionDefinitions
 
 copyExample_SOURCES = copyExample.C
-copyExample_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 copyLoops_SOURCES = copyLoops.C
-copyLoops_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 copyBlocks_SOURCES = copyBlocks.C
-copyBlocks_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 
 copyFunctionDefinitions_SOURCES = copyFunctionDefinitions.C
-copyFunctionDefinitions_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
-
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 

@@ -14,11 +14,9 @@ bin_PROGRAMS  = testPerformance rosePerformanceTest
 ROSE_DEVELOPMENT_LIBS = $(ROSE_SEPARATE_LIBS)
 
 testPerformance_SOURCES      = testPerformance.C
-testPerformance_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 testPerformance_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 rosePerformanceTest_SOURCES      = rosePerformanceTest.C
-rosePerformanceTest_DEPENDENCIES = $(ROSE_LIBS_WITH_PATH)
 rosePerformanceTest_LDADD        = $(LIBS_WITH_RPATH) $(ROSE_DEVELOPMENT_LIBS)
 
 # source files don't contain anything that would be merged
