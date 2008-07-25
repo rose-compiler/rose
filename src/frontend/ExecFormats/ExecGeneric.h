@@ -358,6 +358,7 @@ class ExecFile {
     /* Functions for file headers (a kind of section) */
     void add_header(ExecHeader*);                       /* Add a new file header to the list of headers for this file */
     std::vector<ExecHeader*>& get_headers() {return headers;}/* all file header sections */
+    ExecHeader *get_header(ExecFamily);                 /* Returns the specified header (exception if more than one) */
     const char *format_name();                          /* Return a string describing the file format */
 
   private:

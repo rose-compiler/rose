@@ -449,11 +449,26 @@ ExecFile::unparse(const char *filename)
     }
 }
 
-/* Return a string describing the file format. */
+/* Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
+ * a DOS header report the format of the second (PE, etc.) header rather than the DOS header. */
 const char *
 ExecFile::format_name()
 {
     return headers.back()->format_name();
+}
+
+/* Returns the header for the specified format. */
+ExecHeader *
+ExecFile::get_header(ExecFamily efam)
+{
+    ExecHeader *retval=NULL;
+    for (size_t i=0; i<headers.size(); i++) {
+        if (headers[i]->get_exec_format().family==efam) {
+            ROSE_ASSERT(NULL==retval);
+            retval = headers[i];
+        }
+    }
+    return retval;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
