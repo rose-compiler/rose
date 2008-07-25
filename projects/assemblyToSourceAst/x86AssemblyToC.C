@@ -584,6 +584,23 @@ void SingleInstructionTranslator::translate() {
       break;
     }
 
+    case x86_rep_movsd: {
+      ROSE_ASSERT (operands.size() == 0);
+      X86SegmentRegister segForSrc = insn->get_segmentOverride();
+      append(
+        buildWhileStmt(
+          buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(0)),
+          buildBasicBlock(
+            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all, buildSubtractOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(1))),
+            f->makeMemoryWrite(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all),
+                              f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeDoubleWord::createType()),
+                              SgAsmTypeDoubleWord::createType()),
+            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_si, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1)))),
+            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_di, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1))))
+            )));
+      break;
+    }
+
     case x86_lodsb: {
       X86SegmentRegister segForSrc = insn->get_segmentOverride();
       SgVariableSymbol* op1sym = cacheValue(f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeByte::createType()));
@@ -915,6 +932,24 @@ void SingleInstructionTranslator::translate() {
               buildIntValHex(0))));
       break;
     }
+
+    case x86_cwde:
+      {
+        ROSE_ASSERT (operands.size() == 0);
+        SgVariableSymbol* temp = cacheValue(makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_word)));
+        append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword),
+                         buildConditionalExp(
+                           buildLessThanOp(
+                             buildBitXorOp(
+                               buildVarRefExp(temp),
+                               buildUnsignedLongValHex(0x8000)),
+                             buildUnsignedLongValHex(0x8000)),
+                           buildBitOrOp(
+                             buildVarRefExp(temp),
+                             buildUnsignedLongValHex(0xFFFF0000UL)),
+                           buildVarRefExp(temp))));
+        break;
+      }
 
     case x86_shl:
        {
