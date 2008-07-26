@@ -305,8 +305,10 @@ BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw_ModifyArrayIndex::See
 
                arrayReferenceStack.pop_back();
              }
-
-          addComment (astNode,std::string("*** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+#if 1
+       // printf ("Adding comment: NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw_ModifyArrayIndex to node %p \n",astNode);
+          addComment (astNode,std::string("*** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw_ModifyArrayIndex : ") + StringUtility::numberToString(astNode) + " : " + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+#endif
         }
    }
 
@@ -474,7 +476,9 @@ BufferOverFlowSecurityFlaw::SeedBufferOverflowSecurityFlaw_AlterLoopBounds::Seed
                arrayReferenceStack.pop_back();
              }
 
-          addComment (astNode,std::string("*** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+#if 1
+          addComment (astNode,std::string("*** NOTE Seeded Security Flaw: BufferOverFlowSecurityFlaw_AlterLoopBounds ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+#endif
         }
    }
 

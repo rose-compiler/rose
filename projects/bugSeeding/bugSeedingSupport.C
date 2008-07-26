@@ -72,6 +72,9 @@ SecurityFlaw::codeCloneGeneration( SgProject *project )
      vector<SecurityFlaw::SeedSecurityFlaw*>::iterator j = seedKindList.begin();
      CloneVulnerability::makeClones(project,*j);
      MarkClones::markVulnerabilitiesInClones(project,*j);
+
+  // DQ (7/26/2008): Add comments to the clones so that we can identify them in the generated code.
+     CommentClones::commentClones(project);
    }
 
 // This is a virtual member function
@@ -185,6 +188,7 @@ SecurityFlaw::addComment( SgNode* astNode, string comment )
   // This function adds a comment before the statement contained by the input IR node's associated statement IR node.
      SgStatement* associatedStatement = TransformationSupport::getStatement(astNode);
 
+  // printf ("In SecurityFlaw::addComment(astNode = %p): Adding comment to SgStatement = %p \n",astNode,associatedStatement);
      SageInterface::attachComment(associatedStatement,comment);
    }
 
@@ -351,7 +355,7 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
                     primaryVulnerabilityAttribute->set_primaryVulnerabilityInOriginalCode(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode());
 
                  // if (astNode == primaryVulnerabilityNodeInClone)
-                    addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer->get_name() );
+                 // addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttributeInClonedCode->vulnerabilityPointer->get_name() );
                   }
                  else
                   {
@@ -572,7 +576,7 @@ SecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAttribute ( SgNo
              {
                ROSE_ASSERT(securityVulnerabilityAttribute->get_securityVulnerabilityNode() == astNode);
 
-               addComment (astNode,string("*** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+           // addComment (astNode,string("*** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
              }
             else
              {
@@ -580,7 +584,7 @@ SecurityFlaw::MarkClones::MarkClonesTraversal::evaluateInheritedAttribute ( SgNo
 
                if (inheritedAttribute.inClonedCode == true)
                   {
-                    addComment (astNode,std::string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+                 // addComment (astNode,std::string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
 
                     astNode->removeAttribute("SecurityVulnerabilityAttribute");
 
@@ -633,6 +637,9 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
      printf ("astNode                           = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
+
+
+#if 1
      if (astNode->attributeExists("SecurityFlawOriginalSubtreeAttribute") == true)
         {
           printf ("Found a SecurityFlawOriginalSubtreeAttribute \n");
@@ -640,9 +647,19 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
           SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
        // addComment(astNode,"This is a SecurityFlawOriginalSubtreeAttribute");
+#if 0
+          ROSE_ASSERT(securityVulnerabilityAttribute != NULL);
+          ROSE_ASSERT(securityVulnerabilityAttribute->vulnerabilityPointer != NULL);
           addComment (astNode,string("*** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
+#else
+          addComment (astNode,"This is a SecurityFlawOriginalSubtreeAttribute ");
+#endif
         }
+#endif
 
+
+
+#if 1
      if (astNode->attributeExists("SeededSecurityFlawCloneAttribute") == true)
         {
           printf ("Found a SeededSecurityFlawCloneAttribute \n");
@@ -654,7 +671,11 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
        // addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
           addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") );
         }
+#endif
 
+
+
+#if 1
      if (astNode->attributeExists("PrimarySecurityVulnerabilityForCloneAttribute") == true)
         {
           printf ("Found a PrimarySecurityVulnerabilityForCloneAttribute \n");
@@ -664,6 +685,7 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
        // addComment(astNode,"This is a SeededSecurityFlawCloneAttribute");
           addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
         }
+#endif
    }
 
 

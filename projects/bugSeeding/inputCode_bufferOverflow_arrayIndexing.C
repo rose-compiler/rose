@@ -2,13 +2,13 @@
 
 void foobar(int x)
    {
-  // Static array declaration
+  // This is a static array declaration (might be part of a potential buffer overflow vulnerability)
      float array[10];
 
-  // potential vulnerability: buffer overflow of an array NOT in a loop
+  // This is a potential buffer overflow vulnerability
      array[4] = 0;
 
-  // potential vulnerability: buffer overflow of an array IN a loop
+  // This is a potential buffer overflow vulnerability in a loop
      for (int i=0; i < 5; i++)
           array[i] = 0;
    }
