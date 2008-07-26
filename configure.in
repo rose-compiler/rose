@@ -89,6 +89,32 @@ USE_EDG_SOURCE_CODE
 
 # Setup Automake conditional in src/frontend/CxxFrontend/EDG_3.3/src/Makefile.am
 AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
+
+# DQ (7/25/2008): Added support to make sure that full source and sourse using EDG
+# binaries are correctly handled internally.
+if (test "$with_edg_source_code" = true); then
+   echo "Configured to be a full source version of ROSE."
+   if (test -f $${top_srcdir}/src/frontend/CxxFrontend/libroseEDG.la ); then
+      echo "Error: found valid EDG library in source code!."
+      AC_MSG_ERROR([Found valid EDG library in source code!])
+   else
+      echo "Correct: no EDG library found in source code!."
+   fi
+else
+   echo "Configured to be source version of ROSE with the binary EDG libraries."
+   if (test -f $${top_srcdir}/src/frontend/CxxFrontend/libroseEDG.la ); then
+      echo "Correct: found valid EDG library in source code, OK this is a source version of ROSE with the binary EDG libraries."
+   else
+      echo "Warning: This is a step in building the EDG libraries into the source code (for a source distribution with EDG binaries)."
+      AC_MSG_WARN([EDG libraries not found in source tree (OK if building distribution of source with EDG binaries)!])
+   fi
+fi
+
+#AC_MSG_WARN([Exiting as a test!])
+#AC_MSG_ERROR([Exiting as a test!])
+#echo "Exiting as a test!"
+#exit 1
+
 AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 AM_CONDITIONAL(ROSE_BUILD_ROSEHPCT,test "$with_hpct" = true)
 
