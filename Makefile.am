@@ -162,9 +162,17 @@ DISTCLEANFILES = rose_paths.h
 # (true for bothe the LaTeX and html documentation).
 # DQ (7/23/2004): Since there is a "docs" subdirectory we need to force the build!
 FORCE_DOCS_TO_BE_MADE:
+
+# DQ (7/25/2008): Running "make docs" introduces dependences that are inappropriate
+# for a distribution.
 docs: FORCE_DOCS_TO_BE_MADE
-	@echo "    Generate all possible documentation cd docs; make documentation;"
-	@cd tutorial; $(MAKE) docs;
-	@cd docs; $(MAKE) docs;
-	@cd projects/compass; $(MAKE) docs;
+	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
+	   echo "    Generate all possible documentation cd docs; make documentation;"; \
+	   cd tutorial; $(MAKE) docs; \
+	   cd docs; $(MAKE) docs; \
+	   cd projects/compass; $(MAKE) docs; \
+   else \
+      echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
+   fi
+
 

@@ -33,9 +33,9 @@ librose.la:
 # DQ (7/23/2008): Now we have a single library for both the EDG and EDG/ROSE connection so
 # we copy that to the distribution where we need to support a binary distribution of ROSE.
 dist-hook:
-	echo "Output files from current directory before copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
-	du -a $(distdir)
-	echo "Copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
+#	echo "Output files from current directory before copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
+#	du -a $(distdir)
+#	echo "Copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
 #	We can't call scripts/libtoolcp since internally the libtool variable $old_library
 #	will not be defined.  This is because our library libroseEDG.la is actually
 #	just constructed from other libraries.
@@ -50,8 +50,8 @@ dist-hook:
    else \
       echo "libroseEDG file does not exist (meaningless distribution being built)"; \
    fi
-	echo "DONE Copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
-	du -a $(distdir)
-	echo "DONE: Output files from current directory before copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
+#	echo "DONE Copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
+#	du -a $(distdir)
+#	echo "DONE: Output files from current directory before copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
 
 endif
