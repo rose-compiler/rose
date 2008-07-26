@@ -631,23 +631,20 @@ SecurityFlaw::CommentClones::commentClones( SgProject* project )
 void
 SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
    {
+  // This traversal adds comments into the generated source code to indicate where security 
+  // flaws were identified and where clones were made and where flaws were seeded.
+
      ROSE_ASSERT(astNode != NULL);
+  // printf ("In CommentClonesTraversal::visit(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 
-#if 0
-     printf ("astNode                           = %p = %s \n",astNode,astNode->class_name().c_str());
-#endif
-
-
-
-#if 1
      if (astNode->attributeExists("SecurityFlawOriginalSubtreeAttribute") == true)
         {
-          printf ("Found a SecurityFlawOriginalSubtreeAttribute \n");
+       // printf ("Found a SecurityFlawOriginalSubtreeAttribute \n");
+#if 0
           AstAttribute* existingAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
           SecurityVulnerabilityAttribute* securityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(existingAttribute);
 
        // addComment(astNode,"This is a SecurityFlawOriginalSubtreeAttribute");
-#if 0
           ROSE_ASSERT(securityVulnerabilityAttribute != NULL);
           ROSE_ASSERT(securityVulnerabilityAttribute->vulnerabilityPointer != NULL);
           addComment (astNode,string("*** NOTE Original Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
@@ -655,11 +652,7 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
           addComment (astNode,"This is a SecurityFlawOriginalSubtreeAttribute ");
 #endif
         }
-#endif
 
-
-
-#if 1
      if (astNode->attributeExists("SeededSecurityFlawCloneAttribute") == true)
         {
           printf ("Found a SeededSecurityFlawCloneAttribute \n");
@@ -671,11 +664,7 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
        // addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
           addComment (astNode,string("*** NOTE Cloned Security Flaw Vulnerability: BufferOverFlowSecurityFlaw ") );
         }
-#endif
 
-
-
-#if 1
      if (astNode->attributeExists("PrimarySecurityVulnerabilityForCloneAttribute") == true)
         {
           printf ("Found a PrimarySecurityVulnerabilityForCloneAttribute \n");
@@ -685,7 +674,6 @@ SecurityFlaw::CommentClones::CommentClonesTraversal::visit ( SgNode* astNode )
        // addComment(astNode,"This is a SeededSecurityFlawCloneAttribute");
           addComment (astNode,std::string("*** NOTE Primary Node for clone: BufferOverFlowSecurityFlaw ") + securityVulnerabilityAttribute->vulnerabilityPointer->get_name() );
         }
-#endif
    }
 
 
@@ -743,6 +731,7 @@ SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
                   {
                     if ( seedGrainulatity.get_testAllLevels() == true)
                        {
+                      // This option results in too many clones and vulnerabilities being introduces (generates messy code).
                          printf ("Adding this statement to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
                          returnVector.push_back(statement);
                        }
@@ -751,6 +740,9 @@ SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
                       // Check if this is a function declaration and the grainularity specified ask for the function level
                          if ( seedGrainulatity.get_grainularityLevel() == GrainularitySpecification::e_function && isSgFunctionDeclaration(statement) != NULL )
                             {
+                           // This may be the more useful option.  But to obtain the same control flow in the problem 
+                           // call sites to the function cloned may have to be transformed to call each of the generated 
+                           // cloned functions as well.
                               printf ("Adding this statement (SgFunctionDeclaration) to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
                               returnVector.push_back(statement);
                             }
@@ -758,6 +750,7 @@ SecurityFlaw::SeedSecurityFlaw::grainularityOfSeededCode ( SgNode* astNode )
                             {
                               if ( seedGrainulatity.get_grainularityLevel() == GrainularitySpecification::e_statement && isSgStatement(statement) != NULL )
                                  {
+                                // Unclear if this is useful, since it make the generated code overly complex.
                                    printf ("Adding this statement to the vector of possible subtrees: statement = %p = %s \n",statement,statement->class_name().c_str());
                                    returnVector.push_back(statement);
                                  }
