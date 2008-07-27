@@ -10,6 +10,9 @@ class SgNode;
 
 class AstAttribute
    {
+  // This class contains no data and is to be used as a based class (typically, but not required)
+  // to support under-defined attributes to be attached to AST IR nodes.
+
      public:
 
       // DQ (7/4/2008): Added support for attibutes to specify edges in the dot graphs.
@@ -44,7 +47,41 @@ class AstAttribute
 
                    ~AttributeNodeInfo () {};
              };
+#if 1
+          AstAttribute();
+          virtual ~AstAttribute();
+      /*! This function is used by other components to print the value of an attribute. For example the pdf generation
+          calls this function to print the value of an attribute in the pdf file. The default implementation is to
+          return an empty string.
+       */
+          virtual std::string toString();
 
+       // JH (12/21/2005): Adding Methods for storing the Ast Attribute data
+          AstAttribute* constructor();
+          std::string attribute_class_name();
+
+       // Packing support (by JH)
+          virtual int packed_size();
+          virtual char* packed_data();
+          virtual void unpacked_data( int size, char* data );
+
+       // DQ (7/4/2008): Added DOT support.
+          virtual std::string additionalNodeOptions();
+       // virtual std::string additionalEdgeInfo();
+
+       // virtual std::vector<std::pair<SgNode*,SgNode*> > additionalEdgeInfo();
+          virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AttributeNodeInfo> additionalNodeInfo();
+
+       // DQ (7/27/2008): The support for deep copies of attributes on AST IR 
+       // node requires a virtual copy function that can be overwritten.
+       // This acts just like a virtual constructor (same concept).
+          virtual AstAttribute* copy();
+
+       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
+       // (to tailor the presentation of information about ASTs).
+          virtual bool commentOutNodeInGraph();
+#else
           AstAttribute() {}
           virtual ~AstAttribute() {}
       /*! This function is used by other components to print the value of an attribute. For example the pdf generation
@@ -54,7 +91,7 @@ class AstAttribute
           virtual std::string toString() { return ""; }
 
        // JH (12/21/2005): Adding Methods for storing the Ast Attribute data
-          AstAttribute* constructor() {return new AstAttribute();}
+          AstAttribute* constructor() { return new AstAttribute(); }
           std::string attribute_class_name() { return "AstAttribute"; }
 
        // Packing support (by JH)
@@ -69,6 +106,17 @@ class AstAttribute
        // virtual std::vector<std::pair<SgNode*,SgNode*> > additionalEdgeInfo();
           virtual std::vector<AttributeEdgeInfo> additionalEdgeInfo() { std::vector<AttributeEdgeInfo> v; return v; }
           virtual std::vector<AttributeNodeInfo> additionalNodeInfo() { std::vector<AttributeNodeInfo> v; return v; }
+
+       // DQ (7/27/2008): The support for deep copies of attributes on AST IR 
+       // node requires a virtual copy function that can be overwritten.
+       // This acts just like a virtual constructor (same concept).
+          virtual AstAttribute* copy() { return new AstAttribute(*this); }
+
+       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
+       // (to tailor the presentation of information about ASTs).
+          virtual bool commentOutNodeInGraph() { return false; }
+#endif
+
    };
 
 // DQ (6/28/2008):
@@ -80,6 +128,14 @@ class AstAttribute
 // deep copies.  This might be a good idea.
 class AstAttributeMechanism : public AttributeMechanism<std::string,AstAttribute*> 
    {
+     public:
+       // DQ (7/27/2008): Build a copy constructor that will do a deep copy 
+       // instead of calling the default copy constructor.
+          AstAttributeMechanism ( const AstAttributeMechanism & X );
+
+       // DQ (7/27/2008): Because we add an explicit copy constructor we 
+       // now need an explicit default constructor.
+          AstAttributeMechanism ();
    };
 
 #endif
