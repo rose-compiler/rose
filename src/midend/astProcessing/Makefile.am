@@ -10,7 +10,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 libastprocessingSources = \
    AstPDFGeneration.C AstNodeVisitMapping.C AstTextAttributesHandling.C \
    AstDOTGeneration.C AstProcessing.C AstSimpleProcessing.C Ast.C \
-   AstNodePtrs.C AstSuccessorsSelectors.C \
+   AstNodePtrs.C AstSuccessorsSelectors.C AstAttributeMechanism.C \
    AstReverseSimpleProcessing.C AstRestructure.C AstClearVisitFlags.C \
    AstTraversal.C AstCombinedSimpleProcessing.C \
    AstSharedMemoryParallelSimpleProcessing.C

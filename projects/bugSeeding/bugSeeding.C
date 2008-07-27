@@ -19,6 +19,20 @@ banner( std::string s)
      printf ("\n");
    }
 
+void
+annotateAST( SgProject* project )
+   {
+  // This function is atted to attach attributes to the AST that will make the generated 
+  // DOT graphs more appropriate for presentation of concepts (like bug seeding).
+
+     SgFilePtrList & fileList = *(project->get_fileList());
+     for (SgFilePtrList::iterator i = fileList.begin(); i != fileList.end(); i++)
+        {
+          PruningAttribute* pruneAttribute = new PruningAttribute();
+          (*i)->addNewAttribute("PruningAttribute",pruneAttribute);
+        }
+   }
+
 int
 main (int argc, char *argv[])
    {
@@ -27,6 +41,11 @@ main (int argc, char *argv[])
 
   // Running internal tests (optional)
      AstTests::runAllTests (project);
+
+     banner("                 Annotate AST                    ");
+
+  // Add attributes to make the AST easier to view as a DOT graph.
+     annotateAST(project);
 
   // Output DOT graph of current progress.
      generateDOT ( *project, "_before" );

@@ -8,6 +8,9 @@ using namespace SageInterface;
 
 #include "bugSeeding.h"
 
+// *************************************************
+//         SecurityVulnerabilityAttribute
+// *************************************************
 
 void
 SecurityVulnerabilityAttribute::set_associatedClones(SgNode* node)
@@ -100,6 +103,11 @@ SecurityVulnerabilityAttribute::additionalNodeInfo()
    }
 
 
+AstAttribute*
+SecurityVulnerabilityAttribute::copy()
+   {
+     return new SecurityVulnerabilityAttribute(*this);
+   }
 
 
 
@@ -112,6 +120,9 @@ SecurityVulnerabilityAttribute::additionalNodeInfo()
 
 
 
+// *************************************************
+//      SecurityFlawOriginalSubtreeAttribute
+// *************************************************
 
 // DOT graph support for attributes to add additional edges to AST dot graphs
 // (useful for debugging)
@@ -134,11 +145,21 @@ SecurityFlawOriginalSubtreeAttribute::additionalNodeInfo()
      return v;
    }
 
+AstAttribute*
+SecurityFlawOriginalSubtreeAttribute::copy()
+   {
+     return new SecurityFlawOriginalSubtreeAttribute(*this);
+   }
 
 
 
 
 
+
+
+// *************************************************
+//       SeededSecurityFlawCloneAttribute
+// *************************************************
 
 SeededSecurityFlawCloneAttribute::SeededSecurityFlawCloneAttribute (SgNode* primarySecurityFlawInClone, SgNode* rootOfCloneInOriginalCode)
    : primarySecurityFlawInClone(primarySecurityFlawInClone), 
@@ -202,6 +223,11 @@ SeededSecurityFlawCloneAttribute::additionalNodeInfo()
      return v;
    }
 
+AstAttribute*
+SeededSecurityFlawCloneAttribute::copy()
+   {
+     return new SeededSecurityFlawCloneAttribute(*this);
+   }
 
 
 
@@ -218,6 +244,9 @@ SeededSecurityFlawCloneAttribute::additionalNodeInfo()
 
 
 
+// *************************************************
+//   PrimarySecurityVulnerabilityForCloneAttribute
+// *************************************************
 
 PrimarySecurityVulnerabilityForCloneAttribute::PrimarySecurityVulnerabilityForCloneAttribute(SgNode* primarySecurityFlawInClone, SgNode* rootOfClone, SecurityFlaw::Vulnerability* vulnerabilityPointer)
    : primarySecurityFlawInClone(primarySecurityFlawInClone), rootOfClone(rootOfClone), vulnerabilityPointer(vulnerabilityPointer)
@@ -294,10 +323,23 @@ PrimarySecurityVulnerabilityForCloneAttribute::additionalNodeInfo()
      return v;
    }
 
+AstAttribute*
+PrimarySecurityVulnerabilityForCloneAttribute::copy()
+   {
+     return new PrimarySecurityVulnerabilityForCloneAttribute(*this);
+   }
 
 
 
 
+
+
+
+
+
+// **********************************
+//    SeedMethodologyCloneAttribute
+// **********************************
 
 // DOT graph support for attributes to add additional edges to AST dot graphs
 // (useful for debugging)
@@ -333,6 +375,35 @@ SeedMethodologyCloneAttribute::additionalNodeInfo()
      v.push_back(seedingMethodNode);
 #endif
      return v;
+   }
+
+AstAttribute*
+SeedMethodologyCloneAttribute::copy()
+   {
+     return new SeedMethodologyCloneAttribute(*this);
+   }
+
+
+
+
+// **********************************
+//           PruningAttribute
+// **********************************
+
+PruningAttribute::~PruningAttribute()
+   {
+   }
+
+bool
+PruningAttribute::commentOutNodeInGraph()
+   {
+     return true;
+   }
+
+AstAttribute*
+PruningAttribute::copy()
+   {
+     return new PruningAttribute(*this);
    }
 
 

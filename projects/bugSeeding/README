@@ -11,4 +11,7 @@ and the associated edges.
 
 
 Maybe we could have an attribute which can turn off these nodes in the DOT graph?
+this could be implemetned to introduce "//" to comment out the line in the dot file
+so that it coudl be editied manually as part of debugging.
+
 

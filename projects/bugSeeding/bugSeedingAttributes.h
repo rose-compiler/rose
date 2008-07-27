@@ -34,6 +34,8 @@ class SecurityVulnerabilityAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
    };
 
 class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
@@ -52,6 +54,8 @@ class SecurityFlawOriginalSubtreeAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
    };
 
 
@@ -76,6 +80,8 @@ class SeededSecurityFlawCloneAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
    };
 
 class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
@@ -102,6 +108,8 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
    };
 
 class SeedMethodologyCloneAttribute : public AstAttribute
@@ -127,6 +135,8 @@ class SeedMethodologyCloneAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
    };
 
 
@@ -155,5 +165,20 @@ class PrimarySeedLocationForSeedMethodologyAttribute : public AstAttribute
 
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+
+          virtual AstAttribute* copy();
+   };
+
+
+class PruningAttribute : public AstAttribute
+   {
+  // This is a persistant attribute used to mark locations in the AST where we don't want IR nodes to be generated for the DOT graph.
+
+     public:
+          bool commentOutNodeInGraph();
+
+          virtual AstAttribute* copy();
+
+          virtual ~PruningAttribute();
    };
 

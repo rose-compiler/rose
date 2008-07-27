@@ -186,6 +186,14 @@ class SecurityFlaw
              };
 
 
+          class ResetSecurityFlawAttributesTraversal : public SgSimpleProcessing
+             {
+            // DQ (7/27/2008): This the support for resetting attributes that are copies (instaed of shared), 
+            // but after being copied they reference the wrong IR nodes (so they must be reset).
+               public:
+                    void visit( SgNode* astNode );
+             };
+
           class MarkClones
              {
             // Note that the cloned vulnerability have all vulnerabilities marked (copied from the original code).
@@ -351,6 +359,9 @@ class SecurityFlaw
        // Low level support for adding comments to locations in the source code where security 
        // vulnerabilities are identified or where security flaws are seeded.
           static void addComment( SgNode* astNode, std::string comment );
+
+       // DQ (7/27/2008): Added support for deep copy of attribute lists on IR nodes in ROSE.
+          static void resetAttributesAfterASTCloning( SgNode* root );
 
        // Support for generating a unique integer values used to build names of things (e.g. cloned function namens)
        // static int uniqueValue();

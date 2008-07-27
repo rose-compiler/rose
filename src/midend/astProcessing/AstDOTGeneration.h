@@ -30,6 +30,10 @@ class AstDOTGeneration : public DOTGeneration<SgNode*>
 
        // DQ (3/5/2007) added mechanism to add edge options (to add color, etc.)
           std::string additionalEdgeOptions(SgNode* from, SgNode* to, std::string label);
+
+       // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
+       // (to tailor the presentation of information about ASTs).
+          bool commentOutNodeInGraph(SgNode* node);
    };
 
 #endif

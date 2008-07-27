@@ -26,9 +26,9 @@
 
 //! stl graph class for directed and undirected graphs
 template<class VertexType, class EdgeType, class VertexIterator, class EdgeIterator>
-class DOTGraphInterface {
-
-	public:
+class DOTGraphInterface
+   {
+     public:
 
 		//! public type interface
 
@@ -38,7 +38,7 @@ class DOTGraphInterface {
 		//! this is the function that can be used to ouput the graph to a DOT file
 		void writeToDOTFile(std::string filename);
 
-	protected:
+     protected:
 
 		//! directions of an edge: no direction, towards target, towards source  or bidirectional
 		typedef enum {
@@ -113,7 +113,7 @@ class DOTGraphInterface {
 			return target; 
 		}
 
-   public:
+     public:
       // DQ (8/14/2004): Added support for subgraphs (also make this public)
 	   //! add new subgraph, returns id of the subgraph
 	   virtual int addSubgraph(std::string name) 
@@ -121,11 +121,11 @@ class DOTGraphInterface {
            return mDotRep.addSubgraph(name);
          }
 
-	private:
+     private:
 
 		//! dot representation object
 		DOTSubgraphRepresentation< std::string > mDotRep;
-};
+   };
 
 //-----------------------------------------------------------------------------
 

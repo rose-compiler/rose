@@ -142,6 +142,20 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
      nodeoption += additionalOptions;
 
+     DOTSynthesizedAttribute d(0);
+
+  // DQ (7/27/2008): Added mechanism to support pruning of AST
+     bool commentoutNode = commentOutNodeInGraph(node);
+     if (commentoutNode == true)
+        {
+       // DQ (7/27/2008): For now just return to test this mechanism, then we want to add comment "//" propoerly to generated DOT file.
+          printf ("Skipping the use of this IR node in the DOT Graph \n");
+        }
+       else
+        {
+
+// **************************
+
      switch(traversal)
         {
           case TOPDOWNBOTTOMUP:
@@ -161,7 +175,6 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
   
      ++tdbuTrace;
      ++buTrace;
-     DOTSynthesizedAttribute d(0);
 
   // add edges or null values
      int testnum=0;
@@ -222,19 +235,27 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           testnum++;
         }
 
+// **************************
+        }
+
+
+
   // DQ (7/4/2008): Support for edges specified in AST attributes
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
+       // Loop over all the attributes at this IR node
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
             // std::string name = i->first;
                AstAttribute* attribute = i->second;
                ROSE_ASSERT(attribute != NULL);
 
+            // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
             // printf ("Calling attribute->additionalNodeInfo() \n");
                std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
             // printf ("nodeList.size() = %lu \n",nodeList.size());
+
                for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
                   {
                     SgNode* nodePtr   = i_node->nodePtr;
@@ -316,7 +337,7 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
      AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
      if (astAttributeContainer != NULL)
         {
-          ss << "Attribute list:" << "\\n";
+          ss << "Attribute list (size=" << astAttributeContainer->size() << "):" << "\\n";
           for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
              {
             // pair<std::string,AstAttribute*>
@@ -393,6 +414,33 @@ AstDOTGeneration::additionalEdgeOptions(SgNode* from, SgNode* to, string label)
   // return an empty string for default implementation, but set the parent edge to blue
      return "";
    }
+
+
+bool
+AstDOTGeneration::commentOutNodeInGraph(SgNode* node)
+   {
+  // return an empty string for default implementation
+     bool resultValue = false;
+
+  // DQ (7/4/2008): Added support for output of information about attributes
+     AstAttributeMechanism* astAttributeContainer = node->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
+        {
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+            // std::string name = i->first;
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+
+            // Turn it ON if there is an attribute to do so, but don't turn it off (for attribute to be changed)
+               if (resultValue == false)
+                    resultValue = attribute->commentOutNodeInGraph();
+             }
+        }
+
+     return resultValue;
+   }
+
 
 
 #endif
