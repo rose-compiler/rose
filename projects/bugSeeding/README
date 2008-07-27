@@ -1,0 +1,14 @@
+README for Bug Seeding Project
+
+Note that the dot graph layouts can be improved by 
+eliminating the SgFile and __binaryFile__null
+and the associated edges.
+
+"0x2a98fa0010"[label="0:423\nSgFile\n2\n0x2a98fa0010\n" ];
+"0x2a98fa0010" -> "0x2a98fdb010"[label="root" dir=both ];
+"0x2a98fa0010" -> "0x2a98fa0010__binaryFile__null"[label="binaryFile" dir=none ];
+"0x2a98fa0010__binaryFile__null"[label="" shape=diamond ];
+
+
+Maybe we could have an attribute which can turn off these nodes in the DOT graph?
+
