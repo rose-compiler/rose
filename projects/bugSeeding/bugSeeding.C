@@ -8,6 +8,17 @@ using namespace SageInterface;
 
 #include "bugSeeding.h"
 
+void
+banner( std::string s)
+   {
+  // This supports debugging...
+     printf ("\n\n");
+     printf ("**********************************************************\n");
+     printf ("%s\n",s.c_str());
+     printf ("**********************************************************\n");
+     printf ("\n");
+   }
+
 int
 main (int argc, char *argv[])
    {
@@ -29,16 +40,25 @@ main (int argc, char *argv[])
   // Construct internal list of security flaw to consider for vulnerability detection and seeding
      SecurityFlaw::initialize();
 
+     banner("           detectAllVunerabilities            ");
+
   // Identify locations in the source code where security flaw vulnerabilities COULD exist.
      SecurityFlaw::detectAllVunerabilities(project);
 
   // Output DOT graph of current progress.
      generateDOT ( *project, "_afterIdentificationOfVulnerabilities" );
 
+     banner("             generationAllClones              ");
+
+  // Do all required clone generation to support each "security vulnerability" using each 
+  // "seeding methodology"; note that these multiply to generate a large number of clones 
+  // on different parts of the AST.
      SecurityFlaw::generationAllClones(project);
 
   // Output DOT graph of current progress.
      generateDOT ( *project, "_afterCloneGeneration" );
+
+     banner("             seedAllSecurityFlaws              ");
 
   // Modify the source code to introduce security flaws for the selected types of security flaws 
   // selected and at the location in the source code where the associated vulnerabilities could be seeded.

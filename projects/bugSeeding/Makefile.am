@@ -1,12 +1,15 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/docs/Rose:.: pdflatex --interaction=batchmode
+
 INCLUDES = $(ROSE_INCLUDES)
+
 
 bin_PROGRAMS = bugSeeding
 
-bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C bufferOverFlowSecurityFlaw.C
+bugSeeding_SOURCES = bugSeeding.C bugSeedingSupport.C bugSeedingAttributes.C bufferOverFlowSecurityFlaw.C
 
-# bugSeeding_HEADERS = bugSeeding.h bugSeedingSupport.h bufferOverFlowSecurityFlaw.h
+# bugSeeding_HEADERS = bugSeeding.h bugSeedingSupport.h bugSeedingAttributes.h bufferOverFlowSecurityFlaw.h
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -25,9 +28,6 @@ docFiles = \
    inputCode_bufferOverflow_arrayIndexing_C_afterCloneGeneration.pdf \
    inputCode_bufferOverflow_arrayIndexing_C_afterIdentificationOfVulnerabilities.pdf \
    inputCode_bufferOverflow_arrayIndexing_C_afterSeedingOfSecurityFlaws.pdf
-
-
-PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/docs/Rose:.: pdflatex --interaction=batchmode
 
 docs: bugSeeding.tex testBufferOverflow_arrayIndexing $(docFiles)
 	$(PDFLATEX) bugSeeding.tex

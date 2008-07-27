@@ -104,3 +104,56 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
    };
 
+class SeedMethodologyCloneAttribute : public AstAttribute
+   {
+  // This is the persistant attribute used to mark locations in the AST where original code was copied.
+
+     public:
+       // I am not sure that we will really use this value
+          SgNode* rootOfSeedMethodologyClone;
+          SgNode* originalTreeInVulnerabilityClone;
+
+          SecurityFlaw::SeedSecurityFlaw* seedSecurityFlawPointer;
+
+          SeedMethodologyCloneAttribute ( SgNode* temp_rootOfSeedMethodologyClone, SgNode* temp_originalTreeInVulnerabilityClone, SecurityFlaw::SeedSecurityFlaw* temp_seedSecurityFlawPointer)
+             : rootOfSeedMethodologyClone(temp_rootOfSeedMethodologyClone), originalTreeInVulnerabilityClone(temp_originalTreeInVulnerabilityClone), seedSecurityFlawPointer(temp_seedSecurityFlawPointer) {}
+
+          SgNode* get_rootOfSeedMethodologyClone() { return rootOfSeedMethodologyClone; }
+          SgNode* get_originalTreeInVulnerabilityClone() { return originalTreeInVulnerabilityClone; }
+
+          SecurityFlaw::SeedSecurityFlaw* get_seedSecurityFlawPointer () { return seedSecurityFlawPointer; }
+
+          virtual std::string additionalNodeOptions();
+
+          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+   };
+
+
+
+class PrimarySeedLocationForSeedMethodologyAttribute : public AstAttribute
+   {
+  // This is the persistant attribute used to mark locations in the AST where we have generated
+  // copies of the AST in order to allow each seeding methodology to seed the copies with security flaws.
+
+     public:
+          SgNode* primarySecurityFlawInClone;
+          SgNode* primaryVulnerabilityInOriginalCode;
+          SgNode* rootOfClone;
+
+       // The pointer to the mechanism used to detect the potential vulnerability
+          SecurityFlaw::Vulnerability* vulnerabilityPointer;
+
+          PrimarySeedLocationForSeedMethodologyAttribute (SgNode* primarySecurityFlawInClone, SgNode* rootOfClone, SecurityFlaw::Vulnerability* vulnerabilityPointer );
+
+          SgNode* get_primarySecurityFlawInClone();
+
+          void set_primaryVulnerabilityInOriginalCode(SgNode* node);
+          SgNode* get_primaryVulnerabilityInOriginalCode();
+
+          virtual std::string additionalNodeOptions();
+
+          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
+   };
+
