@@ -260,7 +260,6 @@ void printPCResults(CountingOutputObject  &outputs,
     //    int slowest_func=0;
     //int fastest_func=0;
     double total_calctimes=0;
-    int perc = 0;
     for (size_t i = 0; i < (size_t) processes; i++) {
 
       double maxval = maxtime_val[i];
@@ -269,7 +268,7 @@ void printPCResults(CountingOutputObject  &outputs,
       SgFunctionDefinition* sl_node = isSgFunctionDefinition(n);
       if (sl_node) slow_node= sl_node->get_declaration()->get_name().str();
 
-      perc = 0;
+      int perc = 0;
       if (times[i]>0) 
 	if (i==0 && processes>1)
 	  perc = (int) (commtimes[i]/times[i]*10000);
@@ -297,15 +296,14 @@ void printPCResults(CountingOutputObject  &outputs,
 
     }
     std::cout << std::endl;
+    double d_perc=0;
     if (processes>1)
-      perc =  total_calctimes/(total_time-times[0])*100;
-    else
-      perc = 0;
+      d_perc =  total_calctimes/(total_time-times[0])*100;
 
     std::cerr << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
       	      << "\n    fastest process: " << min_time // << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
       	      << "\n    slowest process: " << max_time //<< " slowest   in file: " << root->get_file(slowest_func).getFileName()
-              << "\n    total calc time: " << perc << " % "
+              << "\n    total calc time: " << d_perc << " % "
       //	      << "\n    fastest process: " << min_time  << " fastest " << fastest_func << "   in node: " << nodeDecls[fastest_func]->class_name() << ": " <<namef<< " : " <<namef2
       //              << "\n    slowest process: " << max_time  << " slowest node : " <<  nodeDecls[]->class_name() << ": " <<names<< " : " <<names2
 	      << std::endl;

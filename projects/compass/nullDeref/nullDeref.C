@@ -221,7 +221,8 @@ checkNullDeref(string analysisname, SgExpression* expr,  string name) {
         trace.append(ToString(line)); trace.append(")\n");
       }
       trace += "End of stack\n";
-      cout << trace ;
+      if (debug) 
+        cout << trace ;
       output->addOutput(new CheckerOutput(trace ,expr));
     } else {
       //cout << "can not be NULL *************************************************************\n";
