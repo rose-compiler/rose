@@ -7,7 +7,7 @@ dnl it depends upon the CHOOSE BACKEND COMPILER macro to have already been calle
    compilerName=`basename $BACKEND_CXX_COMPILER`
    chmod u+x ${srcdir}/config/create_system_headers
    if test "$ROSE_CXX_HEADERS_DIR" = ""; then
-      AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR not set ...])
+      dnl AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR not set ...])
       ROSE_CXX_HEADERS_DIR="${prefix}/include/${compilerName}_HEADERS"
    else
       AC_MSG_NOTICE([ROSE_CXX_HEADERS_DIR set to: $ROSE_CXX_HEADERS_DIR])
@@ -54,7 +54,7 @@ AC_DEFUN([GENERATE_BACKEND_C_COMPILER_SPECIFIC_HEADERS],
    chmod u+x ${srcdir}/config/create_system_headers
 
    if test "$ROSE_C_HEADERS_DIR" = ""; then
-      AC_MSG_NOTICE([ROSE_C_HEADERS_DIR not set ...])
+      dnl AC_MSG_NOTICE([ROSE_C_HEADERS_DIR not set ...])
       ROSE_C_HEADERS_DIR="${compilerName}_HEADERS"
    else
       AC_MSG_NOTICE([ROSE_C_HEADERS_DIR set to: $ROSE_C_HEADERS_DIR])
