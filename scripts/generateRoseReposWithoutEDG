@@ -1,0 +1,62 @@
+#!/bin/bash 
+#!/bin/bash -v
+# A script to strip off EDG and EDG_SAGE_CONNECTION directories from 
+# the original ROSE repository and prepare a fresh clean ROSE to be mirrored 
+# in an external svn repository
+
+# Conclusion: this method does not work. 
+# The cleaned repository is treated as different repository by svnsync each time. 
+# svnsync refuses to synchronize different repositories to the external repository. :-(
+#
+# by Liao, 7/25/2008
+# Last modified, 7/28/2008
+
+#----- variable definitions----
+# original repository --> cleaned repository--> mirror repository
+# svnadmin dump only works on absolute file path, not file:///path
+ORIG_REPOS=/usr/casc/overture/ROSE/svn/ROSE
+#CLEANED_REPOS=/usr/casc/overture/ROSE/svn/ROSE.CLEANED
+
+CLEANED_REPOS=/home/liao6/test/ROSE.CLEANED
+
+#MIRROR_REPOS=https://outreach.scidac.gov/svn/rose
+MIRROR_REPOS=/home/liao6/test/ROSE.MIRROR
+
+#TEMP_PATH=/usr/casc/overture/ROSE/svn
+TEMP_PATH=/home/liao6/test
+#where to find the script to filter repository dump files
+SCRIPT_PATH=/home/liao6/rose/scripts
+# Because previous revisions have old paths to EDG, which cannot be excluded 
+START_REV=1001
+# Has to use the right version of SVN
+SVN_PATH=/nfs/apps/subversion/1.4.5/bin
+
+#----------------real work----------------------
+# dump original repos starting from revision xxx
+# only include trunk, filter out others, such as branches, tags, etc
+# filter out EDG and EDG-SAGE_CONNECTION, MUST use --exclude for each directory!!
+# load the filtered dump into a fresh temporary repository
+cd ${TEMP_PATH} &&\
+${SVN_PATH}/svnadmin dump ${ORIG_REPOS} -r ${START_REV}:head >dumpfile && \
+${SCRIPT_PATH}/svndumpfilter4 ${ORIG_REPOS} trunk < dumpfile > trunkDumpfile &&\
+${SCRIPT_PATH}/svndumpfilter4 ${ORIG_REPOS} --exclude trunk/ROSE/src/frontend/CxxFrontend/EDG_3.10 --exclude trunk/ROSE/src/frontend/CxxFrontend/EDG_3.3 --exclude trunk/ROSE/src/frontend/CxxFrontend/EDG_SAGE_Connection < trunkDumpfile > trunkDumpfileWithoutEDG &&\
+rm -rf ${CLEANED_REPOS} &&\
+${SVN_PATH}/svnadmin create ${CLEANED_REPOS} && \
+${SVN_PATH}/svnadmin load ${CLEANED_REPOS} < trunkDumpfileWithoutEDG 
+
+#Exit immediately if a command fails
+set -e
+{
+# remove temporary dump files
+rm -rf dumpfile trunkDumpfile trunkDumpfileWithoutEDG
+
+# testing: check it out
+#rm -rf rose.cleaned
+#${SVN_PATH}/svn co file://${CLEANED_REPOS} rose.cleaned
+
+# mirror it somewhere 
+# one time initialization for mirror repos.
+#${SVN_PATH}/svnsync initialize file://${MIRROR_REPOS} file://${CLEANED_REPOS}
+#${SVN_PATH}/svnsync synchronize file://${MIRROR_REPOS} 
+
+}
