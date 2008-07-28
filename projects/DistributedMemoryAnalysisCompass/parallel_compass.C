@@ -550,7 +550,7 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	double nextscale = processes/12;
+	double nextscale = processes/5;
 	if (nextscale < 2) nextscale =2;
 	if ((currentJob % 5)==4) scale+=(int)nextscale;
 	if (currentJob>=(int)bounds.size()) {
