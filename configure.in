@@ -18,7 +18,7 @@ AC_CONFIG_AUX_DIR([config])
 # Change the version number for ROSE here!
 # AM_INIT_AUTOMAKE(tar-pax,ROSE,0.8.11a)
 # AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
-AM_INIT_AUTOMAKE([1.9.5])
+AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
 # DQ (6/5/2007): Try to make package name use upper case for ROSE (this does not work)
 # AC_PACKAGE_TARNAME([ROSE])
