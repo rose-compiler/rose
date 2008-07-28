@@ -41,7 +41,7 @@ all-local: rose.docs
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
-EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX OpenFortranParser.jar 
+EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
@@ -54,12 +54,7 @@ clean-local:
 
 # DQ (9/8/2006): Modified to remove backend specific header files
 uninstall-local:
-	rm -rf $(DESTDIR)$(includedir)/*_HEADERS $(DESTDIR)$(bindir)/pdflib-config
-
-clean-stl:
-	@echo "This fixes a common stl problem when the ROSE grammars are rebuilt \"false is not defined\""
-	@echo "    running cd ROSETTA/src; make clean;"
-	@cd ROSETTA/src; $(MAKE) clean;
+	rm -rf $(DESTDIR)$(includedir)/*_HEADERS
 
 distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
@@ -86,15 +81,6 @@ install-data-local:
 	@echo '*****************************************************************'
 	@echo '***** make install-data rule complete (terminated normally) *****'
 	@echo '*****************************************************************'
-
-# DQ (7/22/2004): Need to be able to remove the REQUIRED_LIBS also!
-# Note that uninstall-hook does not work, but uninstall-local does.
-# uninstall-local:
-#	rm -f $(DESTDIR)$(libdir)/libedg.so
-#	rm -f $(DESTDIR)$(libdir)/librose.so
-#	@echo "************************************************************"
-#	@echo "**** make uninstall rule complete (terminated normally) ****"
-#	@echo "************************************************************"
 
 # DQ (4/22/2005): Set this so that make distcheck will use the same 
 # --with-edg_source_code=true/false option as were used at configure.
