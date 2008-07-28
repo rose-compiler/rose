@@ -259,6 +259,8 @@ void printPCResults(CountingOutputObject  &outputs,
     double min_time = std::numeric_limits<double>::max(), max_time = 0.0;
     //    int slowest_func=0;
     //int fastest_func=0;
+    double total_calctimes=0;
+    int perc = 0;
     for (size_t i = 0; i < (size_t) processes; i++) {
 
       double maxval = maxtime_val[i];
@@ -267,12 +269,14 @@ void printPCResults(CountingOutputObject  &outputs,
       SgFunctionDefinition* sl_node = isSgFunctionDefinition(n);
       if (sl_node) slow_node= sl_node->get_declaration()->get_name().str();
 
-      int perc = 0;
+      perc = 0;
       if (times[i]>0) 
 	if (i==0 && processes>1)
 	  perc = (int) (commtimes[i]/times[i]*10000);
-	else
+	else {
 	  perc = (int) (calctimes[i]/times[i]*10000);
+	  total_calctimes += calctimes[i];
+	}
 
       double perc_d = (double) perc/100;
 
@@ -280,6 +284,7 @@ void printPCResults(CountingOutputObject  &outputs,
 	"  real # nodes:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
 	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << 
 	"   => " << perc_d << " % "  << std::endl;
+
 
       total_time += times[i];
       total_memory += memory[i];
@@ -292,10 +297,15 @@ void printPCResults(CountingOutputObject  &outputs,
 
     }
     std::cout << std::endl;
+    if (processes>1)
+      perc =  total_calctimes/(total_time-times[0])*100;
+    else
+      perc = 0;
 
     std::cerr << "\ntotal time: " << total_time << "   total memory : " << total_memory << " MB "
       	      << "\n    fastest process: " << min_time // << " fastest   in file: " << root->get_file(fastest_func).getFileName() 
       	      << "\n    slowest process: " << max_time //<< " slowest   in file: " << root->get_file(slowest_func).getFileName()
+              << "\n    total calc time: " << perc << " % "
       //	      << "\n    fastest process: " << min_time  << " fastest " << fastest_func << "   in node: " << nodeDecls[fastest_func]->class_name() << ": " <<namef<< " : " <<namef2
       //              << "\n    slowest process: " << max_time  << " slowest node : " <<  nodeDecls[]->class_name() << ": " <<names<< " : " <<names2
 	      << std::endl;
@@ -550,7 +560,7 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	double nextscale = processes/5;
+	double nextscale = processes/32;
 	if (nextscale < 2) nextscale =2;
 	if ((currentJob % 5)==4) scale+=(int)nextscale;
 	if (currentJob>=(int)bounds.size()) {
