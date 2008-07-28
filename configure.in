@@ -60,23 +60,6 @@ fi
 
 # exit 1
 
-# Handle differences in GNU tar versions pre and post 1.14 (use of -o option redefined and
-# handling of 100 character absolute paths compromised).
-# tar_version=`tar --version | grep "GNU tar" | cut -c14-18`
-# echo "tar_version = $tar_version"
-# if test $tar_version = 1.14; then
-#    ROSE_TAR_OPTIONS=-chf
-#    echo "This is GNU tar 1.14: skip use of -o option ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
-# else
-#    ROSE_TAR_OPTIONS=-chof
-#    echo "This is NOT GNU tar 1.14 ROSE_TAR_OPTIONS = $ROSE_TAR_OPTIONS"
-# fi
-
-# JJW (6/23/2008): We don't want the -o option to tar, since we want long filenames
-
-ROSE_TAR_OPTIONS="-chf"
-AC_SUBST(ROSE_TAR_OPTIONS)
-
 # DQ (4/13/2005):
 # Control use of EDG source code within ROSE.  This option allows the user
 # to use the EDG source code within ROSE.  By default ROSE distributions
@@ -671,33 +654,6 @@ AC_MSG_RESULT($CXX_STATIC_LIB_UPDATE and $CXX_SHARED_LIB_UPDATE)
 AC_SUBST(CXX_STATIC_LIB_UPDATE)
 AC_SUBST(CXX_SHARED_LIB_UPDATE)
 
-# DQ (1/15/2007): These should not be required for modern C++ compilers today.
-# Name of certain STL header files.
-# This list was taken from Brian Miller's example
-# Determine pecularities of STL (see compiling-stl.m4).
-# These should go after CHOOSE_STL so they would use the
-# header files defined by that macro.
-# STL lines commented out by Bobby
-
-# BTNG_STL_STRING_HEADER_FILENAME
-# BTNG_STL_LIST_HEADER_FILENAME
-# BTNG_STL_MAP_HEADER_FILENAME
-# BTNG_STL_MAP_NEEDS
-# BTNG_STL_VECTOR_HEADER_FILENAME
-# BTNG_STL_ITERATOR_HEADER_FILENAME
-# BTNG_STL_ALGO_HEADER_FILENAME
-# BTNG_IOSTREAM_HEADER_FILENAME
-# BTNG_FSTREAM_HEADER_FILENAME
-# BTNG_IOMANIP_HEADER_FILENAME
-##BTNG_STL_STRINGSTREAM_HEADER_FILENAME
-# BTNG_STL_STRING_HEADER_FILENAME
-# BTNG_TYPE_NAMESPACE
-
-# DQ 7/6/2002: added stacks to use of STL in ROSE
-# BTNG_STL_STACK_HEADER_FILENAME
-
-# echo "In configure.in: top_srcdir = $(top_srcdir)"
-
 # The STL tests use the CC command line which specifies -ptr$(CXX_TEMPLATE_REPOSITORY_PATH) but this
 # is not defined in the shell so no substitution is done and a directory named
 # $(CXX_TEMPLATE_REPOSITORY_PATH) is built in the top level directory.  The least we can do is
@@ -760,21 +716,6 @@ ACROSE_ENABLE_ROSEHPCT
 # header files so that this information will be available at compile time. Unclear
 # which syntax is best for the specification of these paths.
 AC_DEFINE_UNQUOTED([ROSE_COMPILE_TREE_PATH],"$top_pwd",[Location of ROSE Compile Tree.])
-
-#AC_DEFINE_UNQUOTED([ROSE_PREFIX_DIR],"$prefix",[Location of ROSE prefix (install tree).])
-#AC_DEFINE_UNQUOTED([ROSE_BUILD_DIR],"$top_builddir",[Location of ROSE Compile Tree.])
-#AC_DEFINE_UNQUOTED([ROSE_SRC_DIR],"@srcdir@",[Location of ROSE Source Tree.])
-#AC_DEFINE_UNQUOTED([ROSE_SRC_TEST1_DIR],@srcdir@,[Location of ROSE Source Tree.])
-#AC_DEFINE_UNQUOTED([ROSE_SRC_TEST2_DIR],[@srcdir@],[Location of ROSE Source Tree.])
-#AC_DEFINE_UNQUOTED([ROSE_DATA_DIR],"$datadir",[Path specified by automake datadir.])
-#AC_DEFINE_UNQUOTED([ROSE_BIN_DIR],"$bindir",[Path specified by automake bindir.])
-#AC_DEFINE_UNQUOTED([ROSE_INCLUDE_DIR],"$includedir",[Path specified by automake includedir.])
-#AC_DEFINE_UNQUOTED([ROSE_INFO_DIR],"$infodir",[Path specified by automake infodir.])
-#AC_DEFINE_UNQUOTED([ROSE_LIB_DIR],"$libdir",[Path specified by automake libdir.])
-#AC_DEFINE_UNQUOTED([ROSE_LIBEXEC_DIR],"$libexecdir",[Path specified by automake libexecdir.])
-#AC_DEFINE_UNQUOTED([ROSE_LOCALSTATE_DIR],"$localstatedir",[Path specified by automake localstatedir.])
-#AC_DEFINE_UNQUOTED([ROSE_MAN_DIR],"$mandir",[Path specified by automake mandir.])
-#AC_DEFINE_UNQUOTED([ROSE_DIST_DIR],"$distdir",[Path specified by automake distdir.])
 
 # This block turns off features of libharu that don't work with Java
 with_png=no
