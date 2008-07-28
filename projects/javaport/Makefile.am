@@ -6,7 +6,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXTRA_DIST	= sage3.i sgname.i wchart.i test.java input.cc	\
 		  GenericVector.java testjava.sh		\
 		  generate_casts.sh Ptr.java Log.java           \
-		  MakeSgNode.java
+		  MakeSgNode.java std_list.i frontendAndDump.cc \
+		  README testlink.cc
+
 
 if ENABLE_JAVAPORT
 
