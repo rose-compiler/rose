@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastFixup.la
-else
 noinst_LTLIBRARIES = libastFixup.la
-endif
 
 libastFixup_la_SOURCES      = \
      AstFixup.C \

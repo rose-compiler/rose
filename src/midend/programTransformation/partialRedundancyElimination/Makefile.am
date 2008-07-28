@@ -5,11 +5,7 @@ INCLUDES = $(ROSE_INCLUDES) -I${top_srcdir}/src/midend/programAnalysis/CFG
 libpreSources = \
    expressionTreeEqual.C pre.C controlFlowGraph.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libpre.la
-else
 noinst_LTLIBRARIES = libpre.la
-endif
 libpre_la_SOURCES = $(libpreSources)
 
 include_HEADERS = expressionTreeEqual.h pre.h controlFlowGraph.h

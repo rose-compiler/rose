@@ -6,11 +6,7 @@ else
 INCLUDES = $(ROSE_INCLUDES) 
 endif
 
-if DEV_LIBS
 lib_LTLIBRARIES = libCompass.la
-else
-lib_LTLIBRARIES = libCompass.la
-endif
 
 if ROSE_MPI
 LTCXXCOMPILE = \

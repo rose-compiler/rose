@@ -9,11 +9,7 @@ libastinliningSources = \
 # lib_LTLIBRARIES = libastinlining.a
 # libastinlining_a_SOURCES  = $(libastinliningSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastinlining.la
-else
 noinst_LTLIBRARIES = libastinlining.la
-endif
 libastinlining_la_SOURCES = $(libastinliningSources)
 
 include_HEADERS = replaceExpressionWithStatement.h inlinerSupport.h inliner.h

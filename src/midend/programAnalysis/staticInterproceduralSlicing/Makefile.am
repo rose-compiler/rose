@@ -6,11 +6,7 @@ INCLUDES =  $(ROSE_INCLUDES) -I$(srcdir)/.. -I$(srcdir)/../dataflowAnalysis -I$(
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-if DEV_LIBS
-lib_LTLIBRARIES = libStaticSlicing.la
-else
 noinst_LTLIBRARIES = libStaticSlicing.la
-endif
 
 # DQ (1/2/2007): Copied the ControlFlowGraph.C and ControlFlowGraph.h from ../dominatorTreesAndDominanceFrontiers
 # since that directory has been deprecated.

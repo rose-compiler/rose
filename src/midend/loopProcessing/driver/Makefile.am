@@ -13,11 +13,7 @@ libdriverSources = \
 # lib_LTLIBRARIES = libdriver.a
 # libdriver_a_SOURCES  = $(libdriverSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libdriver.la
-else
 noinst_LTLIBRARIES = libdriver.la
-endif
 libdriver_la_SOURCES = $(libdriverSources)
 
 clean-local:

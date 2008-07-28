@@ -11,11 +11,7 @@ libslicingSources = \
 # lib_LTLIBRARIES = libslicing.a
 # libslicing_a_SOURCES  = $(libslicingSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libslicing.la
-else
 noinst_LTLIBRARIES = libslicing.la
-endif
 libslicing_la_SOURCES = $(libslicingSources)
 
 clean-local:

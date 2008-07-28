@@ -9,11 +9,7 @@ GENERATED_OBJECTS = ../Cxx_Grammar.o ../Cxx_GrammarTreeTraversalSuccessorContain
 $(GENERATED_SOURCE):
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastMerge.la
-else
 noinst_LTLIBRARIES = libastMerge.la
-endif
 libastMerge_la_SOURCES      = \
      merge_support.C test_support.C buildMangledNameMap.C buildSetOfFrontendSpecificNodes.C \
      deleteNodes.C fixupTraversal.C nullifyAST.C buildReplacementMap.C collectAssociateNodes.C \

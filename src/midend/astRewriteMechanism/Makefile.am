@@ -34,11 +34,7 @@ librewriteSources = \
 # librewrite_a_SOURCES  = $(librewriteSources)
 # librewrite_a_DEPENDENCIES  = $(librewrite_a_SOURCES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = librewrite.la
-else
 noinst_LTLIBRARIES = librewrite.la
-endif
 librewrite_la_SOURCES = $(librewriteSources) rewriteTemplateInstantiations.C $(TemplateFiles)
 librewrite_la_DEPENDENCIES = $(librewrite_la_SOURCES)
 

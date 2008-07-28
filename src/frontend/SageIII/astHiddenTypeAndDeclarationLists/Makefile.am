@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastHiddenTypeAndDeclarationLists.la
-else
 noinst_LTLIBRARIES = libastHiddenTypeAndDeclarationLists.la
-endif
 
 libastHiddenTypeAndDeclarationLists_la_SOURCES      = \
      HiddenList.C  HiddenList_Intersection.C HiddenList_Output.C NamespacesAndClassTraversal.C

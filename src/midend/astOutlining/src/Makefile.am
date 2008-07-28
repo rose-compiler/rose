@@ -6,11 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = ASTtools CPreproc Preprocess Transform
 
-if DEV_LIBS
-lib_LTLIBRARIES = libliaOutliner.la
-else
 noinst_LTLIBRARIES = libliaOutliner.la
-endif
 
 libliaOutlinerdir = $(liaOutlinerlibdir)
 

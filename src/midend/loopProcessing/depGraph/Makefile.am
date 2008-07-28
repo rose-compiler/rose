@@ -10,11 +10,7 @@ libdepGraphSources = DepGraphBuild.C  LoopAnalysis.C  TransDepGraph.C
 # lib_LTLIBRARIES = libdepGraph.a
 # libdepGraph_a_SOURCES  = $(libdepGraphSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libdepGraph.la
-else
 noinst_LTLIBRARIES = libdepGraph.la
-endif
 libdepGraph_la_SOURCES = $(libdepGraphSources)
 
 clean-local:

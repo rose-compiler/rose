@@ -121,11 +121,7 @@ include \$(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = -I\$(srcdir)/../compassSupport \$(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = lib${CLASS_NAME_PREFIX}.la
-else
 noinst_LTLIBRARIES = lib${CLASS_NAME_PREFIX}.la
-endif
 
 lib${CLASS_NAME_PREFIX}_la_SOURCES = ${FILE_NAME_PREFIX}.C
 

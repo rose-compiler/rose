@@ -12,11 +12,7 @@ libdepInfoSources = \
 # lib_LTLIBRARIES = libdepInfo.a
 # libdepInfo_a_SOURCES  = $(libdepInfoSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libdepInfo.la
-else
 noinst_LTLIBRARIES = libdepInfo.la
-endif
 libdepInfo_la_SOURCES = $(libdepInfoSources)
 
 

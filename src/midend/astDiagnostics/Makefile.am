@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastDiagnostics.la
-else
 noinst_LTLIBRARIES = libastDiagnostics.la
-endif
 
 libastDiagnostics_la_SOURCES = AstConsistencyTests.C AstWarnings.C AstStatistics.C AstPerformance.C
 

@@ -10,11 +10,7 @@ libprepostloopSources = BreakupStmt.C  LoopUnroll.C PrivatizeScalar.C
 # lib_LTLIBRARIES = libprepostloop.a
 # libprepostloop_a_SOURCES  = $(libprepostloopSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libprepostloop.la
-else
 noinst_LTLIBRARIES = libprepostloop.la
-endif
 libprepostloop_la_SOURCES = $(libprepostloopSources)
 
 clean-local:

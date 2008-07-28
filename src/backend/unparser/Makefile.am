@@ -9,11 +9,7 @@ INCLUDES = $(ROSE_INCLUDES)
 unparser_headers = unparser.h unparse_sym.h astUnparseAttribute.h
 unparser_sources = $(unparser_headers:.h=.C)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libunparse.la
-else
 noinst_LTLIBRARIES = libunparse.la
-endif
 
 libunparse_la_SOURCES = $(unparser_sources) $(unparser_headers)
 libunparse_la_LIBADD = 

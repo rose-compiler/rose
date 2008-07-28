@@ -5,11 +5,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libsupportSources = VectorCommandOptions.C CommandOptions.C DAG.C DirectedGraph.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libsupport.la
-else
 noinst_LTLIBRARIES = libsupport.la
-endif
 libsupport_la_SOURCES = $(libsupportSources)
 
 clean-local:

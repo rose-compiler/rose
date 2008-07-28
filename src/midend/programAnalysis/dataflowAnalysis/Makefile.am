@@ -10,11 +10,7 @@ libdataflowAnalysisSources = DataFlowAnalysis.C  DefUseChain.C  ReachingDefiniti
 # lib_LTLIBRARIES = libdataflowAnalysis.a
 # libdataflowAnalysis_a_SOURCES  = $(libdataflowAnalysisSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libdataflowAnalysis.la
-else
 noinst_LTLIBRARIES = libdataflowAnalysis.la
-endif
 libdataflowAnalysis_la_SOURCES = $(libdataflowAnalysisSources)
 
 clean-local:

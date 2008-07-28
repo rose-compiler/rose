@@ -4,11 +4,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 if ROSE_USE_BOOST_WAVE
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastTokenStream.la
-else
 noinst_LTLIBRARIES = libastTokenStream.la
-endif
 
 libastTokenStream_la_SOURCES      = \
      createMap.C  doCompleteMapping.C  linearizeAST.C

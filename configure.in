@@ -151,9 +151,6 @@ AC_CANONICAL_HOST
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 
-# I don't like to use environment variables to setup the CC and CXX variables
-SETUP_COMPILERS_THE_WAY_I_WANT
-
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
 ROSE_HOME=.
 # ROSE_HOME=`pwd`/$top_srcdir
@@ -443,10 +440,6 @@ AC_TRY_EVAL(ac_compile);
 
 # exit 1
 
-AC_ARG_WITH(development-libraries,
-   [  --with-development-libraries ... build individual libraries for development purposes causing the main ROSE library to depend on the individual libraries, instead of incorporating their code],with_development_libraries=yes, with_development_libraries=no )
-AM_CONDITIONAL(DEV_LIBS,test "$with_development_libraries" = yes)
-
 # Figure out what version of lex we have available
 # flex works better than lex (this gives a preference to flex (flex is gnu))
 dnl AM_PROG_LEX
@@ -591,13 +584,6 @@ AM_CONDITIONAL(AXXPXX_SPECIFIC_TESTS,test ! "$with_AxxPxx" = no)
 # AC _SUB ST(STL_INCLUDES)
 # AC _SUB ST(STL_DIR)
 
-# We now only support SAGE III
-AC_DEFINE([USE_SAGE3],[1],[Support for SAGE 3 over SAGE 2.])
-SAGE_INCLUDES='-I$(top_srcdir)/SAGE'
-SAGE_LIBS='$(top_builddir)/SAGE/libsage3.a'
-AC_SUBST(SAGE_INCLUDES)
-AC_SUBST(SAGE_LIBS)
-
 # We no longer want to have the ROSE configure.in setup the PerformanceTests/Makefile
 # PerformanceTests/Makefile
 AC_ARG_WITH(PERFORMANCE_TESTS,
@@ -719,10 +705,6 @@ AC_SUBST(CXX_SHARED_LIB_UPDATE)
 # AC_MSG_RESULT(deleting temporary template directory built during STL tests.)
 # rm -rf '$(CXX_TEMPLATE_REPOSITORY_PATH)'
 rm -rf Templates.DB
-
-## Include the $CXX_TEMPLATES variable in the $CXXFLAGS variable
-## (after all the configure compiler checks have been done)
-if test "$CXX_TEMPLATES"; then CXXFLAGS="$CXXFLAGS $CXX_TEMPLATES"; fi
 
 ## Setup the EDG specific stuff
 SETUP_EDG
@@ -1164,12 +1146,6 @@ AC_CONFIG_COMMANDS([default],[[
 #           fi
 #      fi
 ]],[[
-# These set the environment for commands executing after file generations.
-srcdir=$srcdir
-if test ! `cd $srcdir && pwd -P` = `pwd -P`; then
-  source_tree_is_not_compile_tree=1
-fi
-
 ]])
 
 # Generate rose_paths.h

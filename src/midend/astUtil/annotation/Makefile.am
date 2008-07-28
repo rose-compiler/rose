@@ -12,11 +12,7 @@ libannotationSources = \
 # lib_LTLIBRARIES = libannotation.a
 # libannotation_a_SOURCES = $(libannotationSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libannotation.la
-else
 noinst_LTLIBRARIES = libannotation.la
-endif
 libannotation_la_SOURCES = $(libannotationSources)
 
 clean-local:

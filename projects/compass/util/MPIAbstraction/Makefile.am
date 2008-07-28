@@ -10,11 +10,7 @@ INCLUDES = -I$(srcdir) -I$(srcdir)/.. -I$(srcdir)/../../compassSupport \
 #==========================================================================
 # Auxiliary library.
 
-if DEV_LIBS
-lib_LTLIBRARIES = libMPIAbstraction.la
-else
 noinst_LTLIBRARIES = libMPIAbstraction.la
-endif
 
 libMPIAbstraction_la_SOURCES = Recognizer.C Recognizer.h
 

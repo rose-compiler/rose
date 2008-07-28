@@ -10,11 +10,7 @@ libgraphsSources = \
 # lib_LIBRARIES = libgraphs.a
 # libgraphs_a_SOURCES  = $(libgraphsSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libgraphs.la
-else
 noinst_LTLIBRARIES = libgraphs.la
-endif
 libgraphs_la_SOURCES = $(libgraphsSources)
 
 clean-local:

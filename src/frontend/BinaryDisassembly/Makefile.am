@@ -7,14 +7,10 @@ INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/analyses -I$(srcdir)/graph #-I$(srcdir)/
 # DQ (1/25/2008): I think we need to use DEV_LIB here
 # binarylib_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la libbinarydisassembly.la
 # TPS (03/13/08) added ROSE_USE_BINARY_SQL, so that binary analysis can be compiled without MySQL
-if DEV_LIBS
-lib_LTLIBRARIES = libbinaryDatabase.la libbinaryFrontend.la #libbinarydisassembly.la
-else
 # This will cause the dynamic library to be built (as libbinaryDatabase.so)
 noinst_LTLIBRARIES = libbinaryFrontend.la #libbinarydisassembly.la
 if ROSE_USE_BINARY_SQL
   lib_LTLIBRARIES = libbinaryDatabase.la 
-endif
 endif
 
 if ROSE_USE_BINARY_SQL

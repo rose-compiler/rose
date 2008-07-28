@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastOutliner.la
-else
 noinst_LTLIBRARIES = libastOutliner.la
-endif
 
 libastOutliner_la_SOURCES = \
 	Check.cc \

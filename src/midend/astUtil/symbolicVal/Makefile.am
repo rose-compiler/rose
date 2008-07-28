@@ -12,11 +12,7 @@ libsymbolicValSources = \
 # lib_LTLIBRARIES = libsymbolicVal.a
 # libsymbolicVal_a_SOURCES  = $(libsymbolicValSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libsymbolicVal.la
-else
 noinst_LTLIBRARIES = libsymbolicVal.la
-endif
 libsymbolicVal_la_SOURCES = $(libsymbolicValSources)
 
 clean-local:

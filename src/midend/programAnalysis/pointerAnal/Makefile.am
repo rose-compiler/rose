@@ -7,11 +7,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 EXTRA_DIST = steensgaard.h PtrAnal.h SteensgaardPtrAnal.h
 
-if DEV_LIBS
-lib_LTLIBRARIES = libpointerAnal.la
-else
 noinst_LTLIBRARIES = libpointerAnal.la
-endif
 libpointerAnal_la_SOURCES = PtrAnal.C PtrAnalCFG.C
 
 clean-local:

@@ -22,11 +22,7 @@ libastprocessingSources = \
 # libastprocessing_a_LIBADD  = $(CXX_TEMPLATE_OBJECTS)
 # libastprocessing_a_DEPENDENCIES  = $(libastprocessing_a_SOURCES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastprocessing.la
-else
 noinst_LTLIBRARIES = libastprocessing.la
-endif
 libastprocessing_la_SOURCES = $(libastprocessingSources)
 libastprocessing_la_LIBADD = $(CXX_TEMPLATE_OBJECTS)
 libastprocessing_la_DEPENDENCIES = $(libastprocessing_a_SOURCES)

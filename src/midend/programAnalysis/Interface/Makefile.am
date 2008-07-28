@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES =  $(ROSE_INCLUDES) -I$(top_srcdir)/src/midend/loopProcessing
 
-if DEV_LIBS
-lib_LTLIBRARIES = libInterface.la
-else
 noinst_LTLIBRARIES = libInterface.la
-endif
 
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .

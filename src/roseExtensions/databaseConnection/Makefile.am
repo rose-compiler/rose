@@ -17,11 +17,7 @@ librosedatabaseSources = \
 # librosedatabase_a_SOURCES  = $(librosedatabaseSources)
 # librosedatabase_a_DEPENDENCIES = $(librosedatabase_a_SOURCES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = librosedatabase.la
-else
 noinst_LTLIBRARIES = librosedatabase.la
-endif
 librosedatabase_la_SOURCES = $(librosedatabaseSources)
 
 include_HEADERS = GlobalDatabaseConnection.h TableAccessMacros.h TableAccess.h

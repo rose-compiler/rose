@@ -10,11 +10,7 @@ libCFGSources =  CFG_ROSE.C CFG_OA.C
 # lib_LTLIBRARIES = libCFG.a
 # libCFG_a_SOURCES  = $(libCFGSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libCFG.la
-else
 noinst_LTLIBRARIES = libCFG.la
-endif
 libCFG_la_SOURCES = $(libCFGSources)
 
 clean-local:

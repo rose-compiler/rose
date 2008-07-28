@@ -12,11 +12,7 @@ libRoseCommandlineUtilSources = commandline_processing.C sla++.C
 # lib_LIBRARIES = libRoseCommandlineUtil.a
 # libRoseCommandlineUtil_a_SOURCES  = $(libRoseCommandlineUtilSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libRoseCommandlineUtil.la
-else
 noinst_LTLIBRARIES = libRoseCommandlineUtil.la
-endif
 libRoseCommandlineUtil_la_SOURCES = $(libRoseCommandlineUtilSources)
 
 # We have to explicily build this rule since we want to avoid the use of "ar cru"

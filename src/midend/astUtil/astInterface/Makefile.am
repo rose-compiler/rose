@@ -10,11 +10,7 @@ libastInterfaceSources = AstInterface.C CPPAstInterface.C
 # lib_LTLIBRARIES = libastInterface.a
 # libastInterface_a_SOURCES  = $(libastInterfaceSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastInterface.la
-else
 noinst_LTLIBRARIES = libastInterface.la
-endif
 libastInterface_la_SOURCES = $(libastInterfaceSources)
 
 clean-local:

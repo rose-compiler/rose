@@ -5,11 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 libconstantFoldingSources = \
    constantFolding.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libconstantFolding.la
-else
 noinst_LTLIBRARIES = libconstantFolding.la
-endif
 libconstantFolding_la_SOURCES = $(libconstantFoldingSources)
 
 include_HEADERS = constantFolding.h

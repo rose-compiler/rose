@@ -10,11 +10,7 @@ libastSupportSources = ProcessAstTree.C  StmtInfoCollect.C
 # lib_LTLIBRARIES = libastSupport.a
 # libastSupport_a_SOURCES  = $(libastSupportSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastSupport.la
-else
 noinst_LTLIBRARIES = libastSupport.la
-endif
 libastSupport_la_SOURCES = $(libastSupportSources)
 
 clean-local:

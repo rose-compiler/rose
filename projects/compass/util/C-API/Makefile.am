@@ -19,11 +19,7 @@ endif
 C_API_SRCS = C-API.C SigBase.C FuncSig.C Recognizer.C
 C_API_HDRS = $(C_API_SRCS:.C=.h) ConstSig.h TypeSig.h
 
-if DEV_LIBS
-lib_LTLIBRARIES = libC-API.la
-else
 noinst_LTLIBRARIES = libC-API.la
-endif
 
 libC_API_la_SOURCES = $(C_API_SRCS) $(C_API_HDRS)
 

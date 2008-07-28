@@ -19,11 +19,7 @@ nodeQuery.o : nodeQuery.C queryVariant.C
 # lib_LTLIBRARIES = libquery.a
 # libquery_a_SOURCES  = $(libquerySources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libquery.la
-else
 noinst_LTLIBRARIES = libquery.la
-endif
 libquery_la_SOURCES = $(libquerySources)
 
 libquery_la_DEPENDENCIES = nodeQuery.o

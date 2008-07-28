@@ -8,11 +8,7 @@ INCLUDES = $(ROSE_INCLUDES)
 
 libRoseSQLiteDatabaseSources =  Result.C GlobalDatabaseConnection.C Query.C Connection.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libRoseSQLiteDatabase.la
-else
 noinst_LTLIBRARIES = libRoseSQLiteDatabase.la
-endif
 libRoseSQLiteDatabase_la_SOURCES = $(libRoseSQLiteDatabaseSources)
 endif
 

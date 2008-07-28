@@ -3,15 +3,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # Automake conditional to control use of ROSE with BDDBDDB
 if ROSE_USE_BDDBDDB
 
-###########################
-#        New Code
-###########################
-#if DEV_LIBS
-#lib_LTLIBRARIES = libastBinaryRelations.la
-#else
-#noinst_LTLIBRARIES = libastBinaryRelations.la
-#endif
-
 noinst_LTLIBRARIES = libastBinaryRelations.la
 
 # Bug fix suggested by Rich which is required for automake 1.9.2, but not for version 1.9.6

@@ -6,11 +6,7 @@ INCLUDES = $(ROSE_INCLUDES) -idirafter @MySQL_path@/include -idirafter @MySQL_pa
 # noinst_HEADERS = sideEffect.h
 include_HEADERS = sideEffect.h
 
-if DEV_LIBS
-lib_LTLIBRARIES = libsideEffect.la
-else
 noinst_LTLIBRARIES = libsideEffect.la
-endif
 
 ## Specifications for building the pdf library.
 libsideEffect_la_SOURCES = sideEffect.C

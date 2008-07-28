@@ -862,7 +862,7 @@ INCLUDE_FILE_PATTERNS  =
 # omitted =1 is assumed.
 
 # PREDEFINED             = 
-PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION __EXTERN_C__ USE_SAGE3
+PREDEFINED             = HAVE_EXPLICIT_TEMPLATE_INSTANTIATION __EXTERN_C__
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
 # this tag can be used to specify a list of macro names that should be expanded. 

@@ -12,11 +12,7 @@ libcomputationSources = \
 # lib_LTLIBRARIES = libcomputation.a
 # libcomputation_a_SOURCES  = $(libcomputationSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libcomputation.la
-else
 noinst_LTLIBRARIES = libcomputation.la
-endif
 libcomputation_la_SOURCES = $(libcomputationSources)
 
 clean-local:

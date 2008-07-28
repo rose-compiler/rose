@@ -5,11 +5,7 @@ INCLUDES = $(ROSE_INCLUDES)
 libfunctionCallNormalizationSources = \
    FunctionNormalization.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libfunctionCallNormalization.la
-else
 noinst_LTLIBRARIES = libfunctionCallNormalization.la
-endif
 libfunctionCallNormalization_la_SOURCES = $(libfunctionCallNormalizationSources)
 
 include_HEADERS = FunctionNormalization.h
