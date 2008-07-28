@@ -41,8 +41,8 @@ dist-hook:
 #	ln -s $(distdir)/libroseEDG.la $(distdir)/.libs/libroseEDG.la
 	if [ -f libroseEDG.la ]; then \
       echo "libroseEDG.la file exists"; \
-      cp -a libroseEDG.la $(distdir); \
-      cp -a .libs $(distdir); \
+      sed "s@^dependency_libs.*@dependency_libs=''@" libroseEDG.la > $(distdir)/libroseEDG.la ; \
+      cp -Rp .libs $(distdir); \
    else \
       echo "libroseEDG file does not exist (meaningless distribution being built)"; \
    fi
