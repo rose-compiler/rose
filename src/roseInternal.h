@@ -16,7 +16,7 @@
 #ifndef NDEBUG
 #define ROSE_ASSERT assert
 #else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
-#define ROSE_ASSERT(x) (__builtin_constant_p(x) ? (x ? (void)0 : (abort())) : (void)0)
+#define ROSE_ASSERT(x) do {(void)(__builtin_constant_p(x) ? (x ? 0 : abort()) : 0);} while (0)
 #endif
 #endif
 #ifndef ROSE_ABORT
