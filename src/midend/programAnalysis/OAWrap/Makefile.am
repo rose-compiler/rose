@@ -10,11 +10,7 @@ libOAWrapSources = OAWrap.C SAGE2OA.C
 # lib_LTLIBRARIES = libOAWrap.a
 # libOAWrap_a_SOURCES  = $(libOAWrapSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libOAWrap.la
-else
 noinst_LTLIBRARIES = libOAWrap.la
-endif
 libOAWrap_la_SOURCES = $(libOAWrapSources)
 
 clean-local:

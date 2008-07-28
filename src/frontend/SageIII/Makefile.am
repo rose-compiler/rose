@@ -80,11 +80,7 @@ libsage3Sources = \
 #   stripWrapper.C
 #   grammarBaseClass.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libsage3.la
-else
 noinst_LTLIBRARIES = libsage3.la
-endif
 
 libsage3_la_SOURCES = $(libsage3Sources) preproc.C
 nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h

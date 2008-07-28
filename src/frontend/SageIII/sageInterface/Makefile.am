@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libsageInterface.la
-else
 noinst_LTLIBRARIES = libsageInterface.la
-endif
 libsageInterface_la_SOURCES      = \
      sageInterface.C \
      sageInterface_type.C \

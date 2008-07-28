@@ -10,11 +10,7 @@ if ROSE_USE_EDG_SOURCE
 libroseEDGlibraries = EDG_3.3/src/libedg33.la EDG_SAGE_Connection/libsage.la
 
 # lib_LTLIBRARIES = libroseEDG.la
-if DEV_LIBS
-lib_LTLIBRARIES = libroseEDG.la
-else
 noinst_LTLIBRARIES = libroseEDG.la
-endif
 
 # We need a simple file to seed the generation of the library
 libroseEDG_la_SOURCES = dummyCppFileForLibroseEDG.C

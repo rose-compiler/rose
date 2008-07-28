@@ -7,11 +7,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 
 libCallGraphSources =  CallGraph.C ClassHierarchyGraph.C
 
-if DEV_LIBS
-lib_LTLIBRARIES = libCallGraph.la
-else
 noinst_LTLIBRARIES = libCallGraph.la
-endif
 libCallGraph_la_SOURCES = $(libCallGraphSources)
 
 clean-local:

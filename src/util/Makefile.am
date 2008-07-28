@@ -14,11 +14,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # lib_LIBRARIES = libroseutil.a
 # libroseutil_a_DEPENDENCIES = $(libroseutilDependencies)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libroseutil.la
-else
 noinst_LTLIBRARIES = libroseutil.la
-endif
 
 libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_LIBADD = \

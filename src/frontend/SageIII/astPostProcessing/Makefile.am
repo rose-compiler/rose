@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libastPostProcessing.la
-else
 noinst_LTLIBRARIES = libastPostProcessing.la
-endif
 
 libastPostProcessing_la_SOURCES      = \
      astPostProcessing.C \

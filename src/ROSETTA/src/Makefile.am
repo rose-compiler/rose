@@ -1,8 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = \
-   $(ROSE_INCLUDES) \
-   @SAGE_INCLUDES@
+INCLUDES = $(ROSE_INCLUDES)
 
 EXTRA_DIST = \
    ROSETTA_macros.h  grammar.h grammarString.h terminal.h

@@ -22,11 +22,7 @@ libroseSupportSources = \
 # lib_LIBRARIES = libroseSupport.a
 # libroseSupport_a_SOURCES  = $(libroseSupportSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libroseSupport.la
-else
 noinst_LTLIBRARIES = libroseSupport.la
-endif
 
 libroseSupport_la_SOURCES = $(libroseSupportSources)
 
@@ -43,7 +39,7 @@ include_HEADERS = \
 # templateSupport.h
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files
+	rm -rf Templates.DB ii_files ti_files
 
 distclean-local:
 	rm -rf Templates.DB

@@ -15,11 +15,7 @@ CXXCOMPILE = \
 CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
         $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 
-if DEV_LIBS
-lib_LTLIBRARIES = libdistributedMemoryAnalysis.la
-else
 noinst_LTLIBRARIES = libdistributedMemoryAnalysis.la
-endif
 libdistributedMemoryAnalysis_la_SOURCES = DistributedMemoryAnalysis.C functionNames.C
 libdistributedMemoryAnalysis_la_LIBADD = $(LIBS_WITH_RPATH) #$(ROSE_LIBS) 
 

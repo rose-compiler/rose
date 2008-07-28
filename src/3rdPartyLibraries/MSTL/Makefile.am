@@ -11,11 +11,7 @@ libmstlSources = \
 # lib_LIBRARIES = libmstl.a
 # libmstl_a_SOURCES  = $(libmstlSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libmstl.la
-else
 noinst_LTLIBRARIES = libmstl.la
-endif
 libmstl_la_SOURCES = $(libmstlSources)
 
 clean-local:

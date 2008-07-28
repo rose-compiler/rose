@@ -2,11 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-if DEV_LIBS
-# lib_LTLIBRARIES = libastFileIO.la
-else
 # noinst_LTLIBRARIES = libastFileIO.la
-endif
 
 # DQ (10/18/2007): These have been moved to the src/frontend/SageIII directory
 # to provde greater parallelism to the make -jn parallel make feature.

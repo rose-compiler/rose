@@ -12,11 +12,7 @@ libRoseStringSupportSources = string_functions.C FileNameClassifier.C escape.C
 # libRoseStringSupport_a_SOURCES  = $(libRoseStringSupportSources)
 
 # Tell automake install to copy this library
-if DEV_LIBS
-lib_LTLIBRARIES = libRoseStringSupport.la
-else
 noinst_LTLIBRARIES = libRoseStringSupport.la
-endif
 # noinst_LIBRARIES = libRoseStringSupport.so
 libRoseStringSupport_la_SOURCES = $(libRoseStringSupportSources)
 

@@ -12,11 +12,7 @@ libvaluePropagationSources = ValueAnnot.C  ValuePropagate.C
 # lib_LTLIBRARIES = libvaluePropagation.a
 # libvaluePropagation_a_SOURCES  = $(libvaluePropagationSources)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libvaluePropagation.la
-else
 noinst_LTLIBRARIES = libvaluePropagation.la
-endif
 libvaluePropagation_la_SOURCES = $(libvaluePropagationSources)
 
 clean-local:

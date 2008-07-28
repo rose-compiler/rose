@@ -8,11 +8,7 @@ GENERATED_OBJECTS = ../Cxx_Grammar.o ../Cxx_GrammarTreeTraversalSuccessorContain
 $(GENERATED_SOURCE):
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 
-if DEV_LIBS
-lib_LTLIBRARIES = libvirtualCFG.la
-else
 noinst_LTLIBRARIES = libvirtualCFG.la
-endif
 libvirtualCFG_la_SOURCES      = \
      virtualCFG.C \
      virtualBinCFG.C \

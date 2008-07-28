@@ -105,15 +105,8 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case ADDRESS_OP: { unparseAddrOp(expr, info); break; }
           case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
           case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
-#ifndef USE_SAGE3
-          case ABSTRACT: { unparseAbstractOp(expr, info); break; }
-#endif
           case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
           case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
-#ifndef USE_SAGE3
-          case CLASSINIT_OP: { unparseClassInitOp(expr, info); break; }
-          case DYNAMICCAST_OP: { unparseDyCastOp(expr, info); break; }
-#endif
           case CAST_OP:                 { unparseCastOp(expr, info); break; }
           case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
           case NEW_OP:                  { unparseNewOp(expr, info); break; }
@@ -131,13 +124,7 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case XOR_ASSIGN_OP:           { unparseXorAssnOp(expr, info); break; }
           case LSHIFT_ASSIGN_OP:        { unparseLShiftAssnOp(expr, info); break; }
           case RSHIFT_ASSIGN_OP:        { unparseRShiftAssnOp(expr, info); break; }
-#ifndef USE_SAGE3
-          case FORDECL_OP:              { unparseForDeclOp(expr, info); break; }
-#endif
           case TYPE_REF:                { unparseTypeRef(expr, info); break; }
-#ifndef USE_SAGE3
-          case VECTOR_CONST:            { unparseVConst(expr, info); break; }
-#endif
           case EXPR_INIT:               { unparseExprInit(expr, info); break; }
           case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
           case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }
@@ -565,15 +552,8 @@ void Unparse_ExprStmt::unparseExpression(SgExpression* expr, SgUnparse_Info& inf
                case ADDRESS_OP: { unparseAddrOp(expr, info); break; }
                case MINUSMINUS_OP: { unparseMinusMinusOp(expr, info); break; }
                case PLUSPLUS_OP: { unparsePlusPlusOp(expr, info); break; }
-#ifndef USE_SAGE3
-               case ABSTRACT: { unparseAbstractOp(expr, info); break; }
-#endif
                case BIT_COMPLEMENT_OP: { unparseBitCompOp(expr, info); break; }
                case EXPR_CONDITIONAL: { unparseExprCond(expr, info); break; }
-#ifndef USE_SAGE3
-               case CLASSINIT_OP: { unparseClassInitOp(expr, info); break; }
-               case DYNAMICCAST_OP: { unparseDyCastOp(expr, info); break; }
-#endif
                case CAST_OP:                 { unparseCastOp(expr, info); break; }
                case ARRAY_OP:                { unparseArrayOp(expr, info); break; }
                case NEW_OP:                  { unparseNewOp(expr, info); break; }
@@ -591,13 +571,7 @@ void Unparse_ExprStmt::unparseExpression(SgExpression* expr, SgUnparse_Info& inf
                case XOR_ASSIGN_OP:           { unparseXorAssnOp(expr, info); break; }
                case LSHIFT_ASSIGN_OP:        { unparseLShiftAssnOp(expr, info); break; }
                case RSHIFT_ASSIGN_OP:        { unparseRShiftAssnOp(expr, info); break; }
-#ifndef USE_SAGE3
-               case FORDECL_OP:              { unparseForDeclOp(expr, info); break; }
-#endif
                case TYPE_REF:                { unparseTypeRef(expr, info); break; }
-#ifndef USE_SAGE3
-               case VECTOR_CONST:            { unparseVConst(expr, info); break; }
-#endif
                case EXPR_INIT:               { unparseExprInit(expr, info); break; }
                case AGGREGATE_INIT:          { unparseAggrInit(expr, info); break; }
                case CONSTRUCTOR_INIT:        { unparseConInit(expr, info); break; }

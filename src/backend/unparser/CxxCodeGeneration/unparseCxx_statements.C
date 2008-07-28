@@ -1975,15 +1975,9 @@ Unparse_ExprStmt::unparseWhereStmt(SgStatement* stmt, SgUnparse_Info& info)
      if(where_stmt->get_init_stmt().size() > 0 )
         {
           SgStatementPtrList::iterator i=where_stmt->get_init_stmt().begin();
-#if USE_SAGE3
           if ((*i) != NULL && (*i)->variant() == EXPR_STMT)
              {
                SgExprStatement* pExprStmt = isSgExprStatement(*i);
-#else
-          if ((*i).irep() != NULL && (*i).irep()->variant() == EXPR_STMT)
-             {
-               SgExprStatement* pExprStmt = isSgExprStatement((*i).irep());
-#endif
             // SgAssignOp* pAssignOp = isSgAssignOp(pExprStmt->get_the_expr());
                SgAssignOp* pAssignOp = isSgAssignOp(pExprStmt->get_expression());
                if ( pAssignOp != NULL )

@@ -15,11 +15,7 @@ INCLUDES =  $(ROSE_INCLUDES) \
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 
-if DEV_LIBS
-lib_LTLIBRARIES = libDefUseAnalysis.la
-else
 noinst_LTLIBRARIES = libDefUseAnalysis.la
-endif
 
 # DQ (11/8/2007): The runTest.cpp file was moved to tests/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
 # libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/runTest.cpp

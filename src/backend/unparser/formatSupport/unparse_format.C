@@ -670,26 +670,12 @@ UnparseOrigFormat::get_type_len(SgType* type)
     return length;
   }
 
-#ifndef USE_SAGE3
-  case T_STRUCT: {
-    if cerr << "T_STRUCT not implemented" << endl;
-    break;
-  }
-#endif
-
   case T_ENUM: {
     SgEnumType* enum_type = isSgEnumType(type);
     assert (enum_type != NULL);
     SgName qn = enum_type->get_name();
     return strlen(qn.str());
   }
-
-#ifndef USE_SAGE3
-  case T_UNION: {
-    if (do_unparse) (*os) << "T_UNION not implemented" << endl;
-    break;
-  }
-#endif
 
   case T_TYPEDEF: {
     SgTypedefType* typedef_type = isSgTypedefType(type);

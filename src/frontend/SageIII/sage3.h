@@ -177,15 +177,6 @@ using namespace __gnu_cxx;
 // used with ROSE.
 // #define INLINE
 
-// DQ (3/29/2006): I sure would like to remove this since it should not be required (need to search on "USE_SAGE3")
-// If we are including sage3.h then want USE_SAGE3 defined 
-// (but only if not already defined to avoid preprocessor warnings)
-#ifndef USE_SAGE3
-// Later we need to use #define USE_SAGE3, but that will not work yet 
-// since many places check using #if USE_SAGE3 instead of #ifdef USE_SAGE3
-#define USE_SAGE3 TRUE
-#endif
-
 // DQ (9/21/2005): Support for memory pools.
 // This allows for a total number of IR nodes (for each type of IR node) of
 // (MAX_NUMBER_OF_MEMORY_BLOCKS * DEFAULT_CLASS_ALLOCATION_POOL_SIZE)

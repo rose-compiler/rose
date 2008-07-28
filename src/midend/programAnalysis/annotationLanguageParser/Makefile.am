@@ -9,11 +9,7 @@ noinst_HEADERS = \
 
 include_HEADERS = 
 
-if DEV_LIBS
-lib_LTLIBRARIES = libannotationLanguageParser.la
-else
 noinst_LTLIBRARIES = libannotationLanguageParser.la
-endif
 
 ## Specifications for building the pdf library.
 libannotationLanguageParser_la_SOURCES = \

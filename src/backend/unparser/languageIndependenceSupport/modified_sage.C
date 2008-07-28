@@ -1056,11 +1056,7 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
   SgExpressionPtrList::iterator i = expr_list->get_expressions().begin();
 
   if (i != expr_list->get_expressions().end()) {
-#if USE_SAGE3
     SgFunctionCallExp* func_call = isSgFunctionCallExp(*i);
-#else
-    SgFunctionCallExp* func_call = isSgFunctionCallExp((*i).irep());
-#endif
     i++;
     if (func_call != NULL) {
       SgDotExp* dot_exp = isSgDotExp(func_call->get_function());

@@ -27,11 +27,6 @@ CLEANFILES = preproc-fortran.o preproc-fortran-fixed.o
 FORTRAN_LEX_SCANNERS = preproc-fortran.C preproc-fortran-fixed.C
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
-if DEV_LIBS
-# lib_LTLIBRARIES = libroseFortran.la libparser_java_FortranParserActionJNI.la
-# lib_LTLIBRARIES = libroseFortran.la libfortran_ofp_parser_java_FortranParserActionJNI.la
-lib_LTLIBRARIES = libroseFortran.la libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
-else
 # This will cause the dynamic library to be built (as libroseFortran.so)
 # noinst_LTLIBRARIES = libroseFortran.la
 # lib_LTLIBRARIES = libroseFortran.la
@@ -46,7 +41,6 @@ noinst_LTLIBRARIES = libroseFortran.la
 # lib_LTLIBRARIES = libparser_java_FortranParserActionJNI.la
 # lib_LTLIBRARIES = libfortran_ofp_parser_java_FortranParserActionJNI.la
 lib_LTLIBRARIES = libfortran_ofp_parser_c_jni_FortranParserActionJNI.la
-endif
 else
 # DQ (10/21/2007): build an empyy lib file so that ROSE/src/Makefile.am need not be conditional on Fortran.
 noinst_LTLIBRARIES = libroseFortran.la

@@ -1857,12 +1857,8 @@ SgExprListExp::get_first() const
      if(get_expressions().empty())
           return 0;
      SgExpressionPtrList::const_iterator p=get_expressions().begin();
-#if USE_SAGE3
      ROSE_ASSERT( (*p) != NULL );
      return (*p);
-#else
-     return (*p).irep();
-#endif
    }
 #endif
 
