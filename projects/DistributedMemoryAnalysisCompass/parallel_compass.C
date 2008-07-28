@@ -153,18 +153,22 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
     if (isSgArrowExp(node) || isSgPointerDerefExp(node)
     	|| isSgAssignInitializer(node) || isSgFunctionCallExp(node)) {
       currentWeight = 0.05;
-    } else if (isSgFunctionDefinition(node)) {
+    } else if (isSgFunctionDefinition(node) || isSgTemplateInstantiationMemberFunctionDecl(node)) {
+      /*
       NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
       nrNiF.traverse(node, postorder);
       currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile;
       // make sure a function is weighted more than all other nodes
       if (currentWeight<=0.05)
+*/
 	currentWeight=0.06;
     } else if (isSgFile(node)) {
+      /*
       NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
       nrNiF.traverse(node, postorder);
       currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile+0.01;
       if (currentWeight<=0.06)
+      */
 	currentWeight=0.07;
     }
     weights[i].first = currentWeight;
@@ -546,9 +550,9 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	double nextscale = processes/10;
+	double nextscale = processes/12;
 	if (nextscale < 2) nextscale =2;
-	if ((currentJob % 5)==4) scale+=nextscale;
+	if ((currentJob % 5)==4) scale+=(int)nextscale;
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
