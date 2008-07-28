@@ -16,7 +16,7 @@ endif
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
 SUBDIRS = config src projects tests tutorial exampleTranslators docs tools scripts $(DEVELOPER_DISTRIBUTION_DIRECTORY)
 
-ACLOCAL_AMFLAGS = --foreign -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal
+ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal
 
 # Force rose.docs to be make by default 
 # (if rose.docs.in is modified)

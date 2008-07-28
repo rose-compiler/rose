@@ -43,7 +43,7 @@ autoconf || : exit 1
 # automake -a -c -i --foreign $AUTOMAKE_FLAGS || : exit 1
 # automake -a -c -i --foreign |& grep -v "is not a standard library name" || : exit 1
 # automake -a -c -i --foreign || : exit 1
-automake -a -c -i --foreign 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
+automake -a -c -i 2>&1 | grep -v "is not a standard library name" 1>&2 || : exit 1
 
 # Automake manual says that if we use AM_CONFIG_HEADER we have to build the stamp-h.in files
 touch stamp-h.in  || : exit 1
