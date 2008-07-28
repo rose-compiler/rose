@@ -168,7 +168,7 @@ using namespace __gnu_cxx;
 #ifndef NDEBUG
 #define ROSE_ASSERT assert
 #else // We use assert(false) equivalents so often for "should not get here", but we don't want nontrivial side effects in asserts to be run when assert is disabled
-#define ROSE_ASSERT(x) do {if (__builtin_constant_p(x)) {if (!x) abort();}} while (0)
+#define ROSE_ASSERT(x) do {if (__builtin_constant_p(x)) {if (x) {} else abort();}} while (0)
 #endif
 #define ROSE_ABORT  abort
 
