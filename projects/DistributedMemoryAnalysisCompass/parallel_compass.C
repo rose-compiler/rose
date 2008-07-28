@@ -546,7 +546,9 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	if ((currentJob % 5)==4) scale+=2;
+	double nextscale = processes/10;
+	if (nextscale < 2) nextscale =2;
+	if ((currentJob % 5)==4) scale+=nextscale;
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
@@ -570,7 +572,7 @@ int main(int argc, char **argv)
       }
     }
     if (my_rank==0)
-      cout << "Final scale = " << scale << endl;
+      cerr << ">>> Final scale = " << scale << endl;
   }
 
 
