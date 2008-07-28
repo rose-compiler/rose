@@ -1,6 +1,6 @@
 EXTRA_DIST= \
 	build-examples.sh \
-	sl1rd/sl1rd.set sl1rd/sl1rd.optla sl1rd/runtests \
+	sl1rd/sl1rd.set sl1rd/sl1rd.optla \
 	sl1rd/tests/rdtest1.C  \
 	sl1rd/tests/rdtest2.C     sl1rd/tests/rdtest3.C  \
 	                          sl2rd/tests/rdtest10.C \
