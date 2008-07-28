@@ -1,4 +1,5 @@
-#! /bin/sh
+#!/bin/bash
+# Bash is required for the nullglob option
 ######################################################################################
 # Author:             Bobby Philip                                                   #
 # Creation Date:      11/05/2001                                                     #
@@ -114,6 +115,10 @@ roseHome=$3
 # echo "compilerBinDir = $compilerBinDir"
 # echo "roseHome       = $roseHome"
 # echo "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^"
+
+# Bash option so that the * expansion done in the "cp -Rp" command above does
+# not produce a warning when the given directory is empty
+set nullglob
 
 # we try to ensure that paths can be given, to enable using different versions of the same compiler
 if [ "$compilerBinDir" != "." ]
