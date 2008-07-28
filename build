@@ -31,8 +31,6 @@ else
   libtoolize
 fi
 
-./makelinks
-
 aclocal -I ./config -I ./acmacros -I ./src/3rdPartyLibraries/libltdl -I /usr/share/aclocal || : exit 1
 
 # autoheader --warnings=obsolete,all || : exit 1
