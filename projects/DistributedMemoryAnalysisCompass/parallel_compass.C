@@ -433,6 +433,8 @@ int main(int argc, char **argv)
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
 
+  for (int div=128; div>1 ; div=div/2) {
+
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
   // which node is the most expensive?
@@ -558,7 +560,7 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	double nextscale = processes/32;
+	double nextscale = processes/div;
 	if (nextscale < 2) nextscale =2;
 	if ((currentJob % 5)==4) scale+=(int)nextscale;
 	if (currentJob>=(int)bounds.size()) {
@@ -584,7 +586,7 @@ int main(int argc, char **argv)
       }
     }
     if (my_rank==0)
-      cerr << ">>> Final scale = " << scale << endl;
+      cerr << ">>> Final scale = " << scale << "  div = " << div << endl;
   }
 
 
@@ -623,11 +625,13 @@ int main(int argc, char **argv)
 
   //if (my_rank==0)
   //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
+  delete[] output_values;
+  delete[] times;
+
+  }
 
   /* all done */
   MPI_Finalize();
-  delete[] output_values;
-  delete[] times;
 
 }
 
