@@ -1,7 +1,0 @@
-       // Special constructor for this class
-          CLASSNAME ( SgExpression* expr );
-
-          virtual ROSE_Node* transform();
-
-       // CLASSNAME ( ROSE_Node* node, ROSE_Expression* roseLhsExpression, ROSE_Expression* roseRhsExpression );
-          static CLASSNAME* build_ROSE_C_Expression ( ROSE_Expression* node, ROSE_Expression* roseLhsExpression, ROSE_Expression* roseRhsExpression );

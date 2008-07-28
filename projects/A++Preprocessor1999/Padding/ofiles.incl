@@ -1,6 +1,0 @@
-OFILES = alignData.o arrayInfo.o cacheInfo.o \
-		padding_conditions.o padding_tools.o testPad.o 
-
-CLASSFILES = 
-
-

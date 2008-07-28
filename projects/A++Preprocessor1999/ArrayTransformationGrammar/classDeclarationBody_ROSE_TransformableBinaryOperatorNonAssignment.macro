@@ -1,9 +1,0 @@
-       // Special constructor for this class
-          CLASSNAME ( ROSE_Expression* expr );
-
-       // Make this class an abstract base class so that we can be certain that
-       // we will not ever try to build one of these directly.
-          virtual ROSE_TransformableNode* transform();
-
-       // virtual ROSE_TransformableNode* transform ( ROSE_NonTransformableExpression* lhs,
-       //                                             ROSE_NonTransformableExpression* rhs );
