@@ -37,8 +37,6 @@ bison.c:	$(srcdir)/parseDot.y
 lex.o yac.o main.o: parse_header.h
 lex.o main.o		: y.tab.h
 
-EXTRA_DIST = parse_header.h parseDot.lex parseDot.y README
-
 # parseDot.tab.h  y.tab.h
 
 clean-local:
@@ -49,3 +47,5 @@ clean-local:
 #	./dot2gml $(srcdir)/onefileonly.C.dot
 
 endif
+
+EXTRA_DIST = parse_header.h parseDot.lex parseDot.y README main.C 
