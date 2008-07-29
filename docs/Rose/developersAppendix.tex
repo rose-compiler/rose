@@ -196,13 +196,77 @@ default configuration for LaTeX.
 }
 
 \section{Check In Process}
-   If you are building the development version of ROSE (available only from SVN, not what 
-we package as a ROSE distribution; e.g. ROSE-\VersionNumber.tar.gz) then the README
-file in the top level directory also has instructions for how to get started. 
-The README\_CHECKIN file has the instructions for our standard testing process.
-This should be done before you check anything in; we don't reprint it so it is
-represented at most only once.
+
 {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
+
+   If you have access to the SVN repository (at LLNL) and are building the development 
+version of ROSE (available only from SVN, not what we package as a ROSE distribution; 
+e.g. not from a file name such as ROSE-\VersionNumber.tar.gz) then 
+% the README file in the top level directory also has instructions for how to get started. 
+there are a number of steps to the checkin process:
+%The README\_CHECKIN file has the instructions for our standard testing process.
+%This should be done before you check anything in; we don't reprint it so it is
+%represented at most only once.
+% {\bf NOTE: Get permission from the ROSE Development Team before you make your first check-in!}
+\begin{enumerate}
+   \item Make sure you are working with the latest update (run {\tt svn update} in the top
+    level directory.
+
+ % \item In {\em ROSE/configure.in} modify version number (X.Y.ZZL) at the top of the file.
+
+   \item Run {\tt make} && {\tt make docs} && {\tt make check} && {\tt make dist} && 
+         {\tt make distcheck} && {\tt make install} && {\tt make installcheck}, depending
+         on how agressively you want your changes to be tests.
+   \begin{itemize}
+      \item Not all tests must be run, but we will know who you are (via {\tt svn blame} 
+            if the nightly test fail :-).
+      \item All changes must at least compile, so that you don't hold back other
+            developers who update often.
+   \end{itemize}
+
+   \item svn commit -m "<description of what you did>".
+
+%   \item ROSE/ChangeLog
+%   a new entry has to include at least the following information:
+%   - new version number
+%   - who checked it in
+%   - comments on changes
+%   - run 'cvschk' in your ROSE directory.
+%     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
+%     (this includes all version numbers of tools used, etc.)
+%
+% 4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
+%    version of ROSE. Include the new version number in this e-mail.
+%
+% 6) check out a fresh version of ROSE in a new directory
+%   - run all tests as above, in part 2, on this checked-out version
+%   - make sure all tests succeed
+%
+% 7) cvs rtag ROSE-X-Y-ZZL ROSE
+%    - X-Y-ZZL has to be the same version number as in configure.in
+%      (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
+%       of '.' as in configure.in)
+%
+% 8) send out e-mail that check-in was successful
+%    - copy & paste the output of make distcheck that the new version is ready
+%      for distribution in this e-mail.
+%    - include your new comments from the ChangeLog
+%
+% regular definition of version number:
+% X=Y=Z=[0-9], L=[a-z]
+% X.Y.ZZL /* in configure.in */
+% X-Y-ZZL /* when using cvs rtag */
+%
+% Note that in configure.in '.' is used to separate X,Y,ZZL where as with
+% etag '-' must be used, X-Y-ZZL!
+
+\end{enumerate}
+
+If you do not have access to the SVN repository at LLNL, and you wish to contribute
+work to the ROSE project, please make a patch.  Using the external SVN access via
+LBL use {\tt svn diff} to build a patch.
+Consider options: {\em --diff-cmd arg}.
+DQ(7/28/2008): This section still needs to be completed!
 
 
 
