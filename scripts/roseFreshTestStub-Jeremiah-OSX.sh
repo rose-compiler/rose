@@ -6,6 +6,7 @@ export PATH=/Users/willcock2/fontconfig-install/bin/:/Users/willcock2/ghostscrip
 export DYLD_LIBRARY_PATH=/Users/willcock2/boost-1.35-install/lib
 
 ROSE_TOP="/Users/willcock2/svn-test-rose/$$/"
+export BOOST_ROOTX="/Users/willcock2/boost-1.35-install/"
 
 CONFIGURE_FLAGS=(--with-edg_source_code=true --disable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC --with-CFLAGS=-fPIC --prefix=${ROSE_TOP}/install --with-boost=${BOOST_ROOTX} "$@")
 
