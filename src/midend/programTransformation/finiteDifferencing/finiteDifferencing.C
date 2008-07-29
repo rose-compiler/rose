@@ -161,7 +161,10 @@ SgExpression* doFdVariableUpdate(
      SgExprStatement* dummyExprStatement =
        new SgExprStatement(SgNULL_FILE, expr);
      expr->set_parent(dummyExprStatement);
-     rewrite(rules, (SgNode*&)expr); // This might modify expr
+     SgNode* exprCopyForRewrite = expr;
+     rewrite(rules, exprCopyForRewrite); // This might modify exprCopyForRewrite
+     ROSE_ASSERT (isSgExpression(exprCopyForRewrite));
+     expr = isSgExpression(exprCopyForRewrite);
      expr->set_parent(NULL);
      dummyExprStatement->set_expression(NULL);
      delete dummyExprStatement;
@@ -837,6 +840,10 @@ void simpleIndexFiniteDifferencing(SgNode* root) {
     for (int i = mult_exprs.size() - 1; i >= 0; --i)
       doFiniteDifferencingOne(mult_exprs[i], body, 
 			      getFiniteDifferencingRules());
-    rewrite(getAlgebraicRules(), (SgNode*&)body); // This might update body
+
+    SgNode* bodyCopyForRewrite = body;
+    rewrite(getAlgebraicRules(), bodyCopyForRewrite); // This might update bodyCopyForRewrite
+    ROSE_ASSERT (isSgBasicBlock(bodyCopyForRewrite));
+    body = isSgBasicBlock(bodyCopyForRewrite);
   }
 }
