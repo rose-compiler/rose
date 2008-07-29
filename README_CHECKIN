@@ -1,48 +1,8 @@
-ROSE Check in procedure:
+ROSE source code check in procedure:
 
-0) Make sure you are working with the latest update
+   The checkin process is outlined on the ROSE web 
+site in the ROSE Manual in the Developer's Appendix 
+(section titled "Check In Process").
 
-1) ROSE/configure.in
-   - modify version number (X.Y.ZZL)
 
-2) make && make check && make dist && make distcheck && make install && make installcheck
-   - must be run separately
-   - must be run in that order
-   - must pass without errors
-
-3) ROSE/ChangeLog 
-   a new entry has to include at least the following information:
-   - new version number
-   - who checked it in
-   - comments on changes
-   - run 'cvschk' in your ROSE directory.
-     copy the output of 'cvschk' to the ChangeLog (except "Extra Files")
-     (this includes all version numbers of tools used, etc.)
-
-4) Send an e-mail to casc-rose@llnl.gov that you are checking in a new 
-   version of ROSE. Include the new version number in this e-mail.
-
-5) cvs commit -m "see ChangeLog".
-
-6) check out a fresh version of ROSE in a new directory
-   - run all tests as above, in part 2, on this checked-out version
-   - make sure all tests succeed
-
-7) cvs rtag ROSE-X-Y-ZZL ROSE
-   - X-Y-ZZL has to be the same version number as in configure.in
-     (X, Y, Z are numbers, L is a letter, note that here '-' is used instead
-      of '.' as in configure.in)
-
-8) send out e-mail that check-in was successful
-   - copy & paste the output of make distcheck that the new version is ready
-     for distribution in this e-mail.
-   - include your new comments from the ChangeLog
-
-regular definition of version number:
-X=Y=Z=[0-9], L=[a-z]
-X.Y.ZZL /* in configure.in */
-X-Y-ZZL /* when using cvs rtag */
-
-Note that in configure.in '.' is used to separate X,Y,ZZL where as with
-etag '-' must be used, X-Y-ZZL!
 

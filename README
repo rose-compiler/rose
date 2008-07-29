@@ -1,57 +1,52 @@
 ************************************************************************
-                           ROSE project goal
+                           ROSE Project Goal
 ************************************************************************
-   The goal here is to provide a means of optimizing abstractions found in user's 
-applications. Such abstractions are often represented in libraries.  Our approach 
-permits domain-specific libraries to have compiler support; thus turning domain-specific
-libraries into domain-specific languages in a easy way which does not introduce and 
-language extensions.  Applications using the domain-specific libraries can thus
-optionally use source-to-source compiler support optimize their performance.
-Since we provide a general compiler infrastructure many more general things
-are possible, but the goal has been to optimize the use of libraries and permit
-user's to develop applications at as high a level as possible while providing 
-automatically generated code triggered by the use of high-level abstractions within
-the user's application.  Automating the generation of low-level code required 
-for high-performance from high-level abstractions has been demonstrated to recover
-the sometimes significant performance penalties associated with the use of high-level
-abstractions.  Leveraging the additional semantics of high-level abstractions also
-provides a way to simplify the program analysis required to support many sophisticated
-optimizing transformations.
+
+   The goal of ROSE is to provide the support required to easily build tools
+that operate on source code (reading and/or writing).  ROSE is a library that
+makes it easy to build a wide range of tools from optimizing source-to-source 
+compilers to special purpose analysis tools. ROSE supports, 
+Fortran (66,77/95/2003), C89, C99, C++, OpenMP, UPC, and PHP.  ROSE is
+part of an ongoing collaborations with many external groups worldwide.
+
 
 
 ************************************************************************
                            Intended Audience
 ************************************************************************
-   Library developers are the target audience for the ROSE project.  Library
-developers who have developed high-level abstractions can use ROSE without
-any significant compiler background and construct there own specific 
-source-to-source translators which optimize the use of their abstractions 
-within a user's application.
+
+Anyone building tools to operate on source code.  These can be source-to-source
+optimization translators (optimizing compilers), debugging tools, software analysis
+tools, etc.  ROSE is a library that can be used to build a wide range of tools
+that operate on source code (either just reading it to do analysis, or reading
+and writing it to do transformations, or just writing it to support code generation.
+
 
 
 ************************************************************************
                               Documentation
 ************************************************************************
-   Documentation is located in the ROSE/docs/Rose directory. The important documentation
-is the ROSE/docs/Rose/ROSE-UserManual.pdf and the ROSE/docs/Rose/ROSE_WebPages/index.html (root of the 
-html documentation). To simplify initial use, a version of the ROSE-UserManual.pdf is provided
-in the distribution.  In the UserManual you will find information that permits you to
-build the documentation (this requires, latex, doxygen, dot, etc.; see the UserManual 
-for details).  Recent work has added a tutorial, ROSE/docs/Rose/Tutorial/ROSE-Tutorial.pdf,
-containing numerous examples of simple translators.
+
+   Documentation is located at http://www.roseCompiler.org. The ROSE 
+distributions no longer (as of July 2008) contain a built copy of the ROSE 
+documentation.
+
 
 
 ************************************************************************
                               Research Papers
 ************************************************************************
+
    Most of the research papers published on ROSE are contained in the 
 ROSE/RESEARCH_PAPERS directory.  Also included is information about where 
 they were published.
 
 
+
 ************************************************************************
                     Current Development and Examples
 ************************************************************************
+
    Although ROSE is a mechanism for building source-to-source translators, the
 current development environment builds just one translator (ROSE/src/rose) and it is used to test the
 functionality of the many subsystems being added to ROSE.  The goal of course is that the
@@ -61,9 +56,11 @@ example translators which demonstrate different features of ROSE.  Some represen
 work in progress specific to collaborations with different outside projects.
 
 
+
 ************************************************************************
                              ROSE Directories
 ************************************************************************
+
 The "src" directory contains all source code for ROSE (including optional parts of ROSE)
 
 The "tests" directory contains several subdirectories of test codes which can be used to test
@@ -72,272 +69,15 @@ the current version of ROSE.
 The developersScratchSpace is used for the development purposes of the principal authors.
 It is not intended to be useful for any other purpose.  Tests that are useful
 within the development directory are periodically placed into the appropriate "tests" directories
-so that they can be used for unit tests.
+so that they can be used for to define an evolving test suite for ROSE.
+
+
 
 ************************************************************************
-                            Software Dependences
+                            INSTALLATION INSTRUCTIONS
 ************************************************************************
-** Note current dependencies (specified in ROSE/ChangeLog, see that file for up-to-date dependencies):
-     use of .cvsrc file specifying "update -P -d" and "checkout -P" (also in ~dquinlan/.cvsrc)
 
-   It is critical to have the correct versions of autoconf and automake in your path,
-but this is required only if you are using a development version of ROSE checked out 
-from CVS.
-
-
-************************************************************************************************
-HOW TO BUILD ROSE (For people with a distribution, ROSE-x.x.x.tar.gz (not checked out from CVS))
-************************************************************************************************
-
-    Please read the chapter on getting started in the ROSE User Manual. Basically, 
-sufficient steps are:
-
-   # Start from where you have untared the ROSE distribution (your ROSE source tree)
-     cd  <your ROSE source tree>
-
-   # You can put the build tree anywhere, but DO NOT build in the sources tree
-     mkdir ../compileTree
-     cd ../compileTree
-
-   # The optional prefix specifies where you want the install to take place (default is the build tree)
-     ../<your ROSE source tree>/configure --prefix=`pwd`
-
-   # You can use the "-jn" command where "n" is the number of processes for a parallel make.
-     make
-
-   # This will run a short version of internal tests (see --with-ROSE_LONG_MAKE_CHECK_RULE
-   # configure option for long version of internal tests; mostly for developers)
-     make check
-
-   # Installs to the directory specified by "--prefix=" (or defaults to build tree if not specified)
-     make install
-
-   # tests the installation by recompiling the tutorial examples using an example makefile
-     make installcheck
-
-
-****************************************************************************************
-     HOW TO BUILD ROSE (For people with access to the internal ROSE CVS repository)
-****************************************************************************************
-  1) Checkout a NEW version from CVS:
-     In your .cshrc set the variable CVSROOT to /usr/casc/overture/ROSE/ROSE2_Repository
-     (setenv CVSROOT /usr/casc/overture/ROSE/ROSE2_Repository)
-     and
-     (setenv CVS_RSH ssh)
-     The Later to permit checkout of "acmacros" and the "BenchmarkBase" projects from their separate 
-     CVS repositories.  Note that this will only work from a machine on the LLNL domain.
-     Other machines will have to get the separate tarballs for these projects (may be in 
-     the CVS repository).
-
-     Then run "source ~/.cshrc" to have this environment variable set properly.
-     Then run cvs to checkout the current version from ROSE.
-     cvs co ROSE
-
-  2) Update and EXISTING version from CVS:
-     Run "cvs update" from inside the ROSE directory (at the top level) to update
-     and existing version of ROSE with the new changes within the CVS repository.
-     Note that users should checkout fresh versions to empty directories to avoid
-     problems with update generating incomplete merges between old and new versions.
-
-  3) THIS IS NOW OPTIONAL: ROSE previously had the requirement that you have "." in your 
-     path. On csh run "setenv ${PATH}:." to add "." to your path.  We think that we have 
-     fixed this, but since we often configure our environment to have "." in our path we 
-     don't always notice where it is required.  At least one user has reported this 
-     problem.
-
-  4) After being checked out (or updated) from CVS:
-     Run the "build" script in the top level ROSE directory to build all configure scripts
-     and Makefile.in files (using automake).  This is the difference between the development
-     environment and the distribution.
-
-  5) Build a compile directory (for the compile tree):
-     Make a separate directory to be the root of the compile tree. There can be many compile 
-     trees if you want.
-
-  ** (Linux Only) Before the next step be sure you are using the correct compiler 
-     (g++ 3.3.x on Linux) and that you are using the correct version of automake 
-     (see ChangeLog for what versions the current version of ROSE depends upon). Modify
-     your path to make sure the correct versions of the required tools (see ChangeLog) are
-     found. ROSE now works with a number of versions of GNU compilers and the Intel compiler.
-
-**6) Running configure from within a compile tree:
-     Type "<pathToSourceTree>/configure --help" to see the different configuration options.
-     "<pathToSourceTree>" is meant to be the absolute or relative path to the source tree
-     where the CVS version was checked out.  After options have been selected, type
-     "<pathToSourceTree>/configure <selected-options>" to run the configure script.
-     Running the configure script with no options is sufficient.
-
-**7) Running Make after running configure:
-     After configuration (after the configure script is finished) run "make" or "gmake".
-     If you have a development version then you can also make distributions by running
-     "make dist".  However, if you want to build a new distribution AND test it, you have to
-     use "gmake", run "gmake distcheck".
-
-  8) Testing your new version of ROSE:
-     Automated tests are available within the distribution of ROSE, to run these tests
-     type "make check".  Tests on a Linux/Intel currently take about 30 minutes to run
-     if you have configured ROSE to reference a version of the A++/P++ library (since they includes
-     tests of A++/P++ within ROSE).
-
-
-Notes from Beata Winnicka on how to checkout ROSE to a remote machine from CVS 
-repository at CASC.
-
-1. Create a script called myssh (or whatever you want to call it). Make 
-sure the file has correct permissions and is in your path. The script 
-should look like this:
-
-#!/bin/sh
-ssh -1 -p 922 $1 $2 $3 $4 $5 $6
-
-2. Start IPA
-
-3. setenv CVS_RSH=myssh
-(or whatever you need to setup CVS_RSH env. variable to be myssh)
-
-4. cvs -d  
-:ext:winnicka@tux79.llnl.gov:/usr/casc/overture/ROSE/ROSE2_Repository 
-checkout ROSE
-(replace winnicka with you user name on CASC, you might also want to use 
-a different tux machine, depending on which one is up and running when 
-you do this)
-
-You will have to type in your CASC password when prompted (for me it is 
-the OTP stuff). You have to do this even though IPA is already set up.
-
-5. Before you run the "build" script make sure to checkout separately 
-acmacros (or unpack from the tar file). This should be done in the ROSE 
-directory. You might also possibly need to checkout BenchmarkBase 
-separately (although  the last few times I did the checkout I did not 
-have to do that, so BenchmarkBase might no longer be needed)
-
-BTW: I always do a fresh checkout, never an update, although in 
-principle an update should work as well.
-
-Alternatively this can be setup in the .bashrc file
-(though I have not made thiw work yet since vpn is required):
-export CVSROOT=:ext:dquinlan@tux243.llnl.gov:/usr/casc/overture/ROSE/ROSE2_Repository
-
-# Specify use of CVS remotely
-export CVS_RSH=/home/rose/myssh
-
-
-****************************************************************************************
-BUILDING ROSE TO USE BINARIES OF EDG AND RELATED SOURCE
-****************************************************************************************
-
-For the ROSE developer:
-   From the development version EDG can be compiled to generate distributions that
-include binaries for the EDG and related source code.  To do this:
-   1) Compile ROSE using make, from the top level directory.
-   2) rerun configure changing only the option "--with-edg_source_code=false"
-   3) Run "make dist"
-The resulting distribution will contain binaries for anything that is EDG or uses
-(exposes) the EDG interfaces directly.
-
-For users:
-   The configure script can be run without the option "--with-edg_source_code=false", 
-no option is required (the default is to use the binary version of the EDG library).
-
-
-****************************************************************************************
-BUILDING ROSE ON OTHER ARCHITECTURES
-****************************************************************************************
-
-   ROSE should now work on OSX and Cygwin as a result of a move to use libtool.
-The configure script will detect the details.  This is however not well tests and
-a new option as a result of work late 2006 (released first in version 0.8.10a).
-
-****************************************************************************************
-MOST COMMON EMAIL INTRODUCTION
-****************************************************************************************
-
-Hi,
-   Here is ROSE 0.x.ya, the current version of the manual, tutorial, and
-HTML documentation is pre-built for you in the docs/Rose directory.
-The README should get you started.
-
-Basically, sufficient steps to configure, build, and install ROSE are:
-     ../ROSE-0.x.ya/configure --with-edg_source_code=true --prefix=`pwd`
-     make
-     make check
-     make install
-     make installcheck
-
-A couple of details, this version requires you to:
-     1) have "." in your path (though everything should work without this).
-     2) have the correct version of compiler typically a version of g++ 
-        (e.g 3.3.x or higher compiler) in your path (named "g++").
-     3) Build the compile tree in a different location than your source tree.
-        (if you have problems consider using an absolute path with running configure).
-
-These limitations have been removed in the current version which I'm
-still trying to get ready for checkin to CVS.
-
-If you received split files (because your email would not accept large files)
-then I have likely used a command like:
-     split --bytes=11m ROSE-0.x.ya.tar.gz ROSE-0.x.ya.tar.gz.
-In which case you should reassemble the files using the command:
-     cat ROSE-0.x.ya.tar.gz.a[a-e] > ROSE-0.x.ya.tar.gz
-
-Thanks,
-Dan
-
-****************************************************************************************
-                     BUILDING ROSE ON Linux 64-bit ARCHITECTURES
-****************************************************************************************
-
-   There is a bug in libtool (in versions pre 2.0) which causes g++ to use
-the 32-bit version. Details are at:
-    http://www.mail-archive.com/bug-libtool@gnu.org/msg00980.html
-Basically the solutions are:
-    1) Upgrade to libtool (2.0 or greater, but only 1.9f is in a development release as of
-       May 2007).
-    2) Use LDFLAGS="-L/usr/gcc/lib64" in the environment before running configure.
-
-
-
-***************************************************************************************
-                                ROSE FORTRAN SUPPORT
-***************************************************************************************
-
-Fortran support in ROSE is very new.  The configuration details have not been finalized.
-We use the LANL Open Fortran Parser internally which is an ANTLR based java tool.
-Steps for setting up the Fortran support are:
-  1) Get the 3.0 version of ANTLR installed.  You will have to add their jar files to
-     your CLASSPATH environment variable.
-
-  2) Put the OpenFortranParser.jar file into a directory in your CLASSPATH, or add the
-     ROSE source tree to your CLASSPATH.  OpenFortranParser.jar is located in the top
-     level of the ROSE source tree.
-
-  3) Add the directory <ROSE build tree>/src/frontend/OpenFortranParser_SAGE_Connection/.libs
-     to your LD_LIBRARY_PATH (so that you can find the ROSE generated dynamic library that
-     will be loaded by the Open Fortran Parser (and which builds the ROSE AST based on
-     the parser actions driven by the input Fortran source code.
-
-  4) Get ROSE installed using the options to configure the Fortran support.  And example
-     commandline might be:
-          /home/dquinlan/ROSE/NEW_ROSE/configure --with-edg_source_code=true --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/amd64/server --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/fortran-parser --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall -with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --prefix=/home/dquinlan/ROSE/ROSE_CompileTree/LINUX-64bit-3.4.6-fortran_install CFLAGS=-fPIC CXXFLAGS=-fPIC
-
-     Note that:
-       1) --with-edg_source_code=true is only required if you have the source code to EDG.
-       2) --with-ROSE_LONG_MAKE_CHECK_RULE=yes is only required for running ALL tests
-          (all the Fortran test run independent of this flag, so this only applies to 
-          C++ tests and other features in ROSE (for which the testing can take a while).
-       3) --with-Java=/usr/apps/java/jdk1.5.0_11 is required for use of the Open Fortran
-          Parser (must be set differently for your machine).
-       4) --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/amd64/server is required for 
-          use of the Open Fortran Parser (must be set differently for your machine).
-       5) --with-openFortranParser=/home/dquinlan/ROSE/OpenFortranParser/fortran-parser is
-          required for use of the Open Fortran Parser (must be set differently for your machine).
-       6) The other options mostly force compilation with warnings (suggested).
-       7) The --prefix= options is not required since ROSE defaults to installing in 
-          the build tree when it is not specified explicitly.
-       8) The -fPIC options are only suggested for 64-bit machines and may not be required.
-
-    Follow the rest of the directions to build ROSE (don't forget to use a separate
-    compile tree!).
+See the "Installation Instructions" at the ROSE web site: http://www.roseCompiler.org.
 
 
 

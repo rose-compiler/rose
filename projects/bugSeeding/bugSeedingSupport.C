@@ -218,6 +218,8 @@ SecurityFlaw::seedAllSecurityFlaws( SgProject *project )
 void
 SecurityFlaw::resetAttributesAfterASTCloning( SgNode* root )
    {
+     printf ("Calling the traversal to reset the attributes on the AST (root = %p = %s) \n",root,root->class_name().c_str());
+
      ResetSecurityFlawAttributesTraversal treeTraversal;
      treeTraversal.traverse (root,preorder);
    }
@@ -407,14 +409,6 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
                printf ("Calling resetAttributesAfterASTCloning... \n");
                resetAttributesAfterASTCloning(nearestWholeStatementCopy);
                printf ("DONE: Calling resetAttributesAfterASTCloning... \n");
-#if 0
-            // This is not the right way to handle this, we need a separate traversal to fixup attributes.
-            // DQ (7/27/2008): Fixup attribute in cloned AST now that we support deep copies on attributes.
-               AstAttribute* copiedAttribute = astNode->getAttribute("SecurityVulnerabilityAttribute");
-               SecurityVulnerabilityAttribute* copiedSecurityVulnerabilityAttribute = dynamic_cast<SecurityVulnerabilityAttribute*>(copiedAttribute);
-               ROSE_ASSERT(copiedSecurityVulnerabilityAttribute != NULL);
-               copiedSecurityVulnerabilityAttribute->set_securityVulnerabilityNode(astNode);
-#endif
 
             // Mark the original subtree that is being copied as the original (so that we can optionally permit not seeding the original code).
             // Note that we may be visiting this IR node for a second time so it might already have an existing SecurityFlawOriginalSubtreeAttribute.
@@ -496,16 +490,34 @@ SecurityFlaw::CloneVulnerability::CloneVulnerabilityTraversal::evaluateInherited
 void
 SecurityFlaw::ResetSecurityFlawAttributesTraversal::visit( SgNode* astNode )
    {
+  // When a clone is made, any attributes that it has (e.g. to mark vulnerabilities found
+  // in earlier stages) are copied, but as a result their pointer values need to be reset.
+
      ROSE_ASSERT(astNode != NULL);
 
-     AstAttribute* attributeInClonedCode = astNode->getAttribute("SecurityVulnerabilityAttribute");
-     SecurityVulnerabilityAttribute* securityVulnerabilityAttributeInClonedCode = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInClonedCode);
-
+     SecurityVulnerabilityAttribute* securityVulnerabilityAttributeInClonedCode = dynamic_cast<SecurityVulnerabilityAttribute*>(astNode->getAttribute("SecurityVulnerabilityAttribute"));
      if (securityVulnerabilityAttributeInClonedCode != NULL)
         {
           ROSE_ASSERT(securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNode() != astNode);
 
+       // Note that the securityVulnerabilityNodeInOriginalCode is stored in the SecurityVulnerabilityAttribute, 
+       // so we have a record of what is the AST node in the original AST, here we reset what the parent node is 
+       // that contains the attribute.
           securityVulnerabilityAttributeInClonedCode->set_securityVulnerabilityNode(astNode);
+
+       // At this point these are not different.
+          ROSE_ASSERT(securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNode() != securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNodeInOriginalCode());
+        }
+
+     PrimarySecurityVulnerabilityForCloneAttribute* primarySecurityVulnerabilityAttributeInClonedCode = dynamic_cast<PrimarySecurityVulnerabilityForCloneAttribute*>(astNode->getAttribute("PrimarySecurityVulnerabilityForCloneAttribute"));
+     if (primarySecurityVulnerabilityAttributeInClonedCode != NULL)
+        {
+          ROSE_ASSERT(primarySecurityVulnerabilityAttributeInClonedCode->get_primarySecurityFlawInClone() != astNode);
+
+          primarySecurityVulnerabilityAttributeInClonedCode->set_primarySecurityFlawInClone(astNode);
+
+       // printf ("Are there any of these in the AST? \n");
+       // ROSE_ASSERT(false);
         }
    }
 
@@ -539,8 +551,6 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
      SecurityVulnerabilityAttribute* securityVulnerabilityAttributeInClonedCode = dynamic_cast<SecurityVulnerabilityAttribute*>(attributeInClonedCode);
 
   // Use the value to code specific types of vulnerabilities
-  // if (securityVulnerabilityAttributeInClonedCode != NULL && securityVulnerabilityAttributeInClonedCode->get_value() == 5)
-  // if (securityVulnerabilityAttributeInClonedCode != NULL && securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNode() == astNode)
      if (securityVulnerabilityAttributeInClonedCode != NULL)
         {
        // SgNode* primaryNodeInOriginalCode = primaryVulnerabilityNodeInOriginalCode;
@@ -558,7 +568,12 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
 
        // Since AstAttribute are presently shared this is a way of verifying that we have 
        // linked the location in the clone with the location in the original source code.
-          if (securityVulnerabilityAttributeInOriginalCode == securityVulnerabilityAttributeInClonedCode)
+       // if (securityVulnerabilityAttributeInOriginalCode == securityVulnerabilityAttributeInClonedCode)
+
+       // printf ("Can't test for equality between these now, since they are no longer shared! \n");
+       // ROSE_ASSERT(false);
+
+          if (securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNodeInOriginalCode() == securityVulnerabilityAttributeInClonedCode->get_securityVulnerabilityNodeInOriginalCode())
              {
                printf ("***** Found primary vulnerability in clone ***** astNode = %p = %s rootOfClone = %p = %s \n",astNode,astNode->class_name().c_str(),rootOfClone,rootOfClone->class_name().c_str());
             // SgStatement* statement = isSgStatement(astNode);
@@ -583,6 +598,8 @@ SecurityFlaw::CloneVulnerability::PrimaryVulnerabilityTraversal::visit( SgNode* 
                  // astNode->addNewAttribute("SeededSecurityFlawCloneAttribute",primaryVulnerabilityAttribute);
                     astNode->addNewAttribute("PrimarySecurityVulnerabilityForCloneAttribute",primaryVulnerabilityAttribute);
 
+                 // Note that this could be added to the constructor arguments to avoid having it to be set explicitly 
+                 // (it is now set properly in securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNodeInOriginalCode() ).
                     ROSE_ASSERT(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode() != NULL);
                     primaryVulnerabilityAttribute->set_primaryVulnerabilityInOriginalCode(securityVulnerabilityAttributeInOriginalCode->get_securityVulnerabilityNode());
 
@@ -677,6 +694,10 @@ SecurityFlaw::CloneSeedLocation::PrimarySeedLocationTraversal::visit( SgNode* as
 
        // Since AstAttribute are presently shared this is a way of verifying that we have 
        // linked the location in the clone with the location in the original source code.
+
+          printf ("Can't test for equality between these now, since they are no longer shared! \n");
+          ROSE_ASSERT(false);
+
           if (securityVulnerabilityAttributeInOriginalCode == securityVulnerabilityAttributeInClonedCode)
              {
                printf ("***** Found primary vulnerability in clone ***** astNode = %p = %s rootOfClone = %p = %s \n",astNode,astNode->class_name().c_str(),rootOfClone,rootOfClone->class_name().c_str());

@@ -27,19 +27,24 @@ BufferOverFlowSecurityFlaw::BufferOverFlowSecurityFlaw()
      seedKindList.push_back(seedModifyLoopBounds);
 
   // Vulnerability #1
-     BufferOverflowVulnerability_InLoop* vulnerabilityInLoop = new BufferOverflowVulnerability_InLoop();
-     vulnerabilityKindList.push_back(vulnerabilityInLoop);
-
-  // Vulerability #1 can use seeding apprached #1 and #2
-     vulnerabilityInLoop->associateSeeding(seedModifyIndex);
-     vulnerabilityInLoop->associateSeeding(seedModifyLoopBounds);
-
-  // Vulnerability #2
      BufferOverflowVulnerability_ExternalToLoop* vulnerabilityExternalToLoop = new BufferOverflowVulnerability_ExternalToLoop();
      vulnerabilityKindList.push_back(vulnerabilityExternalToLoop);
 
-  // Vulerability #2 can use seeding apprached #1
+  // Vulerability #1 can use seeding apprached #1
      vulnerabilityExternalToLoop->associateSeeding(seedModifyIndex);
+
+#if 1
+  // To simplify the debugging, we can comment this part out
+
+  // Vulnerability #2
+     BufferOverflowVulnerability_InLoop* vulnerabilityInLoop = new BufferOverflowVulnerability_InLoop();
+     vulnerabilityKindList.push_back(vulnerabilityInLoop);
+
+  // Vulnerability #2 can use seeding apprached #1 and #2
+     vulnerabilityInLoop->associateSeeding(seedModifyIndex);
+     vulnerabilityInLoop->associateSeeding(seedModifyLoopBounds);
+#endif
+
    }
 
 

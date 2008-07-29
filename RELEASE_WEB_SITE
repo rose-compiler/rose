@@ -1,68 +1,10 @@
 
 Hi,
-    Unlike for source code distributions of ROSE which
-contain the EDG source code, we have a web site
-we can use for the distribution of ROSE which has the
-binary of the EDG work. 
+    ROSE is now distributed publicly from the www.roseCompiler.org
+web site.  There you will fine the source code version of ROSE
+containing a binary of the EDG work (used within ROSE) for a 
+number of different platforms.  The instalation
+directions are maintained at the web site (one of the links).
 
-But first a few notes:
-    1) Please follow the directions, we have tested this
-a few times and we have discovered a few ways it can
-fail. 
-   2) Only use this with a 32 bit system.
-   3) Use the gnu 4.1 compiler (I used 4.1.2, but that
-       should not be too big of a deal).
-   4) Only use the configure command line WITHOUT options.
-   5) make the build tree separate from the source tree.
-
-Directions to get: "rose-0.9.1a-with_edg_binary.tar.gz"
-
-  To download a ROSE binary distribution,
-    (1) Point your browser at: http://vuduc.org/rose-dist
-    (2) Login, using
-          Username: rose
-          Password: let.me.in
-
-From the web page, copy the file to your computer....
-
-1) copy to a directory
-2) untar the tarball
-3) type "mkdir compileTree"
-4) type "cd compileTree"
-5) type "../rose-0.9.1a/configure"
-   (there will be output from configure)
-6) type "make"
-   (you can use the -jn option for any value of "n" to run the make in parallel)
-7) type "make check" or "make -jn check"
-8) type "make install"
-9) type make installcheck"
-
-  You now have ROSE installed and tested, the Compass
-work is in projects/compass and you can see from the
-"make check" rule how to test alternative source code.
-To generate the Compass manual, type "make docs".
-
-  Note that we have demonstrated an error if you run the
-configure script with the --prefix option, the default
-is to build the install tree in the build tree, and this
-works. So don't use ANY options. I will research the 
-problem with when it is explicitly specified later.  
-
-  This distribution was built using RedHat 
-version 4, but we have confirmed that it works with other
-installations of RedHat version 4 plus Fedora 7 systems.
-On Ubuntu we have discovered a problem with "yywrap"
-not being defined and we are trying to understand this
-problem better.  CERT has the source code version of
-ROSE (with the source code version of EDG) but they 
-have reported what may be the same "yywrap" problem.
-When I can communicate more with David I will get into
-this.  At the moment I don't have a Ubuntu system to
-test this on, but a student working with us does and
-he is going to look into it. 
-
-Let me know if you have any problems, have fun,
+Thanks,
 Dan
-
-P.S.  I can be reached at 925-423-2668 (my work number).
-

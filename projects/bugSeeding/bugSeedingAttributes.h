@@ -14,6 +14,7 @@ class SecurityVulnerabilityAttribute : public AstAttribute
 
        // This is the pointer to the IR node with the potential for a security vulnerability
           SgNode* securityVulnerabilityNode;
+          SgNode* securityVulnerabilityNodeInOriginalCode;
 
        // The pointer to the mechanism used to detect the potential vulnerability
           SecurityFlaw::Vulnerability* vulnerabilityPointer;
@@ -30,11 +31,16 @@ class SecurityVulnerabilityAttribute : public AstAttribute
           SgNode* get_securityVulnerabilityNode();
           void set_securityVulnerabilityNode(SgNode* node);
 
-          virtual std::string additionalNodeOptions();
+          SgNode* get_securityVulnerabilityNodeInOriginalCode();
+          void set_securityVulnerabilityNodeInOriginalCode(SgNode* node);
 
+       // Support for graphics output of IR nodes using attributes (see the DOT graph of the AST)
+          virtual std::string additionalNodeOptions();
           virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo();
           virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo();
 
+       // Support for the coping of AST and associated attributes on each IR node (required for attributes 
+       // derived from AstAttribute, else just the base class AstAttribute will be copied).
           virtual AstAttribute* copy();
    };
 
@@ -100,6 +106,7 @@ class PrimarySecurityVulnerabilityForCloneAttribute : public AstAttribute
           PrimarySecurityVulnerabilityForCloneAttribute (SgNode* primarySecurityFlawInClone, SgNode* rootOfClone, SecurityFlaw::Vulnerability* vulnerabilityPointer );
 
           SgNode* get_primarySecurityFlawInClone();
+          void set_primarySecurityFlawInClone(SgNode* node);
 
           void set_primaryVulnerabilityInOriginalCode(SgNode* node);
           SgNode* get_primaryVulnerabilityInOriginalCode();

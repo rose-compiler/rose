@@ -2,6 +2,7 @@
 
 # Stub file to include settings for roseFreshTest-common
 
+source /usr/apps/mpich2/1.0.5/setup.sh
 source /usr/apps/graphviz/2.6/setup.sh
 export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/apps/java/jdk1.5.0_11/lib:/usr/apps/java/jdk1.5.0_11/jre/lib/amd64/server:$LD_LIBRARY_PATH"

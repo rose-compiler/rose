@@ -44,8 +44,10 @@ main (int argc, char *argv[])
 
      banner("                 Annotate AST                    ");
 
+#if 1
   // Add attributes to make the AST easier to view as a DOT graph.
      annotateAST(project);
+#endif
 
   // Output DOT graph of current progress.
      generateDOT ( *project, "_before" );
