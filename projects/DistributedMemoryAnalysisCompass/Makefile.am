@@ -7,7 +7,7 @@ endif
 if ROSE_MPI
 
 INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass $(INCLUDES_OMP) 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la 
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la -lrose
 
 if ROSE_USE_GCC_OMP
  LDADD += -lgomp

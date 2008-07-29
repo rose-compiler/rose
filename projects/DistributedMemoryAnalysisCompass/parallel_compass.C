@@ -279,7 +279,7 @@ void printPCResults(CountingOutputObject  &outputs,
 
       double perc_d = (double) perc/100;
 
-      std::cerr << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
+      std::cout << "processor: " << i << " time: " << times[i] << "  memory: " << memory[i] <<  " MB " << 
 	"  real # nodes:  " << (dynamicFunctionsPerProcessor[i]) << "   slowest node : " << slow_node << 
 	"  maxtime: " << maxval << "  commtime : " << commtimes[i] << "  calctime : " << calctimes[i] << 
 	"   => " << perc_d << " % "  << std::endl;
@@ -428,12 +428,15 @@ int main(int argc, char **argv)
 #endif
 
 
+
   ROSE_ASSERT(Compass::defuse);
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
-
-  for (int div=128; div>1 ; div=div/2) {
+  int val=-1;
+  for (int count=0; count<7 ; count++) {
+      if (count==3 || count==4 || count==5) val=0;
+      val++;
 
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
@@ -560,9 +563,15 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
-	double nextscale = processes/div;
-	if (nextscale < 2) nextscale =2;
-	if ((currentJob % 5)==4) scale+=(int)nextscale;
+	if (count<3) {
+	  if ((currentJob % 5)==4) scale+=(int)val;
+	} else if (count <4) {
+	  if ((currentJob % 5)==4) scale=log(currentJob)+1;
+	} else if (count <5) {
+	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
+	} else
+	  if ((currentJob % 10)==9) scale+=(int)val;
+
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
@@ -586,7 +595,7 @@ int main(int argc, char **argv)
       }
     }
     if (my_rank==0)
-      cerr << ">>> Final scale = " << scale << "  div = " << div << endl;
+      cerr << ">>> Final scale = " << scale << "  count = " << count << "  val = " << val << endl;
   }
 
 
