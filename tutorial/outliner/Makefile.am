@@ -160,7 +160,7 @@ cleanDocs:
 
 clean-local:
 	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files *.ti $(generatedFiles)
-	rm -f $(generatedFiles) *.o *~ core
+	rm -f $(generatedFiles) *.o *~ core *.BAK
 
 distclean-local:
 	rm -rf Templates.DB
