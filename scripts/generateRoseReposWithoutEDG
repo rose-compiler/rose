@@ -1,46 +1,47 @@
+#!/bin/bash -v
 #!/bin/bash 
 #!/bin/bash -x
-#!/bin/bash -v
 # A script to strip off EDG and EDG_SAGE_CONNECTION directories from 
 # the original ROSE repository and prepare a fresh clean ROSE to be mirrored 
-# in an external svn repository
-
-# Conclusion: this method does not work. 
-# The cleaned repository is treated as different repository by svnsync each time. 
+# to an external svn repository
+#
+# Caveat: this method may not be robust for two reasons: 
+# Reason 1:
 # 'svnadmin dump -rv1:head' may cause 'svnadmin load' fail, there may be some revisions
-# which depending on a revision before v1 to be replayed. 
+# which depend on a revision before v1 to be replayed. 
+#
 # e.g. Error message
 #     Relative source revision -29 is not available in current repository
 # So choose the start revision carefully.
+# Reason 2:  
+#    The official svndumpfilter is buggy, a third party replacement script is used
 #
 # by Liao, 7/25/2008
 # Last modified, 7/29/2008
 
-#----- variable definitions----
+#-------------- variable definitions-----------------------
+#where to find the script needed :filter repository dump files
+SCRIPT_PATH=/home/liao6/rose/scripts
+
 # original repository --> cleaned repository--> mirror repository
+
 # svnadmin dump only works on absolute file path, not file:///path
 ORIG_REPOS=/usr/casc/overture/ROSE/svn/ROSE
-#CLEANED_REPOS=/usr/casc/overture/ROSE/svn/ROSE.CLEANED
+# Be very careful for the cleaned repos's path, it will be removed and regenerated for each run
+CLEANED_REPOS=/usr/casc/overture/ROSE/svn/ROSE.CLEANED
+TEMP_PATH=/usr/casc/overture/ROSE/svn
 
-CLEANED_REPOS=/home/liao6/test/ROSE.CLEANED
-
-#MIRROR_REPOS=https://outreach.scidac.gov/svn/rose
-MIRROR_REPOS=/home/liao6/test/ROSE.MIRROR
-
-#TEMP_PATH=/usr/casc/overture/ROSE/svn
-TEMP_PATH=/home/liao6/test
-#where to find the script to filter repository dump files
-SCRIPT_PATH=/home/liao6/rose/scripts
-# Because previous revisions have old paths to EDG, which cannot be excluded 
+# Hide previous revisions with old paths to EDG, which cannot be excluded by svndumpfilter4
+#START_REV=1000 #  this revision number will cause checksum problem
 START_REV=1200
 # Has to use the right version of SVN
 SVN_PATH=/nfs/apps/subversion/1.4.5/bin
 
-#----------------real work----------------------
-# dump original repos starting from revision xxx
-# only include trunk, filter out others, such as branches, tags, etc
-# filter out EDG and EDG-SAGE_CONNECTION, MUST use --exclude for each directory!!
-# load the filtered dump into a fresh temporary repository
+#----------------prepare a cleaned repository----------------------
+# x. Dump original repos starting from revision xxx
+# x. Only include trunk, filter out others, such as branches, tags, etc
+# x. Filter out EDG and EDG-SAGE_CONNECTION, MUST use --exclude for each directory!!
+# x. Load the filtered dump into a fresh temporary repository
 cd ${TEMP_PATH} &&\
 ${SVN_PATH}/svnadmin dump ${ORIG_REPOS} -r ${START_REV}:head >dumpfile && \
 ${SCRIPT_PATH}/svndumpfilter4 ${ORIG_REPOS} trunk < dumpfile > trunkDumpfile &&\
@@ -49,19 +50,9 @@ rm -rf ${CLEANED_REPOS} &&\
 ${SVN_PATH}/svnadmin create ${CLEANED_REPOS} && \
 ${SVN_PATH}/svnadmin load ${CLEANED_REPOS} < trunkDumpfileWithoutEDG 
 
-#Exit immediately if a command fails
-set -e
-{
 # remove temporary dump files
 rm -rf dumpfile trunkDumpfile trunkDumpfileWithoutEDG
 
-# testing: check it out
-#rm -rf rose.cleaned
-#${SVN_PATH}/svn co file://${CLEANED_REPOS} rose.cleaned
+# -----------------mirror it somewhere ---------------------------
+# Put this into another script svnSyncRoseCleanedRepository
 
-# mirror it somewhere 
-# one time initialization for mirror repos.
-#${SVN_PATH}/svnsync initialize file://${MIRROR_REPOS} file://${CLEANED_REPOS}
-#${SVN_PATH}/svnsync synchronize file://${MIRROR_REPOS} 
-
-}
