@@ -1,4 +1,5 @@
 #!/bin/bash 
+#!/bin/bash -x
 #!/bin/bash -v
 # A script to strip off EDG and EDG_SAGE_CONNECTION directories from 
 # the original ROSE repository and prepare a fresh clean ROSE to be mirrored 
@@ -6,10 +7,14 @@
 
 # Conclusion: this method does not work. 
 # The cleaned repository is treated as different repository by svnsync each time. 
-# svnsync refuses to synchronize different repositories to the external repository. :-(
+# 'svnadmin dump -rv1:head' may cause 'svnadmin load' fail, there may be some revisions
+# which depending on a revision before v1 to be replayed. 
+# e.g. Error message
+#     Relative source revision -29 is not available in current repository
+# So choose the start revision carefully.
 #
 # by Liao, 7/25/2008
-# Last modified, 7/28/2008
+# Last modified, 7/29/2008
 
 #----- variable definitions----
 # original repository --> cleaned repository--> mirror repository
@@ -27,7 +32,7 @@ TEMP_PATH=/home/liao6/test
 #where to find the script to filter repository dump files
 SCRIPT_PATH=/home/liao6/rose/scripts
 # Because previous revisions have old paths to EDG, which cannot be excluded 
-START_REV=1001
+START_REV=1200
 # Has to use the right version of SVN
 SVN_PATH=/nfs/apps/subversion/1.4.5/bin
 
