@@ -1,0 +1,5 @@
+#!/bin/sh
+# I use this command (inlined) in my crontab to find files that cause conflicts
+# when checked out on systems such as Mac OS X and Windows that have
+# case-preserving, but case-insensitive, file systems)
+svn ls -R file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE | sort -f | uniq -cid
