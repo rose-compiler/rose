@@ -16,18 +16,6 @@ static int sum0 = 0;
 static int myvalue = 0;
 #pragma omp threadprivate(myvalue)
 
-/* This code should be skipped when compiling for 64 bit machines because it is
-   not translated correctly.  The lines:
-  int **_pp_data;
-  _pp_data = ((int **)(__ompc_args[0]));
-  int *_pp_failed;
-are omitted in the generated code.  This example does work fine on 32-bit machines.
-Until we debug this problem specific to 64-bit machines we will leave out this code.
-*/
-#if (_LP64 == 1)
-/* Note that this warning does not showup when the ROSE translator uses the "--edg:no_warnings -w" options. */
-#warning "Skipping code fragment that is a problem for 64-bit machines. OpenMP translator has a 64-bit specific bug."
-#else
 int
 check_omp_threadprivate (FILE * logFile)
 {
@@ -105,7 +93,6 @@ check_omp_threadprivate (FILE * logFile)
   return (known_sum == sum) && !failed;
 
 }				/* end of check_threadprivate */
-#endif
 
 
 
