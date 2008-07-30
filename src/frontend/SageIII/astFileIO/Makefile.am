@@ -9,7 +9,7 @@ INCLUDES = $(ROSE_INCLUDES)
 # libastFileIO_la_SOURCES  =  AST_FILE_IO.C StorageClasses.C
 
 # AST_FILE_IO.lo: StorageClassMemoryManagement.h 
-StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C
+StorageClasses.lo: StorageClassMemoryManagement.h StorageClassMemoryManagement.C AstSpecificDataManagingClass.h
 
 include_HEADERS = \
      StorageClassMemoryManagement.h
@@ -17,6 +17,13 @@ include_HEADERS = \
 # This file is generated
 nodist_include_HEADERS = \
      AstSpecificDataManagingClass.h
+
+ROSETTA_GENERATED_FILES = AstSpecificDataManagingClass.h SourcesOfIRNodesAstFileIOSupport.C
+
+$(ROSETTA_GENERATED_FILES): rosetta-files-built
+
+rosetta-files-built:
+	cd ../../../ROSETTA/src; $(MAKE)
 
 #    AST_FILE_IO.h
 #    StorageClasses.h
