@@ -520,6 +520,22 @@ ExecSection::content(addr_t offset, addr_t size)
     return data + offset;
 }
 
+/* Copies the specified part of the section into a buffer. Any part of the selected area that is outside the domain of the
+ * section will be filled with zero (in contrast to the two-argument version that throws an exception */
+void
+ExecSection::content(addr_t offset, addr_t size, void *buf)
+{
+    if (offset >= this->size) {
+        memset(buf, 0, size);
+    } else if (offset+size > this->size) {
+        addr_t nbytes = this->size - offset;
+        memcpy(buf, data+offset, nbytes);
+        memset((char*)buf+nbytes, 0, size-nbytes);
+    } else {
+        memcpy(buf, data+offset, size);
+    }
+}
+
 /* Returns ptr to a NUL-terminated string */
 const char *
 ExecSection::content_str(addr_t offset)
@@ -585,17 +601,28 @@ ExecSection::uncongeal()
     return referenced;
 }
 
-/* Extend a section by some number of bytes and return a pointer to the content of the newly extended area. Called with a zero
- * size is a convenient way to return a pointer to the first byte after the section, although depending on the size of the
- * file, this might not be a valid pointer. */
-const unsigned char *
+/* Extend a section by some number of bytes. */
+void
 ExecSection::extend(addr_t size)
 {
     ROSE_ASSERT(file);
-    if (offset + this->size + size > file->get_size()) throw ShortRead(this, offset+this->size, size);
-    const unsigned char *retval = data + this->size;
+    if (offset + this->size + size > file->get_size())
+        throw ShortRead(this, offset+this->size, size);
     this->size += size;
-    return retval;
+}
+
+/* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
+ * file then it is extended to the end of the file and no exception is thrown. */
+void
+ExecSection::extend_up_to(addr_t size)
+{
+    ROSE_ASSERT(file);
+    if (offset + this->size + size > file->get_size()) {
+        ROSE_ASSERT(this->offset <= file->get_size());
+        this->size = file->get_size() - this->offset;
+    } else {
+        this->size += size;
+    }
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */

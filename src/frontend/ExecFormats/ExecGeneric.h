@@ -399,10 +399,12 @@ class ExecSection {
     addr_t              get_size() {return size;}       /* read-only */
     addr_t              get_offset() {return offset;}   /* read-only */
     addr_t              end_offset() {return offset+size;} /* file offset for end of section */
-    const unsigned char *extend(addr_t nbytes);         /* make section larger by extending the end */
+    void                extend(addr_t nbytes);         /* make section larger by extending the end */
+    void                extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
 
     /* Functions for accessing content */
     const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+    void                content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
     const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
     const ExtentVector& congeal();                      /* congeal referenced areas into holes */
     const RefMap&       uncongeal();                    /* uncongeal holes back into references */
