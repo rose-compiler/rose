@@ -367,7 +367,7 @@ class LERelocTable : public ExecSection {
         : ExecSection(fhdr->get_file(), offset, 0)
         {ctor(fhdr);}
     virtual ~LERelocTable() {}
-    virtual void unparse(FILE*);
+    //virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
     void ctor(LEFileHeader*);

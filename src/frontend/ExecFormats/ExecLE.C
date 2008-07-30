@@ -887,21 +887,15 @@ LERelocTable::ctor(LEFileHeader *fhdr)
 #endif
 }
 
+#if 0 /*FIXME: not implemented yet*/
 /* Write relocation table back to disk */
 void
 LERelocTable::unparse(FILE *f)
 {
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
-    
-    uint16_t size_le;
-    host_to_le(entries.size(), &size_le);
-    fwrite(&size_le, sizeof size_le, 1, f);
-    
-    for (size_t i=0; i<entries.size(); i++) {
-        entries[i].unparse(f);
-    }
 }
+#endif
     
 /* Print some debugging info */
 void
