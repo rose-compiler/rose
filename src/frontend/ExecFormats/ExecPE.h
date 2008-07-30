@@ -80,6 +80,7 @@ struct PEFileHeader_disk {
 } __attribute__((packed));
 
 struct PE32OptHeader_disk {
+    uint16_t    e_opt_magic;            /* magic number */
     uint16_t    e_lmajor;               /* linker version */
     uint16_t    e_lminor;
     uint16_t    e_code_size;            /* Size of .text or sum of all code sections */
@@ -112,6 +113,7 @@ struct PE32OptHeader_disk {
 } __attribute__((packed));
 
 struct PE64OptHeader_disk {
+    uint16_t    e_opt_magic;
     uint16_t    e_lmajor;
     uint16_t    e_lminor;
     uint16_t    e_code_size;
@@ -119,6 +121,7 @@ struct PE64OptHeader_disk {
     uint32_t    e_bss_size;
     uint32_t    e_entrypoint_rva;
     uint32_t    e_code_rva;
+    //uint32_t  e_data_rva;             /* Not present in PE32+ */
     uint64_t    e_image_base;
     uint32_t    e_section_align;
     uint32_t    e_file_align;
@@ -192,8 +195,8 @@ class PEFileHeader : public ExecHeader {
     
     /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
     unsigned    e_cpu_type, e_nsections, e_time;
-    addr_t      e_coff_symtab;
-    unsigned    e_coff_nsyms, e_nt_hdr_size, e_flags, e_opt_magic;
+    addr_t      e_coff_symtab, e_nt_hdr_size;
+    unsigned    e_coff_nsyms, e_flags, e_opt_magic;
     unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
     addr_t      e_image_base;
     unsigned    e_section_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;

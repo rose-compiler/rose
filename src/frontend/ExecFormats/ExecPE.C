@@ -19,14 +19,15 @@ ExtendedDOSHeader::ctor(ExecFile *f, addr_t offset)
     set_purpose(SP_HEADER);
 
     /* Decode */
-    const ExtendedDOSHeader_disk *disk = (const ExtendedDOSHeader_disk*)content(0, sizeof(ExtendedDOSHeader_disk));
+    ExtendedDOSHeader_disk disk;
+    content(0, sizeof disk, (void*)&disk);
     for (size_t i=0; i<NELMTS(e_res1); i++)
-        e_res1[i]       = le_to_host(disk->e_res1[i]);
-    e_oemid             = le_to_host(disk->e_oemid);
-    e_oeminfo           = le_to_host(disk->e_oeminfo);
+        e_res1[i]       = le_to_host(disk.e_res1[i]);
+    e_oemid             = le_to_host(disk.e_oemid);
+    e_oeminfo           = le_to_host(disk.e_oeminfo);
     for (size_t i=0; i<NELMTS(e_res2); i++)
-        e_res2[i]       = le_to_host(disk->e_res2[i]);
-    e_lfanew            = le_to_host(disk->e_lfanew);
+        e_res2[i]       = le_to_host(disk.e_res2[i]);
+    e_lfanew            = le_to_host(disk.e_lfanew);
 }
 
 /* Encode the extended header back into disk format */
@@ -98,102 +99,107 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
-    const PEFileHeader_disk *fh = (const PEFileHeader_disk*)content(0, sizeof(PEFileHeader_disk));
+    PEFileHeader_disk fh;
+    content(0, sizeof fh, (void*)&fh);
 
     /* Check magic number before getting too far */
-    if (fh->e_magic[0]!='P' || fh->e_magic[1]!='E' || fh->e_magic[2]!='\0' || fh->e_magic[3]!='\0')
+    if (fh.e_magic[0]!='P' || fh.e_magic[1]!='E' || fh.e_magic[2]!='\0' || fh.e_magic[3]!='\0')
         throw FormatError("Bad PE magic number");
 
     /* Decode file header */
-    e_cpu_type           = le_to_host(fh->e_cpu_type);
-    e_nsections          = le_to_host(fh->e_nsections);
-    e_time               = le_to_host(fh->e_time);
-    e_coff_symtab        = le_to_host(fh->e_coff_symtab);
-    e_coff_nsyms         = le_to_host(fh->e_coff_nsyms);
-    e_nt_hdr_size        = le_to_host(fh->e_nt_hdr_size);
-    e_flags              = le_to_host(fh->e_flags);
+    e_cpu_type           = le_to_host(fh.e_cpu_type);
+    e_nsections          = le_to_host(fh.e_nsections);
+    e_time               = le_to_host(fh.e_time);
+    e_coff_symtab        = le_to_host(fh.e_coff_symtab);
+    e_coff_nsyms         = le_to_host(fh.e_coff_nsyms);
+    e_nt_hdr_size        = le_to_host(fh.e_nt_hdr_size);
+    e_flags              = le_to_host(fh.e_flags);
 
-    /* Decode optional header. The version of header is based on a magic number */
-    extend(2);
-    e_opt_magic = le_to_host(*(const uint16_t*)content(sizeof(PEFileHeader_disk), 2));
-    addr_t oh_offset = size;
-    if (0x010b==e_opt_magic) {
-        exec_format.word_size = 4;
-        const PE32OptHeader_disk *oh;
-        size_t oh_size = sizeof(*oh);
-        extend(oh_size);
-        oh = (const PE32OptHeader_disk*)content(oh_offset, oh_size);
-        e_lmajor             = le_to_host(oh->e_lmajor);
-        e_lminor             = le_to_host(oh->e_lminor);
-        e_code_size          = le_to_host(oh->e_code_size);
-        e_data_size          = le_to_host(oh->e_data_size);
-        e_bss_size           = le_to_host(oh->e_bss_size);
-        e_entrypoint_rva     = le_to_host(oh->e_entrypoint_rva);
-        e_code_rva           = le_to_host(oh->e_code_rva);
-        e_data_rva           = le_to_host(oh->e_data_rva);
-        e_image_base         = le_to_host(oh->e_image_base);
-        e_section_align      = le_to_host(oh->e_section_align);
-        e_file_align         = le_to_host(oh->e_file_align);
-        e_os_major           = le_to_host(oh->e_os_major);
-        e_os_minor           = le_to_host(oh->e_os_minor);
-        e_user_major         = le_to_host(oh->e_user_major);
-        e_user_minor         = le_to_host(oh->e_user_minor);
-        e_subsys_major       = le_to_host(oh->e_subsys_major);
-        e_subsys_minor       = le_to_host(oh->e_subsys_minor);
-        e_reserved9          = le_to_host(oh->e_reserved9);
-        e_image_size         = le_to_host(oh->e_image_size);
-        e_header_size        = le_to_host(oh->e_header_size);
-        e_file_checksum      = le_to_host(oh->e_file_checksum);
-        e_subsystem          = le_to_host(oh->e_subsystem);
-        e_dll_flags          = le_to_host(oh->e_dll_flags);
-        e_stack_reserve_size = le_to_host(oh->e_stack_reserve_size);
-        e_stack_commit_size  = le_to_host(oh->e_stack_commit_size);
-        e_heap_reserve_size  = le_to_host(oh->e_heap_reserve_size);
-        e_heap_commit_size   = le_to_host(oh->e_heap_commit_size);
-        e_loader_flags       = le_to_host(oh->e_loader_flags);
-        e_num_rvasize_pairs  = le_to_host(oh->e_num_rvasize_pairs);
+    /* Read the optional header, the size of which is stored in the e_nt_hdr_size of the main PE file header. According to
+     * http://www.phreedom.org/solar/code/tinype the Windows loader honors the e_nt_hdr_size even when set to smaller than the
+     * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
+     * the end of the file, in which case that part should be read as zero. */
+    PE32OptHeader_disk oh32;
+    memset(&oh32, 0, sizeof oh32);
+    addr_t need32 = std::min(e_nt_hdr_size, sizeof oh32);
+    extend_up_to(need32);
+    content(sizeof fh, sizeof oh32, &oh32);
+    e_opt_magic = le_to_host(oh32.e_opt_magic);
+    
+    /* Decode the optional header. */
+    if (0x010b==e_opt_magic) {                                           
+        e_lmajor             = le_to_host(oh32.e_lmajor);
+        e_lminor             = le_to_host(oh32.e_lminor);
+        e_code_size          = le_to_host(oh32.e_code_size);
+        e_data_size          = le_to_host(oh32.e_data_size);
+        e_bss_size           = le_to_host(oh32.e_bss_size);
+        e_entrypoint_rva     = le_to_host(oh32.e_entrypoint_rva);
+        e_code_rva           = le_to_host(oh32.e_code_rva);
+        e_data_rva           = le_to_host(oh32.e_data_rva);
+        e_image_base         = le_to_host(oh32.e_image_base);
+        e_section_align      = le_to_host(oh32.e_section_align);
+        e_file_align         = le_to_host(oh32.e_file_align);
+        e_os_major           = le_to_host(oh32.e_os_major);
+        e_os_minor           = le_to_host(oh32.e_os_minor);
+        e_user_major         = le_to_host(oh32.e_user_major);
+        e_user_minor         = le_to_host(oh32.e_user_minor);
+        e_subsys_major       = le_to_host(oh32.e_subsys_major);
+        e_subsys_minor       = le_to_host(oh32.e_subsys_minor);
+        e_reserved9          = le_to_host(oh32.e_reserved9);
+        e_image_size         = le_to_host(oh32.e_image_size);
+        e_header_size        = le_to_host(oh32.e_header_size);
+        e_file_checksum      = le_to_host(oh32.e_file_checksum);
+        e_subsystem          = le_to_host(oh32.e_subsystem);
+        e_dll_flags          = le_to_host(oh32.e_dll_flags);
+        e_stack_reserve_size = le_to_host(oh32.e_stack_reserve_size);
+        e_stack_commit_size  = le_to_host(oh32.e_stack_commit_size);
+        e_heap_reserve_size  = le_to_host(oh32.e_heap_reserve_size);
+        e_heap_commit_size   = le_to_host(oh32.e_heap_commit_size);
+        e_loader_flags       = le_to_host(oh32.e_loader_flags);
+        e_num_rvasize_pairs  = le_to_host(oh32.e_num_rvasize_pairs);
     } else if (0x020b==e_opt_magic) {
-        exec_format.word_size = 8;
-        const PE64OptHeader_disk *oh;
-        size_t oh_size = sizeof(*oh);
-        extend(oh_size);
-        oh = (const PE64OptHeader_disk*)content(oh_offset, oh_size);
-        e_lmajor             = le_to_host(oh->e_lmajor);
-        e_lminor             = le_to_host(oh->e_lminor);
-        e_code_size          = le_to_host(oh->e_code_size);
-        e_data_size          = le_to_host(oh->e_data_size);
-        e_bss_size           = le_to_host(oh->e_bss_size);
-        e_entrypoint_rva     = le_to_host(oh->e_entrypoint_rva);
-        e_code_rva           = le_to_host(oh->e_code_rva);
-        //e_data_rva         = le_to_host(oh->e_data_rva); /* not in PE32+ */
-        e_image_base         = le_to_host(oh->e_image_base);
-        e_section_align      = le_to_host(oh->e_section_align);
-        e_file_align         = le_to_host(oh->e_file_align);
-        e_os_major           = le_to_host(oh->e_os_major);
-        e_os_minor           = le_to_host(oh->e_os_minor);
-        e_user_major         = le_to_host(oh->e_user_major);
-        e_user_minor         = le_to_host(oh->e_user_minor);
-        e_subsys_major       = le_to_host(oh->e_subsys_major);
-        e_subsys_minor       = le_to_host(oh->e_subsys_minor);
-        e_reserved9          = le_to_host(oh->e_reserved9);
-        e_image_size         = le_to_host(oh->e_image_size);
-        e_header_size        = le_to_host(oh->e_header_size);
-        e_file_checksum      = le_to_host(oh->e_file_checksum);
-        e_subsystem          = le_to_host(oh->e_subsystem);
-        e_dll_flags          = le_to_host(oh->e_dll_flags);
-        e_stack_reserve_size = le_to_host(oh->e_stack_reserve_size);
-        e_stack_commit_size  = le_to_host(oh->e_stack_commit_size);
-        e_heap_reserve_size  = le_to_host(oh->e_heap_reserve_size);
-        e_heap_commit_size   = le_to_host(oh->e_heap_commit_size);
-        e_loader_flags       = le_to_host(oh->e_loader_flags);
-        e_num_rvasize_pairs  = le_to_host(oh->e_num_rvasize_pairs);
+        /* We guessed wrong so extend and read the 64-bit header. */
+        PE64OptHeader_disk oh64;
+        memset(&oh64, 0, sizeof oh64);
+        addr_t need64 = std::min(e_nt_hdr_size, sizeof oh64);
+        extend_up_to(need64-need32);
+        content(sizeof fh, sizeof oh64, &oh64);
+        e_lmajor             = le_to_host(oh64.e_lmajor);
+        e_lminor             = le_to_host(oh64.e_lminor);
+        e_code_size          = le_to_host(oh64.e_code_size);
+        e_data_size          = le_to_host(oh64.e_data_size);
+        e_bss_size           = le_to_host(oh64.e_bss_size);
+        e_entrypoint_rva     = le_to_host(oh64.e_entrypoint_rva);
+        e_code_rva           = le_to_host(oh64.e_code_rva);
+        //e_data_rva         = le_to_host(oh.e_data_rva); /* not in PE32+ */
+        e_image_base         = le_to_host(oh64.e_image_base);
+        e_section_align      = le_to_host(oh64.e_section_align);
+        e_file_align         = le_to_host(oh64.e_file_align);
+        e_os_major           = le_to_host(oh64.e_os_major);
+        e_os_minor           = le_to_host(oh64.e_os_minor);
+        e_user_major         = le_to_host(oh64.e_user_major);
+        e_user_minor         = le_to_host(oh64.e_user_minor);
+        e_subsys_major       = le_to_host(oh64.e_subsys_major);
+        e_subsys_minor       = le_to_host(oh64.e_subsys_minor);
+        e_reserved9          = le_to_host(oh64.e_reserved9);
+        e_image_size         = le_to_host(oh64.e_image_size);
+        e_header_size        = le_to_host(oh64.e_header_size);
+        e_file_checksum      = le_to_host(oh64.e_file_checksum);
+        e_subsystem          = le_to_host(oh64.e_subsystem);
+        e_dll_flags          = le_to_host(oh64.e_dll_flags);
+        e_stack_reserve_size = le_to_host(oh64.e_stack_reserve_size);
+        e_stack_commit_size  = le_to_host(oh64.e_stack_commit_size);
+        e_heap_reserve_size  = le_to_host(oh64.e_heap_reserve_size);
+        e_heap_commit_size   = le_to_host(oh64.e_heap_commit_size);
+        e_loader_flags       = le_to_host(oh64.e_loader_flags);
+        e_num_rvasize_pairs  = le_to_host(oh64.e_num_rvasize_pairs);
     } else {
         throw FormatError("unrecognized Windows PE optional header magic number");
     }
 
     /* Magic number */
-    for (size_t i=0; i<sizeof(fh->e_magic); ++i)
-        magic.push_back(fh->e_magic[i]);
+    for (size_t i=0; i<sizeof(fh.e_magic); ++i)
+        magic.push_back(fh.e_magic[i]);
 
     /* File format */
     exec_format.family      = FAMILY_PE;
@@ -295,6 +301,7 @@ PEFileHeader::encode(PEFileHeader_disk *disk)
 void *
 PEFileHeader::encode(PE32OptHeader_disk *disk)
 {
+    host_to_le(e_opt_magic,          &(disk->e_opt_magic));
     host_to_le(e_lmajor,             &(disk->e_lmajor));
     host_to_le(e_lminor,             &(disk->e_lminor));
     host_to_le(e_code_size,          &(disk->e_code_size));
@@ -329,6 +336,7 @@ PEFileHeader::encode(PE32OptHeader_disk *disk)
 void *
 PEFileHeader::encode(PE64OptHeader_disk *disk)
 {
+    host_to_le(e_opt_magic,          &(disk->e_opt_magic));
     host_to_le(e_lmajor,             &(disk->e_lmajor));
     host_to_le(e_lminor,             &(disk->e_lminor));
     host_to_le(e_code_size,          &(disk->e_code_size));
@@ -365,9 +373,14 @@ PEFileHeader::encode(PE64OptHeader_disk *disk)
 void
 PEFileHeader::add_rvasize_pairs()
 {
-    const RVASizePair_disk *pairs_disk = (const RVASizePair_disk*)extend(e_num_rvasize_pairs * sizeof(RVASizePair_disk));
-    for (size_t i=0; i<e_num_rvasize_pairs; i++) {
-        rvasize_pairs.push_back(RVASizePair(pairs_disk+i));
+    addr_t pairs_offset = get_size();
+    addr_t pairs_size   = e_num_rvasize_pairs * sizeof(RVASizePair_disk);
+    RVASizePair_disk pairs_disk;
+
+    extend_up_to(pairs_size);
+    for (size_t i=0; i<e_num_rvasize_pairs; i++, pairs_offset+=sizeof pairs_disk) {
+        content(pairs_offset, sizeof pairs_disk, (void*)&pairs_disk);
+        rvasize_pairs.push_back(RVASizePair(&pairs_disk));
     }
 }
 
@@ -384,8 +397,6 @@ PEFileHeader::unparse(FILE *f)
     PE64OptHeader_disk oh64;
     void *oh=NULL;
     size_t oh_size=0;
-    uint16_t oh_magic;
-    host_to_le(e_opt_magic, &oh_magic);
     if (4==get_word_size()) {
         oh = encode(&oh32);
         oh_size = sizeof oh32;
@@ -400,8 +411,6 @@ PEFileHeader::unparse(FILE *f)
     int status = fseek(f, offset, SEEK_SET);
     ROSE_ASSERT(status>=0);
     size_t nwrite = fwrite(&fh, sizeof fh, 1, f);
-    ROSE_ASSERT(1==nwrite);
-    nwrite = fwrite(&oh_magic, sizeof oh_magic, 1, f);
     ROSE_ASSERT(1==nwrite);
     nwrite = fwrite(oh, oh_size, 1, f);
     ROSE_ASSERT(1==nwrite);
@@ -454,7 +463,7 @@ PEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n",      p, w, "coff_symtab");
     }
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nt_hdr_size",       e_nt_hdr_size);
+    fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_nt_hdr_size",       e_nt_hdr_size);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_flags",             e_flags);
     fprintf(f, "%s%-*s = 0x%04x %s\n",     p, w, "e_opt_magic",         e_opt_magic,
             0x10b==e_opt_magic ? "PE32" : (0x20b==e_opt_magic ? "PE32+" : "other"));
@@ -595,8 +604,9 @@ PESectionTable::ctor(PEFileHeader *fhdr)
     const size_t entsize = sizeof(PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->e_nsections; i++) {
         /* Parse the section table entry */
-        const PESectionTableEntry_disk *disk = (const PESectionTableEntry_disk*)content(i*entsize, entsize);
-        PESectionTableEntry *entry = new PESectionTableEntry(disk);
+        PESectionTableEntry_disk disk;
+        content(i*entsize, entsize, (void*)&disk);
+        PESectionTableEntry *entry = new PESectionTableEntry(&disk);
 
         /* The section */
         PESection *section=NULL;
@@ -715,10 +725,11 @@ PEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 PEImportHintName::ctor(ExecSection *section, addr_t offset)
 {
-    const PEImportHintName_disk *disk = (const PEImportHintName_disk*)section->content(offset, sizeof(*disk));
-    hint = le_to_host(disk->hint);
-    name = section->content_str(offset+sizeof(*disk));
-    padding = (name.size()+1) % 2 ? *(section->content(offset+sizeof(*disk)+name.size()+1, 1)) : '\0';
+    PEImportHintName_disk disk;
+    section->content(offset, sizeof disk, &disk);
+    hint = le_to_host(disk.hint);
+    name = section->content_str(offset+sizeof disk);
+    padding = (name.size()+1) % 2 ? *(section->content(offset+sizeof(disk)+name.size()+1, 1)) : '\0';
 }
 
 /* Writes the hint/name back to disk at the specified offset */
@@ -791,9 +802,10 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
     /* Read idata directory entries--one per DLL*/
     for (size_t i=0; 1; i++) {
         /* End of list is marked by an entry of all zero. */
-        const PEImportDirectory_disk *idir_disk = (const PEImportDirectory_disk*)content(i*entry_size, entry_size);
-        if (!memcmp(&zero, idir_disk, sizeof zero)) break;
-        PEImportDirectory *idir = new PEImportDirectory(idir_disk);
+        PEImportDirectory_disk idir_disk;
+        content(i*entry_size, entry_size, &idir_disk);
+        if (!memcmp(&zero, &idir_disk, sizeof zero)) break;
+        PEImportDirectory *idir = new PEImportDirectory(&idir_disk);
 
         /* The library's name is indicated by RVA. We need a section offset instead. */
         ROSE_ASSERT(idir->dll_name_rva >= mapped_rva);
@@ -816,10 +828,14 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
                 addr_t hintname_rva = 0; /*RVA of the hint/name pair*/
                 bool import_by_ordinal=false; /*was high-order bit of array element set?*/
                 if (4==fhdr->get_word_size()) {
-                    hintname_rva = le_to_host(*(const uint32_t*)content(hintname_rvas_offset, sizeof(uint32_t)));
+                    uint32_t word;
+                    content(hintname_rvas_offset, sizeof word, &word);
+                    hintname_rva = le_to_host(word);
                     import_by_ordinal = (hintname_rva & 0x80000000) != 0;
                 } else if (8==fhdr->get_word_size()) {
-                    hintname_rva = le_to_host(*(const uint64_t*)content(hintname_rvas_offset, sizeof(uint64_t)));
+                    uint64_t word;
+                    content(hintname_rvas_offset, sizeof word, &word);
+                    hintname_rva = le_to_host(word);
                     import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
@@ -849,9 +865,13 @@ PEImportSection::ctor(PEFileHeader *fhdr, addr_t offset, addr_t size, addr_t map
                  bindings_offset += fhdr->get_word_size()) {
                 addr_t binding=0;
                 if (4==fhdr->get_word_size()) {
-                    binding = le_to_host(*(const uint32_t*)content(bindings_offset, sizeof(uint32_t)));
+                    uint32_t word;
+                    content(bindings_offset, sizeof word, &word);
+                    binding = le_to_host(word);
                 } else if (8==fhdr->get_word_size()) {
-                    binding = le_to_host(*(const uint64_t*)content(bindings_offset, sizeof(uint64_t)));
+                    uint64_t word;
+                    content(bindings_offset, sizeof word, &word);
+                    binding = le_to_host(word);
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
                 }
@@ -993,24 +1013,25 @@ PEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
 void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strtab, size_t idx)
 {
     static const bool debug=false;
-    const COFFSymbol_disk *disk = (const COFFSymbol_disk*)symtab->content(idx*COFFSymbol_disk_size, COFFSymbol_disk_size);
-    if (disk->st_zero==0) {
-        st_name_offset = le_to_host(disk->st_offset);
+    COFFSymbol_disk disk;
+    symtab->content(idx*COFFSymbol_disk_size, COFFSymbol_disk_size, &disk);
+    if (disk.st_zero==0) {
+        st_name_offset = le_to_host(disk.st_offset);
         if (st_name_offset<4) throw FormatError("name collides with size field");
         set_name(strtab->content_str(st_name_offset));
     } else {
         char temp[9];
-        memcpy(temp, disk->st_name, 8);
+        memcpy(temp, disk.st_name, 8);
         temp[8] = '\0';
         set_name(temp);
         st_name_offset = 0;
     }
 
     st_name            = get_name();
-    st_section_num     = le_to_host(disk->st_section_num);
-    st_type            = le_to_host(disk->st_type);
-    st_storage_class   = le_to_host(disk->st_storage_class);
-    st_num_aux_entries = le_to_host(disk->st_num_aux_entries);
+    st_section_num     = le_to_host(disk.st_section_num);
+    st_type            = le_to_host(disk.st_type);
+    st_storage_class   = le_to_host(disk.st_storage_class);
+    st_num_aux_entries = le_to_host(disk.st_num_aux_entries);
 
     /* Bind to section number. We can do this now because we've already parsed the PE Section Table */
     ROSE_ASSERT(fhdr->get_section_table()!=NULL);
@@ -1020,7 +1041,7 @@ void COFFSymbol::ctor(PEFileHeader *fhdr, ExecSection *symtab, ExecSection *strt
     }
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */
-    value = le_to_host(disk->st_value);
+    value = le_to_host(disk.st_value);
     def_state = SYM_DEFINED;
     switch (st_storage_class) {
       case 0:    binding = SYM_NO_BINDING; break; /*none*/
@@ -1298,7 +1319,9 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
     strtab->set_name("COFF Symbol Strtab");
     strtab->set_purpose(SP_HEADER);
     strtab->set_header(fhdr);
-    addr_t strtab_size = le_to_host(*(const uint32_t*)strtab->content(0, sizeof(uint32_t)));
+    uint32_t word;
+    strtab->content(0, sizeof word, &word);
+    addr_t strtab_size = le_to_host(word);
     if (strtab_size<sizeof(uint32_t))
         throw FormatError("COFF symbol table string table size is less than four bytes");
     strtab->extend(strtab_size-sizeof(uint32_t));
