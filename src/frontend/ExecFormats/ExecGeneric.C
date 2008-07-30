@@ -583,10 +583,11 @@ ExecSection::write(FILE *f, addr_t offset, size_t bufsize, const void *buf)
     for (size_t i=nwrite; i<bufsize; i++) {
         if (((const char*)buf)[i]) {
             char mesg[1024];
-            sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const char*)buf)[i]);
+            sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
 #if 1
             fprintf(stderr, "ROBB: Exec::ExecSection::write(): %s\n", mesg);
             hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
+            abort(); /*DEBUGGING*/
 #endif
             throw ShortWrite(this, offset, bufsize, mesg);
         }
