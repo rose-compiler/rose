@@ -145,8 +145,8 @@ docs: FORCE_DOCS_TO_BE_MADE
 	@if [ -f $(top_srcdir)/src/midend/midend.docs ]; then \
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   cd tutorial; $(MAKE) docs; \
-	   cd docs; $(MAKE) docs; \
-	   cd projects/compass; $(MAKE) docs; \
+	   cd ../docs; $(MAKE) docs; \
+	   cd ../projects/compass; $(MAKE) docs; \
    else \
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi
