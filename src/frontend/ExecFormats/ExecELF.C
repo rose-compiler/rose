@@ -21,78 +21,102 @@ namespace ELF {
 void
 ElfFileHeader::ctor(ExecFile *f, addr_t offset)
 {
-    const Elf32FileHeader_disk *disk32 = (const Elf32FileHeader_disk*)content(0, sizeof(Elf32FileHeader_disk));
-    const Elf64FileHeader_disk *disk64 = NULL;
-
     set_name("ELF File Header");
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+    /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
+    ROSE_ASSERT(0==size);
+    Elf32FileHeader_disk disk32;
+    extend_up_to(sizeof disk32);
+    content(0, sizeof disk32, &disk32);
+
     /* Check magic number early */
-    if (disk32->e_ident_magic[0]!=0x7f || disk32->e_ident_magic[1]!='E' ||
-        disk32->e_ident_magic[2]!='L'  || disk32->e_ident_magic[3]!='F')
+    if (disk32.e_ident_magic[0]!=0x7f || disk32.e_ident_magic[1]!='E' ||
+        disk32.e_ident_magic[2]!='L'  || disk32.e_ident_magic[3]!='F')
         throw FormatError("Bad ELF magic number");
 
-    /* File byte order */
-    if (1!=disk32->e_ident_data_encoding && 2!=disk32->e_ident_data_encoding)
-        throw FormatError("invalid ELF header data encoding");
-
-    ByteOrder sex = 1 == disk32->e_ident_data_encoding ? ORDER_LSB : ORDER_MSB;
-
-    /* Switch to 64-bit view of header if necessary */
-    if (1!=disk32->e_ident_file_class && 2!=disk32->e_ident_file_class)
-        throw FormatError("invalid ELF header file class");
-    if (2==disk32->e_ident_file_class) {
-        extend(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
-        disk64 = (const Elf64FileHeader_disk*)content(0, sizeof(Elf64FileHeader_disk));
-        disk32 = NULL;
+    /* File byte order should be 1 or 2. However, we've seen at least one example that left the byte order at zero, implying
+     * that it was the native order. We don't have the luxury of decoding the file on the native machine, so in that case we
+     * try to infer the byte order by looking at one of the other multi-byte fields of the file. */
+    ByteOrder sex;
+    if (1==disk32.e_ident_data_encoding) {
+        sex = ORDER_LSB;
+    } else if (2==disk32.e_ident_data_encoding) {
+        sex = ORDER_MSB;
+    } else if ((disk32.e_type & 0xff00)==0xff00) {
+        /* One of the 0xffxx processor-specific flags in native order */
+        if ((disk32.e_type & 0x00ff)==0xff)
+            throw FormatError("invalid ELF header byte order"); /*ambiguous*/
+        sex = host_order();
+    } else if ((disk32.e_type & 0x00ff)==0x00ff) {
+        /* One of the 0xffxx processor specific orders in reverse native order */
+        sex = host_order()==ORDER_LSB ? ORDER_MSB : ORDER_LSB;
+    } else if ((disk32.e_type & 0xff00)==0) {
+        /* One of the low-valued file types in native order */
+        if ((disk32.e_type & 0x00ff)==0)
+            throw FormatError("invalid ELF header byte order"); /*ambiguous*/
+        sex = host_order();
+    } else if ((disk32.e_type & 0x00ff)==0) {
+        /* One of the low-valued file types in reverse native order */
+        sex = host_order()==ORDER_LSB ? ORDER_MSB : ORDER_LSB;
+    } else {
+        /* Ambiguous order */
+        throw FormatError("invalid ELF header byte order");
     }
 
-    /* Decode members. Both alternatives are identical except one uses disk32 and the other uses disk64 */
-    if (disk32) {
-        ROSE_ASSERT(sizeof(e_ident_padding)==sizeof(disk32->e_ident_padding));
-        memcpy(e_ident_padding, disk32->e_ident_padding, sizeof(e_ident_padding));
-        e_ident_file_class    = disk_to_host(sex, disk32->e_ident_file_class);
-        e_ident_data_encoding = disk_to_host(sex, disk32->e_ident_data_encoding);
-        e_ident_file_version  = disk_to_host(sex, disk32->e_ident_file_version);
-        e_type                = disk_to_host(sex, disk32->e_type);
-        e_machine             = disk_to_host(sex, disk32->e_machine);
-        e_version             = disk_to_host(sex, disk32->e_version);
-        e_entry               = disk_to_host(sex, disk32->e_entry);
-        e_phoff               = disk_to_host(sex, disk32->e_phoff);
-        e_shoff               = disk_to_host(sex, disk32->e_shoff);
-        e_flags               = disk_to_host(sex, disk32->e_flags);
-        e_ehsize              = disk_to_host(sex, disk32->e_ehsize);
-        e_phentsize           = disk_to_host(sex, disk32->e_phentsize);
-        e_phnum               = disk_to_host(sex, disk32->e_phnum);
-        e_shentsize           = disk_to_host(sex, disk32->e_shentsize);
-        e_shnum               = disk_to_host(sex, disk32->e_shnum);
-        e_shstrndx            = disk_to_host(sex, disk32->e_shstrndx);
+    /* Decode header to native format */
+    if (1==disk32.e_ident_file_class) {
+        exec_format.word_size = 4;
+        ROSE_ASSERT(sizeof(e_ident_padding)==sizeof(disk32.e_ident_padding));
+        memcpy(e_ident_padding, disk32.e_ident_padding, sizeof(e_ident_padding));
+        e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
+        e_ident_data_encoding = disk_to_host(sex, disk32.e_ident_data_encoding);
+        e_ident_file_version  = disk_to_host(sex, disk32.e_ident_file_version);
+        e_type                = disk_to_host(sex, disk32.e_type);
+        e_machine             = disk_to_host(sex, disk32.e_machine);
+        e_version             = disk_to_host(sex, disk32.e_version);
+        e_entry               = disk_to_host(sex, disk32.e_entry);
+        e_phoff               = disk_to_host(sex, disk32.e_phoff);
+        e_shoff               = disk_to_host(sex, disk32.e_shoff);
+        e_flags               = disk_to_host(sex, disk32.e_flags);
+        e_ehsize              = disk_to_host(sex, disk32.e_ehsize);
+        e_phentsize           = disk_to_host(sex, disk32.e_phentsize);
+        e_phnum               = disk_to_host(sex, disk32.e_phnum);
+        e_shentsize           = disk_to_host(sex, disk32.e_shentsize);
+        e_shnum               = disk_to_host(sex, disk32.e_shnum);
+        e_shstrndx            = disk_to_host(sex, disk32.e_shstrndx);
+    } else if (2==disk32.e_ident_file_class) {
+        /* We guessed wrong. This is a 64-bit header, not 32-bit. */
+        exec_format.word_size = 8;
+        Elf64FileHeader_disk disk64;
+        extend_up_to(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
+        content(0, sizeof disk64, &disk64);
+        ROSE_ASSERT(sizeof(e_ident_padding)==sizeof(disk64.e_ident_padding));
+        memcpy(e_ident_padding, disk64.e_ident_padding, sizeof(e_ident_padding));
+        e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
+        e_ident_data_encoding = disk_to_host(sex, disk64.e_ident_data_encoding);
+        e_ident_file_version  = disk_to_host(sex, disk64.e_ident_file_version);
+        e_type                = disk_to_host(sex, disk64.e_type);
+        e_machine             = disk_to_host(sex, disk64.e_machine);
+        e_version             = disk_to_host(sex, disk64.e_version);
+        e_entry               = disk_to_host(sex, disk64.e_entry);
+        e_phoff               = disk_to_host(sex, disk64.e_phoff);
+        e_shoff               = disk_to_host(sex, disk64.e_shoff);
+        e_flags               = disk_to_host(sex, disk64.e_flags);
+        e_ehsize              = disk_to_host(sex, disk64.e_ehsize);
+        e_phentsize           = disk_to_host(sex, disk64.e_phentsize);
+        e_phnum               = disk_to_host(sex, disk64.e_phnum);
+        e_shentsize           = disk_to_host(sex, disk64.e_shentsize);
+        e_shnum               = disk_to_host(sex, disk64.e_shnum);
+        e_shstrndx            = disk_to_host(sex, disk64.e_shstrndx);
     } else {
-        ROSE_ASSERT(sizeof(e_ident_padding)==sizeof(disk64->e_ident_padding));
-        memcpy(e_ident_padding, disk64->e_ident_padding, sizeof(e_ident_padding));
-        e_ident_file_class    = disk_to_host(sex, disk64->e_ident_file_class);
-        e_ident_data_encoding = disk_to_host(sex, disk64->e_ident_data_encoding);
-        e_ident_file_version  = disk_to_host(sex, disk64->e_ident_file_version);
-        e_type                = disk_to_host(sex, disk64->e_type);
-        e_machine             = disk_to_host(sex, disk64->e_machine);
-        e_version             = disk_to_host(sex, disk64->e_version);
-        e_entry               = disk_to_host(sex, disk64->e_entry);
-        e_phoff               = disk_to_host(sex, disk64->e_phoff);
-        e_shoff               = disk_to_host(sex, disk64->e_shoff);
-        e_flags               = disk_to_host(sex, disk64->e_flags);
-        e_ehsize              = disk_to_host(sex, disk64->e_ehsize);
-        e_phentsize           = disk_to_host(sex, disk64->e_phentsize);
-        e_phnum               = disk_to_host(sex, disk64->e_phnum);
-        e_shentsize           = disk_to_host(sex, disk64->e_shentsize);
-        e_shnum               = disk_to_host(sex, disk64->e_shnum);
-        e_shstrndx            = disk_to_host(sex, disk64->e_shstrndx);
-   }
-
-    /* Magic number */
-    ROSE_ASSERT(sizeof(disk32->e_ident_magic)==sizeof(disk64->e_ident_magic));
-    for (size_t i=0; i<sizeof(disk32->e_ident_magic); i++)
-        magic.push_back(disk32?disk32->e_ident_magic[i]:disk64->e_ident_magic[i]);
+        throw FormatError("invalid ELF header file class");
+    }
+    
+    /* Magic number. disk32 and disk64 have header bytes at same offset */
+    for (size_t i=0; i<sizeof(disk32.e_ident_magic); i++)
+        magic.push_back(disk32.e_ident_magic[i]);
     
     /* File format */
     exec_format.family = FAMILY_ELF;
@@ -123,7 +147,7 @@ ElfFileHeader::ctor(ExecFile *f, addr_t offset)
     exec_format.is_current_version = (1==e_version);
     exec_format.abi = ABI_UNSPECIFIED;                   /* ELF specifies a target architecture rather than an ABI */
     exec_format.abi_version = 0;
-    exec_format.word_size = disk32 ? 4 : 8;
+    //exec_format.word_size = ...; /*set above*/
 
     /* Target architecture */
     switch (e_machine) {                                /* These come from the Portable Formats Specification v1.1 */

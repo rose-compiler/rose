@@ -58,7 +58,8 @@ struct Elf64FileHeader_disk {
 class ElfFileHeader : public ExecHeader {
   public:
     ElfFileHeader(ExecFile *f, addr_t offset)   /* assume 32-bit for now and fix inside ctor() if necessary */
-        : ExecHeader(f, offset, sizeof(Elf32FileHeader_disk)) {ctor(f, offset);}
+        : ExecHeader(f, offset, 0)
+        {ctor(f, offset);}
     virtual ~ElfFileHeader() {}
     uint64_t max_page_size();
     virtual void unparse(FILE*);
