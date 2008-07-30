@@ -305,10 +305,31 @@ class ShortRead {
   public:
     ShortRead(class ExecSection *section, size_t offset, size_t size)
         : section(section), offset(offset), size(size) {}
-    class ExecSection   *section;                       /* Section from which read occurred; null implies file-level read */
-    addr_t              offset;                         /* Offset where the read failed */
-    addr_t              size;                           /* Number of bytes of attemted read */
+    ShortRead(class ExecSection *section, size_t offset, size_t size, const std::string &mesg)
+        : section(section), offset(offset), size(size), mesg(mesg) {}
+    ShortRead(class ExecSection *section, size_t offset, size_t size, const char *mesg)
+        : section(section), offset(offset), size(size), mesg(mesg) {}
+    ExecSection         *section;                       /* Section from which read occurred; null implies file-level write */
+    addr_t              offset;                         /* Byte offset into section (or file) */
+    addr_t              size;                           /* Number of bytes of attempted read */
+    std::string         mesg;                           /* Optional message */
 };
+
+/* Thrown when an attempt is made to write past the end of a file, section, header, segment, etc. */
+class ShortWrite {
+  public:
+    ShortWrite(class ExecSection *section, size_t offset, size_t size)
+        : section(section), offset(offset), size(size) {}
+    ShortWrite(class ExecSection *section, size_t offset, size_t size, const std::string &mesg)
+        : section(section), offset(offset), size(size), mesg(mesg) {}
+    ShortWrite(class ExecSection *section, size_t offset, size_t size, const char *mesg)
+        : section(section), offset(offset), size(size), mesg(mesg) {}
+    ExecSection         *section;                       /* Section to which write occurred; null implies file-level write */
+    addr_t              offset;                         /* Byte offset into section (or file) */
+    addr_t              size;                           /* Number of bytes of attempted write */
+    std::string         mesg;                           /* Optional message */
+};
+
 
 /* Thrown when the file contains an error that prevents us from parsing it. */
 class FormatError {
@@ -401,6 +422,7 @@ class ExecSection {
     addr_t              end_offset() {return offset+size;} /* file offset for end of section */
     void                extend(addr_t nbytes);         /* make section larger by extending the end */
     void                extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
+    addr_t              write(FILE *f, addr_t offset, size_t bufsize, const void *buf);
 
     /* Functions for accessing content */
     const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */

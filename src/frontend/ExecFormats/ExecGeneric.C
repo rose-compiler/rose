@@ -558,6 +558,43 @@ ExecSection::content_str(addr_t offset)
     return ret;
 }
 
+/* Write data back to a file section. The data to write may be larger than the file section as long as the extra (which will
+ * not be written) is all zero. The offset is relative to the start of the section. */
+addr_t
+ExecSection::write(FILE *f, addr_t offset, size_t bufsize, const void *buf)
+{
+    size_t nwrite, nzero;
+    if (offset>=get_size()) {
+        nwrite = 0;
+        nzero  = bufsize;
+    } else if (offset+bufsize<=get_size()) {
+        nwrite = bufsize;
+        nzero = 0;
+    } else {
+        nwrite = get_size() - offset;
+        nzero = bufsize - nwrite;
+    }
+    
+    int status = fseek(f, get_offset()+offset, SEEK_SET);
+    ROSE_ASSERT(status>=0);
+    size_t nwritten = fwrite(buf, 1, nwrite, f);
+    ROSE_ASSERT(nwrite==nwritten);
+    
+    for (size_t i=nwrite; i<bufsize; i++) {
+        if (((const char*)buf)[i]) {
+            char mesg[1024];
+            sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const char*)buf)[i]);
+#if 1
+            fprintf(stderr, "ROBB: Exec::ExecSection::write(): %s\n", mesg);
+            hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
+#endif
+            throw ShortWrite(this, offset, bufsize, mesg);
+        }
+    }
+
+    return offset+bufsize;
+}
+
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content() and
  * content_str() will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
