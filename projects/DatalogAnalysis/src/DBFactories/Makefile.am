@@ -12,13 +12,13 @@ noinst_HEADERS = CommonDBFactory.hh  TupleDomain.hh  TupleFactory.hh  TupleRelat
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-# EXTRA_DIST = 
-
 check-local:
 	@echo "********************************************************************************************"
 	@echo "*** ROSE/projects/DocumentationGenerator: make check rule complete (terminated normally) ***"
 	@echo "********************************************************************************************"
 endif
+
+EXTRA_DIST = CommonDBFactory.cc  TupleDomain.cc  TupleFactory.cc  TupleRelation.cc CommonDBFactory.hh  TupleDomain.hh  TupleFactory.hh  TupleRelation.hh
 
 distclean-local:
 	rm -rf testAutoDocumentation_01.docs

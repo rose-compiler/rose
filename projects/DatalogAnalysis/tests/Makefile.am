@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # DQ (12/28/2006): Later versions of automake don't seem to work when this is a directory!
 # EXTRA_DIST = datalogExamples
 # JJW (3/12/2008) Palette uses this example
-EXTRA_DIST = test.cc
+EXTRA_DIST = test.cc datalogExamples
 
 # Automake conditional to control use of ROSE with BDDBDDB
 if ROSE_USE_BDDBDDB

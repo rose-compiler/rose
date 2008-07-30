@@ -23,10 +23,6 @@ INCLUDES = -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/../include
 include_HEADERS = 
 ###########################
 
-EXTRA_DIST = main.py  Makefile  Makefile.am  Relations.py  Visitor.py
-
-
-
 # generated_relation_source_code = ../src/RelationVisitor.cc  ../src/RelationVisitor.hh
 generated_relation_source_code = output/RelationVisitor.cc  output/RelationVisitor.hh
 # Python must be version 2.4
@@ -44,6 +40,8 @@ check-local:
 	@echo "*** ROSE/projects/DocumentationGenerator: make check rule complete (terminated normally) ***"
 	@echo "********************************************************************************************"
 endif
+
+EXTRA_DIST = main.py  Relations.py  Visitor.py
 
 distclean-local:
 	rm -rf output

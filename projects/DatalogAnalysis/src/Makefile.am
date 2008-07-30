@@ -45,8 +45,6 @@ relationTranslator_SOURCES = CFGVisitor.cc  main.cc  misc.cc ChildVisitor.cc
 # LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) DBFactories/libDBFactories.la
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) DBFactories/libDBFactories.la $(GENERATED_SOURCE_DIR)/libastBinaryRelations.la 
 
-EXTRA_DIST = 
-
 noinst_HEADERS = CFGVisitor.hh ChildVisitor.hh
 
 check-local:
@@ -54,6 +52,8 @@ check-local:
 	@echo "*** ROSE/projects/DatalogAnalysis/src: make check rule complete (terminated normally) ***"
 	@echo "********************************************************************************************"
 endif
+
+EXTRA_DIST = CFGVisitor.cc  main.cc  misc.cc ChildVisitor.cc CFGVisitor.hh ChildVisitor.hh
 
 distclean-local:
 
