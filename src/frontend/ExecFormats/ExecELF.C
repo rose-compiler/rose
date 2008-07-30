@@ -265,25 +265,23 @@ ElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
 void
 ElfFileHeader::unparse(FILE *f)
 {
-    /* Write the ELF file header */
+    /* Encode ELF file header */
     Elf32FileHeader_disk disk32;
     Elf64FileHeader_disk disk64;
     void *disk=NULL;
-    size_t size=0;
+    size_t struct_size=0;
     if (4==get_word_size()) {
         disk = encode(get_sex(), &disk32);
-        size = sizeof(disk32);
+        struct_size = sizeof(disk32);
     } else if (8==get_word_size()) {
         disk = encode(get_sex(), &disk64);
-        size = sizeof(disk64);
+        struct_size = sizeof(disk64);
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-    ROSE_ASSERT(size==get_size());
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(disk, size, 1, f);
-    ROSE_ASSERT(1==nwrite);
+
+    /* Make sure there's room in the file. If not, anything beyond the file section should be zero. */
+    write(f, offset, struct_size, disk);
 
     /* Write the ELF section and segment tables and, indirectly, the sections themselves. */
     if (section_table) {
@@ -291,7 +289,7 @@ ElfFileHeader::unparse(FILE *f)
         section_table->unparse(f);
     }
     if (segment_table) {
-        ROSE_ASSERT(section_table->get_header()==this);
+        ROSE_ASSERT(segment_table->get_header()==this);
         segment_table->unparse(f);
     }
 
@@ -607,18 +605,9 @@ ElfSectionTable::unparse(FILE *f)
             }
 
             /* The disk struct */
-            ROSE_ASSERT(section->get_id()>=0);
-            addr_t entry_offset = get_offset() + section->get_id() * fhdr->e_shentsize;
-            int status = fseek(f, entry_offset, SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            size_t nwrite = fwrite(disk, size, 1, f);
-            ROSE_ASSERT(1==nwrite);
-            
-            /* Padding after the disk struct */
-            if (shdr->nextra>0) {
-                nwrite = fwrite(shdr->extra, 1, shdr->nextra, f);
-                ROSE_ASSERT(nwrite==shdr->nextra);
-            }
+            addr_t extra_offset = write(f, section->get_id()*fhdr->e_shentsize, size, disk);
+            if (shdr->nextra>0)
+                write(f, extra_offset, shdr->nextra, shdr->extra);
 
             /* The section itself */
             sections[i]->unparse(f);
@@ -874,17 +863,9 @@ ElfSegmentTable::unparse(FILE *f)
         }
         
         /* The disk struct */
-        addr_t entry_offset = get_offset() + i * fhdr->e_phentsize;
-        int status = fseek(f, entry_offset, SEEK_SET);
-        ROSE_ASSERT(status>=0);
-        size_t nwrite = fwrite(disk, size, 1, f);
-        ROSE_ASSERT(1==nwrite);
-        
-        /* Padding after the disk struct */
-        if (shdr->nextra>0) {
-            nwrite = fwrite(shdr->extra, 1, shdr->nextra, f);
-            ROSE_ASSERT(nwrite==shdr->nextra);
-        }
+        addr_t extra_offset = write(f, i*fhdr->e_phentsize, size, disk);
+        if (shdr->nextra>0)
+            write(f, extra_offset, shdr->nextra, shdr->extra);
     }
 
     unparse_holes(f);
@@ -1088,9 +1069,7 @@ ElfDynamicSection::unparse(FILE *f)
     ElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
-
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
+    addr_t spos=0; /*output position in section*/
 
     for (size_t i=0; i<all_entries.size(); i++) {
         Elf32DynamicEntry_disk disk32;
@@ -1107,8 +1086,7 @@ ElfDynamicSection::unparse(FILE *f)
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
-        size_t nwrite = fwrite(disk, size, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        spos = write(f, spos, size, disk);
     }
 
     unparse_holes(f);
@@ -1363,9 +1341,7 @@ ElfSymbolSection::unparse(FILE *f)
     ElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
-
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
+    addr_t spos=0; /*output position in section*/
 
     for (size_t i=0; i<symbols.size(); i++) {
         Elf32SymbolEntry_disk disk32;
@@ -1382,8 +1358,7 @@ ElfSymbolSection::unparse(FILE *f)
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
-        size_t nwrite = fwrite(disk, size, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        spos = write(f, spos, size, disk);
     }
 
     unparse_holes(f);
