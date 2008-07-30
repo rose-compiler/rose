@@ -65,7 +65,7 @@ main( int argc, char * argv[] ) {
    //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
-#ifdef HAVE_SQLITE3
+#ifdef HAVE_MYSQL
    hier.setDBName( "ClassHierarchy" );
    hier.createHierarchySchema();
    hier.writeHierarchyToDB();
@@ -75,7 +75,7 @@ main( int argc, char * argv[] ) {
 
    CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-#ifdef HAVE_SQLITE3
+#ifdef HAVE_MYSQL
    output.writeToDB( 1, "DATABASE" );
    output.filterNodesByDirectory( "DATABASE", "/export" );
    output.filterNodesByDB( "DATABASE", "__filter.db" );
