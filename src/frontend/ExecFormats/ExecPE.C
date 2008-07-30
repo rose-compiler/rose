@@ -1459,8 +1459,10 @@ parse(ExecFile *ef)
      * to not extend beyond the beginning of the PE file header. This makes detecting holes in the PE format much easier. */
     dos_header->add_rm_section(pe_header->get_offset());
 
-    /* Construct the section table and its sections (non-synthesized sections) */
-    addr_t secttab_offset = pe_header->get_offset() + pe_header->e_header_size;
+    /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
+     * comes after the optional (NT) header, which in turn comes after the fixed part of the PE header. The size of the
+     * optional header is indicated in the fixed header. */
+    addr_t secttab_offset = pe_header->get_offset() + sizeof(PEFileHeader_disk) + pe_header->e_nt_hdr_size;
     addr_t secttab_size = pe_header->e_nsections * sizeof(PESectionTableEntry_disk);
     PESectionTable *secttab = new PESectionTable(pe_header, secttab_offset, secttab_size);
     pe_header->set_section_table(secttab);
