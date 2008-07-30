@@ -304,8 +304,8 @@ class PESection : public ExecSection {
  * live in their own section and the section IDs are generated from the table entry indices. */
 class PESectionTable : public ExecSection {
   public:
-    PESectionTable(PEFileHeader *fhdr)
-        : ExecSection(fhdr->get_file(), fhdr->end_offset(), fhdr->e_nsections*sizeof(PESectionTableEntry_disk))
+    PESectionTable(PEFileHeader *fhdr, addr_t offset, addr_t size)
+        : ExecSection(fhdr->get_file(), offset, size)
         {ctor(fhdr);}
     virtual ~PESectionTable() {}
     virtual void unparse(FILE*);

@@ -1460,7 +1460,10 @@ parse(ExecFile *ef)
     dos_header->add_rm_section(pe_header->get_offset());
 
     /* Construct the section table and its sections (non-synthesized sections) */
-    pe_header->set_section_table(new PESectionTable(pe_header));
+    addr_t secttab_offset = pe_header->get_offset() + pe_header->e_header_size;
+    addr_t secttab_size = pe_header->e_nsections * sizeof(PESectionTableEntry_disk);
+    PESectionTable *secttab = new PESectionTable(pe_header, secttab_offset, secttab_size);
+    pe_header->set_section_table(secttab);
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (pe_header->e_coff_symtab && pe_header->e_coff_nsyms) {
