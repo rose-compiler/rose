@@ -128,7 +128,16 @@ DOSFileHeader::add_rm_section(addr_t max_offset)
             rm_size = max_offset - rm_offset;
         }
     }
-    rm_section = new ExecSection(get_file(), rm_offset, rm_size);
+
+    try {
+        rm_section = new ExecSection(get_file(), rm_offset, rm_size);
+    } catch (ShortRead &ex) {
+        /* If the offset or size is out of bounds for the file then assume that the real-mode section does not exist. This
+         * can indicate that the DOS header is being used for something other than a DOS header. See
+         * http://www.phreedom.org/solar/code/tinype/ for some examples of overlapping the DOS header with the PE header. */
+        return NULL;
+    }
+    
     rm_section->set_name("DOS real-mode text/data");
     rm_section->set_synthesized(true);
     rm_section->set_purpose(SP_PROGRAM);
