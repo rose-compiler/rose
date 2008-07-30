@@ -835,13 +835,15 @@ ExecHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fputs("\"\n", f);
     
     /* Base virtual address and entry addresses */
+    char also[1024];
+    sprintf(also, "\n%*s also", (int)strlen(p)+w+12, "");
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "base_va",   base_va);
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", entry_rvas.size());
     for (size_t i=0; i<entry_rvas.size(); i++) {
         fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64, p, w, "entry_rva", i, entry_rvas[i]);
         std::vector<ExecSection*> sections = get_file()->get_sections_by_rva(entry_rvas[i]);
         for (size_t j=0; j<sections.size(); j++) {
-            fprintf(f, "%s in section [%d] \"%s\"", j?"\n    also":"",  sections[j]->get_id(), sections[j]->get_name().c_str());
+            fprintf(f, "%s in section [%d] \"%s\"", j?also:"",  sections[j]->get_id(), sections[j]->get_name().c_str());
         }
         fputc('\n', f);
     }

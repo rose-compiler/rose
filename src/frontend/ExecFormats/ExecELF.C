@@ -651,13 +651,13 @@ ElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 ElfSegmentTableEntry::ctor(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk) 
 {
-    p_type      = disk_to_host(sex, disk->p_type);
+    p_type      = (SegmentType)disk_to_host(sex, disk->p_type);
     p_offset    = disk_to_host(sex, disk->p_offset);
     p_vaddr     = disk_to_host(sex, disk->p_vaddr);
     p_paddr     = disk_to_host(sex, disk->p_paddr);
     p_filesz    = disk_to_host(sex, disk->p_filesz);
     p_memsz     = disk_to_host(sex, disk->p_memsz);
-    p_flags     = disk_to_host(sex, disk->p_flags);
+    p_flags     = (SegmentFlags)disk_to_host(sex, disk->p_flags);
     p_align     = disk_to_host(sex, disk->p_align);
 }
 
@@ -665,13 +665,13 @@ ElfSegmentTableEntry::ctor(ByteOrder sex, const Elf32SegmentTableEntry_disk *dis
 void
 ElfSegmentTableEntry::ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk) 
 {
-    p_type      = disk_to_host(sex, disk->p_type);
+    p_type      = (SegmentType)disk_to_host(sex, disk->p_type);
     p_offset    = disk_to_host(sex, disk->p_offset);
     p_vaddr     = disk_to_host(sex, disk->p_vaddr);
     p_paddr     = disk_to_host(sex, disk->p_paddr);
     p_filesz    = disk_to_host(sex, disk->p_filesz);
     p_memsz     = disk_to_host(sex, disk->p_memsz);
-    p_flags     = disk_to_host(sex, disk->p_flags);
+    p_flags     = (SegmentFlags)disk_to_host(sex, disk->p_flags);
     p_align     = disk_to_host(sex, disk->p_align);
 }
 
@@ -717,7 +717,13 @@ ElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %u\n",                              p, w, "p_type",         p_type);
-    fprintf(f, "%s%-*s = 0x%08x\n",                          p, w, "p_flags",        p_flags);
+    fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "p_flags",        p_flags);
+    fputc(p_flags & PF_RPERM ? 'r' : '-', f);
+    fputc(p_flags & PF_WPERM ? 'w' : '-', f);
+    fputc(p_flags & PF_EPERM ? 'x' : '-', f);
+    if (p_flags & PF_PROC_MASK) fputs(" proc", f);
+    if (p_flags & PF_RESERVED) fputs(" *", f);
+    fputc('\n', f);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 " bytes into file\n", p, w, "p_offset",       p_offset);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_vaddr",        p_vaddr);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_paddr",        p_paddr);
@@ -748,10 +754,9 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
         if (fhdr->e_phentsize < struct_size)
             throw FormatError("ELF header phentsize is too small");
 
-        /* Read all segment headers. We can't just cast this to an array like with other structs because the ELF header
-         * specifies the size of each entry. */
         addr_t offset=0;                                /* w.r.t. the beginning of this section */
         for (size_t i=0; i<fhdr->e_phnum; i++, offset+=fhdr->e_phentsize) {
+            /* Read/decode the segment header */
             ElfSegmentTableEntry *shdr=NULL;
             if (4==fhdr->get_word_size()) {
                 const Elf32SegmentTableEntry_disk *disk = (const Elf32SegmentTableEntry_disk*)content(offset, struct_size);
@@ -760,10 +765,85 @@ ElfSegmentTable::ctor(ElfFileHeader *fhdr)
                 const Elf64SegmentTableEntry_disk *disk = (const Elf64SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new ElfSegmentTableEntry(sex, disk);
             }
+            entries.push_back(shdr);
+
+            /* Save extra bytes */
             shdr->nextra = fhdr->e_phentsize - struct_size;
             if (shdr->nextra>0)
                 shdr->extra = content(offset+struct_size, shdr->nextra);
-            entries.push_back(shdr);
+
+            /* Null segments are just unused slots in the table; no real section to create */
+            if (PT_NULL==shdr->p_type)
+                continue;
+
+            /* Create sections. ELF files can have a section table and a segment table. The former is used for linking and the
+             * latter for loading. At this point we've already read the section table and created sections, and now we'll
+             * create more sections from the segment table -- but only if the segment table describes a section we haven't
+             * already seen. */
+            std::vector<ExecSection*> possible = fhdr->get_file()->get_sections_by_offset(shdr->p_offset, shdr->p_filesz);
+            std::vector<ExecSection*> matching;
+            for (size_t j=0; j<possible.size(); j++) {
+                if (possible[j]->get_offset()!=shdr->p_offset || possible[j]->get_size()!=shdr->p_filesz)
+                    continue; /*different file extent*/
+                if (possible[j]->is_mapped()) {
+                    if (possible[j]->get_mapped_rva()!=shdr->p_vaddr || possible[j]->get_mapped_size()!=shdr->p_memsz)
+                        continue; /*different mapped*/
+                    unsigned section_perms = (possible[j]->get_rperm() ? 0x01 : 0x00) |
+                                             (possible[j]->get_wperm() ? 0x02 : 0x00) |
+                                             (possible[j]->get_eperm() ? 0x04 : 0x00);
+                    unsigned segment_perms = (shdr->p_flags & PF_RPERM ? 0x01 : 0x00) |
+                                             (shdr->p_flags & PF_WPERM ? 0x02 : 0x00) |
+                                             (shdr->p_flags & PF_EPERM ? 0x04 : 0x00);
+                    if (section_perms!=segment_perms)
+                        continue;
+                }
+                matching.push_back(possible[j]);
+            }
+
+            ExecSection *s=NULL;
+            if (0==matching.size()) {
+                /* No matching section; create a new one */
+                char name[128];
+                switch (shdr->p_type) {
+                  case PT_LOAD:
+                    sprintf(name, "ELF load (segment %zu)", i);
+                    break;
+                  case PT_DYNAMIC:
+                    sprintf(name, "ELF dynamic (segment %zu)", i);
+                    break;
+                  case PT_INTERP:
+                    sprintf(name, "ELF interpreter (segment %zu)", i);
+                    break;
+                  case PT_NOTE:
+                    sprintf(name, "ELF note (segment %zu)", i);
+                    break;
+                  case PT_SHLIB:
+                    sprintf(name, "ELF shlib (segment %zu)", i);
+                    break;
+                  case PT_PHDR:
+                    sprintf(name, "ELF segment table (segment %zu)", i);
+                    break;
+                  default:
+                    sprintf(name, "ELF segment 0x%08x (segment %zu)", shdr->p_type, i);
+                    break;
+                }
+                s = new ExecSection(fhdr->get_file(), shdr->p_offset, shdr->p_filesz);
+                s->set_synthesized(true);
+                s->set_name(name);
+                s->set_purpose(SP_HEADER);
+                s->set_header(fhdr);
+            } else if (1==matching.size()) {
+                /* Use the single matching section. */
+                s = matching[0];
+            }
+
+            /* Make sure the section is mapped. */
+            if (!s->is_mapped()) {
+                s->set_mapped(shdr->p_vaddr, shdr->p_memsz);
+                s->set_rperm(shdr->p_flags & PF_RPERM ? true : false);
+                s->set_wperm(shdr->p_flags & PF_WPERM ? true : false);
+                s->set_eperm(shdr->p_flags & PF_EPERM ? true : false);
+            }
         }
     }
 }

@@ -225,6 +225,15 @@ enum SegmentType {
     PT_HIPROC           = 0x7fffffff
 };
 
+/* Segment bit flags */
+enum SegmentFlags {
+    PF_RESERVED         = 0x0ffffff8,           /* Reserved bits */
+    PF_EPERM            = 0x00000001,           /* Execute permission */
+    PF_WPERM            = 0x00000002,           /* Write permission */
+    PF_RPERM            = 0x00000004,           /* Read permission */
+    PF_PROC_MASK        = 0xf0000000            /* Processor-specific bits */
+};
+
 /* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
  * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
  * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. Segment
@@ -266,7 +275,8 @@ class ElfSegmentTableEntry {
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* These are the native-format versions of the same members described in Elf*SegmentTableEntry_disk */
-    unsigned            p_type, p_flags;
+    SegmentType         p_type;
+    SegmentFlags        p_flags;
     addr_t              p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align;
 
     /* The ELF header can define a segment table entry to be larger than the Elf*SegmentTableEntry_disk struct, so any
