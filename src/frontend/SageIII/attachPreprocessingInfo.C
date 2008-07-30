@@ -1213,7 +1213,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   //internalIncludePathList.push_back("-I"+string(CurrentPath)+"/");
 
 
-     string includeBase = findRoseSupportPathFromBuild("include-staging", ROSE_AUTOMAKE_INCLUDEDIR);
+     string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
      for (vector<string>::iterator i = internalIncludePathList.begin(); i != internalIncludePathList.end(); i++)
        {
            ROSE_ASSERT (!i->empty());

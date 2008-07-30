@@ -89,21 +89,30 @@ namespace CommandlineProcessing
           bool isOptionTakingFileName( std::string argument );
    };
 
-//! Find the path of a ROSE support file.  If the environment variable
-//! ROSE_IN_BUILD_TREE is set, the top of the source tree plus
-//! sourceTreeLocation is used as the location.  If the variable is not set,
-//! the path in installTreeLocation (with no prefix added) is used instead.
+//! Find the path of a ROSE support file.  If ROSE is not installed (see
+//! roseInstallPrefix()), the top of the source tree plus sourceTreeLocation is
+//! used as the location.  If the variable is not set, the path in
+//! installTreeLocation (with the install prefix added) is used instead.
 std::string
 findRoseSupportPathFromSource(const std::string& sourceTreeLocation,
                               const std::string& installTreeLocation);
 
-//! Find the path of a ROSE support file.  If the environment variable
-//! ROSE_IN_BUILD_TREE is set, that path plus buildTreeLocation is used as
-//! the location.  If the variable is not set, the path in
-//! installTreeLocation (with no prefix added) is used instead.
+//! Find the path of a ROSE support file.  If ROSE is not installed (see
+//! roseInstallPrefix()), the top of the build tree plus buildTreeLocation is
+//! used as the location.  If the variable is not set, the path in
+//! installTreeLocation (with the install prefix added) is used instead.
 std::string
 findRoseSupportPathFromBuild(const std::string& buildTreeLocation,
                              const std::string& installTreeLocation);
+
+//! Find the path of the ROSE install prefix.  There is an assumption that
+//! <directory containing librose>/.. is the prefix, and that other things can
+//! be found from that.  This may not be true if the various install
+//! directories are set by hand (rather than from $prefix).  This function
+//! either puts the prefix into RESULT and returns true (for an installed copy
+//! of ROSE), or returns false (for a build tree).
+bool
+roseInstallPrefix(std::string& result);
 
 // endif associated with define ROSE_COMMANDLINE_UTILITY_H
 #endif
