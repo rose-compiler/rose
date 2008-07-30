@@ -293,8 +293,8 @@ ExecFile::dump(FILE *f)
     
     /* Print results */
     fprintf(f, "File sections:\n");
-    fprintf(f, "  Flg Offset     Size       End         ID Perm Section Name\n");
-    fprintf(f, "  --- ---------- ---------- ----------  -- ---- -------------------------------------\n");
+    fprintf(f, "  Flg File-Addr  File-Size  File-End    Virt-Addr  Virt-Size  Virt-End   Perm  ID Name\n");
+    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
     addr_t high_water = 0;
     for (size_t i=0; i<sections.size(); i++) {
         ExecSection *section = sections[i];
@@ -319,32 +319,35 @@ ExecFile::dump(FILE *f)
             overlap[2] = 'h'; /* unaccounted only if overlaps are not allowed */
         }
         high_water = std::max(high_water, section->get_offset() + section->get_size());
-        
-        fprintf(f, "  %3s 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
-                overlap, section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
-        if (section->get_id()>=0) {
-            fprintf(f, "  %2d", section->get_id());
-        } else {
-            fputs("    ", f);
-        }
+        fprintf(f, "  %3s", overlap);
+
+        /* File addresses */
+        fprintf(f, " 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
+                section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
+
+        /* Mapped addresses */
         if (section->is_mapped()) {
-#if 0
+            fprintf(f, "  0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
+                    section->get_mapped_rva(), section->get_mapped_size(), section->get_mapped_rva()+section->get_mapped_size());
+        } else {
+            fprintf(f, " %*s", 3*11, "");
+        }
+
+        /* Permissions */
+        if (section->is_mapped()) {
             fprintf(f, " %c%c%c ",
-                    section->get_readable()  ?'r':'-',
-                    section->get_writable()  ?'w':'-', 
-                    section->get_executable()?'x':'-');
-#else
-            fputc(' ', f);
-            bool b = section->get_rperm();
-            fputc(b ? 'r' : '-', f);
-            b = section->get_wperm();
-            fputc(b ? 'w' : '-', f);
-            b = section->get_eperm();
-            fputc(b ? 'x' : '-', f);
-            fputc(' ', f);
-#endif
+                    section->get_rperm()?'r':'-',
+                    section->get_wperm()?'w':'-', 
+                    section->get_eperm()?'x':'-');
         } else {
             fputs("     ", f);
+        }
+
+        /* Section ID, name */
+        if (section->get_id()>=0) {
+            fprintf(f, " %3d", section->get_id());
+        } else {
+            fputs("    ", f);
         }
         fprintf(f, " %s\n", section->get_name().c_str());
     }
@@ -355,8 +358,8 @@ ExecFile::dump(FILE *f)
     } else if (sections.back()->get_offset() + sections.back()->get_size() < (addr_t)sb.st_size) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"                                EOF\n", overlap, (addr_t)sb.st_size);
-    fprintf(f, "  --- ---------- ---------- ----------  -- ---- -------------------------------------\n");
+    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, (addr_t)sb.st_size, 65, "");
+    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
 }
 
 /* Synthesizes sections to describe the parts of the file that are not yet referenced by other sections. */
