@@ -531,8 +531,12 @@ ExecSection::content(addr_t offset, addr_t size, void *buf)
         addr_t nbytes = this->size - offset;
         memcpy(buf, data+offset, nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
+        if (!congealed)
+            referenced.insert(std::make_pair(offset, offset+nbytes));
     } else {
         memcpy(buf, data+offset, size);
+        if (!congealed)
+            referenced.insert(std::make_pair(offset, offset+size));
     }
 }
 
