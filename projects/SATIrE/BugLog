@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.12 2008-07-14 09:22:01 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.13 2008-07-30 08:26:25 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -517,3 +517,28 @@ Fix:
     Compute the pre info attribute from the correct ICFG node.
 Status:
     Resolved 2008-07-14, GB
+
+
+Logged:
+    2008-07-30, GB
+Symptoms:
+    Runtime error "Type -1 is out of range, max is 1000" when running a PAG
+    analyzer.
+Reason:
+    The analysis attempts to use some SATIrE-defined type, but its allocator
+    has not been initialized. This is due to attempted use of a type that
+    has not been declared in the analysis.set file; it seems like this is
+    only possible if one uses wrong declarations for SATIrE support
+    functions. In particular, the error was observed when a user wrote the
+    declaration
+        exprid_typeid:: Expression -> TypeId;
+    instead of the correct version
+        exprid_typeid:: ExpressionId -> TypeId;
+Fix:
+    Nothing to do. We cannot enforce correct typing of the support
+    functions, and while we could force all of our types to be initialized
+    and possibly mask the error, the typing issue would still be present. As
+    such, it's better to have the error message that indirectly points one
+    to erroneous declarations in the analysis specification.
+Status:
+    Resolved 2008-07-30, GB
