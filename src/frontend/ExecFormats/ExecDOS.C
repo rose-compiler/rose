@@ -93,11 +93,7 @@ DOSFileHeader::unparse(FILE *f)
 {
     DOSFileHeader_disk disk;
     encode(&disk);
-
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    write(f, 0, sizeof disk, &disk);
 
     if (relocs)
         relocs->unparse(f);

@@ -693,10 +693,7 @@ ExecSection::unparse(FILE *f)
     fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
 #endif
 
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(data, 1, size, f);
-    ROSE_ASSERT(nwrite==size);
+    write(f, 0, size, data);
 }
 
 /* Write just the specified regions back to the file */
@@ -710,10 +707,7 @@ ExecSection::unparse(FILE *f, const ExtentVector &ev)
         addr_t extent_offset = p.first;
         addr_t extent_size   = p.second - p.first;
         const unsigned char *extent_data = content(extent_offset, extent_size);
-        int status = fseek(f, offset + extent_offset, SEEK_SET);
-        ROSE_ASSERT(status>=0);
-        size_t nwrite = fwrite(extent_data, 1, extent_size, f);
-        ROSE_ASSERT(nwrite==extent_size);
+        write(f, extent_offset, extent_size, extent_data);
     }
 }
 

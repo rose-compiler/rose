@@ -382,7 +382,7 @@ class NERelocEntry {
     NERelocEntry(ExecSection *relocs, addr_t at, addr_t *rec_size)
         {ctor(relocs, at, rec_size);}
     void ctor(ExecSection*, addr_t at, addr_t *rec_size);
-    void unparse(FILE*);
+    addr_t unparse(FILE*, ExecSection*, addr_t spos);
     void dump(FILE*, const char *prefix, ssize_t idx);
   public:
     NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */

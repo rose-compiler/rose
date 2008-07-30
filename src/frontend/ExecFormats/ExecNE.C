@@ -43,10 +43,7 @@ ExtendedDOSHeader::unparse(FILE *f)
 {
     ExtendedDOSHeader_disk disk;
     encode(&disk);
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    write(f, 0, sizeof disk, &disk);
 }
     
 void
@@ -196,10 +193,7 @@ NEFileHeader::unparse(FILE *f)
 {
     NEFileHeader_disk fh;
     encode(&fh);
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&fh, sizeof fh, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    write(f, 0, sizeof fh, &fh);
 
     /* The extended DOS header */
     if (dos2_header)
@@ -476,11 +470,7 @@ NESectionTable::unparse(FILE *f)
             NESectionTableEntry *shdr = section->get_st_entry();
             NESectionTableEntry_disk disk;
             shdr->encode(&disk);
-            addr_t entry_offset = offset + slot * sizeof disk;
-            int status = fseek(f, entry_offset, SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-            ROSE_ASSERT(1==nwrite);
+            write(f, slot*sizeof(disk), sizeof disk, &disk);
 
             /* Write the section and it's optional relocation table */
             section->unparse(f);
@@ -538,28 +528,27 @@ NENameTable::ctor(NEFileHeader *fhdr)
 void
 NENameTable::unparse(FILE *f)
 {
+    addr_t spos=0; /*section offset*/
     ROSE_ASSERT(names.size()==ordinals.size());
 
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
     for (size_t i=0; i<names.size(); i++) {
         /* Name length */
         ROSE_ASSERT(names[i].size()<=0xff);
         unsigned char len = names[i].size();
-        fputc(len, f);
+        spos = write(f, spos, len);
 
         /* Name */
-        fputs(names[i].c_str(), f);
+        spos = write(f, spos, names[i]);
 
         /* Ordinal */
         ROSE_ASSERT(ordinals[i]<=0xffff);
         uint16_t ordinal_le;
         host_to_le(ordinals[i], &ordinal_le);
-        fwrite(&ordinal_le, sizeof ordinal_le, 1, f);
+        spos = write(f, spos, sizeof ordinal_le, &ordinal_le);
     }
     
     /* Zero-terminated */
-    fputc('\0', f);
+    write(f, spos, '\0');
 }
 
 /* Prints some debugging info */
@@ -626,15 +615,13 @@ NEModuleTable::ctor(NEFileHeader *fhdr)
 void
 NEModuleTable::unparse(FILE *f)
 {
+    addr_t spos=0; /*section offset*/
     strtab->unparse(f);
 
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
     for (size_t i=0; i<name_offsets.size(); i++) {
         uint16_t name_offset_le;
         host_to_le(name_offsets[i], &name_offset_le);
-        ssize_t nwrite = fwrite(&name_offset_le, sizeof name_offset_le, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        spos = write(f, spos, sizeof name_offset_le, &name_offset_le);
     }
 }
     
@@ -828,54 +815,53 @@ NEEntryTable::populate_entries()
 void
 NEEntryTable::unparse(FILE *f)
 {
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
+    addr_t spos=0; /*section offset*/
 
     for (size_t bi=0, ei=0; bi<bundle_sizes.size(); ei+=bundle_sizes[bi++]) {
         ROSE_ASSERT(bundle_sizes[bi]>0 && bundle_sizes[bi]<=0xff);
         unsigned char n = bundle_sizes[bi];
-        fputc(n, f);
+        spos = write(f, spos, n);
 
         ROSE_ASSERT(ei+bundle_sizes[bi]<=entries.size());
         if (0==entries[ei].section_idx) {
             /* Unused entries */
-            fputc('\0', f);
+            spos = write(f, spos, '\0');
         } else if (0==entries[ei].int3f) {
             /* Fixed entries */
             ROSE_ASSERT(entries[ei].section_idx<=0xff);
             unsigned char n = entries[ei].section_idx;
-            fputc(n, f);
+            spos = write(f, spos, n);
             for (size_t i=0; i<bundle_sizes[bi]; i++) {
                 ROSE_ASSERT(entries[ei].section_idx==entries[ei+i].section_idx);
                 ROSE_ASSERT(entries[ei+i].int3f==0);
                 ROSE_ASSERT(entries[ei+i].flags<=0xff);
                 n = entries[ei+i].flags;
-                fputc(n, f);
+                spos = write(f, spos, n);
                 uint16_t eoff_le;
                 host_to_le(entries[ei+i].section_offset, &eoff_le);
-                fwrite(&eoff_le, sizeof eoff_le, 1, f);
+                spos = write(f, spos, sizeof eoff_le, &eoff_le);
             }
         } else {
             /* Movable entries */
-            fputc(0xff, f);
+            spos = write(f, spos, '\377');
             for (size_t i=0; i<bundle_sizes[bi]; i++) {
                 ROSE_ASSERT(entries[ei+i].section_idx>0);
                 ROSE_ASSERT(entries[ei+i].int3f!=0);
                 ROSE_ASSERT(entries[ei+i].flags<=0xff);
                 n = entries[ei+i].flags;
-                fputc(n, f);
+                spos = write(f, spos, n);
                 uint16_t word;
                 host_to_le(entries[ei+i].int3f, &word);
-                fwrite(&word, sizeof word, 1, f);
+                spos = write(f, spos, sizeof word, &word);
                 ROSE_ASSERT(entries[ei+i].section_idx<=0xff);
                 n = entries[ei+i].section_idx;
-                fputc(n, f);
+                spos = write(f, spos, n);
                 host_to_le(entries[ei+i].section_offset, &word);
-                fwrite(&word, sizeof word, 1, f);
+                spos = write(f, spos, sizeof word, &word);
             }
         }
     }
-    fputc('\0', f);
+    write(f, spos, '\0');
 }
 
 /* Print some debugging info */
@@ -992,42 +978,42 @@ NERelocEntry::ctor(ExecSection *relocs, addr_t at, addr_t *rec_size/*out*/)
         *rec_size = at - orig_at;
 }
 
-/* Write entry back to disk at current file offset */
-void
-NERelocEntry::unparse(FILE *f)
+/* Write entry back to disk at the specified section and section offset, returning new offset */
+addr_t
+NERelocEntry::unparse(FILE *f, ExecSection *section, addr_t spos)
 {
     unsigned char byte;
     byte = (modifier << 8) | (src_type & 0x0f);
-    fputc(byte, f);
+    spos = section->write(f, spos, byte);
     byte = (flags << 2) | (tgt_type & 0x03);
-    fputc(byte, f);
+    spos = section->write(f, spos, byte);
     
     uint16_t word;
     uint32_t dword;
     host_to_le(src_offset, &word);
-    fwrite(&word, sizeof word, 1, f);
+    spos = section->write(f, spos, sizeof word, &word);
     
     switch (tgt_type) {
       case RF_TGTTYPE_IREF:
         host_to_le(iref.sect_idx, &byte);
-        fputc(byte, f);
+        spos = section->write(f, spos, byte);
         host_to_le(iref.res1, &byte);
-        fputc(byte, f);
+        spos = section->write(f, spos, byte);
         host_to_le(iref.tgt_offset, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         break;
       case RF_TGTTYPE_IORD:
         host_to_le(iord.modref, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         host_to_le(iord.ordinal, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         if (flags & RF_2EXTRA) {
             if (flags & RF_32ADD) {
                 host_to_le(iord.addend, &dword);
-                fwrite(&dword, sizeof dword, 1, f);
+                spos = section->write(f, spos, sizeof dword, &dword);
             } else {
                 host_to_le(iord.addend, &word);
-                fwrite(&word, sizeof word, 1, f);
+                spos = section->write(f, spos, sizeof word, &word);
             }
         } else {
             ROSE_ASSERT(iord.addend==0);
@@ -1035,16 +1021,16 @@ NERelocEntry::unparse(FILE *f)
         break;
       case RF_TGTTYPE_INAME:
         host_to_le(iname.modref, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         host_to_le(iname.nm_off, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         if (flags & RF_2EXTRA) {
             if (flags & RF_32ADD) {
                 host_to_le(iname.addend, &dword);
-                fwrite(&dword, sizeof dword, 1, f);
+                spos = section->write(f, spos, sizeof dword, &dword);
             } else {
                 host_to_le(iname.addend, &word);
-                fwrite(&word, sizeof word, 1, f);
+                spos = section->write(f, spos, sizeof word, &word);
             }
         } else {
             ROSE_ASSERT(iname.addend==0);
@@ -1052,13 +1038,14 @@ NERelocEntry::unparse(FILE *f)
         break;
       case RF_TGTTYPE_OSFIXUP:
         host_to_le(osfixup.type, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         host_to_le(osfixup.res3, &word);
-        fwrite(&word, sizeof word, 1, f);
+        spos = section->write(f, spos, sizeof word, &word);
         break;
       default:
         ROSE_ASSERT(!"unknown relocation target type");
     }
+    return spos;
 }
     
 /* Print some debugging info */
@@ -1168,15 +1155,13 @@ NERelocTable::ctor(NEFileHeader *fhdr)
 void
 NERelocTable::unparse(FILE *f)
 {
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    
+    addr_t spos=0; /*section offset*/
     uint16_t size_le;
     host_to_le(entries.size(), &size_le);
-    fwrite(&size_le, sizeof size_le, 1, f);
+    spos = write(f, spos, sizeof size_le, &size_le);
     
     for (size_t i=0; i<entries.size(); i++) {
-        entries[i].unparse(f);
+        spos = entries[i].unparse(f, this, spos);
     }
 }
     

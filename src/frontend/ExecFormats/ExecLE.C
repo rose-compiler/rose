@@ -190,10 +190,7 @@ LEFileHeader::unparse(FILE *f)
 {
     LEFileHeader_disk fh;
     encode(get_sex(), &fh);
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&fh, sizeof fh, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    write(f, 0, sizeof fh, &fh);
 
     /* The extended DOS header */
     if (dos2_header)
@@ -420,11 +417,11 @@ LEPageTable::get_page(size_t idx)
 void
 LEPageTable::unparse(FILE *f)
 {
-    fseek(f, offset, SEEK_SET);
+    addr_t spos=0; /*section offset*/
     for (size_t i=0; i<entries.size(); i++) {
         LEPageTableEntry_disk disk;
         entries[i]->encode(get_header()->get_sex(), &disk);
-        fwrite(&disk, sizeof disk, 1, f);
+        spos = write(f, spos, sizeof disk, &disk);
     }
 }
 
@@ -617,11 +614,7 @@ LESectionTable::unparse(FILE *f)
             LESectionTableEntry *shdr = section->get_st_entry();
             LESectionTableEntry_disk disk;
             shdr->encode(get_header()->get_sex(), &disk);
-            addr_t entry_offset = offset + slot * sizeof disk;
-            int status = fseek(f, entry_offset, SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-            ROSE_ASSERT(1==nwrite);
+            write(f, slot*sizeof(disk), sizeof disk, &disk);
 
             /* Write the section */
             section->unparse(f);
@@ -679,28 +672,26 @@ LENameTable::ctor(LEFileHeader *fhdr)
 void
 LENameTable::unparse(FILE *f)
 {
+    addr_t spos=0; /*section offset*/
     ROSE_ASSERT(names.size()==ordinals.size());
-
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
     for (size_t i=0; i<names.size(); i++) {
         /* Name length */
         ROSE_ASSERT(names[i].size()<=0xff);
         unsigned char len = names[i].size();
-        fputc(len, f);
+        spos = write(f, spos, len);
 
         /* Name */
-        fputs(names[i].c_str(), f);
+        spos = write(f, spos, names[i]);
 
         /* Ordinal */
         ROSE_ASSERT(ordinals[i]<=0xffff);
         uint16_t ordinal_le;
         host_to_le(ordinals[i], &ordinal_le);
-        fwrite(&ordinal_le, sizeof ordinal_le, 1, f);
+        spos = write(f, spos, sizeof ordinal_le, &ordinal_le);
     }
     
     /* Zero-terminated */
-    fputc('\0', f);
+    write(f, spos, '\0');
 }
 
 /* Prints some debugging info */
@@ -738,15 +729,15 @@ LEEntryPoint::ctor(ByteOrder sex, const LEEntryPoint_disk *disk)
     res1         = disk_to_host(sex, disk->res1);
 }
 
-/* Write the entry information back to the disk at the current file offset */
-void
-LEEntryPoint::unparse(FILE *f, ByteOrder sex)
+/* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
+addr_t
+LEEntryPoint::unparse(FILE *f, ByteOrder sex, ExecSection *section, addr_t spos)
 {
     if (0==(flags & 0x01)) {
         /* Empty entry; write only the flag byte */
         uint8_t byte;
         host_to_disk(sex, flags, &byte);
-        fputc(byte, f);
+        spos = section->write(f, spos, byte);
     } else {
         /* Non-empty entry */
         LEEntryPoint_disk disk;
@@ -755,8 +746,9 @@ LEEntryPoint::unparse(FILE *f, ByteOrder sex)
         host_to_disk(sex, entry_type,   &(disk.entry_type));
         host_to_disk(sex, entry_offset, &(disk.entry_offset));
         host_to_disk(sex, res1,         &(disk.res1));
-        fwrite(&disk, sizeof disk, 1, f);
+        spos = section->write(f, spos, sizeof disk, &disk);
     }
+    return spos;
 }
 
 /* Print some debugging info */
@@ -830,14 +822,14 @@ LEEntryTable::ctor(LEFileHeader *fhdr)
 void
 LEEntryTable::unparse(FILE *f)
 {
-    fseek(f, offset, SEEK_SET);
+    addr_t spos=0; /*section offset*/
     ROSE_ASSERT(entries.size()<=0xff);
     uint8_t byte = entries.size();
-    fputc(byte, f);
+    spos = write(f, spos, byte);
     
     ByteOrder sex = get_header()->get_sex();
     for (size_t i=0; i<entries.size(); i++) {
-        entries[i].unparse(f, sex);
+        spos = entries[i].unparse(f, sex, this, spos);
     }
 }
 
@@ -891,10 +883,7 @@ LERelocTable::ctor(LEFileHeader *fhdr)
 /* Write relocation table back to disk */
 void
 LERelocTable::unparse(FILE *f)
-{
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-}
+{}
 #endif
     
 /* Print some debugging info */
