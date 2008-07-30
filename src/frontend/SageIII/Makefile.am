@@ -38,25 +38,37 @@ CLEANFILES = preproc.o haveRosettaGeneratedSource
 
 # DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
-GENERATED_SOURCE  = \
-   Cxx_Grammar.C \
-   Cxx_GrammarReturnClassHierarchySubTree.C \
-   Cxx_GrammarNewConstructors.C \
-   Cxx_GrammarTreeTraversalSuccessorContainer.C \
-   Cxx_GrammarVariantEnumNames.C \
-   Cxx_GrammarRTI.C \
-   Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
-   Cxx_GrammarReturnDataMemberPointers.C \
-   Cxx_GrammarReturnDataMemberReferenceToPointers.C \
-   Cxx_GrammarCopyMemberFunctions.C \
-   Cxx_GrammarTraverseMemoryPool.C \
-   Cxx_GrammarNewAndDeleteOperators.C \
-   Cxx_GrammarGetChildIndex.C \
-   AST_FILE_IO.C StorageClasses.C
+GENERATED_SOURCE = \
+	Cxx_Grammar.h \
+	Cxx_Grammar.C \
+	AstQueryMemoryPool.h \
+	Cxx_GrammarReturnClassHierarchySubTree.C \
+	Cxx_GrammarTreeTraversalSuccessorContainer.C \
+	Cxx_GrammarRTI.C \
+	Cxx_GrammarTreeTraversalAccessEnums.h \
+	Cxx_GrammarVariantEnumNames.C \
+	Cxx_GrammarNewAndDeleteOperators.C \
+	Cxx_GrammarCopyMemberFunctions.C \
+	Cxx_GrammarTraverseMemoryPool.C \
+	Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
+	AST_FILE_IO.h \
+	AST_FILE_IO.C \
+	StorageClasses.h \
+	StorageClasses.C \
+	Cxx_GrammarReturnDataMemberPointers.C \
+	Cxx_GrammarReturnDataMemberReferenceToPointers.C \
+	Cxx_GrammarNewConstructors.C \
+	Cxx_GrammarGetChildIndex.C \
+	astFileIO/AstSpecificDataManagingClass.h \
+	astFileIO/SourcesOfIRNodesAstFileIOSupport.C
 
 haveRosettaGeneratedSource:
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
 	touch haveRosettaGeneratedSource
+
+force-haveRosettaGeneratedSource:
+	-rm Cxx_Grammar.h
+	$(MAKE) haveRosettaGeneratedSource
 
 $(GENERATED_SOURCE): haveRosettaGeneratedSource
 
@@ -127,7 +139,10 @@ nodist_include_HEADERS = \
    Cxx_Grammar.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \
    AST_FILE_IO.h StorageClasses.h \
-   AstQueryMemoryPool.h
+   AstQueryMemoryPool.h \
+   astFileIO/AstSpecificDataManagingClass.h
+
+BUILT_SOURCES = $(GENERATED_SOURCE)
 
 # DQ (9/9/2007): Put C++_include_files.h back into place
 # since it is a convinient mechanism to handle included headers 
