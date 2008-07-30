@@ -1,7 +1,7 @@
 #ifndef CLASS_HIERARCHY_GRAPH_H
 #define CLASS_HIERARCHY_GRAPH_H
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
    #include <GlobalDatabaseConnection.h>
 #endif
 
@@ -35,7 +35,7 @@ class ClassHierarchyWrapper
     void setAST( SgNode *proj );
 
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
     std::string dbName;
     ClassHierarchyWrapper( std::string db = "__defaultClassHierarch" );
     void setDBName( std::string db ); 

@@ -5,13 +5,13 @@
 using namespace std;
 
 // DQ (9/9/2005): Don't include the database by default
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
    #include "GlobalDatabaseConnection.h"
 #endif
 
 int main( int argc, char * argv[] ) 
    {
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
   // Build the Data base
      GlobalDatabaseConnection *gDB;
      gDB = new GlobalDatabaseConnection( "functionNameDataBase" );
@@ -60,7 +60,7 @@ int main( int argc, char * argv[] )
 
           string functionName = functionDeclaration->get_qualified_name().str();
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
           command = "INSERT INTO Functions values(\"" + functionName + "\"," + 
                   StringUtility::numberToString(counter) + ");";
        // Alternative interface
@@ -71,7 +71,7 @@ int main( int argc, char * argv[] )
 #endif
         }
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
      command = "SELECT * from Functions;";
 
   // Alternative Interface (using query objects)

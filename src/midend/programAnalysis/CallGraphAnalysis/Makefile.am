@@ -2,9 +2,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-## The grammar generator (ROSETTA) should use its own template repository
-CXX_TEMPLATE_REPOSITORY_PATH = .
-
 libCallGraphSources =  CallGraph.C ClassHierarchyGraph.C
 
 noinst_LTLIBRARIES = libCallGraph.la

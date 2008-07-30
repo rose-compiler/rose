@@ -26,7 +26,7 @@ ClassHierarchyWrapper::setAST( SgNode *proj )
   root = proj;
  }
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
 
 ClassHierarchyWrapper::ClassHierarchyWrapper( std::string db ) 
  { 
@@ -99,7 +99,7 @@ ClassHierarchyWrapper::ClassHierarchyWrapper( SgNode *node )
   ROSE_ASSERT ( isSgProject( node ) );
   root = node;
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
   dbName = "__defaultClassHierarchy";
 #endif
 
@@ -228,7 +228,7 @@ ClassHierarchyWrapper::getDirectSubclasses ( SgClassDefinition * cls )
   return classList;
 }
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
 // generates the class hierarchy shema ( not the classes themselves )
 void
 ClassHierarchyWrapper::createHierarchySchema ()
@@ -248,7 +248,7 @@ ClassHierarchyWrapper::createHierarchySchema ()
 }
 #endif
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
 Rose_STL_Container<string>
 ClassHierarchyWrapper::getDirectSubclasses( string className )
 {
@@ -278,7 +278,7 @@ ClassHierarchyWrapper::getDirectSubclasses( string className )
 }
 #endif
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
 Rose_STL_Container<string>
 ClassHierarchyWrapper::getSubclasses( string className )
 {
@@ -311,7 +311,7 @@ ClassHierarchyWrapper::getSubclasses( string className )
 }
 #endif
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
 // writes the class hierarchy to the specified database
 void
 ClassHierarchyWrapper::writeHierarchyToDB ()
