@@ -1,8 +1,6 @@
 #!/bin/bash
-# This script creates a release package of ROSE with EDG binaries
-# It does a fresh checkout (export to be exact) of ROSE and 
-#  conducts series tests before doing so.
-#
+# This script does a fresh checkout of ROSE, conducts series tests, and builds source 
+# and binary release.
 # Please provide your customized configurations in a .sh file before using this script:
 #
 # example .sh file: rose/scripts/roseFreshTestStub-Jeremiah-asmAsEnum.sh, which sets 
@@ -11,20 +9,19 @@
 # 2. The path to the source and build directories of ROSE
 # 3. The configuration options for building ROSE
 # 4. Email notification recipients, etc.  
-#
+# 5. SVNOP=checkout or default export mode
+# 6. SVNVERSIONOPTION=yourVersionNumber or default head revision
+
 # Usage ------------------
-#
-# Must set the ROSE revision number (svnversion) off which you build the release packages
-#
 # manual run it:
-#      ./roseFreshTestBinaryDistribution yourConfigurationStub.sh 
+#      ./thisScript yourConfiguration.sh 
 #
 # automatically run it as a daily cron job running at 2:30AM
 #   $ crontab -e
-#   30 2 * * * /home/liao6/rose/scripts/thisScript /path/to/yourconfig.sh
+#   30 2 * * * /home/liao6/rose/scripts/thisscript /path/to/yourconfig.sh
 #
 # Liao, Jeremiah, 2/7/2008
-# Last modified 7/29/2008
+# Last modified 7/30/2008
 #------------------------------------------------------
 
 user_config_file="$1"
@@ -43,9 +40,10 @@ export TMPDIR
 
 set -e
 
-svnversion=1309 
-
-svnmodificationdate=`${SVN} info -r${svnversion} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
+# SVNVERSIONOPTION is one of the -r options in "svn help checkout"
+if [ "x$SVNVERSIONOPTION" = "x" ]; then SVNVERSIONOPTION="HEAD"; fi
+svnversion=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Revision: ' | cut -f 2 -d \ `
+svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
 
 (
 echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
@@ -86,8 +84,8 @@ buildstatus=0
 
 #------------------------------------------------------
 # check out a fresh copy for testing
-# use export to avoid .svn directories
-  $SVN export -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
+  if [ "x$SVNOP" = "x" ]; then SVNOP=export; fi
+  $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
 
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
