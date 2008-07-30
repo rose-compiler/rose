@@ -58,9 +58,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarReturnDataMemberPointers.C \
 	Cxx_GrammarReturnDataMemberReferenceToPointers.C \
 	Cxx_GrammarNewConstructors.C \
-	Cxx_GrammarGetChildIndex.C \
-	astFileIO/AstSpecificDataManagingClass.h \
-	astFileIO/SourcesOfIRNodesAstFileIOSupport.C
+	Cxx_GrammarGetChildIndex.C
 
 haveRosettaGeneratedSource:
 	cd $(top_builddir)/src/ROSETTA/src; $(MAKE)
