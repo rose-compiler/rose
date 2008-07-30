@@ -420,6 +420,22 @@ echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
 # echo "In configure.in (after libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 
+# Various functions for finding the location of librose.* (used to make the
+# ROSE executables relocatable to different locations without recompilation on
+# some platforms)
+AC_CHECK_HEADERS([dlfcn.h], [have_dladdr=yes], [have_dladdr=no])
+if test "x$have_dladdr" = "xyes"; then
+  AC_CHECK_LIB([dl], [dladdr], [], [have_dladdr=no])
+fi
+if test "x$have_dladdr" = "xyes"; then
+  AC_DEFINE([HAVE_DLADDR], [], [Whether <dlfcn.h> and -ldl contain dladdr()])
+  use_rose_in_build_tree_var=no
+else
+  AC_MSG_WARN([ROSE cannot find the locations of loaded shared libraries using your dynamic linker.  ROSE can only be used with the given build directory or prefix, and the ROSE_IN_BUILD_TREE environment variable must be used to distinguish the two cases.])
+  use_rose_in_build_tree_var=yes
+fi
+AM_CONDITIONAL([USE_ROSE_IN_BUILD_TREE_VAR], [test "x$use_rose_in_build_tree_var" = "xyes"])
+
 # exit 1
 
 # Figure out what version of lex we have available

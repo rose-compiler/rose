@@ -90,7 +90,11 @@ roseDirectoryMap.pdf: Makefile
 #	Generate output from the --help commandline option for use in documentation
 roseHelpOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
+if USE_ROSE_IN_BUILD_TREE_VAR
 	  env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
+else
+	  $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
+endif
 	else \
 	  echo "--help option output is not available (build ROSE, then rebuild documentation)." > roseHelpOutput.txt; \
 	fi;
@@ -103,7 +107,11 @@ roseCommandline.txt:
 roseExecutionOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
 	  echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
+if USE_ROSE_IN_BUILD_TREE_VAR
 	  env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
+else
+	  $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
+endif
 	else \
 	  echo "Execution output is not available (build ROSE, then rebuild documentation)." > roseExecutionOutput.txt; \
 	fi;

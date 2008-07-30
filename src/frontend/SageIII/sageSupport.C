@@ -1,6 +1,11 @@
 #include "rose.h"
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <libgen.h>
+
+#ifdef HAVE_DLADDR
+#include <dlfcn.h>
+#endif
 
 using namespace std;
 
@@ -30,46 +35,69 @@ CommandlineProcessing::isOptionWithParameter ( vector<string> & argv, string opt
    }
 #endif
 
-#if 0
-// DQ: 5/19/2008): This does not appear to be used in this file...
-static bool sameFile(const string& a, const string& b) {
-  // Uses stat() to test device and inode numbers
-  // Returning false on error is so that a non-existant file doesn't match
-  // anything
-  // printf("sameFile('%s', '%s')\n", a.c_str(), b.c_str());
-  struct stat aStat, bStat;
-  int statResultA = stat(a.c_str(), &aStat);
-  if (statResultA != 0) return false;
-  int statResultB = stat(b.c_str(), &bStat);
-  if (statResultB != 0) return false;
-  return aStat.st_dev == bStat.st_dev && aStat.st_ino == bStat.st_ino;
-}
-#endif
-
-static bool isRoseInBuildTree() {
-  const char* envVar = getenv("ROSE_IN_BUILD_TREE");
-  if (envVar) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
 string
 findRoseSupportPathFromSource(const string& sourceTreeLocation,
                               const string& installTreeLocation) {
-  return isRoseInBuildTree() ?
-         (string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/" + sourceTreeLocation) :
-         installTreeLocation;
+  string installTreePath;
+  bool inInstallTree = roseInstallPrefix(installTreePath);
+  if (inInstallTree) {
+    return installTreePath + "/" + installTreeLocation;
+  } else {
+    return string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/" + sourceTreeLocation;
+  }
 }
 
 string
 findRoseSupportPathFromBuild(const string& buildTreeLocation,
                              const string& installTreeLocation) {
-  const char* envVar = getenv("ROSE_IN_BUILD_TREE");
-  return isRoseInBuildTree() ?
-         (string(envVar) + "/" + buildTreeLocation) :
-         installTreeLocation;
+  string installTreePath;
+  bool inInstallTree = roseInstallPrefix(installTreePath);
+  if (inInstallTree) {
+    return installTreePath + "/" + installTreeLocation;
+  } else {
+    return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation;
+  }
+}
+
+bool roseInstallPrefix(std::string& result) {
+#ifdef HAVE_DLADDR
+  {
+    Dl_info info;
+    int retval = dladdr((void*)(&roseInstallPrefix), &info);
+    if (retval == 0) goto default_check;
+    char* libroseName = strdup(info.dli_fname);
+    if (libroseName == NULL) goto default_check;
+    char* libdir = dirname(libroseName);
+    if (libdir == NULL) {free(libroseName); goto default_check;}
+    char* libdirCopy = strdup(libdir);
+    if (libdirCopy == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
+    char* libdirBasenameCS = basename(libdirCopy);
+    if (libdirBasenameCS == NULL) {free(libroseName); free(libdirCopy); goto default_check;}
+    string libdirBasename = libdirBasenameCS;
+    free(libdirCopy);
+    char* prefixCS = dirname(libdir);
+    if (prefixCS == NULL) {free(libroseName); goto default_check;}
+    string prefix = prefixCS;
+    free(libroseName);
+    if (libdirBasename == ".libs") {
+      return false;
+    } else {
+      result = prefix;
+      return true;
+    }
+  }
+#endif
+default_check:
+#ifdef HAVE_DLADDR
+  // Emit a warning that the hard-wired prefix is being used
+  cerr << "Warning: roseInstallPrefix() is using the hard-wired prefix and ROSE_IN_BUILD_TREE even though it should be relocatable" << endl;
+#endif
+  if (getenv("ROSE_IN_BUILD_TREE") != NULL) {
+    return false;
+  } else {
+    result = ROSE_AUTOMAKE_PREFIX;
+    return true;
+  }
 }
 
 void 
@@ -3025,7 +3053,7 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
    }
 
 static string makeSysIncludeList(const Rose_STL_Container<string>& dirs) {
-  string includeBase = findRoseSupportPathFromBuild("include-staging", ROSE_AUTOMAKE_INCLUDEDIR);
+  string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
   string result;
   for (Rose_STL_Container<string>::const_iterator i = dirs.begin();
        i != dirs.end(); ++i) {

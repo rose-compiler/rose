@@ -1723,8 +1723,8 @@ int main(int argc, char** argv) {
   includePaths.clear();
   addIncludePath(".");
   vector<string> sourceFiles = parseParameters(argv[0], vector<char*>(argv + 1, argv + argc));
-  addIncludePath(findRoseSupportPathFromSource("projects/palette/", ROSE_AUTOMAKE_DATADIR));
-  addIncludePath(findRoseSupportPathFromBuild("projects/palette/", ROSE_AUTOMAKE_DATADIR));
+  addIncludePath(findRoseSupportPathFromSource("projects/palette/", "share"));
+  addIncludePath(findRoseSupportPathFromBuild("projects/palette/", "share"));
 
   vector<PrologAst::Node*> program;
   for (unsigned int i = 0; i < sourceFiles.size(); ++i) {
