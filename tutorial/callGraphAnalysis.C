@@ -42,7 +42,7 @@ main( int argc, char * argv[] )
 
 // DQ (7/28/2005): Added use of macro set in config.h so that call 
 // graphs can be generated even if SQLite is not installed with ROSE.
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
      CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
      output.writeToDB( 1, "DATABASE" );

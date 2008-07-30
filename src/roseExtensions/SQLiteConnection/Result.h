@@ -19,10 +19,10 @@ class Result {
   Matrix dataRows;
   Row headerRow;
   int nRows, nCols;
-  vector <string> colTypes;
+  std::vector <std::string> colTypes;
 
  public:
-  Result (char **d, int nRow, int nCol, vector <string> *types);
+  Result (char **d, int nRow, int nCol, std::vector <std::string> *types);
   Result(const Result &);
   void showResult();
   // return a wrapper for vector <string>
@@ -59,7 +59,7 @@ class Result {
     {
       if (currentNo < i)
       {
-	cerr << "Runtime error, iterator substraction out of bounds\n";
+	std::cerr << "Runtime error, iterator substraction out of bounds\n";
 	exit(1);
       }
       currentNo -= i;

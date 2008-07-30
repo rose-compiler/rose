@@ -13,4 +13,4 @@
 
 class Row;
 
-typedef vector <Row> Matrix;
+typedef std::vector <Row> Matrix;

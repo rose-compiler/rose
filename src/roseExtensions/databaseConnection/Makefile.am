@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_DATABASE
+if ROSE_USE_MYSQL_DATABASE
 # DQ (11/13/2003): Modified to use GNU specific -idirafter option to 
 #                  correct set.h (the g++ set.h instead of the C++ mySQL set.h)
 # INCLUDES = $(ROSE_INCLUDES) -I/usr/include/g++-3 -I@MySQL_path@/include -I@MySQL_path@/include/mysql

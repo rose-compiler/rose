@@ -7,7 +7,7 @@
 #include <VirtualGraphCreate.h>
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
    #include <GlobalDatabaseConnection.h>
 #endif
 
@@ -359,7 +359,7 @@ class CallGraphDotOutput : public GraphDotOutput <CallGraphCreate>
        virtual int getVertexSubgraphId ( GraphNode & v );
 
 // DQ (7/28/2005): Don't include the data base
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_MYSQL
        void createCallGraphSchema ( GlobalDatabaseConnection **gDB, std::string dbName );
        int writeToDB ( int i = 0, std::string dbName = "" );
        void writeSubgraphToDB ( GlobalDatabaseConnection *gDB );

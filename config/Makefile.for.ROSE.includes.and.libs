@@ -32,7 +32,7 @@ export ROSE_IN_BUILD_TREE=$(top_builddir)
 
 # This is control over the use of MySQL (which is complicated to use and install)
 # This support for MySQL will be removed in the future.
-if ROSE_USE_DATABASE
+if ROSE_USE_MYSQL_DATABASE
  # The use of the side effect analysis is dependent upon the data base support
  # which is compiled optionally (see configure --help, for details)
    ROSE_SIDEEFFECTS_INCLUDE             = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
@@ -53,20 +53,17 @@ if ROSE_USE_DATABASE
    ROSE_DATABASE_LIBS                = -l$(ROSE_DATABASE_LIB_NAME)
 
  # MySQL support is setup optionally at compile time (see configure --help, for details)
- # MYSQL_DATABASE_LIBS    = @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lfl -lz
-   MYSQL_DATABASE_LIBS    = @MySQL_path@/lib/mysql/libmysqlclient.a @MySQL_path@/lib/libsqlplus.a -lz
-   MYSQL_DATABASE_INCLUDE = -idirafter @MySQL_path@/include -idirafter @MySQL_path@/include/mysql
+   MYSQL_DATABASE_LIBS    = $(MYSQL_LDFLAGS)
+   MYSQL_DATABASE_INCLUDE = $(MYSQL_CFLAGS)
 endif
 
 # SQLite is a simpler database to use than MySQL
 if ROSE_USE_SQLITE_DATABASE
-   ROSE_SQLITE_DATABASE_INCLUDE  = -I$(top_srcdir)/src/roseExtensions/SQLiteConnection
- # SQLITE_DATABASE_INCLUDE       = -I/home/dquinlan/SQLite/sqliteCompileTree/include
-   SQLITE_DATABASE_INCLUDE       = -I@SQLite_path@/include
- # SQLITE_DATABASE_LIBS          = /home/dquinlan/SQLite/sqliteCompileTree/lib/libsqlite3.a
-   SQLITE_DATABASE_LIBS          = @SQLite_path@/lib/libsqlite3.a
+   ROSE_SQLITE_DATABASE_INCLUDE  = $(SQLITE3_CFLAGS)
+   SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS)
+   SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
    ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
-   ROSE_SQLITE_DATABASE_LIB_NAME = RoseSQLiteDatabase
+   ROSE_SQLITE_DATABASE_LIB_NAME = roseSQLiteDatabase
    ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
    ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
 endif

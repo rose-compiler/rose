@@ -80,7 +80,7 @@ private:
 	Connection *connection;
 
 	//! database name for database login
-	string dbName;
+	std::string dbName;
 
 private:
   //! avoid copying of the database class

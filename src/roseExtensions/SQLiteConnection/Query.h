@@ -7,9 +7,9 @@
 class Query {
 
  private:
-  string command;
+  std::string command;
   int err_type;
-  string err_msg;
+  std::string err_msg;
   sqlite3 *db;
 
  public:
@@ -22,13 +22,13 @@ class Query {
   int execute ();
   int execute(const char *);
   int success ();
-  string error ();
+  std::string error ();
   void clear() { command = ""; }
-  void set(string c) { command = c; }
+  void set(const std::string& c) { command = c; }
   Result *store ();
   Result *store_with_types();
-  string preview ();
-  string& operator<< (const string&);
+  std::string preview ();
+  std::string& operator<< (const std::string&);
   //void operator << (const char *);
 };
 

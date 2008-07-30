@@ -1,10 +1,8 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-// #include <rose.h>
+#include "rose.h"
 
 #include <GlobalDatabaseConnection.h>
+
+using namespace std;
 
 //-----------------------------------------------------------------------------
 // constructor

@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 # The testing of the side effect analysis depends upon the side effect analysis, 
 # which depends upon the database support within ROSE, which depends upon the use 
 # of MySQL, which is an external (and optional) piece of the ROSE puzzle.
-if ROSE_USE_DATABASE
+if ROSE_USE_MYSQL_DATABASE
 
 INCLUDES = $(ROSE_INCLUDES)
 

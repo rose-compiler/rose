@@ -65,7 +65,7 @@ main( int argc, char * argv[] ) {
    //  GenerateDotGraph(CGBuilder.getGraph(),"callgraph.dot");
 
    ClassHierarchyWrapper hier( project );
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
    hier.setDBName( "ClassHierarchy" );
    hier.createHierarchySchema();
    hier.writeHierarchyToDB();
@@ -75,7 +75,7 @@ main( int argc, char * argv[] ) {
 
    CallGraphDotOutput output( *(CGBuilder.getGraph()) );
 
-#ifdef USE_ROSE_SQL_DATABASE_SUPPORT
+#ifdef HAVE_SQLITE3
    output.writeToDB( 1, "DATABASE" );
    output.filterNodesByDirectory( "DATABASE", "/export" );
    output.filterNodesByDB( "DATABASE", "__filter.db" );

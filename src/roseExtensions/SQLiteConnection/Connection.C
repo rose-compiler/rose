@@ -1,10 +1,8 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-// #include <rose.h>
+#include "rose.h"
 
 #include <Connection.h>
+
+using namespace std;
 
 int Connection::lastId = 0;
 

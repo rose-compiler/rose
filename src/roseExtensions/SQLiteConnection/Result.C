@@ -1,10 +1,7 @@
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
-// #include <rose.h>
-
+#include "rose.h"
 #include <Result.h>
+
+using namespace std;
 
 // copy constructor
 Result::Result(const Result& rS)

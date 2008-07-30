@@ -11,10 +11,10 @@ class Row
    ColData operator[] (int i) { return rows[i]; }
    int size () { return rows.size(); }
    bool empty () { return rows.empty(); }
-   void reserve (int i) { return rows.reserve(i); }
-   void push_back(string s) { return rows.push_back(s); }
+   void reserve (int i) { rows.reserve(i); }
+   void push_back(const std::string& s) { rows.push_back(s); }
  private:
-   vector <string> rows;
+   std::vector <std::string> rows;
 };
 
 #endif

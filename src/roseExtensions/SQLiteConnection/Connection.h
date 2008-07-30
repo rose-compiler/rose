@@ -8,18 +8,18 @@
 class Connection {
  private:
     bool connected;
-    string dbName;
+    std::string dbName;
     sqlite3 *db;
     Query *qry;
     static int lastId;
 
  public:
     Connection ();
-    Connection (string dbN);
+    Connection (std::string dbN);
 
     int open();
     int close();
-    int drop_db(string);
+    int drop_db(std::string);
     Query *query();
     int insert_id();
     sqlite3 * getDB();

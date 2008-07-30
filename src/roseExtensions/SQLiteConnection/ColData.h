@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 // DQ (12/30/2005): This is a Bad Bad thing to do (I can explain)
 // it hides names in the global namespace and causes errors in 
@@ -14,19 +15,19 @@
 class ColData
 {
  private:
-   string value;
+   std::string value;
  public:
-   ColData (string val) { value = val; }
-   string get_string() { return value; }
+   ColData (std::string val) { value = val; }
+   std::string get_string() { return value; }
    
-   operator int () { return atoi(value.c_str()); }
-   operator long () { return atol(value.c_str()); }
-   operator float () { return (float)atof(value.c_str()); }
-   operator double () { return atof(value.c_str()); }
-   friend ostream& operator<< (ostream& os, const ColData& cd) {
+   operator int () { return boost::lexical_cast<int>(value); }
+   operator long () { return boost::lexical_cast<long>(value); }
+   operator float () { return boost::lexical_cast<float>(value); }
+   operator double () { return boost::lexical_cast<double>(value); }
+   friend std::ostream& operator<< (std::ostream& os, const ColData& cd) {
      return os << cd.value;
    }
-   operator string () { return value; }
+   operator std::string () { return value; }
 };
 
 #endif

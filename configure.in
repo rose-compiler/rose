@@ -156,10 +156,12 @@ AX_BOOST_SERIALIZATION
 #AX_BOOST_TEST_EXEC_MONITOR
 AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
-AX_LIB_SQLITE3([3.0.0])
 AX_BOOST_WAVE
 
 # AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
+
+AX_LIB_SQLITE3
+AX_LIB_MYSQL
 
 # Test this macro here at the start to avoid long processing times (before it fails)
 CHOOSE_BACKEND_COMPILER
@@ -262,13 +264,10 @@ ROSE_SUPPORT_MYSQL
 # echo "In configure: with_MySQL = $with_MySQL"
 
 # Setup Automake conditional in Projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_DATABASE,test ! "$with_MySQL" = no)
-
-# Call supporting macro for SQLite (simpler than MySQL)
-ROSE_SUPPORT_SQLITE
+AM_CONDITIONAL(ROSE_USE_MYSQL_DATABASE,[test "x$MYSQL_VERSION" != "x"])
 
 # Setup Automake conditional in ROSE/projects/DataBase/Makefile.am
-AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,test ! "$with_SQLite" = no)
+AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 
 # Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
