@@ -118,7 +118,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
      * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
     memset(&oh32, 0, sizeof oh32);
-    addr_t need32 = std::min(e_nt_hdr_size, sizeof oh32);
+    addr_t need32 = std::min(e_nt_hdr_size, (addr_t)(sizeof oh32));
     extend_up_to(need32);
     content(sizeof fh, sizeof oh32, &oh32);
     e_opt_magic = le_to_host(oh32.e_opt_magic);
@@ -158,7 +158,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         /* We guessed wrong so extend and read the 64-bit header. */
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
-        addr_t need64 = std::min(e_nt_hdr_size, sizeof oh64);
+        addr_t need64 = std::min(e_nt_hdr_size, (addr_t)(sizeof oh64));
         extend_up_to(need64-need32);
         content(sizeof fh, sizeof oh64, &oh64);
         e_lmajor             = le_to_host(oh64.e_lmajor);
