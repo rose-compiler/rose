@@ -390,7 +390,7 @@ class PEImportHintName {
         : hint(0), padding('\0')
         {ctor(section, offset);}
     virtual ~PEImportHintName() {};
-    void unparse(FILE *f, addr_t offset); /*not the standard unparse() function*/
+    void unparse(FILE *f, ExecSection*, addr_t spos); /*not the standard unparse() function*/
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
     /* Accessors for protected/private data members */

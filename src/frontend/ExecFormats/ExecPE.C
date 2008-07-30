@@ -50,10 +50,7 @@ ExtendedDOSHeader::unparse(FILE *f)
 {
     ExtendedDOSHeader_disk disk;
     encode(&disk);
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    write(f, 0, sizeof disk, &disk);
 }
     
 void
@@ -408,19 +405,14 @@ PEFileHeader::unparse(FILE *f)
     }
     
     /* Write file and optional header to disk */
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwrite = fwrite(&fh, sizeof fh, 1, f);
-    ROSE_ASSERT(1==nwrite);
-    nwrite = fwrite(oh, oh_size, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    addr_t spos = write(f, 0, sizeof fh, &fh);
+    spos = write(f, spos, oh_size, oh);
 
     /* The variable length RVA/size pair table */
     for (size_t i=0; i<e_num_rvasize_pairs; i++) {
         RVASizePair_disk rvasize_disk;
         rvasize_pairs[i].encode(&rvasize_disk);
-        nwrite = fwrite(&rvasize_disk, sizeof rvasize_disk, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        spos = write(f, spos, sizeof rvasize_disk, &rvasize_disk);
     }
 
     /* The extended DOS header */
@@ -650,11 +642,7 @@ PESectionTable::unparse(FILE *f)
             PESectionTableEntry *shdr = section->get_st_entry();
             PESectionTableEntry_disk disk;
             shdr->encode(&disk);
-            addr_t entry_offset = offset + slot * sizeof disk;
-            int status = fseek(f, entry_offset, SEEK_SET);
-            ROSE_ASSERT(status>=0);
-            size_t nwrite = fwrite(&disk, sizeof disk, 1, f);
-            ROSE_ASSERT(1==nwrite);
+            write(f, slot*sizeof(disk), sizeof disk, &disk);
 
             /* Write the section */
             section->unparse(f);
@@ -734,24 +722,20 @@ PEImportHintName::ctor(ExecSection *section, addr_t offset)
 
 /* Writes the hint/name back to disk at the specified offset */
 void
-PEImportHintName::unparse(FILE *f, addr_t offset)
+PEImportHintName::unparse(FILE *f, ExecSection *section, addr_t spos)
 {
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-
     /* The hint */
     uint16_t hint_le;
     host_to_le(hint, &hint_le);
-    size_t nwrite = fwrite(&hint_le, sizeof hint_le, 1, f);
-    ROSE_ASSERT(1==nwrite);
+    spos = section->write(f, spos, sizeof hint_le, &hint_le);
 
     /* NUL-terminated name */
-    fputs(name.c_str(), f);
-    fputc('\0', f);
+    spos = section->write(f, spos, name);
+    spos = section->write(f, spos, '\0');
     
     /* Padding to make an even size */
     if ((name.size()+1) % 2)
-        fputc(padding, f);
+        section->write(f, spos, padding);
 }
 
 /* Print debugging info */
@@ -902,51 +886,43 @@ PEImportSection::unparse(FILE *f)
         /* Directory entry */
         PEImportDirectory_disk idir_disk;
         idir->encode(&idir_disk);
-        int status = fseek(f, offset+(dllno*sizeof idir_disk), SEEK_SET);
-        ROSE_ASSERT(status>=0);
-        size_t nwrite = fwrite(&idir_disk, sizeof idir_disk, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        write(f, dllno*sizeof(idir_disk), sizeof idir_disk, &idir_disk);
 
         /* Library name */
         ROSE_ASSERT(idir->dll_name_rva >= mapped_rva);
         addr_t dll_name_offset = idir->dll_name_rva - mapped_rva;
         ROSE_ASSERT(dll_name_offset + dll->get_name().size() + 1 < size);
-        status = fseek(f, offset+dll_name_offset, SEEK_SET);
-        ROSE_ASSERT(status>=0);
-        fputs(dll->get_name().c_str(), f);
-        fputc('\0', f);
+        addr_t spos = write(f, dll_name_offset, dll->get_name());
+        write(f, spos, '\0');
 
         /* Write the hint/name pairs and the array entries that point to them. */
         if (idir->hintnames_rva!=0) {
             ROSE_ASSERT(idir->hintnames_rva >= mapped_rva);
-            addr_t hintname_rvas_offset = offset + idir->hintnames_rva - mapped_rva; /*file offset*/
+            addr_t hintname_rvas_spos = idir->hintnames_rva - mapped_rva; /*section offset*/
             const std::vector<addr_t> &hintname_rvas = dll->get_hintname_rvas();
             const std::vector<PEImportHintName*> &hintnames = dll->get_hintnames();
             for (size_t i=0; i<=hintname_rvas.size(); i++) {
                 /* Hint/name RVA */
                 addr_t hintname_rva = i<hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
                 bool import_by_ordinal=false;
-                status = fseek(f, hintname_rvas_offset + i*fhdr->get_word_size(), SEEK_SET);
-                ROSE_ASSERT(status>=0);
                 if (4==fhdr->get_word_size()) {
                     uint32_t rva_le;
                     host_to_le(hintname_rva, &rva_le);
-                    nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                    write(f, hintname_rvas_spos + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
                     import_by_ordinal = (hintname_rva & 0x80000000) != 0;
                 } else if (8==fhdr->get_word_size()) {
                     uint64_t rva_le;
                     host_to_le(hintname_rva, &rva_le);
-                    nwrite = fwrite(&rva_le, sizeof rva_le, 1, f);
+                    write(f, hintname_rvas_spos + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
                     import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
                 }
-                ROSE_ASSERT(1==nwrite);
             
                 /* Hint/name pair */
                 if (i<hintname_rvas.size() && !import_by_ordinal) {
-                    addr_t hintname_offset = offset + (hintname_rvas[i] & 0x7fffffff) - mapped_rva; /*file offset*/
-                    hintnames[i]->unparse(f, hintname_offset);
+                    addr_t hintname_spos = (hintname_rvas[i] & 0x7fffffff) - mapped_rva; /*section offset*/
+                    hintnames[i]->unparse(f, this, hintname_spos);
                 }
             }
         }
@@ -954,24 +930,21 @@ PEImportSection::unparse(FILE *f)
         /* Write the bindings array */
         if (idir->bindings_rva!=0) {
             ROSE_ASSERT(idir->bindings_rva >= mapped_rva);
-            const addr_t bindings_offset = offset + idir->bindings_rva - mapped_rva; /*file offset*/
+            const addr_t bindings_spos = idir->bindings_rva - mapped_rva; /*section offset*/
             const std::vector<addr_t> &bindings = dll->get_bindings();
             for (size_t i=0; i<=bindings.size(); i++) {
                 addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
-                status = fseek(f, bindings_offset + i*fhdr->get_word_size(), SEEK_SET);
-                ROSE_ASSERT(status>=0);
                 if (4==fhdr->get_word_size()) {
                     uint32_t binding_le;
                     host_to_le(binding, &binding_le);
-                    nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+                    write(f, bindings_spos + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
                 } else if (8==fhdr->get_word_size()) {
                     uint64_t binding_le;
                     host_to_le(binding, &binding_le);
-                    nwrite = fwrite(&binding_le, sizeof binding_le, 1, f);
+                    write(f, bindings_spos + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
                 }
-                ROSE_ASSERT(1==nwrite);
             }
         }
     }
@@ -980,10 +953,7 @@ PEImportSection::unparse(FILE *f)
     {
         PEImportDirectory_disk zero;
         memset(&zero, 0, sizeof zero);
-        int status = fseek(f, offset + dlls.size()*sizeof zero, SEEK_SET);
-        ROSE_ASSERT(status>=0);
-        size_t nwrite = fwrite(&zero, sizeof zero, 1, f);
-        ROSE_ASSERT(1==nwrite);
+        write(f, dlls.size()*sizeof zero, sizeof zero, &zero);
     }
 
     unparse_holes(f);
@@ -1337,20 +1307,14 @@ COFFSymtab::ctor(ExecFile *ef, PEFileHeader *fhdr)
 void
 COFFSymtab::unparse(FILE *f)
 {
-    int status = fseek(f, offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
+    addr_t spos=0; /*section offset*/
     
     for (size_t i=0; i<symbols.size(); i++) {
         COFFSymbol *symbol = symbols[i];
         COFFSymbol_disk disk;
         symbol->encode(&disk);
-        size_t nwrite = fwrite(&disk, COFFSymbol_disk_size, 1, f);
-        ROSE_ASSERT(1==nwrite);
-        
-        if (symbol->get_aux_size()>0) {
-            nwrite = fwrite(symbol->get_aux_data(), symbol->get_aux_size(), 1, f);
-            ROSE_ASSERT(1==nwrite);
-        }
+        spos = write(f, spos, COFFSymbol_disk_size, &disk);
+        spos = write(f, spos, symbol->get_aux_size(), symbol->get_aux_data());
     }
     if (get_strtab())
         get_strtab()->unparse(f);
