@@ -122,9 +122,11 @@ DOSFileHeader::add_rm_section(addr_t max_offset)
         return NULL;
 
     if (max_offset>0) {
-        ROSE_ASSERT(max_offset >= rm_offset);
-        if (rm_offset + rm_size > max_offset)
+        if (max_offset < rm_offset) {
+            rm_size = 0;
+        } else if (rm_offset + rm_size > max_offset) {
             rm_size = max_offset - rm_offset;
+        }
     }
     rm_section = new ExecSection(get_file(), rm_offset, rm_size);
     rm_section->set_name("DOS real-mode text/data");
