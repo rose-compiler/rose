@@ -6,7 +6,7 @@ AC_DEFUN([ROSE_SUPPORT_GCC_OMP],
 
 AC_MSG_CHECKING(for GCC OpenMP)
 AC_ARG_WITH(gcc_omp,
-[  --with-gcc_omp=PATH	Specify the prefix where Omni OpenMP Runtime System is installed],
+[  --with-gcc_omp  Enables OMP in ROSE to run Compass thread parallel],
 ,
 if test ! "$with_gcc_omp" ; then
    with_gcc_omp=no
