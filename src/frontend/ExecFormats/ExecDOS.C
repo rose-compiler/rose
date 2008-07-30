@@ -107,16 +107,20 @@ DOSFileHeader::unparse(FILE *f)
 }
 
 /* Adds the real-mode section to the DOS file header. If max_offset is non-zero then use that as the maximum offset of the
- * real-mode section. */
-void
+ * real-mode section. If the DOS header indicates a zero sized section then return NULL. If the section exists or is zero size due
+ * to the max_offset then return the section. */
+ExecSection *
 DOSFileHeader::add_rm_section(addr_t max_offset)
 {
     ROSE_ASSERT(NULL==rm_section);
     
     addr_t rm_offset = e_header_paragraphs * 16;
-    addr_t rm_end = e_total_pages * 512 - (512 - e_last_page_size % 512);
-    ROSE_ASSERT(rm_end > rm_offset);
+    addr_t rm_end = e_total_pages * 512 - (e_total_pages>0 ? 512 - e_last_page_size % 512 : 0);
+    ROSE_ASSERT(rm_end >= rm_offset);
     addr_t rm_size = rm_end - rm_offset;
+    if (rm_size==0)
+        return NULL;
+
     if (max_offset>0) {
         ROSE_ASSERT(max_offset >= rm_offset);
         if (rm_offset + rm_size > max_offset)
@@ -128,6 +132,7 @@ DOSFileHeader::add_rm_section(addr_t max_offset)
     rm_section->set_purpose(SP_PROGRAM);
     rm_section->set_header(this);
     rm_section->set_eperm(true);
+    return rm_section;
 }
     
 /* Print some debugging info */
