@@ -1199,7 +1199,7 @@ cleanDocs:
 
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck*
-	find . -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
+	find . -depth -a -name \*.dSYM -a -exec rm -rf {} \; # OS X object file debug info
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 
