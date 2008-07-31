@@ -169,14 +169,16 @@ AstPDFGeneration_private::edit_page(size_t pageNumber, SgNode* node, PDFInherite
      RTIReturnType rti=node->roseRTI();
      for(RTIReturnType::iterator i=rti.begin(); i<rti.end(); i++)
         {
-          if (i->type.size() >= 7 &&
-              i->type.substr(0, 7) == "static ") {
+          if (strlen(i->type) >= 7 &&
+              strncmp(i->type, "static ", 7) == 0) {
             continue; // Skip static members
           }
           HPDF_Page_SetRGBFill(currentPage, 0.5, 0, 0.1);
-          HPDF_Page_ShowTextNextLine(currentPage, (i->type+" ").c_str());
+          HPDF_Page_ShowTextNextLine(currentPage, i->type);
+          HPDF_Page_ShowText(currentPage, " ");
           HPDF_Page_SetRGBFill(currentPage, 0.0, 0.5, 0.5);
-          HPDF_Page_ShowText(currentPage, (i->name+" : ").c_str());
+          HPDF_Page_ShowText(currentPage, i->name);
+          HPDF_Page_ShowText(currentPage, " : ");
           HPDF_Page_SetRGBFill(currentPage, 0.0, 0.0, 0.0);
       
           string value=i->value;
