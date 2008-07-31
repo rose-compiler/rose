@@ -55,7 +55,12 @@ namespace DominatorTreesAndDominanceFrontiers
 				std::cout << "x\tDF\n";
 				for (int i = 0; i < dominatorTree.getSize(); i++)
 				{
-					std::cout <<i<<"\t"<<dominatorFrontier[i]<<std::endl;
+					std::cout <<i<<"\t{";
+                                        for (std::set<int>::const_iterator j = dominatorFrontier[i].begin(); j != dominatorFrontier[i].end(); ++j) {
+                                          if (j != dominatorFrontier[i].begin()) std::cout << ", ";
+                                          std::cout << *j;
+                                        }
+                                        std::cout <<"}" << std::endl;
 				}
 				return ;
 
