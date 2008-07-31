@@ -31,5 +31,8 @@ SVNOP=checkout
 
 MAKEFLAGS="-j16"
 
+# TP (31Jul2008) make sure that the mpi deamon runs in the background
+test mpd && echo "MPD Running" || mpd &
+
 set -e
 set -o pipefail
