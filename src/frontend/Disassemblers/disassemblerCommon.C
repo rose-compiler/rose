@@ -4,14 +4,19 @@ using namespace std;
 using namespace Exec;
 
 ExecSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const {
-  vector<ExecSection*> possibleSections = ef->get_sections_by_va(addr);
-  if (possibleSections.empty()) {
-    return NULL;
-  } else if (possibleSections.size() != 1) {
-    cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
-    abort();
+  ExecSection *section = ef->get_section_by_va(addr);
+  if (!section) {
+    vector<ExecSection*> possibleSections = ef->get_sections_by_va(addr);
+    if (possibleSections.empty()) {
+      // There is no section to satisfy the request.
+      return NULL;
+    } else if (possibleSections.size() != 1) {
+      // Multiple sections found and they don't map consistently between file and memory.
+      cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
+      abort();
+    }
   }
-  return possibleSections[0];
+  return section;
 }
 
 bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
@@ -27,11 +32,7 @@ bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
 size_t DisassemblerCommon::AsmFileWithData::getFileOffsetOfAddress(uint64_t addr) const {
   ExecSection* section = getSectionOfAddress(addr);
   if (!section) abort();
-  ROSE_ASSERT (section->is_mapped());
-  ExecHeader* header = section->get_header();
-  ROSE_ASSERT (header);
-  uint64_t rva = addr - header->get_base_va();
-  return rva - section->get_mapped_rva() + section->get_offset();
+  return section->get_va_offset(addr);
 }
 
 SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const {
