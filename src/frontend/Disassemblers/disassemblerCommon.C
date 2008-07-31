@@ -7,13 +7,21 @@ ExecSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t a
   ExecSection *section = ef->get_section_by_va(addr);
   if (!section) {
     vector<ExecSection*> possibleSections = ef->get_sections_by_va(addr);
-    if (possibleSections.empty()) {
+    vector<ExecSection*> possibleSections2;
+    for (size_t i = 0; i < possibleSections.size(); ++i) {
+      if (possibleSections[i]->get_id() != -1) {
+        possibleSections2.push_back(possibleSections[i]);
+      }
+    }
+    if (possibleSections2.empty()) {
       // There is no section to satisfy the request.
       return NULL;
-    } else if (possibleSections.size() != 1) {
+    } else if (possibleSections2.size() != 1) {
       // Multiple sections found and they don't map consistently between file and memory.
       cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
       abort();
+    } else {
+      return possibleSections2[0];
     }
   }
   return section;
