@@ -20,6 +20,18 @@ libroseEDG_la_LDFLAGS = -no-undefined
 libroseEDG_la_DEPENDENCIES = $(libroseEDGlibraries)
 # libroseEDG_la_DEPENDENCIES = dummyCppFileForLibroseEDG.C
 
+# DQ (7/30/2008): Added support for building binary distribution without rerunning configure.
+copy_libs_for_binary_distribution:
+#	echo "Copying (using scripts/libtoolcp) libroseEDG.la to $(distdir)"
+	echo "In CxxFrontend: distdir = $(top_builddir)/$(distdir)"
+	if [ -f libroseEDG.la ]; then \
+      echo "libroseEDG.la file exists"; \
+      sed "s@^dependency_libs.*@dependency_libs=''@" libroseEDG.la > $(top_builddir)/$(distdir)/libroseEDG.la ; \
+      cp -Rp .libs $(top_builddir)/$(distdir); \
+   else \
+      echo "libroseEDG file does not exist (meaningless distribution being built)"; \
+   fi
+
 else
 
 librose.la:
@@ -39,6 +51,7 @@ dist-hook:
 #	cp -a libroseEDG.la $(distdir)
 #	cp -a .libs $(distdir)
 #	ln -s $(distdir)/libroseEDG.la $(distdir)/.libs/libroseEDG.la
+	echo "In CxxFrontend: distdir = $(distdir)"
 	if [ -f libroseEDG.la ]; then \
       echo "libroseEDG.la file exists"; \
       sed "s@^dependency_libs.*@dependency_libs=''@" libroseEDG.la > $(distdir)/libroseEDG.la ; \

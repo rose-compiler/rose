@@ -517,6 +517,7 @@ HEADER_DECLARATION_MODIFIER_START
                e_export  = 4,  /*!< Export qualifier */
                e_throw   = 5,  /*!< Exception handling support (throw) */
                e_bind    = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
+               e_final   = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
                e_last_modifier /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
 
@@ -564,6 +565,11 @@ HEADER_DECLARATION_MODIFIER_START
           bool isBind() const;
           void setBind();
           void unsetBind();
+
+       // PHP specific attribute
+          bool isFinal() const;
+          void setFinal();
+          void unsetFinal();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1908,6 +1914,10 @@ bool SgDeclarationModifier::isBind() const { return checkBit(e_bind,p_modifierVe
 void SgDeclarationModifier::setBind()      { setBit(e_bind,p_modifierVector); }
 void SgDeclarationModifier::unsetBind()    { unsetBit(e_bind,p_modifierVector); }
 
+bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifierVector); }
+void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
+void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
+
 std::ostream & operator<< ( std::ostream & os, SgDeclarationModifier & m) 
    {
       os << m.get_modifierVector(); 
@@ -1925,6 +1935,7 @@ SgDeclarationModifier::displayString() const
      s += std::string("isExport() = ")  + std::string(isExport()  ? "true " : "false ");
      s += std::string("isThrow() = ")   + std::string(isThrow()   ? "true " : "false ");
      s += std::string("isBind() = ")    + std::string(isBind()    ? "true " : "false ");
+     s += std::string("isFinal() = ")   + std::string(isFinal()   ? "true " : "false ");
      s += std::string("\n     ") + get_typeModifier().displayString() + " ";
      s += std::string("\n     ") + get_accessModifier().displayString() + " ";
      s += std::string("\n     ") + get_storageModifier().displayString();
