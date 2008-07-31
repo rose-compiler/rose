@@ -338,11 +338,25 @@ ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 OPEN_FORTRAN_PARSER_PATH="${ac_top_builddir}/src/3rdPartyLibraries/fortran-parser" # For the one rule that uses it
 AC_SUBST(OPEN_FORTRAN_PARSER_PATH)
+
+AX_WITH_PROG(GFORTRAN_PATH, [gfortran], [])
+
+ofp_enabled=no
+AC_MSG_CHECKING([whether Fortran support can be used])
 if test "x$USE_JAVA" = x1; then
-  AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [$USE_JAVA], [Always enable Fortran support whenever Java is present])
   CPPFLAGS="$CPPFLAGS $JAVA_JVM_INCLUDE"
+  if test "x$GFORTRAN_PATH" != "x"; then
+    AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
+    ofp_enabled=yes
+    AC_MSG_RESULT([yes])
+  else
+    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-java)])
+  fi
+else
+  AC_MSG_RESULT([no ... Java cannot be found (try --with-gfortran)])
 fi
-AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$USE_JAVA" = x1])
+AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
+AC_SUBST(GFORTRAN_PATH)
 
 AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX

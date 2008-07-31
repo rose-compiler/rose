@@ -4620,7 +4620,7 @@ SgFile::callFrontEnd ()
                       // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
 
                          vector<string> fortranCommandLine;
-                         fortranCommandLine.push_back("gfortran");
+                         fortranCommandLine.push_back(ROSE_GFORTRAN_PATH);
                          fortranCommandLine.push_back("-fsyntax-only");
 
                       // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
@@ -5203,7 +5203,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           if (get_Fortran_only() == true)
              {
             // compilerNameString = "f77 ";
-               compilerNameString[0] = "gfortran";
+               compilerNameString[0] = ROSE_GFORTRAN_PATH;
 
                if (get_backendCompileFormat() == e_fixed_form_output_format)
                   {
