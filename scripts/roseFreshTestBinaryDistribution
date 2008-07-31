@@ -144,6 +144,15 @@ if [ $buildstatus == 0 ]; then
   echo "> Environment:" >> mailtext
   printenv >> mailtext
   echo "" >> mailtext
+   # Invoke the import script finally, Liao, 7/31/2008
+  ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP}
+  if [ $? -ne 0 ]; then
+    echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
+    exit 3
+  else
+    echo "importRoseDistributionToSVN finishes normally.">>mailtext
+  fi
+
 else
   echo "Subject: ROSE test $$ on `hostname` results (fail)" > mailtext
   echo "" >> mailtext
