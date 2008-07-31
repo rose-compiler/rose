@@ -1308,6 +1308,32 @@ void SingleInstructionTranslator::translate() {
          break;
        }
 
+    case x86_aaa: {
+      ROSE_ASSERT (operands.size() == 0);
+      SgVariableSymbol* alSym = cacheValue(makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte)));
+      append(buildIfStmt(
+               buildOrOp(buildGreaterOrEqualOp(buildVarRefExp(alSym), buildIntVal(10)), f->makeFlagRead(x86flag_af)),
+               buildBasicBlock(
+                 makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_high_byte),
+                           buildAddOp(makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_high_byte)),
+                                      buildIntVal(1))),
+                 makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte),
+                           buildBitAndOp(
+                             buildAddOp(buildVarRefExp(alSym),
+                                        buildIntVal(6)),
+                             buildIntValHex(0xF))),
+                 f->makeFlagWrite(x86flag_af, buildBoolValExp(true)),
+                 f->makeFlagWrite(x86flag_cf, buildBoolValExp(true))),
+               buildBasicBlock(
+                 makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte),
+                           buildBitAndOp(
+                             buildVarRefExp(alSym),
+                             buildIntValHex(0xF))),
+                 f->makeFlagWrite(x86flag_af, buildBoolValExp(false)),
+                 f->makeFlagWrite(x86flag_cf, buildBoolValExp(false)))));
+      break;
+    }
+
     case x86_push: {
       ROSE_ASSERT (operands.size() == 1);
       makePush(makeRead(operands[0]));
