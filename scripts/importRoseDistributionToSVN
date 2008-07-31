@@ -8,9 +8,10 @@
 # Second, it imports the package which passes the check to 
 #  the head of an external repository using svn_load_dirs.1.4.5.pl
 # Use
-#  thisScript distro-package
+#  update the values of ROSE_COPY, WORK_DIR when necessary 
+#  thisScript distro-package.tar.gz
 #
-# by Liao, 7/30/2008
+# by Liao, 7/31/2008
 # Last Modified 7/30/2008
 #------------------------------------------------------
 
@@ -22,10 +23,13 @@ then
 fi
 
 ROSE_DISTRIBUTION=$1
+ROSE_COPY=/home/liao6/rose
 
+#REMOTE_SVN_REPOS=file:////home/liao6/test3/ROSE.MIRROR
+REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
 echo "ROSE distribution package is:${ROSE_DISTRIBUTION}"
 
-WORK_DIR=/home/liao6/test4
+WORK_DIR=/tmp/$$
 
 rm -rf ${WORK_DIR}
 mkdir -p ${WORK_DIR}
@@ -47,22 +51,25 @@ find . -name .svn | xargs rm -rf
 #----------------------------------------------------
 
 # We search for a representative source file: il_def.h
-EDG_FILES=($(find . -name il_def.h))
+EDG_FILES=($(find . -name il_def.h -or -name cp_gen_be.c -or -name lower_il.h))
 #EDG_FILES=($(find . -name Makefile.am))
 if [ ${EDG_FILES[0]} ]; then
   echo Fatal Error: Found copyrighted EDG source files:${EDG_FILES[@]}
-  exit
+  exit 1
 fi
 
 # and the copyright string of EDG: "Proprietary information of Edison Design Group Inc."
-EDG_COPYRIGHT_STRINGS=($(find . -regex '.*.[C|c|h|Cxx]' | xargs grep 'Proprietary information of Edison Design Group Inc.'))
-#EDG_COPYRIGHT_STRINGS=($(find . -regex '.*.[C|c|h|Cxx]'|xargs grep 'Liao'))
+EDG_COPYRIGHT_STRINGS=($(find . -name \*.C -or -name \*.h -or -name \*.c -or -name \*.cpp| xargs grep 'Proprietary information of Edison Design Group Inc.'))
 
 if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
   echo Fatal Error: Found copyrighted EDG text in source files:${EDG_COPYRIGHT_STRINGS[@]}
-  exit
+  exit 2
 fi
 
 # Now we can upload the package
 #--------------------------------------------------------
+${ROSE_COPY}/scripts/svn_load_dirs.1.4.5.pl -no_user_input ${REMOTE_SVN_REPOS} trunk ${WORK_DIR}/${ROSE_DIST_DIR}
 
+# cleanup, svn_load_dirs.pl has some trouble to clean up itself. We help it here as well
+rm -rf ${WORK_DIR}
+rm -rf /tmp/svn_load_dirs*
