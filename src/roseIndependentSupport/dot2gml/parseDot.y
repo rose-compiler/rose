@@ -5,9 +5,12 @@
 %{
 #include "parse_header.h"
 #include <sstream>
+#include <queue>
+
+using namespace std;
 
 extern ofstream GML;
-std:: string edge_str, crt_options;
+std::string edge_str, crt_options;
 unsigned long buf_len = 0;
 int yyerror (char *s);
 int yylex (void);

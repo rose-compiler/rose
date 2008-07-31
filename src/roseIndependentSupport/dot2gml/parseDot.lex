@@ -2,7 +2,7 @@
 %{
 #include "parse_header.h"
 #include "y.tab.h"
-int yyerror(char *s);
+int yyerror(const char *s);
 int yylineno = 1;
 %}
 
@@ -51,8 +51,3 @@ inquote          \\\"
 .               ;
 
 %%
-
-int yywrap (void)
-{
-  return 1;
-}
