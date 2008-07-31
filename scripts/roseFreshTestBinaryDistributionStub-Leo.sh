@@ -30,6 +30,7 @@ MAILADDRS="liaoch@llnl.gov"
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=export
+SVNVERSIONOPTION=1303
 
 MAKEFLAGS="-j16"
 
