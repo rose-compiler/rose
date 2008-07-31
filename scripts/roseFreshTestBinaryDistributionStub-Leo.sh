@@ -15,7 +15,6 @@ export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
-# DQ (7/19/2008): Permissions were not reset after my 3rd striped disk was added! So use another directory for now.
 ROSE_TOP="/home/liao6/daily-test-rose/svn-test-rose-alt/$$/"
 
 # for regular build and tests
@@ -33,6 +32,8 @@ SVNOP=export
 SVNVERSIONOPTION=1303
 
 MAKEFLAGS="-j16"
+
+ENABLE_UPLOAD=yes
 
 set -e
 set -o pipefail
