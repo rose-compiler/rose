@@ -2429,9 +2429,6 @@ Grammar::buildCode ()
 
      ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
 
-  // DQ (12/31/2005): Insert "using namespace std;" into the source file (but never into the header files!)
-     ROSE_ArrayGrammarSourceFile.push_back(StringUtility::StringWithLineNumber("\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n", "", 1));
-
   // Setup the data base of names (linking name strings to grammar element tags)
      buildVariantsStringDataBase(ROSE_ArrayGrammarSourceFile);
      
@@ -2682,45 +2679,10 @@ Grammar::buildCode ()
        << "  return os << \"\\\"\" << n.str() << \"\\\"\";\n}\n";
 
 #if 1
-  // DQ (3/10/2007): Added output function for SgNodeSet objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, std::set<SgNode*>& s) \n   {\n "
-       << "     for (set<SgNode*>::iterator i = s.begin(); i != s.end(); i++) os << *i;\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
   // DQ (9/0/2006): Added output function for Sgxxx objects
      rtiFile 
        << "std::ostream& operator<<(std::ostream& os, SgAsmStmt::AsmRegisterNameList & bv) \n   {\n "
        << "     for (unsigned int i=0; i < bv.size(); i++) os << ((long)(bv[i]));\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (12/6/2003): Added output function for SgBitVector objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, std::vector<bool>& bv) \n   {\n "
-       << "     for (unsigned int i=0; i < bv.size(); i++) os << ((bv[i] == true) ? \"T\" : \"F\");\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (12/6/2003): Added output function for SgBitVector objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, std::set<int>& s) \n   {\n "
-       << "     for (set<int>::iterator i = s.begin(); i != s.end(); i++) os << *i;\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (12/20/2005): Added output function for support of map<int, string> in Sg_File_Info objects
-     rtiFile
-       << "std::ostream& operator<<(std::ostream& os, std::map<int, std::string>& s) \n   {\n "
-       << "     for (std::map<int, std::string>::iterator i = s.begin(); i != s.end(); i++) os << i->first;\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (12/20/2005): Added output function for support of map<string, int> in Sg_File_Info objects
-     rtiFile
-       << "std::ostream& operator<<(std::ostream& os, std::map<std::string, int>& s) \n   {\n "
-       << "     for (std::map<std::string, int>::iterator i = s.begin(); i != s.end(); i++) os << i->first;\n"
        << "     return os;\n   }\n";
 #endif
 #if 1
@@ -2917,11 +2879,7 @@ void Grammar::buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumber
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::generateRTIImplementation);
   string result;
   result += "// generated file\n";
-  result += "#if ROSE_USE_VALGRIND\n";
-  result += "#include <valgrind/valgrind.h>\n";
-  result += "#include <valgrind/memcheck.h>\n";
-  result += "#include <stdio.h>\n";
-  result += "#endif\n";
+  result += "#include \"rtiHelpers.h\"\n";
   // container in file scope to avoid multiple (200) template instantiation
   result += "static " + RTIreturnType + " " + RTIContainerName + ";\n\n";
   result += a.text; // synthesized attribute
@@ -2988,43 +2946,14 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   ostringstream ss;
   
   ss << "#if ROSE_USE_VALGRIND\n";
-  ss << "if (VALGRIND_CHECK_DEFINED(p_" << memberVariableName << ")) {\n";
-  ss << "  fprintf(stderr, \"Warning: uninitialized field p_" << memberVariableName << " of object %p of class " << className << "\\n\", this);\n";
-  ss << "}\n";
+  ss << "doUninitializedFieldCheck(\"" << memberVariableName << "\", (void*)(&p_" << memberVariableName << "), sizeof(p_" << memberVariableName << "), (void*)this, \"" << className << "\");\n";
   ss << "#endif\n";
-  ss << "{ostringstream _ss; ";
-// JW (inserted by DQ) (7/23/2004): Allows STL containers to be output and permits 
-// more information to be generated for variables.
-   if (isSTLContainer(const_cast<char*>(&(typeString.c_str()[string(getGrammarPrefixName()).length()])))) 
-     {
-       ss << "_ss << \"[\";\n";
-       ss << "for (" << typeString.c_str() << "::const_iterator i = p_" << memberVariableName << ".begin(); i != p_" << memberVariableName << ".end(); ++i) {if (i != p_" << memberVariableName << ".begin()) _ss << \", \"; _ss << &(*i);}\n";
-       ss << "_ss << \"]\";\n";
-     }
-    else
-     { 
-       if(( string(typeString)=="SgVariableSymbol*" || string(typeString) == "SgFunctionSymbol*" || string(typeString) == "SgMemberFunctionSymbol*")) 
-          {
-            ss << "_ss << p_" << memberVariableName << ";\n";
-            ss << "if (p_" << memberVariableName << ")\n";
-            ss << "  _ss << \": varsym \" << p_" << memberVariableName << "->get_name().str() << \" declared at 0x\" << std::hex << (p_" << memberVariableName << "->get_declaration());\n";
-          }
-         else 
-          { 
-            if(( string(typeString)=="SgSymbolTable" )
-               || ( string(typeString)=="SgSymbolHashBase::iterator" ))
-               ss << "_ss << \"<no output operator defined for this type>\";";
-            else
-               ss << "_ss << p_" << memberVariableName << ";";
-          }
-     }
-     ss << dataMemberContainerName << ".push_back(RTIMemberData(" 
-     << "\"" << typeString << "\"" << ", "
-     << "\"p_" << memberVariableName << "\"" << ", "
-     << "_ss.str()"
-     << "));}" << endl;
-     string s=ss.str();
-  return s;
+  ss << dataMemberContainerName << ".push_back(RTIMemberData(" 
+  << "\"" << typeString << "\"" << ", "
+  << "\"p_" << memberVariableName << "\"" << ", "
+  << "toStringForRTI(p_" << memberVariableName << ")"
+  << "));" << endl;
+  return ss.str();
 }
 
 
