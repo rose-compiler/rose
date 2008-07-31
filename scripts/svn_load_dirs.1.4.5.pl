@@ -1998,5 +1998,6 @@ sub new
 sub DESTROY
 {
   print "Cleaning up $temp_dir\n";
-  File::Path::rmtree([$temp_dir], 0, 0);
+# This line has a bug, Liao, 
+  #File::Path::rmtree([$temp_dir], 0, 0);
 }
