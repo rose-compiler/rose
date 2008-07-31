@@ -1,6 +1,9 @@
 /* main.cc */
 
 #include "parse_header.h"
+
+using namespace std;
+
 ofstream GML;
 
 // prototype of bison-generated parser function
