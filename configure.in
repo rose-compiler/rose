@@ -410,7 +410,7 @@ AC_DISABLE_STATIC
 
 # echo "In configure.in (before libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
 LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
-AC_LIBLTDL_CONVENIENCE([src/3rdPartyLibraries/libltdl])
+AC_LIBLTDL_INSTALLABLE([src/3rdPartyLibraries/libltdl])
 AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
