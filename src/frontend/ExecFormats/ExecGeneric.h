@@ -364,14 +364,15 @@ class ExecFile {
     addr_t get_size() {return sb.st_size;}              /* Size of file in bytes as of time it was opened */
     const unsigned char *content() {return data;}       /* File contents */
 
-    /* Functions for sections (plurals return vectors; singular throws exception when there's more than one match) */
+    /* Functions for sections (plurals return vectors; singular return one or NULL) */
     void add_section(ExecSection*);                     /* Add new section to the file; called implicitly by section constructor */
     std::vector<ExecSection*>& get_sections() {return sections;}/* all sections (including file headers) */
     ExecSection *get_section_by_id(int id);             /* Returns first section having specified ID */
     ExecSection *get_section_by_name(std::string, char sep='\0');/* Find section within file by name */
     std::vector<ExecSection*> get_sections_by_offset(addr_t offset, addr_t size);
-    std::vector<ExecSection*> get_sections_by_rva(addr_t rva);
-    std::vector<ExecSection*> get_sections_by_va(addr_t va);
+    std::vector<ExecSection*> get_sections_by_rva(addr_t rva); /*Return sections mapped to specified relative virtual address */
+    ExecSection *get_section_by_va(addr_t va);          /* Return single section mapped to specified virtual address */
+    std::vector<ExecSection*> get_sections_by_va(addr_t va); /*Return all sections mapped to specified virtual address */
     addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
     void fill_holes();                                  /* Find holes in file and create sections to fill them */
     void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
@@ -447,6 +448,7 @@ class ExecSection {
     void                set_wperm(bool b) {wperm=b;}
     bool                get_rperm() {return rperm;}
     void                set_rperm(bool b) {rperm=b;}
+    addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 
     /* Accessors for private members */
     ExecHeader          *get_header() {return header;}

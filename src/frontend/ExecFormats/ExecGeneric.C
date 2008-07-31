@@ -251,6 +251,38 @@ ExecFile::get_sections_by_va(addr_t va)
     return retval;
 }
 
+/* Like get_sections_by_va() except it verifies that the specified virtual address maps to the same file offset in all
+ * sections containing that VA. It then returns a single section, giving preference to the section with the smallest mapped
+ * size and having a non-negative identification number (i.e, appearing in a section table of some sort). */
+ExecSection *
+ExecFile::get_section_by_va(addr_t va)
+{
+    const std::vector<ExecSection*> &possible = get_sections_by_va(va);
+    if (0==possible.size()) {
+        return NULL;
+    } else if (1==possible.size()) {
+        return possible[0];
+    }
+
+    /* Choose the "best" section to return. */
+    ExecSection *best=possible[0];
+    addr_t fo0 = possible[0]->get_va_offset(va);
+    for (size_t i=1; i<possible.size(); i++) {
+        if (fo0 != possible[i]->get_va_offset(va))
+            return NULL; /* all possible sections must map the VA to the same file offset */
+        if (best->get_id()<0 && possible[i]->get_id()>0) {
+            best = possible[i]; /*prefer sections defined in a section or object table*/
+        } else if (best->get_mapped_size() > possible[i]->get_mapped_size()) {
+            best = possible[i]; /*prefer sections with a smaller mapped size*/
+        } else if (best->get_name().size()==0 && possible[i]->get_name().size()>0) {
+            best = possible[i]; /*prefer sections having a name*/
+        } else {
+            /*prefer section defined earlier*/
+        }
+    }
+    return best;
+}
+
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
 addr_t
@@ -719,6 +751,19 @@ ExecSection::unparse_holes(FILE *f)
     unparse(f, congeal());
     if (!was_congealed)
         uncongeal();
+}
+
+/* Returns the file offset associated with the virtual address of a mapped section. */
+addr_t
+ExecSection::get_va_offset(addr_t va)
+{
+    ROSE_ASSERT(is_mapped());
+    ExecHeader *hdr = get_header();
+    ROSE_ASSERT(hdr);
+    ROSE_ASSERT(va >= hdr->get_base_va());
+    addr_t rva = va - hdr->get_base_va();
+    ROSE_ASSERT(rva >= get_mapped_rva());
+    return get_offset() + (rva - get_mapped_rva());
 }
 
 /* Print some debugging info */
