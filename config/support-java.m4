@@ -6,23 +6,26 @@ AC_MSG_CHECKING(for Java)
 
 AC_ARG_WITH([java],
             AS_HELP_STRING([--with-java],
-                           [use Java for Fortran or Javaport support (default is NO)]),
+                           [use Java for Fortran or Javaport support (default is YES if Java can be found)]),
             [javasetting=$withval],
-            [javasetting=no])
+            [javasetting=try])
 
 JAVA=$javasetting
 USE_JAVA=1
 if test "x$javasetting" = xno; then
   JAVA=""
   USE_JAVA=0
-elif test "x$javasetting" = xyes; then
+elif test "x$javasetting" = xyes || test "x$javasetting" = xtry; then
   JAVA_PATH="${JAVA_HOME}"
   if test "x$JAVA_PATH" = x; then
     if which java; then
       JAVA="`which java`"
       AS_SET_CATFILE(JAVA_PATH, "`pwd`", "`dirname ${JAVA}`/../..")
-    else
+    elif "x$javasetting" = "xyes"; then
       AC_MSG_ERROR([--with-java was given but "java" is not in PATH and JAVA_HOME was not set])
+    else # $javasetting is "try", so it is not an error for Java to not be found
+      JAVA=""
+      USE_JAVA=0
     fi
   else
     JAVA="${JAVA_PATH}/bin/java"
@@ -82,7 +85,7 @@ if test "x$USE_JAVA" = x1; then
   fi
 fi
 
-AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[$USE_JAVA],[Controls use of ROSE support for Java (required for the Open Fortran Parser from LANL).])
+AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[$USE_JAVA],[Controls use of ROSE support for Java.])
 
 AC_SUBST(JAVA_PATH)
 AC_SUBST(JAVA_JVM_LINK)

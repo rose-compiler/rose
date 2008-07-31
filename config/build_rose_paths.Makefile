@@ -1,5 +1,6 @@
 rose_paths.h: Makefile
 	@@true > rose_paths.h
+	@@echo "#define ROSE_GFORTRAN_PATH \"@GFORTRAN_PATH@\"" >> rose_paths.h
 	@@echo "#define ROSE_AUTOMAKE_TOP_SRCDIR \"@top_srcdir@\"" >> rose_paths.h
 	@@echo "#define ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR \"@absolute_path_srcdir@\"" >> rose_paths.h
 	@@echo "#define ROSE_AUTOMAKE_TOP_BUILDDIR \"@top_pwd@\"" >> rose_paths.h
