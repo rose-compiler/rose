@@ -1,0 +1,68 @@
+#!/bin/bash -v
+#
+# This script examines a ROSE distribution package and treats it as a vendor drop
+# to an external Subversion repository.
+# First, it conducts sanity check for the package, especially
+#   x. Remove .svn directories
+#   x. Make sure no EDG copyrighted files exist
+# Second, it imports the package which passes the check to 
+#  the head of an external repository using svn_load_dirs.1.4.5.pl
+# Use
+#  thisScript distro-package
+#
+# by Liao, 7/30/2008
+# Last Modified 7/30/2008
+#------------------------------------------------------
+
+if [ $# -lt 1 ]
+then
+  echo This script need at least one argument to run.
+  echo Example: $0 rose-distribution-xxx.tar.gz
+  exit
+fi
+
+ROSE_DISTRIBUTION=$1
+
+echo "ROSE distribution package is:${ROSE_DISTRIBUTION}"
+
+WORK_DIR=/home/liao6/test4
+
+rm -rf ${WORK_DIR}
+mkdir -p ${WORK_DIR}
+
+# unpack the package to the work dir and get the root dir of the distribution
+#----------------------------------------------------
+tar xzvf ${ROSE_DISTRIBUTION} -C ${WORK_DIR}
+
+ROSE_DIST_DIR=$(ls ${WORK_DIR})
+echo "Unpacked ROSE distribution directory is: ${ROSE_DIST_DIR}"
+
+cd ${WORK_DIR}/${ROSE_DIST_DIR}
+
+# Find all .svn directories and remove them
+#----------------------------------------------------
+find . -name .svn | xargs rm -rf
+
+# Make sure no EDG copyrighted files exist
+#----------------------------------------------------
+
+# We search for a representative source file: il_def.h
+EDG_FILES=($(find . -name il_def.h))
+#EDG_FILES=($(find . -name Makefile.am))
+if [ ${EDG_FILES[0]} ]; then
+  echo Fatal Error: Found copyrighted EDG source files:${EDG_FILES[@]}
+  exit
+fi
+
+# and the copyright string of EDG: "Proprietary information of Edison Design Group Inc."
+EDG_COPYRIGHT_STRINGS=($(find . -regex '.*.[C|c|h|Cxx]' | xargs grep 'Proprietary information of Edison Design Group Inc.'))
+#EDG_COPYRIGHT_STRINGS=($(find . -regex '.*.[C|c|h|Cxx]'|xargs grep 'Liao'))
+
+if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
+  echo Fatal Error: Found copyrighted EDG text in source files:${EDG_COPYRIGHT_STRINGS[@]}
+  exit
+fi
+
+# Now we can upload the package
+#--------------------------------------------------------
+
