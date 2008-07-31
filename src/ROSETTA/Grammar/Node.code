@@ -299,11 +299,12 @@ class RTIMemberData
   // DQ (12/31/2005): Note that we can't use "using namespace std;" 
   // to simplify this code, or so it seems.
      public:
-          std::string type;
-          std::string name;
+          // The first two of these fields are constants, and so this avoids the constructor
+          const char* type;
+          const char* name;
           std::string value;
 
-          RTIMemberData(std::string type0, std::string name0, std::string value0)
+          RTIMemberData(const char* type0, const char* name0, const std::string& value0)
              : type(type0), name(name0), value(value0)
              {}
 #if 0 // JJW this should not be used
