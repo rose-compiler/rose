@@ -152,3 +152,18 @@ docs: FORCE_DOCS_TO_BE_MADE
    fi
 
 
+# DQ (7/30/2008): Copy the library to the distribution.
+# binary_EDG_dist: distdir
+copy_libs_for_binary_distribution: distdir
+#	Call rules in the directories where binary libraries are copied (but we have to set DISTDIR)
+	cd src/frontend/CxxFrontend; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.3/src; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.3/src copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.3/misc; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.3/misc copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_SAGE_Connection; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_SAGE_Connection copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.10; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10 copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.10/src; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/src copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.10/src/disp; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/src/disp copy_libs_for_binary_distribution;
+	cd src/frontend/CxxFrontend/EDG_3.10/misc; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/misc copy_libs_for_binary_distribution;
+	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
+	$(am__remove_distdir)
+
