@@ -4,10 +4,10 @@
 #
 # example .sh file: rose/scripts/roseFreshTestStub-Jeremiah-asmAsEnum.sh, which sets 
 #
-# 1. Environment variables,
-# 2. The path to the source and build directories of ROSE
-# 3. The configuration options for building ROSE
-# 4. Email notification recipients, etc.  
+# x. Environment variables,
+# x. The path to the source and build directories of ROSE
+# x. The configuration options for building ROSE
+# x. Email notification recipients, etc.  
 #
 # Usage ------------------
 # manual run it:
@@ -18,9 +18,19 @@
 #   30 2 * * * /home/liao6/rose/scripts/roseFreshTestLeo /path/to/yourconfig.sh
 #
 # Liao, Jeremiah, 2/7/2008
-# Last modified 6/5/2008
+# Last modified 7/31/2008
 #------------------------------------------------------
+if [ $# -lt 1 ]
+then
+  echo This script needs at least one argument
+  echo Exampe:$0 your_config_stub.sh
+  exit 1
+fi
 
+#------------------------------------------------------
+# Configuration Section
+#------------------------------------------------------
+# Obtain the configuration file from the first argument of the script
 user_config_file="$1"
 shift
 . $user_config_file
@@ -35,15 +45,24 @@ mkdir tmp
 TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
 
+#------------------------------------------------------
+# Starting Section
+#------------------------------------------------------
+#Exit immediately if a command fails
 set -e
 
-# SVNVERSIONOPTION is one of the -r options in "svn help checkout"
+# SVNVERSIONOPTION is an optional option supplied in the configuration stub
+# default is the head reversion.It is one of the -r options in "svn help checkout"
 if [ "x$SVNVERSIONOPTION" = "x" ]; then SVNVERSIONOPTION="HEAD"; fi
 svnversion=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Revision: ' | cut -f 2 -d \ `
 svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
 
 (
-echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
+if [ $TIMESTAMP ]; then
+  echo "Subject: Starting ROSE test $TIMESTAMP on `hostname`" > mailtext1
+else
+  echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
+fi  
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog on `hostname` for status" >> mailtext1
 echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
@@ -74,13 +93,18 @@ printenv >> mailtext1
 
 /usr/sbin/sendmail -i $MAILADDRS < mailtext1
 
+#------------------------------------------------------
+#  Building and Making Section
+#------------------------------------------------------
 buildstatus=0
 (
   set -e
+  # Print a trace of simple Shell commands  
   set -x
 
 #------------------------------------------------------
 # check out a fresh copy for testing
+# Two methods: checkout and export (default)
   if [ "x$SVNOP" = "x" ]; then SVNOP=export; fi
   $SVN ${SVNOP} -r${svnversion} -q ${ROSE_SVNROOT} sourcetree
 
@@ -98,12 +122,15 @@ buildstatus=0
 
 # Prevent writing to the install tree
   mkdir install
+if [ $NORMAL_INSTALL_DIR ] ; then
+  echo "Normal file permission for the installation directory"
+else  
   chmod 000 install
+fi  
 
 #------------------------------------------------------
-# configure ROSE
+# configure,make, and test ROSE
   cd build
-# ROSE_CONFIG_FLAGS="--without-binary_analysis --enable-rosehpct --with-openFortranParser=/home/liao6/download/fortran-parser --with-Java=/usr/apps/java/jdk1.5.0_11 --with-JavaJVM=/usr/apps/java/jdk1.5.0_11/jre/lib/i386/server"
   ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" && \
   echo "############ configure done" && \
   make $MAKEFLAGS && \
@@ -123,8 +150,16 @@ buildstatus=0
   echo "############ make distcheck done"
 ) >buildlog 2>&1 || buildstatus=1
 
-if [ $buildstatus == 0 ]; then
-  echo "Subject: ROSE test $$ on `hostname` results (pass)" > mailtext
+#------------------------------------------------------
+# Report Section
+#------------------------------------------------------
+
+if [ $buildstatus == 0 ]; then  
+  if [ $TIMESTAMP ]; then
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (pass)" > mailtext
+  else
+    echo "Subject: ROSE test $$ on `hostname` results (pass)" > mailtext
+  fi
   echo "" >> mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> mailtext
@@ -135,8 +170,30 @@ if [ $buildstatus == 0 ]; then
   echo "> Environment:" >> mailtext
   printenv >> mailtext
   echo "" >> mailtext
+  # upload ROSE sources to SciDAC Outreach repository and documentations to www.roseCompiler.org
+  if [ $ENABLE_UPLOAD ] ; then
+   # update the external SVN repository
+     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP}
+    if [ $? -ne 0 ]; then
+      echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
+    else
+      echo "importRoseDistributionToSVN finishes normally.">>mailtext
+    fi
+    # update the web site
+    cd docs/Rose
+    make copyWebPages
+    if [ $? -ne 0 ]; then
+      echo "Error: make copyWebPages finishes abnormally!" >>mailtext
+    else
+      echo "make copyWebPages finishes normally.">>mailtext
+    fi
+  fi
 else
-  echo "Subject: ROSE test $$ on `hostname` results (fail)" > mailtext
+  if [ $TIMESTAMP ]; then
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (fail)" > mailtext
+  else
+    echo "Subject: ROSE test $$ on `hostname` results (fail)" > mailtext
+  fi  
   echo "" >> mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> mailtext
@@ -154,4 +211,9 @@ fi
 # echo "-------------------- Full log      --------------------" >> mailtext
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
-if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
+if [ $KEEP_TEST_DIR ] ; then
+  echo "Test directory is preserved."
+else  
+  echo "Test directory has been removed."
+  if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
+fi 
