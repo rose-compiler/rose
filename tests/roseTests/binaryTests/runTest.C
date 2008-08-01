@@ -86,12 +86,10 @@ int main(int argc, char** argv) {
   const char* cfgFileName = "cfg.dot";
   RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
-  cout << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
-  cout << " Number of edges == " << cfganalysis->edgesVisited() << endl;
-  ROSE_ASSERT(cfganalysis->nodesVisited()==237);
-  //ROSE_ASSERT(cfganalysis->nodesVisited()==209); // -- old implementation
-  ROSE_ASSERT(cfganalysis->edgesVisited()==261);
-  //ROSE_ASSERT(cfganalysis->edgesVisited()==232); // -- old implementation
+  cerr << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
+  cerr << " Number of edges == " << cfganalysis->edgesVisited() << endl;
+  ROSE_ASSERT(cfganalysis->nodesVisited()==365);
+  ROSE_ASSERT(cfganalysis->edgesVisited()==388);
 
   // call graph analysis  *******************************************************
   cerr << " creating call graph ... " << endl;
@@ -99,9 +97,9 @@ int main(int argc, char** argv) {
   forward = true;
   RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);
-  cout << " Number of nodes == " << callanalysis->nodesVisited() << endl;
-  cout << " Number of edges == " << callanalysis->edgesVisited() << endl;
-  ROSE_ASSERT(callanalysis->nodesVisited()==10);
+  cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
+  cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
+  ROSE_ASSERT(callanalysis->nodesVisited()==12);
   ROSE_ASSERT(callanalysis->edgesVisited()==7);
 
 
@@ -113,12 +111,12 @@ int main(int argc, char** argv) {
   RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
   dfanalysis->init(interprocedural, printEdges);
   dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
-  cout << " Number of nodes == " << dfanalysis->nodesVisited() << endl;
-  cout << " Number of edges == " << dfanalysis->edgesVisited() << endl;
-  cout << " Number of memWrites == " << dfanalysis->nrOfMemoryWrites() << endl;
-  cout << " Number of regWrites == " << dfanalysis->nrOfRegisterWrites() << endl;
-  cout << " Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
-  cout << " Number of uses == " << dfanalysis->nrOfUses() << endl;
+  cerr << " Number of nodes == " << dfanalysis->nodesVisited() << endl;
+  cerr << " Number of edges == " << dfanalysis->edgesVisited() << endl;
+  cerr << " Number of memWrites == " << dfanalysis->nrOfMemoryWrites() << endl;
+  cerr << " Number of regWrites == " << dfanalysis->nrOfRegisterWrites() << endl;
+  cerr << " Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
+  cerr << " Number of uses == " << dfanalysis->nrOfUses() << endl;
   // values for old implementation -- using objdump
   //ROSE_ASSERT(dfanalysis->nodesVisited()==209);
   //ROSE_ASSERT(dfanalysis->edgesVisited()==255);
@@ -127,12 +125,12 @@ int main(int argc, char** argv) {
   //ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
   //ROSE_ASSERT(dfanalysis->nrOfUses()==26);
 
-  ROSE_ASSERT(dfanalysis->nodesVisited()==237);
-  ROSE_ASSERT(dfanalysis->edgesVisited()==284);
-  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
-  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==36);
-  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==183);
-  ROSE_ASSERT(dfanalysis->nrOfUses()==25);
+  ROSE_ASSERT(dfanalysis->nodesVisited()==365);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==487);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==153);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==43);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==309);
+  ROSE_ASSERT(dfanalysis->nrOfUses()==111);
 
 
   // detailed dfa test
