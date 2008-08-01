@@ -87,14 +87,17 @@ roseDirectoryMap.pdf: Makefile
 	h=`grep '^%%BoundingBox: [0-9]' roseDirectoryMap.ps | awk '{print $$5*10;}'` ; \
 	ps2pdf -g$${w}x$${h} roseDirectoryMap.ps roseDirectoryMap.pdf
 
+if USE_ROSE_IN_BUILD_TREE_VAR
+SET_ROSE_IN_BUILD_TREE=env ROSE_IN_BUILD_TREE=$(top_builddir)
+else
+SET_ROSE_IN_BUILD_TREE=
+endif
+
 #	Generate output from the --help commandline option for use in documentation
 roseHelpOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
-if USE_ROSE_IN_BUILD_TREE_VAR
 	  env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
-else
-	  $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
-endif
+	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib --help >& roseHelpOutput.txt; \
 	else \
 	  echo "--help option output is not available (build ROSE, then rebuild documentation)." > roseHelpOutput.txt; \
 	fi;
@@ -107,11 +110,7 @@ roseCommandline.txt:
 roseExecutionOutput.txt:
 	if (test -x $(top_builddir)/src/testSharedRoseLib); then \
 	  echo "int main() { int x=0; return x; }" > roseTestProgram.C; \
-if USE_ROSE_IN_BUILD_TREE_VAR
-	  env ROSE_IN_BUILD_TREE=$(top_builddir) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
-else
-	  $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
-endif
+	  $(SET_ROSE_IN_BUILD_TREE) $(top_builddir)/src/testSharedRoseLib roseTestProgram.C >& roseExecutionOutput.txt; \
 	else \
 	  echo "Execution output is not available (build ROSE, then rebuild documentation)." > roseExecutionOutput.txt; \
 	fi;

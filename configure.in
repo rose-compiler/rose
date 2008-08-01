@@ -448,7 +448,7 @@ else
   AC_MSG_WARN([ROSE cannot find the locations of loaded shared libraries using your dynamic linker.  ROSE can only be used with the given build directory or prefix, and the ROSE_IN_BUILD_TREE environment variable must be used to distinguish the two cases.])
   use_rose_in_build_tree_var=yes
 fi
-AM_CONDITIONAL([USE_ROSE_IN_BUILD_TREE_VAR], [test "x$use_rose_in_build_tree_var" = "xyes"])
+AM_CONDITIONAL(USE_ROSE_IN_BUILD_TREE_VAR, [test "x$use_rose_in_build_tree_var" = "xyes"])
 
 # exit 1
 
