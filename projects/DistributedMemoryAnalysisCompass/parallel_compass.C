@@ -433,10 +433,10 @@ int main(int argc, char **argv)
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
-  int val=-1;
-  for (int count=0; count<7 ; count++) {
-      if (count==3 || count==4 || count==5) val=0;
-      val++;
+  //  int val=-1;
+  //for (int count=0; count<7 ; count++) {
+  //    if (count==3 || count==4 || count==5) val=0;
+  //    val++;
 
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
@@ -563,6 +563,14 @@ int main(int argc, char **argv)
 	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
 	gettime(begin_time_node);
 	currentJob+=scale;
+	
+	// tps 31Jul2008 : best algorithm empirically found for batch distribution of jobs
+	int val=2;
+	if (processes<64) {
+	  if ((currentJob % 10)==9) scale+=(int)val;
+	} else
+	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
+	/*
 	if (count<3) {
 	  if ((currentJob % 5)==4) scale+=(int)val;
 	} else if (count <4) {
@@ -571,7 +579,7 @@ int main(int argc, char **argv)
 	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
 	} else
 	  if ((currentJob % 10)==9) scale+=(int)val;
-
+	*/
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
@@ -595,7 +603,8 @@ int main(int argc, char **argv)
       }
     }
     if (my_rank==0)
-      cerr << ">>> Final scale = " << scale << "  count = " << count << "  val = " << val << endl;
+      cerr << ">>> Final scale = " << scale << endl; 
+    //"  count = " << count << "  val = " << val << endl;
   }
 
 
@@ -637,7 +646,7 @@ int main(int argc, char **argv)
   delete[] output_values;
   delete[] times;
 
-  }
+  //  }
 
   /* all done */
   MPI_Finalize();
