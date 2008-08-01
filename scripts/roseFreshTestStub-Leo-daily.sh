@@ -33,7 +33,8 @@ MAILADDRS="liaoch@llnl.gov"
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=checkout
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
-SVNVERSIONOPTION="`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`"
+# using data as revision number needs {}
+SVNVERSIONOPTION="{`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`}"
 #SVNVERSIONOPTION=1303
 
 # How many processes for make
