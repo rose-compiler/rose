@@ -2,6 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 SUBDIRS = EDG_3.3 EDG_SAGE_Connection EDG_3.10
 
+EXTRA_DIST = Makefile.am.forBinaryEDG
+
 # We only to to specify the library EDG_3.3/src/libedg33.la and EDG_SAGE_Connection/sage_gen_be.lo 
 # libroseEDGlibraries = EDG_3.3/src/libedg33.la EDG_SAGE_Connection/sage_gen_be.lo
 if ROSE_USE_EDG_SOURCE
