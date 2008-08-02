@@ -6,6 +6,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #    Developer: This version includes all EDG source code and some parts that
 #             might be more restricted.
 if ROSE_USE_EDG_SOURCE
+# This next line will be removed for binary distributions, leaving the variable empty
     DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
 endif
 
@@ -31,7 +32,7 @@ all-local: rose.docs
 # (because it has the file: config/Makefile.for.ROSE.includes.and.libs)
 # EXTRA_DIST = stamp-h.in stamp-h1.in GNU_HEADERS config
 # EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in GNU_HEADERS COPYWRITE ROSE_ResearchPapers
-EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX
+EXTRA_DIST = stamp-h.in stamp-h1.in rose.docs.in COPYRIGHT ROSE_ResearchPapers README.OSX build
 
 # At some point we want to put tals into the distribution (likely just PDF files, but not yet).
 # ROSE_Talks
@@ -151,6 +152,46 @@ docs: FORCE_DOCS_TO_BE_MADE
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi
 
+
+clean_binary_distribution: distdir
+	rm -rf $(distdir)/src/frontend/CxxFrontend/EDG*
+	rm -rf $(distdir)/src/frontend/CxxFrontend/Makefile.am # Will be replaced with another version in the binary_edg_tarball rule
+	rm -rf $(distdir)/proposals
+	rm -rf $(distdir)/developersScratchSpace
+	rm -rf $(distdir)/docs/testDoxygen
+
+BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)
+
+binary_edg_tarball:
+	cd src/ROSETTA/src; $(MAKE)
+	cd src/frontend/CxxFrontend; $(MAKE)
+	rm -rf $(BINARY_EDG_DIRNAME)
+	mkdir $(BINARY_EDG_DIRNAME)
+	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/libroseEDG.la > $(BINARY_EDG_DIRNAME)/libroseEDG.la
+	cp -Rp src/frontend/CxxFrontend/.libs $(BINARY_EDG_DIRNAME)/
+	tardir=$(BINARY_EDG_DIRNAME) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(BINARY_EDG_DIRNAME).tar.gz
+	rm -rf $(BINARY_EDG_DIRNAME)
+
+source_with_binary_edg_dist:
+	$(MAKE) clean_binary_distribution
+	$(MAKE) binary_edg_tarball
+	mv $(BINARY_EDG_DIRNAME).tar.gz $(distdir)/src/frontend/CxxFrontend/
+	cat $(top_srcdir)/configure.in | \
+		grep -v '^developersScratchSpace/' | \
+		grep -v '^proposals/' | \
+		grep -v '^src/frontend/CxxFrontend/EDG' | \
+		grep -v '^docs/testDoxygen/' > \
+		$(distdir)/configure.in
+	cat $(top_srcdir)/Makefile.am | \
+		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
+		$(distdir)/Makefile.am # Remove SUBDIRS references to developersScratchSpace and proposals
+	cat $(top_srcdir)/docs/Makefile.am | \
+		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
+		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
+	cp $(top_srcdir)/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
+	cd $(distdir) && ./build
+#	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
+#	$(am__remove_distdir)
 
 # DQ (7/30/2008): Copy the library to the distribution.
 # binary_EDG_dist: distdir
