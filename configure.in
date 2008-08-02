@@ -356,10 +356,10 @@ if test "x$USE_JAVA" = x1; then
     ofp_enabled=yes
     AC_MSG_RESULT([yes])
   else
-    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-java)])
+    AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran)])
   fi
 else
-  AC_MSG_RESULT([no ... Java cannot be found (try --with-gfortran)])
+  AC_MSG_RESULT([no ... Java cannot be found (try --with-java)])
 fi
 AM_CONDITIONAL(ROSE_USE_OPEN_FORTRAN_PARSER, [test "x$ofp_enabled" = "xyes"])
 AC_SUBST(GFORTRAN_PATH)
