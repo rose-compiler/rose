@@ -1,6 +1,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-EXTRA_DIST = buffer2.bin
+EXTRA_DIST = buffer2.bin runTest.C
+
+if USE_BINARY_ANALYSIS_TESTS
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 INCLUDES = $(ROSE_INCLUDES)
@@ -34,11 +36,10 @@ TESTCODE_INCLUDES =
 
 CLEANFILES = unparsed.s callgraph.gml output
 
-# DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runTest 
 	./runTest $(srcdir)/buffer2.bin > output
 	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: make check rule complete (terminated normally)         ***"
 	@echo "*********************************************************************************************************************"
 
 clean-local:
@@ -46,3 +47,12 @@ clean-local:
 
 distclean-local:
 	rm -rf Templates.DB 
+
+else
+
+check-local:
+	@echo "*********************************************************************************************************************"
+	@echo "*** ROSE/tests/roseTests/programAnalysisTests/binaryTests: skipped                                                ***"
+	@echo "*********************************************************************************************************************"
+
+endif

@@ -1,5 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if USE_BINARY_ANALYSIS_TESTS
+
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
@@ -14,6 +16,9 @@ check: x86AssemblyToCDemo
 	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
 	fi
 
-EXTRA_DIST = outputFileTemplate.C
-
 CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C
+
+endif
+
+EXTRA_DIST = outputFileTemplate.C x86AssemblyToCDemo.C x86AssemblyToC.C x86AssemblyToC.h
+
