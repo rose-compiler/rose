@@ -86,12 +86,12 @@ typedef Rose_STL_Container<SgAsmGenericSection*> SgAsmGenericSectionPtrList;
 typedef SgAsmGenericSectionPtrList*              SgAsmGenericSectionPtrListPtr;
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
-typedef Rose_STL_Container<SgAsmGenericSegment*> SgAsmGenericSegmentPtrList;
-typedef SgAsmGenericSegmentPtrList*              SgAsmGenericSegmentPtrListPtr;
+// typedef Rose_STL_Container<SgAsmGenericSegment*> SgAsmGenericSegmentPtrList;
+// typedef SgAsmGenericSegmentPtrList*              SgAsmGenericSegmentPtrListPtr;
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
-typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
-typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
+// typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
+// typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
 
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
