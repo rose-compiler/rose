@@ -164,6 +164,28 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericDLL.setDataPrototype  ("SgStringList","funcs","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      NEW_TERMINAL_MACRO ( AsmGenericFormat,      "AsmGenericFormat",      "AsmGenericFormatTag" );
+#if 0
+  // Later after the initial version of code uses these IR nodes we can move the types defined
+  // in the Exec namespace into the appropriate namespace for use in ROSE (if required).
+  // ExecFamily          family;                         // General format: ELF, PE, etc.
+  // ExecPurpose         purpose;                        // executable, library, etc.
+  // ByteOrder           sex;
+  // unsigned            version;                        // actual file format version number stored in file
+  // bool                is_current_version;             // is 'version' considered to be the current, supported version
+  // ExecABI             abi;                            // application binary interface
+  // unsigned            abi_version;                    // version of the ABI targeted by this file
+  // size_t              word_size;                      // in bytes (e.g., Elf32 is 4; Elf64 is 8)
+     AsmGenericFormat.setDataPrototype("Exec::ExecFamily","family","= default",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("Exec:ExecPurpose","purpose","= default",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("Exec:ByteOrder","sex","= default",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("unsigned int","version","= 0",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("bool","is_current_version","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("Exec:ExecABI","abi","= default",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("unsigned int","abi","= 0",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("unsigned int","abi_version","= 0",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFormat.setDataPrototype("size_t","word_size","= 0",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
      NEW_TERMINAL_MACRO ( AsmGenericArchitecture,"AsmGenericArchitecture","AsmGenericArchitectureTag" );
      NEW_TERMINAL_MACRO ( AsmGenericFile,        "AsmGenericFile",        "AsmGenericFileTag" );
 
@@ -389,6 +411,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
+
      AsmSectionHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmSectionHeaderList.setDataPrototype("SgAsmSectionHeaderPtrList","section_headers","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -560,19 +583,19 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegment.setDataPrototype("unsigned long","dt_pltrelsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of global offset table */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_pltgot","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_pltgot","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of symbol hash table */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_hash","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_hash","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of dynamic string table */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_strtab","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_strtab","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of symbol table */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_symtab","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_symtab","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of Rela relocations */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_rela","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_rela","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Total size in bytes of Rela relocations */
      AsmElfSegment.setDataPrototype("unsigned long","dt_relasz","= 0",
@@ -587,25 +610,25 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegment.setDataPrototype("unsigned long","dt_symentsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of initialization function */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_init","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_init","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of termination function */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_fini","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_fini","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Type of relocation in PLT */
      AsmElfSegment.setDataPrototype("unsigned long","dt_pltrel","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of PLT relocations */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_jmprel","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_jmprel","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Number of entries in dt_verneed table */
      AsmElfSegment.setDataPrototype("unsigned long","dt_verneednum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Address of table with needed versions */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_verneed","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_verneed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* GNU version symbol address */
-     AsmElfSegment.setDataPrototype("unsigned long","dt_versym","= 0",
+     AsmElfSegment.setDataPrototype("addr_t","dt_versym","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegment.setDataPrototype("SgAsmElfSegmentEntryList*","other","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -636,7 +659,7 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegmentEntry.setFunctionPrototype ( "HEADER_ELF_SEGMENT_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentEntry.setDataPrototype("unsigned long","d_tag","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentEntry.setDataPrototype("unsigned long","d_val","= 0",
+     AsmElfSegmentEntry.setDataPrototype("addr_t","d_val","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -648,25 +671,34 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSegmentEntryList.setFunctionPrototype ( "HEADER_ELF_SEGMENT_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentEntryList.setDataPrototype("SgAsmElfSegmentEntryPtrList","segment_entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      AsmElfSymbolSection.setFunctionPrototype      ( "HEADER_ELF_SYMBOL_SECTION",       "../Grammar/BinaryInstruction.code");
      AsmElfSymbolSection.setDataPrototype("unsigned long","x_","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbolSection.setDataPrototype("SgAsmElfSymbolList*","symbols_list","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
+
 #if 0
     std::vector<ElfSymbol> symbols;
+#endif
+
 #endif
 
      AsmElfSymbolList.setFunctionPrototype ( "HEADER_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolList.setDataPrototype("SgAsmElfSymbolPtrList","symbols","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Members defined by the ELF standard
+  // addr_t              st_name;
+  // unsigned char       st_info, st_res1;
+  // unsigned            st_shndx;
+  // addr_t              st_size; // original size for unparsing; superclass holds adjusted size
      AsmElfSymbol.setFunctionPrototype      ( "HEADER_ELF_SYMBOL",       "../Grammar/BinaryInstruction.code");
-     AsmElfSymbol.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSymbol.setDataPrototype("unsigned long","st_name","= 0",
+  // DQ (8/3/2008): This is now in the base class
+  // AsmElfSymbol.setDataPrototype("std::string","name","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSymbol.setDataPrototype("addr_t","st_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_info","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -674,9 +706,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned long","st_shndx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSymbol.setDataPrototype("unsigned long","st_value","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSymbol.setDataPrototype("unsigned long","st_size","= 0",
+  // AsmElfSymbol.setDataPrototype("unsigned long","st_value","= 0",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSymbol.setDataPrototype("addr_t","st_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
     std::string         name;
@@ -686,44 +718,6 @@ Grammar::setUpBinaryInstructions ()
     unsigned char       st_info, st_res1;
     unsigned            st_shndx;
     addr_t              st_value, st_size;
-#endif
-
-#if 0
-  // DQ (8/2/2008): This was removed from the design by Robb.
-
-  // This data structure represents the ExecSegment from file: ExecGeneric.h
-     AsmGenericSegment.setFunctionPrototype ( "HEADER_GENERIC_SEGMENT", "../Grammar/BinaryInstruction.code");
-  /* Section in which this segment lives */
-     AsmGenericSegment.setDataPrototype("SgAsmGenericSection*","section","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Optional name of segment */
-     AsmGenericSegment.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Offset wrt. beginning of the section */
-     AsmGenericSegment.setDataPrototype("unsigned long","offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Bytes stored in the file, sans alignment padding */
-     AsmGenericSegment.setDataPrototype("unsigned long","disk_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Intended size when mapped to memory */
-     AsmGenericSegment.setDataPrototype("unsigned long","mapped_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Byte value (or negative for none) of memory padding */
-     AsmGenericSegment.setDataPrototype("int","mapped_padding","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Intended relative virtual address when mapped by loader */
-     AsmGenericSegment.setDataPrototype("unsigned long","mapped_rva","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Mapped by loader into memory having write permission */
-     AsmGenericSegment.setDataPrototype("bool","writable","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Mapped by loader into memory having execute permission */
-     AsmGenericSegment.setDataPrototype("bool","executable","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
-     AsmGenericSegmentList.setDataPrototype("SgAsmGenericSegmentPtrList","segments","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // This data structure represents the ExecSection from file: ExecGeneric.h
@@ -842,7 +836,30 @@ Grammar::setUpBinaryInstructions ()
   /* Actual stored value if isa==ISA_OTHER */
      AsmGenericFormat.setDataPrototype("unsigned long","other","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
+
+  // DQ (8/3/2008): Added new IR nodes data members.
+  // SymbolDefState      def_state;    // Undefined, created but not allocated, created and allocated, etc.
+  // SymbolBinding       binding;      // local, global, etc.
+  // SymbolType          type;         // file, section, variable, function, etc.
+  // addr_t              value;        // symbol value or address if defined
+  // addr_t              size;         // size of symbol if defined
+  // ExecSection         *bound;       // section when defined locally
+  // std::string         name;         // Symbol name may be the empty string
+     AsmGenericSymbol.setFunctionPrototype ( "HEADER_GENERIC_SYMBOL", "../Grammar/BinaryInstruction.code");
+     AsmGenericSymbol.setDataPrototype("Exec::SymbolDefState","def_state","= Exec::SYM_UNDEFINED",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("Exec::SymbolBinding","binding","= Exec::SYM_NO_BINDING",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("Exec::SymbolType","type","= Exec::SYM_NO_TYPE",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("addr_t","value","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("addr_t","size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("SgAsmGenericSection*","bound","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("std::string","name","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // There are several sorts of declarations within a binary
      AsmDeclaration.setFunctionPrototype        ( "HEADER_BINARY_DECLARATION", "../Grammar/BinaryInstruction.code");
