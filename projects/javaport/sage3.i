@@ -51,6 +51,7 @@ class SgNode;
 
   protected $javaclassname(long cPtr, boolean cMemoryOwn) {
     id = lastid++;
+    if (cPtr == 0) throw new NullPointerException();
     if (cMemoryOwn) {
       //System.err.println("Building a " + this.getClass().getName());
       Log.log.println("Building: " + this.getClass().getName() + " at " + cPtr);
