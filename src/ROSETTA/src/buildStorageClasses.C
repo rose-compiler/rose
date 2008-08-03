@@ -734,6 +734,9 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "Exec::ExecPurpose" ) ||
                  ( varTypeString == "Exec::ByteOrder" ) ||
                  ( varTypeString == "Exec::ExecABI" ) ||
+                 ( varTypeString == "Exec::SymbolDefState" ) ||
+                 ( varTypeString == "Exec::SymbolBinding" ) ||
+                 ( varTypeString == "Exec::SymbolType" ) ||
                  false
               )
        {
@@ -759,7 +762,9 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "unsigned char" ) ||
                  ( varTypeString == "long int" ) || 
                  ( varTypeString == "long long int" ) ||
-                 ( varTypeString == "unsigned long long int" )
+                 ( varTypeString == "unsigned long long int" ) ||
+              // DQ (8/3/2008): Added typedef for primative type (used in binry format)
+                 ( varTypeString == "addr_t" )
               )
        {
           returnType = BASIC_DATA_TYPE;
