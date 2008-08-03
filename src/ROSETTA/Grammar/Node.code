@@ -93,6 +93,10 @@ typedef SgAsmGenericSectionPtrList*              SgAsmGenericSectionPtrListPtr;
 // typedef Rose_STL_Container<SgAsmElfSegmentEntry*> SgAsmElfSegmentEntryPtrList;
 // typedef SgAsmElfSegmentEntryPtrList*              SgAsmElfSegmentEntryPtrListPtr;
 
+// DQ (8/3/2008): Added support for new IR nodes for new binary file formate work by Robb.
+typedef Rose_STL_Container<SgAsmPEImportHintName*> SgAsmPEImportHintNamePtrList;
+typedef SgAsmPEImportHintNamePtrList*              SgAsmPEImportHintNamePtrListPtr;
+
 // DQ (6/14/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
 typedef SgAsmElfSymbolPtrList*              SgAsmElfSymbolPtrListPtr;
@@ -260,6 +264,10 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 // DQ (11/21/2007): Added support for format statements (which can have multiple entries)
 typedef Rose_STL_Container<SgFormatItem*>     SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                  SgFormatItemPtrListPtr;
+
+typedef uint64_t addr_t; // address and size (file and memory)
+typedef Rose_STL_Container<addr_t>            SgAddressList;
+typedef SgAddressList*                        SgAddressListPtr;
 
 // DQ (11/26/2005): Support for visitor pattern.
 class ROSE_VisitTraversal;

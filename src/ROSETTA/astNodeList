@@ -460,3 +460,4 @@ SgAsmGenericSectionList
 SgAsmCoffSymbol
 SgAsmElfSymbol
 SgAsmExecutableFileFormat
+SgAsmPEImportHintNameList
