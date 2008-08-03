@@ -212,7 +212,7 @@ fi
 # cat buildlog >> mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < mailtext
 if [ $KEEP_TEST_DIR ] ; then
-  # echo "Test directory is preserved."
+  : # echo "Test directory is preserved."
 else  
   # echo "Test directory has been removed."
   if [ $buildstatus == 0 ]; then rm -rf "${ROSE_TOP}"; fi # Only delete if the test passed
