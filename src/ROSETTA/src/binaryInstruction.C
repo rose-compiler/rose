@@ -137,52 +137,44 @@ Grammar::setUpBinaryInstructions ()
      AsmType80bitFloat.setDataPrototype     ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmType128bitFloat.setDataPrototype    ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL || TYPE_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte | AsmTypeWord | AsmTypeDoubleWord | AsmTypeQuadWord | AsmTypeDoubleQuadWord | AsmType80bitFloat | AsmType128bitFloat |
-                             AsmTypeSingleFloat | AsmTypeDoubleFloat | AsmTypeVector,
-                             "AsmType", "AsmTypeTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  | 
+                                      AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  | 
+                                      AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat | 
+                                      AsmTypeVector, "AsmType", "AsmTypeTag", false );
 
-#define NEW_ASM_EXECUTABLE_FORMAT_IR_NODES 1
-#if NEW_ASM_EXECUTABLE_FORMAT_IR_NODES
+  // Support for DLL's for different file formats (there appears to only be a PE form of DLL)
+  // NEW_TERMINAL_MACRO ( AsmLEDLL, "AsmLEDLL", "AsmLEDLLTag" );
 
-#if 0
-  // Derive the SgAsmElfHeader from the SgAsmGenericHeader
-     NEW_TERMINAL_MACRO    ( AsmElfHeader,    "AsmElfHeader", "AsmElfHeaderTag" );
-     NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmElfHeader, "AsmGenericHeader", "AsmGenericHeaderTag", false );
+     NEW_TERMINAL_MACRO ( AsmPEDLL, "AsmPEDLL", "AsmPEDLLTag" );
+  // PEImportDirectory *idir;
+  // std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
+  // std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
+  // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
+     AsmPEDLL.setDataPrototype  ("SgAsmPEImportDirectory*","idir","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // Note that ROSETTA does not know how to build access functions that return references (only copies)
+     AsmPEDLL.setDataPrototype  ("SgAddressList","hintname_rvas","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     NEW_TERMINAL_MACRO ( AsmPEImportHintNameList, "AsmPEImportHintNameList", "AsmPEImportHintNameListTag" );
+     AsmPEImportHintNameList.setDataPrototype("SgAsmPEImportHintNamePtrList","hintnames_list","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEDLL.setDataPrototype("SgAsmPEImportHintNameList*","hintnames","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEDLL.setDataPrototype  ("SgAddressList","bindings","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     NEW_NONTERMINAL_MACRO ( AsmGenericDLL, AsmPEDLL , "AsmGenericDLL",    "AsmGenericDLLTag", false );
+  // std::string         name;                           /* Name of library as stored in executable (usually a base name) */
+  // std::vector<std::string> funcs;                     /* List of functions needed from the library */
+     AsmGenericDLL.setDataPrototype  ("std::string","name","= \"\"",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmGenericDLL.setDataPrototype  ("SgStringList","funcs","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection, "AsmElfSection",      "AsmElfSectionTag", false );
+     NEW_TERMINAL_MACRO ( AsmGenericFormat,      "AsmGenericFormat",      "AsmGenericFormatTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericArchitecture,"AsmGenericArchitecture","AsmGenericArchitectureTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericFile,        "AsmGenericFile",        "AsmGenericFileTag" );
 
-  // NEW_TERMINAL_MACRO    ( AsmElfSection,      "AsmElfSection",      "AsmElfSectionTag"      );
-     NEW_TERMINAL_MACRO    ( AsmElfSectionTable, "AsmElfSectionTable", "AsmElfSectionTableTag" );
-     NEW_TERMINAL_MACRO    ( AsmElfSegmentTable, "AsmElfSegmentTable", "AsmElfSegmentTableTag" );
-  // NEW_NONTERMINAL_MACRO ( AsmGenericSection, AsmElfSection | AsmElfSectionTable | AsmElfSegmentTable,
-  //                         "AsmGenericSection", "AsmGenericSectionTag", false );
-     NEW_NONTERMINAL_MACRO ( AsmGenericSection, AsmElfSection | AsmElfSectionTable | AsmElfSegmentTable | AsmElfSymbolSection,
-                             "AsmGenericSection", "AsmGenericSectionTag", false );
-
-  // Generic executable file format supporting IR nodes: ExecSegment, ExecSection, ExecHeader, ExecFile
-  // NEW_TERMINAL_MACRO ( AsmGenericSegment,     "AsmGenericSegment",     "AsmGenericSegmentTag" );
-  // NEW_TERMINAL_MACRO ( AsmGenericSection,     "AsmGenericSection",     "AsmGenericSectionTag" );
-  // NEW_TERMINAL_MACRO ( AsmGenericHeader,      "AsmGenericHeader",      "AsmGenericHeaderTag"  );
-  // NEW_TERMINAL_MACRO ( AsmGenericDLL,         "AsmGenericDLL",         "AsmGenericDLLTag"    );
-#endif
-
-     NEW_TERMINAL_MACRO ( AsmLEDLL,         "AsmLEDLL",         "AsmLEDLLTag"    );
-     NEW_TERMINAL_MACRO ( AsmPEDLL,         "AsmPEDLL",         "AsmPEDLLTag"    );
-     NEW_NONTERMINAL_MACRO ( AsmGenericDLL, AsmPEDLL  | AsmLEDLL, "AsmGenericDLL",    "AsmGenericDLLTag", false );
-
-     NEW_TERMINAL_MACRO ( AsmGenericFormat,      "AsmGenericFormat",      "AsmGenericFormatTag"    );
-     NEW_TERMINAL_MACRO ( AsmGenericArchitecture,"AsmGenericArchitecture","AsmGenericArchitectureTag"    );
-
-     NEW_TERMINAL_MACRO ( AsmGenericFile,        "AsmGenericFile",        "AsmGenericFileTag"    );
-
+  // Support for different types of header for binary executable file formats.
      NEW_TERMINAL_MACRO ( AsmElfHeader,          "AsmElfHeader",          "AsmElfHeaderTag"   );
      NEW_TERMINAL_MACRO ( AsmPEHeader,           "AsmPEHeader",           "AsmPEHeaderTag"    );
      NEW_TERMINAL_MACRO ( AsmNEHeader,           "AsmNEHeader",           "AsmNEHeaderTag"    );
      NEW_TERMINAL_MACRO ( AsmLEHeader,           "AsmLEHeader",           "AsmLEHeaderTag"    );
      NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEHeader  | AsmLEHeader |  AsmNEHeader | AsmElfHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", false );
 
-  // NEW_TERMINAL_MACRO ( AsmGenericSection,     "AsmGenericSection",     "AsmGenericSectionTag"    );
+  // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb recent changes).
      NEW_TERMINAL_MACRO    ( AsmElfSection,       "AsmElfSection",       "AsmElfSectionTag"       );
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTable,  "AsmElfSegmentTable",  "AsmElfSegmentTableTag"  );
@@ -215,8 +207,7 @@ Grammar::setUpBinaryInstructions ()
             AsmLESection     | AsmLESectionTable  | AsmLEPageTable     | AsmLEEntryTable     | AsmLERealocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", false );
 
-  // NEW_TERMINAL_MACRO ( AsmGenericHeader,      "AsmGenericHeader",      "AsmGenericHeaderTag"    );
-
+  // Support for Symbols in the binary executable.
      NEW_TERMINAL_MACRO    ( AsmCoffSymbol,   "AsmCoffSymbol", "AsmCoffSymbolTag"    );
      NEW_TERMINAL_MACRO    ( AsmElfSymbol,    "AsmElfSymbol",  "AsmElfSymbolTag"    );
      NEW_NONTERMINAL_MACRO ( AsmGenericSymbol, AsmCoffSymbol  | AsmElfSymbol, "AsmGenericSymbol",    "AsmGenericSymbolTag", false );
@@ -243,7 +234,6 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmGenericSectionList, "AsmGenericSectionList", "AsmGenericSectionListTag" );
      NEW_TERMINAL_MACRO ( AsmElfSymbolList,      "AsmElfSymbolList",      "AsmElfSymbolListTag"      );
 
-
   // DQ (8/2/2008): These were removed from the design by Robb (segments and sections are now the same: as sections).
   // NEW_TERMINAL_MACRO ( AsmGenericSegmentList, "AsmGenericSegmentList", "AsmGenericSegmentListTag" );
   // NEW_TERMINAL_MACRO ( AsmElfSegment,         "AsmElfSegment",         "AsmElfSegmentTag" );
@@ -261,53 +251,8 @@ Grammar::setUpBinaryInstructions ()
                AsmPEExtendedDOSHeader  | AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry |
                AsmNEExtendedDOSHeader  | AsmNEEntryPoint         | AsmNERealocEntry        | AsmNESectionTableEntry |
                AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry  |
-               AsmGenericSectionList, "AsmExecutableFileFormat",    "AsmExecutableFileFormatTag", false );
+               AsmGenericSectionList   | AsmPEImportHintNameList, "AsmExecutableFileFormat",    "AsmExecutableFileFormatTag", false );
 
-#if 0
-  // Old code
-
-  // ELF executable file format supporting IR nodes
-  // ElfFileHeader, ElfSectionTable, ElfSectionTableEntry, ElfSection, 
-  //                ElfSegmentTable, ElfSegmentTableEntry, ElfDynamicSegment, ElfDynamicEntry, 
-  // ElfSymbolSection, ElfSymbol
-  // NEW_TERMINAL_MACRO ( AsmElfFile,              "AsmElfFile",              "AsmElfFileTag"    );
-  // NEW_TERMINAL_MACRO ( AsmElfSectionTable,      "AsmElfSectionTable",      "AsmElfSectionTableTag"    );
-     NEW_TERMINAL_MACRO ( AsmElfSectionTableEntry, "AsmElfSectionTableEntry", "AsmElfSectionTableEntryTag"    );
-  // NEW_TERMINAL_MACRO ( AsmElfSection,           "AsmElfSection",           "AsmElfSectionTag"    );
-  // NEW_TERMINAL_MACRO ( AsmElfSegmentTable,      "AsmElfSegmentTable",      "AsmElfSegmentTableTag"    );
-     NEW_TERMINAL_MACRO ( AsmElfSegmentTableEntry, "AsmElfSegmentTableEntry", "AsmElfSectionEntryTag"    );
-  // NEW_TERMINAL_MACRO ( AsmElfDynamicSegment,    "AsmElfDynamicSegment",    "AsmElfDynamicSegmentTag"  );
-  // NEW_TERMINAL_MACRO ( AsmElfSegment,           "AsmElfDynamicSegment",    "AsmElfDynamicSegmentTag"  );
-  // NEW_TERMINAL_MACRO ( AsmElfDynamicEntry,      "AsmElfDynamicEntry",      "AsmElfDynamicEntryTag"    );
-     NEW_TERMINAL_MACRO ( AsmElfSegmentEntry,      "AsmElfSegmentEntry",      "AsmElfSegmentEntryTag"    );
-  // NEW_TERMINAL_MACRO ( AsmElfSymbolSection,     "AsmElfSymbolSection",     "AsmElfSymbolSectionTag"   );
-     NEW_TERMINAL_MACRO ( AsmElfSymbolList,        "AsmElfSymbolList",        "AsmElfSymbolListTag"      );
-     NEW_TERMINAL_MACRO ( AsmElfSymbol,            "AsmElfSymbol",            "AsmElfSymbolTag"          );
-
-     NEW_TERMINAL_MACRO ( AsmElfSegmentEntryList, "AsmElfSegmentEntryList", "AsmElfSegmentEntryListTag"  );
-
-     NEW_NONTERMINAL_MACRO ( AsmElfSupport, AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSegmentEntry | 
-                                            AsmElfSegmentEntryList | AsmElfSymbolList | AsmElfSymbol,
-                             "AsmElfSupport", "AsmElfSupportTag", false );
-
-  // Windows PE executable file format supporting IR nodes
-  // NEW_TERMINAL_MACRO ( AsmPEFile,    "AsmPEFile",    "AsmPEFileTag" );
-     NEW_TERMINAL_MACRO ( AsmPEDLL, "AsmPEDLL", "AsmPEDLLTag" );
-     NEW_TERMINAL_MACRO ( AsmPEFileHeader, "AsmPEFileHeader", "AsmPESectionTag" );
-     NEW_TERMINAL_MACRO ( AsmPESection, "AsmPESection", "AsmPESectionTag" );
-     NEW_TERMINAL_MACRO ( AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag" );
-     NEW_TERMINAL_MACRO ( AsmPESectionTable, "AsmPESectionTable", "AsmPESectionTableTag" );
-     NEW_TERMINAL_MACRO ( AsmPECoffSymbolTable, "AsmPECoffSymbolTable", "AsmPECoffSymbolTableTag" );
-
-  // NEW_NONTERMINAL_MACRO ( AsmPESupport, AsmPEFile | AsmPESection, "AsmPESupport",    "AsmPESupportTag", false );
-  // NEW_NONTERMINAL_MACRO ( AsmPESupport, AsmPEDLL | AsmPEFileHeader | AsmPESection | AsmPEImportSection | AsmPESectionTable | AsmPECoffSymbolTable, "AsmPESupport",    "AsmPESupportTag", false );
-
-  // Parent of all executable format support IR nodes
-  // NEW_NONTERMINAL_MACRO ( AsmExecutableFileFormat, AsmGenericSupport | AsmElfSupport | AsmPESupport,
-  //                         "AsmExecutableFileFormat",    "AsmExecutableFileFormatTag", false );
-#endif
-
-#endif
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
   // source code. The kinds of information that we want to save for each is really quire different.
@@ -326,15 +271,10 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmSectionHeaderList, "AsmSectionHeaderList", "AsmSectionHeaderListTag" );
 #endif
 
-#if NEW_ASM_EXECUTABLE_FORMAT_IR_NODES
   // We will elimiate: AsmFile, AsmProgramHeader, AsmSectionHeader, AsmProgramHeaderList, AsmSectionHeaderList
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
-#else
-  // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType, "AsmNode","AsmNodeTag");
-     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType, "AsmNode","AsmNodeTag", false);
-#endif
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
   // AsmInstructionBase.setFunctionPrototype        ( "HEADER", "../Grammar/Common.code");
@@ -442,7 +382,7 @@ Grammar::setUpBinaryInstructions ()
      AsmFile.setDataPrototype("unsigned long", "section_header_string_table_index","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-// In the ne design these are sections 
+  // In the ne design these are sections 
      AsmFile.setDataPrototype("SgAsmProgramHeaderList*", "programHeaderList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmSectionHeaderList*", "sectionHeaderList","= NULL",
@@ -450,20 +390,8 @@ Grammar::setUpBinaryInstructions ()
 #endif
 
      AsmSectionHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
-#if 1
      AsmSectionHeaderList.setDataPrototype("SgAsmSectionHeaderPtrList","section_headers","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#else
-     AsmSectionHeaderList.setAutomaticGenerationOfConstructor(FALSE);
-     AsmSectionHeaderList.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AsmSectionHeaderList.editSubstitute       ( "LIST_DATA_TYPE", "SgAsmSectionHeaderPtrList" );
-     AsmSectionHeaderList.editSubstitute       ( "LIST_NAME", "section_headers" );
-     AsmSectionHeaderList.editSubstitute       ( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     AsmSectionHeaderList.editSubstitute       ( "LIST_FUNCTION_NAME", "section_header" );
-     AsmSectionHeaderList.editSubstitute       ( "LIST_ELEMENT_DATA_TYPE", "SgStatement*" );
-     AsmSectionHeaderList.setDataPrototype    ( "SgAsmSectionHeaderPtrList", "section_headers", "",
-				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-#endif
 
      AsmProgramHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setDataPrototype("SgAsmProgramHeaderPtrList","program_headers","",
@@ -514,8 +442,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmSectionHeader.setDataPrototype("unsigned long","table_entry_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-#if NEW_ASM_EXECUTABLE_FORMAT_IR_NODES
 
      AsmElfHeader.setFunctionPrototype ( "HEADER_ELF_HEADER", "../Grammar/BinaryInstruction.code");
   /* Section in which this segment lives */
@@ -683,7 +609,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegment.setDataPrototype("SgAsmElfSegmentEntryList*","other","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
 #if 0
     unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
