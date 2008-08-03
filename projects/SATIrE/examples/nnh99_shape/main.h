@@ -3,7 +3,7 @@
  * necessary for your analysis. */
 
 extern "C" void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx);
-extern "C" void my_o_VarSet_print_fp(FILE * fp, o_VarSet node);
+extern "C" void my_o_Node_print_fp(FILE * fp, o_Node node);
 extern "C" int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg);
 
 #include "AnalyzerOptions.h"
@@ -219,7 +219,7 @@ protected:
     std::pair<SgNode*,SgNode*> *pair;
     for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
       pair = *i;
-      if (o_is_must_alias(pair->first, pair->second, sg)) {
+      if (o_is_must_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
         aliases->insert(pair);
       }
     }
@@ -234,7 +234,7 @@ protected:
     std::pair<SgNode*,SgNode*> *pair;
     for (i=candidate_pairs->begin(); i!=candidate_pairs->end(); i++) {
       pair = *i;
-      if (o_is_may_alias(pair->first, pair->second, sg)) {
+      if (o_is_may_alias(pair->first, pair->second, o_shape_carrier_to_shapegraphset(sg))) {
         aliases->insert(pair);
       }
     }

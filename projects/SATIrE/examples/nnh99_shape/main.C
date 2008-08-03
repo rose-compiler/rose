@@ -3,22 +3,19 @@
 #include "main-support.h"
 #include "main.h"
 
-PAG_BOOL get_universal_attribute__option_kill_normalisation_temps()
-{
-        /* remove temporary variables introduced in the normalisation process */
-        return true;
+PAG_BOOL get_universal_attribute__option_kill_normalisation_temps() {
+  /* remove temporary variables introduced in the normalisation process */
+  return true;
 }
 
-PAG_BOOL get_universal_attribute__option_kill_empty_graph()
-{
-        /* remove empty graphs from the set of graphs */
-        return true;
+PAG_BOOL get_universal_attribute__option_kill_empty_graph() {
+  /* remove empty graphs from the set of graphs */
+  return true;
 }
 
-PAG_BOOL get_universal_attribute__option_kill_unreachable_nodes()
-{
-        /* remove nodes that are not reachable through the nodes in the state (named ones) */
-        return true;
+PAG_BOOL get_universal_attribute__option_kill_unreachable_nodes() {
+  /* remove nodes that are not reachable through the nodes in the state (named ones) */
+  return true;
 }
 
 ShapeAnalyzerOptions *opt;
@@ -221,9 +218,6 @@ int count_alias_pairs(SgStatement *stmt, std::string pos, std::string alias_type
 
 
 
-
-
-
 /* custom .gdl output functions */
 int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg) {
 	int n_nodes = 0;
@@ -233,7 +227,7 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 	o_HeapEdgeList   heap_edges = o_extract_heapedges(sg);
 
 	o_NodeList	    nodes = o_extract_heapnodes(sg);
-	o_StrList	      vars = o_vars_by_stackedges(o_extract_stackedge_set(sg));
+	o_VarList        vars = o_vars_by_stackedges(o_extract_stackedge_set(sg));
 
 	fprintf(fp, "    title: \"%s-sg%d\"\n", name, n_graphs);
 	fprintf(fp, "    orientation: left_to_right\n");
@@ -246,24 +240,24 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 
 	// all heap nodes
 	while (!o_NodeList_is_empty(nodes)) {
-		o_VarSet node = o_NodeList_head(nodes);
+		o_Node node = o_NodeList_head(nodes);
 		nodes = o_NodeList_tail(nodes);
 		gstats.addHeapNode();
 		n_nodes++;
 		
 		fprintf(fp, "    node: { /*heap node*/ \n");
 		fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
-		o_VarSet_print_fp(fp, node);
+		o_Node_print_fp(fp, node);
 		fprintf(fp, "\"\n");
 		fprintf(fp, "      label: \"");
-		my_o_VarSet_print_fp(fp, node);
+		my_o_Node_print_fp(fp, node);
 		fprintf(fp, "\"\n");
 		if (o_NodeList_is_elem(is_shared, node))
 		{
 			fprintf(fp, "      shape: rhomb\n");
 			if (!edge)
 			{
-	if (o_VarSet_is_empty(node)) 
+	if (o_Node_is_empty(node)) 
 	  fprintf(fp, "      color: darkmagenta\n");
 	else
 	  fprintf(fp, "      color: red\n");
@@ -273,16 +267,17 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 	}
 
 	// all var nodes
-	while (!o_StrList_is_empty(vars)) {
-		str node = o_StrList_head(vars);
+	while (!o_VarList_is_empty(vars)) {
+		o_VariableId node = o_VarList_head(vars);
 		gstats.addStackNode();
 
-		vars = o_StrList_tail(vars);
+		vars = o_VarList_tail(vars);
 		fprintf(fp, "    node: { /*var node*/ \n");
 		fprintf(fp, "      title: \"%s-sg%d", name, n_graphs);
-		str_print_fp(fp, node);
+		o_VariableId_print_fp(fp, node);
 		fprintf(fp, "\"\n      label: \"");
-		fprintf(fp, "%s\"\n", str_to_charp(node));
+        o_VariableId_print_fp(fp, node);
+		fprintf(fp, "\"\n");
 		fprintf(fp, "      shape: ellipse\n");
 		fprintf(fp, "      level: 0\n");
 		fprintf(fp, "    }\n\n");
@@ -291,37 +286,38 @@ int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o
 	// all stack edges
 	while (!o_StackEdgeList_is_empty(stack_edges)) {
 		o_StackEdge	   edge = o_StackEdgeList_head(stack_edges);
-		str	     var = o_StackEdge_select_1(edge);
-		o_VarSet	  vars = o_StackEdge_select_2(edge);
+		o_VariableId    var = o_StackEdge_select_1(edge);
+		o_Node	  vars = o_StackEdge_select_2(edge);
 
 		stack_edges = o_StackEdgeList_tail(stack_edges);
 		fprintf(fp, "    edge: { /*stackedge*/\n");
 		fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
-		str_print_fp(fp, var);
+		o_VariableId_print_fp(fp, var);
 		fprintf(fp, "\"\n");
 		fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-		o_VarSet_print_fp(fp, vars);
+		o_Node_print_fp(fp, vars);
 		fprintf(fp, "\"\n");
 		fprintf(fp, "    }\n\n");
 	}
 
 	// all heap edges
 	while (!o_HeapEdgeList_is_empty(heap_edges)) {
-		o_HeapEdge edge = o_HeapEdgeList_head(heap_edges);
-		o_VarSet  node1 = o_HeapEdge_select_1(edge);
-		str	 var = o_HeapEdge_select_2(edge);
-		o_VarSet  node2 = o_HeapEdge_select_3(edge);
+		o_HeapEdge edge  = o_HeapEdgeList_head(heap_edges);
+		o_Node node1     = o_HeapEdge_select_1(edge);
+		o_VariableId var = o_HeapEdge_select_2(edge);
+		o_Node node2     = o_HeapEdge_select_3(edge);
 
 		heap_edges = o_HeapEdgeList_tail(heap_edges);
 		fprintf(fp, "    edge: { /*heapedge*/\n");
 		fprintf(fp, "      sourcename: \"%s-sg%d", name, n_graphs);
-		o_VarSet_print_fp(fp, node1);
+		o_Node_print_fp(fp, node1);
 		fprintf(fp, "\"\n");
 		fprintf(fp, "      targetname: \"%s-sg%d", name, n_graphs);
-		o_VarSet_print_fp(fp, node2);
+		o_Node_print_fp(fp, node2);
 		fprintf(fp, "\"\n");
 		fprintf(fp, "      label: \"");
-		fprintf(fp, "%s\"\n", str_to_charp(var));
+        o_VariableId_print_fp(fp, var);
+		fprintf(fp, "\"\n");
 		fprintf(fp, "    }\n\n");
 	}
 
@@ -370,25 +366,24 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	fprintf(fp, "  %s\n", attrib);
 
     int n_nodes = 0;
-	if (!o_dfi_istop(info) && !o_dfi_isbottom(info))
-	{
+	if (!o_dfi_istop(info) && !o_dfi_isbottom(info)) {
 		int n_graphs = 0;
-		
-		o_SrwNielsonPair gpair = o_nielson_extract_graphs(o_dfi_drop(info));
+
+		o_SrwNnhPair gpair = o_nnh_extract_graphs(o_dfi_drop(info));
 		
 		if (opt->gdlShowSummaryGraph()) {
+			gstats.addGraphs(1);
 			fprintf(fp, "  graph: { /*summary graph*/\n");
 			fprintf(fp, "    color: lightgrey\n");
 			fprintf(fp, "    label: \"\"\n");
 			n_graphs++;
-			n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNielsonPair_select_1(gpair));
+			n_nodes += gdl_write_shapegraph_fp(fp, name, n_graphs, attrib, o_SrwNnhPair_select_1(gpair));
 		}
 
 		if (opt->gdlShowIndividualGraphs()) {
-			o_ShapeGraphList graphs = o_SrwNielsonPair_select_2(gpair);
+			o_ShapeGraphList graphs = o_SrwNnhPair_select_2(gpair);
 			while (!o_ShapeGraphList_is_empty(graphs)) 
 			{
-			    gstats.addGraphs(1);
 				o_ShapeGraph sg = o_ShapeGraphList_head(graphs);
 				graphs = o_ShapeGraphList_tail(graphs);
 				
@@ -414,17 +409,17 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	return;
 }
 
-void my_o_VarSet_print_fp(FILE * fp, o_VarSet node) {
-	_o_VarSet_cur cur;
+void my_o_Node_print_fp(FILE * fp, o_Node node) {
+	_o_Node_cur cur;
 
 	std::vector<std::string> varSet;
-	o_VarSet_cur_reset(&cur,node);
-	while(!o_VarSet_cur_is_empty(&cur)) {
-		char* var = str_to_charp(o_VarSet_cur_get(&cur)); // MS adapted int to char*
-		o_VarSet_cur_next(&cur);
+	o_Node_cur_reset(&cur,node);
+	while(!o_Node_cur_is_empty(&cur)) {
+        str var   = o_varid_str(o_Node_cur_get(&cur));
+		o_Node_cur_next(&cur);
 		//if (var!=0) fprintf(fp,"%s",var); // MS adapted to char*
 		//else fprintf(fp,"NOVAR");
-		//if(!o_VarSet_cur_is_empty(&cur))
+		//if(!o_Node_cur_is_empty(&cur))
 		//fprintf(fp,",");
 		if (var!=0)
 		  varSet.push_back(var);
@@ -445,4 +440,4 @@ void my_o_VarSet_print_fp(FILE * fp, o_VarSet node) {
 	fprintf(fp,"}");
 }
 
-// vim: ts=4 sts=2:
+// vim: ts=2 sts=2 sw=2 expandtab:
