@@ -90,7 +90,7 @@ int openFortranParser_main(int argc, char **argv)
     string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
 
  /* Save the old value */
-    const char* old_value = getenv("LD_LIBRARY_PATH"); // Might be null
+    const char* old_value = getenv(LTDL_SHLIBPATH_VAR); // Might be null
 
 #if 0
     printf ("Old value: LD_LIBRARY_PATH = %s \n",old_value);
@@ -102,7 +102,7 @@ int openFortranParser_main(int argc, char **argv)
 
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
-    int env_status = setenv("LD_LIBRARY_PATH",new_value.c_str(),overwrite);
+    int env_status = setenv(LTDL_SHLIBPATH_VAR,new_value.c_str(),overwrite);
     assert(env_status == 0);
 #endif
 
@@ -112,7 +112,7 @@ int openFortranParser_main(int argc, char **argv)
 
  /* Reset to the saved value */
 #if OVERWRITE_LD_LIBRARY_PATH
-    env_status = setenv("LD_LIBRARY_PATH",old_value,overwrite);
+    env_status = setenv(LTDL_SHLIBPATH_VAR,old_value,overwrite);
     assert(env_status == 0);
 #endif
 

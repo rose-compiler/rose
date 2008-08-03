@@ -436,6 +436,8 @@ AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
 AC_LIB_LTDL
 AC_PROG_LIBTOOL
+AC_LTDL_SHLIBPATH dnl Get the environment variable like LD_LIBRARY_PATH for the Fortran support to use
+AC_DEFINE([LTDL_SHLIBPATH_VAR], [$LTDL_SHLIBPATH_VAR], [Environment variable containing shared library path])
 echo 'int i;' > conftest.$ac_ext
 AC_TRY_EVAL(ac_compile);
 # echo "In configure.in (after libtool setup): libtool test for 64 bit libs = `/usr/bin/file conftest.o`"
