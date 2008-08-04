@@ -101,6 +101,10 @@ typedef SgAsmPEImportHintNamePtrList*              SgAsmPEImportHintNamePtrListP
 typedef Rose_STL_Container<SgAsmElfSymbol*> SgAsmElfSymbolPtrList;
 typedef SgAsmElfSymbolPtrList*              SgAsmElfSymbolPtrListPtr;
 
+// DQ (8/4/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmCoffSymbol*> SgAsmCoffSymbolPtrList;
+typedef SgAsmCoffSymbolPtrList*              SgAsmCoffSymbolPtrListPtr;
+
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
 typedef SgStatementPtrList*                 SgStatementPtrListPtr;
@@ -265,9 +269,12 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>     SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                  SgFormatItemPtrListPtr;
 
-typedef uint64_t addr_t; // address and size (file and memory)
-typedef Rose_STL_Container<addr_t>            SgAddressList;
+// typedef uint64_t addr_t; // address and size (file and memory)
+typedef Rose_STL_Container<Exec::addr_t>      SgAddressList;
 typedef SgAddressList*                        SgAddressListPtr;
+
+typedef Rose_STL_Container<SgAsmPEDLL*>       SgAsmPEDLLPrtList;
+typedef SgAsmPEDLLPrtList*                    SgAsmPEDLLPrtListPtr;
 
 // DQ (11/26/2005): Support for visitor pattern.
 class ROSE_VisitTraversal;
