@@ -1,4 +1,4 @@
-% SATIrE bug log $Id: BugLog,v 1.13 2008-07-30 08:26:25 gergo Exp $
+% SATIrE bug log $Id: BugLog,v 1.14 2008-08-04 13:26:59 gergo Exp $
 % The intended syntax should be clear. It might be a good idea to add fields
 % describing how to reproduce the error, i.e. a command line. (But we can't
 % include sample input files in this file, or can we?)
@@ -542,3 +542,38 @@ Fix:
     to erroneous declarations in the analysis specification.
 Status:
     Resolved 2008-07-30, GB
+
+
+Logged:
+    2008-08-04, GB
+Symptoms:
+    Analysis specifications have no access to some initializers for
+    variables declared with the "static" storage specifier at file scope.
+    (Reported by Stefan Stattelmann of AbsInt.)
+Reason:
+    This appeared to come up when using static variables with the same name
+    in several files analyzed at once. As the variables had the same name,
+    they were treated as the same, and an initializer in one file could
+    override an initializer in another.
+Fix:
+    Do not "link", as it were, static variables anymore.
+Status:
+    Resolved 2008-08-04, GB
+
+
+Logged:
+    2008-08-04, GB
+Symptoms:
+    Local variables declared "static" are treated like normal local
+    variables in the ICFG; in particular, there is no way for the analysis
+    to tell that the initialization expression must be evaluated exactly
+    once, before executing anything else.
+Reason:
+    No treatment for static yet.
+Fix:
+    Possibly: Put all static variables into the "global variables" list,
+    since they are global in the sense of being available throughout the
+    program's execution. They cannot be referred to from every scope, but
+    that shouldn't matter to an analysis.
+Status:
+    BROKEN as of 2008-08-04

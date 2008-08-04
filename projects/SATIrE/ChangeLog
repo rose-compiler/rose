@@ -15,12 +15,15 @@ V0.8.3 (in progress)
   - deprecated exprnum/typenum functions emit warnings; suppress with
     --no-warn-deprecated command line flag (even better: change the analysis
     specification!)
+  - new support functions stmt_asttext, expr_asttext to visualize AST
+    structure for easier development of matching patterns
 
 * ICFG builder changes [GB]
   - replaced function-specific $func$return, $func$arg_n, and $func$this
     variables by generic $tmpvar$ variables; this allows for calling
     functions without knowing their name (through pointers, for instance)
   - better resolution of calls to static functions
+  - better resolution of static file-scope variables and their initializers
 
 * PAG memory management command line flags [GB]
   - for setting initial memory size:
