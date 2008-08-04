@@ -3,6 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)
 
 noinst_LTLIBRARIES = libroseEDG.la
+libroseEDG_la_SOURCES = 
 
 libroseEDG.la:
 	@if test -f $(srcdir)/$(BINARY_EDG_DIRNAME).tar.gz; then \
