@@ -358,7 +358,6 @@ Rejected modifications for ROSE:
    This section documents things to do that are specific to the ROSE configuration.
    - There are a number of Automake configuration options and we might not need all of
     these:
-         - AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
          - AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_boost_wave" = yes)
          - AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,test ! "$with_SQLite" = no)
          - AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)

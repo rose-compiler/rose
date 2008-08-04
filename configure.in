@@ -60,40 +60,6 @@ fi
 
 # exit 1
 
-# DQ (4/13/2005):
-# Control use of EDG source code within ROSE.  This option allows the user
-# to use the EDG source code within ROSE.  By default ROSE distributions
-# are built to use binaries of anything from the EDG source code so as to
-# not publish any part of the EDG interface.  This is consistant with the
-# requirements of the free EDG research license.
-# USE_EDG_SOURCE_CODE
-with_edg_source_code=true
-
-# echo "In configure: with_edg_source_code = $with_edg_source_code"
-
-# Setup Automake conditional in src/frontend/CxxFrontend/EDG_3.3/src/Makefile.am
-AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
-
-# DQ (7/25/2008): Added support to make sure that full source and sourse using EDG
-# binaries are correctly handled internally.
-# if (test "$with_edg_source_code" = true); then
-#    echo "Configured to be a full source version of ROSE."
-#    if (test -f $${top_srcdir}/src/frontend/CxxFrontend/libroseEDG.la ); then
-#       echo "Error: found valid EDG library in source code!."
-#       AC_MSG_ERROR([Found valid EDG library in source code!])
-#    else
-#       echo "Correct: no EDG library found in source code!."
-#    fi
-# else
-#    echo "Configured to be source version of ROSE with the binary EDG libraries."
-#    if (test -f $${top_srcdir}/src/frontend/CxxFrontend/libroseEDG.la ); then
-#       echo "Correct: found valid EDG library in source code, OK this is a source version of ROSE with the binary EDG libraries."
-#    else
-#       echo "Warning: This is a step in building the EDG libraries into the source code (for a source distribution with EDG binaries)."
-#       AC_MSG_WARN([EDG libraries not found in source tree (OK if building distribution of source with EDG binaries)!])
-#    fi
-# fi
-
 #AC_MSG_WARN([Exiting as a test!])
 #AC_MSG_ERROR([Exiting as a test!])
 #echo "Exiting as a test!"
@@ -102,8 +68,6 @@ AM_CONDITIONAL(ROSE_USE_EDG_SOURCE,test "$with_edg_source_code" = true)
 AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
 AM_CONDITIONAL(ROSE_BUILD_ROSEHPCT,test "$with_hpct" = true)
 
-
-# echo "At top of configure.in: with_edg_source_code = $with_edg_source_code"
 
 # Set up for use of bison to build dot2gml tool in directory
 # src/roseIndependentSupport/dot2gml.  This is made optional
@@ -667,9 +631,11 @@ AC_SUBST(RT_LIBS)
 AC_ARG_ENABLE(dq-developer-tests,
 [--enable-dq-developer-tests   Development option for Dan Quinlan (disregard).],
 [ echo "Setting up optional ROSE/developersScratchSpace/Dan directory"
-if test "$with_edg_source_code" = no; then
-   echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
-   $enable_dq_developer_tests=no
+if test -d ${srcdir}/developersScratchSpace; then
+  :
+else
+  echo "This is a non-developer version of ROSE (source distributed with EDG binary)"
+  enable_dq_developer_tests=no
 fi
 ])
 AM_CONDITIONAL(DQ_DEVELOPER_TESTS,test "$enable_dq_developer_tests" = yes)
@@ -1090,39 +1056,10 @@ developersScratchSpace/Dan/Yices_tests/Makefile
 developersScratchSpace/Dan/Compass_tests/Makefile
 ])
 
-# echo "At bottom of configure.in: with_edg_source_code = $with_edg_source_code"
-
 AC_CONFIG_COMMANDS([default],[[
      echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
      pathToSourceDir=`cd $srcdir && pwd`
      test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s $pathToSourceDir/src/ROSETTA/Grammar src/ROSETTA/Grammar )
-
-# DQ (7/23/2008): Now that we handle this in the Makefile.am we don't need it here, I think.
-#    # Note that the value of $with_edg_source_code is not available here unless it is exported (now fixed)
-#    # echo "How is this set: with_edg_source_code = $with_edg_source_code"
-#      if test -r $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la; then
-#           echo "Copying $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la binary to compile tree src/frontend/CxxFrontend/EDG_3.3/src"
-#         # cp -p $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.a  src/frontend/CxxFrontend/EDG_3.3/src
-#           $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la src/frontend/CxxFrontend/EDG_3.3/src
-#      else
-#           if test "$with_edg_source_code" = true; then
-#                echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
-# #           else
-# #              echo "$pathToSourceDir/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la not found, rerun configure --with-edg_source_code ..."
-#           fi
-#      fi
-
-#      if test -r $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo ; then
-#           echo "Copying $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo binary to compile tree src/frontend/EDG_SAGE_Connection"
-#         # cp -p $pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so  src/frontend/EDG_SAGE_Connection
-#           $pathToSourceDir/scripts/libtoolcp $pathToSourceDir/src/frontend/EDG_SAGE_Connection/sage_gen_be.lo src/frontend/EDG_SAGE_Connection
-#      else
-#           if test "$with_edg_source_code" = true; then
-#                echo "ROSE configured to use EDG source code, this is a development version (no binaries)"
-# #           else
-# #              echo "$pathToSourceDir/src/frontend/EDG_SAGE_Connection/libedgSage.so not found, rerun configure --with-edg_source_code ..."
-#           fi
-#      fi
 ]],[[
 ]])
 

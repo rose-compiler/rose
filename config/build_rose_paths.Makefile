@@ -18,7 +18,6 @@ rose_paths.h: Makefile
 	@@echo "#define ROSE_CONFIGURE_DATE \"@configure_date@\"" >> rose_paths.h
 	@@echo "#define ROSE_AUTOMAKE_BUILD_OS \"@build_os@\"" >> rose_paths.h
 	@@echo "#define ROSE_AUTOMAKE_BUILD_CPU \"@build_cpu@\"" >> rose_paths.h
-	@@echo "#define ROSE_AUTOMAKE_BUILT_WITH_EDG_SOURCE_CODE @with_edg_source_code@" >> rose_paths.h
 	@@echo "" >> rose_paths.h
 #	@@echo "/* Define the location of the Compass tool within ROSE */" >> rose_paths.h
 #	@@echo "#define COMPASS_SOURCE_DIRECTORY \"@absolute_path_srcdir@/projects/compass\"" >> rose_paths.h
