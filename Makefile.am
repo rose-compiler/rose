@@ -121,7 +121,7 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEANFILES = rose_paths.h
+DISTCLEANFILES = rose_paths.h rose_binary_compatibility_signature
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
@@ -152,29 +152,33 @@ clean_binary_distribution: distdir
 
 if BINARY_EDG_TARBALL_ENABLED
 
-BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@
+rose_binary_compatibility_signature:
+	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -exec cat -t {} \; | @MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
 
-binary_edg_tarball:
+.PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
+
+binary_edg_tarball: rose_binary_compatibility_signature
 	cd src/ROSETTA/src; $(MAKE)
 	cd src/frontend/CxxFrontend; $(MAKE)
-	rm -rf $(BINARY_EDG_DIRNAME)
-	mkdir $(BINARY_EDG_DIRNAME)
-	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/libroseEDG.la > $(BINARY_EDG_DIRNAME)/libroseEDG.la
-	cp -Rp src/frontend/CxxFrontend/.libs $(BINARY_EDG_DIRNAME)/
-	tardir=$(BINARY_EDG_DIRNAME) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(BINARY_EDG_DIRNAME).tar.gz
-	rm -rf $(BINARY_EDG_DIRNAME)
+	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-`cat rose_binary_compatibility_signature` && \
+	rm -rf $${BINARY_EDG_DIRNAME} && \
+	mkdir $${BINARY_EDG_DIRNAME} && \
+	sed "s@^dependency_libs.*@dependency_libs=''@" src/frontend/CxxFrontend/libroseEDG.la > $${BINARY_EDG_DIRNAME}/libroseEDG.la && \
+	cp -Rp src/frontend/CxxFrontend/.libs $${BINARY_EDG_DIRNAME}/ && \
+	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
+	rm -rf $${BINARY_EDG_DIRNAME}
 
-source_with_binary_edg_dist:
-	@if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@.tar.gz | wc -l` -eq 0; then echo "Could not find any binary versions of EDG with signature @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi
-	@if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ | wc -l` -ne 0; then echo "Warning: the following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ >&2; fi
-	$(MAKE) clean_binary_distribution
-	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@.tar.gz $(distdir)/src/frontend/CxxFrontend
+source_with_binary_edg_dist: rose_binary_compatibility_signature
+	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
+	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
+	$(MAKE) clean_binary_distribution && \
+	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz $(distdir)/src/frontend/CxxFrontend && \
 	cat $(top_srcdir)/configure.in | \
 		grep -v '^developersScratchSpace/' | \
 		grep -v '^proposals/' | \
 		grep -v '^src/frontend/CxxFrontend/EDG' | \
 		grep -v '^docs/testDoxygen/' | \
-		sed s/RELEASE_BINARY_COMPATIBILITY_SIGNATURE/@ROSE_BINARY_COMPATIBILITY_SIGNATURE@/g > \
+		sed s/RELEASE_BINARY_COMPATIBILITY_SIGNATURE/$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}/g > \
 		$(distdir)/configure.in
 	cat $(top_srcdir)/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
@@ -186,6 +190,8 @@ source_with_binary_edg_dist:
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `ls *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
+	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
+	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Warning: the following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; fi
 #	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
 #	$(am__remove_distdir)
 
