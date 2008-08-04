@@ -675,6 +675,46 @@ SETUP_EDG
 # Setup Automake conditional in Projects/DataBase/Makefile.am
 # AM_CONDITIONAL(ROSE_USE_EDG_3_3,test "$with_EDG_3_3" = yes)
 
+# Find md5 or md5sum and create a signature for ROSE binary compatibility
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
+  AC_CHECK_PROGS(MD5, [md5 md5sum], [])
+  if test "x$MD5" = "x"; then
+    AC_MSG_WARN([Could not find either md5 or md5sum -- building binary EDG tarballs is disabled])
+    binary_edg_tarball_enabled=no
+    ROSE_BINARY_COMPATIBILITY_SIGNATURE=should-not-be-used
+  else
+    binary_edg_tarball_enabled=yes
+    AC_MSG_CHECKING([for binary compatibility signature])
+    ROSE_BINARY_COMPATIBILITY_SIGNATURE="`find ${srcdir}/src/ROSETTA ${srcdir}/src/frontend/CxxFrontend \( -name \*.C -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -exec cat -t {} \; | ${MD5} | cut -f 1 -d \ `"
+    AC_MSG_RESULT([$ROSE_BINARY_COMPATIBILITY_SIGNATURE])
+  fi
+else
+  binary_edg_tarball_enabled=no # This is a binary release version of ROSE anyway
+  ROSE_BINARY_COMPATIBILITY_SIGNATURE=should-not-be-used
+fi
+
+AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
+AC_SUBST(ROSE_BINARY_COMPATIBILITY_SIGNATURE)
+
+release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
+expected_binary_edg_dirname="roseBinaryEDG-${build}-${release_binary_compatibility_signature}"
+expected_binary_edg_tarball="${expected_binary_edg_dirname}.tar.gz"
+full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_binary_edg_tarball}"
+
+if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
+  : # We have EDG source code
+else
+  AC_MSG_CHECKING([for an appropriate binary version of EDG])
+  if test -f ${full_expected_binary_edg_tarball}; then
+    AC_MSG_RESULT([$expected_binary_edg_tarball])
+  else
+    AC_MSG_RESULT([no])
+    AC_MSG_ERROR([Could not find a binary version of EDG for architecture ${build} in ${srcdir}/src/frontend/CxxFrontend; it should be named \"${expected_binary_edg_tarball}\".  This distribution cannot be used on this platform.])
+  fi
+fi
+
+EXPECTED_BINARY_EDG_DIRNAME="${expected_binary_edg_dirname}"
+AC_SUBST(EXPECTED_BINARY_EDG_DIRNAME)
 
 dnl ---------------------------------------------------------------------
 dnl (8/29/2007): This was added to provide more portable times upon the 

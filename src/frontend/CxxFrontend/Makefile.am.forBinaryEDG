@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)
+BINARY_EDG_DIRNAME=@EXPECTED_BINARY_EDG_DIRNAME@
 
 noinst_LTLIBRARIES = libroseEDG.la
 libroseEDG_la_SOURCES = 
@@ -12,7 +12,7 @@ libroseEDG.la:
 	  mv $(BINARY_EDG_DIRNAME)/.libs . && \
 	  rmdir $(BINARY_EDG_DIRNAME)/; \
 	else \
-	  echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE" >&2 && \
+	  echo "There is no binary version of EDG (which should be named $(BINARY_EDG_DIRNAME).tar.gz) in your copy of ROSE -- this should have been caught by configure" >&2 && \
 	  exit 1; \
 	fi
 

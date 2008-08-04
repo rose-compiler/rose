@@ -150,7 +150,9 @@ clean_binary_distribution: distdir
 	rm -rf $(distdir)/developersScratchSpace
 	rm -rf $(distdir)/docs/testDoxygen
 
-BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)
+if BINARY_EDG_TARBALL_ENABLED
+
+BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@
 
 binary_edg_tarball:
 	cd src/ROSETTA/src; $(MAKE)
@@ -163,14 +165,16 @@ binary_edg_tarball:
 	rm -rf $(BINARY_EDG_DIRNAME)
 
 source_with_binary_edg_dist:
+	@if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@.tar.gz | wc -l` -eq 0; then echo "Could not find any binary versions of EDG with signature @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi
+	@if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ | wc -l` -ne 0; then echo "Warning: the following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v @ROSE_BINARY_COMPATIBILITY_SIGNATURE@ >&2; fi
 	$(MAKE) clean_binary_distribution
-	$(MAKE) binary_edg_tarball
-	mv $(BINARY_EDG_DIRNAME).tar.gz $(distdir)/src/frontend/CxxFrontend/
+	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-@ROSE_BINARY_COMPATIBILITY_SIGNATURE@.tar.gz $(distdir)/src/frontend/CxxFrontend
 	cat $(top_srcdir)/configure.in | \
 		grep -v '^developersScratchSpace/' | \
 		grep -v '^proposals/' | \
 		grep -v '^src/frontend/CxxFrontend/EDG' | \
-		grep -v '^docs/testDoxygen/' > \
+		grep -v '^docs/testDoxygen/' | \
+		sed s/RELEASE_BINARY_COMPATIBILITY_SIGNATURE/@ROSE_BINARY_COMPATIBILITY_SIGNATURE@/g > \
 		$(distdir)/configure.in
 	cat $(top_srcdir)/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
@@ -185,3 +189,4 @@ source_with_binary_edg_dist:
 #	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
 #	$(am__remove_distdir)
 
+endif
