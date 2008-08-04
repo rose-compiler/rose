@@ -92,7 +92,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   std::cerr << my_rank << " : deserialization done." << std::endl;
   /* deserialize all results */
 
-  MPI_Barrier(MPI_COMM_WORLD);
+
   my_map defmap = defuse->getDefMap();
   my_map usemap = defuse->getUseMap();
 
@@ -112,6 +112,7 @@ void Compass::saveDFA(std::string name, SgProject* project) {
   runDefUseAnalysis(project);
 
   MPI_Barrier(MPI_COMM_WORLD);
+
   if (my_rank==0) {
     std::cerr <<" Saving DFA to File : " << name << std::endl;
     ROSE_ASSERT(global_arrsize!=0);
@@ -142,7 +143,7 @@ void Compass::saveDFA(std::string name, SgProject* project) {
     loadDFA(name,project);
 
   }
-  MPI_Barrier(MPI_COMM_WORLD);
+
 
 }
 
