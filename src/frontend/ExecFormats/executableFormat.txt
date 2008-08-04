@@ -1,0 +1,138 @@
+DQ (6/10/2008): 
+These notes document how we want to connect the
+classes defined in this directory with the IR nodes
+that we need to build to represent the binary 
+executable file format.
+
+
+Design of existing data structures:
+
+From ExecELF.h:
+ElfFileHeader 
+   ExecHeader (isa)
+   ElfSectionTable (data member)
+      ElfSectionTableEntry (container)
+      ElfSection
+         ElfSection (isa)
+         ExecSegment (data member)
+
+   ElfSegmentTable (data member)
+      ExecSection (isa)
+      ElfSegmentTableEntry (container)
+         ExecSegment
+
+ElfDynamicSegment
+   ElfDynamicEntry (container)
+
+% This is not yet used in any data structure (that I can see)
+ElfSymbolSection
+   ElfSymbol
+
+
+From ExecGeneric.h:
+ExecFile
+   ExecSection (data member)
+      ExecFile (data member)
+      ExecSegment (container)
+         ExecSection (data member)
+
+
+From ExecPE.h:
+DOSFileHeader
+
+PEFileHeader
+   ExecHeader (isa)
+   RVASizePair (container)
+
+ObjectTableEntry_disk
+
+ObjectTableEntry
+
+ObjectTable
+   ExecSection (isa)
+   ObjectTableEntry (container)
+
+ImportDirectory_disk
+
+ImportDirectory
+
+ImportSegment
+   ExecSegment (isa)
+   ImportDirectory (container)
+
+
+
+New IR nodes:
+   ExecSegment
+   ExecSection
+   ExecHeader
+   ExecFile
+
+
+   ElfFileHeader 
+   ElfSectionTable
+   ElfSectionTableEntry
+   ElfSection
+   ElfSegmentTable
+   ElfSegmentTableEntry
+   ElfDynamicSegment
+   ElfDynamicEntry
+
+   ElfSymbolSection
+   ElfSymbol
+
+   DOSFileHeader
+   PEFileHeader
+   RVASizePair
+
+   ObjectTableEntry_disk
+   ObjectTableEntry
+   ObjectTable
+   ImportDirectory_disk
+   ImportDirectory
+   ImportSegment
+
+Build these specific IR nodes so far:
+   SgAsmGenericFormat
+   SgAsmGenericSegment
+   SgAsmGenericSection
+   SgAsmGenericHeader
+   SgAsmGenericFile
+   SgAsmGenericArchitecture
+   SgAsmGenericSectionList
+   SgAsmGenericSegmentList
+   SgAsmGenericSupport
+
+
+Questions:
+1) Where is the raw file format?
+2) Where is ElfSymbolSection used?
+
+
+Ideas: 
+   To make sure that we have absolutely everything, could we build
+the function to reconstruct the binary executable from the representation
+that we have?  And then test it to make sure it is identical.
+
+
+
+(8/4/2008): Additiaonal notes
+
+1) In AsmElfSectionTableEntry.setDataPrototype("SgCharList","extra","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+   the type is supposed to be "const unsigned char*", but this is a problem for ROSETTA to
+   support. Both because it is "const" and because it is not clear if it is pointer to a
+   unsigned char, an offset that only has to be 8 bits wide, or a C style string.
+   Depending upon which of these is true we need to represent it differently.
+
+2) For AsmElfSection.setDataPrototype("AsmElfSection*","linked_section","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+   We should likely be using an STL container, rather than a linked list here.
+
+3) AsmElfSegmentTableEntry variable have a prefix of "p_" this is confusing to ROSETTA,
+   since it reserves this for all data members as part of supporting the code generation.
+
+
+ 
+
+
+
+
