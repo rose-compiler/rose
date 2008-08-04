@@ -211,7 +211,7 @@ extern "C" void *o_add_tmpvarid(void *p_type)
     varname << "$tmpvar$" << add_tmpvarid_counter++;
 
  // Determine the new id value.
-    unsigned long i = get_global_cfg()->exprs_numbers.size();
+    unsigned long i = get_global_cfg()->numbers_exprs.size();
 
  // Add the value to the variable symbol and expression maps, and to the
  // list of variable ids.

@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.16 2008-07-01 09:44:44 gergo Exp $
+// $Id: pag_support.C,v 1.17 2008-08-04 13:27:35 gergo Exp $
 
 #include <iostream>
 
@@ -443,6 +443,22 @@ extern "C" void *o_global_get_initializer(void *symbol)
 {
     SgVariableSymbol *varsym = (SgVariableSymbol *) symbol;
     return get_global_cfg()->globals_initializers[varsym];
+}
+
+// GB (2008-08-04): Two functions requested by Viktor to make the structure
+// of ASTs explicit when trying to write patterns that match them.
+extern "C" str o_stmt_asttext(void *statement)
+{
+    SgStatement *stmt = (SgStatement *) statement;
+    std::string result = Ir::fragmentToTreeRepresentation(stmt);
+    return Ir::getCharPtr(result);
+}
+
+extern "C" str o_expr_asttext(void *expression)
+{
+    SgExpression *expr = (SgExpression *) expression;
+    std::string result = Ir::fragmentToTreeRepresentation(expr);
+    return Ir::getCharPtr(result);
 }
 
 // GB (2008-05-09): This function returns a variable symbol's "ID", which is
