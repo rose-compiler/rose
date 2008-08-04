@@ -2811,12 +2811,12 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
 
 
-SgAsmElfHeader::
-SgAsmElfHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
+SgAsmElfFileHeader::
+SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
    {
   // Conversion of Robb's data structures to ROSE IR nodes.
 
-     printf ("Inside of SgAsmElfHeader constructor \n");
+     printf ("Inside of SgAsmElfFileHeader constructor \n");
 
      set_e_ident_file_class(elf_file_header->e_ident_file_class);
      set_e_ident_data_encoding(elf_file_header->e_ident_data_encoding);

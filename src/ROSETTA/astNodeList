@@ -412,10 +412,10 @@ SgUpcMythread
 SgAsmLEDLL
 SgAsmPEDLL
 SgAsmGenericDLL
-SgAsmPEHeader
-SgAsmLEHeader
-SgAsmNEHeader
-SgAsmElfHeader
+SgAsmPEFileHeader
+SgAsmLEFileHeader
+SgAsmNEFileHeader
+SgAsmElfFileHeader
 SgAsmGenericHeader
 SgAsmElfSection
 SgAsmElfSectionTable
@@ -461,3 +461,4 @@ SgAsmCoffSymbol
 SgAsmElfSymbol
 SgAsmExecutableFileFormat
 SgAsmPEImportHintNameList
+SgAsmCoffSymbolList

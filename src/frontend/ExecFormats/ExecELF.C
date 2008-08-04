@@ -1410,7 +1410,7 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
      ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
 
      ROSE_ASSERT(fhdr != NULL);
-     SgAsmElfHeader* roseElfHeader = new SgAsmElfHeader(fhdr);
+     SgAsmElfFileHeader* roseElfHeader = new SgAsmElfFileHeader(fhdr);
      ROSE_ASSERT(roseElfHeader != NULL);
      asmFile->set_header(roseElfHeader);
 
