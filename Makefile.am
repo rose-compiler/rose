@@ -153,7 +153,7 @@ clean_binary_distribution: distdir
 if BINARY_EDG_TARBALL_ENABLED
 
 rose_binary_compatibility_signature_src:
-	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -exec cat -ve {} \;  > rose_binary_compatibility_signature_src
+	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -print | sort | xargs cat -ve > rose_binary_compatibility_signature_src
 
 rose_binary_compatibility_signature: rose_binary_compatibility_signature_src
 	cat rose_binary_compatibility_signature_src | @MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
