@@ -149,6 +149,9 @@ void initPCompass(int argc, char **argv) {
       name.append(".data");
       std::cerr << "ROSE saving DFA enabled .... " << name << std::endl;
       Compass::saveDFA(name,root);
+      std::cerr << Compass::my_rank << ": ROSE saving DFA done. \n " <<  std::endl;
+      MPI_Finalize();
+      std::cerr << Compass::my_rank << ": exit. \n " <<  std::endl;
       exit(0);
     }
   } else {

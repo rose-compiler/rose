@@ -21,7 +21,7 @@ bool Compass::compilerRemarks  = false;
 // DQ (1/17/2008): New Flymake mode
 bool Compass::UseFlymake       = false;
 
- //! Support for ToolGear XML viewer for output data when run as batch
+//! Support for ToolGear XML viewer for output data when run as batch
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
@@ -37,31 +37,34 @@ int Compass::processes=0;
 void Compass::loadDFA(std::string name, SgProject* project) {
   //unsigned int arrsize, unsigned int *values) {
   std::ifstream loadFile(name.c_str(), std::ios::in | std::ios::binary);
-    int sizeOfArrayItem = -1;
-    global_arrsize=-1;
-    global_arrsizeUse=-1;
-    ROSE_ASSERT(global_arrsize!=0);
-    std::cerr <<"\n Loading DFA from File " << name << std::endl;
-    loadFile.read((char*)&global_arrsize, sizeof(unsigned int));
-    loadFile.read((char*)&global_arrsizeUse, sizeof(unsigned int));
-    loadFile.read((char*)&sizeOfArrayItem, sizeof(int));
-    std::cerr << " sizeof (def_values) : " << sizeOfArrayItem << "   total bytes: " << (sizeOfArrayItem*global_arrsize) << "\n";
-    def_values_global = new unsigned int[global_arrsize];
-    use_values_global = new unsigned int[global_arrsizeUse];
-    for (unsigned int i=0; i<global_arrsize;++i) 
-      def_values_global[i]=0;
-    for (unsigned int i=0; i<global_arrsizeUse;++i) 
-      use_values_global[i]=0;
-    for (unsigned int j=0;j<global_arrsize;j++) {
-      loadFile.read((char*)&def_values_global[j], sizeOfArrayItem);
-    }
-    for (unsigned int j=0;j<global_arrsizeUse;j++) {
-      loadFile.read((char*)&use_values_global[j], sizeOfArrayItem);
-    }
-    loadFile.close();
-    std::cerr <<" Done Loading DFA to File " << std::endl;
-    std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
-    std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
+  int sizeOfArrayItem = -1;
+  global_arrsize=-1;
+  global_arrsizeUse=-1;
+  ROSE_ASSERT(global_arrsize!=0);
+  std::cerr <<"\n " << my_rank << ":  Loading DFA from File " << name << std::endl;
+  loadFile.read((char*)&global_arrsize, sizeof(unsigned int));
+  loadFile.read((char*)&global_arrsizeUse, sizeof(unsigned int));
+  loadFile.read((char*)&sizeOfArrayItem, sizeof(int));
+  std::cerr << " sizeof (def_values) : " << sizeOfArrayItem << 
+    "   total bytes: " << (sizeOfArrayItem*global_arrsize) <<  "\n";
+  def_values_global = new unsigned int[global_arrsize];
+  use_values_global = new unsigned int[global_arrsizeUse];
+  for (unsigned int i=0; i<global_arrsize;++i) 
+    def_values_global[i]=0;
+  for (unsigned int i=0; i<global_arrsizeUse;++i) 
+    use_values_global[i]=0;
+  std::cerr << my_rank <<": loading data ...  globalArrSize: " << global_arrsize <<std::endl;
+  for (unsigned int j=0;j<global_arrsize;j++) {
+    loadFile.read((char*)&def_values_global[j], sizeOfArrayItem);
+  }
+  std::cerr << my_rank <<": loading data ...   globalArrSizeUse: " << global_arrsizeUse <<std::endl;
+  for (unsigned int j=0;j<global_arrsizeUse;j++) {
+    loadFile.read((char*)&use_values_global[j], sizeOfArrayItem);
+  }
+  loadFile.close();
+  std::cerr <<" Done Loading DFA to File " << std::endl;
+  std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
+  std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
 
   // create map with all nodes and indices
   MemoryTraversal* memTrav = new MemoryTraversal();
@@ -70,8 +73,10 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   ROSE_ASSERT(memTrav->counter>0);
   ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
   
-  if (defuse==NULL)
+  if (defuse==NULL) {
     defuse = new DefUseAnalysis(project);
+    std::cerr << " creating defuse ... " <<std::endl;
+  }
 
   /* deserialize all results */
   // write the global def_use_array back to the defmap (for each processor)
@@ -88,8 +93,10 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   if (my_rank==0) {
     std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
     std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
-    //((DefUseAnalysis*)defuse)->printDefMap();
   }
+
+  delete[] def_values_global;
+  delete[] use_values_global;
 
 }
 
@@ -127,12 +134,15 @@ void Compass::saveDFA(std::string name, SgProject* project) {
       use_values_global[j]=0;
     global_arrsizeUse=-1;
     loadDFA(name,project);
+
   }
+  MPI_Barrier(MPI_COMM_WORLD);
+
 }
 
 void Compass::serializeDefUseResults(unsigned int *values,
-			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
-			    std::map<SgNode*,unsigned int > &nodeMapInv) {
+				     std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+				     std::map<SgNode*,unsigned int > &nodeMapInv) {
   int counter=0;
   std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
   for (it=defmap.begin();it!=defmap.end();++it) {
@@ -184,29 +194,29 @@ void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* def
   if (my_rank==0) {
     Compass::gettime(e_time_node);
     double restime = Compass::timeDifference(e_time_node, b_time_node);
-    std::cerr << "\n >>> >>> deserialization. TIME : " << restime << std::endl;
+    std::cerr << " >>> >>> deserialization. TIME : " << restime << std::endl;
   }
 
 }
 
-  // ************************************************************
-  // Time Measurement
-  // ************************************************************
+// ************************************************************
+// Time Measurement
+// ************************************************************
 double Compass::timeDifference(struct timespec end, struct timespec begin) {
-    return (end.tv_sec + end.tv_nsec / 1.0e9)
-      - (begin.tv_sec + begin.tv_nsec / 1.0e9);
-  }
+  return (end.tv_sec + end.tv_nsec / 1.0e9)
+    - (begin.tv_sec + begin.tv_nsec / 1.0e9);
+}
 
 void Compass::MemoryTraversal::visit ( SgNode* node )
-  {
-    ROSE_ASSERT(node != NULL);
-    //    nodeMap[counter]=node;
-    nodeMap.push_back(node);
-    nodeMapInv[node]=counter;
-    counter++;
-  }
+{
+  ROSE_ASSERT(node != NULL);
+  //    nodeMap[counter]=node;
+  nodeMap.push_back(node);
+  nodeMapInv[node]=counter;
+  counter++;
+}
 
-  /******************************************************************/
+/******************************************************************/
 #endif
 
 
@@ -217,255 +227,333 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     //#define DEFUSE
 
 #if ROSE_MPI
-  /* ---------------------------------------------------------- 
-   * MPI code for DEFUSE
-   * ----------------------------------------------------------*/
-  // --------------------------------------------------------
-  // (tps, 07/24/08): added support for dataflow analysis
-  // this should run right before any other checker is executed.
-  // Other checkers rely on this information.
+    /* ---------------------------------------------------------- 
+     * MPI code for DEFUSE
+     * ----------------------------------------------------------*/
+    // --------------------------------------------------------
+    // (tps, 07/24/08): added support for dataflow analysis
+    // this should run right before any other checker is executed.
+    // Other checkers rely on this information.
     struct timespec begin_time_node, end_time_node;
     struct timespec b_time_node, e_time_node;
 
-  // create map with all nodes and indices
-  MemoryTraversal* memTrav = new MemoryTraversal();
-  memTrav->traverseMemoryPool();
-  std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
-  ROSE_ASSERT(memTrav->counter>0);
-  ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+    // create map with all nodes and indices
+    MemoryTraversal* memTrav = new MemoryTraversal();
+    memTrav->traverseMemoryPool();
+    std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+    ROSE_ASSERT(memTrav->counter>0);
+    ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  gettime(begin_time_node);
+    MPI_Barrier(MPI_COMM_WORLD);
+    gettime(begin_time_node);
 
-  defuse = new DefUseAnalysis(root);
+    defuse = new DefUseAnalysis(root);
 
-  //defuse->disableVisualization();
-  Rose_STL_Container<SgNode *> funcs = 
-    NodeQuery::querySubTree(root, V_SgFunctionDefinition);
-  if (my_rank==0)
-    std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << 
-      "  processes : " << processes << std::endl;
-  int resultDefUseNodes=0;
+    //defuse->disableVisualization();
+    Rose_STL_Container<SgNode *> funcs = 
+      NodeQuery::querySubTree(root, V_SgFunctionDefinition);
+    if (my_rank==0)
+      std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << 
+	"  processes : " << processes << std::endl;
+    int resultDefUseNodes=0;
 
 
-  // ---------------- LOAD BALANCING of DEFUSE -------------------
-  // todo: try to make the load balancing for DEFUSE better
-  FunctionNamesPreTraversal preTraversal;
-  MyAnalysis myanalysis;
-  int initialDepth=0;
-  std::vector<int> bounds;
+    // ---------------- LOAD BALANCING of DEFUSE -------------------
+    // todo: try to make the load balancing for DEFUSE better
+    FunctionNamesPreTraversal preTraversal;
+    MyAnalysis myanalysis;
+    int initialDepth=0;
+    std::vector<int> bounds;
 
-  myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
+    myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
 
-  for (int i = 0; i<(int)bounds.size();i++) {
-    //std::cerr << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << std::endl;
-    if (bounds[i]== my_rank) {
+    if (processes==1) {
+      for (int i = 0; i<(int)bounds.size();i++) {
+	//std::cerr << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << std::endl;
+	if (bounds[i]== my_rank) {
 
-      SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
-      SgFunctionDefinition* funcDef = NULL;
-      if (funcDecl)
-	funcDef = funcDecl->get_definition();
-      if (funcDef) {
-	int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
-	resultDefUseNodes+=nrNodes;
+	  SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
+	  SgFunctionDefinition* funcDef = NULL;
+	  if (funcDecl)
+	    funcDef = funcDecl->get_definition();
+	  if (funcDef) {
+	    int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+	    resultDefUseNodes+=nrNodes;
+	  }
+	}
       }
-    }
-  }
-  
-  // ---------------- LOAD BALANCING of DEFUSE -------------------
+    } else {
+      int currentJob = -1;
+      MPI_Status Stat;
+      int *res = new int[2];
+      res[0]=5;
+      res[1]=5;
+      int *res2 = new int[2];
+      res2[0]=-1;
+      res2[1]=-1;
+      bool done = false;
+      int jobsDone = 0;
+      // **********************************************************
+      int scale = 1;
+      // **********************************************************
 
-#if 0
-  // ---------------- LOAD BALANCING of DEFUSE -------------------
-  // run the following in parallel
-  for (int p=0; p<processes;++p) {
-    size_t start = ((double)funcs.size()/processes)*p;
-    size_t end = ((double)funcs.size()/processes)*(p+1);
-    if (my_rank==p) {
-      std::cerr << my_rank <<": start: "<<start<<"  end: " << end << std::endl;
-      for (size_t i=start; i< end; ++i) {
-	//      for (Rose_STL_Container<SgNode *>::iterator i = 
-	//     funcs.begin(); i != funcs.end(); i++) {
-	SgFunctionDefinition* funcDef = isSgFunctionDefinition(funcs[i]);
-	int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
-	resultDefUseNodes+=nrNodes;
+
+      MPI_Request request[2]; 
+      MPI_Status status[2];
+      int min = -1;
+      int max = -1;
+      if (my_rank != 0) {
+	//std::cout << " process : " << my_rank << " sending. " << std::endl;
+	MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
+	MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
+	min = res[0];
+	max = res[1];
+	if (res[0]==-1) 
+	  done =true;
       }
+
+      while (!done) {
+	// we are ready, make sure to notify 0
+	double total_node=0;
+	if (my_rank != 0) {
+	  MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
+	  MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
+	
+	  if (((max-min) % 20)==0)
+	  std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[ of " <<
+	    bounds.size() << "     range : " << (max-min) << std::endl;
+
+	  for (int i=min; i<max;i++) { 
+	    SgNode* mynode = isSgNode(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	    ROSE_ASSERT(mynode);
+	    SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(mynode);
+	    SgFunctionDefinition* funcDef = NULL;
+	    if (funcDecl)
+	      funcDef = funcDecl->get_definition();
+	    if (funcDef) {
+	      int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
+	      resultDefUseNodes+=nrNodes;
+	    }
+	  }
+
+	  MPI_Waitall(2,request,status);
+	  min = res2[0];
+	  max = res2[1];
+	  if (res2[0]==-1) 
+	    break;
+	} // if
+	if (my_rank == 0) {
+	  //std::cout << " process : " << my_rank << " receiving. " << std::endl;
+	  MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
+	  gettime(begin_time_node);
+	  currentJob+=scale;
+
+	  if ((currentJob % 10)==9) scale+=1;
+	  if (currentJob>=(int)bounds.size()) {
+	    res[0] = -1;
+	    jobsDone++;
+	  }      else {
+	    res[0] = currentJob;
+	    res[1] = currentJob+scale;
+	    if (res[1]>=(int)bounds.size())
+	      res[1] = bounds.size();
+	    //	    dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
+	  }
+	  //      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
+	  //std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
+	  gettime(end_time_node);
+	  double my_time_node = timeDifference(end_time_node, begin_time_node);
+	  total_node += my_time_node;
+	  //calc_time_processor+=total_node;
+	  MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
+	  if (jobsDone==(processes-1))
+	    break;
+	}
+	
+      } //while
+      if (my_rank==0)
+	std::cerr << ">>> Final scale = " << scale << std::endl; 
+    
+    } //else
+    // ---------------- LOAD BALANCING of DEFUSE -------------------
+
+
+    gettime(end_time_node);
+    double my_time_node = timeDifference(end_time_node, begin_time_node);
+    std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes << 
+      "  time: " << my_time_node << std::endl;
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (my_rank==0)
+      std::cerr << "\n>> Collecting defuse results ... " << std::endl;
+
+
+    ROSE_ASSERT(defuse);
+    my_map defmap = defuse->getDefMap();
+    my_map usemap = defuse->getUseMap();
+    std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
+    gettime(end_time_node);
+    my_time_node = timeDifference(end_time_node, begin_time_node);
+
+
+    /* communicate times */
+    double *times_defuse = new double[processes];
+    MPI_Gather(&my_time_node, 1, MPI_DOUBLE, times_defuse, 1, MPI_DOUBLE, 0,
+	       MPI_COMM_WORLD);
+    double totaltime=0;
+    for (int i=0;i<processes;++i)
+      if (times_defuse[i]>totaltime)
+	totaltime=times_defuse[i];
+    delete[] times_defuse;
+
+    if (my_rank==0) {
+      std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
+      Compass::gettime(begin_time_node);
+      Compass::gettime(b_time_node);
     }
-    if (p==(processes-1)) {
-      if (my_rank==(processes-1))
-	std::cout << my_rank << "/" << (processes-1) << 
-	  " Verifying that end==funcs.size() : " << end << " = " << funcs.size() << std::endl;
-      ROSE_ASSERT(end==funcs.size());
+    //((DefUseAnalysis*)defuse)->printDefMap();
+    /* communicate times */
+
+
+
+    /* communicate arraysizes */
+    unsigned int arrsize = 0;
+    unsigned int arrsizeUse = 0;
+    my_map::const_iterator dit = defmap.begin();
+    for (;dit!=defmap.end();++dit) {
+      arrsize +=(dit->second).size()*3;
     }
-  }
-  // ---------------- LOAD BALANCING of DEFUSE -------------------
-#endif
+    my_map::const_iterator dit2 = usemap.begin();
+    for (;dit2!=usemap.end();++dit2) {
+      arrsizeUse +=(dit2->second).size()*3;
+    }
+    std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
+	      << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
+    // communicate total size to allocate global arrsize
+    global_arrsize = -1;
+    global_arrsizeUse = -1;
+    MPI_Allreduce(&arrsize, &global_arrsize, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&arrsizeUse, &global_arrsizeUse, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
+    /* communicate arraysizes */
 
-  gettime(end_time_node);
-  double my_time_node = timeDifference(end_time_node, begin_time_node);
-  std::cerr << my_rank << ": DefUse Analysis complete. Nr of nodes: " << resultDefUseNodes << 
-    "  time: " << my_time_node << std::endl;
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0)
-    std::cerr << "\n>> Collecting defuse results ... " << std::endl;
+    /* serialize all results */
+    def_values_global = new unsigned int[global_arrsize];
+    unsigned int *def_values =new unsigned int[arrsize];
+    use_values_global = new unsigned int[global_arrsizeUse];
+    unsigned int *use_values =new unsigned int[arrsizeUse];
+    for (unsigned int i=0; i<arrsize;++i) 
+      def_values[i]=0;
+    for (unsigned int i=0; i<global_arrsize;++i) 
+      def_values_global[i]=0;
+    for (unsigned int i=0; i<arrsizeUse;++i) 
+      use_values[i]=0;
+    for (unsigned int i=0; i<global_arrsizeUse;++i) 
+      use_values_global[i]=0;
 
+    serializeDefUseResults(def_values, defmap, memTrav->nodeMapInv);
+    serializeDefUseResults(use_values, usemap, memTrav->nodeMapInv);
+    /* serialize all results */
+    std::cerr << my_rank << " : serialization done."  << std::endl;
 
-  ROSE_ASSERT(defuse);
-  my_map defmap = defuse->getDefMap();
-  my_map usemap = defuse->getUseMap();
-  std::cerr << my_rank << ": Def entries: " << defmap.size() << "  Use entries : " << usemap.size() << std::endl;
-  gettime(end_time_node);
-  my_time_node = timeDifference(end_time_node, begin_time_node);
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (my_rank==0) {
+      Compass::gettime(e_time_node);
+      double restime = Compass::timeDifference(e_time_node, b_time_node);
+      std::cerr << "\n >>> serialization done. TIME : " << restime << std::endl;
+      Compass::gettime(b_time_node);
+    }
 
+    /* communicate all results */
+    int* offset=new int[processes];
+    int* length=new int[processes];
+    int* global_length=new int [processes];
+    int* offsetUse=new int[processes];
+    int* lengthUse=new int[processes];
+    int* global_lengthUse=new int [processes];
+    MPI_Allgather(&arrsize, 1, MPI_INT, global_length, 1, MPI_INT, MPI_COMM_WORLD);
+    MPI_Allgather(&arrsizeUse, 1, MPI_INT, global_lengthUse, 1, MPI_INT, MPI_COMM_WORLD);
 
-  /* communicate times */
-  double *times_defuse = new double[processes];
-  MPI_Gather(&my_time_node, 1, MPI_DOUBLE, times_defuse, 1, MPI_DOUBLE, 0,
-	     MPI_COMM_WORLD);
-  double totaltime=0;
-  for (int i=0;i<processes;++i)
-    if (times_defuse[i]>totaltime)
-      totaltime=times_defuse[i];
-
-  if (my_rank==0) {
-    std::cerr << ">> ---- Time (max) needed for DefUse : " << totaltime << std::endl <<std::endl;
-    Compass::gettime(begin_time_node);
-    Compass::gettime(b_time_node);
-  }
-  //((DefUseAnalysis*)defuse)->printDefMap();
-  /* communicate times */
-
-
-
-  /* communicate arraysizes */
-  unsigned int arrsize = 0;
-  unsigned int arrsizeUse = 0;
-  my_map::const_iterator dit = defmap.begin();
-  for (;dit!=defmap.end();++dit) {
-    arrsize +=(dit->second).size()*3;
-  }
-  my_map::const_iterator dit2 = usemap.begin();
-  for (;dit2!=usemap.end();++dit2) {
-    arrsizeUse +=(dit2->second).size()*3;
-  }
-  std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
-       << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
-  // communicate total size to allocate global arrsize
-  global_arrsize = -1;
-  global_arrsizeUse = -1;
-  MPI_Allreduce(&arrsize, &global_arrsize, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
-  MPI_Allreduce(&arrsizeUse, &global_arrsizeUse, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
-  /* communicate arraysizes */
-
-  /* serialize all results */
-  def_values_global = new unsigned int[global_arrsize];
-  unsigned int *def_values =new unsigned int[arrsize];
-  use_values_global = new unsigned int[global_arrsizeUse];
-  unsigned int *use_values =new unsigned int[arrsizeUse];
-  for (unsigned int i=0; i<arrsize;++i) 
-    def_values[i]=0;
-  for (unsigned int i=0; i<global_arrsize;++i) 
-    def_values_global[i]=0;
-  for (unsigned int i=0; i<arrsizeUse;++i) 
-    use_values[i]=0;
-  for (unsigned int i=0; i<global_arrsizeUse;++i) 
-    use_values_global[i]=0;
-
-  serializeDefUseResults(def_values, defmap, memTrav->nodeMapInv);
-  serializeDefUseResults(use_values, usemap, memTrav->nodeMapInv);
-  /* serialize all results */
-  std::cerr << my_rank << " : serialization done."  << std::endl;
-
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0) {
-    Compass::gettime(e_time_node);
-    double restime = Compass::timeDifference(e_time_node, b_time_node);
-    std::cerr << "\n >>> serialization done. TIME : " << restime << std::endl;
-    Compass::gettime(b_time_node);
-  }
-
-  /* communicate all results */
-  int* offset=new int[processes];
-  int* length=new int[processes];
-  int* global_length=new int [processes];
-  int* offsetUse=new int[processes];
-  int* lengthUse=new int[processes];
-  int* global_lengthUse=new int [processes];
-  MPI_Allgather(&arrsize, 1, MPI_INT, global_length, 1, MPI_INT, MPI_COMM_WORLD);
-  MPI_Allgather(&arrsizeUse, 1, MPI_INT, global_lengthUse, 1, MPI_INT, MPI_COMM_WORLD);
-
-  for (int j=0;j<processes;++j) {
-    if (j==0) {
+    for (int j=0;j<processes;++j) {
+      if (j==0) {
 	offset[j]=0;
 	offsetUse[j]=0;
-    } else {
+      } else {
 	offset[j]=offset[j - 1] + global_length[j-1];
 	offsetUse[j]=offsetUse[j - 1] + global_lengthUse[j-1];
+      }
+      length[j]=global_length[j]; 
+      lengthUse[j]=global_lengthUse[j]; 
     }
-    length[j]=global_length[j]; 
-    lengthUse[j]=global_lengthUse[j]; 
-  }
-  std::cerr << my_rank << " : serialization done."  
-       <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
+    std::cerr << my_rank << " : serialization done."  
+	      <<  "  waiting to gather...   arrsize: " << arrsize << "  offset : " << offset[my_rank] << " globalarrsize: " << global_arrsize<< std::endl;
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0) {
-    Compass::gettime(e_time_node);
-    double restime = Compass::timeDifference(e_time_node, b_time_node);
-    std::cerr << "\n >>> communication (ARRSIZE) done. TIME : " << restime << "  BROADCASTING ... " << std::endl;
-    Compass::gettime(b_time_node);
-  }
+    delete[] global_length;
+    delete[] global_lengthUse;
 
-
-  // tps: This version seems slightly faster than the one following
-  MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
-		 offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
-  MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
-		 offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (my_rank==0) {
+      Compass::gettime(e_time_node);
+      double restime = Compass::timeDifference(e_time_node, b_time_node);
+      std::cerr << "\n >>> communication (ARRSIZE) done. TIME : " << restime << "  BROADCASTING ... " << std::endl;
+      Compass::gettime(b_time_node);
+    }
 
 
-  /* communicate all results */
-  std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
+    // tps: This version seems slightly faster than the one following
+    MPI_Allgatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
+		   offset, MPI_UNSIGNED,  MPI_COMM_WORLD);
+    MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
+		   offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0) {
-    Compass::gettime(e_time_node);
-    double restime = Compass::timeDifference(e_time_node, b_time_node);
-    std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime << 
-      "   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
-  }
+    delete[] def_values;
+    delete[] use_values;
+    delete[] offset;
+    delete[] length;
+    delete[] offsetUse;
+    delete[] lengthUse;
+
+    /* communicate all results */
+    std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (my_rank==0) {
+      Compass::gettime(e_time_node);
+      double restime = Compass::timeDifference(e_time_node, b_time_node);
+      std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime << 
+	"   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
+    }
 
 
 
-  /* deserialize all results */
-  // write the global def_use_array back to the defmap (for each processor)
-  ((DefUseAnalysis*)defuse)->flushDefuse();
-  deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
-  deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
-  std::cerr << my_rank << " : deserialization done." << std::endl;
-  /* deserialize all results */
+    /* deserialize all results */
+    // write the global def_use_array back to the defmap (for each processor)
+    ((DefUseAnalysis*)defuse)->flushDefuse();
+    deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
+    deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
+    std::cerr << my_rank << " : deserialization done." << std::endl;
+    /* deserialize all results */
 
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0) {
-    Compass::gettime(end_time_node);
-    double restime = Compass::timeDifference(end_time_node, begin_time_node);
-    std::cerr << ">> ---- DefUse Analysis - time for ALL communication :  " << restime << " sec " << std::endl;
-  }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (my_rank==0) {
+      Compass::gettime(end_time_node);
+      double restime = Compass::timeDifference(end_time_node, begin_time_node);
+      std::cerr << ">> ---- DefUse Analysis - time for ALL communication :  " << restime << " sec " << std::endl;
+    }
 
-  defmap = defuse->getDefMap();
-  usemap = defuse->getUseMap();
+    defmap = defuse->getDefMap();
+    usemap = defuse->getUseMap();
 
-  if (my_rank==0) {
-    std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
-    std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
-    //((DefUseAnalysis*)defuse)->printDefMap();
-  }
-  //#endif
+    if (my_rank==0) {
+      std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
+      std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
+      //((DefUseAnalysis*)defuse)->printDefMap();
+    }
+    //#endif
 #else
-  std::cerr << ">>>>>> running defuse analysis in SEQUENCE (NO MPI). "  << std::endl;
-        defuse = new DefUseAnalysis(root);
+    std::cerr << ">>>>>> running defuse analysis in SEQUENCE (NO MPI). "  << std::endl;
+    defuse = new DefUseAnalysis(root);
 
-	// tps: fixme (9 Jul 2008)
+    // tps: fixme (9 Jul 2008)
     // skipping defuse tests until they pass all compass tests
     ((DefUseAnalysis*)defuse)->run(false);
     std::cerr <<  "Total number of def nodes: " << defuse->getDefMap().size() << std::endl;
@@ -481,101 +569,101 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
 //Andreas' function
 std::string Compass::parseString(const std::string& str)
-   {
-     std::istringstream is(str);
-     std::string i;
-     is >> i;
-     if (!is || !is.eof())
-          throw Compass::ParseError(str, "string");
+{
+  std::istringstream is(str);
+  std::string i;
+  is >> i;
+  if (!is || !is.eof())
+    throw Compass::ParseError(str, "string");
 
-     return i;
-   } // std::string Compass::parseString(const std::string& str) 
+  return i;
+} // std::string Compass::parseString(const std::string& str) 
 
 std::ifstream* Compass::openFile(std::string filename)
 {
-    std::ifstream* streamPtr = new std::ifstream(filename.c_str());
-     if (streamPtr->good() == false)
-        {
+  std::ifstream* streamPtr = new std::ifstream(filename.c_str());
+  if (streamPtr->good() == false)
+    {
 #if 0
-          std::cerr << "Warning: Parameter file in current directory: " << filename
-                    << " not found or cannot be opened (looking in user's home directory and then Compass source tree)"
-                    << std::endl;
+      std::cerr << "Warning: Parameter file in current directory: " << filename
+		<< " not found or cannot be opened (looking in user's home directory and then Compass source tree)"
+		<< std::endl;
 #endif
-       // std::cerr << "--- The current directory is expected to have a compass parameter file.\n\n";
+      // std::cerr << "--- The current directory is expected to have a compass parameter file.\n\n";
 
-       // If not in the current directory, then search in the user's home directory
-          std::string alternativeFile = "~/" + filename;
-       // printf ("Compass parameters file not found in current directory: looking for it in user's home directory: alternativeFile = %s \n",alternativeFile.c_str());
+      // If not in the current directory, then search in the user's home directory
+      std::string alternativeFile = "~/" + filename;
+      // printf ("Compass parameters file not found in current directory: looking for it in user's home directory: alternativeFile = %s \n",alternativeFile.c_str());
 
-          streamPtr->close();
-          delete streamPtr;
-          streamPtr = new std::ifstream(alternativeFile.c_str());
+      streamPtr->close();
+      delete streamPtr;
+      streamPtr = new std::ifstream(alternativeFile.c_str());
 
-          if (streamPtr->good() == false)
-             {
-            // Look into the build tree's compass directory
-               alternativeFile = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/projects/compass/" + filename;
-            // printf ("Compass parameters file not found in user's home directory: looking for it in the Compass source tree: alternativeFile = %s \n",alternativeFile.c_str());
+      if (streamPtr->good() == false)
+	{
+	  // Look into the build tree's compass directory
+	  alternativeFile = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/projects/compass/" + filename;
+	  // printf ("Compass parameters file not found in user's home directory: looking for it in the Compass source tree: alternativeFile = %s \n",alternativeFile.c_str());
 
-               streamPtr->close();
-               delete streamPtr;
-               streamPtr = new std::ifstream(alternativeFile.c_str());
+	  streamPtr->close();
+	  delete streamPtr;
+	  streamPtr = new std::ifstream(alternativeFile.c_str());
 
-               if (streamPtr->good() == false)
-                  {
-                    std::cerr << "Error: Parameter file in Compass source directory: " << alternativeFile << " not found or cannot be opened" << std::endl;
-                    exit(1);
-                  }
-             }
-        }
+	  if (streamPtr->good() == false)
+	    {
+	      std::cerr << "Error: Parameter file in Compass source directory: " << alternativeFile << " not found or cannot be opened" << std::endl;
+	      exit(1);
+	    }
+	}
+    }
 
-     ROSE_ASSERT(streamPtr != NULL);
+  ROSE_ASSERT(streamPtr != NULL);
 
-	 return streamPtr;
+  return streamPtr;
 
 };
 
 Compass::Parameters::Parameters(const std::string& filename) throw (Compass::ParseError)
-   {
+{
   // This function needs a set of default paths where the Compass parameter file can be found.
   // This list should be:
   //    1) The current directory
   //    2) The user's home directory
   //    3) Check the Compass source tree
 
-	 std::ifstream* streamPtr = openFile(filename);
+  std::ifstream* streamPtr = openFile(filename);
 
-       std::string line;
-     while (streamPtr != NULL && streamPtr->eof() == false)
-        {
-          std::getline(*streamPtr, line);
+  std::string line;
+  while (streamPtr != NULL && streamPtr->eof() == false)
+    {
+      std::getline(*streamPtr, line);
 
-       // Ignore comments in the parameter file
-          if (line.empty() || line[0] == '#')
-               continue;
+      // Ignore comments in the parameter file
+      if (line.empty() || line[0] == '#')
+	continue;
 
-          std::string name, value;
-          std::string::size_type pos = line.find('=');
-          if (pos == std::string::npos || pos == 0)
-          throw Compass::ParseError(line, "parameter assignment");
-          name = line.substr(0, pos);
+      std::string name, value;
+      std::string::size_type pos = line.find('=');
+      if (pos == std::string::npos || pos == 0)
+	throw Compass::ParseError(line, "parameter assignment");
+      name = line.substr(0, pos);
 
-       // strip spaces off the end of the name string
-          std::string::size_type spaces = name.find_last_not_of(' ');
-          if (spaces != std::string::npos)
-               name.resize(spaces + 1);
-          value = line.substr(pos + 1);
+      // strip spaces off the end of the name string
+      std::string::size_type spaces = name.find_last_not_of(' ');
+      if (spaces != std::string::npos)
+	name.resize(spaces + 1);
+      value = line.substr(pos + 1);
 
-          if (this->data.find(name) != this->data.end())
-             {
-               throw Compass::ParseError(name, "non-duplicate parameter name");
-             }
-          data[name] = value;
-        }
-   }
+      if (this->data.find(name) != this->data.end())
+	{
+	  throw Compass::ParseError(name, "non-duplicate parameter name");
+	}
+      data[name] = value;
+    }
+}
 
 std::string Compass::Parameters::operator[](const std::string& name) const
-				throw (Compass::ParameterNotFoundException) {
+  throw (Compass::ParameterNotFoundException) {
   std::map<std::string, std::string>::const_iterator i = this->data.find(name);
   if (i == this->data.end()) {
     throw Compass::ParameterNotFoundException(name);
@@ -680,11 +768,11 @@ std::string Compass::formatStandardSourcePosition(const std::string& sfilename,
   std::ostringstream os;
   if (sfilename != efilename) {
     os << Compass::formatStandardSourcePosition(sfilename, sline, scol) <<
-          "-" <<
-          Compass::formatStandardSourcePosition(efilename, eline, ecol);
+      "-" <<
+      Compass::formatStandardSourcePosition(efilename, eline, ecol);
   } else if (sline != eline) {
     os << sfilename << ":" << sline << "." << scol << "-" <<
-          eline << "." << ecol;
+      eline << "." << ecol;
   } else if (scol != ecol) {
     os << sfilename << ":" << sline << "." << scol << "-" << ecol;
   } else {
@@ -696,151 +784,151 @@ std::string Compass::formatStandardSourcePosition(const std::string& sfilename,
 
 std::string
 Compass::OutputViolationBase::getString() const
-   {
-     ROSE_ASSERT(getNodeArray().size() <= 1);
+{
+  ROSE_ASSERT(getNodeArray().size() <= 1);
 
   // Default implementation for getString
-     SgLocatedNode* locatedNode = isSgLocatedNode(getNode());
-     std::string sourceCodeLocation;
-     if (locatedNode != NULL)
-        {
-          Sg_File_Info* start = locatedNode->get_startOfConstruct();
-          Sg_File_Info* end   = locatedNode->get_endOfConstruct();
-          sourceCodeLocation = (end ? Compass::formatStandardSourcePosition(start, end) 
-                                    : Compass::formatStandardSourcePosition(start));
-       }
-      else
-       {
+  SgLocatedNode* locatedNode = isSgLocatedNode(getNode());
+  std::string sourceCodeLocation;
+  if (locatedNode != NULL)
+    {
+      Sg_File_Info* start = locatedNode->get_startOfConstruct();
+      Sg_File_Info* end   = locatedNode->get_endOfConstruct();
+      sourceCodeLocation = (end ? Compass::formatStandardSourcePosition(start, end) 
+			    : Compass::formatStandardSourcePosition(start));
+    }
+  else
+    {
       // Else this could be a SgInitializedName or SgTemplateArgument (not yet moved to be a SgLocatedNode)
-         Sg_File_Info* start = getNode()->get_file_info();
-         ROSE_ASSERT(start != NULL);
-         sourceCodeLocation = Compass::formatStandardSourcePosition(start);
-       }
+      Sg_File_Info* start = getNode()->get_file_info();
+      ROSE_ASSERT(start != NULL);
+      sourceCodeLocation = Compass::formatStandardSourcePosition(start);
+    }
 
-     std::string nodeName = getNode()->class_name();
+  std::string nodeName = getNode()->class_name();
 
   // The short description used here needs to be put into a separate function (can this be part of what is filled in by the script?)
   // return loc + ": " + nodeName + ": variable requiring static constructor initialization";
 
   // return m_checkerName + ": " + sourceCodeLocation + ": " + nodeName + ": " + m_shortDescription;
-     return m_checkerName + ": " + sourceCodeLocation + ": " + m_shortDescription;
-   }
+  return m_checkerName + ": " + sourceCodeLocation + ": " + m_shortDescription;
+}
 
 
 
 // DQ (1/16/2008): Moved this implementation from the header file to the source file
 void
 Compass::PrintingOutputObject::addOutput(Compass::OutputViolationBase* theOutput)
-   {
-     ROSE_ASSERT(theOutput != NULL);
-     SgNode* errorNode = theOutput->getNode();
+{
+  ROSE_ASSERT(theOutput != NULL);
+  SgNode* errorNode = theOutput->getNode();
 
-     bool skipOutput = false;
+  bool skipOutput = false;
 
   // printf ("In Compass::PrintingOutputObject::addOutput() errorNode = %s \n",errorNode->class_name().c_str());
 
-     if (errorNode->get_startOfConstruct() != NULL)
-        {
-          const std::string & errorNodeFile          = errorNode->get_startOfConstruct()->get_filenameString();
-          const std::string & errorNodeFile_path     = StringUtility::getPathFromFileName(errorNodeFile);
-          const std::string & errorNodeFile_filename = StringUtility::stripPathFromFileName(errorNodeFile);
+  if (errorNode->get_startOfConstruct() != NULL)
+    {
+      const std::string & errorNodeFile          = errorNode->get_startOfConstruct()->get_filenameString();
+      const std::string & errorNodeFile_path     = StringUtility::getPathFromFileName(errorNodeFile);
+      const std::string & errorNodeFile_filename = StringUtility::stripPathFromFileName(errorNodeFile);
 
-       // Make this static so that it need not be computed all the time!
-          static SgProject* project = TransformationSupport::getProject(errorNode);
-          ROSE_ASSERT(project != NULL);
+      // Make this static so that it need not be computed all the time!
+      static SgProject* project = TransformationSupport::getProject(errorNode);
+      ROSE_ASSERT(project != NULL);
 
-          bool excludeErrorOutput = false;
-          bool forceErrorOutput   = false;
+      bool excludeErrorOutput = false;
+      bool forceErrorOutput   = false;
 
-          const SgStringList & includePathList = project->get_includePathList();
-          const SgStringList & excludePathList = project->get_excludePathList();
-          const SgStringList & includeFileList = project->get_includeFileList();
-          const SgStringList & excludeFileList = project->get_excludeFileList();
+      const SgStringList & includePathList = project->get_includePathList();
+      const SgStringList & excludePathList = project->get_excludePathList();
+      const SgStringList & includeFileList = project->get_includeFileList();
+      const SgStringList & excludeFileList = project->get_excludeFileList();
 
-       // printf ("project->get_includePathList = %zu project->get_excludePathList = %zu \n",project->get_includePathList().size(),project->get_excludePathList().size());
-       // printf ("includePathList = %zu excludePathList = %zu \n",includePathList.size(),excludePathList.size());
-       // printf ("includeFileList = %zu excludeFileList = %zu \n",includeFileList.size(),excludeFileList.size());
+      // printf ("project->get_includePathList = %zu project->get_excludePathList = %zu \n",project->get_includePathList().size(),project->get_excludePathList().size());
+      // printf ("includePathList = %zu excludePathList = %zu \n",includePathList.size(),excludePathList.size());
+      // printf ("includeFileList = %zu excludeFileList = %zu \n",includeFileList.size(),excludeFileList.size());
 
-       // If this is a compiler generated IR node then skip the output of its position
-       // We might want to have a special mode for this since it could be that the 
-       // postion is still available in the raw data.
-          if (errorNode->get_startOfConstruct()->isCompilerGenerated() == true)
-             {
-               excludeErrorOutput = true;
-               forceErrorOutput   = false;
-             }
+      // If this is a compiler generated IR node then skip the output of its position
+      // We might want to have a special mode for this since it could be that the 
+      // postion is still available in the raw data.
+      if (errorNode->get_startOfConstruct()->isCompilerGenerated() == true)
+	{
+	  excludeErrorOutput = true;
+	  forceErrorOutput   = false;
+	}
 
-       // Only permit output of error messages from IR nodes that live along this path
-          SgStringList::const_iterator i = includePathList.begin();
-          while (forceErrorOutput == false && i != includePathList.end())
-             {
-            // Don't let a false value for excludeErrorOutput and a false value for forceErrorOutput cause skipOutput to be false!
-               excludeErrorOutput = true;
+      // Only permit output of error messages from IR nodes that live along this path
+      SgStringList::const_iterator i = includePathList.begin();
+      while (forceErrorOutput == false && i != includePathList.end())
+	{
+	  // Don't let a false value for excludeErrorOutput and a false value for forceErrorOutput cause skipOutput to be false!
+	  excludeErrorOutput = true;
 
-               forceErrorOutput = forceErrorOutput || (errorNodeFile_path.find(*i) != std::string::npos);
-               i++;
-             }
+	  forceErrorOutput = forceErrorOutput || (errorNodeFile_path.find(*i) != std::string::npos);
+	  i++;
+	}
 
-       // Exclude error messages from IR nodes located along paths where these are a substring
-          SgStringList::const_iterator j = excludePathList.begin();
-          while (excludeErrorOutput == false && j != excludePathList.end())
-             {
-               excludeErrorOutput = excludeErrorOutput || (errorNodeFile_path.find(*j) != std::string::npos);
-               j++;
-             }
+      // Exclude error messages from IR nodes located along paths where these are a substring
+      SgStringList::const_iterator j = excludePathList.begin();
+      while (excludeErrorOutput == false && j != excludePathList.end())
+	{
+	  excludeErrorOutput = excludeErrorOutput || (errorNodeFile_path.find(*j) != std::string::npos);
+	  j++;
+	}
 
-       // Only permit output of error messages from IR nodes that live along this path
-          SgStringList::const_iterator k = includeFileList.begin();
-          while (forceErrorOutput == false && k != includeFileList.end())
-             {
-            // Don't let a false value for excludeErrorOutput and a false value for forceErrorOutput cause skipOutput to be false!
-               excludeErrorOutput = true;
+      // Only permit output of error messages from IR nodes that live along this path
+      SgStringList::const_iterator k = includeFileList.begin();
+      while (forceErrorOutput == false && k != includeFileList.end())
+	{
+	  // Don't let a false value for excludeErrorOutput and a false value for forceErrorOutput cause skipOutput to be false!
+	  excludeErrorOutput = true;
 
-            // Strip off the path, since flymake will prepend stuff: e.g. "../../../../../../../../home/dquinlan/ROSE/NEW_ROSE/projects/compass/compassMain"
-            // std::string k_filename = StringUtility::stripPathFromFileName(*k);
+	  // Strip off the path, since flymake will prepend stuff: e.g. "../../../../../../../../home/dquinlan/ROSE/NEW_ROSE/projects/compass/compassMain"
+	  // std::string k_filename = StringUtility::stripPathFromFileName(*k);
 
-            // forceErrorOutput = forceErrorOutput || (errorNodeFile.find(*k) != std::string::npos);
-            // forceErrorOutput = forceErrorOutput || (errorNodeFile_filename.find(k_filename) != std::string::npos);
-               forceErrorOutput = forceErrorOutput || (errorNodeFile_filename.find(*k) != std::string::npos);
-            // printf ("In Compass::PrintingOutputObject::addOutput(): errorNodeFile = %s k = %s forceErrorOutput = %s \n",errorNodeFile.c_str(),k->c_str(),forceErrorOutput ? "true" : "false");
-            // printf ("In Compass::PrintingOutputObject::addOutput(): errorNodeFile_filename = %s k_filename = %s forceErrorOutput = %s \n",errorNodeFile_filename.c_str(),k_filename.c_str(),forceErrorOutput ? "true" : "false");
-               k++;
-             }
+	  // forceErrorOutput = forceErrorOutput || (errorNodeFile.find(*k) != std::string::npos);
+	  // forceErrorOutput = forceErrorOutput || (errorNodeFile_filename.find(k_filename) != std::string::npos);
+	  forceErrorOutput = forceErrorOutput || (errorNodeFile_filename.find(*k) != std::string::npos);
+	  // printf ("In Compass::PrintingOutputObject::addOutput(): errorNodeFile = %s k = %s forceErrorOutput = %s \n",errorNodeFile.c_str(),k->c_str(),forceErrorOutput ? "true" : "false");
+	  // printf ("In Compass::PrintingOutputObject::addOutput(): errorNodeFile_filename = %s k_filename = %s forceErrorOutput = %s \n",errorNodeFile_filename.c_str(),k_filename.c_str(),forceErrorOutput ? "true" : "false");
+	  k++;
+	}
 
-       // Exclude error messages from IR nodes from files with these names
-          SgStringList::const_iterator l = excludeFileList.begin();
-          while (excludeErrorOutput == false && l != excludeFileList.end())
-             {
-            // excludeErrorOutput = excludeErrorOutput || (errorNodeFile.find(*l) != std::string::npos);
-               excludeErrorOutput = excludeErrorOutput || (errorNodeFile_filename.find(*l) != std::string::npos);
-               l++;
-             }
+      // Exclude error messages from IR nodes from files with these names
+      SgStringList::const_iterator l = excludeFileList.begin();
+      while (excludeErrorOutput == false && l != excludeFileList.end())
+	{
+	  // excludeErrorOutput = excludeErrorOutput || (errorNodeFile.find(*l) != std::string::npos);
+	  excludeErrorOutput = excludeErrorOutput || (errorNodeFile_filename.find(*l) != std::string::npos);
+	  l++;
+	}
 
-          skipOutput = (forceErrorOutput ? false : excludeErrorOutput);
-       // printf ("skipOutput = %s forceErrorOutput = %s excludeErrorOutput = %s \n",skipOutput ? "true" : "false",forceErrorOutput ? "true" : "false",excludeErrorOutput ? "true" : "false");
-        }
+      skipOutput = (forceErrorOutput ? false : excludeErrorOutput);
+      // printf ("skipOutput = %s forceErrorOutput = %s excludeErrorOutput = %s \n",skipOutput ? "true" : "false",forceErrorOutput ? "true" : "false",excludeErrorOutput ? "true" : "false");
+    }
 
   // printf ("skipOutput = %s \n",skipOutput ? "true" : "false");
-     if (skipOutput == false)
-        {
-          outputList.push_back(theOutput);
-          stream << theOutput->getString() << std::endl;
-        }
-   }
+  if (skipOutput == false)
+    {
+      outputList.push_back(theOutput);
+      stream << theOutput->getString() << std::endl;
+    }
+}
 
 
 
 void
 Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArray)
-   {
+{
   // printf ("Preprocessor (before): argv = \n%s \n",StringUtility::listToString(commandLineArray).c_str());
 
   // Add option to force EDG warnings and errors to be put onto a single line. This helps
   // Flymake present the message in Emacs when using the connection of Compass to Emacs.
   // commandLineArray.push_back("--edg:remarks");
   // commandLineArray.push_back("--edg:brief_diagnostics");
-     commandLineArray.push_back("--edg:no_wrap_diagnostics");
-     commandLineArray.push_back("--edg:display_error_number");
+  commandLineArray.push_back("--edg:no_wrap_diagnostics");
+  commandLineArray.push_back("--edg:display_error_number");
 
 #if 1
   // We need these to exclude the C++ header files that don't have ".h" suffix extensions.
@@ -848,142 +936,142 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
   // Exclude reporting Compass errors from specific paths or header files
   // These have to be entered as two separate options
   // For more details on Flymake: /nfs/apps/emacs/22.1/share/emacs/22.1/lisp/progmodes/
-     commandLineArray.push_back("-rose:excludePath");
-     commandLineArray.push_back("/include/g++_HEADERS/");
-     commandLineArray.push_back("-rose:excludePath");
-     commandLineArray.push_back("/usr/include/");
-     commandLineArray.push_back("-rose:excludePath");
-     commandLineArray.push_back("/tests/CompileTest/");
+  commandLineArray.push_back("-rose:excludePath");
+  commandLineArray.push_back("/include/g++_HEADERS/");
+  commandLineArray.push_back("-rose:excludePath");
+  commandLineArray.push_back("/usr/include/");
+  commandLineArray.push_back("-rose:excludePath");
+  commandLineArray.push_back("/tests/CompileTest/");
 #endif
 
   // commandLineArray.push_back("-rose:excludePath");
   // commandLineArray.push_back("/home/dquinlan/ROSE/NEW_ROSE/");
 
   // Skip header files (but only works on non-C++ standard header files with ".h"
-     commandLineArray.push_back("-rose:excludeFile");
-     commandLineArray.push_back(".h");
+  commandLineArray.push_back("-rose:excludeFile");
+  commandLineArray.push_back(".h");
 
   // Add a test for a custom command line option
-     if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(s|silent)",true) )
-        {
-       // printf ("Setting Compass silent mode to ON \n");
-          Compass::verboseSetting = -1;
-        }
+  if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(s|silent)",true) )
+    {
+      // printf ("Setting Compass silent mode to ON \n");
+      Compass::verboseSetting = -1;
+    }
 
-     if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(warnings)",true) )
-        {
-       // Turn EDG warnings on
-          Compass::compilerWarnings = true;
-        }
-       else
-        {
-       // Turn EDG warnings off
-          Compass::compilerWarnings = false;
-          commandLineArray.push_back("--edg:no_warnings");
-        }
+  if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(warnings)",true) )
+    {
+      // Turn EDG warnings on
+      Compass::compilerWarnings = true;
+    }
+  else
+    {
+      // Turn EDG warnings off
+      Compass::compilerWarnings = false;
+      commandLineArray.push_back("--edg:no_warnings");
+    }
 
-     if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(remarks)",true) )
-        {
-       // Turn EDG remarks on
-          Compass::compilerRemarks = true;
-          commandLineArray.push_back("--edg:remarks");
-        }
-       else
-        {
-       // Turn EDG remarks off
-          Compass::compilerRemarks = false;
-        }
+  if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(remarks)",true) )
+    {
+      // Turn EDG remarks on
+      Compass::compilerRemarks = true;
+      commandLineArray.push_back("--edg:remarks");
+    }
+  else
+    {
+      // Turn EDG remarks off
+      Compass::compilerRemarks = false;
+    }
 
-     int integerOptionForVerboseMode = 0;
-     if ( CommandlineProcessing::isOptionWithParameter(commandLineArray,"--compass:","(v|verbose)",integerOptionForVerboseMode,true) )
-        {
-          printf ("Setting Compass verbose mode to ON (set to %d) \n",integerOptionForVerboseMode);
-          Compass::verboseSetting = integerOptionForVerboseMode;
-        }
+  int integerOptionForVerboseMode = 0;
+  if ( CommandlineProcessing::isOptionWithParameter(commandLineArray,"--compass:","(v|verbose)",integerOptionForVerboseMode,true) )
+    {
+      printf ("Setting Compass verbose mode to ON (set to %d) \n",integerOptionForVerboseMode);
+      Compass::verboseSetting = integerOptionForVerboseMode;
+    }
 
   // Flymake option
-     if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(flymake)",true) )
-        {
-       // printf ("Setting Compass flymake mode to ON \n");
-          Compass::UseFlymake = true;
-        }
+  if ( CommandlineProcessing::isOption(commandLineArray,"--compass:","(flymake)",true) )
+    {
+      // printf ("Setting Compass flymake mode to ON \n");
+      Compass::UseFlymake = true;
+    }
 
   // This is the ToolGear Option
-     const bool remove = true;
+  const bool remove = true;
 
   // std::vector<std::string> argvList = CommandlineProcessing::generateArgListFromArgcArgv(argc, argv);
   // if ( CommandlineProcessing::isOptionWithParameter( argvList, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
-     if ( CommandlineProcessing::isOptionWithParameter( commandLineArray, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
-        {
-           UseToolGear = true; 
-        }
+  if ( CommandlineProcessing::isOptionWithParameter( commandLineArray, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
+    {
+      UseToolGear = true; 
+    }
 
 
   // Adding a new command line parameter (for mechanisms in ROSE that take command lines)
 
   // printf ("commandLineArray.size() = %zu \n",commandLineArray.size());
   // printf ("Preprocessor (after): argv = \n%s \n",StringUtility::listToString(commandLineArray).c_str());
-   }
+}
 
 
 
 void
 Compass::outputTgui( std::string & tguiXML,
-                 std::vector<Compass::TraversalBase*> & checkers,
-                 Compass::PrintingOutputObject & output )
+		     std::vector<Compass::TraversalBase*> & checkers,
+		     Compass::PrintingOutputObject & output )
 {
-// DQ (1/3/2008): This has to be read/write since we generate an output file for use with ToolGear.
+  // DQ (1/3/2008): This has to be read/write since we generate an output file for use with ToolGear.
   std::fstream xml( tguiXML.c_str(), std::ios::out|std::ios::app );
 
   if( xml.good() == false )
-  {
-    std::cerr << "Error: outputTgui()\n";
-    exit(1);
-  }
+    {
+      std::cerr << "Error: outputTgui()\n";
+      exit(1);
+    }
 
   long pos = xml.tellp();
 
   if( pos == 0 )
-  {
-    xml << "<tool_gear>\n"
-        << "<format>1</format>\n"
-        << "  <version>2.00</version>\n"
-        << "  <tool_title>Compass Analysis Static View</tool_title>\n";
-
-    for( std::vector<Compass::TraversalBase*>::const_iterator itr = 
-         checkers.begin(); itr != checkers.end(); itr++ )
     {
-      std::string checkerName( (*itr)->getName() );
+      xml << "<tool_gear>\n"
+	  << "<format>1</format>\n"
+	  << "  <version>2.00</version>\n"
+	  << "  <tool_title>Compass Analysis Static View</tool_title>\n";
 
-      xml << "  <message_folder>\n"
-          << "    <tag>" << checkerName << "</tag>\n"
-          << "    <title>" << checkerName << " Checker</title>\n"
-          << "    <if_empty>hide</if_empty>\n"
-          << "  </message_folder>\n";
-    } //for, itr
-  } //if( pos == 0 )
+      for( std::vector<Compass::TraversalBase*>::const_iterator itr = 
+	     checkers.begin(); itr != checkers.end(); itr++ )
+	{
+	  std::string checkerName( (*itr)->getName() );
+
+	  xml << "  <message_folder>\n"
+	      << "    <tag>" << checkerName << "</tag>\n"
+	      << "    <title>" << checkerName << " Checker</title>\n"
+	      << "    <if_empty>hide</if_empty>\n"
+	      << "  </message_folder>\n";
+	} //for, itr
+    } //if( pos == 0 )
 
   const std::vector<Compass::OutputViolationBase*>& outputList = 
     output.getOutputList();
 
   for( std::vector<Compass::OutputViolationBase*>::const_iterator itr =
          outputList.begin(); itr != outputList.end(); itr++ )
-  {
-    const Sg_File_Info *info = (*itr)->getNode()->get_file_info();
+    {
+      const Sg_File_Info *info = (*itr)->getNode()->get_file_info();
 
-    xml << "  <message>\n"
-        << "    <folder>" << (*itr)->getCheckerName() << "</folder>\n"
-        << "    <heading>" << (*itr)->getCheckerName() << ": " << info->get_filenameString() << " : " << info->get_line() << "</heading>\n"
-        << "    <body><![CDATA[" << (*itr)->getString() << "]]></body>\n"
-        << "    <annot>\n"
-        << "      <site>\n"
-        << "        <file>" << info->get_filenameString() << "</file>\n"
-        << "        <line>" << info->get_line() << "</line>\n"
-        << "        <desc><![CDATA[" << (*itr)->getShortDescription() << "]]></desc>\n" 
-        << "      </site>\n"
-        << "    </annot>\n"
-        << "  </message>\n";
-  } //for, itr
+      xml << "  <message>\n"
+	  << "    <folder>" << (*itr)->getCheckerName() << "</folder>\n"
+	  << "    <heading>" << (*itr)->getCheckerName() << ": " << info->get_filenameString() << " : " << info->get_line() << "</heading>\n"
+	  << "    <body><![CDATA[" << (*itr)->getString() << "]]></body>\n"
+	  << "    <annot>\n"
+	  << "      <site>\n"
+	  << "        <file>" << info->get_filenameString() << "</file>\n"
+	  << "        <line>" << info->get_line() << "</line>\n"
+	  << "        <desc><![CDATA[" << (*itr)->getShortDescription() << "]]></desc>\n" 
+	  << "      </site>\n"
+	  << "    </annot>\n"
+	  << "  </message>\n";
+    } //for, itr
 
   xml.close();
 

@@ -155,21 +155,15 @@ void computeIndicesPerNode(SgProject *project, std::vector<int>& nodeToProcessor
       currentWeight = 0.05;
     } else if (isSgFunctionDefinition(node) || isSgTemplateInstantiationMemberFunctionDecl(node)) {
       /*
-      NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
-      nrNiF.traverse(node, postorder);
-      currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile;
-      // make sure a function is weighted more than all other nodes
-      if (currentWeight<=0.05)
-*/
-	currentWeight=0.06;
-    } else if (isSgFile(node)) {
-      /*
-      NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
-      nrNiF.traverse(node, postorder);
-      currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile+0.01;
-      if (currentWeight<=0.06)
+	NodeNullDerefCounter nrNiF = NodeNullDerefCounter(true);
+	nrNiF.traverse(node, postorder);
+	currentWeight = 0.002*nrNiF.totalNodes*nrNiF.nrOfForWhile;
+	// make sure a function is weighted more than all other nodes
+	if (currentWeight<=0.05)
       */
-	currentWeight=0.07;
+      currentWeight=0.06;
+    } else if (isSgFile(node)) {
+      currentWeight=0.07;
     }
     weights[i].first = currentWeight;
     weights[i].second = i;
@@ -329,12 +323,13 @@ int main(int argc, char **argv)
   initPCompass(argc, argv);
   ROSE_ASSERT(root);
 
+
   // create map with all nodes and indices
   /*
-  MemoryTraversal* memTrav = new MemoryTraversal();
-  memTrav->traverseMemoryPool();
-  cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << endl;
-  ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+    MemoryTraversal* memTrav = new MemoryTraversal();
+    memTrav->traverseMemoryPool();
+    cerr << ">> MemoryTraversal - Elements : " << memTrav->counter << endl;
+    ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
   */
 
   /* setup checkers */
@@ -351,13 +346,13 @@ int main(int argc, char **argv)
 
   //ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
   //  if (DEBUG_OUTPUT_MORE) 
-    if (my_rank == 0)
-      {
-	std::cout << std::endl << "got " << bases.size() << " checkers:";
-	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
-	  std::cout << ' ' << (*b_itr)->getName();
-	std::cout << std::endl;
-      }
+  if (my_rank == 0)
+    {
+      std::cout << std::endl << "got " << bases.size() << " checkers:";
+      for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
+	std::cout << ' ' << (*b_itr)->getName();
+      std::cout << std::endl;
+    }
 
 
   /* traverse the files */
@@ -389,9 +384,9 @@ int main(int argc, char **argv)
     //    omp_set_num_threads(8);
     threadsnr= omp_get_num_threads();
   }
-	if (my_rank==0)
-	  std::cerr << "\n--------------- OPENMP enabled with " << threadsnr << 
-	    " threads!! processes = " << processes << " ------------" << std::endl;
+  if (my_rank==0)
+    std::cerr << "\n--------------- OPENMP enabled with " << threadsnr << 
+      " threads!! processes = " << processes << " ------------" << std::endl;
 #endif 
 
 
@@ -408,218 +403,218 @@ int main(int argc, char **argv)
   MPI_Barrier(MPI_COMM_WORLD);
   for (int count=0; count<4 ; count++) {
 
-  double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+    double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
-  // which node is the most expensive?
-  int max_time_nr=0;
-  double max_time=0;
-  double calc_time_processor=0;
+    // which node is the most expensive?
+    int max_time_nr=0;
+    double max_time=0;
+    double calc_time_processor=0;
 
-  std::vector<int> bounds;
+    std::vector<int> bounds;
 
-  computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
-  //  gettime(begin_time_0);
-  gettime(begin_time);
+    computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
+    //  gettime(begin_time_0);
+    gettime(begin_time);
 
-  if (processes==1) {
-    /* figure out which files to process on this process */
-    if (DEBUG_OUTPUT_MORE) 
-      cout << "bounds size = " << bounds.size() << endl;
-    int i=-1;
-    gettime(begin_time_defuse);
-#if ROSE_GCC_OMP
-    #pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
-#endif
-    for (i = 0; i<(int)bounds.size();i++) {
+    if (processes==1) {
+      /* figure out which files to process on this process */
       if (DEBUG_OUTPUT_MORE) 
-	cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
-      if (bounds[i]== my_rank) 
-	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	  SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
-	  ROSE_ASSERT(mynode);
-	  (*b_itr)->visit(mynode);
-	}
-    }
-    gettime(end_time_defuse);
-    calc_time_processor = timeDifference(end_time_defuse, begin_time_defuse);
-  } else {
-    // apply runtime algorithm to def_use
-    cout << " Dynamic scheduling ..." << endl;
-    // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
-    int currentJob = -1;
-    MPI_Status Stat;
-    int *res = new int[2];
-    res[0]=5;
-    res[1]=5;
-    int *res2 = new int[2];
-    res2[0]=-1;
-    res2[1]=-1;
-    bool done = false;
-    int jobsDone = 0;
-    // **********************************************************
-    int scale = 2;
-    // **********************************************************
-
-
-    MPI_Request request[2]; 
-    MPI_Status status[2];
-    int min = -1;
-    int max = -1;
-    if (my_rank != 0) {
-      //std::cout << " process : " << my_rank << " sending. " << std::endl;
-      MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
-      MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
-      min = res[0];
-      max = res[1];
-      if (res[0]==-1) 
-	done =true;
-    }
-
-    while (!done) {
-      // we are ready, make sure to notify 0
-      double total_node=0;
-      if (my_rank != 0) {
-	MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
-	MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
-
-	if (DEBUG_OUTPUT_MORE) 	
-	std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[  of " << 
-	  totalnr << "      range : " << (max-min);// << std::endl;
-
-	// OPENMP START-------------------------------------------------------
-	int i=-1;
-	gettime(begin_time_defuse);
+	cout << "bounds size = " << bounds.size() << endl;
+      int i=-1;
+      gettime(begin_time_defuse);
 #if ROSE_GCC_OMP
-#pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
+#pragma omp parallel for private(i,b_itr)  shared(bounds,my_rank,bases,nullderefCounter)
 #endif
-	for (i=min; i<max;i++) { 
-	  gettime(begin_time_node);
+      for (i = 0; i<(int)bounds.size();i++) {
+	if (DEBUG_OUTPUT_MORE) 
+	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
+	if (bounds[i]== my_rank) 
 	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-	    SgNode* mynode = isSgNode(nodeDecls[i]);
+	    SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
 	    ROSE_ASSERT(mynode);
 	    (*b_itr)->visit(mynode);
 	  }
-	  gettime(end_time_node);
-	  double my_time_node = Compass::timeDifference(end_time_node, begin_time_node);
+      }
+      gettime(end_time_defuse);
+      calc_time_processor = timeDifference(end_time_defuse, begin_time_defuse);
+    } else {
+      // apply runtime algorithm to def_use
+      cout << " Dynamic scheduling ..." << endl;
+      // next we need to communicate to 0 that we are ready, if so, 0 sends us the next job
+      int currentJob = -1;
+      MPI_Status Stat;
+      int *res = new int[2];
+      res[0]=5;
+      res[1]=5;
+      int *res2 = new int[2];
+      res2[0]=-1;
+      res2[1]=-1;
+      bool done = false;
+      int jobsDone = 0;
+      // **********************************************************
+      int scale = 2;
+      // **********************************************************
+
+
+      MPI_Request request[2]; 
+      MPI_Status status[2];
+      int min = -1;
+      int max = -1;
+      if (my_rank != 0) {
+	//std::cout << " process : " << my_rank << " sending. " << std::endl;
+	MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
+	MPI_Recv(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &Stat);
+	min = res[0];
+	max = res[1];
+	if (res[0]==-1) 
+	  done =true;
+      }
+
+      while (!done) {
+	// we are ready, make sure to notify 0
+	double total_node=0;
+	if (my_rank != 0) {
+	  MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
+	  MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
+
+	  if (DEBUG_OUTPUT_MORE) 	
+	    std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[  of " << 
+	      totalnr << "      range : " << (max-min);// << std::endl;
+
+	  // OPENMP START-------------------------------------------------------
+	  int i=-1;
+	  gettime(begin_time_defuse);
+#if ROSE_GCC_OMP
+#pragma omp parallel for private(i,b_itr,begin_time_node,end_time_node)  shared(min,max,bases,nodeDecls,max_time,max_time_nr) reduction(+:total_node)
+#endif
+	  for (i=min; i<max;i++) { 
+	    gettime(begin_time_node);
+	    for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	      SgNode* mynode = isSgNode(nodeDecls[i]);
+	      ROSE_ASSERT(mynode);
+	      (*b_itr)->visit(mynode);
+	    }
+	    gettime(end_time_node);
+	    double my_time_node = Compass::timeDifference(end_time_node, begin_time_node);
 #if ROSE_GCC_OMP
 #pragma omp critical (parallelcompassmulti)
 #endif
-	  if (my_time_node>max_time) {
-	    max_time=my_time_node;
-	    max_time_nr = i;
+	    if (my_time_node>max_time) {
+	      max_time=my_time_node;
+	      max_time_nr = i;
+	    }
 	  }
-	}
-	gettime(end_time_defuse);
-	total_node = timeDifference(end_time_defuse, begin_time_defuse);
+	  gettime(end_time_defuse);
+	  total_node = timeDifference(end_time_defuse, begin_time_defuse);
 
 
-	// OPENMP END -------------------------------------------------------
+	  // OPENMP END -------------------------------------------------------
 
-	calc_time_processor+=total_node;
-	if (DEBUG_OUTPUT_MORE) 
-	  std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
-	    "   in node : " << nodeDecls[max_time_nr]->class_name() << "  total_node: " << total_node << std::endl;
+	  calc_time_processor+=total_node;
+	  if (DEBUG_OUTPUT_MORE) 
+	    std::cout << "     >>> Process " << my_rank << " done. Time: " << total_node << "   max_time : " << max_time << "  " << max_time_nr << 
+	      "   in node : " << nodeDecls[max_time_nr]->class_name() << "  total_node: " << total_node << std::endl;
 
 
-	MPI_Waitall(2,request,status);
-	min = res2[0];
-	max = res2[1];
-	if (res2[0]==-1) 
-	  break;
+	  MPI_Waitall(2,request,status);
+	  min = res2[0];
+	  max = res2[1];
+	  if (res2[0]==-1) 
+	    break;
   
-      }
-      if (my_rank == 0) {
-	//std::cout << " process : " << my_rank << " receiving. " << std::endl;
-	MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
-	gettime(begin_time_node);
-	currentJob+=scale;
-	
-	// tps 31Jul2008 : best algorithm empirically found for batch distribution of jobs
-	int val=2;
-	/*
-	if (processes<64) {
-	  if ((currentJob % 10)==9) scale+=(int)val;
-	} else
-	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
-	*/
-
-
-	if (count==0) {
-	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
-	} else if (count==1) {
-	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
-	} else if (count==2) {
-	  if (currentJob<10000)
-	    if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
-	} else  
-	  if ((currentJob % 10)==9) scale+=(int)val;
-
-	if (currentJob>=(int)bounds.size()) {
-	  res[0] = -1;
-	  jobsDone++;
-	}      else {
-	  res[0] = currentJob;
-	  res[1] = currentJob+scale;
-	  if (res[1]>=(int)bounds.size())
-	    res[1] = bounds.size();
-	  //cerr << " sending res[1] : " << res[1] << endl;
-	  dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
 	}
-	//      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
-	//std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
-	gettime(end_time_node);
-	double my_time_node = timeDifference(end_time_node, begin_time_node);
-	total_node += my_time_node;
-	calc_time_processor+=total_node;
-	MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
-	if (jobsDone==(processes-1))
-	  break;
+	if (my_rank == 0) {
+	  //std::cout << " process : " << my_rank << " receiving. " << std::endl;
+	  MPI_Recv(res, 2, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &Stat);
+	  gettime(begin_time_node);
+	  currentJob+=scale;
+	
+	  // tps 31Jul2008 : best algorithm empirically found for batch distribution of jobs
+	  int val=2;
+	  /*
+	    if (processes<64) {
+	    if ((currentJob % 10)==9) scale+=(int)val;
+	    } else
+	    if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
+	  */
+
+
+	  if (count==0) {
+	    if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
+	  } else if (count==1) {
+	    if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
+	  } else if (count==2) {
+	    if (currentJob<10000)
+	      if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
+	  } else  
+	    if ((currentJob % 10)==9) scale+=(int)val;
+
+	  if (currentJob>=(int)bounds.size()) {
+	    res[0] = -1;
+	    jobsDone++;
+	  }      else {
+	    res[0] = currentJob;
+	    res[1] = currentJob+scale;
+	    if (res[1]>=(int)bounds.size())
+	      res[1] = bounds.size();
+	    //cerr << " sending res[1] : " << res[1] << endl;
+	    dynamicFunctionsPerProcessor[Stat.MPI_SOURCE] += scale;
+	  }
+	  //      std::cout << " processes done : " << jobsDone << "/" << (processes-1) << std::endl;
+	  //std::cout << " process : " << my_rank << " sending rank : " << res[0] << std::endl;
+	  gettime(end_time_node);
+	  double my_time_node = timeDifference(end_time_node, begin_time_node);
+	  total_node += my_time_node;
+	  calc_time_processor+=total_node;
+	  MPI_Send(res, 2, MPI_INT, Stat.MPI_SOURCE, 1, MPI_COMM_WORLD);      
+	  if (jobsDone==(processes-1))
+	    break;
+	}
       }
+      if (my_rank==0)
+	cerr << ">>> Final scale = " << scale << endl; 
+      //"  count = " << count << "  val = " << val << endl;
     }
-    if (my_rank==0)
-      cerr << ">>> Final scale = " << scale << endl; 
-    //"  count = " << count << "  val = " << val << endl;
-  }
 
 
-  gettime(end_time);
-  double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
-  double memusage = memusage_e-memusage_b;
-  double my_time = timeDifference(end_time, begin_time);
-  double commtime = my_time-calc_time_processor;
-  std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << 
-    "    CalcTime: " << calc_time_processor << "   CommTime: " << commtime << std::endl;
+    gettime(end_time);
+    double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+    double memusage = memusage_e-memusage_b;
+    double my_time = timeDifference(end_time, begin_time);
+    double commtime = my_time-calc_time_processor;
+    std::cout << ">>> Process " << my_rank << " is done. Time: " << my_time << "  Memory: " << memusage << " MB." << 
+      "    CalcTime: " << calc_time_processor << "   CommTime: " << commtime << std::endl;
 
-  unsigned int *output_values = new unsigned int[outputs.counts.size()];
-  double *times = new double[processes];
-  double *memory = new double[processes];
-  int *maxtime_nr = new int[processes];
-  double *maxtime_val = new double[processes];
-  double *calctimes = new double[processes];
-  double *commtimes = new double[processes];
-  MPI_Barrier(MPI_COMM_WORLD);
+    unsigned int *output_values = new unsigned int[outputs.counts.size()];
+    double *times = new double[processes];
+    double *memory = new double[processes];
+    int *maxtime_nr = new int[processes];
+    double *maxtime_val = new double[processes];
+    double *calctimes = new double[processes];
+    double *commtimes = new double[processes];
+    MPI_Barrier(MPI_COMM_WORLD);
 
-  communicateResult(outputs, 
-		    times,  memory, output_values, my_time, memusage, 
-		    maxtime_nr, max_time_nr, 
-		    maxtime_val, max_time,
-		    calctimes, calc_time_processor, 
-		    commtimes, commtime);
+    communicateResult(outputs, 
+		      times,  memory, output_values, my_time, memusage, 
+		      maxtime_nr, max_time_nr, 
+		      maxtime_val, max_time,
+		      calctimes, calc_time_processor, 
+		      commtimes, commtime);
 
 
 
-  printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
-		 calctimes, commtimes, nodeDecls);
+    printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
+		   calctimes, commtimes, nodeDecls);
 
-  //if (my_rank==0)
-  //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
-  delete[] output_values;
-  delete[] times;
-  delete[] memory;
-  delete[] maxtime_nr;
-  delete[] maxtime_val;
-  delete[] calctimes;
-  delete[] commtimes;
+    //if (my_rank==0)
+    //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
+    delete[] output_values;
+    delete[] times;
+    delete[] memory;
+    delete[] maxtime_nr;
+    delete[] maxtime_val;
+    delete[] calctimes;
+    delete[] commtimes;
   }
 
   /* all done */
