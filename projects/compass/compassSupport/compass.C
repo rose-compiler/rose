@@ -25,6 +25,12 @@ bool Compass::UseFlymake       = false;
 bool Compass::UseToolGear      = false; 
 std::string Compass::tguiXML;
 
+// TPS, needed for DEFUSE
+unsigned int Compass::global_arrsize=-1;
+unsigned int Compass::global_arrsizeUse=-1;
+unsigned int* Compass::def_values_global=NULL;
+unsigned int* Compass::use_values_global=NULL;
+
 
 /******************************************************************
  * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI

@@ -9,10 +9,10 @@
 namespace Compass {
   void loadDFA(std::string name, SgProject* project);
   void saveDFA(std::string name, SgProject* project);
-  unsigned int global_arrsize = -1;
-  unsigned int global_arrsizeUse = -1;
-  unsigned int *def_values_global;
-  unsigned int *use_values_global;
+  extern unsigned int global_arrsize;
+  extern unsigned int global_arrsizeUse;
+  extern unsigned int *def_values_global;
+  extern unsigned int *use_values_global;
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
 #if ROSE_MPI
