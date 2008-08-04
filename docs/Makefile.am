@@ -1,8 +1,7 @@
 
 # DQ (7/24/2008): Only the developer version needs the test directory specific to Doxygen support
-if ROSE_USE_EDG_SOURCE
-    DEVELOPER_DISTRIBUTION_DIRECTORY = testDoxygen
-endif
+# JJW (8/3/2008): This line will be removed in binary distributions
+DEVELOPER_DISTRIBUTION_DIRECTORY = testDoxygen
 
 # Later we will add ROSETTA documentation here ...
 # SUBDIRS = Rose Rosetta testDoxygen

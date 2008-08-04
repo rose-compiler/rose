@@ -8,36 +8,11 @@ SUBDIRS = util ROSETTA frontend midend backend roseSupport \
 INCLUDES = $(ROSE_INCLUDES)
 
 
-# DQ (1/16/2007): The binary release of ROSE requires some libraries to be distributed.
-# if ROSE_USE_EDG_SOURCE
-# # This is a distribution containing the EDG source code in the source tree (distribution or 
-# # development version checked out from CVS).  These libraries are available only as binaries 
-# # in the binary version of the ROSE distribution (but are in the compile tree since this 
-# # distribution includes the EDG source code).
-# libroseEDGlibraries = \
-#    $(top_builddir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la \
-#    $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.la
-# else
-# # This is a distribution containing binaries in the source tree (distribution).
-# # These versions are available only as binaries and stored in the distribution (in this case).
-# libroseEDGlibraries = \
-#    $(top_srcdir)/src/frontend/CxxFrontend/EDG_3.3/src/libedg33.la \
-#    $(top_builddir)/src/frontend/CxxFrontend/EDG_SAGE_Connection/libedgSage.la
-# endif
-
 # DQ (7/23/2008): New handling of EDG builds a single library instead of two.
 # Binary distributions of ROSE store the binary for EDG related code in the source tree.
-if ROSE_USE_EDG_SOURCE
-#  libroseEDGlibraries = $(top_builddir)/src/frontend/CxxFrontend/libroseEDG.la
-   libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
-else
- # Note that this is the wrong location for libroseEDG.la if one mistakenly configures
- # a development version (from svn) of ROSE without specifying "--with-edg_source_code=true"
- # (as is the case when preparing a binary distribution, but then only "make dist" 
- # or "make distcheck" should be run).
-   libroseEDGlibraries = $(top_srcdir)/src/frontend/CxxFrontend/libroseEDG.la
- # libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
-endif
+# JJW (8/3/2008): See src/frontend/CxxFrontend/Makefile.am.forBinaryEDG for
+# more information on this process.
+libroseEDGlibraries = frontend/CxxFrontend/libroseEDG.la
 
 libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/BinaryDisassembly/libbinaryFrontend.la \
@@ -94,41 +69,7 @@ libroseLibraries = \
    $(top_builddir)/src/util/libroseutil.la
 
 
-if ROSE_USE_EDG_SOURCE
-
-testEdgSourceRule:
-	echo "EDG source code will be placed into any ROSE distribution ... "
-
 EXTRA_DIST = extra.docs
-
-dist-hook:
-	echo "dist-hook required for symmetry with binary case ..."
-
-else
-
-testEdgSourceRule:
-	echo "EDG source code not permitted in any ROSE distribution ... "
-
-# DQ (4/21/2005): We should not have to define this (should be defined by automake as elsewhere in ROSE)
-libLIBRARIES_INSTALL = /usr/bin/install -c -m 644
-
-EXTRA_DIST = extra.docs
-
-dist-hook:
-	echo "Commented out Copying the libedg.so to $(distdir)"
-#	cp -p $(libdir)/libedg.so $(distdir)
-
-# # copy the binary from the distribution (make rule allows for dependences upon libedg.so)
-# $(libdir)/libedg.so:
-# 	@echo "Copying binary EDG specific library (libedg.so)"
-# 	@if ! test -f $(srcdir)/libedg.so; then \
-#       echo "Error: libedg.so does not exist, configure using --with-edg_source_code=true so that EDG source code can be used to build libedg.so"; \
-#       exit 1; \
-#    fi
-# 	@echo "Copying $(srcdir)/libedg.so to $(libdir)/libedg.so"
-# 	cp -p $(srcdir)/libedg.so $(libdir)/libedg.so
-
-endif
 
 # Header files that need to be included in the distribution
 include_HEADERS = \

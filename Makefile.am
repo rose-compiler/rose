@@ -5,10 +5,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #            are more restricted.
 #    Developer: This version includes all EDG source code and some parts that
 #             might be more restricted.
-if ROSE_USE_EDG_SOURCE
 # This next line will be removed for binary distributions, leaving the variable empty
-    DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
-endif
+DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
 
 # DQ "config" and "src" must preceed any other directories, and 
 # "tutorial" and "exampleTranslators" must preceed "docs" since 
@@ -78,7 +76,7 @@ install-data-local:
 # JJW (5/14/2008): Add the Boost flag the same way, using an internal
 # variable from AX_BOOST_* to find the argument to --with-boost when
 # this copy of ROSE was originally configured.
-DISTCHECK_CONFIGURE_FLAGS = --with-edg_source_code=$(with_edg_source_code) --with-boost=$(ac_boost_path)
+DISTCHECK_CONFIGURE_FLAGS = --with-boost=$(ac_boost_path)
 
 # DQ (7/25/2008): If ROSE was originallly configured with Fortran (by tuning 
 # on the java support) then make sure it is tested as part of the distcheck rule.
@@ -101,19 +99,11 @@ endif
 
 # DQ (4/22/2005): To make clear when binaries are in the distribution as 
 # opposed to EDG source code we rename the final generated distribution.
+# JJW (8/3/2008): This is only used for source distributions now --
+# source_with_binary_edg_dist does its own renaming
 rename_distribution:
-	@echo "DISTCHECK_CONFIGURE_FLAGS = $(DISTCHECK_CONFIGURE_FLAGS)"
-	@if test "$(with_edg_source_code)" = true; then \
-	  echo "ROSE distribution built using EDG source code (with_edg_source_code = $(with_edg_source_code))"; \
-     new_name="$(distdir)-source-with-EDG-source.tar.gz"; \
-     echo "copying $(distdir).tar.gz to $$new_name"; \
-     cp $(distdir).tar.gz $$new_name; \
-	else \
-     echo "ROSE distribution built using binaries in place of EDG source code (with_edg_source_code = $(with_edg_source_code))"; \
-     new_name="$(distdir)-source-with-EDG-binaries.tar.gz"; \
-     echo "copying $(distdir).tar.gz to $$new_name"; \
-     cp $(distdir).tar.gz $$new_name; \
-   fi
+	new_name="$(distdir)-source-with-EDG-source.tar.gz"; \
+	cp $(distdir).tar.gz $$new_name
 
 # We reset distdir as shown on
 # http://jcalcote.wordpress.com/2008/02/23/autoconf-macros-exposed-at3/ to add the SVN
@@ -192,19 +182,4 @@ source_with_binary_edg_dist:
 	cd $(distdir) && ./build
 #	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
 #	$(am__remove_distdir)
-
-# DQ (7/30/2008): Copy the library to the distribution.
-# binary_EDG_dist: distdir
-copy_libs_for_binary_distribution: distdir
-#	Call rules in the directories where binary libraries are copied (but we have to set DISTDIR)
-	cd src/frontend/CxxFrontend; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.3/src; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.3/src copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.3/misc; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.3/misc copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_SAGE_Connection; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_SAGE_Connection copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.10; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10 copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.10/src; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/src copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.10/src/disp; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/src/disp copy_libs_for_binary_distribution;
-	cd src/frontend/CxxFrontend/EDG_3.10/misc; $(MAKE) distdir=$(distdir)/src/frontend/CxxFrontend/EDG_3.10/misc copy_libs_for_binary_distribution;
-	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
-	$(am__remove_distdir)
 
