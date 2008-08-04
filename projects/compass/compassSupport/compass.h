@@ -7,6 +7,14 @@
 
 
 namespace Compass {
+  void loadDFA(std::string name, SgProject* project);
+  void saveDFA(std::string name, SgProject* project);
+  unsigned int global_arrsize = -1;
+  unsigned int global_arrsizeUse = -1;
+  unsigned int *def_values_global;
+  unsigned int *use_values_global;
+  typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
+
 #if ROSE_MPI
   //  struct timespec begin_time_node, end_time_node;
   extern int my_rank, processes;

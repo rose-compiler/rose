@@ -86,8 +86,8 @@ std::pair<int, int> computeNullDerefIndices(SgProject *project, int my_rank, int
   }
 
   // split algorithm
-  int lo, hi = 0;
-  int my_lo, my_hi;
+  int lo=0, hi = 0;
+  int my_lo=0, my_hi=0;
   for (int rank = 0; rank < processes; rank++) {
     const size_t my_nodes_high = (nullderefCounter.totalNodes / processes + 1) * (rank + 1);
     // set lower limit
@@ -319,7 +319,8 @@ void printPCResults(CountingOutputObject  &outputs,
 // ************************************************************
 int main(int argc, char **argv)
 {
-
+  gettime(begin_init_time);
+  double mem_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   /* setup MPI */
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
@@ -359,7 +360,6 @@ int main(int argc, char **argv)
       }
 
 
-
   /* traverse the files */
 
   if (sequential)
@@ -395,48 +395,18 @@ int main(int argc, char **argv)
 #endif 
 
 
-
-#if 0
-  /* ---------------------------------------------------------- 
-   * OpenMP code for defuse -- not scalable but good for up to 8 processors
-   * ----------------------------------------------------------*/
-  // we have to run the def-use analysis first
-  // as some compass checkers rely on it
-  // however, we cant communicate the results(pointers)
-  // via MPI, so we use OpenMP. Another method
-  // might be UPC?
-  gettime(begin_time_defuse);
-  defuse = new DefUseAnalysis(root);
-  Rose_STL_Container<SgNode *> funcs = 
-    NodeQuery::querySubTree(root, V_SgFunctionDefinition);
-  if (my_rank==0)
-    std::cerr << " running defuse analysis ...  functions: " << funcs.size() << std::endl;
-  int resultDefUseNodes=0;
-  int it;
-#pragma omp parallel for private(it)  shared(funcs,defuse)  reduction(+:resultDefUseNodes) schedule(dynamic, threadsnr)
-  for (it = 0; it < (int)funcs.size(); it++) {
-    SgFunctionDefinition* funcDef = isSgFunctionDefinition(funcs[it]);
-    int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
-    resultDefUseNodes+=nrNodes;
-  }
-  gettime(end_time_defuse);
-  double my_time_node = timeDifference(end_time_defuse, begin_time_defuse);
-  if (my_rank==0) {
-    std::cerr << " finished defuse analysis.  nrDefUseNodes: " << resultDefUseNodes << std::endl;  
-    std::cerr << " time for defuse : " << my_time_node << endl;
-  }
-#endif
-
-
-
   ROSE_ASSERT(Compass::defuse);
+  double mem_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
+  double memuse = mem_e-mem_b;
+  gettime(end_init_time);
+  double init_time = timeDifference(end_init_time, begin_init_time);
+  if (my_rank==0)
+    std::cerr << " TIME FOR INIT IS : " << init_time << "  MEMORY USED : " << memuse << std::endl;
+
 
   // --------------------------------------------------------
   MPI_Barrier(MPI_COMM_WORLD);
-  //  int val=-1;
-  //for (int count=0; count<7 ; count++) {
-  //    if (count==3 || count==4 || count==5) val=0;
-  //    val++;
+  for (int count=0; count<4 ; count++) {
 
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
@@ -566,20 +536,24 @@ int main(int argc, char **argv)
 	
 	// tps 31Jul2008 : best algorithm empirically found for batch distribution of jobs
 	int val=2;
+	/*
 	if (processes<64) {
 	  if ((currentJob % 10)==9) scale+=(int)val;
 	} else
 	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
-	/*
-	if (count<3) {
-	  if ((currentJob % 5)==4) scale+=(int)val;
-	} else if (count <4) {
-	  if ((currentJob % 5)==4) scale=log(currentJob)+1;
-	} else if (count <5) {
-	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
-	} else
-	  if ((currentJob % 10)==9) scale+=(int)val;
 	*/
+
+
+	if (count==0) {
+	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob)+1;
+	} else if (count==1) {
+	  if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
+	} else if (count==2) {
+	  if (currentJob<10000)
+	    if ((currentJob % processes)==(processes-1)) scale=log(currentJob+10);
+	} else  
+	  if ((currentJob % 10)==9) scale+=(int)val;
+
 	if (currentJob>=(int)bounds.size()) {
 	  res[0] = -1;
 	  jobsDone++;
@@ -632,11 +606,7 @@ int main(int argc, char **argv)
 		    calctimes, calc_time_processor, 
 		    commtimes, commtime);
 
-  //  double my_time_0;
-  //  if (my_rank==0) {
-  //   gettime(end_time_0);
-  //    my_time_0 = timeDifference(end_time_0, begin_time_0);
-  // }
+
 
   printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
 		 calctimes, commtimes, nodeDecls);
@@ -645,8 +615,12 @@ int main(int argc, char **argv)
   //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
   delete[] output_values;
   delete[] times;
-
-  //  }
+  delete[] memory;
+  delete[] maxtime_nr;
+  delete[] maxtime_val;
+  delete[] calctimes;
+  delete[] commtimes;
+  }
 
   /* all done */
   MPI_Finalize();

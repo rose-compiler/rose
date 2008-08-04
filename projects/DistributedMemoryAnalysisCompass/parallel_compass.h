@@ -23,8 +23,11 @@
 
 bool loadAST =false;
 bool saveAST =false;
+bool loadDFA =false;
+bool saveDFA =false;
 SgProject *root = NULL;
 struct timespec begin_time, end_time;
+struct timespec begin_init_time, end_init_time;
 struct timespec begin_time_node, end_time_node;
 struct timespec begin_time_0, end_time_0;
 struct timespec begin_time_defuse, end_time_defuse;
@@ -66,8 +69,10 @@ void initPCompass(int argc, char **argv) {
       {
 	std::cerr << "USAGE: "  << std::endl;
 	std::cerr << "   executable filenames_in \t\t\truns on a project given a the specified file"  << std::endl;
-	std::cerr << "   executable -save filename_out filenames_in \truns on the specified file and saves it to ast.ast"  << std::endl;
+	std::cerr << "   executable -save filename_out filenames_in \truns on the specified file (filenames_in) and saves it to filename_out.ast"  << std::endl;
+	std::cerr << "   executable -load filename_in -sdfa \truns dataflow analysis (in parallel) and saves the defuse result to the same output filename.data"  << std::endl;
 	std::cerr << "   executable -load filename_in \t\tloads the specified AST and runs the project"  << std::endl;
+	std::cerr << "   executable -load filename_in -ldfa \t\tloads the dataflow analysis for the same input filename.data" << std::endl;
 	std::cerr << "   executable [-combined | -shared ] (sequential is default)"  << std::endl;
 	std::cerr << std::endl;
 	exit(0);
@@ -75,8 +80,17 @@ void initPCompass(int argc, char **argv) {
   }
 
   if (containsArgument(argc, argv, "-load")) {
+    if (containsArgument(argc, argv, "-ldfa")) {
+      loadDFA = true;
+    }
+    if (containsArgument(argc, argv, "-sdfa")) {
+      saveDFA = true;
+    }
     loadAST = true;
   } else if (containsArgument(argc, argv, "-save")) {
+    if (containsArgument(argc, argv, "-sdfa")) {
+      saveDFA = true;
+    }
     saveAST = true;
   } 
 
@@ -93,6 +107,7 @@ void initPCompass(int argc, char **argv) {
 
   /* read the AST, either from a binary file or from sources */
   if (saveAST) {
+    std::cerr << "ROSE saving FILE.... " << argv[2] << std::endl;
     if (Compass::my_rank == 0) {
       Compass::gettime(begin_time);
       if (argc>3) {
@@ -105,17 +120,40 @@ void initPCompass(int argc, char **argv) {
 	}
 	root = frontend(argc-2, argv2);
 	std::string out_filename = argv[2];//"ast.ast";
+	// this can only run in sequence!
+	if (saveDFA) {
+	  std::string name = argv[2];
+	  name.append(".data");
+	  std::cerr << "ROSE saving DFA enabled.... " << name << std::endl;
+	  Compass::saveDFA(name,root);
+	}
+
 	LoadSaveAST::saveAST(out_filename, root); 
       }
       Compass::gettime(end_time);
       exit(0);
     }
   } else if (loadAST) {
-    std::cout << "ROSE loading .... " << argv[2] << std::endl;
     Compass::gettime(begin_time);
+    std::cerr << "ROSE loading FILE.... " << argv[2] << std::endl;
     root = LoadSaveAST::loadAST(argv[2]); 
     Compass::gettime(end_time);
-  } 
+    if (loadDFA) {
+      std::string name = argv[2];
+      name.append(".data");
+      std::cerr << "ROSE loading DFA enabled.... " << name << std::endl;
+      Compass::loadDFA(name,root);
+    } else if  (saveDFA) {
+      // this can run in parallel!
+      std::string name = argv[2];
+      name.append(".data");
+      std::cerr << "ROSE saving DFA enabled .... " << name << std::endl;
+      Compass::saveDFA(name,root);
+      exit(0);
+    }
+  } else {
+    std::cerr << "ROSE frontend .... " << std::endl;
+  }
 
   if (!saveAST && !loadAST) {
     Compass::gettime(begin_time);

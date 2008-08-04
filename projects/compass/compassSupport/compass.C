@@ -6,6 +6,7 @@
 #include <rose.h>
 #include <sstream>
 #include <fstream>
+#include <iostream> 
 
 #if ROSE_MPI
 #include "functionLevelTraversal.h"
@@ -33,6 +34,102 @@ DefUseAnalysis* Compass::defuse = NULL;
 int Compass::my_rank=0;
 int Compass::processes=0;
 
+void Compass::loadDFA(std::string name, SgProject* project) {
+  //unsigned int arrsize, unsigned int *values) {
+  std::ifstream loadFile(name.c_str(), std::ios::in | std::ios::binary);
+    int sizeOfArrayItem = -1;
+    global_arrsize=-1;
+    global_arrsizeUse=-1;
+    ROSE_ASSERT(global_arrsize!=0);
+    std::cerr <<"\n Loading DFA from File " << name << std::endl;
+    loadFile.read((char*)&global_arrsize, sizeof(unsigned int));
+    loadFile.read((char*)&global_arrsizeUse, sizeof(unsigned int));
+    loadFile.read((char*)&sizeOfArrayItem, sizeof(int));
+    std::cerr << " sizeof (def_values) : " << sizeOfArrayItem << "   total bytes: " << (sizeOfArrayItem*global_arrsize) << "\n";
+    def_values_global = new unsigned int[global_arrsize];
+    use_values_global = new unsigned int[global_arrsizeUse];
+    for (unsigned int i=0; i<global_arrsize;++i) 
+      def_values_global[i]=0;
+    for (unsigned int i=0; i<global_arrsizeUse;++i) 
+      use_values_global[i]=0;
+    for (unsigned int j=0;j<global_arrsize;j++) {
+      loadFile.read((char*)&def_values_global[j], sizeOfArrayItem);
+    }
+    for (unsigned int j=0;j<global_arrsizeUse;j++) {
+      loadFile.read((char*)&use_values_global[j], sizeOfArrayItem);
+    }
+    loadFile.close();
+    std::cerr <<" Done Loading DFA to File " << std::endl;
+    std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
+    std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
+
+  // create map with all nodes and indices
+  MemoryTraversal* memTrav = new MemoryTraversal();
+  memTrav->traverseMemoryPool();
+  std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+  ROSE_ASSERT(memTrav->counter>0);
+  ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
+  
+  if (defuse==NULL)
+    defuse = new DefUseAnalysis(project);
+
+  /* deserialize all results */
+  // write the global def_use_array back to the defmap (for each processor)
+  ((DefUseAnalysis*)defuse)->flushDefuse();
+  deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
+  deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
+  std::cerr << my_rank << " : deserialization done." << std::endl;
+  /* deserialize all results */
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  my_map defmap = defuse->getDefMap();
+  my_map usemap = defuse->getUseMap();
+
+  if (my_rank==0) {
+    std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
+    std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
+    //((DefUseAnalysis*)defuse)->printDefMap();
+  }
+
+}
+
+void Compass::saveDFA(std::string name, SgProject* project) {
+  //unsigned int arrsize, unsigned int *values) {
+  std::ofstream writeFile(name.c_str(), std::ios::out | std::ios::binary);
+  runDefUseAnalysis(project);
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  if (my_rank==0) {
+    std::cerr <<" Saving DFA to File : " << name << std::endl;
+    ROSE_ASSERT(global_arrsize!=0);
+    std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
+    writeFile.write(reinterpret_cast<const char *>(&global_arrsize), sizeof(unsigned int));
+    writeFile.write(reinterpret_cast<const char *>(&global_arrsizeUse), sizeof(unsigned int));
+    int sizeOfArrayItem = sizeof(def_values_global);
+    writeFile.write(reinterpret_cast<const char *>(&sizeOfArrayItem), sizeof(int));
+    for (unsigned int j=0;j<global_arrsize;j++) {
+      writeFile.write((char*)&def_values_global[j], sizeof(def_values_global));
+    }
+    for (unsigned int j=0;j<global_arrsizeUse;j++) {
+      writeFile.write((char*)&use_values_global[j], sizeof(use_values_global));
+    }
+    std::cerr << " sizeof (def_values) : " << (sizeof(def_values_global)*global_arrsize) << " : " 
+	      << (sizeOfArrayItem*global_arrsize) << " bytes \n";
+    writeFile.close();
+    std::cerr <<" Done Saving DFA to File " << std::endl;
+
+    std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
+
+    for (unsigned int j=0;j<global_arrsize;j++) 
+      def_values_global[j]=0;
+    global_arrsize=-1;
+    for (unsigned int j=0;j<global_arrsizeUse;j++) 
+      use_values_global[j]=0;
+    global_arrsizeUse=-1;
+    loadDFA(name,project);
+  }
+}
+
 void Compass::serializeDefUseResults(unsigned int *values,
 			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
 			    std::map<SgNode*,unsigned int > &nodeMapInv) {
@@ -57,14 +154,12 @@ void Compass::serializeDefUseResults(unsigned int *values,
 }
 
 void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
-				       //      std::map<unsigned int, SgNode* > &nodeMap, 
 				       std::vector<SgNode* > &nodeMap, 
 				       bool definition) {
   struct timespec b_time_node, e_time_node;
   //  defuse->flushHelp();
   if (my_rank==0) {
     Compass::gettime(b_time_node);
-    std::cerr << " >> defsize : " << defuse->getDefSize() << std::endl;
   }
 
 
@@ -120,6 +215,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
   if (defuse==NULL) {
     //#define DEFUSE
+
 #if ROSE_MPI
   /* ---------------------------------------------------------- 
    * MPI code for DEFUSE
@@ -135,12 +231,14 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   MemoryTraversal* memTrav = new MemoryTraversal();
   memTrav->traverseMemoryPool();
   std::cerr << my_rank << " >> MemoryTraversal - Elements : " << memTrav->counter << std::endl;
+  ROSE_ASSERT(memTrav->counter>0);
   ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
 
   MPI_Barrier(MPI_COMM_WORLD);
   gettime(begin_time_node);
 
   defuse = new DefUseAnalysis(root);
+
   //defuse->disableVisualization();
   Rose_STL_Container<SgNode *> funcs = 
     NodeQuery::querySubTree(root, V_SgFunctionDefinition);
@@ -148,6 +246,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     std::cerr << "\n>>>>> running defuse analysis (with MPI)...  functions: " << funcs.size() << 
       "  processes : " << processes << std::endl;
   int resultDefUseNodes=0;
+
 
   // ---------------- LOAD BALANCING of DEFUSE -------------------
   // todo: try to make the load balancing for DEFUSE better
@@ -157,24 +256,6 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   std::vector<int> bounds;
 
   myanalysis.computeFunctionIndicesPerNode(root, bounds, initialDepth, &preTraversal);
-  /*
-    std::pair<int, int> bounds = myanalysis.computeFunctionIndicesPerNode(root, initialDepth, &preTraversal);
-    for (int i = bounds.first; i < bounds.second; i++) {
-      std::cerr << my_rank << ": DEFUSE bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ in range length: " 
-    	      << (bounds.second-bounds.first) << ")" << "   Nodes: " << myanalysis.myNodeCounts[i] << 
-      "   Weight : " << myanalysis.myFuncWeights[i] << std::endl;
-
-    SgFunctionDeclaration* funcDecl = myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i];
-    SgFunctionDefinition* funcDef = NULL;
-    if (funcDecl)
-      funcDef = funcDecl->get_definition();
-    if (funcDef) {
-      int nrNodes = ((DefUseAnalysis*)defuse)->start_traversal_of_one_function(funcDef);
-      resultDefUseNodes+=nrNodes;
-    }
-  }
-  */
-
 
   for (int i = 0; i<(int)bounds.size();i++) {
     //std::cerr << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << std::endl;
@@ -190,7 +271,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       }
     }
   }
-
+  
   // ---------------- LOAD BALANCING of DEFUSE -------------------
 
 #if 0
@@ -227,7 +308,6 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   if (my_rank==0)
     std::cerr << "\n>> Collecting defuse results ... " << std::endl;
 
-  typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
 
   ROSE_ASSERT(defuse);
   my_map defmap = defuse->getDefMap();
@@ -270,16 +350,16 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   std::cerr << my_rank << ": defmapsize : " << defmap.size() << "  usemapsize: " << usemap.size() 
        << ": defs : " << arrsize << "  uses: " << arrsizeUse << std::endl;
   // communicate total size to allocate global arrsize
-  unsigned int global_arrsize = -1;
-  unsigned int global_arrsizeUse = -1;
+  global_arrsize = -1;
+  global_arrsizeUse = -1;
   MPI_Allreduce(&arrsize, &global_arrsize, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   MPI_Allreduce(&arrsizeUse, &global_arrsizeUse, 1, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD);
   /* communicate arraysizes */
 
   /* serialize all results */
-  unsigned int *def_values_global = new unsigned int[global_arrsize];
+  def_values_global = new unsigned int[global_arrsize];
   unsigned int *def_values =new unsigned int[arrsize];
-  unsigned int *use_values_global = new unsigned int[global_arrsizeUse];
+  use_values_global = new unsigned int[global_arrsizeUse];
   unsigned int *use_values =new unsigned int[arrsizeUse];
   for (unsigned int i=0; i<arrsize;++i) 
     def_values[i]=0;
@@ -342,22 +422,6 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   MPI_Allgatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
 		 offsetUse, MPI_UNSIGNED,  MPI_COMM_WORLD);
 
-  /*
-  // alternative faster algorithm
-  MPI_Gatherv(def_values, arrsize, MPI_UNSIGNED, def_values_global, length, 
-	      offset, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Gatherv(use_values, arrsizeUse, MPI_UNSIGNED, use_values_global, lengthUse, 
-	      offsetUse, MPI_UNSIGNED, 0,  MPI_COMM_WORLD);
-  MPI_Barrier(MPI_COMM_WORLD);
-  if (my_rank==0) {
-    Compass::gettime(e_time_node);
-    double restime = Compass::timeDifference(e_time_node, b_time_node);
-    std::cerr << "\n >>> Gatherv to 0 done. TIME : " << restime << std::endl;
-    Compass::gettime(b_time_node);
-  }
-  MPI_Bcast(def_values_global, global_arrsize, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
-  MPI_Bcast(use_values_global, global_arrsizeUse, MPI_UNSIGNED,  0,  MPI_COMM_WORLD);
-  */
 
   /* communicate all results */
   std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
@@ -369,6 +433,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     std::cerr << "\n >>> communication (ARRAY) done. TIME : " << restime << 
       "   arrsize Def : " << global_arrsize << "  arrsize Use : " << global_arrsizeUse << std::endl;
   }
+
 
 
   /* deserialize all results */

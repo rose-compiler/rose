@@ -33,7 +33,7 @@
 +:ExplicitCharSign
 +:ExplicitCopy
 +:ExplicitTestForNonBooleanValue
-+:FileReadOnlyAccess
+-:FileReadOnlyAccess
 +:FloatForLoopCounter
 +:FloatingPointExactComparison
 +:FopenFormatParameter
