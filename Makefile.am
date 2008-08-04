@@ -121,7 +121,7 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEANFILES = rose_paths.h rose_binary_compatibility_signature
+DISTCLEANFILES = rose_paths.h rose_binary_compatibility_signature rose_binary_compatibility_signature_src
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
@@ -152,10 +152,13 @@ clean_binary_distribution: distdir
 
 if BINARY_EDG_TARBALL_ENABLED
 
-rose_binary_compatibility_signature:
-	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -exec cat -t {} \; | @MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
+rose_binary_compatibility_signature_src:
+	find $(srcdir)/src/ROSETTA $(srcdir)/src/frontend/CxxFrontend \( -name \*.C -o -name \*.c -o -name \*.h -o -name \*.code -o -name \*.macro -o -name astNodeList \) -a -exec cat -ve {} \;  > rose_binary_compatibility_signature_src
 
-.PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
+rose_binary_compatibility_signature: rose_binary_compatibility_signature_src
+	cat rose_binary_compatibility_signature_src | @MD5@ | cut -f 1 -d \  > rose_binary_compatibility_signature
+
+.PHONY : rose_binary_compatibility_signature_src # Always rebuild the file when needed
 
 binary_edg_tarball: rose_binary_compatibility_signature
 	cd src/ROSETTA/src; $(MAKE)
