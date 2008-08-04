@@ -179,6 +179,8 @@ source_with_binary_edg_dist:
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
 	cp $(top_srcdir)/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
+	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
+	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `ls *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
 #	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
 #	$(am__remove_distdir)
