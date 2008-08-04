@@ -31,7 +31,7 @@ noinst_PROGRAMS = testC-API
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../../compassSupport/libCompass.la \
   libC-API.la
 
-testC_API_SOURCES = libC-API.la testC-API.C
+testC_API_SOURCES = testC-API.C
 
 test: libC-API.la testC-API$(EXEEXT) \
 	    $(srcdir)/c-string.api $(srcdir)/c-string.c
