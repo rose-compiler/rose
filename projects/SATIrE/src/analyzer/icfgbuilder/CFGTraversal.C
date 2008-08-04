@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.45 2008-07-14 09:22:03 gergo Exp $
+// $Id: CFGTraversal.C,v 1.46 2008-08-04 13:28:29 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -982,11 +982,37 @@ CFGTraversal::processGlobalVariableDeclarations(SgGlobal *global)
       if (const SgVariableDeclaration *vardecl = isSgVariableDeclaration(*itr))
       {
           SgInitializedName *initname = vardecl->get_variables().front();
-          std::string name = initname->get_name().str();
           SgVariableSymbol *varsym
-              = global->lookup_variable_symbol(initname->get_name());
-          if (varsym == NULL)
-              varsym = Ir::createVariableSymbol(initname);
+              = isSgVariableSymbol(initname->get_symbol_from_symbol_table());
+          std::string name;
+       // GB (2008-08-04): Global variable names are not unique. Some global
+       // variable names in different files refer to the same variable,
+       // while others don't. Assume that variables with the same name are
+       // meant to refer to the same variable, except ones declared static;
+       // we encode the symbol address in the names of static variables,
+       // thus enabling us to keep them apart.
+          if (varsym != NULL)
+          {
+              std::stringstream symname;
+              symname << varsym->get_name().str();
+           // static
+              const SgStorageModifier &sm
+                  = vardecl->get_declarationModifier().get_storageModifier();
+              if (sm.isStatic())
+              {
+                  symname << "@" << (void *) varsym;
+              }
+              name = symname.str();
+           // std::cout << "global symbol: " << name << std::endl;
+          }
+          else
+          {
+           // redeclarations of variables have NULL symbols, for some weird
+           // reason; getting the first nondefining declaration doesn't
+           // really work either
+              continue;
+          }
+
           if (cfg->names_globals.find(name) == cfg_names_globals_end)
           {
               cfg->names_globals[name] = varsym;

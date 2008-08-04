@@ -28,6 +28,8 @@ std::string Ir::fragmentToString(const SgNode* node) {
   unparseInfo->set_SkipComments();    // do not generate comments
   unparseInfo->set_SkipWhitespaces(); // do not generate whitespaces to format the code
   unparseInfo->set_SkipQualifiedNames(); // skip qualified names -> this would cause a call to the EDG-IR otherwise
+  unparseInfo->set_SkipCPPDirectives(); // GB (2008-08-04): Viktor reported a case with a #define attached to a type name
+  unparseInfo->set_SkipClassDefinition(); // GB (2008-08-04): this has bugged me for a long time
 
   // SgType does not allow to set the parent pointer (as we need to do), an ASSERT fails, but unparsing is ok
   if(const SgType* n=isSgType(node)) {
