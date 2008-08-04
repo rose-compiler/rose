@@ -333,7 +333,9 @@ AC_PROG_SWIG(1.3.31)
 SWIG_ENABLE_CXX
 #AS (10/23/07): introduced conditional use of javaport
 AC_ARG_WITH(javaport,
-   [  --with-javaport ... Enable Java bindings using Swig],with_javaport=yes, with_javaport=no )
+   [  --with-javaport ... Enable Java bindings using Swig],
+   [with_javaport=yes],
+   [with_javaport=no])
 AM_CONDITIONAL(ENABLE_JAVAPORT,test "$with_javaport" = yes)
 
 if test "x$with_javaport" = "xyes"; then
@@ -345,6 +347,8 @@ if test "x$with_javaport" = "xyes"; then
   else
     AC_MSG_ERROR([Trying to enable --with-javaport without SWIG installed])
   fi
+  AC_MSG_WARN([Enabling Java binding support -- SWIG produces invalid C++ code, so -fno-strict-aliasing is being added to CXXFLAGS to work around this issue.  If you are not using GCC as a compiler, this flag will need to be changed.])
+  CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
 
 # Call supporting macro for bddbddb
