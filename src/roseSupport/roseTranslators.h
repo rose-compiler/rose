@@ -26,7 +26,7 @@ class CppToCppTranslator : public Translator<int> {
   //! the status code allows to report front/mid/backend warnings and errors.
   virtual int status();
   //! messages to the user (stdout). 
-  //! Handles the impact of command line flags on printing of messages to stdout. For example, it is surpressed in preprocessing mode.
+  //! Handles the impact of command line flags on printing of messages to stdout. For example, it is suppressed in preprocessing mode.
   virtual void printMessage(std::string s);
 
  protected:
