@@ -891,12 +891,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-
-     AsmPEExtendedDOSHeader.setFunctionPrototype ( "HEADER_PE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportHintName.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-
-
   // std::string         st_name;        // The original name; super.name might be modified
   // addr_t              st_name_offset;
   // int                 st_section_num;
@@ -926,6 +920,43 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffSymbolList.setFunctionPrototype ( "HEADER_PE_COFF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolList.setDataPrototype("SgAsmCoffSymbolPtrList","symbols","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // unsigned e_res1[4], e_oemid, e_oeminfo, e_res2[10];
+  // addr_t e_lfanew;
+     AsmPEExtendedDOSHeader.setFunctionPrototype ( "HEADER_PE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmPEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res1","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","e_oemid","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","e_oeminfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res2","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","e_lfanew","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // addr_t    hintnames_rva, bindings_rva, dll_name_rva;
+  // time_t    time;
+  // unsigned  forwarder_chain;
+     AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
+     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","hintnames_rva","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","bindings_rva","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","dll_name_rva","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // AsmPEExtendedDOSHeader.setDataPrototype("time_t","time","= 0",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","forwarder_chain","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     AsmPEImportHintName.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+
+
 
 
   // This data structure represents the ExecSection from file: ExecGeneric.h
