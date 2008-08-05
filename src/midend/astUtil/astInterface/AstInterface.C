@@ -2189,6 +2189,7 @@ IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
   return AST_NULL;
 }
 
+// Judge if an node is a loop, grab init, condition, increment, and body if yes
 bool AstInterface::
 IsLoop( const AstNodePtr& _s, AstNodePtr* init, AstNodePtr* cond,
 	AstNodePtr* incr, AstNodePtr* body)
