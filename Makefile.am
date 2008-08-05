@@ -193,7 +193,7 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	cd $(distdir) && ./build
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
 	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Warning: the following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; fi
-#	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
-#	$(am__remove_distdir)
+	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(distdir)-source-with-EDG-binary.tar.gz
+	$(am__remove_distdir)
 
 endif
