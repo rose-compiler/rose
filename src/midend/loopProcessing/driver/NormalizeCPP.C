@@ -43,6 +43,8 @@ void FixFileInfo(SgNode* n)
 class NormalizeLoopTraverse : public ProcessAstTree
 {
   bool succ;
+  //Always return true, 
+  //set succ to true if the loop has been normalized, otherwise set it to false
   virtual bool ProcessLoop(AstInterface &fa, const AstNodePtr& _s,
                                const AstNodePtr& body,
                                AstInterface::TraversalVisitType t)
@@ -61,13 +63,13 @@ class NormalizeLoopTraverse : public ProcessAstTree
           succ = false; return true;
       }
       switch (test->variantT()) {
-        case V_SgLessThanOp:
+        case V_SgLessThanOp:  // i<x is normalized to i<= (x-1)
              fa.ReplaceAst( test,
                           fa.CreateBinaryOP(AstInterface::BOP_LE, fa.CopyAstTree(testlhs),
                            fa.CreateBinaryOP(AstInterface::BOP_MINUS, fa.CopyAstTree(testrhs),
                                                    fa.CreateConstInt(1)))); 
               break;
-        case V_SgGreaterThanOp:
+        case V_SgGreaterThanOp: // i>x is normalized to i>= (x+1)
              fa.ReplaceAst( test,
                        fa.CreateBinaryOP(AstInterface::BOP_GE, fa.CopyAstTree(testlhs), 
                                  fa.CreateBinaryOP(AstInterface::BOP_PLUS, fa.CopyAstTree(testrhs),
@@ -83,7 +85,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
 
       AstNodePtrImpl incr = fs->get_increment();
       switch (incr->variantT()) {
-        case V_SgPlusPlusOp:
+        case V_SgPlusPlusOp: //i++ is normalized to i=i+1
            if (! fa.IsSameVarRef(AstNodePtrImpl(isSgPlusPlusOp(incr.get_ptr())->get_operand()), testlhs))
                { succ = false; return true; }
            fa.ReplaceAst( incr, 
@@ -91,7 +93,7 @@ class NormalizeLoopTraverse : public ProcessAstTree
               isSgExpression(AstNodePtrImpl(fa.CopyAstTree(testlhs)).get_ptr()),
               isSgExpression(AstNodePtrImpl(fa.CreateConstInt(1)).get_ptr()))));
            break;
-        case V_SgMinusMinusOp:
+        case V_SgMinusMinusOp: //i-- is normalized to i=i-1
            if (! fa.IsSameVarRef(AstNodePtrImpl(isSgMinusMinusOp(incr.get_ptr())->get_operand()), testlhs))
                { succ = false; return true; }
            fa.ReplaceAst( incr, 

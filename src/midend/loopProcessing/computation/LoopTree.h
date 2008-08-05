@@ -268,6 +268,7 @@ class LoopTreeTraverseSelectLoop
   IteratorImpl<LoopTreeNode*>* Clone() const
    { return new LoopTreeTraverseSelectLoop(*this); }
 };
+
 inline unsigned CountEnclosedStmts(LoopTreeNode *root) 
   { return CountIteratorSize(LoopTreeTraverseSelectStmt(root)); }
 

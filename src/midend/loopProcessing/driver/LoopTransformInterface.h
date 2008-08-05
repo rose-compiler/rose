@@ -126,7 +126,16 @@ AstNodePtr LoopTransformTraverse( AstInterface& fa, const AstNodePtr& head,
                                  AliasAnalysisInterface& aliasInfo,
                                  FunctionSideEffectInterface* funcInfo=0,
                                  ArrayAbstractionInterface* arrayInfo = 0);
+/*
+Loop normalization, documented by Liao, May 15,2008 
 
+test expression:
+  i<x is normalized to i<= (x-1)
+  i>x is normalized to i>= (x+1)
+increment expression: 
+  i++ is normalized to i=i+1
+  i-- is normalized to i=i-1
+*/
 void NormalizeForLoop (AstInterface& fa, const AstNodePtr& head) ;
 
 

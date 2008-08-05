@@ -19,6 +19,8 @@ class AstNodePtrImpl : public AstNodePtr {
   SgNode* get_ptr() const { return static_cast<SgNode*>(repr); }
   SgNode* operator -> () const { return static_cast<SgNode*>(repr); }
 };
+
+
 class AstNodeTypeImpl : public AstNodeType {
  public:
   AstNodeTypeImpl( SgType* n = 0) { AstNodeType::repr = n; }

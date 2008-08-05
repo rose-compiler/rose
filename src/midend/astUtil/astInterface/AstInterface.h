@@ -228,6 +228,7 @@ class AstInterface
   AstNodePtr CreateUnaryOP( OperatorEnum op, const AstNodePtr& arg);
 };
 
+// Base class for any analyzer of AST, Liao, 6/3/2008. Added my understanding, may not be accurate!
 class ProcessAstNode
 {
   public:
@@ -236,10 +237,11 @@ class ProcessAstNode
    virtual ~ProcessAstNode() {}
 };
 
+// Interface to invoke any analyzer on AST
 bool ReadAstTraverse(AstInterface& fa, const AstNodePtr& root, 
                         ProcessAstNode& op, 
                         AstInterface::TraversalOrderType t = AstInterface::PreOrder); 
-
+//Base class for any translator of AST
 class TransformAstTree
 {
  public:
@@ -248,6 +250,7 @@ class TransformAstTree
   virtual ~TransformAstTree() {}
 };
 
+//Interface to invoke any translator on AST
 AstNodePtr TransformAstTraverse( AstInterface& fa, const AstNodePtr& r, 
                     bool (*op)( AstInterface& fa, const AstNodePtr& head, 
                                 AstNodePtr& result), 
