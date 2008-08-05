@@ -96,6 +96,7 @@ new_allow_list_setup:
 	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow" > compass_parameters
 	echo "AllowedFunctions.Library0=$(prefix)/include" >> compass_parameters
 	echo "AllowedFunctions.Library1=$(top_builddir)/include-staging" >> compass_parameters
+	echo "AllowedFunctions.Library2=$(top_srcdir)/src/ROSETTA/Grammar" >> compass_parameters
 	echo "AllowedFunctions.FunctionNum=0" >> compass_parameters
 #	declare -i count=`wc -l $(compass_srcdir)/allowedFunctions/custom_parameters | gawk '{print $$1}'` ;\
 	echo "AllowedFunctions.FunctionNum=$$count" >> compass_parameters ;\

@@ -1,8 +1,8 @@
 # Set Variables ROSE_INSTALL to your ROSE_INSTALL installation and
 # COMPASS_SUPPORT to your compassSupport directory like this:
-ROSE_INSTALL=/home/yuan5/rose-install
-COMPASS_PROJECT =/home/yuan5/ROSE/AUG0108/ROSE/projects/compass2/src
-COMPASS_SUPPORT = ${COMPASS_PROJECT}/compassSupport
+#ROSE_INSTALL= ROSE-INSTALL-DIRECTORY
+#COMPASS_PROJECT = COMPASS-PROJECT-DIRECTORY 
+#COMPASS_SUPPORT = ${COMPASS_PROJECT}/compassSupport
 
 CHECKER_NAME = allowedFunctionsTest
 
