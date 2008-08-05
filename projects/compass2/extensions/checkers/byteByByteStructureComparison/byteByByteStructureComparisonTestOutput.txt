@@ -1,0 +1,3 @@
+ByteByByteStructureComparison: byteByByteStructureComparisonTest1.C:15.8-13: SgFunctionCallExp: Do not perform byte-by-byte comparisons between structures
+ByteByByteStructureComparison: byteByByteStructureComparisonTest1.C:23.6-11: SgFunctionCallExp: Do not perform byte-by-byte comparisons between structures
+ByteByByteStructureComparison: byteByByteStructureComparisonTest1.C:34.6-11: SgFunctionCallExp: Do not perform byte-by-byte comparisons between structures

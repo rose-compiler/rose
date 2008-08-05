@@ -1,0 +1,49 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Malloc Return Value Used In If Stmt}
+
+\label{MallocReturnValueUsedInIfStmt::overview}
+
+\quote{Namespace: \texttt{MallocReturnValueUsedInIfStmt}}
+
+\subsection{Introduction}
+Memory dynamically allocated with malloc should be part of an If-statement
+conditional expression before using the allocated block of memory. Ideally,
+the If-statement conditional appears directly after the call to malloc but may
+simply occur in the same scope. These simple conditional checks help prevent
+many segmentation fault errors. Taken from LLNL ALE3D, section 4.5.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out function
+references to malloc. Then the parent nodes are traversed up until a basic
+scope block is found at which point a nested AST traversal seeks If-statement
+conditional expressions containing the memory block returned from malloc. If
+no such If-statement conditional is found in the immediate basic containing
+block scope then an error is flagged.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: mallocReturnValueUsedInIfStmtTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../mallocReturnValueUsedInIfStmt/mallocReturnValueUsedInIfStmtTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

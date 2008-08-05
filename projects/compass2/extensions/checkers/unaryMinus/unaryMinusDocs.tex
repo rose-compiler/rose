@@ -1,0 +1,59 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Unary Minus}
+\label{UnaryMinus::overview}
+
+% write your introduction
+The unary minus operator should only be used with signed types, as its use
+with unsigned types will never result in a negative value. This checker
+reports any uses of the built-in unary minus operator on an unsigned type.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+unsigned int f_noncompliant(unsigned int u)
+{
+    return -u;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+int f_compliant(int n)
+{
+    return -n;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Check the type of the operand of any unary minus expression; emit a
+diagnostic if it is an unsigned integer type.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this rule is: The Programming Research Group: ``High-Integrity
+C++ Coding Standard Manual'', Item~10.21: ``Apply unary minus to operands of
+signed type only.''

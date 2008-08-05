@@ -1,0 +1,3 @@
+OperatorOverloading: operatorOverloadingTest1.C:9.5-33: SgMemberFunctionDeclaration: Overloading operator&&, operator||, or operator,(comma) may cause subtle bugs!
+OperatorOverloading: operatorOverloadingTest1.C:10.5-33: SgMemberFunctionDeclaration: Overloading operator&&, operator||, or operator,(comma) may cause subtle bugs!
+OperatorOverloading: operatorOverloadingTest1.C:11.5-32: SgMemberFunctionDeclaration: Overloading operator&&, operator||, or operator,(comma) may cause subtle bugs!

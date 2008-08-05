@@ -1,0 +1,118 @@
+// This is an automatically generated file
+#include <iostream>
+#include <rose.h>
+#include <vector>
+#include "compass.h"
+#include "checkers.h"
+
+//AS(1/18/08) Read in the selecting of rules
+std::map<std::string, bool > 
+readFile( std::string filename){
+  std::map<std::string, bool > checkersToUse;
+  std::ifstream* file_op = Compass::openFile( filename );
+
+  std::string current_word;
+  //bool is_first_word = true;
+  //read file
+  char dummyString[2000];
+
+  while((*file_op) >> current_word){
+	//First word denotes what the regular expression should operate
+	//upon. Second word denotes the regular expression
+
+	if(  current_word.substr(0,1) == std::string("#") ){
+	  //Skip rest of the line if a "#" character is found. This denotes a 
+	  //comment
+	  file_op->getline(dummyString,2000);
+
+	}else{
+	  if(current_word.substr(0,2) == "+:" ){
+		checkersToUse[current_word.substr(2)] = true;
+	  }else if(current_word.substr(0,2) == "-:" ){
+		checkersToUse[current_word.substr(2)] = false;
+	  }
+	}
+  }
+
+  return checkersToUse;
+}
+
+
+
+void
+buildCheckers( std::vector<Compass::TraversalBase*> &retVal, 
+	       Compass::Parameters &params, 
+	       Compass::OutputObject &output,
+	       SgProject* pr)
+{
+
+ROSE_ASSERT(pr);
+
+#define BUILD_ONE_CHECKER(NameCapitalized) \
+    try { \
+        CompassAnalyses::NameCapitalized::Traversal *traversal; \
+        traversal = new CompassAnalyses::NameCapitalized::Traversal(params, &output); \
+        retVal.push_back(traversal); \
+    } catch (const std::exception &e) { \
+        std::cerr << "error initializing checker " #NameCapitalized ": " << e.what() << std::endl; \
+    } \
+
+  // @@@ -- checker names inserted here
+
+  //AS(1/18/2008) Remove the rules that has been deselected from the retVal
+  std::string ruleFile = Compass::parseString(params["Compass.RuleSelection"]);
+
+  std::map<std::string, bool > ruleSelection = readFile(ruleFile);
+
+  std::vector<Compass::TraversalBase*> ruleDeselected;
+  for( std::vector<Compass::TraversalBase*>::reverse_iterator iItr = retVal.rbegin();
+	  iItr != retVal.rend(); iItr++ )
+  {
+	std::map<std::string, bool >::iterator isRuleSelected = ruleSelection.find((*iItr)->getName() );   
+      
+	if( isRuleSelected == ruleSelection.end() ){
+         std::cerr << "Error: It has not been selected if " + (*iItr)->getName() + " should be run." 
+		           << std::endl;
+		 exit(1);
+	}
+	if( isRuleSelected->second == false  )
+	  ruleDeselected.push_back(*iItr);
+  }
+
+   for( std::vector<Compass::TraversalBase*>::iterator iItr = ruleDeselected.begin();
+	  iItr != ruleDeselected.end(); iItr++ )
+  {
+	retVal.erase(std::find(retVal.begin(),retVal.end(),*iItr));
+
+  }
+
+   bool useDefAnalysis = false;
+
+   std::vector<Compass::TraversalBase*>::const_iterator it;
+   for (it= retVal.begin(); it!=retVal.end(); ++it) {
+     Compass::TraversalBase* base = *it;
+     try {
+       std::string result = 
+	 Compass::parseString(params[base->getName()+".defUseAnalysis"]);
+       if (result=="true") {
+	 useDefAnalysis = true;
+	 std::cout << " DefUse Analysis is used in " << base->getName() << std::endl;
+       }
+     } catch (const std::exception &e) { 
+     }     
+     
+   }
+   if (useDefAnalysis) {
+     std::cout << "  >> Using DefUse Analysis ... " << std::endl;
+
+#if ROSE_GCC_OMP
+#pragma omp critical (runDefUseAnalysisCompass)
+#endif
+     Compass::runDefUseAnalysis(pr);
+   } else {
+     std::cout << "  >> DefUse Analysis disabled... " << std::endl;
+   }
+
+  return;
+} //buildCheckers()
+

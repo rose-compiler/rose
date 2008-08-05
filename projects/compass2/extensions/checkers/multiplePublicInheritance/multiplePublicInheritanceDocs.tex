@@ -1,0 +1,72 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Multiple Public Inheritance}
+\label{MultiplePublicInheritance::overview}
+
+Multiple inheritance in C++ can give rise to very complicated issues, in
+particular when a class has several public superclasses; in contrast, having a
+single public superclass and several private ones (only inheriting code from
+these, but not public interfaces) can be much more controllable. This checker
+ensures that no class has more than one public superclass, while not
+prohibiting multiple inheritance in general.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+// Dummy classes, the first of which is designed to be used as a base class
+// from which one inherits an interface, the second designed to be used as a
+// base class from which one only inherits an implementation.
+class Interface { /* ... */ };
+class Implementation { /* ... */ };
+
+// not OK: multiple public base classes
+class A: public Interface, public Implementation
+{
+    /* ... */
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class Interface { /* ... */ };
+class Implementation { /* ... */ };
+
+// OK: only one public base class, others may be non-public
+class B: public Interface, private Implementation
+{
+    /* ... */
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each class definition, inspect the list of inheritances. If more
+than one base class is listed as public, emit a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+This checker is a small part of the excellent discussion in: S.~Meyers:
+``Effective C++ Second Edition'', Item~43: ``Use multiple inheritance
+judiciously''.

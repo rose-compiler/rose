@@ -1,0 +1,65 @@
+
+   \section{Secure Coding : EXP06-A. Operands to the sizeof operator should not contain side effects}
+
+   The {\tt sizeof} operator yields the size (in bytes) of its operand, which may be an expression or the parenthesized name of a type. If the type of the operand is not a variable length array type the operand is {\bf not} evaluated.
+
+   Providing an expression that appears to produce side effects may be misleading to programmers who are not aware that these expressions are not evaluated. As a result, programmers may make invalid assumptions about program state leading to errors and possible software vulnerabilities.
+   \subsection{Non-Compliant Code Example}
+
+   In this example, the variable {\tt a} will still have a value 14 after {\tt b} has been initialized.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{int\ }\hlstd{a\ =\ }\hlnum{14}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{int\ }\hlstd{b\ =\ }\hlkey{sizeof}\hlstd{}\hlsym{(}\hlstd{a++}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+}
+
+
+   The expression {\tt a++} is not evaluated. Consequently, side effects in the expression are not executed.
+   \subsubsection{Implementation Specific Details}
+
+   This example compiles cleanly under Microsoft Visual Studio 2005 Version 8.0, with the /W4 option.
+   \subsection{Compliant Solution}
+
+   In this compliant solution, the variable {\tt a} is incremented.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{int\ }\hlstd{a\ =\ }\hlnum{14}\hlstd{;\\
+}\hlline{\ \ \ \ 2\ }\hlstd{}\hltyp{int\ }\hlstd{b\ =\ }\hlkey{sizeof}\hlstd{}\hlsym{(}\hlstd{a}\hlsym{)}\hlstd{;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{a++;\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+}
+
+   \subsubsection{Implementation Specific Details}
+
+   This example compiles cleanly under Microsoft Visual Studio 2005 Version 8.0, with the /W4 option.
+   \subsection{Risk Assessment}
+
+   If expressions that appear to produce side effects are supplied to the {\tt sizeof} operator, the returned result may be different then expected. Depending on how this result is used, this could lead to unintended program behavior.
+
+   \begin{tabular}[c]{| c| c| c| c| c| c|}
+   \hline
+   {\bf Rule} & {\bf Severity} & {\bf Likelihood} & {\bf Remediation Cost} & {\bf Priority} & {\bf Level} \\ \hline
+   EXP06-A & {\bf 1} (low) & {\bf 1} (unlikely) & {\bf 3} (low) & {\bf P3} & {\bf L3} \\ \hline
+   \end{tabular}
+   \subsubsection{Related Vulnerabilities}
+
+   Search for vulnerabilities resulting from the violation of this rule on the \htmladdnormallink{CERT website}{https://www.kb.cert.org/vulnotes/bymetric?searchview\&query=FIELD+contains+EXP06-A} .
+   \subsection{References}
+
+   [ \htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 6.5.3.4, "The sizeof operator"

@@ -1,0 +1,16 @@
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationDefn: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationDefn: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: compilerGenerated:0.0: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: noTemplateUsageTest1.C:5.5: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: noTemplateUsageTest1.C:6.5: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: noTemplateUsageTest1.C:5.5: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.
+NoTemplateUsage: noTemplateUsageTest1.C:6.5: SgTemplateInstantiationMemberFunctionDecl: Templates should not be used.

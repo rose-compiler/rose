@@ -1,0 +1,1 @@
+NoVfork: noVforkTest1.C:6.15-19: SgFunctionRefExp: This checker checks that vfork() is not used.

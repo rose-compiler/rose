@@ -1,0 +1,93 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Control Variable Test Against Function}
+\label{ControlVariableTestAgainstFunction::overview}
+
+This checker detects if there exists a for loop that tests its control (induction) variable against a function. One can get better performance by pulling out the function call before the loop and use a constant value for the test. That is, 
+
+\begin{verbatim}
+  for(int i = 0; i < constSize(); ++i)
+  { // do something }
+\end{verbatim}
+
+The code above can be improved as the following:
+
+\begin{verbatim}
+  const int size = constSize();
+  for(int i = 0; i < size; ++i)
+  { // do something }
+\end{verbatim}
+
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+None
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This checker uses a simple traversal. For every \texttt{for} statement, the checker examines whether or not there is a function call inside the test expression.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+int bar();
+
+void foo()
+{
+  int j=2;
+
+  for(int i = 0; i < bar(), j < 10; ++i)
+  {
+    j += 2;
+  }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+int bar();
+
+void foo()
+{
+  int j=2;
+
+  for(int i = 0; i < 10; ++i)
+  {
+    j += 3;
+  }
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Check if a node is a for statement
+\item Check if the test expression for the for statement contains a function call
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, Item 5.7: ``The control variable in a for loop should be tested against a constant value, not a function''
+

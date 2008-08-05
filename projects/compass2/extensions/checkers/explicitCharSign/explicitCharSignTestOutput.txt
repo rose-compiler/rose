@@ -1,0 +1,2 @@
+ExplicitCharSign: explicitCharSignTest1.C:7.11-13: SgAssignInitializer: This checker checks that all char declarations initialized with type int are explitly signed or unsigned.
+ExplicitCharSign: explicitCharSignTest1.C:8.11-15: SgAssignInitializer: This checker checks that all char declarations initialized with type int are explitly signed or unsigned.

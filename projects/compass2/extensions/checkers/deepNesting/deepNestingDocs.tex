@@ -1,0 +1,89 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Deep Nesting}
+\label{DeepNesting::overview}
+
+% write your introduction
+It is widely agreed that functions should not be `too big' (without a good
+reason, at least). Various size measures exist, including source code lines
+and cyclomatic complexity. This checker adds one more: It tests if function
+definitions contain more nested scopes than allowed by the user.
+
+\subsection{Parameter Requirements}
+
+This checker requires an integer entry DeepNestingChecker.maximumNestedScopes
+in the Compass parameters specifying the maximum allowed number of nested
+scopes.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+/* The innermost scope (the if statement) in this toy function will be
+ * reported by the DeepNestingChecker if maximumNestedScopes is set to 2. */
+void matrix_abs(int n, int m, int **matrix)
+{
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            if (matrix[i][j] < 0)
+            {
+                matrix[i][j] = -matrix[i][j];
+            }
+        }
+    }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+/* The nesting in each function is not greater than 2; the if statement has
+ * been pulled out into its own function. */
+void abs_if_necessary(int *p)
+{
+    if (*p < 0)
+    {
+        *p = -*p;
+    }
+}
+
+void matrix_abs2(int n, int m, int **matrix)
+{
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            abs_if_necessary(&matrix[i][j]);
+        }
+    }
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each `scope statement' (loops, if, basic blocks) count the number of
+enclosing scopes until a function definition is reached (if at all).
+\item If the count is greater than the specified limit, emit a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this checker is: H.~Sutter, A.~Alexandrescu:
+``C++ Coding Standards'', Item 20: ``Avoid long functions. Avoid deep nesting''.

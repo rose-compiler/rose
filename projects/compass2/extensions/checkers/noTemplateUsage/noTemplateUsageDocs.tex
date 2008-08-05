@@ -1,0 +1,82 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{No Template Usage}
+\label{NoTemplateUsage::overview}
+Finds all usages of C++ templates. It will not detect
+C++ template declarations that are not instantiated.
+
+% write your introduction
+
+\subsection{Parameter Requirements}
+No parameters are required.
+
+\subsection{Implementation}
+The checker finds all template instatiation declaration,
+template instatiation definitions, template instantiation member
+function declarations and template instatiation function declarations.
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+template<typename t>
+class Foo
+{
+   public:
+      Foo(){};
+      ~Foo(){};
+};
+
+void main()
+{
+ Foo<int>    fi;
+ Foo<float> ff;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+class Foo
+{
+   public:
+      Foo(){};
+      ~Foo(){};
+};
+
+void main()
+{
+ Foo    fi;
+ Foo    ff;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Traverse the AST
+\item For each template instantiations and template declaration report an error
+\end{enumerate}
+
+\subsection{References}
+
+The ALE3D style guide section 16.1 states that templates
+must not be used.
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

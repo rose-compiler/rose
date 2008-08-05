@@ -1,0 +1,1 @@
+Time_tDirectManipulation: time_tDirectManipulationTest1.C:11.23-45: SgAddOp: This checker checks that type time_t variables are not directly manipulated in arithmetic expressions.

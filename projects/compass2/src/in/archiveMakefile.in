@@ -1,0 +1,5 @@
+#archive@UCHECKER@:
+#	rm -f $(srcdir)/compassRepository/@CHECKER@.*
+#	cd $(srcdir); tar -zcf compassRepository/@CHECKER@.tar.gz @CHECKER@
+#	@echo "updated @CHECKER@ archive"
+#

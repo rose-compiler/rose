@@ -1,0 +1,4 @@
+BufferOverflowFunctions: bufferOverflowFunctionsTest1.C:9.3-9: SgFunctionCallExp: Detects functions that may cause a buffer overflow. found sprintf(). Use snprintf instead. 
+BufferOverflowFunctions: bufferOverflowFunctionsTest1.C:13.3-9: SgFunctionCallExp: Detects functions that may cause a buffer overflow. found sprintf(). Use snprintf instead. 
+BufferOverflowFunctions: bufferOverflowFunctionsTest1.C:19.3-8: SgFunctionCallExp: Detects functions that may cause a buffer overflow. found memcpy(). Check for buffer overflow when copying to destination.
+BufferOverflowFunctions: bufferOverflowFunctionsTest1.C:20.3-8: SgFunctionCallExp: Detects functions that may cause a buffer overflow. found memcpy(). Check for buffer overflow when copying to destination.

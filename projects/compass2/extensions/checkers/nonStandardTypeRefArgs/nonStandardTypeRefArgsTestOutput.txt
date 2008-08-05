@@ -1,0 +1,6 @@
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:23.1-25: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:27.1-31: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:31.1-21: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:40.1-17: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:45.1-43: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.
+NonStandardTypeRefArgs: nonStandardTypeRefArgsTest1.C:50.1-18: SgFunctionDeclaration: Finding function with nonstandard type argumentthat does not take a reference.

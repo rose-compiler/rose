@@ -1,0 +1,1 @@
+ControlVariableTestAgainstFunction: controlVariableTestAgainstFunctionTest1.C:10.22-24: SgFunctionCallExp: The control variable is tested against a function.

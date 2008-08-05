@@ -1,0 +1,4 @@
+StringTokenToIntegerConverter: stringTokenToIntegerConverterTest1.C:16.10-13: SgFunctionCallExp: Use strtol() to convert a string token to an integer.
+StringTokenToIntegerConverter: stringTokenToIntegerConverterTest1.C:17.5-10: SgFunctionCallExp: Use strtol() to convert a string token to an integer.
+StringTokenToIntegerConverter: stringTokenToIntegerConverterTest1.C:18.10-13: SgFunctionCallExp: Use strtol() to convert a string token to an integer.
+StringTokenToIntegerConverter: stringTokenToIntegerConverterTest1.C:19.11-15: SgFunctionCallExp: Use strtol() to convert a string token to an integer.

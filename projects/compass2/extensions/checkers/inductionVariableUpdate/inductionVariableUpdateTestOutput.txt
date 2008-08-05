@@ -1,0 +1,6 @@
+InductionVariableUpdate: inductionVariableUpdateTest1.C:13.7-11: SgVarRefExp: Induction variables should not be updated inside of its loop body.
+InductionVariableUpdate: inductionVariableUpdateTest1.C:14.7-9: SgVarRefExp: Induction variables should not be updated inside of its loop body.
+InductionVariableUpdate: inductionVariableUpdateTest1.C:15.7-9: SgVarRefExp: Induction variables should not be updated inside of its loop body.
+InductionVariableUpdate: inductionVariableUpdateTest1.C:23.7-15: SgVarRefExp: Induction variables should not be updated inside of its loop body.
+InductionVariableUpdate: inductionVariableUpdateTest1.C:25.5-7: SgVarRefExp: Induction variables should not be updated inside of its loop body.
+InductionVariableUpdate: inductionVariableUpdateTest1.C:31.7-11: SgVarRefExp: Induction variables should not be updated inside of its loop body.

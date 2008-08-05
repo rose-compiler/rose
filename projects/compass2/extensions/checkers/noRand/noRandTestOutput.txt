@@ -1,0 +1,1 @@
+NoRand: noRandTest1.C:7.7-10: SgFunctionRefExp: This checker checks that rand() is not used.

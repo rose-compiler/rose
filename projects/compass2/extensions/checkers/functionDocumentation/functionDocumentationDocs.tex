@@ -1,0 +1,36 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Paper: Function Documentation}
+
+This analysis detects all non-compiler generated functions and checks whether they are documented.
+The documentation must be in front of the function. 
+
+\subsection{Non-Compliant Code Examples}
+\begin{verbatim}
+void fail() {
+  //  this function has no comment in front of it
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+\begin{verbatim}
+//Your test file code goes here.
+void succeed() {
+}
+\end{verbatim}
+
+
+\subsection{Parameter Requirements}
+
+None.
+
+\subsection{Implementation}
+
+This analysis checks for both '//' and '/*' documentation.
+
+
+
+\subsection{References}
+
+\htmladdnormallink{Panas05}{} , ``Thomas Panas, Rudiger Lincke, Jonas Lundberg, Welf Lowe, A Qualitative Evaluation of a Software Development and Re-Engineering Project, NASA/IEEE Software Engineering Workshop, Washington DC, USA, April 2005''
+

@@ -1,0 +1,125 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Do Not Call Putenv With Auto Var}
+\label{DoNotCallPutenvWithAutoVar::overview}
+
+% write your introduction
+The POSIX function putenv() is used to set environment variable values. The
+putenv() function does not create a copy of the string supplied to it as an
+argument, rather it inserts a pointer to the string into the environment array.
+If a pointer to a buffer of automatic storage duration is supplied as an
+argument to putenv(), the memory allocated for that buffer may be overwritten
+when the containing function returns and stack memory is recycled. This behavior
+is noted in the Open Group Base Specifications Issue 6 [Open Group 04]:
+
+A potential error is to call putenv() with an automatic variable as the
+argument, then return from the calling function while string is still part of
+the environment.
+
+The actual problem occurs when passing a pointer to an automatic variable to
+putenv().  An automatic pointer to a static buffer would work as intended.
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter specifications.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+The putenv() function is not required to be thread-safe, and the one in libc4,
+libc5 and glibc2.0 is not, but the glibc2.1 version is.
+
+Description for libc4, libc5, glibc: If the argument string is of the form name,
+and does not contain an `=' character, then the variable name is removed from
+the environment. If putenv() has to allocate a new array environ, and the
+previous array was also allocated by putenv(), then it will be freed. In no case
+will the old storage associated to the environment variable itself be freed.
+
+The libc4 and libc5 and glibc 2.1.2 versions conform to SUSv2: the pointer
+argument given to putenv() is used. In particular, this string becomes part of
+the environment; changing it later will change the environment. (Thus, it is an
+error to call putenv() with a pointer to a buffer of automatic storage duration
+as the argument, then return from the calling function while the string is still
+part of the environment.) However, glibc 2.0-2.1.1 differs: a copy of the string
+is used. On the one hand this causes a memory leak, and on the other hand it
+violates SUSv2. This has been fixed in glibc2.1.2.
+
+The BSD4.4 version, like glibc 2.0, uses a copy.
+
+SUSv2 removes the `const' from the prototype, and so does glibc 2.1.3.
+
+The FreeBSD implementation of putenv() copies the value of the provided string,
+and the old values remain accessible indefinitely. As a result, a second call to
+putenv() assigning a differently sized value to the same name results in a
+memory leak.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+In this non-compliant coding example, a pointer to a buffer of automatic storage
+duration is used as an argument to putenv() [Dowd 06]. The TEST environment
+variable may take on an unintended value if it is accessed once func() has
+returned and the stack frame containing env has been recycled.
+
+Note that this example also violates rule [DCL30-C. Declare objects with
+appropriate storage durations].
+
+\begin{verbatim}
+
+int func(char *var) {
+  char env[1024];
+
+  if (snprintf(env, sizeof(env),"TEST=%s", var) < 0) {
+    /* Handle Error */
+  }
+
+  return putenv(env);
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+The setenv() function allocates heap memory for environment variables. This
+eliminates the possibility of accessing volatile, stack memory.
+
+\begin{verbatim}
+
+int func(char *var) {
+  return setenv("TEST", var, 1);
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item{Checks to see if the variable being passed to putenv() is declared in the global
+scope.  If it is not, the checker creates new output.}
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+
+\htmladdnormallink{Open Group 04}{http://www.opengroup.org/onlinepubs/009695399/toc.htm} The putenv() function
+
+\htmladdnormallink{ISO/IEC9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References\#AA.CReferences-ISO\%2FIEC98991999}Section 6.2.4, "Storage durations of objects," and Section 7.20.3, ``Memory management functions''
+
+\htmladdnormallink{Dowd 06}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References\#AA.CReferences-Dowd06} Chapter 10, ``UNIX Processes'' (Confusing putenv() and setenv())

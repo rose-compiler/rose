@@ -1,0 +1,78 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{CERT-DCL04-A: Explicit Char Sign}
+\label{ExplicitCharSign::overview}
+``CERT Secure Coding INT07-A'' states
+\begin{quote}
+The three types {\tt char}, {\tt signed char}, and {\tt unsigned char} are collectively called the character types. Compilers have the latitude to define {\tt char} to have the same range, representation, and behavior as either {\tt signed char} or {\tt unsigned char}. Irrespective of the choice made, {\tt char} is a separate type from the other two and is {\bf not} compatible with either.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal visiting all SgAssignInitializer nodes. If the SgAssignInitializer node is of type {\tt char} and the operand of the node is a SgCastExp of type {\tt int} or is a SgCharVal whose value is negative then flag an error.
+
+\subsection{Non-Compliant Code Example}
+This non-compliant example declares a simple {\tt char} type variable.
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  int n = 200;
+  char c1 = 'i';
+  char c2 = n;
+  char c3 = 200;
+  int i = 1000;
+
+  printf( "%c/c2 = %d\n%c/c3 = %d\n", c1, i/c2, c1, i/c3);
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution explicitly declares the {\tt char} variables as {\tt unsigned}.
+
+\begin{verbatim}
+#include <stdio.h>
+
+int main()
+{
+  int n = 200;
+  char c1 = 'i';
+  unsigned char c2 = n;
+  unsigned char c3 = 200;
+  int i = 1000;
+
+  printf( "%c/c2 = %d\n%c/c3 = %d\n", c1, i/c2, c1, i/c3);
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all SgAssignInitializer nodes.
+\item For each SgAssignInitializer node of type {\tt char}, if the rhs operand is either a cast expression with operand of type int or a negative character value then flag an error.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+\htmladdnormallink{Secure Coding : INT07-A. Explicitly specify signed or unsigned for character types}{https://www.securecoding.cert.org/confluence/display/seccode/INT07-A.+Only+use+signed+or+unsigned+char+type+for+numeric+values}

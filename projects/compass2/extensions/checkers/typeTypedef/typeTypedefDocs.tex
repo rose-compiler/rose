@@ -1,0 +1,80 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Type Typedef}
+\label{TypeTypedef::overview}
+
+Typedefs can be used instead of a type in the cases where it would
+increase maintainability or ensure cross-platform compatilibily.
+
+For instance the ALE3D style guide section 3.5 says that the typedef
+'Real8' should be used instead of 'double'. The introduction of Real8
+is due to the days when a 'double' on CRAY Y-MP meant 16-bytes for
+that particular compiler. Although virtually all compilers now interprets
+'double' as 8-byte ALE3D use the typedef for consistency.
+
+% write your introduction
+
+\subsection{Parameter Requirements}
+Through the 'TypeTypedef.RulesFile' paramaters a filename is provided,
+like e.g 'TypeTypedef.RulesFile=/path/to/file/exampleRules.sn'.
+
+The rules are provided through a file where each word is a rule except
+everything on the line after a '\#' which is considered a comment. Comments 
+can be placed anywhere. There are two types of rules; 'typedefName1',
+'c:typedefName2'. The type of the typedef is found in the AST so the user
+does not have to type it in. Only declarations with the exact type of the
+typedef which does not used the typedef is flagged as an error. When a 
+typedef rule is prefixed with 'c:' exact type
+matches with and without const modifiers are both allowed.
+
+\subsection{Implementation}
+
+The implementation checks the type of all typed constructs that has the
+same type as the typedef and if the typedef is not used it reports an error.
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+typedef double Real8;
+void foo(){
+   double bar; //A violation
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+typedef double Real8;
+void foo(){
+   Real8 bar; //A violation
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Traverse the AST
+\item For each typed contruct of the same type as the typedef it reports an error if the typedef is not used.
+\end{enumerate}
+
+\subsection{References}
+
+ALE3D style guide section 3.5.
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

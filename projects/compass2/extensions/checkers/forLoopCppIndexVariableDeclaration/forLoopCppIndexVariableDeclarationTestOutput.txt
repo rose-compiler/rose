@@ -1,0 +1,1 @@
+ForLoopCppIndexVariableDeclaration: forLoopCppIndexVariableDeclarationTest1.C:4.3-30: SgForInitStatement: This checker checks that the for loop index variable is always declared in the scope of the constructor for C++ code

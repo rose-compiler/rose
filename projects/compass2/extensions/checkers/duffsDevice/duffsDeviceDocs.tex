@@ -1,0 +1,76 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Duffs Device}
+\label{DuffsDevice::overview}
+
+This test checks for the presence of Duff's Device in the source code. Duff's
+Device is a switch statement containing a loop (for, while or do-while; we do
+not check for goto loops) that contains one of the switch's case or default
+labels. If such a construct is found, the position of the switch statement is
+reported.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+// Duff's Device in its almost original form.
+void send(int *to, int *from, int count)
+{
+  int n = (count+7) / 8;
+  switch(count%8) {
+  case 0: do { *to++ = *from++;
+  case 7:      *to++ = *from++;
+  case 6:      *to++ = *from++;
+  case 5:      *to++ = *from++;
+  case 4:      *to++ = *from++;
+  case 3:      *to++ = *from++;
+  case 2:      *to++ = *from++;
+  case 1:      *to++ = *from++;
+             } while (--n>0);
+  }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+// An equivalent function without optimization.
+void send2(int *to, int *from, int count)
+{
+    for (int i = 0; i < count; i++)
+        *to++ = *from++;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each case or default statement, examine the enclosing scopes,
+smallest first (i.e. go upward in the AST).
+\item If there is a loop statement that is closer than a switch statement,
+Duff's Device has been found; emit a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+Duff's Device ist mostly folklore, but one reference in the literature is:
+B.~Stroustrup: ``The C++ Programming Language, Third Edition'', Exercise
+\S6.6[15].

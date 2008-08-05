@@ -1,0 +1,91 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Time\_t Direct Manipulation}
+\label{Time_tDirectManipulation::overview}
+
+``CERT Secure Coding MSC05-A'' states
+\begin{quote}
+{\tt time\_t} is specified as an ``arithmetic type capable of representing times.'' However, how time is encoded within this arithmetic type is unspecified. Because the encoding is unspecified, there is no safe way to manually perform arithmetic on the type, and, as a result, the values should not be modified directly.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that visits all binary operation nodes. For each binary operation node, if the node is a arithmetic expression then check the type of its left and right hand side operands. If either operand type is {\tt time\_t} then flag violation.
+
+\subsection{Non-Compliant Code Example}
+This code attempts to execute {\tt do\_some\_work()} multiple times until at least {\tt seconds\_to\_work} has passed. However, because the encoding is not defined, there is no guarantee that adding {\tt start} to {\tt seconds\_to\_work} will result adding {\tt seconds\_to\_work} seconds.
+
+\begin{verbatim}
+#include <time.h>
+
+int do_work(int seconds_to_work)
+{
+  time_t start;
+  start = time( NULL );
+
+  if (start == (time_t)(-1)) {
+    /* Handle error */
+  }
+  while (time(NULL) < start + seconds_to_work)
+  {
+    //do_some_work();
+  }
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+This compliant solution uses {\tt difftime()} to determine the difference between two {\tt time\_t} values. {\tt difftime()} returns the number of seconds from the second parameter until the first parameter and returns the result as a {\tt double}.
+
+\begin{verbatim}
+#include <time.h>
+
+int do_work(int seconds_to_work) {
+  time_t start;
+  time_t current;
+  start = time(NULL);
+  current = start;
+
+  if (start == (time_t)(-1)) {
+    /* Handle error */
+  }
+  while (difftime(current, start) < seconds_to_work) {
+    current = time(NULL);
+    if (current == (time_t)(-1)) {
+       /* Handle error */
+    }
+    //do_some_work();
+  }
+
+  return 0;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal on all binary operation nodes.
+\item For each binary operation node, if node is arithmetic expression then determine the type of its left and right hand side operands.
+\item If either the left or right hand side is type {\tt time\_t} then flag violation.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Secure Coding : MSC05-A. Do not manipulate time\_t typed values directly}{https://www.securecoding.cert.org/confluence/display/seccode/MSC05-A.+Do+not+manipulate+time\_t+typed+values+directly}

@@ -1,0 +1,48 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Protect Virtual Methods}
+
+\label{ProtectVirtualMethods::overview}
+
+\quote{Namespace: \texttt{ProtectVirtualMethods}}
+
+\subsection{Introduction}
+Do not expose virtual member functions in the public interface of a class. 
+Instead, declare all virtual member functions as protected and call them 
+from a public accessor method with a similar name. This ensures that virtual 
+member functions are protected from public access.
+Taken from ``Elements of C++ Style''
+by Misfeldt, Bumgardner, and Gray; item \#107.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks instances of
+SgMemberFunctionDeclaration that have the public access modifier and the
+virtual function modifier boolean values set to true. Member functions that
+match this pattern are flagged as violations.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: protectVirtualMethodsTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../protectVirtualMethods/protectVirtualMethodsTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

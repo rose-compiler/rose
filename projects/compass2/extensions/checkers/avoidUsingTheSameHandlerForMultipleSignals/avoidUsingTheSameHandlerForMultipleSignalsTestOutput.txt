@@ -1,0 +1,1 @@
+AvoidUsingTheSameHandlerForMultipleSignals: avoidUsingTheSameHandlerForMultipleSignalsTest1.C:25.3-8: SgFunctionCallExp: Each signal handler should be registered to handle only one type of signal.

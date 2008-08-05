@@ -1,0 +1,47 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{For Loop Cpp Index Variable Declaration}
+
+\label{ForLoopCppIndexVariableDeclaration::overview}
+
+\quote{Namespace: \texttt{ForLoopCppIndexVariableDeclaration}}
+
+\subsection{Introduction}
+There are many reasons to declare for loop index variables as locally as
+possible. In C++ this means declaring the index variable inside the for loop
+initializer. One reason to do this is to minimize the scope of the index
+variable to the for loop. Another reason is to prevent confusion and re-using
+common counter variables such as ``i'' that may have an unknown value at the
+point of use. Taken from LLNL ALE3D section 6.2.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks 
+SgForInitStatements that have NULL declaration statements. These nodes are
+flagged as violations.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: forLoopCppIndexVariableDeclarationTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../forLoopCppIndexVariableDeclaration/forLoopCppIndexVariableDeclarationTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

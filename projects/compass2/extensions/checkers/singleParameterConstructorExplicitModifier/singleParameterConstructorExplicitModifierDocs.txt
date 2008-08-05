@@ -1,0 +1,47 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{Single Parameter Constructor Explicit Modifier}
+
+\label{SingleParameterConstructorExplicitModifier::overview}
+
+\quote{Namespace: \texttt{SingleParameterConstructorExplicitModifier}}
+
+\subsection{Introduction}
+Declare single parameter constructors as explicit to avoid unexpected type 
+conversion. A compiler can use a single paramter constructor for type 
+conversions. While this is natural in some situations; it may be unexpected 
+in others. Taken from ``Elements of C++ Style'' 
+by Misfeldt, Bumgardner, and Gray; item \#104.
+
+%Give an exact reference to the pattern in the literature.
+%Here is the example:
+%The reference for this checker is: H. Sutter, A. Alexandrescu:
+%``C++ Coding Standards'', Item 28: ``Prefer the canonical form ++ and --. 
+%Prefer calling the prefix forms''.
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that finds instances of
+SgFunctionDeclaration that are constructors with a single parameter. If these
+SgFunctionDeclaration are not modified with the ``explicit'' keyword then
+a violation is flagged.
+
+\subsection{Example of Failing Output Code}
+
+%Examples of the patterns go here.
+     See example: singleParameterConstructorExplicitModifierTest1.C
+
+%The following lines are for references to the examples in the
+%documentation.
+\begin{latexonly}
+{\codeFontSize
+\lstinputlisting{\ExampleDirectory/../singleParameterConstructorExplicitModifier/singleParameterConstructorExplicitModifierTest1.C}
+}
+\end{latexonly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%If there is strange known behaviour, you can write a 
+%subsection that describes that problem.
+

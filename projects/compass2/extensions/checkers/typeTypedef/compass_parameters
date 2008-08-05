@@ -1,0 +1,6 @@
+# This is a comment
+# 
+# This is commented out but shows the way parameters are specified.
+# LineLengthChecker.maximumLineLength=80
+# TypeTypedef.RulesFile=/home/andreas/REPOSITORY-SRC/ROSE/July-15a-Unsafe/NEW_ROSE/projects/compass/typeTypedef/ale3d.sn
+TypeTypedef.RulesFile=typeTypedef/ale3d-typedefs.sn

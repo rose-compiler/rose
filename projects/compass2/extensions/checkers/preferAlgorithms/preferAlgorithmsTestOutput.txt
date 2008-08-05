@@ -1,0 +1,2 @@
+PreferAlgorithms: preferAlgorithmsTest1.C:9.5-10.20: SgForStatement: Consider using an STL algorithm instead of a loop.
+PreferAlgorithms: preferAlgorithmsTest1.C:24.5-25.9: SgForStatement: Consider using an STL algorithm instead of a loop.

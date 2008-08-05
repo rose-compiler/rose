@@ -1,0 +1,57 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Comma Operator}
+\label{CommaOperator::overview}
+
+The comma operator is commonly considered confusing without any redeeming
+value. This checker makes sure that it is not used. It reports any use of the
+built-in comma operator and any declaration of an overloaded comma operator.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+int f_noncompliant(int n)
+{
+    return (n++, n++, n); // not OK (twice): comma operator
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+int f_compliant(int n)
+{
+    n++;
+    n++;
+    return n;
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis
+checkers identifying any appearance of the built-in comma operator and any
+declaration of a function overloading the comma operator.
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference to this pattern is: The Programming Research Group:
+``High-Integrity C++ Coding Standard Manual'', Item~10.19: ``Do not use the
+comma operator.''

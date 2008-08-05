@@ -1,0 +1,85 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Constructor Destructor Calls Virtual Function}
+\label{ConstructorDestructorCallsVirtualFunction::overview}
+
+{\it C++ Coding Standards}, states that:
+\begin{quote}
+Virtual functions only ``virtually'' always behave virtually: Inside constructors and destructrors, they don't. Worse, any direct or indirect call to an unimplemented {\it pure virtual} function from a constructor or destructor results in undefined behavior. If your design wants virtual dispatch into a derived class from a base class constructor or destructor, you need other techniques such as post-constructors.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file
+
+\subsection{Implementation}
+This pattern is checked using a nested AST traversal in which the top level
+traversal seeks out definitions of constructors and destructors and two
+nested traversals seek out calls to virtual functions of member functions
+and non-member functions respectively.
+
+\subsection{Non-Compliant Code Example}
+The following code calls a virtual function from a public constructor. This is
+a contrived trivial example.
+
+\begin{verbatim}
+class Class
+{
+  int n;
+
+  public:
+    Class() { n = Classy(); } //constructor
+    ~Class() {} //Destructor
+
+    virtual int Classy() { return 1; }
+}; //class Class
+
+int main()
+{
+  Class c;
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class Class
+{
+  int n;
+
+  public:
+    Class() { n = 1; } //constructor
+    ~Class() {} //Destructor
+}; //class Class
+
+int main()
+{
+  Class c;
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform a AST traversal visiting class constructors and destructors.
+\item Flag any calls to virtual functions in class constructor or destructor nodes.
+\item Report any violations. 
+\end{enumerate}
+
+\subsection{References}
+
+Alexandrescu A. and Sutter H. {\it C++ Coding Standards 101 Rules, Guidelines, and Best Practices}. Addison-Wesley 2005.

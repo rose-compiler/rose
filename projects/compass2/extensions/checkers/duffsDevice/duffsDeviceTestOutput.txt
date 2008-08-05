@@ -1,0 +1,14 @@
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.
+DuffsDevice: duffsDeviceTest1.C:6.11-14.29: SgDoWhileStmt: Case label inside loop inside switch.

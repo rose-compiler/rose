@@ -1,0 +1,3 @@
+CommaOperator: commaOperatorTest1.C:3.13-23: SgCommaOpExp: The comma operator should not be used.
+CommaOperator: commaOperatorTest1.C:3.13-20: SgCommaOpExp: The comma operator should not be used.
+CommaOperator: commaOperatorTest1.C:15.1-38: SgFunctionDeclaration: The comma operator should not be used.

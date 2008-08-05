@@ -1,0 +1,1 @@
+PreferFseekToRewind: preferFseekToRewindTest1.C:14.2-7: SgFunctionCallExp: Prefer fseek() to rewind()

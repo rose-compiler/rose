@@ -1,0 +1,91 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Induction Variable Update}
+\label{InductionVariableUpdate::overview}
+
+% write your introduction
+	 This test finds the location in loops (for, do-while, while) where induction variables is updated (through arithmetic operations).
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+  None. 
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   This pattern is detected using a simple traversal. It traverses AST to obtain information about induction variables and to locate statements that assign a new value to the induction variables. However, this checker does not track pointers whether or not the pointers actually update induction variables. In addition, function calls that may update induction variables are not considered here, either.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+void foo(){
+  int i;
+  int j = 0;
+  int k = 0;
+
+  for(i = 0; i != 10; ++i)
+  {
+    if( 0 == i % 3)
+    {
+      i = 3;
+      ++i;
+      i++;
+    }
+  }
+
+  while(j < 10)
+  {
+    if(1 == j %3)
+    {
+      j = j + 2;
+    }
+    j++;
+  }
+
+  do {
+    if(2 == k % 3)
+    {
+      k +=1;
+    }
+  } while(++k < 10);
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+
+% write your compliant code example
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Find a loop and detect its induction variable
+\item Check if the variable is updated inside the loop, by examining its loop body.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+The Programming Research Group, High-Integrity C++ Coding Standard Manual, Item 5.6: ``Do not alter a control variable more than once in a for, do or while statement."

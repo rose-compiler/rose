@@ -1,0 +1,96 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Data Member Access}
+\label{DataMemberAccess::overview}
+
+Following the spirit of data hiding in object-oriented programming, classes
+should in general not have public data members as these might give away
+details of the underlying implementation, making a change of implementation
+more difficult and possibly giving users a way to mess up the internal state
+of objects of the class. It is, however, sometimes useful to have
+`behaviorless aggregates', i.\,e.~C-style structs where all data members are
+public (and no member functions are present).
+
+This checker warns about class definitions that fit into neither of the above
+patterns. Specifically, it warns about class definitions that contain both
+public and nonpublic data members.
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+class NoNo { // not acceptable, contains both public and nonpublic data members
+public:
+    int get_a() const;
+    void set_a(int);
+
+    double d;
+
+protected:
+    int a;
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+struct C_style { // acceptable, all data members are public
+    int a, b;
+    double d;
+};
+
+class WellProtected { // acceptable, no data members are public
+public:
+    int get_a() const;
+    void set_a(int);
+
+    double get_d() const;
+    void set_d(double);
+
+protected:
+    int a;
+
+private:
+    double d;
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each class definition, count the numbers of public and nonpublic
+data members.
+\item If both of the counts for a given class definition are greater than
+zero, a mix of public and nonpublic data members is present; emit a
+diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A literature reference for this checker is: H.~Sutter, A.~Alexandrescu: ``C++
+Coding Standards"", Item 41: ``Make data members private, except in
+behaviorless aggregates (C-style structs)''. Note that the authors advise
+not only against public, but also against protected data members; this checker
+does not report protected data.

@@ -1,0 +1,1 @@
+FunctionDocumentation: functionDocumentationTest1.C:6.1-11: SgFunctionDeclaration: This function is not documented! function name =  ::fail

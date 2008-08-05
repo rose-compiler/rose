@@ -1,0 +1,74 @@
+%General Suggestion: Ideally, the documentation of a style checker should 
+%be around one page.
+\section{[No Reference] : New Delete}
+
+This analysis checks for the validity of all delete operations in a specific source code.
+It checks for violations of:
+
+a) Deleting an array with a simple delete operator instead of an delete array operator.
+
+b) Deleting a NULL pointer.
+
+c) Checks for the deletion of uninitialized pointers.
+
+
+\subsection{Non-Compliant Code Examples}
+
+In the following examples, a) b) and c) from above are demonstrated.
+
+\begin{verbatim}
+class Y {
+  int y;
+};
+
+void fail() {
+  int x=2;
+  // deleting array
+  Y* m = new Y[5];
+  delete m;
+
+  // deleting NULL
+  Y* n = 0;
+  delete n;
+
+  // deleting NULL
+  Y* c ;
+  if (x==5) {
+    x=7;
+    delete c;
+  }
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+Use assert statements to make sure that a pointer cannot be null,
+or use the delete[] operator if a new[] operator precedes on that pointer. 
+
+\subsection{Parameter Requirements}
+
+None.
+
+
+\subsection{Implementation}
+
+This analysis uses the BOOST library in order to utilize the breadth first search (BFS) algorithm.
+Together with the control flow graph and the BFS, the implementation backtracks the code from the
+delete operation to its definition. On violations of the described cases, the analysis results in warnings.
+
+The algorithm searches first for each occurance of a SgDeleteExp and backtracks this Node to
+its definition. If we find a SgNew operation, we need to see if the delete and new operations match,
+i.e. whether they are both operations on pointers or arrays.
+
+The following cases are checked for and handled during the backwards dataflow analysis:
+\begin{verbatim}
+  case V_SgNewExp: 
+  case V_SgVarRefExp:   
+  case V_SgAddressOfOp: 
+  case V_SgCastExp:
+  case V_SgIntVal: 
+\end{verbatim}
+
+The above indicates a recursive algorithm.
+
+\subsection{References}
+

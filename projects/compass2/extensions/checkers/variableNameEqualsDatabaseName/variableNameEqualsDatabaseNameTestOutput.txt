@@ -1,0 +1,1 @@
+error initializing checker VariableNameEqualsDatabaseName: Parameter not found: VariableNameEqualsDatabaseName.ClassName

@@ -1,0 +1,64 @@
+include $(top_srcdir)/projects/compass2/src/compassSupport/compass.inc
+
+SUBDIRS = doc tests
+
+bin_PROGRAMS = compassMain
+
+compassMain_SOURCES = compassMain.C checkers.h
+compassMain_LDADD = -lCompassCheckers $(ROSE_LIBS)
+
+compassMain_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassCheckers.la 
+
+
+test: compassMain compass_parameters $(compass_test_dir)/exampleTest_1.C 
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(compass_test_dir)/exampleTest_1.C
+
+docs:
+	cd doc; $(MAKE) docs
+
+check-local:
+	@$(MAKE) test
+	@echo "*****************************************************************************"
+	@echo "*** ROSE/projects/compass: make check rule complete (terminated normally) ***"
+	@echo "*****************************************************************************"
+
+distclean-local:
+	rm -rf Templates.DB ale3d-typedefs.sn *.sn
+
+clean-local:
+	rm -f *.ti a.out *.lo *.la
+
+EXTRA_DIST = CHECKER_LIST RULE_SELECTION certExample.txt ChangeLog NOTES \
+	emacs_compass_config.el
+
+CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_makefile.inc compass_parameters buildCheckers.C checkers.h compassCheckerDocs.tex
+
+
+################################################################################
+
+# Test Compass using a small test file
+testRose: compassMain compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(srcdir)/tests/exampleTest_2.C
+
+# Test Compass using a large file within ROSE
+testCxx_Grammar: compassMain compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain -I$(top_builddir) $(INCLUDES) $(top_builddir)/src/frontend/SageIII/Cxx_Grammar.C
+
+testAllInputsTogether: compassMain compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain $(COMPASS_CHECKER_TESTS)
+
+# Flymake Support in ROSE
+check-syntax: compassMain compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
+#       @$(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:excludeFile .code -rose:excludeFile .macro -rose:includeFile $(CHK_SOURCES) $(CHK_SOURCES)
+#       $(top_builddir)/projects/compass/compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(CHK_SOURCES:_flymake.C=) $(CHK_SOURCES)
+
+#testEmacs: compassMain compass_parameters
+#	env COMPASS_PARAMETERS=./compass_parameters ./compassMain --compass:silent -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) -rose:includeFile $(srcdir)/testEmacs.C $(srcdir)/testEmacs.C
+
+#testEmacsSize: compassMain compass_parameters
+#	g++ -E -I$(top_builddir) $(ROSE_INCLUDES) -I$(srcdir)/compassSupport -I$(srcdir)/util $(COMPASS_INCLUDES) $(srcdir)/testEmacs.C > wc.out
+#	wc -l wc.out
+
+testCompass:
+	$(MAKE) "CHK_SOURCES=$(compass_support_dir)/compassMain.C" check-syntax

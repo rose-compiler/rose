@@ -1,0 +1,2 @@
+TernaryOperator: ternaryOperatorTest1.C:9.2-23: SgConditionalExp: Do not use the ternary operator(?:) in expressions
+TernaryOperator: ternaryOperatorTest1.C:12.6-19: SgConditionalExp: Do not use the ternary operator(?:) in expressions

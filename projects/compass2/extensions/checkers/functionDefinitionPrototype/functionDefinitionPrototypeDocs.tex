@@ -1,0 +1,71 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{CERT-DCL31-C: Function Definition Prototype}
+\label{FunctionDefinitionPrototype::overview}
+``CERT Secure Coding DCL31-C'' states
+\begin{quote}
+Functions should always be declared with the appropriate function prototype. If a function prototype is not available, the compiler cannot perform checks on the number and type of arguments being passed to functions. Argument type checking in C is only performed during compilation, and does not occur during linking, or dynamic loading.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal of function declaration nodes. For each function declaration node find the first non-defining function declaration; if none is found, then flag violation.
+
+\subsection{Non-Compliant Code Example}
+This example {\tt foo()} has no prototype.
+
+\begin{verbatim}
+int foo( int i )
+{
+  return i;
+}
+
+int main()
+{
+  return foo(0);
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution simply adds a function prototype for {\tt foo()}
+
+\begin{verbatim}
+int foo(int);
+
+int foo( int i )
+{
+  return i;
+}
+
+int main()
+{
+  return foo(0);
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform a simple AST traversal of code visiting all function declaration nodes.
+\item For each function declaration node, find first non-defining declaration. If no non-defining declaration is found, then flag violation.
+\item Report any violations detected.
+\end{enumerate}
+
+\subsection{References}
+
+\htmladdnormallink{Secure Coding : DCL31-C. Ensure every function has a function prototype}{https://www.securecoding.cert.org/confluence/display/seccode/DCL31-C.+Ensure+every+function+has+a+function+prototype}

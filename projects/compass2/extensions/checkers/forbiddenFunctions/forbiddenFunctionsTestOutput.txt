@@ -1,0 +1,2 @@
+ForbiddenFunctions: forbiddenFunctionsTest1.C:23.7-38: SgFunctionRefExp: Forbidden function 'compass_forbidden_function_vfork' used. This is our sample forbidden function.
+ForbiddenFunctions: forbiddenFunctionsTest1.C:7.1-38: SgFunctionRefExp: Forbidden function 'compass_forbidden_function_vfork' used. This is our sample forbidden function.

@@ -1,0 +1,90 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Internal Data Sharing}
+\label{InternalDataSharing::overview}
+
+Classes should usually not return handles to internal data from methods. A
+`handle' in this sense is a non-const reference to a member or copy of a
+pointer member, as the caller could change internal state through such an
+object. This checker reports such cases. One possible exception to this rule
+are overloaded operators, which often return such handles (so they can be
+combined with other operators to bigger expressions), and this checker
+provides a parameter to define whether operators should be allowed to return
+internals.
+
+\subsection{Parameter Requirements}
+
+The bool flag {\bf InternalDataSharing.operatorsExcepted} states whether
+overloaded operators are excepted from this checker's rules, i.e. whether
+they are allowed to return internal data.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+class A
+{
+public:
+    // not OK: returning non-const pointer member
+    int *retptr() { return p; }
+    // not OK: returning non-const reference to data pointed to by member
+    int &retref() { return *p; }
+    // not OK: returning non-const reference to member
+    int *&retptrref() { return p; }
+
+private:
+    int *p;
+};
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+class B
+{
+public:
+    // OK: returning copy of pointed-to data
+    int retint() { return *p; }
+    // OK: const ptr
+    const int *retcptr() { return p; }
+    // OK: const ref
+    const int &retcref() { return *p; }
+
+    // maybe OK, depending on "operatorsExcepted" parameter
+    int &operator*() { return *p; }
+
+private:
+    int *p;
+};
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item While traversing the program representation, set a flag upon entering a
+member function definition that has a non-const pointer or reference return
+type.
+\item Report any return statement within such a flagged function that returns
+a (possibly dereferenced) member variable.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference in the literature is: H.~Sutter, A.~Alexandrescu: ``C++ Coding
+Standards'', Item~42: ``Don't give away your internals''. Their notion of a
+handle is more general, however, as it also includes basic types that are used
+as handles, such as ints that are used as file descriptors.

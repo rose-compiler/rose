@@ -1,0 +1,77 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Copy Constructor Const Arg}
+\label{CopyConstructorConstArg::overview}
+
+This checks whether the copy constructor for a class uses a
+ const reference as an argument.  This should always be the
+ case as a copy constructor should never change its input
+ argument and a reference is necessary to avoid needing a copy operator.            
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+   No Parameter necessary.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+   This checker begins by finding class declarations and getting the
+   class name.  It then runs through
+ each member of the class until finding a constructor.  It checks if
+ the constructor has one argument and                                 
+that argument is a member of the same class.  If it is and it is not
+const a message is returned.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+class interviewer
+{
+interviewer(interviewer other) {return;}
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+
+\begin{verbatim}
+
+class interviewer
+{
+interviewer(const interviewer& other) {return;}
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Identify member function
+\item check args for copy constructor
+\item ensure type and const
+\item if not both, return notification
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection
+  Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 12.1.2, Copy Constructor''

@@ -1,0 +1,2 @@
+NonAssociativeRelationalOperators: nonAssociativeRelationalOperatorsTest1.C:9.8-16: SgLessThanOp: This checker checks that relational binary operators (==,!=,<,>,<=,>=) are not treated as if they were non-associative.
+NonAssociativeRelationalOperators: nonAssociativeRelationalOperatorsTest1.C:11.8-18: SgEqualityOp: This checker checks that relational binary operators (==,!=,<,>,<=,>=) are not treated as if they were non-associative.

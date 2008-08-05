@@ -1,0 +1,82 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Default Case}
+\label{DefaultCase::overview}
+This test checks to ensure each switch statement has a default
+option.  It has been noted that                                                                        
+ unexpected cases `falling through'' can be a cause of difficult to
+ detect bugs.  A default case will catch those cases. 
+% write your introduction
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+No parameters required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+This implementation checks all statements in the basic                                                                                                               
+ block of the switch statement, searching for defaults.  Currently
+ this implementation may have false positives (ie. A switch with a
+ default will raise an alert) on duff's device.  In general Duff's device does not use
+ a default.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+
+\begin{verbatim}
+
+switch(x)
+{
+case 1:
+...
+case 2:
+...
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+% write your compliant code subsection
+
+\begin{verbatim}
+switch(x)
+{
+case 1:
+...
+case 2:
+...
+default:
+//handle unexpected cases
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Identifies switch statement
+\item Reads all statements in it's basic block searching for default
+\item if none found, notify message.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 11.2.2, Branching''

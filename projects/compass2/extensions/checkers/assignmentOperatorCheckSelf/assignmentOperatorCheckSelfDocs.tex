@@ -1,0 +1,86 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Assignment Operator Check Self}
+\label{AssignmentOperatorCheckSelf::overview}
+% write your introduction
+This test checks to make sure that the first statement in a assignment
+operator is a check for self-assignment.  
+As noted in An Abbreviated C++ Code Inspection Checklist 12.1.3 .
+This will save time allocating new memory and (hopefully) deleting the
+ previous copy.  The check for return this; is handled by another checker. 
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+No parameters required.
+
+\subsection{Implementation}
+  This test checks to make sure that the first statement in a
+  assignment operator is a check for self-assignment.  As noted in
+ An Abbreviated C++ Code Inspection Checklist 12.1.3 .  This will
+ save time allocating new memory and (hopefully) deleting the previous
+ copy.  The check for return this; is handled by another checker.
+  
+%Details of the implementation go here.
+
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+
+class bike
+{
+public:
+ const bike& operator= (const bike& other);
+};
+
+const bike& bike::operator= (const bike& other)
+{
+...
+return *this;
+}
+
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+
+const bike& bike::operator= (const bike& other)
+{
+if (this == &other)
+    {return *this;
+    }
+...
+return *this;
+}
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Identify member function
+\item Check name for operator=
+\item Check first statement as If Statement
+\item Check arguments to expression to be this and the right hand argument.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC
+% 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+\htmladdnormallink{Abbreviated Code Inspection Checklist}{http://www.lore.ua.ac.be/Teaching/SE3BAC} Section 12.1.3, Assignment Operator''

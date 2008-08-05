@@ -1,0 +1,1 @@
+FunctionCallAllocatesMultipleResources: functionCallAllocatesMultipleResourcesTest1.C:20.10-12: SgFunctionCallExp: This checker checks that multiple resources are not allocated in a single function call expression.

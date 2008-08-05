@@ -1,0 +1,79 @@
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Right Shift Mask}
+\label{RightShiftMask::overview}
+
+% write your introduction
+Do not assume that a right shift operation is implemented as either an
+arithmetic (signed) shift or a logical (unsigned) shift. If E1 in the
+expression E1 >> E2 has a signed type and a negative value, the
+resulting value is implementation defined and may be either an
+arithmetic shift or a logical shift. Also, be careful to avoid
+undefined behavior while performing a bitwise shift.
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+No Parameter Required.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+Upon finding a right shift we trace parent pointers up until we find
+a bit and operator.  If we find this bitwise and then we return.  If
+we make it to the basic block node of the statement we raise an alert. 
+
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+For implementations in which an arithmetic shift is performed and the
+sign bit can be propagated as the number is shifted.
+\begin{verbatim}
+int stringify;
+char buf[sizeof("256")];
+sprintf(buf, "%u", stringify >> 24);
+% write your non-compliant code example
+
+\end{verbatim}
+If stringify has the value 0x80000000, stringify >> 24 evaluates to
+0xFFFFFF80 and the subsequent call to sprintf() results in a buffer overflow.
+\subsection{Compliant Solution}
+For bit extraction, make sure to mask off the bits you are not
+interested in.
+% write your compliant code subsection
+
+\begin{verbatim}
+int stringify;
+char buf[sizeof("256")];
+sprintf(buf, "%u", ((number >> 24) & 0xff));
+% write your compliant code example
+
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Find the bitwise and
+\item climb parent tree
+\item alert if parent null or basicblock found.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+\htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References}
+[Dowd 06] Chapter 6, ``C Language Issues''
+[ISO/IEC 9899-1999] Section 6.5.7, ``Bitwise shift operators''
+[ISO/IEC 03] Section 6.5.7, ``Bitwise shift operators''

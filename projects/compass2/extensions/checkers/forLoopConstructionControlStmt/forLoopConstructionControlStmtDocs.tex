@@ -1,0 +1,80 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{For Loop Construction Control Stmt}
+\label{ForLoopConstructionControlStmt::overview}
+
+``ALE3D Coding Standards \& Style Guide'' item \#6.1 states that
+\begin{quote}
+for() construction loops must only include statements that control the loop. In particular, for() loops must not initialize or increment/decrement variables not directly related to the loop control.
+\end{quote}
+
+\subsection{Parameter Requirements}
+This checker takes no parameters and inputs the source file.
+
+\subsection{Implementation}
+This pattern is checked using a simple AST traversal that seeks out for loop statement constructs. A list of variables set in the initialization block is generated.  A list of variables set in the increment/decrement block is generated.  Any variable in the increment/decrement list of variables must be in the initialization list of variables.
+
+\subsection{Non-Compliant Code Example}
+This non-compliant code initializes the array inside the for() control statement.
+
+\begin{verbatim}
+#include <stdlib.h>
+
+int main()
+{
+  int *array = (int*)malloc( 100*sizeof(int) );
+  int j=100;
+
+  for( int i = 0; i < 100; i++, j-- ){
+     array[i] = j;
+  }
+
+  free(array);
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Compliant Solution}
+The compliant solution simply moves the array initialization inside the for() loop body.
+
+\begin{verbatim}
+#include <stdlib.h>
+
+int main()
+{
+  int *array = (int*)malloc( 100*sizeof(int) );
+
+  for( int i = 0; i < 100; i++ ){
+     array[i] = i;
+  }
+
+  free(array);
+  return 0;
+} //main()
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item Perform simple AST traversal visiting all for statements.
+\item Generate a list of variables set in the initialization block.
+\item Generate a list of variables set in the increment/decrement block.
+\item Report any variable in the increment/decrement list of variables that are not in the initialization list of variables as a violation
+\end{enumerate}
+
+\subsection{References}
+
+Arrighi B., Neely R., Reus J. ``ALE3D Coding Standards \& Style Guide'', 2005.

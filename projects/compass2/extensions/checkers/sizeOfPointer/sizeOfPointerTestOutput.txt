@@ -1,0 +1,6 @@
+SizeOfPointer: sizeOfPointerTest1.C:16.8-16: SgSizeOfOp: Finding sizeof of a pointer
+SizeOfPointer: sizeOfPointerTest1.C:18.8-16: SgSizeOfOp: Finding sizeof of a pointer
+SizeOfPointer: sizeOfPointerTest1.C:19.8-17: SgSizeOfOp: Finding sizeof of a pointer
+SizeOfPointer: sizeOfPointerTest1.C:21.8-16: SgSizeOfOp: Finding sizeof of a pointer
+SizeOfPointer: sizeOfPointerTest1.C:22.8-17: SgSizeOfOp: Finding sizeof of a pointer
+SizeOfPointer: sizeOfPointerTest1.C:23.8-18: SgSizeOfOp: Finding sizeof of a pointer

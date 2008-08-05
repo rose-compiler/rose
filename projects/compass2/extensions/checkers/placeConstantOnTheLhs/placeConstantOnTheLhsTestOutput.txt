@@ -1,0 +1,4 @@
+PlaceConstantOnTheLhs: placeConstantOnTheLhsTest1.C:7.2-10.2: SgExprStatement: Place the constant on the left hand side in this comparison!
+PlaceConstantOnTheLhs: placeConstantOnTheLhsTest1.C:12.2-15.2: SgExprStatement: Place the constant on the left hand side in this comparison!
+PlaceConstantOnTheLhs: placeConstantOnTheLhsTest1.C:20.9-15: SgExprStatement: Place the constant on the left hand side in this comparison!
+PlaceConstantOnTheLhs: placeConstantOnTheLhsTest1.C:22.2-25.2: SgExprStatement: Place the constant on the left hand side in this comparison!

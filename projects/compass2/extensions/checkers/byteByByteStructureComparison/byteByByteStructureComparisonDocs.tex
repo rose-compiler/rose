@@ -1,0 +1,90 @@
+
+   \section{Secure Coding : EXP04-A. Do not perform byte-by-byte comparisons between structures}
+
+   Structures may be padded with data to ensure that they are properly aligned in memory. The contents of the padding, and the amount of padding added is implementation defined. This can can lead to incorrect results when attempting a byte-by-byte comparison between structures.
+   \subsection{Non-Compliant Code Example}
+
+   This example uses {\tt memcmp()} to compare two structures. If the structures are determined to be equal, {\tt buf\_compare()} should return 1 otherwise, 0 should be returned. However, structure padding may cause {\tt memcmp()} to evaluate the structures to be unequal regardless of the contents of their fields.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{struct\ }\hlstd{my\textunderscore buf\ }\hlsym{\{\\
+}\hlline{\ \ \ \ 2\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{size\textunderscore t\ }\hlstd{size;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{buffer}\hlsym{[}\hlstd{}\hlnum{50}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlsym{\}}\hlstd{;\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hltyp{unsigned\ int\ }\hlstd{buf\textunderscore compare}\hlsym{(}\hlstd{}\hltyp{struct\ }\hlstd{my\textunderscore buf\ *s1,\ }\hltyp{struct\ }\hlstd{my\textunderscore buf\ *s2}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{!memcmp}\hlsym{(}\hlstd{s1,\ s2,\ }\hlkey{sizeof}\hlstd{}\hlsym{(}\hlstd{}\hltyp{struct\ }\hlstd{my\textunderscore struct}\hlsym{)))\ \{\\
+}\hlline{\ \ \ \ 8\ }\hlsym{\hlstd{\ \ \ \ }}\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{1}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }}\hlsym{\}\\
+}\hlline{\ \ \ 10\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ 11\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ 12\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Compliant Solution}
+
+   To accurately compare structures it is necessary to perform a field-by-field comparison [ \htmladdnormallink{Summit 95}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ]. The {\tt buf\_compare()} function has been rewritten to do this.
+ \code{ 
+
+\noindent
+\ttfamily
+\hlstd{}\hlline{\ \ \ \ 1\ }\hlstd{}\hltyp{struct\ }\hlstd{my\textunderscore buf\ }\hlsym{\{\\
+}\hlline{\ \ \ \ 2\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hltyp{size\textunderscore t\ }\hlstd{size;\\
+}\hlline{\ \ \ \ 3\ }\hlstd{\hlstd{\ \ }}\hltyp{char\ }\hlstd{buffer}\hlsym{[}\hlstd{}\hlnum{50}\hlstd{}\hlsym{]}\hlstd{;\\
+}\hlline{\ \ \ \ 4\ }\hlstd{}\hlsym{\}}\hlstd{;\\
+}\hlline{\ \ \ \ 5\ }\hlstd{\\
+}\hlline{\ \ \ \ 6\ }\hlstd{}\hltyp{unsigned\ int\ }\hlstd{buf\textunderscore compare}\hlsym{(}\hlstd{}\hltyp{struct\ }\hlstd{buffer\ *s1,\ }\hltyp{struct\ }\hlstd{buffer\ *s2}\hlsym{)\ \{\\
+}\hlline{\ \ \ \ 7\ }\hlsym{\hlstd{\ \ }}\hlstd{}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{s1-$>$size\ !=\ s2-$>$size}\hlsym{)\ }\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ \ 8\ }\hlstd{\hlstd{\ \ }}\hlkey{if\ }\hlstd{}\hlsym{(}\hlstd{strcmp}\hlsym{(}\hlstd{s1-$>$buffer,\ s2-$>$buffer}\hlsym{)\ }\hlstd{!=\ }\hlnum{0}\hlstd{}\hlsym{)\ }\hlstd{}\hlkey{return\ }\hlstd{}\hlnum{0}\hlstd{;\\
+}\hlline{\ \ \ \ 9\ }\hlstd{\hlstd{\ \ }}\hlkey{return\ }\hlstd{}\hlnum{1}\hlstd{;\\
+}\hlline{\ \ \ 10\ }\hlstd{}\hlsym{\}\\
+}\hlline{\ \ \ 11\ }\hlsym{}\hlstd{}\\
+\mbox{}\\
+\normalfont
+
+
+
+
+
+
+
+
+
+
+
+}
+
+   \subsection{Risk Assessment}
+
+   Failure to correctly compare structure can lead to unexpected program behavior.
+
+   \begin{tabular}[c]{| c| c| c| c| c| c|}
+   \hline
+   {\bf Rule} & {\bf Severity} & {\bf Likelihood} & {\bf Remediation Cost} & {\bf Priority} & {\bf Level} \\ \hline
+   EXP04-A & {\bf 2} (medium) & {\bf 1} (unlikely) & {\bf 1} (high) & {\bf P2} & {\bf L3} \\ \hline
+   \end{tabular}
+   \subsubsection{Related Vulnerabilities}
+
+   Search for vulnerabilities resulting from the violation of this rule on the \htmladdnormallink{CERT website}{https://www.kb.cert.org/vulnotes/bymetric?searchview\&query=FIELD+contains+EXP04-A} .
+   \subsection{References}
+
+   [ \htmladdnormallink{Dowd 06}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Chapter 6, "C Language Issues" (Structure Padding 284-287) [ \\*
+   \htmladdnormallink{ISO/IEC 9899-1999}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Section 6.7.2.1, "Structure and union specifiers" [ \\*
+   \htmladdnormallink{Kerrighan 88}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] Chapter 6, "Structures" (Structures and Functions 129) [ \\*
+   \htmladdnormallink{Summit 95}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} ] comp.lang.c FAQ list - Question 2.8

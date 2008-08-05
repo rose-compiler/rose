@@ -1,0 +1,82 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Prefer Algorithms}
+\label{PreferAlgorithms::overview}
+
+% write your introduction
+Many people consider hand-written loops over STL containers inferior to calls
+to STL algorithms for reasons of efficiency, correctness, and maintainability.
+
+This checker is meant to highlight cases where a loop might be replaced by an
+equivalent STL algorithm call. It reports for loops where the loop head
+fulfills the following properties:
+\begin{itemize}
+\item The initialization part contains an assignment or variable declaration
+with an initializer,
+\item the condition part consists of an inequality comparison, and
+\item the increment part consists of an increment or decrement operation.
+\end{itemize}
+For loops on integer or floating-point types are not reported as those cannot
+be replaced by STL algorithms.
+
+
+\subsection{Parameter Requirements}
+
+This checker does not require any parameters.
+
+\subsection{Non-Compliant Code Example}
+
+\begin{verbatim}
+#include <vector>
+
+void add_x_to_each_element_noncompliant(int x, std::vector<int> &v)
+{
+    // not OK: loop to add x to each element
+    std::vector<int>::iterator v_itr;
+    for (v_itr = v.begin(); v_itr != v.end(); ++v_itr)
+        *v_itr += x;
+}
+\end{verbatim}
+
+\subsection{Compliant Solution}
+
+\begin{verbatim}
+#include <vector>
+#include <algorithm>
+#include <functional>
+
+void add_x_to_each_element_compliant(int x, std::vector<int> &v)
+{
+    // OK: using an algorithm to add x to each element
+    transform(v.begin(), v.end(), v.begin(),
+              std::bind2nd(std::plus<int>(), x));
+}
+\end{verbatim}
+
+\subsection{Mitigation Strategies}
+\subsubsection{Static Analysis} 
+
+Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
+
+\begin{enumerate}
+\item For each for loop, check the criteria explained above, taking both
+built-in and overloaded operators.
+\item If the loop fulfills all criteria, generate a diagnostic.
+\end{enumerate}
+
+\subsection{References}
+
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
+A reference for this checker is: S.~Meyers: ``Effective STL'', Item~43:
+``Prefer algorithm calls to hand-written loops''.
