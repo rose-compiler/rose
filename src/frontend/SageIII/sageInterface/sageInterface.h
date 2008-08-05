@@ -520,6 +520,9 @@ bool isRestrictType(SgType* t);
  */
 bool isScalarType(SgType* t);
 
+//! Check if a type is a struct type (a special SgClassType in ROSE) 
+bool isStructType(SgType* t);
+
 //! Generate a mangled string for a given type based on Itanium C++ ABI
 std::string mangleType(SgType* type);
 

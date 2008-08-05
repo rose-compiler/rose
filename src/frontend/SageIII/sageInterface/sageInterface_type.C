@@ -58,6 +58,19 @@ bool isScalarType( SgType* t)
 }
 
 
+  bool isStructType(SgType* t)
+  {
+    bool result = false;
+    ROSE_ASSERT(t!=NULL);
+    SgClassType * class_type = isSgClassType(t);
+    if (class_type)
+    {
+      SgDeclarationStatement* decl = class_type->get_declaration();
+      result = isStructDeclaration(decl);
+    }
+    return result;
+  }
+
   SgType* getBaseFromType(SgType* t) {
 
   SgType* deref = t->dereference();

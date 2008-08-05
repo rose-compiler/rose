@@ -2,7 +2,16 @@
 enum MyEnumType { ALPHA, BETA, GAMMA };
 enum MyEnumType myenum1;
 
-int array2[5][10];
+int array2[5][10][7];
+
+typedef union u_SU
+{
+ short x;
+ char a;
+}SU;
+
+SU myunion1;
+
 _Bool mybool;
 int a;
 float b;
