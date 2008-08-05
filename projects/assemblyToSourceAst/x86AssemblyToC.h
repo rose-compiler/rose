@@ -122,6 +122,7 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   public:
   X86AssemblyToCWithVariables(SgFile* templateFile);
   SgBasicBlock* makeAllCode(SgAsmFile* asmFile, SgBasicBlock* appendTo);
+  SgStatement* makeDispatchSwitch(SgAsmFile* f);
 };
 
 #endif // ROSE_X86_ASSEMBLY_TO_C_H

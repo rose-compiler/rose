@@ -2101,10 +2101,37 @@ SgFunctionSymbol* X86AssemblyToCWithVariables::getHelperFunction(const string& n
   abort();
 }
 
+SgStatement* X86AssemblyToCWithVariables::makeDispatchSwitch(SgAsmFile* f) {
+  SgBasicBlock* switchBody = buildBasicBlock();
+  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(ipSym), switchBody);
+  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(f, V_SgAsmBlock);
+  for (size_t i = 0; i < asmBlocks.size(); ++i) {
+    SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
+    map<uint64_t, SgLabelStatement*>::const_iterator it = labelsForBlocks.find(bb->get_address());
+    ROSE_ASSERT (it != labelsForBlocks.end());
+    SgLabelStatement* ls = it->second;
+    if (bb->get_externallyVisible()) {
+      appendStatement(
+        buildCaseOptionStmt(
+          buildUnsignedLongLongIntValHex(bb->get_address()),
+          buildBasicBlock(buildGotoStatement(ls))),
+        switchBody);
+      externallyVisibleBlocks.insert(bb->get_address());
+    }
+  }
+  appendStatement(
+    buildDefaultOptionStmt(
+      buildBasicBlock(
+        buildExprStatement(
+          buildFunctionCallExp(
+            abortSym,
+            buildExprListExp())))),
+    switchBody);
+  return sw;
+}
+
 SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBlock* appendTo) {
   SgBasicBlock* body = appendTo;
-  switchBody = buildBasicBlock();
-  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(ipSym), switchBody);
   appendStatement(
     buildAssignStatement(
       buildVarRefExp(ipSym),
@@ -2128,7 +2155,6 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBloc
         startingInstructionSym,
         buildExprListExp())),
     whileBody);
-  appendStatement(sw, whileBody);
   vector<SgNode*> asmBlocks = NodeQuery::querySubTree(f, V_SgAsmBlock);
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
@@ -2136,23 +2162,9 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBloc
     SgLabelStatement* ls = buildLabelStatement("label_" + StringUtility::intToHex(bb->get_address()), buildBasicBlock(), whileBody);
     labelsForBlocks.insert(std::make_pair(bb->get_address(), ls));
     appendStatement(ls, whileBody);
-    if (bb->get_externallyVisible()) {
-      appendStatement(
-        buildCaseOptionStmt(
-          buildUnsignedLongLongIntValHex(bb->get_address()),
-          buildBasicBlock(buildGotoStatement(ls))),
-        switchBody);
-      externallyVisibleBlocks.insert(bb->get_address());
-    }
   }
-  appendStatement(
-    buildDefaultOptionStmt(
-      buildBasicBlock(
-        buildExprStatement(
-          buildFunctionCallExp(
-            abortSym,
-            buildExprListExp())))),
-    switchBody);
+  SgStatement* sw = makeDispatchSwitch(f);
+  appendStatement(sw, whileBody);
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
     const SgAsmStatementPtrList& stmts = bb->get_statementList();
