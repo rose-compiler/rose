@@ -65,7 +65,10 @@ class LoopTreeNode  : public TreeNodeImpl<LoopTreeNode>
   virtual std::string GetClassName() const = 0;
 
   virtual VarInfo GetVarInfo() const { return VarInfo(); }
+  //According to Qing, GetOrigStmt() will return non-null for non-loop nodes
   virtual AstNodePtr GetOrigStmt()  const { return AST_NULL; }
+  // For loop node, I add  GetOrigStmt2() to return the corresponding AstNodePtr
+  virtual AstNodePtr GetOrigStmt2()  const { return AST_NULL; }
 
   virtual const LoopInfo* GetLoopInfo() const { return 0; }
   virtual LoopInfo* GetLoopInfo() { return 0; }
@@ -124,6 +127,12 @@ class LoopTreeLoopNode : public LoopTreeNode, public LoopTreeObserver
   std::string toString() const;
   std::string GetClassName() const { return "LoopTreeLoopNode"; }
   int IncreaseLoopLevel() const { return 1; }
+  //Liao, May 16, 2008 
+  // GetOrigStmt() is designed to return NULL for read loop nodes according to Qing
+  // So I use a new member function here as a workaround. 
+  // Qing said there is a way to directly call dependence analysis on AST node
+  // But I cannot find it so I stick to this extension 
+  AstNodePtr GetOrigStmt2() const { return orig; }
   LoopTreeNode* Clone() const
      { return new LoopTreeLoopNode( *this ); }
   VarInfo GetVarInfo() const { return info; }

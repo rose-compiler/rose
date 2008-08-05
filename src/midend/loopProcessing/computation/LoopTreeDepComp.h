@@ -14,7 +14,13 @@
 #include <PtrSet.h>
 #include <LoopTransformInterface.h>
 #include <GraphScope.h>
-
+/* 
+ * From Qing's email on May 20, 2008
+ * The LoopTreeDepComp class internally: 
+ *  build a dependence graph from the AST, 
+ *  then a LoopTree from the AST, 
+ *  then a mapping between the LoopTree and the DepGraph based on the internal AST.
+ */
 class LoopTreeDepGraphNode 
    : public MultiGraphObserveNodeTemplate<LoopTreeNode*>,
      public LoopTreeObserver
