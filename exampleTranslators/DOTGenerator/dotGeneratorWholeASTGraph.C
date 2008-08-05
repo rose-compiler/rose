@@ -3,7 +3,7 @@
 using namespace std;
 
 // Large arbitrary graphs are a problem to layout using GraphViz (and generally)
-// So these mcrose define limits where it is whole graph mechanism not only takes 
+// So these macros define limits where it is whole graph mechanism not only takes 
 // too long, but is too complex to even be helpful.
 #define MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH 2000
 
@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
      ROSE_ASSERT (project != NULL);
 
   // Generate the filename to be used as a base for generated dot files (graphs)
-  // this will be a concatination of the source file names were more than one is 
+  // this will be a concatenation of the source file names were more than one is 
   // specified on the command line.
      string filename = SageInterface::generateProjectName(project);
 
