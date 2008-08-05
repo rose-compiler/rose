@@ -18,9 +18,6 @@
 
 namespace ASTtools
 {
-  //! Returns true iff compiling in a C++ mode.
-  bool isInCppFile (const SgNode *);
-
   //! Gets the closest enclosing function declaration for current node.
   const SgFunctionDeclaration* getEnclosingFuncDecl (const SgNode* astNode);
 

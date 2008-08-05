@@ -666,16 +666,16 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
 // remember to put const to all arguments.
-//! traverse back through a node's parents to find the first node matching the desired type, includingSelf specifies if the current node is checked.
+//! Traverse back through a node's parents to find the first node matching the desired type, includingSelf specifies if the current node is checked.
 SgNode * getEnclosingNode(const SgNode*, const VariantT, const bool includingSelf=false);
 
-//! get the closest scope 
+//! Get the closest scope 
 SgScopeStatement* getScope(const SgNode* astNode); 
 
-  //! traverse back through a node's parents to find the enclosing global scope
+  //! Traverse back through a node's parents to find the enclosing global scope
   SgGlobal* getGlobalScope( const SgNode* astNode);
 
-  //! find the function definition
+  //! Find the function definition
   SgFunctionDefinition* getEnclosingProcedure(SgNode* n, const bool includingSelf=false);
 
   SgFunctionDefinition* getEnclosingFunctionDefinition(SgNode* astNode, const bool includingSelf=false);
@@ -708,7 +708,6 @@ SgScopeStatement* getScope(const SgNode* astNode);
    SgVariableDeclaration* findVariableDeclaratin( const string& varname)
 
    SgClassDeclaration* getEnclosingClassDeclaration( const SgNode* astNode);
-   SgClassDefinition* getEnclosingClassDefinition( const SgNode* astNode);
 
    // e.g. for some expression, find its parent statement
    SgStatement* getEnclosingStatement(const SgNode* astNode);

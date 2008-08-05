@@ -200,34 +200,6 @@ ASTtools::findFirstFuncDef (const SgStatement* s)
 // ========================================================================
 
 bool
-ASTtools::isInCppFile (const SgNode* n)
-{
-  if (n)
-    switch (n->variantT ())
-      {
-      case V_SgProject:
-        {
-          const SgProject* proj = isSgProject (n);
-          ROSE_ASSERT (proj);
-          return !proj->get_C_only () && !proj->get_C99_only ();
-        }
-        break;
-      case V_SgFile:
-        {
-          const SgFile* file = isSgFile (n);
-          ROSE_ASSERT (file);
-          return !file->get_C_only () && !file->get_C99_only ();
-        }
-      default:
-        return isInCppFile (n->get_parent ());
-        break;
-      }
-  return false; // Default: Assume we are not
-}
-
-// ========================================================================
-
-bool
 ASTtools::isSwitchCond (const SgStatement* s)
 {
   if (s)
