@@ -37,9 +37,11 @@ bool Compass::quickSave=false;
  * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI
  ******************************************************************/
 DefUseAnalysis* Compass::defuse = NULL;
+
 #if ROSE_MPI
 int Compass::my_rank=0;
 int Compass::processes=0;
+
 
 void Compass::loadDFA(std::string name, SgProject* project) {
   MPI_Status Stat;
@@ -50,6 +52,11 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 
   std::cerr << " Starting the load with " << processes << " processes. " << std::endl;
   while (!done) {
+
+    if (defuse==NULL) {
+      defuse = new DefUseAnalysis(project);
+      std::cerr << " creating defuse ... " <<std::endl;
+    }
 
     if (my_rank==0 && processes>1) {
       for (int i=1; i<processes; ++i) {
@@ -62,6 +69,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 	std::cerr << my_rank << " ... server waiting for " << i << std::endl;
 	MPI_Recv(res, 2, MPI_INT, i, 1, MPI_COMM_WORLD, &Stat);
       }
+      std::cerr << my_rank << " ... server done " <<  std::endl;
       done=true;
     }
   
@@ -113,10 +121,6 @@ void Compass::loadDFA(std::string name, SgProject* project) {
       ROSE_ASSERT(memTrav->counter>0);
       ROSE_ASSERT(memTrav->counter==memTrav->nodeMap.size());
   
-      if (defuse==NULL) {
-	defuse = new DefUseAnalysis(project);
-	std::cerr << " creating defuse ... " <<std::endl;
-      }
 
       /* deserialize all results */
       // write the global def_use_array back to the defmap (for each processor)
@@ -132,18 +136,20 @@ void Compass::loadDFA(std::string name, SgProject* project) {
       /* deserialize all results */
 
 
-      if (my_rank==0) {
-	my_map defmap = defuse->getDefMap();
-	my_map usemap = defuse->getUseMap();
-	std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
-	std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
-      }
 
       if (processes>1)
 	MPI_Send(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD);
-
+      done=true;
     }
   }
+
+  if ((my_rank==0 && processes==1) || (my_rank==1 && processes>1)) {
+    my_map defmap = defuse->getDefMap();
+    my_map usemap = defuse->getUseMap();
+    std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
+    std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
+  }
+
 }
 
 void Compass::saveDFA(std::string name, SgProject* project) {
@@ -189,6 +195,8 @@ void Compass::saveDFA(std::string name, SgProject* project) {
 
 
 }
+
+
 
 void Compass::serializeDefUseResults(unsigned int *values,
 				     std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
@@ -282,7 +290,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 
   if (defuse==NULL) {
     //#define DEFUSE
-
+    std::cerr << " DEFUSE ==NULL ... running defuse analysis " << std::endl;
 #if ROSE_MPI
     /* ---------------------------------------------------------- 
      * MPI code for DEFUSE
@@ -304,7 +312,8 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     MPI_Barrier(MPI_COMM_WORLD);
     gettime(begin_time_node);
 
-    defuse = new DefUseAnalysis(root);
+    if (defuse==NULL)
+      defuse = new DefUseAnalysis(root);
 
     //defuse->disableVisualization();
     Rose_STL_Container<SgNode *> funcs = 

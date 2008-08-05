@@ -7,18 +7,22 @@
 
 
 namespace Compass {
-  void loadDFA(std::string name, SgProject* project);
-  void saveDFA(std::string name, SgProject* project);
   extern unsigned int global_arrsize;
   extern unsigned int global_arrsizeUse;
   extern unsigned int *def_values_global;
   extern unsigned int *use_values_global;
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
   extern bool quickSave;
+  // Support for DefUse Analysis
+  extern DefUseAnalysis*  defuse;
+  void runDefUseAnalysis(SgProject* root);
 
 #if ROSE_MPI
   //  struct timespec begin_time_node, end_time_node;
   extern int my_rank, processes;
+
+  void loadDFA(std::string name, SgProject* project);
+  void saveDFA(std::string name, SgProject* project);
 
   /****************************************************************************/
   // (tps - 11Jul08) : needed for MPI run of Compass
@@ -64,9 +68,6 @@ namespace Compass {
      extern bool UseToolGear;
      extern std::string tguiXML;
 
-     // Support for DefUse Analysis
-     extern DefUseAnalysis*  defuse;
-     void runDefUseAnalysis(SgProject* root);
      
      void commandLineProcessing(Rose_STL_Container<std::string> & commandLineArray);
 
