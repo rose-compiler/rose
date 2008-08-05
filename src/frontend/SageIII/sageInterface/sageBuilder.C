@@ -1432,14 +1432,14 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
 {
   ROSE_ASSERT(conditional);
   ROSE_ASSERT(true_body);
-  ROSE_ASSERT(false_body);
+  // ROSE_ASSERT(false_body); -- this is not required anymore
 
   SgIfStmt *ifstmt = new SgIfStmt(conditional, true_body, false_body);
   ROSE_ASSERT(ifstmt);
   setOneSourcePositionForTransformation(ifstmt);
   conditional->set_parent(ifstmt);
   true_body->set_parent(ifstmt);
-  false_body->set_parent(ifstmt);
+  if (false_body != NULL) false_body->set_parent(ifstmt);
   return ifstmt;
 }
 
