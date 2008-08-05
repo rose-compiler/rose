@@ -121,7 +121,8 @@ main ( int argc,  char * argv[] )
      DepStats.SetDepChoice(0x1 | 0x2 | 0x4);
      DepStats.PrintResults();
 #endif
-
+  //Qing's loop transformations are not robust enough to pass all tests.
+   //AstTests::runAllTests(sageProject);
    unparseProject(sageProject);
    if (GenerateObj())
       return sageProject->compileOutput();
