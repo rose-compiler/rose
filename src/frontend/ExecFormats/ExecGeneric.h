@@ -408,7 +408,8 @@ class ExecSection {
 
     ExecSection(ExecFile *f, addr_t offset, addr_t size)
         : file(NULL), header(NULL), size(0), offset(0), data(0), purpose(SP_UNSPECIFIED), synthesized(false),
-        id(-1), mapped(false), mapped_rva(0), rperm(true), wperm(true), eperm(false)
+        id(-1), mapped(false), mapped_rva(0), rperm(true), wperm(true), eperm(false),
+        congealed(false)
         {ctor(f, offset, size);}
     virtual ~ExecSection();
     virtual void        dump(FILE*, const char *prefix, ssize_t idx);
