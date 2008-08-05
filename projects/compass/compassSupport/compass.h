@@ -14,6 +14,7 @@ namespace Compass {
   extern unsigned int *def_values_global;
   extern unsigned int *use_values_global;
   typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
+  extern bool quickSave;
 
 #if ROSE_MPI
   //  struct timespec begin_time_node, end_time_node;

@@ -30,7 +30,7 @@ unsigned int Compass::global_arrsize=-1;
 unsigned int Compass::global_arrsizeUse=-1;
 unsigned int* Compass::def_values_global=NULL;
 unsigned int* Compass::use_values_global=NULL;
-
+bool Compass::quickSave=false;
 
 /******************************************************************
  * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI
@@ -109,7 +109,9 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 void Compass::saveDFA(std::string name, SgProject* project) {
   //unsigned int arrsize, unsigned int *values) {
   std::ofstream writeFile(name.c_str(), std::ios::out | std::ios::binary);
+  quickSave=true;
   runDefUseAnalysis(project);
+  quickSave=false;
 
   MPI_Barrier(MPI_COMM_WORLD);
 
@@ -133,7 +135,8 @@ void Compass::saveDFA(std::string name, SgProject* project) {
     std::cerr <<" Done Saving DFA to File " << std::endl;
 
     std::cerr << " Def[0] : " << def_values_global[0] << "  Use[0] : " << use_values_global[0] << std::endl;
-
+    // test the load after saving
+    /*
     for (unsigned int j=0;j<global_arrsize;j++) 
       def_values_global[j]=0;
     global_arrsize=-1;
@@ -141,7 +144,7 @@ void Compass::saveDFA(std::string name, SgProject* project) {
       use_values_global[j]=0;
     global_arrsizeUse=-1;
     loadDFA(name,project);
-
+    */
   }
 
 
@@ -196,6 +199,8 @@ void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* def
       defuse->addDefElement(node1, node2, node3);
     else
       defuse->addUseElement(node1, node2, node3);
+    if ((i%1000000)==0)
+      std::cerr << ">> deserializing " << i << " of " << arrsize << std::endl;
   }
 
   if (my_rank==0) {
@@ -517,7 +522,14 @@ void Compass::runDefUseAnalysis(SgProject* root) {
     delete[] length;
     delete[] offsetUse;
     delete[] lengthUse;
+    def_values=NULL;
+    use_values=NULL;
+    offset=NULL;
+    length=NULL;
+    offsetUse=NULL;
+    lengthUse=NULL;
 
+    if (quickSave==false) {
     /* communicate all results */
     std::cerr << my_rank << " : communication done. Deserializing ..." << std::endl;
 
@@ -554,6 +566,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
       std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
       std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
       //((DefUseAnalysis*)defuse)->printDefMap();
+    }
     }
     //#endif
 #else
