@@ -1834,7 +1834,7 @@ SgFunctionSymbol* X86AssemblyToCWithVariables::addHelperFunction(const std::stri
   return sym;
 }
 
-X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f): globalScope(NULL) {
+X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
@@ -1895,7 +1895,6 @@ X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f): globalScope
   gprLowByteSym[13] = globalScope->lookup_variable_symbol("r13b"); ROSE_ASSERT (gprLowByteSym[13]);
   gprLowByteSym[14] = globalScope->lookup_variable_symbol("r14b"); ROSE_ASSERT (gprLowByteSym[14]);
   gprLowByteSym[15] = globalScope->lookup_variable_symbol("r15b"); ROSE_ASSERT (gprLowByteSym[15]);
-  ipSym = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
   flagsSym[0] = globalScope->lookup_variable_symbol("cf"); ROSE_ASSERT (flagsSym[0]);
   flagsSym[1] = NULL;
   flagsSym[2] = globalScope->lookup_variable_symbol("pf"); ROSE_ASSERT (flagsSym[2]);
@@ -2058,9 +2057,7 @@ SgStatement* X86AssemblyToCWithVariables::makeGotoNextInstruction(uint64_t curre
 }
 
 SgStatement* X86AssemblyToCWithVariables::makeJump(SgExpression* newAddr) {
-  return buildBasicBlock(
-           buildAssignStatement(buildVarRefExp(ipSym), newAddr),
-           buildContinueStmt());
+  return makeDispatchSwitch(newAddr);
 }
 
 SgStatement* X86AssemblyToCWithVariables::makeConditionalJump(uint64_t currentAddr, SgExpression* cond, uint64_t newAddr, uint64_t nextIP) {
@@ -2101,10 +2098,18 @@ SgFunctionSymbol* X86AssemblyToCWithVariables::getHelperFunction(const string& n
   abort();
 }
 
-SgStatement* X86AssemblyToCWithVariables::makeDispatchSwitch(SgAsmFile* f) {
-  switchBody = buildBasicBlock();
-  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(ipSym), switchBody);
-  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(f, V_SgAsmBlock);
+SgStatement* X86AssemblyToCWithVariables::makeDispatchSwitch(SgExpression* ipExpr) {
+  if (isSgValueExp(ipExpr)) { // Special case for constants
+    uint64_t addr = getIntegerConstantValue(isSgValueExp(ipExpr));
+    map<uint64_t, SgLabelStatement*>::const_iterator it = labelsForBlocks.find(addr);
+    ROSE_ASSERT (it != labelsForBlocks.end());
+    SgLabelStatement* ls = it->second;
+    ROSE_ASSERT (ls);
+    return buildGotoStatement(ls);
+  }
+  SgBasicBlock* switchBody = buildBasicBlock();
+  SgSwitchStatement* sw = buildSwitchStatement(ipExpr, switchBody);
+  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(asmFile, V_SgAsmBlock);
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
     map<uint64_t, SgLabelStatement*>::const_iterator it = labelsForBlocks.find(bb->get_address());
@@ -2130,32 +2135,18 @@ SgStatement* X86AssemblyToCWithVariables::makeDispatchSwitch(SgAsmFile* f) {
   return sw;
 }
 
-SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBlock* appendTo) {
+SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgBasicBlock* appendTo) {
   SgBasicBlock* body = appendTo;
-  appendStatement(
-    buildAssignStatement(
-      buildVarRefExp(ipSym),
-      buildUnsignedLongLongIntValHex(
-        f->get_associated_entry_point())),
-    body);
-  appendStatement(
-    buildAssignStatement(
-      buildVarRefExp(flagsSym[x86flag_df]),
-      buildBoolValExp(false)),
-    body);
-  whileBody = buildBasicBlock();
+  whileBody = body;
+#if 0
   appendStatement(
     buildWhileStmt(
       buildBoolValExp(true),
       whileBody),
     body);
-  appendStatement(
-    buildExprStatement(
-      buildFunctionCallExp(
-        startingInstructionSym,
-        buildExprListExp())),
-    whileBody);
-  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(f, V_SgAsmBlock);
+  appendStatement(whileBody, body);
+#endif
+  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(asmFile, V_SgAsmBlock);
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
     blocks.insert(std::make_pair(bb->get_address(), bb));
@@ -2166,8 +2157,21 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgAsmFile* f, SgBasicBloc
       externallyVisibleBlocks.insert(bb->get_address());
     }
   }
-  SgStatement* sw = makeDispatchSwitch(f); // Also updates switchBody
-  appendStatement(sw, whileBody);
+  SgStatement* sw = makeDispatchSwitch(buildUnsignedLongLongIntValHex(asmFile->get_associated_entry_point()));
+  prependStatement(sw, whileBody);
+  prependStatement(
+    buildAssignStatement(
+      buildVarRefExp(flagsSym[x86flag_df]),
+      buildBoolValExp(false)),
+    body);
+#if 0
+  prependStatement(
+    buildExprStatement(
+      buildFunctionCallExp(
+        startingInstructionSym,
+        buildExprListExp())),
+    whileBody);
+#endif
   for (size_t i = 0; i < asmBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
     const SgAsmStatementPtrList& stmts = bb->get_statementList();

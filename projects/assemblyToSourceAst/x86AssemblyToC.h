@@ -57,6 +57,7 @@ class X86AssemblyToCFramework {
 
 class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   public: // For external access to symbols
+  SgAsmFile* asmFile;
   SgGlobal* globalScope;
   SgFunctionSymbol* paritySym;
   SgFunctionSymbol* mulhi64Sym;
@@ -83,7 +84,7 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgFunctionSymbol* bsfSym;
   SgVariableSymbol* gprSym[16];
   SgVariableSymbol* gprLowByteSym[16];
-  SgVariableSymbol* ipSym;
+  // SgVariableSymbol* ipSym;
   SgVariableSymbol* flagsSym[16];
   SgVariableSymbol* sf_xor_ofSym;
   SgVariableSymbol* zf_or_cfSym;
@@ -98,7 +99,6 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgFunctionSymbol* abortSym;
   SgFunctionSymbol* interruptSym;
   SgFunctionSymbol* startingInstructionSym;
-  SgBasicBlock* switchBody;
   SgBasicBlock* whileBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
@@ -118,11 +118,11 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgStatement* makeJump(SgExpression* newAddr);
   SgStatement* makeConditionalJump(uint64_t currentAddr, SgExpression* cond, uint64_t newAddr, uint64_t nextAddr);
   SgFunctionSymbol* getHelperFunction(const std::string& name);
+  SgStatement* makeDispatchSwitch(SgExpression* ipExpr);
 
   public:
-  X86AssemblyToCWithVariables(SgFile* templateFile);
-  SgBasicBlock* makeAllCode(SgAsmFile* asmFile, SgBasicBlock* appendTo);
-  SgStatement* makeDispatchSwitch(SgAsmFile* f);
+  X86AssemblyToCWithVariables(SgFile* templateFile, SgAsmFile* asmFile);
+  SgBasicBlock* makeAllCode(SgBasicBlock* appendTo);
 };
 
 #endif // ROSE_X86_ASSEMBLY_TO_C_H

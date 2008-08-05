@@ -694,7 +694,7 @@ set<SgInitializedName*> makeAllPossibleVars(const X86AssemblyToCWithVariables& c
       result.insert(conv.flagsSym[i]->get_declaration());
     }
   }
-  result.insert(conv.ipSym->get_declaration());
+  // result.insert(conv.ipSym->get_declaration());
   result.insert(conv.sf_xor_ofSym->get_declaration());
   result.insert(conv.zf_or_cfSym->get_declaration());
   return result;
@@ -1056,7 +1056,7 @@ TrackVariableDefs::DefMap TrackVariableDefs::makeInitialMap() const {
       result[conv.flagsSym[i]->get_declaration()] = conv.flagsSym[i];
     }
   }
-  result[conv.ipSym->get_declaration()] = conv.ipSym;
+  // result[conv.ipSym->get_declaration()] = conv.ipSym;
   result[conv.sf_xor_ofSym->get_declaration()] = conv.sf_xor_ofSym;
   result[conv.zf_or_cfSym->get_declaration()] = conv.zf_or_cfSym;
   return result;
@@ -1926,11 +1926,11 @@ int main(int argc, char** argv) {
   ROSE_ASSERT (g);
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
-  X86AssemblyToCWithVariables converter(newFile);
-  SgBasicBlock* body = decl->get_definition()->get_body();
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
   ROSE_ASSERT (asmFiles.size() == 1);
-  converter.makeAllCode(isSgAsmFile(asmFiles[0]), body);
+  X86AssemblyToCWithVariables converter(newFile, isSgAsmFile(asmFiles[0]));
+  SgBasicBlock* body = decl->get_definition()->get_body();
+  converter.makeAllCode(body);
   proj->get_fileList()->erase(proj->get_fileList()->end() - 1); // Remove binary file before calling backend
   cerr << "Simplifying" << endl;
   set<SgFunctionDeclaration*> safeFunctions;
@@ -1964,7 +1964,7 @@ int main(int argc, char** argv) {
   SAFE(memoryReadDWord);
   SAFE(memoryReadQWord);
 #undef SAFE
-  addDirectJumpsToSwitchCases(converter.switchBody, converter.whileBody, converter.ipSym, converter);
+  // addDirectJumpsToSwitchCases(converter.switchBody, converter.whileBody, converter.ipSym, converter);
   /// // doSimpleSSA(converter.whileBody, converter);
   /// // structureCode(converter.whileBody); cerr << "X" << endl;
   /// // removeUnusedLabels(converter.whileBody); cerr << "X" << endl;
