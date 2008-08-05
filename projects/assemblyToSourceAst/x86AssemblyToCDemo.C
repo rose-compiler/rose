@@ -1989,7 +1989,7 @@ int main(int argc, char** argv) {
   // removeIfConstants(proj); cerr << "X" << endl;
   // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  // flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
+  flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
   // structureCode(converter.switchBody); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;

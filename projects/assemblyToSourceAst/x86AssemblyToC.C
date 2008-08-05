@@ -502,29 +502,41 @@ void SingleInstructionTranslator::translate() {
       break;
     }
 
+#define STRING_INSTRUCTION_CX x86_regclass_gpr, x86_gpr_cx, sizeToPos(insn->get_addressSize()) // Three operands to makeRegister{Read,Write}
+#define STRING_INSTRUCTION_SI x86_regclass_gpr, x86_gpr_si, sizeToPos(insn->get_addressSize()) // Three operands to makeRegister{Read,Write}
+#define STRING_INSTRUCTION_DI x86_regclass_gpr, x86_gpr_di, sizeToPos(insn->get_addressSize()) // Three operands to makeRegister{Read,Write}
+#define STRING_INSTRUCTION_UPDATE_CX f->makeRegisterWrite(STRING_INSTRUCTION_CX, buildSubtractOp(f->makeRegisterRead(STRING_INSTRUCTION_CX), buildUnsignedLongLongIntValHex(1)))
+#define STRING_INSTRUCTION_UPDATE_SI(size) f->makeRegisterWrite(STRING_INSTRUCTION_SI, buildAddOp(f->makeRegisterRead(STRING_INSTRUCTION_SI), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-size), buildUnsignedLongLongIntValHex(size))))
+#define STRING_INSTRUCTION_UPDATE_DI(size) f->makeRegisterWrite(STRING_INSTRUCTION_DI, buildAddOp(f->makeRegisterRead(STRING_INSTRUCTION_DI), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-size), buildUnsignedLongLongIntValHex(size))))
+#define STRING_INSTRUCTION_SOURCE(type) f->makeMemoryRead(insn->get_segmentOverride(), f->makeRegisterRead(STRING_INSTRUCTION_SI), type::createType())
+#define STRING_INSTRUCTION_DEST_READ(type) f->makeMemoryRead(x86_segreg_es, f->makeRegisterRead(STRING_INSTRUCTION_DI), type::createType())
+#define STRING_INSTRUCTION_DEST_WRITE(value, type) f->makeMemoryWrite(x86_segreg_es, f->makeRegisterRead(STRING_INSTRUCTION_DI), (value), type::createType())
+#define STRING_INSTRUCTION_REPEAT_HEADER \
+      ROSE_ASSERT (operands.size() == 0); \
+      SgBasicBlock* block = buildBasicBlock(); \
+      SgLabelStatement* topLabel = buildLabelStatement("repLabel" + StringUtility::intToHex(insn->get_address()), buildBasicBlock(), block); \
+      SgLabelStatement* endLabel = buildLabelStatement("repEndLabel" + StringUtility::intToHex(insn->get_address()), buildBasicBlock(), block); \
+      append(topLabel, block); \
+      append( \
+        buildIfStmt( \
+          buildEqualityOp(f->makeRegisterRead(STRING_INSTRUCTION_CX), buildUnsignedLongLongIntValHex(0)), \
+          buildGotoStatement(endLabel), \
+          NULL), \
+        block); \
+      append(STRING_INSTRUCTION_UPDATE_CX, block);
+
+#define STRING_INSTRUCTION_REPEAT_TRAILER \
+      append(block); \
+      append(endLabel);
+
+#define STRING_INSTRUCTION_GOTO_TOP buildGotoStatement(topLabel)
+#define STRING_INSTRUCTION_GOTO_TOP_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildGotoStatement(topLabel), NULL) 
+#define STRING_INSTRUCTION_GOTO_TOP_NOT_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildBasicBlock(), buildGotoStatement(topLabel)) 
+
     case x86_repe_cmpsb: {
-      ROSE_ASSERT (operands.size() == 0);
-      SgBasicBlock* bbForCxNotZero = buildBasicBlock();
-
-      X86SegmentRegister segForSrc = insn->get_segmentOverride();
-      append(
-        buildWhileStmt(
-          buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(0)),
-          buildBasicBlock(
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all, buildSubtractOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(1))),
-            buildIfStmt(
-              buildNotEqualOp(
-                f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeByte::createType()),
-                f->makeMemoryRead(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), SgAsmTypeByte::createType())),
-              buildBasicBlock(buildBreakStmt()),
-              buildBasicBlock()),
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_si, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1)))),
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_di, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1))))
-            )),
-        bbForCxNotZero);
-
-      SgVariableSymbol* op1sym = cacheValue(f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeByte::createType()), bbForCxNotZero);
-      SgVariableSymbol* op2sym = cacheValue(f->makeMemoryRead(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), SgAsmTypeByte::createType()), bbForCxNotZero);
+      STRING_INSTRUCTION_REPEAT_HEADER
+      SgVariableSymbol* op1sym = cacheValue(STRING_INSTRUCTION_SOURCE(SgAsmTypeByte), block);
+      SgVariableSymbol* op2sym = cacheValue(STRING_INSTRUCTION_DEST_READ(SgAsmTypeByte), block);
       SgVariableSymbol* resultsym =
         makeNewVariableInBlock(
           SgTypeUnsignedChar::createType(),
@@ -533,38 +545,19 @@ void SingleInstructionTranslator::translate() {
               buildVarRefExp(op1sym),
               buildVarRefExp(op2sym)),
             buildUnsignedLongLongIntValHex(0xFF)),
-          bbForCxNotZero);
-
-      setFlagsForSubtract(op1sym, op2sym, resultsym, SgAsmTypeByte::createType(), bbForCxNotZero);
-
-      append(buildIfStmt(
-               buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(0)),
-               bbForCxNotZero,
-               buildBasicBlock()));
+          block);
+      setFlagsForSubtract(op1sym, op2sym, resultsym, SgAsmTypeByte::createType(), block);
+      append(STRING_INSTRUCTION_UPDATE_SI(1), block);
+      append(STRING_INSTRUCTION_UPDATE_DI(1), block);
+      append(STRING_INSTRUCTION_GOTO_TOP_ZF, block);
+      STRING_INSTRUCTION_REPEAT_TRAILER
       break;
     }
 
     case x86_repne_scasb: {
-      ROSE_ASSERT (operands.size() == 0);
-      SgBasicBlock* bbForCxNotZero = buildBasicBlock();
-
-      append(
-        buildWhileStmt(
-          buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(0)),
-          buildBasicBlock(
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all, buildSubtractOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildIntVal(1))),
-            buildIfStmt(
-              buildEqualityOp(
-                f->makeMemoryRead(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), SgAsmTypeByte::createType()),
-                makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte))),
-              buildBasicBlock(buildBreakStmt()),
-              buildBasicBlock()),
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_di, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildIntVal(-1), buildIntVal(1))))
-            )),
-        bbForCxNotZero);
-
-      SgVariableSymbol* op1sym = cacheValue(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte), bbForCxNotZero);
-      SgVariableSymbol* op2sym = cacheValue(f->makeMemoryRead(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), SgAsmTypeByte::createType()), bbForCxNotZero);
+      STRING_INSTRUCTION_REPEAT_HEADER
+      SgVariableSymbol* op1sym = cacheValue(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte), block);
+      SgVariableSymbol* op2sym = cacheValue(STRING_INSTRUCTION_DEST_READ(SgAsmTypeByte), block);
       SgVariableSymbol* resultsym =
         makeNewVariableInBlock(
           SgTypeUnsignedChar::createType(),
@@ -573,49 +566,38 @@ void SingleInstructionTranslator::translate() {
               buildVarRefExp(op1sym),
               buildVarRefExp(op2sym)),
             buildUnsignedLongLongIntValHex(0xFF)),
-          bbForCxNotZero);
-
-      setFlagsForSubtract(op1sym, op2sym, resultsym, SgAsmTypeByte::createType(), bbForCxNotZero);
-
-      append(buildIfStmt(
-               buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildIntVal(0)),
-               bbForCxNotZero,
-               buildBasicBlock()));
+          block);
+      setFlagsForSubtract(op1sym, op2sym, resultsym, SgAsmTypeByte::createType(), block);
+      append(STRING_INSTRUCTION_UPDATE_DI(1), block);
+      append(STRING_INSTRUCTION_GOTO_TOP_NOT_ZF, block);
+      STRING_INSTRUCTION_REPEAT_TRAILER
       break;
     }
 
     case x86_rep_movsd: {
-      ROSE_ASSERT (operands.size() == 0);
-      X86SegmentRegister segForSrc = insn->get_segmentOverride();
-      append(
-        buildWhileStmt(
-          buildNotEqualOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(0)),
-          buildBasicBlock(
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all, buildSubtractOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_cx, x86_regpos_all), buildUnsignedLongLongIntValHex(1))),
-            f->makeMemoryWrite(x86_segreg_es, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all),
-                              f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeDoubleWord::createType()),
-                              SgAsmTypeDoubleWord::createType()),
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_si, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1)))),
-            f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_di, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_di, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildUnsignedLongLongIntValHex(-1), buildUnsignedLongLongIntValHex(1))))
-            )));
-      break;
+      STRING_INSTRUCTION_REPEAT_HEADER
+      append(STRING_INSTRUCTION_DEST_WRITE(STRING_INSTRUCTION_SOURCE(SgAsmTypeDoubleWord), SgAsmTypeDoubleWord), block);
+      append(STRING_INSTRUCTION_UPDATE_SI(4), block);
+      append(STRING_INSTRUCTION_UPDATE_DI(4), block);
+      append(STRING_INSTRUCTION_GOTO_TOP, block);
+      STRING_INSTRUCTION_REPEAT_TRAILER
     }
 
     case x86_lodsb: {
-      X86SegmentRegister segForSrc = insn->get_segmentOverride();
-      SgVariableSymbol* op1sym = cacheValue(f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeByte::createType()));
-      append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte), buildVarRefExp(op1sym)));
-      append(
-          f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_si, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildIntVal(-1), buildIntVal(1)))));
+      SgBasicBlock* block = buildBasicBlock();
+      SgVariableSymbol* op1sym = cacheValue(STRING_INSTRUCTION_SOURCE(SgAsmTypeByte), block);
+      append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_low_byte), buildVarRefExp(op1sym)), block);
+      append(STRING_INSTRUCTION_UPDATE_SI(1), block);
+      append(block);
       break;
     }
 
     case x86_lodsd: {
-      X86SegmentRegister segForSrc = insn->get_segmentOverride();
-      SgVariableSymbol* op1sym = cacheValue(f->makeMemoryRead(segForSrc, f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), SgAsmTypeDoubleWord::createType()));
-      append(f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword, buildVarRefExp(op1sym)));
-      append(
-          f->makeRegisterWrite(x86_regclass_gpr, x86_gpr_si, x86_regpos_all, buildAddOp(f->makeRegisterRead(x86_regclass_gpr, x86_gpr_si, x86_regpos_all), buildConditionalExp(f->makeFlagRead(x86flag_df), buildIntVal(-1), buildIntVal(1)))));
+      SgBasicBlock* block = buildBasicBlock();
+      SgVariableSymbol* op1sym = cacheValue(STRING_INSTRUCTION_SOURCE(SgAsmTypeDoubleWord), block);
+      append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword), buildVarRefExp(op1sym)), block);
+      append(STRING_INSTRUCTION_UPDATE_SI(4), block);
+      append(block);
       break;
     }
 
@@ -2197,7 +2179,7 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgBasicBlock* appendTo) {
         break;
       }
     }
-    flattenBlocks(caseBody);
+    // flattenBlocks(caseBody);
     insertStatementAfter(labelsForBlocks[addr], caseBody);
   }
   return body;
