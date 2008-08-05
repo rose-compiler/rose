@@ -73,11 +73,12 @@ void CppToDotTranslator::backend() {
   AstDOTGeneration astdotgen;
   // we should only generate one file (not all five) and process
   // the rose command line (right now tools/cpp2ps does that)
-  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::PREORDER,"Preorder.");
-  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::POSTORDER,"Postorder.");
-  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::TOPDOWN,"TopDown.");
-  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::BOTTOMUP,"BottomUp.");
-  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::TOPDOWNBOTTOMUP,"TopDownBottomUp.");
+  astdotgen.generateInputFiles(getAstRoot());
+//  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::PREORDER,"Preorder.");
+//  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::POSTORDER,"Postorder.");
+//  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::TOPDOWN,"TopDown.");
+//  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::BOTTOMUP,"BottomUp.");
+//  astdotgen.generateInputFiles(getAstRoot(),AstDOTGeneration::TOPDOWNBOTTOMUP,"TopDownBottomUp.");
 }
 void CppToCppTranslator::printMessage(string s) {
   // Avoid all I/O to stdout if useBackendOnly == true
