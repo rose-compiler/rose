@@ -331,7 +331,7 @@ void Compass::runDefUseAnalysis(SgProject* root) {
 	  MPI_Isend(res, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[0]);
 	  MPI_Irecv(res2, 2, MPI_INT, 0, 1, MPI_COMM_WORLD, &request[1]);
 	
-	  if (((max-min) % 20)==0)
+	  if (((max-min) % 20)==0 || min <10)
 	  std::cout << " process : " << my_rank << " receiving nr: [" << min << ":" << max << "[ of " <<
 	    bounds.size() << "     range : " << (max-min) << std::endl;
 
