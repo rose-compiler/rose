@@ -262,8 +262,8 @@ typedef Rose_STL_Container<SgDimensionObject*>     SgDimensionObjectPtrList;
 typedef SgDimensionObjectPtrList*                  SgDimensionObjectPtrListPtr;
 
 // DQ (11/21/2007): Added support for dimension statements (which can have multiple entries)
-typedef Rose_STL_Container<SgLabelSymbol*>     SgLabelSymbolPtrList;
-typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
+typedef Rose_STL_Container<SgLabelSymbol*>    SgLabelSymbolPtrList;
+typedef SgLabelSymbolPtrList*                 SgLabelSymbolPtrListPtr;
 
 // DQ (11/21/2007): Added support for format statements (which can have multiple entries)
 typedef Rose_STL_Container<SgFormatItem*>     SgFormatItemPtrList;
@@ -275,6 +275,11 @@ typedef SgAddressList*                        SgAddressListPtr;
 
 typedef Rose_STL_Container<SgAsmPEDLL*>       SgAsmPEDLLPrtList;
 typedef SgAsmPEDLLPrtList*                    SgAsmPEDLLPrtListPtr;
+
+typedef Rose_STL_Container<unsigned>          SgUnsignedList;
+typedef SgUnsignedList*                       SgUnsignedListPtr;
+
+
 
 // DQ (11/26/2005): Support for visitor pattern.
 class ROSE_VisitTraversal;
