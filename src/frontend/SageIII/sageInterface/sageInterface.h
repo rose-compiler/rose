@@ -669,14 +669,27 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   \brief Backwards traverse through the AST to find a node, findEnclosingXXX()
 */
 // remember to put const to all arguments.
-//! Traverse back through a node's parents to find the first node matching the desired type, includingSelf specifies if the current node is checked.
-SgNode * getEnclosingNode(const SgNode*, const VariantT, const bool includingSelf=false);
+//! Traverse back through a node's parents to find the first node matching the desired type and its derived types, includingSelf specifies if the current node is checked.
+template <typename NodeType>
+NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf=false)
+{
+  ROSE_ASSERT(astNode!=NULL);
+  if ((includingSelf)&&(dynamic_cast<const NodeType*>(astNode)))
+    return const_cast<NodeType*>(dynamic_cast<const NodeType*> (astNode));
+
+  SgNode* parent = astNode->get_parent();
+  while ((parent!=NULL)&&(!dynamic_cast<const NodeType*>(parent)))
+    parent = parent->get_parent();
+
+  return const_cast<NodeType*>(dynamic_cast<const NodeType*> (parent));
+}
 
 //! Get the closest scope 
 SgScopeStatement* getScope(const SgNode* astNode); 
 
   //! Traverse back through a node's parents to find the enclosing global scope
   SgGlobal* getGlobalScope( const SgNode* astNode);
+
 
   //! Find the function definition
   SgFunctionDefinition* getEnclosingProcedure(SgNode* n, const bool includingSelf=false);
@@ -692,8 +705,8 @@ SgScopeStatement* getScope(const SgNode* astNode);
   //! Find the closest loop outside the given statement; if fortranLabel is not empty, the Fortran label of the loop must be equal to it
   SgScopeStatement* findEnclosingLoop(SgStatement* s, const std::string& fortranLabel = "", bool stopOnSwitches = false);
 
+  //! Find the enclosing function declaration, including its derived instances like isSgProcedureHeaderStatement, isSgProgramHeaderStatement, and isSgMemberFunctionDeclaration. 
   SgFunctionDeclaration * getEnclosingFunctionDeclaration (SgNode * astNode, const bool includingSelf=false);
-
    //roseSupport/utility_functions.h
   //! get the SgFile node from current node
   SgFile* getEnclosingFileNode (SgNode* astNode );

@@ -42,7 +42,7 @@ Outliner::Transform::outlineBlock (SgBasicBlock* s,
   SgGlobal* glob_scope =
     const_cast<SgGlobal *> (TransformationSupport::getGlobalScope (s));
   SgFunctionDeclaration* func_orig =
-    const_cast<SgFunctionDeclaration *> (ASTtools::getEnclosingFuncDecl (s));
+    const_cast<SgFunctionDeclaration *> (SageInterface::getEnclosingFunctionDeclaration (s));
   insert (func, glob_scope, func_orig);
 // DQ (9/7/2007): Need to add function symbol to global scope!
 //   printf ("Fixing up the symbol table in scope = %p = %s for function = %p = %s \n",glob_scope,glob_scope->class_name().c_str(),func,func->get_name().str());

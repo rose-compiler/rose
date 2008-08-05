@@ -18,9 +18,6 @@
 
 namespace ASTtools
 {
-  //! Gets the closest enclosing function declaration for current node.
-  const SgFunctionDeclaration* getEnclosingFuncDecl (const SgNode* astNode);
-
   //! Returns the closest enclosing class definition, or NULL if none exists.
   const SgClassDefinition* getEnclosingClassDef (const SgNode* n);
 

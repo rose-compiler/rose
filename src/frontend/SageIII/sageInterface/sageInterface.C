@@ -4535,9 +4535,9 @@ SgFunctionDefinition* SageInterface::getEnclosingProcedure(SgNode* n, bool inclu
 
 SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bool includingSelf)
 {
-    SgNode* temp = getEnclosingNode(n, V_SgFunctionDefinition,includingSelf);
+    SgFunctionDefinition* temp = getEnclosingNode<SgFunctionDefinition>(n,includingSelf);
   if (temp)
-    return isSgFunctionDefinition(temp);
+    return temp;
   else
     return NULL;
 } 
@@ -4546,7 +4546,7 @@ SgFunctionDefinition* SageInterface::getEnclosingFunctionDefinition(SgNode* n,bo
 SgFunctionDeclaration *
 SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingSelf)
 {
-  SgNode* temp = getEnclosingNode(astNode, V_SgFunctionDeclaration,includingSelf);
+  SgNode* temp = getEnclosingNode<SgFunctionDeclaration>(astNode,includingSelf);
   if (temp)
     return isSgFunctionDeclaration(temp);
   else
@@ -4569,7 +4569,7 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
  SgGlobal* SageInterface::getGlobalScope( const SgNode* astNode)
  {
    // should including itself in this case
-    SgNode* temp = getEnclosingNode(astNode,V_SgGlobal,true);
+    SgNode* temp = getEnclosingNode<SgGlobal>(astNode,true);
     if (temp)
       return isSgGlobal(temp);
     else 
@@ -4579,29 +4579,13 @@ SageInterface::getEnclosingFunctionDeclaration (SgNode * astNode,bool includingS
   SgClassDefinition* 
   SageInterface::getEnclosingClassDefinition(SgNode* astNode, const bool includingSelf/* =false*/)
   {
-    SgNode* temp = getEnclosingNode(astNode,V_SgClassDefinition,includingSelf);
+    SgNode* temp = getEnclosingNode<SgClassDefinition>(astNode,includingSelf);
     if (temp)
       return isSgClassDefinition(temp);
     else 
       return NULL;
  }
 
-
-
-//! a generic function to bottom-up search for a node of VariantT type
-SgNode * SageInterface::getEnclosingNode(const SgNode* astNode, const VariantT nodeType, bool includingSelf)
-{
-  ROSE_ASSERT(astNode!=NULL);
-
-  if ((includingSelf)&&(astNode->variantT()==nodeType)) 
-    return const_cast<SgNode*> (astNode);
-
-  SgNode* parent = astNode->get_parent();
-  while ((parent!=NULL)&&(parent->variantT()!=nodeType))
-    parent = parent->get_parent();
-
-  return parent;
-}
 
 SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 {

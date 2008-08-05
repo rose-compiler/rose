@@ -229,7 +229,8 @@ Outliner::isOutlineable (const SgStatement* s, bool verbose)
       return false;
     }
 
-  const SgFunctionDeclaration* decl = ASTtools::getEnclosingFuncDecl (s);
+  const SgFunctionDeclaration* decl = 
+       SageInterface::getEnclosingFunctionDeclaration (const_cast<SgStatement* >(s));
   if (!decl)
     {
       if (verbose)

@@ -86,23 +86,6 @@ ASTtools::isConstObj (const SgType* type)
 
 // ========================================================================
 
-const SgFunctionDeclaration *
-ASTtools::getEnclosingFuncDecl (const SgNode * astNode)
-{
-  const SgNode *n = astNode;
-  ROSE_ASSERT (astNode != NULL);
-  do
-    {
-      n = n->get_parent ();
-    }
-  while (n
-         && !isSgFunctionDeclaration (n)
-         && !isSgProcedureHeaderStatement (n) // support for Fortran program units, Liao, 12/14/2007
-         && !isSgProgramHeaderStatement (n)
-         && !isSgMemberFunctionDeclaration (n));  // \todo What about SgTemplateInstationFunctionDecl, SgTemplateInstantiationMemberFunctionDecl?
-  return isSgFunctionDeclaration (n);
-}
-
 const SgClassDefinition *
 ASTtools::getEnclosingClassDef (const SgNode* n)
 {

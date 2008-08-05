@@ -37,7 +37,7 @@ toString (const SgStatement* s, size_t id = 0)
 {
   ROSE_ASSERT (s);
   const SgFunctionDeclaration* decl =
-    ASTtools::getEnclosingFuncDecl (s);
+    SageInterface::getEnclosingFunctionDeclaration (const_cast<SgStatement*>(s));
   ROSE_ASSERT (decl);
   string func_tag (decl->get_qualified_name ().str ());
 
