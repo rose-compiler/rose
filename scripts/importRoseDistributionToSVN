@@ -17,8 +17,8 @@
 # Last Modified 7/30/2008
 #------------------------------------------------------
 
-REMOTE_SVN_REPOS=file:////home/liao6/test3/ROSE.MIRROR
-#REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
+#REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
+REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
 
 if [ $# -lt 1 ]
 then
@@ -55,9 +55,11 @@ cd ${UPLOAD_DIR}
 ROSE_DIST_DIR=$(ls ${UPLOAD_DIR})
 echo "Unpacked ROSE distribution directory is: ${ROSE_DIST_DIR}"
 
-# Find all .svn directories and remove them
+# Find all unwanted directories and remove them
 #----------------------------------------------------
 find . -name .svn | xargs rm -rf
+find . -name Makefile.in~ | xargs rm -rf
+find . -name autom4te.cache | xargs rm -rf
 
 # Make sure no EDG copyrighted files exist
 #----------------------------------------------------
