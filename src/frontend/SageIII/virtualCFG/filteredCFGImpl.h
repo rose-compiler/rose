@@ -119,8 +119,7 @@ namespace VirtualCFG
       CfgToDotImpl(std::ostream & o):exploredNodes(), nodesPrinted(), o(o)
         {
         }
-        void explore(NodeT n);
-        void processNodes(SgNode * top);
+        void processNodes(NodeT n);
     };
 
     template < typename NodeT > inline void printNode(std::ostream & o, const NodeT & n)
@@ -148,8 +147,11 @@ namespace VirtualCFG
             "\", style=\"" << (isInEdge ? "dotted" : "solid") << "\"];\n";
     }
 
+    template < typename NodeT, typename EdgeT > void printNodePlusEdges(std::ostream & o,
+                                                                        NodeT n);
+
     template < typename NodeT, typename EdgeT >
-        void CfgToDotImpl < NodeT, EdgeT >::explore(NodeT n)
+        void CfgToDotImpl < NodeT, EdgeT >::processNodes(NodeT n)
     {
         ROSE_ASSERT(n.getNode());
         std::pair < typename std::multimap < SgNode *, NodeT >::const_iterator,
@@ -162,17 +164,18 @@ namespace VirtualCFG
                 return;
         }
         exploredNodes.insert(make_pair(n.getNode(), n));
+        printNodePlusEdges<NodeT, EdgeT>(o, n);
         std::vector < EdgeT > outEdges = n.outEdges();
         for (unsigned int i = 0; i < outEdges.size(); ++i)
         {
             ROSE_ASSERT(outEdges[i].source() == n);
-            explore(outEdges[i].target());
+            processNodes(outEdges[i].target());
         }
         std::vector < EdgeT > inEdges = n.inEdges();
         for (unsigned int i = 0; i < inEdges.size(); ++i)
         {
             ROSE_ASSERT(inEdges[i].target() == n);
-            explore(inEdges[i].source());
+            processNodes(inEdges[i].source());
         }
     }
 
@@ -193,6 +196,7 @@ namespace VirtualCFG
         }
 				#endif
     }
+#if 0
     template < typename NodeT, typename EdgeT >
         void CfgToDotImpl < NodeT, EdgeT >::processNodes(SgNode *)
     {
@@ -202,6 +206,7 @@ namespace VirtualCFG
             printNodePlusEdges < NodeT, EdgeT > (o, it->second);
         }
     }
+#endif
 
 
     template < typename FilterFunction > std::ostream & cfgToDot(std::ostream & o,
@@ -212,8 +217,7 @@ namespace VirtualCFG
         o << "digraph " << graphName << " {\n";
         CfgToDotImpl < FilteredCFGNode < FilterFunction >,
             FilteredCFGEdge < FilterFunction > >impl(o);
-        impl.explore(start);
-        impl.processNodes(start.getNode());
+        impl.processNodes(start);
         o << "}\n";
         return o;
     }
