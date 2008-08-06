@@ -122,7 +122,8 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEANFILES = rose_paths.h rose_binary_compatibility_signature rose_binary_compatibility_signature_src
+DISTCLEANFILES = rose_paths.h
+CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
 
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
@@ -193,6 +194,8 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `ls *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
+	find $(distdir)/ -name Makefile.in~ -exec rm {} \;
+	find $(distdir)/ -name autom4te.cache -exec rm -rf {} \;
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
 	$(am__remove_distdir)
 
