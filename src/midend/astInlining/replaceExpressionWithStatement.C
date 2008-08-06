@@ -292,7 +292,7 @@ SgAssignOp* convertInitializerIntoAssignment(SgAssignInitializer* init)
   // FixSgTree(assign_stmt);
   // FixSgTree(parent);
 
-     AstPostProcessing(assign_stmt);
+  // AstPostProcessing(assign_stmt);
      return isSgAssignOp(assign_stmt->get_expression());
    }
 
