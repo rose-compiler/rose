@@ -726,7 +726,7 @@ HEADER_THROW_OPERATOR_START
              {
                unknown_throw = 0             /*! error value */,
                throw_expression              /*! throw expression (takes an expression) */,
-               throw_exception_specification /*! takes a list of types */,
+               // throw_exception_specification /*! takes a list of types */, JJW (8/6/2008) -- SgThrowOp is not used for exception specifications
                rethrow                       /*! rethow expression (as in \"rethrow;\") */
              };
 

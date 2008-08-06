@@ -1126,8 +1126,11 @@ Grammar::setUpExpressions ()
 
      ThrowOp.setFunctionPrototype ( "HEADER_THROW_OPERATOR", "../Grammar/Expression.code" );
   // DQ (9/19/2004): Added support for throw taking a list of type (what the C++ grammar calls a "exception-specification")
+  // JJW (8/6/2008): This should never be used -- SgThrowOp is not used for exception specifications
+#if 0
      ThrowOp.setDataPrototype     ( "SgTypePtrListPtr", "typeList", "= NULL",
 				    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
   // DQ (9/19/2004): Added support for rethrow (allows unary operator operand to be NULL without being interpreted as an error)
      ThrowOp.setDataPrototype     ( "SgThrowOp::e_throw_kind", "throwKind", "= SgThrowOp::unknown_throw",
 				    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

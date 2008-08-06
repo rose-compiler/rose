@@ -4170,6 +4170,8 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
                break;
              }
 
+// JJW (8/6/2008): this should never happen
+#if 0
           case SgThrowOp::throw_exception_specification:
              {
             // printf ("Case of SgThrowOp::throw_exception_specification in unparseThrowOp() \n");
@@ -4199,6 +4201,7 @@ Unparse_ExprStmt::unparseThrowOp(SgExpression* expr, SgUnparse_Info& info)
                
                break;
              }
+#endif
 
           case SgThrowOp::rethrow:
              {
