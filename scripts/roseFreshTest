@@ -8,17 +8,23 @@
 # x. The path to the source and build directories of ROSE
 # x. The configuration options for building ROSE
 # x. Email notification recipients, etc.  
+# x. Enable upload roseCompiler website
+# x. Enable load ROSE distribution as vendor drop to the SciDAC repository
 #
+# Caution: 
+#    Be extremely careful when change the directory layout of the test dir.
+#    Other scripts may depend on it.     
+#    
 # Usage ------------------
 # manual run it:
 #      ./roseFreshTest yourConfiguration.sh 
 #
 # automatically run it as a daily cron job running at 2:30AM
 #   $ crontab -e
-#   30 2 * * * /home/liao6/rose/scripts/roseFreshTestLeo /path/to/yourconfig.sh
+#   30 2 * * * /home/liao6/rose/scripts/roseFreshTest /path/to/yourconfigStub.sh
 #
 # Liao, Jeremiah, 2/7/2008
-# Last modified 7/31/2008
+# Last modified 8/6/2008
 #------------------------------------------------------
 if [ $# -lt 1 ]
 then
@@ -171,9 +177,8 @@ if [ $buildstatus == 0 ]; then
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
-  # upload ROSE sources to SciDAC Outreach repository and documentations to www.roseCompiler.org
+  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
   if [ $ENABLE_UPLOAD_SVN ] ; then
-   # update the external SVN repository
      ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP}
     if [ $? -ne 0 ]; then
       echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
@@ -181,6 +186,7 @@ if [ $buildstatus == 0 ]; then
       echo "importRoseDistributionToSVN finishes normally.">>mailtext
     fi
   fi
+  # documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
     cd ${ROSE_TOP}/build/docs/Rose
