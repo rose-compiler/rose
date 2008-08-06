@@ -9,7 +9,10 @@ int main (int argc, char* argv[]) {
   SgProject* sageProject = frontend(argc,argv);
   // FixSgProject(sageProject);
 
-  rewrite(getAlgebraicRules(), (SgNode*&)sageProject);
+  SgNode* tempProject = sageProject;
+  rewrite(getAlgebraicRules(), tempProject);
+  sageProject = isSgProject(tempProject);
+  ROSE_ASSERT (sageProject);
 
   // AstPDFGeneration().generateInputFiles(&sageProject);
 

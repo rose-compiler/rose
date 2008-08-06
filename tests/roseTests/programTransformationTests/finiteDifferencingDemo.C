@@ -48,7 +48,10 @@ int main (int argc, char* argv[]) {
 
   moveForDeclaredVariables(sageProject);
 
-  rewrite(getAlgebraicRules(), (SgNode*&)sageProject);
+  SgNode* tempProject = sageProject;
+  rewrite(getAlgebraicRules(), tempProject);
+  sageProject = isSgProject(tempProject);
+  ROSE_ASSERT (sageProject);
 
   FindFunctionsVisitor().traverse(sageProject, preorder);
 
@@ -81,7 +84,10 @@ int main (int argc, char* argv[]) {
       SageInterface::myRemoveStatement(bang_stmt);
       simpleUndoFiniteDifferencingOne(bb, vr);
     }
-    rewrite(getAlgebraicRules(), (SgNode*&)body);
+    SgNode* tempBody = body;
+    rewrite(getAlgebraicRules(), tempBody);
+    body = isSgBasicBlock(tempBody);
+    ROSE_ASSERT (body);
   }
 
   // AstPDFGeneration().generateInputFiles(sageProject);
