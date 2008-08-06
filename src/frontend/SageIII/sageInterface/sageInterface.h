@@ -509,6 +509,9 @@ the types from which it is compounded. Any cv-qualifiers applied to an array typ
  */
 bool isConstType(SgType* t);
 
+//! Remove const (if present) from a type.  stripType() cannot do this because it removes all modifiers.
+SgType* removeConst(SgType* t);
+
 //! Is this a volatile type?
 bool isVolatileType(SgType* t);
 

@@ -96,6 +96,21 @@ bool isConstType(SgType* t) {
   return false;
 }
 
+// Remove a top-level const from the type, if present
+SgType* removeConst(SgType* t) {
+  if (isSgTypedefType(t))
+    return removeConst(isSgTypedefType(t)->get_base_type());
+  if (isSgModifierType(t)) {
+    SgModifierType* newT = deepCopy(isSgModifierType(t));
+    ROSE_ASSERT (newT);
+    SgTypeModifier& modifier = newT->get_typeModifier();
+    SgConstVolatileModifier& cv = modifier.get_constVolatileModifier();
+    cv.unsetConst();
+    return newT;
+  }
+  return t;
+}
+
 // Is this a volatile type?
 bool isVolatileType(SgType* t) {
   if (isSgTypedefType(t))
