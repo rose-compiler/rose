@@ -195,8 +195,8 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
 	find $(distdir)/ -name Makefile.in~ | xargs rm -rf
-	find $(distdir)/ -name .svn | xargs rm -rf
-	find $(distdir)/ -name autom4te.cache | xargs rm -rf
+	find $(distdir)/ -depth -name .svn -exec rm -rf {} \;
+	find $(distdir)/ -depth -name autom4te.cache -exec rm -rf {} \;
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
 	$(am__remove_distdir)
 
