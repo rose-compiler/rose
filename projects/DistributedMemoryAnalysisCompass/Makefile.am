@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
 
 if ROSE_USE_GCC_OMP
  INCLUDES_OMP = -DROSE_GCC_OMP 
@@ -6,8 +7,8 @@ endif
 
 if ROSE_MPI
 
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(top_srcdir)/projects/compass -I$(top_srcdir)/projects/compass/compassSupport -I../compass $(INCLUDES_OMP) 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) ../compass/libCompassCheckers.la -lrose
+INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(compass_tooldir)/compass -I$(compass_support_dir) -I$(compass_build_tooldir)/compass $(INCLUDES_OMP) 
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_build_tooldir)/libCompassCheckers.la -lrose
 
 if ROSE_USE_GCC_OMP
  LDADD += -lgomp
@@ -73,16 +74,16 @@ CLEANFILES = gmon.out *.parse *.run *.ast *.ti compass_parameters
 
 include_HEADERS = LoadSaveAST.h parallel_compass.h
 
-check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass parallel_functionBased_ASTBalance $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C compass_parameters
-	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
-	mpirun -l -np 2 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
-#	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C -shared
-	mpirun -l -np 1 ./parallel_file_compass$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
-	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C
-	mpirun -l -np 2 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C $(top_srcdir)/projects/compass/nullDeref/nullDerefTest2.C
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C -shared
-	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(top_srcdir)/projects/compass/nullDeref/nullDerefTest1.C -combined
+check-local: parallel_functionBased_dynamicBalance parallel_file_compass parallel_compass parallel_functionBased_ASTBalance $(compass_checker_dir)/nullDeref/nullDerefTest1.C compass_parameters
+	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
+	mpirun -l -np 2 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
+#	mpirun -l -np 1 ./parallel_functionBased_dynamicBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -shared
+	mpirun -l -np 1 ./parallel_file_compass$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
+	mpirun -l -np 1 ./parallel_compass$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C
+	mpirun -l -np 2 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C $(compass_checker_dir)/nullDeref/nullDerefTest2.C
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -shared
+	mpirun -l -np 1 ./parallel_functionBased_ASTBalance$(EXEEXT) $(compass_checker_dir)/nullDeref/nullDerefTest1.C -combined
 
 compass_parameters:
 	$(LN_S) ../compass/compass_parameters compass_parameters

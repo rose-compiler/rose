@@ -90,7 +90,7 @@ stringTokenToIntegerConverter
 subExpressionEvaluationOrder
 ternaryOperator
 time_tDirectManipulation
-typeTypedef
+#typeTypedef
 unaryMinus
 uninitializedDefinition
 upperRangeLimit

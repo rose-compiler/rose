@@ -27,6 +27,8 @@ namespace CompassAnalyses{
       //it's base classes has a virtual member.
       bool hasVirtualMember(SgClassDeclaration* clDecl)
         {  
+          // tps (Aug 5, 2008), fixed this bug because it crashed.
+          if (clDecl->get_definingDeclaration()==NULL) return false;
           SgClassDefinition* clDef = isSgClassDeclaration(clDecl->get_definingDeclaration())->get_definition();
 
           if(clDef == NULL)

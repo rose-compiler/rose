@@ -1,6 +1,0 @@
-<SIG> strcpy s1 s2
-<SIG> strncpy s1 s2 n
-<SIG> strdup s1
-<SIG> strcat s1 s2
-<SIG> strcmp s1 s2
-<SIG> strlen s

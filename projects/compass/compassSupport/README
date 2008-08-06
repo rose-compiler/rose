@@ -1,6 +1,0 @@
-
-Gergo has proposed changes to compass.h and compass.C
-which are inconsistant with Rich's MPI checker. So 
-I have saved these files in compass.h.gergo and compass.C.gergo
-and reverted to the version that Rich used.
-

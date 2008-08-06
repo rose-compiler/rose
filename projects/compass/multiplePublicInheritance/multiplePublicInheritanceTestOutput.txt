@@ -1,1 +1,0 @@
-MultiplePublicInheritance: multiplePublicInheritanceTest1.C:8.1-11.1: SgClassDefinition: A class is defined with more than one public superclass.

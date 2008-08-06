@@ -11,7 +11,6 @@ compass_checker_repository=$(compass_checker_dir)/repository
 compass_support_dir=$(compass_srcdir)/compassSupport
 compass_scripts_dir=$(compass_srcdir)/compass_scripts
 compass_input_dir=$(compass_srcdir)/in
-#compass_make_include_dir=$(compass_srcdir)/make_includes
 compass_test_dir=$(compass_srcdir)/tests
 
 compass_checker_bdir=$(compass_build_extdir)/checkers

@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-# include $(top_srcdir)/projects/compass/compass_makefile.inc
+include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
 
 #							-*- Makefile -*-
 
@@ -14,7 +14,7 @@ if ENABLE_JAVAPORT
 
 # To keep compile commands tidy, please ONLY put required include flags here.
 JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
-INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/projects/compass/compassSupport $(JAVA_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES)
 
 #INCLUDES	=						\
 #	-I.							\
@@ -67,7 +67,7 @@ nodist_libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 #libsage3_wrap_la_SOURCES	= sage3_wrap.cxx
 libsage3_wrap_la_CPPFLAGS	= $(INCLUDES)
 libsage3_wrap_la_LIBADD		= -lrose $(RT_LIBS) -lCompass -lCompassCheckers
-libsage3_wrap_la_LDFLAGS	= -L../../src -L../compass -L../compass/compassSupport
+libsage3_wrap_la_LDFLAGS	= -L../../src -L$(compass_build_tooldir)/compass -L$(compass_build_srcdir)/compassSupport
 
 sage3_wrap.cxx:	sage3.i sgname.i wchart.i casts.i Cxx_Grammar.i
 #		$(top_builddir)/src/frontend/SageIII/Cxx_Grammar.h 

@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
 
 # Use automake conditional to build Public and Developer distributions
 #    Public: includes all of ROSE and binary of EDG work and parts that
@@ -137,7 +138,7 @@ docs: FORCE_DOCS_TO_BE_MADE
 	   echo "    Generate all possible documentation cd docs; make documentation;"; \
 	   cd tutorial; $(MAKE) docs; \
 	   cd ../docs; $(MAKE) docs; \
-	   cd ../projects/compass; $(MAKE) docs; \
+	   cd $(compass_build_tooldir)/compass; $(MAKE) docs; \
    else \
       echo "Please look at the ROSE web site for documentation (www.roseCompiler.org)"; \
    fi

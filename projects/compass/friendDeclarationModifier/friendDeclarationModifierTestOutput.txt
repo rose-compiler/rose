@@ -1,1 +1,0 @@
-FriendDeclarationModifier: friendDeclarationModifierTest1.C:4.3-29: SgFunctionDeclaration: This checker checks if a declarations statement contains the "friend" keyword modifier 
