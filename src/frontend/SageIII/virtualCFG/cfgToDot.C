@@ -19,8 +19,7 @@ class CfgToDotImpl {
 
   public:
   CfgToDotImpl(ostream& o): exploredNodes(), nodesPrinted(), o(o) {}
-  void explore(NodeT n);
-  void processNodes(SgNode* top);
+  void processNodes(NodeT n);
 };
 
 template <typename NodeT, bool Debug>
@@ -39,7 +38,10 @@ inline void printEdge(ostream& o, const EdgeT& e, bool isInEdge) {
 }
 
 template <typename NodeT, typename EdgeT, bool Debug>
-void CfgToDotImpl<NodeT, EdgeT, Debug>::explore(NodeT n) {
+void printNodePlusEdges(ostream& o, NodeT n);
+
+template <typename NodeT, typename EdgeT, bool Debug>
+void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(NodeT n) {
   ROSE_ASSERT (n.getNode());
   pair<typename multimap<SgNode*, NodeT>::const_iterator,
        typename multimap<SgNode*, NodeT>::const_iterator> ip = exploredNodes.equal_range(n.getNode());
@@ -47,16 +49,17 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::explore(NodeT n) {
     if (i->second == n) return;
   }
   exploredNodes.insert(make_pair(n.getNode(), n));
+  printNodePlusEdges<NodeT, EdgeT, Debug>(o, n);
   vector<EdgeT> outEdges = n.outEdges();
   for (unsigned int i = 0; i < outEdges.size(); ++i) {
     ROSE_ASSERT (outEdges[i].source() == n);
-    explore(outEdges[i].target());
+    processNodes(outEdges[i].target());
   }
   if (Debug) {
     vector<EdgeT> inEdges = n.inEdges();
     for (unsigned int i = 0; i < inEdges.size(); ++i) {
       ROSE_ASSERT (inEdges[i].target() == n);
-      explore(inEdges[i].source());
+      processNodes(inEdges[i].source());
     }
   }
 }
@@ -96,6 +99,7 @@ void CfgToDotImpl::processNodes(SgNode* top) {
 }
 #endif
 
+#if 0
 template <typename NodeT, typename EdgeT, bool Debug>
 void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(SgNode*) {
   for (typename multimap<SgNode*, NodeT>::const_iterator it = exploredNodes.begin();
@@ -103,12 +107,12 @@ void CfgToDotImpl<NodeT, EdgeT, Debug>::processNodes(SgNode*) {
     printNodePlusEdges<NodeT, EdgeT, Debug>(o, it->second);
   }
 }
+#endif
 
 ostream& cfgToDot(ostream& o, string graphName, CFGNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<CFGNode, CFGEdge, false> impl(o);
-  impl.explore(start);
-  impl.processNodes(start.getNode());
+  impl.processNodes(start);
   o << "}\n";
   return o;
 }
@@ -116,8 +120,7 @@ ostream& cfgToDot(ostream& o, string graphName, CFGNode start) {
 ostream& cfgToDot(ostream& o, string graphName, InterestingNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<InterestingNode, InterestingEdge, false> impl(o);
-  impl.explore(start);
-  impl.processNodes(start.getNode());
+  impl.processNodes(start);
   o << "}\n";
   return o;
 }
@@ -125,8 +128,7 @@ ostream& cfgToDot(ostream& o, string graphName, InterestingNode start) {
 ostream& cfgToDotForDebugging(ostream& o, string graphName, CFGNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<CFGNode, CFGEdge, true> impl(o);
-  impl.explore(start);
-  impl.processNodes(start.getNode());
+  impl.processNodes(start);
   o << "}\n";
   return o;
 }
@@ -135,8 +137,7 @@ ostream& cfgToDotForDebugging(ostream& o, string graphName,
 			      InterestingNode start) {
   o << "digraph " << graphName << " {\n";
   CfgToDotImpl<InterestingNode, InterestingEdge, true> impl(o);
-  impl.explore(start);
-  impl.processNodes(start.getNode());
+  impl.processNodes(start);
   o << "}\n";
   return o;
 }
