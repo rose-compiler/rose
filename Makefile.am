@@ -192,7 +192,7 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
 	cp $(top_srcdir)/src/frontend/CxxFrontend/Makefile.am.forBinaryEDG $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
-	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `ls *.tar.gz`" >> Makefile.am
+	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `echo *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
 	find $(distdir)/ -name Makefile.in~ -exec rm {} \;
 	find $(distdir)/ -name autom4te.cache -exec rm -rf {} \;
