@@ -1,4 +1,4 @@
-include $(top_srcdir)/projects/compass2/src/compassSupport/compass.inc
+include $(top_srcdir)/projects/compass/src/compassSupport/compass.inc
 
 SUBDIRS = doc tests
 

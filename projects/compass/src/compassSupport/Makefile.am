@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
+include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 if ROSE_MPI
 INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI

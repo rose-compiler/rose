@@ -1,10 +1,10 @@
-compass_srcdir=$(top_srcdir)/projects/compass2/src
-compass_tooldir=$(top_srcdir)/projects/compass2/tools
-compass_extdir=$(top_srcdir)/projects/compass2/extensions
+compass_srcdir=$(top_srcdir)/projects/compass/src
+compass_tooldir=$(top_srcdir)/projects/compass/tools
+compass_extdir=$(top_srcdir)/projects/compass/extensions
 
-compass_build_srcdir=$(top_builddir)/projects/compass2/src
-compass_build_tooldir=$(top_builddir)/projects/compass2/tools
-compass_build_extdir=$(top_builddir)/projects/compass2/extensions
+compass_build_srcdir=$(top_builddir)/projects/compass/src
+compass_build_tooldir=$(top_builddir)/projects/compass/tools
+compass_build_extdir=$(top_builddir)/projects/compass/extensions
 
 compass_checker_dir=$(compass_extdir)/checkers
 compass_checker_repository=$(compass_checker_dir)/repository
