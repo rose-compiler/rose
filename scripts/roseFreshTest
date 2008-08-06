@@ -171,7 +171,6 @@ if [ $buildstatus == 0 ]; then
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
-  echo "" >> mailtext
   # upload ROSE sources to SciDAC Outreach repository and documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_SVN ] ; then
    # update the external SVN repository
@@ -184,7 +183,7 @@ if [ $buildstatus == 0 ]; then
   fi
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
-    cd docs/Rose
+    cd ${ROSE_TOP}/build/docs/Rose
     make copyWebPages
     if [ $? -ne 0 ]; then
       echo "Error: make copyWebPages finishes abnormally!" >>mailtext
@@ -192,6 +191,8 @@ if [ $buildstatus == 0 ]; then
       echo "make copyWebPages finishes normally.">>mailtext
     fi
   fi
+  #  end of mail text
+  echo "" >> mailtext
 else
   if [ $TIMESTAMP ]; then
     echo "Subject: ROSE test $TIMESTAMP on `hostname` results (fail)" > mailtext
