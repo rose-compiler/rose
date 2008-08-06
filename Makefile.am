@@ -1,5 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
+include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 # Use automake conditional to build Public and Developer distributions
 #    Public: includes all of ROSE and binary of EDG work and parts that
