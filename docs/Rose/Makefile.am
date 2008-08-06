@@ -1,3 +1,6 @@
+include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+include $(top_srcdir)/projects/compass2/src/compassSupport/compass_dirs.inc
+
 PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
 
 # Later we will add ROSETTA documentation here ...
@@ -137,9 +140,9 @@ rose.html: rose.html.in
 AvailableDocumentation.docs: AvailableDocumentation.docs.in
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
 projects.html: projects.html.in
-COMPASS_MANUAL = $(top_builddir)/projects/compass/compass.pdf
+COMPASS_MANUAL = $(compass_build_tooldir)/compass/compass.pdf
 $(COMPASS_MANUAL):
-	cd $(top_builddir)/projects/compass; $(MAKE) docs
+	cd $(compass_build_tooldir)/compass && $(MAKE) docs
 
 make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf rose.html projects.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
