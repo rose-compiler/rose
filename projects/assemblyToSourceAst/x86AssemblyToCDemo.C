@@ -765,7 +765,17 @@ set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86AssemblyToCW
     case V_SgGotoStatement: {
       return liveVarsForLabels[isSgGotoStatement(stmt)->get_label()];
     }
-    case V_SgSwitchStatement:
+    case V_SgSwitchStatement: {
+      SgSwitchStatement* s = isSgSwitchStatement(stmt);
+      SgBasicBlock* swBody = s->get_body();
+      ROSE_ASSERT (swBody);
+      const SgStatementPtrList& bodyStmts = swBody->get_statements();
+      set<SgInitializedName*> liveForBody; // Assumes any statement in the body is possible
+      for (size_t i = 0; i < bodyStmts.size(); ++i) {
+        setUnionInplace(liveForBody, computeLiveVars(bodyStmts[i], conv, liveVarsForLabels, currentLiveVars, actuallyRemove));
+      }
+      return computeLiveVars(s->get_item_selector(), conv, liveVarsForLabels, liveForBody, actuallyRemove);
+    }
     case V_SgContinueStmt: {
       return makeAllPossibleVars(conv);
     }
@@ -1914,9 +1924,30 @@ void renumberVariableDefinitions(SgNode* top, const X86AssemblyToCWithVariables&
 
 struct InterestingStatementFilter {
   bool operator()(const CFGNode& n) const {
-    return n.isInteresting() && (isSgGotoStatement(n.getNode()) || isSgContinueStmt(n.getNode()) || isSgCaseOptionStmt(n.getNode()) || isSgSwitchStatement(n.getNode()));
+    cerr << n.id() << endl;
+    return true; // n.isInteresting(); //  && (isSgGotoStatement(n.getNode()));
   }
 };
+
+void moveVariableDeclarationsToTop(SgBasicBlock* top) {
+  vector<SgNode*> varDecls = NodeQuery::querySubTree(top, V_SgVariableDeclaration);
+  for (size_t i = 0; i < varDecls.size(); ++i) {
+    SgVariableDeclaration* varDecl = isSgVariableDeclaration(varDecls[i]);
+    ROSE_ASSERT (varDecl);
+    if (varDecl->get_scope() == top) continue;
+    const SgInitializedNamePtrList& vars = varDecl->get_variables();
+    for (size_t j = 0; j < vars.size(); ++j) {
+      SgInitializedName* var = vars[j];
+      ROSE_ASSERT (var);
+      SgAssignInitializer* init = isSgAssignInitializer(var->get_initializer());
+      if (!init) continue;
+      var->set_type(removeConst(var->get_type()));
+      convertInitializerIntoAssignment(init);
+    }
+    isSgScopeStatement(varDecl->get_parent())->remove_statement(varDecl);
+    prependStatement(varDecl, top);
+  }
+}
 
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
@@ -1964,10 +1995,11 @@ int main(int argc, char** argv) {
   SAFE(memoryReadDWord);
   SAFE(memoryReadQWord);
 #undef SAFE
+  moveVariableDeclarationsToTop(converter.whileBody);
   // addDirectJumpsToSwitchCases(converter.switchBody, converter.whileBody, converter.ipSym, converter);
   /// // doSimpleSSA(converter.whileBody, converter);
   /// // structureCode(converter.whileBody); cerr << "X" << endl;
-  /// // removeUnusedLabels(converter.whileBody); cerr << "X" << endl;
+  removeUnusedLabels(converter.whileBody); cerr << "X" << endl;
   /// removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
   /// plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
   /// simplifyAllExpressions(proj, converter); cerr << "X" << endl;
@@ -1982,7 +2014,7 @@ int main(int argc, char** argv) {
   /// removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
   /// // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   /// renumberVariableDefinitions(converter.whileBody, converter); cerr << "X" << endl;
-  // trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
+  trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
   // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
@@ -1990,6 +2022,11 @@ int main(int argc, char** argv) {
   // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
+  plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
+  simplifyAllExpressions(proj, converter); cerr << "X" << endl;
+  removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
+  removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
+  simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // structureCode(converter.switchBody); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
@@ -2026,10 +2063,10 @@ int main(int argc, char** argv) {
   // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // cleanupInlinedCode(proj); cerr << "X" << endl;
   cerr << "Unparsing" << endl;
-#if 0
+#if 1
   {
     ofstream dotFile("foo.dot");
-    cfgToDot(dotFile, "foo", FilteredCFGNode<InterestingStatementFilter>(converter.switchBody->cfgForBeginning()));
+    cfgToDot(dotFile, "foo", /* FilteredCFGNode<InterestingStatementFilter> */ InterestingNode(converter.whileBody->cfgForBeginning()));
   }
   return 0;
 #endif
