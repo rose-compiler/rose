@@ -6,5 +6,5 @@ EXTRA_DIST = extensions
 
 check-local:
 	@echo "***************************************************************************"
-	@echo "****** ROSE/projects/Compass: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/projects/compass: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************"

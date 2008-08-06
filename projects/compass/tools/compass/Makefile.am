@@ -19,7 +19,7 @@ docs:
 check-local:
 	@$(MAKE) test
 	@echo "*****************************************************************************"
-	@echo "*** ROSE/projects/compass: make check rule complete (terminated normally) ***"
+	@echo "*** ROSE/projects/compass/tools/compass: make check rule complete (terminated normally) ***"
 	@echo "*****************************************************************************"
 
 distclean-local:

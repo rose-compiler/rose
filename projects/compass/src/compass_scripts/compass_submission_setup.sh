@@ -14,12 +14,10 @@
 BACK=`pwd`
 SCRIPTDIR=`dirname $0`
 CMDROOT=`sh -c "cd $SCRIPTDIR; pwd"`
-CHECKIN_DIRECTORY=$1
 COMPASS_PROJECT=$2
 READ_ONLY=$3
-CHECKERS_DIRECTORY=${CHECKIN_DIRECTORY}/../
-
-NEW_CHECKERS=`find ${CHECKIN_DIRECTORY} -maxdepth 1 -type f`
+#CHECKERS_DIRECTORY=${CHECKIN_DIRECTORY}/../
+CHECKERS_DIRECTORY=$1
 
 COMPASS_LIST=${COMPASS_PROJECT}/CHECKER_LIST
 
@@ -125,8 +123,8 @@ if(( $# < 2 )); then
   exit 1
 fi
 
-if [[ ! -d $CHECKIN_DIRECTORY ]]; then
-  echo "Error: $CHECKIN_DIRECTORY is not a valid directory"
+if [[ ! -d $CHECKERS_DIRECTORY ]]; then
+  echo "Error: $CHECKERS_DIRECTORY is not a valid directory"
   exit 1
 fi
 
@@ -148,32 +146,9 @@ fi
 
 ################################################################################
 
-#if [[ ${READ_ONLY} != "regenerate" ]]; then
-#  for checker in $NEW_CHECKERS
-#  do
-#      checker_directory=`tar ztf ${checker} | head -1`
-#      tar -C ${CHECKERS_DIRECTORY} -zkxf ${checker} >& /dev/null
-#  
-#      if [[ -d ${COMPASS_PROJECT}/${checker_directory} ]]; then
-#          echo "Updating ${COMPASS_PROJECT}/${checker_directory}..."
-#          rm -rf ${COMPASS_PROJECT}/${checker_directory}
-#      fi
-  
-#      echo "Moving ${checker_directory} to ${COMPASS_PROJECT}..."
-#      mv -f /tmp/${checker_directory} ${COMPASS_PROJECT}
-#  
-#      updateCheckerList `basename ${checker_directory:0:((${#checker_directory}-1))}` ${COMPASS_LIST}
-#  done
-#fi # if [[ ${READ_ONLY} != "regenerate" ]]
-
 echo "Sorting ${COMPASS_LIST}..."
 sort ${COMPASS_LIST} -o ${COMPASS_LIST}
 
-# for checker in $NEW_CHECKERS do; ...; done
-# Updates the compass project directory specified by ${COMPASS_PROJECT} with
-# the submitted checkers in ${CHECKIN_DIRECTORY}.
-# The list of all checkers ${COMPASS_LIST} is also updated.
-  
 for checker in `cat ${COMPASS_LIST}`
 do
   if [[ `echo $checker | grep -v "^#"` != '' ]]; then

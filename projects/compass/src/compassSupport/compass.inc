@@ -55,17 +55,15 @@ regenerate:
 	 @echo "**************************************************************"
 #       When using "make distcheck" rule we need to make the read only srcdir writable.
 	 chmod -R u+w $(compass_checker_dir)
-#       Call the compass_submission_setup directly (can also be called by the user)
-	 /bin/bash $(compass_scripts_dir)/compass_submission_setup.sh $(compass_checker_repository) $(srcdir) "regenerate"
 	 @echo "Builddir $(top_builddir)"
-	 @echo "/bin/bash $(compass_scripts_dir)/compass_submission_setup.sh $(compass_checker_repository) $(srcdir) \"regenerate\" "
+	 bash $(compass_scripts_dir)/compass_submission_setup.sh $(compass_checker_dir) $(srcdir) "regenerate"
 
 
 # GMY Jul. 2008 Test for new checker integration of Compass
 #        chmod -R u+w $(compass_checker_dir)
 #        chmod -R u+w $(srcdir)
 testNewChecker: $(compass_scripts_dir)/gen_checker.sh
-	 cd $(compass_checker_dir) && $(compass_scripts_dir)/gen_checker.sh blank test checker; tar -zcvf blankTestChecker.tar.gz blankTestChecker && mv blankTestChecker.tar.gz $(compass_checker_repository) 
+	 cd $(compass_checker_dir) && $(compass_scripts_dir)/gen_checker.sh blank test checker 
 	 cp $(srcdir)/CHECKER_LIST $(srcdir)/CHECKER_LIST.testNewChecker.bk
 	 cp $(srcdir)/RULE_SELECTION $(srcdir)/RULE_SELECTION.testNewChecker.bk
 	 echo "blankTestChecker" >> $(srcdir)/CHECKER_LIST
@@ -74,7 +72,7 @@ testNewChecker: $(compass_scripts_dir)/gen_checker.sh
 	 $(MAKE); $(MAKE) test
 	 mv $(srcdir)/CHECKER_LIST.testNewChecker.bk $(srcdir)/CHECKER_LIST
 	 mv $(srcdir)/RULE_SELECTION.testNewChecker.bk $(srcdir)/RULE_SELECTION
-	 rm -rf $(compass_checker_dir)/blankTestChecker $(compass_checker_repository)/blankTestChecker.tar.gz blankTestChecker.lo
+	 rm -rf $(compass_checker_dir)/blankTestChecker blankTestChecker.lo
 	 $(MAKE) regenerate; $(MAKE)
 
 
