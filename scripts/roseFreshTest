@@ -148,6 +148,8 @@ fi
   echo "############ make dist done" && \
   make $MAKEFLAGS distcheck && \
   echo "############ make distcheck done"
+  make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion}  && \
+  echo "############ make source_with_binary_edg_dist done"
 ) >buildlog 2>&1 || buildstatus=1
 
 #------------------------------------------------------
@@ -171,7 +173,7 @@ if [ $buildstatus == 0 ]; then
   printenv >> mailtext
   echo "" >> mailtext
   # upload ROSE sources to SciDAC Outreach repository and documentations to www.roseCompiler.org
-  if [ $ENABLE_UPLOAD ] ; then
+  if [ $ENABLE_UPLOAD_SVN ] ; then
    # update the external SVN repository
      ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP}
     if [ $? -ne 0 ]; then
@@ -179,6 +181,8 @@ if [ $buildstatus == 0 ]; then
     else
       echo "importRoseDistributionToSVN finishes normally.">>mailtext
     fi
+  fi
+  if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
     cd docs/Rose
     make copyWebPages

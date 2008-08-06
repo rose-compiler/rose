@@ -40,7 +40,9 @@ SVNOP=checkout
 MAKEFLAGS="-j16"
 
 # my additional stuff
-#ENABLE_UPLOAD=yes
+#ENABLE_UPLOAD_SVN=yes
+ENABLE_UPLOAD_WEB=yes
+
 KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 
