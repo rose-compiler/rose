@@ -4,16 +4,19 @@
 
     Compass is currently distributed as part of ROSE, and represents one
 of many tools that can be built using the ROSE open compiler infrastructure.
-Compass resides in the {\tt ROSE/projects/compass}.  As part of building ROSE
-Compass will be automatically built in the Compass directory.  Running compass
-is a matter if typing {\tt compassMain} and handing in a number of options.
-The {\tt compassMain} program acts just like a compiler so it is appropriate
-to hand it the same options required to compile your source file (e.g {\tt -I}
-directory paths and a source file.  Compass will figure out the language from
-the source file suffix.  Using the {\tt --help} option will provide a more
-complete list of options available to ROSE based tools.  See also the section
-of this chapter on the include/exclude options for path and file names as
-these will permit the output from header files to be tailored.
+Compass resides in the {\tt ROSE/projects/compass}.
+The compass project is currently divided into three subdirectories representing
+the compass instrastructure, extensions (checkers), and individual compass-like
+tools. As part of building ROSE Compass will be automatically built in the 
+compass directory.  Running compass is a matter if typing {\tt compassMain} 
+and handing in a number of options. The {\tt compassMain} program acts just 
+like a compiler so it is appropriate to hand it the same options required to 
+compile your source file (e.g {\tt -I} directory paths and a source file.  
+Compass will figure out the language from the source file suffix.  
+Using the {\tt --help} option will provide a more complete list of options 
+available to ROSE based tools.  See also the section of this chapter on the 
+include/exclude options for path and file names as these will permit the 
+output from header files to be tailored.
 
 
 \section{Output from Compass}
@@ -186,7 +189,7 @@ file.  A copy of this code is available in the compass source directory in the f
 Emacs version 22 or newer is required to take advantage of the emacs integration of
 Compass. Before using Compass a 3 step process must be followed:
 \begin{itemize}
-   \item Add the text in figure \ref{compassEmacs} (in {\tt ROSE/projects/compass/emacs\_compass\_config.el}) to .emacs
+   \item Add the text in figure \ref{compassEmacs} (in \\*{\tt ROSE/AUG0508/ROSE/projects/compass/tools/compass/emacs\_compass\_config.el}) to .emacs
    \item Change /path/to/makefile in figure \ref{compassEmacs} to the path to the project you are editing in Compass
    \item Add a 'check-syntax' rule to the makefile of the project that you are working
    on in Compass. This rule should compile all the files you want Compass to check 
@@ -325,7 +328,7 @@ checker. This skeleton can be easily adapted to write all checkers.
 Follow these steps to generate a checker skeleton:
 \begin{enumerate}
    \item Enter a directory where you want the directory of your checker to be created
-   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/compass\_scripts/gen\_checker.sh $<$name of your checker$>$}
+   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/src/compass\_scripts/gen\_checker.sh $<$name of your checker$>$}
 \end{enumerate}
 
 The results of executing gen\_checker.sh script is that a new directory name 
@@ -356,126 +359,92 @@ It is suggested that you keep the following in mind when using gen\_checker.sh:
 \item
    Some of the files have read-only permissions and are intended only for
    such use. Please do not change the permissions of these files.
-\item
-Advanced: The file `multipleCasesOnSameLine.inc' is used to pass in custom LDADD lines
-to the Make environment on a per checker basis. The LDADD line specified in
-this file will be added verbatim to the compass makefile.
+%\item
+%Advanced: The file `multipleCasesOnSameLine.inc' is used to pass in custom LDADD lines
+%to the Make environment on a per checker basis. The LDADD line specified in
+%this file will be added verbatim to the compass makefile.
 
 \end{itemize}
 
-\subsection{Integrating New Checkers Into Compass}
+\subsection{Integrating New Checkers Into Compass Tool}
 \label{howToIntegrateNewCheckers}
 
-The process for integrating a new checker into Compass has been automated. These directions
-are meant for checkers generated using gen\_checker.sh.
+The process for integrating a new checker into Compass has been automated. 
+These directions are meant for checkers generated using gen\_checker.sh. 
+The process is similar for all compass-like tools that are built using the 
+common instrastructure.
 
 The steps to integrate a new checker is
 \begin{enumerate}
-   \item Create a tar file of the directory tar -zcvf  $<$name of your checker$>$.tar.gz $<$name of your checker$>$
    \item Add $<$name of your checker$>$ to CHECKER\_LIST
-   \item Copy $<$name of your checker$>$.tar.gz to ROSE\_SRC\_DIR/projects/compass/compassRepository/
-   \item Enter ROSE\_BUILD\_DIR/projects/compass/ 
+   \item Enter ROSE\_BUILD\_DIR/projects/compass/tools/compass
    \item Execute 'make regenerate'
    \item After running 'make regenerate' in the build tree then you may run make as usual.
    \item %Before executing compassMain or any Make rule that uses compassMain, 
-	Examine the RULE\_SELECTION file in projects/compass such that it 
+	Examine the RULE\_SELECTION file and confirm it
 	reflects your most recent additional checker(s) choice of execution at
 	run-time; the default setting is ``on''. Please refer to section 
 	~\ref{ruleselection}.
 \end{enumerate}
 
-In the Makefile, the compass\_submission\_setup.sh handles adding/updating a Compass checker into
-an existing Compass source tree. ``regenerate'' is an argument that instructs the script to perform a 
-read-only operation on the file CHECKER\_LIST in your projects/compass directory. This file contains 
-a list of checkers that will be integrated by compass\_submission\_setup.sh.
-
 The file `CHECKER\_LIST' can use the `\#' comment delimiter at the beginning of
 any checker name to remove that checker from compilation. The hash mark may
 only appear at the beginning of the line. The compass\_submission\_setup.sh
 script must be run again with the ``regenerate'' option if any checkers are
-commented out. {\bf Note that no space is permitted between the `\#' and the name
+commented out. 
+{\bf Note that no space is permitted between the `\#' and the name
 of the checker.}
 
-As stated previously, the compass\_submission\_setup.sh script handles
-adding/updating Compass checkers into the compass source tree (usually located
-at ROSE/projects/compass). It does this by generating the necessary files
-to compile Compass with the checkers located in $<$COMPASS SUBMIT DIR$>$. These
-files are:
-
-\begin{itemize}
-\item {\bf CHECKER\_LIST}: 
-	a file that keeps a running list of all checkers seen by 
-	compass\_submission\_setup.sh.
-\item {\bf \${CHECKER}/\${CHECKER}.makefile}: An individual Make file is
-	generated per checker in its directory such that it may be separated
-	for individual development before being reincorporated with Compass.
-\end{itemize}
+Additionally, a blank checker may be automatically integrated into the current
+compass tool as a method to test for build system errors. To execute this test
+,type:
 %
-The \${CHECKER}.makefile file is generated such that any checker may be copied
-out of the source tree projects/compass and worked on separately. This feature
-speeds up development of single checkers as is removes the requirement to
-rebuild the entire compassMain tool.
+\begin{verbatim}
+make testNewChecker
+\end{verbatim}
+%
+from any compass tool directory. This test will create a blank checker from
+the template attempt to install the checker then uninstall it thus leaving the
+tool in its previous state.
 
-Many automatically generated files required for the build of Compass are 
-generated in the build tree. Rules for the generation of these files are found
-in the automake Makefile.am file in the Compass source tree directory 
-projects/compass. These file include:
-
-\begin{itemize}
-\item {\bf CHECKER\_LIST\_WITHOUT\_COMMENTS}: a version of CHECKER\_LIST
-	that expands in two columns those checkers built as part of Compass
-	in camel case starting with a lower-case letter and an upper-case
-	letter respectively.
-\item {\bf compass\_makefile.inc}: a Make include file that sets the Make environment
-	with the information for each checker. This environment specifies
-	the rules needed to compile each checker object, make the
-	documentation, and test all checkers together or separately.
-   {\bf compass\_makefile.inc}: provides the following Make rules: 
-	(note \$\{CHECKER\} is the name of a checker directory i.e. 
-	doNotDeleteThis)
-   \begin{itemize}
-      \item {\bf docs}:  makes the documentation
-
-      \item test\$\{CHECKER\}: tests a single checker, a single rule is provided
-		      per checker.
-
-      \item testAllCheckersSeparately: tests all checkers separately as a batch.
-
-      \item archive\$\{CHECKER\}: -- tar \& gzips a single checker directory in 
-		projects/compass/\$\{CHECKER\} to 
-		projects/compass/compassRepository/\$\{CHECKER\}.tar.gz
-
-      \item archiveCheckers: archives all checkers (uncommented in CHECKER\_LIST)
-                projects/compass to
-                projects/compass/compassRepository/\$\{CHECKER\}.tar.gz
-   \end{itemize}
-
-\item {\bf checkers.h}: An automatically generated file needed by compassMain.C that 
-	contains a list of \#include directives for each checker header .h file.
-
-\item {\bf buildCheckers.C}: An automatically generated source file needed by 
-	compassMain.C to build the Compass checker traversals.
-
-\item {\bf compassCheckerDocs.tex}: A Latex include file that inputs each checker .tex
-	documentation file into the compass.tex document.
-
-\item {\bf compass\_parameters}: The concatenation of individual checker parameter files
-	to be used with compassMain.
-
-\end{itemize}
+%Many automatically generated files required for the build of Compass are 
+%generated in the build tree. Rules for the generation of these files are found
+%in the automake Makefile.am file in the Compass source tree directory 
+%projects/compass. These file include:
+%
+%\begin{itemize}
+%\item {\bf CHECKER\_LIST\_WITHOUT\_COMMENTS}: a version of CHECKER\_LIST
+%	that expands in two columns those checkers built as part of Compass
+%	in camel case starting with a lower-case letter and an upper-case
+%	letter respectively.
+%
+%\item {\bf checkers.h}: An automatically generated file needed by compassMain.C that 
+%	contains a list of \#include directives for each checker header .h file.
+%
+%\item {\bf buildCheckers.C}: An automatically generated source file needed by 
+%	compassMain.C to build the Compass checker traversals.
+%
+%\item {\bf compass\_parameters}: The concatenation of individual checker parameter files to be used with compassMain.
+%
+%\item {\bf testNewChecker}: creates a blank checker from the template and
+%	attempts to automatically install it into the current compass tool then
+%	uninstall it again. This label is used to test the build system.
+%
+%\end{itemize}
 
 
 
 \section{Including/Excluding Checkers in the Compass Build Process}
 \label{CompassBuildProcess}
 
-   This section describes how to select which of the checkers to integrate into Compass
-out of all the checkers available in source form in the Compass source directory. For
-security reasons Compass uses this static build process since it is a central goal
-of Compass that it should run as a trusted part of a project's build process. If the
-integration of checkers had been automatic through a dynamic plugin mechanism it
-would be hard to ensure that the dynamic list of checkers was secure, but for a 
-static list of trusted checkers this is possible.
+   This section describes how to select which of the checkers to integrate 
+into Compass out of all the checkers available in source form in the Compass 
+source directory. For security reasons Compass uses this static build process 
+since it is a central goal of Compass that it should run as a trusted part of 
+a project's build process. If the integration of checkers had been automatic 
+through a dynamic plugin mechanism it would be hard to ensure that the dynamic 
+list of checkers was secure, but for a static list of trusted checkers this is 
+possible.
 
 In order to integrate a checker into Compass the user must:
 \begin{itemize}
@@ -483,8 +452,8 @@ In order to integrate a checker into Compass the user must:
       source directory
    \item Run {\tt make regenerate} in the Compass build directory
 \end{itemize} 
-If a user or developer intends to integrate a new checker into the Compass source
-tree refer to section \ref{howToIntegrateNewCheckers}.
+If a user or developer intends to integrate a new checker into the Compass 
+source tree refer to section \ref{howToIntegrateNewCheckers}.
 
 Usually the CHECKER\_LIST is only modified when a user or developer wants to 
 add a new checker or select a subset of trusted checkers.  Checkers can be
@@ -607,30 +576,30 @@ RULE\_SELECTION, Makefile.am.  Note also that the {\tt compassMain.C} file
 can be any name, but must only be consistant with the {\tt Makefile.am}. This
 example of using the compass infrastructure is compiled as part of compiling
 compass and defines a compass-infrastructure-based tool that implements
-about 25 randomly selected checkers (form the collection in {\tt projects/compass}.
+about 25 randomly selected checkers (form the collection in {\tt projects/compass/extensions/checkers}).
 
-Assume that the present working directory is {\tt projects/compass} of the ROSE
-source tree. First, create a directory for the new Compass subset tool.
+Assume that the present working directory is {\tt projects/compass/tools} 
+of the ROSE source tree. First, create a directory for the new Compass 
+subset tool.
 %
 \begin{verbatim}
 mkdir sampleCompassSubset
 \end{verbatim}
 %
 then add this directory in the {\tt SUBDIRS} variable of the automake file
-{\tt projects/compass/Makefile.am}. Additionally, introduce this new Makefile
-into the top level source tree {\tt configure.in} file. A snippet concerning
-these changes is given below:
+{\tt projects/compass/tools/Makefile.am}. Additionally, introduce this new 
+Makefile into the top level source tree {\tt configure.in} file. A snippet 
+concerning these changes is given below:
 %
 \begin{verbatim}
-projects/compass/Makefile.am:
-SUBDIRS = compassSupport util tests compassVerifier sampleCompassSubset
+projects/compass/tools/Makefile.am:
+SUBDIRS = compass compassVerifier sampleCompassSubset
 \end{verbatim}
 %
 \begin{verbatim}
 configure.in:
-projects/compass/compassVerifier/Makefile
-projects/compass/sampleCompassSubset/Makefile
-projects/compass/Makefile
+projects/compass/tools/sampleCompassSubset/Makefile
+projects/compass/tools/compassVerifier/Makefile
 \end{verbatim}
 %
 {\it Note that after any modification of {\tt configure.in}, the configure command
@@ -639,17 +608,19 @@ for you).}
 
 \vspace{0.2in}
 
-To specify how this tool is to be configured and built create a {\tt Makefile.am},
-{\tt projects/compass/sampleCompassSubset/Makefile.am} is provided as an example.
-This example can be a template and may be used in general for any Compass-like tool.
+To specify how this tool is to be configured and built create a 
+{\tt Makefile.am},
+{\tt projects/compass/tools/sampleCompassSubset/Makefile.am} is provided as an 
+example.
+This example can be a template and may be used in general for any Compass-like 
+tool.
 Any tool that is an extension of the Compass infrastructure will reuse much of 
-the Compass infrastructure such as {\tt compassSupport}, pulling specific sources in
-the {\tt projects/compass} source tree and libraries located in the 
-corresponding build tree directory. Furthermore, much of the Compass build
+the Compass infrastructure such as {\tt compassSupport}.
+Furthermore, much of the Compass build
 process requires the automatic generation of files in the build tree such
 as {\tt compass\_makefile.inc}, {\tt compass\_parameters}, etc. Thus an
 include file has been provided in Compass to define these common rules--
-{\tt compass\_infrastructure.inc}; and is included in this {\tt Makefile.am}.
+{\tt compass.inc}; and is included in this {\tt Makefile.am}.
 A more advanced implementation of this automake file template is located in
 Compass Verifier; which is itself another tool extended off Compass and
 designed to check the rules implemented in Compass.
@@ -658,7 +629,8 @@ So far, a blank Compass-like tool has been created and configured to build with
 ROSE. Still missing are a few Compass files that produce a successful
 compile and linked executable. The next step is to populate the empty 
 Compass-like tool with checkers from Compass. Note that all checkers
-reside as subdirectories in {\tt projects/compass} but that subsets of
+reside as subdirectories in {\tt projects/compass/extensions/checkers};
+but that subsets of
 these are selected for use, thus all checkers are always optionally available 
 to all compass-infrastructure-based tools.  Create a new file called
 {\tt CHECKER\_LIST} under the {\tt sampleCompassSubset} directory (an
@@ -668,18 +640,17 @@ this file. One may also create the dynamic rule selection file
 all checker rules activated by default. Finally, it is necessary to write or
 copy the {\tt compassMain.C} file that defines (among other function)
 the command line processing options where one may alter the interface. 
-For {\tt sampleCompassSubset} the {\tt compassMain.C} of {\tt projects/compass} 
+For {\tt sampleCompassSubset} the {\tt compassMain.C} of 
+{\tt projects/compass/src/compassSupport} 
 is symbolically linked in place. The complete directory list for 
 {\tt sampleCompassSubset} now looks like
 
-%\newpage
 \begin{verbatim}
 CHECKER_LIST
-compassMain.C->../compassMain.C
+compassMain.C -> ../../src/compassSupport/compassMain.C
 Makefile.am
 RULE_SELECTION
 \end{verbatim}
-%
 
 The source tree creation and configuration of a new Compass-like tool is 
 complete with {\tt Makefile.am}, {\tt CHECKER\_LIST}, {\tt RULE\_SELECTION},
@@ -688,4 +659,5 @@ sure that the name is consistant with the {\tt Makefile.am}). Build and
 configure ROSE as usual and then invoke Make at the top level build tree 
 or {\tt projects/compass} subdirectory to
 compile and link the new Compass-like tool executable. In this tutorial 
-example the new target location is {\tt projects/compass/sampleCompassSubset}.
+example the new target location is 
+{\tt projects/compass/tools/sampleCompassSubset}.

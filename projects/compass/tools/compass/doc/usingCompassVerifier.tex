@@ -13,31 +13,39 @@ This chapter will detail the Make rules written to run Compass
 Verifier and to setup the parameters to the AllowedFunctions checker.
 
 The rules to setup and run Compass Verifier are found in 
-{\tt projects/compass/compassVerifier/Makefile.am}. Follows is an overview
-of their usage labels, ({\tt make oneBigVerify, verify, ...})
+{\tt projects/compass/tools/compassVerifier/Makefile.am}. Follows is an 
+overview of their usage labels, ({\tt make oneBigVerify, verify, ...}).
+Verifier is designed to examine the compass tool referenced in the environment
+variable {\tt \$(TOOLBUILD)} which by default is 
+{\tt projects/compass/tools/compass}. This variable may be changed in the
+{\tt Makefile.am} of the source directory or on the command line to {\tt make}
+in the build tree.
 %
 \begin{itemize}
 \item {\tt oneBigVerify:} a fast but rough static analysis over the Compass
 	checker sources. This rule executes {\tt compassVerifier} over the
 	concatenation of all sources with names matching those checkers listed
-	in {\tt projects/compass/CHECKER\_LIST} with extension ({\tt .C}).
+	in {\tt \$(TOOLBUILD)/CHECKER\_LIST\_WITHOUT\_COMMENTS} with extension 
+	({\tt .C}).
 	These should be the only sources from the checker subdirectories that
 	are built with Compass. The consistency of this concatenation depends
 	on no global (function, variable, etc.) declaration conflicts; usually,
 	this is perserved by default as all checkers employ their own namespace.
 %
 \item {\tt verify:} a slow and more complete analysis over all files found in
-	the checker directories listed in {\tt projects/compass/CHECKER\_LIST}.
+	the checker directories listed in 
+	{\tt \$(TOOLBUILD)/CHECKER\_LIST\_WITHOUT\_COMMENTS}.
 	The individual rule labels for verify are generated in 
-	{\tt verify.makefile} identically to the names found in
-	{\tt projects/compass/CHECKER\_LIST}. Each rule logs the standard 
-	output and error to files suffixed {\tt \_out.txt} and {\tt \_err.txt}
+	{\tt verify.makefile} identically to those lower case names found in
+	{\tt \$(TOOLBUILD)/CHECKER\_LIST\_WITHOUT\_COMMENTS}. 
+	Each rule logs the standard output and error to files suffixed 
+	{\tt \_out.txt} and {\tt \_err.txt}
 	respectively and the measure of a passing checker is an empty 
 	standard error log file. Concurrency may be used with
 	({\tt -j\#}) option to GNU Make to reduce the time to complete verify.
 %
-\item {\tt new\_allow\_list:} regenerates the paramter file 
-	{\tt projects/compass/allowedFunctions/compass\_parameters} in the
+\item {\tt new\_allow\_list:} regenerates the parameter file 
+	{\tt projects/compass/extensions/checkers/allowedFunctions/compass\_parameters} in the
 	source tree used as the allowed functions list in Compass Verifier.
 	The present list assumes that all sources found in the present source
 	tree of Compass are trusted in their use of function calls and whatever

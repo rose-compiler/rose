@@ -37,10 +37,13 @@ TOOLBUILD=../compass/
 
  include verify.inc
 
-verify.inc: 
+$(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS:
+	cd $(TOOLBUILD) && make CHECKER_LIST_WITHOUT_COMMENTS
+
+verify.inc: $(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS
 	cut -f 1 -d \  < $(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,verify_&: compassVerifier compass_parameters verify.makefile\n\t$$(MAKE) -f verify.makefile &\n,' > verify.inc
 
-oneBigVerify: compassVerifier compass_parameters
+oneBigVerify: compassVerifier compass_parameters $(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS
 	rm -f catChecker.C catCheckerIncludes.txt catChecker.ti
 	@echo "Concatenating all checker sources"
 	@sh -c '\
@@ -54,7 +57,7 @@ oneBigVerify: compassVerifier compass_parameters
  	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -rose:verbose 2 -I$(top_builddir) $(INCLUDES) $${CAT_CHECKER_INCLUDES} catChecker.C ;\
  	'
  
-verify.makefile: verify.inc
+verify.makefile: verify.inc $(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS
 	@sh -c '\
  	export checker_labels=`echo "$(COMPASS_CHECKER_TEST_LABELS)" | sed -e "s@test@@g"` ;\
  	export directories=`cut -f 1 -d \  < $(TOOLBUILD)/CHECKER_LIST_WITHOUT_COMMENTS` ;\
