@@ -171,7 +171,9 @@ binary_edg_tarball: rose_binary_compatibility_signature
 
 source_with_binary_edg_dist: rose_binary_compatibility_signature
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
+	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Error: Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
+	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
+	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Error: The following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; exit 1; fi
 	$(MAKE) clean_binary_distribution && \
 	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz $(distdir)/src/frontend/CxxFrontend && \
 	cat $(top_srcdir)/configure.in | \
@@ -191,8 +193,6 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	echo "" >> $(distdir)/src/frontend/CxxFrontend/Makefile.am
 	cd $(distdir)/src/frontend/CxxFrontend; echo "EXTRA_DIST = `ls *.tar.gz`" >> Makefile.am
 	cd $(distdir) && ./build
-	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
-	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} | wc -l` -ne 0; then echo "Warning: the following obsolete binary versions of EDG were found in $(srcdir)/src/frontend/CxxFrontend." >&2; ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-*.tar.gz | grep -v $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} >&2; fi
 	tardir=$(distdir) && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$(PACKAGE)-$(VERSION)-source-with-EDG-binary$(DOT_SVNREV).tar.gz
 	$(am__remove_distdir)
 
