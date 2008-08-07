@@ -25,6 +25,7 @@ CONFIGURE_FLAGS=(--with-edg_source_code=true --enable-dq-developer-tests --with-
 
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov andreas.saebjoernsen@gmail.com yuan5@llnl.gov"
+ENABLE_BUILD_BINARY_EDG=1
 
 # the right version of subversion is essential!!
 SVN=/home/willcock2/svn-install/bin/svn
