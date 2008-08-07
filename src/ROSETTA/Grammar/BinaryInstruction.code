@@ -444,8 +444,95 @@ HEADER_PE_COFF_SYMBOL_END
 
 
 
+HEADER_NE_FILE_HEADER_START
+HEADER_NE_FILE_HEADER_END
 
+HEADER_NE_SECTION_START
+HEADER_NE_SECTION_END
 
+HEADER_NE_SECTION_TABLE_START
+HEADER_NE_SECTION_TABLE_END
+
+HEADER_NE_NAME_TABLE_START
+HEADER_NE_NAME_TABLE_END
+
+HEADER_NE_MODULE_TABLE_START
+HEADER_NE_MODULE_TABLE_END
+
+HEADER_NE_STRING_TABLE_START
+HEADER_NE_STRING_TABLE_END
+
+HEADER_NE_ENTRY_TABLE_START
+HEADER_NE_ENTRY_TABLE_END
+
+HEADER_NE_REALOC_TABLE_START
+HEADER_NE_REALOC_TABLE_END
+
+HEADER_NE_EXTENDED_DOS_HEADER_START
+HEADER_NE_EXTENDED_DOS_HEADER_END
+
+HEADER_NE_ENTRY_POINT_START
+HEADER_NE_ENTRY_POINT_END
+
+HEADER_NE_REALOC_ENTRY_START
+HEADER_NE_REALOC_ENTRY_END
+
+HEADER_NE_SECTION_TABLE_ENTRY_START
+HEADER_NE_SECTION_TABLE_ENTRY_END
+
+#if 0
+AsmNEFileHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNESection.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNESectionTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNENameTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNEModuleTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNEStringTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNEEntryTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNERealocTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNEExtendedDOSHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNEEntryPoint.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNERealocEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmNESectionTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+#endif
+
+HEADER_LE_FILE_HEADER_START
+HEADER_LE_FILE_HEADER_END
+
+HEADER_LE_SECTION_START
+HEADER_LE_SECTION_END
+
+HEADER_LE_SECTION_TABLE_START
+HEADER_LE_SECTION_TABLE_END
+
+HEADER_LE_PAGE_TABLE_START
+HEADER_LE_PAGE_TABLE_END
+
+HEADER_LE_ENTRY_TABLE_START
+HEADER_LE_ENTRY_TABLE_END
+
+HEADER_LE_REALOC_TABLE_START
+HEADER_LE_REALOC_TABLE_END
+
+HEADER_LE_PAGE_TABLE_ENTRY_START
+HEADER_LE_PAGE_TABLE_ENTRY_END
+
+HEADER_LE_ENTRY_POINT_START
+HEADER_LE_ENTRY_POINT_END
+
+HEADER_LE_SECTION_TABLE_ENTRY_START
+HEADER_LE_SECTION_TABLE_ENTRY_END
+
+#if 0
+AsmLEFileHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLESection.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLESectionTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLEPageTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLEEntryTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLERealocTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLEPageTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLEEntryPoint.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+AsmLESectionTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+#endif
 
 
 SOURCE_BINARY_FILE_SECTION_HEADER_LIST_START

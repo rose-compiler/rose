@@ -936,25 +936,233 @@ Grammar::setUpBinaryInstructions ()
      AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","e_lfanew","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
+  // time_t testVariable;
   // addr_t    hintnames_rva, bindings_rva, dll_name_rva;
   // time_t    time;
   // unsigned  forwarder_chain;
      AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","hintnames_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("Exec::addr_t","hintnames_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","bindings_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("Exec::addr_t","bindings_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("Exec::addr_t","dll_name_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("Exec::addr_t","dll_name_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmPEExtendedDOSHeader.setDataPrototype("time_t","time","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("unsigned","forwarder_chain","= 0",
+     AsmPEImportDirectory.setDataPrototype("time_t","time","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("unsigned","forwarder_chain","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-
-
+  // unsigned hint;
+  // std::string name;
+  // unsigned char padding;
      AsmPEImportHintName.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+     AsmPEImportHintName.setDataPrototype("std::string","name","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportHintName.setDataPrototype("unsigned char","padding","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags1, e_autodata_sn, e_bss_size, e_stack_size;
+  // unsigned    e_csip, e_sssp, e_nsections, e_nmodrefs, e_nnonresnames, e_nmovable_entries, e_sector_align;
+  // unsigned    e_nresources, e_exetype, e_flags2, e_res1, e_winvers;
+  // addr_t      e_entrytab_rfo, e_entrytab_size, e_sectab_rfo, e_rsrctab_rfo, e_resnametab_rfo, e_modreftab_rfo;
+  // addr_t      e_importnametab_rfo, e_nonresnametab_offset, e_fastload_sector, e_fastload_nsectors;
+  // ExtendedDOSHeader *dos2_header;
+  // NESectionTable *section_table;
+  // NENameTable *resname_table;
+  // NENameTable *nonresname_table;
+  // NEModuleTable *module_table;
+  // NEEntryTable *entry_table;
+     AsmNEFileHeader.setFunctionPrototype ( "HEADER_NE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmNEFileHeader.setDataPrototype("unsigned","e_linker_major","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_linker_minor","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_checksum","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_flags1","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_autodata_sn","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_bss_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_stack_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_csip","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_sssp","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_nsections","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_nmodrefs","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_nnonresnames","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_nmovable_entries","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_sector_align","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_nresources","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_exetype","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_flags2","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_res1","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("unsigned","e_winvers","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_entrytab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_entrytab_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_sectab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_rsrctab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_resnametab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_modreftab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_importnametab_rfo","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_nonresnametab_offset","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_fastload_sector","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("Exec::addr_t","e_fastload_nsectors","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("SgAsmNEExtendedDOSHeader*","dos2_header","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("SgAsmNESectionTable*","section_table","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+  // DQ (8/5/2008): Not clear why there data members are a problem to compile (figure it out when we land).
+     AsmNEFileHeader.setDataPrototype("SgAsmNameTable*","resname_table","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("SgAsmNameTable*","nonresname_table","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("SgAsmModuleTable*","module_table","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNEFileHeader.setDataPrototype("SgAsmEntryTable*","entry_table","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+
+  // NESectionTableEntry *st_entry;
+  // NERelocTable *reloc_table;
+     AsmNESection.setFunctionPrototype ( "HEADER_NE_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmNESection.setDataPrototype("SgAsmNESectionTableEntry*","st_entry","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/7/2008): Commented out to pass compilation so that I could checkin to svn to transfer to Desktop after travel.
+  // AsmNESection.setDataPrototype("SgAsmNERelocTable*","reloc_table","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+  // unsigned    flags, sector;
+  // addr_t      physical_size, virtual_size;
+     AsmNESectionTable.setFunctionPrototype ( "HEADER_NE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
+     AsmNESectionTable.setDataPrototype("unsigned","flags","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNESectionTable.setDataPrototype("unsigned","sector","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNESectionTable.setDataPrototype("Exec::addr_t","physical_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmNESectionTable.setDataPrototype("Exec::addr_t","virtual_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+  // std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
+  // std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
+     AsmNENameTable.setFunctionPrototype ( "HEADER_NE_NAME_TABLE", "../Grammar/BinaryInstruction.code");
+
+
+  // NEStringTable *strtab;
+  // std::vector<addr_t> name_offsets;
+  // std::vector<std::string> names;
+     AsmNEModuleTable.setFunctionPrototype ( "HEADER_NE_MODULE_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // No data members
+     AsmNEStringTable.setFunctionPrototype ( "HEADER_NE_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // std::vector<size_t> bundle_sizes;
+  // std::vector<NEEntryPoint> entries;
+     AsmNEEntryTable.setFunctionPrototype ( "HEADER_NE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // std::vector<NERelocEntry> entries;
+     AsmNERealocTable.setFunctionPrototype ( "HEADER_NE_REALOC_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // unsigned e_res1[14];
+  // addr_t e_lfanew;
+     AsmNEExtendedDOSHeader.setFunctionPrototype ( "HEADER_NE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
+
+  // NEEntryFlags flags;         /* bit flags */
+  // unsigned int3f;             /* always 0x3fxx */
+  // unsigned section_idx;       /* zero indicates unused entry */
+  // unsigned section_offset;    /* byte offset into section */
+     AsmNEEntryPoint.setFunctionPrototype ( "HEADER_NE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
+
+
+  // NERelocSrcType      src_type;       /* low nibble of first byte of relocation record */
+  // NERelocModifiers    modifier;       /* high nibble of first byte */
+  // NERelocTgtType      tgt_type;       /* low two bits of second byte */
+  // NERelocFlags        flags;          /* high six bits of second byte */
+  // addr_t              src_offset;
+  // osfixup_type        osfixup;
+     AsmNERealocEntry.setFunctionPrototype ( "HEADER_NE_REALOC_ENTRY", "../Grammar/BinaryInstruction.code");
+
+
+  // unsigned    flags, sector;
+  // addr_t      physical_size, virtual_size;
+     AsmNESectionTableEntry.setFunctionPrototype ( "HEADER_NE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+
+
+
+  // unsigned e_byte_order, e_word_order, e_format_level, e_cpu_type, e_os_type, e_module_version, e_flags;
+  // unsigned e_eip_section, e_esp_section, e_last_page_size, e_page_offset_shift, e_fixup_sect_cksum, e_loader_sect_cksum;
+  // unsigned e_secttab_nentries, e_rsrctab_nentries, e_fmtdirtab_nentries, e_import_modtab_nentries, e_preload_npages;
+  // unsigned e_nonresnametab_size, e_nonresnametab_cksum, e_auto_ds_section, e_debug_info_size, e_num_instance_preload;
+  // unsigned e_num_instance_demand, e_heap_size;
+    
+  // addr_t e_npages, e_eip, e_esp, e_page_size, e_fixup_sect_size, e_loader_sect_size, e_secttab_rfo, e_pagetab_rfo;
+  // addr_t e_iterpages_offset, e_rsrctab_rfo, e_resnametab_rfo, e_entrytab_rfo, e_fmtdirtab_rfo, e_fixup_pagetab_rfo;
+  // addr_t e_fixup_rectab_rfo, e_import_modtab_rfo, e_import_proctab_rfo, e_ppcksumtab_rfo, e_data_pages_offset;
+  // addr_t e_nonresnametab_offset, e_debug_info_rfo;
+  // ExtendedDOSHeader *dos2_header;
+  // LESectionTable *section_table;
+  // LEPageTable *page_table;
+  // LENameTable *resname_table;
+  // LENameTable *nonresname_table;
+  // LEEntryTable *entry_table;
+  // LERelocTable *reloc_table;
+     AsmLEFileHeader.setFunctionPrototype ( "HEADER_LE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
+
+
+  // LESectionTableEntry *st_entry;
+     AsmLESection.setFunctionPrototype ( "HEADER_LE_SECTION", "../Grammar/BinaryInstruction.code");
+
+  // No data members
+     AsmLESectionTable.setFunctionPrototype ( "HEADER_LE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // std::vector<LEPageTableEntry*> entries;
+     AsmLEPageTable.setFunctionPrototype ( "HEADER_LE_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // std::vector<size_t> bundle_sizes;
+  // std::vector<LEEntryPoint> entries;
+     AsmLEEntryTable.setFunctionPrototype ( "HEADER_LE_ENTRY_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // std::vector<LERelocEntry> entries;
+     AsmLERealocTable.setFunctionPrototype ( "HEADER_LE_REALOC_TABLE", "../Grammar/BinaryInstruction.code");
+
+  // unsigned    pageno;
+  // unsigned    flags;
+     AsmLEPageTableEntry.setFunctionPrototype ( "HEADER_LE_PAGE_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+
+
+     AsmLEEntryPoint.setFunctionPrototype ( "HEADER_LE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
+
+     AsmLESectionTableEntry.setFunctionPrototype ( "HEADER_LE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
 
 
 
