@@ -36,6 +36,8 @@ SVNOP=checkout
 # How many processes for make
 MAKEFLAGS="-j16"
 
+ENABLE_BUILD_BINARY_EDG=1
+
 # my additional stuff
 ENABLE_UPLOAD_SVN=yes
 ENABLE_UPLOAD_WEB=yes
