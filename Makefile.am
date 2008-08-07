@@ -171,12 +171,9 @@ binary_edg_tarball: rose_binary_compatibility_signature
 	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
 	rm -rf $${BINARY_EDG_DIRNAME}
 
-copy_binary_edg_tarball_to_source_tree: binary_edg_tarball
-	signature=`cat rose_binary_compatibility_signature` && \
-	(cd $(top_srcdir)/src/frontend/CxxFrontend/; ls | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'roseBinaryEDG-.*-'$${signature}'\.tar\.gz' | xargs svn rm) && \
-	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-$${signature} && \
-	cp $${BINARY_EDG_DIRNAME}.tar.gz $(top_srcdir)/src/frontend/CxxFrontend/ && \
-	svn add $(top_srcdir)/src/frontend/CxxFrontend/$${BINARY_EDG_DIRNAME}.tar.gz
+copy_binary_edg_tarball_to_source_tree: binary_edg_tarball rose_binary_compatibility_signature
+	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-`cat rose_binary_compatibility_signature` && \
+	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree `sed -n 5p $(top_srcdir)/.svn/entries` $(build_triplet)
 
 source_with_binary_edg_dist: rose_binary_compatibility_signature
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
