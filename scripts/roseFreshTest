@@ -177,16 +177,10 @@ if [ $buildstatus == 0 ]; then
   echo "" >> mailtext
   echo "> Environment:" >> mailtext
   printenv >> mailtext
-  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
-  if [ $ENABLE_UPLOAD_SVN ] ; then
-     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP}
-    if [ $? -ne 0 ]; then
-      echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
-    else
-      echo "importRoseDistributionToSVN finishes normally.">>mailtext
-    fi
-  fi
-  # documentations to www.roseCompiler.org
+  #------------------------------------------------------
+  # Optional uploading Section: for successful tests only
+  #------------------------------------------------------
+   # documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
     cd ${ROSE_TOP}/build/docs/Rose
@@ -195,6 +189,17 @@ if [ $buildstatus == 0 ]; then
       echo "Error: make copyWebPages finishes abnormally!" >>mailtext
     else
       echo "make copyWebPages finishes normally.">>mailtext
+    fi
+  fi
+
+ # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
+  if [ $ENABLE_UPLOAD_SVN ] ; then
+
+     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog
+    if [ $? -ne 0 ]; then
+      echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
+    else
+      echo "importRoseDistributionToSVN finishes normally.">>mailtext
     fi
   fi
   #  end of mail text
