@@ -769,6 +769,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "Exec::addr_t" ) ||
                  ( varTypeString == "uint64_t" ) ||
                  ( varTypeString == "size_t" ) ||
+                 ( varTypeString == "time_t" ) ||
                  false
               )
        {
