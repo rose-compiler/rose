@@ -171,6 +171,13 @@ binary_edg_tarball: rose_binary_compatibility_signature
 	tardir=$${BINARY_EDG_DIRNAME} && $(am__tar) | GZIP=$(GZIP_ENV) gzip -c >$${BINARY_EDG_DIRNAME}.tar.gz && \
 	rm -rf $${BINARY_EDG_DIRNAME}
 
+copy_binary_edg_tarball_to_source_tree: binary_edg_tarball
+	signature=`cat rose_binary_compatibility_signature` && \
+	(cd $(top_srcdir)/src/frontend/CxxFrontend/; ls | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'roseBinaryEDG-.*-'$${signature}'\.tar\.gz' | xargs svn rm) && \
+	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-$${signature} && \
+	cp $${BINARY_EDG_DIRNAME}.tar.gz $(top_srcdir)/src/frontend/CxxFrontend/ && \
+	svn add $(top_srcdir)/src/frontend/CxxFrontend/$${BINARY_EDG_DIRNAME}.tar.gz
+
 source_with_binary_edg_dist: rose_binary_compatibility_signature
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
 	if test `ls -1 $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz | wc -l` -eq 0; then echo "Error: Could not find any binary versions of EDG with signature $${ROSE_BINARY_COMPATIBILITY_SIGNATURE} in $(srcdir)/src/frontend/CxxFrontend.  This distribution cannot be made because it would not be usable on any platform." >&2; exit 1; fi && \
