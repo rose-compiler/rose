@@ -52,5 +52,5 @@ echo ""
 #cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do sed "s,@CHECKER@,$ch,g" < $srcdir/archiveMakefile.in | sed "s,@UCHECKER@,$chupper,g" ; done
 #echo "archiveCheckers: \$(COMPASS_CHECKER_ARCHIVES)"
 #echo ""
-#echo "# Compass checker object file build rules"
-#cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(compass_checker_dir)/&/&.C@	$(LTCXXCOMPILE) -c -o &.lo $(compass_checker_dir)/&/&.C@,' | tr '@' '\n'
+echo "# Compass checker object file build rules"
+cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$,&.lo: $(compass_checker_dir)/&/&.C@	$(LTCXXCOMPILE) -c -o &.lo $(compass_checker_dir)/&/&.C@,' | tr '@' '\n'
