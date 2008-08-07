@@ -66,8 +66,6 @@ fi
 #exit 1
 
 AM_CONDITIONAL(ROSE_USE_QROSE,test "$with_qrose" = true)
-AM_CONDITIONAL(ROSE_BUILD_ROSEHPCT,test "$with_hpct" = true)
-
 
 # Set up for use of bison to build dot2gml tool in directory
 # src/roseIndependentSupport/dot2gml.  This is made optional

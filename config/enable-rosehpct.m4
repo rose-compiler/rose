@@ -1,6 +1,8 @@
 dnl
 dnl ACROSE_ENABLE_HPCT
 dnl
+dnl Must call this after AM_PATH_XML2(2.0.0, [with_xml="yes"])
+dnl
 dnl Checks whether the user explicitly requested that the
 dnl ROSE-HPCT module be built. Sets the shell variable
 dnl 'acrose_enable_rosehpct' to 'yes' or 'no', accordingly.
@@ -8,6 +10,8 @@ dnl Also defines the automake conditional,
 dnl ROSE_BUILD_ROSEHPCT, and modifies CXXFLAGS and
 dnl LIBS to include and link against the appropriate
 dnl prerequisite libraries.
+dnl  
+dnl Enabled it by default if prerequisites are met, Liao, 8/7/2008 
 dnl
 dnl Author: Rich Vuduc <richie@llnl.gov>
 dnl
@@ -21,7 +25,8 @@ AC_ARG_ENABLE([rosehpct],
   AC_HELP_STRING([--enable-rosehpct],
     [enable build of the ROSE-HPCT module]),
   [acrose_enable_rosehpct=$enableval],
-  [acrose_enable_rosehpct=no])
+  [acrose_enable_rosehpct=yes]
+  )
 AC_MSG_RESULT([${acrose_enable_rosehpct}])
 
 if test x"${acrose_enable_rosehpct}" = xyes ; then
