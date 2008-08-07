@@ -7,8 +7,8 @@ endif
 
 if ROSE_MPI
 
-INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(compass_tooldir)/compass -I$(compass_support_dir) -I$(compass_build_tooldir)/compass $(INCLUDES_OMP) 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_build_tooldir)/libCompassCheckers.la -lrose
+INCLUDES = -DROSE_MPI $(ROSE_INCLUDES) -I. -I$(compass_tooldir)/compass -I$(compass_support_dir) -I$(compass_build_tooldir)/compass $(INCLUDES_OMP) -I$(compass_checker_dir)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_build_tooldir)/compass/libCompassCheckers.la -lrose
 
 if ROSE_USE_GCC_OMP
  LDADD += -lgomp
