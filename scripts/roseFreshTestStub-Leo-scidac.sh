@@ -20,7 +20,7 @@ CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
-MAILADDRS="liaoch@llnl.gov"
+MAILADDRS="liaoch@llnl.gov willcock2@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
