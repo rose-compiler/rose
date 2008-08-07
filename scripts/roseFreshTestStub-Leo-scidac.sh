@@ -16,8 +16,7 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 ROSE_TOP=/home/liao6/daily-test-rose/${TIMESTAMP}
 
 # for regular build and tests
-CONFIGURE_FLAGS=( --enable-rosehpct --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
-
+CONFIGURE_FLAGS=( --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
@@ -36,12 +35,14 @@ SVNOP=checkout
 # How many processes for make
 MAKEFLAGS="-j16"
 
-# my additional stuff
+# my additional stuff, not suitable for the external repository
 #ENABLE_UPLOAD_SVN=yes
 #ENABLE_UPLOAD_WEB=yes
 
 KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
+# skip make dist, make distcheck, make source_with_binary_edg_dist etc
+SKIP_DIST_TEST=yes
 
 set -e
 set -o pipefail

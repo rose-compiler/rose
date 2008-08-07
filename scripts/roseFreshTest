@@ -149,34 +149,41 @@ fi
   make $MAKEFLAGS install && \
   echo "############ make install done" && \
   make $MAKEFLAGS installcheck && \
-  echo "############ make installcheck done" && \
-  make $MAKEFLAGS dist && \
-  echo "############ make dist done" && \
-  make $MAKEFLAGS distcheck && \
-  echo "############ make distcheck done"
-  make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion}  && \
-  echo "############ make source_with_binary_edg_dist done"
+  echo "############ make installcheck done" 
+
+  # skip the rest if we are testing the head of the SciDAC repository of ROSE
+  if [ $SKIP_DIST_TEST ] ; then
+    echo "Skipping make dist, distcheck, source_with_binary_edg_dist.." 
+  else  
+    make $MAKEFLAGS dist && \
+    echo "############ make dist done" && \
+    make $MAKEFLAGS distcheck && \
+    echo "############ make distcheck done"
+    make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion}  && \
+    echo "############ make source_with_binary_edg_dist done"
+  fi
 ) >buildlog 2>&1 || buildstatus=1
 
 #------------------------------------------------------
 # Report Section
 #------------------------------------------------------
-
+ mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
   if [ $TIMESTAMP ]; then
-    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (pass)" > mailtext
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (pass)" > $mailtext
   else
-    echo "Subject: ROSE test $$ on `hostname` results (pass)" > mailtext
+    echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
   fi
-  echo "" >> mailtext
-  echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
-  echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> mailtext
-  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
-  echo "Make flags = ${MAKEFLAGS}" >> mailtext
-  echo "Hostname = `hostname`" >> mailtext
-  echo "" >> mailtext
-  echo "> Environment:" >> mailtext
-  printenv >> mailtext
+  echo "" >> $mailtext
+  echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
+  echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
+  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> $mailtext
+  echo "Make flags = ${MAKEFLAGS}" >> $mailtext
+  echo "Hostname = `hostname`" >> $mailtext
+  echo "" >> $mailtext
+  echo "> Environment:" >> $mailtext
+  printenv >> $mailtext
+  echo "" >> $mailtext
   #------------------------------------------------------
   # Optional uploading Section: for successful tests only
   #------------------------------------------------------
@@ -186,9 +193,9 @@ if [ $buildstatus == 0 ]; then
     cd ${ROSE_TOP}/build/docs/Rose
     make copyWebPages
     if [ $? -ne 0 ]; then
-      echo "Error: make copyWebPages finishes abnormally!" >>mailtext
+      echo "Error: make copyWebPages finishes abnormally!" >>$mailtext
     else
-      echo "make copyWebPages finishes normally.">>mailtext
+      echo "make copyWebPages finishes normally.">>$mailtext
     fi
   fi
 
@@ -197,36 +204,34 @@ if [ $buildstatus == 0 ]; then
 
      ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog
     if [ $? -ne 0 ]; then
-      echo "Error: importRoseDistributionToSVN finishes abnormally!" >>mailtext
+      echo "Error: importRoseDistributionToSVN finishes abnormally!" >>$mailtext
     else
-      echo "importRoseDistributionToSVN finishes normally.">>mailtext
+      echo "importRoseDistributionToSVN finishes normally.">>$mailtext
     fi
   fi
-  #  end of mail text
-  echo "" >> mailtext
 else
   if [ $TIMESTAMP ]; then
-    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (fail)" > mailtext
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (fail)" > $mailtext
   else
-    echo "Subject: ROSE test $$ on `hostname` results (fail)" > mailtext
+    echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
   fi  
-  echo "" >> mailtext
-  echo "SVN root = ${ROSE_SVNROOT}" >> mailtext
-  echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> mailtext
-  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> mailtext
-  echo "Make flags = ${MAKEFLAGS}" >> mailtext
-  echo "Hostname = `hostname`" >> mailtext
-  echo "" >> mailtext
-  echo "> Environment:" >> mailtext
-  printenv >> mailtext
-  echo "" >> mailtext
-  echo ">>> -------------------- Error summary --------------------" >> mailtext
-  tail -100 buildlog >> mailtext
-  echo "" >> mailtext
+  echo "" >> $mailtext
+  echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
+  echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
+  echo "Configure flags = ${CONFIGURE_FLAGS[@]}" >> $mailtext
+  echo "Make flags = ${MAKEFLAGS}" >> $mailtext
+  echo "Hostname = `hostname`" >> $mailtext
+  echo "" >> $mailtext
+  echo "> Environment:" >> $mailtext
+  printenv >> $mailtext
+  echo "" >> $mailtext
+  echo ">>> -------------------- Error summary --------------------" >> $mailtext
+  tail -100 buildlog >> $mailtext
+  echo "" >> $mailtext
 fi
-# echo "-------------------- Full log      --------------------" >> mailtext
-# cat buildlog >> mailtext (too big)
-/usr/sbin/sendmail -i $MAILADDRS < mailtext
+# echo "-------------------- Full log      --------------------" >> $mailtext
+# cat buildlog >> $mailtext (too big)
+/usr/sbin/sendmail -i $MAILADDRS < $mailtext
 if [ $KEEP_TEST_DIR ] ; then
   : # echo "Test directory is preserved."
 else  
