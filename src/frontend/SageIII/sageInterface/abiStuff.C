@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace SageBuilder;
+using namespace SageInterface;
 
 StructLayoutInfo ChainableTypeLayoutGenerator::layoutType(SgType* t) const {
   // Default implementation just passes everything (except typedefs and
@@ -95,6 +96,15 @@ StructLayoutInfo NonpackedTypeLayoutGenerator::layoutType(SgType* t) const {
       StructLayoutInfo layout = beginning->layoutType(isSgArrayType(t)->get_base_type());
       layout.fields.clear();
       SgExpression* numElements = isSgArrayType(t)->get_index();
+
+      //Adjustment for UPC array like a[100*THREADS],treat it as a[100]
+      // Liao, 8/7/2008
+      if (isUpcArrayWithThreads(isSgArrayType(t)))
+      {
+        SgMultiplyOp* multiply = isSgMultiplyOp(isSgArrayType(t)->get_index());
+        ROSE_ASSERT(multiply);
+        numElements = multiply->get_lhs_operand();
+      }  
       if (!isSgValueExp(numElements)) {
         cerr << "Error: trying to compute static size of an array with non-constant size" << endl;
         abort();
@@ -501,6 +511,7 @@ StructLayoutInfo CustomizedPrimitiveTypeLayoutGenerator::layoutType(SgType* t) c
     {
       layout.size = custom_sizes->sz_int; 
       layout.alignment = custom_sizes->sz_alignof_int; 
+      ROSE_ASSERT(layout.size!=0);
       break;
     }
     case V_SgTypeLong: 
@@ -542,8 +553,31 @@ StructLayoutInfo CustomizedPrimitiveTypeLayoutGenerator::layoutType(SgType* t) c
     // extended types
     case V_SgPointerType:  // UPC extension
     {
-      layout.size = custom_sizes->sz_void_ptr; 
-      layout.alignment = custom_sizes->sz_alignof_void_ptr; 
+      // pointer to shared: phaseless or not
+      SgType * pointed_type = isSgPointerType(t)->get_base_type();
+      if(isSgModifierType(pointed_type))
+      {
+      if (isUpcSharedModifierType(isSgModifierType(pointed_type))){
+        if (isUpcPhaseLessSharedType(pointed_type))
+        {
+//cout<<"Found a pointer to  phaseless UPC shared type."<<endl;          
+          layout.size = custom_sizes->sz_pshared_ptr;
+          layout.alignment= custom_sizes->sz_alignof_pshared_ptr;
+        }
+        else
+        {
+//cout<<"Found a pointer to  phased UPC shared type."<<endl;          
+          layout.size = custom_sizes->sz_shared_ptr;
+          layout.alignment= custom_sizes->sz_alignof_shared_ptr;
+          ROSE_ASSERT(layout.alignment!=0);
+        }
+       }
+      }
+      else
+      {
+        layout.size = custom_sizes->sz_void_ptr; 
+        layout.alignment = custom_sizes->sz_alignof_void_ptr; 
+      }
       break;
     } 
     case V_SgReferenceType: //{layout.size = 4; layout.alignment = 4; break;}
