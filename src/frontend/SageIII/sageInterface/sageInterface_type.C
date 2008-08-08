@@ -205,6 +205,15 @@ bool isReferenceType(SgType* t) {
     return result;
   } // getArrayElementCount()
 
+  SgType* getArrayElementType(SgArrayType* t)
+  {
+    ROSE_ASSERT(t);
+    SgType* current_type = t;
+    while (isSgArrayType(current_type))
+      current_type = isSgArrayType(current_type)->get_base_type();
+    return current_type;  
+  }
+
 // Returns true if args is a valid argument type list for decl
 // Requires the exact argument list given -- conversions not handled
 // Good enough for default and copy constructors, but not other functions
@@ -524,6 +533,16 @@ bool hasTrivialDestructor(SgType* t) {
       return false;
   }
 
+  bool isUpcSharedArrayType (SgArrayType* array_type)
+  {
+    bool result = false;
+    ROSE_ASSERT(array_type);
+    SgType* base_type=getArrayElementType(array_type); 
+    if (isSgModifierType(base_type))
+      result = isUpcSharedModifierType(isSgModifierType(base_type));
+    return result;
+  }
+
   bool isUpcStrictSharedModifierType(SgModifierType* mod_type)
   {
 
@@ -533,6 +552,15 @@ bool hasTrivialDestructor(SgType* t) {
     return result;
   }
  
+   //! Get the block size of a UPC shared type, including Modifier types and array of modifier types (shared arrays)
+  size_t getUpcSharedBlockSize(SgType* t)
+  {
+    SgModifierType * mod_type=NULL;  
+    bool isUpc = isUpcSharedType(t,&mod_type);
+    ROSE_ASSERT(isUpc);
+    return getUpcSharedBlockSize(mod_type);
+  }
+
   size_t getUpcSharedBlockSize(SgModifierType* mod_type)
   {
     ROSE_ASSERT(isUpcSharedModifierType(mod_type));
@@ -543,7 +571,13 @@ bool hasTrivialDestructor(SgType* t) {
       return result;
   }
 
-  //! Is UPC shared type?
+  //! Check if a type is a UPC shared type, including shared array, shared pointers etc.
+  bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out/* = NULL*/)
+  {
+    return (hasUpcSharedType(t,mod_type_out) && !isUpcPrivateToSharedType(t));
+  }
+
+  //! Has a UPC shared type?
   bool hasUpcSharedType(SgType* sg_type,SgModifierType ** mod_type_out/*=NULL*/)
   {
     ROSE_ASSERT(sg_type);
@@ -577,7 +611,7 @@ bool hasTrivialDestructor(SgType* t) {
   bool isUpcPrivateToSharedType(SgType* t)
   {
     bool check = hasUpcSharedType(t);
-    ROSE_ASSERT(check);
+    if (check==false) return false;
     bool pointerFirst = false;
     SgType* currentType = t;
 
@@ -625,7 +659,7 @@ bool hasTrivialDestructor(SgType* t) {
       return false;
   } // isUpcPhaseLessSharedType
 
-  //! Is an UPC array with dimension of X*THREADS
+  //! Is a UPC array with dimension of X*THREADS
   /*!
    * EDG-SAGE connection ensures that UPC array using THREADS dimension 
    *  has an index expression of type SgMultiplyOp

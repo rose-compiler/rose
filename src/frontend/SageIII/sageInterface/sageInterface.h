@@ -535,10 +535,13 @@ std::string mangleType(SgType* type);
 //! Generated mangled modifier types, include const, volatile,according to Itanium C++ ABI, with extension to handle UPC shared types.  
   std::string mangleModifierType(SgModifierType* type);
 
-//! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is an UPC array. 
+//! Calculate the number of elements of an array type: dim1* dim2*... , assume element count is 1 for int a[]; Strip off THREADS if it is a UPC array. 
 size_t getArrayElementCount(SgArrayType* t);
 
-//! Has an UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
+//! Get the element type of an array
+SgType* getArrayElementType(SgArrayType* t);
+
+//! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
  * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense. 
   AST graph for some examples:
@@ -550,22 +553,31 @@ size_t getArrayElementCount(SgArrayType* t);
  */
 bool hasUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
 
-//! Check if a modifier type is an UPC shared type.
+//! Check if a type is a UPC shared type, including shared array, shared pointers etc. Exclude private pointers to shared types.
+bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL);
+
+//! Check if a modifier type is a UPC shared type.
 bool isUpcSharedModifierType (SgModifierType* mod_type);
+
+//! Check if an array type is a UPC shared type. ROSE AST represents a UPC shared array as regular array of elements of UPC shared Modifier Type. Not directly a UPC shared Modifier Type of an array.
+bool isUpcSharedArrayType (SgArrayType* array_type);
 
 //! Check if a shared UPC type is strict memory consistency or not. Return false if it is relaxed. (So isUpcRelaxedSharedModifierType() is not necessary.)
 bool isUpcStrictSharedModifierType(SgModifierType* mode_type);
 
-//! Get the block size of an UPC shared modifier type
+//! Get the block size of a UPC shared modifier type
 size_t getUpcSharedBlockSize(SgModifierType* mod_type);
+
+//! Get the block size of a UPC shared type, including Modifier types and array of modifier types (shared arrays)
+size_t getUpcSharedBlockSize(SgType* t);
 
 //! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Input parameter must be a UPC shared type.
 bool isUpcPhaseLessSharedType (SgType* t);
 
-//! Is an UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
+//! Is a UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
 bool isUpcPrivateToSharedType(SgType* t);
 
-//! Is an UPC array with dimension of X*THREADS
+//! Is a UPC array with dimension of X*THREADS
 bool isUpcArrayWithThreads(SgArrayType* t);
 
 //! Lookup a named type based on its name, bottomup searching from a specified scope. Note name collison might be allowed for c (not C++) between typedef and enum/struct. Only the first matched named type will be returned in this case. typedef is returned as it is, not the base type it actually refers to.
