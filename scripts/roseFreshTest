@@ -159,7 +159,13 @@ fi
     make $MAKEFLAGS dist && \
     echo "############ make dist done" && \
     make $MAKEFLAGS distcheck && \
-    echo "############ make distcheck done"
+    echo "############ make distcheck done" && \
+    # Build a binary version of EDG and put it into the source tree \
+    if [ $ENABLE_BUILD_BINARY_EDG ]; then \
+      cd ${ROSE_TOP}/build && \
+      make binary_edg_tarball && \
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_SVNROOT} `${ROSE_TOP}/sourcetree/config/config.guess` \
+    fi && \
     make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion}  && \
     echo "############ make source_with_binary_edg_dist done"
   fi
@@ -188,12 +194,6 @@ if [ $buildstatus == 0 ]; then
   #------------------------------------------------------
   # Optional uploading Section: for successful tests only
   #------------------------------------------------------
-  # Build a binary version of EDG and put it into the source tree
-  if [ $ENABLE_BUILD_BINARY_EDG ]; then
-    cd ${ROSE_TOP}/build
-    make binary_edg_tarball
-    ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_SVNROOT} `${ROSE_TOP}/sourcetree/config/config.guess`
-  fi
    # documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
@@ -205,7 +205,6 @@ if [ $buildstatus == 0 ]; then
       echo "make copyWebPages finishes normally.">>$mailtext
     fi
   fi
-
  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
   if [ $ENABLE_UPLOAD_SVN ] ; then
 
