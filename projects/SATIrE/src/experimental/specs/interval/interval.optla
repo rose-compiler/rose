@@ -97,7 +97,7 @@ FunctionExit(_, vars), _:
   kill_vars(@, vars);
 
 FunctionCall(_,_), local_edge:
-  bot; //top;
+  bot;
 
 _, _: @;
 
@@ -191,7 +191,7 @@ binary(left, right, exp, state) =
                               dontknow endif endif;
 
           LessThanOp(_, _)  => if (l2 < r1) then (duplift(1), ls) else 
-                               if (l1 >=l2) then (duplift(0), ls) else 
+                               if (l1 >=r2) then (duplift(0), ls) else 
                                dontknow endif endif;
 
           GreaterThanOp(_, _) => if (l1 > r2) then (duplift(1), ls) else 
@@ -199,7 +199,7 @@ binary(left, right, exp, state) =
                                  dontknow endif endif;
 
           NotEqualOp(_, _) => if (l2 < r1) || (l1 > r2) then (duplift(1), ls) else
-                              if (constp)  && (l1 = r1) then (duplift(0), ls) else
+                              if (constp)  then (duplift(bool_int(l1!=r1)), ls) else
                               dontknow endif;
 
           LessOrEqualOp(_, _) => if (l2 <= r1) then (duplift(1), ls) else 
@@ -421,6 +421,9 @@ max(a, b) = if drop(a) > drop(b) then a else b endif;
 
 maxi(a, b) = if a > b then a else b endif;
 
+// -- default widening operator:
+//wide(_, b) = b;
+
 wide(bot, b) = b;
 wide(a, bot) = a;
 wide(_, top) = top;
@@ -428,8 +431,14 @@ wide(top, _) = top;
 wide(a, b) = lift(crunch(drop(a), drop(b), widen));
 
 widen((top, bot), b) = b;
-widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else bot endif,
-                              if a2=b2 then a2 else top endif );
+widen((a1, a2), (b1, b2)) = ( if a1=b1 then a1 else top /*min(a1, b1)*/ endif,
+                              if a2=b2 then a2 else top /*max(a1, b1)*/ endif );
+
+//widen((a1, a2), (b1, b2)) = let v1 <= b1 ;
+//                                v2 <= b2 ; in 
+//                            ( if v2-v1 > 10 then top else b1 endif,
+//                              if v2-v1 > 10 then top else b2 endif) ;
+
 
 eq(a, b)   = //print("eq a: ") print(a) print("\n")
              //print("eq b: ") print(b) print("\n\n")
