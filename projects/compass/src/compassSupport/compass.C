@@ -45,7 +45,7 @@ int Compass::processes=0;
 
 void Compass::loadDFA(std::string name, SgProject* project) {
   MPI_Status Stat;
-  int *res = new int[2];
+  int res[2];
   res[0]=0;
   res[1]=1;
   bool done=false;
@@ -86,6 +86,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 
       std::ifstream loadFile(name.c_str(), std::ios::in | std::ios::binary);
       int sizeOfArrayItem = -1;
+
       global_arrsize=-1;
       global_arrsizeUse=-1;
       ROSE_ASSERT(global_arrsize!=0);
@@ -93,22 +94,23 @@ void Compass::loadDFA(std::string name, SgProject* project) {
       loadFile.read((char*)&global_arrsize, sizeof(unsigned int));
       loadFile.read((char*)&global_arrsizeUse, sizeof(unsigned int));
       loadFile.read((char*)&sizeOfArrayItem, sizeof(int));
+      ROSE_ASSERT(sizeOfArrayItem==sizeof(int));
       std::cerr << " sizeof (def_values) : " << sizeOfArrayItem << 
 	"   total bytes: " << (sizeOfArrayItem*global_arrsize) <<  "\n";
       def_values_global = new unsigned int[global_arrsize];
       use_values_global = new unsigned int[global_arrsizeUse];
-      for (unsigned int i=0; i<global_arrsize;++i) 
-	def_values_global[i]=0;
-      for (unsigned int i=0; i<global_arrsizeUse;++i) 
-	use_values_global[i]=0;
+      //      for (unsigned int i=0; i<global_arrsize;++i) 
+      //	def_values_global[i]=0;
+      //      for (unsigned int i=0; i<global_arrsizeUse;++i) 
+      //	use_values_global[i]=0;
       std::cerr << my_rank <<": loading data ...  globalArrSize: " << global_arrsize <<std::endl;
-      for (unsigned int j=0;j<global_arrsize;j++) {
-	loadFile.read((char*)&def_values_global[j], sizeOfArrayItem);
-      }
+      //      for (unsigned int j=0;j<global_arrsize;j++) {
+	loadFile.read((char*)&def_values_global[0], sizeOfArrayItem*global_arrsize);
+	//      }
       std::cerr << my_rank <<": loading data ...   globalArrSizeUse: " << global_arrsizeUse <<std::endl;
-      for (unsigned int j=0;j<global_arrsizeUse;j++) {
-	loadFile.read((char*)&use_values_global[j], sizeOfArrayItem);
-      }
+      //      for (unsigned int j=0;j<global_arrsizeUse;j++) {
+	loadFile.read((char*)&use_values_global[0], sizeOfArrayItem*global_arrsizeUse);
+	//}
       loadFile.close();
       std::cerr <<" Done Loading DFA to File " << std::endl;
       std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
@@ -134,7 +136,7 @@ void Compass::loadDFA(std::string name, SgProject* project) {
       use_values_global=NULL;
       delete memTrav;
       /* deserialize all results */
-
+      
 
 
       if (processes>1)
@@ -167,15 +169,15 @@ void Compass::saveDFA(std::string name, SgProject* project) {
     std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
     writeFile.write(reinterpret_cast<const char *>(&global_arrsize), sizeof(unsigned int));
     writeFile.write(reinterpret_cast<const char *>(&global_arrsizeUse), sizeof(unsigned int));
-    int sizeOfArrayItem = sizeof(def_values_global);
+    int sizeOfArrayItem = sizeof(*def_values_global);
     writeFile.write(reinterpret_cast<const char *>(&sizeOfArrayItem), sizeof(int));
-    for (unsigned int j=0;j<global_arrsize;j++) {
-      writeFile.write((char*)&def_values_global[j], sizeof(def_values_global));
-    }
-    for (unsigned int j=0;j<global_arrsizeUse;j++) {
-      writeFile.write((char*)&use_values_global[j], sizeof(use_values_global));
-    }
-    std::cerr << " sizeof (def_values) : " << (sizeof(def_values_global)*global_arrsize) << " : " 
+    //    for (unsigned int j=0;j<global_arrsize;j++) {
+      writeFile.write((char*)&def_values_global[0], sizeof(def_values_global[0])*global_arrsize);
+      // }
+      //    for (unsigned int j=0;j<global_arrsizeUse;j++) {
+      writeFile.write((char*)&use_values_global[0], sizeof(use_values_global[0])*global_arrsizeUse);
+      //}
+    std::cerr << " sizeof (def_values) : " << (sizeof(def_values_global[0])*global_arrsize) << " : " 
 	      << (sizeOfArrayItem*global_arrsize) << " bytes \n";
     writeFile.close();
     std::cerr <<" Done Saving DFA to File " << std::endl;

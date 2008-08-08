@@ -26,6 +26,7 @@ bool saveAST =false;
 bool loadDFA =false;
 bool saveDFA =false;
 SgProject *root = NULL;
+struct timespec begin_time_checker, end_time_checker;
 struct timespec begin_time, end_time;
 struct timespec begin_init_time, end_init_time;
 struct timespec begin_time_node, end_time_node;
@@ -143,6 +144,8 @@ void initPCompass(int argc, char **argv) {
       name.append(".data");
       std::cerr << "ROSE loading DFA enabled.... " << name << std::endl;
       Compass::loadDFA(name,root);
+      //MPI_Finalize();
+      //exit(0);
     } else if  (saveDFA) {
       // this can run in parallel!
       std::string name = argv[2];

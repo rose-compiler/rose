@@ -236,7 +236,7 @@ void printPCResults(CountingOutputObject  &outputs,
 		    unsigned int* output_values,
 		    double* times, double* memory, int* maxtime_i, double* maxtime_val,
 		    double* calctimes, double* commtimes,
-		    std::vector<SgNode*>& nodeDecls
+		    std::vector<SgNode*>& nodeDecls, double* totalCheckerTime
 		    ) {
   /* print everything */
   if (my_rank == 0) {
@@ -245,7 +245,7 @@ void printPCResults(CountingOutputObject  &outputs,
     std::map<std::string, unsigned int> ::iterator o_itr;
     int j=0;
     for (o_itr = outputs.counts.begin(); o_itr != outputs.counts.end(); ++o_itr, ++j) 
-      std::cout << "  " << o_itr->first << " " << output_values[j] << std::endl;
+      std::cout << "  " << o_itr->first << " " << output_values[j] << " " << totalCheckerTime[j] <<std::endl;
     std::cout << std::endl;
 
     double total_time = 0.0;
@@ -335,6 +335,8 @@ int main(int argc, char **argv)
   buildCheckers(bases, params, outputs,root);
   outputs.fillOutputList(bases);
 
+  double* totalCheckerTime = new double[bases.size()];
+
   //ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
   //  if (DEBUG_OUTPUT_MORE) 
   if (my_rank == 0)
@@ -344,6 +346,7 @@ int main(int argc, char **argv)
 	std::cout << ' ' << (*b_itr)->getName();
       std::cout << std::endl;
     }
+
 
 
   /* traverse the files */
@@ -402,6 +405,11 @@ int main(int argc, char **argv)
     double calc_time_processor=0;
 
     std::vector<int> bounds;
+    int t=0;
+    for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+      totalCheckerTime[t]=0;
+      t++;
+    }
 
     computeIndicesPerNode(root, bounds, my_rank, processes, nullderefCounter, nodeDecls);
     //  gettime(begin_time_0);
@@ -419,11 +427,17 @@ int main(int argc, char **argv)
       for (i = 0; i<(int)bounds.size();i++) {
 	if (DEBUG_OUTPUT_MORE) 
 	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
+	int t=0;
 	if (bounds[i]== my_rank) 
 	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	    SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
 	    ROSE_ASSERT(mynode);
+	    gettime(begin_time_checker);
 	    (*b_itr)->visit(mynode);
+	    gettime(end_time_checker);
+	    double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
+	    totalCheckerTime[t]+=time_checker;
+	    t++;
 	  }
       }
       gettime(end_time_defuse);
@@ -480,10 +494,16 @@ int main(int argc, char **argv)
 #endif
 	  for (i=min; i<max;i++) { 
 	    gettime(begin_time_node);
+	    int t=0;
 	    for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
 	      SgNode* mynode = isSgNode(nodeDecls[i]);
 	      ROSE_ASSERT(mynode);
+	      gettime(begin_time_checker);
 	      (*b_itr)->visit(mynode);
+	      gettime(end_time_checker);
+	      double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
+	      totalCheckerTime[t]+=time_checker;
+	      t++;
 	    }
 	    gettime(end_time_node);
 	    double my_time_node = Compass::timeDifference(end_time_node, begin_time_node);
@@ -595,7 +615,8 @@ int main(int argc, char **argv)
 
 
     printPCResults(outputs, output_values, times, memory, maxtime_nr, maxtime_val, 
-		   calctimes, commtimes, nodeDecls);
+		   calctimes, commtimes, nodeDecls, totalCheckerTime);
+
 
     //if (my_rank==0)
     //  cout << "Processor 0 : total time (incl. gathering) : " << my_time_0 << endl << endl;
@@ -607,6 +628,9 @@ int main(int argc, char **argv)
     delete[] calctimes;
     delete[] commtimes;
   }
+    delete[] totalCheckerTime;
+    totalCheckerTime=NULL;
+
 
   /* all done */
   MPI_Finalize();
