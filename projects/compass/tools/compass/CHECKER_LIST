@@ -4,6 +4,8 @@ assignmentOperatorCheckSelf
 assignmentReturnConstThis
 asynchronousSignalHandler
 avoidUsingTheSameHandlerForMultipleSignals
+binPrintAsmFunctions
+binPrintAsmInstruction
 booleanIsHas
 bufferOverflowFunctions
 byteByByteStructureComparison

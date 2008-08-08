@@ -4,6 +4,8 @@
 +:AssignmentReturnConstThis
 +:AsynchronousSignalHandler
 +:AvoidUsingTheSameHandlerForMultipleSignals
++:BinPrintAsmFunctions
++:BinPrintAsmInstruction
 +:BooleanIsHas
 +:BufferOverflowFunctions
 +:ByteByByteStructureComparison
