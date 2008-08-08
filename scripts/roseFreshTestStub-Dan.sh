@@ -29,7 +29,7 @@ MAILADDRS="dquinlan@llnl.gov"
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=checkout
 
-MAKEFLAGS="-j16"
+MAKEFLAGS="-j8"
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
@@ -38,7 +38,7 @@ if (($mpdvar >= 2)); then
    echo "MPD RUNNING"
  elif (($mpdvar < 2)); then
    echo "Starting MPD"
-   mpd &
+   /usr/apps/mpich2/1.0.5/bin/mpd &
    echo "MPD started."
 fi
 
