@@ -150,6 +150,7 @@ fi
   echo "############ make install done" && \
   make $MAKEFLAGS installcheck && \
   echo "############ make installcheck done" 
+  if test $? -ne 0; then exit 1; fi
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ $SKIP_DIST_TEST ] ; then
