@@ -33,7 +33,15 @@ SVNOP=checkout
 MAKEFLAGS="-j8"
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
-test mpd && echo "MPD Running" || mpd &
+export mpdvar=$(ps ax | grep mpd | wc -l )
+#echo $mpdvar
+if (($mpdvar >= 2)); then
+   echo "MPD RUNNING"
+ elif (($mpdvar < 2)); then
+   echo "Starting MPD"
+   /usr/apps/mpich2/1.0.5/bin/mpd &
+   echo "MPD started."
+fi
 
 set -e
 set -o pipefail
