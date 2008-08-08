@@ -33,10 +33,13 @@ MAKEFLAGS="-j16"
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
-if (($mpdvar < 2)) 
- then echo "MPD RUNNING"
- else echo "Starting MPD"
- mpd &
+#echo $mpdvar
+if (($mpdvar >= 2)); then
+   echo "MPD RUNNING"
+ elif (($mpdvar < 2)); then
+   echo "Starting MPD"
+   mpd &
+   echo "MPD started."
 fi
 
 set -e
