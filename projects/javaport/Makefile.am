@@ -12,9 +12,29 @@ EXTRA_DIST	= sage3.i sgname.i wchart.i test.java input.cc	\
 
 if ENABLE_JAVAPORT
 
+# GMY Javaport links to libCompass (sometimes --with-mpi) needs to find
+# MPI symbols 
+if ROSE_MPI
+LTCXXCOMPILE = \
+        $(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXCOMPILE = \
+        $(MPICXX) $(DEFS) \
+        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+        $(AM_CXXFLAGS) $(CXXFLAGS)
+CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+endif
+
+
 # To keep compile commands tidy, please ONLY put required include flags here.
 JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
+if ROSE_MPI
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES) -DROSE_MPI
+else
 INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES)
+endif
 
 #INCLUDES	=						\
 #	-I.							\
