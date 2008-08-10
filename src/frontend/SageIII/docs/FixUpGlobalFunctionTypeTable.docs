@@ -1,9 +1,0 @@
-/* GENERATED FILE - DO NOT MODIFY */
-/*!\class FixUpGlobalFunctionTypeTable
-*/
-/*! \name User Interface*/
-//@{
-/*!\fn virtual inline FixUpGlobalFunctionTypeTable::~FixUpGlobalFunctionTypeTable()
-*/
-//@}
-extern int SAGE_Doxygen_Dummy_438800223;

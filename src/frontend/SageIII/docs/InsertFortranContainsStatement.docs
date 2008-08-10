@@ -1,9 +1,0 @@
-/* GENERATED FILE - DO NOT MODIFY */
-/*!\class InsertFortranContainsStatement
-*/
-/*! \name User Interface*/
-//@{
-/*!\fn virtual void InsertFortranContainsStatement::visit(SgNode *node)
-*/
-//@}
-extern int SAGE_Doxygen_Dummy_1735277972;

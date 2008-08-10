@@ -1,9 +1,0 @@
-/* GENERATED FILE - DO NOT MODIFY */
-/*!\class FixupFunctionDefinitions
-*/
-/*! \name User Interface*/
-//@{
-/*!\fn virtual void FixupFunctionDefinitions::visit(SgNode *node)
-*/
-//@}
-extern int SAGE_Doxygen_Dummy_665601613;

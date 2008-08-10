@@ -1,7 +1,0 @@
-/* GENERATED FILE - DO NOT MODIFY */
-/*! \name User Interface*/
-//@{
-/*!\fn virtual inline SgNode *SgShallowCopy::copyAst(const SgNode *n)
-*/
-//@}
-extern int SAGE_Doxygen_Dummy_1560288777;
