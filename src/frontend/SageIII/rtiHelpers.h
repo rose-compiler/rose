@@ -40,6 +40,17 @@ static std::string toStringForRTI(const std::vector<T>& x) {
   return ss.str();
 }
 
+// DQ (8/8/2008): Added support for type used in binary file format support.
+template <typename T>
+static std::string toStringForRTI(const std::vector<std::pair<T,T> >& x) {
+  std::ostringstream ss;
+  ss << "[";
+  for (typename std::vector<std::pair<T,T> >::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+
 static std::string toStringForRTI(const std::vector<bool>& x) {
   std::ostringstream ss;
   ss << "[";

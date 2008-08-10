@@ -40,11 +40,11 @@ CLEANFILES = preproc.o haveRosettaGeneratedSource
 # Some source code is generated (call make in ROSE/src/ROSETTA/src to generate these files)
 GENERATED_SOURCE = \
 	Cxx_Grammar.h \
+	Cxx_GrammarRTI.C \
 	Cxx_Grammar.C \
 	AstQueryMemoryPool.h \
 	Cxx_GrammarReturnClassHierarchySubTree.C \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
-	Cxx_GrammarRTI.C \
 	Cxx_GrammarTreeTraversalAccessEnums.h \
 	Cxx_GrammarVariantEnumNames.C \
 	Cxx_GrammarNewAndDeleteOperators.C \

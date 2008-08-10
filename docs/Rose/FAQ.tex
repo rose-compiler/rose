@@ -225,6 +225,38 @@ of interface required to make manipulation generally more simple.
 % OK, I guess I learned my lesson here :-), back to work, thanks,
 % Dan
 
+
+// DQ (8/7/2008): Added more questions from email on 8/7/2008.
+\item  We have read, that the rose compiler is provided under the BSD license. Is every
+    part of the rose compiler under BSD licence and is it free for commercial use? \\
+   ROSE is free for commercial use, our research license with EDG has no
+restrictions (except that we can only release the binary and not the source code).
+Obviously the EDG part is not released BSD, only the source code part.
+If you want to build products using ROSE for C/C++, then you should
+consider contacting EDG for a license to there work then you could
+build commercial products and sell them; but you don't have to worry
+about ROSE.  I have no idea what ground your on if you build commercial
+products for sale based on ROSE and just use the EDG binary
+that we provide.  I expect it would be a complicated install for your customers. 
+In general if you are using EDG, and building commercial projects for sale,
+then I would encourage you to contact EDG and buy a license from them.
+This is was a few companies have done, and they have consulted EDG on this
+point.  Our goal is to especially encourage open-source C++ work using ROSE.
+Clearly we derive robustness in C++ in ROSE from the use of EDG, and we
+are thankful to there liberal research license.
+
+\item Is there a list of projects compiled with rose? \\
+     I don't release a list of projects and specific research groups using ROSE.  
+
+\item We have read, that you plan a windows port. Until which date do you plan to port the
+      project? \\
+   We hope to have a windows port using Cygwin, it worked
+a while back, but was not tested often, so we have to fix some
+details for it to work again.  So it is not a big deal, but I can't
+promise when it would happen.
+
+
+
 \end{enumerate}
 
 \commentout{

@@ -728,18 +728,23 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "ArmInstructionCondition" ) ||
                  ( varTypeString == "SgAsmArmRegisterReferenceExpression::arm_register_enum" ) ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
-                 ( varTypeString == "Exec::SectionPurpose" ) ||
-                 ( varTypeString == "Exec::InsSetArchitecture" ) ||
-                 ( varTypeString == "Exec::ExecFamily" ) ||
-                 ( varTypeString == "Exec::ExecPurpose" ) ||
-                 ( varTypeString == "Exec::ByteOrder" ) ||
-                 ( varTypeString == "Exec::ExecABI" ) ||
-                 ( varTypeString == "Exec::SymbolDefState" ) ||
-                 ( varTypeString == "Exec::SymbolBinding" ) ||
-                 ( varTypeString == "Exec::SymbolType" ) ||
-                 ( varTypeString == "Exec::ELF::SegmentType" ) ||
-                 ( varTypeString == "Exec::ELF::SegmentFlags" ) ||
-                 false
+                 ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
+                 ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||
+                 ( varTypeString == "SgAsmGenericFormat::ExecFamily" ) ||
+                 ( varTypeString == "SgAsmGenericFormat::ExecPurpose" ) ||
+                 ( varTypeString == "SgAsmGenericFormat::ByteOrder" ) ||
+                 ( varTypeString == "SgAsmGenericFormat::ExecABI" ) ||
+                 ( varTypeString == "SgAsmGenericSymbol::SymbolDefState" ) ||
+                 ( varTypeString == "SgAsmGenericSymbol::SymbolBinding" ) ||
+                 ( varTypeString == "SgAsmGenericSymbol::SymbolType" ) ||
+                 ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentType" ) ||
+                 ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentFlags" ) ||
+                 ( varTypeString == "Exec::NE::NEEntryFlags" ) ||
+                 ( varTypeString == "Exec::NE::NERelocSrcType" ) ||
+                 ( varTypeString == "Exec::NE::NERelocModifiers" ) ||
+                 ( varTypeString == "Exec::NE::NERelocTgtType" ) ||
+                 ( varTypeString == "Exec::NE::NERelocFlags" ) ||
+                 false 
               )
        {
           returnType = ENUM_TYPE;
@@ -767,9 +772,23 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "unsigned long long int" ) ||
               // DQ (8/3/2008): Added typedef for primative types (used in binary format)
                  ( varTypeString == "Exec::addr_t" ) ||
+              // DQ (8/9/2008): Added typedef to SgAsmExecutableFileFormat so that "Exec::addr_t" can be removed!
+                 ( varTypeString == "SgAsmExecutableFileFormat::addr_t" ) ||
                  ( varTypeString == "uint64_t" ) ||
                  ( varTypeString == "size_t" ) ||
                  ( varTypeString == "time_t" ) ||
+              // DQ (8/7/2008): Note that these are not primative types, but I will account 
+              // for them as such at least temporarily so that we can be the IR in place.
+                 ( varTypeString == "Exec::NE::NERelocEntry::iref_type" ) ||
+                 ( varTypeString == "Exec::NE::NERelocEntry::iord_type" ) ||
+                 ( varTypeString == "Exec::NE::NERelocEntry::iname_type" ) ||
+                 ( varTypeString == "Exec::NE::NERelocEntry::osfixup_type" ) ||
+              // DQ (8/8/2008): This is a typedef to a std::multimap<addr_t,addr_t>, this should likely be supported elsewhere.
+                 ( varTypeString == "SgAsmGenericSection::RefMap" ) ||
+              // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
+                 ( varTypeString == "SgAsmGenericSection::ExtentVector" ) ||
+              // DQ (8/8/2008): Added typedef for primative types (used in binary format)
+                 ( varTypeString == "SgAsmGenericFormat::fileDetails" ) ||
                  false
               )
        {
