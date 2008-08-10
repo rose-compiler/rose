@@ -173,7 +173,11 @@ binary_edg_tarball: rose_binary_compatibility_signature
 
 copy_binary_edg_tarball_to_source_tree: binary_edg_tarball rose_binary_compatibility_signature
 	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-`cat rose_binary_compatibility_signature` && \
-	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree `sed -n 5p $(top_srcdir)/.svn/entries` $(build_triplet)
+	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree $(top_srcdir) $(build_triplet)
+
+copy_binary_edg_tarball_to_source_tree_svn: binary_edg_tarball rose_binary_compatibility_signature
+	BINARY_EDG_DIRNAME=roseBinaryEDG-$(build_triplet)-`cat rose_binary_compatibility_signature` && \
+	$(top_srcdir)/scripts/copy_binary_edg_tarball_to_source_tree_svn `sed -n 5p $(top_srcdir)/.svn/entries` $(build_triplet)
 
 source_with_binary_edg_dist: rose_binary_compatibility_signature
 	@ROSE_BINARY_COMPATIBILITY_SIGNATURE=`cat rose_binary_compatibility_signature` && \
