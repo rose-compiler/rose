@@ -285,15 +285,15 @@ HEADER_BINARY_FILE_PROGRAM_HEADER_END
 
 
 HEADER_BINARY_FILE_SECTION_HEADER_LIST_START
-          const SgAsmSectionHeaderPtrList & get_section_headers() const;
-          SgAsmSectionHeaderPtrList & get_section_headers();
+       // const SgAsmSectionHeaderPtrList & get_section_headers() const;
+       // SgAsmSectionHeaderPtrList & get_section_headers();
 
 HEADER_BINARY_FILE_SECTION_HEADER_LIST_END
 
 
 HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_START
-          const SgAsmProgramHeaderPtrList & get_program_headers() const;
-          SgAsmProgramHeaderPtrList & get_program_headers();
+       // const SgAsmProgramHeaderPtrList & get_program_headers() const;
+       // SgAsmProgramHeaderPtrList & get_program_headers();
 
 HEADER_BINARY_FILE_PROGRAM_HEADER_LIST_END
 
@@ -340,76 +340,1236 @@ HEADER_BINARY_WORD_VALUE_EXPRESSION_START
 HEADER_BINARY_WORD_VALUE_EXPRESSION_END
 
 
-HEADER_GENERIC_SEGMENT_START
-HEADER_GENERIC_SEGMENT_END
+
+// ************************************
+// NEW IR NODES FOR BINARY FILE FORMATS
+// ************************************
+
+HEADER_EXECUTABLE_FILE_FORMAT_START
+     public:
+          typedef uint64_t addr_t; /* address and size (file and memory) */
+
+       /* Thrown when an attempt is made to read past the end of a file, section, header, segment, etc. */
+          class ShortRead {
+               public:
+                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size)
+                       : section(section), offset(offset), size(size) {}
+                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
+                       : section(section), offset(offset), size(size), mesg(mesg) {}
+                    ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
+                       : section(section), offset(offset), size(size), mesg(mesg) {}
+                    SgAsmGenericSection *section;   /* Section from which read occurred; null implies file-level write */
+                    Exec::addr_t         offset;    /* Byte offset into section (or file) */
+                    Exec::addr_t         size;      /* Number of bytes of attempted read */
+                    std::string          mesg;      /* Optional message */
+             };
+
+       /* Thrown when an attempt is made to write past the end of a file, section, header, segment, etc. */
+          class ShortWrite {
+               public:
+                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size)
+                       : section(section), offset(offset), size(size) {}
+                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
+                       : section(section), offset(offset), size(size), mesg(mesg) {}
+                    ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
+                       : section(section), offset(offset), size(size), mesg(mesg) {}
+                    SgAsmGenericSection *section;  /* Section to which write occurred; null implies file-level write */
+                    Exec::addr_t         offset;   /* Byte offset into section (or file) */
+                    Exec::addr_t         size;     /* Number of bytes of attempted write */
+                    std::string          mesg;     /* Optional message */
+             };
+
+       /* Thrown when the file contains an error that prevents us from parsing it. */
+          class FormatError {
+               public:
+                    FormatError(const std::string &mesg) {this->mesg=mesg;}
+                    FormatError(const char *mesg) {this->mesg=mesg;}
+                    std::string mesg;
+             };
+
+
+          typedef struct stat64 fileDetails;
+
+          enum ByteOrder {
+              ORDER_UNSPECIFIED,
+              ORDER_LSB,                                          /* little-endian; least significant byte first */
+              ORDER_MSB,                                          /* big-endian; most significant byte first */
+             };
+    
+          enum ExecFamily {
+              FAMILY_UNSPECIFIED,
+              FAMILY_DOS,                                         /* Microsoft DOS format */
+              FAMILY_ELF,                                         /* Unix Executable and Linking Format */
+              FAMILY_LE,                                          /* Microsft Linear Executable format */
+              FAMILY_LX,                                          /* OS/2 LX (Windows 9x VxD device drivers, extension of LE) */
+              FAMILY_NE,                                          /* Microsoft New Executable Format */
+              FAMILY_PE                                           /* Microsoft Portable Executable Format */
+             };
+
+          enum ExecABI {
+              ABI_UNSPECIFIED,                                    /* Not specified in file and could not be inferred */
+              ABI_OTHER,                                          /* Anything other than values below */
+              ABI_86OPEN,                                         /* 86Open Common IA32 */
+              ABI_AIX,                                            /* AIX */
+              ABI_ARM,                                            /* ARM architecture */
+              ABI_FREEBSD,                                        /* FreeBSD */
+              ABI_HPUX,                                           /* HP/UX */
+              ABI_IRIX,                                           /* IRIX */
+              ABI_HURD,                                           /* GNU/Hurd */
+              ABI_LINUX,                                          /* GNU/Linux */
+              ABI_MODESTO,                                        /* Novell Modesto */
+              ABI_MONTEREY,                                       /* Monterey project */
+              ABI_MSDOS,                                          /* Microsoft DOS */
+              ABI_NT,                                             /* Windows NT */
+              ABI_NETBSD,                                         /* NetBSD */
+              ABI_OS2,                                            /* OS/2 */
+              ABI_SOLARIS,                                        /* Sun Solaris */
+              ABI_SYSV,                                           /* SysV R4 */
+              ABI_TRU64,                                          /* Compaq TRU64 UNIX */
+              ABI_WIN386                                          /* Microsoft Windows */
+             };
+
+          /* Instruction sets organized by families */
+          enum InsSetArchitecture {
+              ISA_UNSPECIFIED             = 0x0000,               /* File does not specify an architecture */
+              ISA_OTHER                   = 0xffff,               /* Architecture is something other than below */
+              ISA_FAMILY_MASK             = 0xff00,               /* Mask to get family part of ISA */
+
+              ISA_IA32_Family             = 0x0100,               /* x86 IA-32 family of architectures; Intel, AMD, VIA, ... */
+              ISA_IA32_286                = 0x0101,               /* 80286 */
+              ISA_IA32_386                = 0x0102,               /* MMU with paging */
+              ISA_IA32_486                = 0x0103,               /* risc-like pipelining, integrated FPU, on-chip cache */
+              ISA_IA32_Pentium            = 0x0104,               /* superscalar, 64-bit databus, MMX */
+              ISA_IA32_Cyrix6x86          = 0x0105,               /* register renaming, speculative execution */
+              ISA_IA32_AMDK5              = 0x0106,               /* micro-op translation */
+              ISA_IA32_PentiumPro         = 0x0107,               /* PAE, integrated L2 cache */
+              ISA_IA32_PentiumII          = 0x0108,               /* L3-cache, 3D Now, SSE */
+              ISA_IA32_Athlon             = 0x0109,               /* superscalar FPU, wide design */
+              ISA_IA32_Pentium4           = 0x010a,               /* deeply pipelined, high frequency, SSE2, hyper-threading */
+              ISA_IA32_PentiumM           = 0x010b,               /* low power */
+
+              ISA_X8664_Family            = 0x0200,               /* x86-64 family of architectures: Intel, AMD, VIA, ... */
+              ISA_X8664_Athlon64          = 0x0201,               /* on-die memory controller, 40-bit phys address space */
+              ISA_X8664_Prescott          = 0x0202,               /* deeply pipelined, high frequency, SSE3 */
+              ISA_X8664_IntelCore         = 0x0203,               /* low power, multi-core, lower clock frequency */
+              ISA_X8664_AMDPhenom         = 0x0204,               /* quad core, 128-bit FPUs, SSE4a, native mem ctrl, on-die L3 cache */
+
+              ISA_SPARC_Family            = 0x0300,               /* SPARC family of architectures; Sun Microsystems */
+              ISA_SPARC_V7                = 0x0301,
+              ISA_SPARC_V8                = 0x0302,
+              ISA_SPARC_V8E               = 0x0303,
+              ISA_SPARC_V9                = 0x0304,
+              ISA_SPARC_V9JPS1            = 0x0305,
+              ISA_SPARC_V9UA              = 0x0306,
+              ISA_SPARC_V9JPS2            = 0x0307,
+
+              ISA_M68K_Family             = 0x0400,               /* Motorala m68k family */
+              ISA_M68K_68000              = 0x0401,               /* generation one: 16/32 internal; 8-, 16-, 32-bit interface */
+              ISA_M68K_68EC000            = 0x0402,
+              ISA_M68K_68HC000            = 0x0403,
+              ISA_M68K_68008              = 0x0404,
+              ISA_M68K_68010              = 0x0405,
+              ISA_M68K_68012              = 0x0406,
+              ISA_M68K_68020              = 0x0407,               /* generation two: fully 32-bit */
+              ISA_M68K_68EC020            = 0x0408,
+              ISA_M68K_68030              = 0x0409,
+              ISA_M68K_68EC030            = 0x040a,
+              ISA_M68K_68040              = 0x040b,               /* generation three: pipelined */
+              ISA_M68K_68EC040            = 0x040c,
+              ISA_M68K_68LC040            = 0x040d,
+              ISA_M68K_68060              = 0x040e,               /* generation four: superscalar */
+              ISA_M68K_ColdFire           = 0x040f,               /* other */
+              ISA_M68K_DragonBall         = 0x0410,               /* other */
+
+              ISA_M88K_Family             = 0x0500,               /* Motorola m88k family (not very popular) */
+              ISA_M88K_88100              = 0x0501,               /* 32-bit, integrated FPU mated with 88200 MMU and cache controller */
+              ISA_M88K_88110              = 0x0502,               /* single package of 88100+88200 */
+              ISA_M88K_88110MP            = 0x0503,               /* on-chip comm for use in multi-processor systems */
+              ISA_M88K_88120              = 0x0504,               /* superscalar (never actually released) */
+
+              ISA_MIPS_Family             = 0x0600,               /* 32/64-bit RISC; MIPS Technologies, Inc. */
+              ISA_MIPS_MarkI              = 0x0601,               /* R2000, R3000 */
+              ISA_MIPS_MarkII             = 0x0602,               /* R6000 */
+              ISA_MIPS_MarkIII            = 0x0603,               /* R4000 */
+              ISA_MIPS_R2000              = 0x0604,               /* 32-bit, Big or little endian */
+              ISA_MIPS_R3000              = 0x0605,               /* virtual identical: Pacempi's R3400, IDT's R3500, Toshiba R3900 */
+              ISA_MIPS_R4000              = 0x0606,               /* 64-bit; others in the series had larger caches and bug fixes */
+              ISA_MIPS_R4200              = 0x0607,               /* low-cost version of R4000 */
+              ISA_MIPS_R4300              = 0x0608,               /* low-cost version of R4000 with 32-bit external bus */
+              ISA_MIPS_R4600              = 0x0609,               /* "Orion" by Qauntum Effect Devices (QED); larger caches */
+              ISA_MIPS_R4650              = 0x060a,               /* by QED */
+              ISA_MIPS_R4700              = 0x060b,               /* "Orion" by QED */
+              ISA_MIPS_R5000              = 0x060c,               /* by QED */
+              ISA_MIPS_RM7000             = 0x060d,               /* by PMC-Sierra; 256kB L2 and optional L3 */
+              ISA_MIPS_R8000              = 0x060e,               /* superscalar, fairly rare */
+              ISA_MIPS_R10000             = 0x060f,               /* R8000 on a single chip; 32kB caches; out-of-order */
+              ISA_MIPS_R12000             = 0x0610,               /* R10000 + higher clock rates */
+              ISA_MIPS_R14000             = 0x0611,               /* R12000 + support for DDR SRAM; 200MHz front side bus */
+              ISA_MIPS_R16000             = 0x0612,               /* R14000 + increased freq, more L1, smaller die */
+              ISA_MIPS_R16000A            = 0x0613,
+              ISA_MIPS_16                 = 0x0614,               /* Unknown. Windows PE architecture 0x266 "MIPS16" */
+              ISA_MIPS_FPU                = 0x0615,               /* Unknown. Windows PE architecture 0x366 "MIPS with FPU" */
+              ISA_MIPS_16FPU              = 0x0616,               /* Unknown. Windows PE architecture 0x466 "MIPS16 with FPU" */
+
+              ISA_I860_Family             = 0x0700,               /* Intel i860 family; 1989-mid 90's; RISC VLIW */
+              ISA_I860_860XR              = 0x0701,               /* (code named N10) 25-40MHz */
+              ISA_I860_860XP              = 0x0702,               /* (code named N11) larger caches; 40-50MHz; same IS as XR */
+
+              ISA_IA64_Family             = 0x0800,               /* Intel 64-bit architecture */
+              ISA_IA64_Itanium            = 0x0801,               /* First generation */
+              ISA_IA64_Itanium2           = 0x0802,               /* Second generation starting Nov 2007 */
+
+              /* See http://en.wikipedia.org/wiki/ARM_architecture */
+              ISA_ARM_Family              = 0x0900,               /* Acorn RISC Machine, Advanced RISC Machines, ARM Limited */
+              ISA_ARM_ARM1                = 0x0901,               /* ARM evaluation system */
+              ISA_ARM_ARM2                = 0x0902,               /* ARM2, ARM250 cores */
+              ISA_ARM_ARM3                = 0x0903,               /* ARM2a core */
+              ISA_ARM_ARM6                = 0x0904,               /* ARM60, ARM600, ARM610 cores */
+              ISA_ARM_ARM7                = 0x0905,               /* ARM{700,710,710a,7100,7500,7500FE} cores */
+              ISA_ARM_ARM7TDMI            = 0x0906,               /* ARM{7TDMI,7TDMI-S,710T,720T,740T,7EJ-S} cores */
+              ISA_ARM_StrongARM           = 0x0907,               /* SA-110, SA-1110 cores */
+              ISA_ARM_ARM8                = 0x0908,               /* ARM810 core */
+              ISA_ARM_ARM9TDMI            = 0x0909,               /* ARM{9TDMI,920T,922T,940T} cores */
+              ISA_ARM_ARM9E               = 0x090a,               /* ARM{946E-S,966E-S,968E-S,926EJ-S,966HS} cores */
+              ISA_ARM_ARM10E              = 0x090b,               /* ARM{1020E,1022E,1026EJ-S} cores */
+              ISA_ARM_XScale              = 0x090c,               /* 80200, IOP310, IOP315, 80219, IOP321, IOP33x, IOP34x, PXA210,
+                                                         * PXA250, PXA255, PXA26x, PXA27x, PXA800(E)F, Monahans, PXA900,
+                                                         * IXC1100, IXP2400, IXP2800, IXP2850, IXP2325, IXP2350, IXP42x,
+                                                         * IXP460, IXP465 cores */
+              ISA_ARM_ARM11               = 0x090d,               /* ARMv{6,6T2,6KZ,6K} cores */
+              ISA_ARM_Cortex              = 0x090e,               /* Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
+          
+              /* Others, not yet incorporated into this enum */
+              ISA_OTHER_Family            = 0xf000,
+
+              ISA_ATT_WE_32100            = 0xf001,               /* sometimes simply "M32" */
+              ISA_IBM_System_370          = 0xf002,
+              ISA_HPPA                    = 0xf003,
+              ISA_Fujitsu_VPP500          = 0xf004,
+              ISA_Sun_v8plus              = 0xf005,
+              ISA_PowerPC                 = 0xf006,
+              ISA_PowerPC_64bit           = 0xf007,
+              ISA_IBM_S390                = 0xf008,
+              ISA_NEC_V800_series         = 0xf009,
+              ISA_Fujitsu_FR20            = 0xf00a,
+              ISA_TRW_RH_32               = 0xf00b,
+              ISA_Motorola_RCE            = 0xf00c,
+              ISA_Digital_Alpha_fake      = 0xf00e,
+              ISA_Hitachi_SH              = 0xf00f,
+              ISA_Siemens_Tricore         = 0xf010,
+              ISA_Argonaut_RISC_Core      = 0xf011,
+              ISA_Hitachi_H8_300          = 0xf012,
+              ISA_Hitachi_H8_300H         = 0xf013,
+              ISA_Hitachi_H8S             = 0xf014,
+              ISA_Hitachi_H8_500          = 0xf015,
+              ISA_Stanford_MIPS_X         = 0xf016,
+              ISA_Motorola_M68HC12        = 0xf017,
+              ISA_Fujitsu_MMA_Multimedia_Accelerator=0xf018,
+              ISA_Siemens_PCP             = 0xf019,
+              ISA_Sony_nCPU_embeeded_RISC = 0xf01a,
+              ISA_Denso_NDR1_microprocessor=0xf01b,
+              ISA_Motorola_Start_Core_processor=0xf01c,
+              ISA_Toyota_ME16_processor   = 0xf01d,
+              ISA_STMicroelectronic_ST100_processor=0xf01e,
+              ISA_Advanced_Logic_Corp_Tinyj_emb_family=0xf01f,
+              ISA_AMD_x86_64_architecture = 0xf020,
+              ISA_Sony_DSP_Processor      = 0xf021,
+              ISA_Siemens_FX66_microcontroller=0xf022,
+              ISA_STMicroelectronics_ST9_plus_8_16_microcontroller=0xf023,
+              ISA_STMicroelectronics_ST7_8bit_microcontroller=0xf024,
+              ISA_Motorola_MC68HC16_microcontroller=0xf025,
+              ISA_Motorola_MC68HC11_microcontroller=0xf026,
+              ISA_Motorola_MC68HC08_microcontroller=0xf027,
+              ISA_Motorola_MC68HC05_microcontroller=0xf028,
+              ISA_Silicon_Graphics_SVx    = 0xf029,
+              ISA_STMicroelectronics_ST19_8bit_microcontroller=0xf02a,
+              ISA_Digital_VAX             = 0xf02b,
+              ISA_Axis_Communications_32bit_embedded_processor=0xf02c,
+              ISA_Infineon_Technologies_32bit_embedded_processor=0xf02d,
+              ISA_Element_14_64bit_DSP_Processor=0xf02e,
+              ISA_LSI_Logic_16bit_DSP_Processor=0xf02f,
+              ISA_Donald_Knuths_educational_64bit_processor=0xf030,
+              ISA_Harvard_University_machine_independent_object_files=0xf031,
+              ISA_SiTera_Prism            = 0xf032,
+              ISA_Atmel_AVR_8bit_microcontroller=0xf033,
+              ISA_Fujitsu_FR30            = 0xf034,
+              ISA_Mitsubishi_D10V         = 0xf035,
+              ISA_Mitsubishi_D30V         = 0xf036,
+              ISA_NEC_v850                = 0xf037,
+              ISA_Mitsubishi_M32R         = 0xf038,
+              ISA_Matsushita_MN10300      = 0xf039,
+              ISA_Matsushita_MN10200      = 0xf03a,
+              ISA_picoJava                = 0xf03b,
+              ISA_OpenRISC_32bit_embedded_processor=0xf03c,
+              ISA_ARC_Cores_Tangent_A5    = 0xf03d,
+              ISA_Tensilica_Xtensa_Architecture=0xf03e,
+              ISA_Digital_Alpha		= 0xf03f,
+              ISA_Matsushita_AM33         = 0xf040,
+              ISA_EFI_ByteCode            = 0xf041
+             };
+
+       /* General purpose of a binary executable file */
+          enum ExecPurpose {
+              PURPOSE_UNSPECIFIED,                                /* Purpose is not specified and could not be inferred */
+              PURPOSE_OTHER,                                      /* A purpose other than any defined below */
+              PURPOSE_EXECUTABLE,                                 /* Executable program */
+              PURPOSE_LIBRARY,                                    /* Library (shared or relocatable) */
+              PURPOSE_CORE_DUMP,                                  /* Post mortem image */
+              PURPOSE_OS_SPECIFIC,                                /* Some operating system specific purpose */
+              PURPOSE_PROC_SPECIFIC                               /* Some processor specific purpose */
+          };
+
+/* Return byte order of caller */
+ByteOrder host_order() {
+    static const int i = 1;
+    return *(unsigned char*)&i ? ORDER_LSB : ORDER_MSB;
+}
+
+/* Swap (reverse) bytes taking care of sign extension */
+uint8_t swap_bytes(uint8_t n) {
+    return n;
+}
+uint16_t swap_bytes(uint16_t n) {
+    return ((n>>8) & 0xff) | ((n<<8) & 0xff00);
+}
+uint32_t swap_bytes(uint32_t n) {
+    return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000u);
+}
+uint64_t swap_bytes(uint64_t n) {
+    return (((n>>56) & (0xffull<<0 )) | ((n>>40) & (0xffull<<8 )) | ((n>>24) & (0xffull<<16)) | ((n>>8 ) & (0xffull<<24)) |
+            ((n<<8 ) & (0xffull<<32)) | ((n<<24) & (0xffull<<40)) | ((n<<40) & (0xffull<<48)) | ((n<<56) & (0xffull<<56)));
+}
+int8_t swap_bytes(int8_t n) {
+    return swap_bytes((uint8_t)n);
+}
+int16_t swap_bytes(int16_t n) {
+    return swap_bytes((uint16_t)n);
+}
+int32_t swap_bytes(int32_t n) {
+    return swap_bytes((uint32_t)n);
+}
+int64_t swap_bytes(int64_t n) {
+    return swap_bytes((uint64_t)n);
+}
+
+
+/* Little-endian byte order conversions */
+uint8_t le_to_host(uint8_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+uint16_t le_to_host(uint16_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+uint32_t le_to_host(uint32_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+uint64_t le_to_host(uint64_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+int8_t le_to_host(int8_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+int16_t le_to_host(int16_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+int32_t le_to_host(int32_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+int64_t le_to_host(int64_t n) {
+    return ORDER_LSB==host_order() ? n : swap_bytes(n);
+}
+
+void host_to_le(unsigned h, uint8_t *n) {
+    assert(0==(h & ~0xff));
+    uint8_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(unsigned h, uint16_t *n) {
+    assert(0==(h & ~0xffff));
+    uint16_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(unsigned h, uint32_t *n) {
+    assert(0==(h & ~0xfffffffful));
+    uint32_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(addr_t h, uint64_t *n) {
+    assert(0==(h & ~0xffffffffffffffffull));
+    uint64_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(int h, int8_t *n) {
+    assert((unsigned)h<=0x8f || ((unsigned)h|0xff)==(unsigned)-1);
+    int8_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(int h, int16_t *n) {
+    assert((unsigned)h<=0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
+    int16_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(int h, int32_t *n) {
+    assert((unsigned)h<=0x8fffffffu || ((unsigned)h|0xffffffffu)==(unsigned)-1);
+    int32_t hh = h;
+    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_le(int64_t h, int64_t *n) {
+    *n = ORDER_LSB==host_order() ? h : swap_bytes(h);
+}
+
+/* Big-endian byte order conversions */
+uint8_t be_to_host(uint8_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+uint16_t be_to_host(uint16_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+uint32_t be_to_host(uint32_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+uint64_t be_to_host(uint64_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+int8_t be_to_host(int8_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+int16_t be_to_host(int16_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+int32_t be_to_host(int32_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+int64_t be_to_host(int64_t n) {
+    return ORDER_MSB==host_order() ? n : swap_bytes(n);
+}
+
+void host_to_be(unsigned h, uint8_t *n) {
+    assert(0==(h & ~0xff));
+    uint8_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(unsigned h, uint16_t *n) {
+    assert(0==(h & ~0xffff));
+    uint16_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(unsigned h, uint32_t *n) {
+    assert(0==(h & ~0xfffffffful));
+    uint32_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(addr_t h, uint64_t *n) {
+    assert(0==(h & ~0xffffffffffffffffull));
+    uint64_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(int h, int8_t *n) {
+    assert((unsigned)h<0x8f || ((unsigned)h|0xff)==(unsigned)-1);
+    int8_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(int h, int16_t *n) {
+    assert((unsigned)h<0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
+    int16_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(int h, int32_t *n) {
+    assert((unsigned)h<0x8ffffffful || ((unsigned)h|0xfffffffful)==(unsigned)-1);
+    int32_t hh = h;
+    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+}
+void host_to_be(int64_t h, int64_t *n) {
+    *n = ORDER_MSB==host_order() ? h : swap_bytes(h);
+}
+
+/* Caller-specified byte order conversions */
+uint8_t disk_to_host(ByteOrder sex, uint8_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+uint16_t disk_to_host(ByteOrder sex, uint16_t n)
+{
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+uint32_t disk_to_host(ByteOrder sex, uint32_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+uint64_t disk_to_host(ByteOrder sex, uint64_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+int8_t disk_to_host(ByteOrder sex, int8_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+int16_t disk_to_host(ByteOrder sex, int16_t n)
+{
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+int32_t disk_to_host(ByteOrder sex, int32_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+int64_t disk_to_host(ByteOrder sex, int64_t n) {
+    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+}
+
+//void host_to_disk(ByteOrder, unsigned char h, unsigned char *np) {
+//    *np = h;
+//}
+void host_to_disk(ByteOrder sex, unsigned h, uint8_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, unsigned h, uint16_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, unsigned h, uint32_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, addr_t h, uint64_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, int h, int8_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, int h, int16_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, int h, int32_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
+    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+}
+
+HEADER_EXECUTABLE_FILE_FORMAT_END
+
 
 HEADER_GENERIC_SECTION_START
        // This can be mapped to the offset data member
           unsigned long get_starting_memory_address() { return get_offset(); }
 
+       // DQ (8/7/2008): These are a few data member access functions that were required 
+       // to compile when first adding the new IR nodes (these should be removed).
           unsigned long get_starting_file_offset() { return 0; }
           unsigned long get_flags() { return 0; }
           unsigned long get_type() { return 0; }
+
+     public:
+
+       /* Reason for section's existence. This is a union of all the section purposes from the various supported file formats.
+        * However, at this time we're only interested in a few kinds of sections and therefore most will fall into the SP_OTHER
+        * category. */
+          enum SectionPurpose {
+              SP_UNSPECIFIED,                                     /* File format did not specify a reason and none could be determined */
+              SP_PROGRAM,                                         /* Program-supplied data, code, etc. */
+              SP_HEADER,                                          /* Section contains a header for the executable file format */
+              SP_SYMTAB,                                          /* Symbol table */
+              SP_OTHER                                            /* File-specified purpose other than any given in this enum */
+             };
+
+          typedef std::multimap<Exec::addr_t,Exec::addr_t> RefMap;        /* Used for keeping track of referenced areas */
+          typedef std::pair<Exec::addr_t,Exec::addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
+          typedef std::vector<ExtentPair> ExtentVector;       /* Vector of extents; usually non-overlapping, sorted by starting offset */
+
+          SgAsmGenericSection(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size);
+
+          virtual ~SgAsmGenericSection();
+          virtual void        dump(FILE*, const char *prefix, ssize_t idx);
+          virtual void        unparse(FILE*);
+          void                unparse(FILE*, const ExtentVector&);
+          SgAsmGenericHeader *is_file_header();              /* true if section represents a top level file header */
+
+       /* Functions for section extent within the file */
+       // SgAsmGenericFile   *get_file() {return file;}      /* read-only */
+       // Exec::addr_t        get_size() {return size;}       /* read-only */
+       // Exec::addr_t        get_offset() {return offset;}   /* read-only */
+          Exec::addr_t        end_offset(); /* file offset for end of section */
+          void                extend(Exec::addr_t nbytes);         /* make section larger by extending the end */
+          void                extend_up_to(Exec::addr_t nbytes);      /* like extend() but more relaxed at EOF */
+          Exec::addr_t        write(FILE *f, Exec::addr_t offset, size_t bufsize, const void *buf);
+          Exec::addr_t        write(FILE *f, Exec::addr_t offset, const std::string &str);
+          Exec::addr_t        write(FILE *f, Exec::addr_t offset, char c);
+
+       // DQ (8/9/2008): Added a new function to support STL types.
+          Exec::addr_t        write(FILE *f, Exec::addr_t offset, const std::vector<unsigned char> & buf);
+
+       /* Functions for accessing content */
+       // const unsigned char *content(Exec::addr_t offset, Exec::addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+          const SgUnsignedCharList content(Exec::addr_t offset, Exec::addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+          void                 content(Exec::addr_t offset, Exec::addr_t size, void *buf); /* copies content into BUF */
+          const char          *content_str(Exec::addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
+          const ExtentVector& congeal();                      /* congeal referenced areas into holes */
+          const RefMap&       uncongeal();                    /* uncongeal holes back into references */
+
+       /* Functions related to mapping of sections into executable memory */
+          bool                is_mapped();
+          void                set_mapped(Exec::addr_t rva, Exec::addr_t size);
+          void                clear_mapped();
+
+       // DQ (8/8/2008): This is not standard semantics for an access function
+          Exec::addr_t        get_mapped_rva();
+          Exec::addr_t        get_mapped_size();
+
+       // bool                get_eperm() {return eperm;}
+       // void                set_eperm(bool b) {eperm=b;}
+       // bool                get_wperm() {return wperm;}
+       // void                set_wperm(bool b) {wperm=b;}
+       // bool                get_rperm() {return rperm;}
+       // void                set_rperm(bool b) {rperm=b;}
+
+          Exec::addr_t              get_va_offset(Exec::addr_t va);       /* Return file offset for specified virtual address */
+
+       /* Accessors for private members */
+       // SgAsmGenericHeader          *get_header() {return header;}
+       // void                set_header(SgAsmGenericExecHeader *hdr) {header=hdr;}
+       // int                 get_id() {return id;}
+       // void                set_id(int i) {id=i;}
+
+       // DQ (8/8/2008): This is not standard semantics for an access function, I think that since 
+       // this is returning by "const &" we can use the automatically generated access function.
+       // const std::string & get_name() { return p_name; }
+
+       // void                set_name(const char *s) {name=s;}
+       // void                set_name(const unsigned char *s) {name=(const char*)s;}
+       // void                set_name(std::string &s) {name=s;}
+
+       // Use the automatically generated access functions
+       // Exec::SectionPurpose      get_purpose() {return purpose;}
+       // void                set_purpose(SectionPurpose p) {purpose=p;}
+       // void                set_synthesized(bool b) {synthesized=b;}
+       // bool                get_synthesized() {return synthesized;}
+
+     protected:
+          void                ctor(SgAsmGenericFile*, Exec::addr_t offset, Exec::addr_t size);
+          void                unparse_holes(FILE*);
+
 HEADER_GENERIC_SECTION_END
 
 HEADER_GENERIC_HEADER_START
+
+     public:
+          SgAsmGenericHeader(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t size)
+             : SgAsmGenericSection(ef, offset, size), p_base_va(0)
+             { ctor(ef, offset, size); }
+
+          virtual ~SgAsmGenericHeader();
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       // DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
+       // virtual const char *format_name() = 0;
+          virtual const char *format_name();
+    
+       /* Functions for dynamically linked libraries (DLLs) */
+          void add_dll(SgAsmGenericDLL *dll);                         /* Add new DLL to list of DLLs for this file */
+       // std::vector<SgAsmGenericDLL*>& get_dlls() {return p_dlls;}    /* all necessary dynamically loaded libraries */
+          std::vector<SgAsmGenericDLL*>& get_dlls() { ROSE_ASSERT(p_dlls != NULL); return p_dlls->get_dlls(); }    /* all necessary dynamically loaded libraries */
+
+       /* Functions for symbols */
+          void add_symbol(SgAsmGenericSymbol*);                       /* add a new symbol to the symbol table. Duplicates are allowed. */
+       // std::vector<SgAsmGenericSymbol*>& get_symbol() { ROSE_ASSERT(p_symbols != NULL); return p_symbols->get_symbols(); }
+          SgAsmGenericSymbolPtrList & get_symbol_list();
+
+       /* Accessors for protected/private members */
+       // SgAsmGenericFormat & get_exec_format() {return p_exec_format;}
+          std::vector<unsigned char>& get_magic() {return p_magic;}
+          const SgAsmGenericArchitecture& get_target() const { ROSE_ASSERT(p_target != NULL); return *p_target; }
+       // Exec::addr_t get_base_va() const {return p_base_va;}
+          Exec::addr_t get_entry_rva() const {return p_entry_rvas[0];}
+          const std::vector<Exec::addr_t>& get_entry_rvas() const {return p_entry_rvas;}
+          void add_entry_rva(Exec::addr_t rva) { p_entry_rvas.push_back(rva);}
+
+       /* Convenience functions */
+       // SgAsmGenericFormat::ByteOrder get_sex() const { return p_exec_format.p_sex; }
+          SgAsmGenericFormat::ByteOrder get_sex() const;
+       // size_t get_word_size() const {return p_exec_format.p_word_size;}
+          size_t get_word_size() const;
+
+  // protected:
+       // ExecFormat          exec_format;                    /* General info about the executable format */
+       // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
+       // Architecture        target;                         /* Machine for which this header and its sections, etc. was compiled */
+       // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
+       // std::vector<addr_t> entry_rvas;                     /* Code entry points wrt base_va */
+       // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
+       // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
+
+     private:
+          void ctor(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size);
+
 HEADER_GENERIC_HEADER_END
 
 HEADER_GENERIC_FILE_START
+     public:
+
+          SgAsmGenericFile(std::string file_name)
+          // : p_fd(-1), p_data(NULL)
+             : p_fd(-1)
+             { ctor(file_name); }
+
+          virtual ~SgAsmGenericFile();                                /* Destructor deletes children and munmaps and closes file */
+          void unparse(const char *filename);                 /* Unparse the file -- mirror image of parsing */
+          void dump(FILE*);                                   /* Print some debugging info */
+
+       /* File contents */
+       // DQ (8/7/2008): Coment this out while I figure out how to handle "sb" as a type
+          Exec::addr_t get_size() { return p_sb.st_size; }      /* Size of file in bytes as of time it was opened */
+
+       // const unsigned char *content() {return p_data;}       /* File contents */
+       // const SgCharList & content() { return p_data; }       /* File contents */
+       // const char* content() { return p_data; }     /* File contents */
+          char* content() { return p_data; }     /* File contents */
+
+       /* Functions for sections (plurals return vectors; singular return one or NULL) */
+          void add_section(SgAsmGenericSection*);                     /* Add new section to the file; called implicitly by section constructor */
+
+          std::vector<SgAsmGenericSection*>& get_sections() {return p_sections;}/* all sections (including file headers) */
+
+          SgAsmGenericSection *get_section_by_id(int id);             /* Returns first section having specified ID */
+          SgAsmGenericSection *get_section_by_name(std::string, char sep='\0');/* Find section within file by name */
+          std::vector<SgAsmGenericSection*> get_sections_by_offset(Exec::addr_t offset, Exec::addr_t size);
+          std::vector<SgAsmGenericSection*> get_sections_by_rva(Exec::addr_t rva); /*Return sections mapped to specified relative virtual address */
+          SgAsmGenericSection *get_section_by_va(Exec::addr_t va);          /* Return single section mapped to specified virtual address */
+          std::vector<SgAsmGenericSection*> get_sections_by_va(Exec::addr_t va); /*Return all sections mapped to specified virtual address */
+          Exec::addr_t get_next_section_offset(Exec::addr_t offset);      /* Find file offset for next section */
+          void fill_holes();                                  /* Find holes in file and create sections to fill them */
+          void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
+
+       /* Functions for file headers (a kind of section) */
+          void add_header(SgAsmGenericHeader*);                       /* Add a new file header to the list of headers for this file */
+          std::vector<SgAsmGenericHeader*>& get_headers() {return p_headers;}/* all file header sections */
+          SgAsmGenericHeader *get_header(SgAsmGenericFormat::ExecFamily);                 /* Returns the specified header (exception if more than one) */
+          const char *format_name();                          /* Return a string describing the file format */
+
+          const SgAsmGenericFormat::fileDetails & get_sb() { return p_sb; }
+          void set_sb ( const SgAsmGenericFormat::fileDetails & sb ) { printf ("set_sb() not implemented! \n"); ROSE_ASSERT(false); }
+
+     private:
+          void ctor(std::string file_name);
+
 HEADER_GENERIC_FILE_END
 
 HEADER_GENERIC_FORMAT_START
+     public:
+
+// typedef uint64_t addr_t;                                /* address and size (file and memory) */
+
+
+#if 0
+       // This is automatically generated.
+          SgAsmGenericFormat() :
+               family(FAMILY_UNSPECIFIED),
+               purpose(PURPOSE_UNSPECIFIED),
+               sex(ORDER_UNSPECIFIED),
+               version(0),
+               is_current_version(false),
+               abi(ABI_UNSPECIFIED),
+               abi_version(0),
+               word_size(4)
+             {}
+#endif
+
+    void dump(FILE*, const char *prefix, ssize_t idx);
+
 HEADER_GENERIC_FORMAT_END
 
 HEADER_GENERIC_ARCHITECTURE_START
+     public:
+       // The default constructor is automatically generated by ROSETTA
+       // SgAsmGenericArchitecture(): isa(ISA_UNSPECIFIED) {}
+
+       // DQ: changed implementation to set data members directly instead of calling depretated access function,
+       // this function should be depricated in favor of the automatically generated constructor tacking two arguments.
+          SgAsmGenericArchitecture(SgAsmGenericFormat::InsSetArchitecture isa) { p_isa = isa; p_other = 0; }
+
+       // void set_isa(Exec::InsSetArchitecture isa) { printf ("Mixing initialization of multiple data members! \n"); ROSE_ASSERT(false); this->p_isa = isa; p_other = 0; }
+
+       // Overloaded access function, should be depricated, leave in place for now!
+          void set_isa(SgAsmGenericFormat::InsSetArchitecture isa, unsigned data) { this->p_isa = isa; this->p_other = data; }
+
+       // Access functions are automatically generated by ROSETTA
+       // Exec::InsSetArchitecture get_isa() const { return isa; }
+
 HEADER_GENERIC_ARCHITECTURE_END
 
+
+HEADER_GENERIC_DLL_START
+     public:
+          SgAsmGenericDLL(std::string name) : p_name(name) {}
+
+       // Use the ones automatically generated by ROSETTA.
+       // virtual ~SgAsmGenericDLL() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+          void add_function(std::string fname) { p_funcs.push_back(fname); } /* Add a needed function to the import list for this DLL */
+
+       /* Accessors for protected/private data members */
+       // Use the ones automatically generated by ROSETTA.
+       // const std::string& get_name() const { return name; }
+       // void set_name(const std::string &s) { name=s; }
+
+HEADER_GENERIC_DLL_END
+
+HEADER_GENERIC_DLL_LIST_START
+HEADER_GENERIC_DLL_LIST_END
+
 HEADER_GENERIC_SYMBOL_START
+
+     public:
+          enum SymbolDefState {
+              SYM_UNDEFINED,                                      /* Symbol has not been defined yet */
+              SYM_TENTATIVE,                                      /* Does not have size/value yet (uninitialized C or Fortran common blks) */
+              SYM_DEFINED                                         /* Created and assigned storage */
+          };
+
+          enum SymbolType {
+              SYM_NO_TYPE,                                        /* No type or type is unknown */
+              SYM_DATA,                                           /* Normal variable definitions */
+              SYM_FUNC,                                           /* Function */
+              SYM_SECTION,                                        /* Section of a file */
+              SYM_FILE,                                           /* Name of a file */
+              SYM_ARRAY,                                          /* Array of some other type */
+              SYM_TLS,                                            /* Thread-local storage */
+              SYM_REGISTER                                        /* CPU register value (see Sparc) */
+          };
+
+          enum SymbolBinding {
+              SYM_NO_BINDING,                                     /* Unknown binding */
+              SYM_LOCAL,
+              SYM_GLOBAL,
+              SYM_WEAK
+          };
+
+       // Use the automatically generated constructor and destructors
+       // SgAsmGenericSymbol() : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0), p_bound(NULL) {}
+       // virtual ~ExecSymbol() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       // Use the automatically generated access functions
+       // const std::string& get_name() {return name;}
+       // void set_name(std::string &s) {name=s;}
+       // void set_name(const std::string &s) {name=s;}
+       // void set_name(const char *s) {name=s;}
+       // addr_t get_value() {return value;}
+       // void set_value(addr_t v) {value=v;}
+       // addr_t get_size() {return size;}
+       // void set_size(addr_t sz) {size=sz;}
+       // SymbolType get_type() {return type;}
+       // void set_type(SymbolType t) {type=t;}
+       // SgAsmGenericSection *get_bound() {return bound;}
+       // void set_bound(SgAsmGenericSection *s) {bound=s;}
+
 HEADER_GENERIC_SYMBOL_END
+
+HEADER_GENERIC_SYMBOL_LIST_START
+HEADER_GENERIC_SYMBOL_LIST_END
 
 
 HEADER_ELF_HEADER_START
 
+     public:
+       /* File format of an ELF header. Byte order of members depends on e_ident value. This code comes directly from "System V
+        * Application Binary Interface, Edition 4.1" and the FreeBSD elf(5) man page, and the "Executable and Linkable Format (ELF)
+        * Portable Formats Specifications, Version 1.2" and not from any header file. */
+          struct Elf32FileHeader_disk {
+               unsigned char       e_ident_magic[4];       /* 0x7f, 'E', 'L', 'F' */
+               unsigned char       e_ident_file_class;     /* 1=>32-bit; 2=>64-bit; other is error */
+               unsigned char       e_ident_data_encoding;  /* 1=>LSB; 2=>MSB; other is error */
+               unsigned char       e_ident_file_version;   /* Format version number (same as 'version' member); must be one. */
+               unsigned char       e_ident_padding[9];     /* padding to align next member at byte offset 16; must be zero */
+               uint16_t            e_type;                 /* object file type: relocatable, executable, shared object, core, etc. */
+               uint16_t            e_machine;              /* required architecture for an individual file */
+               uint32_t            e_version;              /* object file version, currently zero or one */
+               uint32_t            e_entry;                /* entry virtual address or zero if none */
+               uint32_t            e_phoff;                /* file offset of program header (segment) table or zero if none */
+               uint32_t            e_shoff;                /* file offset of section header table or zero if none */
+               uint32_t            e_flags;                /* processor-specific flags (EF_* constants in documentation) */
+               uint16_t            e_ehsize;               /* size of ELF header in bytes */
+               uint16_t            e_phentsize;            /* size in bytes of each entry in the program header table */
+               uint16_t            e_phnum;                /* number of entries in the program header (segment) table, or PN_XNUM, or zero */
+               uint16_t            e_shentsize;            /* size in bytes of each entry in the section header table */
+               uint16_t            e_shnum;                /* number of entries in the section header table, or zero for extended entries */
+               uint16_t            e_shstrndx;             /* index of section containing section name strings, or SHN_UNDEF, or SHN_XINDEX */
+             } __attribute__((packed));
+
+          struct Elf64FileHeader_disk {
+               unsigned char       e_ident_magic[4];
+               unsigned char       e_ident_file_class;
+               unsigned char       e_ident_data_encoding;
+               unsigned char       e_ident_file_version;
+               unsigned char       e_ident_padding[9];
+               uint16_t            e_type;
+               uint16_t            e_machine;
+               uint32_t            e_version;
+               uint64_t            e_entry;
+               uint64_t            e_phoff;
+               uint64_t            e_shoff;
+               uint32_t            e_flags;
+               uint16_t            e_ehsize;
+               uint16_t            e_phentsize;
+               uint16_t            e_phnum;
+               uint16_t            e_shentsize;
+               uint16_t            e_shnum;
+               uint16_t            e_shstrndx;
+             } __attribute__((packed));
+
+       // DQ (8/10/2008): This constructor is implemented in sageSupport.C and will be removed later once the new IR nodes are integrated into use.
+          SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header );
+
+          SgAsmElfFileHeader(SgAsmGenericFile *f, addr_t offset)   /* assume 32-bit for now and fix inside ctor() if necessary */
+             : SgAsmGenericHeader(f, offset, 0)
+             { ctor(f, offset); }
+       // virtual ~SgAsmElfFileHeader() {}
+
+          uint64_t max_page_size();
+          virtual void unparse(FILE*);
+
+          void *encode(ByteOrder, Elf32FileHeader_disk*);
+          void *encode(ByteOrder, Elf64FileHeader_disk*);
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(SgAsmGenericFile *f, addr_t offset);
+
+     public:
        // Forward reference
        // class Exec::ELF::ElfFileHeader;
        //   AsmElfHeader
-          SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header );
+       // SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header );
+
+       // Overloaded base class virtual function
+          const char *format_name();
+
+          static bool is_ELF(SgAsmGenericFile*);
+          static SgAsmElfFileHeader *parse(SgAsmGenericFile*);
 
 HEADER_ELF_HEADER_END
 
 HEADER_ELF_SECTION_TABLE_START
+     public:
+          SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
+       // virtual ~SgAsmElfSectionTable() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(SgAsmElfFileHeader *fhdr);    
+
 HEADER_ELF_SECTION_TABLE_END
 
 HEADER_ELF_SECTION_TABLE_ENTRY_START
+
+     public:
+       /* Section types (host order). All other values are reserved. */
+          enum SectionType {
+              SHT_NULL            = 0,                    /* Section header is inactive */
+              SHT_PROGBITS        = 1,                    /* Information defined by the program; format and meaning determined by prog */
+              SHT_SYMTAB          = 2,                    /* Complete symbol table */
+              SHT_STRTAB          = 3,                    /* String table */
+              SHT_RELA            = 4,                    /* Relocation entries with explicit addends (e.g., Elf32_Rela types) */
+              SHT_HASH            = 5,                    /* Symbol hash table (used by dynamic linking) */
+              SHT_DYNAMIC         = 6,                    /* Information for dynamic linking */
+              SHT_NOTE            = 7,                    /* Information that marks the file in some way */
+              SHT_NOBITS          = 8,                    /* Like SHT_PROGBITS but occupies no file space */
+              SHT_REL             = 9,                    /* Relocation entries without explicit addends (e.g., Elf32_Rel types) */
+              SHT_SHLIB           = 10,                   /* Reserved, unspecified semantics; Present only in non-conforming files */
+              SHT_DYNSYM          = 11,                   /* Minimal set of dynamic linking symbols */
+              SHT_LOPROC          = 0x70000000,           /* Processor specific semantics */
+              SHT_HIPROC          = 0x7fffffff,
+              SHT_LOUSER          = 0x80000000,           /* Application specific semantics */
+              SHT_HIUSER          = 0xffffffff
+          };
+
+       /* File format of an ELF Section header. Byte order of members depends on e_ident value in file header. This code comes
+        * directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
+        * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. */
+          struct Elf32SectionTableEntry_disk {
+              uint32_t            sh_name;                /* Section name; index into section header string table */
+              uint32_t            sh_type;                /* Section contents and semantics (see SectionType enum) */
+              uint32_t            sh_flags;               /* Bit flags */
+              uint32_t            sh_addr;                /* Desired mapped address */
+              uint32_t            sh_offset;              /* Section location in file unless sh_type==SHT_NOBITS */
+              uint32_t            sh_size;                /* Section size in bytes */
+              uint32_t            sh_link;                /* Section ID of another section; meaning depends on section type */
+              uint32_t            sh_info;                /* Extra info depending on section type */
+              uint32_t            sh_addralign;           /* Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned */
+              uint32_t            sh_entsize;             /* If non-zero, size in bytes of each array member in the section */
+          } __attribute__((packed));
+
+          struct Elf64SectionTableEntry_disk {
+              uint32_t            sh_name;
+              uint32_t            sh_type;
+              uint64_t            sh_flags;
+              uint64_t            sh_addr;
+              uint64_t            sh_offset;
+              uint64_t            sh_size;
+              uint32_t            sh_link;
+              uint32_t            sh_info;
+              uint64_t            sh_addralign;
+              uint64_t            sh_entsize;
+          } __attribute__((packed));
+
+
+          SgAsmElfSectionTableEntry(ByteOrder sex, const Elf32SectionTableEntry_disk *disk);
+          SgAsmElfSectionTableEntry(ByteOrder sex, const Elf64SectionTableEntry_disk *disk);
+
+       // virtual ~SgAsmElfSectionTableEntry() {};
+
+          void *encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk);
+          void *encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk);
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk);
+
+
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
+     public:
+       /* Constructor for size based on section table entry (normal sections) */
+          SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
+
+       /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
+          SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size);
+
+       // virtual ~ElfSection() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data members */
+       // ElfSection *get_linked_section() {return linked_section;}
+       // virtual void set_linked_section(ElfSection *sec) {linked_section=sec;}
+       // ElfSectionTableEntry *get_st_entry() {return st_entry;}
+       // void set_st_entry(ElfSectionTableEntry *e) {st_entry=e;}
+
+       /* Convenience functions */
+          SgAsmElfFileHeader *get_elf_header() { return dynamic_cast<SgAsmElfFileHeader*>(get_header()); }
+
+     private:
+          void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+
 HEADER_ELF_SECTION_END
 
+HEADER_ELF_DYNAMIC_SECTION_START
+     public:
+          SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+             : SgAsmElfSection(fhdr, shdr), p_dt_pltrelsz(0), p_dt_pltgot(0), p_dt_hash(0), p_dt_strtab(0), p_dt_symtab(0), 
+               p_dt_rela(0), p_dt_relasz(0), p_dt_relaent(0), p_dt_strsz(0), p_dt_symentsz(0), p_dt_init(0), p_dt_fini(0), 
+               p_dt_pltrel(0), p_dt_jmprel(0), p_dt_verneednum(0), p_dt_verneed(0), p_dt_versym(0)
+             {}
+       // virtual ~SgAsmElfDynamicSection() {}
+
+          virtual void set_linked_section(SgAsmElfSection *sec);   /* Parsing happens here rather than in constructor */
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       // Moved from global scope
+          static void dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, SgAsmGenericFile *ef);
+
+HEADER_ELF_DYNAMIC_SECTION_END
+
+HEADER_ELF_DYNAMIC_ENTRY_START
+     public:
+          struct Elf32DynamicEntry_disk {
+               uint32_t            d_tag;  /* Entry type, one of the DT_* constants */
+               uint32_t            d_val;  /* Tag's value */
+             } __attribute__((packed));
+
+          struct Elf64DynamicEntry_disk {
+               uint64_t            d_tag;  /* Entry type, one of the DT_* constants */
+               uint64_t            d_val;  /* Tag's value */
+             } __attribute__((packed));
+
+          SgAsmElfDynamicEntry(ByteOrder sex, const Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
+          SgAsmElfDynamicEntry(ByteOrder sex, const Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
+       // virtual ~SgAsmElfDynamicEntry() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+          void *encode(ByteOrder, Elf32DynamicEntry_disk*);
+          void *encode(ByteOrder, Elf64DynamicEntry_disk*);
+
+     private:
+          void ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk);
+          void ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk);
+
+HEADER_ELF_DYNAMIC_ENTRY_END
+
 HEADER_ELF_SEGMENT_TABLE_START
+     public:
+          SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr);
+       // virtual ~ElfSegmentTable() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(SgAsmElfFileHeader*);
+
 HEADER_ELF_SEGMENT_TABLE_END
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_START
+     public:
+
+       /* Segment types (host order). All other values are reserved. */
+          enum SegmentType {
+              PT_NULL             = 0,                    /* entry is ignored; other values of entry are undefined */
+              PT_LOAD             = 1,                    /* loadable by mapping file contents into memory (see "mapping" note below) */
+              PT_DYNAMIC          = 2,                    /* dynamic linking information */
+              PT_INTERP           = 3,                    /* segment contains NUL-terminated path name of interpreter */
+              PT_NOTE             = 4,                    /* auxiliary information */
+              PT_SHLIB            = 5,                    /* Reserved w/unspecified semantics; presence causes file to be nonconforming */
+              PT_PHDR             = 6,                    /* Segment contains the segment table itself (program header array) */
+              PT_LOPROC           = 0x70000000,           /* Values reserved for processor-specific semantics */
+              PT_HIPROC           = 0x7fffffff
+          };
+
+       /* Segment bit flags */
+          enum SegmentFlags {
+              PF_RESERVED         = 0x0ffffff8,           /* Reserved bits */
+              PF_EPERM            = 0x00000001,           /* Execute permission */
+              PF_WPERM            = 0x00000002,           /* Write permission */
+              PF_RPERM            = 0x00000004,           /* Read permission */
+              PF_PROC_MASK        = 0xf0000000            /* Processor-specific bits */
+          };
+
+       /* File format of an ELF Segment header. Byte order of members depends on e_ident value in file header. This code
+        * comes directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
+        * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. Segment
+        * table entries (a.k.a., ELF program headers) either describe process segments or give supplementary info which does not
+        * contribute to the process image.
+        *
+        * Mapping segments:
+        * */
+          struct Elf32SegmentTableEntry_disk {
+               uint32_t            p_type;                 /* kind of segment */
+               uint32_t            p_offset;               /* file offset */
+               uint32_t            p_vaddr;                /* desired mapped address of segment */
+               uint32_t            p_paddr;                /* physical address where supported (unused by System V) */
+               uint32_t            p_filesz;               /* number of bytes in the file (may be zero or other value smaller than p_memsz) */
+               uint32_t            p_memsz;                /* number of bytes when mapped (may be zero) */
+               uint32_t            p_flags;
+               uint32_t            p_align;                /* alignment for file and memory (0,1=>none); must be a power of two */
+             } __attribute__((packed));
+
+          struct Elf64SegmentTableEntry_disk {
+               uint32_t            p_type;
+               uint32_t            p_flags;
+               uint64_t            p_offset;
+               uint64_t            p_vaddr;
+               uint64_t            p_paddr;
+               uint64_t            p_filesz;
+               uint64_t            p_memsz;
+               uint64_t            p_align;
+             } __attribute__((packed));
+
+
+          SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk);
+          SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);
+       // virtual ~ElfSegmentTableEntry() {};
+
+          void *encode(ByteOrder, Elf32SegmentTableEntry_disk*);
+          void *encode(ByteOrder, Elf64SegmentTableEntry_disk*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);
+
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
-HEADER_ELF_SEGMENT_ENTRY_START
-HEADER_ELF_SEGMENT_ENTRY_END
-
-HEADER_ELF_SEGMENT_ENTRY_LIST_START
-HEADER_ELF_SEGMENT_ENTRY_LIST_END
+HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_START
+HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 HEADER_ELF_SYMBOL_SECTION_START
+     public:
+          SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
+       // virtual ~SgAsmElfSymbolSection() {}
+
+          virtual void set_linked_section(SgAsmElfSection *strtab);
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data members */
+       // std::vector<ElfSymbol*>& get_symbols() {return symbols;}
+    
+     private:
+          void ctor(SgAsmElfSectionTableEntry*);
+
 HEADER_ELF_SYMBOL_SECTION_END
 
 HEADER_ELF_SYMBOL_LIST_START
 HEADER_ELF_SYMBOL_LIST_END
 
 HEADER_ELF_SYMBOL_START
+
+     public:
+          enum ElfSymBinding {
+               STB_LOCAL=0,
+               STB_GLOBAL=1,
+               STB_WEAK=2
+             };
+
+          enum ElfSymType {
+               STT_NOTYPE  = 0,
+               STT_OBJECT  = 1,
+               STT_FUNC    = 2,
+               STT_SECTION = 3,
+               STT_FILE    = 4
+             };
+
+          struct Elf32SymbolEntry_disk {
+               uint32_t            st_name;   /* Name offset into string table */
+               uint32_t            st_value;  /* Value: absolute value, address, etc. depending on sym type */
+               uint32_t            st_size;   /* Symbol size in bytes */
+               unsigned char       st_info;   /* Type and binding attributes */
+               unsigned char       st_res1;   /* Reserved; always zero */
+               uint16_t            st_shndx;  /* Section index or special meaning */
+             } __attribute__((packed));
+
+          struct Elf64SymbolEntry_disk {
+               uint32_t            st_name;
+               unsigned char       st_info;
+               unsigned char       st_res1;
+               uint16_t            st_shndx;
+               uint64_t            st_value;
+               uint64_t            st_size;
+             } __attribute__((packed));
+
+          SgAsmElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk);
+          SgAsmElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk);
+       // virtual ~SgAsmElfSymbol() {};
+
+          void *encode(ByteOrder, Elf32SymbolEntry_disk*);
+          void *encode(ByteOrder, Elf64SymbolEntry_disk*);
+          virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+          void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
+          ElfSymBinding get_elf_binding();
+          ElfSymType get_elf_type();
+
+     private:
+          void ctor(ByteOrder, const Elf32SymbolEntry_disk*);
+          void ctor(ByteOrder, const Elf64SymbolEntry_disk*);
+
+       /* Initialization common to all constructors */
+          void ctor_common();
+
 HEADER_ELF_SYMBOL_END
 
 
 
 HEADER_PE_FILE_HEADER_START
+
+     public:
+       // Overloaded base class virtual function
+          const char *format_name();
+
+          static bool is_PE (SgAsmGenericFile*);
+          static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
+
 HEADER_PE_FILE_HEADER_END
 
 HEADER_PE_SECTION_START
@@ -445,6 +1605,14 @@ HEADER_PE_COFF_SYMBOL_END
 
 
 HEADER_NE_FILE_HEADER_START
+
+     public:
+       // Overloaded base class virtual function
+          const char *format_name();
+
+          static bool is_NE (SgAsmGenericFile*);
+          static SgAsmNEFileHeader *parse(SgAsmGenericFile*);
+
 HEADER_NE_FILE_HEADER_END
 
 HEADER_NE_SECTION_START
@@ -465,8 +1633,8 @@ HEADER_NE_STRING_TABLE_END
 HEADER_NE_ENTRY_TABLE_START
 HEADER_NE_ENTRY_TABLE_END
 
-HEADER_NE_REALOC_TABLE_START
-HEADER_NE_REALOC_TABLE_END
+HEADER_NE_RELOC_TABLE_START
+HEADER_NE_RELOC_TABLE_END
 
 HEADER_NE_EXTENDED_DOS_HEADER_START
 HEADER_NE_EXTENDED_DOS_HEADER_END
@@ -474,28 +1642,23 @@ HEADER_NE_EXTENDED_DOS_HEADER_END
 HEADER_NE_ENTRY_POINT_START
 HEADER_NE_ENTRY_POINT_END
 
-HEADER_NE_REALOC_ENTRY_START
-HEADER_NE_REALOC_ENTRY_END
+HEADER_NE_RELOC_ENTRY_START
+HEADER_NE_RELOC_ENTRY_END
 
 HEADER_NE_SECTION_TABLE_ENTRY_START
 HEADER_NE_SECTION_TABLE_ENTRY_END
 
-#if 0
-AsmNEFileHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNESection.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNESectionTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNENameTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNEModuleTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNEStringTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNEEntryTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNERealocTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNEExtendedDOSHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNEEntryPoint.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNERealocEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmNESectionTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-#endif
+
 
 HEADER_LE_FILE_HEADER_START
+
+     public:
+       // Overloaded base class virtual function
+          const char *format_name();
+
+          static bool is_LE (SgAsmGenericFile*);
+          static SgAsmLEFileHeader *parse(SgAsmGenericFile*);
+
 HEADER_LE_FILE_HEADER_END
 
 HEADER_LE_SECTION_START
@@ -504,14 +1667,17 @@ HEADER_LE_SECTION_END
 HEADER_LE_SECTION_TABLE_START
 HEADER_LE_SECTION_TABLE_END
 
+HEADER_LE_NAME_TABLE_START
+HEADER_LE_NAME_TABLE_END
+
 HEADER_LE_PAGE_TABLE_START
 HEADER_LE_PAGE_TABLE_END
 
 HEADER_LE_ENTRY_TABLE_START
 HEADER_LE_ENTRY_TABLE_END
 
-HEADER_LE_REALOC_TABLE_START
-HEADER_LE_REALOC_TABLE_END
+HEADER_LE_RELOC_TABLE_START
+HEADER_LE_RELOC_TABLE_END
 
 HEADER_LE_PAGE_TABLE_ENTRY_START
 HEADER_LE_PAGE_TABLE_ENTRY_END
@@ -522,22 +1688,68 @@ HEADER_LE_ENTRY_POINT_END
 HEADER_LE_SECTION_TABLE_ENTRY_START
 HEADER_LE_SECTION_TABLE_ENTRY_END
 
-#if 0
-AsmLEFileHeader.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLESection.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLESectionTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLEPageTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLEEntryTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLERealocTable.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLEPageTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLEEntryPoint.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-AsmLESectionTableEntry.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
-#endif
+HEADER_DOS_HEADER_START
+     public:
+          struct DOSFileHeader_disk {
+               unsigned char e_magic[2];           /* 0x00 "MZ" */
+               uint16_t    e_last_page_size;       /* 0x02 bytes used on last page of file (1 page == 512 bytes); zero if last page is full */
+               uint16_t    e_total_pages;          /* 0x04 number of pages (including last possibly partial page) in file */
+               uint16_t    e_nrelocs;              /* 0x06 number of relocation entries stored after this header */
+               uint16_t    e_header_paragraphs;    /* 0x08 header size in paragraphs (16-byte blocks) including relocations */
+               uint16_t    e_minalloc;             /* 0x0a number of extra paragraphs needed, similar to BSS in Unix */
+               uint16_t    e_maxalloc;             /* 0x0c max paragraphs to allocate for BSS */
+               uint16_t    e_ss;                   /* 0x0e initial value of SS register relative to program load segment */
+               uint16_t    e_sp;                   /* 0x10 initial value for SP register */
+               uint16_t    e_cksum;                /* 0x12 checksum; 16-bit sum of all words in file should be zero (usually not filled in) */
+               uint16_t    e_ip;                   /* 0x14 initial value for IP register */
+               uint16_t    e_cs;                   /* 0x16 initial value for CS register relative to program load segment */
+               uint16_t    e_relocs_offset;        /* 0x18 file address of relocation table */
+               uint16_t    e_overlay;              /* 0x1a overlay number (zero indicates main program) */
+               unsigned char e_res1[4];            /* 0x1c unknown purpose */
+            } __attribute__((packed));              /* 0x20 */
+
+          struct DOSRelocEntry_disk {
+               uint16_t    offset;
+               uint16_t    segment;
+             } __attribute__((packed));
+
+
+          SgAsmDOSFileHeader(SgAsmGenericFile *f, Exec::addr_t offset)
+             : SgAsmGenericHeader(f, offset, sizeof(DOSFileHeader_disk)), p_relocs(NULL), p_rm_section(NULL)
+             { ctor(f, offset); }
+       // virtual ~DOSFileHeader() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       // Required function to overload base class (ROSETTA does not permit the base class function to be pure virtual, as I recall)
+          virtual const char *format_name();
+
+          SgAsmGenericSection *add_rm_section(Exec::addr_t max_offset=0);
+
+       // Use the automatically generated access functions 
+       // SgAsmGenericSection *get_relocs() {return relocs;}
+       // void set_relocs(SgAsmGenericSection *s) {relocs=s;}
+       // SgAsmGenericSection *get_rm_section() {return rm_section;}
+       // void set_rm_section(ExecSection *s) {rm_section=s;}
+
+       // DQ (8/9/2008): Added these member functions from the Exec namespace, since we don't have that namespace available in ROSE (long term).
+          static SgAsmDOSFileHeader *parse( SgAsmGenericFile*, bool define_rm_section = true );
+
+          static bool is_DOS(SgAsmGenericFile*);
+
+     private:
+          void ctor(SgAsmGenericFile *f, Exec::addr_t offset);
+          void *encode(DOSFileHeader_disk*);
+
+HEADER_DOS_HEADER_END
+
+
 
 
 SOURCE_BINARY_FILE_SECTION_HEADER_LIST_START
 
-#if 1
+#if 0
 const SgAsmSectionHeaderPtrList &
 SgAsmSectionHeaderList::get_section_headers() const
    {
@@ -555,7 +1767,7 @@ SOURCE_BINARY_FILE_SECTION_HEADER_LIST_END
 
 SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST_START
 
-#if 1
+#if 0
 const SgAsmProgramHeaderPtrList &
 SgAsmProgramHeaderList::get_program_headers() const
    {
@@ -781,38 +1993,6 @@ HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 /* --------------------------------------------------------------------------------- */
 /* --------------------------------------------------------------------------------- */
 /* --------------------------------------------------------------------------------- */
-
-
-SOURCE_PE_FILE_HEADER_START
-SOURCE_PE_FILE_HEADER_END
-
-SOURCE_PE_SECTION_START
-SOURCE_PE_SECTION_END
-
-SOURCE_PE_IMPORT_SECTION_START
-SOURCE_PE_IMPORT_SECTION_END
-
-SOURCE_PE_SECTION_TABLE_START
-SOURCE_PE_SECTION_TABLE_END
-
-SOURCE_PE_COFF_SYMBOL_TABLE_START
-SOURCE_PE_COFF_SYMBOL_TABLE_END
-
-SOURCE_PE_IMPORT_HINT_NAME_START
-SOURCE_PE_IMPORT_HINT_NAME_END
-
-SOURCE_PE_IMPORT_DIRECTORY_START
-SOURCE_PE_IMPORT_DIRECTORY_END
-
-SOURCE_PE_EXTENDED_DOS_HEADER_START
-SOURCE_PE_EXTENDED_DOS_HEADER_END
-
-SOURCE_PE_SECTION_TABLE_ENTRY_START
-SOURCE_PE_SECTION_TABLE_ENTRY_END
-
-SOURCE_PE_COFF_SYMBOL_START
-SOURCE_PE_COFF_SYMBOL_END
-
 
 
 
@@ -1314,3 +2494,482 @@ SgAsmType* SgAsmMemoryReferenceExpression::get_type() {
 }
 
 SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_END
+
+
+
+
+
+
+
+
+
+
+// *************************************
+//      Binary File Format Support
+// *************************************
+
+SOURCE_EXECUTABLE_FILE_FORMAT_START
+SOURCE_EXECUTABLE_FILE_FORMAT_END
+
+SOURCE_GENERIC_SEGMENT_START
+SOURCE_GENERIC_SEGMENT_END
+
+SOURCE_GENERIC_SECTION_START
+
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size)
+   : p_file(NULL), p_header(NULL), p_size(0), p_offset(0), p_data(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
+     p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
+   {
+     ctor(f, offset, size);
+   }
+
+Exec::addr_t
+SgAsmGenericSection::end_offset()
+   {
+     return p_offset + p_size;
+   }
+
+Exec::addr_t
+SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, const std::string &str)
+   {
+     return write(f, offset, str.size(), str.c_str());
+   }
+
+Exec::addr_t
+SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, char c)
+   {
+     return write(f, offset, 1, &c);
+   }
+
+// DQ (8/9/2008): Added a new function to support STL types.
+Exec::addr_t
+// SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, size_t bufsize, const std::vector<unsigned char> & buf)
+SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, const std::vector<unsigned char> & buf)
+   {
+     return write(f, offset, buf.size(), (void*) &(buf[0]));
+   }
+
+bool
+SgAsmGenericSection::is_mapped()
+   {
+     return p_mapped;
+   }
+
+void
+SgAsmGenericSection::set_mapped(Exec::addr_t rva, Exec::addr_t size)
+   {
+     p_mapped = true;
+     p_mapped_rva = rva;
+     p_mapped_size = size;
+   }
+
+void
+SgAsmGenericSection::clear_mapped()
+   {
+     p_mapped = false;
+     p_mapped_rva = p_mapped_size = 0;
+   }
+
+// DQ (8/8/2008): This is not standard semantics for an access function
+Exec::addr_t
+SgAsmGenericSection::get_mapped_rva()
+   {
+     return p_mapped ? p_mapped_rva  : 0;
+   }
+
+Exec::addr_t
+SgAsmGenericSection::get_mapped_size()
+   {
+     return p_mapped ? p_mapped_size : 0;
+   }
+
+SOURCE_GENERIC_SECTION_END
+
+SOURCE_GENERIC_HEADER_START
+
+const char *
+SgAsmGenericHeader::format_name()
+   {
+     return "ASM_GENERIC_HEADER";
+   }
+
+SgAsmGenericSymbolPtrList & 
+SgAsmGenericHeader::get_symbol_list()
+   {
+     ROSE_ASSERT(p_symbols != NULL);
+     return p_symbols->get_symbols();
+   }
+
+SgAsmGenericFormat::ByteOrder
+SgAsmGenericHeader::get_sex() const
+   {
+     ROSE_ASSERT(p_exec_format != NULL);
+     return p_exec_format->get_sex();
+   }
+
+size_t
+SgAsmGenericHeader::get_word_size() const
+   {
+     ROSE_ASSERT(p_exec_format != NULL);
+     return p_exec_format->get_word_size();
+   }
+
+SOURCE_GENERIC_HEADER_END
+
+SOURCE_GENERIC_FILE_START
+SOURCE_GENERIC_FILE_END
+
+SOURCE_GENERIC_FORMAT_START
+SOURCE_GENERIC_FORMAT_END
+
+SOURCE_GENERIC_ARCHITECTURE_START
+SOURCE_GENERIC_ARCHITECTURE_END
+
+SOURCE_GENERIC_SYMBOL_START
+SOURCE_GENERIC_SYMBOL_END
+
+SOURCE_GENERIC_SYMBOL_LIST_START
+SOURCE_GENERIC_SYMBOL_LIST_END
+
+SOURCE_GENERIC_DLL_START
+SOURCE_GENERIC_DLL_END
+
+SOURCE_GENERIC_DLL_LIST_START
+SOURCE_GENERIC_DLL_LIST_END
+
+
+
+SOURCE_ELF_HEADER_START
+
+const char *
+SgAsmElfFileHeader::format_name()
+   {
+     return "ELF";
+   }
+
+
+SOURCE_ELF_HEADER_END
+
+SOURCE_ELF_SECTION_TABLE_START
+SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
+   : SgAsmGenericSection( fhdr->get_file(), fhdr->get_e_shoff(), fhdr->get_e_shnum() * fhdr->get_e_shentsize() )
+   {
+     ctor(fhdr);
+   }
+
+SOURCE_ELF_SECTION_TABLE_END
+
+SOURCE_ELF_SECTION_TABLE_ENTRY_START
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+   : p_nextra(0)
+   {
+     ctor(sex, disk);
+   }
+
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+   : p_nextra(0)
+   {
+     ctor(sex, disk);
+   }
+
+SOURCE_ELF_SECTION_TABLE_ENTRY_END
+
+SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
+SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
+
+SOURCE_ELF_SECTION_START
+SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+   : SgAsmGenericSection(fhdr->get_file(), shdr->get_sh_offset(), shdr->get_sh_size()), p_linked_section(NULL), p_st_entry(NULL)
+   {
+     ctor(fhdr, shdr);
+   }
+
+/* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
+SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size)
+   : SgAsmGenericSection(fhdr->get_file(), shdr->get_sh_offset(), file_size), p_linked_section(NULL), p_st_entry(NULL)
+   {
+     ctor(fhdr, shdr);
+   }
+
+SOURCE_ELF_SECTION_END
+
+SOURCE_ELF_DYNAMIC_SECTION_START
+SOURCE_ELF_DYNAMIC_SECTION_END
+
+SOURCE_ELF_DYNAMIC_ENTRY_START
+SOURCE_ELF_DYNAMIC_ENTRY_END
+
+SOURCE_ELF_SEGMENT_TABLE_START
+SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr->get_e_phoff(), fhdr->get_e_phnum() * fhdr->get_e_phentsize())
+   {
+     ctor(fhdr);
+   }
+
+SOURCE_ELF_SEGMENT_TABLE_END
+
+SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk)
+   : p_nextra(0)
+   {
+     ctor(sex, disk);
+   }
+
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
+   : p_nextra(0)
+   {
+     ctor(sex, disk);
+   }
+
+SOURCE_ELF_SEGMENT_TABLE_ENTRY_END
+
+SOURCE_ELF_SEGMENT_ENTRY_START
+SOURCE_ELF_SEGMENT_ENTRY_END
+
+SOURCE_ELF_SEGMENT_ENTRY_LIST_START
+SOURCE_ELF_SEGMENT_ENTRY_LIST_END
+
+SOURCE_ELF_SYMBOL_SECTION_START
+SgAsmElfSymbolSection::SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+   : SgAsmElfSection(fhdr, shdr)
+   { 
+     ctor(shdr);
+   }
+
+SOURCE_ELF_SYMBOL_SECTION_END
+
+SOURCE_ELF_SYMBOL_LIST_START
+SOURCE_ELF_SYMBOL_LIST_END
+
+SOURCE_ELF_SYMBOL_START
+SgAsmElfSymbol::SgAsmElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+   {
+     ctor(sex, disk);
+   }
+
+SgAsmElfSymbol::SgAsmElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+   {
+     ctor(sex, disk);
+   }
+
+void
+SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
+   {
+     dump(f, prefix, idx, NULL);
+   }
+
+SgAsmElfSymbol::ElfSymBinding
+SgAsmElfSymbol::get_elf_binding()
+   {
+     return (ElfSymBinding)(p_st_info >> 4);
+   }
+
+SgAsmElfSymbol::ElfSymType
+SgAsmElfSymbol::get_elf_type()
+   {
+     return (ElfSymType)(p_st_info & 0xf);
+   }
+
+SOURCE_ELF_SYMBOL_END
+
+
+
+SOURCE_PE_FILE_HEADER_START
+const char *
+SgAsmPEFileHeader::format_name()
+   {
+     return "PE";
+   }
+
+bool
+SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
+{
+    printf ("SgAsmPEFileHeader::is_PE() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return true;
+}
+
+
+// Parses the structure of an ELF file and adds the info to the ExecFile
+SgAsmPEFileHeader *
+SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
+{
+    ROSE_ASSERT(ef);
+    
+    printf ("SgAsmPEFileHeader::parse() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return NULL;
+}
+    
+
+SOURCE_PE_FILE_HEADER_END
+
+SOURCE_PE_SECTION_START
+SOURCE_PE_SECTION_END
+
+SOURCE_PE_IMPORT_SECTION_START
+SOURCE_PE_IMPORT_SECTION_END
+
+SOURCE_PE_SECTION_TABLE_START
+SOURCE_PE_SECTION_TABLE_END
+
+SOURCE_PE_COFF_SYMBOL_TABLE_START
+SOURCE_PE_COFF_SYMBOL_TABLE_END
+
+SOURCE_PE_IMPORT_HINT_NAME_START
+SOURCE_PE_IMPORT_HINT_NAME_END
+
+SOURCE_PE_IMPORT_DIRECTORY_START
+SOURCE_PE_IMPORT_DIRECTORY_END
+
+SOURCE_PE_EXTENDED_DOS_HEADER_START
+SOURCE_PE_EXTENDED_DOS_HEADER_END
+
+SOURCE_PE_SECTION_TABLE_ENTRY_START
+SOURCE_PE_SECTION_TABLE_ENTRY_END
+
+SOURCE_PE_COFF_SYMBOL_START
+SOURCE_PE_COFF_SYMBOL_END
+
+
+SOURCE_NE_FILE_HEADER_START
+const char *
+SgAsmNEFileHeader::format_name()
+   {
+     return "NE";
+   }
+
+bool
+SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
+{
+    printf ("SgAsmNEFileHeader::is_PE() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return true;
+}
+
+
+// Parses the structure of an ELF file and adds the info to the ExecFile
+SgAsmNEFileHeader *
+SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
+{
+    ROSE_ASSERT(ef);
+    
+    printf ("SgAsmNEFileHeader::parse() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return NULL;
+}
+
+SOURCE_NE_FILE_HEADER_END
+
+SOURCE_NE_SECTION_START
+SOURCE_NE_SECTION_END
+
+SOURCE_NE_SECTION_TABLE_START
+SOURCE_NE_SECTION_TABLE_END
+
+SOURCE_NE_NAME_TABLE_START
+SOURCE_NE_NAME_TABLE_END
+
+SOURCE_NE_MODULE_TABLE_START
+SOURCE_NE_MODULE_TABLE_END
+
+SOURCE_NE_STRING_TABLE_START
+SOURCE_NE_STRING_TABLE_END
+
+SOURCE_NE_ENTRY_TABLE_START
+SOURCE_NE_ENTRY_TABLE_END
+
+SOURCE_NE_RELOC_TABLE_START
+SOURCE_NE_RELOC_TABLE_END
+
+SOURCE_NE_EXTENDED_DOS_HEADER_START
+SOURCE_NE_EXTENDED_DOS_HEADER_END
+
+SOURCE_NE_ENTRY_POINT_START
+SOURCE_NE_ENTRY_POINT_END
+
+SOURCE_NE_RELOC_ENTRY_START
+SOURCE_NE_RELOC_ENTRY_END
+
+SOURCE_NE_SECTION_TABLE_ENTRY_START
+SOURCE_NE_SECTION_TABLE_ENTRY_END
+
+
+
+SOURCE_LE_FILE_HEADER_START
+const char *
+SgAsmLEFileHeader::format_name()
+   {
+     return "LE";
+   }
+
+
+bool
+SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
+{
+    printf ("SgAsmLEFileHeader::is_PE() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return true;
+}
+
+// Parses the structure of an ELF file and adds the info to the ExecFile
+SgAsmLEFileHeader *
+SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
+{
+    ROSE_ASSERT(ef);
+    
+    printf ("SgAsmLEFileHeader::parse() member function incomplete! \n");
+    ROSE_ASSERT(false);
+
+    return NULL;
+}
+
+SOURCE_LE_FILE_HEADER_END
+
+SOURCE_LE_SECTION_START
+SOURCE_LE_SECTION_END
+
+SOURCE_LE_SECTION_TABLE_START
+SOURCE_LE_SECTION_TABLE_END
+
+SOURCE_LE_NAME_TABLE_START
+SOURCE_LE_NAME_TABLE_END
+
+SOURCE_LE_PAGE_TABLE_START
+SOURCE_LE_PAGE_TABLE_END
+
+SOURCE_LE_ENTRY_TABLE_START
+SOURCE_LE_ENTRY_TABLE_END
+
+SOURCE_LE_RELOC_TABLE_START
+SOURCE_LE_RELOC_TABLE_END
+
+SOURCE_LE_PAGE_TABLE_ENTRY_START
+SOURCE_LE_PAGE_TABLE_ENTRY_END
+
+SOURCE_LE_ENTRY_POINT_START
+SOURCE_LE_ENTRY_POINT_END
+
+SOURCE_LE_SECTION_TABLE_ENTRY_START
+SOURCE_LE_SECTION_TABLE_ENTRY_END
+
+
+
+SOURCE_DOS_HEADER_START
+const char *
+SgAsmDOSFileHeader::format_name()
+   {
+     return "DOS";
+   }
+
+
+SOURCE_DOS_HEADER_END
+
+
+
+

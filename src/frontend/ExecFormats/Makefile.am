@@ -6,12 +6,17 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libroseExecFormats.la
 
 libroseExecFormats_la_DEPENDENCIES =
-libroseExecFormats_la_SOURCES = ExecGeneric.C ExecGeneric.h \
-                                ExecDOS.C     ExecDOS.h     \
-                                ExecELF.C     ExecELF.h     \
-				ExecLE.C      ExecLE.h      \
-                                ExecNE.C      ExecNE.h      \
-                                ExecPE.C      ExecPE.h 
+libroseExecFormats_la_SOURCES = \
+   ExecGeneric.C ExecGeneric.h \
+   ExecDOS.C     ExecDOS.h     \
+   ExecELF.C     ExecELF.h     \
+   ExecLE.C      ExecLE.h      \
+   ExecNE.C      ExecNE.h      \
+   ExecPE.C      ExecPE.h \
+   ROSE_ExecGeneric.C \
+   ROSE_ExecELF.C \
+   ROSE_ExecDOS.C 
+
 
 dist_include_HEADERS = ExecGeneric.h ExecDOS.h  ExecELF.h ExecLE.h ExecNE.h ExecPE.h
 

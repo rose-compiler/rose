@@ -844,6 +844,12 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
   // functionString = GrammarString::copyEdit (functionString,"$SET_PARENT_FUNCTION",setParentFunctionCallString);
      functionString = GrammarString::copyEdit (functionString,"$TEST_DATA_POINTER",setParentFunctionCallString);
 
+#if 0
+  // DQ (8/9/2008): Debugging output of access function for case of BUILD_LIST_ACCESS_FUNCTIONS
+     if (config.getValue() == TAG_BUILD_LIST_ACCESS_FUNCTIONS)
+          printf ("functionString = %s \n",functionString.c_str());
+#endif
+
   // BP : 10/18/2001, delete unwanted memory
      delete codeString;
      return functionString;

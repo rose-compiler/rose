@@ -1,6 +1,7 @@
 DATA_ACCESS_FUNCTION_START
 // *** DATA ACCESS FUNCTION SECTION BEGINS HERE ***
 
+// Note that we don't build a "set" function since the return by reference allows the operator= to be called
 const $DATA_TYPE &
 $CLASSNAME::get_$DATA () const
    {
@@ -8,6 +9,7 @@ $CLASSNAME::get_$DATA () const
      return p_$DATA;
    }
 
+// Note that we don't build a "set" function since the return by reference allows the operator= to be called
 $DATA_TYPE &
 $CLASSNAME::get_$DATA () 
    {

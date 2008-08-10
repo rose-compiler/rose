@@ -421,6 +421,9 @@ SgAsmElfSection
 SgAsmElfSectionTable
 SgAsmElfSegmentTable
 SgAsmElfSymbolSection
+SgAsmElfDynamicSection
+SgAsmElfDynamicEntry
+SgAsmElfDynamicEntryList
 SgAsmPESection
 SgAsmPESectionTable
 SgAsmPEImportSection
@@ -431,12 +434,14 @@ SgAsmNENameTable
 SgAsmNEModuleTable
 SgAsmNEStringTable
 SgAsmNEEntryTable
-SgAsmNERealocTable
+SgAsmNERelocTable
+SgAsmNERelocEntry
 SgAsmLESection
 SgAsmLESectionTable
+SgAsmLENameTable
 SgAsmLEPageTable
 SgAsmLEEntryTable
-SgAsmLERealocTable
+SgAsmLERelocTable
 SgAsmGenericFormat
 SgAsmGenericArchitecture
 SgAsmGenericFile
@@ -462,3 +467,8 @@ SgAsmElfSymbol
 SgAsmExecutableFileFormat
 SgAsmPEImportHintNameList
 SgAsmCoffSymbolList
+SgAsmGenericDLLList
+SgAsmGenericSymbolList
+SgAsmDOSFileHeader
+SgAsmElfSegmentTableEntryList
+

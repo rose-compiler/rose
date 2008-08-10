@@ -205,6 +205,10 @@ using namespace __gnu_cxx;
   #include "ExecELF.h"
   #include "ExecPE.h"
 
+// DQ (8/7/2008): Added newer support for NE (older windows) and LE (OS/2) formats.
+  #include "ExecNE.h"
+  #include "ExecLE.h"
+
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).
 #include <Cxx_Grammar.h>

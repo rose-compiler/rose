@@ -4,6 +4,9 @@ HEADER_NODE_PREDECLARATION_START
 #include <semaphore.h>
 #include "sage3.h"
 
+// DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
+#include <sys/stat.h>
+
 // DQ (6/14/2008): Include the Exec format support.
 #include "ExecGeneric.h"
 
@@ -104,6 +107,10 @@ typedef SgAsmElfSymbolPtrList*              SgAsmElfSymbolPtrListPtr;
 // DQ (8/4/2008): Added to support new exec format IR nodes
 typedef Rose_STL_Container<SgAsmCoffSymbol*> SgAsmCoffSymbolPtrList;
 typedef SgAsmCoffSymbolPtrList*              SgAsmCoffSymbolPtrListPtr;
+
+// DQ (8/8/2008): Added to support new exec format IR nodes
+typedef Rose_STL_Container<SgAsmGenericSymbol*> SgAsmGenericSymbolPtrList;
+typedef SgAsmGenericSymbolPtrList*              SgAsmGenericSymbolPtrListPtr;
 
 class SgStatement;
 typedef Rose_STL_Container<SgStatement*>    SgStatementPtrList;
@@ -262,23 +269,61 @@ typedef Rose_STL_Container<SgDimensionObject*>     SgDimensionObjectPtrList;
 typedef SgDimensionObjectPtrList*                  SgDimensionObjectPtrListPtr;
 
 // DQ (11/21/2007): Added support for dimension statements (which can have multiple entries)
-typedef Rose_STL_Container<SgLabelSymbol*>    SgLabelSymbolPtrList;
-typedef SgLabelSymbolPtrList*                 SgLabelSymbolPtrListPtr;
+typedef Rose_STL_Container<SgLabelSymbol*>     SgLabelSymbolPtrList;
+typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 
 // DQ (11/21/2007): Added support for format statements (which can have multiple entries)
-typedef Rose_STL_Container<SgFormatItem*>     SgFormatItemPtrList;
-typedef SgFormatItemPtrList*                  SgFormatItemPtrListPtr;
+typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
+typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
 // typedef uint64_t addr_t; // address and size (file and memory)
-typedef Rose_STL_Container<Exec::addr_t>      SgAddressList;
-typedef SgAddressList*                        SgAddressListPtr;
+typedef Rose_STL_Container<Exec::addr_t>       SgAddressList;
+typedef SgAddressList*                         SgAddressListPtr;
 
-typedef Rose_STL_Container<SgAsmPEDLL*>       SgAsmPEDLLPrtList;
-typedef SgAsmPEDLLPrtList*                    SgAsmPEDLLPrtListPtr;
+typedef Rose_STL_Container<SgAsmPEDLL*>        SgAsmPEDLLPrtList;
+typedef SgAsmPEDLLPrtList*                     SgAsmPEDLLPrtListPtr;
 
-typedef Rose_STL_Container<unsigned>          SgUnsignedList;
-typedef SgUnsignedList*                       SgUnsignedListPtr;
+typedef Rose_STL_Container<unsigned>           SgUnsignedList;
+typedef SgUnsignedList*                        SgUnsignedListPtr;
 
+// DQ (8/7/2008): Added list of size_t types for binary format support.
+typedef Rose_STL_Container<size_t>             SgSizeTList;
+typedef SgSizeTList*                           SgSizeTListPtr;
+
+typedef Rose_STL_Container<SgAsmNEEntryPoint*> SgAsmNEEntryPointPtrList;
+typedef SgAsmNEEntryPointPtrList*              SgAsmNEEntryPointPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmNERelocEntry*> SgAsmNERelocEntryPtrList;
+typedef SgAsmNERelocEntryPtrList*              SgAsmNERelocEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmLEPageTableEntry*> SgAsmLEPageTableEntryPtrList;
+typedef SgAsmLEPageTableEntryPtrList*              SgAsmLEPageTableEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmLEEntryPoint*> SgAsmLEEntryPointPtrList;
+typedef SgAsmLEEntryPointPtrList*              SgAsmLEEntryPointPtrListPtr;
+
+// The OS/2 SgAsmLERelocEntry reused the Windows SgAsmNERelocEntry
+typedef SgAsmNERelocEntry SgAsmLERelocEntry;
+typedef Rose_STL_Container<SgAsmLERelocEntry*> SgAsmLERelocEntryPtrList;
+typedef SgAsmLERelocEntryPtrList*              SgAsmLERelocEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmGenericHeader*> SgAsmGenericHeaderPtrList;
+typedef SgAsmGenericHeaderPtrList*              SgAsmGenericHeaderPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmGenericDLL*> SgAsmGenericDLLPtrList;
+typedef SgAsmGenericDLLPtrList*              SgAsmGenericDLLPtrListPtr;
+
+typedef Rose_STL_Container<unsigned char>    SgUnsignedCharList;
+typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
+
+typedef Rose_STL_Container<SgAsmElfDynamicEntry*> SgAsmElfDynamicEntryPtrList;
+typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmElfSegmentTableEntry*> SgAsmElfSegmentTableEntryPtrList;
+typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
+
+// DQ (8/7/2008): Note that the SgAsmLEExtendedDOSHeader is just using the SgAsmNEExtendedDOSHeader type
+typedef SgAsmNEExtendedDOSHeader SgAsmLEExtendedDOSHeader;
 
 
 // DQ (11/26/2005): Support for visitor pattern.
@@ -563,6 +608,13 @@ class AstSpecificDataManagingClassStorageClass;
 
 // DQ (4/23/2006): The friend declaration the SgProject class is not enough this must be defined outside of the class (for g++ 4.1.0).
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
+
+// DQ (8/8/2008): Added support for std::multimap<Exec::addr_t, Exec::addr_t> used in binary file format.
+std::ostream & operator<< ( std::ostream & os, const std::multimap<Exec::addr_t, Exec::addr_t> & m );
+std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<Exec::addr_t,Exec::addr_t> > & l );
+// struct SgAsmGenericFormat::fileDetails;
+// std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
+std::ostream & operator<< ( std::ostream & os, const struct stat64 & sb );
 
 #if 0
 // DQ (8/28/2006): This fixes a bug in ROSE where the namespace scope is not defined
@@ -1499,6 +1551,30 @@ $CLASSNAME::cfgInEdges(unsigned int) {
   ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
   return std::vector<VirtualCFG::CFGEdge>();
 }
+
+// DQ (8/10/2008): Added to support binary file format.
+std::ostream & 
+operator<< ( std::ostream & os, const std::multimap<Exec::addr_t, Exec::addr_t> & m )
+   {
+     return os;
+   }
+
+#if 0
+// DQ (8/10/2008): This is not used!
+std::ostream & 
+operator<< ( std::ostream & os, const std::vector<std::pair<Exec::addr_t,Exec::addr_t> > & l )
+   {
+     return os;
+   }
+#endif
+
+// DQ (8/10/2008): Added to support binary file format.
+std::ostream & 
+operator<< ( std::ostream & os, const struct stat64 & sb )
+   {
+     return os;
+   }
+
  
 SOURCE_END
 

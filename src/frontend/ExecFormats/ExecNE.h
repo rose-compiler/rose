@@ -390,6 +390,11 @@ class NERelocEntry {
     NERelocTgtType      tgt_type;       /* low two bits of second byte */
     NERelocFlags        flags;          /* high six bits of second byte */
     addr_t              src_offset;
+
+#if 0
+ // DQ (8/7/2008): This is required in the member function: NERelocEntry::ctor(ExecSection *relocs, addr_t at, addr_t *rec_size)
+ // this is an anonymous union defining specific variables of type "struct" to occupy the all start at the same memory location.
+ // It is not clear how to represent this in the IR???  We need to discuss this!!!
     union {
         struct { /*tgt_type==0x00: internal reference*/
             unsigned    sect_idx;       /* section index (1-origin) */
@@ -411,6 +416,67 @@ class NERelocEntry {
             unsigned    res3;
         } osfixup;
     };
+#else
+  // DQ (8/7/2008): At only (I hope) the risk of using more memory that required, break the union so that we can better support 
+  // this in ROSETTA. One solution might be to implement a common base class of unsigned, unsigned, addr_t; and then use member 
+  // functions to access the data in the base class.
+     struct iref_type
+        { /*tgt_type==0x00: internal reference*/
+          unsigned    sect_idx;       /* section index (1-origin) */
+          unsigned    res1;           /* reserved */
+          addr_t      tgt_offset;
+
+       // Added to support RTI support in ROSE
+          friend std::ostream & operator<< ( std::ostream & os, const iref_type & x );
+
+          iref_type();
+        };
+
+iref_type iref;
+
+     struct iord_type { /*tgt_type==0x01: imported ordinal*/
+          unsigned    modref;         /* 1-based index into import module table */
+          unsigned    ordinal;
+          addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+
+       // Added to support RTI support in ROSE
+          friend std::ostream & operator<< ( std::ostream & os, const iord_type & x );
+
+          iord_type();
+        };
+
+iord_type iord;
+
+     struct iname_type { /*tgt_type==0x02: imported name*/
+          unsigned    modref;         /* 1-based index into import module table */
+          unsigned    nm_off;         /* offset into import procedure names */
+          addr_t      addend;         /* value to add (only present for flags & RF_2EXTRA) */
+
+       // Added to support RTI support in ROSE
+          friend std::ostream & operator<< ( std::ostream & os, const iname_type & x );
+
+          iname_type();
+        };
+
+iname_type iname;
+
+     struct osfixup_type { /*tgt_type==0x03: operating system fixup*/
+          unsigned    type;
+          unsigned    res3;
+
+       // Added to support RTI support in ROSE
+          friend std::ostream & operator<< ( std::ostream & os, const osfixup_type & x );
+
+          osfixup_type();
+        };
+
+osfixup_type osfixup;
+
+
+
+
+#endif
+
 };
 
 class NERelocTable : public ExecSection {

@@ -9,6 +9,60 @@
 namespace Exec {
 namespace NE {
 
+
+// Added to support RTI support in ROSE (not implemented)
+std::ostream & operator<< ( std::ostream & os, const NERelocEntry::iref_type & x )
+   {
+     printf ("Error: operator<< not implemented! \n");
+     ROSE_ASSERT(false);
+
+     return os;
+   }
+   
+std::ostream & operator<< ( std::ostream & os, const NERelocEntry::iord_type & x )
+   {
+     return os;
+   }
+
+std::ostream & operator<< ( std::ostream & os, const NERelocEntry::iname_type & x )
+   {
+     return os;
+   }
+
+std::ostream & operator<< ( std::ostream & os, const NERelocEntry::osfixup_type & x )
+   {
+     return os;
+   }
+
+
+NERelocEntry::iref_type::iref_type()
+   {
+     sect_idx   = 0;
+     res1       = 0;
+     tgt_offset = 0;
+   }
+   
+NERelocEntry::iord_type::iord_type()
+   {
+     modref  = 0;
+     ordinal = 0;
+     addend  = 0;
+   }
+   
+NERelocEntry::iname_type::iname_type()
+   {
+     modref = 0;
+     nm_off = 0;
+     addend = 0;
+   }
+   
+NERelocEntry::osfixup_type::osfixup_type()
+   {
+     type = 0;
+     res3 = 0;
+   }
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Extended DOS header for NE files
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

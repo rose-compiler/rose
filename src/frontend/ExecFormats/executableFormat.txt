@@ -130,9 +130,16 @@ that we have?  And then test it to make sure it is identical.
 3) AsmElfSegmentTableEntry variable have a prefix of "p_" this is confusing to ROSETTA,
    since it reserves this for all data members as part of supporting the code generation.
 
+4) Enum types need additional values: 
+   a) "undefined = 0", if possible, and 
+   b) "default = <nonzero value>"
 
- 
+   This provides seperate values for use by the destructor and default values to make it
+   clear when values are uninitialized properly.
 
+5) A lot of data members are public and don't have access functions, this complicates the
+   move to support the new IR nodes.
 
+6) I think that "sh_type" should be of type "Section_Type".
 
 
