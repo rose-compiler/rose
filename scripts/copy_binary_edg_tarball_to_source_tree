@@ -1,8 +1,7 @@
 #!/bin/sh -xv
 set -e
-if test "x$SVN" = "x"; then SVN=svn; fi
 if test $# -ne 2; then
-  echo "Usage: $0 rose-repository-url-or-top_srcdir build-triplet" >&2
+  echo "Usage: $0 top_srcdir build-triplet" >&2
   exit 1
 fi
 if test -f rose_binary_compatibility_signature; then
@@ -11,7 +10,7 @@ else
   echo "Error: this code should be run in the directory with rose_binary_compatibility_signature" >&2
   exit 1
 fi
-roseRepositoryUrl="$1"
+top_srcdir="$1"
 buildTriplet="$2"
 signature=`cat rose_binary_compatibility_signature`
 binaryEdgTarball="roseBinaryEDG-${buildTriplet}-${signature}.tar.gz"
@@ -21,11 +20,5 @@ else
   echo "Error: this code should be run in the directory with the EDG tarball ${binaryEdgTarball}" >&2
   exit 1
 fi
-checkoutDir=tempCheckout_CxxFrontend_`hostname`_$$
-${SVN} checkout -N ${roseRepositoryUrl}/src/frontend/CxxFrontend ${checkoutDir} # FIXME Not secure
-${SVN} ls ${checkoutDir} | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'roseBinaryEDG-.*-'${signature}'\.tar\.gz' | while read oldBinary; do ${SVN} rm ${checkoutDir}/${oldBinary}; done
-cp ${binaryEdgTarball} ${checkoutDir}/${binaryEdgTarball}
-${SVN} add ${checkoutDir}/${binaryEdgTarball}
-${SVN} status ${checkoutDir}
-${SVN} commit -m"Automatic updates of binary EDG tarballs (adding or updating ${binaryEdgTarball}, and removing obsolete versions) for platform ${buildTriplet} and signature ${signature}" ${checkoutDir}
-rm -rf ${checkoutDir}
+ls -1 ${top_srcdir}/src/frontend/CxxFrontend | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'roseBinaryEDG-.*-'${signature}'\.tar\.gz' | while read oldBinary; do rm ${top_srcdir}/src/frontend/CxxFrontend/${oldBinary}; done
+cp ${binaryEdgTarball} ${top_srcdir}/src/frontend/CxxFrontend/${binaryEdgTarball}
