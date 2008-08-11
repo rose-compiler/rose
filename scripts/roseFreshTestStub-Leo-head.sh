@@ -2,7 +2,8 @@
 
 # Stub file to include settings for roseFreshTest-common
 
-#source /usr/apps/graphviz/2.6/setup.sh
+#required by make docs!
+source /usr/apps/graphviz/2.6/setup.sh
 #export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 #export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$LD_LIBRARY_PATH"
 

@@ -3,7 +3,8 @@
 # Stub file to include settings for roseFreshTest-common
 # the java libraries are platform-dependent! e.g.: i386 vs. amd64
 
-#source /usr/apps/graphviz/2.6/setup.sh
+# required to build docs!
+source /usr/apps/graphviz/2.6/setup.sh
 #export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
