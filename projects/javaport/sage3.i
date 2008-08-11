@@ -163,6 +163,7 @@ Sg_Options& Sg_options()
 }
 
 #include "rose.h"
+#include "sage3.h"
 // #include "AstFixParentTraversal.h"
 #include "compass.h"
 
