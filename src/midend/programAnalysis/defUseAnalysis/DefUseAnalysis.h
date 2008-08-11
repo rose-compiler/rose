@@ -43,7 +43,9 @@ class DefUseAnalysis : public DFAnalysis, Support {
   bool visualizationEnabled;
 
   // def-use-specific --------------------
-  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+  typedef std::vector < std::pair<SgInitializedName* , SgNode*> > multitype;
+  //  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+
   typedef std::map< SgNode* , multitype > tabletype;
   // typedef std::map< SgNode* , int > convtype;
   typedef __gnu_cxx::hash_map< SgNode* , int > convtype;
@@ -73,6 +75,7 @@ class DefUseAnalysis : public DFAnalysis, Support {
   void mapAnyUnion(tabletype* tabl, SgNode* before, SgNode* other, SgNode* current);
   void printAnyMap(tabletype* tabl);
 
+
  public:
   DefUseAnalysis(SgProject* proj): project(proj), 
     DEBUG_MODE(false), DEBUG_MODE_EXTRA(false){
@@ -85,10 +88,10 @@ class DefUseAnalysis : public DFAnalysis, Support {
   };
   virtual ~DefUseAnalysis() {}
 
-  std::map< SgNode* , std::multimap <SgInitializedName* , SgNode* >  > getDefMap() { return table;}
-  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* >  > getUseMap() { return usetable;}
-  void setMaps(std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* >  > def,
-	  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > use) {
+  std::map< SgNode* , multitype  > getDefMap() { return table;}
+  std::map< SgNode* , multitype  > getUseMap() { return usetable;}
+  void setMaps(std::map< SgNode* , multitype  > def,
+	  std::map< SgNode* , multitype > use) {
     table = def;
     usetable = use;
   }
@@ -96,8 +99,8 @@ class DefUseAnalysis : public DFAnalysis, Support {
   // def-use-public-functions -----------
   int run();
   int run(bool debug);
-  std::multimap < SgInitializedName* , SgNode* >  getDefMultiMapFor(SgNode* node);
-  std::multimap < SgInitializedName* , SgNode* >  getUseMultiMapFor(SgNode* node);
+  multitype getDefMultiMapFor(SgNode* node);
+  multitype  getUseMultiMapFor(SgNode* node);
   std::vector < SgNode* > getAnyFor(const multitype* mul, SgInitializedName* initName);
   std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
   std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);

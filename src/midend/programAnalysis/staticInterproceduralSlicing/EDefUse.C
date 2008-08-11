@@ -65,7 +65,7 @@ bool EDefUse::isNodeGlobalVariable(SgInitializedName* node)
 {
   return internalDefUse->isNodeGlobalVariable(node);
 }
-std::multimap < SgInitializedName* , SgNode* >  EDefUse::getDefMultiMapFor(SgNode* node)
+std::vector < std::pair < SgInitializedName* , SgNode* > > EDefUse::getDefMultiMapFor(SgNode* node)
 {
   return internalDefUse->getDefMultiMapFor(node);
 }

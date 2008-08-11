@@ -8,6 +8,7 @@ using namespace std;
 using namespace Compass;
 
 
+
 // ************************************************************
 // NodeCounter to determine on how to split the nodes
 // ************************************************************

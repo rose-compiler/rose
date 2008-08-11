@@ -365,7 +365,8 @@ functionDeclarationHandler(
       } //else if, namespace entry
       else
       {
-        std::cout << "RefFname: " << frefFileName << "\t" << fref_classification.getLibraryName() << std::endl;
+        //(08/11/08) tps: commented out the additional cout
+        //std::cout << "RefFname: " << frefFileName << "\t" << fref_classification.getLibraryName() << std::endl;
         output->addOutput(new CheckerOutput(node, ss.str()));
       }
 

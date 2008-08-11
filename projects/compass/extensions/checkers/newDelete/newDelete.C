@@ -158,8 +158,6 @@ checkNewDelForFunction(SgDeleteExp* expr, string name) {
   std::string lineNrDelete=ToString(expr->get_file_info()->get_line());
 
   BoolWithTrace tr;
-  cout << "Expression " << expr->unparseToString() << " at line " << 
-    expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;
 
   ROSE_ASSERT(isSgDeleteExp(expr));
   isCFGArrayDelete = expr->get_is_array();
@@ -168,6 +166,8 @@ checkNewDelForFunction(SgDeleteExp* expr, string name) {
     tr = expressionIsNewExpr(exprV);
 
   if (tr.first) {
+    cout << "Expression " << expr->unparseToString() << " at line " << 
+      expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;
     string trace = "delete is dangerous: stack is:\n";
     for (size_t i = tr.second.size(); i > 0; --i) {
       string classname = (tr.second[i - 1]->class_name());

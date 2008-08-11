@@ -5,9 +5,13 @@
  *****************************************/
 
 
+
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
 #include "GlobalVarAnalysis.h"
+#include <boost/config.hpp>
+#include <boost/bind.hpp>
+
 
 using namespace std;
 // static counter for the node numbering (for visualization)
@@ -86,8 +90,15 @@ void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode,
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisaddUseE) 
 #endif
-  (*tabl)[sgNode].insert(make_pair(initName, defNode));
+  //  (*tabl)[sgNode].insert(make_pair(initName, defNode));
+  (*tabl)[sgNode].push_back(make_pair(initName, defNode));
    addID(sgNode);
+}
+
+bool DefUseAnalysismycond(std::pair<SgInitializedName*,SgNode* > n1, SgInitializedName* init) {
+  if (n1.first==init)
+    return true;
+  return false;
 }
 
 /**********************************************************
@@ -95,6 +106,7 @@ void DefUseAnalysis::addAnyElement(tabletype* tabl, SgNode* sgNode,
  *********************************************************/
 void DefUseAnalysis::replaceElement(SgNode* sgNode, 
 				    SgInitializedName* initName) {
+  ROSE_ASSERT(initName);
   // if the node is contained but not identical, then we overwrite it
   // otherwise, we do nothing
   //table[sgNode].erase(table[sgNode].lower_bound(initName), table[sgNode].upper_bound(initName));
@@ -102,8 +114,14 @@ void DefUseAnalysis::replaceElement(SgNode* sgNode,
 #pragma omp critical (DefUseAnalysisreplaceE1) 
 #endif
   {
-    table[sgNode].erase(initName);
-    table[sgNode].insert(make_pair(initName,sgNode));
+    //table[sgNode].erase(initName);
+    //    table[sgNode].insert(make_pair(initName,sgNode));
+
+    multitype& map = table[sgNode];
+    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, _1, initName)), map.end());
+    //         table[sgNode].erase(it);
+
+    table[sgNode].push_back(make_pair(initName,sgNode));
   }
 }
 
@@ -115,7 +133,13 @@ void DefUseAnalysis::clearUseOfElement(SgNode* sgNode,
 #if ROSE_GCC_OMP
 #pragma omp critical (DefUseAnalysisclearUse) 
 #endif
-  usetable[sgNode].erase(initName);
+  {
+  //  usetable[sgNode].erase(initName);
+
+    multitype& map = usetable[sgNode];
+    map.erase(std::remove_if(map.begin(), map.end(), boost::bind(boost::type<bool>(), DefUseAnalysismycond, _1, initName)), map.end());
+
+  }
 }
 
 /**********************************************************
@@ -365,7 +389,7 @@ std::vector < SgNode* > DefUseAnalysis::getAnyFor(const multitype* multi, SgInit
  * return multimap to user
  * for any given node, return all definitions 
  *****************************************/
-std::multimap < SgInitializedName* , SgNode* > DefUseAnalysis::getDefMultiMapFor(SgNode* node) {
+std::vector <std::pair < SgInitializedName* , SgNode*> > DefUseAnalysis::getDefMultiMapFor(SgNode* node) {
   multitype multi;
   if (searchMap(&table, node)==true) {
     // multimap is contained
@@ -378,7 +402,7 @@ std::multimap < SgInitializedName* , SgNode* > DefUseAnalysis::getDefMultiMapFor
  * return multimap to user
  * for any given node, return all definitions 
  *****************************************/
-std::multimap < SgInitializedName* , SgNode* > DefUseAnalysis::getUseMultiMapFor(SgNode* node) {
+std::vector <std::pair < SgInitializedName* , SgNode*> > DefUseAnalysis::getUseMultiMapFor(SgNode* node) {
   multitype multi;
   if (searchMap(&usetable, node)==true) {
     // multimap is contained

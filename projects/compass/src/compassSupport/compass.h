@@ -11,7 +11,7 @@ namespace Compass {
   extern unsigned int global_arrsizeUse;
   extern unsigned int *def_values_global;
   extern unsigned int *use_values_global;
-  typedef std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > my_map; 
+  typedef std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*>  > > my_map; 
   extern bool quickSave;
   // Support for DefUse Analysis
   extern DefUseAnalysis*  defuse;
@@ -27,7 +27,7 @@ namespace Compass {
   /****************************************************************************/
   // (tps - 11Jul08) : needed for MPI run of Compass
   void serializeDefUseResults(unsigned int *values,
-			    std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+			      std::map< SgNode* , std::vector <std::pair  < SgInitializedName* , SgNode* > > > &defmap,
 			      std::map<SgNode*,unsigned int > &nodeMap);
   void deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* defuse, unsigned int *values,
 				//std::map<unsigned int, SgNode* > &nodeMap, 

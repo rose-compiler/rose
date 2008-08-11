@@ -201,15 +201,15 @@ void Compass::saveDFA(std::string name, SgProject* project) {
 
 
 void Compass::serializeDefUseResults(unsigned int *values,
-				     std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > &defmap,
+				     std::map< SgNode* , std::vector <std::pair < SgInitializedName* , SgNode* > > > &defmap,
 				     std::map<SgNode*,unsigned int > &nodeMapInv) {
   int counter=0;
-  std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > >::const_iterator it;
+  std::map< SgNode* , std::vector <std::pair < SgInitializedName* , SgNode* > > >::const_iterator it;
   for (it=defmap.begin();it!=defmap.end();++it) {
     SgNode* first = it->first;
     ROSE_ASSERT(first);
-    std::multimap < SgInitializedName* , SgNode* > mm = it->second;
-    std::multimap < SgInitializedName* , SgNode* >::const_iterator it2;
+    std::vector < std::pair < SgInitializedName* , SgNode*>  > mm = it->second;
+    std::vector < std::pair < SgInitializedName* , SgNode*>  >::const_iterator it2;
     for (it2=mm.begin();it2!=mm.end();++it2) {
       SgInitializedName* second = isSgInitializedName(it2->first);
       SgNode* third = it2->second;

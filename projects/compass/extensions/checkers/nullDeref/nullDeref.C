@@ -206,11 +206,11 @@ checkNullDeref(string analysisname, SgExpression* expr,  string name) {
   { 
     std::string lineNrDelete=ToString(expr->get_file_info()->get_line());
     BoolWithTrace tr;
-    cout << "Expression " << expr->unparseToString() << " at line " << 
-      expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;
     tr = expressionIsNull(expr);
 
     if (tr.first) {
+      cout << "Expression " << expr->unparseToString() << " at line " << 
+        expr->get_startOfConstruct()->get_line() << "  in file : " << expr->get_file_info()->get_filename() << " " ;
       string trace = "could be NULL: stack is:\n";
       for (size_t i = tr.second.size(); i > 0; --i) {
         string classname = (tr.second[i - 1]->class_name());
