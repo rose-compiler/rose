@@ -8,15 +8,17 @@
 # It conducts sanity check for the package, especially
 #   x. Remove .svn directories
 #   x. Make sure no EDG copyrighted files exist
+#   x. Make sure the EDG binaries for all supported platforms do exist
 # It imports the package which passes the check to 
 #  the head of an external repository using svn_load_dirs.1.4.5.pl
 # Use
 #  thisScript ROSE_TOP_TEST_DIR
 #
 # by Liao, 7/31/2008
-# Last Modified 7/30/2008
+# Last Modified 8/11/2008
 #------------------------------------------------------
 
+# the backup one is for testing only
 #REMOTE_SVN_REPOS=file:////home/liao6/backup/SCIDAC.MIRROR
 REMOTE_SVN_REPOS=https://outreach.scidac.gov/svn/rose
 
@@ -79,6 +81,15 @@ EDG_COPYRIGHT_STRINGS=($(find . -name \*.C -or -name \*.h -or -name \*.c -or -na
 if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
   echo Fatal Error: Found copyrighted EDG text in source files:${EDG_COPYRIGHT_STRINGS[@]}
   exit 2
+fi
+
+# Make sure all binary EDG versions for three platforms exist: i686-apple, i686-redhat, and x86_64-redhat, using a bash array (index starting from 0) to test it.
+EDG_BINARIES=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz))
+if [ ${EDG_BINARIES[2]} ]; then
+   echo Found at least 3 EDG binary version as expected. They are ${EDG_BINARIES[@]}. 
+else 
+  echo Fatal Error: Not all EDG binaries for the three supported platforms are available. Available ones are: ${EDG_BINARIES[@]} .
+  exit 3
 fi
 
 # Now we can upload the package
