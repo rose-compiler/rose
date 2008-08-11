@@ -178,6 +178,7 @@ Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	sed '/<semaphore.h>/,/};/d' | \
 	sed '/namespace AST_FileIO/,/}/d' | \
 	sed 's/ class / struct /g' | \
+	sed 's/__attribute__(([^)]*))//g | \
 	cat >> Cxx_Grammar.i
 
 CLEANFILES = sage3_wrap.cxx sage3_wrap.h compile_java_files sage3.jar \
