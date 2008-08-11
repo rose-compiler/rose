@@ -94,6 +94,7 @@ bool DefUseAnalysisPF::searchMulti(const multitype* multi, SgInitializedName* in
   return isCurrentValueContained;
 }
 
+
 /**********************************************************
  *  check if two multimaps are equal
  *********************************************************/
@@ -198,7 +199,7 @@ SgExpression* DefUseAnalysisPF::resolveCast(SgExpression* expr) {
  *********************************************************/
 bool DefUseAnalysisPF::makeSureThatTheDefIsInTable(SgInitializedName* initName) {
   bool addedNode = false;
-  multimap <SgInitializedName*, SgNode*> mymap = dfa->getDefMultiMapFor(initName);
+  vector <pair < SgInitializedName*, SgNode*> > mymap = dfa->getDefMultiMapFor(initName);
   if (mymap.size()==0) {
     dfa->addDefElement(initName, initName, initName);
     addedNode=true;
@@ -217,7 +218,7 @@ bool DefUseAnalysisPF::makeSureThatTheDefIsInTable(SgInitializedName* initName) 
  *********************************************************/
 bool DefUseAnalysisPF::makeSureThatTheUseIsInTable(SgInitializedName* initName) {
   bool addedNode = false;
-  multimap <SgInitializedName*, SgNode*> mymap = dfa->getUseMultiMapFor(initName);
+  vector <pair < SgInitializedName*, SgNode*> > mymap = dfa->getUseMultiMapFor(initName);
   if (mymap.size()==0) {
     dfa->addUseElement(initName, initName, initName);
     addedNode=true;

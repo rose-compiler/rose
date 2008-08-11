@@ -15,7 +15,7 @@ public:
       // get the vector of defining and usage nodes for a specific node and a initializedName
       std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName);
       std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName);
-      std::multimap < SgInitializedName* , SgNode* >  getDefMultiMapFor(SgNode* node);
+      std::vector < std::pair < SgInitializedName* , SgNode* > >  getDefMultiMapFor(SgNode* node);
       // return whether a node is a global node
       bool isNodeGlobalVariable(SgInitializedName* node);
       //

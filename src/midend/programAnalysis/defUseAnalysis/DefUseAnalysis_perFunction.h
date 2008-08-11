@@ -27,7 +27,8 @@ class DefUseAnalysisPF : public Support {
   // reference to DFA ------------------
   DefUseAnalysis* dfa;
 
-  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+  //  typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+  typedef std::vector < std::pair < SgInitializedName* , SgNode* > > multitype;
   typedef std::map< SgNode* , multitype > tabletype;
   typedef FilteredCFGEdge < IsDFAFilter > filteredCFGEdgeType;
   typedef FilteredCFGNode < IsDFAFilter > filteredCFGNodeType;

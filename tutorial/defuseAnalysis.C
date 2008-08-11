@@ -51,9 +51,9 @@ void testOneFunction( std::string funcParamName,
 
     cout <<"\nChecking all definitions ... " << endl;
     // check nodes in multimap
-    std::multimap <SgInitializedName*, SgNode* > map = defuse->getDefMultiMapFor(func);
+    std::vector < std::pair < SgInitializedName*, SgNode* > > map = defuse->getDefMultiMapFor(func);
     if (map.size()>0) {
-      std::multimap <SgInitializedName*, SgNode*>::const_iterator j = map.begin();
+      std::vector < std::pair < SgInitializedName*, SgNode*> >::const_iterator j = map.begin();
       unsigned int hit=0;
       for (;j!=map.end();++j) {
 	SgInitializedName* in_node = j->first;
@@ -89,7 +89,7 @@ void testOneFunction( std::string funcParamName,
     // check nodes in multimap
     map = defuse->getUseMultiMapFor(func);
     if (map.size()>0) {
-      std::multimap <SgInitializedName*, SgNode*>::const_iterator j = map.begin();
+      std::vector <std::pair < SgInitializedName*, SgNode* > >::const_iterator j = map.begin();
       size_t hit=0;
       for (;j!=map.end();++j) {
 	SgInitializedName* in_node = j->first;
@@ -159,9 +159,9 @@ void runCurrentFile(vector<string> argvList) {
   for (; i!=vars.end();++i) {
     SgReturnStmt* ret = isSgReturnStmt(*i);
     ROSE_ASSERT(ret);
-    std::multimap <SgInitializedName*, SgNode* > 
-      map = defuse->getUseMultiMapFor(ret);    
-    std::multimap <SgInitializedName*, SgNode*>::const_iterator j;
+    typedef std::vector <std::pair < SgInitializedName*, SgNode* > > mymap; 
+    mymap map = defuse->getUseMultiMapFor(ret);    
+    mymap::const_iterator j;
     j = map.begin();
     for (; j!=map.end();++j) {
       SgInitializedName* initName = isSgInitializedName(j->first);

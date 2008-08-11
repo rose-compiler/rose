@@ -56,10 +56,10 @@ std::string ToString(T t) {
   std::string getEdgeString(const EdgeT& e, DefUseAnalysis* dfa) {
     std::string retStr = "";
     SgNode* n = e.source().getNode();
-    typedef std::multimap < SgInitializedName* , SgNode* > multitype;
+    typedef std::vector < std::pair < SgInitializedName* , SgNode*>  > multitype;
     //typedef std::map< SgNode* , multitype > tabletype;
 
-    multitype multi = dfa->getDefMultiMapFor(n);
+    std::vector < std::pair <SgInitializedName*, SgNode*> > multi = dfa->getDefMultiMapFor(n);
     for (multitype::const_iterator j = multi.begin(); j != multi.end(); ++j) {  
       SgInitializedName* sgInitMM = (*j).first;
       string name = sgInitMM->get_qualified_name().str() ;

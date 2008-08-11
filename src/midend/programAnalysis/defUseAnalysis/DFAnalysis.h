@@ -20,8 +20,8 @@ class DFAnalysis {
   virtual int run(bool debug) = 0;
   // request information from the DFA
   // get the multimap of a specific SgNode ... get the Definition or Usage Map
-  virtual std::multimap < SgInitializedName* , SgNode* >  getDefMultiMapFor(SgNode* node)=0;
-  virtual std::multimap < SgInitializedName* , SgNode* >  getUseMultiMapFor(SgNode* node)=0;
+  virtual std::vector < std::pair <SgInitializedName* , SgNode*> >  getDefMultiMapFor(SgNode* node)=0;
+  virtual std::vector < std::pair <SgInitializedName* , SgNode*> >  getUseMultiMapFor(SgNode* node)=0;
   // get the vector of defining and usage nodes for a specific node and a initializedName
   virtual std::vector < SgNode* > getDefFor(SgNode* node, SgInitializedName* initName)=0;
   virtual std::vector < SgNode* > getUseFor(SgNode* node, SgInitializedName* initName)=0;
@@ -36,10 +36,10 @@ class DFAnalysis {
   virtual int getIntForSgNode(SgNode* node)=0;
   virtual void dfaToDOT()=0;
 
-  virtual std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > getDefMap()=0;
-  virtual std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > getUseMap()=0;
-  virtual void setMaps(std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > def,
-	       std::map< SgNode* , std::multimap < SgInitializedName* , SgNode* > > use)=0;
+  virtual std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > getDefMap()=0;
+  virtual std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > getUseMap()=0;
+  virtual void setMaps(std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > def,
+		       std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*> > > use)=0;
 
 };
 

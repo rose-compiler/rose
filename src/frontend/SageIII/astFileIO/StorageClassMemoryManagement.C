@@ -430,8 +430,7 @@ char* EasyStorage<char*> :: rebuildDataStoredInEasyStorageClass() const
         // if there is any data in the pool at all
            if ( Base::actual != NULL  && 0 < Base::getSizeOfData() )
               {
-                char* dataPointer = Base::getBeginningOfDataBlock();
-                memcpy(data_, dataPointer, Base::getSizeOfData() * sizeof(char) );
+                memcpy(data_, Base::getBeginningOfDataBlock(), Base::getSizeOfData() * sizeof(char) );
               }
         // terminate char array
            data_[Base::getSizeOfData()] = '\0';
@@ -491,8 +490,7 @@ std::string EasyStorage<std::string> :: rebuildDataStoredInEasyStorageClass() co
    // if there is any data in the pool at all
       if (Base::actual != NULL && 0 < Base::getSizeOfData() )
          {
-           char* dataPointer = Base::getBeginningOfDataBlock();
-           return_string = std::string(dataPointer,Base::getSizeOfData());
+           return_string = std::string(Base::getBeginningOfDataBlock(),Base::getSizeOfData());
          }
       return return_string;
    }
