@@ -16,7 +16,9 @@ libroseExecFormats_la_SOURCES = \
    ROSE_ExecGeneric.C \
    ROSE_ExecDOS.C \
    ROSE_ExecELF.C \
-   ROSE_ExecPE.C
+   ROSE_ExecPE.C \
+   ROSE_ExecNE.C \
+   ROSE_ExecLE.C
 
 
 dist_include_HEADERS = ExecGeneric.h ExecDOS.h  ExecELF.h ExecLE.h ExecNE.h ExecPE.h

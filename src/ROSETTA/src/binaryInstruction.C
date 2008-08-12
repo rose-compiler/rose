@@ -199,13 +199,14 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag" );
      NEW_TERMINAL_MACRO    ( AsmPEExtendedDOSHeader, "AsmPEExtendedDOSHeader", "AsmPEExtendedDOSHeaderTag" );
 
-     NEW_TERMINAL_MACRO    ( AsmNESection,      "AsmNESection",      "AsmNESectionTag"      );
-     NEW_TERMINAL_MACRO    ( AsmNESectionTable, "AsmNESectionTable", "AsmNESectionTableTag" );
-     NEW_TERMINAL_MACRO    ( AsmNENameTable,    "AsmNENameTable",    "AsmNENameTableTag"    );
-     NEW_TERMINAL_MACRO    ( AsmNEModuleTable,  "AsmNEModuleTable",  "AsmNEModuleTableTag"  );
-     NEW_TERMINAL_MACRO    ( AsmNEStringTable,  "AsmNEStringTable",  "AsmNEStringTableTag"  );
-     NEW_TERMINAL_MACRO    ( AsmNEEntryTable,   "AsmNEEntryTable",   "AsmNEEntryTableTag"   );
-     NEW_TERMINAL_MACRO    ( AsmNERelocTable,   "AsmNERelocTable",   "AsmNERelocTableTag"   );
+     NEW_TERMINAL_MACRO    ( AsmNESection,           "AsmNESection",           "AsmNESectionTag"      );
+     NEW_TERMINAL_MACRO    ( AsmNESectionTable,      "AsmNESectionTable",      "AsmNESectionTableTag" );
+     NEW_TERMINAL_MACRO    ( AsmNENameTable,         "AsmNENameTable",         "AsmNENameTableTag"    );
+     NEW_TERMINAL_MACRO    ( AsmNEModuleTable,       "AsmNEModuleTable",       "AsmNEModuleTableTag"  );
+     NEW_TERMINAL_MACRO    ( AsmNEStringTable,       "AsmNEStringTable",       "AsmNEStringTableTag"  );
+     NEW_TERMINAL_MACRO    ( AsmNEEntryTable,        "AsmNEEntryTable",        "AsmNEEntryTableTag"   );
+     NEW_TERMINAL_MACRO    ( AsmNERelocTable,        "AsmNERelocTable",        "AsmNERelocTableTag"   );
+     NEW_TERMINAL_MACRO    ( AsmNEExtendedDOSHeader, "AsmNEExtendedDOSHeader", "AsmNEExtendedDOSHeaderTag" );
 
      NEW_TERMINAL_MACRO    ( AsmLESection,      "AsmLESection",      "AsmLESectionTag"      );
      NEW_TERMINAL_MACRO    ( AsmLESectionTable, "AsmLESectionTable", "AsmLESectionTableTag" );
@@ -218,7 +219,7 @@ Grammar::setUpBinaryInstructions ()
             AsmGenericHeader | 
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
             AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  |
-            AsmNESection     | AsmNESectionTable  | AsmNENameTable         | AsmNEModuleTable    | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
+            AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", false );
 
@@ -239,7 +240,6 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmPEImportHintName,    "AsmPEImportHintName",    "AsmPEImportHintNameTag"    );
      NEW_TERMINAL_MACRO    ( AsmPESectionTableEntry, "AsmPESectionTableEntry", "AsmPESectionTableEntryTag" );
 
-     NEW_TERMINAL_MACRO    ( AsmNEExtendedDOSHeader, "AsmNEExtendedDOSHeader", "AsmNEExtendedDOSHeaderTag" );
      NEW_TERMINAL_MACRO    ( AsmNEEntryPoint,        "AsmNEEntryPoint",        "AsmNEEntryPointTag"        );
      NEW_TERMINAL_MACRO    ( AsmNERelocEntry,        "AsmNERelocEntry",        "AsmNERelocEntryTag"        );
      NEW_TERMINAL_MACRO    ( AsmNESectionTableEntry, "AsmNESectionTableEntry", "AsmNESectionTableEntryTag" );
@@ -272,9 +272,9 @@ Grammar::setUpBinaryInstructions ()
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol       | AsmGenericSymbolList   |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList       | AsmElfDynamicEntry     | AsmElfDynamicEntryList | AsmElfSegmentTableEntryList |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        |
-               AsmNEExtendedDOSHeader  | AsmNEEntryPoint         | AsmNERelocEntry        | AsmNESectionTableEntry |
-               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry  | 
-               AsmGenericSectionList   | AsmPEImportHintNameList, "AsmExecutableFileFormat",    "AsmExecutableFileFormatTag", false );
+               AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry |
+               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry | 
+               AsmGenericSectionList   | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false );
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
@@ -1203,6 +1203,8 @@ Grammar::setUpBinaryInstructions ()
   // std::vector<addr_t> name_offsets;
   // std::vector<std::string> names;
      AsmNEModuleTable.setFunctionPrototype ( "HEADER_NE_MODULE_TABLE", "../Grammar/BinaryInstruction.code");
+     AsmNEModuleTable.setDataPrototype("SgAsmNEStringTable*","strtab","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEModuleTable.setDataPrototype("SgAddressList","name_offsets","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEModuleTable.setDataPrototype("SgStringList","names","",
@@ -1237,7 +1239,7 @@ Grammar::setUpBinaryInstructions ()
   // unsigned section_idx;       /* zero indicates unused entry */
   // unsigned section_offset;    /* byte offset into section */
      AsmNEEntryPoint.setFunctionPrototype ( "HEADER_NE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
-     AsmNEEntryPoint.setDataPrototype("Exec::NE::NEEntryFlags","flags","= Exec::NE::EF_RESERVED",
+     AsmNEEntryPoint.setDataPrototype("SgAsmNEEntryPoint::NEEntryFlags","flags","= SgAsmNEEntryPoint::EF_RESERVED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEEntryPoint.setDataPrototype("unsigned","int3f","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1257,24 +1259,24 @@ Grammar::setUpBinaryInstructions ()
   // iname_type iname;
   // osfixup_type osfixup;
      AsmNERelocEntry.setFunctionPrototype ( "HEADER_NE_RELOC_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocSrcType","src_type","= Exec::NE::RF_SRCTYPE_8OFF",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::NERelocSrcType","src_type","= SgAsmNERelocEntry::RF_SRCTYPE_8OFF",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocModifiers","modifier","= Exec::NE::RF_MODIFIER_SINGLE",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::NERelocModifiers","modifier","= SgAsmNERelocEntry::RF_MODIFIER_SINGLE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocTgtType","tgt_type","= Exec::NE::RF_TGTTYPE_IREF",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::NERelocTgtType","tgt_type","= SgAsmNERelocEntry::RF_TGTTYPE_IREF",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocFlags","flags","= Exec::NE::RF_ADDITIVE",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::NERelocFlags","flags","= SgAsmNERelocEntry::RF_ADDITIVE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNERelocEntry.setDataPrototype("Exec::addr_t","src_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Note that these call default constructors to initialize their data
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocEntry::iref_type","iref","",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::iref_type","iref","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocEntry::iord_type","iord","",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::iord_type","iord","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocEntry::iname_type","iname","",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::iname_type","iname","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("Exec::NE::NERelocEntry::osfixup_type","osfixup","",
+     AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::osfixup_type","osfixup","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // unsigned    flags, sector;
@@ -1419,7 +1421,7 @@ Grammar::setUpBinaryInstructions ()
 
   // LESectionTableEntry *st_entry;
      AsmLESection.setFunctionPrototype ( "HEADER_LE_SECTION", "../Grammar/BinaryInstruction.code");
-     AsmLESection.setDataPrototype("SgAsmLESectionTable*","st_entry","= NULL",
+     AsmLESection.setDataPrototype("SgAsmLESectionTableEntry*","st_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // No data members
