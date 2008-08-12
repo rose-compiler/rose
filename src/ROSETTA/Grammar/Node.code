@@ -322,6 +322,9 @@ typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr
 typedef Rose_STL_Container<SgAsmElfSegmentTableEntry*> SgAsmElfSegmentTableEntryPtrList;
 typedef SgAsmElfSegmentTableEntryPtrList SgAsmElfSegmentTableEntryPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmPERVASizePair*> SgAsmPERVASizePairPtrList;
+typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
+
 // DQ (8/7/2008): Note that the SgAsmLEExtendedDOSHeader is just using the SgAsmNEExtendedDOSHeader type
 typedef SgAsmNEExtendedDOSHeader SgAsmLEExtendedDOSHeader;
 
