@@ -18,7 +18,6 @@
   
 */
 namespace SageBuilder{
-// shorter and easier name
 
 #if 0
 //---------------------AST creation/building/construction-----------------
@@ -538,9 +537,12 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
 //! Build a return statement
 SgReturnStmt* buildReturnStmt(SgExpression* expression = NULL);
 
-//! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
-SgStatement* buildStatementFromString(std::string str);
+//! Build a NULL statement
+SgNullStatement* buildNullStatement();
 
+//Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
+//This does not work properly since the global scope expects declaration statement, not just SgNullStatement
+//SgStatement* buildStatementFromString(std::string str);
 
 //@}
 
@@ -560,7 +562,7 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                PreprocessingInfo::DirectiveType dtype= PreprocessingInfo::CpreprocessorUnknownDeclaration);
 
-//! Build and attach #define XX directives 
+//! Build and attach #define XX directives, pass "#define xxx xxx" as content.
 PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);

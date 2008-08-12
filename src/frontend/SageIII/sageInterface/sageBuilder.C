@@ -1559,6 +1559,28 @@ SgSwitchStatement* SageBuilder::buildSwitchStatement(SgStatement *item_selector,
   return result;
 }
 
+//! Build a NULL statement
+SgNullStatement* SageBuilder::buildNullStatement()
+{
+  SgNullStatement* result = NULL;
+  result = new SgNullStatement();
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  return result;
+}
+
+//! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
+// This does not work properly since the global scope expects declaration statement, not just SgNullStatement
+#if 0    
+SgStatement* SageBuilder::buildStatementFromString(std::string str)
+{ 
+  SgStatement* result = NULL;
+  
+    return result;
+     
+} //buildStatementFromString()
+#endif
+
 SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
 {
   SgPointerType* result= new SgPointerType(base_type);
@@ -1931,14 +1953,4 @@ PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::s
     return result;
   
   }
-  //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
-  SgStatement* SageBuilder::buildStatementFromString(std::string str)
-  { 
-    SgStatement* result = NULL;
-#if 0    
-    
-#endif
-    return result;
-     
-  } //buildStatementFromString()
 
