@@ -1,4 +1,5 @@
 #!/bin/sh -xv
+# This script add the newly built EDG binaries into the internal ROSE svn repository. 
 set -e
 if test "x$SVN" = "x"; then SVN=svn; fi
 if test $# -ne 2; then
