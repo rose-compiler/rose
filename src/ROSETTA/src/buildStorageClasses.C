@@ -739,11 +739,11 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmGenericSymbol::SymbolType" ) ||
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentType" ) ||
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentFlags" ) ||
-                 ( varTypeString == "Exec::NE::NEEntryFlags" ) ||
-                 ( varTypeString == "Exec::NE::NERelocSrcType" ) ||
-                 ( varTypeString == "Exec::NE::NERelocModifiers" ) ||
-                 ( varTypeString == "Exec::NE::NERelocTgtType" ) ||
-                 ( varTypeString == "Exec::NE::NERelocFlags" ) ||
+                 ( varTypeString == "SgAsmNEEntryPoint::NEEntryFlags" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::NERelocSrcType" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::NERelocModifiers" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::NERelocTgtType" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::NERelocFlags" ) ||
                  false 
               )
        {
@@ -779,10 +779,10 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "time_t" ) ||
               // DQ (8/7/2008): Note that these are not primative types, but I will account 
               // for them as such at least temporarily so that we can be the IR in place.
-                 ( varTypeString == "Exec::NE::NERelocEntry::iref_type" ) ||
-                 ( varTypeString == "Exec::NE::NERelocEntry::iord_type" ) ||
-                 ( varTypeString == "Exec::NE::NERelocEntry::iname_type" ) ||
-                 ( varTypeString == "Exec::NE::NERelocEntry::osfixup_type" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::iref_type" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::iord_type" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
+                 ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
               // DQ (8/8/2008): This is a typedef to a std::multimap<addr_t,addr_t>, this should likely be supported elsewhere.
                  ( varTypeString == "SgAsmGenericSection::RefMap" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
