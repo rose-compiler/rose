@@ -165,7 +165,7 @@ fi
       cd ${ROSE_TOP}/build &&
       make binary_edg_tarball &&
       ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} `${ROSE_TOP}/sourcetree/config/config.guess` &&
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${top_srcdir} `${ROSE_TOP}/sourcetree/config/config.guess`
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree `${ROSE_TOP}/sourcetree/config/config.guess`
     fi &&
     make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} &&
     echo "############ make source_with_binary_edg_dist done"
