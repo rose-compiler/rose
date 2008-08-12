@@ -333,19 +333,19 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     ROSE_ASSERT(p_e_ident_padding.size() == 9);
     for (size_t i=0; i < 9; i++)
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_type",                 p_e_type);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_machine",              p_e_machine);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_version",              p_e_version);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_version",              p_e_version);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "e_entry",                p_e_entry);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",    p, w, "e_phoff",                p_e_phoff);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",    p, w, "e_shoff",                p_e_shoff);
-    fprintf(f, "%s%-*s = 0x%08x\n",                         p, w, "e_flags",                p_e_flags);
-    fprintf(f, "%s%-*s = %u bytes\n",                       p, w, "e_ehsize",               p_e_ehsize);
-    fprintf(f, "%s%-*s = %u bytes\n",                       p, w, "e_phentsize",            p_e_phentsize);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_phnum",                p_e_phnum);
-    fprintf(f, "%s%-*s = %u bytes\n",                       p, w, "e_shentsize",            p_e_shentsize);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_shnum",                p_e_shnum);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_shstrndx",             p_e_shstrndx);
+    fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);
+    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_ehsize",               p_e_ehsize);
+    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_phentsize",            p_e_phentsize);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_phnum",                p_e_phnum);
+    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_shentsize",            p_e_shentsize);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
+    fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -585,9 +585,9 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %u bytes into strtab\n",          p, w, "sh_name",        p_sh_name);
-    fprintf(f, "%s%-*s = %u\n",                            p, w, "sh_type",        p_sh_type);
-    fprintf(f, "%s%-*s = %u\n",                            p, w, "sh_link",        p_sh_link);
-    fprintf(f, "%s%-*s = %u\n",                            p, w, "sh_info",        p_sh_info);
+    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_type",        p_sh_type);
+    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_link",        p_sh_link);
+    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_info",        p_sh_info);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_flags",       p_sh_flags);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_addr",        p_sh_addr);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes info file\n",   p, w, "sh_offset",      p_sh_offset);
