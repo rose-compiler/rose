@@ -33,8 +33,6 @@ string getVariantName ( VariantT v )
      return string(roseGlobalVariantNameList[v]);
    }
 
-
-
 SgNamespaceDefinitionStatement*
 SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
    {
@@ -105,7 +103,7 @@ SageInterface::getNonInstantiatonDeclarationForClass ( SgTemplateInstantiationMe
       return parentDeclaration;
    }
 
-// DQ (11/4/2007): This looks for a forward temple member function declaration of matching name exists in the specificed scope.
+// DQ (11/4/2007): This looks for a forward temple member function declaration of matching name exists in the specified scope.
 bool
 SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclaration* functionDeclaration, SgDeclarationStatement* startingAtDeclaration )
    {
@@ -123,7 +121,7 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
   // Note that this is only defined for certain scopes, but we only want it for THOSE scopes
      SgDeclarationStatementPtrList & declarationList = scope->getDeclarationList();
 
-  // This is a simple way to restrict the evaluation (still linear, but jumps to inital position to start search).
+  // This is a simple way to restrict the evaluation (still linear, but jumps to initial position to start search).
      SgDeclarationStatementPtrList::iterator startingLocation = find(declarationList.begin(),declarationList.end(),startingAtDeclaration);
 
      if (startingLocation != declarationList.end())
@@ -170,7 +168,6 @@ SageInterface::isPrototypeInScope ( SgScopeStatement* scope, SgFunctionDeclarati
 
      return foundExistingPrototype;
    }
-
 
 std::vector<SgNode*>
 SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* help )
@@ -4000,8 +3997,11 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
            // cout<<(*i)->unparseToString()<<endl;
            // ((*i)->get_file_info())->display("debug.......");
            Sg_File_Info * fileInfo = (*i)->get_file_info();
-          // include transformation-generated  statements
-            if ((fileInfo->isSameFile(scope->get_file_info()))||(fileInfo->isTransformation()))
+          // include transformation-generated  statements, but not the hidden ones
+        // Note: isOutputInCodeGeneration is not default to true for original statements from user code
+         if ((fileInfo->isSameFile(scope->get_file_info()))||
+              (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
+            )
             {  
               stmt=*i;
               break;
@@ -4030,8 +4030,11 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
          // cout<<(*i)->unparseToString()<<endl;
          // ((*i)->get_file_info())->display("debug.......");
          Sg_File_Info * fileInfo = (*i)->get_file_info();
-        // include transformation-generated  statements
-          if ((fileInfo->isSameFile(scope->get_file_info()))||(fileInfo->isTransformation()))
+        // include transformation-generated  statements, but not the hidden ones
+        // Note: isOutputInCodeGeneration is not default to true for original statements from user code
+         if ( (fileInfo->isSameFile(scope->get_file_info()))||
+              (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
+            )
           {  
             stmt=*i;
             break;
@@ -5833,7 +5836,10 @@ PreprocessingInfo* attachComment(
 	     j != stmtList.end (); j++)
       {
 	    //must have this judgement, otherwise wrong file will be modified!
-	if (((*j)->get_file_info ())->isSameFile (globalScope->get_file_info ()))
+            //It could also be the transformation generated statements with #include attached
+	if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
+              ((*j)->get_file_info ())->isTransformation () 
+           )
 	 {
     // DQ (7/19/2008): Modified interface to PreprocessingInfo
     // result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,

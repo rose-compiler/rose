@@ -417,12 +417,14 @@ class StatementGenerator {
   void clearScopeNumbers (SgFunctionDefinition * functionDefinition);
 
   
+  //!Find the enclosing namespace of a declaration
   SgNamespaceDefinitionStatement * enclosingNamespaceScope (SgDeclarationStatement * declaration);
 //  SgNamespaceDefinitionStatement * getEnclosingNamespaceScope (SgNode * node);
 
   bool isPrototypeInScope (SgScopeStatement * scope,
 			   SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
+
 //@}
 //------------------------------------------------------------------------
 //@{
@@ -430,7 +432,7 @@ class StatementGenerator {
   \brief #if-#else-#end, comments, #include, etc
 */
 
-//! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope.
+//! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
 PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
 //! Move preprocessing information of stmt_src to stmt_dst
@@ -767,7 +769,7 @@ SgScopeStatement* getScope(const SgNode* astNode);
   */
   SgStatement* getLastStatement(SgScopeStatement *scope);
 
-  //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default
+  //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default. Count transformation-generated ones, but excluding those which are not to be outputted in unparsers. 
   SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
 
 //! Get next statement within the same scope of current statement 
