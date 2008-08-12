@@ -280,8 +280,8 @@ typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 typedef Rose_STL_Container<Exec::addr_t>       SgAddressList;
 typedef SgAddressList*                         SgAddressListPtr;
 
-typedef Rose_STL_Container<SgAsmPEDLL*>        SgAsmPEDLLPrtList;
-typedef SgAsmPEDLLPrtList*                     SgAsmPEDLLPrtListPtr;
+typedef Rose_STL_Container<SgAsmPEDLL*>        SgAsmPEDLLPtrList;
+typedef SgAsmPEDLLPtrList*                     SgAsmPEDLLPtrListPtr;
 
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
 typedef SgUnsignedList*                        SgUnsignedListPtr;

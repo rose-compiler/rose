@@ -983,9 +983,9 @@ Grammar::setUpBinaryInstructions ()
 
   // std::vector<PEDLL*> dlls;
      AsmPEImportSection.setFunctionPrototype ( "HEADER_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
-  // AsmPEImportSection.setDataPrototype("SgAsmPEDLLPrtList","section_table","",
+  // AsmPEImportSection.setDataPrototype("SgAsmPEDLLPtrList","section_table","",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportSection.setDataPrototype("SgAsmPEDLLPrtList","dlls","",
+     AsmPEImportSection.setDataPrototype("SgAsmPEDLLPtrList","dlls","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // std::vector<COFFSymbol*> symbols;
