@@ -1069,8 +1069,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Works like hexdump -C to display N bytes of DATA */
-void
-hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
+void hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
 {
     for (size_t i=0; i<n; i+=16) {
         fprintf(f, "%s0x%08"PRIx64, prefix, base_addr+i);
@@ -1093,6 +1092,33 @@ hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char
         fputs("|\n", f);
     }
 }
+
+// DQ (11/8/2008): Alternative interface that works better for ROSE IR nodes
+// void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string & prefix, const SgCharList & data, size_t n);
+void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string & prefix, const SgCharList & data, size_t n)
+   {
+    for (size_t i=0; i<n; i+=16) {
+        fprintf(f, "%s0x%08"PRIx64, prefix.c_str(), base_addr+i);
+        for (size_t j=0; j<16; j++) {
+            if (8==j) fputc(' ', f);
+            if (i+j<n) {
+                fprintf(f, " %02x", data[i+j]);
+            } else {
+                fputs("   ", f);
+            }
+        }
+        fprintf(f, "  |");
+        for (size_t j=0; j<16 && i+j<n; j++) {
+            if (isprint(data[i+j])) {
+                fputc(data[i+j], f);
+            } else {
+                fputc('.', f);
+            }
+        }
+        fputs("|\n", f);
+    }
+   }
+
 
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,

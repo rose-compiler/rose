@@ -472,9 +472,6 @@ iname_type iname;
 
 osfixup_type osfixup;
 
-
-
-
 #endif
 
 };

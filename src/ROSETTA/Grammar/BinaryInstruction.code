@@ -619,223 +619,228 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
               PURPOSE_PROC_SPECIFIC                               /* Some processor specific purpose */
           };
 
+// DQ (11/8/2008): used in the PE support.
+// Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
+// static void hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
+static void hexdump(FILE *f, addr_t base_addr, const std::string & prefix, const SgCharList & data, size_t n);
+
 /* Return byte order of caller */
-ByteOrder host_order() {
+static ByteOrder host_order() {
     static const int i = 1;
     return *(unsigned char*)&i ? ORDER_LSB : ORDER_MSB;
 }
 
 /* Swap (reverse) bytes taking care of sign extension */
-uint8_t swap_bytes(uint8_t n) {
+static uint8_t swap_bytes(uint8_t n) {
     return n;
 }
-uint16_t swap_bytes(uint16_t n) {
+static uint16_t swap_bytes(uint16_t n) {
     return ((n>>8) & 0xff) | ((n<<8) & 0xff00);
 }
-uint32_t swap_bytes(uint32_t n) {
+static uint32_t swap_bytes(uint32_t n) {
     return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000u);
 }
-uint64_t swap_bytes(uint64_t n) {
+static uint64_t swap_bytes(uint64_t n) {
     return (((n>>56) & (0xffull<<0 )) | ((n>>40) & (0xffull<<8 )) | ((n>>24) & (0xffull<<16)) | ((n>>8 ) & (0xffull<<24)) |
             ((n<<8 ) & (0xffull<<32)) | ((n<<24) & (0xffull<<40)) | ((n<<40) & (0xffull<<48)) | ((n<<56) & (0xffull<<56)));
 }
-int8_t swap_bytes(int8_t n) {
+static int8_t swap_bytes(int8_t n) {
     return swap_bytes((uint8_t)n);
 }
-int16_t swap_bytes(int16_t n) {
+static int16_t swap_bytes(int16_t n) {
     return swap_bytes((uint16_t)n);
 }
-int32_t swap_bytes(int32_t n) {
+static int32_t swap_bytes(int32_t n) {
     return swap_bytes((uint32_t)n);
 }
-int64_t swap_bytes(int64_t n) {
+static int64_t swap_bytes(int64_t n) {
     return swap_bytes((uint64_t)n);
 }
 
 
 /* Little-endian byte order conversions */
-uint8_t le_to_host(uint8_t n) {
+static uint8_t le_to_host(uint8_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-uint16_t le_to_host(uint16_t n) {
+static uint16_t le_to_host(uint16_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-uint32_t le_to_host(uint32_t n) {
+static uint32_t le_to_host(uint32_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-uint64_t le_to_host(uint64_t n) {
+static uint64_t le_to_host(uint64_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-int8_t le_to_host(int8_t n) {
+static int8_t le_to_host(int8_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-int16_t le_to_host(int16_t n) {
+static int16_t le_to_host(int16_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-int32_t le_to_host(int32_t n) {
+static int32_t le_to_host(int32_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
-int64_t le_to_host(int64_t n) {
+static int64_t le_to_host(int64_t n) {
     return ORDER_LSB==host_order() ? n : swap_bytes(n);
 }
 
-void host_to_le(unsigned h, uint8_t *n) {
+static void host_to_le(unsigned h, uint8_t *n) {
     assert(0==(h & ~0xff));
     uint8_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(unsigned h, uint16_t *n) {
+static void host_to_le(unsigned h, uint16_t *n) {
     assert(0==(h & ~0xffff));
     uint16_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(unsigned h, uint32_t *n) {
+static void host_to_le(unsigned h, uint32_t *n) {
     assert(0==(h & ~0xfffffffful));
     uint32_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(addr_t h, uint64_t *n) {
+static void host_to_le(addr_t h, uint64_t *n) {
     assert(0==(h & ~0xffffffffffffffffull));
     uint64_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(int h, int8_t *n) {
+static void host_to_le(int h, int8_t *n) {
     assert((unsigned)h<=0x8f || ((unsigned)h|0xff)==(unsigned)-1);
     int8_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(int h, int16_t *n) {
+static void host_to_le(int h, int16_t *n) {
     assert((unsigned)h<=0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
     int16_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(int h, int32_t *n) {
+static void host_to_le(int h, int32_t *n) {
     assert((unsigned)h<=0x8fffffffu || ((unsigned)h|0xffffffffu)==(unsigned)-1);
     int32_t hh = h;
     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_le(int64_t h, int64_t *n) {
+static void host_to_le(int64_t h, int64_t *n) {
     *n = ORDER_LSB==host_order() ? h : swap_bytes(h);
 }
 
 /* Big-endian byte order conversions */
-uint8_t be_to_host(uint8_t n) {
+static uint8_t be_to_host(uint8_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-uint16_t be_to_host(uint16_t n) {
+static uint16_t be_to_host(uint16_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-uint32_t be_to_host(uint32_t n) {
+static uint32_t be_to_host(uint32_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-uint64_t be_to_host(uint64_t n) {
+static uint64_t be_to_host(uint64_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-int8_t be_to_host(int8_t n) {
+static int8_t be_to_host(int8_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-int16_t be_to_host(int16_t n) {
+static int16_t be_to_host(int16_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-int32_t be_to_host(int32_t n) {
+static int32_t be_to_host(int32_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
-int64_t be_to_host(int64_t n) {
+static int64_t be_to_host(int64_t n) {
     return ORDER_MSB==host_order() ? n : swap_bytes(n);
 }
 
-void host_to_be(unsigned h, uint8_t *n) {
+static void host_to_be(unsigned h, uint8_t *n) {
     assert(0==(h & ~0xff));
     uint8_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(unsigned h, uint16_t *n) {
+static void host_to_be(unsigned h, uint16_t *n) {
     assert(0==(h & ~0xffff));
     uint16_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(unsigned h, uint32_t *n) {
+static void host_to_be(unsigned h, uint32_t *n) {
     assert(0==(h & ~0xfffffffful));
     uint32_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(addr_t h, uint64_t *n) {
+static void host_to_be(addr_t h, uint64_t *n) {
     assert(0==(h & ~0xffffffffffffffffull));
     uint64_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(int h, int8_t *n) {
+static void host_to_be(int h, int8_t *n) {
     assert((unsigned)h<0x8f || ((unsigned)h|0xff)==(unsigned)-1);
     int8_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(int h, int16_t *n) {
+static void host_to_be(int h, int16_t *n) {
     assert((unsigned)h<0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
     int16_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(int h, int32_t *n) {
+static void host_to_be(int h, int32_t *n) {
     assert((unsigned)h<0x8ffffffful || ((unsigned)h|0xfffffffful)==(unsigned)-1);
     int32_t hh = h;
     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
 }
-void host_to_be(int64_t h, int64_t *n) {
+static void host_to_be(int64_t h, int64_t *n) {
     *n = ORDER_MSB==host_order() ? h : swap_bytes(h);
 }
 
 /* Caller-specified byte order conversions */
-uint8_t disk_to_host(ByteOrder sex, uint8_t n) {
+static uint8_t disk_to_host(ByteOrder sex, uint8_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-uint16_t disk_to_host(ByteOrder sex, uint16_t n)
+static uint16_t disk_to_host(ByteOrder sex, uint16_t n)
 {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-uint32_t disk_to_host(ByteOrder sex, uint32_t n) {
+static uint32_t disk_to_host(ByteOrder sex, uint32_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-uint64_t disk_to_host(ByteOrder sex, uint64_t n) {
+static uint64_t disk_to_host(ByteOrder sex, uint64_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-int8_t disk_to_host(ByteOrder sex, int8_t n) {
+static int8_t disk_to_host(ByteOrder sex, int8_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-int16_t disk_to_host(ByteOrder sex, int16_t n)
+static int16_t disk_to_host(ByteOrder sex, int16_t n)
 {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-int32_t disk_to_host(ByteOrder sex, int32_t n) {
+static int32_t disk_to_host(ByteOrder sex, int32_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
-int64_t disk_to_host(ByteOrder sex, int64_t n) {
+static int64_t disk_to_host(ByteOrder sex, int64_t n) {
     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
 }
 
-//void host_to_disk(ByteOrder, unsigned char h, unsigned char *np) {
+//static void host_to_disk(ByteOrder, unsigned char h, unsigned char *np) {
 //    *np = h;
 //}
-void host_to_disk(ByteOrder sex, unsigned h, uint8_t *np) {
+static void host_to_disk(ByteOrder sex, unsigned h, uint8_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, unsigned h, uint16_t *np) {
+static void host_to_disk(ByteOrder sex, unsigned h, uint16_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, unsigned h, uint32_t *np) {
+static void host_to_disk(ByteOrder sex, unsigned h, uint32_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, addr_t h, uint64_t *np) {
+static void host_to_disk(ByteOrder sex, addr_t h, uint64_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, int h, int8_t *np) {
+static void host_to_disk(ByteOrder sex, int h, int8_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, int h, int16_t *np) {
+static void host_to_disk(ByteOrder sex, int h, int16_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, int h, int32_t *np) {
+static void host_to_disk(ByteOrder sex, int h, int32_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
-void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
+static void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
 
@@ -1163,6 +1168,12 @@ HEADER_GENERIC_SYMBOL_END
 HEADER_GENERIC_SYMBOL_LIST_START
 HEADER_GENERIC_SYMBOL_LIST_END
 
+
+
+
+// ***********************************************
+//          ELF Binary File Format Support
+// ***********************************************
 
 HEADER_ELF_HEADER_START
 
@@ -1561,6 +1572,34 @@ HEADER_ELF_SYMBOL_END
 
 
 
+
+
+// ***********************************************
+//          PE Binary File Format Support
+// ***********************************************
+
+HEADER_PE_RVA_SIZE_PAIR_START
+     public:
+       /* File format for an RVA/Size pair. Such pairs are considered to be part of the PE file header. All fields are little endian. */
+          struct RVASizePair_disk
+             {
+               uint32_t    e_rva;
+               uint32_t    e_size;
+             } __attribute__((packed));
+
+          SgAsmPERVASizePair(const RVASizePair_disk *disk);
+          void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk);
+
+       // addr_t e_rva;
+       // addr_t e_size;
+
+HEADER_PE_RVA_SIZE_PAIR_END
+
+
+HEADER_PE_RVA_SIZE_PAIR_LIST_START
+HEADER_PE_RVA_SIZE_PAIR_LIST_END
+
+
 HEADER_PE_FILE_HEADER_START
 
      public:
@@ -1570,39 +1609,435 @@ HEADER_PE_FILE_HEADER_START
           static bool is_PE (SgAsmGenericFile*);
           static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
 
+       /* File format of a PE File Header. All fields are little endian. */
+          struct PEFileHeader_disk {
+               unsigned char e_magic[4];           /* magic number "PE\0\0" */
+               uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
+               uint16_t    e_nsections;            /* number of sections defined in the Section Table */
+               uint32_t    e_time;                 /* time and date file was created or modified by the linker */
+               uint32_t    e_coff_symtab;          /* offset to COFF symbol table */
+               uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
+               uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
+               uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
+             } __attribute__((packed));
+
+          struct PE32OptHeader_disk {
+               uint16_t    e_opt_magic;            /* magic number */
+               uint16_t    e_lmajor;               /* linker version */
+               uint16_t    e_lminor;
+               uint16_t    e_code_size;            /* Size of .text or sum of all code sections */
+               uint32_t    e_data_size;            /* Sum size of initialized data */
+               uint32_t    e_bss_size;             /* Sum size of uninitialized data */
+               uint32_t    e_entrypoint_rva;       /* RVA="relative virtual address"; relative to 'image_base', below */
+               uint32_t    e_code_rva;             /* Address relative to image base for code section when memory mapped */
+               uint32_t    e_data_rva;             /* Address relative to image base for data section */
+               uint32_t    e_image_base;           /* Virtual base of the image (first byte of file, DOS header). Multiple of 64k. */
+               uint32_t    e_section_align;        /* Alignment of sections in memory. Power of two 512<=x<=256M */
+               uint32_t    e_file_align;           /* Alignment factor (in bytes) for image pages */
+               uint16_t    e_os_major;             /* OS version number required to run this image */
+               uint16_t    e_os_minor;
+               uint16_t    e_user_major;           /* User-specified at link time. Useful for differentiating between image revisions */
+               uint16_t    e_user_minor;
+               uint16_t    e_subsys_major;         /* Subsystem version number */
+               uint16_t    e_subsys_minor;
+               uint32_t    e_reserved9;
+               uint32_t    e_image_size;           /* Virtual size (bytes) of the image inc. all headers; multiple of 'section_align' */
+               uint32_t    e_header_size;          /* Total header size (DOS Header + PE Header + Section table */
+               uint32_t    e_file_checksum;        /* Checksum for entire file; Set to zero by the linker */
+               uint16_t    e_subsystem;            /* Unknown, Native, WindowsGUI, WindowsCharacter, OS/2 Character, POSIX Character */
+               uint16_t    e_dll_flags;            /* Bit flags for library init/terminate per process or thread */
+               uint32_t    e_stack_reserve_size;   /* Virtual memory reserved for stack; non-committed pages are guards */
+               uint32_t    e_stack_commit_size;    /* Size (bytes) of valid stack; other pages are guards; <= 'stack_reserve_size' */
+               uint32_t    e_heap_reserve_size;    /* Size (bytes) of local heap to reserve */
+               uint32_t    e_heap_commit_size;     /* Size (bytes) of valid local heap */
+               uint32_t    e_loader_flags;         /* Reserved, must be zero */
+               uint32_t    e_num_rvasize_pairs;    /* Number of RVASizePair entries that follow this member; also part of the PE header */
+             } __attribute__((packed));
+
+          struct PE64OptHeader_disk {
+               uint16_t    e_opt_magic;
+               uint16_t    e_lmajor;
+               uint16_t    e_lminor;
+               uint16_t    e_code_size;
+               uint32_t    e_data_size;
+               uint32_t    e_bss_size;
+               uint32_t    e_entrypoint_rva;
+               uint32_t    e_code_rva;
+            // uint32_t  e_data_rva;             /* Not present in PE32+ */
+               uint64_t    e_image_base;
+               uint32_t    e_section_align;
+               uint32_t    e_file_align;
+               uint16_t    e_os_major;
+               uint16_t    e_os_minor;
+               uint16_t    e_user_major;
+               uint16_t    e_user_minor;
+               uint16_t    e_subsys_major;
+               uint16_t    e_subsys_minor;
+               uint32_t    e_reserved9;
+               uint32_t    e_image_size;
+               uint32_t    e_header_size;
+               uint32_t    e_file_checksum;
+               uint16_t    e_subsystem;
+               uint16_t    e_dll_flags;
+               uint64_t    e_stack_reserve_size;
+               uint64_t    e_stack_commit_size;
+               uint64_t    e_heap_reserve_size;
+               uint64_t    e_heap_commit_size;
+               uint32_t    e_loader_flags;
+               uint32_t    e_num_rvasize_pairs;
+             } __attribute__((packed));
+
+          /* Bit flags for the PE header 'flags' member */
+          enum HeaderFlags {
+               HF_PROGRAM          = 0x0000,       /* Program image (no non-reserved bits set) */
+               HF_EXECUTABLE       = 0x0002,       /* Clear indicates can't load: either link errors or image is being incrementally linked */
+               HF_FIXED            = 0x0200,       /* Image *must* be loaded at image_base address or error */
+               HF_LIBRARY          = 0x2000,       /* Library image */
+               HF_RESERVED_MASK    = 0xddfd        /* Reserved bits */
+             };
+
+          /* Values for the PE header 'subsystem' member */
+          enum Subsystem {
+               HF_SPEC_UNKNOWN     = 0x0000,       /* Specified as 'unknown' in the file */
+               HF_NATIVE           = 0x0001,       /* Native */
+               HF_WINGUI           = 0x0002,       /* Windows GUI */
+               HF_WINCHAR          = 0x0003,       /* Windows character */
+               HF_OS2CHAR          = 0x0005,       /* OS/2 character */
+               HF_POSIX            = 0x0007        /* POSIX character */
+             };
+
+          /* Bit flags for the PE header 'dll_flags' member */
+          enum DLLFlags {
+               DLL_PROC_INIT       = 0x0001,       /* Per-process library initialization */
+               DLL_PROC_TERM       = 0x0002,       /* Per-process library termination */
+               DLL_THRD_INIT       = 0x0004,       /* Per-thread library initialization */
+               DLL_THRD_TERM       = 0x0008,       /* Per-thread library termination */
+               DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
+             };
+
+     public:
+          SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
+       // virtual ~PEFileHeader() {}
+
+          void add_rvasize_pairs();
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data members */
+       // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
+       // void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
+       // PESectionTable *get_section_table() {return section_table;}
+       // void set_section_table(PESectionTable *ot) {section_table=ot;}
+       // COFFSymtab *get_coff_symtab() {return coff_symtab;}
+       // void set_coff_symtab(COFFSymtab *st) {coff_symtab=st;}
+    
+    /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
+       // unsigned    e_cpu_type, e_nsections, e_time;
+       // addr_t      e_coff_symtab, e_nt_hdr_size;
+       // unsigned    e_coff_nsyms, e_flags, e_opt_magic;
+       // unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
+      //  addr_t      e_image_base;
+       // unsigned    e_section_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
+       // unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
+       // unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
+       // unsigned    e_loader_flags, e_num_rvasize_pairs;
+       // std::vector<RVASizePair> rvasize_pairs;
+
+     private:
+          void ctor(SgAsmGenericFile *f, addr_t offset);
+          void *encode(SgAsmPEFileHeader::PEFileHeader_disk*);
+          void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*);
+          void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*);
+       // ExtendedDOSHeader *dos2_header;
+       // PESectionTable *section_table;
+       // COFFSymtab *coff_symtab;
+
 HEADER_PE_FILE_HEADER_END
 
 HEADER_PE_SECTION_START
+     public:
+          SgAsmPESection(SgAsmGenericFile *ef, addr_t offset, addr_t size);
+       // virtual ~PESection() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data */
+       // PESectionTableEntry *get_st_entry() {return st_entry;}
+       // void set_st_entry(PESectionTableEntry *e) {st_entry=e;}
+
+  // private:
+       // PESectionTableEntry *st_entry;
+
 HEADER_PE_SECTION_END
 
 HEADER_PE_IMPORT_SECTION_START
+     public:
+          SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva);
+       // virtual ~PEImportSection() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+          void add_dll(SgAsmPEDLL *d);
+
+       /* Accessors for protected/private data members */
+       // const std::vector<PEDLL*>& get_dlls() {return dlls;}
+
+     private:
+          void ctor(SgAsmPEFileHeader*, addr_t offset, addr_t size, addr_t mapped_rva);
+       // std::vector<PEDLL*> dlls;
+
 HEADER_PE_IMPORT_SECTION_END
 
 HEADER_PE_SECTION_TABLE_START
+     public:
+          SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size);
+       // virtual ~SgAsmPESectionTable() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+  private:
+          void ctor(SgAsmPEFileHeader*);
+
 HEADER_PE_SECTION_TABLE_END
 
 HEADER_PE_COFF_SYMBOL_TABLE_START
+     public:
+          SgAsmCoffSymbolTable(SgAsmGenericFile *f, SgAsmPEFileHeader *fhdr);
+       // virtual ~COFFSymtab() {}
+
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data members */
+       // std::vector<SgAsmCoffSymbol*>& get_symbols() {return symbols;}
+       // ExecSection *get_strtab() {return strtab;}
+
+     private:
+          void ctor(SgAsmGenericFile*, SgAsmPEFileHeader*);
+       // std::vector<COFFSymbol*> symbols;
+       // ExecSection *strtab;                /* Section containing symbol names */
+
 HEADER_PE_COFF_SYMBOL_TABLE_END
 
 HEADER_PE_IMPORT_HINT_NAME_START
+     public:
+       /* Hint/name pairs */
+          struct PEImportHintName_disk {
+               uint16_t            hint;  /* Possible index into lib's export name pointer table */
+            /* NUL-terminated name follows */
+            /* Optional byte to pad struct to an even number of bytes */
+             };
+
+          SgAsmPEImportHintName(SgAsmGenericSection *section, addr_t offset);
+       // virtual ~PEImportHintName() {};
+
+          void unparse(FILE *f, SgAsmGenericSection*, addr_t spos); /*not the standard unparse() function*/
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Accessors for protected/private data members */
+       // void set_name(std::string name) {this->name=name;}
+       // std::string get_name() {return name;}
+
+     private:
+          void ctor(SgAsmGenericSection*, addr_t offset);
+       // unsigned hint;
+       // std::string name;
+       // unsigned char padding;
+
 HEADER_PE_IMPORT_HINT_NAME_END
 
 HEADER_PE_IMPORT_DIRECTORY_START
+
+     public:
+          struct PEImportDirectory_disk {
+               uint32_t            hintnames_rva;   /* address (RVA) of array of addresses (RVAs) of hint/name pairs */
+               uint32_t            time;
+               uint32_t            forwarder_chain;
+               uint32_t            dll_name_rva;    /* address of NUL-terminated library name */
+               uint32_t            bindings_rva;    /* address (RVA) of array of object addresses after binding to DLL */
+             } __attribute__((packed));
+
+          SgAsmPEImportDirectory(const PEImportDirectory_disk *disk);
+       // virtual ~PEImportDirectory() {}
+
+          void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       /* Native versions of the fields in PEImportDirectory_disk */
+       // addr_t              hintnames_rva, bindings_rva, dll_name_rva;
+       // time_t              time;
+       // unsigned            forwarder_chain;
+
+     private:
+          void ctor(const PEImportDirectory_disk*);
+
 HEADER_PE_IMPORT_DIRECTORY_END
 
 HEADER_PE_EXTENDED_DOS_HEADER_START
+
+     public:
+          struct ExtendedDOSHeader_disk {
+               unsigned char e_res1[4];    /* 0x00 reserved */
+               uint16_t    e_oemid;        /* 0x04 OEM Identifier */
+               uint16_t    e_oeminfo;      /* 0x06 other OEM information; oemid specific */
+               uint16_t    e_res2[10];     /* 0x08 reserved */
+               uint32_t    e_lfanew;       /* 0x1c file offset of new exe (PE) header */
+             } __attribute__((packed));    /* 0x20 */
+
+     public:
+          SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset);
+       // virtual ~SgAsmPEExtendedDOSHeader() {}
+
+          void *encode(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk*);
+          virtual void unparse(FILE*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+     private:
+          void ctor(SgAsmGenericFile *f, addr_t offset);
+
 HEADER_PE_EXTENDED_DOS_HEADER_END
 
 HEADER_PE_SECTION_TABLE_ENTRY_START
+
+     public:
+       /* File format of a section table entry. All fields are little endian. Sections are ordered by RVA. */
+          struct PESectionTableEntry_disk {
+               char        name[8];                /* NUL-padded */
+               uint32_t    virtual_size;           /* virtual memory size (bytes), >= physical_size and difference is zero filled */
+               uint32_t    rva;                    /* relative virtual address wrt Image Base; multiple of section_align; dense space */
+               uint32_t    physical_size;          /* bytes of initialized data on disk; multiple of file_align & <= virtual_size */
+               uint32_t    physical_offset;        /* location of initialized data on disk; multiple of file_align */
+               uint32_t    coff_line_nums;         /* file offset of COFF line number info or zero */
+               uint32_t    n_relocs;               /* number of relocation entries; should be zero for executables */
+               uint32_t    n_coff_line_nums;       /* number of COFF line number entries */
+               uint32_t    flags;                  /* PESectionFlags bits: code, data, caching, paging, shared, permissions, etc. */
+             } __attribute__((packed));
+
+       /* These come from the windows PE documentation and http://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files */
+          enum PESectionFlags {
+               OF_CODE             = 0x00000020,   /* section contains code */
+               OF_IDATA            = 0x00000040,   /* initialized data */
+               OF_UDATA            = 0x00000080,   /* uninitialized data */
+               OF_INFO             = 0x00000200,   /* comments or some other type of info */
+               OF_REMOVE           = 0x00000800,   /* section will not become part of image */
+               OF_COMDAT           = 0x00001000,   /* section contains comdat */
+               OF_NO_DEFER_SPEC_EXC= 0x00004000,   /* reset speculative exception handling bits in the TLB entires for this section */
+               OF_GPREL            = 0x00008000,   /* section content can be access relative to GP */
+               OF_ALIGN_1          = 0x00100000,   /* no alignment */
+               OF_ALIGN_2          = 0x00200000,   /* 2-byte alignment */
+               OF_ALIGN_4          = 0x00300000,   /* 4-byte alignment */
+               OF_ALIGN_8          = 0x00400000,   /* 8-byte alignment */
+               OF_ALIGN_16         = 0x00500000,   /* 16-byte alignment (default if not other alignment specified) */
+               OF_ALIGN_32         = 0x00600000,   /* 32-byte alignment */
+               OF_ALIGN_64         = 0x00700000,   /* 64-byte alignment */
+               OF_ALIGN_128        = 0x00800000,   /* 128-byte alignment */
+               OF_ALIGN_256        = 0x00900000,   /* 256-byte alignment */
+               OF_ALIGN_512        = 0x00a00000,   /* 512-byte alignment */
+               OF_ALIGN_1k         = 0x00b00000,   /* 1024-byte alignment */
+               OF_ALIGN_2k         = 0x00c00000,   /* 2048-byte alignment */
+               OF_ALIGN_4k         = 0x00d00000,   /* 4096-byte alignment */
+               OF_ALIGN_8k         = 0x00e00000,   /* 8192-byte alignment */
+               OF_ALIGN_MASK       = 0x00f00000,   /* mask for alignment value */
+               OF_NRELOC_OVFL      = 0x01000000,   /* section contains extended relocations */
+               OF_DISCARDABLE      = 0x02000000,   /* can be discarded */
+               OF_NO_CACHE         = 0x04000000,   /* section must not be cached */
+               OF_NO_PAGING        = 0x08000000,   /* section is not pageable */
+               OF_SHARED           = 0x10000000,   /* section is shared */
+               OF_EXECUTABLE       = 0x20000000,   /* execute permission */
+               OF_READABLE         = 0x40000000,   /* read permission */
+               OF_WRITABLE         = 0x80000000,   /* write permission */
+             };
+
+          SgAsmPESectionTableEntry(const PESectionTableEntry_disk *disk);
+       // virtual ~SgAsmPESectionTableEntry() {};
+
+          void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    
+       /* These are the native-format versions of the same members described in the PESectionTableEntry_disk struct. */
+       // std::string name;
+       // addr_t      virtual_size, rva, physical_size, physical_offset;
+       // unsigned    coff_line_nums, n_relocs, n_coff_line_nums, flags;
+
+     private:
+          void ctor(const PESectionTableEntry_disk*);
+
 HEADER_PE_SECTION_TABLE_ENTRY_END
+
+HEADER_PE_DLL_START
+     public:
+          SgAsmPEDLL(const std::string &name);
+       // virtual ~SgAsmPEDLL() {}
+
+          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+          void add_hintname_rva(addr_t a);
+          void add_hintname(SgAsmPEImportHintName *hn);
+          void add_binding(addr_t a);
+
+       /* Accessors for protected/private data members */
+       // PEImportDirectory *get_idir() {return idir;}
+       // void set_idir(PEImportDirectory *d) {idir=d;}
+       // const std::vector<addr_t>& get_hintname_rvas() const {return hintname_rvas;}
+       // const std::vector<PEImportHintName*>& get_hintnames() const {return hintnames;}
+       // const std::vector<addr_t>& get_bindings() const {return bindings;}
+
+  // private:
+       // PEImportDirectory *idir;
+       // std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
+       // std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
+       // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
+HEADER_PE_DLL_END
+
+
 
 HEADER_PE_COFF_SYMBOL_LIST_START
 HEADER_PE_COFF_SYMBOL_LIST_END
 
 HEADER_PE_COFF_SYMBOL_START
+     public:
+          struct COFFSymbol_disk {
+               union {
+                   char            st_name[8];
+                   struct {
+                       uint32_t    st_zero;
+                       uint32_t    st_offset;
+                   };
+               };
+               uint32_t            st_value;
+               int16_t             st_section_num;
+               uint16_t            st_type;
+               unsigned char       st_storage_class;
+               unsigned char       st_num_aux_entries;
+             } __attribute__((packed));
+
+          SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+       // virtual ~COFFSymbol() {}
+          void *encode(SgAsmCoffSymbol::COFFSymbol_disk*);
+          virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+
+       /* Auxilliary data for the symbol */
+       // const unsigned char *get_aux_data() {return aux_data;}
+       // size_t get_aux_size() {return aux_size;}
+
+       /* Native versions of the COFFSymbol_disk members */
+       // std::string         st_name;        /* The original name; super.name might be modified */
+       // addr_t              st_name_offset;
+       // int                 st_section_num;
+       // unsigned            st_type, st_storage_class, st_num_aux_entries;
+    
+     private:
+          void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
+       // const unsigned char *aux_data;      /* Auxilliary data from table entries that follow */
+       // size_t              aux_size;       /* Size (bytes) of auxilliary data */
+
 HEADER_PE_COFF_SYMBOL_END
 
 
+
+// ***********************************************
+//          NE Binary File Format Support
+// ***********************************************
 
 HEADER_NE_FILE_HEADER_START
 
@@ -1650,6 +2085,10 @@ HEADER_NE_SECTION_TABLE_ENTRY_END
 
 
 
+// ***********************************************
+//          LE Binary File Format Support
+// ***********************************************
+
 HEADER_LE_FILE_HEADER_START
 
      public:
@@ -1687,6 +2126,13 @@ HEADER_LE_ENTRY_POINT_END
 
 HEADER_LE_SECTION_TABLE_ENTRY_START
 HEADER_LE_SECTION_TABLE_ENTRY_END
+
+
+
+
+// ***********************************************
+//          DOS Binary File Format Support
+// ***********************************************
 
 HEADER_DOS_HEADER_START
      public:
@@ -1740,7 +2186,7 @@ HEADER_DOS_HEADER_START
 
      private:
           void ctor(SgAsmGenericFile *f, Exec::addr_t offset);
-          void *encode(DOSFileHeader_disk*);
+          void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*);
 
 HEADER_DOS_HEADER_END
 
@@ -2773,14 +3219,45 @@ SgAsmElfSymbol::get_elf_type()
 SOURCE_ELF_SYMBOL_END
 
 
+SOURCE_PE_RVA_SIZE_PAIR_START
+SgAsmPERVASizePair::SgAsmPERVASizePair(const RVASizePair_disk *disk)
+   {
+     p_e_rva  = le_to_host(disk->e_rva);
+     p_e_size = le_to_host(disk->e_size);
+   }
+
+void*
+SgAsmPERVASizePair::encode(RVASizePair_disk *disk)
+   {
+     host_to_le(p_e_rva,  &(disk->e_rva));
+     host_to_le(p_e_size, &(disk->e_size));
+
+     return disk;
+   }
+
+SOURCE_PE_RVA_SIZE_PAIR_END
+
+
+SOURCE_PE_RVA_SIZE_PAIR_LIST_START
+SOURCE_PE_RVA_SIZE_PAIR_LIST_END
+
 
 SOURCE_PE_FILE_HEADER_START
+
+SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
+   : SgAsmGenericHeader(f, offset, sizeof(PEFileHeader_disk)), /*extended in ctor()*/ p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
+   {
+     ctor(f, offset);
+   }
+
 const char *
 SgAsmPEFileHeader::format_name()
    {
      return "PE";
    }
 
+#if 0
+// This function is in ROSE_ExecPE.C
 bool
 SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
 {
@@ -2789,8 +3266,10 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
 
     return true;
 }
+#endif
 
-
+#if 0
+// This function is in ROSE_ExecPE.C
 // Parses the structure of an ELF file and adds the info to the ExecFile
 SgAsmPEFileHeader *
 SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
@@ -2802,36 +3281,121 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 
     return NULL;
 }
-    
+#endif
 
 SOURCE_PE_FILE_HEADER_END
 
 SOURCE_PE_SECTION_START
+SgAsmPESection::SgAsmPESection(SgAsmGenericFile *ef, addr_t offset, addr_t size)
+   : SgAsmGenericSection(ef, offset, size), p_st_entry(NULL)
+   {
+   }
+
 SOURCE_PE_SECTION_END
 
 SOURCE_PE_IMPORT_SECTION_START
+
+SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
+   : SgAsmPESection(fhdr->get_file(), offset, size)
+   {
+     ctor(fhdr, offset, size, mapped_rva);
+   }
+
+void
+SgAsmPEImportSection::add_dll(SgAsmPEDLL *d)
+   {
+     p_dlls.push_back(d);
+   }
+
 SOURCE_PE_IMPORT_SECTION_END
 
 SOURCE_PE_SECTION_TABLE_START
+SgAsmPESectionTable::SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
+   : SgAsmGenericSection(fhdr->get_file(), offset, size)
+   {
+     ctor(fhdr);
+   }
+
 SOURCE_PE_SECTION_TABLE_END
 
 SOURCE_PE_COFF_SYMBOL_TABLE_START
+SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmGenericFile *f, SgAsmPEFileHeader *fhdr)
+   : SgAsmGenericSection(f, fhdr->get_e_coff_symtab(), fhdr->get_e_coff_nsyms() * COFFSymbol_disk_size)
+   {
+     ctor(f, fhdr);
+   }
+
 SOURCE_PE_COFF_SYMBOL_TABLE_END
 
 SOURCE_PE_IMPORT_HINT_NAME_START
+SgAsmPEImportHintName::SgAsmPEImportHintName(SgAsmGenericSection *section, addr_t offset)
+   : p_hint(0), p_padding('\0')
+   {
+     ctor(section, offset);
+   }
+
 SOURCE_PE_IMPORT_HINT_NAME_END
 
 SOURCE_PE_IMPORT_DIRECTORY_START
+SgAsmPEImportDirectory::SgAsmPEImportDirectory(const PEImportDirectory_disk *disk)
+   {
+     ctor(disk);
+   }
+
 SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_EXTENDED_DOS_HEADER_START
+SgAsmPEExtendedDOSHeader::SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
+   : SgAsmGenericSection(f, offset, sizeof(ExtendedDOSHeader_disk))
+   {
+     ctor(f, offset);
+   }
+
 SOURCE_PE_EXTENDED_DOS_HEADER_END
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
+SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const PESectionTableEntry_disk *disk)
+   {
+     ctor(disk);
+   }
+
 SOURCE_PE_SECTION_TABLE_ENTRY_END
 
 SOURCE_PE_COFF_SYMBOL_START
+SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
+   : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0), p_aux_size(0)
+   {
+     ctor(fhdr, symtab, strtab, idx);
+   }
+
 SOURCE_PE_COFF_SYMBOL_END
+
+SOURCE_PE_DLL_START
+SgAsmPEDLL::SgAsmPEDLL(const std::string &name)
+   : SgAsmGenericDLL(name), p_idir(NULL)
+   {
+   }
+
+void
+SgAsmPEDLL::add_hintname_rva(addr_t a)
+   {
+     p_hintname_rvas.push_back(a);
+   }
+
+void
+SgAsmPEDLL::add_hintname(SgAsmPEImportHintName *hn)
+   {
+     ROSE_ASSERT(p_hintnames != NULL);
+     p_hintnames->get_hintnames().push_back(hn);
+   }
+
+void
+SgAsmPEDLL::add_binding(addr_t a)
+   {
+     p_bindings.push_back(a);
+   }
+
+SOURCE_PE_DLL_END
 
 
 SOURCE_NE_FILE_HEADER_START

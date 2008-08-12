@@ -1324,14 +1324,14 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
         const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk = (const SgAsmElfSymbol::Elf32SymbolEntry_disk*) &(content(0, get_size())[0]);
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
-            p_symbols_list->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
+            p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {
      // const Elf64SymbolEntry_disk *disk = (const Elf64SymbolEntry_disk*)content(0, get_size());
         const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk = (const SgAsmElfSymbol::Elf64SymbolEntry_disk*) &(content(0, get_size())[0]);
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
-            p_symbols_list->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
+            p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     }
 }
@@ -1350,8 +1350,8 @@ void
 SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
 {
     SgAsmElfSection::set_linked_section(strtab);
-    for (size_t i=0; i < p_symbols_list->get_symbols().size(); i++) {
-        SgAsmElfSymbol *symbol = p_symbols_list->get_symbols()[i];
+    for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
+        SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
         /* Get symbol name */
         symbol->set_name(strtab->content_str(symbol->get_st_name()));
@@ -1382,17 +1382,17 @@ SgAsmElfSymbolSection::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     addr_t spos=0; /*output position in section*/
 
-    for (size_t i=0; i < p_symbols_list->get_symbols().size(); i++) {
+    for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol::Elf32SymbolEntry_disk disk32;
         SgAsmElfSymbol::Elf64SymbolEntry_disk disk64;
         void *disk=NULL;
         size_t size = 0;
         
         if (4==fhdr->get_word_size()) {
-            disk = p_symbols_list->get_symbols()[i]->encode(sex, &disk32);
+            disk = p_symbols->get_symbols()[i]->encode(sex, &disk32);
             size = sizeof disk32;
         } else if (8==fhdr->get_word_size()) {
-            disk = p_symbols_list->get_symbols()[i]->encode(sex, &disk64);
+            disk = p_symbols->get_symbols()[i]->encode(sex, &disk64);
             size = sizeof disk64;
         } else {
             ROSE_ASSERT(!"unsupported word size");
@@ -1416,10 +1416,10 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "ElfSymbol.size", p_symbols_list->get_symbols().size());
-    for (size_t i = 0; i < p_symbols_list->get_symbols().size(); i++) {
-        SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols_list->get_symbols()[i]->get_st_shndx());
-        p_symbols_list->get_symbols()[i]->dump(f, p, i, section);
+    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
+    for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
+        SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
+        p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
 }
 
@@ -1487,7 +1487,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
     if (!symtab)
         symtab = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".dynsym"));
     if (symtab) {
-        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols_list()->get_symbols();
+        std::vector<SgAsmElfSymbol*> & symbols = symtab->get_symbols()->get_symbols();
         for (size_t i=0; i<symbols.size(); i++)
             fhdr->add_symbol(symbols[i]);
     }
