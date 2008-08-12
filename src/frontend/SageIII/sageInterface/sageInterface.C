@@ -5807,8 +5807,6 @@ PreprocessingInfo* SageInterface::attachComment(
     }
   }
 
-// DQ (7/19/2008): Modified interface to PreprocessingInfo
-// result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position, false, true);
   result = new PreprocessingInfo (mytype,comment, "transformation-generated", 0, 0, 0, position);
   ROSE_ASSERT(result);
   target->addToAttachedPreprocessingInfo(result);
@@ -5841,9 +5839,6 @@ PreprocessingInfo* SageInterface::attachComment(
               ((*j)->get_file_info ())->isTransformation () 
            )
 	 {
-    // DQ (7/19/2008): Modified interface to PreprocessingInfo
-    // result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-    //          content, "Transformation generated",0, 0, 0, PreprocessingInfo::before,false, false);
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
 	   ROSE_ASSERT(result);
@@ -5853,9 +5848,6 @@ PreprocessingInfo* SageInterface::attachComment(
       }
     else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
      {
-    // DQ (7/19/2008): Modified interface to PreprocessingInfo
-    // result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
-    //          content, "Transformation generated",0, 0, 0, PreprocessingInfo::after,false, false);
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
@@ -5864,30 +5856,47 @@ PreprocessingInfo* SageInterface::attachComment(
     return result;
   }
 
-  //! If the given statement contains any break statements in its body, add a
-  //! new label below the statement and change the breaks into gotos to that
-  //! new label.
-  void SageInterface::changeBreakStatementsToGotos(SgStatement* loopOrSwitch) {
-    using namespace SageBuilder;
-    SgStatement* body = NULL;
-    if (isSgWhileStmt(loopOrSwitch) || isSgDoWhileStmt(loopOrSwitch) ||
-        isSgForStatement(loopOrSwitch)) {
-      body = SageInterface::getLoopBody(isSgScopeStatement(loopOrSwitch));
-    } else if (isSgSwitchStatement(loopOrSwitch)) {
-      body = isSgSwitchStatement(loopOrSwitch)->get_body();
-    }
-    ROSE_ASSERT (body);
-    std::vector<SgBreakStmt*> breaks = SageInterface::findBreakStmts(body);
-    if (!breaks.empty()) {
-      static int breakLabelCounter = 0;
-      SgLabelStatement* breakLabel =
-	buildLabelStatement("breakLabel" +
-  StringUtility::numberToString(++breakLabelCounter),
-			    buildBasicBlock(),
-			    isSgScopeStatement(loopOrSwitch->get_parent()));
-      insertStatement(loopOrSwitch, breakLabel, false);
-      for (size_t j = 0; j < breaks.size(); ++j) {
-	SgGotoStatement* newGoto = buildGotoStatement(breakLabel);
+
+//! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes. We abuse CpreprocessorDefineDeclaration for this purpose.
+PreprocessingInfo* SageInterface::attachArbitraryText(SgLocatedNode* target, 
+                const std::string & text,
+               PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/)
+{
+    ROSE_ASSERT(target != NULL); //dangling #define xxx is not allowed in the ROSE AST
+    PreprocessingInfo* result = NULL;
+    PreprocessingInfo::DirectiveType mytype = PreprocessingInfo::CpreprocessorDefineDeclaration;
+    result = new PreprocessingInfo (mytype,text, "transformation-generated", 0, 0, 0, position);
+    ROSE_ASSERT(result);
+    target->addToAttachedPreprocessingInfo(result);
+    return result;
+}
+
+
+
+//! If the given statement contains any break statements in its body, add a
+//! new label below the statement and change the breaks into gotos to that
+//! new label.
+void SageInterface::changeBreakStatementsToGotos(SgStatement* loopOrSwitch) {
+  using namespace SageBuilder;
+  SgStatement* body = NULL;
+  if (isSgWhileStmt(loopOrSwitch) || isSgDoWhileStmt(loopOrSwitch) ||
+      isSgForStatement(loopOrSwitch)) {
+    body = SageInterface::getLoopBody(isSgScopeStatement(loopOrSwitch));
+  } else if (isSgSwitchStatement(loopOrSwitch)) {
+    body = isSgSwitchStatement(loopOrSwitch)->get_body();
+  }
+  ROSE_ASSERT (body);
+  std::vector<SgBreakStmt*> breaks = SageInterface::findBreakStmts(body);
+  if (!breaks.empty()) {
+    static int breakLabelCounter = 0;
+    SgLabelStatement* breakLabel =
+      buildLabelStatement("breakLabel" +
+StringUtility::numberToString(++breakLabelCounter),
+                          buildBasicBlock(),
+                          isSgScopeStatement(loopOrSwitch->get_parent()));
+    insertStatement(loopOrSwitch, breakLabel, false);
+    for (size_t j = 0; j < breaks.size(); ++j) {
+      SgGotoStatement* newGoto = buildGotoStatement(breakLabel);
 
   isSgStatement(breaks[j]->get_parent())->replace_statement(breaks[j],
   newGoto);

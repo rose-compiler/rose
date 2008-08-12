@@ -438,6 +438,11 @@ PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader
 //! Move preprocessing information of stmt_src to stmt_dst
 void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src);
 
+//! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes.
+PreprocessingInfo* attachArbitraryText(SgLocatedNode* target, 
+                const std::string & text,
+               PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
+
 //@}
 
 
