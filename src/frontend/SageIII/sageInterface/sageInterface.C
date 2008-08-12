@@ -4927,17 +4927,15 @@ class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
   }
 }
 
-//----------------------------------enclosing into the namespace ---------------
-namespace SageInterface {
 
-  SgStatement* getLoopBody(SgScopeStatement* loopStmt) {
+  SgStatement* SageInterface::getLoopBody(SgScopeStatement* loopStmt) {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_body();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_loop_body();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_body();
     ROSE_ASSERT (!"Bad loop kind");
   }
 
-  void setLoopBody(SgScopeStatement* loopStmt, SgStatement* body) {
+  void SageInterface::setLoopBody(SgScopeStatement* loopStmt, SgStatement* body) {
     if (isSgWhileStmt(loopStmt)) {
       isSgWhileStmt(loopStmt)->set_body(body);
     } else if (isSgForStatement(loopStmt)) {
@@ -4950,14 +4948,14 @@ namespace SageInterface {
     body->set_parent(loopStmt);
   }
 
-  SgStatement* getLoopCondition(SgScopeStatement* loopStmt) {
+  SgStatement* SageInterface::getLoopCondition(SgScopeStatement* loopStmt) {
     if (isSgWhileStmt(loopStmt)) return isSgWhileStmt(loopStmt)->get_condition();
     if (isSgForStatement(loopStmt)) return isSgForStatement(loopStmt)->get_test();
     if (isSgDoWhileStmt(loopStmt)) return isSgDoWhileStmt(loopStmt)->get_condition();
     ROSE_ASSERT (!"Bad loop kind");
   }
 
-  void setLoopCondition(SgScopeStatement* loopStmt, SgStatement* cond) {
+  void SageInterface::setLoopCondition(SgScopeStatement* loopStmt, SgStatement* cond) {
     if (isSgWhileStmt(loopStmt)) {
       isSgWhileStmt(loopStmt)->set_condition(cond);
     } else if (isSgForStatement(loopStmt)) {
@@ -4970,7 +4968,7 @@ namespace SageInterface {
     cond->set_parent(loopStmt);
   }
 
-  void removeConsecutiveLabels(SgNode* top) {
+  void SageInterface::removeConsecutiveLabels(SgNode* top) {
    Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,V_SgGotoStatement);
    for (size_t i = 0; i < gotos.size(); ++i) {
      SgGotoStatement* gs = isSgGotoStatement(gotos[i]);
@@ -4988,6 +4986,7 @@ namespace SageInterface {
    }
   }
 
+namespace SageInterface { // A few internal helper classes
 
 class AndOpGenerator: public StatementGenerator
    {
@@ -5058,9 +5057,10 @@ class ConditionalExpGenerator: public StatementGenerator
              }
    };
 
+} // end of namespace for the helper classes
 
-   // Merged from replaceExpressionWithStatement.C
-    SgAssignInitializer* splitExpression(SgExpression* from, string newName/* ="" */) 
+   //! Merged from replaceExpressionWithStatement.C
+    SgAssignInitializer* SageInterface::splitExpression(SgExpression* from, string newName/* ="" */) 
     {
     if (!SageInterface::isCopyConstructible(from->get_type())) {
       std::cerr << "Type " << from->get_type()->unparseToString() << " of expression " << from->unparseToString() << " is not copy constructible" << std::endl;
@@ -5138,9 +5138,8 @@ class ConditionalExpGenerator: public StatementGenerator
     return ai;
   } //splitExpression()
 
-
-  // This generalizes the normal splitExpression to allow loop tests and
-  void splitExpressionIntoBasicBlock(SgExpression* expr) {
+  //! This generalizes the normal splitExpression to allow loop tests and
+  void SageInterface::splitExpressionIntoBasicBlock(SgExpression* expr) {
    struct SplitStatementGenerator: public StatementGenerator {
      SgExpression* expr;
      virtual SgStatement* generate(SgExpression* answer) {
@@ -5153,7 +5152,7 @@ class ConditionalExpGenerator: public StatementGenerator
    replaceExpressionWithStatement(expr, &gen);
   }
     
-  void removeLabeledGotos(SgNode* top) {
+  void SageInterface::removeLabeledGotos(SgNode* top) {
    Rose_STL_Container<SgNode*> gotos = NodeQuery::querySubTree(top,
   V_SgGotoStatement);
    map<SgLabelStatement*, SgLabelStatement*> labelsToReplace;   for
@@ -5180,7 +5179,8 @@ class ConditionalExpGenerator: public StatementGenerator
      gs->set_label(oldLabel);
    }
   }
-  bool isConstantTrue(SgExpression* e) {
+
+  bool SageInterface::isConstantTrue(SgExpression* e) {
   switch (e->variantT()) {
     case V_SgBoolValExp: return isSgBoolValExp(e)->get_value() == true;
     case V_SgIntVal: return isSgIntVal(e)->get_value() != 0;
@@ -5189,9 +5189,9 @@ class ConditionalExpGenerator: public StatementGenerator
     case V_SgAddressOfOp: return true;
     default: return false;
   }
-}
+  }
 
-  bool isConstantFalse(SgExpression* e) {
+  bool SageInterface::isConstantFalse(SgExpression* e) {
     switch (e->variantT()) {
       case V_SgBoolValExp: return isSgBoolValExp(e)->get_value() == false;
       case V_SgIntVal: return isSgIntVal(e)->get_value() == 0;
@@ -5202,7 +5202,7 @@ class ConditionalExpGenerator: public StatementGenerator
     }
   }
 
-  bool isCallToParticularFunction(SgFunctionDeclaration* decl,
+  bool SageInterface::isCallToParticularFunction(SgFunctionDeclaration* decl,
   SgExpression* e) {
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
@@ -5210,7 +5210,7 @@ class ConditionalExpGenerator: public StatementGenerator
     return fr->get_symbol()->get_declaration() == decl;
   }
 
-  bool isCallToParticularFunction(const std::string& qualifiedName, size_t
+  bool SageInterface::isCallToParticularFunction(const std::string& qualifiedName, size_t
   arity, SgExpression* e) {
     SgFunctionCallExp* fc = isSgFunctionCallExp(e);
     if (!fc) return false;
@@ -5221,18 +5221,18 @@ class ConditionalExpGenerator: public StatementGenerator
   fc->get_args()->get_expressions().size() == arity);
   }
 
-  SgExpression* copyExpression(SgExpression* e) 
+  SgExpression* SageInterface::copyExpression(SgExpression* e) 
   {
     return deepCopy(e);
   }
 
-  SgStatement* copyStatement(SgStatement* s)
+  SgStatement* SageInterface::copyStatement(SgStatement* s)
   {
     return deepCopy(s);
   }
 
   //----------------- add into AST tree --------------------
-  void appendExpression(SgExprListExp *expList, SgExpression* exp)
+  void SageInterface::appendExpression(SgExprListExp *expList, SgExpression* exp)
   {
     ROSE_ASSERT(expList);
     ROSE_ASSERT(exp);
@@ -5242,7 +5242,7 @@ class ConditionalExpGenerator: public StatementGenerator
 
   //TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
-  void setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
+  void SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
   {
     ROSE_ASSERT(func);
     ROSE_ASSERT(paralist);
@@ -5265,7 +5265,7 @@ class ConditionalExpGenerator: public StatementGenerator
   }
 
 
-  SgVariableSymbol* appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
+  SgVariableSymbol* SageInterface::appendArg(SgFunctionParameterList *paraList, SgInitializedName* initName)
   {
     ROSE_ASSERT(paraList);
     ROSE_ASSERT(initName);
@@ -5297,7 +5297,7 @@ class ConditionalExpGenerator: public StatementGenerator
   }
 
 
-  void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
+  void SageInterface::setPragma(SgPragmaDeclaration* decl, SgPragma *pragma)
   {
     ROSE_ASSERT(decl);
     ROSE_ASSERT(pragma);
@@ -5308,7 +5308,7 @@ class ConditionalExpGenerator: public StatementGenerator
 //! SageInterface::appendStatement()
 //TODO should we ensureBasicBlockAsScope(scope) ? like ensureBasicBlockAsParent(targetStmt);
 //It might be well legal to append the first and only statement in a scope!
-  void appendStatement(SgStatement *stmt, SgScopeStatement* scope)
+  void SageInterface::appendStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
@@ -5354,13 +5354,13 @@ class ConditionalExpGenerator: public StatementGenerator
      updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
   }
 
-  void appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
+  void SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
     for (size_t i = 0; i < stmts.size(); ++i) {
       appendStatement(stmts[i], scope);
     }
   }
 //!SageInterface::prependStatement()
-  void prependStatement(SgStatement *stmt, SgScopeStatement* scope)
+  void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
   {
    if (scope == NULL)
       scope = SageBuilder::topScopeStack();
@@ -5378,7 +5378,7 @@ class ConditionalExpGenerator: public StatementGenerator
 
   } //prependStatement()
 
-  void prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
+  void SageInterface::prependStatementList(const std::vector<SgStatement*>& stmts, SgScopeStatement* scope) {
     for (size_t i = stmts.size(); i > 0; --i) {
       prependStatement(stmts[i - 1], scope);
     }
@@ -5387,7 +5387,7 @@ class ConditionalExpGenerator: public StatementGenerator
   //TODO handle more side effect like SageBuilder::append_statement() does
   //Merge myStatementInsert()
   // insert  SageInterface::insertStatement()
-  void insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
+  void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStmt, bool insertBefore)
   {
 
     ROSE_ASSERT(targetStmt &&newStmt);
@@ -5416,7 +5416,7 @@ class ConditionalExpGenerator: public StatementGenerator
      updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
   }
 
-  void insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
+  void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
     if (insertBefore) {
       for (size_t i = 0; i < newStmts.size(); ++i) {
         insertStatementBefore(targetStmt, newStmts[i]);
@@ -5428,22 +5428,22 @@ class ConditionalExpGenerator: public StatementGenerator
     }
   }
 
-  void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
+  void SageInterface::insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt)
   {
     insertStatement(targetStmt,newStmt,false);
   }
 
-  void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+  void SageInterface::insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,false);
   }
 
-  void insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
+  void SageInterface::insertStatementBefore(SgStatement *targetStmt, SgStatement* newStmt)
   {
     insertStatement(targetStmt,newStmt,true);
   }
 
-  void insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
+  void SageInterface::insertStatementListBefore(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts)
   {
     insertStatementList(targetStmt,newStmts,true);
   }
@@ -5451,7 +5451,7 @@ class ConditionalExpGenerator: public StatementGenerator
   //a wrapper for set_expression(), set_operand(), set_operand_exp() etc
   // special concern for lvalue, parent, 
   // todo: warning overwritting existing operands
-  void setOperand(SgExpression* target, SgExpression* operand)
+  void SageInterface::setOperand(SgExpression* target, SgExpression* operand)
   {
     ROSE_ASSERT(target);
     ROSE_ASSERT(operand);
@@ -5490,7 +5490,7 @@ class ConditionalExpGenerator: public StatementGenerator
   }
 
   // binary and SgVarArgCopyOp, SgVarArgStartOp
-  void setLhsOperand(SgExpression* target, SgExpression* lhs)
+  void SageInterface::setLhsOperand(SgExpression* target, SgExpression* lhs)
   {
     ROSE_ASSERT(target);
     ROSE_ASSERT(lhs);
@@ -5529,7 +5529,7 @@ class ConditionalExpGenerator: public StatementGenerator
       markLhsValues(target);
   }
 
-  void setRhsOperand(SgExpression* target, SgExpression* rhs)
+  void SageInterface::setRhsOperand(SgExpression* target, SgExpression* rhs)
   {
     ROSE_ASSERT(target);
     ROSE_ASSERT(rhs);
@@ -5569,7 +5569,7 @@ class ConditionalExpGenerator: public StatementGenerator
 
 //------------------------- AST repair----------------------------
 //----------------------------------------------------------------
-  void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
+  void SageInterface::fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope)
   {
     ROSE_ASSERT(structDecl);
     ROSE_ASSERT(scope);
@@ -5591,7 +5591,7 @@ class ConditionalExpGenerator: public StatementGenerator
       nondefdecl->set_parent(scope);
     }
   }
-  void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
+  void SageInterface::fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope)
   {
     ROSE_ASSERT(varDecl);
     ROSE_ASSERT(scope);
@@ -5628,7 +5628,7 @@ class ConditionalExpGenerator: public StatementGenerator
     } //end for
   }
 
-  int fixVariableReferences(SgNode* root)
+  int SageInterface::fixVariableReferences(SgNode* root)
   {
     ROSE_ASSERT(root);
     int counter=0;
@@ -5666,7 +5666,7 @@ class ConditionalExpGenerator: public StatementGenerator
 /*
  * label statement has special scope: the closest function definition , not SgBasicBlock or others!
  */
-void fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
+void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
 {
    SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
    ROSE_ASSERT(label_stmt); 
@@ -5687,7 +5687,7 @@ void fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* scope)
 } // fixLabelStatement()
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements.
-void fixStatement(SgStatement* stmt, SgScopeStatement* scope)
+void SageInterface::fixStatement(SgStatement* stmt, SgScopeStatement* scope)
 { 
   // fix symbol table
   if (isSgVariableDeclaration(stmt))
@@ -5726,7 +5726,7 @@ void fixStatement(SgStatement* stmt, SgScopeStatement* scope)
  *       is first ?  set_first_nondefining for all
  *       not the first ? set first nondefining for itself only
  */
-void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
+void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope)
 {
   ROSE_ASSERT(func&&scope);
   SgStatementPtrList stmtList, sameFuncList;
@@ -5776,7 +5776,7 @@ void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatemen
 } // updateDefiningNondefiningLinks()
 
 //---------------------------------------------------------------
-PreprocessingInfo* attachComment(
+PreprocessingInfo* SageInterface::attachComment(
            SgLocatedNode* target, const string& content,
            PreprocessingInfo::RelativePositionType  position /*=PreprocessingInfo::before*/,
            PreprocessingInfo::DirectiveType dtype /* PreprocessingInfo::CpreprocessorUnknownDeclaration */)
@@ -5815,7 +5815,7 @@ PreprocessingInfo* attachComment(
   return result;
  }
 
-  PreprocessingInfo* insertHeader(const string& filename, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
+  PreprocessingInfo* SageInterface::insertHeader(const string& filename, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
     if (scope == NULL)
 	scope = SageBuilder::topScopeStack();
@@ -5867,7 +5867,7 @@ PreprocessingInfo* attachComment(
   //! If the given statement contains any break statements in its body, add a
   //! new label below the statement and change the breaks into gotos to that
   //! new label.
-  void changeBreakStatementsToGotos(SgStatement* loopOrSwitch) {
+  void SageInterface::changeBreakStatementsToGotos(SgStatement* loopOrSwitch) {
     using namespace SageBuilder;
     SgStatement* body = NULL;
     if (isSgWhileStmt(loopOrSwitch) || isSgDoWhileStmt(loopOrSwitch) ||
@@ -5896,7 +5896,7 @@ PreprocessingInfo* attachComment(
     }
   }
 
-  bool isStructDeclaration(SgNode* node)
+  bool SageInterface::isStructDeclaration(SgNode* node)
   {
     ROSE_ASSERT(node!=NULL);
     SgClassDeclaration *decl = isSgClassDeclaration(node);
@@ -5923,7 +5923,7 @@ PreprocessingInfo* attachComment(
 //           LoweLevel::remove(stmt_src)
 // TODO deprecate this if LowLevelRewrite::insert/remove/replace is really complete!
 
-  void moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src)
+  void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src)
   {
     ROSE_ASSERT(stmt_src != NULL);
     ROSE_ASSERT(stmt_dst != NULL);
@@ -5960,7 +5960,7 @@ PreprocessingInfo* attachComment(
       infoList->erase( find(infoList->begin(),infoList->end(),*j) );
   } 
 
-  SgBasicBlock* ensureBasicBlockAsBodyOfFor(SgForStatement* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs) {
     SgStatement* b = fs->get_loop_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b);
@@ -5971,7 +5971,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsBodyOfWhile(SgWhileStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfWhile(SgWhileStmt* fs) {
     SgStatement* b = fs->get_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b);
@@ -5982,7 +5982,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfDoWhile(SgDoWhileStmt* fs) {
     SgStatement* b = fs->get_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b);
@@ -5993,7 +5993,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* fs) {
     SgStatement* b = fs->get_true_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b);
@@ -6004,7 +6004,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs) {
     SgStatement* b = fs->get_false_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b); // This works if b is NULL as well (producing an empty block)
@@ -6015,7 +6015,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* fs) {
+  SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* fs) {
     SgStatement* b = fs->get_body();
     if (!isSgBasicBlock(b)) {
       b = SageBuilder::buildBasicBlock(b);
@@ -6026,7 +6026,7 @@ PreprocessingInfo* attachComment(
     return isSgBasicBlock(b);
   }
 
-  SgStatement* ensureBasicBlockAsParent(SgStatement* s) {
+  SgStatement* SageInterface::ensureBasicBlockAsParent(SgStatement* s) {
   //SgBasicBlock* ensureBasicBlockAsParent(SgStatement* s) {
     SgStatement* p = isSgStatement(s->get_parent());
     ROSE_ASSERT (p);
@@ -6070,7 +6070,7 @@ PreprocessingInfo* attachComment(
     return p;
   }
 
-  void changeAllLoopBodiesToBlocks(SgNode* top) {
+  void SageInterface::changeAllLoopBodiesToBlocks(SgNode* top) {
     struct Visitor: public AstSimpleProcessing {
       virtual void visit(SgNode* n) {
         switch (n->variantT()) {
@@ -6112,7 +6112,7 @@ PreprocessingInfo* attachComment(
 // used in place of the expression.
 // Assumptions: not currently traversing from or the statement it is in
 void
-replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
+SageInterface::replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
    {
   // DQ (3/11/2006): The problem here is that the test expression for a "for loop" (SgForStmt)
   // is assumed to be a SgExpression.  This was changed in Sage III as part of a bugfix and so 
@@ -6346,7 +6346,7 @@ replaceExpressionWithStatement(SgExpression* from, StatementGenerator* to)
 // Similar to replaceExpressionWithStatement, but with more restrictions.
 // Assumptions: from is not within the test of a loop or if
 //              not currently traversing from or the statement it is in
-void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* to)
+void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* to)
    {
 
      SgStatement* stmt = getStatementOfExpression(from);
@@ -6401,7 +6401,7 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
   //  find all return statements
   //  rewrite it to  temp = expression; return temp; if expression is not a single value.
   //  insert s right before 'return xxx;'
-  int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s) 
+  int SageInterface::instrumentEndOfFunction(SgFunctionDeclaration * func, SgStatement* s) 
   {
     int result = 0;
     ROSE_ASSERT(func&&s);
@@ -6437,19 +6437,19 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
     return result;  
   } // instrumentEndOfFunction
 
-  bool isStatic(SgDeclarationStatement* stmt)
+  bool SageInterface::isStatic(SgDeclarationStatement* stmt)
   {
     ROSE_ASSERT(stmt);
     return ((stmt->get_declarationModifier()).get_storageModifier()).isStatic();
   } // isStatic()
 
-  bool isExtern(SgDeclarationStatement* stmt)
+  bool SageInterface::isExtern(SgDeclarationStatement* stmt)
   {
     ROSE_ASSERT(stmt);
     return ((stmt->get_declarationModifier()).get_storageModifier()).isExtern();
   } // isExtern()
 
-  unsigned long long getIntegerConstantValue(SgValueExp* expr) {
+  unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {
       case V_SgCharVal: return (long long)(isSgCharVal(expr)->get_value());
       case V_SgUnsignedCharVal: return isSgUnsignedCharVal(expr)->get_value();
@@ -6465,5 +6465,4 @@ void replaceSubexpressionWithStatement(SgExpression* from, StatementGenerator* t
     }
   }
 
-} // end namespace SageInterface
 
