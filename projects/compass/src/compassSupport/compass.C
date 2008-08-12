@@ -57,18 +57,31 @@ void Compass::loadDFA(std::string name, SgProject* project) {
       defuse = new DefUseAnalysis(project);
       std::cerr << " creating defuse ... " <<std::endl;
     }
-
+    int nrOfSimultaniousProcs = 3;
     if (my_rank==0 && processes>1) {
-      for (int i=1; i<processes; ++i) {
-	std::cerr << my_rank << " ... server, waiting to receive signal " << std::endl;
-	MPI_Recv(res, 2, MPI_INT, i, 1, MPI_COMM_WORLD, &Stat);
-	res[0]=i;
-	res[1]=i+1;
-	std::cerr << my_rank << " ... server, sending signal " << i << std::endl;
-	MPI_Send(res, 2, MPI_INT, i, 1, MPI_COMM_WORLD);      
-	std::cerr << my_rank << " ... server waiting for " << i << std::endl;
-	MPI_Recv(res, 2, MPI_INT, i, 1, MPI_COMM_WORLD, &Stat);
-      }
+      for (int turn=0; turn <nrOfSimultaniousProcs; ++turn) {
+	for (int i=0; i<processes; i+=nrOfSimultaniousProcs) {
+	  // processor 0 does communication
+	  int proc=i+turn;
+	  if (proc==0) continue;
+	  if (proc<processes) {
+	    std::cerr << my_rank << " ... server, waiting to receive signal -- proc = " << (proc) << "/" << turn << std::endl;
+	    MPI_Recv(res, 2, MPI_INT, proc, 1, MPI_COMM_WORLD, &Stat);
+	    res[0]=i;
+	    res[1]=i+1;
+	    std::cerr << my_rank << " ... server, sending signal " << (proc) <<  "/" << turn << std::endl;
+	    MPI_Send(res, 2, MPI_INT, proc, 1, MPI_COMM_WORLD);      
+	  }
+	}
+	for (int i=0; i<processes; i+=nrOfSimultaniousProcs) {
+	  int proc=i+turn;
+	  if (proc==0) continue;
+	  if (proc<processes) {
+	    std::cerr << my_rank << " ... server waiting for " << (proc) <<  "/" << turn << std::endl;
+	    MPI_Recv(res, 2, MPI_INT, proc, 1, MPI_COMM_WORLD, &Stat);
+	  }
+	}
+      } // turn
       std::cerr << my_rank << " ... server done " <<  std::endl;
       done=true;
     }
@@ -99,18 +112,10 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 	"   total bytes: " << (sizeOfArrayItem*global_arrsize) <<  "\n";
       def_values_global = new unsigned int[global_arrsize];
       use_values_global = new unsigned int[global_arrsizeUse];
-      //      for (unsigned int i=0; i<global_arrsize;++i) 
-      //	def_values_global[i]=0;
-      //      for (unsigned int i=0; i<global_arrsizeUse;++i) 
-      //	use_values_global[i]=0;
       std::cerr << my_rank <<": loading data ...  globalArrSize: " << global_arrsize <<std::endl;
-      //      for (unsigned int j=0;j<global_arrsize;j++) {
-	loadFile.read((char*)&def_values_global[0], sizeOfArrayItem*global_arrsize);
-	//      }
+      loadFile.read((char*)&def_values_global[0], sizeOfArrayItem*global_arrsize);
       std::cerr << my_rank <<": loading data ...   globalArrSizeUse: " << global_arrsizeUse <<std::endl;
-      //      for (unsigned int j=0;j<global_arrsizeUse;j++) {
-	loadFile.read((char*)&use_values_global[0], sizeOfArrayItem*global_arrsizeUse);
-	//}
+      loadFile.read((char*)&use_values_global[0], sizeOfArrayItem*global_arrsizeUse);
       loadFile.close();
       std::cerr <<" Done Loading DFA to File " << std::endl;
       std::cerr << " DefSize : " << global_arrsize << "  UseSize : " << global_arrsizeUse << std::endl;
@@ -249,7 +254,7 @@ void Compass::deserializeDefUseResults(unsigned int arrsize, DefUseAnalysis* def
       defuse->addDefElement(node1, node2, node3);
     else
       defuse->addUseElement(node1, node2, node3);
-    if ((i%1000000)==0 ) {
+    if ((i%10000000)==0 ) {
       double memusage_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
       std::cerr << my_rank << ":  >> deserializing " << i << " of " << arrsize << 
 	"   MemUsage: " << (memusage_e/1024) << " GB " << std::endl;
