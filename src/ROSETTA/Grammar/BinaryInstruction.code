@@ -1223,8 +1223,8 @@ HEADER_ELF_HEADER_START
           uint64_t max_page_size();
           virtual void unparse(FILE*);
 
-          void *encode(ByteOrder, Elf32FileHeader_disk*);
-          void *encode(ByteOrder, Elf64FileHeader_disk*);
+          void *encode(ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*);
+          void *encode(ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*);
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1311,19 +1311,19 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
           } __attribute__((packed));
 
 
-          SgAsmElfSectionTableEntry(ByteOrder sex, const Elf32SectionTableEntry_disk *disk);
-          SgAsmElfSectionTableEntry(ByteOrder sex, const Elf64SectionTableEntry_disk *disk);
+          SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
        // virtual ~SgAsmElfSectionTableEntry() {};
 
-          void *encode(ByteOrder sex, Elf32SectionTableEntry_disk *disk);
-          void *encode(ByteOrder sex, Elf64SectionTableEntry_disk *disk);
+          void *encode(ByteOrder sex, SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          void *encode(ByteOrder sex, SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(ByteOrder sex, const Elf32SectionTableEntry_disk *disk);
-          void ctor(ByteOrder sex, const Elf64SectionTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
 
 HEADER_ELF_SECTION_TABLE_ENTRY_END
@@ -1384,17 +1384,17 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                uint64_t            d_val;  /* Tag's value */
              } __attribute__((packed));
 
-          SgAsmElfDynamicEntry(ByteOrder sex, const Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
-          SgAsmElfDynamicEntry(ByteOrder sex, const Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
+          SgAsmElfDynamicEntry(ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
+          SgAsmElfDynamicEntry(ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
        // virtual ~SgAsmElfDynamicEntry() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          void *encode(ByteOrder, Elf32DynamicEntry_disk*);
-          void *encode(ByteOrder, Elf64DynamicEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
 
      private:
-          void ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk);
-          void ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk);
 
 HEADER_ELF_DYNAMIC_ENTRY_END
 
@@ -1467,17 +1467,17 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
              } __attribute__((packed));
 
 
-          SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk);
-          SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);
+          SgAsmElfSegmentTableEntry(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+          SgAsmElfSegmentTableEntry(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
        // virtual ~ElfSegmentTableEntry() {};
 
-          void *encode(ByteOrder, Elf32SegmentTableEntry_disk*);
-          void *encode(ByteOrder, Elf64SegmentTableEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk);
-          void ctor(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+          void ctor(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
@@ -1539,20 +1539,20 @@ HEADER_ELF_SYMBOL_START
                uint64_t            st_size;
              } __attribute__((packed));
 
-          SgAsmElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk);
-          SgAsmElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk);
+          SgAsmElfSymbol(ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
+          SgAsmElfSymbol(ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
        // virtual ~SgAsmElfSymbol() {};
 
-          void *encode(ByteOrder, Elf32SymbolEntry_disk*);
-          void *encode(ByteOrder, Elf64SymbolEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+          void *encode(ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*);
           virtual void dump(FILE *f, const char *prefix, ssize_t idx);
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
-          ElfSymBinding get_elf_binding();
-          ElfSymType get_elf_type();
+          SgAsmElfSymbol::ElfSymBinding get_elf_binding();
+          SgAsmElfSymbol::ElfSymType get_elf_type();
 
      private:
-          void ctor(ByteOrder, const Elf32SymbolEntry_disk*);
-          void ctor(ByteOrder, const Elf64SymbolEntry_disk*);
+          void ctor(ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+          void ctor(ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 
        /* Initialization common to all constructors */
           void ctor_common();
