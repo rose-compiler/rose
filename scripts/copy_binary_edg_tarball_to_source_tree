@@ -1,4 +1,5 @@
 #!/bin/sh -xv
+# This script copy the newly-built EDG binaries to the source tree
 set -e
 if test $# -ne 2; then
   echo "Usage: $0 top_srcdir build-triplet" >&2
