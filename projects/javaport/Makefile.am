@@ -159,7 +159,6 @@ Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	sed '/postdeclarations for SgAsmNode/,$$s!^[ 	]*virtual [^b][^;0]*;$$!//&!' | \
 	sed '/postdeclarations for SgAsmNode/,$$s!virtual RTIReturnType roseRTI!//&!' | \
 	sed '/postdeclarations for SgAsmNode/,$$s!virtual VariantT variantT!//&!' | \
-	sed 's,//.*,,' | \
 	sed '/^#line/d' | \
 	sed '/^ *$$/d' | \
 	sed '/SgInitializedName($$/,/)/d' | \
