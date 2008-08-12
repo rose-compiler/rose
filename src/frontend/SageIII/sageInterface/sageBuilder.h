@@ -137,7 +137,7 @@ buildFunctionType(SgType* return_type, SgFunctionParameterList * argList=NULL);
   * The translation-generated code is expected to include the runtime library's headers to 
   * have the real type declarations. 
   */
-SgType* buildOpaqueType(std::string const name, SgScopeStatement * scope);
+SgType* buildOpaqueType(std::string const type_name, SgScopeStatement * scope);
 //@}
 
 //--------------------------------------------------------------
@@ -308,14 +308,14 @@ BUILD_BINARY_PROTO(XorAssignOp)
 
 #undef BUILD_BINARY_PROTO
 
-//! build a conditional expression ?:
+//! Build a conditional expression ?:
 SgConditionalExp * buildConditionalExp(SgExpression* test =NULL, SgExpression* a =NULL, SgExpression* b =NULL);
 
-//! build a SgExprListExp, used for function call parameter list etc.
+//! Build a SgExprListExp, used for function call parameter list etc.
 SgExprListExp * buildExprListExp(SgExpression * expr1 = NULL, SgExpression* expr2 = NULL, SgExpression* expr3 = NULL, SgExpression* expr4 = NULL, SgExpression* expr5 = NULL, SgExpression* expr6 = NULL, SgExpression* expr7 = NULL, SgExpression* expr8 = NULL, SgExpression* expr9 = NULL, SgExpression* expr10 = NULL);
 
 
-//! build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
+//! Build SgVarRefExp based on a variable's Sage name. It will lookup symbol table internally starting from scope. A variable name is unique so type can be inferred (double check this).
 
 /*! 
 It is possible to build a reference to a variable with known name before the variable is declaration, especially during bottomup construction of AST. In this case, SgTypeUnknown is used to indicate the variable reference needing postprocessing fix using fixVariableReferences() once the AST is complete and all variable declarations exist. But the side effect is some get_type() operation may not recognize the unknown type before the fix. So far, I extended SgPointerDerefExp::get_type() and SgPntrArrRefExp::get_type() for SgTypeUnknown. There may be others needing the same extension. 
@@ -537,6 +537,10 @@ SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* 
 
 //! Build a return statement
 SgReturnStmt* buildReturnStmt(SgExpression* expression = NULL);
+
+//! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
+SgStatement* buildStatementFromString(std::string str);
+
 
 //@}
 

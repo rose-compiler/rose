@@ -1731,13 +1731,9 @@ SgTypeFloat * SageBuilder::buildFloatType()
   ROSE_ASSERT(result); 
   return result;
 }
-// It is easy to forget the namespace qualifier, so use this lazy method
-//----------------------------------------------------------------------
-namespace SageBuilder{
-
 
   //! Build a constant type.
-  SgType* buildConstType(SgType* base_type /*=NULL*/)
+  SgType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -1746,7 +1742,7 @@ namespace SageBuilder{
  }
 
   //! Build a volatile type.
-  SgType* buildVolatileType(SgType* base_type /*=NULL*/)
+  SgType* SageBuilder::buildVolatileType(SgType* base_type /*=NULL*/)
  {
    SgModifierType *result = new SgModifierType(base_type);
    ROSE_ASSERT(result!=NULL);
@@ -1755,7 +1751,7 @@ namespace SageBuilder{
 
  }
   //! Build a restrict type.
-  SgType* buildRestrictType(SgType* base_type)
+  SgType* SageBuilder::buildRestrictType(SgType* base_type)
  {
    ROSE_ASSERT(base_type!=NULL);
    bool isPointer = isSgPointerType(base_type);
@@ -1772,7 +1768,7 @@ namespace SageBuilder{
 
  }
 
-  SgClassDefinition* buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
+  SgClassDefinition* SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/)
   {
     SgClassDefinition* result = NULL;
     if (d!=NULL) // the constructor does not check for NULL d, causing segmentation fault
@@ -1788,7 +1784,7 @@ namespace SageBuilder{
     return result;
   }
 
-  SgClassDeclaration * buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
+  SgClassDeclaration * SageBuilder::buildStructDeclaration(const SgName& name, SgScopeStatement* scope /*=NULL*/)
   {
     if (scope == NULL)
       scope = SageBuilder::topScopeStack();
@@ -1830,20 +1826,20 @@ namespace SageBuilder{
     return defdecl;    
   }
 
-  SgClassDeclaration * buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
+  SgClassDeclaration * SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
   {
     SgName myname(name);
     return buildStructDeclaration(myname, scope);
   }
 
-  SgClassDeclaration * buildStructDeclaration(const char* name, SgScopeStatement* scope/*=NULL*/)
+  SgClassDeclaration * SageBuilder::buildStructDeclaration(const char* name, SgScopeStatement* scope/*=NULL*/)
   {
     SgName myname(name);
     return buildStructDeclaration(myname, scope);
   }
 
   //! Build a SgFile node
-  SgFile* buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
+  SgFile* SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
   {
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
@@ -1900,59 +1896,9 @@ namespace SageBuilder{
       if (result->get_globalMangledNameMap().size() != 0) 
         result->clearGlobalMangledNameMap();
       return result;
-#if 0      
-      // manually generate SgFile, SgGlobal, etc, Works but not elegant
-      SgFile * result = new SgFile(); 
-      ROSE_ASSERT(result);
-      // build SgGlobal since it is not built in the default constructor
-      SgGlobal* global = new SgGlobal(); //remember set SgFileInfo later
-      ROSE_ASSERT(global);
-      result->set_root(global);
-      global->set_parent(result);
-
-      result->set_parent(project);
-      //SgFilePtrListPtr filelist = project->get_fileList();
-      //filelist->push_back(result);
-      project->set_file(*result); // the same as the two stmts above
-
-      arglist = project->get_originalCommandLineArgumentList ();
-//     cout<<"1. size="<<arglist.size()<<":"<< StringUtility::listToString(arglist,true)<<endl; 
-      arglist.push_back(sourceFilename);
-      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist);
-      CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
-   //cout<<"4. size="<<arglist.size()<<":"<< StringUtility::listToString(arglist,true)<<endl; 
-
-      //arglist.push_back("-rose:o");
-     // arglist.push_back(sourceFilename);
-      //set the output file of unparser explicitly, somehow the patched -rose:o has no effect.
-      result->set_unparse_output_filename(outputFileName);
-      //result->set_unparse_output_filename(sourceFilename);
-
-//    cout<<"sageBuilder:1438. size="<<arglist.size()<<":"<< StringUtility::listToString(arglist,true)<<endl; 
-      // each SgFile has to have a arglist, otherwise the unparser will complain.
-      result->set_originalCommandLineArgumentList(arglist);
-      result->setupSourceFilename(arglist);
-      fullname=result->get_sourceFileNameWithPath();
-      ROSE_ASSERT(fullname.size()!=0);
-//     cout<<"debug:sageBuilder.C:1432 full name is:"<<fullname<<endl;
-
-      //set filename in the SgGlobal node
-     setOneSourcePositionForTransformation(global);
-     ROSE_ASSERT(global->get_startOfConstruct() != NULL);
-     ROSE_ASSERT(global->get_endOfConstruct() == NULL);
-     global->get_startOfConstruct()->set_filenameString(fullname);
-
-     setOneSourcePositionForTransformation(result);
-     result->get_file_info()->set_filenameString(fullname);
-
-    //  SgFunctionTypeTable ?
-     SgFunctionTypeTable * typetable = SgNode::get_globalFunctionTypeTable();   
-     typetable->set_parent(result);
-    return result;
-#endif
   }// end SgFile* buildFile()
 
-PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & content,
+PreprocessingInfo* SageBuilder::buildComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::before*/,
    PreprocessingInfo::DirectiveType dtype
      /* = PreprocessingInfo::CpreprocessorUnknownDeclaration*/)
@@ -1961,7 +1907,7 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
 }
 
 //! #define xxx yyy 
-  PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
+  PreprocessingInfo* SageBuilder::buildCpreprocessorDefineDeclaration(SgLocatedNode* target, 
                 const std::string & content,
                PreprocessingInfo::RelativePositionType position /* =PreprocessingInfo::before*/)
   {
@@ -1985,5 +1931,14 @@ PreprocessingInfo* buildComment(SgLocatedNode* target, const std::string & conte
     return result;
   
   }
+  //! Build a statement from an arbitrary string, used for irregular statements with macros, platform-specified attributes etc.
+  SgStatement* SageBuilder::buildStatementFromString(std::string str)
+  { 
+    SgStatement* result = NULL;
+#if 0    
+    
+#endif
+    return result;
+     
+  } //buildStatementFromString()
 
-} // end of namespace 
