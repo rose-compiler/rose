@@ -911,3 +911,61 @@ Directions for using roseFreshTest to set up periodic regression tests:
    the date specification includes today's date.  Be sure to quit your
    editor -- just suspending it prevents your changes from taking effect.
 \end{enumerate}
+
+\section{Enabling PHP Support}
+
+\begin{enumerate}
+\item
+Fetch and install PHP (tested with 5.2.6) from
+\texttt{http://www.php.net/downloads.php}.  PHC requires a few
+specific configure flags in order to be able to use PHP properly.
+Fill in your choice of PHP install location where appropriate in place
+of \texttt{/usr/local/php}.
+\begin{verbatim}
+./configure  --enable-debug --enable-embed --prefix=/usr/local/php
+make && make install
+\end{verbatim}
+
+\item
+Fetch and install PHC (tested with svn version r1487).  Currently only
+the development release works with ROSE.
+\begin{verbatim}
+svn checkout http://phc.googlecode.com/svn/trunk/ phc-read-only
+cd phc-read-only
+./configure --prefix=/usr/local/php --with-php=/usr/local/php
+make && make install
+\end{verbatim}
+
+\item
+Finally, due to an incongruence in the class hierarchies of PHC and
+ROSE the following changes have to be made to the installed
+\texttt{/usr/local/php/include/phc/AST\_fold.h}.  Hopefully this can be
+resolved soon so that ROSE works with an unmodified upstream PHC.
+
+\begin{verbatim}
+--- src/generated/AST_fold.h    2008-07-30 10:35:32.000000000 -0700
++++ src/generated/AST_fold.h.rose       2008-08-13 15:30:37.000000000 -0700
+@@ -1037,7 +1037,7 @@
+                        case Nop::ID:
+                                return fold_nop(dynamic_cast<Nop*>(in));
+                        case Foreign::ID:
+-                               return fold_foreign(dynamic_cast<Foreign*>(in));
++                               return 0;
+                }
+                assert(0);
+        }
+@@ -1271,7 +1271,7 @@
+                        case Nop::ID:
+                                return fold_nop(dynamic_cast<Nop*>(in));
+                        case Foreign::ID:
+-                               return fold_foreign(dynamic_cast<Foreign*>(in));
++                               return 0;
+                        case Switch_case::ID:
+                                return fold_switch_case(dynamic_cast<Switch_case*>(in));
+                        case Catch::ID:
+\end{verbatim}
+
+\item
+Once both packages have been installed ROSE must be configured with
+the additional \texttt{--with-php=/usr/local/php} option.
+\end{enumerate}
