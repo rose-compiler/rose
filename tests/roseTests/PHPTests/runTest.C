@@ -24,7 +24,9 @@ main(int argc, char** argv)
 
     cout << "--- Unparsing --- " << endl;
 
-    project->unparse();
+    // probably best to only test the parsing until the PHP
+    // specific unparser is implemented
+    // project->unparse();
 
     cout << "--- All Done --- " << endl;
 
