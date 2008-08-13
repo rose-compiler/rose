@@ -196,18 +196,29 @@ using namespace __gnu_cxx;
 #define SKIP_BLOCK_NUMBER_CACHING 0
 #define SKIP_MANGLED_NAME_CACHING 0
 
-// DQ (6/15/2008): This had to be moved here so taht source files only including "sage3.h"
+#define USING_OLD_EXECUTABLE_FORMAT_SUPPORT 1
+#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
+// DQ (12/8/2008): Build a forward declaration for the input parameter type for the 
+// SgAsmFileHeader class constructor.
+namespace Exec { namespace ELF { class ElfFileHeader; }; };
+#endif
+
+#if 0
+// DQ (12/8/2008): Trying to move off of the old form of the binary executable file format.
+
+// DQ (6/15/2008): This had to be moved here so that source files only including "sage3.h"
 // would see the required declarations (now that "Cxx_Grammar.h" references declarations in
 // the "Exec" namespace.
 // Files in src/frontend/ExecFormats
 // This is included in the "ExecELF.h" and "ExecPE.h" files already.
 // #include "ExecGeneric.h"
-  #include "ExecELF.h"
-  #include "ExecPE.h"
+   #include "ExecELF.h"
+   #include "ExecPE.h"
 
 // DQ (8/7/2008): Added newer support for NE (older windows) and LE (OS/2) formats.
   #include "ExecNE.h"
   #include "ExecLE.h"
+#endif
 
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).
