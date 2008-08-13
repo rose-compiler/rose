@@ -1,9 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-PHC_INCLUDES = -I/home/stutsman1/usr/include/phc
-
-INCLUDES = $(ROSE_INCLUDES) $(PHC_INCLUDES)
-
 # This will cause the dynamic library to be built (as librosePHPFrontend.so)
 noinst_LTLIBRARIES = librosePHPFrontend.la
 
