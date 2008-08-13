@@ -1098,7 +1098,7 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
 
 void
 Compass::outputTgui( std::string & tguiXML,
-		     std::vector<Compass::TraversalBase*> & checkers,
+		     std::vector<const Compass::Checker*> & checkers,
 		     Compass::PrintingOutputObject & output )
 {
   // DQ (1/3/2008): This has to be read/write since we generate an output file for use with ToolGear.
@@ -1119,10 +1119,10 @@ Compass::outputTgui( std::string & tguiXML,
 	  << "  <version>2.00</version>\n"
 	  << "  <tool_title>Compass Analysis Static View</tool_title>\n";
 
-      for( std::vector<Compass::TraversalBase*>::const_iterator itr = 
+      for( std::vector<const Compass::Checker*>::const_iterator itr = 
 	     checkers.begin(); itr != checkers.end(); itr++ )
 	{
-	  std::string checkerName( (*itr)->getName() );
+	  std::string checkerName( (*itr)->checkerName );
 
 	  xml << "  <message_folder>\n"
 	      << "    <tag>" << checkerName << "</tag>\n"
@@ -1159,4 +1159,26 @@ Compass::outputTgui( std::string & tguiXML,
   return;
 } //outputTgui()
 
+using namespace Compass;
 
+Compass::ProjectPrerequisite Compass::projectPrerequisite;
+
+static void runPrereqList(const PrerequisiteList& ls, SgProject* proj) {
+  for (size_t i = 0; i < ls.size(); ++i) {
+    runPrereqs(ls[i], proj);
+    ls[i]->run(proj);
+  }
+}
+
+void Compass::runPrereqs(const Checker* checker, SgProject* proj) {
+  runPrereqList(checker->prerequisites, proj);
+}
+
+void Compass::runPrereqs(Prerequisite* prereq, SgProject* proj) {
+  runPrereqList(prereq->getPrerequisites(), proj);
+}
+
+void Compass::runCheckerAndPrereqs(const Checker* checker, SgProject* proj, Parameters params, OutputObject* output) {
+  runPrereqs(checker, proj);
+  checker->run(params, output);
+}

@@ -167,7 +167,7 @@ Sg_Options& Sg_options()
 // #include "AstFixParentTraversal.h"
 #include "compass.h"
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
+void buildCheckers( std::vector<const Compass::Checker*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 
 typedef std::vector<SgNode*> AstNodePointersList;
 
@@ -254,16 +254,16 @@ namespace __gnu_cxx {}
 %include nodeQuery.h
 %include compass.h
 
-%template(TraversalBaseVector) std::vector<Compass::TraversalBase*>;
-%typemap(javainterfaces) std::vector<Compass::TraversalBase*> "GenericVector<TraversalBase>"
+%template(CheckerVector) std::vector<const Compass::Checker*>;
+%typemap(javainterfaces) std::vector<const Compass::Checker*> "GenericVector<Checker>"
 
 %template(OutputObjectVector) std::vector<Compass::OutputObject*>;
 %typemap(javainterfaces) std::vector<Compass::OutputObject*> "GenericVector<OutputObject>"
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
+void buildCheckers( std::vector<const Compass::Checker*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 
 %{
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
+void buildCheckers( std::vector<const Compass::Checker*> & checkers, Compass::Parameters & params, Compass::OutputObject & output, SgProject* proj );
 %}
 
 %include "casts.i"

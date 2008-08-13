@@ -1,3 +1,52 @@
+// Do Not Call Putenv With Auto Var
+// Author: Mark Lewandowski, -422-3849
+// Date: 30-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_DO_NOT_CALL_PUTENV_WITH_AUTO_VAR_H
+#define COMPASS_DO_NOT_CALL_PUTENV_WITH_AUTO_VAR_H
+
+namespace CompassAnalyses
+   { 
+     namespace DoNotCallPutenvWithAutoVar
+        { 
+        /*! \brief Do Not Call Putenv With Auto Var: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_DO_NOT_CALL_PUTENV_WITH_AUTO_VAR_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2:tw=80
 
@@ -6,7 +55,7 @@
 // Date: 30-August-2007
 
 #include "compass.h"
-#include "doNotCallPutenvWithAutoVar.h"
+// #include "doNotCallPutenvWithAutoVar.h"
 
 namespace CompassAnalyses
    { 
@@ -30,7 +79,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::DoNotCallPutenvWithAutoVar::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["DoNotCallPutenvWithAutoVar.YourParameter"]);
@@ -72,3 +121,21 @@ visit(SgNode* node)
 
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::DoNotCallPutenvWithAutoVar::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::DoNotCallPutenvWithAutoVar::Traversal(params, output);
+}
+
+extern const Compass::Checker* const doNotCallPutenvWithAutoVarChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::DoNotCallPutenvWithAutoVar::checkerName,
+        CompassAnalyses::DoNotCallPutenvWithAutoVar::shortDescription,
+        CompassAnalyses::DoNotCallPutenvWithAutoVar::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

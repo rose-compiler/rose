@@ -1,3 +1,59 @@
+// Const Cast
+// Author: Andreas Saebjoernsen
+// Date: 23-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_CONST_CAST_H
+#define COMPASS_CONST_CAST_H
+
+namespace CompassAnalyses
+   { 
+     namespace ConstCast
+        { 
+        /*! \brief Const Cast: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             {
+                    SgType* toType;
+                    SgType* fromType;
+                    SgCastExp* IRnode;
+  
+               public:
+                    CheckerOutput(SgType* to, SgType* from,
+                              SgCastExp* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+                    int maximumConstCast;
+
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_CONST_CAST_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +62,7 @@
 // Date: 23-July-2007
 
 #include "compass.h"
-#include "constCast.h"
+// #include "constCast.h"
 //#include "helpFunctions.h"
 using namespace std;
 namespace CompassAnalyses
@@ -96,7 +152,7 @@ CheckerOutput::CheckerOutput(SgType* to, SgType* from,
 
 CompassAnalyses::ConstCast::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["ConstCast.YourParameter"]);
@@ -136,12 +192,12 @@ visit(SgNode* node)
         //Make sure that we have a const cast since we strip the modifier type
         //when checking for equivalence below
         if( fromTypeName.substr(0,constPrefix.length()) != constPrefix  ){
-             isEqual == false;
+             isEqual = false;
         }
 
         //Check for equivalence between the types before and after casting
         if(fromTypeVec.size() == toTypeVec.size())
-        for(int i = 0; i < fromTypeVec.size(); i++)
+        for(size_t i = 0; i < fromTypeVec.size(); i++)
              {
                SgType* fromType     = fromTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
                SgType* toType       = toTypeVec[i]->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_TYPEDEF_TYPE);
@@ -167,8 +223,26 @@ visit(SgNode* node)
 
         if(isEqual == true){
 
-            getOutput()->addOutput(new CheckerOutput(toType, fromType, ce));
+            output->addOutput(new CheckerOutput(toType, fromType, ce));
         }
 
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::ConstCast::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::ConstCast::Traversal(params, output);
+}
+
+extern const Compass::Checker* const constCastChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::ConstCast::checkerName,
+        CompassAnalyses::ConstCast::shortDescription,
+        CompassAnalyses::ConstCast::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

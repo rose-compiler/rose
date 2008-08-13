@@ -1,3 +1,52 @@
+// Char Star For String
+// Author: Andreas Saebjornsen
+// Date: 25-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_CHAR_STAR_FOR_STRING_H
+#define COMPASS_CHAR_STAR_FOR_STRING_H
+
+namespace CompassAnalyses
+   { 
+     namespace CharStarForString
+        { 
+        /*! \brief Char Star For String: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+                    SgTypedefDeclaration* stringTypedef;
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_CHAR_STAR_FOR_STRING_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 25-July-2007
 
 #include "compass.h"
-#include "charStarForString.h"
+// #include "charStarForString.h"
 
 using namespace std;
 
@@ -92,7 +141,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::CharStarForString::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["CharStarForString.YourParameter"]);
@@ -130,7 +179,7 @@ visit(SgNode* node)
                   iItr != initPtrLst.end(); ++iItr ){
                   SgType* varType = (*iItr)->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
                   if( varType == stringTypedef->get_type())
-                     getOutput()->addOutput(new CheckerOutput(*iItr));
+                     output->addOutput(new CheckerOutput(*iItr));
              }
 
              //Handle typedefs as a special case a std::string is hidden by a 
@@ -140,10 +189,28 @@ visit(SgNode* node)
                   SgType* varType = typeDecl->get_base_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_POINTER_TYPE|SgType::STRIP_ARRAY_TYPE);
  
                 if( varType == stringTypedef->get_type() )
-                      getOutput()->addOutput(new CheckerOutput(typeDecl));
+                      output->addOutput(new CheckerOutput(typeDecl));
                }
 
       } 
      
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::CharStarForString::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::CharStarForString::Traversal(params, output);
+}
+
+extern const Compass::Checker* const charStarForStringChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::CharStarForString::checkerName,
+        CompassAnalyses::CharStarForString::shortDescription,
+        CompassAnalyses::CharStarForString::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

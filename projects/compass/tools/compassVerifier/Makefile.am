@@ -29,7 +29,7 @@ clean-local:
 	rm -f compass_parameters *.ti a.out *.lo *.la
 	rm -f *_tmp*.txt verify.makefile catChecker*
 
-CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow compassTestMain.C RULE_SELECTION
+CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters runCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow compassTestMain.C RULE_SELECTION
 
 ################################################################################
 
@@ -109,18 +109,18 @@ new_allow_list_setup:
 		((count--)) ;\
 	done
 
-new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
+new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION $(TOOLBUILD)/runCheckers.C new_allow_list_setup
 	sed -e 's@new Checker@0; //@' $(compass_support_dir)/compassTestMain.C > compassTestMain.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) compassTestMain.C ; cp functions.allow compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_support_dir)/compass.C ; cp functions.allow compass_parameters
 #	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass-srcdir) $(INCLUDES) $(compass_srcdir)/compassMain.C ; cp functions.allow compass_parameters
-	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/buildCheckers.C ; cp functions.allow compass_parameters
+	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/runCheckers.C ; cp functions.allow compass_parameters
 	$(MAKE) oneBigVerify
 	sed '$$d' functions.allow | sed -e '1d' > $(compass_checker_dir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | gawk -F= '{print $$1 "=-" $$2}' >> $(compass_checker_dir)/allowedFunctions/compass_parameters
 	rm -f compass_parameters RULE_SELECTION compassTestMain.*
 
-$(TOOLBUILD)/buildCheckers.C:
-	cd $(TOOLBUILD); make buildCheckers.C
+$(TOOLBUILD)/runCheckers.C:
+	cd $(TOOLBUILD); make runCheckers.C
 
 verify: compassVerifier compass_parameters verify.makefile
 	$(MAKE) -f verify.makefile -$${MAKEFLAGS}

@@ -1,3 +1,72 @@
+// Single Parameter Constructor Explicit Modifier
+// Author: Gary M. Yuan
+// Date: 23-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_SINGLE_PARAMETER_CONSTRUCTOR_EXPLICIT_MODIFIER_H
+#define COMPASS_SINGLE_PARAMETER_CONSTRUCTOR_EXPLICIT_MODIFIER_H
+
+namespace CompassAnalyses
+   { 
+     namespace SingleParameterConstructorExplicitModifier
+        { 
+          /// \brief checkerName is a std::string containing the name of this
+          /// checker.
+          extern const std::string checkerName;
+          /// \brief shortDescription is a std::string with a short description
+          /// of this checker's pattern
+          extern const std::string shortDescription;
+          /// \brief longDescription is a std::string with a detailed
+          /// description of this checker's pattern and purpose.
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          //////////////////////////////////////////////////////////////////////          /// The CheckerOutput class implements the violation output for this
+          /// checker
+          //////////////////////////////////////////////////////////////////////
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               const char *what;
+
+               public:
+                 /// The constructor
+                 /// \param node is a SgNode*
+                 CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+          //////////////////////////////////////////////////////////////////////
+          /// The Traversal class performs a simple AST traversal seeking out
+          /// single parameter constructors that are not modified with the
+          /// explicit keyword; this is flagged as a violation. 
+          //////////////////////////////////////////////////////////////////////
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    /// The constructor
+                    /// \param out is a Compass::OutputObject*
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    /// run function
+                    /// \param n is a SgNode*
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    /// visit function
+                    /// \param n is a SgNode
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_SINGLE_PARAMETER_CONSTRUCTOR_EXPLICIT_MODIFIER_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +75,7 @@
 // Date: 23-July-2007
 
 #include "compass.h"
-#include "singleParameterConstructorExplicitModifier.h"
+// #include "singleParameterConstructorExplicitModifier.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +96,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::SingleParameterConstructorExplicitModifier::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["SingleParameterConstructorExplicitModifier.YourParameter"]);
@@ -62,3 +131,21 @@ visit(SgNode* node)
      return;
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::SingleParameterConstructorExplicitModifier::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::SingleParameterConstructorExplicitModifier::Traversal(params, output);
+}
+
+extern const Compass::Checker* const singleParameterConstructorExplicitModifierChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::SingleParameterConstructorExplicitModifier::checkerName,
+        CompassAnalyses::SingleParameterConstructorExplicitModifier::shortDescription,
+        CompassAnalyses::SingleParameterConstructorExplicitModifier::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

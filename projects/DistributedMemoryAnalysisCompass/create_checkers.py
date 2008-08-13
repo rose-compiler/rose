@@ -8,7 +8,7 @@ if (f):
     print " found file : ",filename
 out = file("generate_checkers.C",'w')
 for line in f:
-    t = line[0].upper()+line[1:]
+    t = line
     text = t.split('\n')
     text = "generate_checker("+text[0]+");"
     print "   parsing line: ",text

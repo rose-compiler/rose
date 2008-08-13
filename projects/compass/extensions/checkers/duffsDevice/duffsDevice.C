@@ -1,3 +1,52 @@
+// Duff's Device
+// Author: Gergo  Barany
+// Date: 24-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_DUFFS_DEVICE_H
+#define COMPASS_DUFFS_DEVICE_H
+
+namespace CompassAnalyses
+   { 
+     namespace DuffsDevice
+        { 
+        /*! \brief Duff's Device: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+                 Compass::OutputObject* output;
+                 bool isLoopStatement(SgNode *n) const;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_DUFFS_DEVICE_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 24-July-2007
 
 #include "compass.h"
-#include "duffsDevice.h"
+// #include "duffsDevice.h"
 
 namespace CompassAnalyses
    { 
@@ -29,7 +78,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::DuffsDevice::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -53,3 +102,21 @@ isLoopStatement(SgNode* n) const
 {
   return isSgDoWhileStmt(n) || isSgForStatement(n) || isSgWhileStmt(n);
 }
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::DuffsDevice::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::DuffsDevice::Traversal(params, output);
+}
+
+extern const Compass::Checker* const duffsDeviceChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::DuffsDevice::checkerName,
+        CompassAnalyses::DuffsDevice::shortDescription,
+        CompassAnalyses::DuffsDevice::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

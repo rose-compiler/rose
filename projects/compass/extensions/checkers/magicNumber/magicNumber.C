@@ -1,3 +1,58 @@
+// Magic Number
+// Author: Gergo Barany
+// Date: 19-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_MAGIC_NUMBER_H
+#define COMPASS_MAGIC_NUMBER_H
+
+namespace CompassAnalyses
+   { 
+     namespace MagicNumber
+        { 
+        /*! \brief Magic Number: Checks for integer or floating point
+         *         literals occurring outside of initializer expressions. The
+         *         user may choose to ignore some such constants (0 and 1 are
+         *         likely candidates), this can be configured via the
+         *         parameters.
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+                 std::vector<int> allowedIntegers;
+                 std::vector<double> allowedFloats;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_MAGIC_NUMBER_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +61,7 @@
 // Date: 19-July-2007
 
 #include "compass.h"
-#include "magicNumber.h"
+// #include "magicNumber.h"
 
 namespace CompassAnalyses
    { 
@@ -29,7 +84,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::MagicNumber::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
      allowedIntegers = Compass::parseIntegerList(inputParameters["MagicNumber.allowedIntegers"]);
      allowedFloats = Compass::parseDoubleList(inputParameters["MagicNumber.allowedFloats"]);
@@ -81,3 +136,21 @@ visit(SgNode* n)
         }
       }
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::MagicNumber::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::MagicNumber::Traversal(params, output);
+}
+
+extern const Compass::Checker* const magicNumberChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::MagicNumber::checkerName,
+        CompassAnalyses::MagicNumber::shortDescription,
+        CompassAnalyses::MagicNumber::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

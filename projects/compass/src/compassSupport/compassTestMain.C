@@ -3,8 +3,8 @@
 //
 //
 // This file should be included from your main file
-// The typedef Factory should be defined to your checker's 
-// factory class.  This file is provided to support testing
+// The variable myChecker should be defined to your checker's 
+// checker object.  This file is provided to support testing
 // of the detector in isolation.
 
 #include "compass.h"
@@ -47,15 +47,6 @@ int main(int argc, char** argv) {
   Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
 // Compass::TraversalBase* trav = factory.create(params, &output);
-  Compass::TraversalBase* trav = new Checker(params, &output);
-
-  if (trav) {
-    trav->run(sageProject);
-  } else {
-    std::cerr << trav->getName() << " failed to initialize\n";
-    std::cerr << "Short Description:\n";
-    std::cerr << trav->getShortDescription();
-    return 1;
-  }
+  Compass::runCheckerAndPrereqs(myChecker, sageProject, params, &output);
   return 0;
 }

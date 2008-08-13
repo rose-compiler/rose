@@ -1,3 +1,52 @@
+// Upper Range Limit
+// Author: pants,,,
+// Date: 14-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_UPPER_RANGE_LIMIT_H
+#define COMPASS_UPPER_RANGE_LIMIT_H
+
+namespace CompassAnalyses
+   { 
+     namespace UpperRangeLimit
+        { 
+        /*! \brief Upper Range Limit: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_UPPER_RANGE_LIMIT_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 14-August-2007
 
 #include "compass.h"
-#include "upperRangeLimit.h"
+// #include "upperRangeLimit.h"
 
 namespace CompassAnalyses
    { 
@@ -28,7 +77,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::UpperRangeLimit::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["UpperRangeLimit.YourParameter"]);
@@ -43,3 +92,21 @@ visit(SgNode* node)
      if (isSgGreaterOrEqualOp(node)) output->addOutput(new CheckerOutput(node));
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::UpperRangeLimit::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::UpperRangeLimit::Traversal(params, output);
+}
+
+extern const Compass::Checker* const upperRangeLimitChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::UpperRangeLimit::checkerName,
+        CompassAnalyses::UpperRangeLimit::shortDescription,
+        CompassAnalyses::UpperRangeLimit::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

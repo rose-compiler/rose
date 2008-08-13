@@ -8,7 +8,7 @@ void computeResultTable();
 
 
 // Global arrays
-vector<Compass::TraversalBase*> compassTestArray;
+vector<const Compass::Checker*> compassTestArray;
 // vector<Compass::FactoryBase*> compassFactoryArray;
 
 SgProject* sageProject = NULL;
@@ -71,19 +71,19 @@ class compassRow: public QRRow
    {
   // This class binds the QRRow to the Compass object that does the checking.
      public:
-          compassRow(Compass::TraversalBase* localChecker, QRTable *parent, string label)
+          compassRow(const Compass::Checker* localChecker, QRTable *parent, string label)
 		       : QRRow(parent, label, QRRow::checkbox_ctrl) 
              {
                checker = localChecker;
             // ROSE_ASSERT(checker != NULL);
              }
-          compassRow(Compass::TraversalBase* localChecker, QRRow *parent, string label)
+          compassRow(const Compass::Checker* localChecker, QRRow *parent, string label)
              : QRRow(parent, label, QRRow::checkbox) 
              {
                checker = localChecker;
             // ROSE_ASSERT(checker != NULL);
              }
-         Compass::TraversalBase* getChecker() 
+         const Compass::Checker* getChecker() 
              {
             // ROSE_ASSERT(checker != NULL);
                return checker;
@@ -121,7 +121,7 @@ class compassRow: public QRRow
 #endif
 
      protected:
-          Compass::TraversalBase* checker;
+          const Compass::Checker* checker;
    };
 
 // A QRose specific output object which provides the information required to support the QRose GUI.
@@ -834,7 +834,7 @@ main(int argc, char** argv)
      printf ("Program Terminated Normally! \n");
      return status;
 #else
-     for (vector<Compass::TraversalBase*>::iterator i = compassTestArray.begin(); i != compassTestArray.end(); i++)
+     for (vector<const Compass::Checker*>::iterator i = compassTestArray.begin(); i != compassTestArray.end(); i++)
         {
        // Generate separate outputObjects for each checker (to collect output from each checker)
           (*i)->run(sageProject);
@@ -846,12 +846,12 @@ main(int argc, char** argv)
      QRoseOutputObject* output = new QRoseOutputObject();
 
   // Need to make this a function to setup all the checkers.
-     compassTestArray.push_back(new CompassAnalyses::StaticConstructorInitialization::Traversal(params,output));
+     compassTestArray.push_back(staticConstructorInitializationChecker);
 
-     for (vector<Compass::TraversalBase*>::iterator i = compassTestArray.begin(); i != compassTestArray.end(); i++)
+     for (vector<const Compass::Checker*>::iterator i = compassTestArray.begin(); i != compassTestArray.end(); i++)
         {
        // Generate separate outputObjects for each checker (to collect output from each checker)
-          (*i)->run(sageProject);
+          Compass::runCheckerWithPrereqs(*i, sageProject, params, output);
         }
 #endif
 

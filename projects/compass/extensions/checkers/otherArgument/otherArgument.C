@@ -1,3 +1,51 @@
+// Other Argument
+// Author: Valentin  David
+// Date: 03-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_OTHER_ARGUMENT_H
+#define COMPASS_OTHER_ARGUMENT_H
+
+namespace CompassAnalyses {
+  namespace OtherArgument {
+    /*! \brief Other Argument: Check that arguments of copy are called
+     *  "other".
+     */
+
+    extern const std::string checkerName;
+    extern const std::string shortDescription;
+    extern const std::string longDescription;
+
+    // Specification of Checker Output Implementation
+    class CheckerOutput: public Compass::OutputViolationBase {
+    public:
+      CheckerOutput(SgNode* node);
+    };
+
+    // Specification of Checker Traversal Implementation
+
+    class Traversal
+      : public AstSimpleProcessing {
+      // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+      public:
+      Traversal(Compass::Parameters inputParameters,
+		Compass::OutputObject* output);
+
+      void run(SgNode* n) {
+	this->traverse(n, preorder);
+      }
+
+      void visit(SgNode* n);
+    };
+  }
+}
+
+// COMPASS_OTHER_ARGUMENT_H
+#endif
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +54,7 @@
 // Date: 03-August-2007
 
 #include "compass.h"
-#include "otherArgument.h"
+// #include "otherArgument.h"
 
 namespace CompassAnalyses {
   namespace OtherArgument {
@@ -29,8 +77,7 @@ CheckerOutput::CheckerOutput(SgNode* node)
 
 CompassAnalyses::OtherArgument::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName,
-                           shortDescription, longDescription)
+  : output(output)
 {}
 
 static std::string lower_camel_case(const std::string& from) {
@@ -140,3 +187,21 @@ visit(SgNode* n) {
     }
   }
 } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::OtherArgument::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::OtherArgument::Traversal(params, output);
+}
+
+extern const Compass::Checker* const otherArgumentChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::OtherArgument::checkerName,
+        CompassAnalyses::OtherArgument::shortDescription,
+        CompassAnalyses::OtherArgument::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

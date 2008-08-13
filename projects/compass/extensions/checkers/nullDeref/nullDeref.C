@@ -1,3 +1,78 @@
+// Null Deref
+// Author: Thomas Panas
+// Date: 24-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_NULL_DEREF_H
+#define COMPASS_NULL_DEREF_H
+
+#include "BoostGraphInterface.hxx"
+
+namespace CompassAnalyses
+{ 
+  namespace NullDeref
+    { 
+      extern const std::string checkerName;
+      extern const std::string shortDescription;
+      extern const std::string longDescription;
+
+      // Specification of Checker Output Implementation
+      class CheckerOutput: public Compass::OutputViolationBase
+	{ 
+	public:
+	  CheckerOutput(std::string problem, SgNode* node);
+	};
+
+      // Specification of Checker Traversal Implementation
+      class Traversal
+	: public AstSimpleProcessing
+	{
+	  // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+	  typedef std::pair<bool, std::vector<SgExpression*> > BoolWithTrace;
+	  std::map<SgExpression*, BoolWithTrace> traces;
+
+	  BoolWithTrace expressionIsNull(SgExpression* expr);
+
+	  //	  bool isLegitimateNullPointerCheck(SgExpression* expr, SgInitializedName* pointerVar, bool invertCheck) const;
+	  void checkNullDeref(std::string analysisname, SgExpression* theExp, std::string name);
+
+	  template<typename T>    
+	    static std::string ToString(T t){
+	    std::ostringstream myStream; //creates an ostringstream object               
+	    myStream << t << std::flush;       
+	    return myStream.str(); //returns the string form of the stringstream object
+	  }                                 
+
+	  int counter;
+	  int max;
+	  static bool debug;
+
+	public:
+	  Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+	  // The implementation of the run function has to match the traversal being called.
+	  void run(SgNode* n){ 
+	    //SgProject* pr = isSgProject(n);
+	    //ROSE_ASSERT(pr);
+	    //	    Compass::runDefUseAnalysis(pr);
+	    counter=0;
+	    debug=true;
+	    std::vector<SgNode*> exprList = NodeQuery:: querySubTree (n, V_SgFunctionDeclaration);
+	    max = exprList.size();
+	    this->traverse(n, preorder); 
+	  };
+
+	  void visit(SgNode* n);
+	};
+    }
+}
+
+// COMPASS_NULL_DEREF_H
+#endif 
+
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -7,7 +82,7 @@
 // Altered in July 2008 by tps and JW to use defuse instead of boost
 
 #include "compass.h"
-#include "nullDeref.h"
+// #include "nullDeref.h"
 
 using namespace std;
 
@@ -33,7 +108,7 @@ CheckerOutput::CheckerOutput ( string problem, SgNode* node )
 
 CompassAnalyses::NullDeref::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+  : output(output)
 {
 }
 
@@ -286,3 +361,21 @@ visit(SgNode* sgNode)
   
 } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NullDeref::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NullDeref::Traversal(params, output);
+}
+
+extern const Compass::Checker* const nullDerefChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NullDeref::checkerName,
+        CompassAnalyses::NullDeref::shortDescription,
+        CompassAnalyses::NullDeref::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

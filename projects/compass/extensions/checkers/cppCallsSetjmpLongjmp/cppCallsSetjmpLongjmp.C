@@ -1,3 +1,67 @@
+/*
+ * Author: Gary M. Yuan
+ * File: cppCallsSetjmpLongjmp.h
+ * Date: 19-July-2007
+ * Purpose: Cpp Calls Setjmp Longjmp header
+ */
+
+#include "compass.h"
+
+#ifndef COMPASS_CPP_CALLS_SETJMP_LONGJMP_H
+#define COMPASS_CPP_CALLS_SETJMP_LONGJMP_H
+
+namespace CompassAnalyses
+{ 
+  namespace CppCallsSetjmpLongjmp
+  { 
+    /// \brief checkerName is a std::string containing the name of this checker.
+    extern const std::string checkerName;
+    /// \brief shortDescription is a std::string with a short description of
+    /// this checker's pattern.
+    extern const std::string shortDescription;
+    /// \brief longDescription is a std::string with a detailed description
+    /// of this checker's pattern and purpose.
+    extern const std::string longDescription;
+
+    // Specification of Checker Output Implementation
+    ////////////////////////////////////////////////////////////////////////////
+    /// The CheckerOutput class implements the violation output for this
+    /// checker
+    ////////////////////////////////////////////////////////////////////////////
+
+    class CheckerOutput : public Compass::OutputViolationBase
+    { 
+      private:
+        const char *what;
+      public:
+        std::string getString() const;
+        CheckerOutput(SgNode* node, const char *w);
+    }; //class CheckerOutput
+
+    // Specification of Checker Traversal Implementation
+    class Traversal : public AstSimpleProcessing
+    {
+      // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+      public:
+        /// \brief The constructor
+        Traversal(Compass::Parameters inputParameters, 
+                  Compass::OutputObject* output);
+
+        // The implementation of the run function has to match the 
+        //traversal being called.
+        /// \brief run, starts the AST traversal
+        void run(SgNode* n){ this->traverse(n, preorder); };
+
+        /// \brief visit, pattern for AST traversal
+        void visit(SgNode* n);
+    }; //class Traversal
+  } //namespace CppCallsSetjmpLongjmp
+} //namespace CompassAnalyses
+
+// COMPASS_CPP_CALLS_SETJMP_LONGJMP_H
+#endif 
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -9,7 +73,7 @@
  */
 
 #include "compass.h"
-#include "cppCallsSetjmpLongjmp.h"
+// #include "cppCallsSetjmpLongjmp.h"
 
 namespace CompassAnalyses
 { 
@@ -62,7 +126,7 @@ CppCallsSetjmpLongjmp::CheckerOutput::CheckerOutput( SgNode* node,
 
 CompassAnalyses::CppCallsSetjmpLongjmp::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
 {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["CppCallsSetjmpLongjmp.YourParameter"]);
@@ -95,3 +159,21 @@ void CompassAnalyses::CppCallsSetjmpLongjmp::Traversal::visit(SgNode* node)
   return;
 } //CompassAnalyses::CppCallsSetjmpLongjmp::Traversal::visit()
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::CppCallsSetjmpLongjmp::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::CppCallsSetjmpLongjmp::Traversal(params, output);
+}
+
+extern const Compass::Checker* const cppCallsSetjmpLongjmpChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::CppCallsSetjmpLongjmp::checkerName,
+        CompassAnalyses::CppCallsSetjmpLongjmp::shortDescription,
+        CompassAnalyses::CppCallsSetjmpLongjmp::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

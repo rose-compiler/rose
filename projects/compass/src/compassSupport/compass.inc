@@ -22,15 +22,15 @@ compass_parameters: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/RULE_SELECTION
 
 
 
-buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS
+buildCheckers.C: CHECKER_LIST_WITHOUT_COMMENTS $(compass_input_dir)/buildCheckers.C.in
 	sed -n '1,/@@@/p' < $(compass_input_dir)/buildCheckers.C.in > buildCheckers.C
-	cut -f 2 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,BUILD_ONE_CHECKER(&),' >> buildCheckers.C
+	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,BUILD_ONE_CHECKER(&),' >> buildCheckers.C
 	sed -n '/@@@/,$$p' < $(compass_input_dir)/buildCheckers.C.in >> buildCheckers.C
 
 
 
 checkers.h: CHECKER_LIST_WITHOUT_COMMENTS
-	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,#include "&/&.h",' > checkers.h
+	cut -f 1 -d \  < CHECKER_LIST_WITHOUT_COMMENTS | sed 's,^.*$$,extern const Compass::Checker* const &Checker;,' > checkers.h
 
 
 

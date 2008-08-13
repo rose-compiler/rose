@@ -6,12 +6,13 @@
 
 namespace CompassAnalyses {
   namespace PaletteGenerated {
-    class Traversal: public Compass::TraversalBase {
+    class Traversal {
       Compass::Parameters inputParameters;
+      Compass::OutputObject* output;
 @@@@@
 
       public:
-      virtual void run(SgNode*) {
+      virtual void run() {
         Palette::Timer t("Query");
         paletteMain();
       }
@@ -19,14 +20,24 @@ namespace CompassAnalyses {
 
       Traversal(Compass::Parameters inputParameters,
           Compass::OutputObject* output)
-        : Compass::TraversalBase(output, "Palette-compiled code", "", ""),
-        inputParameters(inputParameters)
+        : inputParameters(inputParameters), output(output)
         {}
     };
   }
 }
 
-typedef CompassAnalyses::PaletteGenerated::Traversal Checker;
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::PaletteGenerated::Traversal(params, output).run();
+}
+
+extern const Compass::Checker* const myChecker =
+  new Compass::Checker(
+        "Palette-generated checker",
+        "",
+        "",
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(),
+        run);
 
 #include "compass.C"
 #include "compassTestMain.C"

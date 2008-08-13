@@ -1,3 +1,52 @@
+// Boolean Is Has
+// Author: pants,,,
+// Date: 24-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_BOOLEAN_IS_HAS_H
+#define COMPASS_BOOLEAN_IS_HAS_H
+
+namespace CompassAnalyses
+   { 
+     namespace BooleanIsHas
+        { 
+        /*! \brief Boolean Is Has: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_BOOLEAN_IS_HAS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 24-July-2007
 
 #include "compass.h"
-#include "booleanIsHas.h"
+// #include "booleanIsHas.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +76,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::BooleanIsHas::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["BooleanIsHas.YourParameter"]);
@@ -78,3 +127,21 @@ visit(SgNode* node)
           }
    }
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::BooleanIsHas::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::BooleanIsHas::Traversal(params, output);
+}
+
+extern const Compass::Checker* const booleanIsHasChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::BooleanIsHas::checkerName,
+        CompassAnalyses::BooleanIsHas::shortDescription,
+        CompassAnalyses::BooleanIsHas::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

@@ -4,7 +4,8 @@
 #include <rose.h>
 #include "DefUseAnalysis.h"
 #include "DefUseAnalysis_perFunction.h"
-
+#include <boost/function.hpp>
+#include <boost/any.hpp>
 
 namespace Compass {
   extern unsigned int global_arrsize;
@@ -174,39 +175,68 @@ namespace Compass {
                                            const std::string& endFilename,
                                            int endLine, int endCol);
 
-  /// The base class required for checkers.
-  /// No particular constructors are required; the factory is always used to
-  /// construct objects derived from this base class.
-     class TraversalBase
-        {
-          protected:
-            // DQ (7/6/2007): Added so that information from the factory could be available in the checkers.
-               Compass::OutputObject* output;
+  /// The possible languages that a Compass checker can support.  The enum
+  /// values are powers of 2 and can be ORed together to represent sets.
+  enum {
+    C = (1 << 0),
+    Cpp = (1 << 1),
+    Fortran = (1 << 2),
+    PHP = (1 << 3),
+    X86Assembly = (1 << 4),
+    ArmAssembly = (1 << 5)
+  };
+  typedef int LanguageSet; // To allow operator|() on values
 
-          private:
+  class Prerequisite;
 
-               std::string m_checkerName;
-               std::string m_shortDescription;
-               std::string m_longDescription;
+  /// A list of prerequisite pointers.
+  typedef std::vector<Prerequisite*> PrerequisiteList;
 
-          public:
-               void setName( std::string s ) { m_checkerName = s; }
-               std::string getName() { return m_checkerName; }
-               void setShortDescription( std::string s ) { m_shortDescription = s; }
-               std::string getShortDescription() { return m_shortDescription; }
-               void setLongDescription( std::string s ) { m_longDescription = s; }
-               std::string getLongDescription() { return m_longDescription; }
+  /// A prerequisite description for an analysis used by checkers, such as
+  /// def-use.  Actual prerequisites are global variables that are instances of
+  /// classes that inherit from this one.  Each such class has its own run()
+  /// method and way to get its result.  The assumption is that the
+  /// prerequisites are global variables and are only run once in a session
+  /// (i.e., not on different projects or with different parameter files).
+  class Prerequisite {
+    public:
+    std::string name;
+    mutable bool done;
+    Prerequisite(const std::string& name): name(name), done(false) {}
+    virtual PrerequisiteList getPrerequisites() const = 0;
+    virtual void run(SgProject* proj) = 0;
+    virtual ~Prerequisite() {}
+  };
 
-               TraversalBase(Compass::OutputObject* out, const std::string & name, const std::string & shortDescriptionInput, const std::string & longDescriptionInput) 
-                  : output(out), m_checkerName(name), m_shortDescription(shortDescriptionInput), m_longDescription(longDescriptionInput) {}
+  /// The basic class with metadata about a checker.  Most checkers will be
+  /// instances (not subclasses) of this class.  Some subclasses are for
+  /// checkers that have extra information, such as the ability to be
+  /// combined with other instances of AstSimpleProcessing.
+  class Checker {
+    public:
+    typedef boost::function<void /*run*/(Parameters, OutputObject*)> RunFunction;
+    std::string checkerName;
+    std::string shortDescription;
+    std::string longDescription;
+    LanguageSet supportedLanguages;
+    PrerequisiteList prerequisites;
+    RunFunction run;
+    virtual ~Checker() {} // Allow RTTI
 
-               virtual ~TraversalBase() {}
+    Checker(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run):
+      checkerName(checkerName), shortDescription(shortDescription), longDescription(longDescription), supportedLanguages(supportedLanguages), prerequisites(prerequisites), run(run) {}
+  };
 
-           /// Run the given checker starting at a top node
-               virtual void run(SgNode* n) = 0;
-               virtual void visit(SgNode* n) = 0;
-               Compass::OutputObject* getOutput() { return output; };
-        };
+  /// A checker that supports combining with other instances of
+  /// AstSimpleProcessing
+  class CheckerUsingAstSimpleProcessing: public Checker {
+    public:
+    typedef boost::function<AstSimpleProcessing* /*createSimpleTraversal*/(Parameters, OutputObject*)> SimpleTraversalCreationFunction;
+    SimpleTraversalCreationFunction createSimpleTraversal;
+
+    CheckerUsingAstSimpleProcessing(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run, SimpleTraversalCreationFunction createSimpleTraversal):
+      Checker(checkerName, shortDescription, longDescription, supportedLanguages, prerequisites, run), createSimpleTraversal(createSimpleTraversal) {}
+};
 
  /// The base class for outputs from a checker
      class OutputViolationBase
@@ -270,8 +300,39 @@ namespace Compass {
         };
 
   // ToolGear Support
-     void outputTgui( std::string & tguiXML,std::vector<Compass::TraversalBase*> & checkers, PrintingOutputObject & output );
+     void outputTgui( std::string & tguiXML, std::vector<const Compass::Checker*> & checkers, PrintingOutputObject & output );
 
+  // The prerequisite for getting the SgProject
+  class ProjectPrerequisite: public Prerequisite {
+    SgProject* proj;
+    public:
+    ProjectPrerequisite(): Prerequisite("SgProject"), proj(NULL) {}
+    void run(SgProject* p) {
+      if (done) return;
+      proj = p;
+      done = true;
+    }
+
+    PrerequisiteList getPrerequisites() const {
+      return PrerequisiteList();
+    }
+
+    SgProject* getProject() const {
+      ROSE_ASSERT (done);
+      return proj;
+    }
+  };
+
+  extern ProjectPrerequisite projectPrerequisite;
+
+  /// Run the prerequisites for a checker
+  void runPrereqs(const Checker* checker, SgProject* proj);
+
+  /// Run the prerequisites of a prerequisite, but not prereq itself
+  void runPrereqs(Prerequisite* prereq, SgProject* proj);
+
+  /// Run a checker and its prerequisites
+  void runCheckerAndPrereqs(const Checker* checker, SgProject* proj, Parameters params, OutputObject* output);
 }
 
 #endif // ROSE_COMPASS_H

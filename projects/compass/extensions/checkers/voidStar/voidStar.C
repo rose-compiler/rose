@@ -1,3 +1,49 @@
+// Void Star
+// Author: Valentin  David
+// Date: 03-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_VOID_STAR_H
+#define COMPASS_VOID_STAR_H
+
+namespace CompassAnalyses {
+  namespace VoidStar {
+    /*! \brief Void Star: Tests if classes defines public methods
+      accepting or returning void.
+    */
+
+    extern const std::string checkerName;
+    extern const std::string shortDescription;
+    extern const std::string longDescription;
+
+    // Specification of Checker Output Implementation
+    class CheckerOutput: public Compass::OutputViolationBase {
+    public:
+      CheckerOutput(SgMemberFunctionDeclaration* node);
+    };
+
+    // Specification of Checker Traversal Implementation
+    class Traversal
+      : public AstSimpleProcessing {
+
+      Compass::OutputObject* output;
+
+      public:
+      Traversal(Compass::Parameters inputParameters,
+		Compass::OutputObject* output);
+
+      void run(SgNode* n) {
+           this->traverse(n, preorder);
+      }
+
+      void visit(SgNode* n);
+    };
+  }
+}
+
+// COMPASS_VOID_STAR_H
+#endif
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +52,7 @@
 // Date: 03-August-2007
 
 #include "compass.h"
-#include "voidStar.h"
+// #include "voidStar.h"
 
 namespace CompassAnalyses {
   namespace VoidStar {
@@ -26,8 +72,7 @@ CheckerOutput::CheckerOutput(SgMemberFunctionDeclaration* node)
 
 CompassAnalyses::VoidStar::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName,
-                           shortDescription, longDescription)
+  : output(output)
 {
 }
 
@@ -74,3 +119,21 @@ visit(SgNode* n)
     }
   } //End of the visit function.
 }
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::VoidStar::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::VoidStar::Traversal(params, output);
+}
+
+extern const Compass::Checker* const voidStarChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::VoidStar::checkerName,
+        CompassAnalyses::VoidStar::shortDescription,
+        CompassAnalyses::VoidStar::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

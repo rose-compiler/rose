@@ -1,3 +1,46 @@
+// Name All Parameters
+// Author: Valentin  David
+// Date: 03-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_NAME_ALL_PARAMETERS_H
+#define COMPASS_NAME_ALL_PARAMETERS_H
+
+namespace CompassAnalyses {
+  namespace NameAllParameters {
+    /*! \brief Name All Parameters: Add your description here
+     */
+
+     extern const std::string checkerName;
+     extern const std::string shortDescription;
+     extern const std::string longDescription;
+
+     class CheckerOutput: public Compass::OutputViolationBase
+        {
+          public:
+               CheckerOutput(SgInitializedName* arg, SgFunctionDeclaration* fun);
+        };
+
+    // Specification of Checker Traversal Implementation
+     class Traversal : public AstSimpleProcessing
+        {
+               Compass::OutputObject* output;
+          public:
+               Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+               void run(SgNode* n)
+                  {
+                    this->traverse(n, preorder);
+                  }
+
+               void visit(SgNode* n);
+        };
+  }
+}
+
+// COMPASS_NAME_ALL_PARAMETERS_H
+#endif
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -9,7 +52,7 @@
 // DQ (1/15/2008): Fixed this checker to skip warning for SgTypeEllipse.
 
 #include "compass.h"
-#include "nameAllParameters.h"
+// #include "nameAllParameters.h"
 
 namespace CompassAnalyses
    {
@@ -32,7 +75,7 @@ CheckerOutput(SgInitializedName* arg, SgFunctionDeclaration* fun)
 
 CompassAnalyses::NameAllParameters::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -65,3 +108,21 @@ visit(SgNode* n)
              }
         }
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NameAllParameters::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NameAllParameters::Traversal(params, output);
+}
+
+extern const Compass::Checker* const nameAllParametersChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NameAllParameters::checkerName,
+        CompassAnalyses::NameAllParameters::shortDescription,
+        CompassAnalyses::NameAllParameters::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

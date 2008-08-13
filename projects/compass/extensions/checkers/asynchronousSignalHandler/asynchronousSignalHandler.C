@@ -1,3 +1,52 @@
+// Asynchronous Signal Handler
+// Author: Daniel J. Quinlan
+// Date: 05-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_ASYNCHRONOUS_SIGNAL_HANDLER_H
+#define COMPASS_ASYNCHRONOUS_SIGNAL_HANDLER_H
+
+namespace CompassAnalyses
+   { 
+     namespace AsynchronousSignalHandler
+        { 
+        /*! \brief Asynchronous Signal Handler: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_ASYNCHRONOUS_SIGNAL_HANDLER_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 05-August-2007
 
 #include "compass.h"
-#include "asynchronousSignalHandler.h"
+// #include "asynchronousSignalHandler.h"
 
 namespace CompassAnalyses
    { 
@@ -24,8 +73,9 @@ namespace CompassAnalyses
           std::set<SgFunctionDeclaration*> listOfProcessedHandlers;
 
        // Traversal to be used on each handler function to search for non-async-safe functions
-          class HandlerTraversal : public AstSimpleProcessing, public Compass::TraversalBase
+          class HandlerTraversal : public AstSimpleProcessing
              {
+               Compass::OutputObject* output;
                public:
                  HandlerTraversal(Compass::OutputObject* output);
 
@@ -45,7 +95,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::AsynchronousSignalHandler::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["AsynchronousSignalHandler.YourParameter"]);
@@ -56,7 +106,7 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
 // Constructor for traversal over handler declaration
 CompassAnalyses::AsynchronousSignalHandler::HandlerTraversal::
 HandlerTraversal(Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -87,7 +137,7 @@ visit(SgNode* node)
                 else
                  {
                 // This is a function call to a function NOT on the list of async-safe functions
-                   getOutput()->addOutput(new CheckerOutput(functionCallExp));
+                   output->addOutput(new CheckerOutput(functionCallExp));
                  }
              }
         }
@@ -164,7 +214,7 @@ visit(SgNode* node)
                     if (listOfProcessedHandlers.find(signalHandlerFunctionDeclaration) == listOfProcessedHandlers.end())
                        {
                       // Now traverse the handler implementation (function definition) to detect non async-safe functions
-                         HandlerTraversal nestedTraversal(getOutput());
+                         HandlerTraversal nestedTraversal(output);
                          nestedTraversal.run(signalHandlerFunctionDeclaration);
 
                       // Since we only want to traverse the handlers once and there could be many calls to "signal" that 
@@ -304,3 +354,21 @@ CompassAnalyses::AsynchronousSignalHandler::setupAsyncSignalSafeFunctionList()
      s.insert("write");
    }
 
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::AsynchronousSignalHandler::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::AsynchronousSignalHandler::Traversal(params, output);
+}
+
+extern const Compass::Checker* const asynchronousSignalHandlerChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::AsynchronousSignalHandler::checkerName,
+        CompassAnalyses::AsynchronousSignalHandler::shortDescription,
+        CompassAnalyses::AsynchronousSignalHandler::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

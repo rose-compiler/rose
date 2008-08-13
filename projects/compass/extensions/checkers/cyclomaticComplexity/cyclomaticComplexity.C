@@ -1,3 +1,64 @@
+// Cyclomatic Complexity
+// Author: Thomas Panas
+// Date: 23-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_CYCLOMATIC_COMPLEXITY_H
+#define COMPASS_CYCLOMATIC_COMPLEXITY_H
+
+namespace CompassAnalyses
+   { 
+     namespace CyclomaticComplexity
+        { 
+        /*! \brief Cyclomatic Complexity: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern std::string shortDescription;
+          extern std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+	       static int cc;
+	       static int complexity;
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+		    static std::string getCC() { 
+		      std::ostringstream myStream; //creates an ostringstream object
+		      myStream << cc << std::flush;
+		      return (myStream.str()); //returns the string form of the stringstream object
+		    }
+		    static std::string getComplexity() { 
+		      std::ostringstream myStream; //creates an ostringstream object
+		      myStream << complexity << std::flush;
+		      return (myStream.str()); //returns the string form of the stringstream object
+		    }
+		    void checkNode(SgNode* node);
+		    int checkDepth(std::vector<SgNode*> children);
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_CYCLOMATIC_COMPLEXITY_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +67,7 @@
 // Date: 23-July-2007
 
 #include "compass.h"
-#include "cyclomaticComplexity.h"
+// #include "cyclomaticComplexity.h"
 
 namespace CompassAnalyses
 { 
@@ -42,13 +103,15 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::CyclomaticComplexity::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+  : output(output)
 {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["CyclomaticComplexity.YourParameter"]);
   cc = Compass::parseInteger(inputParameters["CyclomaticComplexity.maxComplexity"]);
+#if 0 // JJW (8/12/2008): We cannot change these now
   setShortDescription(shortDescription + Traversal::getComplexity()+" > "+Traversal::getCC());
   setLongDescription (longDescription + Traversal::getComplexity()+" > "+Traversal::getCC());
+#endif
 }
 
 void CompassAnalyses::CyclomaticComplexity::Traversal::
@@ -94,3 +157,21 @@ visit(SgNode* node)
   }
 } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::CyclomaticComplexity::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::CyclomaticComplexity::Traversal(params, output);
+}
+
+extern const Compass::Checker* const cyclomaticComplexityChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::CyclomaticComplexity::checkerName,
+        CompassAnalyses::CyclomaticComplexity::shortDescription,
+        CompassAnalyses::CyclomaticComplexity::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

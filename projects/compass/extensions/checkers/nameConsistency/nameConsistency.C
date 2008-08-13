@@ -1,3 +1,72 @@
+// Name Consistency
+// Author: Andreas Saebjoernsen
+// Date: 23-July-2007
+
+#include "compass.h"
+
+
+#include "checkNameImpl.h"
+
+#ifndef COMPASS_NAME_CONSISTENCY_H
+#define COMPASS_NAME_CONSISTENCY_H
+
+namespace CompassAnalyses
+   { 
+     namespace NameConsistency
+        { 
+        /*! \brief Name Consistency: Add your description here 
+         */
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+                    Sg_File_Info* file_info;
+                    SgNode* IRnode;
+                    PreprocessingInfo* preproc;
+
+                    std::string regex;
+                    std::string regex_name;
+
+
+               public:
+                    CheckerOutput(SgNode* n, std::string rname, std::string r);
+                    CheckerOutput(PreprocessingInfo* p, std::string rname, std::string r);
+
+                    virtual std::string getString() const;
+
+             };
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+                    std::string ruleFile;
+
+                    NameEnforcer nm;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+
+
+// COMPASS_NAME_CONSISTENCY_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -9,7 +78,7 @@
 
 
 #include "compass.h"
-#include "nameConsistency.h"
+// #include "nameConsistency.h"
 
 
 namespace CompassAnalyses
@@ -74,7 +143,7 @@ CheckerOutput::getString() const {
 
 CompassAnalyses::NameConsistency::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
        // Initalize checker specific parameters here, for example: 
        ruleFile = Compass::parseString(inputParameters["NameConsistency.RulesFile"]);
@@ -102,14 +171,32 @@ visit(SgNode* node)
 
           for( std::list< std::pair<name_types,SgNode*> >::iterator iItr = violations.begin();
                iItr != violations.end(); ++iItr  ){
-                getOutput()->addOutput(new CheckerOutput(iItr->second, nm.get_enumName(iItr->first),nm.get_reg(iItr->first) ));
+                output->addOutput(new CheckerOutput(iItr->second, nm.get_enumName(iItr->first),nm.get_reg(iItr->first) ));
           }
 
           for( std::list< std::pair<name_types,PreprocessingInfo*> >::iterator iItr = macroViolations.end();
                iItr != macroViolations.end(); ++iItr ){
-                getOutput()->addOutput(new CheckerOutput(iItr->second, nm.get_enumName(iItr->first),nm.get_reg(iItr->first) ));
+                output->addOutput(new CheckerOutput(iItr->second, nm.get_enumName(iItr->first),nm.get_reg(iItr->first) ));
           }
           }
    } //End of the visit function.
 
 
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NameConsistency::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NameConsistency::Traversal(params, output);
+}
+
+extern const Compass::Checker* const nameConsistencyChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NameConsistency::checkerName,
+        CompassAnalyses::NameConsistency::shortDescription,
+        CompassAnalyses::NameConsistency::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

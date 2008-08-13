@@ -1,3 +1,52 @@
+// Static Constructor Initialization
+// Author: Daniel J. Quinlan
+// Date: 20-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_STATIC_CONSTRUCTOR_INITIALIZATION_H
+#define COMPASS_STATIC_CONSTRUCTOR_INITIALIZATION_H
+
+namespace CompassAnalyses
+   { 
+     namespace StaticConstructorInitialization
+        { 
+        /*! \brief Static Constructor Initialization: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_STATIC_CONSTRUCTOR_INITIALIZATION_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 20-July-2007
 
 #include "compass.h"
-#include "staticConstructorInitialization.h"
+// #include "staticConstructorInitialization.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +76,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::StaticConstructorInitialization::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -61,7 +110,7 @@ visit(SgNode* node)
                        {
                       // printf ("Found a global variable defining a class = %p \n",initializedName);
                       // variableDeclaration->get_file_info()->display("global variable defining a class");
-                         getOutput()->addOutput(new CheckerOutput(initializedName));
+                         output->addOutput(new CheckerOutput(initializedName));
                        }
 
                     if (isSgClassDefinition(scope) != NULL)
@@ -71,7 +120,7 @@ visit(SgNode* node)
                             {
                            // printf ("Found a static data member defining a class = %p \n",initializedName);
                            // variableDeclaration->get_file_info()->display("static data member defining a class");
-                              getOutput()->addOutput(new CheckerOutput(initializedName));
+                              output->addOutput(new CheckerOutput(initializedName));
                             }
                        }
                   }
@@ -83,3 +132,21 @@ visit(SgNode* node)
 
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::StaticConstructorInitialization::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::StaticConstructorInitialization::Traversal(params, output);
+}
+
+extern const Compass::Checker* const staticConstructorInitializationChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::StaticConstructorInitialization::checkerName,
+        CompassAnalyses::StaticConstructorInitialization::shortDescription,
+        CompassAnalyses::StaticConstructorInitialization::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

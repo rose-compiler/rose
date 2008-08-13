@@ -1,3 +1,52 @@
+// Uninitialized Definition
+// Author: Gergo  Barany
+// Date: 24-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_UNINITIALIZED_DEFINITION_H
+#define COMPASS_UNINITIALIZED_DEFINITION_H
+
+namespace CompassAnalyses
+   { 
+     namespace UninitializedDefinition
+        { 
+        /*! \brief Uninitialized Definition: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_UNINITIALIZED_DEFINITION_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 24-July-2007
 
 #include "compass.h"
-#include "uninitializedDefinition.h"
+// #include "uninitializedDefinition.h"
 
 namespace CompassAnalyses
    { 
@@ -32,7 +81,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::UninitializedDefinition::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -70,3 +119,21 @@ visit(SgNode* n)
         }
       }
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::UninitializedDefinition::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::UninitializedDefinition::Traversal(params, output);
+}
+
+extern const Compass::Checker* const uninitializedDefinitionChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::UninitializedDefinition::checkerName,
+        CompassAnalyses::UninitializedDefinition::shortDescription,
+        CompassAnalyses::UninitializedDefinition::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

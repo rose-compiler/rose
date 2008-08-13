@@ -1,3 +1,71 @@
+// Non Associative Relational Operators
+// Author: Gary Yuan
+// Date: 02-January-2008
+
+#include "compass.h"
+
+#ifndef COMPASS_NON_ASSOCIATIVE_RELATIONAL_OPERATORS_H
+#define COMPASS_NON_ASSOCIATIVE_RELATIONAL_OPERATORS_H
+
+namespace CompassAnalyses
+   { 
+     namespace NonAssociativeRelationalOperators
+        { 
+        /*! \brief Non Associative Relational Operators: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          bool isRelationalOperator( SgNode *n );
+
+          class ExpressionTraversal : public AstSimpleProcessing
+          {
+            private:
+              int count;
+            public:
+              ExpressionTraversal();
+              int run(SgNode *n);
+              void visit(SgNode *n);
+          }; //class ExpressionTraversal
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+               private:
+                    Compass::OutputObject* output;
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // Change the implementation of this function if you are using inherited attributes.
+                    void *initialInheritedAttribute() const { return NULL; }
+
+                 // The implementation of the run function has to match the traversal being called.
+                 // If you use inherited attributes, use the following definition:
+                 // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
+                    void run(SgNode* n){ this->traverse(n, preorder); }
+
+                 // Change this function if you are using a different type of traversal, e.g.
+                 // void *evaluateInheritedAttribute(SgNode *, void *);
+                 // for AstTopDownProcessing.
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_NON_ASSOCIATIVE_RELATIONAL_OPERATORS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +74,7 @@
 // Date: 02-January-2008
 
 #include "compass.h"
-#include "nonAssociativeRelationalOperators.h"
+// #include "nonAssociativeRelationalOperators.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +95,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::NonAssociativeRelationalOperators::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["NonAssociativeRelationalOperators.YourParameter"]);
@@ -99,3 +167,21 @@ visit(SgNode* node)
 
      return;
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NonAssociativeRelationalOperators::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NonAssociativeRelationalOperators::Traversal(params, output);
+}
+
+extern const Compass::Checker* const nonAssociativeRelationalOperatorsChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NonAssociativeRelationalOperators::checkerName,
+        CompassAnalyses::NonAssociativeRelationalOperators::shortDescription,
+        CompassAnalyses::NonAssociativeRelationalOperators::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

@@ -1,3 +1,47 @@
+// No Goto
+// Author: Valentin  David
+// Date: 02-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_NO_GOTO_H
+# define COMPASS_NO_GOTO_H
+
+namespace CompassAnalyses {
+  namespace NoGoto {
+    /*! \brief No Goto: detects uses of \c goto statements.
+     */
+
+    extern const std::string checkerName;
+    extern const std::string shortDescription;
+    extern const std::string longDescription;
+
+    // Specification of Checker Output Implementation
+    class CheckerOutput: public Compass::OutputViolationBase {
+    public:
+      CheckerOutput(SgNode* node);
+    };
+
+    // Specification of Checker Traversal Implementation
+
+    class Traversal
+      : public AstSimpleProcessing {
+
+      Compass::OutputObject* output;
+
+      public:
+      Traversal(Compass::Parameters inputParameters,
+		Compass::OutputObject* output);
+      void run(SgNode* n) {
+	this->traverse(n, preorder);
+      }
+      void visit(SgNode* n);
+    };
+  }
+}
+
+// COMPASS_NO_GOTO_H
+#endif
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +50,7 @@
 // Date: 02-August-2007
 
 #include "compass.h"
-#include "noGoto.h"
+// #include "noGoto.h"
 
 namespace CompassAnalyses {
   namespace NoGoto {
@@ -24,8 +68,7 @@ CheckerOutput::CheckerOutput(SgNode* node)
 
 CompassAnalyses::NoGoto::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName,
-                           shortDescription, longDescription)
+  : output(output)
 {
 }
 
@@ -38,3 +81,21 @@ visit(SgNode* node)
     return ;
   output->addOutput(new CheckerOutput(node));
 } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NoGoto::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NoGoto::Traversal(params, output);
+}
+
+extern const Compass::Checker* const noGotoChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NoGoto::checkerName,
+        CompassAnalyses::NoGoto::shortDescription,
+        CompassAnalyses::NoGoto::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

@@ -327,8 +327,8 @@ int main(int argc, char **argv)
   /* setup checkers */
   std::vector<AstSimpleProcessing *> traversals;
   std::vector<AstSimpleProcessing *>::iterator t_itr;
-  std::vector<Compass::TraversalBase *> bases;
-  std::vector<Compass::TraversalBase *>::iterator b_itr;
+  std::vector<const Compass::Checker *> bases;
+  std::vector<const Compass::Checker *>::iterator b_itr;
   CountingOutputObject  outputs ;
 
   //  compassCheckers(traversals, bases, outputs);

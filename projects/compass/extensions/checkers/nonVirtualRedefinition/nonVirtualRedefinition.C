@@ -1,3 +1,54 @@
+// Non Virtual Redefinition
+// Author: Gergo Barany
+// Date: 31-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_NON_VIRTUAL_REDEFINITION_H
+#define COMPASS_NON_VIRTUAL_REDEFINITION_H
+
+namespace CompassAnalyses
+   { 
+     namespace NonVirtualRedefinition
+        { 
+        /*! \brief Non Virtual Redefinition: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+                 Compass::OutputObject* output;
+                 // Can a function of type a override a function of type b?
+                 bool isOverridingType(SgFunctionType *a, SgFunctionType *b);
+                 void checkBaseClasses(SgMemberFunctionDeclaration *mfd, SgClassDefinition *classdef);
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_NON_VIRTUAL_REDEFINITION_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +57,7 @@
 // Date: 31-July-2007
 
 #include "compass.h"
-#include "nonVirtualRedefinition.h"
+// #include "nonVirtualRedefinition.h"
 #include <cstring>
 
 namespace CompassAnalyses
@@ -30,7 +81,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::NonVirtualRedefinition::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["NonVirtualRedefinition.YourParameter"]);
@@ -121,3 +172,21 @@ checkBaseClasses(SgMemberFunctionDeclaration *mfd, SgClassDefinition *classdef)
     checkBaseClasses(mfd, base);
   }
 }
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NonVirtualRedefinition::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NonVirtualRedefinition::Traversal(params, output);
+}
+
+extern const Compass::Checker* const nonVirtualRedefinitionChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NonVirtualRedefinition::checkerName,
+        CompassAnalyses::NonVirtualRedefinition::shortDescription,
+        CompassAnalyses::NonVirtualRedefinition::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

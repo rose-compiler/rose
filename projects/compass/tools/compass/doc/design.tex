@@ -150,9 +150,11 @@ configuration file. The configuration file allows users to turn on and turn off 
 checkers for their run-time analyses. However, the configuration file only permits
 checkers to be loaded that were part of Compass at compile-time.
 
-The main interface file compass.h contains the abstract classes \emph{TraversalBase} and 
-\emph{OutputObject}. TraversalBase is the interface to ROSE, allowing a checker to
-traverse the ROSE AST (program) and hence perform analysis on that AST. OutputObject aids
+The main interface file compass.h contains the class \emph{Checker} and the
+abstract class \emph{OutputObject}. Checker is the interface to ROSE,
+giving the metadata for a checker and a function to apply the checker to a
+given AST.
+OutputObject aids
 to output defects found by a specific checker. More functionality to handle e.g. file
 input and parameters provided to Compass, is provided within the Compass namespace.
 

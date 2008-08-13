@@ -1,3 +1,66 @@
+// Forbidden Functions
+// Author: Gary Yuan
+// Date: 28-December-2007
+
+#include <map>
+#include <string>
+#include "compass.h"
+
+#ifndef COMPASS_FORBIDDEN_FUNCTIONS_H
+#define COMPASS_FORBIDDEN_FUNCTIONS_H
+
+namespace CompassAnalyses
+   { 
+     namespace ForbiddenFunctions
+        { 
+        /*! \brief Forbidden Functions: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(
+                      SgNode* node, 
+                      const std::string &, 
+                      const std::string & );
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+               private:
+                 Compass::OutputObject* output;
+                 std::map<std::string,std::string> forbiddenFunctionMap;
+                 void parseParameter( const std::string & param );
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // Change the implementation of this function if you are using inherited attributes.
+                    void *initialInheritedAttribute() const { return NULL; }
+
+                 // The implementation of the run function has to match the traversal being called.
+                 // If you use inherited attributes, use the following definition:
+                 // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
+                    void run(SgNode* n){ this->traverse(n, preorder); }
+
+                 // Change this function if you are using a different type of traversal, e.g.
+                 // void *evaluateInheritedAttribute(SgNode *, void *);
+                 // for AstTopDownProcessing.
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_FORBIDDEN_FUNCTIONS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -9,7 +72,7 @@
 #include <sstream>
 
 #include "compass.h"
-#include "forbiddenFunctions.h"
+// #include "forbiddenFunctions.h"
 
 namespace CompassAnalyses
    { 
@@ -33,7 +96,7 @@ CompassAnalyses::ForbiddenFunctions::CheckerOutput::CheckerOutput(
 
 CompassAnalyses::ForbiddenFunctions::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
      try
      {
@@ -116,3 +179,21 @@ visit(SgNode* node)
 
      return;
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::ForbiddenFunctions::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::ForbiddenFunctions::Traversal(params, output);
+}
+
+extern const Compass::Checker* const forbiddenFunctionsChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::ForbiddenFunctions::checkerName,
+        CompassAnalyses::ForbiddenFunctions::shortDescription,
+        CompassAnalyses::ForbiddenFunctions::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

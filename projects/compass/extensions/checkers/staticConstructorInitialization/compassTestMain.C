@@ -15,23 +15,8 @@ int main(int argc, char** argv) {
   SgProject* sageProject = frontend(argc,argv);
   Compass::Parameters params(Compass::findParameterFile());
   Compass::PrintingOutputObject output(std::cerr);
-  Compass::TraversalBase* trav;
+  const Compass::Checker* const checker = staticConstructorInitializationChecker;
  
-  try {
-    trav = new Checker(params, &output);
-  } catch (const Compass::ParameterNotFoundException& e) {
-    std::cerr << e.what() << std::endl;
-    trav = NULL;
-  } catch (const Compass::ParseError& e) {
-    std::cerr << e.what() << std::endl;
-    trav = NULL;
-  }
-
-  if (trav) {
-    trav->run(sageProject);
-  } else {
-    std::cerr << "error in compassTestMain: checker failed to initialize\n";
-    return 1;
-  }
+  Compass::runCheckerWithPrereqs(checker, sageProject, params, output);
   return 0;
 }

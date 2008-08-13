@@ -1,3 +1,52 @@
+// Multiple Public Inheritance
+// Author: Gergo  Barany
+// Date: 24-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_MULTIPLE_PUBLIC_INHERITANCE_H
+#define COMPASS_MULTIPLE_PUBLIC_INHERITANCE_H
+
+namespace CompassAnalyses
+   { 
+     namespace MultiplePublicInheritance
+        { 
+        /*! \brief Multiple Public Inheritance: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_MULTIPLE_PUBLIC_INHERITANCE_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 24-July-2007
 
 #include "compass.h"
-#include "multiplePublicInheritance.h"
+// #include "multiplePublicInheritance.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +76,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::MultiplePublicInheritance::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
    }
 
@@ -50,3 +99,21 @@ visit(SgNode* node)
          output->addOutput(new CheckerOutput(cd));
      }
    } //End of the visit function.
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::MultiplePublicInheritance::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::MultiplePublicInheritance::Traversal(params, output);
+}
+
+extern const Compass::Checker* const multiplePublicInheritanceChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::MultiplePublicInheritance::checkerName,
+        CompassAnalyses::MultiplePublicInheritance::shortDescription,
+        CompassAnalyses::MultiplePublicInheritance::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

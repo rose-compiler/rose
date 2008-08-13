@@ -1,3 +1,54 @@
+// Explicit Copy
+// Author: Valentin  David
+// Date: 02-August-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_EXPLICIT_COPY_H
+#define COMPASS_EXPLICIT_COPY_H
+
+namespace CompassAnalyses {
+  namespace ExplicitCopy {
+    /*! \brief Explicit copy: this checker enforce the declaration of
+     *     a copy constructor and a copy operator.
+     */
+
+    extern const std::string checkerName;
+    extern const std::string shortDescription;
+    extern const std::string longDescription;
+
+    // Specification of Checker Output Implementation
+    class CheckerOutput: public Compass::OutputViolationBase {
+    public:
+      CheckerOutput(SgNode* node, bool hascons, bool hasop);
+    };
+
+    // Specification of Checker Traversal Implementation
+
+    class Traversal
+      : public AstSimpleProcessing {
+      private:
+      Compass::OutputObject* output;
+      void use_default(SgLocatedNode* ln, bool& constr, bool& op);
+      bool is_copy(SgDeclarationStatement* stmt,
+		   SgClassType *myself,
+		   bool& isconstr);
+
+      public:
+      Traversal(Compass::Parameters inputParameters,
+		Compass::OutputObject* output);
+
+      void run(SgNode* n) {
+	this->traverse(n, preorder);
+      }
+      void visit(SgNode* n);
+    };
+  }
+}
+
+// COMPASS_EXPLICIT_COPY_H
+#endif
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +57,7 @@
 // Date: 02-August-2007
 
 #include "compass.h"
-#include "explicitCopy.h"
+// #include "explicitCopy.h"
 
 namespace CompassAnalyses {
   namespace ExplicitCopy {
@@ -31,8 +82,7 @@ CheckerOutput::CheckerOutput (SgNode* node, bool hascons,
 
 CompassAnalyses::ExplicitCopy::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName,
-                           shortDescription, longDescription)
+  : output(output)
 {
 }
 
@@ -167,3 +217,21 @@ is_copy(SgDeclarationStatement* stmt,
   return true;
 }
 
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::ExplicitCopy::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::ExplicitCopy::Traversal(params, output);
+}
+
+extern const Compass::Checker* const explicitCopyChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::ExplicitCopy::checkerName,
+        CompassAnalyses::ExplicitCopy::shortDescription,
+        CompassAnalyses::ExplicitCopy::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

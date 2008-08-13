@@ -1,3 +1,52 @@
+// Buffer Overflow Functions
+// Author: Thomas Panas
+// Date: 23-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_BUFFER_OVERFLOW_FUNCTIONS_H
+#define COMPASS_BUFFER_OVERFLOW_FUNCTIONS_H
+
+namespace CompassAnalyses
+   { 
+     namespace BufferOverflowFunctions
+        { 
+        /*! \brief Buffer Overflow Functions: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(std::string problem, SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_BUFFER_OVERFLOW_FUNCTIONS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 23-July-2007
 
 #include "compass.h"
-#include "bufferOverflowFunctions.h"
+// #include "bufferOverflowFunctions.h"
 
 namespace CompassAnalyses
 { 
@@ -27,7 +76,7 @@ CheckerOutput::CheckerOutput ( std::string problem, SgNode* node )
 
 CompassAnalyses::BufferOverflowFunctions::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-  : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+  : output(output)
 {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["BufferOverflowFunctions.YourParameter"]);
@@ -90,3 +139,21 @@ visit(SgNode* node)
 
 } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::BufferOverflowFunctions::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::BufferOverflowFunctions::Traversal(params, output);
+}
+
+extern const Compass::Checker* const bufferOverflowFunctionsChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::BufferOverflowFunctions::checkerName,
+        CompassAnalyses::BufferOverflowFunctions::shortDescription,
+        CompassAnalyses::BufferOverflowFunctions::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

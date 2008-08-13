@@ -1,3 +1,54 @@
+// Possibly Replicated Variables
+// Author: Jeremiah J. Willcock
+// Date: 07-January-2008
+
+#include "compass.h"
+
+#ifndef COMPASS_POSSIBLY_REPLICATED_VARIABLES_H
+#define COMPASS_POSSIBLY_REPLICATED_VARIABLES_H
+
+namespace CompassAnalyses
+   { 
+     namespace PossiblyReplicatedVariables
+        { 
+        /*! \brief Possibly Replicated Variables: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node, bool isSharable);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // Change the implementation of this function if you are using inherited attributes.
+                    void *initialInheritedAttribute() const { return NULL; }
+
+                 // The implementation of the run function has to match the traversal being called.
+                 // If you use inherited attributes, use the following definition:
+                 // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
+                    void run(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_POSSIBLY_REPLICATED_VARIABLES_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +57,7 @@
 // Date: 07-January-2008
 
 #include "compass.h"
-#include "possiblyReplicatedVariables.h"
+// #include "possiblyReplicatedVariables.h"
 #include <AstInterface.h>
 #include <StmtInfoCollect.h>
 #include <ReachingDefinition.h>
@@ -50,7 +101,7 @@ CheckerOutput::CheckerOutput ( SgNode* node, bool isSharable )
 
 CompassAnalyses::PossiblyReplicatedVariables::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["PossiblyReplicatedVariables.YourParameter"]);
@@ -349,3 +400,21 @@ run(SgNode* node)
      }
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::PossiblyReplicatedVariables::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::PossiblyReplicatedVariables::Traversal(params, output);
+}
+
+extern const Compass::Checker* const possiblyReplicatedVariablesChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::PossiblyReplicatedVariables::checkerName,
+        CompassAnalyses::PossiblyReplicatedVariables::shortDescription,
+        CompassAnalyses::PossiblyReplicatedVariables::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

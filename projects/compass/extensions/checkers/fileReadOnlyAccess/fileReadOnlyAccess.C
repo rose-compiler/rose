@@ -1,3 +1,60 @@
+// File Read Only Access
+// Author: Gary Yuan
+// Date: 03-January-2008
+
+#include "compass.h"
+
+#ifndef COMPASS_FILE_READ_ONLY_ACCESS_H
+#define COMPASS_FILE_READ_ONLY_ACCESS_H
+
+namespace CompassAnalyses
+   { 
+     namespace FileReadOnlyAccess
+        { 
+        /*! \brief File Read Only Access: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // Change the implementation of this function if you are using inherited attributes.
+                    void *initialInheritedAttribute() const { return NULL; }
+
+                 // The implementation of the run function has to match the traversal being called.
+                 // If you use inherited attributes, use the following definition:
+                 // void run(SgNode* n){ this->traverse(n, initialInheritedAttribute()); }
+                    void run(SgNode* n){ this->traverse(n, preorder); }
+
+                 // Change this function if you are using a different type of traversal, e.g.
+                 // void *evaluateInheritedAttribute(SgNode *, void *);
+                 // for AstTopDownProcessing.
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_FILE_READ_ONLY_ACCESS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +63,7 @@
 // Date: 03-January-2008
 
 #include "compass.h"
-#include "fileReadOnlyAccess.h"
+// #include "fileReadOnlyAccess.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +84,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::FileReadOnlyAccess::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["FileReadOnlyAccess.YourParameter"]);
@@ -88,3 +145,21 @@ visit(SgNode* node)
      return;
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::FileReadOnlyAccess::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::FileReadOnlyAccess::Traversal(params, output);
+}
+
+extern const Compass::Checker* const fileReadOnlyAccessChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::FileReadOnlyAccess::checkerName,
+        CompassAnalyses::FileReadOnlyAccess::shortDescription,
+        CompassAnalyses::FileReadOnlyAccess::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);

@@ -44,7 +44,7 @@ DFAnalysis* defuse;
 
 // prototype. Implementation is in Compass.
 void
-buildCheckers( std::vector<Compass::TraversalBase*> &retVal, Compass::Parameters &params, 
+buildCheckers( std::vector<const Compass::Checker*> &retVal, Compass::Parameters &params, 
 	       Compass::OutputObject &output, SgProject* pr );
 
 
@@ -194,10 +194,10 @@ public:
   virtual void addOutput(Compass::OutputViolationBase *obj) {
     ++counts[obj->getCheckerName()];
    }
-  void fillOutputList(  std::vector<Compass::TraversalBase *> bases) {
-    std::vector<Compass::TraversalBase *>::iterator it = bases.begin();
+  void fillOutputList(  std::vector<const Compass::Checker *> bases) {
+    std::vector<const Compass::Checker *>::iterator it = bases.begin();
     for (;it!=bases.end();++it) {
-      Compass::TraversalBase* checker = *it;
+      const Compass::Checker* checker = *it;
       counts[checker->getName()]=0;
     }
   }
@@ -211,14 +211,16 @@ public:
 // ************************************************************
 // What macro? There is no macro here. This is a code generator!
 // ************************************************************
-#define generate_checker(CheckerName)					\
+#define generate_checker(checkerName)					\
   try {									\
-    CompassAnalyses::CheckerName::Traversal *traversal;			\
+    const Compass::CheckerUsingAstSimpleProcessing* const checker = dynamic_cast<Compass::CheckerUsingAstSimpleProcessing*>(checkerName##Checker);      \
     CountingOutputObject *output = new CountingOutputObject(#CheckerName); \
-    traversal = new CompassAnalyses::CheckerName::Traversal(params, output); \
-    traversals.push_back(traversal);					\
-    bases.push_back(traversal);						\
-    outputs.push_back(output);						\
+    if (checker) {                                                      \
+      AstSimpleProcessing *traversal = checker->createSimpleTraversal(params, output);			\
+      traversals.push_back(traversal);					\
+      bases.push_back(traversal);					\
+      outputs.push_back(output);					\
+    }                                                                   \
   } catch (const Compass::ParameterNotFoundException &e) {		\
     std::cerr << e.what() << std::endl;					\
   }

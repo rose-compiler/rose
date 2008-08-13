@@ -142,7 +142,7 @@ check-local:
 	@echo "*** ROSE/projects/compass/${FILE_NAME_PREFIX}: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
-EXTRA_DIST = compass_parameters ${FILE_NAME_PREFIX}.h 
+EXTRA_DIST = compass_parameters
 
 clean-local:
 	rm -f compass_parameters *.ti ${FILE_NAME_PREFIX}Test
@@ -177,55 +177,6 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.C" <<END
 // Date: ${DATE}
 
 #include "compass.h"
-#include "${FILE_NAME_PREFIX}.h"
-
-namespace CompassAnalyses
-   { 
-     namespace ${CLASS_NAME_PREFIX}
-        { 
-          const std::string checkerName      = "${CLASS_NAME_PREFIX}";
-
-       // Descriptions should not include the newline character "\n".
-          const std::string shortDescription = "Short description not written yet!";
-          const std::string longDescription  = "Long description not written yet!";
-        } //End of namespace ${CLASS_NAME_PREFIX}.
-   } //End of namespace CompassAnalyses.
-
-CompassAnalyses::${CLASS_NAME_PREFIX}::
-CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
-   {}
-
-CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal::
-Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
-   {
-  // Initalize checker specific parameters here, for example: 
-  // YourParameter = Compass::parseInteger(inputParameters["${CLASS_NAME_PREFIX}.YourParameter"]);
-
-
-   }
-
-void
-CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal::
-visit(SgNode* node)
-   { 
-  // Implement your traversal here.  
-
-   } //End of the visit function.
-   
-END
-
-#Generate the header file.
-cat >"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.h" <<END
-// ${PROJECT_DESCRIPTION_PREFIX}
-// Author: ${USER_NAME}
-// Date: ${DATE}
-
-#include "compass.h"
-
-#ifndef COMPASS_${IFDEF_PREFIX}H
-#define COMPASS_${IFDEF_PREFIX}H
 
 namespace CompassAnalyses
    { 
@@ -233,10 +184,6 @@ namespace CompassAnalyses
         { 
         /*! \\brief ${PROJECT_DESCRIPTION_PREFIX}: Add your description here 
          */
-
-          extern const std::string checkerName;
-          extern const std::string shortDescription;
-          extern const std::string longDescription;
 
        // Specification of Checker Output Implementation
           class CheckerOutput: public Compass::OutputViolationBase
@@ -248,8 +195,9 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing, public Compass::TraversalBase
+             : public AstSimpleProcessing
              {
+                    Compass::OutputObject* output;
             // Checker specific parameters should be allocated here.
 
                public:
@@ -271,11 +219,52 @@ namespace CompassAnalyses
         }
    }
 
-// COMPASS_${IFDEF_PREFIX}H
-#endif 
+CompassAnalyses::${CLASS_NAME_PREFIX}::
+CheckerOutput::CheckerOutput ( SgNode* node )
+   : OutputViolationBase(node,checkerName,shortDescription)
+   {}
 
+CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal::
+Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
+   : output(output)
+   {
+  // Initalize checker specific parameters here, for example: 
+  // YourParameter = Compass::parseInteger(inputParameters["${CLASS_NAME_PREFIX}.YourParameter"]);
+
+
+   }
+
+void
+CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal::
+visit(SgNode* node)
+   { 
+  // Implement your traversal here.  
+
+   } //End of the visit function.
+
+// Checker main run function and metadata
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+// Remove this function if your checker is not an AST traversal
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal(params, output);
+}
+
+extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        "${CLASS_NAME_PREFIX}",
+     // Descriptions should not include the newline character "\n".
+        "Short description not written yet!".
+        "Long description not written yet!".
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);
+   
 END
-echo "Generated ${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.h"
 
 #Generate the header for the factory typedef.
 cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}Main.C" <<END
@@ -283,8 +272,8 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}Main.C" <<END
 // Do not modify this file
 //
 
-#include "${FILE_NAME_PREFIX}.h"
-typedef CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const myChecker = ${FILE_NAME_PREFIX}Checker;
 
 #include "compass.C"
 #include "compassTestMain.C"

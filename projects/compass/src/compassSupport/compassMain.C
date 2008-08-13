@@ -33,7 +33,7 @@ class QRoseOutputObject
 #endif
 
 
-void buildCheckers( std::vector<Compass::TraversalBase*> & checkers, Compass::Parameters & params, 
+void buildCheckers( std::vector<const Compass::Checker*> & checkers, Compass::Parameters & params, 
 		    Compass::OutputObject & output, SgProject* pr );
 
 int main(int argc, char** argv)
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
      project->display("In Compass");
 #endif
 
-     std::vector<Compass::TraversalBase*> traversals;
+     std::vector<const Compass::Checker*> traversals;
 
 #ifdef USE_QROSE
   // This is part of incomplete GUI interface for Compass using QRose from Imperial.
@@ -87,36 +87,40 @@ int main(int argc, char** argv)
      
         {
        // Make this in a nested scope so that we can time the buildCheckers function
-          TimingPerformance timer_build ("Compass performance (build checkers): time (sec) = ",false);
+          TimingPerformance timer_build ("Compass performance (build checkers and run prerequisites): time (sec) = ",false);
 
           buildCheckers(traversals,params,output, project);
+          for ( std::vector<const Compass::Checker*>::iterator itr = traversals.begin(); itr != traversals.end(); itr++ ) {
+            ROSE_ASSERT (*itr);
+            Compass::runPrereqs(*itr, project);
+          }
         }
 
      TimingPerformance timer_checkers ("Compass performance (checkers only): time (sec) = ",false);
 
      std::vector<std::pair<std::string, std::string> > errors;
-     for ( std::vector<Compass::TraversalBase*>::iterator itr = traversals.begin(); itr != traversals.end(); itr++ )
+     for ( std::vector<const Compass::Checker*>::iterator itr = traversals.begin(); itr != traversals.end(); itr++ )
         {
           if ( (*itr) != NULL )
              {
                if (Compass::verboseSetting >= 0)
-                    printf ("Running checker %s \n",(*itr)->getName().c_str());
+                    printf ("Running checker %s \n",(*itr)->checkerName.c_str());
 
                try
                   {
                     int spaceAvailable = 40;
-                    std::string name = (*itr)->getName() + ":";
+                    std::string name = (*itr)->checkerName + ":";
                     int n = spaceAvailable - name.length();
                     //Liao, 4/3/2008, bug 82, negative value
                     if (n<0) n=0;
                     std::string spaces(n,' ');
                     TimingPerformance timer (name + spaces + " time (sec) = ",false);
-                    (*itr)->run( project );
+                    (*itr)->run(params, &output);
                   }
                catch (const std::exception& e)
                   {
-                    std::cerr << "error running checker : " << (*itr)->getName() << " - reason: " << e.what() << std::endl;
-                    errors.push_back(std::make_pair((*itr)->getName(), e.what()));
+                    std::cerr << "error running checker : " << (*itr)->checkerName << " - reason: " << e.what() << std::endl;
+                    errors.push_back(std::make_pair((*itr)->checkerName, e.what()));
                   }
              } // if( (*itr) != NULL )
             else

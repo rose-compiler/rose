@@ -1,3 +1,52 @@
+// No Exceptions
+// Author: Andreas Saebjornsen
+// Date: 25-July-2007
+
+#include "compass.h"
+
+#ifndef COMPASS_NO_EXCEPTIONS_H
+#define COMPASS_NO_EXCEPTIONS_H
+
+namespace CompassAnalyses
+   { 
+     namespace NoExceptions
+        { 
+        /*! \brief No Exceptions: Add your description here 
+         */
+
+          extern const std::string checkerName;
+          extern const std::string shortDescription;
+          extern const std::string longDescription;
+
+       // Specification of Checker Output Implementation
+          class CheckerOutput: public Compass::OutputViolationBase
+             { 
+               public:
+                    CheckerOutput(SgNode* node);
+             };
+
+       // Specification of Checker Traversal Implementation
+
+          class Traversal
+             : public AstSimpleProcessing
+             {
+            // Checker specific parameters should be allocated here.
+               Compass::OutputObject* output;
+
+               public:
+                    Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output);
+
+                 // The implementation of the run function has to match the traversal being called.
+                    void run(SgNode* n){ this->traverse(n, preorder); };
+
+                    void visit(SgNode* n);
+             };
+        }
+   }
+
+// COMPASS_NO_EXCEPTIONS_H
+#endif 
+
 // -*- mode: C++; c-basic-offset: 2; indent-tabs-mode: nil -*-
 // vim: expandtab:shiftwidth=2:tabstop=2
 
@@ -6,7 +55,7 @@
 // Date: 25-July-2007
 
 #include "compass.h"
-#include "noExceptions.h"
+// #include "noExceptions.h"
 
 namespace CompassAnalyses
    { 
@@ -27,7 +76,7 @@ CheckerOutput::CheckerOutput ( SgNode* node )
 
 CompassAnalyses::NoExceptions::Traversal::
 Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
-   : Compass::TraversalBase(output, checkerName, shortDescription, longDescription)
+   : output(output)
    {
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["NoExceptions.YourParameter"]);
@@ -44,10 +93,28 @@ visit(SgNode* node)
       case V_SgThrowOp:
       case V_SgCatchOptionStmt:
       case V_SgTryStmt:
-         getOutput()->addOutput(new CheckerOutput(node));
+         output->addOutput(new CheckerOutput(node));
          break;
       default:
          break;
     }
    } //End of the visit function.
    
+
+static void run(Compass::Parameters params, Compass::OutputObject* output) {
+  CompassAnalyses::NoExceptions::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
+}
+
+static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::NoExceptions::Traversal(params, output);
+}
+
+extern const Compass::Checker* const noExceptionsChecker =
+  new Compass::CheckerUsingAstSimpleProcessing(
+        CompassAnalyses::NoExceptions::checkerName,
+        CompassAnalyses::NoExceptions::shortDescription,
+        CompassAnalyses::NoExceptions::longDescription,
+        Compass::C | Compass::Cpp,
+        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        run,
+        createTraversal);
