@@ -101,7 +101,7 @@ int main(int argc, char **argv)
       {
 	std::cout << std::endl << "got " << bases.size() << " checkers:";
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
-	  std::cout << ' ' << (*b_itr)->getName();
+	  std::cout << ' ' << (*b_itr)->checkerName;
 	std::cout << std::endl;
       }
 
