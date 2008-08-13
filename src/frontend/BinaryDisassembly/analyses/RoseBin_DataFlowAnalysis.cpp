@@ -8,6 +8,8 @@
 #include "rose.h"
 #include "RoseBin_DataFlowAnalysis.h"
 
+#include "dataflowanalyses/InterruptAnalysis.h"
+
 using namespace std;
 #include <cstdlib>
 
@@ -182,8 +184,8 @@ void
 RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes,
 					RoseBin_DataFlowAbstract* analysis,
 					bool interprocedural){
-  //if (RoseBin_support::DEBUG_MODE())
-  //  cerr << " Interprocedural is " << RoseBin_support::resBool(interprocedural) << endl;
+  cerr << " traverseGraph : debug: " << RoseBin_support::resBool(RoseBin_support::DEBUG_MODE()) << 
+    "  debug_min : " <<  RoseBin_support::resBool(RoseBin_support::DEBUG_MODE_MIN()) << endl;
   // Number of functions traversed
   int funcNr =0;
   // ---------------------------------------------------------------------
@@ -194,6 +196,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
   // a vector of successors of the current node
   vector<SgDirectedGraphNode*> successors;
   // ---------------------------------------------------------------------
+
 
   // iterate through all functions 
   vector<SgDirectedGraphNode*>::iterator it = rootNodes.begin();
@@ -287,6 +290,8 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 
 	string name_n = vizzGraph->getProperty(RoseBin_Def::name, next);
 
+
+
 	bool call = false;
 	bool exceptionCallNext = false;
 	if (nextN)
@@ -294,8 +299,12 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	bool exceptionCallNode = false;
 	if (nodeN)
 	  exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
-	if ((exceptionCallNode && !exceptionCallNext) || 
-	    nextN->get_kind() == x86_ret )
+	std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
+	// if function call is call to malloc we have an exception and follow the call path
+	// fixme -- revisit this once the malloc analysis works again
+	//	if ((exceptionCallNode && !exceptionCallNext) || 
+	if (nodeN && nodeN->get_kind() == x86_call || 
+	    nextN && nextN->get_kind() == x86_ret )
 	  call = true;
 	//bool sameParent = analysis->sameParents(node, next);
 
@@ -320,9 +329,10 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	    // if the successor is not yet visited
 	    // mark as visited and put into worklist
 	    if (RoseBin_support::DEBUG_MODE())
-	      cout << " never visited next node before... " << name_n << endl;
-	      if (RoseBin_support::DEBUG_MODE())
-		cout << "adding to visited : " << name_n << endl;
+	      cout << " never visited next node before... " << name_n << 
+		" interprocedural : " << interprocedural << "  call : " << call << endl;
+	    if (RoseBin_support::DEBUG_MODE())
+	      cout << "adding to visited : " << name_n << endl;
 
 	      visited.insert(next);
 	      nodeBeforeMap[next]=node;
@@ -479,13 +489,23 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
   RoseBin_DataFlowAbstract* emulate = new RoseBin_Emulate();
   emulate->init(vizzGraph);
   init();
-  //  traverseGraph(rootNodes, emulate, interprocedural);
+  //traverseGraph(rootNodes, emulate, interprocedural);
 
   //graphs[analysisName] =vizzGraph->graph;
   //}
 
   // vizzGraph->graph->set_nodes(&nodes);
   //vizzGraph->graph->set_edges(&edges);
+
+
+  // interrupt --------------------------------------------------
+  //if (RoseBin_support::DEBUG_MODE_MIN())
+  //  cerr << " ... Staring Interrupt Analysis " << endl;
+  //RoseBin_DataFlowAbstract* interrupt = new InterruptAnalysis();
+  //cerr << " interrupt defsize " << interrupt->getDefinitionSize() << endl;
+  //interrupt->init(vizzGraph);
+  //init();
+  //traverseGraph(rootNodes, interrupt, interprocedural);
 
   
 
@@ -504,6 +524,7 @@ void RoseBin_DataFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool multied
     cerr << " Nr of Register writes : " << dynamic_cast<RoseBin_DefUseAnalysis*>(defuse)->getNrOfRegisterWrites() << endl;
     cerr << " Nr of Definitions : " << defuse->getDefinitionSize() << endl;
     cerr << " Nr of Uses : " << defuse->getUsageSize() << endl;
+
 
     cerr << " ********************** done running DataFlowAnalysis ... " << endl;
     cerr << " ********************** saving to file ... " << endl;

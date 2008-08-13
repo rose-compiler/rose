@@ -295,7 +295,7 @@ int main(int argc, char** argv) {
     if (containsArgument(argc, argv, "-checkGraph")) {
       loadGraphAnalysisFiles(graph_checkers);
 
-      cout << "\n ---------------- preparing to run DataFlowAnalysis " << endl;
+      cerr << "\n ---------------- preparing to run DataFlowAnalysis (-checkGraph)" << endl;
       string dfgFileName = "dfg.dot";
       graph= new RoseBin_DotGraph(info);
       if (dot==false) {
@@ -313,25 +313,38 @@ int main(int argc, char** argv) {
 	ROSE_ASSERT(cfganalysis->edgesVisited()==261);
       }
 
-      cout << "CFG finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
+      cerr << "CFG (-checkGraph) finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
       ROSE_ASSERT(graph->nodes.size()>0);
 
       RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
       //dfanalysis->init(interprocedural, edges,graph);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
+
+      cerr << "DFG (-checkGraph) finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
       vector<SgDirectedGraphNode*> rootNodes;
       dfanalysis->getRootNodes(rootNodes);
+
+      //SgDirectedGraphNode* root1 = rootNodes[0];
+      //rootNodes.clear();
+      //rootNodes.push_back(root1);
+
       vector <BC_GraphAnalysisInterface*>::const_iterator it2 = graph_checkers.begin();
       cerr << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
-	"   rootNodes size : " << rootNodes.size() << endl;
+	"   rootNodes size : " << rootNodes.size() << "  interprocedural : " << 
+	RoseBin_support::resBool(interprocedural) << endl;
+      cout << "\n ---------------- running graph checkers : " << graph_checkers.size() << 
+	"   rootNodes size : " << rootNodes.size() << "  interprocedural : " << 
+	RoseBin_support::resBool(interprocedural) << endl;
       cerr << "Graph : " << graph->nodes.size() << endl;
       for (;it2!=graph_checkers.end();it2++) {
 	BC_GraphAnalysisInterface* asmf = *it2;
 	ROSE_ASSERT(asmf);
-	cerr << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  endl;
+	cerr << "\nRunning Binary Graph Checker --- " << asmf->get_name() << "    " <<  "  roots : " <<
+	  rootNodes.size() << endl;
 	// tps 04/23/08 -- fixme: this code was broken when I added the testcase -- needs to be fixed
-	//dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
+	dfanalysis->init();
+	dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
       }  
     }
   }  

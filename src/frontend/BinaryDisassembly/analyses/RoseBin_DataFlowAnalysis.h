@@ -39,7 +39,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);
 
 
-  void init();
+
 
   bool existsPath(SgDirectedGraphNode* start, SgDirectedGraphNode* end);
 
@@ -54,6 +54,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   void traverseNodes(RoseBin_DataFlowAbstract* analysis);
 
   bool exceptionCall(SgAsmx86Instruction* call);
+
 
  public:
 
@@ -77,6 +78,8 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
       delete it->second;
     }
   }
+
+  void init();
 
   void traverseGraph(std::vector <SgDirectedGraphNode*>& rootNodes,
 		     RoseBin_DataFlowAbstract* defuse, 

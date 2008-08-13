@@ -30,6 +30,7 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
+     analyses/dataflowanalyses/InterruptAnalysis.cpp \
      analyses/dataflowanalyses/RoseBin_Emulate.cpp \
      analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      x86InstructionEnum.h x86InstructionProperties.h \
@@ -68,6 +69,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
+   analyses/dataflowanalyses/InterruptAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
    analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
@@ -85,6 +87,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
    analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
    analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
+   analyses/dataflowanalyses/InterruptAnalysis.h \
    analyses/dataflowanalyses/RoseBin_Emulate.h \
    analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \

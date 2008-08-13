@@ -1,7 +1,7 @@
 
-
+#include "rose.h"
 #include "InterruptAnalysis.h"
-#include "string.h"
+//#include "string.h"
 
 
 using namespace std;
@@ -446,7 +446,7 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
     // verify all interrupts and make sure they do what one expects them to do.
     if (asmNode->get_kind() == x86_int) {
       if (RoseBin_support::DEBUG_MODE()) 
-	cout << "    " << name << " : found int call " << endl;
+	cerr << "    " << name << " : found int call " << endl;
       // need to resolve rax, rbx, rcx, rdx
       // therefore get the definition for each
       getValueForDefinition(val_rax, pos_rax, fpos_rax, node, std::make_pair(x86_regclass_gpr, x86_gpr_ax));
@@ -497,17 +497,19 @@ InterruptAnalysis::run(string& name, SgDirectedGraphNode* node,
 	string t_edx = RoseBin_support::getTypeName(data_edx);
 
 	int_name += " ("+t_ebx+","+t_ecx+","+t_edx+")";
-	//if (RoseBin_support::DEBUG_MODE()) 
-	// cout << " found INT call : " << value << " .. " << int_name << endl;
+	if (RoseBin_support::DEBUG_MODE()) 
+	 cerr << " found INT call : "  << int_name << endl;
 	node->append_properties(RoseBin_Def::dfa_variable,int_name);
       }
     }
   }
+
+  // has changed?
   return false;
 }
 
 
-extern "C" BC_GraphAnalysisInterface* create() {
-  return new InterruptAnalysis();
-}
+//extern "C" BC_GraphAnalysisInterface* create() {
+//  return new InterruptAnalysis();
+//}
 

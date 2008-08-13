@@ -204,7 +204,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
     }
 
   }
-  return true;
+  return false;
 }
 
 
