@@ -27,9 +27,11 @@ libroseLibraries = \
    $(top_builddir)/src/backend/unparser/languageIndependenceSupport/libunparseLanguageIndependenceSupport.la \
    $(top_builddir)/src/backend/unparser/CxxCodeGeneration/libunparseCxx.la \
    $(top_builddir)/src/backend/unparser/FortranCodeGeneration/libunparseFortran.la \
+   $(top_builddir)/src/backend/unparser/PHPCodeGeneration/libunparsePHP.la \
    $(top_builddir)/src/backend/unparser/formatSupport/libunparseFormatSupport.la \
    $(top_builddir)/src/frontend/SageIII/libsage3.la \
    $(top_builddir)/src/frontend/OpenFortranParser_SAGE_Connection/libroseFortran.la \
+   $(top_builddir)/src/frontend/PHPFrontend/librosePHPFrontend.la \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(libroseRuntimeTransformation) \

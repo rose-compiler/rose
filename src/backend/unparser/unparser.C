@@ -295,8 +295,17 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                   }
                  else
                   {
-                    printf ("Error: unclear how to unparse the input code! \n");
-                    ROSE_ASSERT(false);
+                    if (file->get_PHP_only())
+                       {
+                          Unparse_PHP unparser(this,
+                                               file->get_unparse_output_filename());
+                          unparser.unparseStatement(globalScope, info);
+                       }
+                      else
+                       {
+                         printf ("Error: unclear how to unparse the input code! \n");        
+                         ROSE_ASSERT(false);
+                       }
                   }
              }
         }

@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # SUBDIRS = CxxCodeGeneration languageIndependenceSupport formatSupport
-SUBDIRS = CxxCodeGeneration FortranCodeGeneration languageIndependenceSupport formatSupport
+SUBDIRS = CxxCodeGeneration FortranCodeGeneration PHPCodeGeneration languageIndependenceSupport formatSupport
 
 INCLUDES = $(ROSE_INCLUDES)
 

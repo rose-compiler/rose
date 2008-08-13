@@ -136,5 +136,7 @@ namespace ELF{
 // added .h file for error check transformations
 #include "RuntimeInstrumentation.h"
 
+#include "PHPFrontend.h"
+
 // ifndef ROSE_H
 #endif

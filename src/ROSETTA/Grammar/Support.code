@@ -3486,6 +3486,7 @@ HEADER_APPLICATION_FILE_START
                e_Cxx_output_language,     /*!< value used to specify output of C++ (for testing C++ unparser) */
                e_Fortran_output_language, /*!< value used to specify output of Fortran (for testing the Fortran unparser from C) */
                e_Promela_output_language, /*!< value used to specify output of Promela for uses with SPIN (unsupported option) */
+               e_PHP_output_language, /*!< value used to specify output of PHP */
                e_last_output_language     /*!< upper bound on the range of values supported for the outputLanguageOption_enum */
              };
 
@@ -3763,6 +3764,9 @@ HEADER_APPLICATION_PROJECT_START
           bool get_F90_only (void) const;
           bool get_F95_only (void) const;
           bool get_F2003_only (void) const;
+
+          bool get_PHP_only(void) const;
+
           bool get_binary_only (void) const;
 
           void display ( const std::string & label ) const;
@@ -9175,6 +9179,9 @@ SgFile::initialization ()
      p_F90_only                = false;
      p_F95_only                = false;
      p_F2003_only              = false;
+
+     p_PHP_only                = false;
+
      p_binary_only             = false;
 
   // Input code format
@@ -9264,6 +9271,8 @@ SgFile::initialization ()
   // DQ (12/2/2006): This we be used (as in GNU) to set the languge mode (C++ files will turn on C++ language mode 
   // and only ".c" (C files) will turn on C language mode).
      p_sourceFileUsesCppFileExtension = false;
+
+     p_sourceFileUsesPHPFileExtension = false;
 
   // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
      p_binaryFile = NULL;
@@ -9636,6 +9645,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
      printf ("     p_F95_only()                           = %s \n",(p_F95_only == true) ? "true" : "false");
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
+     printf ("     p_PHP_only()                         = %s \n",(p_PHP_only == true) ? "true" : "false");
      printf ("     p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
 
   // printf ("     p_fixedFormat                          = %s \n",(p_fixedFormat == true) ? "true" : "false");
@@ -9697,6 +9707,7 @@ SgFile::display ( const std::string & label ) const
           case SgFile::e_C_output_language:       outputLanguageName = "C";       break;
           case SgFile::e_Cxx_output_language:     outputLanguageName = "C++";     break;
           case SgFile::e_Fortran_output_language: outputLanguageName = "Fortran"; break;
+          case SgFile::e_PHP_output_language: outputLanguageName = "PHP"; break;
           case SgFile::e_Promela_output_language: outputLanguageName = "Promela"; break;
 
           default:
@@ -10158,6 +10169,19 @@ SgProject::get_F2003_only (void) const
         {
           SgFile & file = get_file(i);
           result = result || (bool) file.get_F2003_only();
+        }
+     return result;
+   }
+
+bool
+SgProject::get_PHP_only (void) const
+   {
+  // look at how the files are set
+     bool result = false;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          result = result || (bool) file.get_PHP_only();
         }
      return result;
    }

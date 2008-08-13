@@ -250,6 +250,9 @@ ROSE_SUPPORT_YICES
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_YICES,test ! "$with_yices" = no)
 
+ROSE_SUPPORT_PHP
+
+AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
 
 #TPS (03/13/08) introduced optional DB support for binary work
 HASH_ROSE_BINARY_SQL
@@ -807,6 +810,7 @@ src/frontend/CxxFrontend/EDG_3.10/src/disp/Makefile
 src/frontend/CxxFrontend/EDG_3.10/lib/Makefile
 src/frontend/CxxFrontend/EDG_SAGE_Connection/Makefile
 src/frontend/OpenFortranParser_SAGE_Connection/Makefile
+src/frontend/PHPFrontend/Makefile
 src/frontend/BinaryDisassembly/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/ExecFormats/Makefile
@@ -855,6 +859,7 @@ src/backend/unparser/formatSupport/Makefile
 src/backend/unparser/languageIndependenceSupport/Makefile
 src/backend/unparser/CxxCodeGeneration/Makefile
 src/backend/unparser/FortranCodeGeneration/Makefile
+src/backend/unparser/PHPCodeGeneration/Makefile
 src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
@@ -1027,6 +1032,7 @@ tests/roseTests/roseHPCToolkitTests/data/03/PROFILE/Makefile
 tests/roseTests/roseHPCToolkitTests/data/03/struct_ls/Makefile
 tests/roseTests/astInterfaceTests/Makefile
 tests/roseTests/binaryTests/Makefile
+tests/roseTests/PHPTests/Makefile
 tests/translatorTests/Makefile
 tutorial/Makefile
 tutorial/exampleMakefile

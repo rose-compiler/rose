@@ -1153,6 +1153,12 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
                printf ("Use the Promela language code generator (unparser) \n");
           set_outputLanguage(SgFile::e_Promela_output_language);
         }
+     if ( CommandlineProcessing::isOption(argv,"-rose:","PHP_output_language",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Use the PHP language code generator (unparser) \n");
+          set_outputLanguage(SgFile::e_PHP_output_language);
+        }
 
 
   //
@@ -1407,7 +1413,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(compileFixed|backendCompileFixedFormat)",1);
      optionCount = sla(argv, "-rose:", "($)", "(compileFree|backendCompileFreeFormat)",1);
 
-     optionCount = sla(argv, "-rose:", "($)", "(C_output_language|Cxx_output_language|Fortran_output_language|Promela_output_language)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(C_output_language|Cxx_output_language|Fortran_output_language|Promela_output_language|PHP_output_language)",1);
 
   // DQ (5/19/2005): The output file name is constructed from the input source name (as I recall)
   // optionCount = sla(argv, "-rose:", "($)^", "(o|output)", &p_unparse_output_filename ,1);
@@ -3000,6 +3006,14 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                     set_backendCompileFormat(SgFile::e_free_form_output_format);
                   }
              }
+            else if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+             {
+                    set_sourceFileUsesPHPFileExtension(true);
+
+                    set_outputLanguage(SgFile::e_PHP_output_language);
+
+                    set_PHP_only(true);
+              }
             else
              {
             // printf ("Calling set_sourceFileUsesFortranFileExtension(false) \n");
@@ -4557,6 +4571,7 @@ SgFile::callFrontEnd ()
                printf ("get_F90_only()     = %s \n",(get_F90_only()     == true) ? "true" : "false");
                printf ("get_F95_only()     = %s \n",(get_F95_only()     == true) ? "true" : "false");
                printf ("get_F2003_only()   = %s \n",(get_F2003_only()   == true) ? "true" : "false");
+               printf ("get_PHP_only()   = %s \n",(get_PHP_only()   == true) ? "true" : "false");
                printf ("get_binary_only()  = %s \n",(get_binary_only()  == true) ? "true" : "false");
 
             // DQ (18/2008): We not explicit mark files that require C preprocessing...
@@ -5018,17 +5033,26 @@ SgFile::callFrontEnd ()
                        }
                       else
                        {
-                         std::string frontEndCommandLineString;
-                         frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+                           if ( get_PHP_only() == true )
+                              {
+                                 string phpFileName = this->get_sourceFileNameWithPath();                                 
+                                 frontendErrorLevel = php_main(phpFileName, this);
+                              }
+                             else
+                              {
+                                 std::string frontEndCommandLineString;
+                                 frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
-                         if ( get_verbose() > 1 )
-                              printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+                                 if ( get_verbose() > 1 )
+                                    printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
 
-                         int edg_argc = 0;
-                         char **edg_argv = NULL;
-                         CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
-
-                         frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+                                 int edg_argc = 0;
+                                 char **edg_argv = NULL;
+                                 CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
+                                 
+                                 frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+                              } 
+                           
                        }
                   }
 
@@ -6022,6 +6046,8 @@ SgFile::usage ( int status )
 "     -rose:Promela_output_language\n"
 "                             force use of Promela as output language (not\n"
 "                               supported)\n"
+"     -rose:PHP_output_language\n"
+"                             force use of PHP as output language\n"
 "     -rose:outputFormat      generate code in either fixed/free format (fortran only)\n"
 "                               options are: fixedOutput|fixedFormatOutput or \n"
 "                                            freeOutput|freeFormatOutput\n"

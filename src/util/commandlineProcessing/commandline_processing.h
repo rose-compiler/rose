@@ -77,6 +77,8 @@ namespace CommandlineProcessing
           bool isFortran2003FileNameSuffix ( const std::string & suffix );
           bool isFortran2008FileNameSuffix ( const std::string & suffix );
 
+          bool isPHPFileNameSuffix ( const std::string & suffix );
+
           void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
 
