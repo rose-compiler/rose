@@ -198,7 +198,7 @@ public:
     std::vector<const Compass::Checker *>::iterator it = bases.begin();
     for (;it!=bases.end();++it) {
       const Compass::Checker* checker = *it;
-      counts[checker->getName()]=0;
+      counts[checker->checkerName]=0;
     }
   }
   std::map<std::string, unsigned int> counts;
@@ -214,7 +214,7 @@ public:
 #define generate_checker(checkerName)					\
   try {									\
     const Compass::CheckerUsingAstSimpleProcessing* const checker = dynamic_cast<Compass::CheckerUsingAstSimpleProcessing*>(checkerName##Checker);      \
-    CountingOutputObject *output = new CountingOutputObject(#CheckerName); \
+    CountingOutputObject *output = new CountingOutputObject(#checkerName); \
     if (checker) {                                                      \
       AstSimpleProcessing *traversal = checker->createSimpleTraversal(params, output);			\
       traversals.push_back(traversal);					\
