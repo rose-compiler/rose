@@ -17,7 +17,7 @@ BufferOverflow::run(string& name, SgDirectedGraphNode* node,
   // check known function calls and resolve variables
   ROSE_ASSERT(node);
 
-  cerr << " bufferoverflow->run " << node->get_name() << endl;
+  //cerr << " bufferoverflow->run " << node->get_name() << endl;
   SgAsmx86Instruction* asmNode = isSgAsmx86Instruction(node->get_SgNode());
   if (asmNode) {
 

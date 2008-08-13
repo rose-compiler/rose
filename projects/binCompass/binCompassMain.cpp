@@ -344,6 +344,7 @@ int main(int argc, char** argv) {
 	  rootNodes.size() << endl;
 	// tps 04/23/08 -- fixme: this code was broken when I added the testcase -- needs to be fixed
 	dfanalysis->init();
+	asmf->init(graph);
 	dfanalysis->traverseGraph(rootNodes, asmf, interprocedural);
       }  
     }

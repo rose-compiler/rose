@@ -271,11 +271,12 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	nodeBeforeMap.find(node);
       if (it!=nodeBeforeMap.end())
 	nodeBefore = it->second;
-      hasChanged = analysis->run(name, node, nodeBefore);
-
       // successor vector is empty on each new node
       successors.clear();
       vizzGraph->getSuccessors(node, successors);    
+
+      hasChanged = analysis->run(name, node, nodeBefore);
+
       // append the successors to the worklist
       if (RoseBin_support::DEBUG_MODE())
 	cout << ">> getting successors  (" << successors.size() << ") for : " << name << endl;

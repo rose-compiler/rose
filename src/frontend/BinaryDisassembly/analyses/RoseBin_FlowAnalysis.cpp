@@ -284,7 +284,8 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
   return NULL;
 }
 
-void RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
+void 
+RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
   vector<SgNode*> tree =NodeQuery::querySubTree(globalNode, V_SgAsmInstruction);
   vector<SgNode*>::iterator itV = tree.begin();
   for (;itV!=tree.end();itV++) {
@@ -296,7 +297,8 @@ void RoseBin_FlowAnalysis::initFunctionList(SgAsmNode* globalNode) {
   }
 }
 
-void RoseBin_FlowAnalysis::process_jumps() {
+void 
+RoseBin_FlowAnalysis::process_jumps() {
   
   cerr << "\n >>>>>>>>> processing jumps ... " << endl;
   rose_hash::hash_map <uint64_t, SgAsmInstruction* >::iterator it;      
@@ -453,7 +455,8 @@ RoseBin_FlowAnalysis::createInstToNodeTable() {
 /****************************************************
  * traverse the binary AST
  ****************************************************/
-void RoseBin_FlowAnalysis::visit(SgNode* node) {
+void 
+RoseBin_FlowAnalysis::visit(SgNode* node) {
 
   //  cerr << " traversing node " << binNode << endl;
   if (isSgAsmFunctionDeclaration(node) ) {
@@ -516,9 +519,10 @@ void RoseBin_FlowAnalysis::visit(SgNode* node) {
 }
 
 
-void RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
-					     int functionSize, int countDown,
-					     string& currentFunctionName, int func_nr) {
+void 
+RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
+					int functionSize, int countDown,
+					string& currentFunctionName, int func_nr) {
 
   while (!worklist_forthisfunction.empty()) {
     SgAsmInstruction* binInst = worklist_forthisfunction.top();
