@@ -108,6 +108,11 @@ if ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT
   ROSE_WINE_INCLUDES = -I$(wine_path)/include
 endif
 
+if ROSE_USE_PHP
+  ROSE_PHP_INCLUDES = -I$(php_path)/include/phc -I$(php_path)/include/php
+  ROSE_PHP_LIBS = -lphp5 -lphc -lltdl
+  ROSE_PHP_LIBS_WITH_PATH = $(php_path)/lib/libphc.so $(php_path)/lib/libphp5.so $(LIBLTDL)
+endif
 
 ROSE_INCLUDES = \
      -I$(top_srcdir)/src \
@@ -124,6 +129,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/SageIII/astHiddenTypeAndDeclarationLists \
      -I$(top_builddir)/src/frontend/SageIII/astFileIO \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
+     -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/graph \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses \
@@ -135,6 +141,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/backend/unparser/languageIndependenceSupport \
      -I$(top_srcdir)/src/backend/unparser/CxxCodeGeneration \
      -I$(top_srcdir)/src/backend/unparser/FortranCodeGeneration \
+     -I$(top_srcdir)/src/backend/unparser/PHPCodeGeneration \
      -I$(top_srcdir)/src/backend/asmUnparser \
      -I$(top_srcdir)/src/util \
      -I$(top_srcdir)/src/util/support \
@@ -184,6 +191,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
+	 $(ROSE_PHP_INCLUDES) \
      $(VALGRIND_CFLAGS) \
 	 $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
 #     $(WAVE_INCLUDES) \
@@ -212,7 +220,7 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
     $(SQLITE_DATABASE_LIBS) $(LIB_QT)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
 	$(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
 	$(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-	$(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) 
+	$(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH)
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
 # development. The use of the seperate libraries make the linking faster where the

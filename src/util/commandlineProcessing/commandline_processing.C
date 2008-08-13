@@ -866,6 +866,25 @@ CommandlineProcessing::isUPCFileNameSuffix ( const std::string & suffix )
      return returnValue;
    }
 
+bool
+CommandlineProcessing::isPHPFileNameSuffix ( const std::string & suffix )
+   {
+     bool returnValue = false;
+
+  // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
+
+#if(CASE_SENSITIVE_SYSTEM == 1)
+     if ( suffix == "php" )
+#else//It is a case insensitive system
+     if ( suffix == "php" )
+#endif
+        {
+          returnValue = true;
+        }
+
+     return returnValue;
+   }
+
 void
 CommandlineProcessing::initSourceFileSuffixList ( )
    {
@@ -908,6 +927,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F08");
      // Liao (6/6/2008)  Support for UPC   
           validSourceFileSuffixes.push_back(".upc");
+          validSourceFileSuffixes.push_back(".php");
 #else 
        // it is a case insensitive system
           validSourceFileSuffixes.push_back(".c");
@@ -935,6 +955,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
           validSourceFileSuffixes.push_back(".upc");
+          validSourceFileSuffixes.push_back(".php");
 #endif
           first_call = false;
         }
