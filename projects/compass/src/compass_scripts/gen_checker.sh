@@ -104,7 +104,7 @@ libcompass.so: compass.h compass.C
 	g++ -fPIC -Wall -shared -o libcompass.so compass.C -I\$(ROSE_INSTALL)/include
 
 ${FILE_NAME_PREFIX}Test: ${FILE_NAME_PREFIX}.C ${FILE_NAME_PREFIX}Main.C libcompass.so
-	g++ -fPIC -Wall -o ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}.C ${FILE_NAME_PREFIX}Main.C -I\$(ROSE_INSTALL)/include \$(LINKER_FLAGS)
+	g++ -fPIC -Wall -o ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Main.C ${FILE_NAME_PREFIX}.C -I\$(ROSE_INSTALL)/include \$(LINKER_FLAGS)
 
 test: ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Test1.C
 	./${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Test1.C
@@ -178,6 +178,8 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}.C" <<END
 
 #include "compass.h"
 
+extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker;
+
 namespace CompassAnalyses
    { 
      namespace ${CLASS_NAME_PREFIX}
@@ -221,7 +223,7 @@ namespace CompassAnalyses
 
 CompassAnalyses::${CLASS_NAME_PREFIX}::
 CheckerOutput::CheckerOutput ( SgNode* node )
-   : OutputViolationBase(node,checkerName,shortDescription)
+   : OutputViolationBase(node,::${FILE_NAME_PREFIX}Checker->checkerName,::${FILE_NAME_PREFIX}Checker->shortDescription)
    {}
 
 CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal::
@@ -257,8 +259,8 @@ extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker =
   new Compass::CheckerUsingAstSimpleProcessing(
         "${CLASS_NAME_PREFIX}",
      // Descriptions should not include the newline character "\n".
-        "Short description not written yet!".
-        "Long description not written yet!".
+        "Short description not written yet!",
+        "Long description not written yet!",
         Compass::C | Compass::Cpp,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
         run,
@@ -273,6 +275,7 @@ cat >./"${SOURCE_DIRECTORY_NAME}/${FILE_NAME_PREFIX}Main.C" <<END
 //
 
 #include "compass.h"
+extern const Compass::Checker* const ${FILE_NAME_PREFIX}Checker;
 extern const Compass::Checker* const myChecker = ${FILE_NAME_PREFIX}Checker;
 
 #include "compass.C"
