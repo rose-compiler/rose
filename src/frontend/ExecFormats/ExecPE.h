@@ -428,7 +428,11 @@ class PEImportSection : public PESection {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* WARNING: Instances of this type are aligned on 4-byte boundaries, which means sizeof() will return 20 rather than 18. */
-#define COFFSymbol_disk_size 18
+
+// DQ (8/12/2008): Define this as an int to avoid it being expanded as a macro in the ROSE IR nodes!
+// #define COFFSymbol_disk_size 18
+const unsigned COFFSymbol_disk_size = 18;
+
 struct COFFSymbol_disk {
     union {
         char            st_name[8];

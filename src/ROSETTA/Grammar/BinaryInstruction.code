@@ -359,8 +359,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
                     ShortRead(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
                     SgAsmGenericSection *section;   /* Section from which read occurred; null implies file-level write */
-                    Exec::addr_t         offset;    /* Byte offset into section (or file) */
-                    Exec::addr_t         size;      /* Number of bytes of attempted read */
+                    addr_t         offset;    /* Byte offset into section (or file) */
+                    addr_t         size;      /* Number of bytes of attempted read */
                     std::string          mesg;      /* Optional message */
              };
 
@@ -374,8 +374,8 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
                     ShortWrite(class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
                        : section(section), offset(offset), size(size), mesg(mesg) {}
                     SgAsmGenericSection *section;  /* Section to which write occurred; null implies file-level write */
-                    Exec::addr_t         offset;   /* Byte offset into section (or file) */
-                    Exec::addr_t         size;     /* Number of bytes of attempted write */
+                    addr_t         offset;   /* Byte offset into section (or file) */
+                    addr_t         size;     /* Number of bytes of attempted write */
                     std::string          mesg;     /* Optional message */
              };
 
@@ -619,10 +619,14 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
               PURPOSE_PROC_SPECIFIC                               /* Some processor specific purpose */
           };
 
-// DQ (11/8/2008): used in the PE support.
-// Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
-// static void hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
-static void hexdump(FILE *f, addr_t base_addr, const std::string & prefix, const SgCharList & data, size_t n);
+
+  // DQ (12/8/2008): Hook into the construction of the binary file format support.
+     static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
+
+  // DQ (11/8/2008): used in the PE support.
+  // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
+  // static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
+     static void hexdump(FILE *f, addr_t base_addr, const std::string & prefix, const SgCharList & data, size_t n);
 
 /* Return byte order of caller */
 static ByteOrder host_order() {
@@ -870,11 +874,11 @@ HEADER_GENERIC_SECTION_START
               SP_OTHER                                            /* File-specified purpose other than any given in this enum */
              };
 
-          typedef std::multimap<Exec::addr_t,Exec::addr_t> RefMap;        /* Used for keeping track of referenced areas */
-          typedef std::pair<Exec::addr_t,Exec::addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
+          typedef std::multimap<addr_t,addr_t> RefMap;        /* Used for keeping track of referenced areas */
+          typedef std::pair<addr_t,addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
           typedef std::vector<ExtentPair> ExtentVector;       /* Vector of extents; usually non-overlapping, sorted by starting offset */
 
-          SgAsmGenericSection(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size);
+          SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size);
 
           virtual ~SgAsmGenericSection();
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
@@ -884,34 +888,34 @@ HEADER_GENERIC_SECTION_START
 
        /* Functions for section extent within the file */
        // SgAsmGenericFile   *get_file() {return file;}      /* read-only */
-       // Exec::addr_t        get_size() {return size;}       /* read-only */
-       // Exec::addr_t        get_offset() {return offset;}   /* read-only */
-          Exec::addr_t        end_offset(); /* file offset for end of section */
-          void                extend(Exec::addr_t nbytes);         /* make section larger by extending the end */
-          void                extend_up_to(Exec::addr_t nbytes);      /* like extend() but more relaxed at EOF */
-          Exec::addr_t        write(FILE *f, Exec::addr_t offset, size_t bufsize, const void *buf);
-          Exec::addr_t        write(FILE *f, Exec::addr_t offset, const std::string &str);
-          Exec::addr_t        write(FILE *f, Exec::addr_t offset, char c);
+       // addr_t        get_size() {return size;}       /* read-only */
+       // addr_t        get_offset() {return offset;}   /* read-only */
+          addr_t        end_offset(); /* file offset for end of section */
+          void                extend(addr_t nbytes);         /* make section larger by extending the end */
+          void                extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
+          addr_t        write(FILE *f, addr_t offset, size_t bufsize, const void *buf);
+          addr_t        write(FILE *f, addr_t offset, const std::string &str);
+          addr_t        write(FILE *f, addr_t offset, char c);
 
        // DQ (8/9/2008): Added a new function to support STL types.
-          Exec::addr_t        write(FILE *f, Exec::addr_t offset, const std::vector<unsigned char> & buf);
+          addr_t        write(FILE *f, addr_t offset, const std::vector<unsigned char> & buf);
 
        /* Functions for accessing content */
-       // const unsigned char *content(Exec::addr_t offset, Exec::addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
-          const SgUnsignedCharList content(Exec::addr_t offset, Exec::addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
-          void                 content(Exec::addr_t offset, Exec::addr_t size, void *buf); /* copies content into BUF */
-          const char          *content_str(Exec::addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
+       // const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+          const SgUnsignedCharList content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+          void                 content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
+          const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
           const ExtentVector& congeal();                      /* congeal referenced areas into holes */
           const RefMap&       uncongeal();                    /* uncongeal holes back into references */
 
        /* Functions related to mapping of sections into executable memory */
           bool                is_mapped();
-          void                set_mapped(Exec::addr_t rva, Exec::addr_t size);
+          void                set_mapped(addr_t rva, addr_t size);
           void                clear_mapped();
 
        // DQ (8/8/2008): This is not standard semantics for an access function
-          Exec::addr_t        get_mapped_rva();
-          Exec::addr_t        get_mapped_size();
+          addr_t        get_mapped_rva();
+          addr_t        get_mapped_size();
 
        // bool                get_eperm() {return eperm;}
        // void                set_eperm(bool b) {eperm=b;}
@@ -920,7 +924,7 @@ HEADER_GENERIC_SECTION_START
        // bool                get_rperm() {return rperm;}
        // void                set_rperm(bool b) {rperm=b;}
 
-          Exec::addr_t              get_va_offset(Exec::addr_t va);       /* Return file offset for specified virtual address */
+          addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 
        /* Accessors for private members */
        // SgAsmGenericHeader          *get_header() {return header;}
@@ -943,7 +947,7 @@ HEADER_GENERIC_SECTION_START
        // bool                get_synthesized() {return synthesized;}
 
      protected:
-          void                ctor(SgAsmGenericFile*, Exec::addr_t offset, Exec::addr_t size);
+          void                ctor(SgAsmGenericFile*, addr_t offset, addr_t size);
           void                unparse_holes(FILE*);
 
 HEADER_GENERIC_SECTION_END
@@ -951,7 +955,7 @@ HEADER_GENERIC_SECTION_END
 HEADER_GENERIC_HEADER_START
 
      public:
-          SgAsmGenericHeader(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t size)
+          SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
              : SgAsmGenericSection(ef, offset, size), p_base_va(0)
              { ctor(ef, offset, size); }
 
@@ -975,11 +979,11 @@ HEADER_GENERIC_HEADER_START
        /* Accessors for protected/private members */
        // SgAsmGenericFormat & get_exec_format() {return p_exec_format;}
           std::vector<unsigned char>& get_magic() {return p_magic;}
-          const SgAsmGenericArchitecture& get_target() const { ROSE_ASSERT(p_target != NULL); return *p_target; }
-       // Exec::addr_t get_base_va() const {return p_base_va;}
-          Exec::addr_t get_entry_rva() const {return p_entry_rvas[0];}
-          const std::vector<Exec::addr_t>& get_entry_rvas() const {return p_entry_rvas;}
-          void add_entry_rva(Exec::addr_t rva) { p_entry_rvas.push_back(rva);}
+       // const SgAsmGenericArchitecture& get_target() const { ROSE_ASSERT(p_target != NULL); return *p_target; }
+       // addr_t get_base_va() const {return p_base_va;}
+          addr_t get_entry_rva() const {return p_entry_rvas[0];}
+       // const std::vector<addr_t>& get_entry_rvas() const {return p_entry_rvas;}
+          void add_entry_rva(addr_t rva) { p_entry_rvas.push_back(rva);}
 
        /* Convenience functions */
        // SgAsmGenericFormat::ByteOrder get_sex() const { return p_exec_format.p_sex; }
@@ -997,7 +1001,7 @@ HEADER_GENERIC_HEADER_START
        // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
 
      private:
-          void ctor(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size);
+          void ctor(SgAsmGenericFile *f, addr_t offset, addr_t size);
 
 HEADER_GENERIC_HEADER_END
 
@@ -1015,7 +1019,7 @@ HEADER_GENERIC_FILE_START
 
        /* File contents */
        // DQ (8/7/2008): Coment this out while I figure out how to handle "sb" as a type
-          Exec::addr_t get_size() { return p_sb.st_size; }      /* Size of file in bytes as of time it was opened */
+          addr_t get_size() { return p_sb.st_size; }      /* Size of file in bytes as of time it was opened */
 
        // const unsigned char *content() {return p_data;}       /* File contents */
        // const SgCharList & content() { return p_data; }       /* File contents */
@@ -1029,11 +1033,11 @@ HEADER_GENERIC_FILE_START
 
           SgAsmGenericSection *get_section_by_id(int id);             /* Returns first section having specified ID */
           SgAsmGenericSection *get_section_by_name(std::string, char sep='\0');/* Find section within file by name */
-          std::vector<SgAsmGenericSection*> get_sections_by_offset(Exec::addr_t offset, Exec::addr_t size);
-          std::vector<SgAsmGenericSection*> get_sections_by_rva(Exec::addr_t rva); /*Return sections mapped to specified relative virtual address */
-          SgAsmGenericSection *get_section_by_va(Exec::addr_t va);          /* Return single section mapped to specified virtual address */
-          std::vector<SgAsmGenericSection*> get_sections_by_va(Exec::addr_t va); /*Return all sections mapped to specified virtual address */
-          Exec::addr_t get_next_section_offset(Exec::addr_t offset);      /* Find file offset for next section */
+          std::vector<SgAsmGenericSection*> get_sections_by_offset(addr_t offset, addr_t size);
+          std::vector<SgAsmGenericSection*> get_sections_by_rva(addr_t rva); /*Return sections mapped to specified relative virtual address */
+          SgAsmGenericSection *get_section_by_va(addr_t va);          /* Return single section mapped to specified virtual address */
+          std::vector<SgAsmGenericSection*> get_sections_by_va(addr_t va); /*Return all sections mapped to specified virtual address */
+          addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
           void fill_holes();                                  /* Find holes in file and create sections to fill them */
           void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
 
@@ -1082,12 +1086,12 @@ HEADER_GENERIC_ARCHITECTURE_START
 
        // DQ: changed implementation to set data members directly instead of calling depretated access function,
        // this function should be depricated in favor of the automatically generated constructor tacking two arguments.
-          SgAsmGenericArchitecture(SgAsmGenericFormat::InsSetArchitecture isa) { p_isa = isa; p_other = 0; }
+       // SgAsmGenericArchitecture(SgAsmGenericFormat::InsSetArchitecture isa) { p_isa = isa; p_other = 0; }
 
        // void set_isa(Exec::InsSetArchitecture isa) { printf ("Mixing initialization of multiple data members! \n"); ROSE_ASSERT(false); this->p_isa = isa; p_other = 0; }
 
        // Overloaded access function, should be depricated, leave in place for now!
-          void set_isa(SgAsmGenericFormat::InsSetArchitecture isa, unsigned data) { this->p_isa = isa; this->p_other = data; }
+       // void set_isa(SgAsmGenericFormat::InsSetArchitecture isa, unsigned data) { this->p_isa = isa; this->p_other = data; }
 
        // Access functions are automatically generated by ROSETTA
        // Exec::InsSetArchitecture get_isa() const { return isa; }
@@ -1223,8 +1227,10 @@ HEADER_ELF_HEADER_START
                uint16_t            e_shstrndx;
              } __attribute__((packed));
 
+#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
        // DQ (8/10/2008): This constructor is implemented in sageSupport.C and will be removed later once the new IR nodes are integrated into use.
           SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header );
+#endif
 
           SgAsmElfFileHeader(SgAsmGenericFile *f, addr_t offset)   /* assume 32-bit for now and fix inside ctor() if necessary */
              : SgAsmGenericHeader(f, offset, 0)
@@ -1996,6 +2002,10 @@ HEADER_PE_COFF_SYMBOL_LIST_END
 
 HEADER_PE_COFF_SYMBOL_START
      public:
+
+       // This was previously a #define macro in ExecPE.h (so we have to avoid the macro defining it as "static const unsigned int 18 = 18"
+          static const unsigned int COFFSymbol_disk_size = 18;
+
           struct COFFSymbol_disk {
                union {
                    char            st_name[8];
@@ -2838,7 +2848,7 @@ HEADER_DOS_HEADER_START
                uint16_t    segment;
              } __attribute__((packed));
 
-          SgAsmDOSFileHeader(SgAsmGenericFile *f, Exec::addr_t offset);
+          SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset);
        // virtual ~DOSFileHeader() {}
 
           virtual void unparse(FILE*);
@@ -2847,7 +2857,7 @@ HEADER_DOS_HEADER_START
        // Required function to overload base class (ROSETTA does not permit the base class function to be pure virtual, as I recall)
           virtual const char *format_name();
 
-          SgAsmGenericSection *add_rm_section(Exec::addr_t max_offset=0);
+          SgAsmGenericSection *add_rm_section(addr_t max_offset=0);
 
        // Use the automatically generated access functions 
        // SgAsmGenericSection *get_relocs() {return relocs;}
@@ -2861,7 +2871,7 @@ HEADER_DOS_HEADER_START
           static bool is_DOS(SgAsmGenericFile*);
 
      private:
-          void ctor(SgAsmGenericFile *f, Exec::addr_t offset);
+          void ctor(SgAsmGenericFile *f, addr_t offset);
           void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*);
 
 HEADER_DOS_HEADER_END
@@ -3638,35 +3648,35 @@ SOURCE_GENERIC_SEGMENT_END
 
 SOURCE_GENERIC_SECTION_START
 
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size)
    : p_file(NULL), p_header(NULL), p_size(0), p_offset(0), p_data(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
      p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
      ctor(f, offset, size);
    }
 
-Exec::addr_t
+SgAsmExecutableFileFormat::addr_t
 SgAsmGenericSection::end_offset()
    {
      return p_offset + p_size;
    }
 
-Exec::addr_t
-SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, const std::string &str)
+SgAsmExecutableFileFormat::addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, const std::string &str)
    {
      return write(f, offset, str.size(), str.c_str());
    }
 
-Exec::addr_t
-SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, char c)
+SgAsmExecutableFileFormat::addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
    {
      return write(f, offset, 1, &c);
    }
 
 // DQ (8/9/2008): Added a new function to support STL types.
-Exec::addr_t
-// SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, size_t bufsize, const std::vector<unsigned char> & buf)
-SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, const std::vector<unsigned char> & buf)
+SgAsmExecutableFileFormat::addr_t
+// SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const std::vector<unsigned char> & buf)
+SgAsmGenericSection::write(FILE *f, addr_t offset, const std::vector<unsigned char> & buf)
    {
      return write(f, offset, buf.size(), (void*) &(buf[0]));
    }
@@ -3678,7 +3688,7 @@ SgAsmGenericSection::is_mapped()
    }
 
 void
-SgAsmGenericSection::set_mapped(Exec::addr_t rva, Exec::addr_t size)
+SgAsmGenericSection::set_mapped(addr_t rva, addr_t size)
    {
      p_mapped = true;
      p_mapped_rva = rva;
@@ -3693,13 +3703,13 @@ SgAsmGenericSection::clear_mapped()
    }
 
 // DQ (8/8/2008): This is not standard semantics for an access function
-Exec::addr_t
+SgAsmExecutableFileFormat::addr_t
 SgAsmGenericSection::get_mapped_rva()
    {
      return p_mapped ? p_mapped_rva  : 0;
    }
 
-Exec::addr_t
+SgAsmExecutableFileFormat::addr_t
 SgAsmGenericSection::get_mapped_size()
    {
      return p_mapped ? p_mapped_size : 0;
@@ -3996,7 +4006,7 @@ SOURCE_PE_SECTION_TABLE_END
 
 SOURCE_PE_COFF_SYMBOL_TABLE_START
 SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmGenericFile *f, SgAsmPEFileHeader *fhdr)
-   : SgAsmGenericSection(f, fhdr->get_e_coff_symtab(), fhdr->get_e_coff_nsyms() * COFFSymbol_disk_size)
+   : SgAsmGenericSection(f, fhdr->get_e_coff_symtab(), fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size)
    {
      ctor(f, fhdr);
    }
@@ -4348,7 +4358,7 @@ SOURCE_LE_SECTION_TABLE_ENTRY_END
 
 SOURCE_DOS_HEADER_START
 
-SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f, Exec::addr_t offset)
+SgAsmDOSFileHeader::SgAsmDOSFileHeader(SgAsmGenericFile *f, addr_t offset)
    : SgAsmGenericHeader(f, offset, sizeof(SgAsmDOSFileHeader::DOSFileHeader_disk)), p_relocs(NULL), p_rm_section(NULL)
    {
      ctor(f, offset);

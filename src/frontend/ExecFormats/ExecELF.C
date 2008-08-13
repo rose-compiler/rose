@@ -4,6 +4,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "ExecGeneric.h"
+#include "ExecELF.h"
+
 /* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
  * unsigned datatype as the address. */
 #define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))
@@ -1410,7 +1413,14 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
      ElfFileHeader *fhdr = new ElfFileHeader(f, 0);
 
      ROSE_ASSERT(fhdr != NULL);
+
+#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
+  // DQ (12/8/2008): This is the link to the older binary file format support
      SgAsmElfFileHeader* roseElfHeader = new SgAsmElfFileHeader(fhdr);
+#else
+  // DQ (12/8/2008): This will fail in the assertion statement (next statement)
+     SgAsmElfFileHeader* roseElfHeader = NULL;
+#endif
      ROSE_ASSERT(roseElfHeader != NULL);
      asmFile->set_header(roseElfHeader);
 

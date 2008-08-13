@@ -118,7 +118,11 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
       case 0x40: p_target->set_isa(ISA_MIPS_MarkI);   break; /*R2000, R3000*/
       case 0x41: p_target->set_isa(ISA_MIPS_MarkII);  break; /*R6000*/
       case 0x42: p_target->set_isa(ISA_MIPS_MarkIII); break; /*R4000*/
-      default:   p_target->set_isa(ISA_OTHER, p_e_cpu_type); break;
+   // default:   p_target->set_isa(ISA_OTHER, p_e_cpu_type); break;
+      default:
+        p_target->set_isa(ISA_OTHER);
+        p_target->set_other(p_e_cpu_type);
+        break;
     }
 
     /* Entry point */

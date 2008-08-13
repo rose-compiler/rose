@@ -7,6 +7,14 @@
 #include <dlfcn.h>
 #endif
 
+#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
+// DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
+// will be removed later once the new IR nodes are integrated into use.
+
+#include "ExecELF.h"
+
+#endif
+
 using namespace std;
 
 // DQ (1/5/2008): These are functions separated out of the generated
@@ -2180,6 +2188,11 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
 
      printf ("Inside of generateBinaryExecutableFileInformation_ELF() \n");
 
+  // DQ (12/8/2008): Why have we reverted to this older preliminary version of the binary 
+  // format reader, weren't we supposed to be using Robb's work?
+     printf ("\n\nWhy is this older binary file format being used!  \n\n\n");
+  // ROSE_ASSERT(false);
+
      ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
 
      asmFile->set_name(sourceFilename);
@@ -2762,11 +2775,17 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
    {
   // Need a mechanism to select what kind of binary we will process.
 
-#if USE_NEW_BINARY_FORMAT_READER
-     printf ("Calling Exec::parseBinaryFormat() \n");
+// #if USE_NEW_BINARY_FORMAT_READER
+
+// UNCOMMENT THIS CODE TO TEST ROBB'S BINARY FORMAT SUPPORT USING NEW IR NODES.
+#if 0
+     printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
+
   // Exec::ExecFile* binaryFormat = Exec::parseBinaryFormat(sourceFilename,asmFile);
   // ROSE_ASSERT(binaryFormat != NULL);
-     Exec::parseBinaryFormat(sourceFilename,asmFile);
+
+  // Exec::parseBinaryFormat(sourceFilename,asmFile);
+     SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
 
      asmFile->set_name(sourceFilename);
 
@@ -2811,6 +2830,10 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
 
 
+#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
+// DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
+// will be removed later once the new IR nodes are integrated into use.
+
 SgAsmElfFileHeader::
 SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
    {
@@ -2847,7 +2870,7 @@ SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
   // printf ("Exiting at base of SgAsmElfHeader constructor \n");
   // ROSE_ASSERT(false);
    }
- 
+#endif
 
 
 

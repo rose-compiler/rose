@@ -201,7 +201,9 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         throw FormatError("use of reserved value for Windows NE header e_exetype");
 
       default:
-        p_target->set_isa(ISA_OTHER, p_e_exetype);
+     // p_target->set_isa(ISA_OTHER, p_e_exetype);
+        p_target->set_isa(ISA_OTHER);
+        p_target->set_other(p_e_exetype);
         break;
     }
 

@@ -277,7 +277,8 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         break;
 
       default:
-        p_target->set_isa(ISA_OTHER, p_e_cpu_type);
+        p_target->set_isa(ISA_OTHER);
+        p_target->set_other(p_e_cpu_type);
         break;
     }
 
@@ -1009,7 +1010,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 {
     static const bool debug = false;
     COFFSymbol_disk disk;
-    symtab->content(idx*COFFSymbol_disk_size, COFFSymbol_disk_size, &disk);
+    symtab->content(idx * COFFSymbol_disk_size, COFFSymbol_disk_size, &disk);
     if (disk.st_zero == 0) {
         p_st_name_offset = le_to_host(disk.st_offset);
         if (p_st_name_offset < 4) throw FormatError("name collides with size field");
@@ -1316,7 +1317,7 @@ SgAsmCoffSymbolTable::ctor( SgAsmGenericFile *ef, SgAsmPEFileHeader *fhdr)
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
-    addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * COFFSymbol_disk_size;
+    addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(ef, strtab_offset, sizeof(uint32_t));
     p_strtab->set_synthesized(true);
     p_strtab->set_name("COFF Symbol Strtab");
@@ -1346,7 +1347,7 @@ SgAsmCoffSymbolTable::unparse(FILE *f)
         SgAsmCoffSymbol *symbol = p_symbols->get_symbols()[i];
         SgAsmCoffSymbol::COFFSymbol_disk disk;
         symbol->encode(&disk);
-        spos = write(f, spos, COFFSymbol_disk_size, &disk);
+        spos = write(f, spos, SgAsmCoffSymbol::COFFSymbol_disk_size, &disk);
      // spos = write(f, spos, symbol->get_aux_size(), symbol->get_aux_data());
         spos = write(f, (Exec::addr_t) spos, symbol->get_aux_data());
     }

@@ -25,11 +25,16 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+    ROSE_ASSERT(f != NULL);
+    printf ("SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
+
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
     ROSE_ASSERT(0 == p_size);
     Elf32FileHeader_disk disk32;
     extend_up_to(sizeof(disk32));
     content(0, sizeof(disk32), &disk32);
+
+    ROSE_ASSERT(p_exec_format != NULL);
 
     /* Check magic number early */
     if (disk32.e_ident_magic[0]!=0x7f || disk32.e_ident_magic[1]!='E' ||
@@ -40,7 +45,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
      * that it was the native order. We don't have the luxury of decoding the file on the native machine, so in that case we
      * try to infer the byte order by looking at one of the other multi-byte fields of the file. */
     ByteOrder sex;
-    if (1==disk32.e_ident_data_encoding) {
+    if (1 == disk32.e_ident_data_encoding) {
         sex = ORDER_LSB;
     } else if (2==disk32.e_ident_data_encoding) {
         sex = ORDER_MSB;
@@ -59,19 +64,28 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         sex = host_order();
     } else if ((disk32.e_type & 0x00ff)==0) {
         /* One of the low-valued file types in reverse native order */
-        sex = host_order()==ORDER_LSB ? ORDER_MSB : ORDER_LSB;
+        sex = host_order() == ORDER_LSB ? ORDER_MSB : ORDER_LSB;
     } else {
         /* Ambiguous order */
         throw FormatError("invalid ELF header byte order");
     }
 
+    ROSE_ASSERT(p_exec_format != NULL);
+
+    printf ("disk32.e_ident_file_class = %u \n",disk32.e_ident_file_class);
+
     /* Decode header to native format */
-    if (1==disk32.e_ident_file_class) {
+    if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
-        ROSE_ASSERT(sizeof(p_e_ident_padding)==sizeof(disk32.e_ident_padding));
+
+        printf ("p_e_ident_padding.size()       = %zu \n",p_e_ident_padding.size());
+        printf ("sizeof(disk32.e_ident_padding) = %zu \n",sizeof(disk32.e_ident_padding));
+
+     // ROSE_ASSERT(sizeof(p_e_ident_padding) == sizeof(disk32.e_ident_padding));
      // memcpy(p_e_ident_padding, disk32.e_ident_padding, sizeof(p_e_ident_padding));
         for (int i = 0; i < 9; i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
+        ROSE_ASSERT(p_e_ident_padding.size() == sizeof(disk32.e_ident_padding));
 
         p_e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
         p_e_ident_data_encoding = disk_to_host(sex, disk32.e_ident_data_encoding);
@@ -95,10 +109,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         Elf64FileHeader_disk disk64;
         extend_up_to(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
         content(0, sizeof disk64, &disk64);
-        ROSE_ASSERT(sizeof(p_e_ident_padding)==sizeof(disk64.e_ident_padding));
+     // ROSE_ASSERT(sizeof(p_e_ident_padding)==sizeof(disk64.e_ident_padding));
      // memcpy(p_e_ident_padding, disk64.e_ident_padding, sizeof(p_e_ident_padding));
         for (int i = 0; i < 9; i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
+        ROSE_ASSERT(p_e_ident_padding.size() == sizeof(disk64.e_ident_padding));
 
         p_e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
         p_e_ident_data_encoding = disk_to_host(sex, disk64.e_ident_data_encoding);
@@ -155,6 +170,10 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_exec_format->set_abi_version(0);
     //exec_format.word_size = ...; /*set above*/
 
+ // default values are: isa = ISA_UNSPECIFIED and other = 0
+    set_target(new SgAsmGenericArchitecture());
+    ROSE_ASSERT(get_target() != NULL);
+
     /* Target architecture */
     switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
       case 0:
@@ -189,7 +208,9 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
-        p_target->set_isa(ISA_OTHER, p_e_machine);
+     // p_target->set_isa(ISA_OTHER, p_e_machine);
+        p_target->set_isa(ISA_OTHER);
+        p_target->set_other(p_e_machine);
         break;
     }
 
@@ -198,7 +219,12 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Entry point */
     p_base_va = 0;
+
+    printf ("p_e_entry = %zu \n",p_e_entry);
+
     add_entry_rva(p_e_entry);
+
+    printf ("Leaving SgAsmElfFileHeader::ctor() \n");
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
@@ -524,6 +550,9 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
             strtab = new SgAsmElfSection(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_st_entry(shdr);
+
+         // DQ: This line is causing problems!
+            printf ("shdr->get_sh_name() = %zu \n",shdr->get_sh_name());
             strtab->set_name(strtab->content_str(shdr->get_sh_name()));
         }
 
@@ -1430,12 +1459,22 @@ bool
 SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 {
     SgAsmElfFileHeader *hdr = NULL;
+
+    ROSE_ASSERT(f != NULL);
     
     try {
+        printf ("Before SgAsmElfFileHeader constructor! \n");
         hdr = new SgAsmElfFileHeader(f, 0);
+        printf ("After SgAsmElfFileHeader constructor! \n");
+
+        ROSE_ASSERT(hdr != NULL);
     } catch (...) {
+        printf ("General catch() \n");
         return false;
     }
+
+    printf ("Leaving SgAsmElfFileHeader::is_ELF() \n");
+
     delete hdr;
     return true;
 }

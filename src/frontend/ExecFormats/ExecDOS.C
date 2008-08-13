@@ -4,6 +4,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "ExecGeneric.h"
+#include "ExecDOS.h"
+
 namespace Exec {
 namespace DOS {
 

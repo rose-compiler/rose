@@ -1,9 +1,9 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-#include "ExecELF.h"
-#include "ExecLE.h"
-#include "ExecNE.h"
-#include "ExecPE.h"
+// #include "ExecELF.h"
+// #include "ExecLE.h"
+// #include "ExecNE.h"
+// #include "ExecPE.h"
 
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
@@ -570,21 +570,28 @@ const SgUnsignedCharList
 SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
 {
     SgUnsignedCharList returnValue;
+
+ // addr_t is a typedef for: uint64_t
+    printf ("offset = %zu p_size = %zu size = %zu \n",offset,p_size,size);
+
     if (offset > this->p_size || offset+size > this->p_size)
         throw SgAsmGenericFile::ShortRead(this, offset, size);
 
     if (!p_congealed && size > 0)
         p_referenced.insert(std::make_pair(offset, offset+size));
 
+#if 1
  // DQ (8/8/2008): Added cast, but this should be fixed better.
  // return (const unsigned char *) p_data + offset;
  // for (addr_t i = 0; i < offset; i++)
- //      returnValue.push_back(p_data[i]);
- // return returnValue
-
- // DQ (8/10/2008): this is a more efficient (shorter) implementation.
+    for (addr_t i = offset; i < offset+size; i++)
+         returnValue.push_back(p_data[i]);
+    return returnValue;
+#else
+ // DQ (8/10/2008): this should be a more efficient (shorter) implementation.
     addr_t position = (addr_t)p_data + offset;
     return SgUnsignedCharList (position,position+size);
+#endif
 }
 #endif
 
@@ -614,11 +621,16 @@ const char *
 SgAsmGenericSection::content_str(Exec::addr_t offset)
 {
  // const char *ret = (const char*)content(offset, 0);
-    const char *ret = (const char*) &(content(offset, 0)[0]);
+ // const char *ret = (const char*) &(content(offset, 0)[0]);
+    const char *ret = (const char*) (p_data + offset);
     size_t nchars=0;
-    while (offset+nchars< p_size && ret[nchars]) nchars++;
+
+    printf ("SgAsmGenericSection::content_str(offset): p_data = %p offset = %zu p_size = %zu \n",p_data,offset,p_size);
+
+    while (offset+nchars < p_size && ret[nchars]) nchars++;
     nchars++; /*NUL*/
-    if (offset+nchars> p_size)
+
+    if (offset+nchars > p_size)
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
     if (!p_congealed)
         p_referenced.insert(std::make_pair(offset, offset+nchars));
@@ -731,6 +743,7 @@ void
 SgAsmGenericSection::extend_up_to(Exec::addr_t size)
 {
     ROSE_ASSERT(p_file);
+
     if (p_offset + this->p_size + size > p_file->get_size()) {
         ROSE_ASSERT(this->p_offset <= p_file->get_size());
         this->p_size = p_file->get_size() - this->p_offset;
@@ -875,6 +888,13 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     set_synthesized(true);
     set_purpose(SP_HEADER);
     ef->add_header(this);
+
+ // The SgAsmGenericFormat is contained as a pointer and not a value data member, 
+ // so we have to build one and initialize the pointer.
+    SgAsmGenericFormat* local_exec_format = new SgAsmGenericFormat();
+    ROSE_ASSERT(local_exec_format != NULL);
+    set_exec_format(local_exec_format);
+    ROSE_ASSERT(p_exec_format != NULL);
 }
 
 /* Destructor must remove the header from its parent file's headers list. */
@@ -1124,48 +1144,33 @@ void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::st
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
 void
-parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
+SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
 {
      SgAsmGenericFile *ef = new SgAsmGenericFile(name.c_str());
-    
-     asmFile->set_name(name);
-#if 0
-     if (ELF::is_ELF(ef))
-        {
-          ELF::parseBinaryFormat(ef,asmFile);
-        }
-       else
-        {
-          if (PE::is_PE(ef))
-             {
-               PE::parseBinaryFormat(ef,asmFile);
-             }
-            else
-             {
-               delete ef;
-               throw SgAsmGenericFile::FormatError("unrecognized file format");
-             }
-        }
-#endif
+     ROSE_ASSERT(ef != NULL);
 
-    if (SgAsmElfFileHeader::is_ELF(ef))
+     asmFile->set_name(name);
+
+     SgAsmGenericHeader* executableHeader = NULL;
+
+     if (SgAsmElfFileHeader::is_ELF(ef))
        {
       // ELF::parse(ef);
-         SgAsmElfFileHeader::parse(ef);
+         executableHeader = SgAsmElfFileHeader::parse(ef);
        }
       else
        {
          if (SgAsmPEFileHeader::is_PE(ef))
             {
            // PE::parse(ef);
-              SgAsmPEFileHeader::parse(ef);
+              executableHeader = SgAsmPEFileHeader::parse(ef);
             }
            else
             {
               if (SgAsmNEFileHeader::is_NE(ef))
                  {
                 // NE::parse(ef);
-                   SgAsmNEFileHeader::parse(ef);
+                   executableHeader = SgAsmNEFileHeader::parse(ef);
                  }
                 else
                  {
@@ -1173,7 +1178,7 @@ parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
                       {
                      /* or LX */
                      // LE::parse(ef);
-                        SgAsmLEFileHeader::parse(ef);
+                        executableHeader = SgAsmLEFileHeader::parse(ef);
                       }
                      else
                       {
@@ -1181,7 +1186,7 @@ parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
                            {
                           /* Must be after PE and NE all PE and NE files are also DOS files */
                           // DOS::parse(ef);
-                             SgAsmDOSFileHeader::parse(ef);
+                             executableHeader = SgAsmDOSFileHeader::parse(ef);
                            }
                           else
                            {
@@ -1230,6 +1235,11 @@ parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
                  }
             }
        }
+
+     ROSE_ASSERT(executableHeader != NULL);
+
+     asmFile->set_header(executableHeader);
+     ROSE_ASSERT(asmFile->get_header() != NULL);
 
   // return ef;
 }

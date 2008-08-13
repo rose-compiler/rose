@@ -4,6 +4,9 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#include "ExecGeneric.h"
+#include "ExecPE.h"
+
 namespace Exec {
 namespace PE {
 
@@ -1313,7 +1316,7 @@ COFFSymtab::unparse(FILE *f)
         COFFSymbol *symbol = symbols[i];
         COFFSymbol_disk disk;
         symbol->encode(&disk);
-        spos = write(f, spos, COFFSymbol_disk_size, &disk);
+        spos = write(f, spos, Exec::PE::COFFSymbol_disk_size, &disk);
         spos = write(f, spos, symbol->get_aux_size(), symbol->get_aux_data());
     }
     if (get_strtab())
