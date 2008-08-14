@@ -1,10 +1,38 @@
-V0.8.3 (in progress)
+V0.8.3 2008-08-14 GB,VP,MS
+
+* Tested with:
+ - ROSE 0.9.1a
+ - PAG 8.7.6.17
+ - flex 2.5.33
+ - bison 2.3
+ - g++ 4.1.2 20061115 (prerelease) (Debian 4.1.1-21)
 
 * strongly recommended user changes:
   - change analysis specifications to use new Id types and associated
     functions; the deprecated exprnum/typenum functions will be removed from
     the next release
 
+* Example analyses [GB,MS,VP]
+  - fixed bugs and style issues in constprop [GB]
+  - Updated sl1rd and sl2rd [MS]
+    + to use VariableId and Label 
+    + to handle additional cases of temporary variables (utilizing the new
+      support function is_tmpvar(v) )
+    + to separate RD information on local and call edge
+  - Updated shape analyses [VP]
+    + to use VariableId instead of strings for variables
+    + adapted transfer functions to use TypeId, ExprId
+    + Normalization:
+      * added new normalization of data access expressions because tmpvars 
+        does no longer allow to guess on names of the next temporary vars.
+      * it is now more elegant, more compact.
+      * generates better sequence of transfer functions
+  - identified "Setpower too big" error (fixed in PAG 8.7.6.17)
+    + NNH: --output-gdl=<file> generates now set of NNH shape graphs by
+      default (default is --individualgraphs --no-summarygraph)
+    + SRW: --output-gdl=<file> generates now set of NNH shape graphs by
+      default (default ist --no-individualgraphs --summarygraph)
+	
 * Better support for combined analyses [GB]
   - correct prefixing of SATIrE support functions
 
@@ -38,9 +66,6 @@ V0.8.3 (in progress)
   - Support for multiple input files
   - Changed all occurrences of PrologString to PrologAtom
     (all names in the term representation are now 'singlequoted')
-
-* Example analyses [GB]
-  - fixed bugs and style issues in constprop
 
 V0.8.2 2008-06-02 GB,MS,AP
 
