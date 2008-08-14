@@ -75,7 +75,7 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "sex", s);
 
-    fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", version, get_is_current_version() ? "" : "not-" );
+    fprintf(f, "%s%-*s = %u (%scurrent)\n", p, w, "version", get_version(), get_is_current_version() ? "" : "not-" );
     
     switch (get_abi()) {
       case ABI_UNSPECIFIED: s = "unspecified";        break;
@@ -551,8 +551,11 @@ SgAsmGenericSection::~SgAsmGenericSection()
     }
 }
 
-#if 0
-/* Returns ptr to content at specified offset after ensuring that the required amount of data is available. */
+/* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
+ * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
+ * difference is that instead of the caller supplying the buffer, the callee uses its own buffer (part of the buffer that was
+ * returned by the OS from the mmap of the binary file).  The content() functions also keep track of what parts of the section
+ * have been returned so that it's easy to find the parts that are apparently unused. */
 const unsigned char *
 SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
 {
@@ -561,40 +564,9 @@ SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
     if (!p_congealed && size > 0)
         p_referenced.insert(std::make_pair(offset, offset+size));
 
- // DQ (8/8/2008): Added cast, but this should be fixed better.
+ // DQ (8/8/2008): Added cast, but this should be fixed better. FIXME
     return (const unsigned char *) p_data + offset;
 }
-#else
-// DQ (8/10/2008): This is the more useful version for use with the ROSE IR nodes.
-const SgUnsignedCharList
-SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
-{
-    SgUnsignedCharList returnValue;
-
- // addr_t is a typedef for: uint64_t
-    printf ("offset = %zu p_size = %zu size = %zu \n",offset,p_size,size);
-
-    if (offset > this->p_size || offset+size > this->p_size)
-        throw SgAsmGenericFile::ShortRead(this, offset, size);
-
-    if (!p_congealed && size > 0)
-        p_referenced.insert(std::make_pair(offset, offset+size));
-
-#if 1
- // DQ (8/8/2008): Added cast, but this should be fixed better.
- // return (const unsigned char *) p_data + offset;
- // for (addr_t i = 0; i < offset; i++)
-    for (addr_t i = offset; i < offset+size; i++)
-         returnValue.push_back(p_data[i]);
-    return returnValue;
-#else
- // DQ (8/10/2008): this should be a more efficient (shorter) implementation.
-    addr_t position = (addr_t)p_data + offset;
-    return SgUnsignedCharList (position,position+size);
-#endif
-}
-#endif
-
 
 /* Copies the specified part of the section into a buffer. Any part of the selected area that is outside the domain of the
  * section will be filled with zero (in contrast to the two-argument version that throws an exception */
@@ -636,6 +608,19 @@ SgAsmGenericSection::content_str(Exec::addr_t offset)
         p_referenced.insert(std::make_pair(offset, offset+nchars));
 
     return ret;
+}
+
+/* Like the low-level content(addr_t,addr_t) but returns an object rather than a ptr directly into the file content. This is
+ * the recommended way to obtain file content for IR nodes that need to point to that content. The other function is more of a
+ * low-level, efficient file read operation. */
+const SgUnsignedCharList
+SgAsmGenericSection::content_ucl(Exec::addr_t offset, Exec::addr_t size)
+{
+    const unsigned char *data = content(offset, size);
+    SgUnsignedCharList returnValue;
+    for (addr_t i=0; i<size; i++)
+        returnValue.push_back(data[i]);
+    return returnValue;
 }
 
 /* Write data back to a file section. The data to write may be larger than the file section as long as the extra (which will
@@ -788,10 +773,8 @@ SgAsmGenericSection::unparse(FILE *f, const ExtentVector &ev)
         ROSE_ASSERT(p.second <= p_size);
         Exec::addr_t extent_offset = p.first;
         Exec::addr_t extent_size   = p.second - p.first;
-     // const unsigned char *extent_data = content(extent_offset, extent_size);
-     // write(f, extent_offset, extent_size, extent_data);
-        const SgUnsignedCharList extent_data = content(extent_offset, extent_size);
-        write(f, extent_offset, extent_data);
+        const unsigned char *extent_data = content(extent_offset, extent_size);
+        write(f, extent_offset, extent_size, extent_data);
     }
 }
 

@@ -738,14 +738,7 @@ std::string
 SgAsmNEStringTable::get_string(addr_t offset)
 {
     size_t length = content(offset, 1)[0];
-
- // return std::string((const char*)content(offset+1, length), length);
-    std::string s;
-    SgUnsignedCharList charList = content(offset+1, length);
-    for (size_t i = 0; i < charList.size(); i++)
-         s.push_back(charList[i]);
-
-    return s;
+    return std::string((const char*)content(offset+1, length), length);
 }
 
 /* Prints some debugging info */

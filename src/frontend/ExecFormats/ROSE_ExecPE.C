@@ -1078,7 +1078,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
         p_aux_size = p_st_num_aux_entries * COFFSymbol_disk_size;
-        p_aux_data = symtab->content((idx+1)*COFFSymbol_disk_size, p_aux_size);
+        p_aux_data = symtab->content_ucl((idx+1)*COFFSymbol_disk_size, p_aux_size);
 
      // DQ (11/8/2008): I have not been careful enough in the translation of the offset pointers
      // to indexes into the "p_aux_data" array (stored as an STL vector in the ROSE IR.

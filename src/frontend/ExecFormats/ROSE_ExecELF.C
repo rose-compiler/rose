@@ -529,17 +529,17 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
         for (size_t i = 0; i < fhdr->get_e_shnum(); i++, offset += fhdr->get_e_shentsize()) {
             SgAsmElfSectionTableEntry *shdr = NULL;
             if (4 == fhdr->get_word_size()) {
-             // const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk = (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
-                const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk = (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*) &(content(offset, fhdr->get_e_shentsize())[0]);
+                const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk =
+                    (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
                 shdr = new SgAsmElfSectionTableEntry(sex, disk);
             } else {
-             // const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk = (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
-                const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk = (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*) &(content(offset, fhdr->get_e_shentsize())[0]);
+                const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk =
+                    (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
                 shdr = new SgAsmElfSectionTableEntry(sex, disk);
             }
             shdr->set_nextra(fhdr->get_e_shentsize() - struct_size);
             if (shdr->get_nextra() > 0)
-                shdr->get_extra() = content(offset+struct_size, shdr->get_nextra());
+                shdr->get_extra() = content_ucl(offset+struct_size, shdr->get_nextra());
             entries.push_back(shdr);
         }
 
@@ -547,12 +547,13 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
         SgAsmElfSection *strtab = NULL;
         if (fhdr->get_e_shstrndx() > 0) {
             SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
+            fprintf(stderr, "shdr=0x%08lx\n", (unsigned long)shdr);
             strtab = new SgAsmElfSection(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_st_entry(shdr);
 
          // DQ: This line is causing problems!
-            printf ("shdr->get_sh_name() = %zu \n",shdr->get_sh_name());
+            fprintf (stderr, "shdr->get_sh_name() = %u \n",shdr->get_sh_name());
             strtab->set_name(strtab->content_str(shdr->get_sh_name()));
         }
 
@@ -819,7 +820,7 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
             /* Save extra bytes */
             shdr->set_nextra( fhdr->get_e_phentsize() - struct_size );
             if (shdr->get_nextra() > 0)
-                shdr->get_extra() = content(offset+struct_size, shdr->get_nextra());
+                shdr->get_extra() = content_ucl(offset+struct_size, shdr->get_nextra());
 
             /* Null segments are just unused slots in the table; no real section to create */
             if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
