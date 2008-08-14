@@ -551,7 +551,7 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
             strtab->set_name(strtab->content_str(shdr->get_sh_name()));
         }
 
-     /* Read all other sections */
+        /* Read all other sections */
         for (size_t i = 0; i<entries.size(); i++) {
             SgAsmElfSectionTableEntry *shdr = entries[i];
             SgAsmElfSection *section = NULL;
@@ -781,6 +781,11 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
     set_name("ELF Segment Table");
     set_purpose(SP_HEADER);
     set_header(fhdr);
+
+    /* RPM (2008-08-13) p_entries should probably be initialized to point to a node that's an empty list. How is that done?
+     * Doing it here for the time being. FIXME */
+    if (!p_entries)
+        p_entries = new SgAsmElfSegmentTableEntryList;
     
     ByteOrder sex = fhdr->get_sex();
     
@@ -1342,11 +1347,18 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
+    /* RPM (2008-08-13) p_symbols should probably be initialized to point to a node that's an empty list. How is that done?
+     * Doing it here for the time being. FIXME */
+    if (!p_symbols)
+        p_symbols = new SgAsmElfSymbolList;
+
     if (4==fhdr->get_word_size()) {
         const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =
             (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
+            fprintf(stderr, "ROBB: SgAsmElfSymbolSection::ctor():\n");
+            fprintf(stderr, "           p_symbols=0x%08lx\n", (unsigned long)p_symbols);
             p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {

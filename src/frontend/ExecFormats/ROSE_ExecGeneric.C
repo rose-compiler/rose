@@ -874,6 +874,13 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     set_purpose(SP_HEADER);
     ef->add_header(this);
 
+    /* RPM (2008-08-13) lists should probably be initialized to point to a node that's an empty list. How is that done?
+     * Doing it here for the time being. FIXME */
+    if (!p_symbols)
+        p_symbols = new SgAsmGenericSymbolList;
+    if (!p_dlls)
+        p_dlls = new SgAsmGenericDLLList;
+
  // The SgAsmGenericFormat is contained as a pointer and not a value data member, 
  // so we have to build one and initialize the pointer.
     SgAsmGenericFormat* local_exec_format = new SgAsmGenericFormat();
