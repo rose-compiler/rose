@@ -2721,7 +2721,9 @@ Grammar::buildCode ()
        << "std::ostream& operator<<(std::ostream& os, SgFormatItemPtrList& bv) \n   {\n "
        << "     return os;\n   }\n";
 #endif
-#if 1
+
+// DQ (8/13/2008): Turn this off to remove older binary file format IR nodes!
+#if 0
   // DQ (11/21/2007): Added output function for SgAsmSectionHeader objects
      rtiFile 
        << "std::ostream& operator<<(std::ostream& os, SgAsmSectionHeaderPtrList& bv) \n   {\n "
