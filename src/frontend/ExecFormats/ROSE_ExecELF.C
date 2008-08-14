@@ -1469,7 +1469,6 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 
         ROSE_ASSERT(hdr != NULL);
     } catch (...) {
-        printf ("General catch() \n");
         return false;
     }
 

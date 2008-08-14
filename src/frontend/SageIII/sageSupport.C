@@ -2184,8 +2184,10 @@ typedef struct _IMAGE_SECTION_HEADER {
 #endif
 
 
-#if USE_NEW_BINARY_FORMAT_READER == 0
-// Older Binary file format support (from before Robb's newer version)
+// #if USE_NEW_BINARY_FORMAT_READER == 0
+#if 0
+// Older Binary file format support (from before Robb's newer version
+// and it's even newer connection to the binary format IR nodes).
 
 bool
 generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
@@ -2822,12 +2824,20 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
   // printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");
      bool handled = false;
-     if (!handled) handled = generateBinaryExecutableFileInformation_ELF( sourceFilename, asmFile );
-     if (!handled) {} // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+
+  // DQ (13/8/2008): Skip the use of the older binary file format support (from before Robb's work).
+  // if (!handled) handled = generateBinaryExecutableFileInformation_ELF( sourceFilename, asmFile );
+  // if (!handled) {} // generateBinaryExecutableFileInformation_Windows ( sourceFilename, asmFile );
+
      if (!handled) {
+
+    // DQ (13/8/2008): This is one of the few remaining data member in a SgAsmFile IR node.
        asmFile->set_name(sourceFilename);
+
     // Hard wire this for the moment while I work on getting Robb's work into place...
-       asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+    // DQ (13/8/2008): Removed this data member (such information is now in the SgAsmGenericHeader).
+    // asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+
        handled = true;
      }
      ROSE_ASSERT (handled);

@@ -260,8 +260,10 @@ Grammar::setUpBinaryInstructions ()
   // source code. The kinds of information that we want to save for each is really quire different.
      NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
 
-#if 1
+#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
   // DQ (8/2/2008): these might be required for now, but we need to be removed later!
+
+#error "Dead Code!"
 
   // DQ (1/6/2008): Added ELF program header and section header support to AST.
      NEW_TERMINAL_MACRO ( AsmProgramHeader, "AsmProgramHeader", "AsmProgramHeaderTag" );
@@ -271,12 +273,14 @@ Grammar::setUpBinaryInstructions ()
   // AsmFile can not have traversed data members and lists, so this give it two additional data members.
      NEW_TERMINAL_MACRO ( AsmProgramHeaderList, "AsmProgramHeaderList", "AsmProgramHeaderListTag" );
      NEW_TERMINAL_MACRO ( AsmSectionHeaderList, "AsmSectionHeaderList", "AsmSectionHeaderListTag" );
-#endif
 
   // We will elimiate: AsmFile, AsmProgramHeader, AsmSectionHeader, AsmProgramHeaderList, AsmSectionHeaderList
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
+#else
+     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
+#endif
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
   // AsmInstructionBase.setFunctionPrototype        ( "HEADER", "../Grammar/Common.code");
@@ -326,16 +330,31 @@ Grammar::setUpBinaryInstructions ()
      AsmBlock.setDataPrototype("bool","externallyVisible"," = true", // Can this block be called into from random code?
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+
      AsmFile.setFunctionPrototype ( "HEADER_BINARY_FILE", "../Grammar/BinaryInstruction.code");
+
+  // This is the filename of the binary executable...
      AsmFile.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // This is where the instructions are put...
      AsmFile.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // DQ (12/8/2008): This is the connection to Robb's work.
+  // DQ (8/12/2008): This is the connection to Robb's work.
      AsmFile.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
+  // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
+  // This is redundant with the more complete information in the SgAsmGenericSections of the binary file format.
+     AsmFile.setDataPrototype("unsigned long", "associated_entry_point","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#if 0
+  // DQ (8/13/2008): Removing data members not required for using Robb's work (or anywhere else in ROSE, 
+  // now that we no longer use the older binary file format support).
 
 #if 0
      AsmFile.setDataPrototype("SgAsmFile::elf_machine_architecture_enum", "machine_architecture","= SgAsmFile::e_machine_architecture_error",
@@ -388,14 +407,15 @@ Grammar::setUpBinaryInstructions ()
      AsmFile.setDataPrototype("unsigned long", "section_header_string_table_index","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // In the ne design these are sections 
+  // In the new design these are sections 
      AsmFile.setDataPrototype("SgAsmProgramHeaderList*", "programHeaderList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmSectionHeaderList*", "sectionHeaderList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
+#endif
 
-
+#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
   // *****************************************************
   //           OLD BINARY FILE FORMAT IR NODES
   // *****************************************************
@@ -453,6 +473,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmSectionHeader.setDataPrototype("unsigned long","table_entry_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
   // *****************************************************
   //           NEW BINARY FILE FORMAT IR NODES
@@ -2028,7 +2049,9 @@ Grammar::setUpBinaryInstructions ()
      AsmWordValueExpression.setFunctionSource( "SOURCE_BINARY_WORD_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
 
+#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
      AsmSectionHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");
+#endif
 
    }

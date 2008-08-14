@@ -1457,8 +1457,12 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsmBinaryAdd:
           case V_SgAsmFunctionDeclaration:
           case V_SgAsmBinaryMultiply:
+
+#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
+  // DQ (8/2/2008): these might be required for now, but we need to be removed later!
           case V_SgAsmProgramHeaderList:
           case V_SgAsmSectionHeaderList:
+#endif
 
        // Liao, 12/13/2007, new fortran nodes, put in ignoring list temporarily
           case V_SgWriteStatement:
