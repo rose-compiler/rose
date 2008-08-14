@@ -2786,7 +2786,7 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 // #if USE_NEW_BINARY_FORMAT_READER
 
 // UNCOMMENT THIS CODE TO TEST ROBB'S BINARY FORMAT SUPPORT USING NEW IR NODES.
-#if 0
+#if 1
      printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
 
   // Exec::ExecFile* binaryFormat = Exec::parseBinaryFormat(sourceFilename,asmFile);
