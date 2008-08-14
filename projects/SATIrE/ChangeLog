@@ -14,15 +14,19 @@ V0.8.3 2008-08-14 GB,VP,MS
 
 * Example analyses [GB,MS,VP]
   - fixed bugs and style issues in constprop [GB]
-  - Updated sl1rd and sl2rd [MS]
-    + to use VariableId and Label 
+  - Updated sl2rd [MS]
+    + to use VariableId instead of strings
     + to handle additional cases of temporary variables (utilizing the new
-      support function is_tmpvar(v) )
-    + to separate RD information on local and call edge
+      support function is_tmpvarid(v) )
+    + early version to separate RD information on local and call edge (the 
+      final version requires some addtional support functions for temporary 
+      variables)
+    + to handle global variables (including the initialization of the 
+      analysis)
   - Updated shape analyses [VP]
     + to use VariableId instead of strings for variables
     + adapted transfer functions to use TypeId, ExprId
-    + Normalization:
+    + normalization:
       * added new normalization of data access expressions because tmpvars 
         does no longer allow to guess on names of the next temporary vars.
       * it is now more elegant, more compact.

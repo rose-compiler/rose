@@ -337,9 +337,10 @@ kill_temporary_variable(var,infoLifted) =
     error("This is not an SL2 program.")
   endif;
 
-/* filter local vars that can be passed on local edge
-   to pass on temorary argument-vars. Since we have no test-function for local tmpvars introduced in boolean
-   expressions we pass those on as well. */
+/* filter local vars that can be passed on local edge to pass temorary argument-vars. 
+   Since we have no test-function yet to test whether a tmpvar is local or an argument-variable
+   we pass those on as well. (this will added in the next release and allow
+   a much more compact formulation of this analysis) */
 rd_local_vars::VarLabPairSet -> VarLabPairSet;
 rd_local_vars(varset) = {(var1,lab1) !! (var1,lab1) <-- varset, if !(is_tmpvarid(var1)) && !(is_global_var(var1))};
 
