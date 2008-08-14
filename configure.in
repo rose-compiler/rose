@@ -693,10 +693,12 @@ fi
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
-build_without_redhat=`echo $build | sed s/-redhat-/-pc-/`
-expected_binary_edg_dirname="roseBinaryEDG-${build_without_redhat}-${release_binary_compatibility_signature}"
+build_triplet_without_redhat=`echo $build | sed s/-redhat-/-pc-/`
+expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-${release_binary_compatibility_signature}"
 expected_binary_edg_tarball="${expected_binary_edg_dirname}.tar.gz"
 full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_binary_edg_tarball}"
+
+AC_SUBST(build_triplet_without_redhat) dnl This is done even with EDG source, since it is used to determine the binary to make in roseFreshTest
 
 if test -e ${srcdir}/src/frontend/CxxFrontend/EDG_SAGE_Connection; then
   : # We have EDG source code
