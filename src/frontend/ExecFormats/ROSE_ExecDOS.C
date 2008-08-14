@@ -14,8 +14,7 @@
 void
 SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
- // const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*)content(0, sizeof(DOSFileHeader_disk));
-    const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*) &(content(0, sizeof(DOSFileHeader_disk))[0]);
+    const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*)content(0, sizeof(DOSFileHeader_disk));
 
     set_name("DOS File Header");
     set_synthesized(true);

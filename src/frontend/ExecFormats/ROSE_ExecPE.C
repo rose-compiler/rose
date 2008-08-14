@@ -20,7 +20,7 @@ SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Decode */
     ExtendedDOSHeader_disk disk;
-    content(0, sizeof disk, (void*)&disk);
+    content(0, sizeof disk, &disk);
 
  // for (size_t i=0; i<NELMTS(e_res1); i++)
     for (size_t i=0; i < 4; i++)
@@ -103,7 +103,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_purpose(SP_HEADER);
 
     PEFileHeader_disk fh;
-    content(0, sizeof fh, (void*)&fh);
+    content(0, sizeof fh, &fh);
 
     /* Check magic number before getting too far */
     if (fh.e_magic[0]!='P' || fh.e_magic[1]!='E' || fh.e_magic[2]!='\0' || fh.e_magic[3]!='\0')
@@ -386,7 +386,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
 
     extend_up_to(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
-        content(pairs_offset, sizeof pairs_disk, (void*)&pairs_disk);
+        content(pairs_offset, sizeof pairs_disk, &pairs_disk);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
     }
 }
@@ -615,7 +615,7 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         /* Parse the section table entry */
         SgAsmPESectionTableEntry::PESectionTableEntry_disk disk;
-        content(i * entsize, entsize, (void*)&disk);
+        content(i * entsize, entsize, &disk);
         SgAsmPESectionTableEntry *entry = new SgAsmPESectionTableEntry(&disk);
 
         /* The section */
@@ -735,8 +735,7 @@ SgAsmPEImportHintName::ctor(SgAsmGenericSection *section, addr_t offset)
     section->content(offset, sizeof disk, &disk);
     p_hint = le_to_host(disk.hint);
     p_name = section->content_str(offset+sizeof disk);
- // p_padding = (p_name.size()+1) % 2 ? *(section->content(offset + sizeof(disk)+ p_name.size() + 1, 1)) : '\0';
-    p_padding = (p_name.size()+1) % 2 ? (section->content(offset + sizeof(disk)+ p_name.size() + 1, 1)[0]) : '\0'; 
+    p_padding = (p_name.size()+1) % 2 ? *(section->content(offset + sizeof(disk)+ p_name.size() + 1, 1)) : '\0';
 }
 
 /* Writes the hint/name back to disk at the specified offset */

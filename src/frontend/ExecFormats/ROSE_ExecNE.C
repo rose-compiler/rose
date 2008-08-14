@@ -75,8 +75,8 @@ SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_purpose(SP_HEADER);
 
     /* Decode */
- // const ExtendedDOSHeader_disk *disk = (const ExtendedDOSHeader_disk*)content(0, sizeof(ExtendedDOSHeader_disk));
-    const ExtendedDOSHeader_disk *disk = (const ExtendedDOSHeader_disk*) &(content(0, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk))[0]);
+    const ExtendedDOSHeader_disk *disk =
+        (const ExtendedDOSHeader_disk*)content(0, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk));
 
  // for (size_t i=0; i<NELMTS(e_res1); i++)
     for (size_t i=0; i < 14; i++)
@@ -133,8 +133,7 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
- // const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
-    const NEFileHeader_disk *fh = (const NEFileHeader_disk*) &(content(0, sizeof(NEFileHeader_disk))[0]);
+    const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
 
     /* Check magic number early */
     if (fh->e_magic[0] != 'N' || fh->e_magic[1] != 'E')
@@ -474,7 +473,8 @@ SgAsmNESectionTable::ctor(SgAsmNEFileHeader *fhdr)
 
     for (size_t i = 0; i < fhdr->get_e_nsections(); i++) {
         /* Parse the section table entry */
-        const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk = (const SgAsmNESectionTableEntry::NESectionTableEntry_disk*) &(content(i * entsize, entsize)[0]);
+        const SgAsmNESectionTableEntry::NESectionTableEntry_disk *disk =
+            (const SgAsmNESectionTableEntry::NESectionTableEntry_disk*)content(i * entsize, entsize);
         SgAsmNESectionTableEntry *entry = new SgAsmNESectionTableEntry(disk);
 
         /* The section */
@@ -579,12 +579,11 @@ SgAsmNENameTable::ctor(SgAsmNEFileHeader *fhdr)
         if (0==length) break;
 
         extend(length);
-        p_names.push_back(std::string((const char*) &(content(at, length)[0]), length));
+        p_names.push_back(std::string((const char*)content(at, length), length));
         at += length;
 
         extend(2);
-     // p_ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
-        p_ordinals.push_back(le_to_host((const uint16_t) content(at, 2)[0]));
+        p_ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
         at += 2;
     }
 }
@@ -665,7 +664,7 @@ SgAsmNEModuleTable::ctor(SgAsmNEFileHeader *fhdr)
     ROSE_ASSERT(NULL != p_strtab);
 
     for (addr_t at = 0; at < p_size; at += 2) {
-        addr_t name_offset = le_to_host((const uint16_t) content(at, 2)[0]);
+        addr_t name_offset = le_to_host(*(const uint16_t*)content(at, 2));
         p_name_offsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
     }
@@ -825,17 +824,17 @@ SgAsmNEEntryTable::ctor(SgAsmNEFileHeader *fhdr)
             /* Movable segment entries. */
             for (size_t i = 0; i < bundle_nentries; i++, at+=6) {
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags) (content(at+0, 1)[0]);
-                unsigned int3f = le_to_host((const uint16_t) content(at+1, 2)[0]);
+                unsigned int3f = le_to_host(*(const uint16_t*)content(at+1, 2));
                 ROSE_ASSERT(int3f!=0); /*because we use zero to indicate a fixed entry in unparse()*/
                 unsigned segno = content(at+3, 1)[0];
-                unsigned segoffset = le_to_host((const uint16_t) content(at+4, 2)[0]);
+                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+4, 2));
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, int3f, segno, segoffset));
             }
         } else {
             /* Fixed segment entries */
             for (size_t i = 0; i < bundle_nentries; i++, at+=3) {
                 SgAsmNEEntryPoint::NEEntryFlags flags = (SgAsmNEEntryPoint::NEEntryFlags) (content(at+0, 1)[0]);
-                unsigned segoffset = le_to_host( (const uint16_t)content(at+1, 2)[0]);
+                unsigned segoffset = le_to_host(*(const uint16_t*)content(at+1, 2));
                 p_entries.push_back(new SgAsmNEEntryPoint(flags, 0, segment_indicator, segoffset));
             }
         }
@@ -978,7 +977,7 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
      * the source will be patched by adding the target value to the value stored at the source. Otherwise the target value is
      * written to the source and the old contents of the source contains the next source offset, until we get 0xffff. */
     relocs->extend(2);
-    p_src_offset = le_to_host((const uint16_t) relocs->content(at, 2)[0]);
+    p_src_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
     at += 2;
 
     switch (p_tgt_type) {
@@ -987,23 +986,23 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
         relocs->extend(4);
         p_iref.sect_idx = relocs->content(at++, 1)[0];
         p_iref.res1  = relocs->content(at++, 1)[0];
-        p_iref.tgt_offset = le_to_host((const uint16_t) relocs->content(at, 2)[0]);
+        p_iref.tgt_offset = le_to_host(*(const uint16_t*)relocs->content(at, 2));
         at += 2;
         break;
       case RF_TGTTYPE_IORD:
         /* Imported ordinal */
         relocs->extend(4);
-        p_iord.modref  = le_to_host((const uint16_t) relocs->content(at+0, 2)[0]);
-        p_iord.ordinal = le_to_host((const uint16_t) relocs->content(at+2, 2)[0]);
+        p_iord.modref  = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        p_iord.ordinal = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                p_iord.addend = le_to_host((const uint32_t) relocs->content(at+8, 4)[0]);
+                p_iord.addend = le_to_host(*(const uint32_t*)relocs->content(at+8, 4));
                 at += 4;
             } else {
                 relocs->extend(2);
-                p_iord.addend = le_to_host((const uint16_t) relocs->content(at+8, 2)[0]);
+                p_iord.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
                 at += 2;
             }
         } else {
@@ -1013,17 +1012,17 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
       case RF_TGTTYPE_INAME:
         /* Imported name */
         relocs->extend(4);
-        p_iname.modref = le_to_host((const uint16_t) relocs->content(at+0, 2)[0]);
-        p_iname.nm_off = le_to_host((const uint16_t) relocs->content(at+2, 2)[0]);
+        p_iname.modref = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        p_iname.nm_off = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
         at += 4;
         if (p_flags & RF_2EXTRA) {
             if (p_flags & RF_32ADD) {
                 relocs->extend(4);
-                p_iname.addend = le_to_host((const uint16_t) relocs->content(at+8, 4)[0]);
+                p_iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 4));
                 at += 4;
             } else {
                 relocs->extend(2);
-                p_iname.addend = le_to_host((const uint16_t) relocs->content(at+8, 2)[0]);
+                p_iname.addend = le_to_host(*(const uint16_t*)relocs->content(at+8, 2));
                 at += 2;
             }
         } else {
@@ -1033,8 +1032,8 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
       case RF_TGTTYPE_OSFIXUP:
         /* Operating system fixup */
         relocs->extend(4);
-        p_osfixup.type = le_to_host((const uint16_t) relocs->content(at+0, 2)[0]);
-        p_osfixup.res3 = le_to_host((const uint16_t) relocs->content(at+2, 2)[0]);
+        p_osfixup.type = le_to_host(*(const uint16_t*)relocs->content(at+0, 2));
+        p_osfixup.res3 = le_to_host(*(const uint16_t*)relocs->content(at+2, 2));
         at += 4;
         break;
     }
@@ -1206,11 +1205,10 @@ SgAsmNERelocTable::ctor(SgAsmNEFileHeader *fhdr)
 
     ROSE_ASSERT(0 == p_size);
 
- // DQ (11/8/2008): reloc_size was previously not initialized before use in the for loop.
     addr_t at = 0, reloc_size = 0;
 
     extend(2);
-    size_t nrelocs = le_to_host((const uint16_t) content(at, 2)[0]);
+    size_t nrelocs = le_to_host(*(const uint16_t*)content(at, 2));
     at += 2;
     
     for (size_t i = 0; i < nrelocs; i++, at += reloc_size) {

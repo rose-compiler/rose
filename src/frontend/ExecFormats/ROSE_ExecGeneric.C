@@ -568,8 +568,10 @@ SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
     return (const unsigned char *) p_data + offset;
 }
 
-/* Copies the specified part of the section into a buffer. Any part of the selected area that is outside the domain of the
- * section will be filled with zero (in contrast to the two-argument version that throws an exception */
+/* Copies the specified part of the section into a buffer. This is more like fread() than the two-argument version in that the
+ * caller must supply the buffer (the two-arg version returns a ptr to the mmap'd memory). Any part of the selected area that
+ * is outside the domain of the section will be filled with zero (in contrast to the two-argument version that throws an
+ * exception). */
 void
 SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size, void *buf)
 {
@@ -592,12 +594,12 @@ SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size, void *buf)
 const char *
 SgAsmGenericSection::content_str(Exec::addr_t offset)
 {
- // const char *ret = (const char*)content(offset, 0);
- // const char *ret = (const char*) &(content(offset, 0)[0]);
     const char *ret = (const char*) (p_data + offset);
     size_t nchars=0;
 
+#if 1 /*DEBUGGING*/
     printf ("SgAsmGenericSection::content_str(offset): p_data = %p offset = %zu p_size = %zu \n",p_data,offset,p_size);
+#endif
 
     while (offset+nchars < p_size && ret[nchars]) nchars++;
     nchars++; /*NUL*/
@@ -661,8 +663,8 @@ SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, size_t bufsize, const v
     return offset+bufsize;
 }
 
-/* Congeal the references to find the unreferenced areas. Once the references are congealed calling content() and
- * content_str() will not affect references. This allows us to read the unreferenced areas without turning them into
+/* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
+ * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
 const SgAsmGenericSection::ExtentVector &
 SgAsmGenericSection::congeal()

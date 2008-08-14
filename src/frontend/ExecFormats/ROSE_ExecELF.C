@@ -109,8 +109,6 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         Elf64FileHeader_disk disk64;
         extend_up_to(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
         content(0, sizeof disk64, &disk64);
-     // ROSE_ASSERT(sizeof(p_e_ident_padding)==sizeof(disk64.e_ident_padding));
-     // memcpy(p_e_ident_padding, disk64.e_ident_padding, sizeof(p_e_ident_padding));
         for (int i = 0; i < 9; i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
         ROSE_ASSERT(p_e_ident_padding.size() == sizeof(disk64.e_ident_padding));
@@ -806,13 +804,12 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
             /* Read/decode the segment header */
             SgAsmElfSegmentTableEntry *shdr = NULL;
             if (4==fhdr->get_word_size()) {
-             // const Elf32SegmentTableEntry_disk *disk = (const Elf32SegmentTableEntry_disk*)content(offset, struct_size);
-             // const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk = (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*) &(content(offset, fhdr->get_e_shentsize())[0]);
-                const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk = (const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*) &(content(offset, struct_size)[0]);
+                const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk =
+                    (const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new SgAsmElfSegmentTableEntry(sex, disk);
             } else {
-             // const Elf64SegmentTableEntry_disk *disk = (const Elf64SegmentTableEntry_disk*)content(offset, struct_size);
-                const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk = (const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*) &(content(offset, struct_size)[0]);
+                const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk =
+                    (const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new SgAsmElfSegmentTableEntry(sex, disk);
             }
             p_entries->get_entries().push_back(shdr);
@@ -1021,16 +1018,16 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab)
 
     size_t section_size = get_size(), entry_size = 0, nentries = 0;
     if (4==fhdr->get_word_size()) {
-     // const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk = (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(0, section_size);
-        const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk = (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*) &(content(0, section_size)[0]);
+        const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk =
+            (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i = 0; i < nentries; i++) {
             p_all_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else if (8==fhdr->get_word_size()) {
-     // const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk = (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(0, section_size);
-        const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk = (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*) &(content(0, section_size)[0]);
+        const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
+            (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(0, section_size);
         entry_size = sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i = 0; i < nentries; i++) {
@@ -1350,15 +1347,15 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     ROSE_ASSERT(fhdr!=NULL);
 
     if (4==fhdr->get_word_size()) {
-     // const Elf32SymbolEntry_disk *disk = (const Elf32SymbolEntry_disk*)content(0, get_size());
-        const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk = (const SgAsmElfSymbol::Elf32SymbolEntry_disk*) &(content(0, get_size())[0]);
+        const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =
+            (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
             p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {
-     // const Elf64SymbolEntry_disk *disk = (const Elf64SymbolEntry_disk*)content(0, get_size());
-        const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk = (const SgAsmElfSymbol::Elf64SymbolEntry_disk*) &(content(0, get_size())[0]);
+        const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk =
+            (const SgAsmElfSymbol::Elf64SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
             p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));

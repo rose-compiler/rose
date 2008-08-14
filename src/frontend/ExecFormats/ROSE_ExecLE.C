@@ -17,7 +17,7 @@ void
 SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
 
-    const LEFileHeader_disk *fh = (const LEFileHeader_disk*) &(content(0, sizeof(LEFileHeader_disk))[0]);
+    const LEFileHeader_disk *fh = (const LEFileHeader_disk*)content(0, sizeof(LEFileHeader_disk));
 
     /* Check magic number early */
     if (fh->e_magic[0]!='L' ||
@@ -403,8 +403,8 @@ SgAsmLEPageTable::ctor(SgAsmLEFileHeader *fhdr)
 
     const addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
     for (addr_t entry_offset=0; entry_offset+entry_size <= p_size; entry_offset+=entry_size) {
-     // const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk = (const SgAsmLEPageTableEntry::LEPageTableEntry_disk*) content(entry_offset, entry_size);
-        const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk = (const SgAsmLEPageTableEntry::LEPageTableEntry_disk*) &(content(entry_offset, entry_size)[0]);
+        const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk =
+            (const SgAsmLEPageTableEntry::LEPageTableEntry_disk*)content(entry_offset, entry_size);
         p_entries.push_back(new SgAsmLEPageTableEntry(fhdr->get_sex(), disk));
     }
 }
@@ -553,8 +553,8 @@ SgAsmLESectionTable::ctor(SgAsmLEFileHeader *fhdr)
     const size_t entsize = sizeof(SgAsmLESectionTableEntry::LESectionTableEntry_disk);
     for (size_t i = 0; i < fhdr->get_e_secttab_nentries(); i++) {
         /* Parse the section table entry */
-     // const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk = (const SgAsmLESectionTableEntry::LESectionTableEntry_disk*)content(i*entsize, entsize);
-        const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk = (const SgAsmLESectionTableEntry::LESectionTableEntry_disk*) &(content(i*entsize, entsize)[0]);
+        const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk =
+            (const SgAsmLESectionTableEntry::LESectionTableEntry_disk*)content(i*entsize, entsize);
         SgAsmLESectionTableEntry *entry = new SgAsmLESectionTableEntry(fhdr->get_sex(), disk);
 
         /* The section pages in the executable file. For now we require that the entries in the page table for the section
@@ -665,11 +665,11 @@ SgAsmLENameTable::ctor(SgAsmLEFileHeader *fhdr)
         if (0==length) break;
 
         extend(length);
-        p_names.push_back(std::string((const char*) &(content(at, length)[0]), length));
+        p_names.push_back(std::string((const char*)content(at, length), length));
         at += length;
 
         extend(2);
-        p_ordinals.push_back(le_to_host((const uint16_t) content(at, 2)[0]));
+        p_ordinals.push_back(le_to_host(*(const uint16_t*)content(at, 2)));
         at += 2;
     }
 }
@@ -816,8 +816,8 @@ SgAsmLEEntryTable::ctor(SgAsmLEFileHeader *fhdr)
         uint8_t flags = content(at, 1)[0];
         if (flags & 0x01) {
             extend(sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk)-1);
-         // const SgAsmLEEntryPoint::LEEntryPoint_disk *disk = (const SgAsmLEEntryPoint::LEEntryPoint_disk*)content(at, sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk));
-            const SgAsmLEEntryPoint::LEEntryPoint_disk *disk = (const SgAsmLEEntryPoint::LEEntryPoint_disk*) &(content(at, sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk))[0]);
+            const SgAsmLEEntryPoint::LEEntryPoint_disk *disk =
+                (const SgAsmLEEntryPoint::LEEntryPoint_disk*)content(at, sizeof(SgAsmLEEntryPoint::LEEntryPoint_disk));
             p_entries.push_back(new SgAsmLEEntryPoint(fhdr->get_sex(), disk));
         } else {
             p_entries.push_back(new SgAsmLEEntryPoint(fhdr->get_sex(), flags));
