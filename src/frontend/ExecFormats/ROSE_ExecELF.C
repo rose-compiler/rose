@@ -545,13 +545,9 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
         SgAsmElfSection *strtab = NULL;
         if (fhdr->get_e_shstrndx() > 0) {
             SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
-            fprintf(stderr, "shdr=0x%08lx\n", (unsigned long)shdr);
             strtab = new SgAsmElfSection(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_st_entry(shdr);
-
-         // DQ: This line is causing problems!
-            fprintf (stderr, "shdr->get_sh_name() = %u \n",shdr->get_sh_name());
             strtab->set_name(strtab->content_str(shdr->get_sh_name()));
         }
 
