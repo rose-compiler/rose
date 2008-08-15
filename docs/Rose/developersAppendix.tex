@@ -932,6 +932,7 @@ the development release works with ROSE.
 \begin{verbatim}
 svn checkout http://phc.googlecode.com/svn/trunk/ phc-read-only
 cd phc-read-only
+touch src/generated/*                                                       
 ./configure --prefix=/usr/local/php --with-php=/usr/local/php
 make && make install
 \end{verbatim}
