@@ -28,7 +28,7 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -178,7 +178,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::SetPointersToNull::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::SetPointersToNull::Traversal(params, output);
 }
 

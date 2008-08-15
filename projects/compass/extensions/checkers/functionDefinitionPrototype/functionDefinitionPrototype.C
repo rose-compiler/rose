@@ -47,7 +47,7 @@ namespace CompassAnalyses
           /// prototypes are flagged as violations.
           //////////////////////////////////////////////////////////////////////
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -164,7 +164,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::FunctionDefinitionPrototype::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::FunctionDefinitionPrototype::Traversal(params, output);
 }
 

@@ -164,17 +164,25 @@ int main(int argc, char **argv)
   ROSE_ASSERT(root);
 
   /* setup checkers */
-  std::vector<AstSimpleProcessing *> traversals;
-  std::vector<AstSimpleProcessing *>::iterator t_itr;
+  std::vector<AstSimpleProcessingWithRunFunction *> traversals;
+  std::vector<AstSimpleProcessingWithRunFunction *>::iterator t_itr;
   std::vector<const Compass::Checker *> bases;
+  std::vector<const Compass::Checker *> basesAll;
   std::vector<const Compass::Checker *>::iterator b_itr;
-  //    std::vector<Compass::OutputObject *> outputs;
-  //std::vector<Compass::OutputObject *>::iterator o_itr;
   CountingOutputObject  outputs ;
 
   //  compassCheckers(traversals, bases, outputs);
   Compass::Parameters params(Compass::findParameterFile());
-  buildCheckers(bases, params, outputs,root);
+  buildCheckers(basesAll, params, outputs, root);
+
+  for (b_itr = basesAll.begin(); b_itr != basesAll.end(); ++b_itr) {
+    const Compass::CheckerUsingAstSimpleProcessing* astChecker = 
+      dynamic_cast<const Compass::CheckerUsingAstSimpleProcessing*>(*b_itr);
+    if (astChecker!=NULL) {
+      bases.push_back(astChecker);
+      traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
+    }
+  }
   outputs.fillOutputList(bases);
 
   //  ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
@@ -183,11 +191,11 @@ int main(int argc, char **argv)
       {
 	std::cout << std::endl << "got " << bases.size() << " checkers:";
 	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
-	  std::cout << ' ' << (*b_itr)->getName();
+	  std::cout << ' ' << (*b_itr)->checkerName;
 	std::cout << std::endl;
       }
 
-  /* traverse the files */
+ /* traverse the files */
   Compass::gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
 
@@ -205,20 +213,20 @@ int main(int argc, char **argv)
       std::cout << "bounds ("<< i<<" [ " << bounds.first << "," << bounds.second << "[ of " << std::endl;
 
       if (sequential) {
-	for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	for (b_itr = bases.begin(), t_itr = traversals.begin(); b_itr != bases.end(); ++b_itr, ++t_itr) {
 	  if (DEBUG_OUTPUT_MORE) 
 	    std::cout << "running checker (" << i << " in ["<< bounds.first << "," << bounds.second 
-		      <<"[) : " << (*b_itr)->getName() << " \t on " << (root->get_file(i).getFileName()) << std::endl; 
-	  (*b_itr)->run(&root->get_file(i));
+		      <<"[) : " << (*b_itr)->checkerName << " \t on " << (root->get_file(i).getFileName()) << std::endl; 
+	  (*t_itr)->run(&root->get_file(i));
 	}
       } else if (combined) {
 	std::cout << "\n>>> Running combined ... " << std::endl;
-	AstCombinedSimpleProcessing combined(traversals);
-	combined.traverse(&root->get_file(i), preorder);
+	//AstCombinedSimpleProcessing combined(traversals);
+	//combined.traverse(&root->get_file(i), preorder);
       } else {
 	std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
-	AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-	parallel.traverseInParallel(&root->get_file(i), preorder);
+	//AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
+	//parallel.traverseInParallel(&root->get_file(i), preorder);
       }
     }
 

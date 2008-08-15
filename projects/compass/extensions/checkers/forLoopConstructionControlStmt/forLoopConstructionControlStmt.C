@@ -42,7 +42,7 @@ namespace CompassAnalyses
           /// expressions. If any are found then they are flagged as violations.
           //////////////////////////////////////////////////////////////////////
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -126,7 +126,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::ForLoopConstructionControlStmt::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::ForLoopConstructionControlStmt::Traversal(params, output);
 }
 

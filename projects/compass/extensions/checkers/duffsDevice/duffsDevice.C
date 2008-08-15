@@ -28,7 +28,7 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
                  Compass::OutputObject* output;
                  bool isLoopStatement(SgNode *n) const;
@@ -107,7 +107,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::DuffsDevice::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::DuffsDevice::Traversal(params, output);
 }
 

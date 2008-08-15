@@ -28,7 +28,7 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -73,7 +73,7 @@ namespace CompassAnalyses
           std::set<SgFunctionDeclaration*> listOfProcessedHandlers;
 
        // Traversal to be used on each handler function to search for non-async-safe functions
-          class HandlerTraversal : public AstSimpleProcessing
+          class HandlerTraversal : public Compass::AstSimpleProcessingWithRunFunction
              {
                Compass::OutputObject* output;
                public:
@@ -359,7 +359,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::AsynchronousSignalHandler::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::AsynchronousSignalHandler::Traversal(params, output);
 }
 

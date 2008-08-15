@@ -42,7 +42,7 @@ namespace CompassAnalyses
           /// declaration is found then a violation is flagged.
           //////////////////////////////////////////////////////////////////////
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
                     Compass::OutputObject* output;
                public:
@@ -133,7 +133,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::EnumDeclarationNamespaceClassScope::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::EnumDeclarationNamespaceClassScope::Traversal(params, output);
 }
 

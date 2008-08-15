@@ -32,7 +32,7 @@ namespace CompassAnalyses
           enum OP_CODES{ CONTINUE=0, GENERATE_CURRENT_LIST=1 };
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
             // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -500,7 +500,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::AllowedFunctions::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::AllowedFunctions::Traversal(params, output);
 }
 

@@ -325,15 +325,26 @@ int main(int argc, char **argv)
   ROSE_ASSERT(root);
 
   /* setup checkers */
-  std::vector<AstSimpleProcessing *> traversals;
-  std::vector<AstSimpleProcessing *>::iterator t_itr;
+  std::vector<AstSimpleProcessingWithRunFunction *> traversals;
+  std::vector<AstSimpleProcessingWithRunFunction *>::iterator t_itr;
   std::vector<const Compass::Checker *> bases;
+  std::vector<const Compass::Checker *> basesAll;
   std::vector<const Compass::Checker *>::iterator b_itr;
   CountingOutputObject  outputs ;
 
   //  compassCheckers(traversals, bases, outputs);
   Compass::Parameters params(Compass::findParameterFile());
-  buildCheckers(bases, params, outputs,root);
+  buildCheckers(basesAll, params, outputs, root);
+
+  for (b_itr = basesAll.begin(); b_itr != basesAll.end(); ++b_itr) {
+    const Compass::CheckerUsingAstSimpleProcessing* astChecker = 
+      dynamic_cast<const Compass::CheckerUsingAstSimpleProcessing*>(*b_itr);
+    if (astChecker!=NULL) {
+      bases.push_back(astChecker);
+      traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
+    }
+  }
+
   outputs.fillOutputList(bases);
 
   double* totalCheckerTime = new double[bases.size()];
@@ -344,7 +355,7 @@ int main(int argc, char **argv)
     {
       std::cout << std::endl << "got " << bases.size() << " checkers:";
       for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
-	std::cout << ' ' << (*b_itr)->getName();
+	std::cout << ' ' << (*b_itr)->checkerName;
       std::cout << std::endl;
     }
 
@@ -430,11 +441,11 @@ int main(int argc, char **argv)
 	  cout << "bounds [" << i << "] = " << bounds[i] << "   my_rank: " << my_rank << endl;
 	int t=0;
 	if (bounds[i]== my_rank) 
-	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	  for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
 	    SgNode* mynode = isSgNode(nullderefCounter.nodes[i]);
 	    ROSE_ASSERT(mynode);
 	    gettime(begin_time_checker);
-	    (*b_itr)->visit(mynode);
+	    (*t_itr)->visit(mynode);
 	    gettime(end_time_checker);
 	    double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
 	    totalCheckerTime[t]+=time_checker;
@@ -496,11 +507,11 @@ int main(int argc, char **argv)
 	  for (i=min; i<max;i++) { 
 	    gettime(begin_time_node);
 	    int t=0;
-	    for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	    for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
 	      SgNode* mynode = isSgNode(nodeDecls[i]);
 	      ROSE_ASSERT(mynode);
 	      gettime(begin_time_checker);
-	      (*b_itr)->visit(mynode);
+	      (*t_itr)->visit(mynode);
 	      gettime(end_time_checker);
 	      double time_checker = Compass::timeDifference(end_time_checker, begin_time_checker);
 	      totalCheckerTime[t]+=time_checker;

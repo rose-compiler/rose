@@ -41,7 +41,7 @@ namespace CompassAnalyses
     /// seeking out function reference expressions corresponding to exit()
     /// between blocks of MPI code.
     ////////////////////////////////////////////////////////////////////////////
-    class Traversal : public AstSimpleProcessing
+    class Traversal : public Compass::AstSimpleProcessingWithRunFunction
     {
       // Checker specific parameters should be allocated here.
                Compass::OutputObject* output;
@@ -146,7 +146,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::NoExitInMpiCode::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::NoExitInMpiCode::Traversal(params, output);
 }
 

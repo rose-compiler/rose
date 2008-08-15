@@ -28,7 +28,7 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction
              {
                  Compass::OutputObject* output;
                  // Can a function of type a override a function of type b?
@@ -177,7 +177,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::NonVirtualRedefinition::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::NonVirtualRedefinition::Traversal(params, output);
 }
 

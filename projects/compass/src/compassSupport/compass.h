@@ -227,11 +227,20 @@ namespace Compass {
       checkerName(checkerName), shortDescription(shortDescription), longDescription(longDescription), supportedLanguages(supportedLanguages), prerequisites(prerequisites), run(run) {}
   };
 
+  class AstSimpleProcessingWithRunFunction : public AstSimpleProcessing {
+    public:
+    AstSimpleProcessingWithRunFunction() {}
+    virtual ~AstSimpleProcessingWithRunFunction() {}
+    virtual void run(SgNode*)=0;
+    virtual void visit(SgNode* n)=0;
+  };
+
+
   /// A checker that supports combining with other instances of
   /// AstSimpleProcessing
   class CheckerUsingAstSimpleProcessing: public Checker {
     public:
-    typedef boost::function<AstSimpleProcessing* /*createSimpleTraversal*/(Parameters, OutputObject*)> SimpleTraversalCreationFunction;
+    typedef boost::function<AstSimpleProcessingWithRunFunction* /*createSimpleTraversal*/(Parameters, OutputObject*)> SimpleTraversalCreationFunction;
     SimpleTraversalCreationFunction createSimpleTraversal;
 
     CheckerUsingAstSimpleProcessing(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run, SimpleTraversalCreationFunction createSimpleTraversal):

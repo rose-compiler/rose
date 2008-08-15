@@ -84,15 +84,26 @@ int main(int argc, char **argv)
 
 
   /* setup checkers */
-  std::vector<AstSimpleProcessing *> traversals;
-  std::vector<AstSimpleProcessing *>::iterator t_itr;
+  std::vector<AstSimpleProcessingWithRunFunction *> traversals;
+  std::vector<AstSimpleProcessingWithRunFunction *>::iterator t_itr;
   std::vector<const Compass::Checker *> bases;
+  std::vector<const Compass::Checker *> basesAll;
   std::vector<const Compass::Checker *>::iterator b_itr;
   CountingOutputObject  outputs ;
 
   //  compassCheckers(traversals, bases, outputs);
   Compass::Parameters params(Compass::findParameterFile());
-  buildCheckers(bases, params, outputs, root);
+  buildCheckers(basesAll, params, outputs, root);
+
+  for (b_itr = basesAll.begin(); b_itr != basesAll.end(); ++b_itr) {
+    const Compass::CheckerUsingAstSimpleProcessing* astChecker = 
+      dynamic_cast<const Compass::CheckerUsingAstSimpleProcessing*>(*b_itr);
+    if (astChecker!=NULL) {
+      bases.push_back(astChecker);
+      traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
+    }
+  }
+
   outputs.fillOutputList(bases);
 
   //  ROSE_ASSERT(traversals.size() == bases.size() && bases.size() == outputs.size());
@@ -141,13 +152,13 @@ int main(int argc, char **argv)
 	  //if (DEBUG_OUTPUT_MORE) 
 	  // std::cout << "bounds ("<< i<<"/"<< bounds.size()<<")  - weight: " << (myanalysis.myNodeCounts[i]*
 	  //								myanalysis.myFuncWeights[i]) << std::endl;
-	  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	  for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
 	    //if (DEBUG_OUTPUT_MORE) 
 	    //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
 	    //  (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
 	    //  "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
 	    //      << std::endl; 
-	    (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	    (*t_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
 	  }
 	}
       }
@@ -182,12 +193,12 @@ int main(int argc, char **argv)
 	    //break;
 	    //}
 	    // ready contains the next number to be processed
-	    for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+	    for (t_itr = traversals.begin(); t_itr != traversals.end(); ++t_itr) {
 	      //std::cout << "running checker (" << i << ") : " << (*b_itr)->getName() << " \t on function: " << 
 	      // (myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_name().str()) << 
 	      // "     in File: " << 	(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]->get_file_info()->get_filename()) 
 	      //	    << std::endl; 
-	      (*b_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
+	      (*t_itr)->run(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i]);
 	    }
 	  }
 	}
@@ -221,18 +232,18 @@ int main(int argc, char **argv)
       exit(0);
     }
     std::cout << "\n>>> Running combined ... " << std::endl;
-    AstCombinedSimpleProcessing combined(traversals);
-    for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
-      combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
+    //AstCombinedSimpleProcessing combined(traversals);
+    //for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
+    //  combined.traverse(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   } else {
     if (processes > 1 ) {
       cerr << "  Processes specified: " << processes << " -- Currently the combined and shared memory model does not run in distributed mode!" << endl;
       exit(0);
     }
     std::cout << "\n>>> Running shared ... with " << nrOfThreads << " threads per traversal " << std::endl;
-    AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
-    for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
-      parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
+    //AstSharedMemoryParallelSimpleProcessing parallel(traversals,nrOfThreads);
+    //for (int i=0; i < (int)myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls.size(); i++)
+    //  parallel.traverseInParallel(myanalysis.DistributedMemoryAnalysisBase<int>::funcDecls[i], preorder);
   }
 
 
