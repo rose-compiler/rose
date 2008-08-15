@@ -769,8 +769,10 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_filesz",       p_filesz);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_memsz",        p_memsz);
     fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "p_align",        p_align);
-    if (p_nextra > 0)
-        fprintf(f, "%s%-*s = %s\n",                           p, w, "extra",          "<FIXME>");
+    if (p_extra.size()>0) {
+        fprintf(f, "%s%-*s = (%zu bytes)\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, "    ", &(p_extra[0]), p_extra.size());
+    }
 }
 
 /* Constructor reads the Elf Segment (Program Header) Table */
@@ -813,9 +815,9 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
             p_entries->get_entries().push_back(shdr);
 
             /* Save extra bytes */
-            shdr->set_nextra( fhdr->get_e_phentsize() - struct_size );
-            if (shdr->get_nextra() > 0)
-                shdr->get_extra() = content_ucl(offset+struct_size, shdr->get_nextra());
+            addr_t nextra = fhdr->get_e_phentsize() - struct_size;
+            if (nextra>0)
+                shdr->get_extra() = content_ucl(offset+struct_size, nextra);
 
             /* Null segments are just unused slots in the table; no real section to create */
             if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
@@ -921,8 +923,7 @@ SgAsmElfSegmentTable::unparse(FILE *f)
         
         /* The disk struct */
         addr_t extra_offset = write(f, i * fhdr->get_e_phentsize(), size, disk);
-        if (shdr->get_nextra() > 0)
-         // write(f, extra_offset, shdr->get_nextra(), shdr->get_extra());
+        if (shdr->get_extra().size() > 0)
             write(f, extra_offset, shdr->get_extra());
     }
 

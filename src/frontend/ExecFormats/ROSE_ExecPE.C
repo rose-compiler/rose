@@ -1176,12 +1176,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             /* COMDAT section */
             /*FIXME: not implemented yet*/
             fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", p_st_name.c_str());
-            hexdump(stderr, (addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_data.size());
+            hexdump(stderr, (addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
 
         } else {
             fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
                     p_st_name.c_str(), p_st_storage_class, p_st_type, p_st_section_num);
-            hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_data.size());
+            hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data);
         }
     }
 
@@ -1310,7 +1310,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", p_st_name.c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
     fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_size", p_aux_data.size());
-    hexdump(f, 0, "        ", p_aux_data, p_aux_data.size());
+    hexdump(f, 0, "        ", p_aux_data);
 }
 
 /* Constructor */
