@@ -2797,8 +2797,15 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
      asmFile->set_name(sourceFilename);
 
-  // Hard wire this for the moment while I work on getting Robb's work into place...
-  // asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+#if 1
+     /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
+      * identical with the original. */
+     string newFilename = sourceFilename + ".new";
+     size_t slash = sourceFilename.find_last_of('/');
+     if (slash!=sourceFilename.npos)
+         newFilename.replace(0, slash+1, "");
+     SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+#endif
 
 #if 0
   // These seem to be the relavant values that are set in the code above (i.e. in generateBinaryExecutableFileInformation_ELF())

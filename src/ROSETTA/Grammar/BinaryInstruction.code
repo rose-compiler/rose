@@ -622,6 +622,7 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
 
   // DQ (12/8/2008): Hook into the construction of the binary file format support.
      static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
+     static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
 
   // DQ (11/8/2008): used in the PE support.
   // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)

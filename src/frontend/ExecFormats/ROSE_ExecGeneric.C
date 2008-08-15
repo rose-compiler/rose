@@ -1110,6 +1110,24 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
     hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
 }
 
+/* Writes a new file from the IR node for a parse executable file.  This is primarily to debug the parser by creating
+ * an executable that *should* be identical to the original. */
+void
+SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
+{
+    FILE *output = fopen(name.c_str(), "w");
+    ROSE_ASSERT(output!=NULL);
+    
+    /* FIXME: executable files may have more than a single file header (e.g., a PE file has a DOS header and a PE header). For
+     *        now we just unparse one of the headers. See SgAsmGenericFile::unparse for more info -- it was the old top-level
+     *        node. */
+    SgAsmGenericHeader *file_header = asmFile->get_header();
+    ROSE_ASSERT(file_header!=NULL);
+    
+    file_header->unparse(output);
+    fclose(output);
+}
+
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
