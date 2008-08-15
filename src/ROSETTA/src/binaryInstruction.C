@@ -686,10 +686,6 @@ Grammar::setUpBinaryInstructions ()
   // DQ (6/14/2008): I think we can let this be considered an offset into the start of the mapped file (double check on this).
      AsmElfSegmentTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* extra size in bytes */
-  // DQ: Note that this is the size of the "SgUnsignedCharList extra" array, so this may be redundant because we use an STL vector for "extra".
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","nextra","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmElfSegmentTableEntryList.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentTableEntryList.setDataPrototype("SgAsmElfSegmentTableEntryPtrList","entries","",
