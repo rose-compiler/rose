@@ -1088,18 +1088,13 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
         p_aux_size = p_st_num_aux_entries * COFFSymbol_disk_size;
         p_aux_data = symtab->content_ucl((idx+1)*COFFSymbol_disk_size, p_aux_size);
 
-     // DQ (11/8/2008): I have not been careful enough in the translation of the offset pointers
-     // to indexes into the "p_aux_data" array (stored as an STL vector in the ROSE IR.
-        printf ("I think that the indexing of \"p_aux_data\" is not correctly translated from the pointer offsets that were previously used. \n");
-        ROSE_ASSERT(false);
-
         if (get_type() == SYM_FUNC && p_st_section_num > 0) {
             /* Function */
-            unsigned bf_idx      = le_to_host((const uint32_t)(p_aux_data[0]));
-            unsigned size        = le_to_host((const uint32_t)(p_aux_data[4]));
-            unsigned lnum_ptr    = le_to_host((const uint32_t)(p_aux_data[8]));
-            unsigned next_fn_idx = le_to_host((const uint32_t)(p_aux_data[12]));
-            unsigned res1        = le_to_host((const uint16_t)(p_aux_data[16]));
+            unsigned bf_idx      = le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned size        = le_to_host(*(uint32_t*)&(p_aux_data[4]));
+            unsigned lnum_ptr    = le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_fn_idx = le_to_host(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res1        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             if (debug) {
                 fprintf(stderr, "COFF aux func %s: bf_idx=%u, size=%u, lnum_ptr=%u, next_fn_idx=%u, res1=%u\n", 
@@ -1108,12 +1103,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             
         } else if (p_st_storage_class == 101 /*function*/ && (0 == p_st_name.compare(".bf") || 0 == p_st_name.compare(".ef"))) {
             /* Beginning/End of function */
-            unsigned res1        = le_to_host((const uint32_t)(p_aux_data[0]));
-            unsigned lnum        = le_to_host((const uint16_t)(p_aux_data[4])); /*line num within source file*/
-            unsigned res2        = le_to_host((const uint16_t)(p_aux_data[6]));
-            unsigned res3        = le_to_host((const uint32_t)(p_aux_data[8]));
-            unsigned next_bf     = le_to_host((const uint32_t)(p_aux_data[12])); /*only for .bf; reserved in .ef*/
-            unsigned res4        = le_to_host((const uint16_t)(p_aux_data[16]));
+            unsigned res1        = le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned lnum        = le_to_host(*(uint16_t*)&(p_aux_data[4])); /*line num within source file*/
+            unsigned res2        = le_to_host(*(uint16_t*)&(p_aux_data[6]));
+            unsigned res3        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned next_bf     = le_to_host(*(uint32_t*)&(p_aux_data[12])); /*only for .bf; reserved in .ef*/
+            unsigned res4        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux %s: res1=%u, lnum=%u, res2=%u, res3=%u, next_bf=%u, res4=%u\n", 
                         p_st_name.c_str(), res1, lnum, res2, res3, next_bf, res4);
@@ -1121,11 +1116,11 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             
         } else if (p_st_storage_class == 2/*external*/ && p_st_section_num == 0/*undef*/ && get_value()==0) {
             /* Weak External */
-            unsigned sym2_idx    = le_to_host((const uint32_t)(p_aux_data[0]));
-            unsigned flags       = le_to_host((const uint32_t)(p_aux_data[4]));
-            unsigned res1        = le_to_host((const uint32_t)(p_aux_data[8]));
-            unsigned res2        = le_to_host((const uint32_t)(p_aux_data[12]));
-            unsigned res3        = le_to_host((const uint16_t)(p_aux_data[16]));
+            unsigned sym2_idx    = le_to_host(*(uint32_t*)&(p_aux_data[0]));
+            unsigned flags       = le_to_host(*(uint32_t*)&(p_aux_data[4]));
+            unsigned res1        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned res2        = le_to_host(*(uint32_t*)&(p_aux_data[12]));
+            unsigned res3        = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             if (debug) {
                 fprintf(stderr, "COFF aux weak %s: sym2_idx=%u, flags=%u, res1=%u, res2=%u, res3=%u\n",
                         p_st_name.c_str(), sym2_idx, flags, res1, res2, res3);
@@ -1142,11 +1137,10 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
                 if (debug)
                     fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n", fname_offset, get_name().c_str());
             } else {
+                /* Aux data contains a NUL-padded name; the NULs (if any) are not part of the name. */
                 ROSE_ASSERT(p_st_num_aux_entries == 1);
-
-             // DQ (11/8/2008): This is an awkward conversion between of char* and STL.
                 char fname[COFFSymbol_disk_size+1];
-                strcpy(fname, (const char*) &(p_aux_data[0]));
+                memcpy(fname, &(p_aux_data[0]), COFFSymbol_disk_size);
                 fname[COFFSymbol_disk_size] = '\0';
                 set_name(fname);
                 if (debug)
@@ -1156,14 +1150,14 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
 
         } else if (p_st_storage_class == 3/*static*/ && NULL != fhdr->get_file()->get_section_by_name(p_st_name, '$')) {
             /* Section */
-            unsigned size         = le_to_host((const uint32_t)(p_aux_data[0])); /*same as section header SizeOfRawData */
-            unsigned nrel         = le_to_host((const uint16_t)(p_aux_data[4])); /*number of relocations*/
-            unsigned nln_ents     = le_to_host((const uint16_t)(p_aux_data[6])); /*number of line number entries */
-            unsigned cksum        = le_to_host((const uint32_t)(p_aux_data[8]));
-            unsigned sect_id      = le_to_host((const uint16_t)(p_aux_data[12])); /*1-base index into section table*/
+            unsigned size         = le_to_host(*(uint32_t*)&(p_aux_data[0])); /*same as section header SizeOfRawData */
+            unsigned nrel         = le_to_host(*(uint16_t*)&(p_aux_data[4])); /*number of relocations*/
+            unsigned nln_ents     = le_to_host(*(uint16_t*)&(p_aux_data[6])); /*number of line number entries */
+            unsigned cksum        = le_to_host(*(uint32_t*)&(p_aux_data[8]));
+            unsigned sect_id      = le_to_host(*(uint16_t*)&(p_aux_data[12])); /*1-base index into section table*/
             unsigned comdat       = p_aux_data[14]; /*comdat selection number if section is a COMDAT section*/
             unsigned res1         = p_aux_data[15];
-            unsigned res2         = le_to_host((const uint16_t)(p_aux_data[16]));
+            unsigned res2         = le_to_host(*(uint16_t*)&(p_aux_data[16]));
             set_size(size);
             set_type(SYM_SECTION);
             if (debug) {
