@@ -127,7 +127,8 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
     e_opt_magic = le_to_host(oh32.e_opt_magic);
     
     /* Decode the optional header. */
-    if (0x010b==e_opt_magic) {                                           
+    if (0x010b==e_opt_magic) {
+        exec_format.word_size = 4;
         e_lmajor             = le_to_host(oh32.e_lmajor);
         e_lminor             = le_to_host(oh32.e_lminor);
         e_code_size          = le_to_host(oh32.e_code_size);
@@ -159,6 +160,7 @@ PEFileHeader::ctor(ExecFile *f, addr_t offset)
         e_num_rvasize_pairs  = le_to_host(oh32.e_num_rvasize_pairs);
     } else if (0x020b==e_opt_magic) {
         /* We guessed wrong so extend and read the 64-bit header. */
+        exec_format.word_size = 8;
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
         addr_t need64 = std::min(e_nt_hdr_size, (addr_t)(sizeof oh64));

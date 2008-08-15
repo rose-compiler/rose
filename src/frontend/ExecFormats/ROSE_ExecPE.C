@@ -118,10 +118,10 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_e_nt_hdr_size        = le_to_host(fh.e_nt_hdr_size);
     p_e_flags              = le_to_host(fh.e_flags);
 
- /* Read the optional header, the size of which is stored in the e_nt_hdr_size of the main PE file header. According to
-  * http://www.phreedom.org/solar/code/tinype the Windows loader honors the e_nt_hdr_size even when set to smaller than the
-  * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
-  * the end of the file, in which case that part should be read as zero. */
+    /* Read the optional header, the size of which is stored in the e_nt_hdr_size of the main PE file header. According to
+     * http://www.phreedom.org/solar/code/tinype the Windows loader honors the e_nt_hdr_size even when set to smaller than the
+     * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
+     * the end of the file, in which case that part should be read as zero. */
     PE32OptHeader_disk oh32;
     memset(&oh32, 0, sizeof oh32);
     addr_t need32 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh32));
@@ -131,6 +131,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     
     /* Decode the optional header. */
     if (0x010b == p_e_opt_magic) {                                           
+        p_exec_format->set_word_size(4);
         p_e_lmajor             = le_to_host(oh32.e_lmajor);
         p_e_lminor             = le_to_host(oh32.e_lminor);
         p_e_code_size          = le_to_host(oh32.e_code_size);
@@ -162,6 +163,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_num_rvasize_pairs  = le_to_host(oh32.e_num_rvasize_pairs);
     } else if (0x020b == p_e_opt_magic) {
         /* We guessed wrong so extend and read the 64-bit header. */
+        p_exec_format->set_word_size(8);
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
         addr_t need64 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
@@ -823,8 +825,8 @@ SgAsmPEImportSection::ctor(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, 
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(&idir_disk);
 
         /* The library's name is indicated by RVA. We need a section offset instead. */
-        ROSE_ASSERT(idir->get_dll_name_rva() >= p_mapped_rva);
-        addr_t dll_name_offset = idir->get_dll_name_rva() - p_mapped_rva;
+        ROSE_ASSERT(idir->get_dll_name_rva() >= mapped_rva);
+        addr_t dll_name_offset = idir->get_dll_name_rva() - mapped_rva;
         std::string dll_name = content_str(dll_name_offset);
 
         /* Create the DLL objects */
