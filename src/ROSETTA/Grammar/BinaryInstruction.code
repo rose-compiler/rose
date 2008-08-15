@@ -4053,7 +4053,7 @@ SOURCE_PE_SECTION_TABLE_ENTRY_END
 
 SOURCE_PE_COFF_SYMBOL_START
 SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx)
-   : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0), p_aux_size(0)
+   : p_st_name_offset(0), p_st_section_num(0), p_st_type(0), p_st_storage_class(0), p_st_num_aux_entries(0)
    {
      ctor(fhdr, symtab, strtab, idx);
    }

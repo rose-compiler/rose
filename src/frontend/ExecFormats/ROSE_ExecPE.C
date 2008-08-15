@@ -513,7 +513,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table", p_section_table->get_id(), p_section_table->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
+                p_section_table->get_id(), p_section_table->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
@@ -634,11 +635,16 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
         section->set_header(fhdr);
         section->set_mapped(entry->get_rva(), entry->get_virtual_size());
         section->set_st_entry(entry);
-        section->set_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)   == SgAsmPESectionTableEntry::OF_READABLE);
-        section->set_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)   == SgAsmPESectionTableEntry::OF_WRITABLE);
-        section->set_eperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE) == SgAsmPESectionTableEntry::OF_EXECUTABLE);
+        section->set_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE) ==
+                           SgAsmPESectionTableEntry::OF_READABLE);
+        section->set_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE) ==
+                           SgAsmPESectionTableEntry::OF_WRITABLE);
+        section->set_eperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE) ==
+                           SgAsmPESectionTableEntry::OF_EXECUTABLE);
         
-        if (entry->get_flags() & (SgAsmPESectionTableEntry::OF_CODE|SgAsmPESectionTableEntry::OF_IDATA|SgAsmPESectionTableEntry::OF_UDATA))
+        if (entry->get_flags() & (SgAsmPESectionTableEntry::OF_CODE|
+                                  SgAsmPESectionTableEntry::OF_IDATA|
+                                  SgAsmPESectionTableEntry::OF_UDATA))
             section->set_purpose(SP_PROGRAM);
     }
 }
@@ -1085,8 +1091,7 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     
     /* Read additional aux entries. We keep this as 'char' to avoid alignment problems. */
     if (p_st_num_aux_entries > 0) {
-        p_aux_size = p_st_num_aux_entries * COFFSymbol_disk_size;
-        p_aux_data = symtab->content_ucl((idx+1)*COFFSymbol_disk_size, p_aux_size);
+        p_aux_data = symtab->content_ucl((idx+1)*COFFSymbol_disk_size, p_st_num_aux_entries * COFFSymbol_disk_size);
 
         if (get_type() == SYM_FUNC && p_st_section_num > 0) {
             /* Function */
@@ -1171,12 +1176,12 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             /* COMDAT section */
             /*FIXME: not implemented yet*/
             fprintf(stderr, "COFF aux comdat %s: (FIXME) not implemented yet\n", p_st_name.c_str());
-            hexdump(stderr, (addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_size);
+            hexdump(stderr, (addr_t) symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_data.size());
 
         } else {
             fprintf(stderr, "COFF aux unknown %s: (FIXME) st_storage_class=%u, st_type=0x%02x, st_section_num=%d\n", 
                     p_st_name.c_str(), p_st_storage_class, p_st_type, p_st_section_num);
-            hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_size);
+            hexdump(stderr, symtab->get_offset()+(idx+1)*COFFSymbol_disk_size, "    ", p_aux_data, p_aux_data.size());
         }
     }
 
@@ -1304,8 +1309,8 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", p_st_name.c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
-    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_size", p_aux_size);
-    hexdump(f, 0, "        ", p_aux_data, p_aux_size);
+    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_size", p_aux_data.size());
+    hexdump(f, 0, "        ", p_aux_data, p_aux_data.size());
 }
 
 /* Constructor */
