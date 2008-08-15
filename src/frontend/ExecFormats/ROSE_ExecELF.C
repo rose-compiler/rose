@@ -238,16 +238,14 @@ SgAsmElfFileHeader::max_page_size()
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
 {
- // for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
-    ROSE_ASSERT(p_magic.size() == 4);
-    for (size_t i = 0; i < 4; i++)
+    ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
+    for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
     host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
- // for (size_t i=0; i<NELMTS(e_ident_padding); i++)
-    ROSE_ASSERT(p_e_ident_padding.size() == 9);
-    for (size_t i = 0; i < 9; i++)
+    ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
+    for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     host_to_disk(sex, p_e_type,                &(disk->e_type));
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
@@ -268,16 +266,14 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
 {
- // for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
-    ROSE_ASSERT(p_magic.size() == 4);
-    for (size_t i = 0; i < 4; i++)
+    ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
+    for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
     host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
- // for (size_t i=0; i<NELMTS(e_ident_padding); i++)
-    ROSE_ASSERT(p_e_ident_padding.size() == 9);
-    for (size_t i = 0; i < 9; i++)
+    ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
+    for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
         disk->e_ident_padding[i] = p_e_ident_padding[i];
     host_to_disk(sex, p_e_type,                &(disk->e_type));
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
@@ -348,9 +344,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_class",     p_e_ident_file_class);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_data_encoding",  p_e_ident_data_encoding);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_version",   p_e_ident_file_version);
- // for (size_t i=0; i<NELMTS(p_e_ident_padding); i++)
-    ROSE_ASSERT(p_e_ident_padding.size() == 9);
-    for (size_t i=0; i < 9; i++)
+    for (size_t i=0; i < p_e_ident_padding.size(); i++)
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
