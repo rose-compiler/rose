@@ -1022,8 +1022,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmCoffSymbol.setDataPrototype("SgUnsignedCharList","aux_data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmCoffSymbol.setDataPrototype("size_t","aux_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // This is the IR node to hold a list of symbols (needed because we can't mix children from data 
   // members with children from containers).
