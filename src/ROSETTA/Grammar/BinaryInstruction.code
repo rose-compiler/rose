@@ -1377,7 +1377,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
              : SgAsmElfSection(fhdr, shdr), p_dt_pltrelsz(0), p_dt_pltgot(0), p_dt_hash(0), p_dt_strtab(0), p_dt_symtab(0), 
                p_dt_rela(0), p_dt_relasz(0), p_dt_relaent(0), p_dt_strsz(0), p_dt_symentsz(0), p_dt_init(0), p_dt_fini(0), 
                p_dt_pltrel(0), p_dt_jmprel(0), p_dt_verneednum(0), p_dt_verneed(0), p_dt_versym(0)
-             {}
+             {ctor(fhdr, shdr);}
        // virtual ~SgAsmElfDynamicSection() {}
 
           virtual void set_linked_section(SgAsmElfSection *sec);   /* Parsing happens here rather than in constructor */
@@ -1386,6 +1386,9 @@ HEADER_ELF_DYNAMIC_SECTION_START
 
        // Moved from global scope
           static void dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, SgAsmGenericFile *ef);
+
+     private:
+	  void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
 
 HEADER_ELF_DYNAMIC_SECTION_END
 
@@ -1993,6 +1996,7 @@ HEADER_PE_DLL_START
        // std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
        // std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
        // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
+	  void ctor(const std::string&);
 HEADER_PE_DLL_END
 
 
@@ -4060,6 +4064,7 @@ SOURCE_PE_DLL_START
 SgAsmPEDLL::SgAsmPEDLL(const std::string &name)
    : SgAsmGenericDLL(name), p_idir(NULL)
    {
+     ctor(name);
    }
 
 void

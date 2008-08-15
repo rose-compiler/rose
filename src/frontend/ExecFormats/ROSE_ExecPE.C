@@ -102,6 +102,8 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+    p_rvasize_pairs = new SgAsmPERVASizePairList;
+
     PEFileHeader_disk fh;
     content(0, sizeof fh, &fh);
 
@@ -773,6 +775,13 @@ SgAsmPEImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%02x\n", p, w, "padding", p_padding);
 }
 
+/* Constructor */
+void
+SgAsmPEDLL::ctor(const std::string&) 
+{
+    p_hintnames = new SgAsmPEImportHintNameList;
+}
+
 /* Print debugging info */
 void
 SgAsmPEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1313,6 +1322,8 @@ SgAsmCoffSymbolTable::ctor( SgAsmGenericFile *ef, SgAsmPEFileHeader *fhdr)
     set_name("COFF Symbols");
     set_purpose(SP_SYMTAB);
     set_header(fhdr);
+
+    p_symbols = new SgAsmCoffSymbolList;
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */

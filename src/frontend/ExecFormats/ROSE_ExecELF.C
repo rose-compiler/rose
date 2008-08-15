@@ -782,10 +782,7 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
     set_purpose(SP_HEADER);
     set_header(fhdr);
 
-    /* RPM (2008-08-13) p_entries should probably be initialized to point to a node that's an empty list. How is that done?
-     * Doing it here for the time being. FIXME */
-    if (!p_entries)
-        p_entries = new SgAsmElfSegmentTableEntryList;
+    p_entries = new SgAsmElfSegmentTableEntryList;
     
     ByteOrder sex = fhdr->get_sex();
     
@@ -828,7 +825,8 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
              * latter for loading. At this point we've already read the section table and created sections, and now we'll
              * create more sections from the segment table -- but only if the segment table describes a section we haven't
              * already seen. */
-            std::vector<SgAsmGenericSection*> possible = fhdr->get_file()->get_sections_by_offset(shdr->get_offset(), shdr->get_filesz());
+            std::vector<SgAsmGenericSection*> possible =
+                fhdr->get_file()->get_sections_by_offset(shdr->get_offset(), shdr->get_filesz());
             std::vector<SgAsmGenericSection*> matching;
             for (size_t j = 0; j < possible.size(); j++) {
                 if (possible[j]->get_offset()!=shdr->get_offset() || possible[j]->get_size()!=shdr->get_filesz())
@@ -1003,6 +1001,14 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = %u\n",              p, w, "d_tag",      p_d_tag);
     }
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",     p, w, "d_val_addr", p_d_val);
+}
+
+/* Constructor */
+void
+SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+{
+    p_other_entries = new SgAsmElfDynamicEntryList;
+    p_all_entries   = new SgAsmElfDynamicEntryList;
 }
 
 /* Set linked section (the string table) and finish parsing this section. */
@@ -1347,10 +1353,7 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
-    /* RPM (2008-08-13) p_symbols should probably be initialized to point to a node that's an empty list. How is that done?
-     * Doing it here for the time being. FIXME */
-    if (!p_symbols)
-        p_symbols = new SgAsmElfSymbolList;
+    p_symbols = new SgAsmElfSymbolList;
 
     if (4==fhdr->get_word_size()) {
         const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =

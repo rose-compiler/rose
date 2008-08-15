@@ -2798,7 +2798,7 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
      asmFile->set_name(sourceFilename);
 
   // Hard wire this for the moment while I work on getting Robb's work into place...
-     asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
+  // asmFile->set_machine_architecture(SgAsmFile::e_machine_architecture_Intel_80386);
 
 #if 0
   // These seem to be the relavant values that are set in the code above (i.e. in generateBinaryExecutableFileInformation_ELF())
