@@ -9,10 +9,6 @@
 #include <fstream>
 #include <iostream> 
 
-#if ROSE_MPI
-#include "functionLevelTraversal.h"
-#include "functionNames.h"
-#endif
 
 // Default setting for verbosity level (-1 is silent, and values greater then zero indicate different levels of verbosity)
 int  Compass::verboseSetting   = 0;
@@ -37,7 +33,6 @@ bool Compass::quickSave=false;
 /******************************************************************
  * MPI CODE TO RUN DEFUSE IN PARALLEL WITH MPI
  ******************************************************************/
-DefUseAnalysis* Compass::defuse = NULL;
 
 #if ROSE_MPI
 int Compass::my_rank=0;
@@ -54,10 +49,12 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   std::cerr << " Starting the load with " << processes << " processes. " << std::endl;
   while (!done) {
 
-    if (defuse==NULL) {
-      defuse = new DefUseAnalysis(project);
-      std::cerr << " creating defuse ... " <<std::endl;
-    }
+    Compass::sourceDefUsePrerequisite.load(project);
+    ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
+    //    if (defuse==NULL) {
+    //  defuse = new DefUseAnalysis(project);
+    //  std::cerr << " creating defuse ... " <<std::endl;
+    //}
     int nrOfSimultaniousProcs = 3;
     if (my_rank==0 && processes>1) {
       for (int turn=0; turn <nrOfSimultaniousProcs; ++turn) {
@@ -132,11 +129,11 @@ void Compass::loadDFA(std::string name, SgProject* project) {
 
       /* deserialize all results */
       // write the global def_use_array back to the defmap (for each processor)
-      deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)defuse, def_values_global, memTrav->nodeMap, true);
+      deserializeDefUseResults(global_arrsize, (DefUseAnalysis*)Compass::sourceDefUsePrerequisite.getSourceDefUse(), def_values_global, memTrav->nodeMap, true);
       std::cerr << my_rank << " : deserialization of Defs done." << std::endl;
       delete[] def_values_global;
       def_values_global=NULL;
-      deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)defuse, use_values_global, memTrav->nodeMap, false);
+      deserializeDefUseResults(global_arrsizeUse, (DefUseAnalysis*)Compass::sourceDefUsePrerequisite.getSourceDefUse(), use_values_global, memTrav->nodeMap, false);
       std::cerr << my_rank << " : deserialization of Uses done." << std::endl;
       delete[] use_values_global;
       use_values_global=NULL;
@@ -152,8 +149,8 @@ void Compass::loadDFA(std::string name, SgProject* project) {
   }
 
   if ((my_rank==0 && processes==1) || (my_rank==1 && processes>1)) {
-    my_map defmap = defuse->getDefMap();
-    my_map usemap = defuse->getUseMap();
+    my_map defmap = Compass::sourceDefUsePrerequisite.getSourceDefUse()->getDefMap();
+    my_map usemap = Compass::sourceDefUsePrerequisite.getSourceDefUse()->getUseMap();
     std::cerr <<  my_rank << ": Total number of def nodes: " << defmap.size() << std::endl;
     std::cerr <<  my_rank << ": Total number of use nodes: " << usemap.size() << std::endl << std::endl;
   }
@@ -295,6 +292,8 @@ void Compass::MemoryTraversal::visit ( SgNode* node )
 
 
 void Compass::runDefUseAnalysis(SgProject* root) {
+
+#if 0
 
   if (defuse==NULL) {
     //#define DEFUSE
@@ -646,6 +645,8 @@ void Compass::runDefUseAnalysis(SgProject* root) {
   }
 
   ROSE_ASSERT(defuse);
+
+#endif
 }
 
 
@@ -1163,13 +1164,18 @@ Compass::outputTgui( std::string & tguiXML,
 using namespace Compass;
 
 Compass::ProjectPrerequisite Compass::projectPrerequisite;
+Compass::SourceDefUsePrerequisite Compass::sourceDefUsePrerequisite;
+Compass::AuxiliaryInfoPrerequisite Compass::auxiliaryInfoPrerequisite;
+Compass::BinDataFlowPrerequisite Compass::binDataFlowPrerequisite;
 
 static void runPrereqList(const PrerequisiteList& ls, SgProject* proj) {
   for (size_t i = 0; i < ls.size(); ++i) {
     runPrereqs(ls[i], proj);
+    std::cerr << "Running Prerequisite " << ls[i]->name << std::endl;
     ls[i]->run(proj);
   }
 }
+
 
 void Compass::runPrereqs(const Checker* checker, SgProject* proj) {
   runPrereqList(checker->prerequisites, proj);

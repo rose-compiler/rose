@@ -18,6 +18,7 @@ constStringLiterals
 controlVariableTestAgainstFunction
 copyConstructorConstArg
 cppCallsSetjmpLongjmp
+cycleDetection
 cyclomaticComplexity
 dataMemberAccess
 deepNesting

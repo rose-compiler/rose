@@ -19,6 +19,7 @@
 +:ControlVariableTestAgainstFunction
 +:CopyConstructorConstArg
 +:CppCallsSetjmpLongjmp
++:CycleDetection
 +:CyclomaticComplexity
 +:DataMemberAccess
 +:DeepNesting

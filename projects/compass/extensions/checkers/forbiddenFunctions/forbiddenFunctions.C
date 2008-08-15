@@ -2,9 +2,10 @@
 // Author: Gary Yuan
 // Date: 28-December-2007
 
+#include "compass.h"
 #include <map>
 #include <string>
-#include "compass.h"
+
 
 #ifndef COMPASS_FORBIDDEN_FUNCTIONS_H
 #define COMPASS_FORBIDDEN_FUNCTIONS_H

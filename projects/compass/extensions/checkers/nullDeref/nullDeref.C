@@ -186,7 +186,7 @@ CompassAnalyses::NullDeref::Traversal::expressionIsNull(SgExpression* expr) {
     SgVarRefExp* vr = isSgVarRefExp(expr);
     SgInitializedName* var = vr->get_symbol()->get_declaration();
     ROSE_ASSERT (var);
-    vector<SgNode*> defs = Compass::defuse->getDefFor(vr, var);
+    vector<SgNode*> defs = Compass::sourceDefUsePrerequisite.getSourceDefUse()->getDefFor(vr, var);
     // cerr << "Have " << defs.size() << " def(s)" << endl;
     for (size_t i = 0; i < defs.size(); ++i) {
       SgExpression* def = isSgExpression(defs[i]);
@@ -254,7 +254,7 @@ CompassAnalyses::NullDeref::Traversal::expressionIsNull(SgExpression* expr) {
     break;
   }
   default: {
-    cout << "Unhandled expression kind " << expr->class_name() << endl;
+    cout << "Compass::Nullderef::Unhandled expression kind " << expr->class_name() << endl;
     result.first = true;
     break;
   }
@@ -370,12 +370,19 @@ static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Par
   return new CompassAnalyses::NullDeref::Traversal(params, output);
 }
 
+static Compass::PrerequisiteList getPrerequisites() {
+  Compass::PrerequisiteList defusePre;
+  defusePre.push_back(&Compass::projectPrerequisite);
+  defusePre.push_back(&Compass::sourceDefUsePrerequisite);
+  return defusePre;
+}
+
 extern const Compass::Checker* const nullDerefChecker =
   new Compass::CheckerUsingAstSimpleProcessing(
         CompassAnalyses::NullDeref::checkerName,
         CompassAnalyses::NullDeref::shortDescription,
         CompassAnalyses::NullDeref::longDescription,
         Compass::C | Compass::Cpp,
-        Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
+        getPrerequisites(),
         run,
         createTraversal);

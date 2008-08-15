@@ -170,6 +170,7 @@ void initPCompass(int argc, char **argv) {
 
 }
 
+#if 0
 // The pre-traversal runs before the distributed part of the analysis and is used to propagate context information down
 // to the individual function definitions in the AST. Here, it just computes the depth of nodes in the AST.
 class FunctionNamesPreTraversal: public AstTopDownProcessing<int>
@@ -180,7 +181,7 @@ protected:
     return depth + 1;
   }
 };
-
+#endif
 
 // ************************************************************
 // OUTPUT OBJECT: Initialize to zero and when error occurs, we increase the output

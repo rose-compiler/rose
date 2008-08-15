@@ -359,7 +359,8 @@ int main(int argc, char **argv)
       std::cout << std::endl;
     }
 
-
+  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
+    Compass::runPrereqs(*b_itr, root);
 
   /* traverse the files */
 
@@ -395,8 +396,8 @@ int main(int argc, char **argv)
       " threads!! processes = " << processes << " ------------" << std::endl;
 #endif 
 
-
-  ROSE_ASSERT(Compass::defuse);
+  
+  ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
   double mem_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memuse = mem_e-mem_b;
   gettime(end_init_time);
