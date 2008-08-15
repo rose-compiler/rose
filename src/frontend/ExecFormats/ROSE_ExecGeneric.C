@@ -876,6 +876,7 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
 
     p_symbols = new SgAsmGenericSymbolList;
     p_dlls = new SgAsmGenericDLLList;
+    p_target = new SgAsmGenericArchitecture;
 
  // The SgAsmGenericFormat is contained as a pointer and not a value data member, 
  // so we have to build one and initialize the pointer.

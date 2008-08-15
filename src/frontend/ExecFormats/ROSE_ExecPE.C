@@ -22,16 +22,14 @@ SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     ExtendedDOSHeader_disk disk;
     content(0, sizeof disk, &disk);
 
- // for (size_t i=0; i<NELMTS(e_res1); i++)
-    for (size_t i=0; i < 4; i++)
-        p_e_res1[i]       = le_to_host(disk.e_res1[i]);
+    for (size_t i=0; i<NELMTS(disk.e_res1); i++)
+        p_e_res1.push_back(le_to_host(disk.e_res1[i]));
 
     p_e_oemid             = le_to_host(disk.e_oemid);
     p_e_oeminfo           = le_to_host(disk.e_oeminfo);
 
- // for (size_t i=0; i< NELMTS(e_res2); i++)
-    for (size_t i = 0; i< 10; i++)
-        p_e_res2[i]       = le_to_host(disk.e_res2[i]);
+    for (size_t i=0; i< NELMTS(disk.e_res2); i++)
+        p_e_res2.push_back(le_to_host(disk.e_res2[i]));
 
     p_e_lfanew            = le_to_host(disk.e_lfanew);
 }

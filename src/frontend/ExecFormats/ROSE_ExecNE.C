@@ -78,9 +78,8 @@ SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     const ExtendedDOSHeader_disk *disk =
         (const ExtendedDOSHeader_disk*)content(0, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk));
 
- // for (size_t i=0; i<NELMTS(e_res1); i++)
-    for (size_t i=0; i < 14; i++)
-        p_e_res1[i]  = le_to_host(disk->e_res1[i]);
+    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
+        p_e_res1.push_back(le_to_host(disk->e_res1[i]));
     p_e_lfanew = le_to_host(disk->e_lfanew);
 }
 

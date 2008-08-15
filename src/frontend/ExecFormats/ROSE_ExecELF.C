@@ -168,10 +168,6 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_exec_format->set_abi_version(0);
     //exec_format.word_size = ...; /*set above*/
 
- // default values are: isa = ISA_UNSPECIFIED and other = 0
-    set_target(new SgAsmGenericArchitecture());
-    ROSE_ASSERT(get_target() != NULL);
-
     /* Target architecture */
     switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
       case 0:
@@ -206,7 +202,6 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
-     // p_target->set_isa(ISA_OTHER, p_e_machine);
         p_target->set_isa(ISA_OTHER);
         p_target->set_other(p_e_machine);
         break;

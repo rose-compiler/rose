@@ -38,8 +38,8 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_e_cs                = le_to_host(disk->e_cs);
     p_e_relocs_offset     = le_to_host(disk->e_relocs_offset);
     p_e_overlay           = le_to_host(disk->e_overlay);
-    for (size_t i=0; i<NELMTS(p_e_res1); i++)
-        p_e_res1[i]       = le_to_host(disk->e_res1[i]);
+    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
+        p_e_res1.push_back(le_to_host(disk->e_res1[i]));
 
     /* Magic number */
     p_magic.push_back(disk->e_magic[0]);
@@ -93,7 +93,7 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk)
     host_to_le(p_e_cs,                 &(disk->e_cs));
     host_to_le(p_e_relocs_offset,      &(disk->e_relocs_offset));
     host_to_le(p_e_overlay,            &(disk->e_overlay));
-    for (size_t i=0; i<NELMTS(p_e_res1); i++)
+    for (size_t i=0; i<NELMTS(disk->e_res1); i++)
         host_to_le(p_e_res1[i],        &(disk->e_res1[i]));
     return disk;
 }
@@ -179,7 +179,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08u\n",                p, w, "e_cs",                 p_e_cs);
     fprintf(f, "%s%-*s = byte %"PRIu64"\n",        p, w, "e_relocs_offset",      p_e_relocs_offset);
     fprintf(f, "%s%-*s = %u\n",                    p, w, "e_overlay",            p_e_overlay);
-    for (size_t i=0; i < NELMTS(p_e_res1); i++) {
+    for (size_t i=0; i < p_e_res1.size(); i++) {
         fprintf(f, "%s%-*s = [%zd] %u\n",          p, w, "e_res1",               i, p_e_res1[i]);
     }
     if (p_relocs) {
