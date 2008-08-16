@@ -768,31 +768,31 @@ void
 CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
    {
   // This function skips the representation of specific kinds of IR nodes 
-#if 1
+#if 0
      if (isSgAsmElfSectionTableEntry(node) != NULL)
         {
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
      if (isSgAsmPESectionTableEntry(node) != NULL)
         {
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
      if (isSgAsmPERVASizePair(node) != NULL)
         {
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
      if (isSgAsmPEImportHintName(node) != NULL)
         {
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
      if (isSgAsmElfSymbolList(node) != NULL)
         {
           skipNode(node);
@@ -804,17 +804,24 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
      if (isSgAsmCoffSymbol(node) != NULL)
         {
           skipNode(node);
         }
 #endif
-#if 1
+#if 0
   // Use this as a way to reduce the number of IR nodes in the generated AST to simplify debugging.
      SgAsmElfSection* elfSection = isSgAsmElfSection(node);
      SgAsmElfDynamicSection* elfDynamicSection = isSgAsmElfDynamicSection(node);
      if (elfSection != NULL && elfSection->get_name() != ".text" && elfSection->get_name() != ".data" && elfDynamicSection == NULL )
+        {
+          skipNode(node);
+        }
+#endif
+#if 0
+     SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(node);
+     if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("start") == std::string::npos)
         {
           skipNode(node);
         }
