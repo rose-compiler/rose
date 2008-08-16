@@ -583,6 +583,7 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                  // Only build the edge if the node is not on the list of IR nodes to skip
                  // We can't use the visitedNodes list since just be cause we have visited
                  // the IR node does not imply that we should skip the edge (quite the opposent!)
+                 // if ( skipNodeList.find(n) == skipNodeList.end() )
                     if ( skipNodeList.find(n) == skipNodeList.end() )
                        {
                       // printf ("Edge is being output \n");
@@ -597,6 +598,19 @@ CustomMemoryPoolDOTGenerationData::visit(SgNode* node)
                            // graph, we want to ignore any edges to them as well.
                               ignoreEdge = fileInfo->isFrontendSpecific();
                             }
+#endif
+
+#if 0
+                      // if (edgelabel == "header")
+                      //    {
+                              EdgeType edge(node,n,edgelabel);
+                              ignoreEdge = (skipEdgeSet.find(edge) == skipEdgeSet.end());
+                              printf ("node = %p n = %p edgelabel = %s ignoreEdge = %s \n",node,n,edgelabel.c_str(),ignoreEdge ? "true" : "false");
+                      //    }
+#endif
+#if 0
+                         if (edgelabel == "header")
+                              ignoreEdge = true;
 #endif
 
                          if (ignoreEdge == false)
@@ -685,6 +699,26 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
           EdgeType edge(nodeSource,nodeSink,edgeName);
           skipEdge(edge);
         }
+#if 0
+  // DQ (8/15/2008): This does not appear to be working, I don't know why.
+
+  // Filter out the edges between SgAsmElfSections and their SgAsmElfFileHeader
+     if (edgeName == "header")
+        {
+          printf ("In CustomMemoryPoolDOTGeneration::edgeFilter(): Skipping header edges \n");
+          EdgeType edge(nodeSource,nodeSink,edgeName);
+          skipEdge(edge);
+        }
+
+  // Filter out the edges between SgAsmElfSections and their SgAsmElfFileHeader
+     if (edgeName == "file")
+        {
+          printf ("In CustomMemoryPoolDOTGeneration::edgeFilter(): Skipping file edges \n");
+          EdgeType edge(nodeSource,nodeSink,edgeName);
+          skipEdge(edge);
+        }
+#endif
+
 #if 1
   // DQ (1/24/2007): Added skipNodeList to permit filtering of IR nodes, if the source node is not present 
   // then we don't have an edge to skip, if the source node is present and the sink node is to be skipped, 
@@ -695,7 +729,6 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
           if ( nodeSink != NULL && DOTgraph.skipNodeList.find(nodeSink) != DOTgraph.skipNodeList.end() )
              {
             // printf ("CustomMemoryPoolDOTGeneration::edgeFilter(): Skipping this edge since it is to a node that is skipped nodeSink = %p = %s \n",nodeSink,nodeSink->class_name().c_str());
-               printf ("CustomMemoryPoolDOTGeneration::edgeFilter(): Skipping this edge since it is to a node that is skipped nodeSink = %p = %s \n",nodeSink,nodeSink->class_name().c_str());
 
             // ROSE_ASSERT(false);
 
@@ -714,7 +747,7 @@ CustomMemoryPoolDOTGeneration::edgeFilter(SgNode* nodeSource, SgNode* nodeSink, 
 void
 CustomMemoryPoolDOTGeneration::typeFilter(SgNode* node)
    {
-  // This function skips the representation ot types and IR nodes associated with types
+  // This function skips the representation of types and IR nodes associated with types
      if (isSgType(node) != NULL)
         {
           skipNode(node);
@@ -729,6 +762,39 @@ CustomMemoryPoolDOTGeneration::typeFilter(SgNode* node)
         {
           skipNode(node);
         }
+   }
+
+void
+CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
+   {
+  // This function skips the representation of specific kinds of IR nodes 
+#if 1
+     if (isSgAsmElfSectionTableEntry(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
+     if (isSgAsmElfSymbolList(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 0
+     if (isSgAsmGenericFile(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
+  // Use this as a way to reduce the number of IR nodes in the generated AST to simplify debugging.
+     SgAsmElfSection* elfSection = isSgAsmElfSection(node);
+     SgAsmElfDynamicSection* elfDynamicSection = isSgAsmElfDynamicSection(node);
+     if (elfSection != NULL && elfSection->get_name() != ".text" && elfSection->get_name() != ".data" && elfDynamicSection == NULL )
+        {
+          skipNode(node);
+        }
+#endif
    }
 
 void
@@ -957,6 +1023,8 @@ CustomMemoryPoolDOTGeneration::defaultFilter(SgNode* node)
      frontendCompatabilityFilter(node);
 #endif
      commentAndDirectiveFilter(node);
+
+     binaryExecutableFormatFilter(node);
 
      std::vector<std::pair<SgNode*,std::string> > listOfIRnodes = node->returnDataMemberPointers();
      std::vector<std::pair<SgNode*,std::string> >::iterator i = listOfIRnodes.begin();
@@ -1259,6 +1327,112 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
+          addNode(graphNode);
+        }
+
+     if (isSgAsmType(node) != NULL)
+        {
+          string additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=3,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+
+       // Make this statement different in the generated dot graph
+       // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
+          string labelWithSourceCode;
+       // printf ("Graph this node (%s) \n",node->class_name().c_str());
+          if (isSgClassType(node) == NULL)
+             {
+            // printf ("Graph this node (%s) \n",node->class_name().c_str());
+            // labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
+             }
+
+       // labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+          labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+
+          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
+          addNode(graphNode);
+        }
+
+     if (isSgAsmNode(node) != NULL)
+        {
+       // Color selection for the binary file format and binary instruction IR nodes.
+
+          string additionalNodeOptions;
+
+       // Make this statement different in the generated dot graph
+          string labelWithSourceCode;
+
+          switch(node->variantT())
+             {
+               case V_SgAsmElfSection:
+               case V_SgAsmPESection:
+               case V_SgAsmNESection:
+               case V_SgAsmLESection:
+                  {
+                    SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=RoyalBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = string("\\n  ") + genericSection->get_name() +
+                                          "\\n  " +  StringUtility::numberToString(genericSection) + "  ";
+                 // printf ("########## genericSection->get_name() = %s \n",genericSection->get_name().c_str());
+                    break;
+                  }
+
+               case V_SgAsmElfFileHeader:
+               case V_SgAsmPEFileHeader:
+               case V_SgAsmNEFileHeader:
+               case V_SgAsmLEFileHeader:
+               case V_SgAsmDOSFileHeader:
+                  {
+                    SgAsmGenericHeader* genericHeader = isSgAsmGenericHeader(node);
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + genericHeader->get_name() + 
+                                          "\\n  " +  StringUtility::numberToString(genericHeader) + "  ";
+                    break;
+                  }
+
+               case V_SgAsmElfSectionTableEntry:
+               case V_SgAsmPESectionTableEntry:
+               case V_SgAsmNESectionTableEntry:
+               case V_SgAsmLESectionTableEntry:
+                  {
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=darkturquoise,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    break;
+                  }
+
+               case V_SgAsmElfSegmentTableEntry:
+                  {
+                    additionalNodeOptions = "shape=house,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=red,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " +  StringUtility::numberToString(node) + "  ";
+                    break;
+                  }
+
+               case V_SgAsmElfSymbol:
+               case V_SgAsmCoffSymbol:
+                  {
+                    SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
+                    additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                    labelWithSourceCode = "\\n  " + genericSymbol->get_name() + 
+                                          "\\n  " +  StringUtility::numberToString(genericSymbol) + "  ";
+                    break;
+                  }
+
+               default:
+                  {
+                 // It appears that we can't unparse one of these (not implemented)
+                    additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=SkyBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
+                 // labelWithSourceCode = string("\\n  ") + functionDeclaration->get_name().getString() + "  ";
+                    labelWithSourceCode = string("\\n  ") + StringUtility::numberToString(node) + "  ";
+#if 0
+                 // DQ (5/14/2006): this is an error when processing stdio.h
+                 // DQ (5/14/2006): This fails for SgClassDeclaration
+                 // if (isSgVariableDefinition(statement) == NULL)
+                    if ( (isSgVariableDefinition(statement) == NULL) && (isSgClassDeclaration(node) == NULL) )
+                         labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
+#endif
+                    break;
+                  }
+             }
+
+          NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
           addNode(graphNode);
         }
 

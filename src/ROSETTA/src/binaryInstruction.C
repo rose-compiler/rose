@@ -229,6 +229,7 @@ Grammar::setUpBinaryInstructions ()
 
   // List objects required because IR design does not mix children with list elements.
      NEW_TERMINAL_MACRO ( AsmGenericSectionList, "AsmGenericSectionList", "AsmGenericSectionListTag" );
+     NEW_TERMINAL_MACRO ( AsmGenericHeaderList,  "AsmGenericHeaderList",  "AsmGenericHeaderListTag"  );
      NEW_TERMINAL_MACRO ( AsmGenericSymbolList,  "AsmGenericSymbolList",  "AsmGenericSymbolListTag"  );
      NEW_TERMINAL_MACRO ( AsmElfSymbolList,      "AsmElfSymbolList",      "AsmElfSymbolListTag"      );
      NEW_TERMINAL_MACRO ( AsmCoffSymbolList,     "AsmCoffSymbolList",     "AsmCoffSymbolListTag"     );
@@ -253,7 +254,7 @@ Grammar::setUpBinaryInstructions ()
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        |
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry |
                AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry | 
-               AsmGenericSectionList   | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false );
+               AsmGenericSectionList   | AsmGenericHeaderList    | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false );
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
@@ -1564,8 +1565,18 @@ Grammar::setUpBinaryInstructions ()
   /* The file to which this section belongs */
      AsmGenericSection.setDataPrototype("SgAsmGenericFile*","file","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/15/2008): Put this back since the sections are in a list and the list is not in the header
+  // (as I thought).  The list is in the SgAsmGenericFile which has a SgAsmFile as a parent.
+  // DQ (8/14/2008): The get_header() function is now implemented in terms of the "get_parent()" function 
+  // so that we can remove redundant representation of pointers to IR nodes. parent pointers are
+  // a standard part of the design of the ROSE IR and this detail was not accounted for in the 
+  // design of the executable format support.
+  // AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   /* Size of section in bytes */
      AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1620,7 +1631,9 @@ Grammar::setUpBinaryInstructions ()
 
   // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmGenericDLLList.setFunctionPrototype ( "HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericDLLList.setDataPrototype("SgAsmGenericDLLPtrList","dlls","",
@@ -1665,6 +1678,11 @@ Grammar::setUpBinaryInstructions ()
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
+  // int                 fd;             // File descriptor opened for read-only (or negative)
+  // struct stat64       sb;             // File attributes at time of file open (valid if fd>=0)
+  // unsigned char       *data;          // Content of file mapped into memory   (or null on file error)
+  // std::vector<ExecSection*> sections; // All known sections for this file
+  // std::vector<ExecHeader*> headers;   // All format headers belonging to this file
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
 
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
@@ -1687,10 +1705,14 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFile.setDataPrototype("char*","data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* All known sections for this file */
-     AsmGenericFile.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // AsmGenericFile.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // AsmGenericFile.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFile.setDataPrototype("SgAsmGenericSectionList*","sections","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericFile.setDataPrototype("SgAsmGenericHeaderList*","headers","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h

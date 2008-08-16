@@ -212,6 +212,9 @@ class CustomMemoryPoolDOTGeneration
        // Default fileter to simplify the whole AST graph
           void defaultFilter(SgNode* n);
 
+       // DQ (8/14/2008): Added to reduce the size and complexity of graphs of the executable format.
+          void binaryExecutableFormatFilter(SgNode* node);
+
        // Mechanism to ignore all SgFile Info IR nodes (often they just get in the way)
           void fileInfoFilter(SgNode* node);
    };

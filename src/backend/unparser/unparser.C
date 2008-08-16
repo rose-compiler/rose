@@ -291,7 +291,17 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                     SgAsmFile* astFile = file->get_binaryFile();
                     ROSE_ASSERT(astFile != NULL);
 
-                    unparseAsmStatementToFile(outputFileName, astFile->get_global_block());
+                 // DQ (8/14/2008): Added test to make sure that there is a valid SgAsmBlock with instructions.
+                 // So that we can optionally just test the binary file format details.
+                    if (astFile->get_global_block() != NULL)
+                       {
+                         unparseAsmStatementToFile(outputFileName, astFile->get_global_block());
+                       }
+                      else
+                       {
+                         printf ("Warning: SgAsmFile is missing valid global_block: astFile->get_global_block() != NULL \n");
+                       }
+                    
                   }
                  else
                   {
