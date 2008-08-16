@@ -612,7 +612,12 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
     set_synthesized(true);
     set_name("PE Section Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
     
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
@@ -632,7 +637,14 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
         section->set_name(entry->get_name());
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
+
+     // DQ (8/15/2008): Put this back!
         section->set_header(fhdr);
+
+     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+     // the get_header() to be implemented in terms of the get_parent() function.
+     // section->set_parent(fhdr);
+
         section->set_mapped(entry->get_rva(), entry->get_virtual_size());
         section->set_st_entry(entry);
         section->set_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE) ==
@@ -655,8 +667,8 @@ SgAsmPESectionTable::unparse(FILE *f)
 {
     SgAsmGenericFile *ef = get_file();
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections();
+    ROSE_ASSERT(fhdr != NULL);
+    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
@@ -1320,9 +1332,16 @@ SgAsmCoffSymbolTable::ctor( SgAsmGenericFile *ef, SgAsmPEFileHeader *fhdr)
     set_synthesized(true);
     set_name("COFF Symbols");
     set_purpose(SP_SYMTAB);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     p_symbols = new SgAsmCoffSymbolList;
+
+    p_symbols->set_parent(this);
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
@@ -1331,7 +1350,13 @@ SgAsmCoffSymbolTable::ctor( SgAsmGenericFile *ef, SgAsmPEFileHeader *fhdr)
     p_strtab->set_synthesized(true);
     p_strtab->set_name("COFF Symbol Strtab");
     p_strtab->set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     p_strtab->set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // p_strtab->set_parent(fhdr);
+
     uint32_t word;
     p_strtab->content(0, sizeof word, &word);
     addr_t strtab_size = le_to_host(word);
@@ -1431,7 +1456,13 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     pe_header->add_rvasize_pairs();
 
     /* The extended part of the DOS header is owned by the PE header */
+
+ // DQ (8/15/2008): Put this back!
     dos2_header->set_header(pe_header);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // dos2_header->set_parent(pe_header);
+
     pe_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

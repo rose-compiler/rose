@@ -2783,49 +2783,18 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
    {
   // Need a mechanism to select what kind of binary we will process.
 
-// #if USE_NEW_BINARY_FORMAT_READER
-
-// UNCOMMENT THIS CODE TO TEST ROBB'S BINARY FORMAT SUPPORT USING NEW IR NODES.
-#if 0
+#if 1
      printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
 
-  // Exec::ExecFile* binaryFormat = Exec::parseBinaryFormat(sourceFilename,asmFile);
-  // ROSE_ASSERT(binaryFormat != NULL);
-
-  // Exec::parseBinaryFormat(sourceFilename,asmFile);
      SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
 
-     asmFile->set_name(sourceFilename);
-
-#if 1
-     /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
-      * identical with the original. */
+  /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
+   * identical with the original. */
      string newFilename = sourceFilename + ".new";
      size_t slash = sourceFilename.find_last_of('/');
      if (slash!=sourceFilename.npos)
          newFilename.replace(0, slash+1, "");
      SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
-#endif
-
-#if 0
-  // These seem to be the relavant values that are set in the code above (i.e. in generateBinaryExecutableFileInformation_ELF())
-     asmFile->set_binary_class_type(SgAsmFile::e_class_32);
-     asmFile->set_binary_class_type(SgAsmFile::e_class_64);
-     asmFile->set_binary_class_type(SgAsmFile::e_class_none);
-     asmFile->set_binary_class_type(SgAsmFile::e_class_unknown);
-
-     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_none);
-     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_least_significant_byte);
-     asmFile->set_data_encoding(SgAsmFile::e_data_encoding_most_significant_byte);
-     asmFile->set_version(SgAsmFile::e_version_none);
-     asmFile->set_version(SgAsmFile::e_version_current);
-     asmFile->set_object_file_type(object_file_kind);
-     asmFile->set_machine_architecture(machine_architecture_kind);
-#endif
-
-  // While we debug this case ...
-     printf ("Exiting at base of generateBinaryExecutableFileInformation() for sourceFilename = %s \n",sourceFilename.c_str());
-     ROSE_ASSERT(false);
 
 #else
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
@@ -4998,39 +4967,14 @@ SgFile::callFrontEnd ()
                       // Later we will implement a PE reader to get the structure of MS Windows executables.
                          generateBinaryExecutableFileInformation(executableFileName,asmFile);
 
-#if 0
-                      // DQ (1/22/2008): This is a temporary way to setup the Binary analysis support, in the 
-                      // future the binary analysis will query the information in the SgAsmFile.
-                         if (asmFile->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386)
-                            {
-                              RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
-                            }
-                           else
-                            {
-                              printf ("Error: only Intel_80386 machine architecture currently supported! \n");
-                            }
-
-                         if (asmFile->get_binary_class_type() == SgAsmFile::e_class_32)
-                            {
-                              RoseBin_Arch::arch = RoseBin_Arch::bit32;
-                            }
-                           else
-                            {
-                              printf ("Error: only 32-bit binaries are currently supported for disassembly using ROSE! \n");
-                            }
-
-                      // We need to figure out which type of binary this is, x86 or ARM, etc.
-                      // To do this we need to consult the binary file format data (computed 
-                      // by generateBinaryExecutableFileInformation()).
-                      // RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
-                         ROSE_ASSERT(asmFile->get_machine_architecture() == SgAsmFile::e_machine_architecture_Intel_80386);
-                         ROSE_ASSERT(asmFile->get_binary_class_type()    == SgAsmFile::e_class_32);
-#endif
-
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
+#if 1
                          Disassembler::disassembleFile(asmFile);
+#else
+                         printf ("\nWARNING: Skipping instruction disassembly \n\n");
+#endif
 
                       // Attach the SgAsmFile to the SgFile
                          this->set_binaryFile(asmFile);

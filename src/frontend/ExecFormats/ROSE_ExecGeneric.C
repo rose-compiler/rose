@@ -125,20 +125,29 @@ SgAsmGenericFile::ctor(std::string fileName)
         std::string mesg = "Could not mmap binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }
+
+    ROSE_ASSERT(p_sections == NULL);
+    ROSE_ASSERT(p_headers  == NULL);
+
+    p_sections = new SgAsmGenericSectionList();
+    p_headers  = new SgAsmGenericHeaderList();
+
+    p_sections->set_parent(this);
+    p_headers->set_parent(this);
 }
 
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
     /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
-    while (p_headers.size()) {
-        SgAsmGenericHeader *header = p_headers.back();
-        p_headers.pop_back();
+    while (p_headers->get_headers().size()) {
+        SgAsmGenericHeader *header = p_headers->get_headers().back();
+        p_headers->get_headers().pop_back();
         delete header;
     }
-    while (p_sections.size()) {
-        SgAsmGenericSection *section = p_sections.back();
-        p_sections.pop_back();
+    while (p_sections->get_sections().size()) {
+        SgAsmGenericSection *section = p_sections->get_sections().back();
+        p_sections->get_sections().pop_back();
         delete section;
     }
     
@@ -156,11 +165,13 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
 {
 #ifndef NDEBUG
     /* New header must not already be present. */
-    for (size_t i=0; i< p_headers.size(); i++) {
-        ROSE_ASSERT(p_headers[i] != header);
+    for (size_t i=0; i< p_headers->get_headers().size(); i++) {
+        ROSE_ASSERT(p_headers->get_headers()[i] != header);
     }
 #endif
-    p_headers.push_back(header);
+    p_headers->get_headers().push_back(header);
+
+    p_headers->get_headers().back()->set_parent(p_headers);
 }
 
 /* Adds a new section to the file. This is called implicitly by the section constructor. */
@@ -169,18 +180,21 @@ SgAsmGenericFile::add_section(SgAsmGenericSection *section)
 {
 #ifndef NDEBUG
     /* New section must not already be present. */
-    for (size_t i=0; i< p_sections.size(); i++) {
-        ROSE_ASSERT(p_sections[i]!=section);
+    ROSE_ASSERT(p_sections != NULL);
+    for (size_t i=0; i< p_sections->get_sections().size(); i++) {
+        ROSE_ASSERT(p_sections->get_sections()[i]!=section);
     }
 #endif
-    p_sections.push_back(section);
+    p_sections->get_sections().push_back(section);
+
+    p_sections->get_sections().back()->set_parent(p_sections);
 }
 
 /* Returns the pointer to the first section with the specified ID. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_id(int id)
 {
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         if ((*i)->get_id() == id) {
             return *i;
         }
@@ -200,7 +214,7 @@ SgAsmGenericFile::get_section_by_name(std::string name, char sep)
             name.erase(pos);
     }
     
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         if (0==(*i)->get_name().compare(name))
             return *i;
     }
@@ -212,7 +226,7 @@ std::vector<SgAsmGenericSection*>
 SgAsmGenericFile::get_sections_by_offset(Exec::addr_t offset, Exec::addr_t size)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         SgAsmGenericSection *section = *i;
         if (offset >= section->get_offset() &&
             offset < section->get_offset()+section->get_size() &&
@@ -227,7 +241,7 @@ std::vector<SgAsmGenericSection*>
 SgAsmGenericFile::get_sections_by_rva(Exec::addr_t rva)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         SgAsmGenericSection *section = *i;
         if (section->is_mapped() && rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
             retval.push_back(section);
@@ -243,7 +257,7 @@ std::vector<SgAsmGenericSection*>
 SgAsmGenericFile::get_sections_by_va(Exec::addr_t va)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         SgAsmGenericSection *section = *i;
         if (section->is_mapped()) {
             SgAsmGenericHeader *hdr = section->get_header();
@@ -294,7 +308,7 @@ Exec::addr_t
 SgAsmGenericFile::get_next_section_offset(Exec::addr_t offset)
 {
     Exec::addr_t found = ~(Exec::addr_t)0;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections.begin(); i != p_sections.end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         if ((*i)->get_offset() >= offset && (*i)->get_offset() < found)
             found = (*i)->get_offset();
     }
@@ -305,13 +319,13 @@ SgAsmGenericFile::get_next_section_offset(Exec::addr_t offset)
 void
 SgAsmGenericFile::dump(FILE *f)
 {
-    if (p_sections.size()==0) {
+    if (p_sections->get_sections().size()==0) {
         fprintf(f, "No sections defined for file.\n");
         return;
     }
     
     /* Sort sections by offset and size */
-    std::vector<SgAsmGenericSection*> sections = this->p_sections;
+    std::vector<SgAsmGenericSection*> sections = this->p_sections->get_sections();
     for (size_t i = 1; i < sections.size(); i++) {
         for (size_t j=0; j<i; j++) {
             if (sections[j]->get_offset() == sections[i]->get_offset()) {
@@ -447,9 +461,9 @@ SgAsmGenericFile::unfill_holes()
 {
     /* Get a list of holes */
     std::vector<SgAsmGenericSection*> holes;
-    for (size_t i=0; i < p_sections.size(); i++) {
-        if (p_sections[i]->get_id() < 0 && p_sections[i]->get_name().compare("hole")==0)
-            holes.push_back(p_sections[i]);
+    for (size_t i=0; i < p_sections->get_sections().size(); i++) {
+        if (p_sections->get_sections()[i]->get_id() < 0 && p_sections->get_sections()[i]->get_name().compare("hole")==0)
+            holes.push_back(p_sections->get_sections()[i]);
     }
 
     /* Destroy the holes, removing them from the "sections" vector */
@@ -478,14 +492,14 @@ SgAsmGenericFile::unparse(const char *filename)
 #endif
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
-    for (size_t i=0; i< p_sections.size(); i++) {
-        if (p_sections[i]->get_id()<0 && p_sections[i]->get_name().compare("hole")==0)
-            p_sections[i]->unparse(f);
+    for (size_t i=0; i< p_sections->get_sections().size(); i++) {
+        if (p_sections->get_sections()[i]->get_id()<0 && p_sections->get_sections()[i]->get_name().compare("hole")==0)
+            p_sections->get_sections()[i]->unparse(f);
     }
     
     /* Write file headers (and indirectly, all that they reference) */
-    for (size_t i=0; i< p_headers.size(); i++) {
-        p_headers[i]->unparse(f);
+    for (size_t i=0; i< p_headers->get_headers().size(); i++) {
+        p_headers->get_headers()[i]->unparse(f);
     }
 }
 
@@ -494,7 +508,7 @@ SgAsmGenericFile::unparse(const char *filename)
 const char *
 SgAsmGenericFile::format_name()
 {
-    return p_headers.back()->format_name();
+    return p_headers->get_headers().back()->format_name();
 }
 
 /* Returns the header for the specified format. */
@@ -502,11 +516,11 @@ SgAsmGenericHeader *
 SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 {
     SgAsmGenericHeader *retval = NULL;
-    for (size_t i = 0; i < p_headers.size(); i++) {
+    for (size_t i = 0; i < p_headers->get_headers().size(); i++) {
      // if (p_headers[i]->get_exec_format().get_family() == efam) {
-        if (p_headers[i]->get_exec_format()->get_family() == efam) {
+        if (p_headers->get_headers()[i]->get_exec_format()->get_family() == efam) {
             ROSE_ASSERT(NULL == retval);
-            retval = p_headers[i];
+            retval = p_headers->get_headers()[i];
         }
     }
 
@@ -539,7 +553,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_
 SgAsmGenericSection::~SgAsmGenericSection()
 {
     if (p_file) {
-        std::vector<SgAsmGenericSection*> & sections = p_file->get_sections();
+        std::vector<SgAsmGenericSection*> & sections = p_file->get_sections()->get_sections();
         std::vector<SgAsmGenericSection*>::iterator i = sections.begin();
         while (i != sections.end()) {
             if (*i==this) {
@@ -597,7 +611,7 @@ SgAsmGenericSection::content_str(Exec::addr_t offset)
     const char *ret = (const char*) (p_data + offset);
     size_t nchars=0;
 
-#if 1 /*DEBUGGING*/
+#if 0 /*DEBUGGING*/
     printf ("SgAsmGenericSection::content_str(offset): p_data = %p offset = %zu p_size = %zu \n",p_data,offset,p_size);
 #endif
 
@@ -874,9 +888,25 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     set_purpose(SP_HEADER);
     ef->add_header(this);
 
-    p_symbols = new SgAsmGenericSymbolList;
-    p_dlls = new SgAsmGenericDLLList;
-    p_target = new SgAsmGenericArchitecture;
+#if 0
+ // DQ (8/15/2008): Note that this can fail, but I don't know why!
+    ROSE_ASSERT(p_symbols != NULL);
+    ROSE_ASSERT(p_dlls    != NULL);
+    ROSE_ASSERT(p_target  != NULL);
+#endif
+
+    if (p_symbols == NULL)
+         p_symbols = new SgAsmGenericSymbolList;
+
+    if (p_dlls == NULL)
+         p_dlls    = new SgAsmGenericDLLList;
+
+    if (p_target == NULL)
+         p_target  = new SgAsmGenericArchitecture;
+
+    p_symbols->set_parent(this);
+    p_dlls->set_parent(this);
+    p_target->set_parent(this);
 
  // The SgAsmGenericFormat is contained as a pointer and not a value data member, 
  // so we have to build one and initialize the pointer.
@@ -884,13 +914,15 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     ROSE_ASSERT(local_exec_format != NULL);
     set_exec_format(local_exec_format);
     ROSE_ASSERT(p_exec_format != NULL);
+
+    local_exec_format->set_parent(this);
 }
 
 /* Destructor must remove the header from its parent file's headers list. */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
     if (p_file) {
-        std::vector<SgAsmGenericHeader*> & headers = p_file->get_headers();
+        std::vector<SgAsmGenericHeader*> & headers = p_file->get_headers()->get_headers();
         std::vector<SgAsmGenericHeader*>::iterator i = headers.begin();
         while (i != headers.end()) {
             if (*i==this) {
@@ -926,6 +958,8 @@ SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
     }
 #endif
     p_symbols->get_symbols().push_back(symbol);
+
+    p_symbols->get_symbols().back()->set_parent(p_symbols);
 }
 
 /* Print some debugging info */
@@ -1225,6 +1259,10 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
        }
 
      ROSE_ASSERT(executableHeader != NULL);
+
+     ROSE_ASSERT(ef->get_parent() == executableHeader);
+  // ef->set_parent(executableHeader);
+     executableHeader->set_parent(asmFile);
 
      asmFile->set_header(executableHeader);
      ROSE_ASSERT(asmFile->get_header() != NULL);

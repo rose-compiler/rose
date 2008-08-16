@@ -399,7 +399,12 @@ SgAsmLEPageTable::ctor(SgAsmLEFileHeader *fhdr)
     set_synthesized(true);
     set_name(section_name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     const addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
     for (addr_t entry_offset=0; entry_offset+entry_size <= p_size; entry_offset+=entry_size) {
@@ -546,7 +551,12 @@ SgAsmLESectionTable::ctor(SgAsmLEFileHeader *fhdr)
     sprintf(section_name, "%s Section Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     SgAsmLEPageTable *pages = fhdr->get_page_table();
     
@@ -583,7 +593,13 @@ SgAsmLESectionTable::ctor(SgAsmLEFileHeader *fhdr)
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
+
+     // DQ (8/15/2008): Put this back!
         section->set_header(fhdr);
+     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+     // the get_header() to be implemented in terms of the get_parent() function.
+     // section->set_parent(fhdr);
+
         section->set_st_entry(entry);
 
         /* Section permissions */
@@ -608,7 +624,7 @@ SgAsmLESectionTable::unparse(FILE *f)
     SgAsmGenericFile *ef = get_file();
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections();
+    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id() >= 0) {
@@ -654,7 +670,12 @@ SgAsmLENameTable::ctor(SgAsmLEFileHeader *fhdr)
     sprintf(section_name, "%s Name Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
     
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
@@ -796,7 +817,12 @@ SgAsmLEEntryTable::ctor(SgAsmLEFileHeader *fhdr)
     sprintf(section_name, "%s Entry Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
     
     ROSE_ASSERT(0 == p_size);
 
@@ -872,7 +898,12 @@ SgAsmLERelocTable::ctor(SgAsmLEFileHeader *fhdr)
     set_synthesized(true);
     set_name(name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     ROSE_ASSERT(0 == p_size);
 
@@ -957,7 +988,12 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmLEFileHeader *le_header = new SgAsmLEFileHeader(ef, dos2_header->get_e_lfanew());
 
     /* The extended part of the DOS header is owned by the LE header */
+ // DQ (8/15/2008): Put this back!
     dos2_header->set_header(le_header);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // dos2_header->set_parent(le_header);
+
     le_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

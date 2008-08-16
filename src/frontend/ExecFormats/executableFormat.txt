@@ -196,3 +196,9 @@ that we have?  And then test it to make sure it is identical.
    some of the binary executable file format specific details to live.
 
 
+6) Removed SgAsmGenericSection::p_header data member.  Under the new IR nodes design it is
+   redundant with the IR node parent pointer.  A "get_header()" member function was
+   implemented to preserve the semantics of the original code, and is implemented using
+   the parent pointer ("get_parent()").  The calls to the "set_header()" have been 
+   fixed up in the code to call the set_parent() function; using the same input paremeter.
+

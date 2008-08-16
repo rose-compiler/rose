@@ -4,7 +4,12 @@ INCLUDES = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = libastVisualization.la
 
-libastVisualization_la_SOURCES      = astGraph.C AstAttributeDOT.C wholeAST.C
+libastVisualization_la_SOURCES      = \
+   astGraph.C AstAttributeDOT.C wholeAST.C
+
+#   colorFilesTraversal.C  colorMemoryPoolTraversal.C \
+#   customAstDOTGeneration.C  customAstDOTGenerationData.C \
+#   customMemoryPoolDOTGeneration.C  customMemoryPoolDOTGenerationData.C
 
 libastVisualization_la_LIBADD       = 
 libastVisualization_la_DEPENDENCIES = 

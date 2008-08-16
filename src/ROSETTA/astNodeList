@@ -450,6 +450,7 @@ SgAsmGenericSymbol
 SgAsmGenericDLLList
 SgAsmGenericSymbolList
 SgAsmGenericSectionList
+SgAsmGenericHeaderList
 SgAsmElfSectionTableEntry
 SgAsmElfSegmentTableEntry
 SgAsmElfSymbol

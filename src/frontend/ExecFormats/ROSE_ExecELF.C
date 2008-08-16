@@ -28,6 +28,8 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     ROSE_ASSERT(f != NULL);
     printf ("SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
 
+    f->set_parent(this);
+
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
     ROSE_ASSERT(0 == p_size);
     Elf32FileHeader_disk disk32;
@@ -620,7 +622,7 @@ SgAsmElfSectionTable::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections();
+    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
 
     /* Write the remaining entries */
     for (size_t i = 0; i < sections.size(); i++) {
@@ -774,6 +776,8 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
     set_header(fhdr);
 
     p_entries = new SgAsmElfSegmentTableEntryList;
+
+    p_entries->set_parent(this);
     
     ByteOrder sex = fhdr->get_sex();
     
@@ -802,6 +806,8 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
                 shdr = new SgAsmElfSegmentTableEntry(sex, disk);
             }
             p_entries->get_entries().push_back(shdr);
+
+            p_entries->get_entries().back()->set_parent(p_entries);
 
             /* Save extra bytes */
             addr_t nextra = fhdr->get_e_phentsize() - struct_size;
@@ -999,6 +1005,9 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 {
     p_other_entries = new SgAsmElfDynamicEntryList;
     p_all_entries   = new SgAsmElfDynamicEntryList;
+
+    p_other_entries->set_parent(this);
+    p_all_entries->set_parent(this);
 }
 
 /* Set linked section (the string table) and finish parsing this section. */
@@ -1350,8 +1359,10 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
             (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
+#if 0
             fprintf(stderr, "ROBB: SgAsmElfSymbolSection::ctor():\n");
             fprintf(stderr, "           p_symbols=0x%08lx\n", (unsigned long)p_symbols);
+#endif
             p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {

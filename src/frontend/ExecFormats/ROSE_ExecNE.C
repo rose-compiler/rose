@@ -466,7 +466,12 @@ SgAsmNESectionTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name("NE Section Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
     
     const size_t entsize = sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk);
 
@@ -482,7 +487,13 @@ SgAsmNESectionTable::ctor(SgAsmNEFileHeader *fhdr)
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
+
+     // DQ (8/15/2008): Put this back!
         section->set_header(fhdr);
+     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+     // the get_header() to be implemented in terms of the get_parent() function.
+     // section->set_parent(fhdr);
+
         section->set_st_entry(entry);
 
         /* All NE sections are mapped. There desired address is apparently based on their file offset. */
@@ -521,7 +532,7 @@ SgAsmNESectionTable::unparse(FILE *f)
     SgAsmGenericFile *ef = get_file();
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections();
+    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
 
     for (size_t i=0; i<sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
@@ -567,7 +578,12 @@ SgAsmNENameTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name("NE Name Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
     
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
@@ -658,7 +674,12 @@ SgAsmNEModuleTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name("NE Module Reference Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     ROSE_ASSERT(NULL != p_strtab);
 
@@ -726,7 +747,12 @@ SgAsmNEStringTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name("NE String Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 }
     
 /* Returns the string whose size indicator is at the specified offset within the table. There's nothing that prevents OFFSET
@@ -807,7 +833,12 @@ SgAsmNEEntryTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name("NE Entry Table");
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     addr_t at = 0;
     size_t bundle_nentries = content(at++, 1)[0];
@@ -1200,7 +1231,12 @@ SgAsmNERelocTable::ctor(SgAsmNEFileHeader *fhdr)
     set_synthesized(true);
     set_name(name);
     set_purpose(SP_HEADER);
+
+ // DQ (8/15/2008): Put this back!
     set_header(fhdr);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // set_parent(fhdr);
 
     ROSE_ASSERT(0 == p_size);
 
@@ -1292,7 +1328,13 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmNEFileHeader *ne_header = new SgAsmNEFileHeader(ef, dos2_header->get_e_lfanew());
 
     /* The extended part of the DOS header is owned by the NE header */
+
+ // DQ (8/15/2008): Put this back!
     dos2_header->set_header(ne_header);
+ // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
+ // the get_header() to be implemented in terms of the get_parent() function.
+ // dos2_header->set_parent(ne_header);
+
     ne_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

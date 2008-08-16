@@ -26,7 +26,8 @@ cleandocs:
 # This allows us to test the development of the 
 # documentation specific to the publications page.
 copyPublications:
-	cp -r $(top_srcdir)/ROSE_ResearchPapers .
+	mkdir -p ROSE_ResearchPapers
+	cp -r $(top_srcdir)/ROSE_ResearchPapers/*.pdf ROSE_ResearchPapers
 
 # This copies the experimental version of the documentation to the
 # location where it will permanently reside in the source tree.
