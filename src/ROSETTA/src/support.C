@@ -927,6 +927,12 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
+  // the binary executable file format and not the instructions).  This is also useful for testing.
+     File.setDataPrototype         ( "bool", "read_executable_file_format_only", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 #if OLD_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
    // note - todo: Properties should be a map <string, string> (doesnt work yet)
@@ -1054,7 +1060,7 @@ Grammar::setUpSupport ()
   // DQ (10/16/2005): Removed because they are not needed except as a local variable in the
   // command line processing function.
      // MK: store the command line data associated with the file (or is it the argv for the whole project?)
-     Project.setDataPrototype("int","numberOfCommandLineArguments", "",
+     Project.setDataPrototype("int","numberOfCommandLineArguments", "= 0",
                               NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      // MK: store the command line data associated with the file (or is it the argv for the whole project?)
      Project.setDataPrototype("char**","commandLineArgumentList", "= NULL",

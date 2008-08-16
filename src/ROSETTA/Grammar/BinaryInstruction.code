@@ -247,6 +247,8 @@ HEADER_BINARY_FILE_START
        // JJW (6/18/2008): Commenting out because this function doesn't have a definition
        // SgAsmGenericSectionPtrList & get_sectionList();
 
+          void post_construction_initialization();
+
 HEADER_BINARY_FILE_END
 
 
@@ -881,7 +883,9 @@ HEADER_GENERIC_SECTION_START
 
           SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size);
 
+       // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
           virtual ~SgAsmGenericSection();
+
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
           virtual void        unparse(FILE*);
           void                unparse(FILE*, const ExtentVector&);
@@ -903,7 +907,7 @@ HEADER_GENERIC_SECTION_START
 
        /* Functions for accessing content */
           const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
-	  const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
+          const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
           void                 content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
           const char          *content_str(addr_t offset);    /* returns ptr to NUL-terminated string starting at OFFSET */
           const ExtentVector& congeal();                      /* congeal referenced areas into holes */
@@ -929,7 +933,11 @@ HEADER_GENERIC_SECTION_START
 
        // DQ (8/15/2008): This is now automatically generated (and is a const function)!
        // SgAsmGenericHeader *get_header();
-
+#if 1
+       // DQ (8/16/2008): Allow this to be overloaded in classes that might store a SgAsmGenericFile 
+       // file variable directly (e.g. required in SgAsmGenericHeader).
+          virtual SgAsmGenericFile* get_file() const;
+#endif
        /* Accessors for private members */
        // SgAsmGenericHeader          *get_header() {return header;}
        // void                set_header(SgAsmGenericExecHeader *hdr) {header=hdr;}
@@ -959,9 +967,7 @@ HEADER_GENERIC_SECTION_END
 HEADER_GENERIC_HEADER_START
 
      public:
-          SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-             : SgAsmGenericSection(ef, offset, size), p_base_va(0)
-             { ctor(ef, offset, size); }
+          SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size);
 
           virtual ~SgAsmGenericHeader();
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -1012,10 +1018,7 @@ HEADER_GENERIC_HEADER_END
 HEADER_GENERIC_FILE_START
      public:
 
-          SgAsmGenericFile(std::string file_name)
-          // : p_fd(-1), p_data(NULL)
-             : p_fd(-1)
-             { ctor(file_name); }
+          SgAsmGenericFile(std::string file_name);
 
           virtual ~SgAsmGenericFile();                                /* Destructor deletes children and munmaps and closes file */
           void unparse(const char *filename);                 /* Unparse the file -- mirror image of parsing */
@@ -1032,6 +1035,9 @@ HEADER_GENERIC_FILE_START
 
        /* Functions for sections (plurals return vectors; singular return one or NULL) */
           void add_section(SgAsmGenericSection*);                     /* Add new section to the file; called implicitly by section constructor */
+
+       // DQ (8/16/2008): Added function to remove effects of add_section()
+          void remove_section(SgAsmGenericSection*);                  /* Remove section to the file */
 
        // DQ (8/15/2008): This is now an automatically generated access function.
        // std::vector<SgAsmGenericSection*>& get_sections() {return p_sections;}/* all sections (including file headers) */
@@ -3140,7 +3146,16 @@ HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 /* --------------------------------------------------------------------------------- */
 
 
+SOURCE_BINARY_FILE_START
+void
+SgAsmFile::post_construction_initialization()
+   {
+  // Build the list IR node
+     p_headers = new SgAsmGenericHeaderList();
+     p_headers->set_parent(this);
+   }
 
+SOURCE_BINARY_FILE_END
 
 SOURCE_BINARY_BLOCK_START
 void
@@ -3662,8 +3677,15 @@ SOURCE_GENERIC_SEGMENT_END
 SOURCE_GENERIC_SECTION_START
 
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size)
-   : p_file(NULL), p_size(0), p_offset(0), p_data(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
-     p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
+   : 
+#if 0
+p_file(NULL), 
+#endif
+#if 1
+p_header(NULL), 
+#endif
+p_size(0), p_offset(0), p_data(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
+p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
      ctor(f, offset, size);
    }
@@ -3768,9 +3790,53 @@ SgAsmGenericSection::get_header()
    }
 #endif
 
+#if 1
+SgAsmGenericFile* 
+SgAsmGenericSection::get_file() const
+   {
+  // DQ (8/15/2008): fixup parent to point to list IR node and then reference it's parent.
+  // return dynamic_cast<SgAsmGenericHeader*>( get_parent() );
+     ROSE_ASSERT(get_parent() != NULL);
+
+     printf ("In SgAsmGenericSection::get_file(): this = %p = %s \n",this,this->class_name().c_str());
+
+#if 0
+     SgNode* temp_parent = get_parent();
+     while (temp_parent != NULL)
+        {
+          printf ("In SgAsmGenericSection::get_file(): this = %p = %s parent = %p = %s \n",this,this->class_name().c_str(),temp_parent,temp_parent->class_name().c_str());
+          temp_parent = temp_parent->get_parent();
+        }
+#endif
+     SgAsmGenericSectionList* sectionList = dynamic_cast<SgAsmGenericSectionList*>( get_parent() );
+     SgAsmGenericFile* genericFile = NULL;
+     if (sectionList != NULL)
+        {
+          ROSE_ASSERT(sectionList->get_parent() != NULL);
+
+          genericFile = dynamic_cast<SgAsmGenericFile*>( sectionList->get_parent() );
+          if (genericFile == NULL)
+             {
+               printf ("In SgAsmGenericSection::get_file(): sectionList->get_parent() = %p = %s \n",sectionList->get_parent(),sectionList->get_parent()->class_name().c_str());
+             }
+        }
+
+  // Since "get_file() is used in NULL pointer tests, we can't assert it always returns a valid pointer.
+  // ROSE_ASSERT(genericFile != NULL);
+
+     return genericFile;
+   }
+#endif
+
 SOURCE_GENERIC_SECTION_END
 
 SOURCE_GENERIC_HEADER_START
+
+SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
+   : SgAsmGenericSection(ef, offset, size), p_base_va(0)
+   {
+     ctor(ef, offset, size);
+   }
 
 const char *
 SgAsmGenericHeader::format_name()
@@ -3802,6 +3868,13 @@ SgAsmGenericHeader::get_word_size() const
 SOURCE_GENERIC_HEADER_END
 
 SOURCE_GENERIC_FILE_START
+
+SgAsmGenericFile::SgAsmGenericFile(std::string file_name)
+   : p_fd(-1), p_data(NULL), p_sections(NULL), p_headers(NULL)
+   {
+     ctor(file_name);
+   }
+
 SOURCE_GENERIC_FILE_END
 
 SOURCE_GENERIC_FORMAT_START

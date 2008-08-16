@@ -26,8 +26,9 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_purpose(SP_HEADER);
 
     ROSE_ASSERT(f != NULL);
-    printf ("SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
+    printf ("In SgAsmElfFileHeader::ctor(): SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
 
+ // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
 
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
@@ -1484,7 +1485,12 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 
     printf ("Leaving SgAsmElfFileHeader::is_ELF() \n");
 
+ // DQ (8/16/2008): Remove the SgAsmGenericSection from the SgAsmGenericFile p_sections list
+    f->remove_section(hdr);
+
     delete hdr;
+    hdr = NULL;
+
     return true;
 }
 

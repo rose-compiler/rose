@@ -132,6 +132,9 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+ // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
+    f->set_parent(this);
+
     const NEFileHeader_disk *fh = (const NEFileHeader_disk*)content(0, sizeof(NEFileHeader_disk));
 
     /* Check magic number early */

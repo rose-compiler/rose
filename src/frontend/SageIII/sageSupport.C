@@ -1202,6 +1202,15 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
        // set_collectAllCommentsAndDirectives(false);
         }
 
+  // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
+  // the binary executable file format and not the instructions).  This is also useful for testing.
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only)",true) == true )
+        {
+       // printf ("option -rose:read_executable_file_format_only found \n");
+          set_read_executable_file_format_only(true);
+        }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -1462,6 +1471,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
 
   // DQ (12/8/2007): Strip use of the "-rose:output <filename> option.
      optionCount = sla(argv, "-rose:", "($)^", "(o|output)", filename, 1);
+
+  // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
+  // the binary executable file format and not the instructions).  This is also useful for testing.
+     optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);
    }
 
 void
@@ -2779,7 +2792,7 @@ generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* 
 #endif
  
 void
-generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
+SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
    {
   // Need a mechanism to select what kind of binary we will process.
 
@@ -2788,13 +2801,24 @@ generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmF
 
      SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
 
+  // DQ (8/16/2008): Since the instructions have not been read yet, isn't it too early a stage to try to write out 
+  // the binary?  I think this code should be moved to after the instruction disassembly. Also this currently fails 
+  // for PE formats.
+
   /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
    * identical with the original. */
-     string newFilename = sourceFilename + ".new";
-     size_t slash = sourceFilename.find_last_of('/');
-     if (slash!=sourceFilename.npos)
-         newFilename.replace(0, slash+1, "");
-     SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+     if (get_read_executable_file_format_only() == false)
+        {
+          string newFilename = sourceFilename + ".new";
+          size_t slash = sourceFilename.find_last_of('/');
+          if (slash!=sourceFilename.npos)
+               newFilename.replace(0, slash+1, "");
+          SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+        }
+       else
+        {
+          printf ("\nWARNING: Skipping writing out the binary \n\n");
+        }
 
 #else
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
@@ -4970,8 +4994,19 @@ SgFile::callFrontEnd ()
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());
                          ROSE_ASSERT(project != NULL);
+
 #if 1
-                         Disassembler::disassembleFile(asmFile);
+                      // DQ (8/16/2008): Added support to only read the binary executable file format.
+                      // this will allow us to separate out different kinds of testing.
+                         if (get_read_executable_file_format_only() == false)
+                            {
+                              Disassembler::disassembleFile(asmFile);
+                            }
+                           else
+                            {
+                              printf ("\nWARNING: Skipping instruction disassembly \n\n");
+                            }
+
 #else
                          printf ("\nWARNING: Skipping instruction disassembly \n\n");
 #endif

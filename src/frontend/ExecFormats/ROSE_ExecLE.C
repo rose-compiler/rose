@@ -17,6 +17,9 @@ void
 SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
 
+ // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
+    f->set_parent(this);
+
     const LEFileHeader_disk *fh = (const LEFileHeader_disk*)content(0, sizeof(LEFileHeader_disk));
 
     /* Check magic number early */

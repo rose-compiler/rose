@@ -1422,7 +1422,9 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
      SgAsmElfFileHeader* roseElfHeader = NULL;
 #endif
      ROSE_ASSERT(roseElfHeader != NULL);
-     asmFile->set_header(roseElfHeader);
+  // asmFile->set_header(roseElfHeader);
+     ROSE_ASSERT(asmFile->get_headers() != NULL);
+     asmFile->get_headers()->get_headers().push_back(roseElfHeader);
 
   /* Read the optional section and segment tables and the sections/segments to which they point. */
      if (fhdr->e_shnum)

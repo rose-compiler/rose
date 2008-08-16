@@ -1335,8 +1335,8 @@ Grammar::setUpExpressions ()
 
      DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
   // Each of these fields is either a SgValueExp for an array index or an SgVarRefExp for a struct field name -- they are chained to form the actual designator
-     DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DesignatedInitializer.setDataPrototype("SgExprListExp*", "designatorList", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     DesignatedInitializer.setDataPrototype("SgInitializer*", "memberInit", "= NULL", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // ***********************************************************************
      // ***********************************************************************

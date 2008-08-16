@@ -100,7 +100,12 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+ // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
+    f->set_parent(this);
+
     p_rvasize_pairs = new SgAsmPERVASizePairList;
+
+    p_rvasize_pairs->set_parent(this);
 
     PEFileHeader_disk fh;
     content(0, sizeof fh, &fh);
@@ -552,9 +557,10 @@ SgAsmPESectionTableEntry::encode(PESectionTableEntry_disk *disk)
  // DQ: Not clear if this is the correct translation of the call to use std::string
  // memcpy(disk->name, p_name.c_str(), std::min(sizeof(name), name.size()));
  // memcpy(disk->name, p_name.c_str(), p_name.size(), p_name.size());
+    memcpy(disk->name, p_name.c_str(), p_name.size());
 
-    printf ("Figure out the correct translation later! \n");
-    ROSE_ASSERT(false);
+ // printf ("Figure out the correct translation later! \n");
+ // ROSE_ASSERT(false);
 
     host_to_le(p_virtual_size,     &(disk->virtual_size));
     host_to_le(p_rva,              &(disk->rva));
@@ -764,6 +770,10 @@ SgAsmPEImportHintName::unparse(FILE *f, SgAsmGenericSection *section, addr_t spo
 {
     /* The hint */
     uint16_t hint_le;
+
+ // DQ (8/16/2008): Assertion on p_hint in host_to_le
+    assert(0==(p_hint & ~0xffff));
+
     host_to_le(p_hint, &hint_le);
     spos = section->write(f, spos, sizeof hint_le, &hint_le);
 
@@ -1428,6 +1438,13 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
     } catch (...) {
         /* cleanup is below */
     }
+
+ // DQ (8/16/2008): Remove the SgAsmGenericSection from the SgAsmGenericFile p_sections list
+    f->remove_section(dos_hdr);
+    f->remove_section(dos2_hdr);
+    f->remove_section(pe_hdr);
+
+    f->get_sections()->get_sections().clear();
 
     delete dos_hdr;
     delete dos2_hdr;

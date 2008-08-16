@@ -20,6 +20,9 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
+ // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
+    f->set_parent(this);
+
     /* Check magic number early */
     if (disk->e_magic[0]!='M' || disk->e_magic[1]!='Z')
         throw FormatError("Bad DOS magic number");

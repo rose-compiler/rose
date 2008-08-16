@@ -139,6 +139,8 @@ SgAsmGenericFile::ctor(std::string fileName)
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
+    printf ("In ~SgAsmGenericFile() \n");
+
     /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
     while (p_headers->get_headers().size()) {
         SgAsmGenericHeader *header = p_headers->get_headers().back();
@@ -150,6 +152,9 @@ SgAsmGenericFile::~SgAsmGenericFile()
         p_sections->get_sections().pop_back();
         delete section;
     }
+
+    ROSE_ASSERT(p_sections->get_sections().empty() == true);
+    ROSE_ASSERT(p_headers->get_headers().empty()   == true);
     
     /* Unmap and close */
     if ( p_data != NULL )
@@ -157,12 +162,22 @@ SgAsmGenericFile::~SgAsmGenericFile()
 
     if ( p_fd >= 0 )
         close(p_fd);
+
+ // Delete the pointers to the IR nodes containing the STL lists
+    delete p_sections;
+    delete p_headers;
+
+    p_sections = NULL;
+    p_headers = NULL;
 }
 
 /* Adds a new header to the file. This is called implicitly by the header constructor */
 void
 SgAsmGenericFile::add_header(SgAsmGenericHeader *header) 
 {
+    ROSE_ASSERT(p_sections != NULL);
+    ROSE_ASSERT(p_headers  != NULL);
+
 #ifndef NDEBUG
     /* New header must not already be present. */
     for (size_t i=0; i< p_headers->get_headers().size(); i++) {
@@ -178,16 +193,45 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
 void
 SgAsmGenericFile::add_section(SgAsmGenericSection *section)
 {
+    ROSE_ASSERT(section != NULL);
+
+    ROSE_ASSERT(p_sections != NULL);
+    ROSE_ASSERT(p_headers  != NULL);
+
+    printf ("SgAsmGenericFile::add_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
+
 #ifndef NDEBUG
     /* New section must not already be present. */
-    ROSE_ASSERT(p_sections != NULL);
-    for (size_t i=0; i< p_sections->get_sections().size(); i++) {
-        ROSE_ASSERT(p_sections->get_sections()[i]!=section);
+    for (size_t i = 0; i < p_sections->get_sections().size(); i++) {
+        ROSE_ASSERT(p_sections->get_sections()[i] != section);
     }
 #endif
     p_sections->get_sections().push_back(section);
 
     p_sections->get_sections().back()->set_parent(p_sections);
+}
+
+void
+SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
+{
+ // DQ (8/16/2008): Added this support to remove the effects of the SgAsmGenericFile::add_section()
+ // bacause get_file() returns NULL in the SgAsmGenericSection destructor now that we have remove the
+ // SgAsmGenericFile pointer from the SgAsmGenericSection IR node.
+
+    ROSE_ASSERT(section != NULL);
+
+    ROSE_ASSERT(p_sections != NULL);
+    ROSE_ASSERT(p_headers  != NULL);
+
+    printf ("SgAsmGenericFile::remove_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
+
+ // std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().find(section);
+    std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),p_sections->get_sections().end(),section);
+    if (i != p_sections->get_sections().end())
+       {
+         printf ("Found section = %p to remove from list \n",section);
+         p_sections->get_sections().erase(i);
+       }
 }
 
 /* Returns the pointer to the first section with the specified ID. */
@@ -538,8 +582,16 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_
     ROSE_ASSERT(ef != NULL);
     if (offset > ef->get_size() || offset+size > ef->get_size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
-    
+
+    printf ("In SgAsmGenericSection::ctor() \n");
+
+#if 0
+ // This data member is removed from the SgAsmGenericSection, but it is added for the SgAsmGenericHeader.
     this->p_file = ef;
+#endif
+    ROSE_ASSERT(ef->get_sections() != NULL);
+    set_parent(ef->get_sections());
+
     this->p_offset = offset;
     this->p_size = size;
     this->p_data = ef->content() + offset;
@@ -552,8 +604,14 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_
 /* Destructor must remove the section from its parent file's section list */
 SgAsmGenericSection::~SgAsmGenericSection()
 {
-    if (p_file) {
-        std::vector<SgAsmGenericSection*> & sections = p_file->get_sections()->get_sections();
+ // if (p_file) {
+ //     std::vector<SgAsmGenericSection*> & sections = p_file->get_sections()->get_sections();
+
+    SgAsmGenericFile* genericFile = get_file();
+    printf ("In SgAsmGenericSection destructor: genericFile = %p \n",genericFile);
+
+    if (genericFile != NULL) {
+        std::vector<SgAsmGenericSection*> & sections = genericFile->get_sections()->get_sections();
         std::vector<SgAsmGenericSection*>::iterator i = sections.begin();
         while (i != sections.end()) {
             if (*i==this) {
@@ -564,6 +622,7 @@ SgAsmGenericSection::~SgAsmGenericSection()
         }
     }
 }
+
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
@@ -732,8 +791,8 @@ SgAsmGenericSection::uncongeal()
 void
 SgAsmGenericSection::extend(Exec::addr_t size)
 {
-    ROSE_ASSERT(p_file);
-    if (p_offset + this->p_size + size > p_file->get_size())
+    ROSE_ASSERT(get_file() != NULL);
+    if (p_offset + this->p_size + size > get_file()->get_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+this->p_size, size);
     this->p_size += size;
 }
@@ -743,11 +802,11 @@ SgAsmGenericSection::extend(Exec::addr_t size)
 void
 SgAsmGenericSection::extend_up_to(Exec::addr_t size)
 {
-    ROSE_ASSERT(p_file);
+    ROSE_ASSERT(get_file() != NULL);
 
-    if (p_offset + this->p_size + size > p_file->get_size()) {
-        ROSE_ASSERT(this->p_offset <= p_file->get_size());
-        this->p_size = p_file->get_size() - this->p_offset;
+    if (p_offset + this->p_size + size > get_file()->get_size()) {
+        ROSE_ASSERT(this->p_offset <= get_file()->get_size());
+        this->p_size = get_file()->get_size() - this->p_offset;
     } else {
         this->p_size += size;
     }
@@ -895,6 +954,9 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     ROSE_ASSERT(p_target  != NULL);
 #endif
 
+ // DQ (8/16/2008): This is defined only for SgAsmGenericHeader, and not for SgAsmGenericSection
+    set_file(ef);
+
     if (p_symbols == NULL)
          p_symbols = new SgAsmGenericSymbolList;
 
@@ -921,8 +983,8 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
 /* Destructor must remove the header from its parent file's headers list. */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
-    if (p_file) {
-        std::vector<SgAsmGenericHeader*> & headers = p_file->get_headers()->get_headers();
+    if (get_file() != NULL) {
+        std::vector<SgAsmGenericHeader*> & headers = get_file()->get_headers()->get_headers();
         std::vector<SgAsmGenericHeader*>::iterator i = headers.begin();
         while (i != headers.end()) {
             if (*i==this) {
@@ -932,6 +994,16 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
             }
         }
     }
+
+    delete p_symbols;
+    delete p_dlls;
+    delete p_target;
+    delete p_exec_format;
+
+    p_symbols = NULL;
+    p_dlls = NULL;
+    p_target = NULL;
+    p_exec_format = NULL;
 }
 
 /* Add a new DLL to the header DLL list */
@@ -1155,8 +1227,14 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFil
     /* FIXME: executable files may have more than a single file header (e.g., a PE file has a DOS header and a PE header). For
      *        now we just unparse one of the headers. See SgAsmGenericFile::unparse for more info -- it was the old top-level
      *        node. */
-    SgAsmGenericHeader *file_header = asmFile->get_header();
-    ROSE_ASSERT(file_header!=NULL);
+
+ // DQ (8/16/2008): Modified code to support STL container of "SgAsmGenericHeader*" types.
+ // SgAsmGenericHeader *file_header = asmFile->get_header();
+    ROSE_ASSERT(asmFile->get_headers() != NULL);
+    ROSE_ASSERT(asmFile->get_headers()->get_headers().empty() == false);
+
+    SgAsmGenericHeader *file_header = asmFile->get_headers()->get_headers()[0];
+    ROSE_ASSERT(file_header != NULL);
     
     file_header->unparse(output);
     fclose(output);
@@ -1262,10 +1340,15 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 
      ROSE_ASSERT(ef->get_parent() == executableHeader);
   // ef->set_parent(executableHeader);
-     executableHeader->set_parent(asmFile);
 
-     asmFile->set_header(executableHeader);
-     ROSE_ASSERT(asmFile->get_header() != NULL);
+  // asmFile->set_header(executableHeader);
+     ROSE_ASSERT(asmFile->get_headers() != NULL);
+     asmFile->get_headers()->get_headers().push_back(executableHeader);
+
+     executableHeader->set_parent(asmFile->get_headers());
+
+  // ROSE_ASSERT(asmFile->get_header() != NULL);
+     ROSE_ASSERT(asmFile->get_headers()->get_headers().empty() == false);
 
   // return ef;
 }
