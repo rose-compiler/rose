@@ -294,6 +294,17 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     add_entry_rva(p_e_entrypoint_rva);
 }
 
+SgAsmPEFileHeader::~SgAsmPEFileHeader() 
+{
+    printf ("In ~SgAsmPEFileHeader() \n");
+
+    ROSE_ASSERT(p_rvasize_pairs->get_pairs().empty() == true);
+    
+ // Delete the pointers to the IR nodes containing the STL lists
+    delete p_rvasize_pairs;
+    p_rvasize_pairs = NULL;
+}
+
 /* Encode the PE header into disk format */
 void *
 SgAsmPEFileHeader::encode(PEFileHeader_disk *disk)
@@ -391,10 +402,14 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     addr_t pairs_size   = p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     SgAsmPERVASizePair::RVASizePair_disk pairs_disk;
 
+    ROSE_ASSERT(p_rvasize_pairs != NULL);
+
     extend_up_to(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
         content(pairs_offset, sizeof pairs_disk, &pairs_disk);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
+
+        p_rvasize_pairs->get_pairs().back()->set_parent(p_rvasize_pairs);
     }
 }
 
@@ -647,6 +662,8 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
      // DQ (8/15/2008): Put this back!
         section->set_header(fhdr);
 
+        entry->set_parent(section);
+
      // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
      // the get_header() to be implemented in terms of the get_parent() function.
      // section->set_parent(fhdr);
@@ -808,6 +825,7 @@ void
 SgAsmPEDLL::ctor(const std::string&) 
 {
     p_hintnames = new SgAsmPEImportHintNameList;
+    p_hintnames->set_parent(this);
 }
 
 /* Print debugging info */
@@ -855,6 +873,8 @@ SgAsmPEImportSection::ctor(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, 
         SgAsmPEDLL *dll = new SgAsmPEDLL(dll_name);
         dll->set_idir(idir);
 
+        idir->set_parent(dll);
+
         /* The idir->hintname_rvas is an (optional) RVA for a NULL-terminated array whose members are either:
          *    1. an RVA of a hint/name pair (if the high-order bit of the array member is clear)
          *    2. an ordinal if the high-order bit is set */
@@ -893,6 +913,9 @@ SgAsmPEImportSection::ctor(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, 
                     SgAsmPEImportHintName *hintname = new SgAsmPEImportHintName(this, hintname_offset);
                     dll->add_function(hintname->get_name());
                     dll->add_hintname(hintname);
+
+                 // Make the parent the list IR node
+                    hintname->set_parent(dll->get_hintnames());
                 }
             }
         }
@@ -1444,7 +1467,14 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
     f->remove_section(dos2_hdr);
     f->remove_section(pe_hdr);
 
+ // Do we have to implement a "remove_header() function too!
+
+ // The constructor for sections adds the object being constructed to list in the SgAsmGenericFile, 
+ // so we have to undo this explicitly.  The previous alternative was to save a pointer to the 
+ // SgAsmGenericFile so that the destructor could do the cleanup.  but this caused redundant information
+ // in the IR which would be a consistancy problem later (I think), since the AST is mutable by design.
     f->get_sections()->get_sections().clear();
+    f->get_headers()->get_headers().clear();
 
     delete dos_hdr;
     delete dos2_hdr;

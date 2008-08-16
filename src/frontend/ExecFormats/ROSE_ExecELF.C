@@ -574,6 +574,8 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
                 section->set_name(strtab->content_str(shdr->get_sh_name()));
             section->set_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
             section->set_eperm((shdr->get_sh_flags() & 0x04) == 0x04);
+
+            shdr->set_parent(section);
         }
 
         /* Initialize links between sections */

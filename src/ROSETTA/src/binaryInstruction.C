@@ -542,7 +542,7 @@ Grammar::setUpBinaryInstructions ()
   // ElfSectionTableEntry *st_entry;
      AsmElfSection.setFunctionPrototype      ( "HEADER_ELF_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSection.setDataPrototype("SgAsmElfSection*","linked_section","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","st_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -855,6 +855,8 @@ Grammar::setUpBinaryInstructions ()
   // COFFSymtab *coff_symtab;
 
      AsmPEFileHeader.setFunctionPrototype ( "HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
+     AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
+
      AsmPEFileHeader.setDataPrototype("unsigned","e_cpu_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_nsections","= 0",
@@ -932,7 +934,7 @@ Grammar::setUpBinaryInstructions ()
   // AsmPEFileHeader.setDataPrototype("std::vector<RVASizePair>","rvasize_pairs","",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPEExtendedDOSHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPESectionTable*","section_table","= NULL",
@@ -950,7 +952,7 @@ Grammar::setUpBinaryInstructions ()
 
      AsmPERVASizePairList.setFunctionPrototype ( "HEADER_PE_RVA_SIZE_PAIR_LIST", "../Grammar/BinaryInstruction.code");
      AsmPERVASizePairList.setDataPrototype("SgAsmPERVASizePairPtrList","pairs","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // PESectionTableEntry *st_entry;
      AsmPESection.setFunctionPrototype ( "HEADER_PE_SECTION", "../Grammar/BinaryInstruction.code");
@@ -1077,12 +1079,17 @@ Grammar::setUpBinaryInstructions ()
   // std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
   // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
      AsmPEDLL.setFunctionPrototype ( "HEADER_PE_DLL", "../Grammar/BinaryInstruction.code");
-     AsmPEDLL.setDataPrototype ("SgAsmPEImportDirectory*","idir","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     AsmPEDLL.setDataPrototype ("SgAddressList","hintname_rvas","",NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     AsmPEDLL.setDataPrototype ("SgAsmPEImportHintNameList*","hintnames","= NULL",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmPEDLL.setDataPrototype ("SgAddressList","bindings","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmPEDLL.setDataPrototype ("SgAsmPEImportDirectory*","idir","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmPEDLL.setDataPrototype ("SgAddressList","hintname_rvas","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmPEDLL.setDataPrototype ("SgAsmPEImportHintNameList*","hintnames","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEDLL.setDataPrototype ("SgAddressList","bindings","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
-     AsmPEImportHintNameList.setDataPrototype("SgAsmPEImportHintNamePtrList","hintnames","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmPEImportHintNameList.setDataPrototype("SgAsmPEImportHintNamePtrList","hintnames","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
   // unsigned    e_linker_major, e_linker_minor, e_checksum, e_flags1, e_autodata_sn, e_bss_size, e_stack_size;
@@ -1638,15 +1645,15 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmGenericDLLList.setFunctionPrototype ( "HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericDLLList.setDataPrototype("SgAsmGenericDLLPtrList","dlls","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmGenericSymbolList.setFunctionPrototype ( "HEADER_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList","symbols","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // This data structure represents the ExecHeader from file: ExecGeneric.h
   // ExecFormat          exec_format;                    /* General info about the executable format */
@@ -1662,13 +1669,13 @@ Grammar::setUpBinaryInstructions ()
 
   /* General info about the executable format */
      AsmGenericHeader.setDataPrototype("SgAsmGenericFormat*","exec_format","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   /* Optional magic number in file byte order */
      AsmGenericHeader.setDataPrototype("SgCharList","magic","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Machine for which this header and its sections, etc. was compiled */
      AsmGenericHeader.setDataPrototype("SgAsmGenericArchitecture*","target","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   /* Base virtual address used by all "relative virtual addresses" (RVA) */
      AsmGenericHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","base_va","= 0",
@@ -1677,9 +1684,9 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericHeader.setDataPrototype("SgAddressList","entry_rvas","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericDLLList*","dlls","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericSymbolList*","symbols","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/16/2008): Added this here instead of in SgAsmGenericSection because it can be computed from the 
   // parent pointer in the SgAsmGenericSection where as it is reuired in the AsmGenericHeader IR node.

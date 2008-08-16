@@ -1010,6 +1010,8 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
 void
 SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
 {
+    ROSE_ASSERT(p_dlls != NULL);
+
 #ifndef NDEBUG
  // for (size_t i = 0; i < p_dlls.size(); i++) {
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++) {
@@ -1017,6 +1019,8 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
     }
 #endif
     p_dlls->get_dlls().push_back(dll);
+
+    dll->set_parent(p_dlls);
 }
 
 

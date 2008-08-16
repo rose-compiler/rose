@@ -1741,7 +1741,9 @@ HEADER_PE_FILE_HEADER_START
 
      public:
           SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
-       // virtual ~PEFileHeader() {}
+
+       // DQ (8/16/2008): Implemented destructor to delete the p_rvasize_pairs
+          virtual ~SgAsmPEFileHeader();
 
           void add_rvasize_pairs();
           virtual void unparse(FILE*);
