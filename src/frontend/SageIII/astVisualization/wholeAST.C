@@ -775,6 +775,24 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
         }
 #endif
 #if 1
+     if (isSgAsmPESectionTableEntry(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
+     if (isSgAsmPERVASizePair(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
+     if (isSgAsmPEImportHintName(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
      if (isSgAsmElfSymbolList(node) != NULL)
         {
           skipNode(node);
@@ -782,6 +800,12 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
 #endif
 #if 0
      if (isSgAsmGenericFile(node) != NULL)
+        {
+          skipNode(node);
+        }
+#endif
+#if 1
+     if (isSgAsmCoffSymbol(node) != NULL)
         {
           skipNode(node);
         }

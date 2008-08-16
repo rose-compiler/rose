@@ -3500,6 +3500,9 @@ HEADER_APPLICATION_FILE_START
        // SgFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex, SgProject* project );
           void doSetupForConstructor(const std::vector<std::string>& argv, int& errorCode, int fileNameIndex, SgProject* project);
 
+       // DQ (8/16/2008): Added this function to the SgFile IR node (defined in sageSupport.C).
+          void generateBinaryExecutableFileInformation ( std::string sourceFilename, SgAsmFile* asmFile );
+
       //! Default constructor (not meant to be used)
           SgFile() ROSE_DEPRECATED_FUNCTION;
 

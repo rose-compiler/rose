@@ -425,7 +425,7 @@ Grammar::setUpTypes ()
 
   // class A { int i; };    // An "autonomous" decl
   // class B { int i; } b;  // Not "autonomous"
-     NamedType.setDataPrototype     ("bool", "autonomous_declaration","= TRUE",
+     NamedType.setDataPrototype     ("bool", "autonomous_declaration","= true",
 				     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // NamedType.setDataPrototype ( "static SgQualifiedNamePtrList", "defaultQualifiedNamePtrList", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

@@ -704,7 +704,7 @@ Grammar::setUpStatements ()
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/27/2006): Support for function declaration exception specifications
-     FunctionDeclaration.setDataPrototype ( "SgTypePtrListPtr", "exceptionSpecification", "",
+     FunctionDeclaration.setDataPrototype ( "SgTypePtrListPtr", "exceptionSpecification", "= NULL",
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
@@ -1664,14 +1664,14 @@ Grammar::setUpStatements ()
                               DEF_TRAVERSAL, NO_DELETE, CLONE_TREE);
   // ***** Warning ****** Warning ****** Warning ****** Warning ****** Warning ******
 #else
-     AsmStmt.setDataPrototype ( "std::string", "assemblyCode", "",
+     AsmStmt.setDataPrototype ( "std::string", "assemblyCode", "= \"\"",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (7/22/2006): This is a list of operands (SgAsmOp IR nodes) (see test2006_93.C)
   // Note that the asm template is the first entry in the operand list!
   // AsmStmt.setDataPrototype ( "SgExpressionPtrList", "operands", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
   // DQ (8/13/2006): This variable should not be deleted (since it is a value instead of a pointer).
-     AsmStmt.setDataPrototype ( "bool", "useGnuExtendedFormat", "",
+     AsmStmt.setDataPrototype ( "bool", "useGnuExtendedFormat", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmStmt.setDataPrototype ( "SgExpressionPtrList", "operands", "",
                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2414,7 +2414,7 @@ Grammar::setUpStatements ()
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // ComputedGotoStatement.setDataPrototype    ( "SgLabelSymbolPtrList", "labelList", "",
   //              CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     ComputedGotoStatement.setDataPrototype    ( "SgExprListExp*", "labelList", "",
+     ComputedGotoStatement.setDataPrototype    ( "SgExprListExp*", "labelList", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComputedGotoStatement.setDataPrototype    ( "SgExpression*", "label_index", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -2456,7 +2456,7 @@ Grammar::setUpStatements ()
 #if 0
   // Support for comments within the AST (it would be nice to use a string as a data member)
   // CommentStatement.setFunctionPrototype ( "HEADER_COMMENT_STATEMENT", "Grammar/Statement.code" );
-     CommentStatement.setDataPrototype     ( "std::string*"   , "comment", "= \"\"",
+     CommentStatement.setDataPrototype     ( "std::string"   , "comment", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
      CxxStyleCommentStatement.setDataPrototype     ( "std::string"   , "dummyString1", "= \"\"",
                                              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL);
