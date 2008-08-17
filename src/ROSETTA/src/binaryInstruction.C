@@ -347,7 +347,9 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/12/2008): This is the connection to Robb's work.
   // AsmFile.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
+  // AsmFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmFile.setDataPrototype("SgAsmGenericFile*","genericFile","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C

@@ -819,9 +819,10 @@ CustomMemoryPoolDOTGeneration::binaryExecutableFormatFilter(SgNode* node)
           skipNode(node);
         }
 #endif
-#if 0
+#if 1
      SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(node);
-     if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("start") == std::string::npos)
+  // if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("start") == std::string::npos)
+     if (symbol != NULL && symbol->get_name() != ".text" && symbol->get_name() != ".data" && symbol->get_name().find("__s") == std::string::npos)
         {
           skipNode(node);
         }
