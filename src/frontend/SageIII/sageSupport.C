@@ -1600,7 +1600,7 @@ isBinaryExecutableFile ( string sourceFilename )
     }
 
 
-
+#if 0
 string
 processorArchitectureName (SgAsmFile::pe_processor_architecture_enum processor_architecture_kind)
    {
@@ -1634,7 +1634,9 @@ processorArchitectureName (SgAsmFile::pe_processor_architecture_enum processor_a
 
      return s;
    }
+#endif
 
+#if 0
 string
 processorTypeName (SgAsmFile::pe_processor_type_enum processor_type_kind)
    {
@@ -1682,9 +1684,9 @@ processorTypeName (SgAsmFile::pe_processor_type_enum processor_type_kind)
 
      return s;
    }
+#endif
 
-
-
+#if 0
 string
 machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_architecture_kind)
    {
@@ -1778,6 +1780,7 @@ machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_archit
 
      return s;
    }
+#endif
 
 #if 0
 // Older Binary file format support
