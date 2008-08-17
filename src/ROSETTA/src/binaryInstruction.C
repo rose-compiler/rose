@@ -408,8 +408,11 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_shstrndx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2008): Note that SgAsmElfSectionTable is a SgAsmGenericSection, so it is traversed from 
+  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmElfFileHeader.setDataPrototype("SgAsmElfSectionTable*","section_table","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/17/2008): This points to an IR node that is in the SgAsmGenericFile::section list so we can't 
   // traverse it here or we will be traversing this subtree twice in a single traversal (the dot graphs 
@@ -716,8 +719,11 @@ Grammar::setUpBinaryInstructions ()
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("SgAsmPERVASizePairList*","rvasize_pairs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2008): Note that SgAsmPEExtendedDOSHeader is a SgAsmGenericSection, so it is traversed from 
+  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmPEFileHeader.setDataPrototype("SgAsmPEExtendedDOSHeader*","dos2_header","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/17/2008): Note that SgAsmPESectionTable is a SgAsmGenericSection, so it is traversed from 
   // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
@@ -785,8 +791,11 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffSymbolTable.setFunctionPrototype ( "HEADER_PE_COFF_SYMBOL_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbolTable.setDataPrototype("SgAsmCoffSymbolList*","symbols","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2008): Note that strtab is a SgAsmGenericSection, so it is traversed from 
+  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmCoffSymbolTable.setDataPrototype("SgAsmGenericSection*","strtab","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // std::string         st_name;        // The original name; super.name might be modified
@@ -950,8 +959,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("SgAsmNEExtendedDOSHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2008): Note that SgAsmNESectionTable is a SgAsmGenericSection, so it is traversed from 
+  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmNEFileHeader.setDataPrototype("SgAsmNESectionTable*","section_table","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmNEFileHeader.setDataPrototype("SgAsmNENameTable*","resname_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("SgAsmNENameTable*","nonresname_table","= NULL",
@@ -1200,8 +1213,12 @@ Grammar::setUpBinaryInstructions ()
   // LERelocTable *reloc_table;
      AsmLEFileHeader.setDataPrototype("SgAsmLEExtendedDOSHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/17/2008): Note that SgAsmLESectionTable is a SgAsmGenericSection, so it is traversed from 
+  // the SgAsmGenericSectionList, so set to: NO_TRAVERSAL.
      AsmLEFileHeader.setDataPrototype("SgAsmLESectionTable*","section_table","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmLEFileHeader.setDataPrototype("SgAsmLEPageTable*","page_table","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmLEFileHeader.setDataPrototype("SgAsmLENameTable*","resname_table","= NULL",
@@ -1330,7 +1347,7 @@ Grammar::setUpBinaryInstructions ()
      AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","relocs","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","rm_section","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // This data structure represents the ExecSection from file: ExecGeneric.h
@@ -1441,8 +1458,11 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmGenericSymbolList.setFunctionPrototype ( "HEADER_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
+
+  // DQ (8/17/2008): Set to NO_TRAVERSAL to avoid visiting symbols twice (also travered from 
+  // SgAsmElfSymbolList and SgAsmPESymbolList for ELF or PE formats).
      AsmGenericSymbolList.setDataPrototype("SgAsmGenericSymbolPtrList","symbols","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // This data structure represents the ExecHeader from file: ExecGeneric.h
   // ExecFormat          exec_format;                    /* General info about the executable format */
