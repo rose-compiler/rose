@@ -1404,6 +1404,7 @@ is_ELF(ExecFile *f)
     return true;
 }
 
+#if 0
 /* Parses the structure of an ELF file and adds the information to the asmFile */
 void
 parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
@@ -1436,6 +1437,7 @@ parseBinaryFormat(ExecFile *f, SgAsmFile* asmFile)
   /* Identify parts of the file that we haven't encountered during parsing */
      f->fill_holes();
    }
+#endif
 
 /* Parses the structure of an ELF file and adds the info to the ExecFile */
 ElfFileHeader *

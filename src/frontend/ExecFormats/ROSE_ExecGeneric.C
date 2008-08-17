@@ -537,7 +537,7 @@ SgAsmGenericFile::unparse(const char *filename)
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
     for (size_t i=0; i< p_sections->get_sections().size(); i++) {
-        if (p_sections->get_sections()[i]->get_id()<0 && p_sections->get_sections()[i]->get_name().compare("hole")==0)
+        if (p_sections->get_sections()[i]->get_id() < 0 && p_sections->get_sections()[i]->get_name().compare("hole") == 0)
             p_sections->get_sections()[i]->unparse(f);
     }
     
@@ -1231,7 +1231,7 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFil
     /* FIXME: executable files may have more than a single file header (e.g., a PE file has a DOS header and a PE header). For
      *        now we just unparse one of the headers. See SgAsmGenericFile::unparse for more info -- it was the old top-level
      *        node. */
-
+#if 0
  // DQ (8/16/2008): Modified code to support STL container of "SgAsmGenericHeader*" types.
  // SgAsmGenericHeader *file_header = asmFile->get_header();
     ROSE_ASSERT(asmFile->get_headers() != NULL);
@@ -1239,6 +1239,13 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFil
 
     SgAsmGenericHeader *file_header = asmFile->get_headers()->get_headers()[0];
     ROSE_ASSERT(file_header != NULL);
+#else
+    ROSE_ASSERT(asmFile->get_genericFile() != NULL);
+    ROSE_ASSERT(asmFile->get_genericFile()->get_headers() != NULL);
+    ROSE_ASSERT(asmFile->get_genericFile()->get_headers()->get_headers().empty() == false);
+    SgAsmGenericHeader *file_header = asmFile->get_genericFile()->get_headers()->get_headers()[0];
+    ROSE_ASSERT(file_header != NULL);
+#endif
     
     file_header->unparse(output);
     fclose(output);
@@ -1345,6 +1352,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
      ROSE_ASSERT(ef->get_parent() == executableHeader);
   // ef->set_parent(executableHeader);
 
+#if 0
   // asmFile->set_header(executableHeader);
      ROSE_ASSERT(asmFile->get_headers() != NULL);
      asmFile->get_headers()->get_headers().push_back(executableHeader);
@@ -1353,8 +1361,13 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 
   // ROSE_ASSERT(asmFile->get_header() != NULL);
      ROSE_ASSERT(asmFile->get_headers()->get_headers().empty() == false);
+#else
+  // asmFile->get_genericFile()->get_headers()->get_headers().push_back(executableHeader);
+  // executableHeader->set_parent(asmFile->get_genericFile()->get_headers());
 
-  // return ef;
+     asmFile->set_genericFile(executableHeader->get_file());
+     executableHeader->get_file()->set_parent(asmFile);
+#endif
 }
 
 #if 0

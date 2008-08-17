@@ -3153,8 +3153,10 @@ void
 SgAsmFile::post_construction_initialization()
    {
   // Build the list IR node
-     p_headers = new SgAsmGenericHeaderList();
-     p_headers->set_parent(this);
+
+  // DQ (8/16/2008): Make the SgAsmGenericFile the root of the AST for the binary executable format
+  // p_headers = new SgAsmGenericHeaderList();
+  // p_headers->set_parent(this);
    }
 
 SOURCE_BINARY_FILE_END

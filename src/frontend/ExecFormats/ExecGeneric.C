@@ -1052,6 +1052,7 @@ hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data
     }
 }
 
+#if 0
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
@@ -1081,6 +1082,7 @@ parseBinaryFormat(const std::string & name, SgAsmFile* asmFile)
 
   // return ef;
 }
+#endif
 
 // DQ (6/15/2008): Old function name (confirmed to not be called in ROSE)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
