@@ -33,6 +33,7 @@ noinst_PROGRAMS = \
    ASTGraphGenerator \
    bin_example \
    binaryAnalysis \
+   binaryAnalysis_symbolTable \
    buildCFG \
    buildCG \
    callGraphAnalysis \
@@ -187,6 +188,8 @@ defuseAnalysis_SOURCES = defuseAnalysis.C
 runtimeCheck_SOURCES = runtimeCheck.cpp
 
 binaryAnalysis_SOURCES = binaryAnalysis.C
+
+binaryAnalysis_symbolTable_SOURCES = binaryAnalysis_symbolTable.C
 
 bin_example_SOURCES = bin_example.C
 
@@ -662,6 +665,7 @@ generatedCodeExamples = \
    collectDefineDirectives.out \
    defuseAnalysis_pic1.pdf \
    binaryAnalysis_pic1.pdf \
+   binaryAnalysis_pic3.pdf \
    rose_input_runtimeErrorCheck.C \
    rose_input_runtimeErrorCheck2.C \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
@@ -928,6 +932,15 @@ binaryAnalysis_pic1.pdf: binaryAnalysis
 	@echo "BinaryAnalysis: Building postscript file from cfg.dot & dfg.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF cfg.dot binaryAnalysis_pic1.pdf
 	$(top_srcdir)/scripts/dotgenLetterPDF dfg.dot binaryAnalysis_pic2.pdf
+
+# DQ (8/17/2008): Added example to show how to use traversal on AST for binary executable format.
+binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable
+	@echo "Building an example BinaryAnalysis ..."
+	cp -f $(srcdir)/buffer2.bin ./bin_example_2
+	./binaryAnalysis_symbolTable -rose:read_executable_file_format_only bin_example_2
+	@echo "BinaryAnalysis: Building postscript file from AST and whole graph dot files..."
+	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
 
 # rose_bin_example.s.aa: binaryAnalysis_pic1.pdf
 
@@ -1198,7 +1211,7 @@ cleanDocs:
 	rm -f rose_*.C *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C
 
 clean-local: cleanDocs
-	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck*
+	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new *.s bin_example_2
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
