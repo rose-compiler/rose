@@ -139,7 +139,7 @@ SgAsmGenericFile::ctor(std::string fileName)
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
-    printf ("In ~SgAsmGenericFile() \n");
+ // printf ("In ~SgAsmGenericFile() \n");
 
     /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
     while (p_headers->get_headers().size()) {
@@ -198,7 +198,7 @@ SgAsmGenericFile::add_section(SgAsmGenericSection *section)
     ROSE_ASSERT(p_sections != NULL);
     ROSE_ASSERT(p_headers  != NULL);
 
-    printf ("SgAsmGenericFile::add_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
+ // printf ("SgAsmGenericFile::add_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
 
 #ifndef NDEBUG
     /* New section must not already be present. */
@@ -223,13 +223,13 @@ SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
     ROSE_ASSERT(p_sections != NULL);
     ROSE_ASSERT(p_headers  != NULL);
 
-    printf ("SgAsmGenericFile::remove_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
+ // printf ("SgAsmGenericFile::remove_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
 
  // std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().find(section);
     std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),p_sections->get_sections().end(),section);
     if (i != p_sections->get_sections().end())
        {
-         printf ("Found section = %p to remove from list \n",section);
+      // printf ("Found section = %p to remove from list \n",section);
          p_sections->get_sections().erase(i);
        }
 }
@@ -583,7 +583,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_
     if (offset > ef->get_size() || offset+size > ef->get_size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
 
-    printf ("In SgAsmGenericSection::ctor() \n");
+ // printf ("In SgAsmGenericSection::ctor() \n");
 
 #if 0
  // This data member is removed from the SgAsmGenericSection, but it is added for the SgAsmGenericHeader.
@@ -608,7 +608,7 @@ SgAsmGenericSection::~SgAsmGenericSection()
  //     std::vector<SgAsmGenericSection*> & sections = p_file->get_sections()->get_sections();
 
     SgAsmGenericFile* genericFile = get_file();
-    printf ("In SgAsmGenericSection destructor: genericFile = %p \n",genericFile);
+ // printf ("In SgAsmGenericSection destructor: genericFile = %p \n",genericFile);
 
     if (genericFile != NULL) {
         std::vector<SgAsmGenericSection*> & sections = genericFile->get_sections()->get_sections();

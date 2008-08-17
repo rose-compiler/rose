@@ -652,7 +652,6 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
           static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
 
-#if 1
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();
 
@@ -724,228 +723,6 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
           static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np);
-#else
-
-/* Return byte order of caller */
-static ByteOrder host_order() {
-    static const int i = 1;
-    return *(unsigned char*)&i ? ORDER_LSB : ORDER_MSB;
-}
-
-/* Swap (reverse) bytes taking care of sign extension */
-static uint8_t swap_bytes(uint8_t n) {
-    return n;
-}
-static uint16_t swap_bytes(uint16_t n) {
-    return ((n>>8) & 0xff) | ((n<<8) & 0xff00);
-}
-static uint32_t swap_bytes(uint32_t n) {
-    return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000u);
-}
-static uint64_t swap_bytes(uint64_t n) {
-    return (((n>>56) & (0xffull<<0 )) | ((n>>40) & (0xffull<<8 )) | ((n>>24) & (0xffull<<16)) | ((n>>8 ) & (0xffull<<24)) |
-            ((n<<8 ) & (0xffull<<32)) | ((n<<24) & (0xffull<<40)) | ((n<<40) & (0xffull<<48)) | ((n<<56) & (0xffull<<56)));
-}
-static int8_t swap_bytes(int8_t n) {
-    return swap_bytes((uint8_t)n);
-}
-static int16_t swap_bytes(int16_t n) {
-    return swap_bytes((uint16_t)n);
-}
-static int32_t swap_bytes(int32_t n) {
-    return swap_bytes((uint32_t)n);
-}
-static int64_t swap_bytes(int64_t n) {
-    return swap_bytes((uint64_t)n);
-}
-
-
-/* Little-endian byte order conversions */
-static uint8_t le_to_host(uint8_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static uint16_t le_to_host(uint16_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static uint32_t le_to_host(uint32_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static uint64_t le_to_host(uint64_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static int8_t le_to_host(int8_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static int16_t le_to_host(int16_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static int32_t le_to_host(int32_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-static int64_t le_to_host(int64_t n) {
-    return ORDER_LSB==host_order() ? n : swap_bytes(n);
-}
-
-static void host_to_le(unsigned h, uint8_t *n) {
-    assert(0==(h & ~0xff));
-    uint8_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(unsigned h, uint16_t *n) {
-    assert(0==(h & ~0xffff));
-    uint16_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(unsigned h, uint32_t *n) {
-    assert(0==(h & ~0xfffffffful));
-    uint32_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(addr_t h, uint64_t *n) {
-    assert(0==(h & ~0xffffffffffffffffull));
-    uint64_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(int h, int8_t *n) {
-    assert((unsigned)h<=0x8f || ((unsigned)h|0xff)==(unsigned)-1);
-    int8_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(int h, int16_t *n) {
-    assert((unsigned)h<=0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
-    int16_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(int h, int32_t *n) {
-    assert((unsigned)h<=0x8fffffffu || ((unsigned)h|0xffffffffu)==(unsigned)-1);
-    int32_t hh = h;
-    *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_le(int64_t h, int64_t *n) {
-    *n = ORDER_LSB==host_order() ? h : swap_bytes(h);
-}
-
-/* Big-endian byte order conversions */
-static uint8_t be_to_host(uint8_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static uint16_t be_to_host(uint16_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static uint32_t be_to_host(uint32_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static uint64_t be_to_host(uint64_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static int8_t be_to_host(int8_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static int16_t be_to_host(int16_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static int32_t be_to_host(int32_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-static int64_t be_to_host(int64_t n) {
-    return ORDER_MSB==host_order() ? n : swap_bytes(n);
-}
-
-static void host_to_be(unsigned h, uint8_t *n) {
-    assert(0==(h & ~0xff));
-    uint8_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(unsigned h, uint16_t *n) {
-    assert(0==(h & ~0xffff));
-    uint16_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(unsigned h, uint32_t *n) {
-    assert(0==(h & ~0xfffffffful));
-    uint32_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(addr_t h, uint64_t *n) {
-    assert(0==(h & ~0xffffffffffffffffull));
-    uint64_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(int h, int8_t *n) {
-    assert((unsigned)h<0x8f || ((unsigned)h|0xff)==(unsigned)-1);
-    int8_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(int h, int16_t *n) {
-    assert((unsigned)h<0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
-    int16_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(int h, int32_t *n) {
-    assert((unsigned)h<0x8ffffffful || ((unsigned)h|0xfffffffful)==(unsigned)-1);
-    int32_t hh = h;
-    *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
-}
-static void host_to_be(int64_t h, int64_t *n) {
-    *n = ORDER_MSB==host_order() ? h : swap_bytes(h);
-}
-
-/* Caller-specified byte order conversions */
-static uint8_t disk_to_host(ByteOrder sex, uint8_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static uint16_t disk_to_host(ByteOrder sex, uint16_t n)
-{
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static uint32_t disk_to_host(ByteOrder sex, uint32_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static uint64_t disk_to_host(ByteOrder sex, uint64_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static int8_t disk_to_host(ByteOrder sex, int8_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static int16_t disk_to_host(ByteOrder sex, int16_t n)
-{
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static int32_t disk_to_host(ByteOrder sex, int32_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-static int64_t disk_to_host(ByteOrder sex, int64_t n) {
-    return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
-}
-
-//static void host_to_disk(ByteOrder, unsigned char h, unsigned char *np) {
-//    *np = h;
-//}
-static void host_to_disk(ByteOrder sex, unsigned h, uint8_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, unsigned h, uint16_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, unsigned h, uint32_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, addr_t h, uint64_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, int h, int8_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, int h, int16_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, int h, int32_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-static void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
-    ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
-}
-#endif
 
 HEADER_EXECUTABLE_FILE_FORMAT_END
 
@@ -1262,6 +1039,10 @@ HEADER_GENERIC_SYMBOL_START
        // virtual ~ExecSymbol() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+          std::string stringifyDefState() const;
+          std::string stringifyType() const;
+          std::string stringifyBinding() const;
 
        // Use the automatically generated access functions
        // const std::string& get_name() {return name;}
@@ -4278,7 +4059,7 @@ SgAsmGenericSection::get_file() const
   // return dynamic_cast<SgAsmGenericHeader*>( get_parent() );
      ROSE_ASSERT(get_parent() != NULL);
 
-     printf ("In SgAsmGenericSection::get_file(): this = %p = %s \n",this,this->class_name().c_str());
+  // printf ("In SgAsmGenericSection::get_file(): this = %p = %s \n",this,this->class_name().c_str());
 
 #if 0
      SgNode* temp_parent = get_parent();
@@ -4297,7 +4078,7 @@ SgAsmGenericSection::get_file() const
           genericFile = dynamic_cast<SgAsmGenericFile*>( sectionList->get_parent() );
           if (genericFile == NULL)
              {
-               printf ("In SgAsmGenericSection::get_file(): sectionList->get_parent() = %p = %s \n",sectionList->get_parent(),sectionList->get_parent()->class_name().c_str());
+            // printf ("In SgAsmGenericSection::get_file(): sectionList->get_parent() = %p = %s \n",sectionList->get_parent(),sectionList->get_parent()->class_name().c_str());
              }
         }
 
@@ -4364,6 +4145,145 @@ SOURCE_GENERIC_ARCHITECTURE_START
 SOURCE_GENERIC_ARCHITECTURE_END
 
 SOURCE_GENERIC_SYMBOL_START
+
+std::string
+SgAsmGenericSymbol::stringifyDefState() const
+   {
+     std::string s;
+     switch (p_def_state)
+        {
+          case SYM_UNDEFINED: 
+             {
+               s = "SYM_UNDEFINED";
+               break;
+             }
+
+          case SYM_TENTATIVE: 
+             {
+               s = "SYM_TENTATIVE";
+               break;
+             }
+
+          case SYM_DEFINED:
+             {
+               s = "SYM_DEFINED";
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+std::string
+SgAsmGenericSymbol::stringifyType() const
+   {
+     std::string s;
+     switch (p_type)
+        {
+          case SYM_NO_TYPE: 
+             {
+               s = "SYM_NO_TYPE";
+               break;
+             }
+
+          case SYM_DATA: 
+             {
+               s = "SYM_DATA";
+               break;
+             }
+
+          case SYM_FUNC:
+             {
+               s = "SYM_FUNC";
+               break;
+             }
+
+          case SYM_SECTION:
+             {
+               s = "SYM_SECTION";
+               break;
+             }
+
+          case SYM_FILE:
+             {
+               s = "SYM_FILE";
+               break;
+             }
+
+          case SYM_ARRAY:
+             {
+               s = "SYM_ARRAY";
+               break;
+             }
+
+          case SYM_TLS:
+             {
+               s = "SYM_TLS";
+               break;
+             }
+
+          case SYM_REGISTER:
+             {
+               s = "SYM_REGISTER";
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
+std::string
+SgAsmGenericSymbol::stringifyBinding() const
+   {
+     std::string s;
+     switch (p_binding)
+        {
+          case SYM_NO_BINDING: 
+             {
+               s = "SYM_NO_BINDING";
+               break;
+             }
+
+          case SYM_LOCAL: 
+             {
+               s = "SYM_LOCAL";
+               break;
+             }
+
+          case SYM_GLOBAL:
+             {
+               s = "SYM_GLOBAL";
+               break;
+             }
+
+          case SYM_WEAK:
+             {
+               s = "SYM_WEAK";
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return s;
+   }
+
 SOURCE_GENERIC_SYMBOL_END
 
 SOURCE_GENERIC_SYMBOL_LIST_START
