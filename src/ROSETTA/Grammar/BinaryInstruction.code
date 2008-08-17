@@ -36,7 +36,10 @@ HEADER_BINARY_INSTRUCTION_END
 
 HEADER_BINARY_FILE_START
 
+#if 0
        // enums for ELF header information
+
+#error "DEAD CODE!"
 
        // unsigned char	e_ident[EI_NIDENT]
        // typedef unsigned char magic_number_vector_type[EI_NIDENT];
@@ -51,6 +54,8 @@ HEADER_BINARY_FILE_START
                e_class_64      = 4, // value maps to ELFCLASS64
                e_class_last
              };
+
+#error "DEAD CODE!"
 
           enum elf_data_encoding_enum
              {
@@ -71,6 +76,8 @@ HEADER_BINARY_FILE_START
                e_version_last
              };
 
+
+#error "DEAD CODE!"
 
           enum elf_OS_ABI_identification_enum
              {
@@ -93,6 +100,8 @@ HEADER_BINARY_FILE_START
                e_OS_ABI_last
              };
 
+#error "DEAD CODE!"
+
           enum elf_object_file_type_enum
              {
                e_file_type_error       = 0,
@@ -105,6 +114,8 @@ HEADER_BINARY_FILE_START
                e_file_type_last
              };
 
+
+#error "DEAD CODE!"
 
        // DQ (1/8/2008): For a collection of interesting binaries go to: http://www.distributed.net/source/
           enum elf_machine_architecture_enum
@@ -189,6 +200,8 @@ HEADER_BINARY_FILE_START
                e_machine_architecture_last
              };
 
+#error "DEAD CODE!"
+
        // DQ (2/11/2008): Added support for Windows binaries
           enum pe_processor_architecture_enum
              {
@@ -208,6 +221,8 @@ HEADER_BINARY_FILE_START
                e_processor_architecture_UNKNOWN = 13,
                e_processor_architecture_last
              };
+
+#error "DEAD CODE!"
 
        // DQ (2/11/2008): Added support for Windows binaries
           enum pe_processor_type_enum
@@ -246,6 +261,7 @@ HEADER_BINARY_FILE_START
        // DQ (6/15/2008): Adding interface to simplify migration to newer executable formate IR nodes.
        // JJW (6/18/2008): Commenting out because this function doesn't have a definition
        // SgAsmGenericSectionPtrList & get_sectionList();
+#endif
 
           void post_construction_initialization();
 
@@ -254,6 +270,7 @@ HEADER_BINARY_FILE_END
 
 HEADER_BINARY_FILE_SECTION_HEADER_START
 
+#if 0
           enum elf_version_enum
              {
                e_version_error   = 0,
@@ -262,12 +279,14 @@ HEADER_BINARY_FILE_SECTION_HEADER_START
                e_version_current = 3, // value maps to EV_CURRENT
                e_version_last
              };
+#endif
 
 HEADER_BINARY_FILE_SECTION_HEADER_END
 
 
 HEADER_BINARY_FILE_PROGRAM_HEADER_START
 
+#if 0
           enum elf_type_enum
              {
                e_type_error                = 0,
@@ -282,6 +301,7 @@ HEADER_BINARY_FILE_PROGRAM_HEADER_START
                e_type_processor_specific   = 9,
                e_type_last
              };
+#endif
 
 HEADER_BINARY_FILE_PROGRAM_HEADER_END
 
@@ -348,6 +368,7 @@ HEADER_BINARY_WORD_VALUE_EXPRESSION_END
 // ************************************
 
 HEADER_EXECUTABLE_FILE_FORMAT_START
+
      public:
           typedef uint64_t addr_t; /* address and size (file and memory) */
 
@@ -622,14 +643,88 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
           };
 
 
-  // DQ (12/8/2008): Hook into the construction of the binary file format support.
-     static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
-     static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
+       // DQ (12/8/2008): Hook into the construction of the binary file format support.
+          static void parseBinaryFormat(const std::string & name, SgAsmFile* asmFile);
+          static void unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile);
 
-  // DQ (11/8/2008): used in the PE support.
-  // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
-     static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
-     static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
+       // DQ (11/8/2008): used in the PE support.
+       // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
+          static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
+          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
+
+#if 1
+       /* Return byte order of caller */
+          static SgAsmExecutableFileFormat::ByteOrder host_order();
+
+       /* Swap (reverse) bytes taking care of sign extension */
+          static uint8_t swap_bytes(uint8_t n);
+          static uint16_t swap_bytes(uint16_t n);
+          static uint32_t swap_bytes(uint32_t n);
+          static uint64_t swap_bytes(uint64_t n);
+          static int8_t swap_bytes(int8_t n);
+          static int16_t swap_bytes(int16_t n);
+          static int32_t swap_bytes(int32_t n);
+          static int64_t swap_bytes(int64_t n);
+
+
+       /* Little-endian byte order conversions */
+          static uint8_t le_to_host(uint8_t n);
+          static uint16_t le_to_host(uint16_t n);
+          static uint32_t le_to_host(uint32_t n);
+          static uint64_t le_to_host(uint64_t n);
+          static int8_t le_to_host(int8_t n);
+          static int16_t le_to_host(int16_t n);
+          static int32_t le_to_host(int32_t n);
+          static int64_t le_to_host(int64_t n);
+
+          static void host_to_le(unsigned h, uint8_t *n);
+          static void host_to_le(unsigned h, uint16_t *n);
+          static void host_to_le(unsigned h, uint32_t *n);
+          static void host_to_le(addr_t h, uint64_t *n);
+          static void host_to_le(int h, int8_t *n);
+          static void host_to_le(int h, int16_t *n);
+          static void host_to_le(int h, int32_t *n);
+          static void host_to_le(int64_t h, int64_t *n);
+
+       /* Big-endian byte order conversions */
+          static uint8_t be_to_host(uint8_t n);
+          static uint16_t be_to_host(uint16_t n);
+          static uint32_t be_to_host(uint32_t n);
+          static uint64_t be_to_host(uint64_t n);
+          static int8_t be_to_host(int8_t n);
+          static int16_t be_to_host(int16_t n);
+          static int32_t be_to_host(int32_t n);
+          static int64_t be_to_host(int64_t n);
+
+          static void host_to_be(unsigned h, uint8_t *n);
+          static void host_to_be(unsigned h, uint16_t *n);
+          static void host_to_be(unsigned h, uint32_t *n);
+          static void host_to_be(addr_t h, uint64_t *n);
+          static void host_to_be(int h, int8_t *n);
+          static void host_to_be(int h, int16_t *n);
+          static void host_to_be(int h, int32_t *n);
+          static void host_to_be(int64_t h, int64_t *n);
+
+       /* Caller-specified byte order conversions */
+          static uint8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint8_t n);
+          static uint16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint16_t n);
+          static uint32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint32_t n);
+          static uint64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint64_t n);
+          static int8_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int8_t n);
+          static int16_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int16_t n);
+          static int32_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int32_t n);
+          static int64_t disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int64_t n);
+
+       // static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder, unsigned char h, unsigned char *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint8_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, addr_t h, uint64_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np);
+          static void host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np);
+#else
 
 /* Return byte order of caller */
 static ByteOrder host_order() {
@@ -850,6 +945,7 @@ static void host_to_disk(ByteOrder sex, int h, int32_t *np) {
 static void host_to_disk(ByteOrder sex, int64_t h, int64_t *np) {
     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
 }
+#endif
 
 HEADER_EXECUTABLE_FILE_FORMAT_END
 
@@ -896,8 +992,8 @@ HEADER_GENERIC_SECTION_START
        // addr_t        get_size() {return size;}       /* read-only */
        // addr_t        get_offset() {return offset;}   /* read-only */
           addr_t        end_offset(); /* file offset for end of section */
-          void                extend(addr_t nbytes);         /* make section larger by extending the end */
-          void                extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
+          void          extend(addr_t nbytes);         /* make section larger by extending the end */
+          void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
           addr_t        write(FILE *f, addr_t offset, size_t bufsize, const void *buf);
           addr_t        write(FILE *f, addr_t offset, const std::string &str);
           addr_t        write(FILE *f, addr_t offset, char c);
@@ -914,9 +1010,9 @@ HEADER_GENERIC_SECTION_START
           const RefMap&       uncongeal();                    /* uncongeal holes back into references */
 
        /* Functions related to mapping of sections into executable memory */
-          bool                is_mapped();
-          void                set_mapped(addr_t rva, addr_t size);
-          void                clear_mapped();
+          bool  is_mapped();
+          void  set_mapped(addr_t rva, addr_t size);
+          void  clear_mapped();
 
        // DQ (8/8/2008): This is not standard semantics for an access function
           addr_t        get_mapped_rva();
@@ -933,11 +1029,11 @@ HEADER_GENERIC_SECTION_START
 
        // DQ (8/15/2008): This is now automatically generated (and is a const function)!
        // SgAsmGenericHeader *get_header();
-#if 1
+
        // DQ (8/16/2008): Allow this to be overloaded in classes that might store a SgAsmGenericFile 
        // file variable directly (e.g. required in SgAsmGenericHeader).
           virtual SgAsmGenericFile* get_file() const;
-#endif
+
        /* Accessors for private members */
        // SgAsmGenericHeader          *get_header() {return header;}
        // void                set_header(SgAsmGenericExecHeader *hdr) {header=hdr;}
@@ -959,8 +1055,8 @@ HEADER_GENERIC_SECTION_START
        // bool                get_synthesized() {return synthesized;}
 
      protected:
-          void                ctor(SgAsmGenericFile*, addr_t offset, addr_t size);
-          void                unparse_holes(FILE*);
+          void ctor(SgAsmGenericFile*, addr_t offset, addr_t size);
+          void unparse_holes(FILE*);
 
 HEADER_GENERIC_SECTION_END
 
@@ -997,7 +1093,7 @@ HEADER_GENERIC_HEADER_START
 
        /* Convenience functions */
        // SgAsmGenericFormat::ByteOrder get_sex() const { return p_exec_format.p_sex; }
-          SgAsmGenericFormat::ByteOrder get_sex() const;
+          SgAsmExecutableFileFormat::ByteOrder get_sex() const;
        // size_t get_word_size() const {return p_exec_format.p_word_size;}
           size_t get_word_size() const;
 
@@ -1254,8 +1350,8 @@ HEADER_ELF_HEADER_START
           uint64_t max_page_size();
           virtual void unparse(FILE*);
 
-          void *encode(ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*);
-          void *encode(ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*);
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1342,19 +1438,19 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
           } __attribute__((packed));
 
 
-          SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+          SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
        // virtual ~SgAsmElfSectionTableEntry() {};
 
-          void *encode(ByteOrder sex, SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          void *encode(ByteOrder sex, SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
-          void ctor(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
 
 HEADER_ELF_SECTION_TABLE_ENTRY_END
@@ -1419,17 +1515,17 @@ HEADER_ELF_DYNAMIC_ENTRY_START
                uint64_t            d_val;  /* Tag's value */
              } __attribute__((packed));
 
-          SgAsmElfDynamicEntry(ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
-          SgAsmElfDynamicEntry(ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
+          SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk) {ctor(sex, disk);}
+          SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk) {ctor(sex, disk);}
        // virtual ~SgAsmElfDynamicEntry() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          void *encode(ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
-          void *encode(ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*);
 
      private:
-          void ctor(ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk);
-          void ctor(ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk);
 
 HEADER_ELF_DYNAMIC_ENTRY_END
 
@@ -1502,17 +1598,17 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
              } __attribute__((packed));
 
 
-          SgAsmElfSegmentTableEntry(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-          SgAsmElfSegmentTableEntry(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
+          SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+          SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
        // virtual ~ElfSegmentTableEntry() {};
 
-          void *encode(ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
-          void *encode(ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
-          void ctor(ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk);
 
 HEADER_ELF_SEGMENT_TABLE_ENTRY_END
 
@@ -1574,20 +1670,20 @@ HEADER_ELF_SYMBOL_START
                uint64_t            st_size;
              } __attribute__((packed));
 
-          SgAsmElfSymbol(ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
-          SgAsmElfSymbol(ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
+          SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
+          SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
        // virtual ~SgAsmElfSymbol() {};
 
-          void *encode(ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-          void *encode(ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*);
           virtual void dump(FILE *f, const char *prefix, ssize_t idx);
           void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
           SgAsmElfSymbol::ElfSymBinding get_elf_binding();
           SgAsmElfSymbol::ElfSymType get_elf_type();
 
      private:
-          void ctor(ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-          void ctor(ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
 
        /* Initialization common to all constructors */
           void ctor_common();
@@ -2608,7 +2704,7 @@ HEADER_LE_FILE_HEADER_START
 
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmLEFileHeader::LEFileHeader_disk*);
 
        // ExtendedDOSHeader *dos2_header;
        // LESectionTable *section_table;
@@ -2735,15 +2831,15 @@ HEADER_LE_PAGE_TABLE_ENTRY_START
                unsigned char       flags;
              } __attribute__((packed));
 
-          SgAsmLEPageTableEntry(ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
+          SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk);
 
           void dump(FILE*, const char *prefix, ssize_t idx);
-          void *encode(ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
 
        // unsigned get_pageno() {return pageno;}
 
      private:
-          void ctor(ByteOrder, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEPageTableEntry::LEPageTableEntry_disk*);
 
        // unsigned    pageno;
        // unsigned    flags;
@@ -2763,14 +2859,14 @@ HEADER_LE_ENTRY_POINT_START
               uint16_t    res1;           /* 0x08 Reserved */
           } __attribute__((packed));      /* 0x0a */
 
-          SgAsmLEEntryPoint(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
-          SgAsmLEEntryPoint(ByteOrder sex, unsigned flags);
+          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk);
+          SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags);
 
-          addr_t unparse(FILE*, ByteOrder, SgAsmGenericSection*, addr_t spos);
+          addr_t unparse(FILE*, SgAsmExecutableFileFormat::ByteOrder, SgAsmGenericSection*, addr_t spos);
           void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLEEntryPoint::LEEntryPoint_disk*);
 
        // std::vector<LEEntryPoint> entries;
        // unsigned flags, objnum, entry_type, res1;
@@ -2822,10 +2918,10 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
                SF_IO_PRIV          = 0x00008000,   /* Section I/O privilege level (80x86 specific; used only for 16:16 alias objects) */
              };
 
-          SgAsmLESectionTableEntry(ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
+          SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk);
        // virtual ~LESectionTableEntry() {};
 
-          void *encode(ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
+          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
           virtual void dump(FILE *f, const char *prefix, ssize_t idx);
     
        /* These are the native-format versions of the same members described in the NESectionTableEntry_disk struct. */
@@ -2833,7 +2929,7 @@ HEADER_LE_SECTION_TABLE_ENTRY_START
        // addr_t      mapped_size, base_addr;
 
      private:
-          void ctor(ByteOrder, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
+          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmLESectionTableEntry::LESectionTableEntry_disk*);
 
 HEADER_LE_SECTION_TABLE_ENTRY_END
 
@@ -3673,10 +3769,390 @@ SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 // *************************************
 
 SOURCE_EXECUTABLE_FILE_FORMAT_START
+
+SgAsmExecutableFileFormat::ByteOrder
+SgAsmExecutableFileFormat::host_order()
+   {
+     static const int i = 1;
+     return *(unsigned char*)&i ? ORDER_LSB : ORDER_MSB;
+   }
+
+/* Swap (reverse) bytes taking care of sign extension */
+uint8_t
+SgAsmExecutableFileFormat::swap_bytes(uint8_t n)
+   {
+     return n;
+   }
+
+uint16_t
+SgAsmExecutableFileFormat::swap_bytes(uint16_t n)
+   {
+     return ((n>>8) & 0xff) | ((n<<8) & 0xff00);
+   }
+
+uint32_t
+SgAsmExecutableFileFormat::swap_bytes(uint32_t n)
+   {
+     return ((n>>24) & 0xff) | ((n>>8) & 0xff00) | ((n<<8) & 0xff0000) | ((n<<24) & 0xff000000u);
+   }
+
+uint64_t
+SgAsmExecutableFileFormat::swap_bytes(uint64_t n)
+   {
+     return (((n>>56) & (0xffull<<0 )) | ((n>>40) & (0xffull<<8 )) | ((n>>24) & (0xffull<<16)) | ((n>>8 ) & (0xffull<<24)) |
+             ((n<<8 ) & (0xffull<<32)) | ((n<<24) & (0xffull<<40)) | ((n<<40) & (0xffull<<48)) | ((n<<56) & (0xffull<<56)));
+   }
+
+int8_t
+SgAsmExecutableFileFormat::swap_bytes(int8_t n)
+   {
+     return swap_bytes((uint8_t)n);
+   }
+
+int16_t
+SgAsmExecutableFileFormat::swap_bytes(int16_t n)
+   {
+     return swap_bytes((uint16_t)n);
+   }
+
+int32_t
+SgAsmExecutableFileFormat::swap_bytes(int32_t n)
+   {
+     return swap_bytes((uint32_t)n);
+   }
+
+int64_t
+SgAsmExecutableFileFormat::swap_bytes(int64_t n)
+   {
+     return swap_bytes((uint64_t)n);
+   }
+
+/* Little-endian byte order conversions */
+uint8_t
+SgAsmExecutableFileFormat::le_to_host(uint8_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint16_t
+SgAsmExecutableFileFormat::le_to_host(uint16_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint32_t
+SgAsmExecutableFileFormat::le_to_host(uint32_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint64_t
+SgAsmExecutableFileFormat::le_to_host(uint64_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+int8_t
+SgAsmExecutableFileFormat::le_to_host(int8_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+int16_t
+SgAsmExecutableFileFormat::le_to_host(int16_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+int32_t
+SgAsmExecutableFileFormat::le_to_host(int32_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+int64_t
+SgAsmExecutableFileFormat::le_to_host(int64_t n)
+   {
+     return ORDER_LSB==host_order() ? n : swap_bytes(n);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(unsigned h, uint8_t *n)
+   {
+     assert(0==(h & ~0xff));
+     uint8_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(unsigned h, uint16_t *n)
+   {
+     assert(0==(h & ~0xffff));
+     uint16_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(unsigned h, uint32_t *n)
+   {
+     assert(0==(h & ~0xfffffffful));
+     uint32_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(addr_t h, uint64_t *n)
+   {
+     assert(0==(h & ~0xffffffffffffffffull));
+     uint64_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(int h, int8_t *n)
+   {
+     assert((unsigned)h<=0x8f || ((unsigned)h|0xff)==(unsigned)-1);
+     int8_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(int h, int16_t *n)
+   {
+     assert((unsigned)h<=0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
+     int16_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(int h, int32_t *n)
+   {
+     assert((unsigned)h<=0x8fffffffu || ((unsigned)h|0xffffffffu)==(unsigned)-1);
+     int32_t hh = h;
+     *n = ORDER_LSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_le(int64_t h, int64_t *n)
+   {
+     *n = ORDER_LSB==host_order() ? h : swap_bytes(h);
+   }
+
+/* Big-endian byte order conversions */
+uint8_t
+SgAsmExecutableFileFormat::be_to_host(uint8_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint16_t
+SgAsmExecutableFileFormat::be_to_host(uint16_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint32_t
+SgAsmExecutableFileFormat::be_to_host(uint32_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+uint64_t
+SgAsmExecutableFileFormat::be_to_host(uint64_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+int8_t
+SgAsmExecutableFileFormat::be_to_host(int8_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+int16_t
+SgAsmExecutableFileFormat::be_to_host(int16_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+int32_t
+SgAsmExecutableFileFormat::be_to_host(int32_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+int64_t
+SgAsmExecutableFileFormat::be_to_host(int64_t n)
+   {
+     return ORDER_MSB==host_order() ? n : swap_bytes(n);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(unsigned h, uint8_t *n)
+   {
+     assert(0==(h & ~0xff));
+     uint8_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(unsigned h, uint16_t *n)
+   {
+     assert(0==(h & ~0xffff));
+     uint16_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(unsigned h, uint32_t *n)
+   {
+     assert(0==(h & ~0xfffffffful));
+     uint32_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(addr_t h, uint64_t *n)
+   {
+     assert(0==(h & ~0xffffffffffffffffull));
+     uint64_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(int h, int8_t *n)
+   {
+     assert((unsigned)h<0x8f || ((unsigned)h|0xff)==(unsigned)-1);
+     int8_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(int h, int16_t *n)
+   {
+     assert((unsigned)h<0x8fff || ((unsigned)h|0xffff)==(unsigned)-1);
+     int16_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(int h, int32_t *n)
+   {
+     assert((unsigned)h<0x8ffffffful || ((unsigned)h|0xfffffffful)==(unsigned)-1);
+     int32_t hh = h;
+     *n = ORDER_MSB==host_order() ? hh : swap_bytes(hh);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_be(int64_t h, int64_t *n)
+   {
+     *n = ORDER_MSB==host_order() ? h : swap_bytes(h);
+   }
+
+/* Caller-specified byte order conversions */
+uint8_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint8_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+uint16_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint16_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+uint32_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint32_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+uint64_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, uint64_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+int8_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int8_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+int16_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int16_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+int32_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int32_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+int64_t
+SgAsmExecutableFileFormat::disk_to_host(SgAsmExecutableFileFormat::ByteOrder sex, int64_t n)
+   {
+     return ORDER_LSB==sex ? le_to_host(n) : be_to_host(n);
+   }
+
+// void SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder, unsigned char h, unsigned char *np)
+//    {
+//      *np = h;
+//    }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint8_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint16_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, unsigned h, uint32_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, addr_t h, uint64_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int8_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int16_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int h, int32_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
+void
+SgAsmExecutableFileFormat::host_to_disk(SgAsmExecutableFileFormat::ByteOrder sex, int64_t h, int64_t *np)
+   {
+     ORDER_LSB==sex ? host_to_le(h, np) : host_to_be(h, np);
+   }
+
 SOURCE_EXECUTABLE_FILE_FORMAT_END
 
-SOURCE_GENERIC_SEGMENT_START
-SOURCE_GENERIC_SEGMENT_END
 
 SOURCE_GENERIC_SECTION_START
 
@@ -3922,13 +4398,13 @@ SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
 SOURCE_ELF_SECTION_TABLE_END
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
    : p_nextra(0)
    {
      ctor(sex, disk);
    }
 
-SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
+SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
    : p_nextra(0)
    {
      ctor(sex, disk);
@@ -3977,12 +4453,12 @@ SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
 SOURCE_ELF_SEGMENT_TABLE_END
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf32SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const Elf32SegmentTableEntry_disk *disk)
    {
      ctor(sex, disk);
    }
 
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
    {
      ctor(sex, disk);
    }
@@ -4008,12 +4484,12 @@ SOURCE_ELF_SYMBOL_LIST_START
 SOURCE_ELF_SYMBOL_LIST_END
 
 SOURCE_ELF_SYMBOL_START
-SgAsmElfSymbol::SgAsmElfSymbol(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const Elf32SymbolEntry_disk *disk)
    {
      ctor(sex, disk);
    }
 
-SgAsmElfSymbol::SgAsmElfSymbol(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const Elf64SymbolEntry_disk *disk)
    {
      ctor(sex, disk);
    }
@@ -4459,7 +4935,7 @@ SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
 SOURCE_LE_RELOC_TABLE_END
 
 SOURCE_LE_PAGE_TABLE_ENTRY_START
-SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
+SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk)
    : p_pageno(0), p_flags(0)
    {
      ctor(sex, disk);
@@ -4468,13 +4944,13 @@ SgAsmLEPageTableEntry::SgAsmLEPageTableEntry(ByteOrder sex, const SgAsmLEPageTab
 SOURCE_LE_PAGE_TABLE_ENTRY_END
 
 SOURCE_LE_ENTRY_POINT_START
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_disk *disk)
    : p_flags(0), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
      ctor(sex, disk);
    }
 
-SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder sex, unsigned flags)
+SgAsmLEEntryPoint::SgAsmLEEntryPoint(SgAsmExecutableFileFormat::ByteOrder sex, unsigned flags)
    : p_flags(flags), p_objnum(0), p_entry_type(0), p_res1(0), p_entry_offset(0)
    {
    }
@@ -4482,7 +4958,7 @@ SgAsmLEEntryPoint::SgAsmLEEntryPoint(ByteOrder sex, unsigned flags)
 SOURCE_LE_ENTRY_POINT_END
 
 SOURCE_LE_SECTION_TABLE_ENTRY_START
-SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
+SgAsmLESectionTableEntry::SgAsmLESectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmLESectionTableEntry::LESectionTableEntry_disk *disk)
    {
      ctor(sex, disk);
    }
