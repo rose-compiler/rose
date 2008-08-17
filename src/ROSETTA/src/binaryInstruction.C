@@ -140,7 +140,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmType, AsmTypeByte        | AsmTypeWord           | AsmTypeDoubleWord  | 
                                       AsmTypeQuadWord    | AsmTypeDoubleQuadWord | AsmType80bitFloat  | 
                                       AsmType128bitFloat | AsmTypeSingleFloat    | AsmTypeDoubleFloat | 
-                                      AsmTypeVector, "AsmType", "AsmTypeTag", false );
+                                      AsmTypeVector, "AsmType", "AsmTypeTag", false /* canHaveInstances = false */ );
 
   // Support for DLL's for different file formats (there appears to only be a PE form of DLL)
   // NEW_TERMINAL_MACRO ( AsmLEDLL, "AsmLEDLL", "AsmLEDLLTag" );
@@ -161,18 +161,18 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmNEFileHeader,       "AsmNEFileHeader",       "AsmNEFileHeaderTag"    );
      NEW_TERMINAL_MACRO ( AsmLEFileHeader,       "AsmLEFileHeader",       "AsmLEFileHeaderTag"    );
      NEW_TERMINAL_MACRO ( AsmDOSFileHeader,      "AsmDOSFileHeader",      "AsmDOSFileHeaderTag"    );
-     NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEFileHeader  | AsmLEFileHeader |  AsmNEFileHeader | AsmDOSFileHeader |  AsmElfFileHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEFileHeader  | AsmLEFileHeader |  AsmNEFileHeader | AsmDOSFileHeader |  AsmElfFileHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", true /* canHaveInstances = true */ );
 
   // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
      NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
      NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection, "AsmElfSection", "AsmElfSectionTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTable,  "AsmElfSegmentTable",  "AsmElfSegmentTableTag"  );
 
      NEW_TERMINAL_MACRO    ( AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmPESection, AsmPEImportSection, "AsmPESection",       "AsmPESectionTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmPESection, AsmPEImportSection, "AsmPESection",       "AsmPESectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmPESectionTable,  "AsmPESectionTable",  "AsmPESectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag" );
@@ -200,12 +200,12 @@ Grammar::setUpBinaryInstructions ()
             AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  |
             AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
-           "AsmGenericSection",    "AsmGenericSectionTag", false );
+           "AsmGenericSection",    "AsmGenericSectionTag", true /* canHaveInstances = true */ );
 
   // Support for Symbols in the binary executable.
      NEW_TERMINAL_MACRO    ( AsmCoffSymbol,   "AsmCoffSymbol", "AsmCoffSymbolTag"    );
      NEW_TERMINAL_MACRO    ( AsmElfSymbol,    "AsmElfSymbol",  "AsmElfSymbolTag"    );
-     NEW_NONTERMINAL_MACRO ( AsmGenericSymbol, AsmCoffSymbol  | AsmElfSymbol, "AsmGenericSymbol",    "AsmGenericSymbolTag", false );
+     NEW_NONTERMINAL_MACRO ( AsmGenericSymbol, AsmCoffSymbol  | AsmElfSymbol, "AsmGenericSymbol",    "AsmGenericSymbolTag", false /* canHaveInstances = false */ );
 
   // These are supporting IR nodes to be gathered into (derived from) the AsmGenericBinaryFileSupport class
      NEW_TERMINAL_MACRO    ( AsmElfSectionTableEntry,     "AsmElfSectionTableEntry",     "AsmElfSectionTableEntryTag"     );
@@ -254,12 +254,12 @@ Grammar::setUpBinaryInstructions ()
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        |
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry |
                AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry | 
-               AsmGenericSectionList   | AsmGenericHeaderList    | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false );
+               AsmGenericSectionList   | AsmGenericHeaderList    | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
   // source code. The kinds of information that we want to save for each is really quire different.
-     NEW_TERMINAL_MACRO ( AsmFile                     , "AsmFile",                     "AsmFileTag" );
+     NEW_TERMINAL_MACRO ( AsmFile, "AsmFile", "AsmFileTag" );
 
 #if USE_OLD_BINARY_EXECUTABLE_IR_NODES
   // DQ (8/2/2008): these might be required for now, but we need to be removed later!
@@ -358,67 +358,6 @@ Grammar::setUpBinaryInstructions ()
      AsmFile.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-
-#if USE_OLD_BINARY_EXECUTABLE_IR_NODES
-  // *****************************************************
-  //           OLD BINARY FILE FORMAT IR NODES
-  // *****************************************************
-
-     AsmSectionHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
-     AsmSectionHeaderList.setDataPrototype("SgAsmSectionHeaderPtrList","section_headers","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AsmProgramHeaderList.setFunctionPrototype ( "HEADER_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");
-     AsmProgramHeaderList.setDataPrototype("SgAsmProgramHeaderPtrList","program_headers","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AsmProgramHeader.setFunctionPrototype ( "HEADER_BINARY_FILE_PROGRAM_HEADER", "../Grammar/BinaryInstruction.code");
-  // AsmProgramHeader.setDataPrototype("std::string","name","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmProgramHeader.setDataPrototype("unsigned long","name_string_index","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","type","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","starting_file_offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","starting_virtual_memory_address","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","starting_physical_memory_address","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","file_image_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","memory_image_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","segment_flags","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmProgramHeader.setDataPrototype("unsigned long","alignment","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AsmSectionHeader.setFunctionPrototype ( "HEADER_BINARY_FILE_SECTION_HEADER", "../Grammar/BinaryInstruction.code");
-     AsmSectionHeader.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","name_string_index","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","type","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","flags","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","starting_memory_address","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","starting_file_offset","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","table_index_link","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","info","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","address_alignment","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmSectionHeader.setDataPrototype("unsigned long","table_entry_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
   // *****************************************************
   //           NEW BINARY FILE FORMAT IR NODES
   // *****************************************************
@@ -435,7 +374,6 @@ Grammar::setUpBinaryInstructions ()
   // class ElfSectionTable *section_table;
   // class ElfSegmentTable *segment_table;
      AsmElfFileHeader.setFunctionPrototype ( "HEADER_ELF_HEADER", "../Grammar/BinaryInstruction.code");
-  /* Section in which this segment lives */
      AsmElfFileHeader.setDataPrototype("unsigned char","e_ident_file_class","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned char","e_ident_data_encoding","= 0",
@@ -1583,7 +1521,7 @@ Grammar::setUpBinaryInstructions ()
 
   // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
      AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
