@@ -31,9 +31,9 @@ endif
 # To keep compile commands tidy, please ONLY put required include flags here.
 JAVA_INCLUDES = -I$(JAVA_PATH)/include -I$(JAVA_PATH)/include/linux
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES) -DROSE_MPI
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES) -DROSE_MPI  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 else
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES)
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(JAVA_INCLUDES)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 endif
 
 #INCLUDES	=						\

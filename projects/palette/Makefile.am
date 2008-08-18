@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir)
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir)  -I$(compass_prereqs_dir) -I$(compass_support_bdir)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 PALETTEFLAGS = 

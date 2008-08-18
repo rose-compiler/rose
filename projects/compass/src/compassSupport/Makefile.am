@@ -2,9 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI
+INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_prereqs_dir)
 else
-INCLUDES = $(ROSE_INCLUDES) 
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_prereqs_dir)
 endif
 
 lib_LTLIBRARIES = libCompass.la
@@ -39,6 +39,14 @@ endif
 compassEmptyMain_SOURCES = compassEmptyMain.C
 compassEmptyMain_LDADD = $(ROSE_LIBS_WITH_PATH) libCompass.la
 
+BUILT_SOURCES = prerequisites.h instantiate_prerequisites.h 
+
+prerequisites.h: $(compass_prereqs_dir)
+	find $(compass_prereqs_dir) -name "*.h" | gawk -F/ '{print "#include \"" $$NF "\""}' > $@
+
+instantiate_prerequisites.h: $(compass_prereqs_dir)
+	tail -1 $(compass_prereqs_dir)/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | gawk '{print $$1 " Compass::" $$2}' > $@
+
 test: compassEmptyMain 
 	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(compass_test_dir)/exampleTest_1.C
 
@@ -64,4 +72,4 @@ EXTRA_DIST = \
         README 
 
 clean-local:
-	rm -f *.sty *.ti a.out
+	rm -f *.sty *.ti a.out prerequisites.h instantiate_prerequisites.h 

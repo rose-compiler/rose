@@ -1163,10 +1163,7 @@ Compass::outputTgui( std::string & tguiXML,
 
 using namespace Compass;
 
-Compass::ProjectPrerequisite Compass::projectPrerequisite;
-Compass::SourceDefUsePrerequisite Compass::sourceDefUsePrerequisite;
-Compass::AuxiliaryInfoPrerequisite Compass::auxiliaryInfoPrerequisite;
-Compass::BinDataFlowPrerequisite Compass::binDataFlowPrerequisite;
+#include "instantiate_prerequisites.h"
 
 static void runPrereqList(const PrerequisiteList& ls, SgProject* proj) {
   for (size_t i = 0; i < ls.size(); ++i) {

@@ -90,9 +90,9 @@ INCLUDES_OMP = -DROSE_GCC_OMP
 endif
 
 if ROSE_MPI
-INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_support_dir) $(COMPASS_INCLUDES) -I$(compass_srcdir) -I$(compass_checker_dir) -I.
+INCLUDES = $(ROSE_INCLUDES) -DROSE_MPI -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 else 
-INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) $(COMPASS_INCLUDES) -I$(compass_srcdir) -I$(compass_checker_dir) -I.
+INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 endif
 
 if ROSE_MPI

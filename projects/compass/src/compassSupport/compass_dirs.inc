@@ -6,6 +6,7 @@ compass_build_srcdir=$(top_builddir)/projects/compass/src
 compass_build_tooldir=$(top_builddir)/projects/compass/tools
 compass_build_extdir=$(top_builddir)/projects/compass/extensions
 
+compass_prereqs_dir=$(compass_extdir)/prerequisites
 compass_checker_dir=$(compass_extdir)/checkers
 compass_checker_repository=$(compass_checker_dir)/repository
 compass_support_dir=$(compass_srcdir)/compassSupport
