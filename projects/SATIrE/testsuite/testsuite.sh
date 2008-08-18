@@ -11,15 +11,15 @@ debug=0
 
 if [ $# = 2 ]; then
   ANALYSIS=$1
-	SUITE=$2
+  SUITE=$2
 else
   if [ $# = 1 ]; then
-	  ANALYSIS=$1
-		SUITE="."
-	else
-	  echo "usage: $0 <binary-to-test> <path-to-testcases>"
-		exit 1
-	fi
+    ANALYSIS=$1
+    SUITE="."
+  else
+    echo "usage: $0 <binary-to-test> <path-to-testcases>"
+    exit 1
+  fi
 fi
 
 # only include the files in success/ and failure/ directories
@@ -37,7 +37,7 @@ STATSFILE=runtests.stats
 TMPFILE=runtests.tmp
 DATFILE=runtests.dat
 
-printf "outfile\ttime\_rose\_frontend\tAST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tExpr-numbering\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
+printf "outfile\ttime\_rose\_frontend\tEDG-AST-construction\tROSE-AST-construction\tAST-post-processing\tAST-comment-processing\tICFG-construction\tExpr-numbering\tICFG-checks\tPAG-analysis\tresult\ttime\_sys\ttime\_user\ttime\_wall\ttime\_pag\_run\ttime\_pag\_init\ttime\_pag\_iter\ttime\_pag\_gc\tPAG-analysis\tSATIrE-ICFG\tROSE-AST\ttotal_memory\tanalysis\toptions\tfile\n" \
     > $DATFILE
 for file in $FILES; do
 
@@ -87,6 +87,10 @@ for file in $FILES; do
         if [ $debug == 42 ]; then echo "time_rose_frontend = $time_rose_frontend because: \"`grep 'ROSE frontend' $TMPFILE`\""; fi
         time_ast_construction=` cat $TMPFILE | awk '/AST Constrution .*: time = .* .sec/ {print $9;exit}'`
         if [ $debug == 42 ]; then echo "time_ast_construction = $time_ast_construction because: \"`grep 'AST Constrution' $TMPFILE`\""; fi
+        time_edg_ast=`cat $TMPFILE | awk '/EDG AST Constrution: time = .* .sec/ {print $6;exit}'`
+        if [ $debug == 42 ]; then echo "time_edg_ast = $time_edg_ast because: \"`grep 'EDG AST Constrution' $TMPFILE`\""; fi
+        time_rose_ast=`cat $TMPFILE | awk '/AST EDG.Sage III Translation:  time = .* .sec/ {print $7;exit}'`
+        if [ $debug == 42 ]; then echo "time_rose_ast = $time_rose_ast because: \"`grep 'AST EDG/Sage III Translation' $TMPFILE`\""; fi
         time_ast_postprocess=` cat $TMPFILE | awk '/AST post-processing: time = .* .sec/ {print $5;exit}'`
         if [ $debug == 42 ]; then echo "time_ast_postprocess = $time_ast_postprocess because: \"`grep 'AST post-processing' $TMPFILE`\""; fi
         time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*: time = .* .sec/ {print $10;exit}'`
@@ -126,7 +130,7 @@ for file in $FILES; do
             # echo "    wall = $time_wall"
 
         printf "$outfile\t$time_rose_frontend\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$analysis\t$options\t$file\n" >> $STATSFILE
-        printf "$outfile\t$time_rose_frontend\t$time_ast_construction\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_expr_numbering\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$icfg_memory\t$ast_memory\t$total_memory\t$analysis\t$options\t$file\n" \
+        printf "$outfile\t$time_rose_frontend\t$time_edg_ast\t$time_rose_ast\t$time_ast_postprocess\t$time_ast_comment\t$time_icfg\t$time_expr_numbering\t$time_icfg_check\t$time_analysis\t$result\t$time_sys\t$time_user\t$time_wall\t$time_pag_run\t$time_pag_init\t$time_pag_iter\t$time_pag_gc\t$pag_mem_allocd\t$icfg_memory\t$ast_memory\t$total_memory\t$analysis\t$options\t$file\n" \
           | sed 's/\_/\\\\\_/g' >> $DATFILE
       else
         echo "** ERROR: Expected success failed $analysis $options $file"
@@ -247,7 +251,8 @@ plot newhistogram "" lc 2, '$DATFILE' \
      '' using 5, \
      '' using 6, \
      '' using 7, \
-     '' using 9
+     '' using 8, \
+     '' using 10
 EOF
 
 # GB (2008-04-23): Removed "using 7" because the ICFG tests are now not run by
@@ -286,9 +291,9 @@ set auto y
 # Plot the data:
 # "using 2" means "use column 2 from $DATFILE"
 plot newhistogram "" lc 2, '$DATFILE' \
-        using 20:xtic(1), \
-     '' using 19, \
-     '' using 18
+        using 21:xtic(1), \
+     '' using 20, \
+     '' using 19
 EOF
 
 #        using 2:xtic(1) ti col lt rgb "#FD8238", \
