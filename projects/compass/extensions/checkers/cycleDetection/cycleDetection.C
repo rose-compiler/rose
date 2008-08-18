@@ -96,6 +96,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   dfanalysis->traverseGraph(rootNodes, &checker, interprocedural);
 }
 
+
 // Remove this function if your checker is not an AST traversal
 //static Compass::GraphProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
 //  return new CompassAnalyses::CycleDetection::Traversal(params, output);
@@ -119,6 +120,9 @@ extern const Compass::Checker* const cycleDetectionChecker =
                        getPrerequisites(),
                        run);
    
+
+
+
 
 /**************************************************************************
  * If we think that a cycle exists. We want to make sure.
