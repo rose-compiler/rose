@@ -122,6 +122,8 @@ int main(int argc, char **argv)
 	  std::cout << ' ' << (*b_itr)->checkerName;
 	std::cout << std::endl;
       }
+  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
+    Compass::runPrereqs(*b_itr, root);
 
 
   MPI_Barrier(MPI_COMM_WORLD);

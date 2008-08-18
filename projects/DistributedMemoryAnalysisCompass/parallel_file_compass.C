@@ -195,6 +195,9 @@ int main(int argc, char **argv)
 	std::cout << std::endl;
       }
 
+  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
+    Compass::runPrereqs(*b_itr, root);
+
  /* traverse the files */
   Compass::gettime(begin_time);
   double memusage_b = ROSE_MemoryUsage().getMemoryUsageMegabytes();
