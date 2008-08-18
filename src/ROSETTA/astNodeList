@@ -474,4 +474,5 @@ SgAsmLEEntryPoint
 SgAsmLESectionTableEntry
 SgAsmDOSFileHeader
 SgAsmExecutableFileFormat
+SgAsmPEDLLList
 

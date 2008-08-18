@@ -276,6 +276,8 @@
 % DQ (2/10/2007): Documentation for the AST Merge mechanism to support whole program analysis
 \input{astMerge}
 
+\input{binaryAnalysis}
+
 % This is ROSE/tests/tests.tex
 \input{tests}
 

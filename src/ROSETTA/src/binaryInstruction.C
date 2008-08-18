@@ -234,6 +234,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmElfSymbolList,      "AsmElfSymbolList",      "AsmElfSymbolListTag"      );
      NEW_TERMINAL_MACRO ( AsmCoffSymbolList,     "AsmCoffSymbolList",     "AsmCoffSymbolListTag"     );
      NEW_TERMINAL_MACRO ( AsmGenericDLLList,     "AsmGenericDLLList",     "AsmGenericDLLListTag"     );
+     NEW_TERMINAL_MACRO ( AsmPEDLLList,          "AsmPEDLLList",          "AsmPEDLLListTag"          );
      NEW_TERMINAL_MACRO ( AsmPERVASizePairList,  "AsmPERVASizePairList",  "AsmPERVASizePairListTag"  );
 
 
@@ -251,7 +252,7 @@ Grammar::setUpBinaryInstructions ()
                AsmGenericDLL           | AsmGenericFormat        | AsmGenericArchitecture | AsmGenericDLLList      |
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol       | AsmGenericSymbolList   |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList       | AsmElfDynamicEntry     | AsmElfDynamicEntryList | AsmElfSegmentTableEntryList |
-               AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        |
+               AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        | AsmPEDLLList |
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry |
                AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry | 
                AsmGenericSectionList   | AsmGenericHeaderList    | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
@@ -783,8 +784,13 @@ Grammar::setUpBinaryInstructions ()
      AsmPEImportSection.setFunctionPrototype ( "HEADER_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
   // AsmPEImportSection.setDataPrototype("SgAsmPEDLLPtrList","section_table","",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportSection.setDataPrototype("SgAsmPEDLLPtrList","dlls","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // AsmPEImportSection.setDataPrototype("SgAsmPEDLLPtrList","dlls","",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportSection.setDataPrototype("SgAsmPEDLLList*","dlls","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AsmPEDLLList.setDataPrototype("SgAsmPEDLLPtrList","dlls","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // std::vector<COFFSymbol*> symbols;
   // ExecSection *strtab;                /* Section containing symbol names */

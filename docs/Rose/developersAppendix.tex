@@ -929,3 +929,38 @@ resolved soon so that ROSE works with an unmodified upstream PHC.
 Once both packages have been installed ROSE must be configured with
 the additional \texttt{--with-php=/usr/local/php} option.
 \end{enumerate}
+
+
+
+\section{Binary Analysis}
+
+   The documentation for the binary analysis can be found in the ROSE manual at
+\ref{binaryAnalysis::overview}.  However, there are a collection of details 
+that we need to document about the design; so for how these details can go here.
+   The design behind the support for binary analysis in ROSE has caused a number of
+design meetings to discuss details.  This section is specific to the support
+in ROSE for binary analysis and the development of the support in ROSE for the 
+binary analysis.
+
+\subsection{Design of the Binary AST}
+
+This subsection is specific to the design of the binary executable file format
+and specifically the representation of the binary file format in the Binary AST 
+as a tree (in the graph sense) instead of as a directed graph, so that ti can be 
+traversed using the mechanisms available in ROSE.
+
+\begin{itemize}
+   \item Symbols \\
+Their are multiple references to symbols (as shown in the Whole Graph view of the AST with 
+the binary format).  We have selected the SgAsmELFSymbolTable and the SgAsmCoffSymbolTable
+instead of the SgAsmGenericSymbolTable because it points to the most derived type.
+An alternative reasoning is that in stripped binariiies that require DLL support
+the required symbols in the SgAsmELFSymbolTable and the SgAsmCoffSymbolTable are 
+left in place to support the DLL mechanism where as all entries in the
+SgAsmGenericSymbolTable are removed (get more details from Robb). 
+\fixme{We should get a reference for the details of what symbols are left in stripped
+       binaries and what symbols are required to support dynamic linking and where they
+       are stored.}
+
+\end{itemize}
+
