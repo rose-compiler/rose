@@ -15,15 +15,24 @@
 
 % write your introduction
 
+This checker is a graph based checker. It determines if cycles are present in the crontrol flow graph.
+
 \subsection{Parameter Requirements}
 
 %Write the Parameter specification here.
-   No Parameter specifications yet!
+
+Parameters for the run must be provided, e.g. is the analysis interprocedural?
+This is work in progress.
 
 \subsection{Implementation}
 
 %Details of the implementation go here.
-   No implementation yet!
+Within the traversal of the graph, the run function of this checker is called.
+This function takes the current and previous node as input. Within the run
+function, the algorithm checks the successors of the current node and determines
+if a node has been seen before during the graph traversal. If so, a possible
+cycle has been found. To verify that a cycle exists, we verify that a path
+from the successor to the current node exists.
 
 \subsection{Non-Compliant Code Example}
 
