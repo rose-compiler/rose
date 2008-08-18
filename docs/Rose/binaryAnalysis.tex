@@ -1,0 +1,60 @@
+
+\chapter{Binary Analysis: Support for the Analysis of Binary Executables}
+
+\label{binaryAnalysis::overview}
+
+\section{Introduction}
+
+   ROSE supports the disassemble and analysis of binary executables for x86 and AMR
+instruction sets.  ROSE implements this support as part of general research work
+to support combining analysis for source code and analysis for binaries.  
+
+\section{The Binary AST}
+
+\subsection{The Binary Executable Format}
+
+    ROSE handles Linux and Windows binary formats; thus ELF format for Linux and PE, NE,
+LE, DOS formats for Windows.  The details of each format are represented in IR nodes in
+the AST (using structures common to the representation of such low level data).  About
+60 IR nodes have been added to ROSE to support the binary executable formats; this
+support allows the analysis of any Linux or Windows, OS\/2, or DOS binary.
+
+The binary executable file format can be analyized seperately from the instructions
+using the command line option: {\tt -rose:read\_executable\_file\_format\_only}.  this
+allows graphs generated using the ROSE visualization mechanisms to be easily restricted 
+(in size) to the just the IR nodes specific to the binary executable file format.
+\fixme{We need an example of the binary executable format AST.}
+
+\subsection{Instruction Disassembly}
+
+    ROSE has its own disassembler; a recursive disassembler that is well suited to
+details of variable length instruction set handling and data stored in the instruction
+stream.  All details of the instructions, and the roperands and operator expression trees,
+etc. are stored in the binary AST as seperate IR nodes.
+\fixme{We need an example of the AST for a few instructions.}
+
+\section{Binary Analysis}
+
+   A number of binary analysis passes are provided, most are a part of the Compass
+framework for software analysis.  See the Compass manual for more details on supported
+binary analysis.
+
+   The ROSE tutorial shows a number of binary analysis passes over both the binary
+instructions and the executable file format.
+
+\section{Compass as a Binary Analysis Tool}
+
+   Compass is a tool framework for building software analysis tools using rules; Compass
+reports violations of the rules in the evaluation of the software.  Compass is a
+reletively simple application built on top of ROSE.  Most of the complexity and code 
+within Compass is that it includes a large collection to rules, each rule has its
+own implementation of an arbitrary test over the source code or the binary.  Rules
+(checkers) may be defined over the AST or any other graph built within ROSE to store 
+program analysis information. See the Compass manual for more details on supported
+binary analysis.
+
+\section{Usage}
+     See the ROSE Tutorial for an example.
+
+
+

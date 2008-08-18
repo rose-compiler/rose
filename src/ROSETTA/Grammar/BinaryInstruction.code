@@ -4520,7 +4520,8 @@ SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offse
 void
 SgAsmPEImportSection::add_dll(SgAsmPEDLL *d)
    {
-     p_dlls.push_back(d);
+     ROSE_ASSERT(p_dlls != NULL);
+     p_dlls->get_dlls().push_back(d);
    }
 
 SOURCE_PE_IMPORT_SECTION_END

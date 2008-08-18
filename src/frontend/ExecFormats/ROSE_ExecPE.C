@@ -664,6 +664,9 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
 
         entry->set_parent(section);
 
+     // DQ (8/18/2008): I think we need to set the parent explicit here, but I am not certain what to set it to be (using "this" is a default).
+        section->set_parent(this);
+
      // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
      // the get_header() to be implemented in terms of the get_parent() function.
      // section->set_parent(fhdr);
@@ -856,6 +859,9 @@ SgAsmPEImportSection::ctor(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, 
     SgAsmPEImportDirectory::PEImportDirectory_disk zero;
     memset(&zero, 0, sizeof zero);
 
+    p_dlls = new SgAsmPEDLLList();
+    p_dlls->set_parent(this);
+
     /* Read idata directory entries--one per DLL*/
     for (size_t i = 0; 1; i++) {
         /* End of list is marked by an entry of all zero. */
@@ -961,7 +967,8 @@ SgAsmPEImportSection::unparse(FILE *f)
     SgAsmGenericHeader *fhdr = get_header();
 
  // This is the same as accessing p_dlls and used to be redundant with "dlls" before being use with RISE IR nodes.
-    const std::vector<SgAsmPEDLL*> & dlls = get_dlls();
+ // const std::vector<SgAsmPEDLL*> & dlls = get_dlls();
+    const std::vector<SgAsmPEDLL*> & dlls = get_dlls()->get_dlls();
 
     for (size_t dllno = 0; dllno < dlls.size(); dllno++) {
         SgAsmPEDLL *dll = dlls[dllno];
