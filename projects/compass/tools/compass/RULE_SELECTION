@@ -4,6 +4,7 @@
 +:AssignmentReturnConstThis
 +:AsynchronousSignalHandler
 +:AvoidUsingTheSameHandlerForMultipleSignals
++:BinaryInterruptAnalysis
 +:BinPrintAsmFunctions
 +:BinPrintAsmInstruction
 +:BooleanIsHas

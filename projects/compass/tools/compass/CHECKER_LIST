@@ -4,6 +4,7 @@ assignmentOperatorCheckSelf
 assignmentReturnConstThis
 asynchronousSignalHandler
 avoidUsingTheSameHandlerForMultipleSignals
+binaryInterruptAnalysis
 binPrintAsmFunctions
 binPrintAsmInstruction
 booleanIsHas
