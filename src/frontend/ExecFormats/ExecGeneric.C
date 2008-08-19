@@ -871,10 +871,12 @@ ExecHeader::add_dll(ExecDLL *dll)
 void
 ExecHeader::add_symbol(ExecSymbol *symbol)
 {
+#if 0 /*Too slow for large symbol tables*/
 #ifndef NDEBUG
     for (size_t i=0; i<symbols.size(); i++) {
         ROSE_ASSERT(symbols[i]!=symbol); /*duplicate*/
     }
+#endif
 #endif
     symbols.push_back(symbol);
 }

@@ -1013,18 +1013,27 @@ SgAsmGenericHeader::add_dll(SgAsmGenericDLL *dll)
     dll->set_parent(p_dlls);
 }
 
-
-/* Add a new symbol to the symbol table */
+/* Add a new symbol to the symbol table. The SgAsmGenericHeader has a list of symbol pointers. These pointers point to symbols
+ * that are defined in various sections throughout the executable. It's not absolutely necessary to store them here since the
+ * sections where they're defined also point to them--they're here only for convenience.
+ * 
+ * FIXME: If symbols are stored in one central location we should probably use something other than an
+ *        unsorted list. (RPM 2008-08-19) */
 void
 SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
 {
+#if 0 /*turned off because too slow!!! (RPM 2008-08-19)*/
 #ifndef NDEBUG
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         ROSE_ASSERT(p_symbols->get_symbols()[i] != symbol); /*duplicate*/
     }
 #endif
+#endif
     p_symbols->get_symbols().push_back(symbol);
 
+    /* FIXME: symbols have two parents: the header's p_symbols list and the list in the section where the symbol was defined.
+     *        We probably want to keep them only with the section that defines them. For example, SgAsmElfSymbolSection.
+     *        (RPM 2008-08-19) */
     p_symbols->get_symbols().back()->set_parent(p_symbols);
 }
 
