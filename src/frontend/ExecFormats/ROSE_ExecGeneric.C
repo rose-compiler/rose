@@ -949,37 +949,25 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t
     set_purpose(SP_HEADER);
     ef->add_header(this);
 
-#if 0
- // DQ (8/15/2008): Note that this can fail, but I don't know why!
-    ROSE_ASSERT(p_symbols != NULL);
-    ROSE_ASSERT(p_dlls    != NULL);
-    ROSE_ASSERT(p_target  != NULL);
-#endif
 
  // DQ (8/16/2008): This is defined only for SgAsmGenericHeader, and not for SgAsmGenericSection
     set_file(ef);
 
-    if (p_symbols == NULL)
-         p_symbols = new SgAsmGenericSymbolList;
+    /* Initialized in the real constructor */
+    ROSE_ASSERT(p_symbols     == NULL);
+    ROSE_ASSERT(p_dlls        == NULL);
+    ROSE_ASSERT(p_target      == NULL);
+    ROSE_ASSERT(p_exec_format == NULL);
 
-    if (p_dlls == NULL)
-         p_dlls    = new SgAsmGenericDLLList;
-
-    if (p_target == NULL)
-         p_target  = new SgAsmGenericArchitecture;
-
+    /* Create child IR nodes and set their parent */
+    p_symbols = new SgAsmGenericSymbolList;
     p_symbols->set_parent(this);
+    p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
+    p_target  = new SgAsmGenericArchitecture;
     p_target->set_parent(this);
-
- // The SgAsmGenericFormat is contained as a pointer and not a value data member, 
- // so we have to build one and initialize the pointer.
-    SgAsmGenericFormat* local_exec_format = new SgAsmGenericFormat();
-    ROSE_ASSERT(local_exec_format != NULL);
-    set_exec_format(local_exec_format);
-    ROSE_ASSERT(p_exec_format != NULL);
-
-    local_exec_format->set_parent(this);
+    p_exec_format = new SgAsmGenericFormat;
+    p_exec_format->set_parent(this);
 }
 
 /* Destructor must remove the header from its parent file's headers list. */

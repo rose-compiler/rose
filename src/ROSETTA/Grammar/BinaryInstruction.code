@@ -4094,7 +4094,8 @@ SOURCE_GENERIC_SECTION_END
 SOURCE_GENERIC_HEADER_START
 
 SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size), p_base_va(0)
+   : SgAsmGenericSection(ef, offset, size), p_base_va(0),
+     p_symbols(NULL), p_dlls(NULL), p_target(NULL), p_exec_format(NULL)
    {
      ctor(ef, offset, size);
    }
