@@ -1,6 +1,8 @@
 ## Process this file with automake to create Makefile.in
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS = fileNames fileExtensions
+
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompileTests/A++Code -I$(srcdir) 
 # INCLUDES = $(ROSE_INCLUDES) -I$(top_srcdir)/tests/CompilerOptionsTests/A++Code -I$(srcdir) 
 
@@ -25,13 +27,36 @@ testFilenames:
 testLongFilenames:
 	$(srcdir)/test_filenames_looong_torture.pl
 
+EmptyFileNames = \
+	test_empty_cplusplus_file.C \
+	test_empty_c_file.c
+
+
+FileNames = \
+	test_simple_file.C \
+	test_simple_file_no_permissions.C
+
+genFileNames:
+	@echo -e "\nGenerating test files\n" && sh -c '\
+		  for f in $(FileNames) ;\
+		  do \
+			   cp $(srcdir)/fileNames/test_simple_file.C ./"$${f}" ;\
+		  done ;\
+		  for f in $(EmptyFileNames) ;\
+		  do \
+			   touch ./"$${f}" ;\
+		  done ;\
+	 '
+	chmod a-r test_simple_file_no_permissions.C
+
+
 # This rule is run after automake's internal check rule (which we don't want to use)
-check-local:
+check-local: genFileNames
 	@echo "#########################################"
 	@echo "Testing use of filenames skipped for now!"
 	@echo "#########################################"
-#	@$(MAKE) testFilenames
-#	@$(MAKE) testLongFilenames
+	@$(MAKE) testFilenames
+	@$(MAKE) testLongFilenames
 	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testFileNamesAndExtensions: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************"
@@ -50,12 +75,12 @@ distclean-local:
 	rm -rf headerList
 
 clean-local:
-	rm -f *.o *.C rose_*.C *.sage.C test2001_??.C.show outputFile \
-              *.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
-	rm -rf ti_files
-
-
-
-
-
-
+	@sh -c '\
+		for f in $(FileNames) $(EmptyFileNames);\
+		do \
+			rm -f ./"$${f}" ;\
+		done ;\
+	'
+	rm -f *.o *.C rose_*.[Cc] *.sage.C test2001_??.C.show outputFile \
+	*.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
+	rm -rf ti_files a*.out

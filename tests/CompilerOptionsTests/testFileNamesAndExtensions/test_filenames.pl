@@ -1,4 +1,4 @@
-#!/usr/apps/bin/perl -w
+#!/bin/env perl
 #The cases are the following:
 # the file could be present and given as 
 #       absolute path
@@ -41,8 +41,8 @@ $output_line="-o output";
     "./test_empty_c_file.c",
     "././test_empty_c_file.c",
     "././///////////////////////////////./././././././././/test_empty_c_file.c",
-     "/home/upadrasta1/NEW_ROSE6.4/test_empty_c_file.c",
-     "/home/upadrasta1/./NEW_ROSE6.4/./test_empty_c_file.c",
+#     "/home/upadrasta1/NEW_ROSE6.4/test_empty_c_file.c",
+#     "/home/upadrasta1/./NEW_ROSE6.4/./test_empty_c_file.c",
 
      #test for a file in a non-existant relative path 
      "./a/b/c/test_empty_c_file.C",
@@ -91,5 +91,6 @@ for($i = 0; $i < $length_of_command_line; $i++)
     $j = $i + $length_of_command_line;
     print("\n\n");
     print("$j.##########################COMMAND LINE = \"$identity_translator $output_line $command_line_arguments[$i]\"#################################\n");
-    system("$identity_translator $output_line $command_line_arguments[$i]\n");
+#    system("$identity_translator $output_line $command_line_arguments[$i]\n");
+    system("$identity_translator -o a$i.out $command_line_arguments[$i]\n");
 }

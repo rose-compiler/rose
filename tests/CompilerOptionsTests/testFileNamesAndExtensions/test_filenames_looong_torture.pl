@@ -1,4 +1,4 @@
-#!/usr/apps/bin/perl -w
+#!/bin/env perl 
 #file: test_filenames_looong_torture.pl
 #This file is an extension of test_filenames.pl
 #Mainly wierd cases are dumped into this file
@@ -97,5 +97,6 @@ for($i = 0; $i < $length_of_command_line; $i++)
     $j = $i + $length_of_command_line;
     print("\n\n");
     print("$j.##########################COMMAND LINE = \"$identity_translator $output_line $command_line_arguments[$i]\"#################################\n");
-    system("$identity_translator $output_line $command_line_arguments[$i]\n");
+#    system("$identity_translator $output_line $command_line_arguments[$i]\n");
+    system("$identity_translator -o a$i.out $command_line_arguments[$i]\n");
 }

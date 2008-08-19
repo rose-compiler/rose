@@ -1,4 +1,4 @@
-#!/usr/apps/bin/perl -w
+#!/bin/env perl
 #Test which file names are recognized by gcc, g++, EDG and identityTranslator
 
 #test if machine is LINUX. If not exit
@@ -9,7 +9,7 @@ die "exiting" unless($OSNAME eq "linux");
 
 $gcc_command_line="gcc";
 $g_plus_plus_command_line="g++";
-$identity_translator="../../../../../../gcc3.3.2-compile_dir/tutorial/identityTranslator";
+$identity_translator="../../../../../tutorial/identityTranslator";
 
 @command_line_arguments = (
        # the only extension for c language
