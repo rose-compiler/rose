@@ -95,7 +95,8 @@ namespace RoseBin_DataTypes {
 #include <ext/hash_map>
 #include <ext/hash_set>
 
-
+#if OLD_GRAPH_NODES
+// DQ (8/18/2008): Commented out as part of support for new Graph IR nodes!
 namespace __gnu_cxx {
   template <> struct hash<std::string> {
     unsigned long operator()( const std::string &s) const {
@@ -103,6 +104,7 @@ namespace __gnu_cxx {
     }
   };
 }
+#endif
 
 class SgDirectedGraphNode;
 namespace __gnu_cxx { 

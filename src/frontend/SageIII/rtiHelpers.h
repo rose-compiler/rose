@@ -86,6 +86,51 @@ static std::string toStringForRTI(const std::map<K, V>& x) {
   return ss.str();
 }
 
+
+#if !OLD_GRAPH_NODES
+// DQ (8/18/2008): Added support for new Graph IR node.
+static std::string toStringForRTI(const SgGraphNodeDirectedGraphEdgeMultimapPtrList & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeDirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+// DQ (8/18/2008): Added support for new Graph IR node.
+static std::string toStringForRTI(const SgStringGraphNodeMapPtrList & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgStringGraphNodeMapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+
+// DQ (8/18/2008): Added support for new Graph IR node.
+static std::string toStringForRTI(const SgIntegerGraphNodeMapPtrList & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+  for (SgIntegerGraphNodeMapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+
+// DQ (8/18/2008): Added support for new Graph IR node.
+static std::string toStringForRTI(const SgGraphNodeUndirectedGraphEdgeMultimapPtrList & x)
+{
+  std::ostringstream ss;
+  ss << "[";
+// for (SgGraphNodeUndirectedGraphEdgeMultimapPtrList::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << i->first << "->" << i->second;}
+  ss << "]";
+  return ss.str();
+}
+#endif
+
+
 static std::string toStringForRTI(const SgAccessModifier& m) {
   return m.displayString();
 }

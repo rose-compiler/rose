@@ -127,6 +127,13 @@ Grammar::setUpSupport ()
      NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
      NEW_NONTERMINAL_MACRO (Graph, DirectedGraph, "Graph", "GraphTag", false);
 #else
+
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     NEW_TERMINAL_MACRO (DirectedGraphNode, "DirectedGraphNode", "DirectedGraphNodeTag" );
+
+  // DQ (8/18/2008): Added support for compatability with older IR nodes (will be removed later!)
+     NEW_TERMINAL_MACRO (DirectedGraph,     "DirectedGraph",     "DirectedGraphTag" );
+
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
    // tps (10/24/07): extended the set of graphs
      NEW_TERMINAL_MACRO (StringKeyedBidirectionalGraph,  "StringKeyedBidirectionalGraph",  "StringKeyedBidirectionalGraphTag" );
@@ -145,7 +152,11 @@ Grammar::setUpSupport ()
 
      NEW_TERMINAL_MACRO (GraphNode, "GraphNode", "GraphNodeTag");
      NEW_NONTERMINAL_MACRO (GraphEdge, DirectedGraphEdge | UndirectedGraphEdge, "GraphEdge", "GraphEdgeTag", false);
-     NEW_NONTERMINAL_MACRO (Graph,  IncidenceDirectedGraph | IncidenceUndirectedGraph ,"Graph", "GraphTag", false);
+     NEW_NONTERMINAL_MACRO (Graph, IncidenceDirectedGraph | IncidenceUndirectedGraph | DirectedGraph ,"Graph", "GraphTag", false);
+
+  // DQ (8/18/2008): Added support for container so that we don't mix data member and list elements as children.
+     NEW_TERMINAL_MACRO (GraphNodeList, "GraphNodeList", "GraphNodeListTag");
+     NEW_TERMINAL_MACRO (GraphEdgeList, "GraphEdgeList", "GraphEdgeListTag");
 #endif
 
   // DQ (12/19/2005): Support for explicit qualified names in the source code (currently we generate them
@@ -181,7 +192,12 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
-          TemplateParameterList | Graph                     | GraphNode           | GraphEdge            |
+          TemplateParameterList | 
+          Graph                     | GraphNode           | GraphEdge            | 
+
+#if !OLD_GRAPH_NODES
+          DirectedGraphNode | GraphNodeList | GraphEdgeList |
+#endif
           NameGroup             | CommonBlockObject         | DimensionObject     | FormatItem           |
           FormatItemList        | DataStatementGroup        | DataStatementObject | DataStatementValue,
           "Support", "SupportTag", false);
@@ -979,6 +995,7 @@ Grammar::setUpSupport ()
      Graph.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #else
+
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
      GraphNode.setFunctionPrototype        ( "HEADER_GRAPHNODE", "../Grammar/Support.code");
      GraphNode.setDataPrototype("std::string","name","= \"\"",
@@ -987,63 +1004,119 @@ Grammar::setUpSupport ()
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // GraphNode.setDataPrototype("int","graph_id", "= 0",
   //                         CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // GraphNode.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphNode.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphNode.setDataPrototype("SgNode*","SgNode","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     GraphNode.setDataPrototype("std::string","type","= \"\"",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      GraphEdge.setFunctionPrototype        ( "HEADER_GRAPHEDGE", "../Grammar/Support.code");
      GraphEdge.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/18/2008): NOTE: "SgIntegerStringMapPtrList" does not cause ROSETTA to generate the 
+  // correct code, where as "std::map<int, std::string>" appears to work better.
+
   // GraphEdge.setDataPrototype("std::string","type","= \"\"",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // GraphEdge.setDataPrototype("int","graph_id", "= 0",
   //                       CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // GraphEdge.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      GraphEdge.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     DirectedGraph.setFunctionPrototype        ( "HEADER_DIRECTED_GRAPH", "../Grammar/Support.code");
+
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     DirectedGraphNode.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
+
+     DirectedGraphEdge.setFunctionPrototype ( "HEADER_DIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
      DirectedGraphEdge.setDataPrototype("SgGraphNode*","from","= NULL",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      DirectedGraphEdge.setDataPrototype("SgGraphNode*","to","= NULL",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UndirectedGraphEdge.setDataPrototype("std::vector<SgGraphNode*>","nodes","",
+  // UndirectedGraphEdge.setDataPrototype("std::vector<SgGraphNode*>","nodes","",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UndirectedGraphEdge.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     GraphNodeList.setDataPrototype("SgGraphNodePtrList","nodes","",
+                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     GraphEdgeList.setDataPrototype("SgGraphEdgePtrList","edges","",
+                           CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Graph.setFunctionPrototype        ( "HEADER_GRAPH", "../Grammar/Support.code");
      Graph.setDataPrototype("std::string","name","= \"\"",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      //Graph.setDataPrototype("std::string","type","= \"\"",
      //                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("vector<SgGraphNode*>","nodes","= \"\"",
+  // Graph.setDataPrototype("vector<SgGraphNode*>","nodes","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("SgGraphNodeList*","nodes","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     Graph.setDataPrototype("vector<SgGraphEdge*>","edges","= \"\"",
+  // Graph.setDataPrototype("vector<SgGraphEdge*>","edges","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     Graph.setDataPrototype("SgGraphEdgeList*","edges","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      //Graph.setDataPrototype("__gnu_cxx::hash_map <std::string, SgDirectedGraphNode*>*","nodes","",
      //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      //Graph.setDataPrototype("__gnu_cxx::hash_map <std::string, SgDirectedGraphEdge*>*","edges","",
      //                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Graph.setDataPrototype("std::map<int, std::string>","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // Graph.setDataPrototype("SgIntegerStringMapPtrList","properties", "",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      Graph.setDataPrototype("std::map<int, std::string>","properties", "",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     IncidenceUndirectedGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*>","edges","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     IncidenceDirectedGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     BidirectionalGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+  // IncidenceUndirectedGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*>","edges","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+     IncidenceUndirectedGraph.setDataPrototype("SgGraphNodeUndirectedGraphEdgeMultimapPtrList","undirected_edges","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+  // IncidenceDirectedGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+     IncidenceDirectedGraph.setDataPrototype("SgGraphNodeDirectedGraphEdgeMultimapPtrList","edgesOut","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+  // BidirectionalGraph.setDataPrototype(" rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+     BidirectionalGraph.setDataPrototype("SgGraphNodeDirectedGraphEdgeMultimapPtrList","edgesIn","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
      //KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesOut","= \"\"",
      //                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      //KeyedBidirectionalGraph.setDataPrototype(" __gnu_cxx::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*>","edgesIn","= \"\"",
      //                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     StringKeyedBidirectionalGraph.setDataPrototype("rose_hash::hash_map < std::string, SgGraphNode*>","nodesMap","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // StringKeyedBidirectionalGraph.setDataPrototype("rose_hash::hash_map < std::string, SgGraphNode*>","nodesMap","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+     StringKeyedBidirectionalGraph.setDataPrototype("SgStringGraphNodeMapPtrList","nodesMap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+  // IntKeyedBidirectionalGraph.setDataPrototype("rose_hash::hash_map < int, SgGraphNode*>","nodesMap","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
+     IntKeyedBidirectionalGraph.setDataPrototype("SgIntegerGraphNodeMapPtrList","nodesMap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
-     IntKeyedBidirectionalGraph.setDataPrototype("rose_hash::hash_map < int, SgGraphNode*>","nodesMap","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 
@@ -1591,6 +1664,17 @@ Specifiers that can have only one value (implemented with a protected enum varia
      Graph.setFunctionSource ( "SOURCE_GRAPH" , "../Grammar/Support.code");
      GraphNode.setFunctionSource  ( "SOURCE_GRAPHNODE" , "../Grammar/Support.code");
      GraphEdge.setFunctionSource  ( "SOURCE_GRAPHEDGE" , "../Grammar/Support.code");     
+
+
+#if !OLD_GRAPH_NODES
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     DirectedGraph.setFunctionSource ( "SOURCE_DIRECTED_GRAPH", "../Grammar/Support.code");
+
+  // DQ (8/18/2008): This should be removed in the final version; added for backward compatability!
+     DirectedGraphNode.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_NODE", "../Grammar/Support.code");
+
+     DirectedGraphEdge.setFunctionSource ( "SOURCE_DIRECTED_GRAPH_EDGE", "../Grammar/Support.code");
+#endif
 
   // DQ (11/19/2007): Added support for Fortran namelist statement
      NameGroup.setFunctionSource         ( "SOURCE_NAME_GROUP", "../Grammar/Support.code");

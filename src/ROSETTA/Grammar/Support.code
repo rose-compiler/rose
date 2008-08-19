@@ -26,6 +26,39 @@ HEADER_GRAPHEDGE_START
 HEADER_GRAPHEDGE_END
 
 
+HEADER_DIRECTED_GRAPH_EDGE_START
+     public:
+
+       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
+
+          SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*);
+
+HEADER_DIRECTED_GRAPH_EDGE_END
+
+HEADER_DIRECTED_GRAPH_NODE_START
+     public:
+
+       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
+
+          SgDirectedGraphNode(std::string, std::string, int n);
+
+HEADER_DIRECTED_GRAPH_NODE_END
+
+HEADER_DIRECTED_GRAPH_START
+     public:
+
+       // DQ (8/18/2008): This is part of the OLD interface introduced for backward compatability!
+
+          SgDirectedGraph(std::string, std::string);
+
+HEADER_DIRECTED_GRAPH_END
+
+HEADER_GRAPH_NODE_START
+HEADER_GRAPH_NODE_END
+
+
+
+
 HEADER_MODIFIER_START
           SgModifier ( const SgModifier & X );
           SgModifier & operator= ( const SgModifier & X );
@@ -11841,8 +11874,19 @@ SOURCE_GRAPHNODE_START
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
 int 
 SgGraphNode::get_graph_id() const {
+#if OLD_GRAPH_NODES
     return p_graph_id;
-  }	
+#else
+ // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+ // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+
+    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+    ROSE_ASSERT(false);
+
+    return 0;
+#endif
+  }
+
 void
 SgGraphNode::append_properties( int addr, std::string prop )
    {
@@ -11856,7 +11900,17 @@ SOURCE_GRAPHEDGE_START
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
 int 
 SgGraphEdge::get_graph_id() const {
+#if OLD_GRAPH_NODES
     return p_graph_id;
+#else
+ // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+ // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+
+    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+    ROSE_ASSERT(false);
+
+    return 0;
+#endif
   }	
 void
 SgGraphEdge::append_properties( int addr, std::string prop )
@@ -11889,13 +11943,47 @@ SgGraph::hashCode( char* p, int len) // hash a character array
 
 int 
 SgGraph::get_graph_id()  {
+#if OLD_GRAPH_NODES
     string name = p_name+p_type;
     int len = sizeof(name);
      char* pointer = reinterpret_cast< char *>(&name);
     return hashCode(pointer, len);
+#else
+ // DQ (8/18/2008): We have added the new support for graph IR nodes with a bit fo the redundant support
+ // for the older IR nodes so that ROSE will compile, but these old IR nodes should not be used!
+
+    printf ("Error: OLD GRAPH IR NODES ARE NOT SUPPORTED! \n");
+    ROSE_ASSERT(false);
+
+    return 0;
+#endif
   }	
 SOURCE_GRAPH_END
 
+
+SOURCE_DIRECTED_GRAPH_EDGE_START
+SgDirectedGraphEdge::SgDirectedGraphEdge(std::string, std::string, int n, SgGraphNode*, SgGraphNode*)
+{
+}
+
+SOURCE_DIRECTED_GRAPH_EDGE_END
+
+SOURCE_DIRECTED_GRAPH_NODE_START
+SgDirectedGraphNode::SgDirectedGraphNode(std::string, std::string, int n)
+{
+}
+
+SOURCE_DIRECTED_GRAPH_NODE_END
+
+SOURCE_DIRECTED_GRAPH_START
+SgDirectedGraph::SgDirectedGraph(std::string, std::string)
+{
+}
+
+SOURCE_DIRECTED_GRAPH_END
+
+SOURCE_GRAPH_NODE_START
+SOURCE_GRAPH_NODE_END
 
 
 SOURCE_NAME_GROUP_START

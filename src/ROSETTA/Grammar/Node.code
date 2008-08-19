@@ -51,6 +51,10 @@ class mutex
 
 #define ROSE_INTEGER_TYPE_MAX_BIT_LENGTH 32
 
+// DQ (8/18/2008): Added support for new IR graph nodes
+// This is the use of this macro in ROSE, there is another macro with the same name in ROSETTA!
+#define OLD_GRAPH_NODES 1
+
 //! declaration of variable to control internal output of debugging information (default = 0)
 extern int SAGE_DEBUG;
 
@@ -332,6 +336,32 @@ typedef SgAsmPERVASizePairPtrList* SgAsmPERVASizePairPtrListPtr;
 
 // DQ (8/7/2008): Note that the SgAsmLEExtendedDOSHeader is just using the SgAsmNEExtendedDOSHeader type
 typedef SgAsmNEExtendedDOSHeader SgAsmLEExtendedDOSHeader;
+
+#if !OLD_GRAPH_NODES
+// DQ (8/18/2008): Added support for new Graph IR nodes.
+typedef Rose_STL_Container<SgGraphNode*> SgGraphNodePtrList;
+typedef SgGraphNodePtrList* SgGraphNodePtrListPtr;
+
+// DQ (8/18/2008): Added support for new Graph IR node.
+typedef Rose_STL_Container<SgGraphEdge*> SgGraphEdgePtrList;
+typedef SgGraphEdgePtrList* SgGraphEdgePtrListPtr;
+
+typedef rose_hash::hash_multimap < SgGraphNode*, SgDirectedGraphEdge*> SgGraphNodeDirectedGraphEdgeMultimapPtrList;
+typedef SgGraphNodeDirectedGraphEdgeMultimapPtrList* SgGraphNodeDirectedGraphEdgeMultimapPtrListPtr;
+
+typedef rose_hash::hash_multimap < SgGraphNode*, SgUndirectedGraphEdge*> SgGraphNodeUndirectedGraphEdgeMultimapPtrList;
+typedef SgGraphNodeUndirectedGraphEdgeMultimapPtrList* SgGraphNodeUndirectedGraphEdgeMultimapPtrListPtr;
+
+typedef rose_hash::hash_map < std::string, SgGraphNode*> SgStringGraphNodeMapPtrList;
+typedef SgStringGraphNodeMapPtrList* SgStringGraphNodeMapPtrListPtr;
+
+typedef rose_hash::hash_map < int, SgGraphNode*> SgIntegerGraphNodeMapPtrList;
+typedef SgIntegerGraphNodeMapPtrList* SgIntegerGraphNodeMapPtrListPtr;
+
+typedef std::map<int, std::string> SgIntegerStringMapPtrList;
+typedef SgIntegerStringMapPtrList* SgIntegerStringMapPtrListPtr;
+#endif
+
 
 
 // DQ (11/26/2005): Support for visitor pattern.
