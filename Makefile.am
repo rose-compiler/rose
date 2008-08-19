@@ -160,8 +160,6 @@ rose_binary_compatibility_signature:
 
 .PHONY : rose_binary_compatibility_signature # Always rebuild the file when needed
 
-build_triplet_without_redhat = @build_triplet_without_redhat@
-
 binary_edg_tarball: rose_binary_compatibility_signature
 	cd src/ROSETTA/src; $(MAKE)
 	cd src/frontend/CxxFrontend; $(MAKE)
