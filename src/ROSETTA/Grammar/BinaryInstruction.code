@@ -910,7 +910,7 @@ HEADER_GENERIC_FILE_START
           void add_section(SgAsmGenericSection*);                     /* Add new section to the file; called implicitly by section constructor */
 
        // DQ (8/16/2008): Added function to remove effects of add_section()
-          void remove_section(SgAsmGenericSection*);                  /* Remove section to the file */
+          void remove_section(SgAsmGenericSection*);                  /* Remove section from the file */
 
        // DQ (8/15/2008): This is now an automatically generated access function.
        // std::vector<SgAsmGenericSection*>& get_sections() {return p_sections;}/* all sections (including file headers) */

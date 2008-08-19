@@ -211,27 +211,27 @@ SgAsmGenericFile::add_section(SgAsmGenericSection *section)
     p_sections->get_sections().back()->set_parent(p_sections);
 }
 
+// DQ (8/16/2008): Added this support to remove the effects of the SgAsmGenericFile::add_section()
+// bacause get_file() returns NULL in the SgAsmGenericSection destructor now that we have remove the
+// SgAsmGenericFile pointer from the SgAsmGenericSection IR node.
+// RPM (8/18/2008): No longer fails assertion if section is null, but rather does nothing.
 void
 SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
 {
- // DQ (8/16/2008): Added this support to remove the effects of the SgAsmGenericFile::add_section()
- // bacause get_file() returns NULL in the SgAsmGenericSection destructor now that we have remove the
- // SgAsmGenericFile pointer from the SgAsmGenericSection IR node.
-
-    ROSE_ASSERT(section != NULL);
-
-    ROSE_ASSERT(p_sections != NULL);
-    ROSE_ASSERT(p_headers  != NULL);
 
  // printf ("SgAsmGenericFile::remove_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
 
- // std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().find(section);
-    std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),p_sections->get_sections().end(),section);
-    if (i != p_sections->get_sections().end())
-       {
-      // printf ("Found section = %p to remove from list \n",section);
-         p_sections->get_sections().erase(i);
-       }
+    if (section!=NULL) {
+        ROSE_ASSERT(p_sections != NULL);
+        ROSE_ASSERT(p_headers  != NULL);
+        
+        std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),
+                                                             p_sections->get_sections().end(),
+                                                             section);
+        if (i != p_sections->get_sections().end()) {
+            p_sections->get_sections().erase(i);
+        }
+    }
 }
 
 /* Returns the pointer to the first section with the specified ID. */

@@ -1460,6 +1460,11 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
+    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
+     * important in them. */
+    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
+
     try {
         dos_hdr  = new SgAsmDOSFileHeader(f, 0);
         dos2_hdr = new SgAsmPEExtendedDOSHeader(f, dos_hdr->get_size());

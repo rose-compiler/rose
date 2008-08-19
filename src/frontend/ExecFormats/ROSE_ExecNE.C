@@ -1299,6 +1299,11 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
+    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
+     * important in them. */
+    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
+
     try {
         dos_hdr  = new SgAsmDOSFileHeader(f, 0);
         dos2_hdr = new SgAsmNEExtendedDOSHeader(f, dos_hdr->get_size());
@@ -1307,6 +1312,15 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
     } catch (...) {
         /* cleanup is below */
     }
+
+    /* Remove sections explicitly since section destructors no longer do that. */
+    f->remove_section(dos_hdr);
+    f->remove_section(dos2_hdr);
+    f->remove_section(ne_hdr);
+
+    /* See Dan's comment in SgAsmPEFileHeader::is_PE */
+    f->get_sections()->get_sections().clear();
+    f->get_headers()->get_headers().clear();
 
     delete dos_hdr;
     delete dos2_hdr;

@@ -1473,27 +1473,33 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 {
     SgAsmElfFileHeader *hdr = NULL;
 
+    bool retval = false;
+
     ROSE_ASSERT(f != NULL);
     
+    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
+     * important in them. */
+    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
+
     try {
-        printf ("Before SgAsmElfFileHeader constructor! \n");
         hdr = new SgAsmElfFileHeader(f, 0);
-        printf ("After SgAsmElfFileHeader constructor! \n");
-
-        ROSE_ASSERT(hdr != NULL);
+        retval = true;
     } catch (...) {
-        return false;
+        /* cleanup is below */
     }
-
-    printf ("Leaving SgAsmElfFileHeader::is_ELF() \n");
 
  // DQ (8/16/2008): Remove the SgAsmGenericSection from the SgAsmGenericFile p_sections list
     f->remove_section(hdr);
 
+    /* See Dan's comment in SgAsmPEFileHeader::is_PE */
+    f->get_sections()->get_sections().clear();
+    f->get_headers()->get_headers().clear();
+
     delete hdr;
     hdr = NULL;
 
-    return true;
+    return retval;
 }
 
 #if 0
