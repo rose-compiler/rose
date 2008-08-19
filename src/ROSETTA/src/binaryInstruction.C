@@ -1322,29 +1322,29 @@ Grammar::setUpBinaryInstructions ()
   // ExecSection         *rm_section;    /* Real mode code segment */
      AsmDOSFileHeader.setFunctionPrototype ( "HEADER_DOS_HEADER", "../Grammar/BinaryInstruction.code");
   /* Section in which this segment lives */
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_last_page_size","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_last_page_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_total_pages","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_total_pages","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_nrelocs","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_nrelocs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_header_paragraphs","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_header_paragraphs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_minalloc","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_minalloc","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_maxalloc","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_maxalloc","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_ss","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_ss","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_sp","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_sp","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_cksum","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_cksum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_ip","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_ip","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_cs","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_cs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned char","e_overlay","= 0",
+     AsmDOSFileHeader.setDataPrototype("unsigned","e_overlay","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_relocs_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
