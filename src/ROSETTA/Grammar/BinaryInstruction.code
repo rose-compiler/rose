@@ -894,7 +894,7 @@ HEADER_GENERIC_FILE_START
           SgAsmGenericFile(std::string file_name);
 
           virtual ~SgAsmGenericFile();                                /* Destructor deletes children and munmaps and closes file */
-          void unparse(const char *filename);                 /* Unparse the file -- mirror image of parsing */
+          void unparse(const std::string &filename);		/* Unparse the file -- mirror image of parsing */
           void dump(FILE*);                                   /* Print some debugging info */
 
        /* File contents */

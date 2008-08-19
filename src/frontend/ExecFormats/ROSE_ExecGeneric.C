@@ -517,9 +517,9 @@ SgAsmGenericFile::unfill_holes()
 
 /* Mirror image of parsing an executable file. The result should be identical to the original file. */
 void
-SgAsmGenericFile::unparse(const char *filename)
+SgAsmGenericFile::unparse(const std::string &filename)
 {
-    FILE *f = fopen(filename, "w");
+    FILE *f = fopen(filename.c_str(), "w");
     ROSE_ASSERT(f);
 
 #if 0
@@ -545,6 +545,8 @@ SgAsmGenericFile::unparse(const char *filename)
     for (size_t i=0; i< p_headers->get_headers().size(); i++) {
         p_headers->get_headers()[i]->unparse(f);
     }
+
+    fclose(f);
 }
 
 /* Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
@@ -1227,28 +1229,9 @@ SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFil
 {
     FILE *output = fopen(name.c_str(), "w");
     ROSE_ASSERT(output!=NULL);
-    
-    /* FIXME: executable files may have more than a single file header (e.g., a PE file has a DOS header and a PE header). For
-     *        now we just unparse one of the headers. See SgAsmGenericFile::unparse for more info -- it was the old top-level
-     *        node. */
-#if 0
- // DQ (8/16/2008): Modified code to support STL container of "SgAsmGenericHeader*" types.
- // SgAsmGenericHeader *file_header = asmFile->get_header();
-    ROSE_ASSERT(asmFile->get_headers() != NULL);
-    ROSE_ASSERT(asmFile->get_headers()->get_headers().empty() == false);
-
-    SgAsmGenericHeader *file_header = asmFile->get_headers()->get_headers()[0];
-    ROSE_ASSERT(file_header != NULL);
-#else
+    ROSE_ASSERT(asmFile!=NULL);
     ROSE_ASSERT(asmFile->get_genericFile() != NULL);
-    ROSE_ASSERT(asmFile->get_genericFile()->get_headers() != NULL);
-    ROSE_ASSERT(asmFile->get_genericFile()->get_headers()->get_headers().empty() == false);
-    SgAsmGenericHeader *file_header = asmFile->get_genericFile()->get_headers()->get_headers()[0];
-    ROSE_ASSERT(file_header != NULL);
-#endif
-    
-    file_header->unparse(output);
-    fclose(output);
+    asmFile->get_genericFile()->unparse(name);
 }
 
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)
