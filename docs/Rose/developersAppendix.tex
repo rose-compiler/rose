@@ -962,5 +962,13 @@ SgAsmGenericSymbolTable are removed (get more details from Robb).
        binaries and what symbols are required to support dynamic linking and where they
        are stored.}
 
+   \item Checking the symbols in the executable using {\tt nm} \\
+ROSE permits a programmable interface to the binary executable file format,
+but unix utility functions provide text output of such details. For example,
+use {\tt nm -D .libs/librose.so | c++filt | less } to generate a list of
+all the symbols in an executable (text output).  In this case {\tt c++filt }
+resolved the original names from the mangled names for executables built from 
+C++ applications.  The C++ symbols appear at the bottom of the listing.
+
 \end{itemize}
 
