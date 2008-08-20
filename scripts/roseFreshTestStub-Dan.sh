@@ -38,11 +38,12 @@ MAKEFLAGS="-j8"
 export mpdvar=$(ps ax | grep mpd | wc -l )
 #echo $mpdvar
 if (($mpdvar >= 2)); then
-   echo "MPD RUNNING"
+:
+#   echo "MPD RUNNING"
  elif (($mpdvar < 2)); then
-   echo "Starting MPD"
+#   echo "Starting MPD"
    mpd &
-   echo "MPD started."
+#   echo "MPD started."
 fi
 
 set -e
