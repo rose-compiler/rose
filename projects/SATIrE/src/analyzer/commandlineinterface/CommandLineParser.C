@@ -1,5 +1,5 @@
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.23 2008-08-20 09:06:53 adrian Exp $
+// Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
+// $Id: CommandLineParser.C,v 1.24 2008-08-20 10:30:09 adrian Exp $
 
 #include <config.h>
 

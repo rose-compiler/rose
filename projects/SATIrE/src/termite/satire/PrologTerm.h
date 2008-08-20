@@ -9,6 +9,7 @@ see LICENSE in the root folder of this project
 #include <string>
 #include <iostream>
 #include <ctype.h>
+
 using namespace std;
 /// Representation of a prolog term
 class PrologTerm {
@@ -29,13 +30,50 @@ class PrologTerm {
   static std::string quote(const std::string atom) {
     if (atom.length() == 0) return "''";
     if (((atom.length() > 0) && (!islower(atom[0])) && (!isdigit(atom[0])))
-	|| (atom.find(' ') < atom.length())) {
+	|| contains_bad_char(atom)) {
       std::string s;
       s = "'" + atom  + "'";
       return s;
     }
     return atom;
   }
+
+protected:
+
+  static bool contains_bad_char(const std::string s) {
+    if (s.length() == 0) 
+      return true;
+
+    bool alldigits = isdigit(s[0]);
+    for (std::string::const_iterator c = s.begin();
+	 c != s.end(); ++c) {
+
+      if (alldigits) {
+	if (!isdigit(*c))
+	  return true;
+	else continue;
+      }
+
+      if (!islower(*c) && !isupper(*c))
+	return true;
+    }
+    return false;
+  }
+
+//   static std::string escape(const std::string s) {
+//     std::string r;
+//     for (std::string::const_iterator c = s.begin();
+// 	 c != s.end(); ++c) {
+
+//       if (*c == '\'') 
+// 	r += "\\'";
+//       else r.push_back(*c);
+
+//     }
+//     return r;
+//   }
+
+
 };
 
 
