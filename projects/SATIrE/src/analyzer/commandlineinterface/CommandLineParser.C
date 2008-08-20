@@ -1,16 +1,25 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.22 2008-07-01 09:45:09 gergo Exp $
+// $Id: CommandLineParser.C,v 1.23 2008-08-20 09:06:53 adrian Exp $
 
 #include <config.h>
 
 #include <sstream>
 #include "CommandLineParser.h"
 
+using namespace std;
+
+void CommandLineParser::exitError(string msg)
+{
+  if (msg != "") cout << "**ERROR: " << msg << endl;
+  cout << "(For a complete list of options, invoke with --help)" << endl;
+  exit(EXIT_FAILURE);
+}
+
 void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
 
-  cl->setProgramName(std::string(argv[0]));
+  cl->setProgramName(string(argv[0]));
   cl->clearCommandLine();
-  cl->appendCommandLine(std::string(argv[0]));
+  cl->appendCommandLine(string(argv[0]));
 
   for (int i=1; i < argc; i += handleOption(cl, i, argc, argv));
 
@@ -20,28 +29,25 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
 
   // post-processing of parsed values
   if(cl->helpMessageRequested()) {
-    std::cout << cl->getOptionsInfo() << std::endl;
+    cout << cl->getOptionsInfo() << endl;
     exit(EXIT_SUCCESS);
   }
   if(cl->optionsError()) {
-    std::cout << cl->getOptionsErrorMessage() << std::endl;
-    exit(EXIT_FAILURE);
-  }
+    exitError(cl->getOptionsErrorMessage());
+   }
   if (cl->getNumberOfInputFiles() == 0 && !cl->inputBinaryAst()) {
-    std::cout << "ERROR: no input files to analyze" << std::endl;
-    exit(EXIT_FAILURE);
+    exitError("no input files to analyze");
   } else if (cl->getNumberOfInputFiles() != 0 && cl->inputBinaryAst()) {
-    std::cout << "ERROR: both source and binary input files specified" << std::endl;
-    exit(EXIT_FAILURE);
+    exitError("both source and binary input files specified");
   }
 
   /* extend command line with ROSE options for front end language selection */
   switch(cl->getLanguage()) {
-  case AnalyzerOptions::Language_C89: cl->appendCommandLine(std::string("-rose:C_only ")); break;
-  case AnalyzerOptions::Language_C99: cl->appendCommandLine(std::string("-rose:C99_only ")); break;
+  case AnalyzerOptions::Language_C89: cl->appendCommandLine(string("-rose:C_only ")); break;
+  case AnalyzerOptions::Language_C99: cl->appendCommandLine(string("-rose:C99_only ")); break;
   case AnalyzerOptions::Language_CPP: /* default ROSE mode */ break;
   default: {
-    std::cout << "UNKOWN LANGUAGE SELECTED: " << cl->getLanguage() << std::endl;
+    cout << "UNKOWN LANGUAGE SELECTED: " << cl->getLanguage() << endl;
     failed(cl);
   }
   }
@@ -63,7 +69,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--no-result")) {
     cl->resultGenerationOff();
   } else if (optionMatch(argv[i], "--no_anim")) {
-    std::cout << "SATIrE commandline option: --no_anim is deprecated (has no effect)." << std::endl;
+    cout << "SATIrE commandline option: --no_anim is deprecated (has no effect)." << endl;
     //cl->outputGdlAnimOff();
   } else if (optionMatchPrefix(argv[i], "--callstringlength=")) {
     cl->setCallStringLength(atoi(argv[i]+prefixLength));
@@ -77,14 +83,14 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->quietOn();
   } else if (optionMatchPrefix(argv[i], "--pag-memsize-mb=")) {
     if (cl->memsizeMBSet() || cl->memsizePercSet()) {
-      cl->setOptionsErrorMessage("ERROR: only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
+      cl->setOptionsErrorMessage("only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
       return 1;
     }
     cl->memsizeMBSetOn();
     cl->setMemsizeMB(atoi(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--pag-memsize-perc=")) {
     if (cl->memsizeMBSet() || cl->memsizePercSet()) {
-      cl->setOptionsErrorMessage("ERROR: only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
+      cl->setOptionsErrorMessage("only one --pag-memsize-mb or --pag-memsize-perc flag is allowed");
       return 1;
     }
     cl->memsizePercSetOn();
@@ -181,33 +187,33 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setOutputGdlAnimDirName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--input-binary-ast=")) {
     if (cl->inputBinaryAst()) {
-      cl->setOptionsErrorMessage("ERROR: --input-binary-ast specified more than once");
+      cl->setOptionsErrorMessage("--input-binary-ast specified more than once");
       return 1;
     }
     cl->inputBinaryAstOn();
     cl->setInputBinaryAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-binary-ast=")) {
     if (cl->outputBinaryAst()) {
-      cl->setOptionsErrorMessage("ERROR: --output-binary-ast specified more than once");
+      cl->setOptionsErrorMessage("--output-binary-ast specified more than once");
       return 1;
     }
     cl->outputBinaryAstOn();
     cl->setOutputBinaryAstFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--gnu:")) {
     /* process gnu options: pass through without '--gnu:' */
-    cl->appendCommandLine(std::string(argv[i]+6));
+    cl->appendCommandLine(string(argv[i]+6));
   } else if (optionMatchPrefix(argv[i], "--edg:")) {
     /* pass edg-options as required by ROSE through */
-    cl->appendCommandLine(std::string(argv[i]));
+    cl->appendCommandLine(string(argv[i]));
   } else if (optionMatchPrefix(argv[i], "-edg:")) {
     /* ROSE requires to specify all EDG options starting
      * with one '-' as -edg: */
-    cl->appendCommandLine(std::string(argv[i]));
+    cl->appendCommandLine(string(argv[i]));
   } else if (optionMatchPrefix(argv[i], "--rose:")) {
     /* all ROSE options start with '-rose:', to make this uniform
      * with SATIrE command line options we use '--rose:' but pass
      * all options through unchanged as '-rose:' */
-    cl->appendCommandLine(std::string(argv[i]+1));
+    cl->appendCommandLine(string(argv[i]+1));
   } else if (optionMatch(argv[i], "--help-rose")) {
     cl->appendCommandLine("--help");
   } else if (optionMatch(argv[i], "--frontend-warnings")) {
@@ -228,7 +234,7 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->helpMessageRequestedOn();
   } else if (!strncmp(argv[i], "-I",2)) {
     /* include path option is passed to ROSE as is */
-    cl->appendCommandLine(std::string(argv[i]));
+    cl->appendCommandLine(string(argv[i]));
   } else if (optionMatch(argv[i], "--language=c++")) {
     cl->setLanguage(AnalyzerOptions::Language_CPP);
   } else if (optionMatch(argv[i], "--language=c89")) {
@@ -237,14 +243,14 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
     cl->setLanguage(AnalyzerOptions::Language_C99);
   } else if ((!optionMatchPrefix(argv[i], "-") && !optionMatchPrefix(argv[i],"--")) ) {
     /* handle as filename, pass filenames through */
-    std::cout << "Found input file '" << argv[i] << "'." << std::endl;
+    cout << "Found input file '" << argv[i] << "'." << endl;
  // GB (2008-06-02): Using appendInputFile here; this method sets the input
  // file name, appends the name to the command line, and increments the file
  // name counter.
     cl->appendInputFile(argv[i]);
   } else {
-    std::stringstream s;
-    s << "ERROR: unrecognized option: " << argv[i] << std::endl;
+    stringstream s;
+    s << "unrecognized option: " << argv[i] << endl;
     cl->setOptionsErrorMessage(s.str());
     return 1;
   }
@@ -252,10 +258,10 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
 }
 
 /* Support functions for handling the analyzer command line and PAG options */
-bool CommandLineParser::fileExists(const std::string& fileName)
+bool CommandLineParser::fileExists(const string& fileName)
 {
-  std::fstream fin;
-  fin.open(fileName.c_str(),std::ios::in);
+  fstream fin;
+  fin.open(fileName.c_str(),ios::in);
   if( fin.is_open() )
   {
     fin.close();
@@ -266,13 +272,13 @@ bool CommandLineParser::fileExists(const std::string& fileName)
 }
 
 void CommandLineParser::failed(AnalyzerOptions *opt) {
-  std::cout << opt->getOptionsInfo() << std::endl;
+  cout << opt->getOptionsInfo() << endl;
   exit(1);
 }
 
 bool CommandLineParser::optionMatch(char* s1, char* s2) {
   bool match=!strcmp(s1,s2);
-  //if(match) std::cout << "INFO: found option: " << s1 << std::endl;
+  //if(match) cout << "INFO: found option: " << s1 << endl;
   return match;
 }
 
