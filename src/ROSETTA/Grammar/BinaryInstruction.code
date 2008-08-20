@@ -2197,6 +2197,7 @@ HEADER_NE_EXTENDED_DOS_HEADER_END
 
 HEADER_NE_ENTRY_POINT_START
           enum NEEntryFlags {
+	       EF_ZERO		   = 0x00, /* No flags set */
                EF_RESERVED         = 0xfc, /* Reserved bits */
                EF_EXPORTED         = 0x01, /* Exported */
                EF_GLOBAL           = 0x02  /* Uses a global (shared) data section */
@@ -4735,7 +4736,9 @@ SOURCE_NE_EXTENDED_DOS_HEADER_END
 
 SOURCE_NE_ENTRY_POINT_START
 
-// SgAsmNEEntryPoint::SgAsmNEEntryPoint() : flags((NEEntryFlags)0), int3f(0), section_idx(0), section_offset(0) {}
+//SgAsmNEEntryPoint::SgAsmNEEntryPoint()
+//   : p_flags((SgAsmNEEntryPoint::EF_ZERO), p_int3f(0), p_section_idx(0), p_section_offset(0)
+//   {}
 
 SgAsmNEEntryPoint::SgAsmNEEntryPoint(SgAsmNEEntryPoint::NEEntryFlags flags, unsigned int3f, unsigned s_idx, unsigned s_off)
    : p_flags(flags), p_int3f(int3f), p_section_idx(s_idx), p_section_offset(s_off)

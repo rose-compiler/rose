@@ -812,7 +812,7 @@ SgAsmNEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     if (0 == p_section_idx) {
         fprintf(f, "%s%-*s = %s\n", p, w, "type", "unused");
-        ROSE_ASSERT(0 == p_flags);
+        ROSE_ASSERT(SgAsmNEEntryPoint::EF_ZERO == p_flags);
         ROSE_ASSERT(0 == p_int3f);
         ROSE_ASSERT(0 == p_section_offset);
     } else {

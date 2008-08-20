@@ -1053,7 +1053,7 @@ Grammar::setUpBinaryInstructions ()
   // unsigned section_idx;       /* zero indicates unused entry */
   // unsigned section_offset;    /* byte offset into section */
      AsmNEEntryPoint.setFunctionPrototype ( "HEADER_NE_ENTRY_POINT", "../Grammar/BinaryInstruction.code");
-     AsmNEEntryPoint.setDataPrototype("SgAsmNEEntryPoint::NEEntryFlags","flags","= SgAsmNEEntryPoint::EF_RESERVED",
+     AsmNEEntryPoint.setDataPrototype("SgAsmNEEntryPoint::NEEntryFlags","flags","= SgAsmNEEntryPoint::EF_ZERO",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEEntryPoint.setDataPrototype("unsigned","int3f","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
