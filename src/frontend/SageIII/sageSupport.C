@@ -2815,7 +2815,10 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
           size_t slash = sourceFilename.find_last_of('/');
           if (slash!=sourceFilename.npos)
                newFilename.replace(0, slash+1, "");
-          SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+  // tps (08/19/08) : commented this out for now as it causes distcleancheck to fail.
+  //                  It currently creates a file called buffer2.bin.new
+  //        SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
+          printf ("\nCHANGE IN IMPLEMENTATION: Skipping writing out the binary \n\n");
         }
        else
         {
