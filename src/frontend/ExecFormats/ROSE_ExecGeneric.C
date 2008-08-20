@@ -1282,13 +1282,16 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                           else
                            {
                              delete ef;
+                             ef = NULL;
 
-#if 1
-                             throw SgAsmGenericFile::FormatError("unrecognized file format");
-#else
-                          // DQ (8/9/2008): I don't understand the purpose of this code.
+                          // DQ (8/20/2008): The code (from Robb) identifies what kind of file this is or 
+                          // more specifically what kind of file most tools would think this 
+                          // file is (using the system file(1) command as a standard way to identify
+                          // file types using their first few bytes.
 
-                          /* Use file(1) to try to figure out the file type to report in the exception */
+                             printf ("Evaluate the file type \n");
+
+                          // Use file(1) to try to figure out the file type to report in the exception
                              int child_stdout[2];
                              pipe(child_stdout);
                              pid_t pid = fork();
@@ -1298,7 +1301,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                                   dup2(child_stdout[1], 1);
                                   close(child_stdout[0]);
                                   close(child_stdout[1]);
-                                  execlp("file", "file", "-b", name, NULL);
+                                  execlp("file", "file", "-b", name.c_str(), NULL);
                                   exit(1);
                                 }
                                else
@@ -1313,14 +1316,13 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                                        waitpid(pid, NULL, 0);
                                        char mesg[64+sizeof buf];
                                        sprintf(mesg, "unrecognized file format: %s", buf);
-                                       throw FormatError(mesg);
+                                       throw SgAsmGenericFile::FormatError(mesg);
                                      }
                                     else
                                      {
-                                       throw FormatError("unrecognized file format");
+                                       throw SgAsmGenericFile::FormatError("unrecognized file format");
                                      }
                                 }
-#endif
                            }
                       }
                  }
