@@ -4,6 +4,8 @@
 #include <string>
 #include "sage3.h"
 
+#if OLD_GRAPH_NODES
+// DQ (8/19/2008): This is already defined in src/frontend/SageIII/Cxx_Grammar.h
 struct eqstr_string
    {
      bool operator()(const std::string & s1, const std::string & s2) const
@@ -12,6 +14,7 @@ struct eqstr_string
         }
    };
 
+// DQ (8/19/2008): This is already defined in src/frontend/SageIII/Cxx_Grammar.h
 struct hash_string
    {
      rose_hash::hash<char*> hasher;
@@ -22,6 +25,7 @@ struct hash_string
                return hasher(name.c_str());
              }
    };
+#endif
 
 // This class builds a map of unique names and associated IR nodes.
 // It uses the memory pool traversal so that ALL IR nodes will be visited.

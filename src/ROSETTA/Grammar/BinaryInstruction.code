@@ -1488,7 +1488,7 @@ HEADER_PE_RVA_SIZE_PAIR_START
                uint32_t    e_size;
              } __attribute__((packed));
 
-          SgAsmPERVASizePair(const RVASizePair_disk *disk);
+          SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk);
           void *encode(SgAsmPERVASizePair::RVASizePair_disk *disk);
 
        // addr_t e_rva;
@@ -1761,7 +1761,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
                uint32_t            bindings_rva;    /* address (RVA) of array of object addresses after binding to DLL */
              } __attribute__((packed));
 
-          SgAsmPEImportDirectory(const PEImportDirectory_disk *disk);
+          SgAsmPEImportDirectory(const SgAsmPEImportDirectory::PEImportDirectory_disk *disk);
        // virtual ~PEImportDirectory() {}
 
           void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
@@ -1773,7 +1773,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
        // unsigned            forwarder_chain;
 
      private:
-          void ctor(const PEImportDirectory_disk*);
+          void ctor(const SgAsmPEImportDirectory::PEImportDirectory_disk*);
 
 HEADER_PE_IMPORT_DIRECTORY_END
 
@@ -1852,7 +1852,7 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
                OF_WRITABLE         = 0x80000000,   /* write permission */
              };
 
-          SgAsmPESectionTableEntry(const PESectionTableEntry_disk *disk);
+          SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk);
        // virtual ~SgAsmPESectionTableEntry() {};
 
           void *encode(SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
@@ -1864,7 +1864,7 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
        // unsigned    coff_line_nums, n_relocs, n_coff_line_nums, flags;
 
      private:
-          void ctor(const PESectionTableEntry_disk*);
+          void ctor(const SgAsmPESectionTableEntry::PESectionTableEntry_disk*);
 
 HEADER_PE_SECTION_TABLE_ENTRY_END
 
@@ -2773,6 +2773,10 @@ HEADER_DOS_HEADER_START
           void *encode(SgAsmDOSFileHeader::DOSFileHeader_disk*);
 
 HEADER_DOS_HEADER_END
+
+
+
+
 
 
 
@@ -4374,12 +4378,12 @@ SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
 SOURCE_ELF_SEGMENT_TABLE_END
 
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_START
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const Elf32SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk)
    {
      ctor(sex, disk);
    }
 
-SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const Elf64SegmentTableEntry_disk *disk)
+SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk *disk)
    {
      ctor(sex, disk);
    }
@@ -4405,12 +4409,12 @@ SOURCE_ELF_SYMBOL_LIST_START
 SOURCE_ELF_SYMBOL_LIST_END
 
 SOURCE_ELF_SYMBOL_START
-SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk)
    {
      ctor(sex, disk);
    }
 
-SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const Elf64SymbolEntry_disk *disk)
+SgAsmElfSymbol::SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk)
    {
      ctor(sex, disk);
    }
@@ -4437,14 +4441,14 @@ SOURCE_ELF_SYMBOL_END
 
 
 SOURCE_PE_RVA_SIZE_PAIR_START
-SgAsmPERVASizePair::SgAsmPERVASizePair(const RVASizePair_disk *disk)
+SgAsmPERVASizePair::SgAsmPERVASizePair(const SgAsmPERVASizePair::RVASizePair_disk *disk)
    {
      p_e_rva  = le_to_host(disk->e_rva);
      p_e_size = le_to_host(disk->e_size);
    }
 
 void*
-SgAsmPERVASizePair::encode(RVASizePair_disk *disk)
+SgAsmPERVASizePair::encode(SgAsmPERVASizePair::RVASizePair_disk *disk)
    {
      host_to_le(p_e_rva,  &(disk->e_rva));
      host_to_le(p_e_size, &(disk->e_size));
@@ -4462,7 +4466,7 @@ SOURCE_PE_RVA_SIZE_PAIR_LIST_END
 SOURCE_PE_FILE_HEADER_START
 
 SgAsmPEFileHeader::SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericHeader(f, offset, sizeof(PEFileHeader_disk)), /*extended in ctor()*/ p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
+   : SgAsmGenericHeader(f, offset, sizeof(SgAsmPEFileHeader::PEFileHeader_disk)), /*extended in ctor()*/ p_dos2_header(NULL), p_section_table(NULL), p_coff_symtab(NULL)
    {
      ctor(f, offset);
    }
@@ -4555,7 +4559,7 @@ SgAsmPEImportHintName::SgAsmPEImportHintName(SgAsmGenericSection *section, addr_
 SOURCE_PE_IMPORT_HINT_NAME_END
 
 SOURCE_PE_IMPORT_DIRECTORY_START
-SgAsmPEImportDirectory::SgAsmPEImportDirectory(const PEImportDirectory_disk *disk)
+SgAsmPEImportDirectory::SgAsmPEImportDirectory(const SgAsmPEImportDirectory::PEImportDirectory_disk *disk)
    {
      ctor(disk);
    }
@@ -4564,7 +4568,7 @@ SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_EXTENDED_DOS_HEADER_START
 SgAsmPEExtendedDOSHeader::SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericSection(f, offset, sizeof(ExtendedDOSHeader_disk))
+   : SgAsmGenericSection(f, offset, sizeof(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk))
    {
      ctor(f, offset);
    }
@@ -4572,7 +4576,7 @@ SgAsmPEExtendedDOSHeader::SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t o
 SOURCE_PE_EXTENDED_DOS_HEADER_END
 
 SOURCE_PE_SECTION_TABLE_ENTRY_START
-SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const PESectionTableEntry_disk *disk)
+SgAsmPESectionTableEntry::SgAsmPESectionTableEntry(const SgAsmPESectionTableEntry::PESectionTableEntry_disk *disk)
    {
      ctor(disk);
    }

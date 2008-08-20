@@ -2807,6 +2807,9 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
   // DQ (8/16/2008): Since the instructions have not been read yet, isn't it too early a stage to try to write out 
   // the binary?  I think this code should be moved to after the instruction disassembly.
 
+#if 0
+  // DQ (8/19/2008): Move this to the backend().
+
   /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
    * identical with the original. */
      if (get_read_executable_file_format_only() == false)
@@ -2824,6 +2827,7 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
         {
           printf ("\nWARNING: Skipping writing out the binary \n\n");
         }
+#endif
 
 #else
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
