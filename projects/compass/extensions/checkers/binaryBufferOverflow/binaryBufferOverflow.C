@@ -9,7 +9,7 @@
 
 using namespace std;
 
-extern const Compass::Checker* const binaryBufferOverflowChecker;
+extern const Compass::CheckerUsingGraphProcessing* const binaryBufferOverflowChecker;
 
 namespace CompassAnalyses
 { 
@@ -104,13 +104,13 @@ static Compass::PrerequisiteList getPrerequisites() {
 //  return new CompassAnalyses::BinaryBufferOverflow::Traversal(params, output);
 //}
 
-extern const Compass::Checker* const binaryBufferOverflowChecker =
-  new Compass::Checker(
+extern const Compass::CheckerUsingGraphProcessing* const binaryBufferOverflowChecker =
+  new Compass::CheckerUsingGraphProcessing(
                        "BinaryBufferOverflow",
                        // Descriptions should not include the newline character "\n".
                        "Short description not written yet!",
                        "Long description not written yet!",
-                       Compass::C | Compass::Cpp,
+                       Compass::X86Assembly,
                        getPrerequisites(),
                        run);
    

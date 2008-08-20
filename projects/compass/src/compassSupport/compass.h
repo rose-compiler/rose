@@ -230,7 +230,19 @@ namespace Compass {
     PrerequisiteList prerequisites;
     RunFunction run;
     virtual ~Checker() {} // Allow RTTI
-
+#if 0
+    bool isBinary() {
+      bool isbinary=false;
+      int language = supportedLanguages;
+      language >>= 4;
+      int lan = language &0x1u ; // x86
+      if (lan==1) isbinary=true;
+      language >>= 1;
+      lan = language &0x1u ;  // ARM
+      if (lan==1) isbinary=true;
+      return isbinary;
+    }
+#endif
   Checker(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run):
     checkerName(checkerName), shortDescription(shortDescription), longDescription(longDescription), supportedLanguages(supportedLanguages), prerequisites(prerequisites), run(run) {}
   };
@@ -261,6 +273,15 @@ namespace Compass {
 
   // ---- AST ---------------------------------------------------------------------------------------------------
 
+  // ---- GRAPH ---------------------------------------------------------------------------------------------------
+
+  class CheckerUsingGraphProcessing: public Checker {
+  public:
+  CheckerUsingGraphProcessing(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run):
+    Checker(checkerName, shortDescription, longDescription, supportedLanguages, prerequisites, run) {}
+  };
+
+  // ---- GRAPH ---------------------------------------------------------------------------------------------------
 
 
   /// The base class for outputs from a checker

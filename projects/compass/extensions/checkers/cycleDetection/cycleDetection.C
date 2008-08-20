@@ -9,7 +9,7 @@
 
 using namespace std;
 
-extern const Compass::Checker* const cycleDetectionChecker;
+extern const Compass::CheckerUsingGraphProcessing* const cycleDetectionChecker;
 
 namespace CompassAnalyses
 { 
@@ -110,8 +110,8 @@ static Compass::PrerequisiteList getPrerequisites() {
 }
 
 
-extern const Compass::Checker* const cycleDetectionChecker =
-  new Compass::Checker(
+extern const Compass::CheckerUsingGraphProcessing* const cycleDetectionChecker =
+  new Compass::CheckerUsingGraphProcessing(
                        "CycleDetection",
                        // Descriptions should not include the newline character "\n".
                        "Short description not written yet!",

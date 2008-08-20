@@ -159,7 +159,7 @@ extern const Compass::Checker* const binPrintAsmInstructionChecker =
         CompassAnalyses::BinPrintAsmInstruction::checkerName,
         CompassAnalyses::BinPrintAsmInstruction::shortDescription,
         CompassAnalyses::BinPrintAsmInstruction::longDescription,
-        Compass::C | Compass::Cpp,
+        Compass::X86Assembly,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
         run,
         createTraversal);

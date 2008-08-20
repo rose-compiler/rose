@@ -9,7 +9,7 @@
 
 using namespace std;
 
-extern const Compass::Checker* const binaryInterruptAnalysisChecker;
+extern const Compass::CheckerUsingGraphProcessing* const binaryInterruptAnalysisChecker;
 
 namespace CompassAnalyses
 { 
@@ -140,13 +140,13 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 //  return new CompassAnalyses::BinaryInterruptAnalysis::Traversal(params, output);
 //}
 
-extern const Compass::Checker* const binaryInterruptAnalysisChecker =
-  new Compass::Checker(
+extern const Compass::CheckerUsingGraphProcessing* const binaryInterruptAnalysisChecker =
+  new Compass::CheckerUsingGraphProcessing(
                        "BinaryInterruptAnalysis",
                        // Descriptions should not include the newline character "\n".
                        "Short description not written yet!",
                        "Long description not written yet!",
-                       Compass::C | Compass::Cpp,
+                       Compass::X86Assembly,
                        getPrerequisites(),
                        run);
 

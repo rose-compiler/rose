@@ -332,17 +332,62 @@ int main(int argc, char **argv)
   std::vector<const Compass::Checker *>::iterator b_itr;
   CountingOutputObject  outputs ;
 
+  bool isBinaryInput=true;
+  SgAsmFile* file = root->get_file(0).get_binaryFile();
+  if (file==NULL)
+    isBinaryInput=false;
+
   //  compassCheckers(traversals, bases, outputs);
   Compass::Parameters params(Compass::findParameterFile());
   buildCheckers(basesAll, params, outputs, root);
 
   for (b_itr = basesAll.begin(); b_itr != basesAll.end(); ++b_itr) {
-    const Compass::CheckerUsingAstSimpleProcessing* astChecker = 
-      dynamic_cast<const Compass::CheckerUsingAstSimpleProcessing*>(*b_itr);
-    if (astChecker!=NULL) {
-      bases.push_back(astChecker);
-      traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
-    }
+      const Compass::CheckerUsingGraphProcessing* graphChecker = 
+	dynamic_cast<const Compass::CheckerUsingGraphProcessing*>(*b_itr);
+      if (graphChecker!=NULL) {
+	bases.push_back(graphChecker);
+
+	//	bool isBinary = graphChecker->isBinary();
+	bool isbinary=false;
+	int language = graphChecker->supportedLanguages;
+	language >>= 4;
+	int lan = language &0x1u ; // x86
+	if (lan==1) isbinary=true;
+	language >>= 1;
+	lan = language &0x1u ;  // ARM
+	if (lan==1) isbinary=true;
+	std::cerr << " found graph checker " << graphChecker->checkerName <<  " isBinaryChecker: " << isbinary ;
+
+	if ((isbinary && isBinaryInput) || (!isbinary && !isBinaryInput)) {
+	  bases.push_back(graphChecker);
+	//	traversals.push_back(graphChecker->createSimpleTraversal(params, &outputs));
+	  cerr << " adding checker. " << endl;
+	} else
+	  cerr << " ... skipping. " << endl;
+	
+      }
+
+      const Compass::CheckerUsingAstSimpleProcessing* astChecker = 
+	dynamic_cast<const Compass::CheckerUsingAstSimpleProcessing*>(*b_itr);
+      if (astChecker!=NULL) {
+
+	bool isbinary=false;
+	int language = astChecker->supportedLanguages;
+	language >>= 4;
+	int lan = language &0x1u ; // x86
+	if (lan==1) isbinary=true;
+	language >>= 1;
+	lan = language &0x1u ;  // ARM
+	if (lan==1) isbinary=true;
+	std::cerr << " found AST checker " << astChecker->checkerName << "  isBinaryChecker : " << isbinary ;
+
+	if ((isbinary && isBinaryInput) || (!isbinary && !isBinaryInput)) {
+	  bases.push_back(astChecker);
+	  traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
+	  cerr << " adding checker. " << endl;
+	} else
+	  cerr << " ... skipped. " << endl;
+      }
   }
 
   outputs.fillOutputList(bases);
@@ -361,6 +406,17 @@ int main(int argc, char **argv)
 
   for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
     Compass::runPrereqs(*b_itr, root);
+
+  // the following needs to be changed. Currently it takes a project as input
+  // all graph analyses are run before the AsT traverals. Comment this out if not
+  // needed for traversal.
+  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
+    cerr << " Running GraphChecker on project... " << endl;
+    const Compass::CheckerUsingGraphProcessing* graphChecker = 
+      dynamic_cast<const Compass::CheckerUsingGraphProcessing*>(*b_itr);
+    if (graphChecker)
+      (*b_itr)->run(params, &outputs);
+  }
 
   /* traverse the files */
 
@@ -396,8 +452,9 @@ int main(int argc, char **argv)
       " threads!! processes = " << processes << " ------------" << std::endl;
 #endif 
 
-  
-  ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
+
+  if (!isBinaryInput)
+    ROSE_ASSERT(Compass::sourceDefUsePrerequisite.done==true);
   double mem_e = ROSE_MemoryUsage().getMemoryUsageMegabytes();
   double memuse = mem_e-mem_b;
   gettime(end_init_time);

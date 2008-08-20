@@ -167,7 +167,7 @@ extern const Compass::Checker* const binPrintAsmFunctionsChecker =
         CompassAnalyses::BinPrintAsmFunctions::checkerName,
         CompassAnalyses::BinPrintAsmFunctions::shortDescription,
         CompassAnalyses::BinPrintAsmFunctions::longDescription,
-        Compass::C | Compass::Cpp,
+        Compass::X86Assembly,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
         run,
         createTraversal);
