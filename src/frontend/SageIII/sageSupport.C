@@ -2804,31 +2804,6 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
 
      SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
 
-  // DQ (8/16/2008): Since the instructions have not been read yet, isn't it too early a stage to try to write out 
-  // the binary?  I think this code should be moved to after the instruction disassembly.
-
-#if 0
-  // DQ (8/19/2008): Move this to the backend().
-
-  /* Temporary debugging. Writes a new executable based on the parse tree. The new executable should be byte-for-byte
-   * identical with the original. */
-     if (get_read_executable_file_format_only() == false)
-        {
-          string newFilename = sourceFilename + ".new";
-          size_t slash = sourceFilename.find_last_of('/');
-          if (slash!=sourceFilename.npos)
-               newFilename.replace(0, slash+1, "");
-  // tps (08/19/08) : commented this out for now as it causes distcleancheck to fail.
-  //                  It currently creates a file called buffer2.bin.new
-  //        SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
-          printf ("\nCHANGE IN IMPLEMENTATION: Skipping writing out the binary \n\n");
-        }
-       else
-        {
-          printf ("\nWARNING: Skipping writing out the binary \n\n");
-        }
-#endif
-
 #else
   // JJW (7/23/2008): We are using Robb's code for this, and it crashes on PE files
   // printf ("Calling generateBinaryExecutableFileInformation_ELF() \n");

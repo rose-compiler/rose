@@ -302,6 +302,61 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                          printf ("Warning: SgAsmFile is missing valid global_block: astFile->get_global_block() != NULL \n");
                        }
                     
+
+                 // DQ (8/20/2008): Output the re-assembled binary from the parts in the represnetation of the binary file format 
+                 // (Note that this does not support transformations on instructions, so this is not a backend code generator).
+
+                 // Writes a new executable based on the parse tree. The new executable should be byte-for-byte identical with 
+                 // the original.  This work supports testing that we have completely represented the binary executable file format.
+                 // Any transformations to parts of the binary executable file format (in the AST) will be represented in the 
+                 // re-generated binary.
+                    if (file->get_read_executable_file_format_only() == false)
+                       {
+                      // If we didn't disassemble the instructions into the AST, then we can't regenerate the binary.
+#if 0
+                      // The output filename should perhaps be the one in: file->get_unparse_output_filename()
+                      // Need to think about this, since it might overwrite the input binary executable.
+                         string newFilename = file->get_unparse_output_filename();
+#else
+                         string sourceFilename = file->get_sourceFileNameWithoutPath();
+                         string newFilename = sourceFilename + ".new";
+                         size_t slash = sourceFilename.find_last_of('/');
+                         if (slash!=sourceFilename.npos)
+                              newFilename.replace(0, slash+1, "");
+#endif
+                      // Regenerate the binary executable.
+                         SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, astFile);
+                       }
+                      else
+                       {
+                         printf ("\nWARNING: Skipping writing out the regenerated binary \n\n");
+                       }
+
+                 // Dump detailed info from the AST representation of the binary executable file format.
+                    string baseName = file->get_sourceFileNameWithoutPath();
+                    std::string dumpName = baseName + ".dump";
+                    FILE *dumpFile = fopen(dumpName.c_str(), "w");
+                    if (dumpFile)
+                       {
+                         SgAsmGenericFile *ef = astFile->get_genericFile();
+                         ROSE_ASSERT(ef != NULL);
+
+                      // The file type should be the first; test harness depends on it
+                         fprintf(dumpFile, "%s\n", ef->format_name());
+
+                      // A table describing the sections of the file
+                         ef->dump(dumpFile);
+
+                      // Detailed info about each section
+                         SgAsmGenericSectionList *sections = ef->get_sections();
+                         for (size_t i = 0; i < sections->get_sections().size(); i++)
+                            {
+                              fprintf(dumpFile, "Section [%zd]:\n", i);
+                              sections->get_sections()[i]->dump(dumpFile, "  ", -1);
+                            }
+
+                         fclose(dumpFile);
+                       }
                   }
                  else
                   {
