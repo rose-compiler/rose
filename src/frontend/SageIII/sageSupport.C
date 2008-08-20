@@ -17,6 +17,88 @@
 
 using namespace std;
 
+
+
+
+
+
+
+void
+outputTypeOfFileAndExit( const string & name )
+   {
+  // DQ (8/20/2008): The code (from Robb) identifies what kind of file this is or 
+  // more specifically what kind of file most tools would think this 
+  // file is (using the system file(1) command as a standard way to identify
+  // file types using their first few bytes.
+
+  // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
+
+#if 0
+  // I could not get this code to work for me, so I just used something internally built on the system command (that has some security checking).
+
+  // Use file(1) to try to figure out the file type to report in the exception
+     int child_stdout[2];
+     pipe(child_stdout);
+     pid_t pid = fork();
+
+     printf ("pid = %d \n",pid);
+
+     if (0 == pid)
+        {
+          close(0);
+          dup2(child_stdout[1], 1);
+          close(child_stdout[0]);
+          close(child_stdout[1]);
+          execlp("file", "file", "-b", name.c_str(), NULL);
+          exit(1);
+        }
+       else
+        {
+          if (pid > 0)
+             {
+               char buf[4096];
+               memset(buf, 0, sizeof buf);
+               read(child_stdout[0], buf, sizeof buf);
+               buf[sizeof(buf)-1] = '\0';
+               if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
+               waitpid(pid, NULL, 0);
+               char mesg[64+sizeof buf];
+               sprintf(mesg, "unrecognized file format: %s", buf);
+               throw SgAsmGenericFile::FormatError(mesg);
+             }
+            else
+             {
+               throw SgAsmGenericFile::FormatError("unrecognized file format");
+             }
+        }
+#else
+  // Call the Unix "file" command, it would be great if this was an available 
+  // system call (but Robb thinks it might not be available).
+
+     vector<string> commandLineVector;
+     commandLineVector.push_back("file -b " + name);
+
+  // ios::sync_with_stdio();     // Syncs C++ and C I/O subsystems!
+
+  // printf ("Unknown file: %s ",name.c_str());
+     printf ("Error: unknown file type: ");
+     flush(cout);
+     
+  // I could not make this work!
+  // systemFromVector (commandLineVector);
+
+  // Use "-b" for brief mode!
+     string commandLine = "file " + name;
+     system(commandLine.c_str());
+
+  // printf ("\n\nExiting: Unknown file Error \n\n");
+  // ROSE_ASSERT(false);
+     exit(0);
+#endif
+   }
+
+
+
 // DQ (1/5/2008): These are functions separated out of the generated
 // code in ROSETTA.  These functions don't need to be generated since
 // there implementation is not as dependent upon the IR as other functions
@@ -1556,26 +1638,13 @@ SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOri
         }
    }
 
-       // Detect if this is a binary (executable) file!
-
-#include "freebsd_elf_combined.h"
-
-// DQ (2/11/2008): Added support for reading binaries.
-// Note that there is a redundant use of the SelectObject name so I have placed the Wine header files into a namespace.
-//      ROSE/src/util/support/FunctionObject.h:5: error: previous declaration of `template<class T> class SelectObject'
-// We are using the Wine project and their header files to handle the details of the structure of Windows binaries.
-#if 0
-namespace Rose_Wine
-   {
-// I have modified the win.h file to change the data member "class" to "window_class" (see note in win.h).
-#include "win.h"
-   }
-#endif
 
 bool
 isBinaryExecutableFile ( string sourceFilename )
    {
      bool returnValue = false;
+
+  // printf ("Inside of isBinaryExecutableFile(%s) \n",sourceFilename.c_str());
 
   // Open file for reading
      FILE* f = fopen(sourceFilename.c_str(), "r");
@@ -1599,1200 +1668,6 @@ isBinaryExecutableFile ( string sourceFilename )
       return returnValue;
     }
 
-
-#if 0
-string
-processorArchitectureName (SgAsmFile::pe_processor_architecture_enum processor_architecture_kind)
-   {
-  // This function supports the Portable Execution binary format (PE) used in Windows binaries.
-  // PE format is a variation of the COFF format used by IBM and others.
-
-     string s;
-
-     switch (processor_architecture_kind)
-        {
-          case SgAsmFile::e_processor_architecture_none:    s = "No machine"; break;
-          case SgAsmFile::e_processor_architecture_INTEL:   s = "INTEL";      break;
-          case SgAsmFile::e_processor_architecture_MIPS:    s = "MIPS";       break;
-          case SgAsmFile::e_processor_architecture_ALPHA:   s = "ALPHA";      break;
-          case SgAsmFile::e_processor_architecture_PPC:     s = "PPC";        break;
-          case SgAsmFile::e_processor_architecture_SHX:     s = "SHX";        break;
-          case SgAsmFile::e_processor_architecture_ARM:     s = "ARM";        break;
-          case SgAsmFile::e_processor_architecture_IA64:    s = "IA64";       break;
-          case SgAsmFile::e_processor_architecture_ALPHA64: s = "ALPHA64";    break;
-          case SgAsmFile::e_processor_architecture_MSIL:    s = "MSIL";       break;
-          case SgAsmFile::e_processor_architecture_AMD64:   s = "AMD64";      break;
-          case SgAsmFile::e_processor_architecture_UNKNOWN: s = "UNKNOWN";    break;
-
-          default:
-             {
-               s = "error";
-
-               printf ("Error: default reach for processor_architecture_type = %d \n",processor_architecture_kind);
-             }
-        }
-
-     return s;
-   }
-#endif
-
-#if 0
-string
-processorTypeName (SgAsmFile::pe_processor_type_enum processor_type_kind)
-   {
-  // This function supports the Portable Execution binary format (PE) used in Windows binaries.
-  // PE format is a variation of the COFF format used by IBM and others.
-
-     string s;
-
-     switch (processor_type_kind)
-        {
-          case SgAsmFile::e_processor_type_none:          s = "No machine";    break;
-          case SgAsmFile::e_processor_type_INTEL_386:     s = "INTEL_386";     break;
-          case SgAsmFile::e_processor_type_INTEL_486:     s = "INTEL_486";     break;
-          case SgAsmFile::e_processor_type_INTEL_PENTIUM: s = "INTEL_PENTIUM"; break;
-          case SgAsmFile::e_processor_type_INTEL_860:     s = "INTEL_860";     break;
-          case SgAsmFile::e_processor_type_INTEL_IA64:    s = "INTEL_IA64";    break;
-          case SgAsmFile::e_processor_type_AMD_X8664:     s = "AMD_X8664";     break;
-          case SgAsmFile::e_processor_type_MIPS_R2000:    s = "MIPS_R2000";    break;
-          case SgAsmFile::e_processor_type_MIPS_R3000:    s = "MIPS_R3000";    break;
-          case SgAsmFile::e_processor_type_MIPS_R4000:    s = "MIPS_R4000";    break;
-          case SgAsmFile::e_processor_type_ALPHA_21064:   s = "ALPHA_21064";   break;
-          case SgAsmFile::e_processor_type_PPC_601:       s = "PPC_601";       break;
-          case SgAsmFile::e_processor_type_PPC_603:       s = "PPC_603";       break;
-          case SgAsmFile::e_processor_type_PPC_604:       s = "PPC_604";       break;
-          case SgAsmFile::e_processor_type_PPC_620:       s = "PPC_620";       break;
-          case SgAsmFile::e_processor_type_HITACHI_SH3:   s = "HITACHI_SH3";   break;
-          case SgAsmFile::e_processor_type_HITACHI_SH3E:  s = "HITACHI_SH3E";  break;
-          case SgAsmFile::e_processor_type_HITACHI_SH4:   s = "HITACHI_SH4";   break;
-          case SgAsmFile::e_processor_type_MOTOROLA_821:  s = "MOTOROLA_821";  break;
-          case SgAsmFile::e_processor_type_SHx_SH3:       s = "SHx_SH3";       break;
-          case SgAsmFile::e_processor_type_SHx_SH4:       s = "SHx_SH4";       break;
-          case SgAsmFile::e_processor_type_STRONGARM:     s = "STRONGARM";     break;
-          case SgAsmFile::e_processor_type_ARM720:        s = "ARM720";        break;
-          case SgAsmFile::e_processor_type_ARM820:        s = "ARM820";        break;
-          case SgAsmFile::e_processor_type_ARM920:        s = "ARM920";        break;
-          case SgAsmFile::e_processor_type_ARM_7TDMI:     s = "ARM_7TDMI";     break;
-
-          default:
-             {
-               s = "error";
-
-               printf ("Error: default reach for processor_type_type = %d \n",processor_type_kind);
-             }
-        }
-
-     return s;
-   }
-#endif
-
-#if 0
-string
-machineArchitectureName (SgAsmFile::elf_machine_architecture_enum machine_architecture_kind)
-   {
-     string s;
-
-     switch (machine_architecture_kind)
-        {
-          case SgAsmFile::e_machine_architecture_none:                     s = "No machine";               break;
-          case SgAsmFile::e_machine_architecture_ATT_WE_32100:             s = "AT&T WE 32100";            break;
-          case SgAsmFile::e_machine_architecture_Sun_Sparc:                s = "SUN SPARC";                break;
-          case SgAsmFile::e_machine_architecture_Intel_80386:              s = "Intel 80386";              break;
-          case SgAsmFile::e_machine_architecture_Motorola_m68k_family:     s = "Motorola m68k family";     break;
-          case SgAsmFile::e_machine_architecture_Motorola_m88k_family:     s = "Motorola m88k family";     break;
-          case SgAsmFile::e_machine_architecture_Intel_80860:              s = "Intel 80860";              break;
-          case SgAsmFile::e_machine_architecture_MIPS_R3000_big_endian:    s = "MIPS R3000 big-endian";    break;
-          case SgAsmFile::e_machine_architecture_IBM_System_370:           s = "IBM System/370";           break;
-          case SgAsmFile::e_machine_architecture_MIPS_R3000_little_endian: s = "MIPS R3000 little-endian"; break;
-          case SgAsmFile::e_machine_architecture_HPPA:               s = "HPPA";                 break;
-          case SgAsmFile::e_machine_architecture_Fujitsu_VPP500:     s = "Fujitsu VPP500";       break;
-          case SgAsmFile::e_machine_architecture_Sun_v8plus:         s = "Sun's v8plus";         break;
-          case SgAsmFile::e_machine_architecture_Intel_80960:        s = "Intel 80960";          break;
-          case SgAsmFile::e_machine_architecture_PowerPC:            s = "PowerPC";              break;
-          case SgAsmFile::e_machine_architecture_PowerPC_64bit:      s = "PowerPC 64-bit";       break;
-          case SgAsmFile::e_machine_architecture_IBM_S390:           s = "IBM S390";             break;
-          case SgAsmFile::e_machine_architecture_NEC_V800_series:    s = "NEC V800 series";      break;
-          case SgAsmFile::e_machine_architecture_Fujitsu_FR20:       s = "Fujitsu FR20";         break;
-          case SgAsmFile::e_machine_architecture_TRW_RH_32:          s = "TRW RH-32";            break;
-          case SgAsmFile::e_machine_architecture_Motorola_RCE:       s = "Motorola RCE";         break;
-          case SgAsmFile::e_machine_architecture_ARM:                s = "ARM";                  break;
-          case SgAsmFile::e_machine_architecture_Digital_Alpha_fake: s = "Digital Alpha (fake)"; break;
-          case SgAsmFile::e_machine_architecture_Hitachi_SH:         s = "Hitachi SH";           break;
-          case SgAsmFile::e_machine_architecture_SPARC_v9_64bit:     s = "SPARC v9 64-bit";      break;
-          case SgAsmFile::e_machine_architecture_Siemens_Tricore:    s = "Siemens Tricore";      break;
-          case SgAsmFile::e_machine_architecture_Argonaut_RISC_Core: s = "Argonaut RISC Core";   break;
-          case SgAsmFile::e_machine_architecture_Hitachi_H8_300:     s = "Hitachi H8/300";       break;
-          case SgAsmFile::e_machine_architecture_Hitachi_H8_300H:    s = "Hitachi H8/300H";      break;
-          case SgAsmFile::e_machine_architecture_Hitachi_H8S:        s = "Hitachi H8S";          break;
-          case SgAsmFile::e_machine_architecture_Hitachi_H8_500:     s = "Hitachi H8/500";       break;
-          case SgAsmFile::e_machine_architecture_Intel_Merced:       s = "Intel Merced";         break;
-          case SgAsmFile::e_machine_architecture_Stanford_MIPS_X:    s = "Stanford MIPS-X";      break;
-          case SgAsmFile::e_machine_architecture_Motorola_Coldfire:  s = "Motorola Coldfire";    break;
-          case SgAsmFile::e_machine_architecture_Motorola_M68HC12:   s = "Motorola M68HC12";     break;
-          case SgAsmFile::e_machine_architecture_Fujitsu_MMA_Multimedia_Accelerator:   s = "Fujitsu MMA Multimedia Accelerator"; break;
-          case SgAsmFile::e_machine_architecture_Siemens_PCP:                          s = "Siemens PCP";                        break;
-          case SgAsmFile::e_machine_architecture_Sony_nCPU_embeeded_RISC:              s = "Sony nCPU embeeded RISC";            break;
-          case SgAsmFile::e_machine_architecture_Denso_NDR1_microprocessor:            s = "Denso NDR1 microprocessor";          break;
-          case SgAsmFile::e_machine_architecture_Motorola_Start_Core_processor:        s = "Motorola Start*Core processor";      break;
-          case SgAsmFile::e_machine_architecture_Toyota_ME16_processor:                s = "Toyota ME16 processor";              break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronic_ST100_processor:    s = "STMicroelectronic ST100 processor";  break;
-          case SgAsmFile::e_machine_architecture_Advanced_Logic_Corp_Tinyj_emb_family: s = "Advanced Logic Corp. Tinyj emb.fam"; break;
-          case SgAsmFile::e_machine_architecture_AMD_x86_64_architecture:              s = "AMD x86-64 architecture";            break;
-          case SgAsmFile::e_machine_architecture_Sony_DSP_Processor:                   s = "Sony DSP Processor";                 break;
-          case SgAsmFile::e_machine_architecture_Siemens_FX66_microcontroller:         s = "Siemens FX66 microcontroller";       break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_microcontroller: s = "STMicroelectronics ST9+ 8/16 mc";   break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_microcontroller:      s = "STmicroelectronics ST7 8 bit mc";   break;
-          case SgAsmFile::e_machine_architecture_Motorola_MC68HC16_microcontroller:              s = "Motorola MC68HC16 microcontroller"; break;
-          case SgAsmFile::e_machine_architecture_Motorola_MC68HC11_microcontroller:              s = "Motorola MC68HC11 microcontroller"; break;
-          case SgAsmFile::e_machine_architecture_Motorola_MC68HC08_microcontroller:              s = "Motorola MC68HC08 microcontroller"; break;
-          case SgAsmFile::e_machine_architecture_Motorola_MC68HC05_microcontroller:              s = "Motorola MC68HC05 microcontroller"; break;
-          case SgAsmFile::e_machine_architecture_Silicon_Graphics_SVx:                           s = "Silicon Graphics SVx";              break;
-          case SgAsmFile::e_machine_architecture_STMicroelectronics_ST19_8bit_microcontroller:   s = "STMicroelectronics ST19 8 bit mc";  break;
-          case SgAsmFile::e_machine_architecture_Digital_VAX:                                    s = "Digital VAX";                       break;
-          case SgAsmFile::e_machine_architecture_Axis_Communications_32bit_embedded_processor:   s = "Axis Communications 32-bit embedded processor";   break;
-          case SgAsmFile::e_machine_architecture_Infineon_Technologies_32bit_embedded_processor: s = "Infineon Technologies 32-bit embedded processor"; break;
-          case SgAsmFile::e_machine_architecture_Element_14_64bit_DSP_Processor:                 s = "Element 14 64-bit DSP Processor";                 break;
-          case SgAsmFile::e_machine_architecture_LSI_Logic_16bit_DSP_Processor:                  s = "LSI Logic 16-bit DSP Processor";                  break;
-          case SgAsmFile::e_machine_architecture_Donald_Knuths_educational_64bit_processor:      s = "Donald Knuth's educational 64-bit processor";     break;
-          case SgAsmFile::e_machine_architecture_Harvard_University_machine_independent_object_files: s = "Harvard University machine-independent object files"; break;
-          case SgAsmFile::e_machine_architecture_SiTera_Prism:                      s = "SiTera Prism";                       break;
-          case SgAsmFile::e_machine_architecture_Atmel_AVR_8bit_microcontroller:    s = "Atmel AVR 8-bit microcontroller";    break;
-          case SgAsmFile::e_machine_architecture_Fujitsu_FR30:                      s = "Fujitsu FR30";                       break;
-          case SgAsmFile::e_machine_architecture_Mitsubishi_D10V:                   s = "Mitsubishi D10V";                    break;
-          case SgAsmFile::e_machine_architecture_Mitsubishi_D30V:                   s = "Mitsubishi D30V";                    break;
-          case SgAsmFile::e_machine_architecture_NEC_v850:                          s = "NEC v850";                           break;
-          case SgAsmFile::e_machine_architecture_Mitsubishi_M32R:                   s = "Mitsubishi M32R";                    break;
-          case SgAsmFile::e_machine_architecture_Matsushita_MN10300:                s = "Matsushita MN10300";                 break;
-          case SgAsmFile::e_machine_architecture_Matsushita_MN10200:                s = "Matsushita MN10200";                 break;
-          case SgAsmFile::e_machine_architecture_picoJava:                          s = "picoJava";                           break;
-          case SgAsmFile::e_machine_architecture_OpenRISC_32bit_embedded_processor: s = "OpenRISC 32-bit embedded processor"; break;
-          case SgAsmFile::e_machine_architecture_ARC_Cores_Tangent_A5:              s = "ARC Cores Tangent-A5";               break;
-          case SgAsmFile::e_machine_architecture_Tensilica_Xtensa_Architecture:     s = "Tensilica Xtensa Architecture";      break;
-          case SgAsmFile::e_machine_architecture_Digital_Alpha:                     s = "Digital Alpha";                      break;
-
-          default:
-             {
-               s = "error";
-
-               printf ("Error: default reach for machine_architecture_type = %d \n",machine_architecture_kind);
-             }
-        }
-
-     return s;
-   }
-#endif
-
-#if 0
-// Older Binary file format support
-void
-generateBinaryExecutableFileInformation_Windows ( string sourceFilename, SgAsmFile* asmFile )
-   {
-     ROSE_ASSERT(asmFile != NULL);
-
-     ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
-
-  // Open file for reading
-     FILE* f = fopen(sourceFilename.c_str(), "r");
-     if (!f)
-        {
-          printf ("Could not open binary file = %s \n",sourceFilename.c_str());
-          ROSE_ASSERT(false);
-        }
-
-     int firstCharacter = fgetc(f);
-
-     printf ("In generateBinaryExecutableFileInformation_Windows(): firstCharacter = %d \n",firstCharacter);
-     ROSE_ASSERT(firstCharacter == 77);
-
-  // This is likely a binary executable
-  // fread(void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
-
-#if 0
-// This is the MSDOS header
-typedef struct _IMAGE_DOS_HEADER {
-    WORD  e_magic;      /* 00: MZ Header signature */
-    WORD  e_cblp;       /* 02: Bytes on last page of file */
-    WORD  e_cp;         /* 04: Pages in file */
-    WORD  e_crlc;       /* 06: Relocations */
-    WORD  e_cparhdr;    /* 08: Size of header in paragraphs */
-    WORD  e_minalloc;   /* 0a: Minimum extra paragraphs needed */
-    WORD  e_maxalloc;   /* 0c: Maximum extra paragraphs needed */
-    WORD  e_ss;         /* 0e: Initial (relative) SS value */
-    WORD  e_sp;         /* 10: Initial SP value */
-    WORD  e_csum;       /* 12: Checksum */
-    WORD  e_ip;         /* 14: Initial IP value */
-    WORD  e_cs;         /* 16: Initial (relative) CS value */
-    WORD  e_lfarlc;     /* 18: File address of relocation table */
-    WORD  e_ovno;       /* 1a: Overlay number */
-    WORD  e_res[4];     /* 1c: Reserved words */
-    WORD  e_oemid;      /* 24: OEM identifier (for e_oeminfo) */
-    WORD  e_oeminfo;    /* 26: OEM information; e_oemid specific */
-    WORD  e_res2[10];   /* 28: Reserved words */
-    DWORD e_lfanew;     /* 3c: Offset to extended header */
-} IMAGE_DOS_HEADER, *PIMAGE_DOS_HEADER;
-#endif
-
-  // The first x3c bytes are the MS-DOS header, the last word is the offset to the PE header (extended header)
-     Rose_Wine::IMAGE_DOS_HEADER msdos_header;
-     char* msdos_header_array = (char*) &msdos_header;
-
-     msdos_header_array[0]  = firstCharacter;
-
-     int msdos_header_value = 0;
-     int msdos_header_size = sizeof(Rose_Wine::IMAGE_DOS_HEADER);
-     ROSE_ASSERT(msdos_header_size == 64);
-     int i = 1;
-     do {
-          msdos_header_value = fgetc(f);
-          msdos_header_array[i]  = msdos_header_value;
-          i++;
-        }
-  // while (i <= msdos_header_size && msdos_header_value != EOF);
-     while (i < msdos_header_size && msdos_header_value != EOF);
-
-     printf ("msdos_header.e_magic    = %d \n",(int)msdos_header.e_magic);
-     printf ("msdos_header.e_cblp     = %d \n",(int)msdos_header.e_cblp);
-     printf ("msdos_header.e_cp       = %d \n",(int)msdos_header.e_cp);
-     printf ("msdos_header.e_crlc     = %d \n",(int)msdos_header.e_crlc);
-     printf ("msdos_header.e_cparhdr  = %d \n",(int)msdos_header.e_cparhdr);
-     printf ("msdos_header.e_minalloc = %d \n",(int)msdos_header.e_minalloc);
-     printf ("msdos_header.e_maxalloc = %d \n",(int)msdos_header.e_maxalloc);
-     printf ("msdos_header.e_ss       = %d \n",(int)msdos_header.e_ss);
-     printf ("msdos_header.e_sp       = %d \n",(int)msdos_header.e_sp);
-     printf ("msdos_header.e_csum     = %d \n",(int)msdos_header.e_csum);
-     printf ("msdos_header.e_ip       = %d \n",(int)msdos_header.e_ip);
-     printf ("msdos_header.e_cs       = %d \n",(int)msdos_header.e_cs);
-     printf ("msdos_header.e_lfarlc   = %d \n",(int)msdos_header.e_lfarlc);
-     printf ("msdos_header.e_ovno     = %d \n",(int)msdos_header.e_ovno);
-     printf ("msdos_header.e_res[0]   = %d \n",(int)msdos_header.e_res[0]);
-     printf ("msdos_header.e_res[1]   = %d \n",(int)msdos_header.e_res[1]);
-     printf ("msdos_header.e_res[2]   = %d \n",(int)msdos_header.e_res[2]);
-     printf ("msdos_header.e_res[3]   = %d \n",(int)msdos_header.e_res[3]);
-     printf ("msdos_header.e_oemid    = %d \n",(int)msdos_header.e_oemid);
-     printf ("msdos_header.e_oeminfo  = %d \n",(int)msdos_header.e_oeminfo);
-     printf ("msdos_header.e_res2[0]  = %d \n",(int)msdos_header.e_res2[0]);
-     printf ("msdos_header.e_res2[1]  = %d \n",(int)msdos_header.e_res2[1]);
-     printf ("msdos_header.e_res2[2]  = %d \n",(int)msdos_header.e_res2[2]);
-     printf ("msdos_header.e_res2[3]  = %d \n",(int)msdos_header.e_res2[3]);
-     printf ("msdos_header.e_res2[4]  = %d \n",(int)msdos_header.e_res2[4]);
-     printf ("msdos_header.e_res2[5]  = %d \n",(int)msdos_header.e_res2[5]);
-     printf ("msdos_header.e_res2[6]  = %d \n",(int)msdos_header.e_res2[6]);
-     printf ("msdos_header.e_res2[7]  = %d \n",(int)msdos_header.e_res2[7]);
-     printf ("msdos_header.e_res2[8]  = %d \n",(int)msdos_header.e_res2[8]);
-     printf ("msdos_header.e_res2[9]  = %d \n",(int)msdos_header.e_res2[9]);
-     printf ("msdos_header.e_lfanew   = %d \n",(int)msdos_header.e_lfanew);
-
-  // printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() after reading the msdos header \n");
-  // ROSE_ASSERT(false);
-
-     printf ("Read the file up to the PE header msdos_header.e_lfanew = %d \n",msdos_header.e_lfanew);
-
-     for (int i = msdos_header_size; i < msdos_header.e_lfanew; i++)
-        {
-          int value = fgetc(f);
-          ROSE_ASSERT(value != EOF);
-        }
-
-     printf ("Now read the PE header \n");
-
-  // Now read the PE header!
-
-     char characterArray [4+1];
-     for (int i=0; i < 4; i++)
-          characterArray[i] = 'X';
-     characterArray[4] = '\0';
-
-  // string magic_number_string(char[EI_NIDENT]);
-     string magic_number_string = characterArray;
-  // printf ("magic_number_string.size() = %zu \n",magic_number_string.size());
-     ROSE_ASSERT(magic_number_string.size() == 4);
-
-     int pe_string[4] = { -1, -1, -1, -1 };
-     int magic_number_array[4];
-
-     magic_number_array [0] = firstCharacter;
-     magic_number_string[0] = (char)firstCharacter;
-
-     int magic_number_value = 0;
-     i = 0;
-     do {
-          magic_number_value     = fgetc(f);
-
-          printf ("magic_number_value = %d \n",magic_number_value);
-          char charValue = (char)magic_number_value;
-          if (charValue >= 'a' && charValue <= 'Z')
-               printf ("charValue = %c \n",charValue);
-
-          pe_string[i]           = magic_number_value;
-          magic_number_array[i]  = magic_number_value;
-          magic_number_string[i] = (char)magic_number_value;
-          i++;
-        }
-  // while (i <= 3 && magic_number_value != EOF);
-     while (i < 4 && magic_number_value != EOF);
-
-     ROSE_ASSERT(magic_number_value != EOF);
-
-  // The PE format has the string "PE\0\0" in the first 4 bytes.
-     if ( pe_string[0] == 'P' && pe_string[1] == 'E' && pe_string[2] == '\0' && pe_string[3] == '\0')
-        {
-          printf ("This is some sort of PE (likely Windows) binary executable \n");
-        }
-       else
-        {
-          printf ("Error: this is a binary, but not in COFF format \n");
-          ROSE_ASSERT(false);
-        }
-
-#if 0
-typedef struct _IMAGE_FILE_HEADER {
-  WORD  Machine;
-  WORD  NumberOfSections;
-  DWORD TimeDateStamp;
-  DWORD PointerToSymbolTable;
-  DWORD NumberOfSymbols;
-  WORD  SizeOfOptionalHeader;
-  WORD  Characteristics;
-} IMAGE_FILE_HEADER, *PIMAGE_FILE_HEADER;
-#endif
-
-  // This needs to be referenced later (to get the number of sections)
-     Rose_Wine::IMAGE_FILE_HEADER coff_file_header;
-     char* coff_file_header_array = (char*) &coff_file_header;
-
-     int coff_file_header_value = 0;
-     int coff_file_header_size = sizeof(Rose_Wine::IMAGE_FILE_HEADER);
-  // ROSE_ASSERT(coff_file_header_size == 64);
-     i = 0;
-     do {
-          coff_file_header_value = fgetc(f);
-          coff_file_header_array[i]  = coff_file_header_value;
-          i++;
-        }
-  // while (i <= msdos_header_size && msdos_header_value != EOF);
-     while (i < coff_file_header_size && coff_file_header_value != EOF);
-
-     printf ("coff_file_header.Machine                = %d \n",(int)coff_file_header.Machine);
-     printf ("coff_file_header.NumberOfSections       = %d \n",(int)coff_file_header.NumberOfSections);
-     printf ("coff_file_header.TimeDateStamp          = %d \n",(int)coff_file_header.TimeDateStamp);
-
-  // Note that ctime() adds a "\n" at the end of the string that it returns.
-     printf ("coff_file_header.TimeDateStamp (string) = %s",ctime((const time_t*)&coff_file_header.TimeDateStamp));
-
-     printf ("coff_file_header.PointerToSymbolTable   = %d \n",(int)coff_file_header.PointerToSymbolTable);
-     printf ("coff_file_header.NumberOfSymbols        = %d \n",(int)coff_file_header.NumberOfSymbols);
-     printf ("coff_file_header.SizeOfOptionalHeader   = %d \n",(int)coff_file_header.SizeOfOptionalHeader);
-     printf ("coff_file_header.Characteristics        = %p \n",(void*)coff_file_header.Characteristics);
-
-
-  // Save the PE header in the SgAsmFile asmFile
-
-#if 0
-typedef struct _IMAGE_OPTIONAL_HEADER {
-
-  /* Standard fields */
-
-  WORD  Magic; /* 0x10b or 0x107 */	/* 0x00 */
-  BYTE  MajorLinkerVersion;
-  BYTE  MinorLinkerVersion;
-  DWORD SizeOfCode;
-  DWORD SizeOfInitializedData;
-  DWORD SizeOfUninitializedData;
-  DWORD AddressOfEntryPoint;		/* 0x10 */
-  DWORD BaseOfCode;
-  DWORD BaseOfData;
-
-  /* NT additional fields */
-
-  DWORD ImageBase;
-  DWORD SectionAlignment;		/* 0x20 */
-  DWORD FileAlignment;
-  WORD  MajorOperatingSystemVersion;
-  WORD  MinorOperatingSystemVersion;
-  WORD  MajorImageVersion;
-  WORD  MinorImageVersion;
-  WORD  MajorSubsystemVersion;		/* 0x30 */
-  WORD  MinorSubsystemVersion;
-  DWORD Win32VersionValue;
-  DWORD SizeOfImage;
-  DWORD SizeOfHeaders;
-  DWORD CheckSum;			/* 0x40 */
-  WORD  Subsystem;
-  WORD  DllCharacteristics;
-  DWORD SizeOfStackReserve;
-  DWORD SizeOfStackCommit;
-  DWORD SizeOfHeapReserve;		/* 0x50 */
-  DWORD SizeOfHeapCommit;
-  DWORD LoaderFlags;
-  DWORD NumberOfRvaAndSizes;
-  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES]; /* 0x60 */
-  /* 0xE0 */
-} IMAGE_OPTIONAL_HEADER32, *PIMAGE_OPTIONAL_HEADER32;
-#endif
-
-     Rose_Wine::IMAGE_OPTIONAL_HEADER32 coff_optional_header;
-     char* coff_optional_header_array = (char*) &coff_optional_header;
-
-     int coff_optional_header_value = 0;
-     int coff_optional_header_size = sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32);
-
-     printf ("coff_optional_header_size = %d sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32) = %d coff_file_header.SizeOfOptionalHeader = %d \n",
-          coff_optional_header_size,(int)sizeof(Rose_Wine::IMAGE_OPTIONAL_HEADER32),(int)coff_file_header.SizeOfOptionalHeader);
-
-     ROSE_ASSERT(coff_optional_header_size == coff_file_header.SizeOfOptionalHeader);
-
-     i = 0;
-     do {
-          coff_optional_header_value = fgetc(f);
-          coff_optional_header_array[i]  = coff_optional_header_value;
-          i++;
-        }
-     while (i < coff_optional_header_size && coff_optional_header_value != EOF);
-
-     printf ("coff_optional_header.Magic                       = %p \n",(int*)coff_optional_header.Magic);
-     printf ("coff_optional_header.MajorLinkerVersion          = %d \n",(int)coff_optional_header.MajorLinkerVersion);
-     printf ("coff_optional_header.MinorLinkerVersion          = %d \n",(int)coff_optional_header.MinorLinkerVersion);
-     printf ("coff_optional_header.SizeOfCode                  = %d \n",(int)coff_optional_header.SizeOfCode);
-     printf ("coff_optional_header.SizeOfInitializedData       = %d \n",(int)coff_optional_header.SizeOfInitializedData);
-     printf ("coff_optional_header.SizeOfUninitializedData     = %d \n",(int)coff_optional_header.SizeOfUninitializedData);
-     printf ("coff_optional_header.AddressOfEntryPoint         = %p \n",(int*)coff_optional_header.AddressOfEntryPoint);
-     printf ("coff_optional_header.BaseOfCode                  = %p \n",(int*)coff_optional_header.BaseOfCode);
-     printf ("coff_optional_header.BaseOfData                  = %d \n",(int)coff_optional_header.BaseOfData);
-     printf ("coff_optional_header.ImageBase                   = %p \n",(int*)coff_optional_header.ImageBase);
-     printf ("coff_optional_header.SectionAlignment            = %d \n",(int)coff_optional_header.SectionAlignment);
-     printf ("coff_optional_header.FileAlignment               = %d \n",(int)coff_optional_header.FileAlignment);
-     printf ("coff_optional_header.MajorOperatingSystemVersion = %d \n",(int)coff_optional_header.MajorOperatingSystemVersion);
-     printf ("coff_optional_header.MinorOperatingSystemVersion = %d \n",(int)coff_optional_header.MinorOperatingSystemVersion);
-     printf ("coff_optional_header.MajorImageVersion           = %d \n",(int)coff_optional_header.MajorImageVersion);
-     printf ("coff_optional_header.MinorSubsystemVersion       = %d \n",(int)coff_optional_header.MinorSubsystemVersion);
-     printf ("coff_optional_header.Win32VersionValue           = %d \n",(int)coff_optional_header.Win32VersionValue);
-     printf ("coff_optional_header.SizeOfImage                 = %d \n",(int)coff_optional_header.SizeOfImage);
-     printf ("coff_optional_header.SizeOfHeaders               = %d \n",(int)coff_optional_header.SizeOfHeaders);
-     printf ("coff_optional_header.CheckSum                    = %d \n",(int)coff_optional_header.CheckSum);
-     printf ("coff_optional_header.Subsystem                   = %d \n",(int)coff_optional_header.Subsystem);
-     printf ("coff_optional_header.DllCharacteristics          = %p \n",(int*)coff_optional_header.DllCharacteristics);
-     printf ("coff_optional_header.SizeOfStackReserve          = %d \n",(int)coff_optional_header.SizeOfStackReserve);
-     printf ("coff_optional_header.SizeOfStackCommit           = %d \n",(int)coff_optional_header.SizeOfStackCommit);
-     printf ("coff_optional_header.SizeOfHeapReserve           = %d \n",(int)coff_optional_header.SizeOfHeapReserve);
-     printf ("coff_optional_header.SizeOfHeapCommit            = %d \n",(int)coff_optional_header.SizeOfHeapCommit);
-     printf ("coff_optional_header.LoaderFlags                 = %d \n",(int)coff_optional_header.LoaderFlags);
-     printf ("coff_optional_header.NumberOfRvaAndSizes         = %d \n",(int)coff_optional_header.NumberOfRvaAndSizes);
-  // printf ("coff_optional_header.              = %d \n",(int)coff_optional_header.);
-
-  // Save the PE optional header in the SgAsmFile asmFile
-
-     const int MaxNumberOfDirectoryHeaders = 100;
-  // Rose_Wine::IMAGE_DATA_DIRECTORY coff_data_directory_headers[16];
-     Rose_Wine::IMAGE_DATA_DIRECTORY coff_data_directory_headers[MaxNumberOfDirectoryHeaders];
-     char* coff_data_directory_array = (char*) coff_data_directory_headers;
-
-  // ROSE_ASSERT(coff_optional_header.NumberOfRvaAndSizes == 16);
-     ROSE_ASSERT(coff_optional_header.NumberOfRvaAndSizes < MaxNumberOfDirectoryHeaders);
-
-     int coff_data_directory_header_value = 0;
-     int coff_data_directory_headers_size = coff_optional_header.NumberOfRvaAndSizes * sizeof(Rose_Wine::IMAGE_DATA_DIRECTORY);
-
-     i = 0;
-     do {
-          coff_data_directory_header_value = fgetc(f);
-          coff_data_directory_array[i]     = coff_data_directory_header_value;
-          i++;
-        }
-     while (i < coff_data_directory_headers_size && coff_data_directory_header_value != EOF);
-
-     for (int i = 0; i < coff_optional_header.NumberOfRvaAndSizes; i++)
-        {
-          printf ("coff_data_directory_headers[%d].VirtualAddress = %p \n",i,(void*)coff_data_directory_headers[i].VirtualAddress);
-          printf ("coff_data_directory_headers[%d].Size           = %u \n",i,(unsigned int)coff_data_directory_headers[i].Size);
-        }
-
-#if 0
-typedef struct _IMAGE_SECTION_HEADER {
-  BYTE  Name[IMAGE_SIZEOF_SHORT_NAME];
-  union {
-    DWORD PhysicalAddress;
-    DWORD VirtualSize;
-  } Misc;
-  DWORD VirtualAddress;
-  DWORD SizeOfRawData;
-  DWORD PointerToRawData;
-  DWORD PointerToRelocations;
-  DWORD PointerToLinenumbers;
-  WORD  NumberOfRelocations;
-  WORD  NumberOfLinenumbers;
-  DWORD Characteristics;
-} IMAGE_SECTION_HEADER, *PIMAGE_SECTION_HEADER;
-#endif
-
-#if 1
-  // Reread the file from the start
-     rewind(f);
-
-     int coff_sectionHeaderFilePosition_value = 0;
-     int signatureSize = 4;
-
-  // The COFF header starts at a position specified by msdos_header.e_lfanew
-  // int sectionHeaderFilePosition  = msdos_header_size + signatureSize + coff_file_header_size + coff_optional_header_size + coff_data_directory_headers_size;
-     int sectionHeaderFilePosition  = msdos_header.e_lfanew + signatureSize + coff_file_header_size + coff_optional_header_size + coff_data_directory_headers_size;
-
-     printf ("sectionHeaderFilePosition = %d \n",sectionHeaderFilePosition);
-
-     i = 0;
-     do {
-          coff_sectionHeaderFilePosition_value = fgetc(f);
-          i++;
-        }
-     while (i < sectionHeaderFilePosition && coff_sectionHeaderFilePosition_value != EOF);
-#endif
-
-  // Note that the Windows loader limits the number of sections to 96 (see PE spec: page 7 section 3.3).
-     const int MaxNumberOfSectionHeaders = 96;
-     Rose_Wine::IMAGE_SECTION_HEADER coff_section_headers[MaxNumberOfSectionHeaders];
-     char* coff_section_array = (char*) coff_section_headers;
-
-     ROSE_ASSERT(coff_file_header.NumberOfSections < MaxNumberOfSectionHeaders);
-
-     unsigned int coff_section_header_value = 0;
-     int coff_section_headers_size = coff_file_header.NumberOfSections * sizeof(Rose_Wine::IMAGE_SECTION_HEADER);
-
-     i = 0;
-     do {
-          coff_section_header_value = fgetc(f);
-          coff_section_array[i]     = coff_section_header_value;
-          i++;
-        }
-     while (i < coff_section_headers_size && coff_section_header_value != EOF);
-
-  // Assertion based on PE spec page 12 (SizeOfHeaders description)
-     ROSE_ASSERT(sectionHeaderFilePosition + coff_section_headers_size < coff_optional_header.SizeOfHeaders);
-
-     for (int i = 0; i < coff_file_header.NumberOfSections; i++)
-        {
-          unsigned char nameString[9];
-          printf ("coff_section_headers[%d].Name (byte values)   = ",i);
-          for (int j = 0; j < 8; j++)
-             {
-               nameString[i] = coff_section_headers[i].Name[j];
-               printf ("%d ",nameString[i]);
-             }
-          nameString[8] = '\0';
-          printf ("\n");
-
-          printf ("coff_section_headers[%d].Name                 = \"%s\" \n",i,nameString);
-          printf ("coff_section_headers[%d].Misc.PhysicalAddress = %d \n",i,(int)coff_section_headers[i].Misc.PhysicalAddress);
-          printf ("coff_section_headers[%d].Misc.VirtualSize     = %d \n",i,(int)coff_section_headers[i].Misc.VirtualSize);
-          printf ("coff_section_headers[%d].VirtualAddress       = %d \n",i,(int)coff_section_headers[i].VirtualAddress);
-          printf ("coff_section_headers[%d].SizeOfRawData        = %d \n",i,(int)coff_section_headers[i].SizeOfRawData);
-          printf ("coff_section_headers[%d].PointerToRawData     = %p \n",i,(void*)coff_section_headers[i].PointerToRawData);
-          printf ("coff_section_headers[%d].PointerToRelocations = %p \n",i,(void*)coff_section_headers[i].PointerToRelocations);
-          printf ("coff_section_headers[%d].PointerToLinenumbers = %p \n",i,(void*)coff_section_headers[i].PointerToLinenumbers);
-          printf ("coff_section_headers[%d].NumberOfRelocations  = %d \n",i,(int)coff_section_headers[i].NumberOfRelocations);
-          printf ("coff_section_headers[%d].NumberOfLinenumbers  = %d \n",i,(int)coff_section_headers[i].NumberOfLinenumbers);
-          printf ("coff_section_headers[%d].Characteristics      = %p \n",i,(void*)coff_section_headers[i].Characteristics);
-        }
-
-  // Reread the file from the start
-     rewind(f);
-
-     printf ("Exiting at base of generateBinaryExecutableFileInformation_Windows() \n");
-     ROSE_ASSERT(false);
-   }
-#endif
-
-
-// #if USE_NEW_BINARY_FORMAT_READER == 0
-#if 0
-// Older Binary file format support (from before Robb's newer version
-// and it's even newer connection to the binary format IR nodes).
-
-bool
-generateBinaryExecutableFileInformation_ELF ( string sourceFilename, SgAsmFile* asmFile )
-   {
-     ROSE_ASSERT(asmFile != NULL);
-
-     printf ("Inside of generateBinaryExecutableFileInformation_ELF() \n");
-
-  // DQ (12/8/2008): Why have we reverted to this older preliminary version of the binary 
-  // format reader, weren't we supposed to be using Robb's work?
-     printf ("\n\nWhy is this older binary file format being used!  \n\n\n");
-  // ROSE_ASSERT(false);
-
-     ROSE_ASSERT(isBinaryExecutableFile(sourceFilename) == true);
-
-     asmFile->set_name(sourceFilename);
-
-  // Open file for reading
-     FILE* f = fopen(sourceFilename.c_str(), "r");
-     if (!f)
-        {
-          printf ("Could not open binary file = %s \n",sourceFilename.c_str());
-          ROSE_ASSERT(false);
-        }
-
-     int firstCharacter = fgetc(f);
-     // ROSE_ASSERT(firstCharacter == 127);
-     if (firstCharacter != 127) {
-       // Not ELF
-       return false; // Let something else handle this
-     }
-
-  // This is likely a binary executable
-  // fread(void *ptr, size_t size_of_elements, size_t number_of_elements, FILE *a_file);
-
-     char characterArray [EI_NIDENT+1];
-     for (int i=0; i < EI_NIDENT; i++)
-          characterArray[i] = 'X';
-     characterArray[EI_NIDENT] = '\0';
-
-  // string magic_number_string(char[EI_NIDENT]);
-     string magic_number_string = characterArray;
-  // printf ("magic_number_string.size() = %zu \n",magic_number_string.size());
-     ROSE_ASSERT(magic_number_string.size() == EI_NIDENT);
-
-     int elf_string[3] = { -1, -1, -1 };
-     int magic_number_array[EI_NIDENT];
-
-     magic_number_array[0] = firstCharacter;
-     magic_number_string[0] = (char)firstCharacter;
-
-     int magic_number_value = 0;
-     int i = 1;
-     do {
-          magic_number_value = fgetc(f);
-          elf_string[i-1] = magic_number_value;
-          magic_number_array[i] = magic_number_value;
-          magic_number_string[i] = (char)magic_number_value;
-          i++;
-        }
-     while (i <= 3 && magic_number_value != EOF);
-
-     ROSE_ASSERT(magic_number_value != EOF);
-
-     if ( elf_string[0] == 'E' && elf_string[1] == 'L' && elf_string[2] == 'F' )
-        {
-       // printf ("This is some sort of ELF binary executable \n");
-
-       // Make sure that this is what I expect!
-          ROSE_ASSERT(EI_NIDENT == 16);
-
-       // Gather the remaining magic numbers (now that we are sure this is an ELF file)
-          do {
-               magic_number_value = fgetc(f);
-               magic_number_array [i] = magic_number_value;
-               magic_number_string[i] = (char)magic_number_value;
-               i++;
-             }
-          while (i < EI_NIDENT && magic_number_value != EOF);
-          ROSE_ASSERT(magic_number_value != EOF);
-
-          asmFile->set_magic_number_string(magic_number_string);
-        }
-       else
-        {
-          printf ("Error: this is a binary, but not ELF \n");
-          ROSE_ASSERT(false);
-        }
-
-#if 0
-  // At this point we have the ELF header magic number array (print it out)
-     for (int i=0; i < EI_NIDENT; i++)
-        {
-          printf ("ELF header magic_number_array[%d] = %d \n",i,magic_number_array[i]);
-        }
-#endif
-
-  // Reread the file from the start
-     rewind(f);
-
-     Elf32_Ehdr elf_32_bit_header;
-     Elf64_Ehdr elf_64_bit_header;
-
-     int elfHeaderSize_32bit = sizeof(Elf32_Ehdr);
-     int elfHeaderSize_64bit = sizeof(Elf64_Ehdr);
-
-  // printf ("elfHeaderSize_32bit = %d elfHeaderSize_64bit = %d \n",elfHeaderSize_32bit,elfHeaderSize_64bit);
-     ROSE_ASSERT(elfHeaderSize_32bit <= elfHeaderSize_64bit);
-
-     int elementsRead = 0;
-
-  // Read the header as a 32bit elf file header first, if there is an error then try as 64 bit elf header.
-     elementsRead = fread(&elf_32_bit_header,1,elfHeaderSize_32bit,f);
-     if (elementsRead != elfHeaderSize_32bit)
-        {
-          printf ("Error in reading to the end of the elf_32_bit_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfHeaderSize_32bit);
-          ROSE_ASSERT(false);
-        }
-
-     bool isA32bitElfHeader = false;
-     bool isA64bitElfHeader = false;
-
-     ROSE_ASSERT(EI_CLASS == 4);
-     if (magic_number_array[EI_CLASS] == ELFCLASS32)
-        {
-       // This appears to be a 32 bit (class 1) elf file.
-          if ( SgProject::get_verbose() >= 1 )
-               printf ("This appears to be a 32 bit (class 1) ELF file \n");
-
-          isA32bitElfHeader = true;
-
-          asmFile->set_binary_class_type(SgAsmFile::e_class_32);
-        }
-       else
-        {
-       // Reread the file from the start
-          rewind(f);
-
-       // Read the header as a 64bit elf file header (second), if there is an error then there is some other problem!
-          elementsRead = fread(&elf_64_bit_header,1,elfHeaderSize_64bit,f);
-          if (elementsRead != elfHeaderSize_64bit)
-             {
-               printf ("Error in reading to the end of the elf_32_bit_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfHeaderSize_32bit);
-               ROSE_ASSERT(false);
-             }
-
-       // if (elf_64_bit_header.e_type == ELFCLASS64)
-          if (magic_number_array[EI_CLASS] == ELFCLASS64)
-             {
-            // This appears to be a 64 bit (class 1) elf file.
-               if ( SgProject::get_verbose() >= 1 )
-                    printf ("This appears to be a 64 bit (class 2) ELF file \n");
-               isA64bitElfHeader = true;
-
-               asmFile->set_binary_class_type(SgAsmFile::e_class_64);
-             }
-            else
-             {
-               if (magic_number_array[EI_CLASS] == ELFCLASSNONE)
-                  {
-                    printf ("magic_number_array[4] marked as ELFCLASSNONE \n");
-                    asmFile->set_binary_class_type(SgAsmFile::e_class_none);
-                  }
-                 else
-                  {
-                    asmFile->set_binary_class_type(SgAsmFile::e_class_unknown);
-                  }
-             }
-        }
-
-  // Only one of these should be true.
-     ROSE_ASSERT(isA32bitElfHeader == true  || isA64bitElfHeader == true);
-     ROSE_ASSERT(isA32bitElfHeader == false || isA64bitElfHeader == false);
-
-     ROSE_ASSERT(EI_DATA == 5);
-     bool isBigEndian = false; // For reading header fields
-     switch (magic_number_array[EI_DATA])
-        {
-          case ELFDATANONE:
-            // This appears to be an error 
-            // printf ("Error: Data encoding is ELFDATANONE \n");
-               asmFile->set_data_encoding(SgAsmFile::e_data_encoding_none);
-               break;
-
-          case ELFDATA2LSB:
-            // little endian 
-            // printf ("Data encoding is LITTLE endian \n");
-               asmFile->set_data_encoding(SgAsmFile::e_data_encoding_least_significant_byte);
-               isBigEndian = false;
-               break;
-
-          case ELFDATA2MSB:
-            // big endian 
-            // printf ("Data encoding is BIG endian \n");
-               asmFile->set_data_encoding(SgAsmFile::e_data_encoding_most_significant_byte);
-               isBigEndian = true;
-               break;
-
-          default:
-             {
-               printf ("Error: default reached in data encoding specification magic_number_array[EI_DATA] = %d \n",magic_number_array[EI_DATA]);
-            // ROSE_ASSERT(false);
-             }
-        }
-
-     ROSE_ASSERT(EI_VERSION == 6);
-     switch (magic_number_array[EI_VERSION])
-        {
-          case EV_NONE:
-            // This appears to be an error 
-            // printf ("Error in ELF version number: magic_number_array[EI_VERSION] = EV_NONE \n");
-               asmFile->set_version(SgAsmFile::e_version_none);
-               break;
-
-          case EV_CURRENT:
-            // Only acceptable value for ELF
-            // printf ("Only acceptable value for ELF version number: magic_number_array[EI_VERSION] = EV_CURRENT \n");
-               asmFile->set_version(SgAsmFile::e_version_current);
-               break;
-
-          default:
-             {
-               printf ("Error: default reached in ELF version specification magic_number_array[EI_VERSION] = %d \n",magic_number_array[EI_VERSION]);
-             }
-        }
-
-  // Now set the object file type
-     SgAsmFile::elf_object_file_type_enum object_file_kind = SgAsmFile::e_file_type_error;
-     // This field is the same for 32 vs. 64 bits
-     int object_file_type = getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_type);
-
-     switch (object_file_type)
-        {
-          case ET_NONE: 
-               object_file_kind = SgAsmFile::e_file_type_none;
-               break;
-
-          case ET_REL: 
-               object_file_kind = SgAsmFile::e_file_type_relocatable;
-               break;
-
-          case ET_EXEC: 
-               object_file_kind = SgAsmFile::e_file_type_executable;
-               break;
-
-          case ET_DYN: 
-               object_file_kind = SgAsmFile::e_file_type_shared;
-               break;
-
-          case ET_CORE: 
-               object_file_kind = SgAsmFile::e_file_type_core;
-               break;
-
-          default:
-             {
-               printf ("Error: default reach for object_file_type = %d \n",object_file_type);
-             }
-        }
-
-     asmFile->set_object_file_type(object_file_kind);
-
-  // Now set the machine architecture type -- same for 32 vs. 64 bit
-     SgAsmFile::elf_machine_architecture_enum machine_architecture_kind = SgAsmFile::e_machine_architecture_error;
-     int machine_architecture_type = getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_machine);
-
-     switch (machine_architecture_type)
-        {
-          case EM_NONE:        machine_architecture_kind = SgAsmFile::e_machine_architecture_none;                     break;
-          case EM_M32:         machine_architecture_kind = SgAsmFile::e_machine_architecture_ATT_WE_32100;             break;
-          case EM_SPARC:       machine_architecture_kind = SgAsmFile::e_machine_architecture_Sun_Sparc;                break;
-          case EM_386:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Intel_80386;              break;
-          case EM_68K:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_m68k_family;     break;
-          case EM_88K:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_m88k_family;     break;
-          case EM_860:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Intel_80860;              break;
-          case EM_MIPS:        machine_architecture_kind = SgAsmFile::e_machine_architecture_MIPS_R3000_big_endian;    break;
-          case EM_S370:        machine_architecture_kind = SgAsmFile::e_machine_architecture_IBM_System_370;           break;
-          case EM_MIPS_RS3_LE: machine_architecture_kind = SgAsmFile::e_machine_architecture_MIPS_R3000_little_endian; break;
-          case EM_PARISC:      machine_architecture_kind = SgAsmFile::e_machine_architecture_HPPA;               break;
-          case EM_VPP500:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Fujitsu_VPP500;     break;
-          case EM_SPARC32PLUS: machine_architecture_kind = SgAsmFile::e_machine_architecture_Sun_v8plus;         break;
-          case EM_960:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Intel_80960;        break;
-          case EM_PPC:         machine_architecture_kind = SgAsmFile::e_machine_architecture_PowerPC;            break;
-          case EM_PPC64:       machine_architecture_kind = SgAsmFile::e_machine_architecture_PowerPC_64bit;      break;
-          case EM_S390:        machine_architecture_kind = SgAsmFile::e_machine_architecture_IBM_S390;           break;
-          case EM_V800:        machine_architecture_kind = SgAsmFile::e_machine_architecture_NEC_V800_series;    break;
-          case EM_FR20:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Fujitsu_FR20;       break;
-          case EM_RH32:        machine_architecture_kind = SgAsmFile::e_machine_architecture_TRW_RH_32;          break;
-          case EM_RCE:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_RCE;       break;
-          case EM_ARM:         machine_architecture_kind = SgAsmFile::e_machine_architecture_ARM;                break;
-          case EM_FAKE_ALPHA:  machine_architecture_kind = SgAsmFile::e_machine_architecture_Digital_Alpha_fake; break;
-          case EM_SH:          machine_architecture_kind = SgAsmFile::e_machine_architecture_Hitachi_SH;         break;
-          case EM_SPARCV9:     machine_architecture_kind = SgAsmFile::e_machine_architecture_SPARC_v9_64bit;     break;
-          case EM_TRICORE:     machine_architecture_kind = SgAsmFile::e_machine_architecture_Siemens_Tricore;    break;
-          case EM_ARC:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Argonaut_RISC_Core; break;
-          case EM_H8_300:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Hitachi_H8_300;     break;
-          case EM_H8_300H:     machine_architecture_kind = SgAsmFile::e_machine_architecture_Hitachi_H8_300H;    break;
-          case EM_H8S:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Hitachi_H8S;        break;
-          case EM_H8_500:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Hitachi_H8_500;     break;
-          case EM_IA_64:       machine_architecture_kind = SgAsmFile::e_machine_architecture_Intel_Merced;       break;
-          case EM_MIPS_X:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Stanford_MIPS_X;    break;
-          case EM_COLDFIRE:    machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_Coldfire;  break;
-          case EM_68HC12:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_M68HC12;   break;
-          case EM_MMA:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Fujitsu_MMA_Multimedia_Accelerator;   break;
-          case EM_PCP:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Siemens_PCP;                          break;
-          case EM_NCPU:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Sony_nCPU_embeeded_RISC;              break;
-          case EM_NDR1:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Denso_NDR1_microprocessor;            break;
-          case EM_STARCORE:    machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_Start_Core_processor;        break;
-          case EM_ME16:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Toyota_ME16_processor;                break;
-          case EM_ST100:       machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronic_ST100_processor;    break;
-          case EM_TINYJ:       machine_architecture_kind = SgAsmFile::e_machine_architecture_Advanced_Logic_Corp_Tinyj_emb_family; break;
-          case EM_X86_64:      machine_architecture_kind = SgAsmFile::e_machine_architecture_AMD_x86_64_architecture;              break;
-          case EM_PDSP:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Sony_DSP_Processor;                   break;
-          case EM_FX66:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Siemens_FX66_microcontroller;         break;
-          case EM_ST9PLUS:     machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST9_plus_8_16_microcontroller; break;
-          case EM_ST7:         machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST7_8bit_microcontroller;      break;
-          case EM_68HC16:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC16_microcontroller;              break;
-          case EM_68HC11:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC11_microcontroller;              break;
-          case EM_68HC08:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC08_microcontroller;              break;
-          case EM_68HC05:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Motorola_MC68HC05_microcontroller;              break;
-          case EM_SVX:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Silicon_Graphics_SVx;                           break;
-          case EM_ST19:        machine_architecture_kind = SgAsmFile::e_machine_architecture_STMicroelectronics_ST19_8bit_microcontroller;   break;
-          case EM_VAX:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Digital_VAX;                                    break;
-          case EM_CRIS:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Axis_Communications_32bit_embedded_processor;   break;
-          case EM_JAVELIN:     machine_architecture_kind = SgAsmFile::e_machine_architecture_Infineon_Technologies_32bit_embedded_processor; break;
-          case EM_FIREPATH:    machine_architecture_kind = SgAsmFile::e_machine_architecture_Element_14_64bit_DSP_Processor;                 break;
-          case EM_ZSP:         machine_architecture_kind = SgAsmFile::e_machine_architecture_LSI_Logic_16bit_DSP_Processor;                  break;
-          case EM_MMIX:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Donald_Knuths_educational_64bit_processor;      break;
-          case EM_HUANY:       machine_architecture_kind = SgAsmFile::e_machine_architecture_Harvard_University_machine_independent_object_files; break;
-          case EM_PRISM:       machine_architecture_kind = SgAsmFile::e_machine_architecture_SiTera_Prism;                      break;
-          case EM_AVR:         machine_architecture_kind = SgAsmFile::e_machine_architecture_Atmel_AVR_8bit_microcontroller;    break;
-          case EM_FR30:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Fujitsu_FR30;                      break;
-          case EM_D10V:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Mitsubishi_D10V;                   break;
-          case EM_D30V:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Mitsubishi_D30V;                   break;
-          case EM_V850:        machine_architecture_kind = SgAsmFile::e_machine_architecture_NEC_v850;                          break;
-          case EM_M32R:        machine_architecture_kind = SgAsmFile::e_machine_architecture_Mitsubishi_M32R;                   break;
-          case EM_MN10300:     machine_architecture_kind = SgAsmFile::e_machine_architecture_Matsushita_MN10300;                break;
-          case EM_MN10200:     machine_architecture_kind = SgAsmFile::e_machine_architecture_Matsushita_MN10200;                break;
-          case EM_PJ:          machine_architecture_kind = SgAsmFile::e_machine_architecture_picoJava;                          break;
-          case EM_OPENRISC:    machine_architecture_kind = SgAsmFile::e_machine_architecture_OpenRISC_32bit_embedded_processor; break;
-          case EM_ARC_A5:      machine_architecture_kind = SgAsmFile::e_machine_architecture_ARC_Cores_Tangent_A5;              break;
-          case EM_XTENSA:      machine_architecture_kind = SgAsmFile::e_machine_architecture_Tensilica_Xtensa_Architecture;     break;
-          case EM_ALPHA:       machine_architecture_kind = SgAsmFile::e_machine_architecture_Digital_Alpha;                     break;
-
-          default:
-             {
-               printf ("Error: default reach for machine_architecture_type = %d \n",machine_architecture_type);
-             }
-        }
-
-     asmFile->set_machine_architecture(machine_architecture_kind);
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("Machine arcitecture = %s \n",machineArchitectureName(machine_architecture_kind).c_str());
-
-     if (isA32bitElfHeader == true)
-        {
-          ROSE_ASSERT(isA64bitElfHeader == false);
-
-          asmFile->set_associated_entry_point(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_entry));
-          asmFile->set_program_header_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_phoff));
-          asmFile->set_section_header_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_shoff));
-          asmFile->set_processor_specific_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_header.e_flags));
-          asmFile->set_elf_header_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_ehsize));
-          asmFile->set_program_header_entry_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_phentsize));
-          asmFile->set_number_of_program_headers(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_phnum));
-          asmFile->set_section_header_entry_size(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shentsize));
-          asmFile->set_number_of_section_headers(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shnum));
-          asmFile->set_section_header_string_table_index(getSwitchedEndian16(isBigEndian, elf_32_bit_header.e_shstrndx));
-        }
-       else
-        {
-          ROSE_ASSERT(isA64bitElfHeader == true);
-
-          asmFile->set_associated_entry_point(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_entry));
-          asmFile->set_program_header_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_phoff));
-          asmFile->set_section_header_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_header.e_shoff));
-          asmFile->set_processor_specific_flags(getSwitchedEndian32(isBigEndian, elf_64_bit_header.e_flags));
-          asmFile->set_elf_header_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_ehsize));
-          asmFile->set_program_header_entry_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_phentsize));
-          asmFile->set_number_of_program_headers(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_phnum));
-          asmFile->set_section_header_entry_size(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shentsize));
-          asmFile->set_number_of_section_headers(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shnum));
-          asmFile->set_section_header_string_table_index(getSwitchedEndian16(isBigEndian, elf_64_bit_header.e_shstrndx));
-        }
-
-     if ( SgProject::get_verbose() >= 3 )
-        {
-          printf ("asmFile->get_associated_entry_point()            = %lx \n",asmFile->get_associated_entry_point());
-          printf ("asmFile->get_program_header_offset()             = %lx \n",asmFile->get_program_header_offset());
-          printf ("asmFile->get_section_header_offset()             = %lx \n",asmFile->get_section_header_offset());
-          printf ("asmFile->get_processor_specific_flags()          = %lx \n",asmFile->get_processor_specific_flags());
-          printf ("asmFile->get_elf_header_size()                   = %lx \n",asmFile->get_elf_header_size());
-          printf ("asmFile->get_program_header_entry_size()         = %lu \n",asmFile->get_program_header_entry_size());
-          printf ("asmFile->get_number_of_program_headers()         = %lu \n",asmFile->get_number_of_program_headers());
-          printf ("asmFile->get_section_header_entry_size()         = %lu \n",asmFile->get_section_header_entry_size());
-          printf ("asmFile->get_number_of_section_headers()         = %lu \n",asmFile->get_number_of_section_headers());
-          printf ("asmFile->get_section_header_string_table_index() = %lu \n",asmFile->get_section_header_string_table_index());
-        }
-
-  // Now get the program headers
-
-  // Can we move the file pointer more directly than this???
-     unsigned long programHeaderOffset = asmFile->get_program_header_offset();
-     fseek(f, programHeaderOffset, SEEK_SET);
-
-     Elf32_Phdr elf_32_bit_program_header;
-     Elf64_Phdr elf_64_bit_program_header;
-
-     int elfProgramHeaderSize_32bit = sizeof(Elf32_Phdr);
-     int elfProgramHeaderSize_64bit = sizeof(Elf64_Phdr);
-
-     SgAsmProgramHeaderList* programHeaderList = new SgAsmProgramHeaderList();
-
-     asmFile->set_programHeaderList(programHeaderList);
-     programHeaderList->set_parent(asmFile);
-
-     if ( SgProject::get_verbose() >= 3 )
-          printf ("elfProgramHeaderSize_32bit = %d elfProgramHeaderSize_64bit = %d \n",elfProgramHeaderSize_32bit,elfProgramHeaderSize_64bit);
-     ROSE_ASSERT(elfProgramHeaderSize_32bit <= elfProgramHeaderSize_64bit);
-
-     int number_of_program_headers = asmFile->get_number_of_program_headers();
-     for (int i = 0; i < number_of_program_headers; i++)
-        {
-          SgAsmProgramHeader* programHeader = new SgAsmProgramHeader();
-          ROSE_ASSERT(programHeader != NULL);
-
-          programHeaderList->get_program_headers().push_back(programHeader);
-          programHeader->set_parent(programHeaderList);
-
-       // If we used a 32 bit Elf header then the program header (and section header) must match, I think.
-          if (isA32bitElfHeader == true)
-             {
-               ROSE_ASSERT(isA64bitElfHeader == false);
-
-               elementsRead = fread(&elf_32_bit_program_header,1,elfProgramHeaderSize_32bit,f);
-               if (elementsRead != elfProgramHeaderSize_32bit)
-                  {
-                    printf ("Error in reading to the end of the elf_32_bit_program_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfProgramHeaderSize_32bit);
-                    ROSE_ASSERT(false);
-                  }
-
-               programHeader->set_type(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_type));
-               programHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_offset));
-               programHeader->set_starting_virtual_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_vaddr));
-               programHeader->set_starting_physical_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_paddr));
-               programHeader->set_file_image_size(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_filesz));
-               programHeader->set_memory_image_size(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_memsz));
-               programHeader->set_segment_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_flags));
-               programHeader->set_alignment(getSwitchedEndian32(isBigEndian, elf_32_bit_program_header.p_align));
-             }
-            else
-             {
-               ROSE_ASSERT(isA64bitElfHeader == true);
-
-               elementsRead = fread(&elf_64_bit_program_header,1,elfProgramHeaderSize_64bit,f);
-               if (elementsRead != elfProgramHeaderSize_64bit)
-                  {
-                    printf ("Error in reading to the end of the elf_64_bit_program_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfProgramHeaderSize_32bit);
-                    ROSE_ASSERT(false);
-                  }
-
-               programHeader->set_type(getSwitchedEndian32(isBigEndian, elf_64_bit_program_header.p_type));
-               programHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_64_bit_program_header.p_offset));
-               programHeader->set_starting_virtual_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_vaddr));
-               programHeader->set_starting_physical_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_paddr));
-               programHeader->set_file_image_size(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_filesz));
-               programHeader->set_memory_image_size(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_memsz));
-               programHeader->set_segment_flags(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_flags));
-               programHeader->set_alignment(getSwitchedEndian64(isBigEndian, elf_64_bit_program_header.p_align));
-             }
-
-          if ( SgProject::get_verbose() >= 3 )
-             {
-               printf ("programHeader->get_type() = %lu \n",programHeader->get_type());
-               printf ("programHeader->get_starting_file_offset() = %lx \n",programHeader->get_starting_file_offset());
-               printf ("programHeader->get_starting_virtual_memory_address() = %lx \n",programHeader->get_starting_virtual_memory_address());
-               printf ("programHeader->get_starting_physical_memory_address() = %lx \n",programHeader->get_starting_physical_memory_address());
-               printf ("programHeader->get_file_image_size() = %lx \n",programHeader->get_file_image_size());
-               printf ("programHeader->get_memory_image_size() = %lx \n",programHeader->get_memory_image_size());
-               printf ("programHeader->get_segment_flags() = %lu \n",programHeader->get_segment_flags());
-               printf ("programHeader->get_alignment() = %lx \n",programHeader->get_alignment());
-             }
-        }
-
-  // Now get the segment headers
-
-  // Can we move the file pointer more directly than this???
-     unsigned long segmentHeaderOffset = asmFile->get_section_header_offset();
-     fseek(f, segmentHeaderOffset, SEEK_SET);
-
-     Elf32_Shdr elf_32_bit_section_header;
-     Elf64_Shdr elf_64_bit_section_header;
-
-     int elfSectionHeaderSize_32bit = sizeof(Elf32_Shdr);
-     int elfSectionHeaderSize_64bit = sizeof(Elf64_Shdr);
-
-     if ( SgProject::get_verbose() >= 1 )
-          printf ("elfSectionHeaderSize_32bit = %d elfSectionHeaderSize_64bit = %d \n",elfSectionHeaderSize_32bit,elfSectionHeaderSize_64bit);
-     ROSE_ASSERT(elfSectionHeaderSize_32bit <= elfSectionHeaderSize_64bit);
-
-     SgAsmSectionHeaderList* sectionHeaderList = new SgAsmSectionHeaderList();
-
-     asmFile->set_sectionHeaderList(sectionHeaderList);
-     sectionHeaderList->set_parent(asmFile);
-
-     int number_of_section_headers = asmFile->get_number_of_section_headers();
-     for (int i = 0; i < number_of_section_headers; i++)
-        {
-          SgAsmSectionHeader* sectionHeader = new SgAsmSectionHeader();
-          ROSE_ASSERT(sectionHeader != NULL);
-
-          sectionHeaderList->get_section_headers().push_back(sectionHeader);
-          sectionHeader->set_parent(sectionHeaderList);
-
-       // If we used a 32 bit Elf header then the program header (and section header) must match, I think.
-          if (isA32bitElfHeader == true)
-             {
-               ROSE_ASSERT(isA64bitElfHeader == false);
-
-               elementsRead = fread(&elf_32_bit_section_header,1,elfSectionHeaderSize_32bit,f);
-               if (elementsRead != elfSectionHeaderSize_32bit)
-                  {
-                    printf ("Error in reading to the end of the elf_32_bit_section_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfSectionHeaderSize_32bit);
-                    ROSE_ASSERT(false);
-                  }
-
-               string name = "not looked-up yet (elf_32_bit_section_header)";
-               sectionHeader->set_name(name);
-
-               sectionHeader->set_name_string_index(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_name));
-               sectionHeader->set_type(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_type));
-               sectionHeader->set_flags(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_flags));
-               sectionHeader->set_starting_memory_address(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_addr));
-               sectionHeader->set_starting_file_offset(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_offset));
-               sectionHeader->set_size(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_size));
-               sectionHeader->set_table_index_link(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_link));
-               sectionHeader->set_info(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_info));
-               sectionHeader->set_address_alignment(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_addralign));
-               sectionHeader->set_table_entry_size(getSwitchedEndian32(isBigEndian, elf_32_bit_section_header.sh_entsize));
-             }
-            else
-             {
-               ROSE_ASSERT(isA64bitElfHeader == true);
-
-               elementsRead = fread(&elf_64_bit_section_header,1,elfSectionHeaderSize_64bit,f);
-               if (elementsRead != elfSectionHeaderSize_64bit)
-                  {
-                    printf ("Error in reading to the end of the elf_64_bit_section_header (read only %d bytes, elf header is %d bytes) \n",elementsRead,elfSectionHeaderSize_32bit);
-                    ROSE_ASSERT(false);
-                  }
-
-               string name = "not looked-up yet (elf_64_bit_section_header)";
-               sectionHeader->set_name(name);
-
-               sectionHeader->set_type(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_type));
-               sectionHeader->set_flags(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_flags));
-               sectionHeader->set_starting_memory_address(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_addr));
-               sectionHeader->set_starting_file_offset(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_offset));
-               sectionHeader->set_size(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_size));
-               sectionHeader->set_table_index_link(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_link));
-               sectionHeader->set_info(getSwitchedEndian32(isBigEndian, elf_64_bit_section_header.sh_info));
-               sectionHeader->set_address_alignment(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_addralign));
-               sectionHeader->set_table_entry_size(getSwitchedEndian64(isBigEndian, elf_64_bit_section_header.sh_entsize));
-             }
-
-          if ( SgProject::get_verbose() >= 3 )
-             {
-               printf ("sectionHeader->get_name()                    = %s \n",sectionHeader->get_name().c_str());
-               printf ("sectionHeader->get_name_string_index()       = %lu \n",sectionHeader->get_name_string_index());
-               printf ("sectionHeader->get_type()                    = %lu \n",sectionHeader->get_type());
-               printf ("sectionHeader->get_flags()                   = %lu \n",sectionHeader->get_flags());
-               printf ("sectionHeader->get_starting_memory_address() = %lX \n",sectionHeader->get_starting_memory_address());
-               printf ("sectionHeader->get_starting_file_offset()    = %lX \n",sectionHeader->get_starting_file_offset());
-               printf ("sectionHeader->get_size()                    = %lX \n",sectionHeader->get_size());
-               printf ("sectionHeader->get_table_index_link()        = %lu \n",sectionHeader->get_table_index_link());
-               printf ("sectionHeader->get_info()                    = %lu \n",sectionHeader->get_info());
-               printf ("sectionHeader->get_address_alignment()       = %lX \n",sectionHeader->get_address_alignment());
-               printf ("sectionHeader->get_table_entry_size()        = %lu \n",sectionHeader->get_table_entry_size());
-             }
-        }
-
-     fclose(f);
-
-  // printf ("Exiting as a test in generateBinaryExecutableFileInformation() \n");
-  // ROSE_ASSERT(false);
-     return true; // This file was handled
-   }
-// Older Binary file format support
-#endif
  
 void
 SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
@@ -2828,49 +1703,6 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
 #endif
    }
 
-
-
-#if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
-// DQ (8/12/2008): This constructor is implemented in sageSupport.C and 
-// will be removed later once the new IR nodes are integrated into use.
-
-SgAsmElfFileHeader::
-SgAsmElfFileHeader ( Exec::ELF::ElfFileHeader* elf_file_header )
-   {
-  // Conversion of Robb's data structures to ROSE IR nodes.
-
-     printf ("Inside of SgAsmElfFileHeader constructor \n");
-
-     set_e_ident_file_class(elf_file_header->e_ident_file_class);
-     set_e_ident_data_encoding(elf_file_header->e_ident_data_encoding);
-     set_e_ident_file_version(elf_file_header->e_ident_file_version);
-
-     SgCharList charList;
-     for (int i = 0; i < 9; i++)
-          charList.push_back(elf_file_header->e_ident_padding[i]);
-     set_e_ident_padding(charList);
-
-     set_e_type(elf_file_header->e_type);
-     set_e_machine(elf_file_header->e_machine);
-     set_e_version(elf_file_header->e_version);
-     set_e_entry(elf_file_header->e_entry);
-     set_e_phoff(elf_file_header->e_phoff);
-     set_e_shoff(elf_file_header->e_shoff);
-     set_e_flags(elf_file_header->e_flags);
-     set_e_ehsize(elf_file_header->e_ehsize);
-     set_e_phentsize(elf_file_header->e_phentsize);
-     set_e_phnum(elf_file_header->e_phnum);
-     set_e_shentsize(elf_file_header->e_shentsize);
-     set_e_shnum(elf_file_header->e_shnum);
-     set_e_shstrndx(elf_file_header->e_shstrndx);
-
-     set_section_table(NULL); 
-     set_segment_table(NULL);
-
-  // printf ("Exiting at base of SgAsmElfHeader constructor \n");
-  // ROSE_ASSERT(false);
-   }
-#endif
 
 
 
@@ -2920,6 +1752,9 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
        // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro 
        // if we detect we are processing a source file using a C++ filename extension.
           string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
+
+       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
+       // ROSE_ASSERT(false);
 
        // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
           set_requires_C_preprocessor(true);
@@ -3028,8 +1863,8 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                  else
                   {
                   // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
-                    if ((CommandlineProcessing::isCFileNameSuffix(filenameExtension) == true)||
-                     (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true))
+                    if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
+                         ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
                        {
                       // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
                          set_sourceFileUsesCppFileExtension(false);
@@ -3055,12 +1890,16 @@ SgFile::setupSourceFilename ( const vector<string>& argv )
                               set_sourceFileUsesBinaryFileExtension(true);
                               set_binary_only(true);
 
-                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor.
+                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
                               set_requires_C_preprocessor(false);
+                            }
+                           else
+                            {
+                           // If all else fails, then output the type of file and exit.
+                              outputTypeOfFileAndExit(sourceFilename);
                             }
                        }
                   }
-
              }
 
           p_sourceFileNameWithoutPath = ROSE::stripPathFromFileName(p_sourceFileNameWithPath.c_str());
@@ -3126,10 +1965,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      // printf ("Inside of SgFile::build_EDG_CommandLine(): fileNameIndex = %d \n",fileNameIndex);
 
-  // BP: (11/26/2001) trying out a new method of figuring out internal compiler definitions
-#if defined(CXX_SPEC_DEF)
+#if !defined(CXX_SPEC_DEF)
+  // Output an error and exit
+     cout << "ERROR: The preprocessor definition CXX_SPEC_DEF should have been defined by the configure process!!" << endl;
+     ROSE_ABORT();
+#endif
 
-#if 1
      string configDefsString                = CXX_SPEC_DEF;
      const char* Cxx_ConfigIncludeDirsRaw[] = CXX_INCLUDE_STRING;
      const char* C_ConfigIncludeDirsRaw[]   = C_INCLUDE_STRING;
@@ -3342,13 +2183,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // Separate the string into substrings consistent with the structure of argv command line input
      inputCommandLine.clear();
      StringUtility::splitStringIntoStrings(initString, ' ', inputCommandLine);
-#endif
 
-#else
-  // Output an error and exit
-     cout << "ERROR: The preprocessor definition CXX_SPEC_DEF should have been defined by the configure process!!" << endl;
-     ROSE_ABORT();
-#endif
 
   // We only provide options to change the default values!
 
@@ -3652,27 +2487,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   //
   // specify compilation only option (new style command line processing)
   //
-#if 0
-     if ( CommandlineProcessing::isOption(argc,argv,"-","c",false) == true )
-        {
-          printf ("In build_EDG_CommandLine(): Option -c found (compile only)! \n");
-          set_compileOnly(true);
-        }
-       else
-        {
-          printf ("In build_EDG_CommandLine(): Option -c not found (compile AND link) adding --auto_instantiation ... \n");
-          Rose_STL_Container<string> additionalOptions_a;
-          Rose_STL_Container<string> additionalOptions_b;
-       // Even though this is not an error to EDG, it does not appear to force instantiation of all templates
-          additionalOptions_a.push_back("auto_instantiation");
-          CommandlineProcessing::addListToCommandLine(numberOfCommandLineArguments,inputCommandLine,"--",additionalOptions_a);
-
-       // DQ (5/12/05): Set the instantiation mode to "used" for specify what sort of templates to instantiate automatically
-       // (generate "-tused" instead of "--instantiate used" since EDG does not seems to accept options containing white space).
-          additionalOptions_b.push_back("tused");
-          CommandlineProcessing::addListToCommandLine(numberOfCommandLineArguments,inputCommandLine, "-",additionalOptions_b);
-        }
-#else
      bool autoInstantiation = false;
      if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
         {
@@ -3700,7 +2514,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      Rose_STL_Container<string> additionalOptions_a;
      Rose_STL_Container<string> additionalOptions_b;
-#if 1
+
      if (autoInstantiation == true)
         {
        // printf ("In build_EDG_CommandLine(): autoInstantiation = true adding --auto_instantiation -tused ... \n");
@@ -3750,7 +2564,8 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
                CommandlineProcessing::addListToCommandLine(inputCommandLine, "-",additionalOptions_b);
              }
         }
-#else
+
+#if 0
   // DQ (5/20/05): Set the instantiation mode to "used" for specify what sort of templates to instantiate automatically
   // (generate "-tused" instead of "--instantiate used" since EDG does not seems to accept options containing white space).
      printf ("In build_EDG_CommandLine(): autoInstantiation = true adding --auto_instantiation -tused ... \n");
@@ -3761,8 +2576,6 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      additionalOptions_b.push_back("tused");
      CommandlineProcessing::addListToCommandLine(inputCommandLine, "-",additionalOptions_b);
-#endif
-
 #endif
 
   // printf ("###### Located source filename = %s \n",get_sourceFileNameWithPath().c_str());
@@ -3813,7 +2626,7 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-     // printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
+  // printf ("Inside of SgProject::parse(const vector<string>& argv) \n");
 
   // builds file list (or none if this is a link line)
 	  processCommandLine(argv);
@@ -3901,7 +2714,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
 
-     // printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+  // printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
      unsigned int i = 0;
@@ -4168,7 +2981,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
    {
      initExecutableFileSuffixList();
 
-     // printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+  // printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -4182,32 +2995,86 @@ CommandlineProcessing::isExecutableFilename ( string name )
              {
                bool returnValue = false;
 
-               // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
+            // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
-               FILE* f = fopen(name.c_str(), "r");
-               if (!f)
+               bool firstBase = isValidFileWithExecutableFileSuffixes(name);
+               if (firstBase == true)
                   {
-                    printf ("CommandlineProcessing::isExecutableFilename(): Could not open file, so it is assumed to NOT be an executable");
-                 // ROSE_ASSERT(false);
-                  }
-                 else
-                  {
+                    FILE* f = fopen(name.c_str(), "r");
+                    ROSE_ASSERT(f != NULL);
+
                  // Check for if this is a binary executable file!
                     int character0 = fgetc(f);
                     int character1 = fgetc(f);
 
+                 // Note that there may be more executable formats that this simple test will not catch.
                  // The first character of an ELF binary is '\177' and for a PE binary it is 'M'
                  // if (character0 == 127)
-                    if ((character0 == 0x7F && character1 == 0x45) ||
-                        (character0 == 0x4D && character1 == 0x5A))
+                 // if ((character0 == 0x7F && character1 == 0x45) ||
+                 //     (character0 == 0x4D && character1 == 0x5A))
+                    bool secondBase = ( (character0 == 0x7F && character1 == 0x45) || (character0 == 0x4D && character1 == 0x5A) );
+                    if (secondBase == true)
                        {
                          returnValue = true;
                        }
 
-                    // printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
+                 // printf ("First character in file: character0 = %d  (77 == %c) \n",character0,'\77');
 
                     fclose(f);
+                  }
+
+               if (returnValue) return true;
+             }
+        }
+
+     return false;
+   }
+
+bool
+CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
+   {
+  // DQ (8/20/2008):
+  // There may be files that are marked as appearing as an executable but are not 
+  // (we want to process them so that they fail in the binary file format tests 
+  // rather then here).  so we need to add them to the list of sourceFiles (executable 
+  // counts as source for binary analysis in ROSE).
+
+     initExecutableFileSuffixList();
+
+  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+     ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
+
+     int length = name.size();
+     for ( Rose_STL_Container<string>::iterator j = validExecutableFileSuffixes.begin(); j != validExecutableFileSuffixes.end(); j++ )
+        {
+          int jlength = (*j).size();
+
+          // printf ("jlength = %d *j = %s \n",jlength,(*j).c_str());
+
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+             {
+               bool returnValue = false;
+
+            // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
+
+            // Open file for reading
+               FILE* f = fopen(name.c_str(), "r");
+               if (f != NULL)
+                  {
+                    returnValue = true;
+
+                 // printf ("This is a valid file: %s \n",name.c_str());
+
+                    fclose(f);
+                  }
+                 else
+                  {
+                 // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): Could not open file, so it is assumed to NOT be an executable");
+                    printf ("Could not open specified input file: %s \n\n",name.c_str());
+
+                 // If we can't open the file then I think we should end in an error!
+                    ROSE_ASSERT(false);
                   }
 
                if (returnValue) return true;
@@ -4294,8 +3161,9 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
 
             // printf ("isExecutableFilename(%s) = %s \n",(*i).c_str(),isExecutableFilename(*i) ? "true" : "false");
                if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isExecutableFilename(*i) == true )
+            // if ( isSourceFilename(*i) == false && isObjectFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
-                    // printf ("This is an executable file: *i = %s \n",(*i).c_str());
+                 // printf ("This is an executable file: *i = %s \n",(*i).c_str());
                  // executableFileList.push_back(*i);
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
@@ -4305,6 +3173,13 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == true )
                   {
                  // printf ("This is a source file: *i = %s \n",(*i).c_str());
+                 // foundSourceFile = true;
+                    sourceFileList.push_back(*i);
+                    goto incrementPosition;
+                  }
+               if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
+                  {
+                 // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
                  // foundSourceFile = true;
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
@@ -4410,7 +3285,7 @@ SgFile::callFrontEnd ()
         }
 #endif
 
-     // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
+  // printf ("Inside of SgFile::callFrontEnd(): fileNameIndex = %d \n",fileNameIndex);
 
   // Save this so that it can be used in the template instantiation phase later.
   // This file is later written into the *.ti file so that the compilation can 
@@ -4565,7 +3440,7 @@ SgFile::callFrontEnd ()
                printf ("get_F90_only()     = %s \n",(get_F90_only()     == true) ? "true" : "false");
                printf ("get_F95_only()     = %s \n",(get_F95_only()     == true) ? "true" : "false");
                printf ("get_F2003_only()   = %s \n",(get_F2003_only()   == true) ? "true" : "false");
-               printf ("get_PHP_only()   = %s \n",(get_PHP_only()   == true) ? "true" : "false");
+               printf ("get_PHP_only()     = %s \n",(get_PHP_only()     == true) ? "true" : "false");
                printf ("get_binary_only()  = %s \n",(get_binary_only()  == true) ? "true" : "false");
 
             // DQ (18/2008): We not explicit mark files that require C preprocessing...

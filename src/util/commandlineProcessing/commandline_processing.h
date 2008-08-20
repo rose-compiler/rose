@@ -58,9 +58,14 @@ namespace CommandlineProcessing
           bool isObjectFilename ( std::string name );
           bool isExecutableFilename ( std::string name );
 
+       // DQ (8/20/2008): Added test that will allow bogus exececutable files (marked as .exe but not executable) to pass
+          bool isValidFileWithExecutableFileSuffixes ( std::string name );
+
           bool isCFileNameSuffix ( const std::string & suffix );
-      //Liao (6/6/2008): Added support for UPC file suffix name    
+
+       // Liao (6/6/2008): Added support for UPC file suffix name    
           bool isUPCFileNameSuffix ( const std::string & suffix );
+
           bool isCppFileNameSuffix ( const std::string & suffix );
 
        // DQ (8/7/2007): Added support for Fortran file suffix names.

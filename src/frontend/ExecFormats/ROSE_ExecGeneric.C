@@ -1244,6 +1244,8 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 
      SgAsmGenericHeader* executableHeader = NULL;
 
+     printf ("Evaluate what kind of binary format this file is! \n");
+
      if (SgAsmElfFileHeader::is_ELF(ef))
        {
       // ELF::parse(ef);
@@ -1289,8 +1291,8 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                           // file is (using the system file(1) command as a standard way to identify
                           // file types using their first few bytes.
 
-                             printf ("Evaluate the file type \n");
-
+                             printf ("In SgAsmExecutableFileFormat::parseBinaryFormat(%s): Evaluate the file type \n",name.c_str());
+#if 0
                           // Use file(1) to try to figure out the file type to report in the exception
                              int child_stdout[2];
                              pipe(child_stdout);
@@ -1323,6 +1325,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                                        throw SgAsmGenericFile::FormatError("unrecognized file format");
                                      }
                                 }
+#endif
                            }
                       }
                  }
