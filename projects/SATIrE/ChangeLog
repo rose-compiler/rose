@@ -1,3 +1,8 @@
+V ?????
+
+* Termite [AP]
+  - fixed the quoting of Prolog atoms.
+
 V0.8.3 2008-08-14 GB,VP,MS
 
 * Tested with:
