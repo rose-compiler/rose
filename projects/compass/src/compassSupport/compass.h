@@ -274,11 +274,24 @@ namespace Compass {
   // ---- AST ---------------------------------------------------------------------------------------------------
 
   // ---- GRAPH ---------------------------------------------------------------------------------------------------
+  class GraphProcessingWithRunFunction : public RoseBin_DataFlowAbstract {
+  public:
+    const Checker* checker;
+    GraphProcessingWithRunFunction():checker(NULL) {}
+    GraphProcessingWithRunFunction(Checker* mychecker):checker(mychecker) {}
+    virtual ~GraphProcessingWithRunFunction() {}
+    virtual void run(SgNode*)=0;
+    //virtual void run(std::string, SgDirectedGraphNode*, SgDirectedGraphNode*)=0;
+    //virtual void visit(SgNode* n)=0;
+  };
 
   class CheckerUsingGraphProcessing: public Checker {
   public:
-  CheckerUsingGraphProcessing(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run):
-    Checker(checkerName, shortDescription, longDescription, supportedLanguages, prerequisites, run) {}
+    typedef boost::function<GraphProcessingWithRunFunction* /*createGraphTraversal*/(Parameters, OutputObject*)> GraphTraversalCreationFunction;
+    GraphTraversalCreationFunction createGraphTraversal;
+
+  CheckerUsingGraphProcessing(std::string checkerName, std::string shortDescription, std::string longDescription, LanguageSet supportedLanguages, const PrerequisiteList& prerequisites, RunFunction run, GraphTraversalCreationFunction createGraphTraversal):
+    Checker(checkerName, shortDescription, longDescription, supportedLanguages, prerequisites, run), createGraphTraversal(createGraphTraversal) {}
   };
 
   // ---- GRAPH ---------------------------------------------------------------------------------------------------

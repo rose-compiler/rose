@@ -326,8 +326,11 @@ int main(int argc, char **argv)
 
   /* setup checkers */
   std::vector<AstSimpleProcessingWithRunFunction *> traversals;
+  std::vector<GraphProcessingWithRunFunction *> traversalsGraph;
   std::vector<AstSimpleProcessingWithRunFunction *>::iterator t_itr;
+  std::vector<GraphProcessingWithRunFunction *>::iterator t_itr_graph;
   std::vector<const Compass::Checker *> bases;
+  std::vector<const Compass::Checker *> basesGraph;
   std::vector<const Compass::Checker *> basesAll;
   std::vector<const Compass::Checker *>::iterator b_itr;
   CountingOutputObject  outputs ;
@@ -345,7 +348,7 @@ int main(int argc, char **argv)
       const Compass::CheckerUsingGraphProcessing* graphChecker = 
 	dynamic_cast<const Compass::CheckerUsingGraphProcessing*>(*b_itr);
       if (graphChecker!=NULL) {
-	bases.push_back(graphChecker);
+	//	bases.push_back(graphChecker);
 
 	//	bool isBinary = graphChecker->isBinary();
 	bool isbinary=false;
@@ -359,11 +362,11 @@ int main(int argc, char **argv)
 	std::cerr << " found graph checker " << graphChecker->checkerName <<  " isBinaryChecker: " << isbinary ;
 
 	if ((isbinary && isBinaryInput) || (!isbinary && !isBinaryInput)) {
-	  bases.push_back(graphChecker);
-	//	traversals.push_back(graphChecker->createSimpleTraversal(params, &outputs));
+	  basesGraph.push_back(graphChecker);
+	  traversalsGraph.push_back(graphChecker->createGraphTraversal(params, &outputs));
 	  cerr << " adding checker. " << endl;
 	} else
-	  cerr << " ... skipping. " << endl;
+	  cerr <<  endl;
 	
       }
 
@@ -386,7 +389,7 @@ int main(int argc, char **argv)
 	  traversals.push_back(astChecker->createSimpleTraversal(params, &outputs));
 	  cerr << " adding checker. " << endl;
 	} else
-	  cerr << " ... skipped. " << endl;
+	  cerr  << endl;
       }
   }
 
@@ -407,15 +410,22 @@ int main(int argc, char **argv)
   for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr)
     Compass::runPrereqs(*b_itr, root);
 
+  for (b_itr = basesGraph.begin(); b_itr != basesGraph.end(); ++b_itr)
+    Compass::runPrereqs(*b_itr, root);
+
   // the following needs to be changed. Currently it takes a project as input
   // all graph analyses are run before the AsT traverals. Comment this out if not
   // needed for traversal.
-  for (b_itr = bases.begin(); b_itr != bases.end(); ++b_itr) {
-    cerr << " Running GraphChecker on project... " << endl;
-    const Compass::CheckerUsingGraphProcessing* graphChecker = 
-      dynamic_cast<const Compass::CheckerUsingGraphProcessing*>(*b_itr);
-    if (graphChecker)
-      (*b_itr)->run(params, &outputs);
+  for ( b_itr = basesGraph.begin();b_itr!=basesGraph.end();++b_itr) { 
+       //  for (t_itr_graph = traversalsGraph.begin(), b_itr = basesGraph.begin(); 
+       //t_itr_graph != traversalsGraph.end(); ++t_itr_graph, ++b_itr) {
+    ROSE_ASSERT(*b_itr);
+
+    cerr << " Running GraphChecker on project... " << (*b_itr)->checkerName << endl;
+    //ROSE_ASSERT(*t_itr_graph);
+    // need to fix this
+    //    (*t_itr_graph)->run(root);
+    (*b_itr)->run(params, &outputs);
   }
 
   /* traverse the files */

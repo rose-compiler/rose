@@ -2,7 +2,6 @@
 #include <mpi.h>
 #endif
 
-
 #include "compass.h"
 #include <rose.h>
 #include <sstream>

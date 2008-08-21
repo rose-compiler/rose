@@ -28,7 +28,7 @@ namespace CompassAnalyses
     // Specification of Checker Traversal Implementation
 
     class Traversal
-      : public RoseBin_DataFlowAbstract
+      : public Compass::GraphProcessingWithRunFunction //RoseBin_DataFlowAbstract
     {
       Compass::OutputObject* output;
       // Checker specific parameters should be allocated here.
@@ -41,6 +41,8 @@ namespace CompassAnalyses
 
       // The implementation of the run function has to match the traversal being called.
       bool run(string& name, SgDirectedGraphNode* node, SgDirectedGraphNode* previous);
+
+      void run(SgNode*);
 
       bool runEdge(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
         return false;
@@ -115,6 +117,12 @@ static Compass::PrerequisiteList getPrerequisites() {
   return defusePre;
 }
 
+void
+CompassAnalyses::BinaryInterruptAnalysis::
+Traversal::run ( SgNode* node )
+{
+}
+
 
 static void run(Compass::Parameters params, Compass::OutputObject* output) {
   //  CompassAnalyses::BinaryInterruptAnalysis::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
@@ -136,9 +144,10 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 }
 
 // Remove this function if your checker is not an AST traversal
-//static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-//  return new CompassAnalyses::BinaryInterruptAnalysis::Traversal(params, output);
-//}
+static Compass::GraphProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  return new CompassAnalyses::BinaryInterruptAnalysis::Traversal(params, output);
+}
+
 
 extern const Compass::CheckerUsingGraphProcessing* const binaryInterruptAnalysisChecker =
   new Compass::CheckerUsingGraphProcessing(
@@ -148,7 +157,8 @@ extern const Compass::CheckerUsingGraphProcessing* const binaryInterruptAnalysis
                        "Long description not written yet!",
                        Compass::X86Assembly,
                        getPrerequisites(),
-                       run);
+                       run,
+                       createTraversal);
 
    
 

@@ -28,7 +28,7 @@ namespace CompassAnalyses
     // Specification of Checker Traversal Implementation
 
     class Traversal
-      : public RoseBin_DataFlowAbstract
+      : public Compass::GraphProcessingWithRunFunction //RoseBin_DataFlowAbstract
     {
       Compass::OutputObject* output;
       // Checker specific parameters should be allocated here.
@@ -50,7 +50,8 @@ namespace CompassAnalyses
       void init(RoseBin_Graph* vg) {
         vizzGraph = vg;
       }
-
+      
+      void run(SgNode*);
 
     };
   }
@@ -68,6 +69,28 @@ Traversal(Compass::Parameters inputParameters, Compass::OutputObject* output)
   // Initalize checker specific parameters here, for example: 
   // YourParameter = Compass::parseInteger(inputParameters["BinaryBufferOverflow.YourParameter"]);
 
+}
+
+void
+CompassAnalyses::BinaryBufferOverflow::
+Traversal::run ( SgNode* node )
+{
+  /*
+  SgAsmFile* file = Compass::projectPrerequisite.getProject()->get_file(0).get_binaryFile();
+  if (file==NULL)
+    return;
+
+  CompassAnalyses::BinaryBufferOverflow::Traversal checker(params, output);
+  checker.init(Compass::binDataFlowPrerequisite.getGraph());
+
+  bool interprocedural = false;
+  RoseBin_DataFlowAnalysis* dfanalysis = Compass::binDataFlowPrerequisite.getBinDataFlowInfo();
+  vector<SgDirectedGraphNode*> rootNodes;
+  dfanalysis->getRootNodes(rootNodes);
+  dfanalysis->init();
+  
+  dfanalysis->traverseGraph(rootNodes, &checker, interprocedural);
+  */
 }
 
 
@@ -100,9 +123,10 @@ static Compass::PrerequisiteList getPrerequisites() {
 
 
 // Remove this function if your checker is not an AST traversal
-//static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-//  return new CompassAnalyses::BinaryBufferOverflow::Traversal(params, output);
-//}
+static Compass::GraphProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+  std::cerr << " creating bufferOverflow traversal " << std::endl;
+  return new CompassAnalyses::BinaryBufferOverflow::Traversal(params, output);
+}
 
 extern const Compass::CheckerUsingGraphProcessing* const binaryBufferOverflowChecker =
   new Compass::CheckerUsingGraphProcessing(
@@ -112,7 +136,8 @@ extern const Compass::CheckerUsingGraphProcessing* const binaryBufferOverflowChe
                        "Long description not written yet!",
                        Compass::X86Assembly,
                        getPrerequisites(),
-                       run);
+                       run,
+                       createTraversal);
    
 
 
