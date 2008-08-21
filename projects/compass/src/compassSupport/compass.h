@@ -23,8 +23,9 @@ namespace Compass {
   extern unsigned int *use_values_global;
   typedef std::map< SgNode* , std::vector < std::pair <SgInitializedName* , SgNode*>  > > my_map; 
   extern bool quickSave;
-  // Support for DefUse Analysis
-  void runDefUseAnalysis(SgProject* root);
+
+  static std::set<std::string> pre;
+
 
 #if ROSE_MPI
   //  struct timespec begin_time_node, end_time_node;

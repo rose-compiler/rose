@@ -593,7 +593,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
           ostringstream tgthex_s;
           tgthex_s << hex << setw(8) << returnAddr ;
           string tgtStr = tgthex_s.str();
-          SgDirectedGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
+          //SgDirectedGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
           string mne = retInsn->get_mnemonic();
           // if (!tgt) {tgt = vizzGraph->createNode(mne, typeNode, returnAddr, vizzGraph->graph->get_graph_id(), false, retInsn);}
           // vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, thisbinX86->get_address(), tgt, returnAddr);
@@ -633,7 +633,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 
       if (bin_target!=NULL) {
 	string trg_func_name = "";
-	int trg_func_address;
+	int trg_func_address =1;
 	string hexStrf = "";
 
 	SgAsmFunctionDeclaration* funcDeclparent=NULL;

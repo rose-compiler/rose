@@ -84,8 +84,8 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     nrNodes=0;
     nrEdges=0;
     db = RoseBin_support::getDataBaseSupport();
-    RoseBin_support::setDebugMode(true);    
-    RoseBin_support::setDebugModeMin(true);    
+    RoseBin_support::setDebugMode(false);    
+    RoseBin_support::setDebugModeMin(false);    
     func_nr=0;
     globalBin = global;
     // todo: optimize later

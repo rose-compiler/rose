@@ -162,6 +162,7 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
   SgAsmInstruction* instSgNode = isSgAsmInstruction(sgNode->get_SgNode());
   SgAsmInstruction* instSgNodeBefore = isSgAsmInstruction(sgNodeBefore->get_SgNode());
   if (instSgNode && instSgNodeBefore) {
+  if (RoseBin_support::DEBUG_MODE()) 
     cout << " *** instSgNode && instSgNodeBefore " << endl;
     SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
     SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
@@ -169,6 +170,7 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
       // (tps - 05/23/08) : the semantics of the previous implementation is:
       // check the node before in the instruction set and check if it is the same as the previous node
       // todo: the following line must be changed... the size of the current node does not give you the last node!
+      if (RoseBin_support::DEBUG_MODE()) 
       cout << " *** f1 && f2 " << endl;
       SgAsmInstruction* nodeBeforeInSet = NULL;
       int byte = 1;
@@ -176,9 +178,11 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
 	nodeBeforeInSet = info->getInstructionAtAddress(instSgNode->get_address() - byte);
 	byte++;
       }
+      if (RoseBin_support::DEBUG_MODE()) 
       cout << " *** nodeBeforeInSet = " << nodeBeforeInSet << "  instSgNodeBefore : " << instSgNodeBefore << "   byte : " << byte << endl;
       if (nodeBeforeInSet == instSgNodeBefore) {
 	//if (!isAsmUnconditionalBranch(nodeBeforeInSet))
+	if (RoseBin_support::DEBUG_MODE()) 
 	cout << " isDirectedControlFlowEdge = true  --  isAsmUnconditionalBranch(nodeBeforeInSet) : " << isAsmUnconditionalBranch(nodeBeforeInSet) << endl;
 	 isDirectedControlFlowEdge = true;
       }
@@ -188,6 +192,7 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
       for (size_t i = 0; i < outEdges.size(); ++i) {
         if (outEdges[i].target().getNode() == instSgNode) {
 	  // they must be in the same function in order to count as an (intraprocedural) DirectedControlFlowEdge
+	  if (RoseBin_support::DEBUG_MODE()) 
 	  cout << " *** f1 : " << f1 << "   f2 : " << f2 << endl;
 	  if (f1==f2)
 	    isDirectedControlFlowEdge = true;
@@ -195,8 +200,10 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
         }
       }
 #endif
+      if (RoseBin_support::DEBUG_MODE()) {
       cout << " *** f1 && f2 -- isDirectionalControlFlowEdge: " << isDirectedControlFlowEdge << endl;
       cout << " inst->get_kind() == x86_call : " << (inst->get_kind() == x86_call) << "     inst->get_kind() == x86_ret : " << (inst->get_kind() == x86_ret) << endl;  
+      }
       if ((inst->get_kind() == x86_call || inst->get_kind() == x86_ret) && isDirectedControlFlowEdge)
 	valid=false;
     }
@@ -228,6 +235,7 @@ RoseBin_Graph::getDefinitionForUsage(SgDirectedGraphNode* node) {
       SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
       if (source) {
 	string type_n = getProperty(RoseBin_Def::type, edge);
+	if (RoseBin_support::DEBUG_MODE()) 
 	cout << " found a predecessor with type : " << type_n << endl;
 	if (type_n==RoseBin_support::ToString(RoseBin_Edgetype::usage)) 
 	  return source;

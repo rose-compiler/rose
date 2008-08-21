@@ -92,6 +92,7 @@ ROSE_ASSERT(pr);
 
   }
 
+#if 0
    bool useDefAnalysis = false;
 
    std::vector<const Compass::Checker*>::const_iterator it;
@@ -118,7 +119,7 @@ ROSE_ASSERT(pr);
    } else {
      std::cout << "  >> DefUse Analysis disabled... " << std::endl;
    }
-
+#endif
   return;
 } //buildCheckers()
 

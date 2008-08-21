@@ -300,6 +300,7 @@ RoseBin_DataFlowAnalysis::traverseGraph(vector <SgDirectedGraphNode*>& rootNodes
 	bool exceptionCallNode = false;
 	if (nodeN)
 	  exceptionCallNode = exceptionCall(nodeN->get_kind() == x86_call ? nodeN : 0);
+	if (RoseBin_support::DEBUG_MODE()) 
 	std::cout << " exceptionCallNode : " << exceptionCallNode << " exceptionCallNext : " << exceptionCallNext << endl;
 	// if function call is call to malloc we have an exception and follow the call path
 	// fixme -- revisit this once the malloc analysis works again
