@@ -103,7 +103,7 @@ extraDist()
   for dir in ${SUBDIRS[@]}
   do
     Dir=${CHECKERS_DIRECTORY}/${dir}
-    rm -f ${Dir}/Makefile.am ${Dir}/compass.[Ch] ${Dir}/Makefile ${Dir}/compassTestMain.C
+    rm -f ${Dir}/Makefile.am ${Dir}/compass.[Ch] ${Dir}/Makefile ${Dir}/compassTestMain.C ${Dir}/prerequisites.h ${Dir}/instantiate_prerequisites.h
     extraDistMakefile ${dir}
   done
 } # extraDist

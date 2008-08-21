@@ -77,6 +77,8 @@ mkdir -p ${SOURCE_DIRECTORY_NAME}
 echo "Created the directory ${SOURCE_DIRECTORY_NAME}."
 
 SCRIPT_DIRECTORY=${CMDROOT}/compass_template_generator
+PREREQ_DIRECTORY=${CMDROOT}/../../extensions/prerequisites/
+#`sh -c "cd ${SCRIPT_DIRECTORY}/../../extensions/prerequisites; pwd"`
 
 ###################################################################
 #Copy the auxiliary source/header/parameter files to the directory.
@@ -96,15 +98,17 @@ cat >./${SOURCE_DIRECTORY_NAME}/Makefile <<END
 
 CHECKER_NAME = ${FILE_NAME_PREFIX}
 
-LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose \$(RT_LIBS) -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass 
+LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose \$(RT_LIBS) -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass
+
+CXX_FLAGS = -I\$(ROSE_INSTALL)/include -I${PREREQ_DIRECTORY}
 
 all: ${FILE_NAME_PREFIX}Test
 
 libcompass.so: compass.h compass.C
-	g++ -fPIC -Wall -shared -o libcompass.so compass.C -I\$(ROSE_INSTALL)/include
+	g++ -fPIC -Wall -shared -o libcompass.so compass.C \$(CXX_FLAGS)
 
 ${FILE_NAME_PREFIX}Test: ${FILE_NAME_PREFIX}.C ${FILE_NAME_PREFIX}Main.C libcompass.so
-	g++ -fPIC -Wall -o ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Main.C ${FILE_NAME_PREFIX}.C -I\$(ROSE_INSTALL)/include \$(LINKER_FLAGS)
+	g++ -fPIC -Wall -o ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Main.C ${FILE_NAME_PREFIX}.C \$(CXX_FLAGS) \$(LINKER_FLAGS)
 
 test: ${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Test1.C
 	./${FILE_NAME_PREFIX}Test ${FILE_NAME_PREFIX}Test1.C
@@ -116,40 +120,40 @@ END
 echo "Generated ${SOURCE_DIRECTORY_NAME}/Makefile"
 
 #Generate Makefile.am
-cat >./${SOURCE_DIRECTORY_NAME}/Makefile.am <<END
-include \$(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-
-INCLUDES = -I\$(srcdir)/../compassSupport \$(ROSE_INCLUDES)
-
-noinst_LTLIBRARIES = lib${CLASS_NAME_PREFIX}.la
-
-lib${CLASS_NAME_PREFIX}_la_SOURCES = ${FILE_NAME_PREFIX}.C
-
-bin_PROGRAMS = ${FILE_NAME_PREFIX}Main
-
-LDADD = \$(LIBS_WITH_RPATH) \$(ROSE_LIBS) ../compassSupport/libCompass.la lib${CLASS_NAME_PREFIX}.la
-
-${FILE_NAME_PREFIX}Main_SOURCES = lib${CLASS_NAME_PREFIX}.la ${FILE_NAME_PREFIX}Main.C
-${FILE_NAME_PREFIX}Main_DEPENDENCIES = \$(ROSE_LIBS_WITH_PATH) lib${CLASS_NAME_PREFIX}.la
-
-test: lib${CLASS_NAME_PREFIX}.la ${FILE_NAME_PREFIX}Main 
-	cp -f \$(srcdir)/compass_parameters compass_parameters
-	./${FILE_NAME_PREFIX}Main \$(srcdir)/${FILE_NAME_PREFIX}/${FILE_NAME_PREFIX}Test1.C
-
-check-local:
-	@\$(MAKE) test
-	@echo "*********************************************************************************************************************"
-	@echo "*** ROSE/projects/compass/${FILE_NAME_PREFIX}: make check rule complete (terminated normally) ***"
-	@echo "*********************************************************************************************************************"
-
-EXTRA_DIST = compass_parameters
-
-clean-local:
-	rm -f compass_parameters *.ti ${FILE_NAME_PREFIX}Test
-
-END
-echo "Generated ${SOURCE_DIRECTORY_NAME}/Makefile.am"
-
+#cat >./${SOURCE_DIRECTORY_NAME}/Makefile.am <<END
+#include \$(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+#
+#INCLUDES = -I\$(srcdir)/../compassSupport \$(ROSE_INCLUDES)
+#
+#noinst_LTLIBRARIES = lib${CLASS_NAME_PREFIX}.la
+#
+#lib${CLASS_NAME_PREFIX}_la_SOURCES = ${FILE_NAME_PREFIX}.C
+#
+#bin_PROGRAMS = ${FILE_NAME_PREFIX}Main
+#
+#LDADD = \$(LIBS_WITH_RPATH) \$(ROSE_LIBS) ../compassSupport/libCompass.la lib${CLASS_NAME_PREFIX}.la
+#
+#${FILE_NAME_PREFIX}Main_SOURCES = lib${CLASS_NAME_PREFIX}.la ${FILE_NAME_PREFIX}Main.C
+#${FILE_NAME_PREFIX}Main_DEPENDENCIES = \$(ROSE_LIBS_WITH_PATH) lib${CLASS_NAME_PREFIX}.la
+#
+#test: lib${CLASS_NAME_PREFIX}.la ${FILE_NAME_PREFIX}Main 
+#	cp -f \$(srcdir)/compass_parameters compass_parameters
+#	./${FILE_NAME_PREFIX}Main \$(srcdir)/${FILE_NAME_PREFIX}/${FILE_NAME_PREFIX}Test1.C
+#
+#check-local:
+#	@\$(MAKE) test
+#	@echo "*********************************************************************************************************************"
+#	@echo "*** ROSE/projects/compass/${FILE_NAME_PREFIX}: make check rule complete (terminated normally) ***"
+#	@echo "*********************************************************************************************************************"
+#
+#EXTRA_DIST = compass_parameters
+#
+#clean-local:
+#	rm -f compass_parameters *.ti ${FILE_NAME_PREFIX}Test
+#
+#END
+#echo "Generated ${SOURCE_DIRECTORY_NAME}/Makefile.am"
+#
 ################################################################################
 #
 # Generate the include checker include (.inc) file
@@ -197,7 +201,7 @@ namespace CompassAnalyses
        // Specification of Checker Traversal Implementation
 
           class Traversal
-             : public AstSimpleProcessing
+             : public Compass::AstSimpleProcessingWithRunFunction 
              {
                     Compass::OutputObject* output;
             // Checker specific parameters should be allocated here.
@@ -251,7 +255,7 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
 }
 
 // Remove this function if your checker is not an AST traversal
-static AstSimpleProcessing* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
+static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
   return new CompassAnalyses::${CLASS_NAME_PREFIX}::Traversal(params, output);
 }
 
@@ -365,3 +369,7 @@ variable \${ROSE_INSTALL} in ${SOURCE_DIRECTORY_NAME}/Makefile to get a
 working system. Good luck with your style-checker!
 END
 
+echo $PREREQ_DIRECTORY
+#exit 0
+find $PREREQ_DIRECTORY -name "*.h" | gawk -F/ '{print "#include \"" $NF "\""}' > ${SOURCE_DIRECTORY_NAME}/prerequisites.h
+tail -1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | gawk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h

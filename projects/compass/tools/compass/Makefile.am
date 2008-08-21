@@ -17,6 +17,10 @@ docs:
 	cd doc; $(MAKE) docs
 
 check-local:
+	@echo "*****************************************************************************"
+	@echo "*** Testing blank AST checker generator ***"
+	@echo "*****************************************************************************"
+	@$(MAKE) testNewChecker
 	@$(MAKE) test
 	@echo "*****************************************************************************"
 	@echo "*** ROSE/projects/compass/tools/compass: make check rule complete (terminated normally) ***"
