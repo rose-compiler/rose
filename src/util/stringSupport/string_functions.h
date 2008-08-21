@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <stdint.h>
 
 // extern const char** roseGlobalVariantNameList;
 //Rama: 12/14/06: Changed the class to namespace and removed 'static'ness of the erstwhile "member functions"
