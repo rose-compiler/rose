@@ -296,7 +296,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
 SgAsmPEFileHeader::~SgAsmPEFileHeader() 
 {
-    printf ("In ~SgAsmPEFileHeader() \n");
+ // printf ("In ~SgAsmPEFileHeader() \n");
 
     ROSE_ASSERT(p_rvasize_pairs->get_pairs().empty() == true);
     

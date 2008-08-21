@@ -3073,6 +3073,8 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
                  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): Could not open file, so it is assumed to NOT be an executable");
                     printf ("Could not open specified input file: %s \n\n",name.c_str());
 
+                 // DQ (8/20/2008): We need to allow this to pass, since Qing's command line processing 
+                 // mistakenly treats all the arguments as filenames (and most do not exist as valid files).
                  // If we can't open the file then I think we should end in an error!
                     ROSE_ASSERT(false);
                   }
@@ -3085,8 +3087,9 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
    }
 
 // DQ (1/16/2008): This function was moved from the commandling_processing.C file to support the debugging specific to binary analysis
+// bool CommandlineProcessing::isOptionTakingFileName( string argument )
 bool
-CommandlineProcessing::isOptionTakingFileName( string argument )
+CommandlineProcessing::isOptionTakingSecondParameter( string argument )
    {
      bool result = false;
   // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s \n",argument.c_str());
@@ -3117,7 +3120,36 @@ CommandlineProcessing::isOptionTakingFileName( string argument )
           argument == "-rose:excludePath" ||
           argument == "-rose:includeFile" ||
           argument == "-rose:excludeFile" ||
-          argument == "-rose:astMergeCommandFile" )
+          argument == "-rose:astMergeCommandFile" ||
+
+       // DQ (8/20/2008): Add support for Qing's options!
+          argument == "-annot" ||
+          argument == "-bs" ||
+          isOptionTakingThirdParameter(argument) )
+        {
+          result = true;
+        }
+
+  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s result = %s \n",argument.c_str(),result ? "true" : "false");
+
+     return result;
+   }
+
+bool
+CommandlineProcessing::isOptionTakingThirdParameter( string argument )
+   {
+     bool result = false;
+  // printf ("In CommandlineProcessing::isOptionTakingFileName(): argument = %s \n",argument.c_str());
+
+  // List any rose options that take source filenames here, so that they can avoid 
+  // being confused with the source file name that is to be read by EDG and translated.
+
+  // DQ (1/6/2008): Added another test for a rose option that takes a filename
+     if ( false ||          // Used to specify yet another parameter
+
+       // DQ (8/20/2008): Add support for Qing's options!
+          argument == "-unroll" ||
+          false )
         {
           result = true;
         }
@@ -3177,6 +3209,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
                   }
+#if 1
                if ( isObjectFilename(*i) == false && isSourceFilename(*i) == false && isValidFileWithExecutableFileSuffixes(*i) == true )
                   {
                  // printf ("This is at least an existing file of some kind: *i = %s \n",(*i).c_str());
@@ -3184,6 +3217,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
                     sourceFileList.push_back(*i);
                     goto incrementPosition;
                   }
+#endif
 #if 0
                if ( isObjectFilename(*i) )
                   {
@@ -3194,8 +3228,16 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
              }
 
        // DQ (12/8/2007): Looking for rose options that take filenames that would accidentally be considered as source files.
-          if (isOptionTakingFileName(*i) == true)
+       // if (isOptionTakingFileName(*i) == true)
+          if (isOptionTakingSecondParameter(*i) == true)
              {
+               if (isOptionTakingThirdParameter(*i) == true)
+                  {
+                 // Jump over the next argument when such options are identified.
+                    counter++;
+                    i++;
+                  }
+
             // Jump over the next argument when such options are identified.
                counter++;
                i++;
