@@ -285,7 +285,7 @@ relation(
                 tuple[3]= getElement(node->get_definition());
         """,
         setDoc( ['class','name','type','def'] ),
-        'node->get_definition()->get_declaration() == node'
+        'node->get_definingDeclaration() == node'
     ),
 
 relation(
@@ -303,7 +303,7 @@ relation(
         'base', 2, ['SgBaseClass'],
         setTupleE( [
                 'node',
-                'node->get_base_class()->get_definition()->get_declaration()'
+                'isSgClassDeclaration(node->get_base_class()->get_definingDeclaration())'
             ] ),
         setDoc( ['base','class decl'] )
     ),
