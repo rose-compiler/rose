@@ -307,41 +307,6 @@ std::string Compass::parseString(const std::string& str)
 std::ifstream* Compass::openFile(std::string filename)
 {
   std::ifstream* streamPtr = new std::ifstream(filename.c_str());
-  if (streamPtr->good() == false)
-    {
-#if 0
-      std::cerr << "Warning: Parameter file in current directory: " << filename
-		<< " not found or cannot be opened (looking in user's home directory and then Compass source tree)"
-		<< std::endl;
-#endif
-      // std::cerr << "--- The current directory is expected to have a compass parameter file.\n\n";
-
-      // If not in the current directory, then search in the user's home directory
-      std::string alternativeFile = "~/" + filename;
-      // printf ("Compass parameters file not found in current directory: looking for it in user's home directory: alternativeFile = %s \n",alternativeFile.c_str());
-
-      streamPtr->close();
-      delete streamPtr;
-      streamPtr = new std::ifstream(alternativeFile.c_str());
-
-      if (streamPtr->good() == false)
-	{
-	  // Look into the build tree's compass directory
-	  alternativeFile = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/projects/compass/" + filename;
-	  // printf ("Compass parameters file not found in user's home directory: looking for it in the Compass source tree: alternativeFile = %s \n",alternativeFile.c_str());
-
-	  streamPtr->close();
-	  delete streamPtr;
-	  streamPtr = new std::ifstream(alternativeFile.c_str());
-
-	  if (streamPtr->good() == false)
-	    {
-	      std::cerr << "Error: Parameter file in Compass source directory: " << alternativeFile << " not found or cannot be opened" << std::endl;
-	      exit(1);
-	    }
-	}
-    }
-
   ROSE_ASSERT(streamPtr != NULL);
 
   return streamPtr;
