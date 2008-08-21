@@ -20,7 +20,7 @@ export BOOST_ROOTX="/home/yuan5/lib/boost_1_35_0/install"
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="yuangm@gmail.com"
 
-source /home/yuan5/tmp/09/ROSE_Regression/scripts/rosetestrc
+#source /home/yuan5/tmp/09/ROSE_Regression/scripts/rosetestrc
 export ROSE_TOP=${ROSE_TEST_REGRESSION_ROOT}/rose/fresh/`date +%F-%H%M`
 
 MYCC="${ROSE_TEST_REGRESSION_ROOT}/scripts/utils/gcc"
