@@ -162,11 +162,12 @@ fi
     echo "############ make distcheck done" &&
     # Build a binary version of EDG and put it into the source tree
     SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | sed s/-redhat-/-pc-/`
+    echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ $ENABLE_BUILD_BINARY_EDG ]; then
       cd ${ROSE_TOP}/build &&
       make binary_edg_tarball &&
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} ${SYSTEM_NAME} &&
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree ${SYSTEM_NAME}
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" &&
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}"
     fi &&
     make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} &&
     echo "############ make source_with_binary_edg_dist done"
