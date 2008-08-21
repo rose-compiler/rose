@@ -28,3 +28,4 @@ Makefile.in
 /src/3rdPartyLibraries/libltdl/config.sub
 /src/3rdPartyLibraries/libltdl/configure
 /src/3rdPartyLibraries/libltdl/install-sh
+*.pyc

@@ -4,6 +4,7 @@
 #include <deque>
 
 using namespace VirtualCFG;
+using namespace std;
 
 Element *getElement(SgNode*);
 Element *getNumber(unsigned int);
@@ -34,8 +35,8 @@ size_t operator()( const CFGNode &n ) const {
 void
 CFGVisitor::explore( SgNode *node )
 {
-    hash_set<CFGNode,hashCFGNode> visited;
-    deque<CFGNode> tovisit;
+    __gnu_cxx::hash_set<CFGNode,hashCFGNode> visited;
+    std::deque<CFGNode> tovisit;
 
     tovisit.push_back( makeCfg(node) );
 

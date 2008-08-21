@@ -45,7 +45,7 @@ Element *getNumber( unsigned int n )
         return numbers->findElement(str.str());
     }
 
-    Element *last;
+    Element *last = NULL;
     for (unsigned int i= max+1; i <= n; i++) {
         ostringstream str;
         str << i;
@@ -103,7 +103,7 @@ struct hashSgNodePtr {
 };
 
 /* Rather than use attributes, elemtns are stored in this map */
-typedef hash_map< SgNode *, Element *, hashSgNodePtr > emap;
+typedef __gnu_cxx::hash_map< SgNode *, Element *, hashSgNodePtr > emap;
 
 emap elements;
 
@@ -196,7 +196,7 @@ int main( int argc, char **argv )
     int myargc= argc+1;
     char **myargv= (char**)malloc( sizeof (char*) * (myargc) );
     myargv[0]= argv[0];
-    myargv[1]= "--edg:no_warnings";
+    myargv[1]= (char*)"--edg:no_warnings";
     for (int i= 1; i < argc; i++ ) {
         myargv[i+1]= argv[i];
     }

@@ -3,12 +3,13 @@
 
 #include "common.hh"
 #include <ext/hash_map>
+#include <string>
 
 /*this class hashes strings */
 struct HashString {
-    size_t operator()( const string &s ) const
+    size_t operator()( const std::string &s ) const
     {
-        hash<const char*> o;
+        __gnu_cxx::hash<const char*> o;
         return o( s.c_str() );
     }
 };
@@ -18,12 +19,12 @@ struct HashString {
  */
 template <class Data>
 struct StringMap {
-    typedef hash_map< string, Data, HashString  > Type;
+    typedef __gnu_cxx::hash_map< std::string, Data, HashString  > Type;
 };
 
 template <class Data>
 struct StringMultiMap {
-    typedef hash_multimap< string, Data, HashString  > Type;
+    typedef __gnu_cxx::hash_multimap< std::string, Data, HashString  > Type;
 };
 
 #endif

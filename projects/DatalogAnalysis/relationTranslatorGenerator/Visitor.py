@@ -84,7 +84,7 @@ ListVisit= Template(
         $type *node= dynamic_cast<$type *>(n);
         if (node != NULL $pred) {
             Element *parent= getElement(node);
-            list<$ctype *> &l= $list;
+            vector<$ctype *> &l= $list;
             if ( l.begin() != l.end() ) {
                 Element *tuple[2];
                 tuple[1]= getElement(*l.begin());
@@ -93,7 +93,7 @@ ListVisit= Template(
             }
 
             Element *last= NULL;
-            for (   list<$ctype*>::iterator i= l.begin();
+            for (   vector<$ctype*>::iterator i= l.begin();
                     i != l.end();
                     i++
                 )
