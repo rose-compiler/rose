@@ -369,9 +369,9 @@ traverseInputFiles(SgProject* projectNode,
         InheritedAttributeType inheritedValue,
         t_traverseOrder travOrder)
 {
-    SgFilePtrListPtr fList = projectNode->get_fileList();
-    for (SgFilePtrList::iterator fl_iter = fList->begin();
-        fl_iter != fList->end(); fl_iter++)
+    const SgFilePtrList& fList = projectNode->get_fileList();
+    for (SgFilePtrList::const_iterator fl_iter = fList.begin();
+        fl_iter != fList.end(); fl_iter++)
     {
         ROSE_ASSERT(*fl_iter!=0);
         traverseWithinFile((*fl_iter), inheritedValue, travOrder);

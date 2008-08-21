@@ -440,7 +440,7 @@ ResetParentPointers::resetParentPointersInType (SgType* typeNode, SgNode* previo
 
 
 void 
-ResetParentPointers::resetParentPointersInTemplateArgumentList ( SgTemplateArgumentPtrListPtr templateArgListPtr )
+ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr )
    {
   // DQ (10/15/2004): It would be helpful if this were a part of the standard traversal, but it is not and it might be
   // that the SgTemplateArgumentPtrList would have to be made a new IR node to allow it to be traversed.
@@ -450,10 +450,10 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( SgTemplateArgum
   // requires that the parents pointers be traversed to trace back through the scopes and collect the names of all the 
   // scopes.  This is handled in the get_scope() function which is called by the get_qualified_name() function.
 
-     ROSE_ASSERT(templateArgListPtr != NULL);
+  // ROSE_ASSERT(templateArgListPtr != NULL);
   // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %zu ### \n",templateArgListPtr->size());
-     SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr->begin();
-     while (i != templateArgListPtr->end())
+     SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
+     while (i != templateArgListPtr.end())
         {
        // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgList element *i = %s \n",(*i)->sage_class_name());
           switch((*i)->get_argumentType())
@@ -889,7 +889,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // explicitly (and check with Markus).
                  // printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
 
-                    ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
+                 // ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
                     resetParentPointersInTemplateArgumentList(templateInstantiation->get_templateArguments());
                     break;
                   }
@@ -921,7 +921,7 @@ ResetParentPointers::evaluateInheritedAttribute (
                  // explicitly (and check with Markus).
                  // printf ("\n\n##### Setting parents of declarations within the template arguments not implemented! ##### \n\n");
 
-                    ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
+                 // ROSE_ASSERT(templateInstantiation->get_templateArguments() != NULL);
                     resetParentPointersInTemplateArgumentList(templateInstantiation->get_templateArguments());
                     break;
                   }

@@ -704,7 +704,7 @@ Grammar::setUpStatements ()
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (6/27/2006): Support for function declaration exception specifications
-     FunctionDeclaration.setDataPrototype ( "SgTypePtrListPtr", "exceptionSpecification", "= NULL",
+     FunctionDeclaration.setDataPrototype ( "SgTypePtrList", "exceptionSpecification", "",
 					    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
@@ -1197,7 +1197,7 @@ Grammar::setUpStatements ()
 					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateDeclaration.setDataPrototype ( "SgTemplateDeclaration::template_type_enum" , "template_kind", "= SgTemplateDeclaration::e_template_none",
 					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrListPtr", "templateParameters", "= NULL",
+     TemplateDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (11/15/2004): class declarations for nested classes can appear outside the scope of the class to which 
@@ -1252,8 +1252,8 @@ Grammar::setUpStatements ()
   // access to it from the SgTemplateInstantiationDecl object).
   // TemplateInstantiationDecl.setDataPrototype ( "SgNodePtrListPtr", "templateParameters", "= NULL",
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateInstantiationDecl.setDataPrototype ( "SgTemplateArgumentPtrListPtr", "templateArguments",  "= NULL",
-                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
+                    CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
    // TemplateInstantiationDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= NULL",
 	//               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1286,8 +1286,8 @@ Grammar::setUpStatements ()
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
      TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrListPtr", "templateArguments",  "= NULL",
-						  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
+						  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/15/2005): instantiated function template names must be reset once the template parameters are known
   // We want to use names like "ABC<int>" instead of the mangled equivalent names.  This variable records
@@ -1317,8 +1317,8 @@ Grammar::setUpStatements ()
   //                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_TREE);
      TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateDeclaration*", "templateDeclaration", "= NULL",
                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrListPtr", "templateArguments",  "= NULL",
-						  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationMemberFunctionDecl.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
+						  CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/15/2005): instantiated member function template names must be reset once the template parameters are known
   // We want to use names like "ABC<int>" instead of the mangled equivalent names.  This variable records

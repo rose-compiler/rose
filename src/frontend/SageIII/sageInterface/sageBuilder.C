@@ -1874,9 +1874,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
       { 
         project = new SgProject();
         ROSE_ASSERT(project);
-        SgFilePtrListPtr listp = new SgFilePtrList();
-        ROSE_ASSERT(listp);
-        project->set_fileList(listp);
+        project->get_fileList().clear();
 
         arglist.push_back("cc"); 
         arglist.push_back("-c"); 

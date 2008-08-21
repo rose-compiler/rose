@@ -32,7 +32,7 @@ void AstPostProcessing (SgNode* node)
                ROSE_ASSERT(project != NULL);
 
                SgFilePtrList::iterator fileListIterator;
-               for (fileListIterator = project->get_fileList()->begin(); fileListIterator != project->get_fileList()->end(); fileListIterator++)
+               for (fileListIterator = project->get_fileList().begin(); fileListIterator != project->get_fileList().end(); fileListIterator++)
                   {
                  // iterate through the list of current files
                     AstPostProcessing(*fileListIterator);

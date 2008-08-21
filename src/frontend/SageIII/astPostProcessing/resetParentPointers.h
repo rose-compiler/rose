@@ -100,7 +100,7 @@ class ResetParentPointers : public SgTopDownProcessing<ResetParentPointersInheri
 
           \internal This could be eliminated if we were to traverse the template arguments (not clear if that is a good idea).
        */
-          void resetParentPointersInTemplateArgumentList ( SgTemplateArgumentPtrListPtr templateArgListPtr );
+          void resetParentPointersInTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgList );
    };
 
 

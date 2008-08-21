@@ -466,10 +466,10 @@ Unparse_Type::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info )
      SgType* internalType = qualifiedNameType->get_base_type();
 
   // Note that this modifies the list and that SgUnparse_Info& info is passed by reference.  This could be a problem!
-     ninfo.set_qualifiedNameList(&(qualifiedNameType->get_qualifiedNameList()));
+     ninfo.set_qualifiedNameList(qualifiedNameType->get_qualifiedNameList());
 
      ROSE_ASSERT(internalType != NULL);
-     ROSE_ASSERT(ninfo.get_qualifiedNameList() != NULL);
+  // ROSE_ASSERT(ninfo.get_qualifiedNameList() != NULL);
 
   // printf ("Processing a SgQualifiedNameType IR node base_type = %p = %s qualified name list size = %ld \n",
   //      type,type->class_name().c_str(),qualifiedNameType->get_qualifiedNameList().size());

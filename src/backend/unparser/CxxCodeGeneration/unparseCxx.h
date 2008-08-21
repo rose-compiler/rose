@@ -332,7 +332,7 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           std::string trimGlobalScopeQualifier ( std::string qualifiedName );
 
       //! Support for exception specification for functions and member functions
-          virtual void unparseExceptionSpecification( SgTypePtrList* exceptionSpecifierList, SgUnparse_Info& info);
+          virtual void unparseExceptionSpecification( const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info);
 
 #if USE_OLD_MECHANISM_OF_HANDLING_PREPROCESSING_INFO
           void getDirectives ( char* sourceFilename );
