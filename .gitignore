@@ -13,6 +13,7 @@ TAGS
 #
 Makefile.in
 *.new.tex
+*.compass.external.makefile
 /*.tar.gz
 /aclocal.m4
 /autom4te.cache

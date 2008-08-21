@@ -67,9 +67,7 @@ extraDistMakefile()
 {
   dir=$1
 
-#  echo ${CHECKERS_DIRECTORY}/${dir}/${dir}.makefile
-
-  cat > ${CHECKERS_DIRECTORY}/${dir}/${dir}.makefile <<END
+  test -f ${CHECKERS_DIRECTORY}/${dir}/${dir}.compass.external.makefile || cat > ${CHECKERS_DIRECTORY}/${dir}/${dir}.compass.external.makefile <<END
 # Set Variables ROSE_INSTALL to your ROSE_INSTALL installation and
 # COMPASS_SUPPORT to your compassSupport directory like this:
 #ROSE_INSTALL= ROSE-INSTALL-DIRECTORY
