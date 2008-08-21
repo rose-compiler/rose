@@ -22,8 +22,8 @@ main ( int argc, char * argv[] )
           project = frontendShell(argvList);
 
        // Loop over all files in the SgProject (and call the frontend on a selected subset)
-          SgFilePtrList::iterator fileIterator = project->get_fileList()->begin();
-          while (fileIterator != project->get_fileList()->end())
+          SgFilePtrList::iterator fileIterator = project->get_fileList().begin();
+          while (fileIterator != project->get_fileList().end())
              {
                string filename = (*fileIterator)->get_sourceFileNameWithPath();
 

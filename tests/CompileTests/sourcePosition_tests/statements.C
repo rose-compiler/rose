@@ -652,7 +652,7 @@ outputStatementPositionInformation ( SgFile* file )
 void
 outputStatementPositionInformation ( SgProject* project )
    {
-     SgFilePtrList fileList = *(project->get_fileList());
+     const SgFilePtrList& fileList = project->get_fileList();
      for (int i = 0; i < project->numberOfFiles(); i++)
         {
           SgFile* file = fileList[i];

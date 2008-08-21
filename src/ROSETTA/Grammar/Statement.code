@@ -5436,13 +5436,13 @@ SgDeclarationStatement::skipEmptyTemplateArgumentListTest ( SgFunctionDeclaratio
      if (templateInstantiationFunctionDeclaration != NULL)
         {
           functionName       = templateInstantiationFunctionDeclaration->get_templateName().str();
-          templateArgListPtr = templateInstantiationFunctionDeclaration->get_templateArguments();
+          templateArgListPtr = &templateInstantiationFunctionDeclaration->get_templateArguments();
         }
        else
         {
           ROSE_ASSERT(templateInstantiationMemberFunctionDeclaration != NULL);
           functionName       = templateInstantiationMemberFunctionDeclaration->get_templateName().str();
-          templateArgListPtr = templateInstantiationMemberFunctionDeclaration->get_templateArguments();
+          templateArgListPtr = &templateInstantiationMemberFunctionDeclaration->get_templateArguments();
         }
 
 #if 0
@@ -5641,7 +5641,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     SgTemplateInstantiationDecl* node = isSgTemplateInstantiationDecl(this);
                     ROSE_ASSERT(node != NULL);
                     returnName         = node->get_templateName().str();
-                    templateArgListPtr = node->get_templateArguments();
+                    templateArgListPtr = &node->get_templateArguments();
 
                  // DQ (2/21/2005): Error checking on existence of substrings that can be common
                  // in building template name and which are a source of errors in generated code.
@@ -5656,7 +5656,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                     SgTemplateInstantiationFunctionDecl* node = isSgTemplateInstantiationFunctionDecl(this);
                     ROSE_ASSERT(node != NULL);
                     returnName         = node->get_templateName().str();
-                    templateArgListPtr = node->get_templateArguments();
+                    templateArgListPtr = &node->get_templateArguments();
 
                  // DQ (2/28/2005): function templates need to be separated out since for them the marker of being explicit make sense.
                     functionTemplateArguments = true;
@@ -5688,7 +5688,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                  // printf ("node = %p = (templateName) %s = (name) %s \n",node,node->get_templateName().str(),node->get_name().str());
 
                     returnName         = node->get_templateName().str();
-                    templateArgListPtr = node->get_templateArguments();
+                    templateArgListPtr = &node->get_templateArguments();
 
                  // DQ (2/28/2005): function templates need to be separated out since for them the marker of being explicit make sense.
                     functionTemplateArguments = true;
@@ -7961,7 +7961,8 @@ SgFunctionDeclaration::post_construction_initialization()
   // p_args->set_endOfConstruct(endingPosition);
 
   // DQ (7/31/2006): Explicit initialization of this data member is required!
-     p_exceptionSpecification = NULL;
+  // JJW (8/6/2008): It probably isn't now that p_exceptionSpecification is a vector
+     p_exceptionSpecification.clear();
    }
 
 SgType*
@@ -8077,8 +8078,8 @@ SgFunctionDeclaration::isTemplateFunction() const
                   }
             // ROSE_ASSERT(templateParameterList != NULL);
 #endif
-               ROSE_ASSERT(templateMemberFunction->get_templateArguments() != NULL);
-               int numberOfTemplateArguments  = templateMemberFunction->get_templateArguments()->size();
+            // ROSE_ASSERT(templateMemberFunction->get_templateArguments() != NULL);
+               int numberOfTemplateArguments  = templateMemberFunction->get_templateArguments().size();
 
             // printf ("Number of template arguments  = %d \n",numberOfTemplateArguments);
 
@@ -10634,20 +10635,25 @@ SgTemplateInstantiationDecl::post_construction_initialization()
 #endif
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
+  // JJW (8/6/2008): p_templateArguments is not a pointer anymore
+#if 0
      if (p_templateArguments != NULL)
         {
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments->begin();
-          while (i != p_templateArguments->end())
+#endif
+          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+          while (i != p_templateArguments.end())
              {
                (*i)->set_parent(this);
                i++;
              }
+#if 0
         }
        else
         {
        // DQ (2/22/2007): This is OK sometimes, though a better implementation could likely be done to make this an error (more strict).
        // printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationDecl = %p \n",this);
         }
+#endif
    }
 
 SgName
@@ -10783,19 +10789,24 @@ SgTemplateInstantiationFunctionDecl::post_construction_initialization()
   // set_from_template(true);
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
+  // JJW (8/6/2008): This is not a pointer anymore
+#if 0
      if (p_templateArguments != NULL)
         {
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments->begin();
-          while (i != p_templateArguments->end())
+#endif
+          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+          while (i != p_templateArguments.end())
              {
                (*i)->set_parent(this);
                i++;
              }
+#if 0
         }
        else
         {
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationFunctionDecl = %p \n",this);
         }
+#endif
    }
 
 void
@@ -10857,19 +10868,24 @@ SgTemplateInstantiationMemberFunctionDecl::post_construction_initialization()
   // set_from_template(true);
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
+  // JJW (8/6/2008): This is not a pointer anymore
+#if 0
      if (p_templateArguments != NULL)
         {
-          SgTemplateArgumentPtrList::iterator i = p_templateArguments->begin();
-          while (i != p_templateArguments->end())
+#endif
+          SgTemplateArgumentPtrList::iterator i = p_templateArguments.begin();
+          while (i != p_templateArguments.end())
              {
                (*i)->set_parent(this);
                i++;
              }
+#if 0
         }
        else
         {
           printf ("Warning (post_construction_initialization): p_templateArguments == NULL in SgTemplateInstantiationMemberFunctionDecl = %p \n",this);
         }
+#endif
    }
 
 void

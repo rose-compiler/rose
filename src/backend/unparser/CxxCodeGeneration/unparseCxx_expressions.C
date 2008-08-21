@@ -157,17 +157,17 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      ROSE_ASSERT (templateInstantiationDeclaration != NULL);
 
      unp->u_exprStmt->curprint ( templateInstantiationDeclaration->get_templateName().str());
-     SgTemplateArgumentPtrListPtr templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
-     if (templateArgListPtr != NULL)
+     const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
+     if (!templateArgListPtr.empty())
         {
        // printf ("templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
 
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
-          ROSE_ASSERT(templateArgListPtr->size() > 0);
+          ROSE_ASSERT(templateArgListPtr.size() > 0);
 
           unp->u_exprStmt->curprint ( "< ");
-          SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr->begin();
-          while (i != templateArgListPtr->end())
+          SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
+          while (i != templateArgListPtr.end())
              {
             // printf ("templateArgList element *i = %s \n",(*i)->sage_class_name());
 #if 0
@@ -177,7 +177,7 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
 
                unparseTemplateArgument(*i,info);
                i++;
-               if (i != templateArgListPtr->end())
+               if (i != templateArgListPtr.end())
                     unp->u_exprStmt->curprint ( " , ");
              }
           unp->u_exprStmt->curprint ( " > ");

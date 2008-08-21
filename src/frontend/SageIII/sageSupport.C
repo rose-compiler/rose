@@ -227,8 +227,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
 
   // Build the empty STL lists
-     p_fileList = new SgFilePtrList();
-     ROSE_ASSERT (p_fileList != NULL);
+     p_fileList.clear();
 
   // return value for calls to SLA
      int optionCount = 0;
@@ -2709,7 +2708,7 @@ SgProject::parse()
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse()):");
 
-     ROSE_ASSERT (p_fileList != NULL);
+  // ROSE_ASSERT (p_fileList != NULL);
 
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.

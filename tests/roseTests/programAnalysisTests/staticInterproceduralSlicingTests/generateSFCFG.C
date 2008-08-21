@@ -18,7 +18,7 @@ int main(int argc, char **argv)
 {
 
     SgProject *project = frontend(argc, argv);
-		string outputFileName=(*(*project->get_fileList()).begin())->get_sourceFileNameWithoutPath ();
+    string outputFileName=project->get_fileList().front()->get_sourceFileNameWithoutPath ();
 
  // list < SgNode * >fd = NodeQuery::querySubTree(project, V_SgFunctionDefinition);
     NodeQuerySynthesizedAttributeType fd = NodeQuery::querySubTree(project, V_SgFunctionDefinition);

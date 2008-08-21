@@ -3403,9 +3403,9 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
 // string mainName = "main";
    string mainName = "::main";
 
-  SgFilePtrListPtr fileptrlist = project->get_fileList();
+  const SgFilePtrList& fileptrlist = project->get_fileList();
 
-  for (std::vector<SgFile*>::iterator i = fileptrlist->begin();i!=fileptrlist->end();i++) 
+  for (std::vector<SgFile*>::const_iterator i = fileptrlist.begin();i!=fileptrlist.end();i++) 
   {
     SgFile* sgfile = isSgFile(*i);
     ROSE_ASSERT(sgfile != NULL);

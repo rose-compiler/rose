@@ -1429,8 +1429,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationFunctionDeclStmt (SgStatement* stm
 
      if (outputInstantiatedTemplateFunction == true)
        {
-          SgTemplateArgumentPtrListPtr templateArgListPtr = templateInstantiationFunctionDeclaration->get_templateArguments();
-          ROSE_ASSERT(templateArgListPtr != NULL);
+       // const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationFunctionDeclaration->get_templateArguments();
 #if 0
        // DQ (8/29/2005): This is now output by the Unparse_ExprStmt::outputTemplateSpecializationSpecifier() member function
 
@@ -2143,7 +2142,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 
 void
-Unparse_ExprStmt::unparseExceptionSpecification(SgTypePtrList* exceptionSpecifierList, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseExceptionSpecification(const SgTypePtrList& exceptionSpecifierList, SgUnparse_Info& info)
    {
   // DQ (6/27/2006): Added support for throw modifier and its exception specification lists
 
@@ -2152,10 +2151,10 @@ Unparse_ExprStmt::unparseExceptionSpecification(SgTypePtrList* exceptionSpecifie
 #endif
 
      curprint ( string(" throw("));
-     if (exceptionSpecifierList != NULL)
+     if (!exceptionSpecifierList.empty())
         {
-          SgTypePtrList::iterator i = exceptionSpecifierList->begin();
-          while (i != exceptionSpecifierList->end())
+          SgTypePtrList::const_iterator i = exceptionSpecifierList.begin();
+          while (i != exceptionSpecifierList.end())
              {
             // Handle class type as a special case to make sure the names are always output (see test2004_91.C).
             // unparseType(*i,info);
@@ -2182,7 +2181,7 @@ Unparse_ExprStmt::unparseExceptionSpecification(SgTypePtrList* exceptionSpecifie
                unp->u_type->unparseType(*i,info);
 #endif
                i++;
-               if (i != exceptionSpecifierList->end())
+               if (i != exceptionSpecifierList.end())
                   curprint ( string(","));
              }
         }
@@ -2468,7 +2467,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
             // printf ("Output throw modifier (incomplete implementation) \n");
             // curprint ( string(" throw( /* from unparseFuncDeclStmt() type list output not implemented */ )";
-               SgTypePtrList* exceptionSpecifierList = funcdecl_stmt->get_exceptionSpecification();
+               const SgTypePtrList& exceptionSpecifierList = funcdecl_stmt->get_exceptionSpecification();
                unparseExceptionSpecification(exceptionSpecifierList,info);
              }
 
@@ -3067,7 +3066,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // unparseThrowExp(mfuncdecl_stmt->get_throwExpression,info);
             // printf ("Incomplete implementation of throw specifier on function \n");
             // curprint ( string(" throw( /* from unparseMFuncDeclStmt() type list output not implemented */ )";
-               SgTypePtrList* exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
+               const SgTypePtrList& exceptionSpecifierList = mfuncdecl_stmt->get_exceptionSpecification();
                unparseExceptionSpecification(exceptionSpecifierList,ninfo);
              }
 

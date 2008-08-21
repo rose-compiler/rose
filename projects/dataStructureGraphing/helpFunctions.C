@@ -173,7 +173,7 @@ findScopes (SgNode * astNode)
       ROSE_ASSERT (sageProject != NULL);
 
       //Get a list of all files in the current project
-      const SgFilePtrList sageFilePtrList = *sageProject->get_fileList ();
+      const SgFilePtrList& sageFilePtrList = sageProject->get_fileList ();
 
       //Iterate over the list of files to find all Global Scopes
       SgNodePtrVector globalScopes;
@@ -456,7 +456,7 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 	map< SgTypedefDeclaration*, SgType*> 
 	typeInterpreter::buildTypedefTranslationTable(SgProject* project){
 		ROSE_ASSERT (project != NULL);
-		const SgFilePtrList sageFilePtrList = *project->get_fileList ();
+		const SgFilePtrList& sageFilePtrList = project->get_fileList ();
 
 		//Iterate over all global scopes in the all the files the project spans.
 		for (unsigned int i = 0; i < sageFilePtrList.size (); i += 1)

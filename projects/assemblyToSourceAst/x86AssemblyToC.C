@@ -1861,6 +1861,7 @@ X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f, SgAsmFile* a
   gprSym[13] = globalScope->lookup_variable_symbol("r13"); ROSE_ASSERT (gprSym[13]);
   gprSym[14] = globalScope->lookup_variable_symbol("r14"); ROSE_ASSERT (gprSym[14]);
   gprSym[15] = globalScope->lookup_variable_symbol("r15"); ROSE_ASSERT (gprSym[15]);
+#if 0
   gprLowByteSym[0] = globalScope->lookup_variable_symbol("al"); ROSE_ASSERT (gprLowByteSym[0]);
   gprLowByteSym[1] = globalScope->lookup_variable_symbol("cl"); ROSE_ASSERT (gprLowByteSym[1]);
   gprLowByteSym[2] = globalScope->lookup_variable_symbol("dl"); ROSE_ASSERT (gprLowByteSym[2]);
@@ -1877,6 +1878,7 @@ X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f, SgAsmFile* a
   gprLowByteSym[13] = globalScope->lookup_variable_symbol("r13b"); ROSE_ASSERT (gprLowByteSym[13]);
   gprLowByteSym[14] = globalScope->lookup_variable_symbol("r14b"); ROSE_ASSERT (gprLowByteSym[14]);
   gprLowByteSym[15] = globalScope->lookup_variable_symbol("r15b"); ROSE_ASSERT (gprLowByteSym[15]);
+#endif
   flagsSym[0] = globalScope->lookup_variable_symbol("cf"); ROSE_ASSERT (flagsSym[0]);
   flagsSym[1] = NULL;
   flagsSym[2] = globalScope->lookup_variable_symbol("pf"); ROSE_ASSERT (flagsSym[2]);
@@ -1917,7 +1919,8 @@ SgExpression* X86AssemblyToCWithVariables::makeRegisterRead(X86RegisterClass cl,
       switch (pos) {
         case x86_regpos_dword: return buildVarRefExp(gprSym[num]);
         case x86_regpos_word: return buildBitAndOp(buildVarRefExp(gprSym[num]), buildUnsignedIntValHex(0xFFFF));
-        case x86_regpos_low_byte: return buildVarRefExp(gprLowByteSym[num]);
+        // case x86_regpos_low_byte: return buildVarRefExp(gprLowByteSym[num]);
+        case x86_regpos_low_byte: return buildBitAndOp(buildVarRefExp(gprSym[num]), buildUnsignedIntValHex(0xFF));
         case x86_regpos_high_byte: return buildBitAndOp(buildRshiftOp(buildVarRefExp(gprSym[num]), buildIntVal(8)), buildUnsignedIntValHex(0xFF));
         default: ROSE_ASSERT (false);
       }
@@ -1937,9 +1940,9 @@ SgStatement* X86AssemblyToCWithVariables::makeRegisterWrite(X86RegisterClass cl,
       ROSE_ASSERT (pos != x86_regpos_qword);
       SgExpression* rawRef = buildVarRefExp(gprSym[num]);
       switch (pos) {
-        case x86_regpos_dword: appendStatement(buildAssignStatement(rawRef, value), bb); appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), buildBitAndOp(copyExpression(value), buildUnsignedIntValHex(0xFFU))), bb); break;
-        case x86_regpos_word: appendStatement(buildAssignStatement(rawRef, buildBitOrOp(buildBitAndOp(copyExpression(rawRef), buildUnsignedIntValHex(0xFFFF0000U)), buildBitAndOp(value, buildUnsignedIntValHex(0xFFFFU)))), bb); appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), buildBitAndOp(copyExpression(value), buildUnsignedIntValHex(0xFFU))), bb); break;
-        case x86_regpos_low_byte: appendStatement(buildAssignStatement(rawRef, buildBitOrOp(buildBitAndOp(copyExpression(rawRef), buildUnsignedIntValHex(0xFFFFFF00U)), buildBitAndOp(value, buildUnsignedIntValHex(0xFFU)))), bb); appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), copyExpression(value)), bb); break;
+        case x86_regpos_dword: appendStatement(buildAssignStatement(rawRef, value), bb); /* appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), buildBitAndOp(copyExpression(value), buildUnsignedIntValHex(0xFFU))), bb); */ break;
+        case x86_regpos_word: appendStatement(buildAssignStatement(rawRef, buildBitOrOp(buildBitAndOp(copyExpression(rawRef), buildUnsignedIntValHex(0xFFFF0000U)), buildBitAndOp(value, buildUnsignedIntValHex(0xFFFFU)))), bb); /* appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), buildBitAndOp(copyExpression(value), buildUnsignedIntValHex(0xFFU))), bb); */ break;
+        case x86_regpos_low_byte: appendStatement(buildAssignStatement(rawRef, buildBitOrOp(buildBitAndOp(copyExpression(rawRef), buildUnsignedIntValHex(0xFFFFFF00U)), buildBitAndOp(value, buildUnsignedIntValHex(0xFFU)))), bb); /* appendStatement(buildAssignStatement(buildVarRefExp(gprLowByteSym[num]), copyExpression(value)), bb); */ break;
         case x86_regpos_high_byte: appendStatement(buildAssignStatement(rawRef, buildBitOrOp(buildBitAndOp(copyExpression(rawRef), buildUnsignedIntValHex(0xFFFF00FFU)), buildLshiftOp(buildBitAndOp(value, buildUnsignedIntValHex(0xFFU)), buildIntVal(8)))), bb); /* No change to low byte */ break;
         default: ROSE_ASSERT (false);
       }

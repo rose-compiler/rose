@@ -112,12 +112,12 @@ SgName mangleTemplateArgs (const SgTemplateArgumentPtrList::const_iterator b, co
  *  \returns Mangled name, including all parameter information.
  */
 std::string mangleTemplateToString (const std::string& templ_name,
-                               const SgTemplateArgumentPtrList* templ_args,
+                               const SgTemplateArgumentPtrList& templ_args,
                                const SgScopeStatement* scope);
 
 //! Mangles an instantiated template, returning an SgName object.
 SgName mangleTemplate (const SgName& templ_name,
-                       const SgTemplateArgumentPtrList* templ_args,
+                       const SgTemplateArgumentPtrList& templ_args,
                        const SgScopeStatement* scope);
 
 /*! Mangles an instantiated template function or template member function.
@@ -133,7 +133,7 @@ SgName mangleTemplate (const SgName& templ_name,
  */
 std::string
 mangleTemplateFunctionToString (const std::string& templ_name,
-                                const SgTemplateArgumentPtrList* templ_args,
+                                const SgTemplateArgumentPtrList& templ_args,
                                 const SgFunctionType* func_type,
                                 const SgScopeStatement* scope);
 
@@ -143,7 +143,7 @@ mangleTemplateFunctionToString (const std::string& templ_name,
  */
 SgName
 mangleTemplateFunction (const std::string& templ_name,
-                        const SgTemplateArgumentPtrList* templ_args,
+                        const SgTemplateArgumentPtrList& templ_args,
                         const SgFunctionType* func_type,
                         const SgScopeStatement* scope);
 

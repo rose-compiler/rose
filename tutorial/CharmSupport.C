@@ -44,12 +44,12 @@ buildListOfGlobalVariables ( SgProject* project )
 
      Rose_STL_Container<SgInitializedName*> globalVariableList;
 
-     SgFilePtrList* fileList = project->get_fileList();
-     SgFilePtrList::iterator file = fileList->begin();
+     const SgFilePtrList& fileList = project->get_fileList();
+     SgFilePtrList::const_iterator file = fileList.begin();
 
   // Loop over the files in the project (multiple files exist 
   // when multiple source files are placed on the command line).
-     while(file != fileList->end())
+     while(file != fileList.end())
         {
           Rose_STL_Container<SgInitializedName*> fileGlobalVariableList = buildListOfGlobalVariables(*file);
 
@@ -367,9 +367,9 @@ transformGlobalVariablesToUseStruct ( SgProject *project )
   // objects when multiple files are specfied on the command line!).
      assert(project != NULL);
 
-     SgFilePtrList* fileList = project->get_fileList();
-     SgFilePtrList::iterator file = fileList->begin();
-     while(file != fileList->end())
+     const SgFilePtrList& fileList = project->get_fileList();
+     SgFilePtrList::const_iterator file = fileList.begin();
+     while(file != fileList.end())
         {
           transformGlobalVariablesToUseStruct(*file);
           file++;

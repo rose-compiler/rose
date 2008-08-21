@@ -83,7 +83,7 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgFunctionSymbol* bsrSym;
   SgFunctionSymbol* bsfSym;
   SgVariableSymbol* gprSym[16];
-  SgVariableSymbol* gprLowByteSym[16];
+  // SgVariableSymbol* gprLowByteSym[16];
   // SgVariableSymbol* ipSym;
   SgVariableSymbol* flagsSym[16];
   SgVariableSymbol* sf_xor_ofSym;

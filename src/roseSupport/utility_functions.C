@@ -128,8 +128,8 @@ frontendShell (const std::vector<std::string>& argv)
 
      project->display("In frontendShell(), after frontend()");
 
-     SgFilePtrList::iterator i = project->get_fileList()->begin();
-     while (i != project->get_fileList()->end())
+     SgFilePtrList::const_iterator i = project->get_fileList().begin();
+     while (i != project->get_fileList().end())
         {
        // Get the local command line so that we can remove the "-rose:skip_rose" option
           vector<string> local_argv = (*i)->get_originalCommandLineArgumentList();

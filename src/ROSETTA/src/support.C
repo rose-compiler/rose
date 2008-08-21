@@ -553,7 +553,7 @@ Grammar::setUpSupport ()
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
   // DQ (10/10/2006): Support for reference to a list that would be used for qualified name generation for any type.
-     Unparse_Info.setDataPrototype ( "SgQualifiedNamePtrListPtr", "qualifiedNameList", "= NULL",
+     Unparse_Info.setDataPrototype ( "SgQualifiedNamePtrList", "qualifiedNameList", "= SgQualifiedNamePtrList()",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (10/20/2006): Added support for output of function calls.  We need to know if we are 
@@ -1145,8 +1145,8 @@ Grammar::setUpSupport ()
 
   // DQ (4/7/2001) Added support for multiple files (changed SgFile* to SgFilePtrListPtr*)
   // Project.setDataPrototype      ( "SgFile*"  , "file", "= NULL" );
-     Project.setDataPrototype      ( "SgFilePtrListPtr"  , "fileList", "= NULL" ,
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     Project.setDataPrototype      ( "SgFilePtrList"  , "fileList", "= SgFilePtrList()" ,
+                                     CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 #if 0
   // DQ (10/16/2005): Removed because they are not needed except as a local variable in the

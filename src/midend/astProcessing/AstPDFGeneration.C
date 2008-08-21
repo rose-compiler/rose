@@ -68,9 +68,9 @@ AstPDFGeneration_private::generate(string filename, SgNode* node) {
 
 void
 AstPDFGeneration_private::generateInputFiles(SgProject* projectNode) {
-  SgFilePtrListPtr fList = projectNode->get_fileList();
-  for (SgFilePtrList::iterator fl_iter = fList->begin();
-       fl_iter != fList->end(); fl_iter++) {
+  const SgFilePtrList& fList = projectNode->get_fileList();
+  for (SgFilePtrList::const_iterator fl_iter = fList.begin();
+       fl_iter != fList.end(); fl_iter++) {
     ROSE_ASSERT(*fl_iter!=0);
     generateWithinFile(*fl_iter);
   }

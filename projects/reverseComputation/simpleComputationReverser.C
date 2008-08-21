@@ -204,8 +204,8 @@ void reverseOneFunction(SgFunctionDeclaration* decl, SgFunctionSymbol*& forward,
 int main(int argc, char * argv[]) {
   SgProject* project = frontend(argc, argv);
   AstTests::runAllTests(project);
-  ROSE_ASSERT (project->get_fileList()->size() == 1);
-  SgFile* f = (*project->get_fileList())[0];
+  ROSE_ASSERT (project->get_fileList().size() == 1);
+  SgFile* f = project->get_fileList().front();
   ROSE_ASSERT (f);
   SgGlobal* g = f->get_globalScope();
   ROSE_ASSERT (g);

@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
 		std::cerr<<"DFAnalysis failed!"<<endl;
 	}
 #endif
- string outputFileName=(*(*project->get_fileList()).begin())->get_sourceFileNameWithoutPath ();                                                                                                
+ string outputFileName=project->get_fileList().front()->get_sourceFileNameWithoutPath ();                                                                                                
  
 
 

@@ -25,8 +25,8 @@ annotateAST( SgProject* project )
   // This function is atted to attach attributes to the AST that will make the generated 
   // DOT graphs more appropriate for presentation of concepts (like bug seeding).
 
-     SgFilePtrList & fileList = *(project->get_fileList());
-     for (SgFilePtrList::iterator i = fileList.begin(); i != fileList.end(); i++)
+     const SgFilePtrList & fileList = project->get_fileList();
+     for (SgFilePtrList::const_iterator i = fileList.begin(); i != fileList.end(); i++)
         {
           PruningAttribute* pruneAttribute = new PruningAttribute();
           (*i)->addNewAttribute("PruningAttribute",pruneAttribute);

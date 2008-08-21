@@ -446,14 +446,13 @@ mangleTemplateArgs (const SgTemplateArgumentPtrList::const_iterator b,
  
 string
 mangleTemplateToString (const string& templ_name,
-                        const SgTemplateArgumentPtrList* templ_args,
+                        const SgTemplateArgumentPtrList& templ_args,
                         const SgScopeStatement* scope)
   {
     // Mangle all the template arguments
     string args_mangled;
-    if (templ_args)
-      args_mangled = mangleTemplateArgsToString (templ_args->begin (),
-                                                 templ_args->end ());
+    args_mangled = mangleTemplateArgsToString (templ_args.begin (),
+                                               templ_args.end ());
 
     // Compute the name qualification, if any.
     string scope_name;
@@ -468,7 +467,7 @@ mangleTemplateToString (const string& templ_name,
 
 SgName
 mangleTemplate (const SgName& templ_name,
-                const SgTemplateArgumentPtrList* templ_args,
+                const SgTemplateArgumentPtrList& templ_args,
                 const SgScopeStatement* scope)
 {
   string mangled_name = mangleTemplateToString (templ_name.getString (),
@@ -479,7 +478,7 @@ mangleTemplate (const SgName& templ_name,
 
 string
 mangleTemplateFunctionToString (const string& templ_name,
-                                const SgTemplateArgumentPtrList* templ_args,
+                                const SgTemplateArgumentPtrList& templ_args,
                                 const SgFunctionType* func_type,
                                 const SgScopeStatement* scope)
   {
@@ -509,7 +508,7 @@ mangleTemplateFunctionToString (const string& templ_name,
 
 SgName
 mangleTemplateFunction (const string& templ_name,
-                        const SgTemplateArgumentPtrList* templ_args,
+                        const SgTemplateArgumentPtrList& templ_args,
                         const SgFunctionType* func_type,
                         const SgScopeStatement* scope)
   {

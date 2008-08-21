@@ -10013,8 +10013,7 @@ SgProject::SgProject( const SgProject & project )
   // p_defaultCommandLineArgumentList(project.p_defaultCommandLineArgumentList),
 
   // Build the empty STL lists
-     p_fileList = new SgFilePtrList();
-     ROSE_ASSERT (p_fileList != NULL);
+     p_fileList.clear();
 
   // print error message and quit
      printf ("ERROR: this SgProject copy constructor is not supposed to be used \n");
@@ -10061,7 +10060,7 @@ void
 SgProject::initialization()
    {
   // DQ (10/16/2005): This function initializes default values (until we use an automatically generated version)
-     p_fileList                            = NULL;
+     p_fileList.clear();
   // p_numberOfCommandLineArguments        = 0;
   // p_commandLineArgumentList             = NULL;
   // p_defaultNumberOfCommandLineArguments = 0;
@@ -10094,10 +10093,10 @@ SgProject::initialization()
 SgFile*
 SgProject::operator[]( unsigned int i )
    {
-     ROSE_ASSERT(i < get_fileList()->size());
+     ROSE_ASSERT(i < get_fileList().size());
 
   // Since we use an STL vector internally we can use the vector::operator[] directly.
-     return p_fileList->operator[](i);
+     return p_fileList[i];
    }
 
 // Moved to sageSupport.C: int SgProject::parse(const vector<string>& argv)
@@ -10207,8 +10206,8 @@ int
 SgProject::numberOfFiles() const
    {
   // This function does not return a meaningful result until all the files have been processed
-     ROSE_ASSERT (p_fileList != NULL);
-     int returnValue = p_fileList->size();
+  // ROSE_ASSERT (p_fileList != NULL);
+     int returnValue = p_fileList.size();
   // ROSE_ASSERT ( returnValue > 0 );
 
   // Seems like a good upper bound for now!
@@ -10224,8 +10223,8 @@ SgProject::get_file ( int i ) const
      ROSE_ASSERT (i >= 0);
      ROSE_ASSERT (i < numberOfFiles());
 
-     ROSE_ASSERT (p_fileList != NULL);
-     SgFile* targetFile =  (*p_fileList)[i];
+  // ROSE_ASSERT (p_fileList != NULL);
+     SgFile* targetFile =  p_fileList[i];
      ROSE_ASSERT (targetFile != NULL);
 
      return *targetFile;
@@ -10234,8 +10233,8 @@ SgProject::get_file ( int i ) const
 void
 SgProject::set_file ( SgFile & file )
    {
-     ROSE_ASSERT (p_fileList != NULL);
-     p_fileList->push_back(&file);
+  // ROSE_ASSERT (p_fileList != NULL);
+     p_fileList.push_back(&file);
      ROSE_ASSERT (numberOfFiles() > 0);
    }
 
@@ -10826,7 +10825,7 @@ SgUnparse_Info::post_construction_initialization()
      p_outputCodeGenerationFormatDelimiters = false;
 
   // DQ (10/10/2006): Added support for qualified name lists.
-     p_qualifiedNameList = NULL;
+     p_qualifiedNameList.clear();
 
   // DQ (10/20/2006): Added support for function call context information.
      p_current_function_call = NULL;

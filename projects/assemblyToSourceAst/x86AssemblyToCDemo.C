@@ -1057,9 +1057,11 @@ TrackVariableDefs::DefMap TrackVariableDefs::makeInitialMap() const {
     if (conv.gprSym[i]) {
       result[conv.gprSym[i]->get_declaration()] = conv.gprSym[i];
     }
+#if 0
     if (conv.gprLowByteSym[i]) {
       result[conv.gprLowByteSym[i]->get_declaration()] = conv.gprLowByteSym[i];
     }
+#endif
   }
   for (size_t i = 0; i < 16; ++i) {
     if (conv.flagsSym[i]) {
@@ -1924,8 +1926,11 @@ void renumberVariableDefinitions(SgNode* top, const X86AssemblyToCWithVariables&
 
 struct InterestingStatementFilter {
   bool operator()(const CFGNode& n) const {
-    cerr << n.id() << endl;
-    return true; // n.isInteresting(); //  && (isSgGotoStatement(n.getNode()));
+    // bool ok = n.isInteresting() && (isSgStatement(n.getNode())) && !isSgVariableDeclaration(n.getNode()) && !isSgPragmaDeclaration(n.getNode()) && !isSgGotoStatement(n.getNode()) && !isSgExprStatement(n.getNode());
+    bool ok = n.outEdges().size() != 1;
+    if (ok) 
+      cerr << n.id() << endl;
+    return ok;
   }
 };
 
@@ -1952,7 +1957,7 @@ void moveVariableDeclarationsToTop(SgBasicBlock* top) {
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ROSE_ASSERT (proj);
-  SgFile* newFile = proj->get_fileList()[0][0];
+  SgFile* newFile = proj->get_fileList().front();
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
@@ -1962,7 +1967,7 @@ int main(int argc, char** argv) {
   X86AssemblyToCWithVariables converter(newFile, isSgAsmFile(asmFiles[0]));
   SgBasicBlock* body = decl->get_definition()->get_body();
   converter.makeAllCode(body);
-  proj->get_fileList()->erase(proj->get_fileList()->end() - 1); // Remove binary file before calling backend
+  proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
   cerr << "Simplifying" << endl;
   set<SgFunctionDeclaration*> safeFunctions;
 #define SAFE(f) \
@@ -2014,19 +2019,19 @@ int main(int argc, char** argv) {
   /// removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
   /// // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   /// renumberVariableDefinitions(converter.whileBody, converter); cerr << "X" << endl;
-  trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
+  // trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
   // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
   // removeIfConstants(proj); cerr << "X" << endl;
   // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
-  plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
-  removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
-  simplifyAllExpressions(proj, converter); cerr << "X" << endl;
+  // flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
+  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
+  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
+  // removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
+  // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
+  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // structureCode(converter.switchBody); cerr << "X" << endl;
   // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
   // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
@@ -2063,10 +2068,10 @@ int main(int argc, char** argv) {
   // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
   // cleanupInlinedCode(proj); cerr << "X" << endl;
   cerr << "Unparsing" << endl;
-#if 1
+#if 0
   {
     ofstream dotFile("foo.dot");
-    cfgToDot(dotFile, "foo", /* FilteredCFGNode<InterestingStatementFilter> */ InterestingNode(converter.whileBody->cfgForBeginning()));
+    cfgToDot(dotFile, "foo", FilteredCFGNode<InterestingStatementFilter>(converter.whileBody->cfgForBeginning()));
   }
   return 0;
 #endif

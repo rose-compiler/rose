@@ -26,10 +26,10 @@ int main( int argc, char * argv[] )
                classTemplateCounter++,
                instantiatedTemplateClass->get_templateName().str());
 
-          SgTemplateArgumentPtrList* templateParameterList = instantiatedTemplateClass->get_templateArguments();
+          const SgTemplateArgumentPtrList& templateParameterList = instantiatedTemplateClass->get_templateArguments();
           int parameterCounter = 0;
-          for (SgTemplateArgumentPtrList::iterator j = templateParameterList->begin(); 
-               j != templateParameterList->end(); j++)
+          for (SgTemplateArgumentPtrList::const_iterator j = templateParameterList.begin(); 
+               j != templateParameterList.end(); j++)
              {
                printf ("   TemplateArgument #%d = %s \n",parameterCounter++,(*j)->unparseToString().c_str());
              }

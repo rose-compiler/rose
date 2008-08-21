@@ -202,7 +202,7 @@ MyTraversal::graphGenerateProject (SgProject * project)
 {
   ROSE_ASSERT (project != NULL);
 
-  const SgFilePtrList sageFilePtrList = *project->get_fileList ();
+  const SgFilePtrList& sageFilePtrList = project->get_fileList ();
   //Find  all fileNames in the project.
   Rose_STL_Container< string > fileNamesInProjectList = project->getFileNames ();
   //Put the fileNames into a strctures which is more handy
