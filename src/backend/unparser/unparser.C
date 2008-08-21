@@ -309,29 +309,22 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                  // Writes a new executable based on the parse tree. The new executable should be byte-for-byte identical with 
                  // the original.  This work supports testing that we have completely represented the binary executable file format.
                  // Any transformations to parts of the binary executable file format (in the AST) will be represented in the 
-                 // re-generated binary.
-                    if (file->get_read_executable_file_format_only() == false)
-                       {
-                      // If we didn't disassemble the instructions into the AST, then we can't regenerate the binary.
+                 // re-generated binary. Note that we didn't have to disassemble the instructions to re-generate the binary, that
+                 // is an orthogonal concept (so this step does not depend upon the value of get_read_executable_file_format_only()).
 #if 0
-                      // The output filename should perhaps be the one in: file->get_unparse_output_filename()
-                      // Need to think about this, since it might overwrite the input binary executable.
-                         string newFilename = file->get_unparse_output_filename();
+                 // The output filename should perhaps be the one in: file->get_unparse_output_filename()
+                 // Need to think about this, since it might overwrite the input binary executable.
+                    string newFilename = file->get_unparse_output_filename();
 #else
-                         string sourceFilename = file->get_sourceFileNameWithoutPath();
-                         string newFilename = sourceFilename + ".new";
-                         size_t slash = sourceFilename.find_last_of('/');
-                         if (slash!=sourceFilename.npos)
-                              newFilename.replace(0, slash+1, "");
-                         std::cout << "output re-generated binary as: " << newFilename << std::endl;
+                    string sourceFilename = file->get_sourceFileNameWithoutPath();
+                    string newFilename = sourceFilename + ".new";
+                    size_t slash = sourceFilename.find_last_of('/');
+                    if (slash!=sourceFilename.npos)
+                         newFilename.replace(0, slash+1, "");
+                    std::cout << "output re-generated binary as: " << newFilename << std::endl;
 #endif
-                      // Regenerate the binary executable.
-                         SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, astFile);
-                       }
-                      else
-                       {
-                         printf ("\nWARNING: Skipping writing out the regenerated binary \n\n");
-                       }
+                 // Regenerate the binary executable.
+                    SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, astFile);
 
                  // Dump detailed info from the AST representation of the binary executable file format.
                     string baseName = file->get_sourceFileNameWithoutPath();
