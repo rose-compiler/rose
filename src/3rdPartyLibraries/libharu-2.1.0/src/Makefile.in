@@ -75,13 +75,13 @@ libhpdf_la_OBJECTS = $(am_libhpdf_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_srcdir)/include -I$(top_builddir)/include
 depcomp =
 am__depfiles_maybe =
-COMPILE = @echo "  COMPILE $@"; @echo "  COMPILE $@"; $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+COMPILE = @echo "  COMPILE $@"; $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = @echo "  COMPILE $@"; @echo "  COMPILE $@"; $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
+LTCOMPILE = @echo "  COMPILE $@"; $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
 	$(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
-LINK = @echo "  LINK    $@"; @echo "  LINK    $@"; $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+LINK = @echo "  LINK    $@"; $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libhpdf_la_SOURCES)
 DIST_SOURCES = $(libhpdf_la_SOURCES)
