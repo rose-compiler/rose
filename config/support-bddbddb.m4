@@ -28,14 +28,7 @@ else
         echo "Setup bddbddb support in ROSE! path = $bddbddb_path"
         AC_DEFINE([USE_ROSE_BDDBDDB_SUPPORT],1,[Controls use of ROSE support for bddbddb (Binary decision diagrams (BDD) BDD-Based Deductive DataBase.])
     else
-        cat << EOF
-
-No Python >=2.4.0 found.  Disabling support for bddbddb.
-Try setting the --with-python option to the location of
-a good python interpreter:
---with-python=/path/to/python/bin/python
-
-EOF
+        AC_MSG_ERROR([--with-bddbddb was passed but Python 2.4 or above was not found.  Try setting the --with-python option to the location of a good python interpreter: --with-python=/path/to/python/bin/python])
     fi
 
 fi
