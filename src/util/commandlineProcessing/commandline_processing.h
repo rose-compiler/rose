@@ -93,7 +93,9 @@ namespace CommandlineProcessing
           void initExecutableFileSuffixList();
           static Rose_STL_Container<std::string> validExecutableFileSuffixes;
 
-          bool isOptionTakingFileName( std::string argument );
+       // bool isOptionTakingFileName( std::string argument );
+          bool isOptionTakingSecondParameter( std::string argument );
+          bool isOptionTakingThirdParameter ( std::string argument );
    };
 
 //! Find the path of a ROSE support file.  If ROSE is not installed (see
