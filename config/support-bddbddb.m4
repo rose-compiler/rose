@@ -15,7 +15,6 @@ if test ! "$with_bddbddb" ; then
 fi
 )
 
-echo "In ROSE SUPPORT MACRO: with_bddbddb $with_bddbddb"
 if test "$with_bddbddb" = no; then
   # If bddbddb is not specified, then don't use it.
   echo "Skipping use of bddbddb!"
@@ -25,7 +24,6 @@ else
         # We currently ignore the path, but it might be used
         # later if BDDBDDB is installed external to ROSE.
         bddbddb_path=$with_bddbddb
-        echo "Setup bddbddb support in ROSE! path = $bddbddb_path"
         AC_DEFINE([USE_ROSE_BDDBDDB_SUPPORT],1,[Controls use of ROSE support for bddbddb (Binary decision diagrams (BDD) BDD-Based Deductive DataBase.])
     else
         AC_MSG_ERROR([--with-bddbddb was passed but Python 2.4 or above was not found.  Try setting the --with-python option to the location of a good python interpreter: --with-python=/path/to/python/bin/python])
