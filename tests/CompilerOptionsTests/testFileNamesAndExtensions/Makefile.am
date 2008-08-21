@@ -27,6 +27,12 @@ testFilenames:
 testLongFilenames:
 	$(srcdir)/test_filenames_looong_torture.pl
 
+SymlinkFileNames = \
+	test_empty_c_file.c \
+	test_simple_file.C \
+	$(srcdir)/fileNames/test_symbolic.C \
+	../../.libs/testTranslator
+
 EmptyFileNames = \
 	test_empty_cplusplus_file.C \
 	test_empty_c_file.c
@@ -38,20 +44,25 @@ FileNames = \
 
 genFileNames:
 	@echo -e "\nGenerating test files\n" && sh -c '\
-		  for f in $(FileNames) ;\
-		  do \
-			   cp $(srcdir)/fileNames/test_simple_file.C ./"$${f}" ;\
-		  done ;\
-		  for f in $(EmptyFileNames) ;\
-		  do \
-			   touch ./"$${f}" ;\
-		  done ;\
+		for f in $(FileNames) ;\
+		do \
+			 cp $(srcdir)/fileNames/test_simple_file.C ./"$${f}" ;\
+		done ;\
+		for f in $(EmptyFileNames) ;\
+		do \
+			touch ./"$${f}" ;\
+		done ;\
+		for f in $(SymlinkFileNames) ;\
+		do \
+			bf=`basename $$f` ;\
+			(test -e $${bf} && ln -s -f $${f} $${bf%%.*}.L.$${bf#*.}) || ln -s -f $${f} $$bf;\
+		done ;\
 	 '
-	chmod a-r test_simple_file_no_permissions.C
 
 
 # This rule is run after automake's internal check rule (which we don't want to use)
 check-local: genFileNames
+	chmod a-r test_simple_file_no_permissions.C
 	@echo "#########################################"
 	@echo "Testing use of filenames skipped for now!"
 	@echo "#########################################"
@@ -60,6 +71,7 @@ check-local: genFileNames
 	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/CompilerOptionTests/testFileNamesAndExtensions: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************************"
+	chmod a+r test_simple_file_no_permissions.C
 
 # Test the -H option with all of these example files
 $(TEST_Objects): $(TESTCODES)
@@ -80,7 +92,13 @@ clean-local:
 		do \
 			rm -f ./"$${f}" ;\
 		done ;\
+		for f in $(SymlinkFileNames) ;\
+		do \
+			bf=`basename $$f` ;\
+			rm -f ./$$bf $${f%%.*}.L.$${f#*.} ;\
+		done ;\
 	'
 	rm -f *.o *.C rose_*.[Cc] *.sage.C test2001_??.C.show outputFile \
-	*.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core
+	*.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core \
+	rose_*.s *.new *.dump
 	rm -rf ti_files a*.out

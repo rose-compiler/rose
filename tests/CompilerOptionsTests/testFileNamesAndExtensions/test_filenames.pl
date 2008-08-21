@@ -68,6 +68,12 @@ $output_line="-o output";
      "././ ./ls.C",
      "/a/b/c/test_empty_file.C /./",
      "/./ /a/b/c/test_empty_file.C",
+
+     #Symbolic links
+     "test_empty_c_file.L.c",
+     "test_simple_file.L.C",
+     "test_symbolic.C",
+     "testTranslator"
 );
 
 $length_of_command_line = @command_line_arguments;
