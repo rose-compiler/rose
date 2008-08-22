@@ -3,7 +3,7 @@
 # Stub file to include settings for roseFreshTest-common
 
 source /usr/apps/graphviz/2.6/setup.sh
-# source /usr/apps/python/2.5/setup.sh
+source /usr/apps/python/2.5/setup.sh
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
 export LD_LIBRARY_PATH="${JAVA_HOME}/jre/lib/amd64/server:${LD_LIBRARY_PATH}"
 # source /usr/apps/gcc/4.2.2/setup.sh
