@@ -63,7 +63,7 @@ regenerate:
 #        chmod -R u+w $(compass_checker_dir)
 #        chmod -R u+w $(srcdir)
 testNewChecker: $(compass_scripts_dir)/gen_checker.sh
-	 cd $(compass_checker_dir) && $(compass_scripts_dir)/gen_checker.sh blank test checker 
+	 cd $(compass_checker_dir) && ../../src/compass_scripts/gen_checker.sh blank test checker 
 	 cp $(srcdir)/CHECKER_LIST $(srcdir)/CHECKER_LIST.testNewChecker.bk
 	 cp $(srcdir)/RULE_SELECTION $(srcdir)/RULE_SELECTION.testNewChecker.bk
 	 echo "blankTestChecker" >> $(srcdir)/CHECKER_LIST
