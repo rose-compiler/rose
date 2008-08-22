@@ -2311,7 +2311,8 @@ initialize_global_scope_if_required()
           ROSE_ASSERT(globalScope != NULL);
           ROSE_ASSERT(globalScope->get_parent() != NULL);
 
-          ROSE_ASSERT(globalScope->get_endOfConstruct()   == NULL);
+       // DQ (8/21/2008): endOfConstruct is not set to be consistant with startOfConstruct.
+          ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
           ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
 
        // Scopes should be pushed onto the front of the stack (we define the top of the stack to

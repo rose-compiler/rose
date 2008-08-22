@@ -2,12 +2,16 @@
 #include <fcntl.h>
 #include <vector>
 #include "rose.h"
-#include "freebsd_elf_combined.h"
-#include "ExecGeneric.h"
+
+// DQ (8/21/2008): No longer used (using new IR nodes now)
+// #include "freebsd_elf_combined.h"
+// #include "ExecGeneric.h"
 
 using namespace std;
 using namespace SageBuilderAsm;
-using namespace Exec;
+
+// DQ (8/21/2008): No longer used (using new IR nodes now)
+// using namespace Exec;
 
 namespace X86Disassembler {
 

@@ -6,7 +6,9 @@
 #include <map>
 #include <set>
 #include "rose.h"
-#include "ExecGeneric.h"
+
+// DQ (8/21/2008): Removed references to old code from before the use of the new IR nodes.
+// #include "ExecGeneric.h"
 
 struct OverflowOfInstructionVector {};
 struct BadInstruction {};
@@ -62,12 +64,15 @@ namespace ArmDisassembler {
 namespace DisassemblerCommon {
 
   struct AsmFileWithData {
-    Exec::ExecFile* ef;
+ // Exec::ExecFile* ef;
+    SgAsmGenericFile* ef;
     mutable size_t instructionsDisassembled;
 
-    AsmFileWithData(Exec::ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
+ // AsmFileWithData(Exec::ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
+    AsmFileWithData(SgAsmGenericFile* ef): ef(ef), instructionsDisassembled(0) {}
 
-    Exec::ExecSection* getSectionOfAddress(uint64_t addr) const;
+ // Exec::ExecSection* getSectionOfAddress(uint64_t addr) const;
+    SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const;
     bool inCodeSegment(uint64_t addr) const;
     size_t getFileOffsetOfAddress(uint64_t addr) const;
     SgAsmInstruction* disassembleOneAtAddress(uint64_t addr, std::set<uint64_t>& knownSuccessors) const;

@@ -26,7 +26,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_purpose(SP_HEADER);
 
     ROSE_ASSERT(f != NULL);
-    printf ("In SgAsmElfFileHeader::ctor(): SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
+ // printf ("In SgAsmElfFileHeader::ctor(): SgAsmGenericFile *f = %p addr_t offset = %zu \n",f,offset);
 
  // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
@@ -75,14 +75,14 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     ROSE_ASSERT(p_exec_format != NULL);
 
-    printf ("disk32.e_ident_file_class = %u \n",disk32.e_ident_file_class);
+ // printf ("disk32.e_ident_file_class = %u \n",disk32.e_ident_file_class);
 
     /* Decode header to native format */
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
-        printf ("p_e_ident_padding.size()       = %zu \n",p_e_ident_padding.size());
-        printf ("sizeof(disk32.e_ident_padding) = %zu \n",sizeof(disk32.e_ident_padding));
+     // printf ("p_e_ident_padding.size()       = %zu \n",p_e_ident_padding.size());
+     // printf ("sizeof(disk32.e_ident_padding) = %zu \n",sizeof(disk32.e_ident_padding));
 
      // ROSE_ASSERT(sizeof(p_e_ident_padding) == sizeof(disk32.e_ident_padding));
      // memcpy(p_e_ident_padding, disk32.e_ident_padding, sizeof(p_e_ident_padding));
@@ -216,11 +216,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Entry point */
     p_base_va = 0;
 
-    printf ("p_e_entry = %zu \n",p_e_entry);
+ // printf ("p_e_entry = %zu \n",p_e_entry);
 
     add_entry_rva(p_e_entry);
 
-    printf ("Leaving SgAsmElfFileHeader::ctor() \n");
+ // printf ("Leaving SgAsmElfFileHeader::ctor() \n");
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts

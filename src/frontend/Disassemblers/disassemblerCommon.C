@@ -1,13 +1,15 @@
 #include "rose.h"
 
 using namespace std;
-using namespace Exec;
 
-ExecSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const {
-  ExecSection *section = ef->get_section_by_va(addr);
+// DQ (8/21/2008): No longer used (using new IR nodes now)
+// using namespace Exec;
+
+SgAsmGenericSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const {
+  SgAsmGenericSection *section = ef->get_section_by_va(addr);
   if (!section) {
-    vector<ExecSection*> possibleSections = ef->get_sections_by_va(addr);
-    vector<ExecSection*> possibleSections2;
+    vector<SgAsmGenericSection*> possibleSections = ef->get_sections_by_va(addr);
+    vector<SgAsmGenericSection*> possibleSections2;
     for (size_t i = 0; i < possibleSections.size(); ++i) {
       if (possibleSections[i]->get_id() != -1) {
         possibleSections2.push_back(possibleSections[i]);
@@ -28,7 +30,7 @@ ExecSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t a
 }
 
 bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
-  ExecSection* sectionOfThisPtr = getSectionOfAddress(addr);
+  SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
   if (sectionOfThisPtr != NULL &&
       sectionOfThisPtr->is_mapped() &&
       sectionOfThisPtr->get_eperm()) {
@@ -38,36 +40,36 @@ bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
 }
 
 size_t DisassemblerCommon::AsmFileWithData::getFileOffsetOfAddress(uint64_t addr) const {
-  ExecSection* section = getSectionOfAddress(addr);
+  SgAsmGenericSection* section = getSectionOfAddress(addr);
   if (!section) abort();
   return section->get_va_offset(addr);
 }
 
 SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const {
-  ExecSection* section = getSectionOfAddress(addr);
+  SgAsmGenericSection* section = getSectionOfAddress(addr);
   if (!section) return 0;
   if (!section->is_mapped() ||
       !section->get_eperm()) {
     return 0;
   }
-  ExecHeader* header = section->get_header();
+  SgAsmGenericHeader* header = section->get_header();
   ROSE_ASSERT (header);
   uint64_t rva = addr - header->get_base_va();
   size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
   ROSE_ASSERT (fileOffset < ef->get_size());
-  const Architecture& arch = header->get_target();
-  InsSetArchitecture isa = arch.get_isa();
+  const SgAsmGenericArchitecture* arch = header->get_target();
+  SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
   SgAsmInstruction* insn = NULL;
   try {
-    if ((isa & ISA_FAMILY_MASK) == ISA_IA32_Family) {
+    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_32);
-      insn = X86Disassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
-    } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
+      insn = X86Disassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
-      insn = X86Disassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
-    } else if (isa == ISA_ARM_Family) {
+      insn = X86Disassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+    } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = ArmDisassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
     } else {
       cerr << "Bad architecture to disassemble" << endl;
       abort();
@@ -146,12 +148,12 @@ void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t
 }
 
 void Disassembler::disassembleFile(SgAsmFile* f) {
-  ExecFile* ef = Exec::parse(f->get_name().c_str());
+  SgAsmGenericFile* ef = SgAsmExecutableFileFormat::parse(f->get_name().c_str());
   DisassemblerCommon::AsmFileWithData file(ef);
   map<uint64_t, SgAsmInstruction*> insns;
   map<uint64_t, bool> basicBlockStarts;
   set<uint64_t> functionStarts;
-  const vector<ExecHeader*>& headers = ef->get_headers();
+  const vector<SgAsmGenericHeader*> & headers = ef->get_headers()->get_headers();
   for (size_t i = 0; i < headers.size(); ++i) {
     uint64_t entryPoint = headers[i]->get_entry_rva() + headers[i]->get_base_va();
     basicBlockStarts[entryPoint] = true;
@@ -159,21 +161,21 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
     file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
   }
 
-  const vector<ExecSection*>& sections = ef->get_sections();
+  const vector<SgAsmGenericSection*> & sections = ef->get_sections()->get_sections();
   for (size_t i = 0; i < sections.size(); ++i) {
-    ExecSection* sect = sections[i];
+    SgAsmGenericSection* sect = sections[i];
     if (sect->is_mapped()) {
       // Scan for pointers to code
-      ExecHeader* header = sect->get_header();
+      SgAsmGenericHeader* header = sect->get_header();
       ROSE_ASSERT (header);
-      const Architecture& arch = header->get_target();
-      InsSetArchitecture isa = arch.get_isa();
+      const SgAsmGenericArchitecture * arch = header->get_target();
+      SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
       size_t pointerSize = 0;
-      if ((isa & ISA_FAMILY_MASK) == ISA_IA32_Family) {
+      if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
         pointerSize = 4;
-      } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
+      } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
         pointerSize = 8;
-      } else if (isa == ISA_ARM_Family) {
+      } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
         pointerSize = 4;
       } else {
         cerr << "Bad architecture to disassemble" << endl;
@@ -215,18 +217,18 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
   for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
     SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
     if (!bb) continue;
-    ExecSection* section = file.getSectionOfAddress(bb->get_address());
+    SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
     if (!section) continue;
-    ExecHeader* header = section->get_header();
+    SgAsmGenericHeader* header = section->get_header();
     ROSE_ASSERT (header);
-    const Architecture& arch = header->get_target();
-    InsSetArchitecture isa = arch.get_isa();
+    const SgAsmGenericArchitecture* arch = header->get_target();
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
     bool isFunctionStart = false;
-    if ((isa & ISA_FAMILY_MASK) == ISA_IA32_Family) {
+    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
-    } else if ((isa & ISA_FAMILY_MASK) == ISA_X8664_Family) {
+    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-    } else if (isa == ISA_ARM_Family) {
+    } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       isFunctionStart = false; // FIXME
     } else {
       cerr << "Bad architecture to disassemble" << endl;

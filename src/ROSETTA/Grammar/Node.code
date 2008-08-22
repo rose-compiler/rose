@@ -8,7 +8,12 @@ HEADER_NODE_PREDECLARATION_START
 #include <sys/stat.h>
 
 // DQ (6/14/2008): Include the Exec format support.
-#include "ExecGeneric.h"
+// #include "ExecGeneric.h"
+typedef uint64_t rose_addr_t; /* address and size (file and memory) */
+
+// DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
+#define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
+#define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */
 
 class mutex
    {
@@ -285,9 +290,12 @@ typedef SgLabelSymbolPtrList*                  SgLabelSymbolPtrListPtr;
 typedef Rose_STL_Container<SgFormatItem*>      SgFormatItemPtrList;
 typedef SgFormatItemPtrList*                   SgFormatItemPtrListPtr;
 
+// DQ (8/21/2008): Use the reference built for rose_addr_t instead.
+// DQ (8/21/2008): Moved this from Node.code to make it local since 
+// we can't reference the nested addr_t directly from glogal scope.
 // typedef uint64_t addr_t; // address and size (file and memory)
-typedef Rose_STL_Container<Exec::addr_t>       SgAddressList;
-typedef SgAddressList*                         SgAddressListPtr;
+typedef Rose_STL_Container<rose_addr_t>  SgAddressList;
+typedef SgAddressList*                   SgAddressListPtr;
 
 typedef Rose_STL_Container<SgAsmPEDLL*>        SgAsmPEDLLPtrList;
 typedef SgAsmPEDLLPtrList*                     SgAsmPEDLLPtrListPtr;
@@ -647,9 +655,9 @@ class AstSpecificDataManagingClassStorageClass;
 // DQ (4/23/2006): The friend declaration the SgProject class is not enough this must be defined outside of the class (for g++ 4.1.0).
 std::ostream & operator<< ( std::ostream & os, const Rose_STL_Container<std::string> & l );
 
-// DQ (8/8/2008): Added support for std::multimap<Exec::addr_t, Exec::addr_t> used in binary file format.
-std::ostream & operator<< ( std::ostream & os, const std::multimap<Exec::addr_t, Exec::addr_t> & m );
-std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<Exec::addr_t,Exec::addr_t> > & l );
+// DQ (8/8/2008): Added support for std::multimap<rose_addr_t, rose_addr_t> used in binary file format.
+std::ostream & operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m );
+std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l );
 // struct SgAsmGenericFormat::fileDetails;
 // std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
 std::ostream & operator<< ( std::ostream & os, const struct stat64 & sb );
@@ -1592,7 +1600,7 @@ $CLASSNAME::cfgInEdges(unsigned int) {
 
 // DQ (8/10/2008): Added to support binary file format.
 std::ostream & 
-operator<< ( std::ostream & os, const std::multimap<Exec::addr_t, Exec::addr_t> & m )
+operator<< ( std::ostream & os, const std::multimap<rose_addr_t, rose_addr_t> & m )
    {
      return os;
    }
@@ -1600,7 +1608,7 @@ operator<< ( std::ostream & os, const std::multimap<Exec::addr_t, Exec::addr_t> 
 #if 0
 // DQ (8/10/2008): This is not used!
 std::ostream & 
-operator<< ( std::ostream & os, const std::vector<std::pair<Exec::addr_t,Exec::addr_t> > & l )
+operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l )
    {
      return os;
    }

@@ -4,7 +4,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "ExecLE.h"
+// DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
+// #include "ExecLE.h"
 
 // namespace Exec {
 // namespace LE {
@@ -760,8 +761,8 @@ SgAsmLEEntryPoint::ctor(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_dis
 }
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
-Exec::addr_t
-SgAsmLEEntryPoint::unparse(FILE *f, ByteOrder sex, SgAsmGenericSection *section, Exec::addr_t spos)
+rose_addr_t
+SgAsmLEEntryPoint::unparse(FILE *f, ByteOrder sex, SgAsmGenericSection *section, rose_addr_t spos)
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */

@@ -4,7 +4,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-#include "ExecNE.h"
+// DQ (8/21/2008): Now we want to move away from using the older header files (from before we used the IR nodes).
+// #include "ExecNE.h"
 
 // namespace Exec {
 // namespace NE {
@@ -1076,8 +1077,8 @@ SgAsmNERelocEntry::ctor(SgAsmGenericSection *relocs, addr_t at, addr_t *rec_size
 }
 
 /* Write entry back to disk at the specified section and section offset, returning new offset */
-Exec::addr_t
-SgAsmNERelocEntry::unparse(FILE *f, SgAsmGenericSection *section, addr_t spos)
+rose_addr_t
+SgAsmNERelocEntry::unparse(FILE *f, SgAsmGenericSection *section, rose_addr_t spos)
 {
     unsigned char byte;
     byte = (p_modifier << 8) | (p_src_type & 0x0f);

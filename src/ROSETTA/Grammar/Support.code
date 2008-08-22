@@ -9327,7 +9327,7 @@ SgFile::SgFile ( const SgFile & X )
 
 
 void
-SgFile::initialization ()
+SgFile::initialization()
    {
      ROSE_ASSERT(this != NULL);
 
@@ -9369,6 +9369,12 @@ SgFile::initialization ()
 
   // DQ (2/15/2006): Set the parent of the SgGlobal IR node
      p_root->set_parent(this);
+
+  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
+  // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
+     ROSE_ASSERT(p_root->get_endOfConstruct() == NULL);
+     p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
+     ROSE_ASSERT(p_root->get_endOfConstruct() != NULL);
 
   // DQ (4/10/2006): Removed in favor of implementation at SgNode using
   // a pointer and the interface represented directly at the SgNode

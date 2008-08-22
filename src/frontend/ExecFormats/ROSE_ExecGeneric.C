@@ -267,7 +267,7 @@ SgAsmGenericFile::get_section_by_name(std::string name, char sep)
 
 /* Returns a vector of sections that contain the specified portion of the file */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_offset(Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size)
 {
     std::vector<SgAsmGenericSection*> retval;
     for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
@@ -282,7 +282,7 @@ SgAsmGenericFile::get_sections_by_offset(Exec::addr_t offset, Exec::addr_t size)
 
 /* Returns a vector of sections that are mapped to the specified RVA */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_rva(Exec::addr_t rva)
+SgAsmGenericFile::get_sections_by_rva(addr_t rva)
 {
     std::vector<SgAsmGenericSection*> retval;
     for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
@@ -298,14 +298,14 @@ SgAsmGenericFile::get_sections_by_rva(Exec::addr_t rva)
  * addresses (RVAs) that are based on the base VA of the section's file header. If the section is mapped but has no associated
  * file header then we assume zero for the base VA. */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_va(Exec::addr_t va)
+SgAsmGenericFile::get_sections_by_va(addr_t va)
 {
     std::vector<SgAsmGenericSection*> retval;
     for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         SgAsmGenericSection *section = *i;
         if (section->is_mapped()) {
             SgAsmGenericHeader *hdr = section->get_header();
-            Exec::addr_t base_va = hdr ? hdr->get_base_va() : 0;
+            addr_t base_va = hdr ? hdr->get_base_va() : 0;
             if (va>=base_va + section->get_mapped_rva() && va < base_va+section->get_mapped_rva() + section->get_mapped_size()) {
                 retval.push_back(section);
             }
@@ -318,7 +318,7 @@ SgAsmGenericFile::get_sections_by_va(Exec::addr_t va)
  * sections containing that VA. It then returns a single section, giving preference to the section with the smallest mapped
  * size and having a non-negative identification number (i.e, appearing in a section table of some sort). */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_va(Exec::addr_t va)
+SgAsmGenericFile::get_section_by_va(addr_t va)
 {
     const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va);
     if (0==possible.size()) {
@@ -329,7 +329,7 @@ SgAsmGenericFile::get_section_by_va(Exec::addr_t va)
 
     /* Choose the "best" section to return. */
     SgAsmGenericSection *best = possible[0];
-    Exec::addr_t fo0 = possible[0]->get_va_offset(va);
+    addr_t fo0 = possible[0]->get_va_offset(va);
     for (size_t i=1; i<possible.size(); i++) {
         if (fo0 != possible[i]->get_va_offset(va))
             return NULL; /* all possible sections must map the VA to the same file offset */
@@ -348,10 +348,10 @@ SgAsmGenericFile::get_section_by_va(Exec::addr_t va)
 
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
-Exec::addr_t
-SgAsmGenericFile::get_next_section_offset(Exec::addr_t offset)
+rose_addr_t
+SgAsmGenericFile::get_next_section_offset(addr_t offset)
 {
-    Exec::addr_t found = ~(Exec::addr_t)0;
+    addr_t found = ~(addr_t)0;
     for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
         if ((*i)->get_offset() >= offset && (*i)->get_offset() < found)
             found = (*i)->get_offset();
@@ -390,7 +390,7 @@ SgAsmGenericFile::dump(FILE *f)
     fprintf(f, "File sections:\n");
     fprintf(f, "  Flg File-Addr  File-Size  File-End    Virt-Addr  Virt-Size  Virt-End   Perm  ID Name\n");
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
-    Exec::addr_t high_water = 0;
+    addr_t high_water = 0;
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmGenericSection *section = sections[i];
         
@@ -448,12 +448,12 @@ SgAsmGenericFile::dump(FILE *f)
     }
 
     char overlap[4] = "   ";
-    if (high_water < (Exec::addr_t)p_sb.st_size) {
+    if (high_water < (addr_t)p_sb.st_size) {
         overlap[2] = 'H';
-    } else if (sections.back()->get_offset() + sections.back()->get_size() < (Exec::addr_t)p_sb.st_size) {
+    } else if (sections.back()->get_offset() + sections.back()->get_size() < (addr_t)p_sb.st_size) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, (Exec::addr_t)p_sb.st_size, 65, "");
+    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, (addr_t)p_sb.st_size, 65, "");
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
 }
 
@@ -464,23 +464,23 @@ SgAsmGenericFile::fill_holes()
 
     /* Find the holes and store their extent info */
     SgAsmGenericSection::ExtentVector extents;
-    Exec::addr_t offset = 0;
-    while (offset < (Exec::addr_t)p_sb.st_size) {
+    addr_t offset = 0;
+    while (offset < (addr_t)p_sb.st_size) {
         std::vector<SgAsmGenericSection*> sections = get_sections_by_offset(offset, 0); /*all sections at this file offset*/
         
         /* Find the maximum ending offset */
-        Exec::addr_t end_offset = 0;
+        addr_t end_offset = 0;
         for (size_t i=0; i<sections.size(); i++) {
-            Exec::addr_t tmp = sections[i]->get_offset() + sections[i]->get_size();
+            addr_t tmp = sections[i]->get_offset() + sections[i]->get_size();
             if (tmp>end_offset)
                 end_offset = tmp;
         }
-        ROSE_ASSERT(end_offset <= (Exec::addr_t)p_sb.st_size);
+        ROSE_ASSERT(end_offset <= (addr_t)p_sb.st_size);
         
         /* Is there a hole here? */
         if (end_offset<=offset) {
             end_offset = get_next_section_offset(offset+1);
-            if (end_offset==(Exec::addr_t)-1)
+            if (end_offset==(addr_t)-1)
                 end_offset = p_sb.st_size;
             extents.push_back(SgAsmGenericSection::ExtentPair(offset, end_offset-offset));
         }
@@ -525,7 +525,7 @@ SgAsmGenericFile::unparse(const std::string &filename)
 #if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
-    Exec::addr_t remaining = p_sb.st_size;
+    addr_t remaining = p_sb.st_size;
     unsigned char fill=0xaa, buf[4096];
     memset(buf, fill, sizeof buf);
     while (remaining>=sizeof buf) {
@@ -579,7 +579,7 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 
 /* Constructor */
 void
-SgAsmGenericSection::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericSection::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);
     if (offset > ef->get_size() || offset+size > ef->get_size())
@@ -632,7 +632,7 @@ SgAsmGenericSection::~SgAsmGenericSection()
  * returned by the OS from the mmap of the binary file).  The content() functions also keep track of what parts of the section
  * have been returned so that it's easy to find the parts that are apparently unused. */
 const unsigned char *
-SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
     if (offset > this->p_size || offset+size > this->p_size)
         throw SgAsmGenericFile::ShortRead(this, offset, size);
@@ -648,12 +648,12 @@ SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size)
  * is outside the domain of the section will be filled with zero (in contrast to the two-argument version that throws an
  * exception). */
 void
-SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size, void *buf)
+SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 {
     if (offset >= this->p_size) {
         memset(buf, 0, size);
     } else if (offset+size > this->p_size) {
-        Exec::addr_t nbytes = this->p_size - offset;
+        addr_t nbytes = this->p_size - offset;
         memcpy(buf, p_data+offset, nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
         if (!p_congealed)
@@ -667,7 +667,7 @@ SgAsmGenericSection::content(Exec::addr_t offset, Exec::addr_t size, void *buf)
 
 /* Returns ptr to a NUL-terminated string */
 const char *
-SgAsmGenericSection::content_str(Exec::addr_t offset)
+SgAsmGenericSection::content_str(addr_t offset)
 {
     const char *ret = (const char*) (p_data + offset);
     size_t nchars=0;
@@ -691,7 +691,7 @@ SgAsmGenericSection::content_str(Exec::addr_t offset)
  * the recommended way to obtain file content for IR nodes that need to point to that content. The other function is more of a
  * low-level, efficient file read operation. */
 const SgUnsignedCharList
-SgAsmGenericSection::content_ucl(Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 {
     const unsigned char *data = content(offset, size);
     SgUnsignedCharList returnValue;
@@ -702,8 +702,8 @@ SgAsmGenericSection::content_ucl(Exec::addr_t offset, Exec::addr_t size)
 
 /* Write data back to a file section. The data to write may be larger than the file section as long as the extra (which will
  * not be written) is all zero. The offset is relative to the start of the section. */
-Exec::addr_t
-SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, size_t bufsize, const void *buf)
+rose_addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *buf)
 {
     size_t nwrite, nzero;
     if (offset>=get_size()) {
@@ -728,7 +728,7 @@ SgAsmGenericSection::write(FILE *f, Exec::addr_t offset, size_t bufsize, const v
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
 #if 1
             fprintf(stderr, "ROBB: Exec::ExecSection::write(): %s\n", mesg);
-            Exec::hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
+            hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
             abort(); /*DEBUGGING*/
 #endif
             throw SgAsmGenericFile::ShortWrite(this, offset, bufsize, mesg);
@@ -747,7 +747,7 @@ SgAsmGenericSection::congeal()
 
     if (!p_congealed) {
         p_holes.clear();
-        Exec::addr_t old_end = 0;
+        addr_t old_end = 0;
         for (RefMap::iterator it = p_referenced.begin(); it != p_referenced.end(); it++) {
             ExtentPair value = *it;
             ROSE_ASSERT(value.first <= value.second);
@@ -771,7 +771,7 @@ SgAsmGenericSection::uncongeal()
 {
     if (p_congealed) {
         p_referenced.clear();
-        Exec::addr_t old_end = 0;
+        addr_t old_end = 0;
         for (ExtentVector::iterator it = p_holes.begin(); it != p_holes.end(); it++) {
             ExtentPair value = *it;
             ROSE_ASSERT(value.first >= old_end);
@@ -791,7 +791,7 @@ SgAsmGenericSection::uncongeal()
 
 /* Extend a section by some number of bytes. */
 void
-SgAsmGenericSection::extend(Exec::addr_t size)
+SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
     if (p_offset + this->p_size + size > get_file()->get_size())
@@ -802,7 +802,7 @@ SgAsmGenericSection::extend(Exec::addr_t size)
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
  * file then it is extended to the end of the file and no exception is thrown. */
 void
-SgAsmGenericSection::extend_up_to(Exec::addr_t size)
+SgAsmGenericSection::extend_up_to(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
 
@@ -848,8 +848,8 @@ SgAsmGenericSection::unparse(FILE *f, const ExtentVector &ev)
         ExtentPair p = ev[i];
         ROSE_ASSERT(p.first <= p.second);
         ROSE_ASSERT(p.second <= p_size);
-        Exec::addr_t extent_offset = p.first;
-        Exec::addr_t extent_size   = p.second - p.first;
+        addr_t extent_offset = p.first;
+        addr_t extent_size   = p.second - p.first;
         const unsigned char *extent_data = content(extent_offset, extent_size);
         write(f, extent_offset, extent_size, extent_data);
     }
@@ -866,14 +866,14 @@ SgAsmGenericSection::unparse_holes(FILE *f)
 }
 
 /* Returns the file offset associated with the virtual address of a mapped section. */
-Exec::addr_t
-SgAsmGenericSection::get_va_offset(Exec::addr_t va)
+rose_addr_t
+SgAsmGenericSection::get_va_offset(addr_t va)
 {
     ROSE_ASSERT(is_mapped());
     SgAsmGenericHeader *hdr = get_header();
     ROSE_ASSERT(hdr);
     ROSE_ASSERT(va >= hdr->get_base_va());
-    Exec::addr_t rva = va - hdr->get_base_va();
+    addr_t rva = va - hdr->get_base_va();
     ROSE_ASSERT(rva >= get_mapped_rva());
     return get_offset() + (rva - get_mapped_rva());
 }
@@ -930,7 +930,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     const ExtentVector & holes = congeal();
     for (size_t i = 0; i < holes.size(); i++) {
         ExtentPair extent = holes[i];
-        Exec::addr_t hole_size = extent.second - extent.first;
+        addr_t hole_size = extent.second - extent.first;
         fprintf(f, "%s%-*s = [%zu] at %"PRIu64", %"PRIu64" bytes\n", p, w, "hole", i, extent.first, hole_size);
     }
     if (!was_congealed)
@@ -943,7 +943,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, Exec::addr_t offset, Exec::addr_t size)
+SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 {
     set_synthesized(true);
     set_purpose(SP_HEADER);
@@ -1188,7 +1188,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Works like hexdump -C to display N bytes of DATA */
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, Exec::addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
 {
     for (size_t i=0; i<n; i+=16) {
         fprintf(f, "%s0x%08"PRIx64, prefix, base_addr+i);
@@ -1244,7 +1244,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 
      SgAsmGenericHeader* executableHeader = NULL;
 
-     printf ("Evaluate what kind of binary format this file is! \n");
+  // printf ("Evaluate what kind of binary format this file is! \n");
 
      if (SgAsmElfFileHeader::is_ELF(ef))
        {
@@ -1291,7 +1291,10 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
                           // file is (using the system file(1) command as a standard way to identify
                           // file types using their first few bytes.
 
-                             printf ("In SgAsmExecutableFileFormat::parseBinaryFormat(%s): Evaluate the file type \n",name.c_str());
+                          // DQ (8/21/2008): It should be an error to get this far.  Robb's code (below) was copied to sageSupport.C where it is used to detect incorrect file types.
+                             printf ("Error: In SgAsmExecutableFileFormat::parseBinaryFormat(%s) evaluation of file type should have been done previously \n",name.c_str());
+                             ROSE_ASSERT(false);
+
 #if 0
                           // Use file(1) to try to figure out the file type to report in the exception
                              int child_stdout[2];
@@ -1355,26 +1358,28 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
 #endif
 }
 
-#if 0
+#if 1
+// DQ (8/21/2008): Turn this back on since the disassembler uses it!
+
 // DQ (6/15/2008): Old function name (confirmed to not be called in ROSE)
 /* Top-level binary executable file parser. Given the name of a file, open the file, detect the format, parse the file,
  * and return information about the file. */
 SgAsmGenericFile *
-parse(const char *name)
+SgAsmExecutableFileFormat::parse(const char *name)
 {
-    ExecFile *ef = new ExecFile(name);
+    SgAsmGenericFile *ef = new SgAsmGenericFile(name);
     
-    if (ELF::is_ELF(ef)) {
-        ELF::parse(ef);
-    } else if (PE::is_PE(ef)) {
-        PE::parse(ef);
-    } else if (NE::is_NE(ef)) {
-        NE::parse(ef);
-    } else if (LE::is_LE(ef)) { /*or LX*/
-        LE::parse(ef);
-    } else if (DOS::is_DOS(ef)) {
+    if (SgAsmElfFileHeader::is_ELF(ef)) {
+        SgAsmElfFileHeader::parse(ef);
+    } else if (SgAsmPEFileHeader::is_PE(ef)) {
+        SgAsmPEFileHeader::parse(ef);
+    } else if (SgAsmNEFileHeader::is_NE(ef)) {
+        SgAsmNEFileHeader::parse(ef);
+    } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
+        SgAsmLEFileHeader::parse(ef);
+    } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
         /* Must be after PE and NE all PE and NE files are also DOS files */
-        DOS::parse(ef);
+        SgAsmDOSFileHeader::parse(ef);
     } else {
         delete ef;
         /* Use file(1) to try to figure out the file type to report in the exception */

@@ -1674,7 +1674,7 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
   // Need a mechanism to select what kind of binary we will process.
 
 #if 1
-     printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
+  // printf ("Calling SgAsmExecutableFileFormat::parseBinaryFormat() \n");
 
      SgAsmExecutableFileFormat::parseBinaryFormat(sourceFilename,asmFile);
 
@@ -2825,13 +2825,19 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
      ROSE_ASSERT (p_root != NULL);
      ROSE_ASSERT(p_root->get_startOfConstruct() != NULL);
-     ROSE_ASSERT(p_root->get_endOfConstruct() == NULL);
+
+  // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
+  // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(p_root->get_endOfConstruct()   != NULL);
+
   // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
   // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
      p_root->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
-  // p_root->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      ROSE_ASSERT(p_root->get_startOfConstruct()->get_filenameString().empty() == false);
-  // ROSE_ASSERT(p_root->get_endOfConstruct()->get_filenameString().empty() == false);
+
+  // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
+     p_root->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     ROSE_ASSERT(p_root->get_endOfConstruct()->get_filenameString().empty() == false);
 
   // printf ("Found a Sg_File_Info using filename == NULL_FILE: fileInfo = %p SgGlobal (p_root = %p) p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info(),p_root,p_root->get_file_info()->get_filenameString().c_str());
 
@@ -2841,7 +2847,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // printf ("p_sourceFileNameWithPath = %s \n",p_sourceFileNameWithPath);
      string timerLabel = "AST SgFile Constructor for " + p_sourceFileNameWithPath + ":";
      TimingPerformance timer (timerLabel);
- 
+
   // Build a DEEP COPY of the input parameters!
      vector<string> local_commandLineArgumentList = argv;
 
@@ -2944,6 +2950,10 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
 
   // DQ (5/3/2007): Added assertion.
      ROSE_ASSERT (get_startOfConstruct() != NULL);
+
+  // DQ (8/21/2008): Added assertion.
+     ROSE_ASSERT (p_root->get_startOfConstruct() != NULL);
+     ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
    }
 
 
@@ -3885,7 +3895,7 @@ SgFile::callFrontEnd ()
                          SgAsmFile* asmFile = new SgAsmFile();
                          ROSE_ASSERT(asmFile != NULL);
 
-                         printf ("Calling generateBinaryExecutableFileInformation() \n");
+                      // printf ("Calling generateBinaryExecutableFileInformation() \n");
 
                       // Get the structure of the binary file (only implemented for ELF formatted files currently).
                       // Later we will implement a PE reader to get the structure of MS Windows executables.
@@ -4522,7 +4532,11 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
           if ( get_verbose() > 1 )
                printf ("COMPILER NOT CALLED: compilerNameString = %s \n", "<unknown>" /* compilerNameString.c_str() */);
 
-          printf ("Skipped call to backend vendor compiler! \n");
+       // DQ (8/21/2008): If this is a binary then we don't need the message output.
+          if (get_binary_only() == false)
+             {
+               printf ("Skipped call to backend vendor compiler! \n");
+             }
         }
 
   // DQ (7/20/2006): Catch errors returned from unix "system" function (commonly "out of memory" errors, suggested by Peter and Jeremiah).

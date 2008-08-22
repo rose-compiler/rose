@@ -7,7 +7,9 @@
 
 using namespace std;
 using namespace SageBuilderAsm;
-using namespace Exec;
+
+// DQ (8/21/2008): No longer used (using new IR nodes now)
+// using namespace Exec;
 
 namespace ArmDisassembler {
 
