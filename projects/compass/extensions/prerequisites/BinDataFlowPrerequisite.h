@@ -1,3 +1,8 @@
+#ifndef COMPASS_BIN_DATA_FLOW_PREREQUISITE_H
+#define COMPASS_BIN_DATA_FLOW_PREREQUISITE_H
+
+#include "AuxiliaryInfoPrerequisite.h"
+
   class BinDataFlowPrerequisite: public Prerequisite {
     RoseBin_DataFlowAnalysis* dfanalysis;
     RoseBin_Graph* graph;
@@ -44,3 +49,5 @@
   };
 
 extern BinDataFlowPrerequisite binDataFlowPrerequisite;
+
+#endif

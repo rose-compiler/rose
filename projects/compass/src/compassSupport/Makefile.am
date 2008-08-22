@@ -45,7 +45,7 @@ prerequisites.h: $(compass_prereqs_dir)
 	find $(compass_prereqs_dir) -name "*.h" | awk -F/ '{print "#include \"" $$NF "\""}' > $@
 
 instantiate_prerequisites.h: $(compass_prereqs_dir)
-	tail -1 $(compass_prereqs_dir)/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $$1 " Compass::" $$2}' > $@
+	cat $(compass_prereqs_dir)/*.h | grep "^extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $$1 " Compass::" $$2}' > $@
 
 test: compassEmptyMain 
 	env COMPASS_PARAMETERS=$(srcdir)/compass_parameters ./compassEmptyMain $(compass_test_dir)/exampleTest_1.C

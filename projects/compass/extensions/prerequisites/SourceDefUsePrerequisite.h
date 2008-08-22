@@ -1,3 +1,6 @@
+#ifndef COMPASS_SOURCE_DEFUSE_PREREQUISITE_H
+#define COMPASS_SOURCE_DEFUSE_PREREQUISITE_H
+
 // The prerequisite for getting the SgProject
 class SourceDefUsePrerequisite: public Prerequisite 
 {
@@ -380,3 +383,5 @@ class SourceDefUsePrerequisite: public Prerequisite
 }; //class SourceDefUsePrerequisite
 
 extern SourceDefUsePrerequisite sourceDefUsePrerequisite;
+
+#endif

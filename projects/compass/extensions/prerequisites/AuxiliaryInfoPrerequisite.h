@@ -1,3 +1,6 @@
+#ifndef COMPASS_AUXILIARY_INFO_PREREQUISITE_H
+#define COMPASS_AUXILIARY_INFO_PREREQUISITE_H
+
   // The prerequisite for getting the SgProject
   class AuxiliaryInfoPrerequisite: public Prerequisite {
     VirtualBinCFG::AuxiliaryInformation* info;
@@ -22,3 +25,5 @@
   };
 
 extern AuxiliaryInfoPrerequisite auxiliaryInfoPrerequisite;
+
+#endif

@@ -1,3 +1,6 @@
+#ifndef COMPASS_PROJECT_PREREQUISITE_H
+#define COMPASS_PROJECT_PREREQUISITE_H
+
 // The prerequisite for getting the SgProject
 class ProjectPrerequisite: public Prerequisite 
 {
@@ -23,3 +26,5 @@ class ProjectPrerequisite: public Prerequisite
 }; //class ProjectPrerequisite
 
 extern ProjectPrerequisite projectPrerequisite;
+
+#endif
