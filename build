@@ -26,7 +26,7 @@ rm -rf autom4te.cache
 if test -f ./config/ltmain.sh; then
   :
 elif test -x /usr/bin/glibtoolize; then
-  /usr/bin/glibtoolize
+  /usr/bin/glibtoolize --force
 else
   libtoolize
 fi
