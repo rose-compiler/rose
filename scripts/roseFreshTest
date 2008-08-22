@@ -141,10 +141,10 @@ fi
   echo "############ configure done" &&
   make $MAKEFLAGS &&
   echo "############ make done" &&
-  make $MAKEFLAGS docs &&
-  echo "############ make docs done" &&
   make $MAKEFLAGS check &&
   echo "############ make check done" &&
+  make $MAKEFLAGS docs &&
+  echo "############ make docs done" &&
   rmdir ../install &&
   make $MAKEFLAGS install &&
   echo "############ make install done" &&
