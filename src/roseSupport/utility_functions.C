@@ -203,7 +203,11 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
      if (project->get_binary_only() == true)
         {
           ROSE_ASSERT(project != NULL);
-          printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
+
+       // DQ (8/21/2008): Only output a message when we we use verbose option.
+          if ( SgProject::get_verbose() >= 1 )
+              printf ("Note: Binary executables are unparsed, but not passed to gcc as assembly source code \n");
+
           project->skipfinalCompileStep(true);
         }
 

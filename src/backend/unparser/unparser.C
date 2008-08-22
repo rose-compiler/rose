@@ -321,7 +321,10 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                     size_t slash = sourceFilename.find_last_of('/');
                     if (slash!=sourceFilename.npos)
                          newFilename.replace(0, slash+1, "");
-                    std::cout << "output re-generated binary as: " << newFilename << std::endl;
+
+                 // DQ (8/21/2008): Only output a message when we we use verbose option.
+                    if ( SgProject::get_verbose() >= 1 )
+                         std::cout << "output re-generated binary as: " << newFilename << std::endl;
 #endif
                  // Regenerate the binary executable.
                     SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, astFile);

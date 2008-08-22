@@ -198,7 +198,7 @@ using namespace __gnu_cxx;
 
 #define USE_OLD_BINARY_EXECUTABLE_IR_NODES 0
 
-#define USING_OLD_EXECUTABLE_FORMAT_SUPPORT 1
+#define USING_OLD_EXECUTABLE_FORMAT_SUPPORT 0
 #if USING_OLD_EXECUTABLE_FORMAT_SUPPORT
 // DQ (12/8/2008): Build a forward declaration for the input parameter type for the 
 // SgAsmFileHeader class constructor.
