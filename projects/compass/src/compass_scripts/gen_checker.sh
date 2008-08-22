@@ -371,5 +371,5 @@ END
 
 echo $PREREQ_DIRECTORY
 #exit 0
-find $PREREQ_DIRECTORY -name "*.h" | gawk -F/ '{print "#include \"" $NF "\""}' > ${SOURCE_DIRECTORY_NAME}/prerequisites.h
-tail -1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | gawk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h
+find $PREREQ_DIRECTORY -name "*.h" | awk -F/ '{print "#include \"" $NF "\""}' > ${SOURCE_DIRECTORY_NAME}/prerequisites.h
+tail -1 $PREREQ_DIRECTORY/*.h | grep "extern" | sed -e 's@extern[\t\ ]*@Compass::@g' | awk '{print $1 " Compass::" $2}' > ${SOURCE_DIRECTORY_NAME}/instantiate_prerequisites.h

@@ -150,7 +150,7 @@ sort ${COMPASS_LIST} -o ${COMPASS_LIST}
 for checker in `cat ${COMPASS_LIST}`
 do
   if [[ `echo $checker | grep -v "^#"` != '' ]]; then
-    USUBDIRS[$((SUBDIR_COUNT))]=`echo ${checker:0:1} | gawk '{print toupper($0)}'`${checker:1}
+    USUBDIRS[$((SUBDIR_COUNT))]=`echo ${checker:0:1} | awk '{print toupper($0)}'`${checker:1}
     SUBDIRS[$((SUBDIR_COUNT++))]=$checker
   fi #if [[ `echo $checker | grep -v "^#"` != '' ]], # is comment symbol
 done

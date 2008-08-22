@@ -25,7 +25,7 @@ if [[ -f $FILE ]]; then
         exit 1
     fi
 
-    declare -i FILE_SIZE=`du -sk ${FILE} | gawk '{print $1}'`
+    declare -i FILE_SIZE=`du -sk ${FILE} | awk '{print $1}'`
     if(( $FILE_SIZE > $MAX_FILE_SIZE )); then
         echo "Error: File size of ${FILE} exceeds the maximum file size ${MAX_FILE_SIZE} KB."
         exit 1
