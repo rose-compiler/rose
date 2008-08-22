@@ -137,39 +137,38 @@ fi
 #------------------------------------------------------
 # configure,make, and test ROSE
   cd build
-  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" &&
-  echo "############ configure done" &&
-  make $MAKEFLAGS &&
-  echo "############ make done" &&
-  make $MAKEFLAGS check &&
-  echo "############ make check done" &&
-  make $MAKEFLAGS docs &&
-  echo "############ make docs done" &&
-  rmdir ../install &&
-  make $MAKEFLAGS install &&
-  echo "############ make install done" &&
-  make $MAKEFLAGS installcheck &&
-  echo "############ make installcheck done" &&
-  if test $? -ne 0; then exit 1; fi &&
+  ../sourcetree/configure "${CONFIGURE_FLAGS[@]}" || exit 1
+  echo "############ configure done"
+  make $MAKEFLAGS || exit 1
+  echo "############ make done"
+  make $MAKEFLAGS check || exit 1
+  echo "############ make check done"
+  make $MAKEFLAGS docs || exit 1
+  echo "############ make docs done"
+  rmdir ../install || exit 1
+  make $MAKEFLAGS install || exit 1
+  echo "############ make install done"
+  make $MAKEFLAGS installcheck || exit 1
+  echo "############ make installcheck done"
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
   if [ $SKIP_DIST_TEST ] ; then
     echo "Skipping make dist, distcheck, source_with_binary_edg_dist.." 
   else  
-    make $MAKEFLAGS dist &&
-    echo "############ make dist done" &&
-    make $MAKEFLAGS distcheck &&
-    echo "############ make distcheck done" &&
+    make $MAKEFLAGS dist || exit 1
+    echo "############ make dist done"
+    make $MAKEFLAGS distcheck || exit 1
+    echo "############ make distcheck done"
     # Build a binary version of EDG and put it into the source tree
     SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | sed s/-redhat-/-pc-/`
     echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ $ENABLE_BUILD_BINARY_EDG ]; then
-      cd ${ROSE_TOP}/build &&
-      make binary_edg_tarball &&
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" &&
-      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}"
-    fi &&
-    make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} &&
+      cd ${ROSE_TOP}/build
+      make binary_edg_tarball || exit 1
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
+      ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}" || exit 1
+    fi
+    make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
     echo "############ make source_with_binary_edg_dist done"
   fi
 ) >buildlog 2>&1 || buildstatus=1
