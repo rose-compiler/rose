@@ -32,7 +32,7 @@ MAILADDRS="dquinlan@llnl.gov"
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=checkout
 
-MAKEFLAGS="-j8"
+MAKEFLAGS="-j16"
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
