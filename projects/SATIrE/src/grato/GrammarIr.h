@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: GrammarIr.h,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: GrammarIr.h,v 1.3 2008-08-23 13:46:57 gergo Exp $
 
 /**************************************************************
 * Author: Markus Schordan, 2005                               *
@@ -48,6 +48,7 @@ public:
   virtual void visitProductionRhs(GProductionRhs*);
   virtual void visitTerminal(GTerminal*);
   virtual void visitNonTerminal(GNonTerminal*);
+  virtual ~GVisitor();
 };
 
 class GBAVisitor {
@@ -66,6 +67,7 @@ public:
   virtual void afterVisitTerminal(GTerminal*);
   virtual void beforeVisitNonTerminal(GNonTerminal*);
   virtual void afterVisitNonTerminal(GNonTerminal*);
+  virtual ~GBAVisitor();
 };
 
 class GEquation {
@@ -83,6 +85,7 @@ public:
   virtual void accept(GVisitor& visitor)=0;
   virtual void baaccept(GBAVisitor& visitor)=0;
   virtual EVariant variant()=0;
+  virtual ~GNode();
 };
 
 class GEnhancedToken {
@@ -152,7 +155,7 @@ public:
   virtual void accept(GVisitor& visitor);
   virtual void baaccept(GBAVisitor& visitor);
   virtual EVariant variant();
-  ~GNonTerminal();
+  virtual ~GNonTerminal();
 };
 
 class GProductionList : public GArbitraryArityNode {

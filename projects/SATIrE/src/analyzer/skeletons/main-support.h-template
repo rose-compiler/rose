@@ -3,11 +3,20 @@
 #ifndef H_PAG_ANALYSIS_MAIN
 #define H_PAG_ANALYSIS_MAIN
 
-#include <config.h>
+// GB (2008-08-21): I think this inclusion of <config.h> is no longer
+// needed.
+// #include <config.h>
 #include "CFGTraversal.h"
 #include "ProcTraversal.h"
 #include "TermPrinter.h"
 
+// GB (2008-08-21): ROSE defines macros TRUE and FALSE, then goes redefining
+// them in a header called general.h. PAG (here in iterate.h) also includes
+// a file called general.h, which is redirected to ROSE's general.h. That in
+// itself is not a problem, but the unguarded redefinitions of TRUE and
+// FALSE are. So undefine them before including iterate.h.
+#undef TRUE
+#undef FALSE
 #include "iterate.h"
 
 #undef NDEBUG

@@ -19,7 +19,7 @@ extern int   dfilineno;
 PrologCompTerm*  dfiterm;
 const char* dfi_name;
 
-void dfierror(char *);
+void dfierror(const char *);
 
 %}
 
@@ -116,7 +116,7 @@ values:
 extern const char* dfi_input;
 extern const char* dfi_input_start;
 
-void dfierror(char* msg) 
+void dfierror(const char* msg) 
 {
   cerr << std::string(msg) 
        << " near token """ << dfitext << """" 

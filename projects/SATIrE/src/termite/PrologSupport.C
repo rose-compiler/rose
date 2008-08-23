@@ -465,11 +465,10 @@ PrologSupport::getTypeSpecific(SgType* stype) {
 
 /**
  * class: SgUnaryOp
- * term: unary_op_annotation(mode,type,throw_kind,throw_types)
+ * term: unary_op_annotation(mode,type,throw_kind)
  * arg mode: prefix or postfix
  * arg type: type of the expression
  * arg throw_kind: an integer flag of throw ops
- * arg throw_list: a list of types used by SgThrowOps
  */
 PrologTerm*
 PrologSupport::getUnaryOpSpecific(SgUnaryOp* op) {
@@ -477,8 +476,12 @@ PrologSupport::getUnaryOpSpecific(SgUnaryOp* op) {
     annot->addSubterm(new PrologInt((int) op->get_mode()));
     annot->addSubterm(getTypeSpecific(op->get_type()));
     if(SgThrowOp* thrw = dynamic_cast<SgThrowOp*>(op)) {
-	/*Throw Ops also have a 'throw kind' and a 'type pointer list'*/
+	/*Throw Ops also have a 'throw kind'*/
+ // GB (2008-08-23): As of ROSE 0.9.3.a-1593, throw ops no longer have a
+ // type list. Or was it only removed temporarily? TODO: Check again
+ // sometime.
 	annot->addSubterm(new PrologInt((int) thrw->get_throwKind()));
+#if 0
 	SgTypePtrListPtr types = thrw->get_typeList ();
 	SgTypePtrList::iterator it = types->begin();
 	PrologList* l = new PrologList();
@@ -486,6 +489,7 @@ PrologSupport::getUnaryOpSpecific(SgUnaryOp* op) {
 	    l->addElement(getTypeSpecific(*it));
 	    it++;
 	}
+#endif
     } else if (SgCastExp* cst = dynamic_cast<SgCastExp*>(op)) {
 	/*Casts have a cast type*/
 	annot->addSubterm(new PrologInt((int) cst->get_cast_type()));

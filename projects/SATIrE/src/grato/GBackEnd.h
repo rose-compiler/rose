@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: GBackEnd.h,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: GBackEnd.h,v 1.3 2008-08-23 13:46:57 gergo Exp $
 
 #ifndef GBACKEND_H
 #define GBACKEND_H
@@ -22,6 +22,8 @@ protected:
   virtual void generateEquationListEpilog();
   virtual void generateGrammarEpilog(GGrammar* grammar);
 
+  virtual ~GBackEnd();
+
 private:
 };
 
@@ -34,6 +36,7 @@ protected:
   virtual void generateProductionRhsListDelimiter(){}
   virtual void generateProductionRhsNonTerminal(GNonTerminal* lhs, GNonTerminal* rhsSymbol){}
   virtual void generateProductionRhsTerminal(GNonTerminal* lhs, GTerminal* rhsSymbol){}
+  virtual ~GBnfBackEnd();
 };
 
 class GSingleRuleBackEnd : public GBackEnd {
@@ -44,6 +47,7 @@ protected:
   virtual void generateProductionRhsDelimiter(){}
   virtual void generateProductionRhsNonTerminal(GNonTerminal* rhsSymbol){}
   virtual void generateProductionRhsTerminal(GTerminal* rhsSymbol){}
+  virtual ~GSingleRuleBackEnd();
 };
 
 #endif

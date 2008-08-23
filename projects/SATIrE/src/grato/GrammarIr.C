@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: GrammarIr.C,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: GrammarIr.C,v 1.3 2008-08-23 13:46:57 gergo Exp $
 
 /*************************************************************
 * Author: Markus Schordan, 2005                              *
@@ -342,6 +342,11 @@ void GBAVisitor::afterVisitTerminal(GTerminal* terminal) {
   std::cout << "aVisiting Terminal" << endl; 
 }
 
+// ------------------------
+// Visitor default destructors
+// ------------------------
+GVisitor::~GVisitor() {}
+GBAVisitor::~GBAVisitor() {}
 
 // ------------------------
 // Grammar variant functions
@@ -357,6 +362,7 @@ EVariant GNonTerminal::variant() { return VGNonTerminal; }
 
 // Grammar virtual destructors
 
+GNode::~GNode() {}
 GSymbol::~GSymbol() {}
 GTerminal::~GTerminal() {}
 GNonTerminal::~GNonTerminal() {}

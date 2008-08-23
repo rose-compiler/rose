@@ -6,6 +6,7 @@ ROSE_LIB=@roselib@
 SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
+CXX=@cxx@
 
 # variable CUSTOM_CFLAGS can be in separate file; so can options from
 # newcombined analysis
@@ -50,13 +51,13 @@ $(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
 main.o: main.C
-	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main.C
+	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main.C
 
 main-support.o: main-support.C
-	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main-support.C
+	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main-support.C
 
 $(ANALYSIS): $(ANALYSIS).a main.o main-support.o $(OTHERANALYSISLIBS)
-	g++ $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
+	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) main.o main-support.o -o $(ANALYSIS) $(LPATH) $(LIBS) 
 	@echo
 	@echo 'PAG said:'
 	@cat pag-out

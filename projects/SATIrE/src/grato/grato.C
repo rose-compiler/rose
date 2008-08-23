@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: grato.C,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: grato.C,v 1.3 2008-08-23 13:46:57 gergo Exp $
 
 // Author: Markus Schordan
 
@@ -32,7 +32,7 @@ extern GGrammar* synParse(void);
 int main(int argc, char **argv)
 {
   char *input_filename = NULL;
-  char *output_filename = "a.c";
+  const char *output_filename = "a.c";
 
   bool dotoutput=false;
   bool textoutput=false;

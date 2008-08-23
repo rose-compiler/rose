@@ -1,10 +1,13 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: GBackEnd.C,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: GBackEnd.C,v 1.3 2008-08-23 13:46:56 gergo Exp $
 
 
 #include "GBackEnd.h"
 
 GBackEnd::GBackEnd() {
+}
+
+GBackEnd::~GBackEnd() {
 }
 
 void
@@ -39,6 +42,9 @@ void GBackEnd::generateGrammarEpilog(GGrammar* grammar) {
 GBnfBackEnd::GBnfBackEnd() {
 }
 
+GBnfBackEnd::~GBnfBackEnd() {
+}
+
 void
 GBnfBackEnd::generateProduction(GNonTerminal* lhs,GProductionRhsList* rhs) {
   generateProductionLhs(lhs);
@@ -57,6 +63,9 @@ GBnfBackEnd::generateProduction(GNonTerminal* lhs,GProductionRhsList* rhs) {
 }
 
 GSingleRuleBackEnd::GSingleRuleBackEnd() {
+}
+
+GSingleRuleBackEnd::~GSingleRuleBackEnd() {
 }
 
 void

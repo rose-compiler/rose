@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.24 2008-08-20 10:30:09 adrian Exp $
+// $Id: CommandLineParser.C,v 1.25 2008-08-23 13:46:50 gergo Exp $
 
 #include <config.h>
 
@@ -276,13 +276,13 @@ void CommandLineParser::failed(AnalyzerOptions *opt) {
   exit(1);
 }
 
-bool CommandLineParser::optionMatch(char* s1, char* s2) {
+bool CommandLineParser::optionMatch(const char* s1, const char* s2) {
   bool match=!strcmp(s1,s2);
   //if(match) cout << "INFO: found option: " << s1 << endl;
   return match;
 }
 
-bool CommandLineParser::optionMatchPrefix(char* s, char* prefix) {
+bool CommandLineParser::optionMatchPrefix(const char* s, const char* prefix) {
   prefixLength=strlen(prefix);
   return !strncmp(s, prefix,prefixLength);
 }

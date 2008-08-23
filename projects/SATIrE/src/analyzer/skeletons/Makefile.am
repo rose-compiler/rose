@@ -15,7 +15,8 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's,[@]roseinclude[@],$(ROSE_INCLUDE_DIR),g' \
               -e 's,[@]roselib[@],$(ROSE_LIB_DIR),g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
-              -e 's,[@]satirelib[@],$(libdir),g'
+              -e 's,[@]satirelib[@],$(libdir),g' \
+              -e 's,[@]cxx[@],$(CXX),g'
 
 newanalysis: newanalysis.in Makefile
 	$(do_subst) < $(srcdir)/newanalysis.in > newanalysis

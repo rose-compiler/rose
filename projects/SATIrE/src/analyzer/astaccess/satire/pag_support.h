@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.h,v 1.3 2008-06-04 11:49:31 gergo Exp $
+// $Id: pag_support.h,v 1.4 2008-08-23 13:46:48 gergo Exp $
 
 #ifndef H_PAG_SUPPORT
 #define H_PAG_SUPPORT
@@ -28,7 +28,7 @@ extern int e_syntaxtype;
 #ifdef __cplusplus
 extern "C"
 #endif
-char *basic_type_name(const void *);
+const char *basic_type_name(const void *);
 
 // GB (2008-06-04): If an analyzer prefix is set, include the header that
 // redefines prefixed support function names to the actual unprefixed names.

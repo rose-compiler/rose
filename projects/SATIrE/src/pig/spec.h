@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: spec.h,v 1.3 2007-09-20 09:25:32 adrian Exp $
+// $Id: spec.h,v 1.4 2008-08-23 13:47:04 gergo Exp $
 
 #ifndef H_SPEC
 #define H_SPEC
@@ -14,7 +14,8 @@ struct isn
 {
     enum types type;
     unsigned long line, col;
-    char *id, *str;
+    const char *id;
+    char *str;
     unsigned long num;
 };
 

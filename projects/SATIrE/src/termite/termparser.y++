@@ -21,7 +21,7 @@ extern int   yylineno;
 extern int   colno;
 PrologTerm*  prote;
 
-void yyerror(char *);
+void yyerror(const char *);
 
 %}
 
@@ -117,7 +117,7 @@ plist:
 
 
 %%
-void yyerror(char* msg) {
+void yyerror(const char* msg) {
   std::cerr << std::string(msg) 
 	    << " at line " << yylineno 
 	    << ", col. " << colno << ", "

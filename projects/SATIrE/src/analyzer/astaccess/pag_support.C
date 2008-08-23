@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: pag_support.C,v 1.17 2008-08-04 13:27:35 gergo Exp $
+// $Id: pag_support.C,v 1.18 2008-08-23 13:46:46 gergo Exp $
 
 #include <iostream>
 
@@ -78,7 +78,7 @@ void *LIST_VariableSymbolNT_tl(void *l)
 #endif
 
 PIG_EXTERN_C
-char *basic_type_name(const void *p)
+const char *basic_type_name(const void *p)
 {
     const SgNode *node = (SgNode *) p;
 
@@ -207,6 +207,19 @@ char const *kfg_get_instruction_attribute_by_name(KFG, KFG_NODE, int, char *)
 {
     return "";
 }
+
+// GB (2008-08-21): Inclusion of snum.h, below, also includes "general.h".
+// Funnily, this is supposed to include PAG's general.h, but there is also
+// one in ROSE, which takes precedence due to -I flags. But that's OK,
+// actually.
+// What's not OK is that ROSE's general.h #defines FALSE and TRUE without
+// definition guards. However, these macros are also defined (in an
+// incompatible way, but ironically *with* guards) by sage3.h, which is
+// already included via satire_rose.h. So all in all, including "snum.h"
+// fails with a multiple definition error. We will try to get around this by
+// undefining TRUE and FALSE here.
+#undef TRUE
+#undef FALSE
 
 /* static attributes */
 //#define HAVE_MEMMOVE
