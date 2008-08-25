@@ -608,7 +608,7 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_info",        p_sh_info);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_flags",       p_sh_flags);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_addr",        p_sh_addr);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes info file\n",   p, w, "sh_offset",      p_sh_offset);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",   p, w, "sh_offset",      p_sh_offset);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "sh_size",        p_sh_size);
     fprintf(f, "%s%-*s = %" PRIu64 "\n",                   p, w, "sh_addralign",   p_sh_addralign);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "sh_entsize",     p_sh_entsize);
