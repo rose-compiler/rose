@@ -775,7 +775,7 @@ HEADER_GENERIC_SECTION_START
 
        /* Functions for section extent within the file */
        // SgAsmGenericFile   *get_file() {return file;}      /* read-only */
-       // addr_t        get_size() {return size;}       /* read-only */
+          addr_t        get_size() const;
        // addr_t        get_offset() {return offset;}   /* read-only */
           addr_t        end_offset(); /* file offset for end of section */
           void          extend(addr_t nbytes);         /* make section larger by extending the end */
@@ -3965,7 +3965,7 @@ SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, add
 #if 0
 p_file(NULL), 
 #endif
-p_data(0), p_header(NULL), p_size(0), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
+p_data(0), p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
 p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
      ctor(f, offset, size);
@@ -3974,7 +3974,7 @@ p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eper
 SgAsmExecutableFileFormat::addr_t
 SgAsmGenericSection::end_offset()
    {
-     return p_offset + p_size;
+     return get_offset() + get_size();
    }
 
 SgAsmExecutableFileFormat::addr_t

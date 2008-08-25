@@ -411,7 +411,7 @@ SgAsmLEPageTable::ctor(SgAsmLEFileHeader *fhdr)
  // set_parent(fhdr);
 
     const addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
-    for (addr_t entry_offset=0; entry_offset+entry_size <= p_size; entry_offset+=entry_size) {
+    for (addr_t entry_offset=0; entry_offset+entry_size <= get_size(); entry_offset+=entry_size) {
         const SgAsmLEPageTableEntry::LEPageTableEntry_disk *disk =
             (const SgAsmLEPageTableEntry::LEPageTableEntry_disk*)content(entry_offset, entry_size);
         p_entries.push_back(new SgAsmLEPageTableEntry(fhdr->get_sex(), disk));
@@ -828,7 +828,7 @@ SgAsmLEEntryTable::ctor(SgAsmLEFileHeader *fhdr)
  // the get_header() to be implemented in terms of the get_parent() function.
  // set_parent(fhdr);
     
-    ROSE_ASSERT(0 == p_size);
+    ROSE_ASSERT(0 == get_size());
 
     if (FAMILY_LX == fhdr->get_exec_format()->get_family()) {
         /* FIXME: LX Entry tables have a different format than LE (they are similar to NE Entry Tables). See
@@ -909,7 +909,7 @@ SgAsmLERelocTable::ctor(SgAsmLEFileHeader *fhdr)
  // the get_header() to be implemented in terms of the get_parent() function.
  // set_parent(fhdr);
 
-    ROSE_ASSERT(0 == p_size);
+    ROSE_ASSERT(0 == get_size());
 
 #if 0 /*FIXME: How do we know how many entries are in the relocation table? */
     size_t nrelocs = 0;

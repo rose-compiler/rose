@@ -687,7 +687,7 @@ SgAsmNEModuleTable::ctor(SgAsmNEFileHeader *fhdr)
 
     ROSE_ASSERT(NULL != p_strtab);
 
-    for (addr_t at = 0; at < p_size; at += 2) {
+    for (addr_t at = 0; at < get_size(); at += 2) {
         addr_t name_offset = le_to_host(*(const uint16_t*)content(at, 2));
         p_name_offsets.push_back(name_offset);
         p_names.push_back(p_strtab->get_string(name_offset));
@@ -1242,7 +1242,7 @@ SgAsmNERelocTable::ctor(SgAsmNEFileHeader *fhdr)
  // the get_header() to be implemented in terms of the get_parent() function.
  // set_parent(fhdr);
 
-    ROSE_ASSERT(0 == p_size);
+    ROSE_ASSERT(0 == get_size());
 
     addr_t at = 0, reloc_size = 0;
 

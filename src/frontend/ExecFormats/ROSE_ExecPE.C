@@ -982,7 +982,7 @@ SgAsmPEImportSection::unparse(FILE *f)
         /* Library name */
         ROSE_ASSERT(idir->get_dll_name_rva() >= p_mapped_rva);
         addr_t dll_name_offset = idir->get_dll_name_rva() - p_mapped_rva;
-        ROSE_ASSERT(dll_name_offset + dll->get_name().size() + 1 < p_size);
+        ROSE_ASSERT(dll_name_offset + dll->get_name().size() + 1 < get_size());
         addr_t spos = write(f, dll_name_offset, dll->get_name());
         write(f, spos, '\0');
 

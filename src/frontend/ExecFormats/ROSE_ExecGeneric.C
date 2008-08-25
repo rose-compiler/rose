@@ -128,7 +128,8 @@ SgAsmGenericFile::ctor(std::string fileName)
 
     /* Make file contents available through an STL vector without actually reading the file */
     SgStaticPool *pool = new SgStaticPool(mapped, p_sb.st_size);
-    p_data2 = new SgFileContentList(p_sb.st_size, 0, SgFileContentAllocator(pool));
+    ROSE_ASSERT(p_data==NULL);
+    p_data = new SgFileContentList(p_sb.st_size, 0, SgFileContentAllocator(pool));
 
     ROSE_ASSERT(p_sections == NULL);
     p_sections = new SgAsmGenericSectionList();
@@ -158,9 +159,13 @@ SgAsmGenericFile::~SgAsmGenericFile()
     ROSE_ASSERT(p_headers->get_headers().empty()   == true);
     
     /* Unmap and close */
-    if (p_data2->size()>0) {
-        unsigned char *mapped = &(p_data2->at(0));
-        munmap(mapped, p_sb.st_size);
+    if (p_data) {
+        if (p_data->size()>0) {
+            unsigned char *mapped = &(p_data->at(0));
+            munmap(mapped, p_sb.st_size);
+        }
+        delete p_data;
+        p_data = NULL;
     }
 
     if ( p_fd >= 0 )
@@ -177,11 +182,11 @@ SgAsmGenericFile::~SgAsmGenericFile()
 /* Returns a vector that points to part of the file content without actually ever referencing the file content until the
  * vector elements are referenced. */
 SgFileContentList *
-SgAsmGenericFile::content2(addr_t offset, addr_t size)
+SgAsmGenericFile::content(addr_t offset, addr_t size)
 {
-    if (offset+size > p_data2->size())
+    if (offset+size > p_data->size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
-    SgStaticPool *pool = p_data2->get_allocator().get_pool();
+    SgStaticPool *pool = p_data->get_allocator().get_pool();
     return new SgFileContentList(size, 0, SgFileContentAllocator(pool, offset));
 }
 
@@ -603,14 +608,13 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 
 #if 0
  // This data member is removed from the SgAsmGenericSection, but it is added for the SgAsmGenericHeader.
-    this->p_file = ef;
+    p_file = ef;
 #endif
     ROSE_ASSERT(ef->get_sections() != NULL);
     set_parent(ef->get_sections());
 
-    this->p_offset = offset;
-    this->p_size = size;
-    this->p_data2 = ef->content2(offset, size);
+    p_offset = offset;
+    p_data = ef->content(offset, size);
 
     /* The section is added to the file's list of sections. It may also be added to other lists by the caller. The destructor
      * will remove it from the file's list but does not know about other lists. */
@@ -639,6 +643,14 @@ SgAsmGenericSection::~SgAsmGenericSection()
     }
 }
 
+/* Returns the file size of the section in bytes */
+rose_addr_t
+SgAsmGenericSection::get_size() const
+{
+    ROSE_ASSERT(p_data);
+    return p_data->size();
+}
+
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
  * difference is that instead of the caller supplying the buffer, the callee uses its own buffer (part of the buffer that was
@@ -647,12 +659,12 @@ SgAsmGenericSection::~SgAsmGenericSection()
 const unsigned char *
 SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
-    if (offset > this->p_size || offset+size > this->p_size)
+    if (offset > get_size() || offset+size > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, size);
     if (!p_congealed && size > 0)
         p_referenced.insert(std::make_pair(offset, offset+size));
 
-    return &(p_data2->at(offset));
+    return &(p_data->at(offset));
 }
 
 /* Copies the specified part of the section into a buffer. This is more like fread() than the two-argument version in that the
@@ -662,16 +674,16 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
 void
 SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 {
-    if (offset >= this->p_size) {
+    if (offset >= get_size()) {
         memset(buf, 0, size);
-    } else if (offset+size > this->p_size) {
-        addr_t nbytes = this->p_size - offset;
-        memcpy(buf, &(p_data2->at(offset)), nbytes);
+    } else if (offset+size > get_size()) {
+        addr_t nbytes = get_size() - offset;
+        memcpy(buf, &(p_data->at(offset)), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+nbytes));
     } else {
-        memcpy(buf, &(p_data2->at(offset)), size);
+        memcpy(buf, &(p_data->at(offset)), size);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+size));
     }
@@ -681,17 +693,17 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 const char *
 SgAsmGenericSection::content_str(addr_t offset)
 {
-    const char *ret = (const char*)&(p_data2->at(offset));
+    const char *ret = (const char*)&(p_data->at(offset));
     size_t nchars=0;
 
 #if 0 /*DEBUGGING*/
     printf ("SgAsmGenericSection::content_str(offset): p_data = %p offset = %zu p_size = %zu \n",p_data,offset,p_size);
 #endif
 
-    while (offset+nchars < p_size && ret[nchars]) nchars++;
+    while (offset+nchars < get_size() && ret[nchars]) nchars++;
     nchars++; /*NUL*/
 
-    if (offset+nchars > p_size)
+    if (offset+nchars > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
     if (!p_congealed)
         p_referenced.insert(std::make_pair(offset, offset+nchars));
@@ -786,8 +798,8 @@ SgAsmGenericSection::congeal()
             if (value.second > old_end)
                 old_end = value.second;
         }
-        if (p_size > old_end)
-            p_holes.push_back(std::make_pair(old_end, p_size));
+        if (get_size() > old_end)
+            p_holes.push_back(std::make_pair(old_end, get_size()));
         p_referenced.clear();
         p_congealed = true;
     }
@@ -811,8 +823,8 @@ SgAsmGenericSection::uncongeal()
             if (value.second > old_end)
                 old_end = value.second;
         }
-        if (p_size > old_end)
-            p_referenced.insert(std::make_pair(old_end, p_size));
+        if (get_size() > old_end)
+            p_referenced.insert(std::make_pair(old_end, get_size()));
         p_congealed = false;
         p_holes.clear();
     }
@@ -824,13 +836,13 @@ void
 SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
-    if (p_offset + p_size + size > get_file()->get_size())
-        throw SgAsmGenericFile::ShortRead(this, p_offset+p_size, size);
+    addr_t new_size = get_size() + size;
+    if (p_offset + new_size > get_file()->get_size())
+        throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
 
-    p_size += size;
-
-    delete p_data2;
-    p_data2 = get_file()->content2(p_offset, p_size);
+    ROSE_ASSERT(p_data);
+    delete p_data;
+    p_data = get_file()->content(p_offset, new_size);
 }
 
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
@@ -839,16 +851,15 @@ void
 SgAsmGenericSection::extend_up_to(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
-
-    if (p_offset + p_size + size > get_file()->get_size()) {
+    addr_t new_size = get_size() + size;
+    if (p_offset + new_size > get_file()->get_size()) {
         ROSE_ASSERT(p_offset <= get_file()->get_size());
-        p_size = get_file()->get_size() - p_offset;
-    } else {
-        p_size += size;
+        new_size = get_file()->get_size() - p_offset;
     }
 
-    delete p_data2;
-    p_data2 = get_file()->content2(p_offset, p_size);
+    ROSE_ASSERT(p_data);
+    delete p_data;
+    p_data = get_file()->content(p_offset, new_size);
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
@@ -874,7 +885,7 @@ SgAsmGenericSection::unparse(FILE *f)
     fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
 #endif
 
-    write(f, 0, p_data2);
+    write(f, 0, p_data);
 }
 
 /* Write just the specified regions back to the file */
@@ -884,7 +895,7 @@ SgAsmGenericSection::unparse(FILE *f, const ExtentVector &ev)
     for (size_t i = 0; i < ev.size(); i++) {
         ExtentPair p = ev[i];
         ROSE_ASSERT(p.first <= p.second);
-        ROSE_ASSERT(p.second <= p_size);
+        ROSE_ASSERT(p.second <= get_size());
         addr_t extent_offset = p.first;
         addr_t extent_size   = p.second - p.first;
         const unsigned char *extent_data = content(extent_offset, extent_size);
@@ -932,7 +943,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name.c_str());
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
     fprintf(f, "%s%-*s = %" PRId64 " bytes into file\n", p, w, "offset",      p_offset);
-    fprintf(f, "%s%-*s = %" PRId64 " bytes\n",           p, w, "size",        p_size);
+    fprintf(f, "%s%-*s = %" PRId64 " bytes\n",           p, w, "size",        get_size());
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", p_synthesized?"yes":"no");
     if (p_header) {
         fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name().c_str());

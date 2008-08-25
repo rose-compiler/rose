@@ -32,7 +32,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     f->set_parent(this);
 
     /* Read 32-bit header for now. Might need to re-read as 64-bit later. */
-    ROSE_ASSERT(0 == p_size);
+    ROSE_ASSERT(0 == get_size());
     Elf32FileHeader_disk disk32;
     extend_up_to(sizeof(disk32));
     content(0, sizeof(disk32), &disk32);
