@@ -1,4 +1,5 @@
 #include "rose.h"
+#include "rose_paths.h"
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <libgen.h>

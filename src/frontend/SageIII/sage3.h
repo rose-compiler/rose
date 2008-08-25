@@ -25,7 +25,10 @@
 
 // DQ (11/10/2007): Added support for ROSE specific paths to be available. These are 
 // useful for tools built using ROSE, they are not presently being used within ROSE.
-#include "rose_paths.h"
+// RPM (8/22/2008): Commented out because it contains info that prevents us from making
+// optimal use of ccache. "rose_paths.h" contains info that changes every time we
+// configure. Can it be included at a finer granularity than this?
+//#include "rose_paths.h"
 
 // DQ (5/30/2004): Added to permit warnings to be placed in the source code so that
 // issues can be addressed later but called out during development (and eliminated
