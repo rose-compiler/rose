@@ -6,8 +6,6 @@
 // DQ (3/12/2006): We want to remove config.h from being placed in every source file
 #include <rose_config.h>
 
-// DQ (11/10/2007): Include ROSE specific paths to support external tools
-// These are included here, for consistancy, but are not currently used within ROSETTA.
 #include "rose_paths.h"
 
 #include <stdio.h>

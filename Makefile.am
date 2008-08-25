@@ -50,7 +50,8 @@ distclean-local:
 	-rm -rf $(top_builddir)/include-staging/
 
 # DQ (12/3/2007): Added rose_paths.h so that it would be copied to the install tree.
-nodist_include_HEADERS = rose_config.h rose_paths.h
+# JJW (8/25/2008): Changed to a .c file
+nodist_include_HEADERS = rose_config.h
 
 include $(top_srcdir)/config/build_rose_paths.Makefile
 
@@ -122,7 +123,7 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEANFILES = rose_paths.h
+DISTCLEANFILES = rose_paths.c
 CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
 
 find_rose_lock_files:
