@@ -333,6 +333,198 @@ typedef SgAsmGenericDLLPtrList*              SgAsmGenericDLLPtrListPtr;
 typedef Rose_STL_Container<unsigned char>    SgUnsignedCharList;
 typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
 
+/* RPM (2008-08-22) FIXME: This probably isn't the most appropriate place or name for this class.
+ * 
+ * This allocator is intended to be used for STL vectors that point to parts of a memory-mapped file. The goals are:
+ *    - to be able to have multiple vectors pointing to contiguous regions of the file content
+ *    - all vectors share a single copy of the file content
+ *    - content is accessed using standard methods (i.e., a plain old std::vector)
+ *    - the referenced sub-region of the file can be enlarged by extending the vector, but not past the end-of-file.
+ * 
+ * Implementation details:
+ *    - We define a memory pool (SgStaticPool) that holds information about the mapped file (address and size).
+ *    - We define an allocator (SgStaticAllocator) that points to the pool and tracks allocated size.
+ * 
+ * Example constructors:
+ *    // Create the pool by mapping a file
+ *    void *mem = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, 0);
+ *    SgStaticPool p(mem, length);
+ *
+ *    // Create the allocator that references the pool
+ *    SgStaticAllocator a1(&p, offset); //offset with respect to beginning of pool
+ *
+ *    // Use the allocator when creating the vector
+ *    SgFileContentList content(mem_size, 0, a1); // second arg is not used since memory is pre-initialized by mmap
+ *
+ *    // Create a vector that points to just part of the file without reading the file
+ *    size_t offset=100, size=200;
+ *    SgStaticAllocator a2(a1, offset); //offset relative to a1's offset
+ *    FileContentVector part1(size, 0, 2);
+ *
+ *    // Create a vector that points to part of part1 (offset & size are relative to part1)
+ *    offset=10; size=100;
+ *    FileContentVector part2(size, 0, FileContentAllocator(part1.get_allocator(), offset));
+ */
+class SgStaticPool {
+  public:
+    SgStaticPool()
+        : data(0), size(0)
+        {}
+    SgStaticPool(void *data, size_t size)
+        : data(data), size(size)
+        {}
+    void *get_data() {return data;}
+    size_t get_size() {return size;}
+  private:
+    void *data;
+    size_t size;
+};
+    
+template <class T>
+class SgStaticAllocator {
+  public:
+    typedef T           value_type;
+    typedef T*          pointer;
+    typedef const T*    const_pointer;
+    typedef T&          reference;
+    typedef const T&    const_reference;
+    typedef size_t      size_type;
+    typedef ptrdiff_t   difference_type;
+
+    template <class U> struct rebind {
+        typedef SgStaticAllocator<U> other;
+    };
+    
+    /* Default constructor */
+    SgStaticAllocator() throw()
+        : pool(0), start(0), nalloc(0) {
+        //fprintf(stderr,"SgStaticAllocator() = 0x%08lx[0x%08lx,%zu,%zu]\n",
+        //        (unsigned long)this, (unsigned long)pool, start, nalloc);
+    }
+    /* Copy constructed allocator same as old except using a new offset w.r.t. old offset */
+    SgStaticAllocator(const SgStaticAllocator &a, size_type start=0) throw()
+        : pool(a.pool), start(a.start+start), nalloc(0) {
+        //fprintf(stderr,"SgStaticAllocator(a=0x%08lx[0x%08lx,%zu,%zu], start=%zu) = 0x%08lx[0x%08lx,%zu,%zu]\n",
+        //        (unsigned long)&a, (unsigned long)a.pool, a.start, a.nalloc, start,
+        //        (unsigned long)this, (unsigned long)pool, this->start, nalloc);
+    }
+    /* Constructed allocator starts at "start" bytes from beginning of pool */
+    SgStaticAllocator(SgStaticPool *p, size_type start=0) throw()
+        : pool(p), start(start), nalloc(0) {
+        //fprintf(stderr,"SgStaticAllocator(pool=0x%08lx,start=%zu) = 0x%08lx[0x%08lx,%zu,%zu]\n",
+        //        (unsigned long)p, start, (unsigned long)this, (unsigned long)pool, this->start, nalloc);
+    }
+    /* Required by STL but not used since this allocator is only for std::vector */
+    template <class U> SgStaticAllocator(const SgStaticAllocator<U> &a) throw()
+      : pool(a.pool), start(a.start), nalloc(0) {
+        abort();
+    }
+
+    ~SgStaticAllocator() throw()
+        {}
+
+    /* Just plain old addresses */
+    pointer address(reference x) const {return &x;}
+    const_pointer address(const_reference x) const {return &x;}
+
+    /* This allocator is *very* simple. It allows a single call to allocate() with n>0 and throws an exception if called more
+     * than once.  We make this restriction because of the way that std::vector::resize() works. But it's not really an issue
+     * since one can just as easily construct a new vector that points to a different amount of the original data. */
+    pointer allocate(size_type n, const_pointer hint=0) {
+        //fprintf(stderr,"SgStaticAllocator-0x%08lx[0x%08lx,%zu,%zu]->allocate(n=%zu,hint=0x%08lx)",
+        //        (unsigned long)this, (unsigned long)pool, start, nalloc, n, (unsigned long)hint);
+        assert(pool);
+        if (n>0 && nalloc>0)
+            throw std::bad_alloc(); /*we already allocated once; don't allow another!*/
+        if (start+nalloc+n > pool->get_size())
+            throw std::bad_alloc(); /*attempted to allocate past end of pool*/
+        pointer retval = (pointer)pool->get_data() + start + nalloc;
+        nalloc += n;
+        //fprintf(stderr, " = 0x%08lx\n", (unsigned long)retval);
+        return retval;
+    }
+    
+    /* We can only deallocate from the end of what we've allocated */
+    void deallocate(pointer p, size_type n) {
+        //fprintf(stderr,"SgStaticAllocator-0x%08lx[0x%08lx,%zu,%zu]->dealloc(p=0x%08lx,n=%zu)\n",
+        //        (unsigned long)this, (unsigned long)pool, start, nalloc, (unsigned long)p, n);
+        assert(pool);
+        if (0==n)
+            return;
+        if (n>nalloc)
+            throw std::bad_alloc(); /*trying to free more than we've allocated*/
+        pointer addr = (pointer)pool->get_data() + start + (nalloc-n);
+        if (addr!=p)
+            throw std::bad_alloc(); /*not deallocating from the end of the pool*/
+        nalloc -= n;
+    }
+    
+    /* Size of unallocated region */
+    size_type max_size() const throw() {
+        //fprintf(stderr, "SgStaticAllocator-0x%08lx[0x%08lx,%zu,%zu]->max_size()", 
+        //        (unsigned long)this, (unsigned long)pool, start, nalloc);
+        assert(pool);
+        assert(pool->get_size()>=start+nalloc);
+        //fprintf(stderr, " = %zu\n", pool->get_size() - (start+nalloc));
+        return pool->get_size() - (start+nalloc);
+    }
+    
+    /* Construction in place for contained objects */
+    void construct(pointer p, const value_type &val) {
+        //new(p) value_type(val);
+    }
+
+    /* Destroy without releasing memory */
+    void destroy(pointer p) {
+        //p->~value_type();
+    }
+
+    /* Return the underlying pool */
+    SgStaticPool *get_pool() {return pool;}
+
+  private:
+    void operator=(const SgStaticAllocator&) {abort();}
+    SgStaticPool *pool;
+    size_type start, nalloc;
+};
+
+/* Special case for void allocator */
+template<>
+class SgStaticAllocator<void> {
+    typedef void        value_type;
+    typedef void*       pointer;
+    typedef const void* const_pointer;
+    template <class U> struct rebind {
+        typedef SgStaticAllocator<U> other;
+    };
+};
+
+/* Allocators are equal if they point to the same pool */
+template <class T1, class T2>
+bool operator==(const SgStaticAllocator<T1> &a1, const SgStaticAllocator<T2> &a2) throw()
+{
+    bool retval = a1 && a2 && a1->pool==a2->pool;
+    //fprintf(stderr,"SgStaticAllocator-0x%08lx[0x%08lx,%zu,%s] == 0x%08lx[0x%08lx,%zu,%s] ? %s\n",
+    //        (unsigned long)&a1, (unsigned long)a1.data, a1.data_size, a1.has_been_allocated?"true":"false",
+    //        (unsigned long)&a2, (unsigned long)a2.data, a2.data_size, a2.has_been_allocated?"true":"false",
+    //        retval?"true":"false");
+    return retval;
+}
+template <class T1, class T2>
+bool operator!=(const SgStaticAllocator<T1> &a1, const SgStaticAllocator<T2> &a2) throw()
+{
+    bool retval = !(a1==a2);
+    //fprintf(stderr,"SgStaticAllocator-0x%08lx[0x%08lx,%zu,%s] != 0x%08lx[0x%08lx,%zu,%s] ? %s\n",
+    //        (unsigned long)&a1, (unsigned long)a1.data, a1.data_size, a1.has_been_allocated?"true":"false",
+    //        (unsigned long)&a2, (unsigned long)a2.data, a2.data_size, a2.has_been_allocated?"true":"false",
+    //        retval?"true":"false");
+    return retval;
+}
+
+typedef SgStaticAllocator<unsigned char> SgFileContentAllocator;
+typedef Rose_STL_Container<unsigned char, SgFileContentAllocator> SgFileContentList;
+typedef SgFileContentList*		     SgFileContentListPtr;
+
 typedef Rose_STL_Container<SgAsmElfDynamicEntry*> SgAsmElfDynamicEntryPtrList;
 typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr;
 

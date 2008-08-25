@@ -1410,14 +1410,11 @@ Grammar::setUpBinaryInstructions ()
   /* Starting offset of the section */
      AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of just this section; points into file's content */
-  // AsmGenericSection.setDataPrototype("const unsigned char","data","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmGenericSection.setDataPrototype("unsigned char","data","= 0",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (12/8/2008): I can't make ROSETTA accept "unsigned char*"
-     AsmGenericSection.setDataPrototype("char*","data","= NULL",
+     AsmGenericSection.setDataPrototype("SgFileContentList*","data2","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
   /* General contents of the section */
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::SectionPurpose","purpose","= SgAsmGenericSection::SP_UNSPECIFIED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1538,13 +1535,11 @@ Grammar::setUpBinaryInstructions ()
   /* File attributes at time of file open (valid if fd>=0) */
      AsmGenericFile.setDataPrototype("SgAsmGenericFormat::fileDetails","sb","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Content of file mapped into memory   (or null on file error) */
-  // AsmGenericFile.setDataPrototype("SgCharList","data","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmGenericFile.setDataPrototype("unsigned char*","data","",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("char*","data","= NULL",
+#if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
+  /* Content of file mapped into memory */
+     AsmGenericFile.setDataPrototype("SgFileContentList*","data2","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
   /* All known sections for this file */
   // AsmGenericFile.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
   //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
