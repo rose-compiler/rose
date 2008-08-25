@@ -867,6 +867,7 @@ src/backend/asmUnparser/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/SQLiteConnection/Makefile
+src/roseExtensions/sqlite3x/Makefile
 src/roseExtensions/databaseConnection/Makefile
 src/roseExtensions/databaseConnection/GlobalDatabaseConnection.C
 src/roseExtensions/dataStructureTraversal/Makefile
@@ -919,6 +920,7 @@ projects/compass/tools/compass/tests/C_tests/Makefile
 projects/compass/tools/compass/tests/Cxx_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
+projects/BinaryCloneDetection/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
