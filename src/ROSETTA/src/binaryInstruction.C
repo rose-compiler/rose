@@ -294,6 +294,9 @@ Grammar::setUpBinaryInstructions ()
 
      AsmStatement.setDataPrototype("unsigned int","address","= 0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+  // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
+     AsmStatement.setDataPrototype("std::string","comment","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      //AsmStatement.setDataPrototype("SgAsmNode*","parent","= NULL",
      //                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
@@ -305,8 +308,9 @@ Grammar::setUpBinaryInstructions ()
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("std::string","raw_bytes","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmInstruction.setDataPrototype("std::string","comment","= \"\"",
-                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+  // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
+  // AsmInstruction.setDataPrototype("std::string","comment","= \"\"",
+  //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("SgAsmOperandList*","operandList","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmInstruction.setDataPrototype("SgAsmStatementPtrList","sources","",
@@ -433,8 +437,10 @@ Grammar::setUpBinaryInstructions ()
   // ElfSection *linked_section;
   // ElfSectionTableEntry *st_entry;
      AsmElfSection.setFunctionPrototype      ( "HEADER_ELF_SECTION", "../Grammar/BinaryInstruction.code");
+
+  // This is over written by AsmElfSymbolSection AsmElfDynamicSection (so we need the access functions to be virtual)
      AsmElfSection.setDataPrototype("SgAsmElfSection*","linked_section","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","st_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1460,6 +1466,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmGenericDLLList.setFunctionPrototype ( "HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
+
+  // DQ (8/23/2008): I think we should consider traversing this or building an ELF version 
+  // of the list so that we can traverse it similarly to the PE DLL list.
      AsmGenericDLLList.setDataPrototype("SgAsmGenericDLLPtrList","dlls","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
