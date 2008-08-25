@@ -123,7 +123,6 @@ distcheck-after:
 	@echo "Running distcheck hook rule ..."
 	@$(MAKE) rename_distribution
 
-DISTCLEANFILES = rose_paths.c
 CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
 
 find_rose_lock_files:
