@@ -113,34 +113,35 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmGenericFile::ctor(std::string fileName)
 {
- // DQ (8/8/2008): Can we avoid assignments in the predicates?
-    if ((p_fd = open(fileName.c_str(), O_RDONLY))<0 || fstat64(p_fd, &p_sb)<0) {
+    p_fd = open(fileName.c_str(), O_RDONLY);
+    if (p_fd<0 || fstat64(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }
 
- // DQ (8/8/2008): Can we avoid assignments in the predicates?
- // if (NULL == (p_data = (unsigned char*) mmap(NULL, p_sb.st_size, PROT_READ, MAP_PRIVATE, p_fd, 0))) {
-    if (NULL == (p_data = (char*) mmap(NULL, p_sb.st_size, PROT_READ, MAP_PRIVATE, p_fd, 0))) {
+    /* Map the file into memory so we don't have to read it explicitly */
+    unsigned char *mapped = (unsigned char*)mmap(NULL, p_sb.st_size, PROT_READ, MAP_PRIVATE, p_fd, 0);
+    if (!mapped) {
         std::string mesg = "Could not mmap binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }
 
+    /* Make file contents available through an STL vector without actually reading the file */
+    SgStaticPool *pool = new SgStaticPool(mapped, p_sb.st_size);
+    p_data2 = new SgFileContentList(p_sb.st_size, 0, SgFileContentAllocator(pool));
+
     ROSE_ASSERT(p_sections == NULL);
-    ROSE_ASSERT(p_headers  == NULL);
-
     p_sections = new SgAsmGenericSectionList();
-    p_headers  = new SgAsmGenericHeaderList();
-
     p_sections->set_parent(this);
+
+    ROSE_ASSERT(p_headers  == NULL);
+    p_headers  = new SgAsmGenericHeaderList();
     p_headers->set_parent(this);
 }
 
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
- // printf ("In ~SgAsmGenericFile() \n");
-
     /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
     while (p_headers->get_headers().size()) {
         SgAsmGenericHeader *header = p_headers->get_headers().back();
@@ -157,8 +158,10 @@ SgAsmGenericFile::~SgAsmGenericFile()
     ROSE_ASSERT(p_headers->get_headers().empty()   == true);
     
     /* Unmap and close */
-    if ( p_data != NULL )
-        munmap(p_data, p_sb.st_size);
+    if (p_data2->size()>0) {
+        unsigned char *mapped = &(p_data2->at(0));
+        munmap(mapped, p_sb.st_size);
+    }
 
     if ( p_fd >= 0 )
         close(p_fd);
@@ -169,6 +172,17 @@ SgAsmGenericFile::~SgAsmGenericFile()
 
     p_sections = NULL;
     p_headers = NULL;
+}
+
+/* Returns a vector that points to part of the file content without actually ever referencing the file content until the
+ * vector elements are referenced. */
+SgFileContentList *
+SgAsmGenericFile::content2(addr_t offset, addr_t size)
+{
+    if (offset+size > p_data2->size())
+        throw SgAsmGenericFile::ShortRead(NULL, offset, size);
+    SgStaticPool *pool = p_data2->get_allocator().get_pool();
+    return new SgFileContentList(size, 0, SgFileContentAllocator(pool, offset));
 }
 
 /* Adds a new header to the file. This is called implicitly by the header constructor */
@@ -596,7 +610,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 
     this->p_offset = offset;
     this->p_size = size;
-    this->p_data = ef->content() + offset;
+    this->p_data2 = ef->content2(offset, size);
 
     /* The section is added to the file's list of sections. It may also be added to other lists by the caller. The destructor
      * will remove it from the file's list but does not know about other lists. */
@@ -625,7 +639,6 @@ SgAsmGenericSection::~SgAsmGenericSection()
     }
 }
 
-
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
  * this function as being similar to fseek()+fread() in that it returns contents of part of a file as bytes. The main
  * difference is that instead of the caller supplying the buffer, the callee uses its own buffer (part of the buffer that was
@@ -639,8 +652,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
     if (!p_congealed && size > 0)
         p_referenced.insert(std::make_pair(offset, offset+size));
 
- // DQ (8/8/2008): Added cast, but this should be fixed better. FIXME
-    return (const unsigned char *) p_data + offset;
+    return &(p_data2->at(offset));
 }
 
 /* Copies the specified part of the section into a buffer. This is more like fread() than the two-argument version in that the
@@ -654,12 +666,12 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
         memset(buf, 0, size);
     } else if (offset+size > this->p_size) {
         addr_t nbytes = this->p_size - offset;
-        memcpy(buf, p_data+offset, nbytes);
+        memcpy(buf, &(p_data2->at(offset)), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+nbytes));
     } else {
-        memcpy(buf, p_data+offset, size);
+        memcpy(buf, &(p_data2->at(offset)), size);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+size));
     }
@@ -669,7 +681,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 const char *
 SgAsmGenericSection::content_str(addr_t offset)
 {
-    const char *ret = (const char*) (p_data + offset);
+    const char *ret = (const char*)&(p_data2->at(offset));
     size_t nchars=0;
 
 #if 0 /*DEBUGGING*/
@@ -738,6 +750,24 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *b
     return offset+bufsize;
 }
 
+/* See related method above */
+rose_addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, const SgFileContentList *buf)
+{
+    if (0==buf->size())
+        return 0;
+    return write(f, offset, buf->size(), &(buf->at(0)));
+}
+
+/* See related method above */
+rose_addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, const SgUnsignedCharList &buf)
+{
+    if (0==buf.size())
+        return 0;
+    return write(f, offset, buf.size(), (void*)&(buf[0]));
+}
+
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
  * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
@@ -794,9 +824,13 @@ void
 SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
-    if (p_offset + this->p_size + size > get_file()->get_size())
-        throw SgAsmGenericFile::ShortRead(this, p_offset+this->p_size, size);
-    this->p_size += size;
+    if (p_offset + p_size + size > get_file()->get_size())
+        throw SgAsmGenericFile::ShortRead(this, p_offset+p_size, size);
+
+    p_size += size;
+
+    delete p_data2;
+    p_data2 = get_file()->content2(p_offset, p_size);
 }
 
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
@@ -806,12 +840,15 @@ SgAsmGenericSection::extend_up_to(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
 
-    if (p_offset + this->p_size + size > get_file()->get_size()) {
-        ROSE_ASSERT(this->p_offset <= get_file()->get_size());
-        this->p_size = get_file()->get_size() - this->p_offset;
+    if (p_offset + p_size + size > get_file()->get_size()) {
+        ROSE_ASSERT(p_offset <= get_file()->get_size());
+        p_size = get_file()->get_size() - p_offset;
     } else {
-        this->p_size += size;
+        p_size += size;
     }
+
+    delete p_data2;
+    p_data2 = get_file()->content2(p_offset, p_size);
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
@@ -837,7 +874,7 @@ SgAsmGenericSection::unparse(FILE *f)
     fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
 #endif
 
-    write(f, 0, p_size, p_data);
+    write(f, 0, p_data2);
 }
 
 /* Write just the specified regions back to the file */

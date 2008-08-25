@@ -1422,7 +1422,6 @@ SgAsmCoffSymbolTable::unparse(FILE *f)
         SgAsmCoffSymbol::COFFSymbol_disk disk;
         symbol->encode(&disk);
         spos = write(f, spos, SgAsmCoffSymbol::COFFSymbol_disk_size, &disk);
-     // spos = write(f, spos, symbol->get_aux_size(), symbol->get_aux_data());
         spos = write(f, (addr_t) spos, symbol->get_aux_data());
     }
     if (get_strtab())

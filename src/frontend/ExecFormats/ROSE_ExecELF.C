@@ -650,7 +650,6 @@ SgAsmElfSectionTable::unparse(FILE *f)
             /* The disk struct */
             addr_t extra_offset = write(f, section->get_id() * fhdr->get_e_shentsize(), size, disk);
             if (shdr->get_nextra() > 0)
-             // write(f, extra_offset, shdr->get_nextra(), shdr->get_extra());
                 write(f, extra_offset, shdr->get_extra());
 
             /* The section itself */

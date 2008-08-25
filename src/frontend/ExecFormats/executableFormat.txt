@@ -168,6 +168,8 @@ that we have?  And then test it to make sure it is identical.
 2) AsmGenericFile data member "data" is a "char*" type and should likely be an STL list 
    (SgUnsignedCharList).  
 
+   FIXME
+
    "data" is intended to point to the entire executable file contents
    before (and while) the file is being parsed. We use mmap() rather
    than fread() throughout the parser for convenient, simple

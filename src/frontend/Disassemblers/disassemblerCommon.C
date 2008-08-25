@@ -63,13 +63,13 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   try {
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_32);
-      insn = X86Disassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(ef->content2()[0]), ef->get_size(), fileOffset, &knownSuccessors);
     } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
-      insn = X86Disassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(ef->content2()[0]), ef->get_size(), fileOffset, &knownSuccessors);
     } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, (unsigned char*) ef->content(), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = ArmDisassembler::disassemble(params, &(ef->content2()[0]), ef->get_size(), fileOffset, &knownSuccessors);
     } else {
       cerr << "Bad architecture to disassemble" << endl;
       abort();
@@ -193,7 +193,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
         // FIXME: assumes file is little endian
         for (size_t k = pointerSize; k > 0; --k) {
           addr <<= 8;
-          addr |= ef->content()[j + k - 1];
+          addr |= ef->content2()[j + k - 1];
         }
         addr += header->get_base_va();
         if (file.inCodeSegment(addr)) {

@@ -783,11 +783,13 @@ HEADER_GENERIC_SECTION_START
           addr_t        write(FILE *f, addr_t offset, size_t bufsize, const void *buf);
           addr_t        write(FILE *f, addr_t offset, const std::string &str);
           addr_t        write(FILE *f, addr_t offset, char c);
-
-       // DQ (8/9/2008): Added a new function to support STL types.
-          addr_t        write(FILE *f, addr_t offset, const std::vector<unsigned char> & buf);
+	  addr_t        write(FILE *f, addr_t offset, const SgFileContentList *buf);
+	  addr_t	write(FILE *f, addr_t offset, const SgUnsignedCharList &buf);
 
        /* Functions for accessing content */
+#if 1 /*FIXME: data member defined here for now rather than in binaryInstruction.C (RPM 2008-08-22)*/
+	  SgFileContentList *p_data2; /*renamed from p_data temporarily for swapping implementations*/
+#endif
           const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
           const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
           void                 content(addr_t offset, addr_t size, void *buf); /* copies content into BUF */
@@ -913,7 +915,12 @@ HEADER_GENERIC_FILE_START
        // const unsigned char *content() {return p_data;}       /* File contents */
        // const SgCharList & content() { return p_data; }       /* File contents */
        // const char* content() { return p_data; }     /* File contents */
-          char* content() { return p_data; }     /* File contents */
+#if 1
+	  /* FIXME: data members defined here for now rather than in binaryInstruction.C (RPM 2008-08-22) */
+	  SgFileContentList *p_data2; /*renamed from p_data temporarily for swapping implementations*/
+#endif
+          const SgFileContentList& content2() { return *p_data2; }     	/* Entire file contents */
+          SgFileContentList* content2(addr_t offset, addr_t size);	/* Partial file contents */
 
        /* Functions for sections (plurals return vectors; singular return one or NULL) */
           void add_section(SgAsmGenericSection*);                     /* Add new section to the file; called implicitly by section constructor */
@@ -3963,7 +3970,7 @@ p_file(NULL),
 #if 1
 p_header(NULL), 
 #endif
-p_size(0), p_offset(0), p_data(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
+p_size(0), p_offset(0), p_data2(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
 p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
      ctor(f, offset, size);
@@ -3985,14 +3992,6 @@ SgAsmExecutableFileFormat::addr_t
 SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
    {
      return write(f, offset, 1, &c);
-   }
-
-// DQ (8/9/2008): Added a new function to support STL types.
-SgAsmExecutableFileFormat::addr_t
-// SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const std::vector<unsigned char> & buf)
-SgAsmGenericSection::write(FILE *f, addr_t offset, const std::vector<unsigned char> & buf)
-   {
-     return write(f, offset, buf.size(), (void*) &(buf[0]));
    }
 
 bool
@@ -4112,8 +4111,8 @@ SOURCE_GENERIC_SECTION_END
 SOURCE_GENERIC_HEADER_START
 
 SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size), p_base_va(0),
-     p_symbols(NULL), p_dlls(NULL), p_target(NULL), p_exec_format(NULL)
+   : SgAsmGenericSection(ef, offset, size),
+     p_exec_format(NULL), p_target(NULL), p_base_va(0), p_dlls(NULL), p_symbols(NULL)
    {
      ctor(ef, offset, size);
    }
@@ -4150,7 +4149,7 @@ SOURCE_GENERIC_HEADER_END
 SOURCE_GENERIC_FILE_START
 
 SgAsmGenericFile::SgAsmGenericFile(std::string file_name)
-   : p_fd(-1), p_data(NULL), p_sections(NULL), p_headers(NULL)
+   : p_fd(-1), p_data2(NULL), p_sections(NULL), p_headers(NULL)
    {
      ctor(file_name);
    }
