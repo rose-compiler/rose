@@ -2,7 +2,7 @@
 (require (lib "match.ss"))
 (require (lib "1.ss" "srfi"))
 
-(define data (with-input-from-file "/home/willcock2/rose-svn-checkout/build/projects/assemblyToSourceAst/fnord.ss" read))
+(define data (with-input-from-file "fnord.ss" read))
 
 (define (simplify-begins t)
   (match t
@@ -165,6 +165,7 @@
                          `(let ((,(car nv) ,(remap (cdar asx) al)))
                             ,(l (cdr asx) (cdr nv)))))))
                 (`(expr . ,_) (loop `(begin ,e) al as))
+                (`(parallel-assign ,_) (loop `(begin ,e) al as))
                 (`(case ,key . ,cases)
                  `(case ,(remap key al)
                     ,@(map (match-lambda (`(,k ,body) `(,k ,(loop body al as)))) cases)))
@@ -277,35 +278,102 @@
            `(let ((,var ,val)) ,(remove-unused-variables body))
            (remove-unused-variables body))))
     (`(goto ,_) e)
+    (`(label ,l ,body) `(label ,l ,(remove-unused-variables body)))
     (`(if ,p ,a ,b) `(if ,p ,(remove-unused-variables a) ,(remove-unused-variables b)))
     (`(case ,key . ,cases)
      `(case ,key . ,(map (match-lambda (`(,k ,body) `(,k ,(remove-unused-variables body)))) cases)))
     (`(parallel-assign ,al) e)
-    (`(expr ,e) e)
+    (`(expr ,_) e)
     (_ (error "remove-unused-variables" e))))
+
+(define ((term-with-functor? f) t)
+  (and (list? t) (eq? (car t) f)))
+
+(define ((associative-list f id) t)
+  (if ((term-with-functor? f) t) (cdr t) (if (equal? t id) '() (list t))))
+
+(define ((flatten-assoc f id) t)
+  (let ((result
+         (if ((term-with-functor? f) t)
+             (let ((ls (append-map (associative-list f id) (cdr t))))
+               (cond
+                 ((null? ls) id)
+                 ((null? (cdr ls)) (car ls))
+                 (else (cons f ls))))
+             t)))
+    (if (equal? result t) #f result)))
+
+(define ((flatten-idem f) t)
+  (and ((term-with-functor? f) t)
+       (let ((tl (delete-duplicates (cdr t) equal?)))
+         (if (equal? tl (cdr t))
+             #f
+             (cons (car t) tl)))))
+
+(define ((flatten-zero f z) t)
+  (and ((term-with-functor? f) t)
+       (member z (cdr t))
+       z))
 
 (define (simplify-expr e)
   (letrec ((simp
             (lambda (e)
-              (cond
-                ((match e (`(subtract (add ,a ,b) ,c) (and (number? b) (number? c))) (else #f))
-                 `(add ,(cadadr e) ,(- (caddr (cadr e)) (caddr e))))
-                ((match e (`(add (add ,a ,b) ,c) (and (number? b) (number? c))) (else #f))
-                 `(add ,(cadadr e) ,(+ (caddr (cadr e)) (caddr e))))
-                ((match e (`(add ,a 0) #t) (_ #f)) (cadr e))
-                ((match e (`(subtract ,a 0) #t) (_ #f)) (cadr e))
-                ((match e (`(xor ,a ,b) (equal? a b)) (_ #f)) 0)
-                ((match e (`(memoryWriteDWord ,m ,a (memoryReadDWord ,m ,b)) (equal? a b)) (_ #f))
-                 (cadr e))
-                ((match e (`(memoryReadDWord (memoryWriteDWord ,m ,a ,v) ,b) #t) (_ #f))
-                 (match e (`(memoryReadDWord (memoryWriteDWord ,m ,a ,v) ,b)
-                           `(if-e (equal ,a ,b)
-                                  ,v
-                                  (if-e (less-than (subtract (add ,a ,b) 3) 7)
-                                        (error)
-                                        (memoryReadDWord ,m ,b))))))
-                ((list? e) (cons (car e) (map simp (cdr e))))
-                (else e)))))
+              (if (boolean? e)
+                  (if e 1 0)
+                  (or
+                   (match e (`(subtract ,a ,b) `(add ,a (negate ,b))) (_ #f))
+                   (match e (`(negate ,x) (and (number? x) (if (zero? x) 0 (- (expt 2 32) x)))) (_ #f))
+                   (match e (`(negate (negate ,x)) x) (_ #f))
+                   ((flatten-assoc 'add 0) e)
+                   ((flatten-assoc 'and (- (expt 2 32) 1)) e)
+                   ((flatten-zero 'and 0) e)
+                   ((flatten-idem 'and) e)
+                   ((flatten-assoc 'or 0) e)
+                   ((flatten-idem 'or) e)
+                   ((flatten-zero 'or (- (expt 2 32) 1)) e)
+                   ((flatten-assoc 'xor 0) e)
+                   ((flatten-assoc 'logical-and 1) e)
+                   ((flatten-idem 'logical-and) e)
+                   ((flatten-zero 'logical-and 0) e)
+                   ((flatten-assoc 'logical-or 0) e)
+                   ((flatten-idem 'logical-or) e)
+                   ((flatten-zero 'logical-or 1) e)
+                   (match e (`(xor ,a ,b) (and (equal? a b) 0)) (_ #f))
+                   (match e (`(memoryWriteDWord ,m1 ,a (memoryReadDWord ,m2 ,b)) (and (equal? m1 m2) (equal? a b) m2)) (_ #f))
+                   (match e
+                     (`(memoryReadDWord (memoryWriteDWord ,m ,a ,v) ,b)
+                      `(if-e (equal ,a ,b)
+                             ,v
+                             (memoryReadDWord ,m ,b))) ; FIXME
+                     (_ #f))
+                   (match e
+                     (`(add . ,ls) (and (>= (length (filter number? ls)) 2)
+                                        `(add ,@(filter (lambda (x) (not (number? x))) ls)
+                                              ,(remainder (apply + (filter number? ls)) (expt 2 32)))))
+                     (_ #f))
+                   (match e
+                     (`(and . ,ls) (and (>= (length (filter number? ls)) 2)
+                                        `(and ,@(filter (lambda (x) (not (number? x))) ls)
+                                              ,(apply bitwise-and (filter number? ls)))))
+                     (_ #f))
+                   (match e
+                     (`(xor . ,ls) (and (>= (length (filter number? ls)) 2)
+                                        `(xor ,@(filter (lambda (x) (not (number? x))) ls)
+                                              ,(apply bitwise-xor (filter number? ls)))))
+                     (_ #f))
+                   (match e
+                     (`(equal (add ,a1 . ,rest1) (add ,a2 . ,rest2)) (and (equal? a1 a2) `(equal (add . ,rest1) (add . ,rest2))))
+                     (_ #f))
+                   (match e (`(equal ,a ,b) (and (equal? a b) 1)) (_ #f))
+                   (match e
+                     (`(parity ,n) (and (number? n)
+                                        (let parity ((n (bitwise-and n 255)))
+                                          (cond
+                                            ((zero? n) 1)
+                                            ((odd? n) (- 1 (parity (/ (sub1 n) 2))))
+                                            (else (parity (/ n 2)))))))
+                     (_ #f))
+                   (if (list? e) (cons (car e) (map simp (cdr e))) e))))))
     (let loop ((e e))
       (let ((new-e (simp e)))
         (if (equal? e new-e) new-e (loop new-e))))))
@@ -316,6 +384,7 @@
     (`(let ((,var ,val)) ,body)
      `(let ((,var ,(simplify-expr val))) ,(simplify body)))
     (`(goto ,_) e)
+    (`(label ,l ,body) `(label ,l ,(simplify body)))
     (`(if ,p ,a ,b) `(if ,(simplify p) ,(simplify a) ,(simplify b)))
     (`(case ,key . ,cases)
      `(case ,(simplify key) . ,(map (match-lambda (`(,k ,body) `(,k ,(simplify body)))) cases)))
@@ -324,12 +393,13 @@
     (`(expr ,e) `(expr ,(simplify-expr e)))
     (_ (error "simplify" e))))
 
-(define init-code `(begin . ,(filter (match-lambda (`(label . ,_) #f) (_ #t)) data)))
+(define (init-code) `(begin . ,(filter (match-lambda (`(label . ,_) #f) (_ #t)) data)))
 (define (get-label l) (or (ormap (match-lambda (`(label ,l2 ,body) (if (eq? l l2) body #f)) (_ #f)) data) (error "Label not found" l)))
 
 (define (expand-one e)
   (match e
     (`(goto ,l) (get-label l))
+    (`(label ,l ,body) `(label ,l ,(expand-one body)))
     (`(if ,p ,a ,b) `(if ,p ,(expand-one a) ,(expand-one b)))
     (`(case ,k . ,cases) `(case ,k . ,(map (match-lambda (`(,keys ,e) `(,keys ,(expand-one e)))) cases)))
     (`(expr . ,_) e)
@@ -338,11 +408,14 @@
     (`(let ,vars ,body) `(let ,vars ,(expand-one body)))
     (_ (error "expand-one" e))))
 
-(define (expand-one-simp e) (simplify (simplify-begins (remove-unused-variables (copy-and-constant-prop (fold-lets (expand-one e)) '())))))
+(define (simplify-full e) (simplify (simplify-begins (remove-unused-variables (copy-and-constant-prop (fold-lets e) '())))))
+
+(define (expand-one-simp e) (simplify-full (expand-one e)))
 
 (define (expand-many n e)
   (if (zero? n) e (expand-one-simp (expand-many (sub1 n) e))))
 
-(pretty-print (change-to-let* (expand-many 3 init-code)))
-; (pretty-print data)
+; (pretty-print (change-to-let* (map expand-one-simp data)))
+(for-each (lambda (x) (pretty-print (change-to-let* (simplify-full x)))) data)
+; (pretty-print (map change-to-let* (map simplify-full data)))
 ;
