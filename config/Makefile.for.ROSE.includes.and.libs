@@ -62,7 +62,7 @@ endif
 # SQLite is a simpler database to use than MySQL
 if ROSE_USE_SQLITE_DATABASE
    ROSE_SQLITE_DATABASE_INCLUDE  = $(SQLITE3_CFLAGS)
-   SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS)
+   SQLITE_DATABASE_INCLUDE       = $(SQLITE3_CFLAGS) -I$(top_srcdir)/src/roseExtensions/sqlite3x
    SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
    ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
    ROSE_SQLITE_DATABASE_LIB_NAME = roseSQLiteDatabase

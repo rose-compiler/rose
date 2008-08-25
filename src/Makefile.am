@@ -20,6 +20,16 @@ libroseBinaryLibraries = \
    $(top_builddir)/src/frontend/ExecFormats/libroseExecFormats.la \
    $(top_builddir)/src/backend/asmUnparser/libroseAsmUnparser.la 
 
+if ROSE_USE_SQLITE_DATABASE
+
+libroseSqlite3xConnection = \
+   $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la 
+else
+libroseSqlite3xConnection = 
+
+
+endif
+   
 # TODO: correct list!
 libroseLibraries = \
    $(top_builddir)/src/3rdPartyLibraries/MSTL/libmstl.la \
@@ -68,7 +78,7 @@ libroseLibraries = \
    $(top_builddir)/src/roseSupport/libroseSupport.la \
    $(top_builddir)/src/util/support/libsupport.la \
    $(top_builddir)/src/util/graphs/libgraphs.la \
-   $(top_builddir)/src/util/libroseutil.la
+   $(top_builddir)/src/util/libroseutil.la $(libroseSqlite3xConnection)
 
 
 EXTRA_DIST = extra.docs
