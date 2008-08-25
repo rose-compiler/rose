@@ -321,8 +321,11 @@ void RoseFile::visit(SgNode* node) {
  * unparse AST to assembly
  ****************************************************/
 void RoseFile::unparse(char* fileName) { 
-  ROSE_ASSERT(globalNode);
-  {
-    unparseAsmStatementToFile(fileName, globalNode);
-  }
+  ROSE_ASSERT(globalNode != NULL);
+
+// DQ (8/23/2008): Modified to use more precise interface taking "SgAsmStatement*" instead of "SgAsmNode*"
+  SgAsmStatement* asmStatement = isSgAsmStatement(globalNode);
+  ROSE_ASSERT(asmStatement);
+
+  unparseAsmStatementToFile(fileName, asmStatement);
 }

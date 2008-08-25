@@ -331,7 +331,7 @@ $(F03_TESTCODES_REQUIRED_TO_PASS) \
 $(F03_TESTCODES_CURRENTLY_FAILING)
 
 # File option to accumulate performance information about the compilation
-PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/C_ROSE_PERFORMANCE_DATA.csv
+PERFORMANCE_REPORT_OPTION = -rose:compilationPerformanceFile $(top_builddir)/FORTRAN_ROSE_PERFORMANCE_DATA.csv
 
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict
 # ROSE_FLAGS = -rose:C_only -rose:verbose 2 --edg:restrict $(PERFORMANCE_REPORT_OPTION)
@@ -452,6 +452,6 @@ EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TE
 
 clean-local:
 	rm -f *.o rose_*.f*
-	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *.dot *.pdf *~ *.ps *.out *.log
+	rm -f *.s *.mod rose_*.f rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -rf QMTest
 

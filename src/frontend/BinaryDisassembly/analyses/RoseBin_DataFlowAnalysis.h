@@ -51,7 +51,7 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
   RoseBin_DefUseAnalysis* defuse;
   bool printEdges;
 
-  void traverseNodes(RoseBin_DataFlowAbstract* analysis);
+
 
   bool exceptionCall(SgAsmx86Instruction* call);
 
@@ -78,6 +78,8 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
       delete it->second;
     }
   }
+
+  void traverseNodes(RoseBin_DataFlowAbstract* analysis);
 
   void init();
 

@@ -1267,6 +1267,10 @@ HEADER_ELF_SECTION_START
        // SgAsmElfFileHeader *get_elf_header() { return dynamic_cast<SgAsmElfFileHeader*>(get_header()); }
           SgAsmElfFileHeader *get_elf_header();
 
+       // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+          SgAsmElfSection* get_linked_section () const;
+          virtual void set_linked_section ( SgAsmElfSection* linked_section );
+
      private:
           void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
 
@@ -4368,6 +4372,35 @@ SgAsmElfFileHeader*
 SgAsmElfSection::get_elf_header()
    {
      return dynamic_cast<SgAsmElfFileHeader*>(get_header());
+   }
+
+
+// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+SgAsmElfSection* 
+SgAsmElfSection::get_linked_section () const
+   {
+     ROSE_ASSERT (this != NULL);
+     return p_linked_section;
+   }
+
+// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+void
+SgAsmElfSection::set_linked_section ( SgAsmElfSection* linked_section )
+   {
+     ROSE_ASSERT (this != NULL);
+     set_isModified(true);
+
+#if DEBUG_SAGE_ACCESS_FUNCTIONS
+     if (p_linked_section != NULL && linked_section != NULL && p_linked_section != linked_section)
+        {
+          printf ("Warning: linked_section = %p overwriting valid pointer p_linked_section = %p \n",linked_section,p_linked_section);
+#if DEBUG_SAGE_ACCESS_FUNCTIONS_ASSERTION
+          printf ("Error fails assertion (p_linked_section != NULL && linked_section != NULL && p_linked_section != linked_section) is false\n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+     p_linked_section = linked_section;
    }
 
 SOURCE_ELF_SECTION_END

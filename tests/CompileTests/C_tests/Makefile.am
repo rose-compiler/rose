@@ -103,6 +103,6 @@ check-local:
 	@echo "*********************************************************************************************"
 
 clean-local:
-	rm -f *.o rose_*.[cC]
+	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock
 	rm -rf QMTest
 

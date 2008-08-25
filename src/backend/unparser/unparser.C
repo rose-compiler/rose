@@ -36,12 +36,12 @@ using namespace std;
 Unparser::Unparser( ostream* nos, string fname, Unparser_Opt nopt, UnparseFormatHelp *h, UnparseDelegate* r)
    : cur(nos, h), repl(r)
    {
-     u_type = new Unparse_Type(this);
-     u_name = new Unparser_Nameq(this);
-  // u_support = new Unparse_Support(this);
-     u_sym = new Unparse_Sym(this);
-     u_debug = new Unparse_Debug(this);
-     u_sage = new Unparse_MOD_SAGE(this);
+     u_type     = new Unparse_Type(this);
+     u_name     = new Unparser_Nameq(this);
+  // u_support  = new Unparse_Support(this);
+     u_sym      = new Unparse_Sym(this);
+     u_debug    = new Unparse_Debug(this);
+     u_sage     = new Unparse_MOD_SAGE(this);
      u_exprStmt = new Unparse_ExprStmt(this, fname);
 
   // DQ (8/14/2007): I have added this here to be consistant, but I question if this is a good design!

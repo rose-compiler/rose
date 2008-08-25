@@ -153,6 +153,8 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
   map<uint64_t, SgAsmInstruction*> insns;
   map<uint64_t, bool> basicBlockStarts;
   set<uint64_t> functionStarts;
+
+// DQ (8/23/2008): Since headers are also in the section list, isn't this redundant?
   const vector<SgAsmGenericHeader*> & headers = ef->get_headers()->get_headers();
   for (size_t i = 0; i < headers.size(); ++i) {
     uint64_t entryPoint = headers[i]->get_entry_rva() + headers[i]->get_base_va();

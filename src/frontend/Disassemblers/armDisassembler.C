@@ -14,8 +14,12 @@ using namespace SageBuilderAsm;
 namespace ArmDisassembler {
 
   SgAsmArmInstruction* makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, int condPos, ArmInstructionKind kind, ArmInstructionCondition cond, uint32_t insn) {
-    SgAsmArmInstruction* instruction = new SgAsmArmInstruction(address, mnemonic, "", kind, cond, condPos);
+
+ // DQ (8/23/2008): Moved comment support to SgAsmStatement since we can't yet support functions and I need to at least comment the AST as to were the functions are.
+ // SgAsmArmInstruction* instruction = new SgAsmArmInstruction(address, mnemonic, "", kind, cond, condPos);
+    SgAsmArmInstruction* instruction = new SgAsmArmInstruction(address, mnemonic, kind, cond, condPos);
     ROSE_ASSERT (instruction);
+
     SgAsmOperandList* operands = new SgAsmOperandList();
     instruction->set_operandList(operands);
     operands->set_parent(instruction);

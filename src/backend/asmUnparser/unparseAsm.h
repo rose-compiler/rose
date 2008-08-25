@@ -25,7 +25,12 @@ std::string unparseArmInstructionWithAddress(SgAsmArmInstruction* insn);
 
 std::string unparseInstruction(SgAsmInstruction* insn);
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn);
-std::string unparseAsmStatement(SgAsmNode* stmt);
-void unparseAsmStatementToFile(const std::string& filename, SgAsmNode* stmt);
+
+// Fixed to take a SgAsmStatement and added support for comments.
+// std::string unparseAsmStatement(SgAsmNode* stmt);
+std::string unparseAsmStatement(SgAsmStatement* stmt);
+
+// void unparseAsmStatementToFile(const std::string& filename, SgAsmNode* stmt);
+void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt);
 
 #endif /* ROSE_UNPARSEASM_H */

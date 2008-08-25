@@ -4589,7 +4589,12 @@ SgProject::compileOutput( const std::string& compilerName )
 
      if (numberOfFiles() == 0)
         {
-          printf ("Note in SgProject::compileOutput(%s): numberOfFiles() == 0 \n",compilerName.c_str());
+       // printf ("Note in SgProject::compileOutput(%s): numberOfFiles() == 0 \n",compilerName.c_str());
+          printf ("ROSE using %s as backend compiler: no input files \n",compilerName.c_str());
+
+       // DQ (8/24/2008): We can't recreate same behavior on exit as GNU on exit with no
+       // files since it causes the test immediately after buinding librose.so to fail.
+       // exit(1);
         }
 
      if (get_C_PreprocessorOnly() == true)

@@ -37,7 +37,7 @@ check-local:
 	@echo "************************************************************************************************"
 
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_*.C rose_performance_report_lockfile.lock
 
 distclean-local:
 	rm -rf Templates.DB 

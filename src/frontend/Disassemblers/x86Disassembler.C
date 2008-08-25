@@ -45,7 +45,10 @@ namespace X86Disassembler {
   }
 
   SgAsmx86Instruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, X86InstructionKind kind, X86InstructionSize baseSize, X86InstructionSize operandSize, X86InstructionSize addressSize, bool lockPrefix) {
-    SgAsmx86Instruction* instruction = new SgAsmx86Instruction(address, mnemonic, "", kind, baseSize, operandSize, addressSize);
+
+ // DQ (8/23/2008): Moved comment support to SgAsmStatement since we can't yet support functions and I need to at least comment the AST as to were the functions are.
+ // SgAsmx86Instruction* instruction = new SgAsmx86Instruction(address, mnemonic, "", kind, baseSize, operandSize, addressSize);
+    SgAsmx86Instruction* instruction = new SgAsmx86Instruction(address, mnemonic, kind, baseSize, operandSize, addressSize);
     ROSE_ASSERT (instruction);
     instruction->set_lockPrefix(lockPrefix);
     return instruction;

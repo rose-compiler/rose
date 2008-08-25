@@ -215,6 +215,8 @@ AstPerformance::AstPerformance( std::string s , bool outputReport )
 
 AstPerformance::~AstPerformance()
    {
+  // printf ("Inside of AstPerformance destructor ... project = %p outputReportInDestructor = %s \n",project,outputReportInDestructor ? "true" : "false");
+
   // Remove this performance monitor from the stack
      performanceStack.pop_front();
 
@@ -237,11 +239,14 @@ AstPerformance::~AstPerformance()
         {
        // printf ("Calling generateReportToFile() ... \n");
           generateReportToFile(project);
+       // printf ("DONE: Calling generateReportToFile() ... \n");
         }
        else
         {
        // printf ("Skipped performance report generation to the performance file \n");
         }
+
+  // printf ("Leaving AstPerformance destructor ... \n");
    }
 
 ProcessingPhase::ProcessingPhase ()
@@ -321,11 +326,31 @@ AstPerformance::getLock()
 
   // printf ("Build the lock file \n");
   // generate a lock 
-  // printf ("Acquiring a lock \n");
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Acquiring a lock: rose_performance_report_lockfile.lock \n");
+
+  // DQ (8/24/2008): Setup counters to detect when file locks are in place (this was a problem this morning)
+     unsigned long counter             = 0;
+     const unsigned long userTolerance = 10;
+
      while ( (fd = open("rose_performance_report_lockfile.lock", O_WRONLY | O_CREAT | O_EXCL)) == -1 )
         {
-       // printf ("Waiting for lock! \n");
+       // Skip the message output if this is the first try!
+          if ( counter > 0 )
+               printf ("Waiting for lock! counter = %lu userTolerance = %lu \n",counter,userTolerance);
+
           sleep(1);
+
+          counter++;
+
+       // DQ (8/24/2008): If after waiting a short while and the lock is still there, then report the issue.
+          if ( counter > userTolerance )
+             {
+               printf ("Waiting for file lock (run \"make clean\" to remove lock files, if problem persists)... \n");
+
+            // Reset the counter to prevent it from over flowing on nightly tests, though that might take a long time :-).
+               counter = 1;
+             }
         }
 
      if (fd == -1)
@@ -341,7 +366,10 @@ void
 AstPerformance::releaseLock (int fd )
    {
      close(fd);
-  // printf ("Removing the lock file \n");
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("Removing the lock file \n");
+
      remove("rose_performance_report_lockfile.lock");
    }
 
@@ -626,6 +654,8 @@ AstPerformance::generateReportToFile( SgProject* project ) const
 
   // datafile << "This is a test!" << std::endl;
 
+  // printf ("Get the lock ... \n");
+
   // generate a lock 
      int fd = getLock();
      ROSE_ASSERT(fd > 0);
@@ -635,6 +665,7 @@ AstPerformance::generateReportToFile( SgProject* project ) const
   // output the data
      datafile << "filename," << source_file << ", number of AST nodes, " << numberOfNodes() << ", memory, " << memoryUsage() << " ";
 
+  // printf ("Output the data to the file ... \n");
      std::vector<ProcessingPhase*>::iterator i = data.begin();
      while (i != data.end())
         {
@@ -643,7 +674,12 @@ AstPerformance::generateReportToFile( SgProject* project ) const
         }
 
      datafile << endl;
+
+  // printf ("Done: Output the data to the file ... (calling flush) \n");
+
      datafile.flush();
+
+  // printf ("Done with file flush() ... \n");
 
   // release the lock
   // printf ("Releasing the file lock \n");

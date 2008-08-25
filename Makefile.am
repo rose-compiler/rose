@@ -125,6 +125,10 @@ distcheck-after:
 DISTCLEANFILES = rose_paths.h
 CLEANFILES = rose_binary_compatibility_signature rose_binary_compatibility_signature_src
 
+find_rose_lock_files:
+#	du -a | grep rose_performance_report_lockfile
+	find . -name rose_performance_report_lockfile -print
+
 # New rule to simplify generation of documentation (we want to avoid using the
 # automake generated "docs" rule because the generation of documentation is
 # dependent upon separate tools which the user might not have available
