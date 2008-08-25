@@ -1413,7 +1413,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of just this section; points into file's content */
-     AsmGenericSection.setDataPrototype("SgFileContentList*","data2","= NULL",
+     AsmGenericSection.setDataPrototype("SgFileContentList*","data","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* General contents of the section */
@@ -1531,14 +1531,15 @@ Grammar::setUpBinaryInstructions ()
   /* File descriptor opened for read-only (or negative) */
      AsmGenericFile.setDataPrototype("int","fd","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (6/14/2008): This data member's type is not yet correctly implemented needs to reference stat or stat64.  
+  // DQ (6/14/2008): This data member's type is not yet correctly implemented needs to reference stat or stat64.
+  // RPM (2008-08-22): We don't need this any more; we only used it for get_size(), which now uses STL vector.
   // Need to discuss this with Robb.
   /* File attributes at time of file open (valid if fd>=0) */
      AsmGenericFile.setDataPrototype("SgAsmGenericFormat::fileDetails","sb","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of file mapped into memory */
-     AsmGenericFile.setDataPrototype("SgFileContentList*","data2","= NULL",
+     AsmGenericFile.setDataPrototype("SgFileContentList*","data","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* All known sections for this file */

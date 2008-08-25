@@ -162,7 +162,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
     if (p_data) {
         if (p_data->size()>0) {
             unsigned char *mapped = &(p_data->at(0));
-            munmap(mapped, p_sb.st_size);
+            munmap(mapped, p_data->size());
         }
         delete p_data;
         p_data = NULL;
@@ -177,6 +177,14 @@ SgAsmGenericFile::~SgAsmGenericFile()
 
     p_sections = NULL;
     p_headers = NULL;
+}
+
+/* Returns size of file */
+rose_addr_t
+SgAsmGenericFile::get_size() const
+{
+    ROSE_ASSERT(p_data);
+    return p_data->size();
 }
 
 /* Returns a vector that points to part of the file content without actually ever referencing the file content until the
@@ -467,12 +475,12 @@ SgAsmGenericFile::dump(FILE *f)
     }
 
     char overlap[4] = "   ";
-    if (high_water < (addr_t)p_sb.st_size) {
+    if (high_water < get_size()) {
         overlap[2] = 'H';
-    } else if (sections.back()->get_offset() + sections.back()->get_size() < (addr_t)p_sb.st_size) {
+    } else if (sections.back()->get_offset() + sections.back()->get_size() < get_size()) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, (addr_t)p_sb.st_size, 65, "");
+    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, get_size(), 65, "");
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
 }
 
@@ -484,7 +492,7 @@ SgAsmGenericFile::fill_holes()
     /* Find the holes and store their extent info */
     SgAsmGenericSection::ExtentVector extents;
     addr_t offset = 0;
-    while (offset < (addr_t)p_sb.st_size) {
+    while (offset < get_size()) {
         std::vector<SgAsmGenericSection*> sections = get_sections_by_offset(offset, 0); /*all sections at this file offset*/
         
         /* Find the maximum ending offset */
@@ -494,13 +502,13 @@ SgAsmGenericFile::fill_holes()
             if (tmp>end_offset)
                 end_offset = tmp;
         }
-        ROSE_ASSERT(end_offset <= (addr_t)p_sb.st_size);
+        ROSE_ASSERT(end_offset <= get_size());
         
         /* Is there a hole here? */
         if (end_offset<=offset) {
             end_offset = get_next_section_offset(offset+1);
             if (end_offset==(addr_t)-1)
-                end_offset = p_sb.st_size;
+                end_offset = get_size();
             extents.push_back(SgAsmGenericSection::ExtentPair(offset, end_offset-offset));
         }
         
@@ -544,7 +552,7 @@ SgAsmGenericFile::unparse(const std::string &filename)
 #if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
-    addr_t remaining = p_sb.st_size;
+    addr_t remaining = get_size();
     unsigned char fill=0xaa, buf[4096];
     memset(buf, fill, sizeof buf);
     while (remaining>=sizeof buf) {

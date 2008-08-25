@@ -908,15 +908,14 @@ HEADER_GENERIC_FILE_START
           void unparse(const std::string &filename);		/* Unparse the file -- mirror image of parsing */
           void dump(FILE*);                                   /* Print some debugging info */
 
-       /* File contents */
-       // DQ (8/7/2008): Coment this out while I figure out how to handle "sb" as a type
-          addr_t get_size() { return p_sb.st_size; }      /* Size of file in bytes as of time it was opened */
 
 #if 1
 	  /* FIXME: data members defined here for now rather than in binaryInstruction.C (RPM 2008-08-22) */
 	  SgFileContentList *p_data;
 #endif
 
+       /* File contents */
+          addr_t get_size() const;       				/* Size of file in bytes as of time it was opened */
           const SgFileContentList& content() { return *p_data; }     	/* Entire file contents */
           SgFileContentList* content(addr_t offset, addr_t size);	/* Partial file contents */
 
