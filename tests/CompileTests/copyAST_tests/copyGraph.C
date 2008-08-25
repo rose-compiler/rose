@@ -34,7 +34,7 @@ void graphNodesAfterCopy(const set<SgNode*>& oldNodes, string filename) {
     }
     fs << endl;
   }
-  system(("tclsh " ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/tests/CompileTests/copyAST_tests/make_copy_graph.tcl " + old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot").c_str());
+  system(("tclsh " + std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/tests/CompileTests/copyAST_tests/make_copy_graph.tcl " + old_nodes_filename + " " + temp_filename + ".dot " + filename + ".dot").c_str());
   // system("rm temp.dot");
   // system("rm old_nodes");
 }

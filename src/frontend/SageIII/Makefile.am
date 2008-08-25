@@ -92,7 +92,7 @@ libsage3Sources = \
 
 noinst_LTLIBRARIES = libsage3.la
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.C
+libsage3_la_SOURCES = $(libsage3Sources) preproc.C rose_paths.h
 nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h
 
 if ROSE_USE_BOOST_WAVE

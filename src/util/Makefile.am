@@ -17,9 +17,17 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 noinst_LTLIBRARIES = libroseutil.la
 
 libroseutil_la_SOURCES = processSupport.C processSupport.h
+nodist_libroseutil_la_SOURCES = rose_paths.c
 libroseutil_la_LIBADD = \
 	stringSupport/libRoseStringSupport.la \
 	commandlineProcessing/libRoseCommandlineUtil.la
+
+rose_paths.c:
+	cd $(top_builddir); make src/util/rose_paths.c
+
+BUILT_SOURCES = rose_paths.c
+
+DISTCLEAN_FILES = rose_paths.c
 
 include_HEADERS = setup.h processSupport.h
 
