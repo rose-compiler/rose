@@ -32,6 +32,9 @@ SVNOP=checkout
 #SVNVERSIONOPTION="{`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`}"
 #SVNVERSIONOPTION=1303
 
+# bddbddb needs python 
+source /home/liao6/opt/python-2.4.5/setup.sh
+
 # How many processes for make
 MAKEFLAGS="-j16"
 
