@@ -1,4 +1,6 @@
 %option noyywrap
+/* Note that yylineno is an undocumented feature that we shouldn't be using */
+%option yylineno
 %{
 #include "parse_header.h"
 #include "y.tab.h"
