@@ -54,7 +54,7 @@ $USER_DEFINED_TRANSFORMATION_SOURCE \n\
   // the C++ new operator since it will be deleted in the copyEdit() function
   // This avoids a purify error (so we have to call stringDuplicate())
      char* sourceCodeTemplate = NULL;
-     if (isADeclaration == TRUE)
+     if (isADeclaration == true)
           sourceCodeTemplate = stringDuplicate(staticDeclarationStringSourceCodeTemplate);
        else
           sourceCodeTemplate = stringDuplicate(staticNonDeclarationStringSourceCodeTemplate);
@@ -140,8 +140,8 @@ $USER_DEFINED_TRANSFORMATION_SOURCE \n\
      printf ("START: Unparsing transformationAST! \n");
 
   // debugging code (make sure that the transformation's AST can be unparsed)
-     transformationAST.set_verbose(TRUE);
-  // transformationAST.set_skip_unparse(FALSE);
+     transformationAST.set_verbose(true);
+  // transformationAST.set_skip_unparse(false);
      transformationAST.unparse();
 
      printf ("DONE: Unparsing transformationAST! Exiting ... \n");

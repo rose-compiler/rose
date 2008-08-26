@@ -557,7 +557,7 @@ cout << "BEFORE checkPragmaRHSUnionControl" << endl;
 				      new SgName (controlVariableName.
 						  c_str ()),
 				      NodeQuery::VariableDeclarationFromName);
-	  ROSE_ASSERT (variableDeclaration.empty () == FALSE);
+	  ROSE_ASSERT (variableDeclaration.empty () == false);
 
 	  tempString =
 	    " (classReference->" + controlVariableName + "==" + condition +
@@ -577,7 +577,7 @@ cout << "BEFORE checkPragmaRHSUnionControl" << endl;
 				      new SgName (controlVariableName.
 						  c_str ()),
 				      NodeQuery::VariableDeclarationFromName);
-	  ROSE_ASSERT (variableDeclaration.empty () == FALSE);
+	  ROSE_ASSERT (variableDeclaration.empty () == false);
 
 	  tempString =
 	    " (classReference->" + controlVariableName + "!=" + condition +

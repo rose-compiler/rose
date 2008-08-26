@@ -2580,8 +2580,8 @@ DefaultFunctionGenerator::generateDefaultConstructorCall(SgMemberFunctionDeclara
      which is created by the call to 
        a_SgInitializer_ptr sageInit = 
           sage_gen_dynamic_init ( ctor_init->initializer, type, 
-          *parenthesized_init=* TRUE,
-          *force_parens=* TRUE, fileInfo);
+          *parenthesized_init=* true,
+          *force_parens=* true, fileInfo);
      from sage_gen_ctor_initializers in sage_gen_be.C.
      Therefore, we force parens to be true.
   */

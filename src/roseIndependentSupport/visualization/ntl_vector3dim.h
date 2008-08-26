@@ -600,7 +600,7 @@ ntlVector3Dim<Scalar>::operator/(Scalar s) const
   Test two ntlVector3Dims for equality based on the equality of their
   values within a small threshold.
   \param c The second vector to compare
-  \return TRUE if both are equal
+  \return true if both are equal
   \sa getEpsilon()
   */
 template<class Scalar>
@@ -617,7 +617,7 @@ ntlVector3Dim<Scalar>::operator== (const ntlVector3Dim<Scalar>& c) const
   Test two ntlVector3Dims for inequality based on the inequality of their
   values within a small threshold.
   \param c The second vector to compare
-  \return FALSE if both are equal
+  \return false if both are equal
   \sa getEpsilon()
   */
 template<class Scalar>

@@ -908,11 +908,11 @@ SgIfStmt::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
 
      this->get_conditional()->fixupCopy_references(ifStatement_copy->get_conditional(),help);
 
-  // printf ("\nProcess the TRUE body of the SgIfStmt \n\n");
+  // printf ("\nProcess the true body of the SgIfStmt \n\n");
 
      this->get_true_body()->fixupCopy_references(ifStatement_copy->get_true_body(),help);
 
-  // printf ("\nProcess the FALSE body of the SgIfStmt \n\n");
+  // printf ("\nProcess the false body of the SgIfStmt \n\n");
 
      if (this->get_false_body()) {
        this->get_false_body()->fixupCopy_references(ifStatement_copy->get_false_body(),help);

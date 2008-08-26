@@ -31,10 +31,10 @@
 
 class Unparser_Nameq;
 
-// Macro used for debugging.  If TRUE it fixes the anonymous typedef and anonymous declaration
-// bugs, but causes several other problems.  If FALSE, everything works except the anonymous 
+// Macro used for debugging.  If true it fixes the anonymous typedef and anonymous declaration
+// bugs, but causes several other problems.  If false, everything works except the anonymous 
 // typedef and anonymous declaration bugs.
-#define ANONYMOUS_TYPEDEF_FIX FALSE
+#define ANONYMOUS_TYPEDEF_FIX false
 
 // DQ (2/6/03):
 // The unparser should not write to (modify) the AST.  This fix skips and locations
@@ -50,14 +50,14 @@ class Unparser_Nameq;
 // DQ (3/18/2004): This is not removed as part of the newly added template support.
 // #ifndef UNPARSE_TEMPLATES
 // [DT] 
-// #define UNPARSE_TEMPLATES TRUE
-// #define UNPARSE_TEMPLATES FALSE
+// #define UNPARSE_TEMPLATES true
+// #define UNPARSE_TEMPLATES false
 // #endif /* UNPARSE_TEMPLATES */
 
 #ifndef UNPARSER_VERBOSE
 // [DT] 8/14/2000 -- Toggle some of my debug output in the unparser.
-//#define UNPARSER_VERBOSE TRUE
-  #define UNPARSER_VERBOSE FALSE
+//#define UNPARSER_VERBOSE true
+  #define UNPARSER_VERBOSE false
 #endif /* UNPARSER_VERBOSE */
 
 // optionally turn off all directive processing (for debugging)
@@ -212,10 +212,10 @@ class Unparser
       //! get the output stream wrapper
           UnparseFormat& get_output_stream(); 
 
-      //! TRUE if SgLocatedNode is part of a transformation on the AST
+      //! true if SgLocatedNode is part of a transformation on the AST
           bool isPartOfTransformation( SgLocatedNode *n);
 
-      //! TRUE if SgLocatedNode is part of a compiler generated part of the AST (e.g template instatiation)
+      //! true if SgLocatedNode is part of a compiler generated part of the AST (e.g template instatiation)
           bool isCompilerGenerated( SgLocatedNode *n);
 
       //! counts the number of lines in one directive

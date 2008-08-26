@@ -353,7 +353,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
 
      char buffer[512];
      sprintf (buffer,"entering case for %s",type->sage_class_name());
-     unp->u_debug->printDebugInfo(buffer,TRUE);
+     unp->u_debug->printDebugInfo(buffer,true);
 
      switch (type->variant())
         {

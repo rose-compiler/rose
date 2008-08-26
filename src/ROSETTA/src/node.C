@@ -136,7 +136,7 @@ Grammar::setUpNodes ()
   // of IR nodes, but that state should be stored in the traversal directly.
 
   // MK: we need a boolean flag for the tree traversal
-     Node.setDataPrototype("bool","isVisited","= FALSE",
+     Node.setDataPrototype("bool","isVisited","= false",
 			   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      // MS: make file_info accessible in every AST node. Only set in SgLocatedNode(s) 
      //Node.setDataPrototype("Sg_File_Info*","file_info","= NULL",
@@ -249,14 +249,14 @@ Grammar::setUpNodes ()
   // Parse functions are only built for the higher level grammars since they parse
   // from a lower level grammar into a higher level grammer (thus they are not defined 
   // within the root grammar (the C+ grammar)).
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
           Node.setSubTreeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
 
   // Source code for LocatedNode
      LocatedNode.setFunctionSource( "SOURCE", "../Grammar/LocatedNode.code");
      LocatedNode.editSubstitute("CONSTRUCTOR_BODY"," ");
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // LocatedNode.setAutomaticGenerationOfDestructor(FALSE);
+  // LocatedNode.setAutomaticGenerationOfDestructor(false);
 
   // DQ (3/24/2007): Added support for tokens in the IR.
      Token.setFunctionSource ( "SOURCE_TOKEN", "../Grammar/LocatedNode.code");

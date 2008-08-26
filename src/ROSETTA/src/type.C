@@ -78,7 +78,7 @@ Grammar::setUpTypes ()
   // It seems that ROSETTA has a bug in the copy constructor that forces us 
   // to specify product rules with more than one Terminal or nonTerminal object 
   // (under some circomstances at least).
-#define ROSETTA_BUG FALSE
+#define ROSETTA_BUG false
 #if ROSETTA_BUG
   // Dummy Terminal so that we can add avoid the NonTerminal copy constructor (this may be a bug)
   // I think that this is not a problem now (Terminals can be reused in multiple BNF statements) though
@@ -144,9 +144,9 @@ Grammar::setUpTypes ()
   // Type.setFunctionPrototype ( "HEADER", "../Grammar/Common.code" );
      Type.setFunctionPrototype ( "HEADER", "../Grammar/Type.code" );
      Type.setFunctionSource    ( "SOURCE_MAIN_TYPE", "../Grammar/Type.code" );
-     Type.setAutomaticGenerationOfConstructor(FALSE);
+     Type.setAutomaticGenerationOfConstructor(false);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // Type.setAutomaticGenerationOfDestructor (FALSE);
+  // Type.setAutomaticGenerationOfDestructor (false);
 
      Type.setSubTreeFunctionPrototype               ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
      Type.excludeFunctionPrototype                  ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
@@ -212,14 +212,14 @@ Grammar::setUpTypes ()
 #error "DEAD CODE"
 
      X_Type.setFunctionPrototype     ( "HEADER_X_TYPE",     "../Grammar/Type.code" );
-     X_Type.setAutomaticGenerationOfCopyFunction(FALSE);
+     X_Type.setAutomaticGenerationOfCopyFunction(false);
      non_X_Type.setFunctionPrototype ( "HEADER_NON_X_TYPE", "../Grammar/Type.code" );
 #endif
 
   // The only two types that don't have a get_mangled() member function
      PartialFunctionType.excludeFunctionPrototype   ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
      NamedType.excludeFunctionPrototype             ( "HEADER_GET_MANGLED", "../Grammar/Type.code" );
-  // NamedType.setAutomaticGenerationOfCopyFunction(FALSE);
+  // NamedType.setAutomaticGenerationOfCopyFunction(false);
 
   // TypeUnknown.setFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
   // TypeUnknown.setFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -440,7 +440,7 @@ Grammar::setUpTypes ()
   // TemplateInstantiationType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
   // Skip building a parse function for this terminal/nonterminal of the Grammar
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
         {
           NamedType.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
           NamedType.excludeFunctionSource   ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
@@ -518,7 +518,7 @@ Grammar::setUpTypes ()
      FunctionType.setFunctionPrototype ("HEADER_FUNCTION_TYPE_ARGUMENTS", "../Grammar/Type.code" );        
      FunctionType.setDataPrototype     ("SgType*", "return_type","= NULL",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);
-     FunctionType.setDataPrototype     ("bool", "has_ellipses","= TRUE",
+     FunctionType.setDataPrototype     ("bool", "has_ellipses","= true",
 					CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      FunctionType.setDataPrototype     ("SgType*", "orig_return_type","= NULL",
 					NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, TYPE_TRAVERSAL, NO_DELETE);

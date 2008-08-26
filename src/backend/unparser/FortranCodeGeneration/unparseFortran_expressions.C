@@ -334,7 +334,7 @@ FortranCodeGeneration_locatedNode::unparseUnaryExpr(SgExpression* expr, SgUnpars
 void
 FortranCodeGeneration_locatedNode::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) 
    {
-     printDebugInfo("entering unparseBinaryExpr", TRUE);
+     printDebugInfo("entering unparseBinaryExpr", true);
 
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
      ROSE_ASSERT(binary_op != NULL);
@@ -1228,12 +1228,12 @@ FortranCodeGeneration_locatedNode::unparseMFuncRef(SgExpression* expr, SgUnparse
   ROSE_ASSERT(cdecl != NULL);
   ROSE_ASSERT(cdecl->get_parent() != NULL);
 
-     bool print_colons = FALSE;
+     bool print_colons = false;
      if (mfunc_ref->get_need_qualifier())
         {
           curprint(cdecl->get_qualified_name().str()); 
           curprint("::"); 
-          print_colons = TRUE;
+          print_colons = true;
         }
 
   // comments about the logic below can be found above in the unparseFuncRef function.

@@ -72,7 +72,7 @@ SgNode::insertSourceCode ( SgProject & project,
   // get a reference to the statement list out of the basic block
      SgStatementPtrList & currentStatementList = currentBlock->get_statements();
 
-     if (locateNewCodeAtTop == TRUE)
+     if (locateNewCodeAtTop == true)
         {
        // Insert at top of list (pull the elements off the bottom of the new statement list to get the order correct
        // printf ("Insert new statements (new statement list size = %d) at the top of the block (in reverse order to preset the order in the final block) \n",newTransformationStatementListPtr->size());
@@ -168,8 +168,8 @@ SgNode::insertSourceCode ( SgProject & project,
                                    statementCounter = 1;
 
                                    SgStatementPtrList::iterator i = currentStatementList.begin();
-                                   bool declarationFound = FALSE;
-                                   while ( ( i != currentStatementList.end() ) && ( declarationFound == FALSE ) )
+                                   bool declarationFound = false;
+                                   while ( ( i != currentStatementList.end() ) && ( declarationFound == false ) )
                                       {
                                      // searching for the declarationStatement
 #if 0
@@ -182,7 +182,7 @@ SgNode::insertSourceCode ( SgProject & project,
                                              (statementCounter > previousStatementCounter) )
                                            {
                                           // printf ("Found the declarationStatement at position (statementCounter = %d previousStatementCounter = %d) \n",statementCounter,previousStatementCounter);
-                                             declarationFound = TRUE;
+                                             declarationFound = true;
                                            }
                                           else
                                            {
@@ -196,7 +196,7 @@ SgNode::insertSourceCode ( SgProject & project,
                                 // the source sequence so that we can append the new statement just
                                 // after it (so that variables referenced in the new statement will
                                 // be defined).
-                                   if ( (statementCounter > previousStatementCounter) && ( declarationFound == TRUE ) )
+                                   if ( (statementCounter > previousStatementCounter) && ( declarationFound == true ) )
                                       {
                                         previousStatementCounter = statementCounter;
                                         furthestDeclarationInSourceSequence = i;
@@ -289,7 +289,7 @@ SgNode::insertSourceCode ( SgProject & project,
              }
 
 #if 0
-          printf ("Exiting in insertSourceCode(): case of locateNewCodeAtTop == TRUE ... \n");
+          printf ("Exiting in insertSourceCode(): case of locateNewCodeAtTop == true ... \n");
           ROSE_ABORT();
 #endif
         }
@@ -298,13 +298,13 @@ SgNode::insertSourceCode ( SgProject & project,
        // Put the new statements at the end of the list (traverse the new statements from first to last)
        // But put it before any return statement! So find the last statement!
           SgStatementPtrList::iterator lastStatement = currentStatementList.begin();
-          bool foundEndOfList = FALSE;
-          while ( (foundEndOfList == FALSE) && (lastStatement != currentStatementList.end()) )
+          bool foundEndOfList = false;
+          while ( (foundEndOfList == false) && (lastStatement != currentStatementList.end()) )
              {
                SgStatementPtrList::iterator tempStatement = lastStatement;
                tempStatement++;
                if (tempStatement == currentStatementList.end())
-                    foundEndOfList = TRUE;
+                    foundEndOfList = true;
                  else
                     lastStatement++;
              }

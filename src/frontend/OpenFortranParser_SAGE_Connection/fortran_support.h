@@ -19,13 +19,13 @@ extern "C" {
 
 
 // Control output from Fortran parser
-#define DEBUG_FORTRAN_SUPPORT TRUE
+#define DEBUG_FORTRAN_SUPPORT true
 #define DEBUG_RULE_COMMENT_LEVEL 1
 #define DEBUG_COMMENT_LEVEL 2
 
 // DQ (2/18/2008): I think this might be fixed now!
 // DQ (12/16/2007): This is associated with a bug that cause lables for the computed goto to be processed twice with R313
-#define OFP_LABEL_BUG FALSE
+#define OFP_LABEL_BUG false
 
 // We make heavy use of ROSE IR nodes and support for build the AST from actions 
 // that will be specified by the LANL Fortran 2003 parser.  This is header file 

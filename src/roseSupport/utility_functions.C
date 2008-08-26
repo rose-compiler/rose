@@ -28,13 +28,13 @@ const int roseTargetCacheLineSize = 32;
 #endif
 
 // DQ (8/10/2004): This was moved to the SgFile a long time ago and should not be used any more)
-// bool ROSE::verbose                 = FALSE;
+// bool ROSE::verbose                 = false;
 // DQ (8/11/2004): build a global state here
 // int ROSE::roseVerbose = 0;
 
 
-#define OUTPUT_TO_FILE TRUE
-#define DEBUG_COPY_EDIT FALSE
+#define OUTPUT_TO_FILE true
+#define DEBUG_COPY_EDIT false
 
 std::string version ()
    {

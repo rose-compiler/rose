@@ -41,7 +41,7 @@ evaluateInheritedAttribute (
      counter++;
 
 #undef PRINT_DEBUGGING_INFO
-#define PRINT_DEBUGGING_INFO FALSE
+#define PRINT_DEBUGGING_INFO false
 
 #if 0
      printf ("!!! In PrefixSuffixGenerationTraversal::evaluateInheritedAttribute: astNode = %p = %s stackOfScopes = %d \n",

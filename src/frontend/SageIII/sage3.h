@@ -10,12 +10,13 @@
 // DQ (3/30/2006): Currently we have TRUE and FALSE through out the ROSE source code.
 // it might be better to change this to "true" and "false" instead, but until then
 // we have to define these (early in the compilation).
-#ifndef TRUE
-   #define TRUE true
-#endif
-#ifndef FALSE
-   #define FALSE false
-#endif
+// JJW (8/26/2008): Removing these
+// #ifndef TRUE
+//    #define TRUE true
+// #endif
+// #ifndef FALSE
+//    #define FALSE false
+// #endif
 
 // DQ (3/12/2006): This is included here as specified in the Autoconf manual (using <> instead of "")
 // We have also abandoned the ifdef HAVE_CONFIG_H cpp conditional use of rose_config.h as well.
@@ -75,7 +76,7 @@
 // requires the parent pointer to have already been set.  Since we defer the 
 // setting of the parent pointers until post processing of the Sage III AST.
 // It is now called within the AstFixup.C.
-#define USE_RESET_TEMPLATE_NAME FALSE
+#define USE_RESET_TEMPLATE_NAME false
 
 #if 0
 // DQ (5/22/2005):
@@ -105,7 +106,7 @@
 // input parameters to any access function which gets and data member of sets a data member would not modified its input 
 // parameters. Same idea but applied to all access functions, not just constructors.  It is not clear if we need go further.
 // Clearly it might be important to have some function that modify their input parameters but a simple design would disallow it!
-#define PRINT_SIDE_EFFECT_WARNINGS FALSE
+#define PRINT_SIDE_EFFECT_WARNINGS false
 
 
 // DQ (10/21/2004): We require a relaxed level of internal error checking for manually generated AST fragments!
@@ -113,7 +114,7 @@
 // does not follwo the new rules for what qualifies as a valid AST.  Time is needed for the AST Interface code 
 // to be adapted to the new rules.  Not clear how this will effect the unparser!!!
 // In the future we want to make this value "TRUE" this is a work around until then.
-#define STRICT_ERROR_CHECKING FALSE
+#define STRICT_ERROR_CHECKING false
 
 
 // DQ (11/7/2007): Reimplementation of "fixup" support for the AST copy mechanism.

@@ -343,7 +343,7 @@ insertStatementUsingDependenceInformation (
                  // the source sequence so that we can append the new statement just
                  // after it (so that variables referenced in the new statement will
                  // be defined).
-                    if ( (statementCounter > previousStatementCounter) && ( declarationFound == TRUE ) )
+                    if ( (statementCounter > previousStatementCounter) && ( declarationFound == true ) )
                        {
                          previousStatementCounter = statementCounter;
                          furthestDeclarationInSourceSequence = i;
@@ -845,7 +845,7 @@ replaceAppendPrependTreeFragment (
              }
 
        // printf ("removeOriginalStatement = %s \n",removeOriginalStatement ? "true" : "false");
-          if (removeOriginalStatement == TRUE)
+          if (removeOriginalStatement == true)
              {
                LowLevelRewrite::removeStatement(astNode);
              }
@@ -1372,7 +1372,7 @@ appendPrependTreeFragment (
                  //      newDeclarationStatement->get_file_info()->get_filename(),filenameOfTargetStatement);
                     newDeclarationStatement->get_file_info()->set_filename(filenameOfTargetStatement);
 
-                    if ( prependNewCode == TRUE )
+                    if ( prependNewCode == true )
                        {
                       // printf ("Inserting the new declaration into the global scope ... \n");
                       // printf ("   New declaration is a newDeclarationStatement->sage_class_name() = %s \n",
@@ -1490,7 +1490,7 @@ appendPrependTreeFragment (
                  //      newDeclarationStatement->get_file_info()->get_filename(),filenameOfTargetStatement);
                     newStatement->get_file_info()->set_filename(filenameOfTargetStatement);
 
-                    if ( prependNewCode == TRUE )
+                    if ( prependNewCode == true )
                        {
 #if 0
                          printf ("Inserting the new statement into the basic block ... \n");

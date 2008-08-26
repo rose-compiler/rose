@@ -495,18 +495,18 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
                int stringLength = tempName.length();
                ROSE_ASSERT (stringLength >= 2);
 
-               bool isAnOperator = FALSE;
+               bool isAnOperator = false;
             // if ( (stringLength >= 8) && (!strncmp (tempName,"operator",8)) )
                if ( (stringLength >= 8) && (!strncmp (tempName.c_str(),"operator",8)) )
-                    isAnOperator = TRUE;
+                    isAnOperator = true;
 
-               if ( isAnOperator == TRUE )
+               if ( isAnOperator == true )
                   {
                     operatorString = stringifyOperator(tempName);
                   }
                  else
                   {
-                    printf ("isAnOperator == FALSE in buildOperatorString() \n");
+                    printf ("isAnOperator == false in buildOperatorString() \n");
                     ROSE_ABORT();
                   }
                break;
@@ -526,18 +526,18 @@ TransformationSupport::buildOperatorString ( SgNode* astNode )
                int stringLength = tempName.length();
                ROSE_ASSERT (stringLength >= 2);
 
-               bool isAnOperator = FALSE;
+               bool isAnOperator = false;
             // if ( (stringLength >= 8) && (!strncmp (tempName,"operator",8)) )
                if ( (stringLength >= 8) && (!strncmp (tempName.c_str(),"operator",8)) )
-                    isAnOperator = TRUE;
+                    isAnOperator = true;
 
-               if ( isAnOperator == TRUE )
+               if ( isAnOperator == true )
                   {
                     operatorString = stringifyOperator(tempName);
                   }
                  else
                   {
-                    printf ("isAnOperator == FALSE in buildOperatorString() \n");
+                    printf ("isAnOperator == false in buildOperatorString() \n");
                     ROSE_ABORT();
                   }
                break;
@@ -1213,7 +1213,7 @@ TransformationSupport::getTransformationOptions (
                SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
                ROSE_ASSERT (symbolTable != NULL);
 
-               bool foundTransformationOptimizationSpecifier = FALSE;
+               bool foundTransformationOptimizationSpecifier = false;
 
             // printf ("Now print out the information in the symbol table for this scope: \n");
             // symbolTable->print();
@@ -1257,7 +1257,7 @@ TransformationSupport::getTransformationOptions (
                            // printf ("Type is: (named type) = %s \n",nameString);
                               ROSE_ASSERT (identifingTypeName.c_str() != NULL);
                            // ROSE_ASSERT (typeName != NULL);
-                           // if ( (typeName != NULL) && (ROSE::isSameName(typeName,identifingTypeName) == TRUE) )
+                           // if ( (typeName != NULL) && (ROSE::isSameName(typeName,identifingTypeName) == true) )
                               if ( typeName == identifingTypeName )
                                  {
                                 // Now look at the parameter list to the constructor and save the
@@ -1280,7 +1280,7 @@ TransformationSupport::getTransformationOptions (
 
                                         getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
 
-                                        foundTransformationOptimizationSpecifier = TRUE;
+                                        foundTransformationOptimizationSpecifier = true;
 
                                      // printf ("Exiting after saving the constructor arguments! \n");
                                      // ROSE_ABORT();
@@ -1320,7 +1320,7 @@ TransformationSupport::getTransformationOptions (
                  // printf ("Pointer to symbol table is NULL \n");
                   }
 
-            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "TRUE" : "FALSE");
+            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "true" : "false");
 
             // SgSymbolTable objects don't have a parent node (specifically they lack a get_parent
             // member function in the interface)!
@@ -1459,7 +1459,7 @@ TransformationSupport::getTransformationOptions (
                SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
                ROSE_ASSERT (symbolTable != NULL);
 
-               bool foundTransformationOptimizationSpecifier = FALSE;
+               bool foundTransformationOptimizationSpecifier = false;
 
             // printf ("Now print out the information in the symbol table for this scope: \n");
             // symbolTable->print();
@@ -1528,7 +1528,7 @@ TransformationSupport::getTransformationOptions (
 
                                         getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
 
-                                        foundTransformationOptimizationSpecifier = TRUE;
+                                        foundTransformationOptimizationSpecifier = true;
 
                                      // printf ("Exiting after saving the constructor arguments! \n");
                                      // ROSE_ABORT();
@@ -1568,7 +1568,7 @@ TransformationSupport::getTransformationOptions (
                  // printf ("Pointer to symbol table is NULL \n");
                   }
 
-            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "TRUE" : "FALSE");
+            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "true" : "false");
 
             // SgSymbolTable objects don't have a parent node (specifically they lack a get_parent
             // member function in the interface)!

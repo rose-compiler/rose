@@ -143,7 +143,7 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
      Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes.
-     if (parentNode != NULL && node.generateConstructor() == TRUE)
+     if (parentNode != NULL && node.generateConstructor() == true)
         {
           string constructorTemplateFileName = "../Grammar/grammarConstructorDefinitionMacros.macro";
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
@@ -168,8 +168,8 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
                  // printf ("Calling base class default constructor (should call paramtererized version) \n");
 
                     string baseClassParameterString = "";
-                    bool withInitializers = FALSE;
-                    bool withTypes        = FALSE;
+                    bool withInitializers = false;
+                    bool withTypes        = false;
                     baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
                     string preInitializationString = ": " + parentClassName + "($BASECLASS_PARAMETERS)";
                     preInitializationString = StringUtility::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
@@ -180,8 +180,8 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
                     constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
                   }
 
-               bool withInitializers         = FALSE;
-               bool withTypes                = TRUE;
+               bool withInitializers         = false;
+               bool withTypes                = true;
                string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
                constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
                constructorSource = StringUtility::copyEdit (constructorSource,"$CLASSNAME",className);

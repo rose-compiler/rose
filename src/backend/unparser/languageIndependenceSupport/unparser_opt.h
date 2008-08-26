@@ -26,7 +26,7 @@ class Unparser_Opt
      public:
 
        // constructors
-          Unparser_Opt();    // all options are set to FALSE by default
+          Unparser_Opt();    // all options are set to false by default
           Unparser_Opt(bool, bool, bool, bool, bool, bool, bool, bool, bool, bool);
 
        // destructor
