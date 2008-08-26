@@ -89,7 +89,7 @@ Grammar::Grammar ( const string& inputGrammarName,
 
   // JJW 2-12-2008 Use a file for this list so the numbers will be more stable
      {
-       std::string astNodeListFilename = ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR "/src/ROSETTA/astNodeList";
+       std::string astNodeListFilename = std::string(ROSE_AUTOMAKE_ABSOLUTE_PATH_TOP_SRCDIR) + "/src/ROSETTA/astNodeList";
        std::ifstream astNodeList(astNodeListFilename.c_str());
        size_t c = 1;
        while (astNodeList) {
