@@ -93,7 +93,7 @@ libsage3Sources = \
 noinst_LTLIBRARIES = libsage3.la
 
 libsage3_la_SOURCES = $(libsage3Sources) preproc.C rose_paths.h
-nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h $(top_builddir)/rose_paths.h
+nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h
 
 if ROSE_USE_BOOST_WAVE
 libsage3_la_LIBADD  = \
@@ -131,7 +131,7 @@ include_HEADERS = \
    attachPreprocessingInfo.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
-   general_token_defs.h
+   general_token_defs.h rose_paths.h
 
 nodist_include_HEADERS = \
    Cxx_Grammar.h \
