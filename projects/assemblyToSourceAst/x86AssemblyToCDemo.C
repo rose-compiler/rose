@@ -1555,17 +1555,38 @@ void unparseAsSExpressions(ostream& o, SgExpression* e) {
 void unparseAsSExpressions(ostream& o, SgStatement* s) {
   switch (s->variantT()) {
     case V_SgBasicBlock: {
-      o << "(bb";
+      size_t numCloseParens = 0;
       const SgStatementPtrList& stmts = isSgBasicBlock(s)->get_statements();
       for (size_t i = 0; i < stmts.size(); ++i) {
-        o << " ";
-        unparseAsSExpressions(o, stmts[i]);
+        if (isSgVariableDeclaration(stmts[i])) {
+          SgVariableDeclaration* decl = isSgVariableDeclaration(stmts[i]);
+          ROSE_ASSERT (decl->get_variables().size() == 1);
+          SgInitializedName* in = decl->get_variables()[0];
+          o << "(let ((" << in->get_name().getString() << " ";
+          if (in->get_initializer()) {
+            unparseAsSExpressions(o, in->get_initializer());
+          } else {
+            o << "(void)";
+          }
+          o << "))\n";
+          ++numCloseParens;
+        } else if (i == stmts.size() - 1) {
+          unparseAsSExpressions(o, stmts[i]);
+        } else {
+          o << "(begin ";
+          unparseAsSExpressions(o, stmts[i]);
+          ++numCloseParens;
+        }
       }
-      o << ")\n";
+      o << string(numCloseParens, ')') << "\n";
       break;
     }
     case V_SgGotoStatement: {
       o << "(goto " << isSgGotoStatement(s)->get_label()->get_name().getString() << ")\n";
+      break;
+    }
+    case V_SgLabelStatement: {
+      o << "(label " << isSgLabelStatement(s)->get_name().getString() << ")\n";
       break;
     }
     case V_SgIfStmt: {
@@ -1591,6 +1612,23 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
       o << "(break)\n";
       break;
     }
+    case V_SgSwitchStatement: {
+      // Special case
+      SgBasicBlock* body = isSgSwitchStatement(s)->get_body();
+      const SgStatementPtrList& stmts = body->get_statements();
+      o << "(case ";
+      unparseAsSExpressions(o, isSgSwitchStatement(s)->get_item_selector());
+      o << "\n";
+      for (size_t i = 0; i < stmts.size(); ++i) {
+        SgCaseOptionStmt* co = isSgCaseOptionStmt(stmts[i]);
+        if (!co) continue;
+        o << "((" << getValue(co->get_key()) << ") ";
+        unparseAsSExpressions(o, co->get_body());
+        o << ")\n";
+      }
+      o << ")\n";
+      break;
+    }
     case V_SgPragmaDeclaration: break;
     case V_SgVariableDeclaration: {
       SgVariableDeclaration* decl = isSgVariableDeclaration(s);
@@ -1604,8 +1642,9 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
       break;
     }
     case V_SgExprStatement: {
+      o << "(expr ";
       unparseAsSExpressions(o, isSgExprStatement(s)->get_expression());
-      o << "\n";
+      o << ")\n";
       break;
     }
     default: cerr << "Unknown statement in unparseAsSExpressions: " << s->class_name() << endl; abort();
@@ -1613,6 +1652,9 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
 }
 
 void unparseAsSExpressionsTop(ostream& o, SgBasicBlock* bb) {
+  unparseAsSExpressions(o, bb);
+  return;
+#if 0
   o << "(";
   const SgStatementPtrList& stmts = bb->get_statements();
   for (size_t i = 0; i < stmts.size(); ++i) {
@@ -1628,6 +1670,10 @@ void unparseAsSExpressionsTop(ostream& o, SgBasicBlock* bb) {
         break;
       }
 #endif
+      case V_SgGotoStatement: {
+        o << "(goto " << isSgGotoStatement(s)->get_label()->get_name().getString() << ")\n";
+        break;
+      }
       case V_SgLabelStatement: {
         ROSE_ASSERT (i + 1 != stmts.size());
         if (isSgLabelStatement(stmts[i + 1])) break; // Skip this one
@@ -1666,6 +1712,7 @@ void unparseAsSExpressionsTop(ostream& o, SgBasicBlock* bb) {
     }
   }
   o << ")\n";
+#endif
 }
 
 set<SgInitializedName*> getVariablesUsedInExpression(SgExpression* e) {
@@ -2000,7 +2047,7 @@ int main(int argc, char** argv) {
   SAFE(memoryReadDWord);
   SAFE(memoryReadQWord);
 #undef SAFE
-  moveVariableDeclarationsToTop(converter.whileBody);
+  // moveVariableDeclarationsToTop(converter.whileBody);
   // addDirectJumpsToSwitchCases(converter.switchBody, converter.whileBody, converter.ipSym, converter);
   /// // doSimpleSSA(converter.whileBody, converter);
   /// // structureCode(converter.whileBody); cerr << "X" << endl;
@@ -2075,7 +2122,7 @@ int main(int argc, char** argv) {
   }
   return 0;
 #endif
-#if 0
+#if 1
   {
     ofstream sexpr("fnord.ss");
     unparseAsSExpressionsTop(sexpr, converter.whileBody);

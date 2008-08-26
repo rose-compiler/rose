@@ -60,6 +60,8 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgAsmFile* asmFile;
   SgGlobal* globalScope;
   SgFunctionSymbol* paritySym;
+  SgFunctionSymbol* mulhi16Sym;
+  SgFunctionSymbol* mulhi32Sym;
   SgFunctionSymbol* mulhi64Sym;
   SgFunctionSymbol* imulhi16Sym;
   SgFunctionSymbol* imulhi32Sym;

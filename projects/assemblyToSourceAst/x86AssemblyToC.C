@@ -516,13 +516,15 @@ void SingleInstructionTranslator::translate() {
       SgBasicBlock* block = buildBasicBlock(); \
       SgLabelStatement* topLabel = buildLabelStatement("repLabel" + StringUtility::intToHex(insn->get_address()), buildBasicBlock(), block); \
       SgLabelStatement* endLabel = buildLabelStatement("repEndLabel" + StringUtility::intToHex(insn->get_address()), buildBasicBlock(), block); \
+      SgLabelStatement* afterTestLabel = buildLabelStatement("repAfterTestLabel" + StringUtility::intToHex(insn->get_address()), buildBasicBlock(), block); \
       append(topLabel, block); \
       append( \
         buildIfStmt( \
           buildEqualityOp(f->makeRegisterRead(STRING_INSTRUCTION_CX), buildUnsignedLongLongIntValHex(0)), \
           buildGotoStatement(endLabel), \
-          NULL), \
+          buildGotoStatement(afterTestLabel)), \
         block); \
+      append(afterTestLabel, block); \
       append(STRING_INSTRUCTION_UPDATE_CX, block);
 
 #define STRING_INSTRUCTION_REPEAT_TRAILER \
@@ -530,8 +532,8 @@ void SingleInstructionTranslator::translate() {
       append(endLabel);
 
 #define STRING_INSTRUCTION_GOTO_TOP buildGotoStatement(topLabel)
-#define STRING_INSTRUCTION_GOTO_TOP_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildGotoStatement(topLabel), NULL) 
-#define STRING_INSTRUCTION_GOTO_TOP_NOT_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildBasicBlock(), buildGotoStatement(topLabel)) 
+#define STRING_INSTRUCTION_GOTO_TOP_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildGotoStatement(topLabel), buildGotoStatement(endLabel)) 
+#define STRING_INSTRUCTION_GOTO_TOP_NOT_ZF buildIfStmt(f->makeFlagRead(x86flag_zf), buildGotoStatement(endLabel), buildGotoStatement(topLabel)) 
 
     case x86_repe_cmpsb: {
       STRING_INSTRUCTION_REPEAT_HEADER
@@ -974,7 +976,7 @@ void SingleInstructionTranslator::translate() {
                                                                           buildBoolValExp(false))),
                          thenBasicBlock);
 
-         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,buildBasicBlock()));
+         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,NULL));
 
          break;
        }
@@ -1021,7 +1023,7 @@ void SingleInstructionTranslator::translate() {
                                                                           buildBoolValExp(false))),
                          thenBasicBlock);
 
-         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,buildBasicBlock()));
+         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,NULL));
 
          break;
        }
@@ -1074,7 +1076,7 @@ void SingleInstructionTranslator::translate() {
          appendStatement(f->makeFlagWrite(x86flag_of, buildBoolValExp(false)),
                          thenBasicBlock);
 
-         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,buildBasicBlock()));
+         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,NULL));
 
          break;
        }
@@ -1135,7 +1137,7 @@ void SingleInstructionTranslator::translate() {
                buildBoolValExp(false))),
            thenBasicBlock);
 
-         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,buildBasicBlock()));
+         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,NULL));
 
          break;
        }
@@ -1198,7 +1200,7 @@ void SingleInstructionTranslator::translate() {
                buildBoolValExp(false))),
            thenBasicBlock);
 
-         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,buildBasicBlock()));
+         append(buildIfStmt(buildNotEqualOp(buildVarRefExp(shiftCountSym),buildIntValHex(0)),thenBasicBlock,NULL));
 
          break;
        }
@@ -1470,20 +1472,22 @@ void SingleInstructionTranslator::translate() {
          }
          case V_SgAsmTypeWord: {
            SgVariableSymbol* axSym = cacheValue(makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_word)));
-           SgVariableSymbol* resultSym = cacheValue(buildMultiplyOp(buildCastExp(buildVarRefExp(axSym), SgTypeUnsignedInt::createType()), buildVarRefExp(argSym)));
-           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_word), buildBitAndOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0xFFFFU))));
-           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_word), buildRshiftOp(buildVarRefExp(resultSym), buildIntValHex(16))));
-           append(f->makeFlagWrite(x86flag_cf, buildGreaterOrEqualOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0x10000))));
-           append(f->makeFlagWrite(x86flag_of, buildGreaterOrEqualOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0x10000))));
+           SgVariableSymbol* resultLowSym = cacheValue(buildMultiplyOp(buildVarRefExp(axSym), buildVarRefExp(argSym)));
+           SgVariableSymbol* resultHighSym = cacheValue(buildFunctionCallExp(f->getHelperFunction("mulhi16"), buildExprListExp(buildVarRefExp(axSym), buildVarRefExp(argSym))));
+           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_word), buildVarRefExp(resultLowSym)));
+           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_word), buildVarRefExp(resultHighSym)));
+           append(f->makeFlagWrite(x86flag_cf, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
+           append(f->makeFlagWrite(x86flag_of, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
            break;
          }
          case V_SgAsmTypeDoubleWord: {
            SgVariableSymbol* eaxSym = cacheValue(makeRead(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword)));
-           SgVariableSymbol* resultSym = cacheValue(buildMultiplyOp(buildCastExp(buildVarRefExp(eaxSym), SgTypeUnsignedLongLong::createType()), buildVarRefExp(argSym)));
-           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword), buildBitAndOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0xFFFFFFFFULL))));
-           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_dword), buildRshiftOp(buildVarRefExp(resultSym), buildIntValHex(32))));
-           append(f->makeFlagWrite(x86flag_cf, buildGreaterOrEqualOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0x100000000ULL))));
-           append(f->makeFlagWrite(x86flag_of, buildGreaterOrEqualOp(buildVarRefExp(resultSym), buildUnsignedLongLongIntValHex(0x100000000ULL))));
+           SgVariableSymbol* resultLowSym = cacheValue(buildMultiplyOp(buildVarRefExp(eaxSym), buildVarRefExp(argSym)));
+           SgVariableSymbol* resultHighSym = cacheValue(buildFunctionCallExp(f->getHelperFunction("mulhi32"), buildExprListExp(buildVarRefExp(eaxSym), buildVarRefExp(argSym))));
+           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_dword), buildVarRefExp(resultLowSym)));
+           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_dword), buildVarRefExp(resultHighSym)));
+           append(f->makeFlagWrite(x86flag_cf, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
+           append(f->makeFlagWrite(x86flag_of, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
            break;
          }
          case V_SgAsmTypeQuadWord: {
@@ -1491,7 +1495,7 @@ void SingleInstructionTranslator::translate() {
            SgVariableSymbol* resultLowSym = cacheValue(buildMultiplyOp(buildVarRefExp(raxSym), buildVarRefExp(argSym)));
            SgVariableSymbol* resultHighSym = cacheValue(buildFunctionCallExp(f->getHelperFunction("mulhi64"), buildExprListExp(buildVarRefExp(raxSym), buildVarRefExp(argSym))));
            append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_ax, x86_regpos_qword), buildVarRefExp(resultLowSym)));
-           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_dword), buildVarRefExp(resultHighSym)));
+           append(makeWrite(new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, x86_gpr_dx, x86_regpos_qword), buildVarRefExp(resultHighSym)));
            append(f->makeFlagWrite(x86flag_cf, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
            append(f->makeFlagWrite(x86flag_of, buildNotEqualOp(buildVarRefExp(resultHighSym), buildIntValHex(0))));
            break;
@@ -1823,6 +1827,8 @@ X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f, SgAsmFile* a
 #define LOOKUP_FUNC(name) \
   do {name##Sym = globalScope->lookup_function_symbol(#name); ROSE_ASSERT (name##Sym);} while (0)
   LOOKUP_FUNC(parity);
+  LOOKUP_FUNC(mulhi16);
+  LOOKUP_FUNC(mulhi32);
   LOOKUP_FUNC(mulhi64);
   LOOKUP_FUNC(imulhi16);
   LOOKUP_FUNC(imulhi32);
@@ -2055,6 +2061,8 @@ SgStatement* X86AssemblyToCWithVariables::makeConditionalJump(uint64_t currentAd
 SgFunctionSymbol* X86AssemblyToCWithVariables::getHelperFunction(const string& name) {
 #define DO_NAME(n) do {if (name == #n) return n##Sym;} while (0)
   DO_NAME(parity);
+  DO_NAME(mulhi16);
+  DO_NAME(mulhi32);
   DO_NAME(mulhi64);
   DO_NAME(imulhi16);
   DO_NAME(imulhi32);

@@ -23,6 +23,8 @@
   
   (define (from-picosat output)
     (let* ((tokens (string-tokenize output))
+           (_ (display `(tokens . ,tokens)))
+           (_ (newline))
            (first-token (car tokens))
            (second-token (cadr tokens))
            (output-valid? (equal? first-token "s"))
@@ -66,7 +68,7 @@
         output)))
   
   (define (run-picosat)
-    (from-picosat (run-process-raw "/Users/jewillco/picosat-632/picosat" (to-dimacs))))
+    (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs))))
   
   (define (make-reduction-tree operation-size f output inputs)
     (if (<= (length inputs) operation-size)
@@ -76,9 +78,11 @@
                   (if (<= (length ls) operation-size)
                       (list ls)
                       (cons (take ls operation-size) (loop (drop ls operation-size))))))
-               (new-vars (map (lambda _ (variable!)) subtrees)))
-          (for-each (lambda (chunk var) (apply f var chunk)) subtrees new-vars)
-          (make-reduction-tree operation-size f output new-vars))))
+               (new-vars (map (lambda (st) (if (= (length st) 1) #f (variable!))) subtrees)))
+          (for-each (lambda (chunk var) (if var (apply f var chunk) (void))) subtrees new-vars)
+          (make-reduction-tree operation-size f output
+                               (map (lambda (nv st) (or nv (car st)))
+                                    new-vars subtrees)))))
   
   ; Helpers and logic gates
   ; All of these can have inputs and/or outputs inverted using the - function
@@ -115,7 +119,9 @@
   
   (provide reset!)
   (provide variable!)
+  (provide variables!)
   (provide add-clause!)
+  (provide to-dimacs)
   (provide run-picosat)
   (provide force-0!)
   (provide force-1!)
@@ -123,6 +129,7 @@
   (provide nor-gate!)
   (provide and-gate!)
   (provide nand-gate!)
+  (provide identity-gate!)
   (provide not-gate!)
   (provide xor-gate!)
   (provide xnor-gate!)

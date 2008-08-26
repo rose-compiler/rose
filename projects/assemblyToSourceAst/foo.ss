@@ -2,7 +2,7 @@
 (require (lib "match.ss"))
 (require (lib "1.ss" "srfi"))
 
-(define data (with-input-from-file "fnord.ss" read))
+(define data (with-input-from-file "/home/willcock2/rose-svn-checkout/build/projects/assemblyToSourceAst/fnord.ss" read))
 
 (define (simplify-begins t)
   (match t
@@ -201,33 +201,36 @@
 
 (set! data (map fold-lets data))
 
-(define (copy-and-constant-prop e al)
+(define (copy-and-constant-prop e al simple?)
+  ;(pretty-print `(copy-and-constant-prop ,e ,al ,simple?))
   (letrec ((subst-expr
             (lambda (e al)
               (if (list? e)
                   (cons (car e) (map (lambda (e2) (subst-expr e2 al)) (cdr e)))
                   (if (symbol? e)
                       (let ((p (assq e al))) (if p (cdr p) e))
-                      e))))
-           (simple? (lambda (x) #t #;(or (number? x) (symbol? x) (boolean? x)))))
+                      e)))))
   (match e
-    (`(begin . ,rest) `(begin . ,(map (lambda (e) (copy-and-constant-prop e al)) rest)))
+    (`(begin . ,rest) `(begin . ,(map (lambda (e) (copy-and-constant-prop e al simple?)) rest)))
     (`(let ((,var ,val)) ,body)
      (let ((val (subst-expr val al)))
        (if (simple? val)
-           (copy-and-constant-prop body `((,var . ,val) . ,al))
-           `(let ((,var ,val)) ,(copy-and-constant-prop body al)))))
+           (copy-and-constant-prop body `((,var . ,val) . ,al) simple?)
+           `(let ((,var ,val)) ,(copy-and-constant-prop body al simple?)))))
     (`(expr ,e) `(expr ,(subst-expr e al)))
     (`(parallel-assign ,al2) `(parallel-assign ,(map (match-lambda (`(,e1 . ,e2) `(,(subst-expr e1 al) . ,(subst-expr e2 al)))) al2)))
-    (`(label ,l ,body) `(label ,l ,(copy-and-constant-prop body al)))
+    (`(label ,l ,body) `(label ,l ,(copy-and-constant-prop body al simple?)))
     (`(goto . ,_) e)
-    (`(if ,p ,a ,b) `(if ,(subst-expr p al) ,(copy-and-constant-prop a al) ,(copy-and-constant-prop b al)))
+    (`(if ,p ,a ,b) `(if ,(subst-expr p al) ,(copy-and-constant-prop a al simple?) ,(copy-and-constant-prop b al simple?)))
     (`(case ,key . ,cases) `(case ,(subst-expr key al)
-                              ,@(map (match-lambda (`(,k* ,body) `(,k* ,(copy-and-constant-prop body al))))
+                              ,@(map (match-lambda (`(,k* ,body) `(,k* ,(copy-and-constant-prop body al simple?))))
                                      cases)))
     (_ (error "copy-and-constant-prop" e)))))
 
-(set! data (map (lambda (e) (copy-and-constant-prop e '())) data))
+(define (basic-simple? x) (or (number? x) (boolean? x) (symbol? x)))
+(define (always-simple? x) #t)
+
+(set! data (map (lambda (e) (copy-and-constant-prop e '() basic-simple?)) data))
 
 (define (change-to-let* e)
   (match e
@@ -286,6 +289,54 @@
     (`(expr ,_) e)
     (_ (error "remove-unused-variables" e))))
 
+(define (split-and-value-number e)
+  ;(pretty-print `(split-and-value-number ,e))
+  (let ((exprs-known '()))
+    (letrec ((split-expr
+              (lambda (expr k)
+                ;(pretty-print `(split-expr ,expr ,exprs-known))
+                (cond
+                  ((and (list? expr) (ormap list? (cdr expr)))
+                   (let* ((first-list (find list? (cdr expr))))
+                     (split-expr first-list
+                                 (lambda (fl2)
+                                   (let ((plugged-in (cons (car expr)
+                                                           (map (lambda (e)
+                                                                  (if (equal? e first-list) fl2 e))
+                                                                (cdr expr)))))
+                                     (split-expr plugged-in k))))))
+                  ((assoc expr exprs-known) => (lambda (p) (k (cdr p))))
+                  ((list? expr)
+                   (let ((var (gensym 'temp)))
+                     (set! exprs-known (cons (cons expr var) exprs-known))
+                     `(let ((,var ,expr)) ,(k var))))
+                  (else (k expr))))))
+      (match e
+        (`(label ,l ,body)
+         `(label ,l ,(split-and-value-number body)))
+        (`(let ((,v ,def)) ,body)
+         (split-expr def (lambda (def2) `(let ((,v ,def2)) ,(split-and-value-number body)))))
+        (`(expr (assign ,a ,b))
+         (split-expr b (lambda (b2) `(expr (assign ,a ,b2)))))
+        (`(expr (abort)) e)
+        (`(expr (interrupt ,i)) e)
+        (`(parallel-assign ,pairs)
+         (let loop ((pairs pairs) (acc-rev '()))
+           (match pairs
+             (`() `(parallel-assign ,(reverse acc-rev)))
+             (`((,var1 . ,def1) . ,rest)
+              (split-expr def1 (lambda (def2) (loop rest `((,var1 . ,def2) . ,acc-rev))))))))
+        (`(begin . ,ls) `(begin . ,(map split-and-value-number ls)))
+        (`(if (expr ,p) ,a ,b)
+         (split-expr p (lambda (p2) `(if (expr ,p2) ,(split-and-value-number a) ,(split-and-value-number b)))))
+        (`(case (expr ,p) . ,cases)
+         (split-expr p (lambda (p2)
+                         `(case (expr ,p2)
+                            . ,(map (match-lambda (`(,keys ,body) `(,keys ,(split-and-value-number body))))
+                                    cases)))))
+        (`(goto ,l) `(goto ,l))
+        (else (error "split-and-value-number" e))))))
+
 (define ((term-with-functor? f) t)
   (and (list? t) (eq? (car t) f)))
 
@@ -338,6 +389,7 @@
                    ((flatten-assoc 'logical-or 0) e)
                    ((flatten-idem 'logical-or) e)
                    ((flatten-zero 'logical-or 1) e)
+                   (match e (`(logical-not ,x) (and (number? x) (if (zero? x) 1 0))) (_ #f))
                    (match e (`(xor ,a ,b) (and (equal? a b) 0)) (_ #f))
                    (match e (`(memoryWriteDWord ,m1 ,a (memoryReadDWord ,m2 ,b)) (and (equal? m1 m2) (equal? a b) m2)) (_ #f))
                    (match e
@@ -364,7 +416,22 @@
                    (match e
                      (`(equal (add ,a1 . ,rest1) (add ,a2 . ,rest2)) (and (equal? a1 a2) `(equal (add . ,rest1) (add . ,rest2))))
                      (_ #f))
-                   (match e (`(equal ,a ,b) (and (equal? a b) 1)) (_ #f))
+                   (match e 
+                     (`(equal ,a ,b)
+                      (cond
+                        ((equal? a b) 1)
+                        ((and (number? a) (number? b)) (if (= a b) 1 0))
+                        (else #f)))
+                     (_ #f))
+                   (match e 
+                     (`(less-than ,a ,b)
+                      (cond
+                        ((equal? a b) 0)
+                        ((and (number? a) (number? b)) (if (< a b) 1 0))
+                        ((and (number? b) (zero? b)) 0)
+                        (else #f)))
+                     (_ #f))
+                   (match e (`(not-equal ,a ,b) `(logical-not (equal ,a ,b))) (_ #f))
                    (match e
                      (`(parity ,n) (and (number? n)
                                         (let parity ((n (bitwise-and n 255)))
@@ -408,7 +475,31 @@
     (`(let ,vars ,body) `(let ,vars ,(expand-one body)))
     (_ (error "expand-one" e))))
 
-(define (simplify-full e) (simplify (simplify-begins (remove-unused-variables (copy-and-constant-prop (fold-lets e) '())))))
+(define (loop-simplify-and-ccp e)
+  (let* ((e1 (simplify e))
+         (e2 (copy-and-constant-prop e1 '() basic-simple?)))
+    (if (equal? e2 e)
+        e
+        (loop-simplify-and-ccp e2))))
+
+(define (memory-simple? x)
+  (or (basic-simple? x)
+      (and (list? x)
+           (memq (car x) '(memoryWriteDWord memoryWriteWord memoryWriteByte)))))
+
+(define (simplify-full e)
+  (remove-unused-variables
+   (copy-and-constant-prop
+    (split-and-value-number
+     (loop-simplify-and-ccp
+      (simplify-begins
+       (remove-unused-variables
+        (copy-and-constant-prop
+         (fold-lets e)
+         '()
+         memory-simple?)))))
+    '()
+    basic-simple?)))
 
 (define (expand-one-simp e) (simplify-full (expand-one e)))
 
@@ -416,6 +507,8 @@
   (if (zero? n) e (expand-one-simp (expand-many (sub1 n) e))))
 
 ; (pretty-print (change-to-let* (map expand-one-simp data)))
+; (for-each (lambda (x) (pretty-print (change-to-let* (copy-and-constant-prop x '() always-simple?)))) data)
 (for-each (lambda (x) (pretty-print (change-to-let* (simplify-full x)))) data)
+; (for-each (lambda (x) (pretty-print (change-to-let* (split-and-value-number x)))) data)
 ; (pretty-print (map change-to-let* (map simplify-full data)))
 ;

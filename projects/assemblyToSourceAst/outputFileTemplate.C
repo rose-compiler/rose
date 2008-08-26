@@ -9,6 +9,8 @@ bool parity(uint8_t val) {
   return (val & 1) != 0;
 }
 
+uint16_t mulhi16(uint16_t a, uint16_t b);
+uint32_t mulhi32(uint32_t a, uint32_t b);
 uint64_t mulhi64(uint64_t a, uint64_t b);
 uint16_t imulhi16(uint16_t a, uint16_t b);
 uint32_t imulhi32(uint32_t a, uint32_t b);
