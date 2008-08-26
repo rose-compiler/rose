@@ -17,8 +17,8 @@
 #include "RoseBin_VariableAnalysis.h"
 #include "RoseBin_DataFlowAbstract.h"
 
-class RoseBin;
-class RoseFile;
+//class RoseBin;
+//class RoseFile;
 
 class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:

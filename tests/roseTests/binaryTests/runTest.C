@@ -99,7 +99,8 @@ int main(int argc, char** argv) {
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);
   cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
-  ROSE_ASSERT(callanalysis->nodesVisited()==11);
+  // tps (25 Aug 2008) : changed this because of results from IDAPro
+  ROSE_ASSERT(callanalysis->nodesVisited()==12);
   ROSE_ASSERT(callanalysis->edgesVisited()==7);
 
 
@@ -125,12 +126,12 @@ int main(int argc, char** argv) {
   //ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
   //ROSE_ASSERT(dfanalysis->nrOfUses()==26);
 
-  ROSE_ASSERT(dfanalysis->nodesVisited()==241);
-  ROSE_ASSERT(dfanalysis->edgesVisited()==290);
-  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==15);
-  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==38);
-  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==186);
-  ROSE_ASSERT(dfanalysis->nrOfUses()==27);
+  ROSE_ASSERT(dfanalysis->nodesVisited()==365);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==487);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==153);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==43);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==309);
+  ROSE_ASSERT(dfanalysis->nrOfUses()==111);
 
 
   // detailed dfa test

@@ -10,8 +10,8 @@
 
 #include "RoseBin_FlowAnalysis.h"
 
-class RoseBin;
-class RoseFile;
+//class RoseBin;
+//class RoseFile;
 
 class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 

@@ -527,7 +527,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
   while (!worklist_forthisfunction.empty()) {
     SgAsmInstruction* binInst = worklist_forthisfunction.top();
     worklist_forthisfunction.pop();
-
+    ROSE_ASSERT(binInst);
 
     countDown--;
 
@@ -589,14 +589,19 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
         if (thisbinX86->get_kind() == x86_call) {
           uint64_t returnAddr = thisbinX86->get_address() + thisbinX86->get_raw_bytes().size();
           SgAsmInstruction* retInsn = info->getInstructionAtAddress(returnAddr);
-          worklist_forthisfunction.push(retInsn);
-          ostringstream tgthex_s;
-          tgthex_s << hex << setw(8) << returnAddr ;
-          string tgtStr = tgthex_s.str();
-          //SgDirectedGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
-          string mne = retInsn->get_mnemonic();
-          // if (!tgt) {tgt = vizzGraph->createNode(mne, typeNode, returnAddr, vizzGraph->graph->get_graph_id(), false, retInsn);}
-          // vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, thisbinX86->get_address(), tgt, returnAddr);
+	  if (retInsn) {
+	    worklist_forthisfunction.push(retInsn);
+	    ostringstream tgthex_s;
+	    tgthex_s << hex << setw(8) << returnAddr ;
+	    string tgtStr = tgthex_s.str();
+	    //SgDirectedGraphNode* tgt = vizzGraph->checkIfGraphNodeExists(tgtStr);
+	    
+	    // tps (25 Aug 2008) : this line seems broken!
+	    //string mne = retInsn->get_mnemonic();
+	    
+	    // if (!tgt) {tgt = vizzGraph->createNode(mne, typeNode, returnAddr, vizzGraph->graph->get_graph_id(), false, retInsn);}
+	    // vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), src, thisbinX86->get_address(), tgt, returnAddr);
+	  }
         }
       }
 
@@ -716,6 +721,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	    string nameFunc = funcPar->get_name();	
 	    if (nameFunc==currentFunctionName) {
 	      //	    checkControlFlow(bin_target, functionSize, countDown, currentFunctionName);
+	      ROSE_ASSERT(bin_target);
 	      worklist_forthisfunction.push(bin_target);
 	    }
 	  } else {

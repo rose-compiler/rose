@@ -9,7 +9,7 @@
 
 class RoseBin_abstract : public AstSimpleProcessing {
  protected: 
-  SgAsmNode* globalNode;
+  SgAsmStatement* globalNode;
   std::list<std::string> functionNames;
 
   int trav_inst;
