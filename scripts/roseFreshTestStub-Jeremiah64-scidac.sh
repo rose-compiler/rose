@@ -25,6 +25,7 @@ CONFIGURE_FLAGS=( --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=y
 
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
 MAILADDRS="willcock2@llnl.gov liaoch@llnl.gov dquinlan@llnl.gov"
+SKIP_DIST_TEST=yes
 
 # the right version of subversion is essential!!
 SVN=/home/willcock2/svn-install/bin/svn
