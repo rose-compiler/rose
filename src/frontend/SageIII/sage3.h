@@ -48,6 +48,10 @@
 #error "MSDOS macros should not be defined"
 #endif
 
+// Force 64-bit file offsets in struct stat
+#define _FILE_OFFSET_BITS 64
+#include <sys/stat.h>
+
 // This is a problem with the SUN CC version 6.0 compiler
 #include <sstream>  // This (sstream) should eventually replace calls to strstream.h (Kyle)
 

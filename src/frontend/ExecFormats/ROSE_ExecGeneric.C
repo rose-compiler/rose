@@ -5,6 +5,9 @@
 // #include "ExecNE.h"
 // #include "ExecPE.h"
 
+#define _FILE_OFFSET_BITS 64
+#include <sys/stat.h>
+
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -114,7 +117,7 @@ void
 SgAsmGenericFile::ctor(std::string fileName)
 {
     p_fd = open(fileName.c_str(), O_RDONLY);
-    if (p_fd<0 || fstat64(p_fd, &p_sb)<0) {
+    if (p_fd<0 || fstat(p_fd, &p_sb)<0) {
         std::string mesg = "Could not open binary file";
         throw FormatError(mesg + ": " + strerror(errno));
     }

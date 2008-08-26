@@ -417,7 +417,7 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
              };
 
 
-          typedef struct stat64 fileDetails;
+          typedef struct stat fileDetails;
 
           enum ByteOrder {
               ORDER_UNSPECIFIED,
