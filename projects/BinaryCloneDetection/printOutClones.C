@@ -4,58 +4,27 @@
 #include <sys/resource.h>
 #include <iostream>
 #include <fstream>
-#include "sqlite3x.h"
+#include "sqlite3x.hpp"
 #include <list>
 #include <math.h>
 #include <boost/program_options.hpp>
 #include <algorithm>
 #include <string>
 #include <cstdio> // for std::remove
-#include <boost/random.hpp>
-#include <boost/smart_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-
-
-//##include "lsh.h"
+#include "lsh.h"
 using namespace std;
 using namespace sqlite3x;
 using namespace boost::program_options;
 using namespace boost;
 
-
-template <typename T>
-class scoped_array_with_size {
-  boost::scoped_array<T> sa;
-  size_t theSize;
-
-  public:
-  scoped_array_with_size(): sa(), theSize(0) {}
-  scoped_array_with_size(size_t s): sa(new T[s]), theSize(s) {}
-
-  void allocate(size_t s) {
-    sa.reset(new T[s]);
-    theSize = s;
-  }
-  size_t size() const {return theSize;}
-  T* get() const {return sa.get();}
-
-  T& operator[](size_t i) {return sa[i];}
-  const T& operator[](size_t i) const {return sa[i];}
-
-  private:
-  scoped_array_with_size(const scoped_array_with_size<T>&); // Not copyable
-};
-
-
-
 struct Element {
       int cluster;
-      int vectors_row;
-      int function_id;
+      int64_t vectors_row;
+      int64_t function_id;
       std::string file;
       std::string function_name;
-      int line;
-      int offset;
+      int64_t line;
+      int64_t offset;
 };
 
 
@@ -143,6 +112,7 @@ int main(int argc, char* argv[])
     exit (1);
   }
 
+  std::cout << "Allocating " << eltCount << " elements " << std::endl;
   vectorOfClusters.allocate(eltCount);
   //Create set of clone pairs
   try{
@@ -152,7 +122,7 @@ int main(int argc, char* argv[])
     sqlite3_command cmd(con, selectSeparateDatasets.c_str());
     sqlite3_reader datasets=cmd.executereader();
 
-    int thisClusterName;
+    int64_t thisClusterName;
     
    
     std::vector<Element> thisCluster;
@@ -161,21 +131,21 @@ int main(int argc, char* argv[])
 //    int set_number = ds.find_set(0);
 
     
-    int last_clone=0;
-    int clone_cluster=0;
+    int64_t last_clone=0;
+    int64_t clone_cluster=0;
       
     while(datasets.read())
     {
     
       Element cur_elem;
-      cur_elem.cluster       = lexical_cast<int>(datasets.getstring(0));
+      cur_elem.cluster       = lexical_cast<int64_t>(datasets.getstring(0));
 
-      cur_elem.vectors_row   = lexical_cast<int>(datasets.getstring(1));
-      cur_elem.function_id   = lexical_cast<int>(datasets.getstring(2));
+      cur_elem.vectors_row   = lexical_cast<int64_t>(datasets.getstring(1));
+      cur_elem.function_id   = lexical_cast<int64_t>(datasets.getstring(2));
       cur_elem.file          = datasets.getstring(3);
       cur_elem.function_name = datasets.getstring(4);
-      cur_elem.line          = lexical_cast<int>(datasets.getstring(5));
-      cur_elem.offset        = lexical_cast<int>(datasets.getstring(6));
+      cur_elem.line          = lexical_cast<int64_t>(datasets.getstring(5));
+      cur_elem.offset        = lexical_cast<int64_t>(datasets.getstring(6));
 
       if( cur_elem.cluster != last_clone )
       {
@@ -184,6 +154,8 @@ int main(int argc, char* argv[])
       }
       
       
+      if(clone_cluster == eltCount)
+        std::cout << "Bad idea: eltCount exceeded " << std::endl;
       vectorOfClusters[clone_cluster].push_back(cur_elem);
       
     }
@@ -202,9 +174,9 @@ int main(int argc, char* argv[])
       std::cout << "  elem " << j << ": row in vectors " << vectorOfClusters[i][j].vectors_row
                 << " function id " << vectorOfClusters[i][j].function_id 
                 << " file " << vectorOfClusters[i][j].file
-                << " filename " << vectorOfClusters[i][j].function_name
-                << " line " << hex << vectorOfClusters[i][j].line 
-                << " offset " << hex << vectorOfClusters[i][j].offset 
+                << " function name " << vectorOfClusters[i][j].function_name
+                << " begin address " << hex << vectorOfClusters[i][j].line 
+                << " end address " << hex << vectorOfClusters[i][j].offset 
                 << dec << std::endl;
            
 
