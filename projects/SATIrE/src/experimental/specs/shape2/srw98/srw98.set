@@ -1,0 +1,10 @@
+/* Author: Markus Schordan, Viktor Pavlu
+   E-mail: markus@complang.tuwien.ac.at
+   Year  : 2006, 2007, 2008
+*/
+
+SET
+#include "../common.set"
+
+DOMAIN
+dfi = flat(ShapeGraph)

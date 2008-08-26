@@ -22,8 +22,7 @@ if [ "$binaries" = '' ]; then
 fi
 
 if [ "$#" -lt 2 ]; then
-  echo "usage: $0 ${binaries/ /|} [<OPTIONS>]  <FILES>"
-  echo "type '$0 ${binaries/ /|} --help' for a list of options"
+  echo "usage: $0 ${binaries/ /|} FILES"
   exit 1
 fi
 

@@ -1,19 +1,11 @@
-The subdirectories contain the specs of these shape analysis algorithms:
+This directory contains all common code for the shape analyses,
+i.e. matching of nested expressions, normalisation, alias predicates, etc.
+
+Its subdirectories contain the specifications of the following
+shape analysis algorithms:
 
 nnh99/ The analysis described in the book "Principle of Program Analysis"
        (F. Nielson, H.R. Nielson, C. Hankin).
 
 srw98/ The analysis from TOPLAS'98, "Solving shape-analysis problems
        in languages with destructive updating" (M. Sagiv, T. Reps, R. Wilhelm)
-
-What is common between the analyses, i.e. matching of nested expressions,
-normalisation, alias predicates, visualisation, etc. is kept in the
-toplevel files named common_* and visualisation.[Ch].
-
-To customize the generalized common code, replace ${DFI} with the type of
-the carrier, that is with
-
-  nnh99: o_ShapeGraphSetLifted
-  srw98: o_ShapeGraphLifted
-
-These replacements are done automatically by the Makefile.

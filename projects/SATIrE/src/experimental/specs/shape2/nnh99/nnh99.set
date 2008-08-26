@@ -1,0 +1,14 @@
+/* Author: Viktor Pavlu
+   E-mail: e0425543@student.tuwien.ac.at
+   Year  : 2006, 2007, 2008
+*/
+
+SET
+#include "../common.set"
+HeapEdgeTuple     = HeapEdge * HeapEdge
+HeapEdgeTupleList = list(HeapEdgeTuple)
+NodeSetSet        = set(NodeSet)
+ShapeGraphSetList = list(ShapeGraphSet)
+
+DOMAIN
+dfi = flat(ShapeGraphSet)
