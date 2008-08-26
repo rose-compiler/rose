@@ -161,6 +161,18 @@ SageBuilder::buildVariableDeclaration \
   SgName name2(name);
   return buildVariableDeclaration(name2,type, varInit,scope);
 }
+
+//!Build a typedef declaration, such as: typedef int myint; 
+SgTypedefDeclaration* 
+SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type)
+{
+   SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
+   ROSE_ASSERT(type_decl);
+   type_decl->set_firstNondefiningDeclaration (type_decl);
+   setOneSourcePositionForTransformation(type_decl);
+   return type_decl;
+}
+
 //-----------------------------------------------
 // Assertion `definingDeclaration != __null || firstNondefiningDeclaration != __null' 
 SgFunctionParameterList * 
@@ -381,6 +393,18 @@ SageBuilder::buildNondefiningFunctionDeclaration_T \
   // set File_Info as transformation generated
   setSourcePositionForTransformation(func);
   return func;  
+}
+
+//! Build a prototype for an existing function declaration (defining or nondefining ) 
+SgFunctionDeclaration *
+SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope/*=NULL*/)
+{
+  ROSE_ASSERT(funcdecl!=NULL);
+  SgName name=funcdecl->get_name(); 
+  SgFunctionType * funcType = funcdecl->get_type();
+  SgType* return_type = funcType->get_return_type();
+  SgFunctionParameterList* paralist = deepCopy<SgFunctionParameterList>(funcdecl->get_parameterList());
+  return buildNondefiningFunctionDeclaration(name,return_type,paralist,scope);
 }
 
 SgFunctionDeclaration* SageBuilder::buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, SgScopeStatement* scope)
@@ -1846,7 +1870,7 @@ SgTypeFloat * SageBuilder::buildFloatType()
 #endif
     }
     return defdecl;    
-  }
+  } //buildStructDeclaration()
 
   SgClassDeclaration * SageBuilder::buildStructDeclaration(const string& name, SgScopeStatement* scope/*=NULL*/)
   {

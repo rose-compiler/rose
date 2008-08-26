@@ -4066,6 +4066,64 @@ SgStatement* SageInterface::getFirstStatement(SgScopeStatement *scope, bool incl
 
 }
 
+  SgFunctionDeclaration* SageInterface::findFirstDefiningFunctionDecl(SgScopeStatement* scope)
+  {
+    ROSE_ASSERT(scope);
+    SgFunctionDeclaration* result = NULL;
+    if (scope->containsOnlyDeclarations())
+    {
+      SgDeclarationStatementPtrList declList = scope->getDeclarationList();
+      SgDeclarationStatementPtrList::iterator i=declList.begin();
+      while (i!=declList.end())
+      {
+        Sg_File_Info * fileInfo = (*i)->get_file_info();
+
+       if ((fileInfo->isSameFile(scope->get_file_info()))||
+          (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
+        )
+        { 
+          SgFunctionDeclaration* func = isSgFunctionDeclaration(*i);
+          if (func)
+          {
+            if (func->get_definingDeclaration ()==func)
+            {
+            //cout<<"debug, first defining func decl is:"<<(*i)->unparseToString()<<endl;
+            result=func;
+            break;
+            }
+          } 
+        }  
+        i++;
+      }//end while
+    } else
+    {
+      SgStatementPtrList stmtList = scope->getStatementList();
+      SgStatementPtrList::iterator i=stmtList.begin();
+      while (i!=stmtList.end())
+      {
+        Sg_File_Info * fileInfo = (*i)->get_file_info();
+        if ( (fileInfo->isSameFile(scope->get_file_info()))||
+             (fileInfo->isTransformation()&& fileInfo->isOutputInCodeGeneration())
+            )
+         {  
+          SgFunctionDeclaration* func = isSgFunctionDeclaration(*i);
+          if (func)
+          {
+            if (func->get_definingDeclaration ()==func)
+            {
+            //cout<<"debug, first defining func decl is:"<<(*i)->unparseToString()<<endl;
+            result=func;
+            break;
+            }// if defining
+          } // if func 
+         }// if fileInof
+        i++;
+      }//while
+    } // end if
+    return result;
+  }
+
+
 bool SageInterface::isMain(const SgNode* n)
 {
  bool result = false;
@@ -4628,6 +4686,13 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
 SgStatement* SageInterface::getEnclosingStatement(SgNode* n) {
   while (n && !isSgStatement(n)) n = n->get_parent();
   return isSgStatement(n);
+}
+
+//! Remove a statement: TODO consider side effects for symbol tables
+void SageInterface::removeStatement(SgStatement* stmt)
+{
+  ROSE_ASSERT(stmt);
+  LowLevelRewrite::remove(stmt);
 }
 
 //! Replace a statement with another
@@ -5830,6 +5895,7 @@ PreprocessingInfo* SageInterface::attachComment(
 
   PreprocessingInfo* SageInterface::insertHeader(const string& filename, bool isSystemHeader /*=false*/, SgScopeStatement* scope /*=NULL*/)
   {
+    bool successful = false;
     if (scope == NULL)
 	scope = SageBuilder::topScopeStack();
     ROSE_ASSERT(scope);
@@ -5845,29 +5911,35 @@ PreprocessingInfo* SageInterface::attachComment(
 
     SgDeclarationStatementPtrList & stmtList = globalScope->get_declarations ();
     if (stmtList.size()>0) // the source file is not empty
+     { 
       for (SgDeclarationStatementPtrList::iterator j = stmtList.begin ();
 	     j != stmtList.end (); j++)
       {
 	    //must have this judgement, otherwise wrong file will be modified!
             //It could also be the transformation generated statements with #include attached
 	if ( ((*j)->get_file_info ())->isSameFile(globalScope->get_file_info ())||
-              ((*j)->get_file_info ())->isTransformation () 
+              ((*j)->get_file_info ())->isTransformation() 
            )
 	 {
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::before);
 	   ROSE_ASSERT(result);
 	   (*j)->addToAttachedPreprocessingInfo(result);
+           successful = true;
 	    break;
 	  }
       }
+     }
     else // empty file, attach it after SgGlobal,TODO it is not working for unknown reason!!
      {
        result = new PreprocessingInfo(PreprocessingInfo::CpreprocessorIncludeDeclaration,
                 content, "Transformation generated",0, 0, 0, PreprocessingInfo::after);
        ROSE_ASSERT(result);
        globalScope->addToAttachedPreprocessingInfo(result);
+       successful = true;
     }
+    // must be inserted once somehow
+    ROSE_ASSERT(successful==true);
     return result;
   }
 
@@ -5931,23 +6003,22 @@ StringUtility::numberToString(++breakLabelCounter),
   }
 
 //----------------------------
-// the preprocessing info attached to the first declaration has to be
-// moved 'up' if another declaration is inserted at the top of the scope
+// Sometimes, the preprocessing info attached to a declaration has to be
+// moved 'up' if another declaration is inserted before it.
 // This is a workaround for the broken LowLevelRewrite::insert() and the private
 // LowLevelRewrite::reassociatePreprocessorDeclarations()
 //
 // input: 
-//     *stmt_dst: the new inserted 1st declaration 
-//     *stmt_src: the previous 1st declaration
+//     *stmt_dst: the new inserted declaration 
+//     *stmt_src: the existing declaration with preprocessing information
 // tasks:
 //     judge if stmt_src has propressingInfo with headers, ifdef, etc..
 //     add them into stmt_dst
 //     delete them from stmt_dst   
 // More general usage: move preprocessingInfo of stmt_src to stmt_dst, should used before any
 //           LoweLevel::remove(stmt_src)
-// TODO deprecate this if LowLevelRewrite::insert/remove/replace is really complete!
-
-  void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src)
+  void SageInterface::moveUpPreprocessingInfo(SgStatement * stmt_dst, SgStatement * stmt_src,
+      PreprocessingInfo::RelativePositionType position/*=PreprocessingInfo::undef*/)
   {
     ROSE_ASSERT(stmt_src != NULL);
     ROSE_ASSERT(stmt_dst != NULL);
@@ -5973,8 +6044,15 @@ StringUtility::numberToString(++breakLabelCounter),
           (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
         )
       { 
-        stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-       (*infoToRemoveList).push_back(*i);
+        if (position == PreprocessingInfo::undef) 
+        {
+          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+          (*infoToRemoveList).push_back(*i);
+        } else if (info->getRelativePosition()==position)
+        {
+          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+          (*infoToRemoveList).push_back(*i);
+        } // if position
       } // end if 
      }// end for
 
@@ -5982,7 +6060,7 @@ StringUtility::numberToString(++breakLabelCounter),
     AttachedPreprocessingInfoType::iterator j;
     for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
       infoList->erase( find(infoList->begin(),infoList->end(),*j) );
-  } 
+  } // moveUpPreprocessingInfo()
 
   SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs) {
     SgStatement* b = fs->get_loop_body();
@@ -6467,11 +6545,27 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
     return ((stmt->get_declarationModifier()).get_storageModifier()).isStatic();
   } // isStatic()
 
+  //! Set a declaration as static 
+  void SageInterface::setStatic(SgDeclarationStatement* stmt)
+  {
+    ROSE_ASSERT(stmt);
+    return ((stmt->get_declarationModifier()).get_storageModifier()).setStatic();
+  }
+
   bool SageInterface::isExtern(SgDeclarationStatement* stmt)
   {
     ROSE_ASSERT(stmt);
     return ((stmt->get_declarationModifier()).get_storageModifier()).isExtern();
   } // isExtern()
+
+  
+  //! Set a declaration as extern
+  void SageInterface::setExtern(SgDeclarationStatement* stmt)
+  {
+    ROSE_ASSERT(stmt);
+    return ((stmt->get_declarationModifier()).get_storageModifier()).setExtern();
+  }
+
 
   unsigned long long SageInterface::getIntegerConstantValue(SgValueExp* expr) {
     switch (expr->variantT()) {

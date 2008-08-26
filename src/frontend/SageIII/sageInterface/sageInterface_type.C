@@ -649,8 +649,10 @@ bool hasTrivialDestructor(SgType* t) {
 
     bool check = hasUpcSharedType(t,&mod_type_out);
     //ROSE_ASSERT(hasUpcSharedType(t,mod)); // avoid side effect for assertion!!
-    ROSE_ASSERT(check&&mod_type_out); 
-
+    if (check==false) 
+      return false;
+    else
+      ROSE_ASSERT(check&&mod_type_out); 
     block_size =  mod_type_out->get_typeModifier().get_upcModifier().get_layout();
    // cout<<"block size is "<<block_size<<endl;
     if ((block_size==1)||(block_size == -1)|| (block_size == 0))

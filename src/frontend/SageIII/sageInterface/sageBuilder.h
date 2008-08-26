@@ -429,6 +429,10 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 SgVariableDeclaration* 
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
+//!Build a typedef declaration, such as: typedef int myint; 
+SgTypedefDeclaration* 
+buildTypedefDeclaration(const std::string& name, SgType* base_type);
+
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
 
@@ -445,6 +449,10 @@ buildNondefiningFunctionDeclaration_T \
 //! Build a prototype for a function, handle function type, symbol etc transparently
 SgFunctionDeclaration *
 buildNondefiningFunctionDeclaration (const SgName & name, SgType* return_type, SgFunctionParameterList *parlist, SgScopeStatement* scope=NULL);
+
+//! Build a prototype for an existing function declaration (defining or nondefining is fine) 
+SgFunctionDeclaration *
+buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* funcdecl, SgScopeStatement* scope=NULL);
 
 //! Build a prototype member function declaration
 SgMemberFunctionDeclaration *

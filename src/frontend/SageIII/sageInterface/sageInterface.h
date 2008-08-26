@@ -351,8 +351,15 @@ bool isCallToParticularFunction(const std::string& qualifiedName, size_t arity, 
 
 //! Check if a declaration has a "static' modifier
 bool isStatic(SgDeclarationStatement* stmt);
+
+//! Set a declaration as static
+void setStatic(SgDeclarationStatement* stmt);
+
 //! Check if a declaration has an "extern" modifier
 bool isExtern(SgDeclarationStatement* stmt);
+
+//! Set a declaration as extern
+void setExtern(SgDeclarationStatement* stmt);
 
 //! Interface for creating a statement whose computation writes its answer into
 //! a given variable.
@@ -436,8 +443,8 @@ class StatementGenerator {
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX. 
 PreprocessingInfo* insertHeader(const std::string& filename, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
-//! Move preprocessing information of stmt_src to stmt_dst
-void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src);
+//! Move preprocessing information of stmt_src to stmt_dst, Only move preprocessing informationat the specified relative position, otherwise move all preprocessing information.  
+void moveUpPreprocessingInfo (SgStatement* stmt_dst, SgStatement* stmt_src, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::undef);
 
 //! Attach an arbitrary string to a located node. A workaround to insert irregular statements or vendor-specific attributes.
 PreprocessingInfo* attachArbitraryText(SgLocatedNode* target, 
@@ -561,7 +568,10 @@ SgType* getArrayElementType(SgArrayType* t);
  */
 bool hasUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL  );
 
-//! Check if a type is a UPC shared type, including shared array, shared pointers etc. Exclude private pointers to shared types.
+//! Check if a type is a UPC shared type, including shared array, shared pointers etc. Exclude private pointers to shared types. Optionally return the modifier type with the UPC shared property. 
+/*!
+ * ROSE uses SgArrayType of SgModifierType to represent shared arrays, not SgModifierType points to SgArrayType. Also typedef may cause a chain of nodes before reach the actual SgModifierType with UPC shared property.
+ */
 bool isUpcSharedType(SgType* t, SgModifierType ** mod_type_out = NULL);
 
 //! Check if a modifier type is a UPC shared type.
@@ -579,7 +589,7 @@ size_t getUpcSharedBlockSize(SgModifierType* mod_type);
 //! Get the block size of a UPC shared type, including Modifier types and array of modifier types (shared arrays)
 size_t getUpcSharedBlockSize(SgType* t);
 
-//! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Input parameter must be a UPC shared type.
+//! Is UPC phase-less shared type? Phase-less means block size of the first SgModifierType with UPC information is 1 or 0/unspecified. Also return false if the type is not a UPC shared type.
 bool isUpcPhaseLessSharedType (SgType* t);
 
 //! Is a UPC private-to-shared pointer?  SgPointerType comes first compared to SgModifierType with UPC information. Input type must be any of UPC shared types first.
@@ -777,6 +787,8 @@ SgScopeStatement* getScope(const SgNode* astNode);
 
   //! Get the first statement within a scope, return NULL if it does not exist. Skip compiler-generated statement by default. Count transformation-generated ones, but excluding those which are not to be outputted in unparsers. 
   SgStatement* getFirstStatement(SgScopeStatement *scope,bool includingCompilerGenerated=false);
+    //!Find the first defining function declaration statement in a scope 
+  SgFunctionDeclaration* findFirstDefiningFunctionDecl(SgScopeStatement* scope);
 
 //! Get next statement within the same scope of current statement 
   SgStatement* getNextStatement(SgStatement * currentStmt);
@@ -844,6 +856,9 @@ void insertStatementAfter(SgStatement *targetStmt, SgStatement* newStmt);
 
 //! Insert a list of statements after a target statement
 void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmt);
+
+//! Remove a statement
+void removeStatement(SgStatement* stmt);
 
 //! Replace a statement with another
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
