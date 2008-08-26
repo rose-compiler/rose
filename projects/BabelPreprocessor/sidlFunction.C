@@ -35,7 +35,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 	// printf ("thirdLastCharacter = %c \n",thirdLastCharacter);
 
 	// function names that are not C++ operators are returned unmodified
-	bool isAnOperator = TRUE;
+	bool isAnOperator = true;
 
 	// Now turn the last character code into a string (we want to return a string instead of a character!)
 	if (secondLastCharacter == 'r')
@@ -62,7 +62,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 			case '|': operatorString = "BitwiseOr"; break;
 			case '^': operatorString = "BitwiseXor"; break;
 			default:
-					  isAnOperator = FALSE;
+					  isAnOperator = false;
 		}
 	}
 	else
@@ -105,7 +105,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 						case '|': operatorString = "BitwiseOrEquals"; break;
 						case '^': operatorString = "BitwiseXorEquals"; break;
 						default:
-								  isAnOperator = FALSE;
+								  isAnOperator = false;
 					}
 					break;
 				}
@@ -158,7 +158,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 					break;
 				}
 			default:
-				isAnOperator = FALSE;
+				isAnOperator = false;
 		}
 	}
 
@@ -167,7 +167,7 @@ SIDL_TreeTraversal::stringifyOperatorWithoutSymbols (string name)
 	// Copy the string to avoid returning a reference to local (stack) memory
 	string returnString;
 
-	if (isAnOperator == TRUE)
+	if (isAnOperator == true)
 		returnString = "operator" + operatorString;
 	else
 		returnString = name;
@@ -456,7 +456,7 @@ SIDL_TreeTraversal::generateSIDLFunctionDeclaration(SgFunctionDeclaration* funct
   // ROSE_ASSERT (returnType != NULL);
   // string returnTypeName = TransformationSupport::getTypeName(returnType);
 
-  // printf ("function has_ellipses %s \n",(functionType->get_has_ellipses() != FALSE) ? "TRUE" : "FALSE");
+  // printf ("function has_ellipses %s \n",(functionType->get_has_ellipses() != false) ? "true" : "false");
   // showSgFunctionType(cout, functionType, "Called from generateSIDLFunctionDeclaration", 0 );
   // printf ("Function return type = %s \n",returnTypeName.c_str());
 
@@ -491,11 +491,11 @@ SIDL_TreeTraversal::generateSIDLFunctionDeclaration(SgFunctionDeclaration* funct
 		string sidlParameterPassingMechanim = "in";
 		
 		//it seems like the has_ellipses value is wrong, so we'll set it
-		functionType->set_has_ellipses(FALSE);
+		functionType->set_has_ellipses(false);
 		if(type->variantT() == V_SgTypeEllipse)
 		{
 			sidlParameterPassingMechanim = "inout";
-			functionType->set_has_ellipses(TRUE);
+			functionType->set_has_ellipses(true);
 		}
 		//else if (type->variantT() == V_SgTypeVoid)
 		/*else if (ROSE::stringDuplicate(type->sage_class_name()) == "SgTypeVoid")

@@ -108,7 +108,7 @@ class TransformationSupport
           static operatorCodeType classifyOverloadedOperator (
                std::string name,
                int numberOfParameters = 0,
-               bool prefixOperator    = FALSE);
+               bool prefixOperator    = false);
 
       /*! \brief Return string representing operator node in AST.
 

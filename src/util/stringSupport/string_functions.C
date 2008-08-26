@@ -575,19 +575,19 @@ StringUtility::removePseudoRedundentSubstrings ( string X )
 int
 StringUtility::isSameName ( const std::string& s1, const std::string& s2 )
    {
-     int returnValue = FALSE;
+     int returnValue = false;
   // return strcmp(fname, fileName) == 0;
   // The strings are the same only if ZERO is the return value from strcmp()
      if (s1 == s2)
 	{
-	  returnValue = TRUE;
+	  returnValue = true;
 	}
      return returnValue;
    }
 #endif
 
 // Macro used only in the copyEdit function
-#define DEBUG_COPY_EDIT FALSE
+#define DEBUG_COPY_EDIT false
 
 // BP : 10/25/2001, a non recursive version that
 // allocs memory only once
@@ -638,15 +638,15 @@ StringUtility::writeFile (
      string outputFileName = directoryName + fileNameString;
 
      ofstream outputFile(outputFileName.c_str());
-     ROSE_ASSERT (outputFile.good() == TRUE);
+     ROSE_ASSERT (outputFile.good() == true);
 
   // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
   // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
   // ostream & outputStream = (OUTPUT_TO_FILE ? ((ostream&) outputFile) : ((ostream&) cout));
-     ROSE_ASSERT (outputFile.good() == TRUE);
+     ROSE_ASSERT (outputFile.good() == true);
 
      outputFile << outputString;
-     ROSE_ASSERT (outputFile.good() == TRUE);
+     ROSE_ASSERT (outputFile.good() == true);
 
      outputFile.close();
    }
@@ -700,13 +700,13 @@ StringUtility::readFile ( const string& fileName )
 
      ifstream inputFile;
      inputFile.open( fileName.c_str(), ios::binary );
-     if (inputFile.good() != TRUE)
+     if (inputFile.good() != true)
 	{
 	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
 	  ROSE_ABORT();
 	}
 
-     ROSE_ASSERT (inputFile.good() == TRUE);
+     ROSE_ASSERT (inputFile.good() == true);
 
   // get length of file:
      inputFile.seekg (0, ios::end);
@@ -750,13 +750,13 @@ StringUtility::readFileWithPos ( const string& fileName )
 
      ifstream inputFile;
      inputFile.open( fileName.c_str(), ios::binary );
-     if (inputFile.good() != TRUE)
+     if (inputFile.good() != true)
    {
 	  printf ("ERROR: File not found -- %s \n",fileName.c_str());
 	  ROSE_ABORT();
 	}
 
-     ROSE_ASSERT (inputFile.good() == TRUE);
+     ROSE_ASSERT (inputFile.good() == true);
 
   // get length of file:
      inputFile.seekg (0, ios::end);

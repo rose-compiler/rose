@@ -157,29 +157,29 @@ class Terminal
                  // of the grammar represented by this nonTerminal
   void setFunctionPrototype        ( const GrammarString & memberFunction );
   void setFunctionPrototype        ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = FALSE );
+				     bool pureVirtual = false );
 
   void setSubTreeFunctionPrototype ( const GrammarString & memberFunction );
   void setSubTreeFunctionPrototype ( const std::string& markerString, const std::string& filename,
-				     bool pureVirtual = FALSE );
+				     bool pureVirtual = false );
 
   void setFunctionSource           ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = FALSE );
+				     bool pureVirtual = false );
   void setSubTreeFunctionSource    ( const std::string& markerString, const std::string& filename, 
-				     bool pureVirtual = FALSE );
+				     bool pureVirtual = false );
 
   // Mechanism for excluding code from specific node or subtrees
   void excludeFunctionPrototype        ( const GrammarString & memberFunction );
   void excludeFunctionPrototype        ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = FALSE );
+					 bool pureVirtual = false );
   void excludeSubTreeFunctionPrototype ( const GrammarString & memberFunction );
   void excludeSubTreeFunctionPrototype ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = FALSE );
+					 bool pureVirtual = false );
 
   void excludeFunctionSource           ( const std::string& markerString, const std::string& filename,
-					 bool pureVirtual = FALSE );
+					 bool pureVirtual = false );
   void excludeSubTreeFunctionSource    ( const std::string& markerString, const std::string& filename, 
-					 bool pureVirtual = FALSE );
+					 bool pureVirtual = false );
 
   void excludeSubTreeDataPrototype ( const GrammarString & inputMemberData );
   void excludeSubTreeDataPrototype ( const std::string& inputTypeNameString,
@@ -270,10 +270,10 @@ class Terminal
                  // automated tool (such cases represent asymetries in the design and so 
                  // they should be avoided).  In general such details should be handled 
                  // within the post_construction_initialization() member function.
-  void setAutomaticGenerationOfConstructor         ( bool X = TRUE );
-  void setAutomaticGenerationOfDestructor          ( bool X = TRUE );
-  void setAutomaticGenerationOfDataAccessFunctions ( bool X = TRUE );
-  void setAutomaticGenerationOfCopyFunction        ( bool X = TRUE );
+  void setAutomaticGenerationOfConstructor         ( bool X = true );
+  void setAutomaticGenerationOfDestructor          ( bool X = true );
+  void setAutomaticGenerationOfDataAccessFunctions ( bool X = true );
+  void setAutomaticGenerationOfCopyFunction        ( bool X = true );
 
                  // Access function for automaticGenerationOfDestructor and automaticGenerationOfConstructor
   bool generateDestructor () const;

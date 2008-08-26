@@ -1252,7 +1252,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
    {
 #if 0
      curprint ( "\n /* Inside of unparseUnaryExpr */ \n");
-     unp->u_debug->printDebugInfo("entering unparseUnaryExpr", TRUE);
+     unp->u_debug->printDebugInfo("entering unparseUnaryExpr", true);
 #endif
 
      SgUnaryOp* unary_op = isSgUnaryOp(expr);
@@ -1265,7 +1265,7 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   //
   // Flag to indicate whether the operand contains an overloaded arrow operator
   //
-     bool arrow_op = FALSE;
+     bool arrow_op = false;
      arrow_op = unp->u_sage->NoDereference(expr);
 
 #if 0
@@ -1283,12 +1283,12 @@ UnparseLanguageIndependentConstructs::unparseUnaryExpr(SgExpression* expr, SgUnp
   // It seems that EDG and SAGE represent the two similarly, so we have to choose which format we 
   // want to have in the unparsing. Likely this should be an option to the unparser.
 
-  // bool isFunctionType = (isSgFunctionType(unary_op->get_type()) != NULL) ? TRUE : FALSE;
+  // bool isFunctionType = (isSgFunctionType(unary_op->get_type()) != NULL) ? true : false;
 
 #if 0
      printf ("unary_op->get_mode() != SgUnaryOp::postfix is %s \n",(unary_op->get_mode() != SgUnaryOp::postfix) ? "true" : "false");
      printf ("In Unparse_ExprStmt::unparseUnaryExpr: arrow_op = %d \n",arrow_op);
-     printf ("isFunctionType = %s \n",(isFunctionType == TRUE) ? "TRUE" : "FALSE");
+     printf ("isFunctionType = %s \n",(isFunctionType == true) ? "true" : "false");
 
      printf ("unary_op->get_operand()->sage_class_name() = %s \n",unary_op->get_operand()->sage_class_name());
      printf ("unary_op->get_type()->sage_class_name() = %s \n",unary_op->get_type()->sage_class_name());
@@ -1338,7 +1338,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
       printf ("In unparseBinaryExpr() expr = %s \n",expr->class_name().c_str());
 #endif
 
-     unp->u_debug->printDebugInfo("entering unparseBinaryExpr", TRUE);
+     unp->u_debug->printDebugInfo("entering unparseBinaryExpr", true);
      SgBinaryOp* binary_op = isSgBinaryOp(expr);
      ROSE_ASSERT(binary_op != NULL);
 
@@ -1350,33 +1350,33 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
   // int toplevel_expression = !info.get_nested_expression();
-     bool iostream_op = FALSE;
+     bool iostream_op = false;
 
   // Same reasoning above except with parenthesis operator function.
-     bool paren_op = FALSE;
+     bool paren_op = false;
 
   // Same reasoning above except with "this" expression.
-     bool this_op = FALSE;
+     bool this_op = false;
 
   // Flag to indicate whether the rhs operand is an overloaded arrow operator
   // (to control the printing of parenthesis).
-     bool arrow_op = FALSE;
+     bool arrow_op = false;
 
   // Flag to indicate whether the lhs operand contains an overloaded arrow operator
   // to control printing of operator.
-     bool overload_arrow = FALSE;
+     bool overload_arrow = false;
 
      if (!unp->opt.get_overload_opt() && unp->u_sage->isIOStreamOperator(binary_op->get_rhs_operand()) )
-          iostream_op = TRUE;
+          iostream_op = true;
 
      if (!unp->opt.get_overload_opt() && unp->u_sage->isBinaryParenOperator(binary_op->get_rhs_operand()) )
-          paren_op = TRUE;
+          paren_op = true;
 
      if (!unp->opt.get_this_opt() && isSgThisExp(binary_op->get_lhs_operand()) )
-          this_op = TRUE;
+          this_op = true;
 
      if (!unp->opt.get_overload_opt() && unp->u_sage->isOverloadedArrowOperator(binary_op->get_rhs_operand()) )
-          arrow_op = TRUE;
+          arrow_op = true;
 
      info.set_nested_expression();
 
@@ -1397,11 +1397,11 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
         {
        // Special case:
        // curprint ( "/* Special case of operator[] found */\n";
-          unp->u_debug->printDebugInfo("we have special case: []", TRUE);
-          unp->u_debug->printDebugInfo("lhs: ", FALSE);
+          unp->u_debug->printDebugInfo("we have special case: []", true);
+          unp->u_debug->printDebugInfo("lhs: ", false);
           unparseExpression(binary_op->get_lhs_operand(), info);
           curprint (  "[") ; 
-          unp->u_debug->printDebugInfo("rhs: ", FALSE);
+          unp->u_debug->printDebugInfo("rhs: ", false);
           unparseExpression(binary_op->get_rhs_operand(), info);
           curprint (  "]"); 
         }
@@ -1440,14 +1440,14 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                        {
                       // Prefix unary operator.
                       // printf ("Handle prefix operator ... \n");
-                         unp->u_debug->printDebugInfo("prefix unary operator found", TRUE);
-                         unp->u_debug->printDebugInfo("rhs: ", FALSE);
+                         unp->u_debug->printDebugInfo("prefix unary operator found", true);
+                         unp->u_debug->printDebugInfo("rhs: ", false);
 
                       // printf ("Prefix unary operator: Output the RHS operand ... = %s \n",binary_op->get_rhs_operand()->sage_class_name());
                       // curprint ( "\n /* Prefix unary operator: Output the RHS operand ... */ \n";
                          unparseExpression(binary_op->get_rhs_operand(), info);
 
-                         unp->u_debug->printDebugInfo("lhs: ", FALSE);
+                         unp->u_debug->printDebugInfo("lhs: ", false);
 
                       // DQ (2/22/2005): Treat the operator->() the same as an SgArrowExp IR node
                       // DQ (2/19/2005): When converting to overloaded operator syntax (e.g. "++" instead of "operator++()")
@@ -1513,7 +1513,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                printf ("overload option is turned off and this is a SgDotExp! \n");
                if ( !info.SkipComments() || !info.SkipCPPDirectives() )
                   {
-                    curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == TRUE */ \n");
+                    curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == true */ \n");
                   }
 #endif
                overload_arrow = unp->u_sage->NoDereference(binary_op->get_lhs_operand());
@@ -1524,7 +1524,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
             // curprint ( "\n /* mfunc_ref = " + StringUtility::numberToString(mfunc_ref) + " */ \n";
 
-               unp->u_debug->printDebugInfo("lhs: ", FALSE);
+               unp->u_debug->printDebugInfo("lhs: ", false);
 
                bool addParensForLhs = false;
                SgExpression* lhs = binary_op->get_lhs_operand();
@@ -1560,7 +1560,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
             // unparseExpression(binary_op->get_lhs_operand(), info);
                unparseExpression(lhs, info);
-               unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), TRUE);
+               unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
 
                if (addParensForLhs == true)
                   {
@@ -1575,7 +1575,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                  // Print out the dot:
                  // curprint ( "\n /* Print out the dot */ \n";
                     curprint ( info.get_operator_name());
-                    unp->u_debug->printDebugInfo("printed dot because is not member function", TRUE);
+                    unp->u_debug->printDebugInfo("printed dot because is not member function", true);
                   }
                  else
                   {
@@ -1599,7 +1599,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                        {
                       // curprint ( "\n /* Print out the dot in second case */ \n";
                          curprint ( info.get_operator_name());
-                         unp->u_debug->printDebugInfo("printed dot because is not operator overloading function", TRUE);
+                         unp->u_debug->printDebugInfo("printed dot because is not operator overloading function", true);
                        }
                   }
              }
@@ -1611,7 +1611,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
             // so, we need to handle this differently. Otherwise, skip this section and 
             // unparse using the default case below.
 
-            // curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == FALSE */ \n";
+            // curprint ( "\n /* ( !unp->opt.get_overload_opt() && isSgDotExp(expr) ) == false */ \n";
 #if 0
                curprint ( string("\n /* ( !unp->opt.get_overload_opt() && isSgArrowExp(expr) ) = ") + 
                     ((!unp->opt.get_this_opt() && isSgArrowExp(expr)) ? "true" : "false") + " */ \n");
@@ -1627,9 +1627,9 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                     if (!unp->opt.get_overload_opt() && unp->u_sage->isOperator(binary_op->get_rhs_operand()))
                        goto dereference;
 
-                    unp->u_debug->printDebugInfo("lhs: ", FALSE);
+                    unp->u_debug->printDebugInfo("lhs: ", false);
                     unparseExpression(binary_op->get_lhs_operand(), info);
-                    unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), TRUE);
+                    unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
 
                  // Check if the lhs is a this expression. If so, then don't print the arrow. 
                     if (!isSgThisExp(binary_op->get_lhs_operand())) 
@@ -1653,9 +1653,9 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                          if (unp->u_sage->noQualifiedName(binary_op->get_rhs_operand())) 
                             {
                               curprint ( "(*"); 
-                              unp->u_debug->printDebugInfo("lhs: ", FALSE);
+                              unp->u_debug->printDebugInfo("lhs: ", false);
                               unparseExpression(binary_op->get_lhs_operand(), info);
-                              unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), TRUE);
+                              unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
                               curprint ( ")");
                             }
                        }
@@ -1664,11 +1664,11 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                       // We reach this if the options were on, or if this was not a dot, arrow, or unary
                       // prefix expression. This is the default case.
 
-                         unp->u_debug->printDebugInfo("lhs: ", FALSE);
+                         unp->u_debug->printDebugInfo("lhs: ", false);
                       // curprint ( "/* lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
                          unparseExpression(binary_op->get_lhs_operand(), info);
                       // curprint ( "/* DONE: lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
-                         unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), TRUE);
+                         unp->u_debug->printDebugInfo(getSgVariant(expr->variant()), true);
 
                       // Before checking to insert a newline to prevent linewrapping, check that this
                       // expression is a primitive operator and not dot or arrow expressions.
@@ -1682,7 +1682,7 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              {
                SgUnparse_Info newinfo(info);
                newinfo.set_inRhsExpr();
-               unp->u_debug->printDebugInfo("rhs: ", FALSE);
+               unp->u_debug->printDebugInfo("rhs: ", false);
             // unparseExpression(binary_op->get_rhs_operand(), newinfo);
                unparseExpression(rhs, newinfo);
              }
@@ -2083,7 +2083,7 @@ UnparseLanguageIndependentConstructs::unparseEnumVal(SgExpression* expr, SgUnpar
      SgEnumVal* enum_val = isSgEnumVal(expr);
      ROSE_ASSERT(enum_val != NULL);
 
-  // printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "TRUE" : "FALSE");
+  // printf ("In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = %s \n",info.inEnumDecl() ? "true" : "false");
   // curprint ( "\n/* In Unparse_ExprStmt::unparseEnumVal: info.inEnumDecl() = " + (info.inEnumDecl() ? "true" : "false") + " */\n ";
 
   // todo: optimize this so that the qualified name is only printed when necessary.

@@ -141,7 +141,7 @@ DataMemberPointersToIR<Functional1,Functional2>::generateGraph(SgNode* graphNode
 
        }//END FOR
 
-     }//END IF addToGraph == TRUE
+     }//END IF addToGraph == true
 
 };
 

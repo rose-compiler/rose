@@ -64,7 +64,7 @@ Terminal::setBuildDefaultConstructor ( bool X )
 bool
 Terminal::getBuildDefaultConstructor () const
    {
-     ROSE_ASSERT (buildDefaultConstructor == TRUE || buildDefaultConstructor == FALSE);
+     ROSE_ASSERT (buildDefaultConstructor == true || buildDefaultConstructor == false);
      return buildDefaultConstructor;
    }
 
@@ -148,7 +148,7 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
   // This function builds a string that represents the initialization of member data
   // if the default initializers are used (for default constructors) then all member 
   // data is initialized using the initializer (all member data should be defined 
-  // with an initializer string).  If withInitializers == FALSE (for non-default 
+  // with an initializer string).  If withInitializers == false (for non-default 
   // constructors) then all member data is initialized with the name used for the 
   // for the associated constructor parameter.  Excluded data members are initialized
   // with their default initializer.
@@ -261,7 +261,7 @@ StringUtility::FileWithLineNumbers Terminal::buildCopyMemberFunctionSource ()
   // printf ("In Terminal::buildCopyMemberFunctionSource(): class name = %s \n",name);
 
      StringUtility::FileWithLineNumbers returnString;
-     if (automaticGenerationOfCopyFunction == TRUE)
+     if (automaticGenerationOfCopyFunction == true)
         {
           string constructArgCopy = "", constructArgList = "", postConstructCopy = "";
           string filename     = "../Grammar/copyMemberFunction.macro";
@@ -551,7 +551,7 @@ Terminal::addGrammarPrefixToName()
 
   // Error Checking! Check to make sure that grammar's name does not already exist in the
   // terminal's name.  This helps make sure that elements are not represented twice!
-     ROSE_ASSERT (GrammarString::isContainedIn(name,grammarName) == FALSE);
+     ROSE_ASSERT (GrammarString::isContainedIn(name,grammarName) == false);
 
   // Set the name to include the grammar's prefix
   // Modify this statement to avoid Insure++ warning
@@ -732,7 +732,7 @@ Terminal::setDataPrototype ( const GrammarString & inputMemberData)
   // string representing the access functions (get and set functions)
   // and will be placed into the buildGrammarStringForSourceList (inputMemberData);
   
-  bool pureVirtual = FALSE;
+  bool pureVirtual = false;
   
   string accessFunctionString = buildDataAccessFunctions (inputMemberData);
   GrammarString* sourceCodeString = new GrammarString(accessFunctionString);
@@ -790,7 +790,7 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
 
      string markerString = "DATA_ACCESS_FUNCTION";
 
-     bool pureVirtual = FALSE;
+     bool pureVirtual = false;
      SETUP_MARKER_STRINGS_MACRO
 
   // We can't edit anything that would be tree position dependent be 
@@ -972,7 +972,7 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
   // printf ("Inside of Terminal::addElementToList \n");
 
      int i = 0;
-     bool duplicateEntryFound = FALSE;
+     bool duplicateEntryFound = false;
      vector<GrammarString *>::iterator stringListIterator;
   // Error checking (make sure the element is not already in the list!)
      for( stringListIterator = targetList.begin();
@@ -982,7 +982,7 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
 	 if (*stringListIterator == &element)
 	   {
 	     printf ("Duplicate entry found in list! (targetList[%d] == element) \n",i);
-	     duplicateEntryFound = TRUE;
+	     duplicateEntryFound = true;
 	     
 	     // If any of the GrammarString objects is marked to skip construction 
 	     // of access functions (for all the data at a node!) then mark it in the list's copy
@@ -998,7 +998,7 @@ void Terminal::addElementToList ( vector<GrammarString *> & targetList, const Gr
   // Since the grammar tree is not build yet we cannot search the parents
   // so this abstraction for adding elements to the lists is not used to
   // exclude any elements (this is post processed).
-     if (duplicateEntryFound == FALSE)
+     if (duplicateEntryFound == false)
        {
 	 const GrammarString *const &tmpRef = new GrammarString(element);
 	 targetList.push_back( (GrammarString *const &) tmpRef );
@@ -1080,7 +1080,7 @@ Terminal::editSubstituteExcludeSubTree ( const string& oldString, const string& 
 void
 Terminal::editSubstitute ( const string& oldString, const string& markerString, const string& filename )
    {
-     bool pureVirtual = FALSE;
+     bool pureVirtual = false;
   // char* returnString = "";
 
   // Call MACRO to read new string
@@ -1092,7 +1092,7 @@ Terminal::editSubstitute ( const string& oldString, const string& markerString, 
 void
 Terminal::editSubstituteSubTree        ( const string& oldString, const string& markerString, const string& filename )
    {
-     bool pureVirtual = FALSE;
+     bool pureVirtual = false;
   // char* returnString = "";
 
   // Call MACRO to read new string
@@ -1105,7 +1105,7 @@ Terminal::editSubstituteSubTree        ( const string& oldString, const string& 
 void
 Terminal::editSubstituteExclude        ( const string& oldString, const string& markerString, const string& filename )
    {
-     bool pureVirtual = FALSE;
+     bool pureVirtual = false;
   // char* returnString = "";
 
   // Call MACRO to read new string
@@ -1117,7 +1117,7 @@ Terminal::editSubstituteExclude        ( const string& oldString, const string& 
 void
 Terminal::editSubstituteExcludeSubTree ( const string& oldString, const string& markerString, const string& filename )
    {
-     bool pureVirtual = FALSE;
+     bool pureVirtual = false;
   // char* returnString = "";
 
   // Call MACRO to read new string

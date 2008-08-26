@@ -36,7 +36,7 @@ Unparse_Sym::unparseSymbol(SgSymbol* sym, SgUnparse_Info& info)
           default:
              {
                printf ("Default reached in Unparse_Sym::unparseSymbol(sym = %p = %s,info) \n",sym,sym->class_name().c_str());
-               unp->u_debug->printDebugInfo("Abort: Unknown symbol", TRUE);
+               unp->u_debug->printDebugInfo("Abort: Unknown symbol", true);
                ROSE_ABORT();
                break;
              }

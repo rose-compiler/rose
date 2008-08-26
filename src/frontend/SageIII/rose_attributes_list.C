@@ -1317,7 +1317,7 @@ ROSEAttributesListContainer::isInList ( const string & fName )
 #endif
        // if (!strcmp( (*i)->getFileName() , fName ) )
           if ( (*i)->getFileName() == fName )
-               returnValue = TRUE;
+               returnValue = true;
         }
 #else
      returnValue = (attributeListMap.find(fName) != attributeListMap.end());

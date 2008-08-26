@@ -87,14 +87,14 @@ class DeleteFlag { // Wrapper for extra argument type checking
 
 // DQ (7/18/2004): Comment out so that we can link when it is 
 // turned on to the definition of DEF2TYPE_TRAVERSAL
-// #define TYPE_TRAVERSAL TRUE // traversal within types
+// #define TYPE_TRAVERSAL true // traversal within types
 
 #if 1
 // DQ (7/18/2004): Turn this on by default so that nested traversals 
 // on types are possible this does not change the default behavior.
 #define TYPE_TRAVERSAL DEF_TRAVERSAL // traversal within types
 
-// DEF2TYPE_TRAVERSAL must be defined as FALSE in any release of ROSE!
+// DEF2TYPE_TRAVERSAL must be defined as false in any release of ROSE!
 
 // This is the usual setting (traversal excludes types).  Users cannot apply transformations
 // to SgType objects since these objects are shared within the AST.
@@ -127,14 +127,15 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #define ROSE_ASSERT assert
 #define ROSE_ABORT  abort
 
-#define TRUE  1
-#define FALSE 0
+// JJW (8/26/2008): Removing these
+// #define TRUE  1
+// #define FALSE 0
 
 #define MAX_NUMBER_OF_TERMINALS    50
 #define MAX_NUMBER_OF_NONTERMINALS 50
 
 // Support for debugging a bug in Insure++
-#define INSURE_BUG FALSE
+#define INSURE_BUG false
 
 #include <vector>
 // #ifndef STL_LIST_IS_BROKEN

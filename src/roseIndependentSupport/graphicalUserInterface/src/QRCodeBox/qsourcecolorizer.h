@@ -223,7 +223,7 @@ public:
 class HLItemCollection: public HLItem{
 public:
     HLItemCollection( int state=0, int context=0 ): HLItem( state, context )
-    { m_items.setAutoDelete( TRUE ); }
+    { m_items.setAutoDelete( true ); }
 
     void appendChild( HLItem* item ) { m_items.append( item ); }
 
@@ -285,7 +285,7 @@ public:
 
     QStringList styleList() const;
     virtual void updateStyles( QMap<QString, QPair<QFont, QColor> >& values );
-    virtual void process( QTextDocument*, QTextParagraph*, int, bool=FALSE );
+    virtual void process( QTextDocument*, QTextParagraph*, int, bool=false );
     virtual int computeLevel( QTextParagraph*, int ) { return 0; }
 
 protected:

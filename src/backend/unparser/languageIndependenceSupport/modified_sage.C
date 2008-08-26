@@ -25,8 +25,8 @@ bool Unparse_MOD_SAGE::isOperator(SgExpression* expr)
      ROSE_ASSERT(expr != NULL);
 
      if (isBinaryOperator(expr) || isUnaryOperator(expr))
-          return TRUE;
-     return FALSE;
+          return true;
+     return false;
    }
 
 // DQ (8/13/2007): Added by Thomas to refactor unparser.
@@ -60,7 +60,7 @@ bool Unparse_MOD_SAGE::isBinaryEqualsOperator(SgExpression* expr)
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
   if (func_ref != NULL)
@@ -69,8 +69,8 @@ bool Unparse_MOD_SAGE::isBinaryEqualsOperator(SgExpression* expr)
        func_name = mfunc_ref->get_symbol()->get_name().str();
   
   if (func_name == "operator=") 
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 //-----------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-     if (!func_ref && !mfunc_ref) return FALSE;
+     if (!func_ref && !mfunc_ref) return false;
 
      string func_name;
      if (func_ref != NULL)
@@ -94,9 +94,9 @@ Unparse_MOD_SAGE::isBinaryEqualityOperator(SgExpression* expr)
           func_name = mfunc_ref->get_symbol()->get_name().str();
 
      if (func_name == "operator==") 
-          return TRUE;
+          return true;
 
-     return FALSE;
+     return false;
    }
 
 //-----------------------------------------------------------------------------------
@@ -110,7 +110,7 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
   if(func_ref != NULL)
@@ -123,9 +123,9 @@ bool Unparse_MOD_SAGE::isBinaryInequalityOperator(SgExpression* expr)
       func_name == "operator<" || 
       func_name == "operator>" ||
       func_name == "operator!="  ) 
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 
 }
 
@@ -140,7 +140,7 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
   if(func_ref != NULL)
@@ -156,9 +156,9 @@ bool Unparse_MOD_SAGE::isBinaryArithmeticOperator(SgExpression* expr)
       func_name == "operator-=" || 
       func_name == "operator*="|| 
       func_name == "operator/="  ) 
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 
 }
 
@@ -173,7 +173,7 @@ bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
   if (func_ref != NULL)
@@ -182,8 +182,8 @@ bool Unparse_MOD_SAGE::isBinaryParenOperator(SgExpression* expr)
        func_name = mfunc_ref->get_symbol()->get_name().str();
 
   if (func_name == "operator()") 
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 }
 
 //-----------------------------------------------------------------------------------
@@ -197,7 +197,7 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
   string func_name;
   if (func_ref != NULL)
@@ -206,8 +206,8 @@ bool Unparse_MOD_SAGE::isBinaryBracketOperator(SgExpression* expr)
        func_name = mfunc_ref->get_symbol()->get_name().str();
 
   if (func_name == "operator[]") 
-    return TRUE;
-  return FALSE;
+    return true;
+  return false;
 
 }
 
@@ -225,7 +225,7 @@ bool Unparse_MOD_SAGE::isBinaryOperator(SgExpression* expr)
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
   
      if (!func_ref && !mfunc_ref)
-          return FALSE;
+          return false;
 
      string func_name;
      if (func_ref != NULL)
@@ -446,13 +446,13 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
                          SgInitializedNamePtrList argList = mfunc_decl->get_args();
 	                   // postfix operators have one argument (0), prefix operators have none ()
                          if (argList.size() == 1)
-                            return TRUE;
+                            return true;
                        }
                   }
              }
         }
 
-     return FALSE;
+     return false;
    }
 
 #if 0
@@ -462,8 +462,8 @@ bool Unparse_MOD_SAGE::isUnaryPostfixOperator(SgExpression* expr)
 //  void Unparse_MOD_SAGE::RemoveArgs
 //  
 //  This function determines whether to remove the argument list of overloaded 
-//  operators. It returns TRUE if the function is an unary operator. Otherwise, it
-//  returns FALSE for all other functions. 
+//  operators. It returns true if the function is an unary operator. Otherwise, it
+//  returns false for all other functions. 
 //-----------------------------------------------------------------------------------
 bool
 Unparse_MOD_SAGE::RemoveArgs(SgExpression* expr)
@@ -1049,7 +1049,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 //  Auxiliary function to determine whether parenthesis is needed around
 //  this expression list. If the list only contains one element and the
 //  element is a binary operator whose rhs is an operator(), then parens
-//  are removed (return TRUE). Otherwise, return FALSE.
+//  are removed (return true). Otherwise, return false.
 //-----------------------------------------------------------------------------------
 bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
   ROSE_ASSERT(expr_list != NULL);
@@ -1067,12 +1067,12 @@ bool Unparse_MOD_SAGE::RemovePareninExprList(SgExprListExp* expr_list) {
 	  //contains the member operator() overloaded function
 	  if (i == expr_list->get_expressions().end() && 
 	      isBinaryParenOperator(binary_op->get_rhs_operand()))
-	    return TRUE;
+	    return true;
 	}
       }
     }
   }
-  return FALSE;
+  return false;
 }
 
 //-----------------------------------------------------------------------------------
@@ -1229,7 +1229,7 @@ Unparse_MOD_SAGE::isOverloadedArrowOperator(SgExpression* expr)
      SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
      SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
 
-     if (!func_ref && !mfunc_ref) return FALSE;
+     if (!func_ref && !mfunc_ref) return false;
 
      string func_name;
      if (func_ref != NULL)
@@ -1252,9 +1252,9 @@ Unparse_MOD_SAGE::isOverloadedArrowOperator(SgExpression* expr)
        // strcmp(mfunc_ref->get_symbol()->get_name().str(), "operator->");  
           if ( ( mfunc_ref->get_symbol()->get_name().getString() == "operator->" || 
                 mfunc_ref->get_symbol()->get_name().getString() == "operator->*"   ) )
-               return TRUE;
+               return true;
             else
-               return FALSE;
+               return false;
         }
   
   // [DT] 4/4/2000 -- Added check for func_name!=NULL.
@@ -1309,11 +1309,11 @@ Unparse_MOD_SAGE::isUnaryOperatorArrowSubtree(SgExpression* expr)
 bool
 Unparse_MOD_SAGE::NoDereference(SgExpression* expr)
    {
-     bool arrow = FALSE;
+     bool arrow = false;
 
   // now we first check of this is an dereference operator. If so, we need to 
   // determine if the operand contains an overloaded arrow operator. If this
-  // is true, set arrow = TRUE so the dereference operator will be suppressed.
+  // is true, set arrow = true so the dereference operator will be suppressed.
      SgPointerDerefExp* deref_exp = isSgPointerDerefExp(expr);
      if (deref_exp != NULL)
         {
@@ -1339,7 +1339,7 @@ Unparse_MOD_SAGE::NoDereference(SgExpression* expr)
 bool Unparse_MOD_SAGE::isIOStreamOperator(SgExpression* expr) {
   SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
   SgMemberFunctionRefExp* mfunc_ref = isSgMemberFunctionRefExp(expr);
-  if (!func_ref && !mfunc_ref) return FALSE;
+  if (!func_ref && !mfunc_ref) return false;
 
 // This results in a FMR in purify since the casting operator for 
 // SgName (operator char*) causes a SgName object to be built and 
@@ -1354,9 +1354,9 @@ bool Unparse_MOD_SAGE::isIOStreamOperator(SgExpression* expr) {
   
   //check if the function name is "operator<<" or "operator>>"
   if (func_name == "operator<<" || func_name == "operator>>")
-    return TRUE;
+    return true;
 
-  return FALSE;
+  return false;
 }
 
 //-----------------------------------------------------------------------------------
@@ -1498,7 +1498,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
           if (info.isPrivateAccess())
              {
             // If the current declaration access setting if different from the one stored in
-            // info then set flag to TRUE, so that the access specified will be output.
+            // info then set flag to true, so that the access specified will be output.
                if (!decl_stmt->get_declarationModifier().get_accessModifier().isPrivate())
                     flag = true;
              }
@@ -1507,7 +1507,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                if (info.isProtectedAccess())
                   {
                  // If the current declaration access setting if different from the one stored in
-                 // info then set flag to TRUE, so that the access specified will be output.
+                 // info then set flag to true, so that the access specified will be output.
                     if (!decl_stmt->get_declarationModifier().get_accessModifier().isProtected())
                          flag = true;
                   }
@@ -1516,7 +1516,7 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                     if (info.isPublicAccess())
                        {
                       // If the current declaration access setting if different from the one stored in
-                      // info then set flag to TRUE, so that the access specified will be output.
+                      // info then set flag to true, so that the access specified will be output.
                          if (!decl_stmt->get_declarationModifier().get_accessModifier().isPublic())
                               flag = true;
                        }

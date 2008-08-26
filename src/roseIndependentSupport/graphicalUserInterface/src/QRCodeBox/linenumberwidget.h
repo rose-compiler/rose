@@ -14,7 +14,7 @@ public:
     virtual ~LineNumberWidget();
 
 public slots:
-    void doRepaint() { repaint( FALSE ); }
+    void doRepaint() { repaint( false ); }
 
 protected:
     virtual void resizeEvent( QResizeEvent* );

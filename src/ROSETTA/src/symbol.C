@@ -87,7 +87,7 @@ Grammar::setUpSymbols ()
 
      Symbol.setSubTreeFunctionPrototype ( "HEADER_GET_TYPE", "../Grammar/Symbol.code" );
      Symbol.excludeFunctionPrototype    ( "HEADER_GET_TYPE", "../Grammar/Symbol.code" );
-     Symbol.setAutomaticGenerationOfCopyFunction(FALSE);
+     Symbol.setAutomaticGenerationOfCopyFunction(false);
 
 #if 1
   // DQ (1/24/2006): Added attribute via ROSETTA (changed to pointer to AstAttributeMechanism)
@@ -100,7 +100,7 @@ Grammar::setUpSymbols ()
 #endif
 
   // Skip building a parse function for this terminal/nonterminal of the Grammar
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
         {
           Symbol.excludeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code" );
           Symbol.excludeFunctionSource   ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );

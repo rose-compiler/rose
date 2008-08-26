@@ -3,9 +3,9 @@
 // DQ (10/15/2007): This controls the output of debugging information within the fixupCopy() member function of many IR nodes.
 // These member functions are used to handle custom IR node specific details of correcting references made by the AST copy 
 // mechanism between the original AST and the copy of the AST.
-#define DEBUG_FIXUP_COPY FALSE
+#define DEBUG_FIXUP_COPY false
 
-#define DEBUG_FIXUP_COPY_OUTPUT_MAP FALSE
+#define DEBUG_FIXUP_COPY_OUTPUT_MAP false
 
 void outputMap ( SgCopyHelp & help )
    {

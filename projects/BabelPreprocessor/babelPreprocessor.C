@@ -103,7 +103,7 @@ main ( int argc, char * argv[] )
   // be commented out.  It is not required for Babel Processing. This is now fixed!
 
   // Generate the final C++ source code from the potentially modified SAGE AST
-  // sageProject.set_verbose(TRUE);
+  // sageProject.set_verbose(true);
      sageProject.unparse();
 #endif
 

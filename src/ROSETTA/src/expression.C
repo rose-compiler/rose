@@ -272,7 +272,7 @@ Grammar::setUpExpressions ()
 
 #ifdef HL_GRAMMARS
      X_Expression.setFunctionPrototype          ( "HEADER_X_EXPRESSION",     "../Grammar/Expression.code" );
-     X_Expression.setAutomaticGenerationOfCopyFunction(FALSE);
+     X_Expression.setAutomaticGenerationOfCopyFunction(false);
      non_X_Expression.setFunctionPrototype      ( "HEADER_NON_X_EXPRESSION", "../Grammar/Expression.code" );
 #endif
 
@@ -671,7 +671,7 @@ Grammar::setUpExpressions ()
   // QY:9/30/04: remove statement pointer. use parent pointer instead
   // ExpressionRoot.setDataPrototype ( "SgStatement*", "statement", "= NULL", 
   //      CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // ExpressionRoot.setAutomaticGenerationOfDataAccessFunctions(FALSE);
+  // ExpressionRoot.setAutomaticGenerationOfDataAccessFunctions(false);
 
      ExprListExp.setFunctionPrototype ( "HEADER_EXPRESSION_LIST_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -747,9 +747,9 @@ Grammar::setUpExpressions ()
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (3/25/2006): We can have ROSETTA generate the constructor now that we use a C++ style std::string
-  // StringVal.setAutomaticGenerationOfConstructor(FALSE);
+  // StringVal.setAutomaticGenerationOfConstructor(false);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // StringVal.setAutomaticGenerationOfDestructor (FALSE);
+  // StringVal.setAutomaticGenerationOfDestructor (false);
 
   // DQ (3/25/2006): This should take a const char (since we don't modified it and it make for a simpler interface)
   // StringVal.setDataPrototype ( "char*", "value", "= NULL",
@@ -1039,7 +1039,7 @@ Grammar::setUpExpressions ()
 #if 0
   // DQ (5/20/2004): removed need_paren from this class and added it to the base class so that 
   // all expression could allow it to be set (so that we can use the value as set in EDG)!
-     CastExp.setDataPrototype     ( "bool"  , "need_paren", "= TRUE",
+     CastExp.setDataPrototype     ( "bool"  , "need_paren", "= true",
 				    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 #if 0
@@ -1203,7 +1203,7 @@ Grammar::setUpExpressions ()
 #if 0
   // DQ (5/20/2004): removed need_paren from this class and added it to the base class so that 
   // all expression could allow it to be set (so that we can use the value as set in EDG)!
-     AssignInitializer.setDataPrototype     ( "bool"    , "need_paren"     , "= TRUE",
+     AssignInitializer.setDataPrototype     ( "bool"    , "need_paren"     , "= true",
 					      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 

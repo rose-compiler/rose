@@ -121,7 +121,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
      if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
         {
           curprint( "("); 
-          unp->u_debug->printDebugInfo("( from OneElemConInit", TRUE);
+          unp->u_debug->printDebugInfo("( from OneElemConInit", true);
         }
 
   // printf ("con_init->get_args() = %p \n",con_init->get_args());
@@ -141,7 +141,7 @@ Unparse_ExprStmt::unparseOneElemConInit(SgConstructorInitializer* con_init, SgUn
      if (con_init->get_need_name() && unp->u_sage->printConstructorName(con_init)) 
         {
           curprint( ")");
-          unp->u_debug->printDebugInfo(") from OneElemConInit", TRUE);
+          unp->u_debug->printDebugInfo(") from OneElemConInit", true);
         }
 
 #if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
@@ -1481,7 +1481,7 @@ Unparse_ExprStmt::unparseTemplateInstantiationMemberFunctionDeclStmt (SgStatemen
           (templateInstantiationMemberFunctionDeclaration->get_file_info()->isOutputInCodeGeneration() == true) ? "true" : "false");
 #endif
 
-  // DQ (6/1/2005): Use this case when PROTOTYPE_INSTANTIATIONS_IN_IL is to TRUE in EDG's host_envir.h
+  // DQ (6/1/2005): Use this case when PROTOTYPE_INSTANTIATIONS_IN_IL is to true in EDG's host_envir.h
      bool outputMemberFunctionTemplateInstantiation = false;
      if ( isTransformed (templateInstantiationMemberFunctionDeclaration) == true )
         {
@@ -2788,10 +2788,10 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                info.set_CheckAccess();
              }
 
-       // printDebugInfo("entering unp->u_sage->printSpecifier1", TRUE);
+       // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
           unp->u_sage->printSpecifier1(mfuncdecl_stmt, info);
 
-       // printDebugInfo("entering unp->u_sage->printSpecifier2", TRUE);
+       // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
           unp->u_sage->printSpecifier2(mfuncdecl_stmt, info);
           info.unset_CheckAccess();
 
@@ -3205,7 +3205,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // printf ("Calling unp->u_sage->printSpecifier1() \n");
   // curprint ( string("\n/* Calling unp->u_sage->printSpecifier1() */ \n";
-  // printDebugInfo("entering unp->u_sage->printSpecifier1", TRUE);
+  // printDebugInfo("entering unp->u_sage->printSpecifier1", true);
      unp->u_sage->printSpecifier1(vardecl_stmt, ninfo); 
   // printf ("DONE: Calling unp->u_sage->printSpecifier1() \n");
   // curprint ( string("\n/* DONE: Calling unp->u_sage->printSpecifier1() */ \n";
@@ -3424,7 +3424,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
             // printf ("Calling unp->u_sage->printSpecifier2 \n");
             // curprint ( string("\n/* Calling unp->u_sage->printSpecifier2() */ \n";
-            // printDebugInfo("entering unp->u_sage->printSpecifier2", TRUE);
+            // printDebugInfo("entering unp->u_sage->printSpecifier2", true);
                unp->u_sage->printSpecifier2(vardecl_stmt, saved_ninfo);
             // curprint ( string("\n/* DONE: Calling unp->u_sage->printSpecifier2() */ \n";
 
@@ -3573,7 +3573,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // if ( (isSgArrayType(tmp_type) != NULL) && (declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) )
                if ( (declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) )
                   {
-                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == TRUE \n");
+                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == true \n");
                     printf ("tmp_type = %p = %s \n",tmp_type,tmp_type->class_name().c_str());
 #if 0
                     if (isSgArrayType(tmp_type) != NULL)
@@ -3587,7 +3587,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   }
                  else
                   {
-                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == FALSE \n");
+                    printf ("(declStmt != NULL) && (isSgTypedefDeclaration(declStmt) == NULL) == false \n");
                     unp->u_type->unparseType(tmp_type, ninfo2);
                   }
 #else
@@ -3851,7 +3851,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
             // if (get_suppress_global(classdecl_stmt))
             //      ninfo.set_SkipGlobal(); //attributes.h
 
-            // printDebugInfo("entering unp->u_sage->printSpecifier", TRUE);
+            // printDebugInfo("entering unp->u_sage->printSpecifier", true);
                unp->u_sage->printSpecifier(classdecl_stmt, ninfo);
                info.set_access_attribute(ninfo.get_access_attribute());
              }
@@ -4132,7 +4132,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              {
                info.set_CheckAccess();
              }
-       // printDebugInfo("entering unp->u_sage->printSpecifier", TRUE);
+       // printDebugInfo("entering unp->u_sage->printSpecifier", true);
           unp->u_sage->printSpecifier(enum_stmt, info);
           info.unset_CheckAccess();
           curprint ( string("enum " ) + enum_stmt->get_name().str() + " ");
@@ -4291,7 +4291,7 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if (expr_stmt->get_the_expr())
      if (expr_stmt->get_expression())
         {
-       // printDebugInfo(getSgVariant(expr_stmt->get_the_expr()->variant()), TRUE); 
+       // printDebugInfo(getSgVariant(expr_stmt->get_the_expr()->variant()), true); 
        // unparseExpression(expr_stmt->get_the_expr(), newinfo);
           unparseExpression(expr_stmt->get_expression(), newinfo);
         }
@@ -4717,7 +4717,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           SgClassDefinition *cdefn = isSgClassDefinition(typedef_stmt->get_parent());
           if (cdefn && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
                info.set_CheckAccess();
-       // printDebugInfo("entering unp->u_sage->printSpecifier", TRUE);
+       // printDebugInfo("entering unp->u_sage->printSpecifier", true);
           unp->u_sage->printSpecifier(typedef_stmt, info);
           info.unset_CheckAccess();
         }

@@ -9,8 +9,9 @@
 // #define true  1
 // #endif
 
-#define FALSE 0
-#define TRUE 1
+// JJW (8/26/2008): Removing these
+// #define FALSE 0
+// #define TRUE 1
 
 #if 0
 #ifndef INLINE

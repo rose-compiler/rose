@@ -693,7 +693,7 @@ cout << "BEFORE checkPragmaRHSUnionControl" << endl;
                cout << "Parent class has no fields" << endl;
           else if(variableDeclaration.empty() == true){
                         }/* End if(variableDeclaration.empty() == true */
-	  ROSE_ASSERT (variableDeclaration.empty () == FALSE);
+	  ROSE_ASSERT (variableDeclaration.empty () == false);
 
 	  tempString =
 	    " ("+ controlPrefix + controlVariableName + "==" + condition +
@@ -747,7 +747,7 @@ cout << "BEFORE checkPragmaRHSUnionControl" << endl;
 				      new SgName (controlVariableName.
 						  c_str ()),
 				      NodeQuery::VariableDeclarationFromName);
-	  ROSE_ASSERT (variableDeclaration.empty () == FALSE);
+	  ROSE_ASSERT (variableDeclaration.empty () == false);
 
 	  tempString =
 	    " ("+ controlPrefix + controlVariableName + "!=" + condition +

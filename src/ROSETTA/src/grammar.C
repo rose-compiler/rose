@@ -29,7 +29,7 @@ vector<grammarFile*> Grammar::fileList;
 // #                   Grammar Member Functions                   #
 // ################################################################
 
-#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS FALSE
+#define WRITE_SEPARATE_FILES_FOR_EACH_CLASS false
 
 string replaceString(string patternInInput, string replacePattern, string input) {
   string::size_type posIter = input.find(patternInInput);
@@ -69,11 +69,11 @@ Grammar::Grammar ( const string& inputGrammarName,
   // We want to set the parent grammar as early as possible since the specification of terminals/nonterminals is
   // dependent upon the the current grammar being a "RootGrammar" (using the isRootGrammar() member function)
   // and the value of the boolean returned from isRootGrammardepends upon the pointer to the parentGrammar being set!
-     bool skipConstructionOfParseFunctions = FALSE;
+     bool skipConstructionOfParseFunctions = false;
      if (inputParentGrammar == NULL)
         {
        // We want to skip the construction of parse member function for the C++ grammar
-          skipConstructionOfParseFunctions = TRUE;
+          skipConstructionOfParseFunctions = true;
         }
        else
         {
@@ -123,7 +123,7 @@ Grammar::Grammar ( const string& inputGrammarName,
      setFilenameForGlobalDeclarations ("../Grammar/Cxx_GlobalDeclarations.macro");
 
   // We want to skip the construction of parse member function for the C++ grammar
-     if ( skipConstructionOfParseFunctions == TRUE)
+     if ( skipConstructionOfParseFunctions == true)
         {
           Terminal & Node = *lookupTerminal(terminalList, "Node");
           Node.excludeSubTreeFunctionPrototype ( "HEADER_PARSER", "../Grammar/Node.code");
@@ -164,7 +164,7 @@ Grammar::isRootGrammar ()
   // Determine if this is the C++ grammar at the root of the heiarchy of grammars
   // Don't call the getParentGrammar() member function since if the 
   // parentGrammar is false it will trigger an assert (which we want to keep)
-     return (parentGrammar == NULL) ? TRUE : FALSE;
+     return (parentGrammar == NULL) ? true : false;
    }
 
 void
@@ -270,7 +270,7 @@ Grammar::nonTerminalConstructor ( const string& lexeme, Grammar& X, const string
      return *(nt);
    }
 
-#define OUTPUT_TO_FILE TRUE
+#define OUTPUT_TO_FILE true
 
 StringUtility::FileWithLineNumbers
 Grammar::readFileWithPos ( const string& inputFileName )
@@ -307,18 +307,18 @@ Grammar::writeFile ( const StringUtility::FileWithLineNumbers& outputString,
      string outputFilename = (directoryName == "." ? "" : directoryName + "/") + className + fileExtension;
      // printf ("outputFilename = %s \n",outputFilename.c_str());
      ofstream ROSE_ShowFile(outputFilename.c_str());
-     ROSE_ASSERT (ROSE_ShowFile.good() == TRUE);
+     ROSE_ASSERT (ROSE_ShowFile.good() == true);
 
   // Select an output stream for the program tree display (cout or <filename>.C.roseShow)
   // Macro OUTPUT_SHOWFILE_TO_FILE is defined in the transformation_1.h header file
      ostream & outputStream = (OUTPUT_TO_FILE ? (ROSE_ShowFile) : (cout));
-     ROSE_ASSERT (outputStream.good() == TRUE);
+     ROSE_ASSERT (outputStream.good() == true);
 
      outputStream << StringUtility::toString(outputString, outputFilename);
-     ROSE_ASSERT (outputStream.good() == TRUE);
+     ROSE_ASSERT (outputStream.good() == true);
 
      ROSE_ShowFile.close();
-     ROSE_ASSERT (outputStream.good() == TRUE);
+     ROSE_ASSERT (outputStream.good() == true);
    }
 
 
@@ -344,9 +344,9 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::SUBTREE_LIST,Terminal::EXCLUDE_LIST);
 
-#define PREORDER_TRAVERSAL FALSE
+#define PREORDER_TRAVERSAL false
 
-#if (PREORDER_TRAVERSAL == TRUE)
+#if (PREORDER_TRAVERSAL == true)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -377,7 +377,7 @@ Grammar::generateStringListsFromSubtreeLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if (PREORDER_TRAVERSAL == FALSE)
+#if (PREORDER_TRAVERSAL == false)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -413,9 +413,9 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   vector<GrammarString *> &listOfIncludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
   vector<GrammarString *> &listOfExcludes = (node.*listFunction)(Terminal::LOCAL_LIST,Terminal::EXCLUDE_LIST);
   
-#define PREORDER_TRAVERSAL FALSE
+#define PREORDER_TRAVERSAL false
 
-#if (PREORDER_TRAVERSAL == TRUE)
+#if (PREORDER_TRAVERSAL == true)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -446,7 +446,7 @@ Grammar::generateStringListsFromLocalLists ( Terminal & node,
   checkListOfGrammarStrings(excludeList);
 #endif
 
-#if (PREORDER_TRAVERSAL == FALSE)
+#if (PREORDER_TRAVERSAL == false)
 
   for( grammarStringIterator = listOfIncludes.begin(); 
        grammarStringIterator != listOfIncludes.end(); 
@@ -1111,7 +1111,7 @@ Grammar::buildConstructorParameterList ( Terminal & node, vector<GrammarString *
           GrammarString *memberFunctionCopy= *gIt;
           ROSE_ASSERT (memberFunctionCopy != NULL);
        // DQ (11/7/2006): Rewritten to remove wrap logic (overly complex)
-       // if (memberFunctionCopy->getIsInConstructorParameterList() == TRUE)
+       // if (memberFunctionCopy->getIsInConstructorParameterList() == true)
           if (memberFunctionCopy->getIsInConstructorParameterList() == CONSTRUCTOR_PARAMETER)
              {
                 constructorParameterList.push_back(memberFunctionCopy);
@@ -1156,16 +1156,16 @@ Grammar::buildConstructorParameterListString ( Terminal & node, bool withInitial
           GrammarString & constructorParameter = **stringListIterator;
        // char* tempConstructorParameterString = constructorParameter.getConstructorParameterString();
           string tempConstructorParameterString = "";
-          if (withTypes == TRUE)
+          if (withTypes == true)
              {
-               if (withInitializers == TRUE)
+               if (withInitializers == true)
                     tempConstructorParameterString = constructorParameter.getConstructorPrototypeParameterString();
                  else
                     tempConstructorParameterString = constructorParameter.getConstructorSourceParameterString();
              }
             else
              {
-               ROSE_ASSERT (withInitializers == FALSE);
+               ROSE_ASSERT (withInitializers == false);
                tempConstructorParameterString = constructorParameter.getBaseClassConstructorSourceParameterString();
              }
       
@@ -1217,23 +1217,23 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
   // Build the constructor prototype and then edit the names!
      string destructorPrototype  = "\n     public: \n         virtual ~" + string(className) +  "();\n";
 
-     if (node.generateDestructor() == TRUE)
+     if (node.generateDestructor() == true)
          dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(destructorPrototype, "" /* "<destructor>" */, 1));
 
      // Now build the constructor and put in the constructorParameterString
-     if (node.generateConstructor() == TRUE)
+     if (node.generateConstructor() == true)
         {
           bool complete = false;
           ConstructParamEnum cur = INDIRECT_CONSTRUCTOR_PARAMETER;
           string constructorPrototype = "\n     public: \n"; 
 #if 1
-          bool withInitializers = TRUE;
+          bool withInitializers = true;
 #else
        // DQ (11/7/2006): Let's try to force use of initializers! So that we 
        // can also define constructors that don't take a Sg_File_Info object.
           bool withInitializers = false;
 #endif
-          bool withTypes        = TRUE;
+          bool withTypes        = true;
        // Get the SgLocatedNode so that we can set the data member as not being a constructor 
        // parameter so that we can reuse the same code generation source code.
           Terminal* parentNode = getNamedNode ( node, "SgLocatedNode" );
@@ -1283,8 +1283,8 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     // printf ("Calling base class default constructor (should call paramtererized version) \n");
 
     string baseClassParameterString;
-    bool withInitializers = FALSE;
-    bool withTypes        = FALSE;
+    bool withInitializers = false;
+    bool withTypes        = false;
     baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
     string preInitializationString = parentClassName + "($BASECLASS_PARAMETERS)";
     preInitializationString = ": " + preInitializationString;
@@ -1296,8 +1296,8 @@ void Grammar::constructorLoopBody(const ConstructParamEnum& config, bool& comple
     constructorSource = GrammarString::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
   }
 
-  bool withInitializers         = FALSE;
-  bool withTypes                = TRUE;
+  bool withInitializers         = false;
+  bool withTypes                = true;
   string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
   constructorSource = GrammarString::copyEdit (constructorSource,"$CLASSNAME",node.getName());
@@ -1337,7 +1337,7 @@ Grammar::buildConstructor ( Terminal & node )
 
      StringUtility::FileWithLineNumbers returnString;
 
-     if (node.generateDestructor() == TRUE)
+     if (node.generateDestructor() == true)
         {
        // Build the string representing the constructor text (with macro variables)
 	  string destructorTemplateFileName  = "../Grammar/grammarDestructorDefinitionMacros.macro";
@@ -1357,7 +1357,7 @@ Grammar::buildConstructor ( Terminal & node )
           returnString.insert(returnString.end(), destructorSource.begin(), destructorSource.end());
         }
 
-     if (node.generateConstructor() == TRUE)
+     if (node.generateConstructor() == true)
         {
           string constructorTemplateFileName = "../Grammar/grammarConstructorDefinitionMacros.macro";
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
@@ -1450,7 +1450,7 @@ Grammar::buildGrammarClassSourceCode ( StringUtility::FileWithLineNumbers & outp
 
      // BP : 10/25/2001, rewrote to do only one alloc
      StringUtility::FileWithLineNumbers finalOutputString = sourceCodeTemplate;
-     if(!isRootGrammar()==TRUE)
+     if(!isRootGrammar()==true)
        finalOutputString.insert(finalOutputString.end(), parseFunctionSourceCodeTemplate.begin(), parseFunctionSourceCodeTemplate.end());
 
      finalOutputString = GrammarString::copyEdit (finalOutputString,"$CLASSNAME",getGrammarName());
@@ -1730,7 +1730,7 @@ Grammar::editSubstitution ( Terminal & node, const StringUtility::FileWithLineNu
      editString = GrammarString::copyEdit (editString,"$GRAMMAR_TAG_PREFIX_",node.getGrammar()->getGrammarTagName());
 
      string parentGrammarPrefix = "";
-     if (isRootGrammar() == TRUE)
+     if (isRootGrammar() == true)
         {
        // In the case of a root grammar there is no parent
           parentGrammarPrefix = node.getGrammar()->getGrammarPrefixName();
@@ -2650,7 +2650,7 @@ Grammar::buildCode ()
      string treeTraversalClassHeaderFileName = getGrammarName();
      treeTraversalClassHeaderFileName += "TreeTraversalAccessEnums.h";
      ofstream ROSE_treeTraversalClassHeaderFile(treeTraversalClassHeaderFileName.c_str());
-     ROSE_ASSERT (ROSE_treeTraversalClassHeaderFile.good() == TRUE);
+     ROSE_ASSERT (ROSE_treeTraversalClassHeaderFile.good() == true);
      ROSE_treeTraversalClassHeaderFile << "// GENERATED HEADER FILE --- DO NOT MODIFY!"
 				       << endl << endl;
      ROSE_treeTraversalClassHeaderFile <<  naiveTraverseGrammar(*rootNode, &Grammar::EnumStringForNode);
@@ -2660,7 +2660,7 @@ Grammar::buildCode ()
   // MS: generation of VariantName Strings
      string variantEnumNamesFileName = string(getGrammarName())+"VariantEnumNames.C";
      ofstream variantEnumNamesFile(variantEnumNamesFileName.c_str());
-     ROSE_ASSERT(variantEnumNamesFile.good() == TRUE);     
+     ROSE_ASSERT(variantEnumNamesFile.good() == true);     
      string  variantEnumNames=buildVariantEnumNames();
 
   // DQ (4/8/2004): Maybe we need a more obscure name to prevent global name space pollution?
@@ -2744,7 +2744,7 @@ Grammar::buildCode ()
   // part of pre-release work to fixup interface and names of objects within ROSE. 
      string transformationSupportFileName = "translationSupport.code";
      ofstream ROSE_TransformationSupportFile(transformationSupportFileName.c_str());
-     ROSE_ASSERT(ROSE_TransformationSupportFile.good() == TRUE);
+     ROSE_ASSERT(ROSE_TransformationSupportFile.good() == true);
      string transformationSupportString = buildTransformationSupport();
      ROSE_TransformationSupportFile << transformationSupportString;
      ROSE_TransformationSupportFile.close();

@@ -382,11 +382,11 @@ Grammar::setUpStatements ()
      Statement.setSubTreeFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code" );
 
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // Statement.setAutomaticGenerationOfDestructor(FALSE);
+  // Statement.setAutomaticGenerationOfDestructor(false);
 
 #ifdef HL_GRAMMARS
      X_Statement.setFunctionPrototype     ( "HEADER_X_STATEMENT",     "../Grammar/Statement.code" );
-     X_Statement.setAutomaticGenerationOfCopyFunction(FALSE);
+     X_Statement.setAutomaticGenerationOfCopyFunction(false);
 
      non_X_Statement.setFunctionPrototype ( "HEADER_NON_X_STATEMENT", "../Grammar/Statement.code" );
 #endif
@@ -397,7 +397,7 @@ Grammar::setUpStatements ()
   // Statement.excludeDataPrototype( "SgStatement*","parent","= NULL");
 
   // The functions we want to generate for setting the parent data are special
-  // Statement.setAutomaticGenerationOfDataAccessFunctions(FALSE);
+  // Statement.setAutomaticGenerationOfDataAccessFunctions(false);
 
   // DQ (3/21/2007): Added numeric label to support Fortran (any statement can have a label)
   // A value of -1 indicates that no label is explicit in the source code.
@@ -407,7 +407,7 @@ Grammar::setUpStatements ()
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ScopeStatement.setFunctionPrototype( "HEADER_SCOPE_STATEMENT", "../Grammar/Statement.code" );
-     ScopeStatement.setAutomaticGenerationOfConstructor(FALSE);
+     ScopeStatement.setAutomaticGenerationOfConstructor(false);
 
   // Switch between inlcuding the SgSymbolTable as a pointer or as a data member
      ScopeStatement.setDataPrototype    ( "SgSymbolTable*","symbol_table","= NULL",
@@ -431,7 +431,7 @@ Grammar::setUpStatements ()
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
 					     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
-     FunctionTypeTable.setAutomaticGenerationOfConstructor(FALSE);
+     FunctionTypeTable.setAutomaticGenerationOfConstructor(false);
 
      Global.setFunctionPrototype( "HEADER_GLOBAL", "../Grammar/Statement.code" );
      Global.editSubstitute      ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -445,7 +445,7 @@ Grammar::setUpStatements ()
 				  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // We need a custom destructor until we have automated support for deletion of list elements.
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // Global.setAutomaticGenerationOfDestructor(FALSE);
+  // Global.setAutomaticGenerationOfDestructor(false);
 
   // DQ (6/26/2007): Moved to SgNode to support AST merge
   // DQ (10/6/2006): Support for caching of mangle names unique to global scope; this is a performance improvement.
@@ -547,7 +547,7 @@ Grammar::setUpStatements ()
 
 
      BasicBlock.setFunctionPrototype ( "HEADER_BASIC_BLOCK", "../Grammar/Statement.code" );
-     BasicBlock.setAutomaticGenerationOfConstructor(FALSE);
+     BasicBlock.setAutomaticGenerationOfConstructor(false);
      BasicBlock.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      BasicBlock.editSubstitute       ( "LIST_DATA_TYPE", "SgStatementPtrList" );
      BasicBlock.editSubstitute       ( "LIST_NAME", "statements" );
@@ -557,7 +557,7 @@ Grammar::setUpStatements ()
      BasicBlock.setDataPrototype    ( "SgStatementPtrList", "statements", "",
 				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // BasicBlock.setAutomaticGenerationOfDestructor(FALSE);
+  // BasicBlock.setAutomaticGenerationOfDestructor(false);
 
      IfStmt.setFunctionPrototype ( "HEADER_IF_STATEMENT", "../Grammar/Statement.code" );
      IfStmt.setDataPrototype ( "SgStatement*",  "conditional", "= NULL",
@@ -567,7 +567,7 @@ Grammar::setUpStatements ()
      IfStmt.setDataPrototype ( "SgStatement*", "false_body",  "= NULL",
 			       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // IfStmt.setAutomaticGenerationOfDestructor(FALSE);
+  // IfStmt.setAutomaticGenerationOfDestructor(false);
 
   // DQ (12/16/2007): The else part of the if can have its own label (fortran only)!
   // IfStmt.setDataPrototype ( "int", "else_numeric_label", "= -1",
@@ -622,7 +622,7 @@ Grammar::setUpStatements ()
 
 
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // ForStatement.setAutomaticGenerationOfDestructor(FALSE);
+  // ForStatement.setAutomaticGenerationOfDestructor(false);
 
      ForInitStatement.setFunctionPrototype ( "HEADER_FOR_INIT_STATEMENT", "../Grammar/Statement.code" );
      ForInitStatement.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -634,7 +634,7 @@ Grammar::setUpStatements ()
      ForInitStatement.setDataPrototype ( "SgStatementPtrList", "init_stmt", "",
   				         NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // ForInitStatement.setAutomaticGenerationOfDestructor(FALSE);
+  // ForInitStatement.setAutomaticGenerationOfDestructor(false);
 
 
   // DQ and Liao (6/11/2008): Added support for UPC forall IR node.
@@ -735,7 +735,7 @@ Grammar::setUpStatements ()
      FunctionParameterList.setDataPrototype ( "SgInitializedNamePtrList", "args", "",
   				            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // FunctionParameterList.setAutomaticGenerationOfDestructor(FALSE);
+  // FunctionParameterList.setAutomaticGenerationOfDestructor(false);
 
 
   // We would like to have a class include data members which are terminals/nonterminals within the grammar.
@@ -900,7 +900,7 @@ Grammar::setUpStatements ()
      CtorInitializerList.setDataPrototype ( "SgInitializedNamePtrList", "ctors", "",
   				            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // CtorInitializerList.setAutomaticGenerationOfDestructor(FALSE);
+  // CtorInitializerList.setAutomaticGenerationOfDestructor(false);
 
 
      //
@@ -940,7 +940,7 @@ Grammar::setUpStatements ()
      VariableDeclaration.setDataPrototype("SgInitializedNamePtrList", "variables", "",
 					  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // VariableDeclaration.setAutomaticGenerationOfDestructor(FALSE);
+  // VariableDeclaration.setAutomaticGenerationOfDestructor(false);
 
   // DQ (9/4/2004): Added support for qualification of type names in variable declarations
   // VariableDeclaration.setDataPrototype("bool", "need_name_qualifier", "= false",
@@ -1583,7 +1583,7 @@ Grammar::setUpStatements ()
      CatchStatementSeq.setDataPrototype ( "SgStatementPtrList", "catch_statement_seq", "",
 				  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // DQ (12/4/2004): Now we automate the generation of the destructors
-  // CatchStatementSeq.setAutomaticGenerationOfDestructor(FALSE);
+  // CatchStatementSeq.setAutomaticGenerationOfDestructor(false);
 
      CatchOptionStmt.setFunctionPrototype ( "HEADER_CATCH_OPTION_STATEMENT", "../Grammar/Statement.code" );
 
@@ -1972,7 +1972,7 @@ Grammar::setUpStatements ()
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // CommonBlock.setDataPrototype("SgInitializedNamePtrList", "variables", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     CommonBlock.setAutomaticGenerationOfDestructor(FALSE);
+     CommonBlock.setAutomaticGenerationOfDestructor(false);
 
   // DQ (3/20/2007): Removed this since it is better to compute the qualified name dynamically than to have it 
   // statically specified in the AST and possibly set incorrectly after a possible transformation.  This also
@@ -2534,7 +2534,7 @@ Grammar::setUpStatements ()
   // Parse functions are only built for the higher level grammars since they parse
   // from a lower level grammar into a higher level grammer (thus they are not defined 
   // within the root grammar (the C+ grammar)).
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
         {
        // Use the specialized unparse function for this terminal
           Global.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
@@ -2566,7 +2566,7 @@ Grammar::setUpStatements ()
   // Parse functions are only built for the higher level grammars since they parse
   // from a lower level grammar into a higher level grammer (thus they are not defined 
   // within the root grammar (the C+ grammar)).
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
         {
        // Use the specialized unparse function for this terminal
           FunctionDeclaration.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );
@@ -2579,7 +2579,7 @@ Grammar::setUpStatements ()
   // Parse functions are only built for the higher level grammars since they parse
   // from a lower level grammar into a higher level grammer (thus they are not defined 
   // within the root grammar (the C+ grammar)).
-     if (isRootGrammar() == FALSE)
+     if (isRootGrammar() == false)
         {
        // Use the specialized unparse function for this terminal
           FunctionDefinition.excludeFunctionSource ( "SOURCE_PARSER", "../Grammar/parserSourceCode.macro" );

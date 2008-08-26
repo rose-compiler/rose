@@ -7,7 +7,7 @@
 #include <string>
 
 #undef PRINT_DEBUGGING_INFO
-#define PRINT_DEBUGGING_INFO FALSE
+#define PRINT_DEBUGGING_INFO false
 
 #if 0
 template <class ASTNodeCollection>

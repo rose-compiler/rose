@@ -60,12 +60,12 @@ extractRangeOfStatementsBetweenDeclarations (
                     SgStatementPtrList::iterator start_iter = s_iter;
                     SgStatementPtrList::iterator end_iter   = s_iter;
 
-                    bool closingMarkerFound = FALSE;
-                    while (closingMarkerFound == FALSE )
+                    bool closingMarkerFound = false;
+                    while (closingMarkerFound == false )
                        {
                       // Look for the "int END_OF_TRANSFORMATION_SOURCE_CODE;" variable declaration
 
-                      // printf ("Value of closingMarkerFound = %s \n",(closingMarkerFound == TRUE) ? "TRUE" : "FALSE");
+                      // printf ("Value of closingMarkerFound = %s \n",(closingMarkerFound == true) ? "true" : "false");
                          SgVariableDeclaration* nextVariableDeclarationStatement = isSgVariableDeclaration(*s_iter);
                          if ( nextVariableDeclarationStatement != NULL )
                             {
@@ -83,7 +83,7 @@ extractRangeOfStatementsBetweenDeclarations (
                            // Look for the marker that indicates the end of the declarations that represent transformations
                               if ( closingVariableNameString == endingMarkerVariableName )
                                  {
-                                   closingMarkerFound = TRUE;
+                                   closingMarkerFound = true;
                                 // printf ("FOUND the ending declaration \n");
                                  }
                                 else
@@ -197,12 +197,12 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
   // This function disasembles the AST represented by the SgFile for a transformation and gets out
   // the parts that are relevant to the transformation. The list of statements that is returned is
   // marked (each statement is marked) as either: declaration, initialization, or transformation.
-  // If (isADeclaration == TRUE) then only code between the DECLARATION_MARKERS is extracted, else
+  // If (isADeclaration == true) then only code between the DECLARATION_MARKERS is extracted, else
   // code between the INITIALIZATION_MARKERS and the TRANSFORMATION_MARKERS is extracted.
 
 #if 0
      printf ("Strip away the wrapper from the transformation's AST (isADeclaration = %s) \n",
-          (isADeclaration) ? "TRUE" : "FALSE");
+          (isADeclaration) ? "true" : "false");
 #endif
 
   // name of the file containing the transformation source code
@@ -237,7 +237,7 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
        // printf ("In TransformationSpecificationType::stripAwayWrapping(): (*s_iter)->getFileName() = %s \n",(*s_iter)->getFileName());
 
        // restrict our focus to the pieces of the AST associated with the current file
-          if (isSameName(inputFileName, (*s_iter)->getFileName()) == TRUE)
+          if (isSameName(inputFileName, (*s_iter)->getFileName()) == true)
              {
             // printf ("In stripAwayWrapping(): (*s_iter)->sage_class_name()  = %s \n",(*s_iter)->sage_class_name());
 
@@ -258,7 +258,7 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
                  // printf ("Transformation hidden in function name = %s \n",functionNameString.c_str());
 
                  // The containing function is given a specific name that we can recognize
-                 // if (isSameName(functionNameString, "transformationContainerFunction") == TRUE)
+                 // if (isSameName(functionNameString, "transformationContainerFunction") == true)
                     if ( functionNameString == "transformationContainerFunction" )
                        {
                          ROSE_ASSERT (functionDeclarationStatement->get_definition() != NULL);
@@ -282,7 +282,7 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
                          SgStatementPtrList* initializationStatmentList = NULL;
                          SgStatementPtrList* transformationStatmentList = NULL;
 
-                         if (isADeclaration == TRUE)
+                         if (isADeclaration == true)
                             {
                            // printf ("Processing VARIABLE_DECLARATION_MARKER \n");
                               declarationStatmentList =

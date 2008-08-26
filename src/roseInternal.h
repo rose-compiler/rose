@@ -4,12 +4,13 @@
 #define ROSE_INTERNAL_H
 
 // Removed support for this, since C++ has "true" and "false" values already
-#ifndef TRUE
-#define TRUE true
-#endif
-#ifndef FALSE
-#define FALSE false
-#endif
+// JJW (8/26/2008): Removing these
+// #ifndef TRUE
+// #define TRUE true
+// #endif
+// #ifndef FALSE
+// #define FALSE false
+// #endif
 
 // These are supported this way so that they can be redefined as required
 #ifndef ROSE_ASSERT
@@ -23,7 +24,7 @@
 #define ROSE_ABORT  abort
 #endif
 
-#define ROSE_INTERNAL_DEBUG FALSE
+#define ROSE_INTERNAL_DEBUG false
 
 #define NEWSYMTABLESIZE 5
 
@@ -33,7 +34,7 @@
 // options with which we then call the main rose driver program.
 // When this is used we can't use rose with the debugger
 //    (dbx: File '../bin/rose_script' is not in ELF format)
-#define USE_ARCHITECTURE_SPECIFIC_SCRIPT FALSE
+#define USE_ARCHITECTURE_SPECIFIC_SCRIPT false
 
 // this comes from Sage/EDG--it may not be of any real use
 extern "C" char* C_output_file_name;

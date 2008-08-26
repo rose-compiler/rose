@@ -10,16 +10,16 @@ using namespace std;
 Unparser_Opt::Unparser_Opt()
    {
   // default setting: all options are false;
-     auto_opt = FALSE;
-     linefile_opt = FALSE;
-     overload_opt = FALSE;
-     boolnum_opt = FALSE;
-     this_opt = FALSE;
-     caststring_opt = FALSE;
-     debug_opt = FALSE;
-     class_opt = FALSE;
-     forced_transformation_format = FALSE;
-     unparse_includes_opt = FALSE;
+     auto_opt = false;
+     linefile_opt = false;
+     overload_opt = false;
+     boolnum_opt = false;
+     this_opt = false;
+     caststring_opt = false;
+     debug_opt = false;
+     class_opt = false;
+     forced_transformation_format = false;
+     unparse_includes_opt = false;
 
  // display("In Unparser_Opt default constructor");
    }

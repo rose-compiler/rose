@@ -723,15 +723,15 @@ GrammarString::getFunctionNameString ( Terminal & node )
      string memberFunctionString = functionNameString;
 
 #if 0
-     printf ("pureVirtualFunction = %s \n",(pureVirtualFunction == TRUE) ? "TRUE" : "FALSE");
-     printf ("node.isRootNode() = %s \n",(node.isRootNode() == TRUE) ? "TRUE" : "FALSE");
-     printf ("node.isLeafNode() = %s \n",(node.isLeafNode() == TRUE) ? "TRUE" : "FALSE");
+     printf ("pureVirtualFunction = %s \n",(pureVirtualFunction == true) ? "true" : "false");
+     printf ("node.isRootNode() = %s \n",(node.isRootNode() == true) ? "true" : "false");
+     printf ("node.isLeafNode() = %s \n",(node.isLeafNode() == true) ? "true" : "false");
 #endif
 
-     if (pureVirtualFunction == TRUE)
+     if (pureVirtualFunction == true)
         {
        // Now we have to edit the string
-       // ROSE_ASSERT (pureVirtualFunction == FALSE);
+       // ROSE_ASSERT (pureVirtualFunction == false);
 
           string className = node.getName();
 
@@ -819,7 +819,7 @@ GrammarString::GrammarString()
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
      defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(COPY_DATA), toBeTraversed(TRUE), key(0),
+     toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
    {
@@ -837,7 +837,7 @@ GrammarString::GrammarString(
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(inputTypeNameString), variableNameString(inputVariableNameString), 
      defaultInitializerString(inputDefaultInitializerString), isInConstructorParameterList(isConstructorParameter), 
-     toBeCopied(_toBeCopied), toBeTraversed(TRUE), key(0),
+     toBeCopied(_toBeCopied), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(delete_flag)
 {
@@ -867,7 +867,7 @@ GrammarString::GrammarString( const string& inputFunctionNameString )
    : pureVirtualFunction(0), functionNameString(inputFunctionNameString), 
      typeNameString(""), variableNameString(""), 
      defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(COPY_DATA), toBeTraversed(TRUE), key(0),
+     toBeCopied(COPY_DATA), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
    {
@@ -880,7 +880,7 @@ GrammarString::GrammarString( const GrammarString & X )
    : pureVirtualFunction(0), functionNameString(""), 
      typeNameString(""), variableNameString(""), 
      defaultInitializerString(""), isInConstructorParameterList(CONSTRUCTOR_PARAMETER), 
-     toBeCopied(X.toBeCopied), toBeTraversed(TRUE), key(0),
+     toBeCopied(X.toBeCopied), toBeTraversed(true), key(0),
      automaticGenerationOfDataAccessFunctions(BUILD_ACCESS_FUNCTIONS),
      toBeDeleted(false)
    {
@@ -935,7 +935,7 @@ operator== ( const GrammarString & X, const GrammarString & Y )
   // It first tests to see if they are the same length
   // This function does not test based upon the "automaticGenerationOfDataAccessFunctions" variable
 
-     bool returnValue = FALSE;
+     bool returnValue = false;
      int lengthX = X.getLength();
      int lengthY = Y.getLength();
      if (lengthX == lengthY)
@@ -945,19 +945,19 @@ operator== ( const GrammarString & X, const GrammarString & Y )
 
           if (keyX == keyY)
              {
-               bool tempResult = TRUE;
+               bool tempResult = true;
                int i = 0;
 
                ROSE_ASSERT (lengthX > 0);
-               while ( (tempResult == TRUE) && (i < lengthX) )
+               while ( (tempResult == true) && (i < lengthX) )
                     {
-                      if (tempResult == TRUE)
+                      if (tempResult == true)
                            tempResult = X.functionNameString[i] == Y.functionNameString[i];
                       i++;
                     }
 
 #if 0
-               if (tempResult == TRUE)
+               if (tempResult == true)
                     printf ("X.functionNameString = %s \n",X.functionNameString);
 #endif
 
@@ -966,7 +966,7 @@ operator== ( const GrammarString & X, const GrammarString & Y )
         }
 
   // For now this should always evaluate to be false (later this will not be so)
-  // ROSE_ASSERT (returnValue == FALSE);
+  // ROSE_ASSERT (returnValue == false);
 
      return returnValue;
    }

@@ -85,7 +85,7 @@ TransformationSupport::getTransformationOptions ( SgNode* astNode, list<OptionDe
                SgSymbolTable* symbolTable = isSgSymbolTable(astNode);
                ROSE_ASSERT (symbolTable != NULL);
 
-               bool foundTransformationOptimizationSpecifier = FALSE;
+               bool foundTransformationOptimizationSpecifier = false;
 
             // printf ("Now print out the information in the symbol table for this scope: \n");
             // symbolTable->print();
@@ -150,7 +150,7 @@ TransformationSupport::getTransformationOptions ( SgNode* astNode, list<OptionDe
 
                                         getTransformationOptionsFromVariableDeclarationConstructorArguments(variableDeclaration,generatedList);
 
-                                        foundTransformationOptimizationSpecifier = TRUE;
+                                        foundTransformationOptimizationSpecifier = true;
 
                                      // printf ("Exiting after saving the constructor arguments! \n");
                                      // ROSE_ABORT();
@@ -191,7 +191,7 @@ TransformationSupport::getTransformationOptions ( SgNode* astNode, list<OptionDe
                  // printf ("Pointer to symbol table is NULL \n");
                   }
 
-            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "TRUE" : "FALSE");
+            // printf ("foundTransformationOptimizationSpecifier = %s \n",foundTransformationOptimizationSpecifier ? "true" : "false");
 
             // SgSymbolTable objects don't have a parent node (specifically they lack a get_parent
             // member function in the interface)!
