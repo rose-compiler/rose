@@ -23,11 +23,11 @@ libroseBinaryLibraries = \
 if ROSE_USE_SQLITE_DATABASE
 
 libroseSqlite3xConnection = \
-   $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la 
+   $(top_builddir)/src/roseExtensions/sqlite3x/libRoseSQLite3xDatabase.la
+   OPT_SQLITE3_LDFLAGS = $(SQLITE3_LDFLAGS)
 else
-libroseSqlite3xConnection = 
-
-
+   libroseSqlite3xConnection = 
+   OPT_SQLITE3_LDFLAGS =
 endif
    
 # TODO: correct list!
@@ -118,7 +118,8 @@ librose_la_LIBADD = $(libroseLibraries) $(LIB_QT) $(JAVA_JVM_FLAGS) -lm $(RT_LIB
 		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
 		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
 		    $(BOOST_WAVE_LIB) \
-		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf
+		    -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
+		    $(OPT_SQLITE3_LDFLAGS)
 librose_la_LDFLAGS = -no-undefined
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
