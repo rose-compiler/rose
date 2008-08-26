@@ -23,7 +23,7 @@ libroseutil_la_LIBADD = \
 	commandlineProcessing/libRoseCommandlineUtil.la
 
 rose_paths.c:
-	cd $(top_builddir); make src/util/rose_paths.c
+	cd $(top_builddir); $(MAKE) src/util/rose_paths.c
 
 BUILT_SOURCES = rose_paths.c
 
