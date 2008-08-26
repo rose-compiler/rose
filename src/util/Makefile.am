@@ -27,7 +27,7 @@ rose_paths.c:
 
 BUILT_SOURCES = rose_paths.c
 
-DISTCLEAN_FILES = rose_paths.c
+DISTCLEANFILES = rose_paths.c
 
 include_HEADERS = setup.h processSupport.h
 
