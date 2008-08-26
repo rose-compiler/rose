@@ -1,6 +1,7 @@
 /* main.cc */
 
 #include "parse_header.h"
+#include <libgen.h>
 
 using namespace std;
 
