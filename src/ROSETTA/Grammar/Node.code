@@ -5,6 +5,9 @@ HEADER_NODE_PREDECLARATION_START
 #include "sage3.h"
 
 // DQ (8/8/2008): This is required to process the "stat64 struct in SgAsmGenericFile
+// JJW (8/26/2008): Changed to struct stat with _FILE_OFFSET_BITS == 64 (see
+// http://www.gnu.org/software/libc/manual/html_node/Reading-Attributes.html)
+#define _FILE_OFFSET_BITS 64 // Use 64-bit offsets on 32-bit machines when available
 #include <sys/stat.h>
 
 // DQ (6/14/2008): Include the Exec format support.
@@ -852,7 +855,7 @@ std::ostream & operator<< ( std::ostream & os, const std::multimap<rose_addr_t, 
 std::ostream & operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_addr_t> > & l );
 // struct SgAsmGenericFormat::fileDetails;
 // std::ostream & operator<< ( std::ostream & os, const SgAsmGenericFormat::fileDetails & sb );
-std::ostream & operator<< ( std::ostream & os, const struct stat64 & sb );
+std::ostream & operator<< ( std::ostream & os, const struct stat & sb );
 
 #if 0
 // DQ (8/28/2006): This fixes a bug in ROSE where the namespace scope is not defined
@@ -1808,7 +1811,7 @@ operator<< ( std::ostream & os, const std::vector<std::pair<rose_addr_t, rose_ad
 
 // DQ (8/10/2008): Added to support binary file format.
 std::ostream & 
-operator<< ( std::ostream & os, const struct stat64 & sb )
+operator<< ( std::ostream & os, const struct stat & sb )
    {
      return os;
    }
