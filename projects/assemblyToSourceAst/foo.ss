@@ -1,8 +1,10 @@
-(require (lib "pretty.ss"))
-(require (lib "match.ss"))
-(require (lib "1.ss" "srfi"))
+(require scheme/pretty)
+(require scheme/match)
+(require srfi/1)
+(require "bitblast.ss")
+(require "dimacs.ss")
 
-(define data (with-input-from-file "/home/willcock2/rose-svn-checkout/build/projects/assemblyToSourceAst/fnord.ss" read))
+(define data (with-input-from-file "/home/willcock2/rose-svn-checkout/to-build/projects/assemblyToSourceAst/fnord.ss" read))
 
 (define (simplify-begins t)
   (match t
@@ -114,8 +116,14 @@
                 ((boolean? e) e)
                 ((list? e)
                  (match e
-                   (`(memoryReadDWord ,a) `(memoryReadDWord memory ,(change-expr a)))
-                   (`(memoryReadWord ,a) `(memoryReadWord memory ,(change-expr a)))
+                   (`(memoryReadDWord ,a)
+                    `(or (memoryReadByte memory ,(change-expr a))
+                         (left-shift (memoryReadByte memory (add 1 ,(change-expr a))) 8)
+                         (left-shift (memoryReadByte memory (add 2 ,(change-expr a))) 16)
+                         (left-shift (memoryReadByte memory (add 3 ,(change-expr a))) 24)))
+                   (`(memoryReadWord ,a)
+                    `(or (memoryReadByte memory ,(change-expr a))
+                         (left-shift (memoryReadByte memory (add 1 ,(change-expr a))) 8)))
                    (`(memoryReadByte ,a) `(memoryReadByte memory ,(change-expr a)))
                    (`(,f . ,args) `(,f . ,(map change-expr args)))))
                 (else (error "change-expr" e))))))
@@ -127,9 +135,18 @@
     (`(case ,key . ,rest) `(case ,(change-expr key) . ,rest))
     (`(begin . ,rest) `(begin . ,(map change-to-pure-memory rest)))
     (`(let ((,var ,val)) ,body) `(let ((,var ,(change-expr val))) ,(change-to-pure-memory body)))
-    (`(expr (memoryWriteDWord ,a ,d)) `(expr (assign memory (memoryWriteDWord memory ,(change-expr a) ,(change-expr d)))))
-    (`(expr (memoryWriteWord ,a ,d)) `(expr (assign memory (memoryWriteWord memory ,(change-expr a) ,(change-expr d)))))
-    (`(expr (memoryWriteByte ,a ,d)) `(expr (assign memory (memoryWriteByte memory ,(change-expr a) ,(change-expr d)))))
+    (`(expr (memoryWriteDWord ,a ,d))
+     `(begin
+        (expr (assign memory (memoryWriteByte memory ,(change-expr a) (and 255 ,(change-expr d)))))
+        (expr (assign memory (memoryWriteByte memory (add 1 ,(change-expr a)) (and 255 (right-shift ,(change-expr d) 8)))))
+        (expr (assign memory (memoryWriteByte memory (add 2 ,(change-expr a)) (and 255 (right-shift ,(change-expr d) 16)))))
+        (expr (assign memory (memoryWriteByte memory (add 3 ,(change-expr a)) (and 255 (right-shift ,(change-expr d) 24)))))))
+    (`(expr (memoryWriteWord ,a ,d))
+     `(begin
+        (expr (assign memory (memoryWriteByte memory ,(change-expr a) (and 255 ,(change-expr d)))))
+        (expr (assign memory (memoryWriteByte memory (add 1 ,(change-expr a)) (and 255 (right-shift ,(change-expr d) 8)))))))
+    (`(expr (memoryWriteByte ,a ,d))
+     `(expr (assign memory (memoryWriteByte memory ,(change-expr a) ,(change-expr d)))))
     (`(expr ,e) `(expr ,(change-expr e)))
     (_ (error "change-to-pure-memory" e)))))
 
@@ -251,35 +268,35 @@
 
 ; (set! data (map change-to-let* data))
 
-(define (get-used-variables e)
+(define (is-used-variable? var e)
   (letrec ((g (lambda (e)
                 (cond
-                  ((symbol? e) (list e))
-                  ((list? e) (apply lset-union eq? (map g (cdr e))))
-                  (else '())))))
-    (match e
-      (`(begin . ,rest) (apply lset-union eq? (map get-used-variables rest)))
-      (`(let ((,var ,val)) ,body)
-       (let ((x (get-used-variables body)))
-         (if (memq var x)
-             (lset-union eq? (g val) (lset-difference eq? x (list var)))
-             x)))
-      (`(goto ,_) '())
-      (`(if ,p ,a ,b) (lset-union eq? (g p) (get-used-variables a) (get-used-variables b)))
-      (`(case ,key . ,cases)
-       (apply lset-union eq? (g key) (map (match-lambda (`(,k ,body) (get-used-variables body))) cases)))
-      (`(parallel-assign ,al) (apply lset-union eq? (map g (map cdr al))))
-      (`(expr ,e) (g e))
-      (_ (error "get-used-variables" e)))))
+                  ((symbol? e) (eq? e var))
+                  ((list? e) (ormap g (cdr e)))
+                  (else #f)))))
+    (let loop ((e e))
+      (match e
+        (`(begin . ,rest) (ormap loop rest))
+        (`(let ((,var2 ,val)) ,body)
+         (or
+          (g val)
+          (and (not (eq? var var2))
+               (loop body))))
+        (`(goto ,_) #f)
+        (`(if ,p ,a ,b) (or (g p) (loop a) (loop b)))
+        (`(case ,key . ,cases)
+         (or (g key) (ormap (match-lambda (`(,k ,body) (loop body))) cases)))
+        (`(parallel-assign ,al) (ormap g (map cdr al)))
+        (`(expr ,e) (g e))
+        (_ (error "is-used-variable?" e))))))
 
 (define (remove-unused-variables e)
   (match e
     (`(begin . ,rest) `(begin . ,(map remove-unused-variables rest)))
     (`(let ((,var ,val)) ,body)
-     (let ((x (get-used-variables body)))
-       (if (memq var x)
-           `(let ((,var ,val)) ,(remove-unused-variables body))
-           (remove-unused-variables body))))
+     (if (is-used-variable? var body)
+         `(let ((,var ,val)) ,(remove-unused-variables body))
+         (remove-unused-variables body)))
     (`(goto ,_) e)
     (`(label ,l ,body) `(label ,l ,(remove-unused-variables body)))
     (`(if ,p ,a ,b) `(if ,p ,(remove-unused-variables a) ,(remove-unused-variables b)))
@@ -366,6 +383,15 @@
        (member z (cdr t))
        z))
 
+(define (remove-all ls1 ls2) ; Like lset-difference but handles multisets properly
+  (let loop ((ls1 ls1) (ls2 ls2))
+    (if (null? ls2)
+        ls1
+        (loop
+         (let remove ((ls ls1))
+           (if (null? ls) '() (if (equal? (car ls) (car ls2)) (cdr ls) (cons (car ls) (remove (cdr ls))))))
+         (cdr ls2)))))
+
 (define (simplify-expr e)
   (letrec ((simp
             (lambda (e)
@@ -390,13 +416,16 @@
                    ((flatten-idem 'logical-or) e)
                    ((flatten-zero 'logical-or 1) e)
                    (match e (`(logical-not ,x) (and (number? x) (if (zero? x) 1 0))) (_ #f))
+                   (match e (`(if-e ,p ,a ,b) (and (number? p) (if (zero? p) b a))) (_ #f))
                    (match e (`(xor ,a ,b) (and (equal? a b) 0)) (_ #f))
-                   (match e (`(memoryWriteDWord ,m1 ,a (memoryReadDWord ,m2 ,b)) (and (equal? m1 m2) (equal? a b) m2)) (_ #f))
+                   (match e (`(left-shift ,a ,b) (and (number? a) (number? b) (arithmetic-shift a b))) (_ #f))
+                   (match e (`(right-shift ,a ,b) (and (number? a) (number? b) (arithmetic-shift a (- b)))) (_ #f))
+                   (match e (`(memoryWriteByte ,m1 ,a (memoryReadByte ,m2 ,b)) (and (equal? m1 m2) (equal? a b) m2)) (_ #f))
                    (match e
-                     (`(memoryReadDWord (memoryWriteDWord ,m ,a ,v) ,b)
+                     (`(memoryReadByte (memoryWriteByte ,m ,a ,v) ,b)
                       `(if-e (equal ,a ,b)
                              ,v
-                             (memoryReadDWord ,m ,b))) ; FIXME
+                             (memoryReadByte ,m ,b)))
                      (_ #f))
                    (match e
                      (`(add . ,ls) (and (>= (length (filter number? ls)) 2)
@@ -414,7 +443,14 @@
                                               ,(apply bitwise-xor (filter number? ls)))))
                      (_ #f))
                    (match e
-                     (`(equal (add ,a1 . ,rest1) (add ,a2 . ,rest2)) (and (equal? a1 a2) `(equal (add . ,rest1) (add . ,rest2))))
+                     (`(equal ,x ,y)
+                      (let* ((x-ls ((associative-list 'add 0) x))
+                             (y-ls ((associative-list 'add 0) y))
+                             (isect (lset-intersection equal? x-ls y-ls)))
+                        (and (not (null? isect))
+                             (let ((x-ls-minus-isect (remove-all x-ls isect))
+                                   (y-ls-minus-isect (remove-all y-ls isect)))
+                               `(equal (add . ,x-ls-minus-isect) (add . ,y-ls-minus-isect))))))
                      (_ #f))
                    (match e 
                      (`(equal ,a ,b)
@@ -497,7 +533,7 @@
         (copy-and-constant-prop
          (fold-lets e)
          '()
-         memory-simple?)))))
+         always-simple?)))))
     '()
     basic-simple?)))
 
@@ -506,9 +542,92 @@
 (define (expand-many n e)
   (if (zero? n) e (expand-one-simp (expand-many (sub1 n) e))))
 
+(define (check-constraints e)
+  (letrec ((check-statement
+            (lambda (e csf)
+              ;(pretty-print `(check-constraints ,e ,constraints-so-far))
+              (match e
+                (`(goto ,l) e)
+                (`(begin . ,ls) `(begin . ,(map (lambda (e2) (check-statement e2 csf)) ls)))
+                (`(let ((,var ,val)) ,body)
+                 (let ((val2 (check-expr val csf)))
+                   `(let ((,var ,val2)) ,(check-statement body `((equal ,var ,val2) . ,csf)))))
+                (`(if (expr ,p) ,a ,b)
+                 (let ((p (check-expr p csf)))
+                   ;(pretty-print `(checking if ,p ,a ,b))
+                   (let ((p-true (constraints-satisfiable? `((not-equal ,p 0) . ,csf)))
+                         (p-false (constraints-satisfiable? `((equal ,p 0) . ,csf))))
+                     (if p-true
+                         (if p-false
+                             `(if (expr ,p)
+                                  ,(check-statement a `((not-equal ,p 0) . ,csf))
+                                  ,(check-statement b `((equal ,p 0) . ,csf)))
+                             (begin 
+                               (pretty-print `(removing false branch ,b))
+                               (check-statement a csf)))
+                         (if p-false
+                             (begin
+                               (pretty-print `(removing true branch ,a))
+                               (check-statement b csf))
+                             (begin
+                               (pretty-print `(in ,e test can be neither true nor false under assumptions ,@csf))
+                               (error "check-constraints")))))))
+                (`(case (expr ,key) . ,cases)
+                 (let ((key (check-expr key csf)))
+                   `(case (expr ,key) . ,(filter-map
+                                          (match-lambda
+                                            (`((,k) ,body)
+                                             (if (constraints-satisfiable?
+                                                  `((equal ,key ,k) . ,constraints-so-far))
+                                                 `((,k)
+                                                   ,(loop body `((equal ,key ,k) . ,constraints-so-far)))
+                                                 #f)))
+                                          cases))))
+                (`(expr (abort)) e)
+                (`(parallel-assign ,prs)
+                 `(parallel-assign
+                   ,(map (match-lambda (`(,var . ,val) `(,var . ,(check-expr val csf)))) prs)))
+                (_ (error "check-constraints" e)))))
+           (check-expr
+            (lambda (e csf)
+              (match e
+                (`(if-e ,p ,a ,b)
+                 ;(pretty-print `(checking if-e ,p ,a ,b))
+                 (let ((p-true (constraints-satisfiable? `((not-equal ,p 0) . ,csf)))
+                       (p-false (constraints-satisfiable? `((equal ,p 0) . ,csf))))
+                   (if p-true
+                       (if p-false
+                           `(if-e ,p
+                                  ,(check-expr a `((not-equal ,p 0) . ,csf))
+                                  ,(check-expr b `((equal ,p 0) . ,csf)))
+                           (begin
+                             (pretty-print `(removing false if-e branch ,b))
+                             (check-expr a csf)))
+                       (if p-false
+                           (begin
+                             (pretty-print `(removing true if-e branch ,a))
+                             (check-expr b csf))
+                           (error "if-e not satisfiable" p)))))
+                ((? list?) (cons (car e) (map (lambda (e2) (check-expr e2 csf)) (cdr e))))
+                (_ e)))))
+    (check-statement e '())))
+
+(set! data
+      (map (lambda (x)
+             (let ((result
+                    (match (simplify-full x)
+                      (`(label ,l ,body)
+                       `(label ,l ,(change-to-let* (remove-unused-variables (check-constraints body)))))
+                      (e (change-to-let* e)))))
+               (pretty-print result)
+               '() #;result))
+           data))
+
+; (set! data (map (match-lambda (`(label ,l ,body) `(label ,l ,(check-constraints body))) (e e)) data))
+
 ; (pretty-print (change-to-let* (map expand-one-simp data)))
 ; (for-each (lambda (x) (pretty-print (change-to-let* (copy-and-constant-prop x '() always-simple?)))) data)
-(for-each (lambda (x) (pretty-print (change-to-let* (simplify-full x)))) data)
+; (for-each (lambda (x) (pretty-print (change-to-let* (simplify-full x)))) data)
 ; (for-each (lambda (x) (pretty-print (change-to-let* (split-and-value-number x)))) data)
 ; (pretty-print (map change-to-let* (map simplify-full data)))
 ;
