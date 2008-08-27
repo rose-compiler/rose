@@ -14,6 +14,25 @@ bool RoseBin_FlowAnalysis::initialized = false;
 
 //#include "AST_BIN_Traversal.h"
 
+
+bool 
+RoseBin_FlowAnalysis::sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
+  bool same=false;
+  if (isSgAsmFunctionDeclaration(node->get_SgNode())) {
+    return true;
+  }
+
+  SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(next->get_SgNode());
+  if (thisNode && nextNode) {
+    SgAsmFunctionDeclaration* func1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
+    SgAsmFunctionDeclaration* func2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
+    if (func1==func2)
+      same=true;
+  }
+  return same;
+}
+
 /*
  * This function removes blocks, so functions contain only instructions
  */

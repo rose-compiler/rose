@@ -153,6 +153,8 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     return nrEdges;
   }
 
+  bool sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+
 
 };
 

@@ -14,6 +14,9 @@
 //class RoseFile;
 
 class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
+  void getCFGNodesForFunction(std::set<SgDirectedGraphNode*>& visited_f,
+			      std::set<std::string>& visited_names,
+			      SgDirectedGraphNode* next_n, std::string nodeName);
 
  public:
 
@@ -37,6 +40,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
     forward_analysis=forward;
   }
   */
+
   ~RoseBin_ControlFlowAnalysis() {
     delete globalBin;
     //delete roseBin;
@@ -57,6 +61,7 @@ class RoseBin_ControlFlowAnalysis : public RoseBin_FlowAnalysis {
 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  void printGraph(std::string fileName, std::set<std::string>& filter);
 
 };
 

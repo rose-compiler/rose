@@ -493,6 +493,21 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
   */
     SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
     SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
+
+    // extra check to ensure that nodes exist. If not, skip
+      nodeType::iterator itn2 = nodes.begin();
+      bool foundS=false;
+      bool foundT=false;
+      for (; itn2!=nodes.end();++itn2) {
+	SgDirectedGraphNode* n = itn2->second;
+	if (n==source) foundS=true;
+	if (n==target) foundT=true;
+      }
+      if (foundS==false || foundT==false) {
+	cerr <<"WARNING :: printEdges - edge not found." << endl;
+	return;
+      }
+
     ROSE_ASSERT(source);
     ROSE_ASSERT(target);
     string from_hex = source->get_name();
