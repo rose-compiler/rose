@@ -408,8 +408,67 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
         content(pairs_offset, sizeof pairs_disk, &pairs_disk);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(&pairs_disk));
-
         p_rvasize_pairs->get_pairs().back()->set_parent(p_rvasize_pairs);
+    }
+}
+
+/* Looks at the RVA/Size pairs in the PE header and creates an SgAsmGenericSection object for each one. We have to do this
+ * near the end of parsing because RVA/Size pairs have only memory info and no file offsets -- we need to have parsed the
+ * other sections so we can determine the file offset of each table. */
+void
+SgAsmPEFileHeader::create_table_sections()
+{
+    getpid();
+
+    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
+        const SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+        if (0==pair->get_e_size())
+            continue;
+
+        /* Table names come from PE file specification and are hard coded by RVA/Size pair index */
+        const char *tabname = NULL;
+        switch (i) {
+          case 0:  tabname = "Export table";                 break;
+          case 1:  tabname = "Import table";                 break;
+          case 2:  tabname = "Resource table";               break;
+          case 3:  tabname = "Exception table";              break;
+          case 4:  tabname = "Certificate table";            break;
+          case 5:  tabname = "Base relocation table";        break;
+          case 6:  tabname = "Debug";                        break;
+          case 7:  tabname = "Architecture";                 break;
+          case 8:  tabname = "Global ptr";                   break;
+          case 9:  tabname = "TLS table";                    break;
+          case 10: tabname = "Load config table";            break;
+          case 11: tabname = "Bound import";                 break;
+          case 12: tabname = "Import address table";         break;
+          case 13: tabname = "Delay import descriptor";      break;
+          case 14: tabname = "CLR runtime header";           break;
+          case 15: ROSE_ASSERT(!"reserved; should be zero"); break;
+          default: ROSE_ASSERT(!"too many RVA/Size pairs");  break;
+        }
+
+        /* Find a section that contains the starting RVA of the table. We use that to find the file offset. */
+        SgAsmGenericFile *ef = get_file();
+        SgAsmGenericSection *contained_in = ef->get_section_by_va(get_base_va()+pair->get_e_rva());
+        if (!contained_in) {
+            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections(): pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64" bytes \"%s\""
+                    ": unable to find a section containing the virtual address (skipping)\n",
+                    i, pair->get_e_rva(), pair->get_e_size(), tabname?tabname:"");
+            continue;
+        }
+        addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva());
+        
+
+        SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, file_offset, pair->get_e_size());
+        if (tabname) tabsec->set_name(tabname);
+        tabsec->set_parent(this); // FIXME: Is this necessary since we call set_header() also? (RPM 2008-08-27)
+        tabsec->set_header(this);
+        tabsec->set_synthesized(true);
+        tabsec->set_purpose(SP_HEADER);
+        tabsec->set_mapped(pair->get_e_rva(), pair->get_e_size());
+        tabsec->set_rperm(true);
+        tabsec->set_wperm(false);
+        tabsec->set_eperm(false);
     }
 }
 
@@ -1544,6 +1603,9 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
         pe_header->set_coff_symtab(symtab);
     }
 
+    /* Turn header-specified tables (RVA/Size pairs) into generic sections */
+    pe_header->create_table_sections();
+    
     /* Identify parts of the file that we haven't encountered during parsing */
     ef->fill_holes();
 

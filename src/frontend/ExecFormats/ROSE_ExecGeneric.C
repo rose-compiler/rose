@@ -364,9 +364,12 @@ SgAsmGenericFile::get_section_by_va(addr_t va)
     for (size_t i=1; i<possible.size(); i++) {
         if (fo0 != possible[i]->get_va_offset(va))
             return NULL; /* all possible sections must map the VA to the same file offset */
+#if 0 /* Not sure if we want to give table-defined sections special treatment since non-Elf often defines things in headers */
         if (best->get_id()<0 && possible[i]->get_id()>0) {
             best = possible[i]; /*prefer sections defined in a section or object table*/
-        } else if (best->get_mapped_size() > possible[i]->get_mapped_size()) {
+        } else
+#endif
+        if (best->get_mapped_size() > possible[i]->get_mapped_size()) {
             best = possible[i]; /*prefer sections with a smaller mapped size*/
         } else if (best->get_name().size()==0 && possible[i]->get_name().size()>0) {
             best = possible[i]; /*prefer sections having a name*/
@@ -664,6 +667,51 @@ SgAsmGenericSection::get_size() const
     return p_data->size();
 }
 
+/* Returns starting byte offset in the file */
+rose_addr_t
+SgAsmGenericSection::end_offset()
+{
+    return get_offset() + get_size();
+}
+
+/* Returns whether section desires to be mapped to memory */
+bool
+SgAsmGenericSection::is_mapped()
+{
+    return p_mapped;
+}
+
+/* Causes section to be mapped to memory */
+void
+SgAsmGenericSection::set_mapped(addr_t rva, addr_t size)
+{
+    p_mapped = true;
+    p_mapped_rva = rva;
+    p_mapped_size = size;
+}
+
+/* Causes section to not be mapped to memory. */
+void
+SgAsmGenericSection::clear_mapped()
+{
+    p_mapped = false;
+    p_mapped_rva = p_mapped_size = 0;
+}
+
+// DQ (8/8/2008): This is not standard semantics for an access function
+rose_addr_t
+SgAsmGenericSection::get_mapped_rva()
+{
+    return p_mapped ? p_mapped_rva  : 0;
+}
+
+/* Returns mapped size of section if mapped; zero otherwise */
+rose_addr_t
+SgAsmGenericSection::get_mapped_size()
+{
+    return p_mapped ? p_mapped_size : 0;
+}
+
 /* Returns base virtual address for a section, or zero if the section is not associated with a header. */
 rose_addr_t
 SgAsmGenericSection::get_base_va() const
@@ -801,6 +849,21 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, const SgUnsignedCharList &buf
     return write(f, offset, buf.size(), (void*)&(buf[0]));
 }
 
+/* See related method above. */
+rose_addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, const std::string &str)
+{
+    return write(f, offset, str.size(), str.c_str());
+}
+
+/* See related method above. */
+rose_addr_t
+SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
+{
+    return write(f, offset, 1, &c);
+}
+
+
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
  * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
@@ -932,6 +995,13 @@ SgAsmGenericSection::unparse_holes(FILE *f)
     unparse(f, congeal());
     if (!was_congealed)
         uncongeal();
+}
+
+/* Returns the file offset associated with the relative virtual address of a mapped section. */
+rose_addr_t
+SgAsmGenericSection::get_rva_offset(addr_t rva)
+{
+    return get_va_offset(rva + get_base_va());
 }
 
 /* Returns the file offset associated with the virtual address of a mapped section. */
