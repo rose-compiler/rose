@@ -206,6 +206,12 @@ int main(int argc, char** argv) {
     }
     RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
+	
+    set<std::string> partialCFG;
+    partialCFG.insert(" 8048363_f");
+    partialCFG.insert(" 804828f_f");
+    cfganalysis->printGraph("thomas.dot",partialCFG);
+
     if (test) {
       cout << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
       cout << " cfa -- Number of edges == " << cfganalysis->edgesVisited() << endl;
