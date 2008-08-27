@@ -38,7 +38,7 @@ check-local: binCompassMain
 	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 	@echo "*********************************************************************************************************************"
 
-CLEANFILES = dfg.dot cfg.dot unparsed.s dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
+CLEANFILES = dfg.dot thomas.dot cfg.dot unparsed.s dfg.gml out/buffer2.bin.PrintAsmInstruction.out out/buffer2.bin.PrintAsmFunctions.out output out/*
 
 binCompassMain.o: binCompassMain.cpp
 
