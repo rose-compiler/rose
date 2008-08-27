@@ -1408,7 +1408,7 @@ Grammar::setUpBinaryInstructions ()
   // RPM (2008-08-22): Size is now stored by the 'data' member since 'data' is an STL vector
   // AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","size","= 0",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Starting offset of the section */
+  /* Starting file offset of the section */
      AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
