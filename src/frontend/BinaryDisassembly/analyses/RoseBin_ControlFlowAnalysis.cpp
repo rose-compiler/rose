@@ -191,9 +191,11 @@ void RoseBin_ControlFlowAnalysis::run(RoseBin_Graph* vg, string fileN, bool mult
   vizzGraph->printEpilog(myfile);
   myfile.close();  
 
+#if 0
   set<std::string> partialCFG;
   partialCFG.insert(" 8048363_f");
   partialCFG.insert(" 804828f_f");
   printGraph("thomas.dot",partialCFG);
+#endif
 }
 
