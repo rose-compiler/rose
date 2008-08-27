@@ -10,7 +10,9 @@ clean: nnh99clean srw98clean
 
 
 
-nnh99shape: nnh99/Makefile
+nnh99shape: nnh99/Makefile \
+	common.set common_highlevel.optla common_normalisation.optla\
+	common_support.optla common_transfer.optla
 	$(MAKE) all -C nnh99
 
 nnh99/Makefile:
@@ -24,7 +26,9 @@ nnh99clean:
 	rm -f nnh99/runtests
 
 
-srw98shape: srw98/Makefile
+srw98shape: srw98/Makefile \
+	common.set common_highlevel.optla common_normalisation.optla\
+	common_support.optla common_transfer.optla
 	$(MAKE) all -C srw98
 
 srw98/Makefile:

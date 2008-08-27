@@ -4,6 +4,16 @@
 // E-mail: e0425543@student.tuwien.ac.at
 // Year  : 2006, 2007, 2008
 
+
+delete_vars::dfi,*VariableSymbolNT->dfi;
+delete_vars(g,[!]) = g;
+delete_vars(g,VariableSymbol(_) as v::vs) = delete_vars(delete_var(g,varsym_varid(v)), vs);
+
+delete_var::dfi,VariableId->dfi;
+delete_var(top,_) = top;
+delete_var(bot,_) = bot;
+delete_var(  g,v) = lift(tassign_x_null(v,drop(g)));
+
 extract_stackedge_set::ShapeGraph->StackEdgeSet;
 extract_stackedge_set(((se,_),_)) = se;
 
@@ -31,6 +41,12 @@ heapedge_by_var_sel(x,sel,edges) = hd([e !! (nv,sv,_) as e <-- edges, if (x ? nv
 
 no_duplicates::VarList->VarList;
 no_duplicates(list) = [x !! x <-- {y !! y <- list}];
+
+srw_extract_graphs::ShapeGraph->SrwNnhPair;
+srw_extract_graphs(sg) = (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)));
+
+nnh_extract_graphs::ShapeGraphSet->SrwNnhPair;
+nnh_extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
 
 sgSet_to_sgList::ShapeGraphSet->ShapeGraphList;
 sgSet_to_sgList(sgs) = [sg !! sg <-- sgs];
@@ -179,16 +195,7 @@ stackedges_by_dest(dest,edges) = {e !! (_,d) as e <-- edges, if d = dest};
 
 // all vars of stackedges
 vars_by_stackedges::StackEdgeSet->VarList;
-//vars_by_stackedges(ES) = no_duplicates([v !! (v,n) <-- ES]);
-vars_by_stackedges(S) = [v1 !! v1 <-- {v2 !! (v2,_) <-- S}];
-
-// all vars of stackedges (as set)
-nodes_by_stackedges::StackEdgeSet->NodeSet;
-nodes_by_stackedges(S) = {{nx} !! (nx,_) <-- S};
-
-// all vars of heapedges (as set)
-nodes_by_heapedges::HeapEdgeSet->NodeSet;
-nodes_by_heapedges(H) = {n !! n <-- union({nv !! (nv,_,_) <-- H},{nw !! (_,_,nw) <-- H})};
+vars_by_stackedges(ES) = no_duplicates([v !! (v,n) <-- ES]);
 
 stackedge_subtract::StackEdgeSet,StackEdgeSet->StackEdgeSet;
 stackedge_subtract(S1,S2) = {x!!x<--S1, if !(x ? S2)};
@@ -233,6 +240,10 @@ rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,
 // ----------------------------
 // is_may_alias / is_must_alias
 // ----------------------------
+
+// convert carrier to set of shapegraphs on which the aliases will be computed
+shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
+shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
 
 is_no_alias::Expression,Expression,ShapeGraphSet->bool;
 is_no_alias(a,b,sgs) = !is_may_alias(a,b,sgs);
@@ -347,9 +358,32 @@ node_by_var(x,((S0,_),_) as g) = hd([nk !! (k,nk) <-- S0, if (k=x)]);
 node_by_src_sel::Node,VariableId,ShapeGraph->Node;
 node_by_src_sel(x,sel,((_,H0),_)) = hd([nk !! (x1,sel1,nk) <-- H0, if x1 = x && sel1 = sel]);
 
+
+// Predefined SATIrE Support Functions
+expr_type::Expression->Type;
+expr_exprid::Expression->ExpressionId;
+exprid_expr::ExpressionId->Expression;
+exprid_str::ExpressionId->str;
+
+varsym_varid::VariableSymbolNT->VariableId;
+varref_varid::Expression->VariableId;
+varid_exprid::VariableId->ExpressionId;
+varid_str::VariableId->str;
+
+exprid_typeid::ExpressionId->TypeId;
+type_typeid::Type->TypeId;
+typeid_type::TypeId->Type;
+typeid_str::TypeId->str;
+
+is_tmpvarid::VariableId->bool;
+add_tmpvarid::TypeId->VariableId;
+
+stmt_asttext::Statement->str;
+expr_asttext::Expression->str;
+
 // garbage collection (Markus Schordan)
 /*
-gc::{DFI}->{DFI};
+gc::dfi->dfi;
 gc(lifted_sg) = if option_kill_unreachable_nodes then
   case drop(lifted_sg) of sgs => lift(remove_empty_graph({gc_sg(sg) !! sg <-- sgs})); endcase
 else

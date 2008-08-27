@@ -1,4 +1,4 @@
-This directory contains all common code for the shape analyses,
+This directory contains all common auxiliary functions for the shape analyses,
 i.e. matching of nested expressions, normalisation, alias predicates, etc.
 
 Its subdirectories contain the specifications of the following
