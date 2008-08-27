@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "placeConstantOnTheLhs.h"
-typedef CompassAnalyses::PlaceConstantOnTheLhs::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const placeConstantOnTheLhsChecker;
+extern const Compass::Checker* const myChecker = placeConstantOnTheLhsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

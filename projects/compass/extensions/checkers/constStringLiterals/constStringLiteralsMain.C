@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "constStringLiterals.h"
-typedef CompassAnalyses::ConstStringLiterals::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const constStringLiteralsChecker;
+extern const Compass::Checker* const myChecker = constStringLiteralsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

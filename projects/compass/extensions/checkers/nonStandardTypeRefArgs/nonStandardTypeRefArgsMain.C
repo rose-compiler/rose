@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "nonStandardTypeRefArgs.h"
-typedef CompassAnalyses::NonStandardTypeRefArgs::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const nonStandardTypeRefArgsChecker;
+extern const Compass::Checker* const myChecker = nonStandardTypeRefArgsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "avoidUsingTheSameHandlerForMultipleSignals.h"
-typedef CompassAnalyses::AvoidUsingTheSameHandlerForMultipleSignals::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const avoidUsingTheSameHandlerForMultipleSignalsChecker;
+extern const Compass::Checker* const myChecker = avoidUsingTheSameHandlerForMultipleSignalsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

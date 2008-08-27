@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "dynamicCast.h"
-typedef CompassAnalyses::DynamicCast::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const dynamicCastChecker;
+extern const Compass::Checker* const myChecker = dynamicCastChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

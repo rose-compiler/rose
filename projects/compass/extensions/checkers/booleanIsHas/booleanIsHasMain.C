@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "booleanIsHas.h"
-typedef CompassAnalyses::BooleanIsHas::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const booleanIsHasChecker;
+extern const Compass::Checker* const myChecker = booleanIsHasChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

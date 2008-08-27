@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "assignmentReturnConstThis.h"
-typedef CompassAnalyses::AssignmentReturnConstThis::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const assignmentReturnConstThisChecker;
+extern const Compass::Checker* const myChecker = assignmentReturnConstThisChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

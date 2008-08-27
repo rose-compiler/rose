@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "nonStandardTypeRefReturns.h"
-typedef CompassAnalyses::NonStandardTypeRefReturns::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const nonStandardTypeRefReturnsChecker;
+extern const Compass::Checker* const myChecker = nonStandardTypeRefReturnsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

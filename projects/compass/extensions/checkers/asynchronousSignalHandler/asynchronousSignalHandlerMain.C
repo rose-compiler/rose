@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "asynchronousSignalHandler.h"
-typedef CompassAnalyses::AsynchronousSignalHandler::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const asynchronousSignalHandlerChecker;
+extern const Compass::Checker* const myChecker = asynchronousSignalHandlerChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "functionCallAllocatesMultipleResources.h"
-typedef CompassAnalyses::FunctionCallAllocatesMultipleResources::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const functionCallAllocatesMultipleResourcesChecker;
+extern const Compass::Checker* const myChecker = functionCallAllocatesMultipleResourcesChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

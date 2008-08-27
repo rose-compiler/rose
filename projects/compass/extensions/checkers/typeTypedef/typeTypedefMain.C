@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "typeTypedef.h"
-typedef CompassAnalyses::TypeTypedef::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const typeTypedefChecker;
+extern const Compass::Checker* const myChecker = typeTypedefChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

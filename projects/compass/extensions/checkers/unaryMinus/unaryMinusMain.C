@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "unaryMinus.h"
-typedef CompassAnalyses::UnaryMinus::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const unaryMinusChecker;
+extern const Compass::Checker* const myChecker = unaryMinusChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "noVariadicFunctions.h"
-typedef CompassAnalyses::NoVariadicFunctions::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const noVariadicFunctionsChecker;
+extern const Compass::Checker* const myChecker = noVariadicFunctionsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

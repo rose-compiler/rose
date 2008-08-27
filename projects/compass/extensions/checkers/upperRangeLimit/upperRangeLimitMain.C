@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "upperRangeLimit.h"
-typedef CompassAnalyses::UpperRangeLimit::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const upperRangeLimitChecker;
+extern const Compass::Checker* const myChecker = upperRangeLimitChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

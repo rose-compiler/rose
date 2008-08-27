@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "singleParameterConstructorExplicitModifier.h"
-typedef CompassAnalyses::SingleParameterConstructorExplicitModifier::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const singleParameterConstructorExplicitModifierChecker;
+extern const Compass::Checker* const myChecker = singleParameterConstructorExplicitModifierChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

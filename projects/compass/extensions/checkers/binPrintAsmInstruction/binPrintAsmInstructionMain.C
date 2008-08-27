@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "binPrintAsmInstruction.h"
-typedef CompassAnalyses::BinPrintAsmInstruction::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const binPrintAsmInstructionChecker;
+extern const Compass::Checker* const myChecker = binPrintAsmInstructionChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

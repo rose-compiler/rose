@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "doNotUseCstyleCasts.h"
-typedef CompassAnalyses::DoNotUseCstyleCasts::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const doNotUseCstyleCastsChecker;
+extern const Compass::Checker* const myChecker = doNotUseCstyleCastsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

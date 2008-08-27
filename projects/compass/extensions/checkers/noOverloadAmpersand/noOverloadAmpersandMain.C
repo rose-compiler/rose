@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "noOverloadAmpersand.h"
-typedef CompassAnalyses::NoOverloadAmpersand::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const noOverloadAmpersandChecker;
+extern const Compass::Checker* const myChecker = noOverloadAmpersandChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

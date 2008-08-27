@@ -70,21 +70,31 @@ extraDistMakefile()
   test -f ${CHECKERS_DIRECTORY}/${dir}/${dir}.compass.external.makefile || cat > ${CHECKERS_DIRECTORY}/${dir}/${dir}.compass.external.makefile <<END
 # Set Variables ROSE_INSTALL to your ROSE_INSTALL installation and
 # COMPASS_SUPPORT to your compassSupport directory like this:
-#ROSE_INSTALL= ROSE-INSTALL-DIRECTORY
-#COMPASS_PROJECT = COMPASS-PROJECT-DIRECTORY 
-#COMPASS_SUPPORT = \${COMPASS_PROJECT}/compassSupport
+#ROSE_INSTALL=ROSE-INSTALL-DIRECTORY
+#COMPASS_PROJECT=COMPASS-PROJECT-DIRECTORY
+#COMPASS_SUPPORT=\${COMPASS_PROJECT}/src/compassSupport
 
 CHECKER_NAME = ${dir}Test
 
 LINKER_FLAGS = -L\$(ROSE_INSTALL)/lib -Wl,-rpath \$(ROSE_INSTALL)/lib -lrose \$(RT_LIBS) -L\`pwd\` -Wl,-rpath \`pwd\` -lcompass
 
-all: ${dir}Test
+all: prerequisites.h instantiate_prerequisites.h ${dir}Test
 
-libcompass.so: \$(COMPASS_SUPPORT)/compass.h \$(COMPASS_SUPPORT)/compass.C
-	g++ -fPIC -Wall -shared -o \$@ \$(COMPASS_SUPPORT)/compass.C -I\$(ROSE_INSTALL)/include -I\$(COMPASS_SUPPORT)
+prerequisites.h: \$(COMPASS_PROJECT)/extensions/prerequisites
+	find \$(COMPASS_PROJECT)/extensions/prerequisites -name "*.h" | awk -F/ '{print "#include \"" \$\$NF "\""}' > \$@
 
-${dir}Test: ${dir}.C ${dir}Main.C libcompass.so \$(COMPASS_SUPPORT)/compassTestMain.C
-	g++ -fPIC -Wall -o \$@ ${dir}.C ${dir}Main.C -I\$(COMPASS_SUPPORT) -I\$(ROSE_INSTALL)/include \$(LINKER_FLAGS)
+instantiate_prerequisites.h: \$(COMPASS_PROJECT)/extensions/prerequisites
+	cat \$(COMPASS_PROJECT)/extensions/prerequisites/*.h | grep "^extern" | sed -e 's@extern[\\t\\ ]*@Compass::@g' | awk '{print \$\$1 " Compass::" \$\$2}' > \$@
+
+
+libcompass.so: \$(COMPASS_PROJECT)/src/compassSupport/compass.h \$(COMPASS_PROJECT)/src/compassSupport/compass.C prerequisites.h instantiate_prerequisites.h
+	g++ -fPIC -Wall -shared -o \$@ \$(COMPASS_PROJECT)/src/compassSupport/compass.C -I\$(ROSE_INSTALL)/include -I\$(COMPASS_PROJECT)/src/compassSupport -I\$(COMPASS_PROJECT)/extensions/prerequisites -I.
+
+# GMY: The order of source files during compilation is important due to the use
+# of extern. The checker source code must follow the main source or else the
+# executable is likely to seg. fault.
+${dir}Test: ${dir}.C ${dir}Main.C libcompass.so \$(COMPASS_PROJECT)/src/compassSupport/compassTestMain.C
+	g++ -fPIC -Wall -o \$@ ${dir}Main.C ${dir}.C -I\$(COMPASS_PROJECT)/src/compassSupport -I\$(ROSE_INSTALL)/include -I\$(COMPASS_PROJECT)/extensions/prerequisites -I. \$(LINKER_FLAGS)
 
 test: ${dir}Test ${dir}Test1.C
 	./${dir}Test ${dir}Test1.C

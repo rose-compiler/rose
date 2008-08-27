@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "computationalFunctions.h"
-typedef CompassAnalyses::ComputationalFunctions::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const computationalFunctionsChecker;
+extern const Compass::Checker* const myChecker = computationalFunctionsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

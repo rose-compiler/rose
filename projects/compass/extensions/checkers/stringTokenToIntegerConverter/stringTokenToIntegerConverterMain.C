@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "stringTokenToIntegerConverter.h"
-typedef CompassAnalyses::StringTokenToIntegerConverter::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const stringTokenToIntegerConverterChecker;
+extern const Compass::Checker* const myChecker = stringTokenToIntegerConverterChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

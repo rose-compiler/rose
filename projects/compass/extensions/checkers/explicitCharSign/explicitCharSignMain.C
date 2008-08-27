@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "explicitCharSign.h"
-typedef CompassAnalyses::ExplicitCharSign::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const explicitCharSignChecker;
+extern const Compass::Checker* const myChecker = explicitCharSignChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

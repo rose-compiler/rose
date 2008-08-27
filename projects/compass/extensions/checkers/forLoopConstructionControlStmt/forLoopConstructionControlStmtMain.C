@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "forLoopConstructionControlStmt.h"
-typedef CompassAnalyses::ForLoopConstructionControlStmt::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const forLoopConstructionControlStmtChecker;
+extern const Compass::Checker* const myChecker = forLoopConstructionControlStmtChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

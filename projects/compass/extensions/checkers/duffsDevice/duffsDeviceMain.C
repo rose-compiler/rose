@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "duffsDevice.h"
-typedef CompassAnalyses::DuffsDevice::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const duffsDeviceChecker;
+extern const Compass::Checker* const myChecker = duffsDeviceChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

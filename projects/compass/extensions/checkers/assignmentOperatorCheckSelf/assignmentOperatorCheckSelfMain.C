@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "assignmentOperatorCheckSelf.h"
-typedef CompassAnalyses::AssignmentOperatorCheckSelf::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const assignmentOperatorCheckSelfChecker;
+extern const Compass::Checker* const myChecker = assignmentOperatorCheckSelfChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "byteByByteStructureComparison.h"
-typedef CompassAnalyses::ByteByByteStructureComparison::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const byteByByteStructureComparisonChecker;
+extern const Compass::Checker* const myChecker = byteByByteStructureComparisonChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

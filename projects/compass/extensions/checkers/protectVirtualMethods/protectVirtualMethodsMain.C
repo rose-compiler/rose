@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "protectVirtualMethods.h"
-typedef CompassAnalyses::ProtectVirtualMethods::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const protectVirtualMethodsChecker;
+extern const Compass::Checker* const myChecker = protectVirtualMethodsChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

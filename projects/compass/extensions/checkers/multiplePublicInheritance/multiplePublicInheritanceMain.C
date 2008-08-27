@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "multiplePublicInheritance.h"
-typedef CompassAnalyses::MultiplePublicInheritance::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const multiplePublicInheritanceChecker;
+extern const Compass::Checker* const myChecker = multiplePublicInheritanceChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "cyclomaticComplexity.h"
-typedef CompassAnalyses::CyclomaticComplexity::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const cyclomaticComplexityChecker;
+extern const Compass::Checker* const myChecker = cyclomaticComplexityChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

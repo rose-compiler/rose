@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "explicitTestForNonBooleanValue.h"
-typedef CompassAnalyses::ExplicitTestForNonBooleanValue::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const explicitTestForNonBooleanValueChecker;
+extern const Compass::Checker* const myChecker = explicitTestForNonBooleanValueChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"

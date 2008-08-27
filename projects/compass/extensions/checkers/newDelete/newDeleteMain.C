@@ -2,8 +2,9 @@
 // Do not modify this file
 //
 
-#include "newDelete.h"
-typedef CompassAnalyses::NewDelete::Traversal Checker;
+#include "compass.h"
+extern const Compass::Checker* const newDeleteChecker;
+extern const Compass::Checker* const myChecker = newDeleteChecker;
 
 #include "compass.C"
 #include "compassTestMain.C"
