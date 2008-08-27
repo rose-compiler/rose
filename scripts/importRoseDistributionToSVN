@@ -1,3 +1,4 @@
+#!/bin/bash 
 #!/bin/bash -v
 #
 # This script locates a distribution package in a ROSE test directory.
@@ -15,7 +16,7 @@
 #  thisScript ROSE_TOP_TEST_DIR
 #
 # by Liao, 7/31/2008
-# Last Modified 8/11/2008
+# Last Modified 8/27/2008
 #------------------------------------------------------
 
 # the backup one is for testing only
@@ -84,13 +85,21 @@ if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
 fi
 
 # Make sure all binary EDG versions for three platforms exist: i686-apple, i686-redhat, and x86_64-redhat, using a bash array (index starting from 0) to test it.
-EDG_BINARIES=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-*.tar.gz))
-if [ ${EDG_BINARIES[2]} ]; then
-   echo Found at least 3 EDG binary version as expected. They are ${EDG_BINARIES[@]}. 
+EDG_BINARIES1=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-pc-linux-gnu*.tar.gz))
+if [ ${EDG_BINARIES1[0]} ]; then
+   echo Found the EDG binaries for i686-pc-linux as expected. It is ${EDG_BINARIES1[@]}. 
 else 
-  echo Fatal Error: Not all EDG binaries for the three supported platforms are available. Available ones are: ${EDG_BINARIES[@]} .
+  echo Fatal Error: No EDG binaries for i686-pc-linux are available. 
   exit 3
 fi
+EDG_BINARIES2=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-x86_64-pc-linux-gnu*.tar.gz))
+if [ ${EDG_BINARIES2[0]} ]; then
+   echo Found the EDG binaries for x86_64-pc-linux-gnu as expected. It is ${EDG_BINARIES2[@]}. 
+else 
+  echo Fatal Error: No EDG binaries for x86_64-pc-linux-gnu are available. 
+  exit 3
+fi
+# TODO add OS-x binary check 
 
 # Now we can upload the package
 #--------------------------------------------------------
