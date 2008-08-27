@@ -70,7 +70,7 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func) {
-      //std::cerr << "CFG -- found : ." << hex_address << "." <<endl;
+      std::cerr << "ControlFlowAnalysis:: found function: ." << hex_address << "." <<endl;
       std::set<std::string>::const_iterator it = filter.find(hex_address);
       if (it!=filter.end()) {
 	//std::cerr << " ******************* match ********************* " << std::endl;
