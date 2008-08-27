@@ -3,6 +3,7 @@
   (require srfi/1)
   (require srfi/13)
   (require scheme/system)
+  (require scheme/pretty)
   
   (define variable-counter 1) ; 0 is not a valid value
   (define clauses '())
@@ -102,35 +103,102 @@
   
   (define (force-1! var) (add-clause! `(,var)))
   (define (force-0! var) (force-1! (inv var)))
+  (define (unsatisfiable!) (add-clause! `()))
+  
+  (define (has-inverses? vars)
+    (if (null? vars)
+        #f
+        (if (memv (inv (car vars)) (cdr vars))
+            #t
+            (has-inverses? (cdr vars)))))
   
   (define (or-gate-raw! output . inputs)
     (for-each (lambda (in) (add-clause! `(,(inv in) ,output))) inputs)
     (add-clause! `(,(inv output) ,@inputs)))
-  (define (or-gate! output . inputs)
-    (make-reduction-tree 5 or-gate-raw! output inputs))
   
-  (define (nor-gate! output . inputs) (apply or-gate! (inv output) inputs))
-  (define (and-gate! output . inputs) (apply or-gate! (inv output) (map inv inputs)))
-  (define (nand-gate! output . inputs) (apply or-gate! output (map inv inputs)))
-  (define (identity-gate! output input) (or-gate! output input))
-  (define (not-gate! output input) (nor-gate! output input))
-  (define (mux! output sel in-true in-false)
-    (add-clause! `(,sel ,in-false ,(inv output)))
-    (add-clause! `(,sel ,(inv in-false) ,output))
-    (add-clause! `(,(inv sel) ,in-true ,(inv output)))
-    (add-clause! `(,(inv sel) ,(inv in-true) ,output)))
-  (define (xor2-gate! output in1 in2)
-    (mux! output in1 (inv in2) in2))
-  (define (xor-gate! output . inputs)
-    (make-reduction-tree 2 xor2-gate! output inputs))
-  (define (xnor-gate! output . inputs) (apply xor-gate! (inv output) inputs))
-  (define (majority-gate! output in1 in2 in3)
-    (add-clause! `(,(inv in1) ,(inv in2) ,output))
-    (add-clause! `(,(inv in1) ,(inv in3) ,output))
-    (add-clause! `(,(inv in2) ,(inv in3) ,output))
-    (add-clause! `(,in1 ,in2 ,(inv output)))
-    (add-clause! `(,in1 ,in3 ,(inv output)))
-    (add-clause! `(,in2 ,in3 ,(inv output))))
+  (define (or-gate! . inputs)
+    (if (or (memq #t inputs) (has-inverses? inputs))
+        #t
+        (let ((inputs (delete-duplicates (filter (lambda (x) (not (eq? x #f))) inputs) eqv?)))
+          (cond
+            ((null? inputs) #f)
+            ((null? (cdr inputs)) (car inputs))
+            (else
+             (let ((output (variable!)))
+               (make-reduction-tree 5 or-gate-raw! output inputs)
+               output))))))
+  
+  (define (nor-gate! . inputs) (inv (apply or-gate! inputs)))
+  (define (and-gate! . inputs) (inv (apply or-gate! (map inv inputs))))
+  (define (nand-gate! . inputs) (apply or-gate! (map inv inputs)))
+  (define (identify! . vars)
+    (cond
+      ((has-inverses? vars) (unsatisfiable!))
+      ((memq #t vars)
+       (for-each force-1! vars))
+      ((memq #f vars)
+       (for-each force-0! vars))
+      (else
+       (let ((v1 (car vars)))
+         (let loop ((vars (cdr vars)))
+           (if (null? vars)
+               (void)
+               (let ((v2 (car vars)))
+                 (add-clause! `(,v1 ,(inv v2)))
+                 (add-clause! `(,(inv v1) ,v2))
+                 (loop (cdr vars)))))))))
+  
+  (define (mux! sel in-true in-false)
+    (cond
+      ((eq? sel #t) in-true)
+      ((eq? sel #f) in-false)
+      ((eq? in-false #f) (and-gate! sel in-true))
+      ((eq? in-true #f) (and-gate! (inv sel) in-false))
+      ((eq? in-false #t) (or-gate! (inv sel) in-true))
+      ((eq? in-true #t) (or-gate! sel in-false))
+      (else
+       (let ((output (variable!)))
+         (add-clause! `(,sel ,in-false ,(inv output)))
+         (add-clause! `(,sel ,(inv in-false) ,output))
+         (add-clause! `(,(inv sel) ,in-true ,(inv output)))
+         (add-clause! `(,(inv sel) ,(inv in-true) ,output))
+         output))))
+  
+  (define (xor2-gate! in1 in2)
+    (mux! in1 (inv in2) in2))
+  
+  (define (remove-one elt ls)
+    (cond
+      ((null? ls) '())
+      ((eqv? elt (car ls)) (cdr ls))
+      (else (cons (car ls) (remove-one elt (cdr ls))))))
+  
+  (define (xor-gate! . inputs)
+    (let loop ((inputs (filter (lambda (x) (not (eq? x #f))) inputs)))
+      (cond
+        ((null? inputs) #f)
+        ((eq? (car inputs) #t) (inv (loop (cdr inputs))))
+        ((memv (inv (car inputs)) (cdr inputs)) (inv (loop (remove-one (inv (car inputs)) (cdr inputs)))))
+        ((memv (car inputs) (cdr inputs)) (loop (remove-one (car inputs) (cdr inputs))))
+        (else
+         (xor2-gate! (car inputs) (loop (cdr inputs)))))))
+  
+  (define (xnor-gate! . inputs) (inv (apply xor-gate! inputs)))
+  
+  (define (threshold-gate! required-count . inputs)
+    (cond
+      ((zero? required-count) #t)
+      ((> required-count (length inputs)) #f)
+      ((= required-count (length inputs)) (apply and-gate! inputs))
+      ((= required-count 1) (apply or-gate! inputs))
+      ((memq #f inputs) (apply threshold-gate! required-count (remove-one #f inputs)))
+      ((memq #t inputs) (apply threshold-gate! (sub1 required-count) (remove-one #t inputs)))
+      (else (mux! (car inputs)
+                  (apply threshold-gate! (sub1 required-count) (cdr inputs))
+                  (apply threshold-gate! required-count (cdr inputs))))))
+  
+  (define (majority-gate! in1 in2 in3)
+    (threshold-gate! 2 in1 in2 in3))
   
   (provide reset!)
   (provide variable!)
@@ -141,15 +209,16 @@
   (provide run-picosat)
   (provide force-0!)
   (provide force-1!)
+  (provide unsatisfiable!)
   (provide or-gate!)
   (provide nor-gate!)
   (provide and-gate!)
   (provide nand-gate!)
-  (provide identity-gate!)
-  (provide not-gate!)
+  (provide identify!)
   (provide mux!)
   (provide xor-gate!)
   (provide xnor-gate!)
+  (provide threshold-gate!)
   (provide majority-gate!)
   
   )

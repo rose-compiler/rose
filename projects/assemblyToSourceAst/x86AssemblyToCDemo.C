@@ -1334,6 +1334,19 @@ void doSimpleSSA(SgBasicBlock* top, const X86AssemblyToCWithVariables& conv) {
   }
 }
 
+void unparseAsSExpressions(ostream& o, SgType* t) {
+  switch (t->variantT()) {
+    case V_SgModifierType: unparseAsSExpressions(o, isSgModifierType(t)->get_base_type()); break;
+    case V_SgTypeUnsignedChar: o << "uint8_t"; break;
+    case V_SgTypeUnsignedShort: o << "uint16_t"; break;
+    case V_SgTypeInt: o << "int32_t"; break;
+    case V_SgTypeUnsignedInt: o << "uint32_t"; break;
+    case V_SgTypeUnsignedLong: o << "uint32_t"; break;
+    case V_SgTypeUnsignedLongLong: o << "uint64_t"; break;
+    default: cerr << "unparseAsSExpressions: bad type " << t->class_name() << endl; abort();
+  }
+}
+
 void unparseAsSExpressions(ostream& o, SgExpression* e) {
   switch (e->variantT()) {
     case V_SgFunctionCallExp: {
@@ -1522,15 +1535,7 @@ void unparseAsSExpressions(ostream& o, SgExpression* e) {
     }
     case V_SgCastExp: {
       o << "(";
-      switch (e->get_type()->stripType()->variantT()) {
-        case V_SgTypeUnsignedLongLong: o << "uint64_t"; break;
-        case V_SgTypeUnsignedLong: o << "uint32_t"; break;
-        case V_SgTypeInt: o << "int32_t"; break;
-        case V_SgTypeUnsignedInt: o << "uint32_t"; break;
-        case V_SgTypeUnsignedShort: o << "uint16_t"; break;
-        case V_SgTypeUnsignedChar: o << "uint8_t"; break;
-        default: cerr << "Bad cast dest type " << e->get_type()->stripType()->class_name() << endl; abort();
-      }
+      unparseAsSExpressions(o, e->get_type());
       o << " ";
       unparseAsSExpressions(o, isSgUnaryOp(e)->get_operand());
       o << ")";
@@ -1562,7 +1567,9 @@ void unparseAsSExpressions(ostream& o, SgStatement* s) {
           SgVariableDeclaration* decl = isSgVariableDeclaration(stmts[i]);
           ROSE_ASSERT (decl->get_variables().size() == 1);
           SgInitializedName* in = decl->get_variables()[0];
-          o << "(let ((" << in->get_name().getString() << " ";
+          o << "(let ((";
+          unparseAsSExpressions(o, in->get_type());
+          o << " " << in->get_name().getString() << " ";
           if (in->get_initializer()) {
             unparseAsSExpressions(o, in->get_initializer());
           } else {
