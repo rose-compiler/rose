@@ -737,6 +737,7 @@ HEADER_EXECUTABLE_FILE_FORMAT_END
 
 
 HEADER_GENERIC_SECTION_START
+       // RPM (8/27/2008): Is this right? get_offset() returns file offset; get_mapped_rva() returns memory addr*/
        // This can be mapped to the offset data member
           unsigned long get_starting_memory_address() { return get_offset(); }
 
@@ -801,6 +802,7 @@ HEADER_GENERIC_SECTION_START
           bool  is_mapped();
           void  set_mapped(addr_t rva, addr_t size);
           void  clear_mapped();
+	  addr_t get_base_va() const;
 
        // DQ (8/8/2008): This is not standard semantics for an access function
           addr_t        get_mapped_rva();

@@ -331,12 +331,13 @@ std::vector<SgAsmGenericSection*>
 SgAsmGenericFile::get_sections_by_va(addr_t va)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
         SgAsmGenericSection *section = *i;
         if (section->is_mapped()) {
-            SgAsmGenericHeader *hdr = section->get_header();
-            addr_t base_va = hdr ? hdr->get_base_va() : 0;
-            if (va>=base_va + section->get_mapped_rva() && va < base_va+section->get_mapped_rva() + section->get_mapped_size()) {
+            if (va>=section->get_base_va() + section->get_mapped_rva() &&
+                va < section->get_base_va() + section->get_mapped_rva() + section->get_mapped_size()) {
                 retval.push_back(section);
             }
         }
@@ -418,8 +419,8 @@ SgAsmGenericFile::dump(FILE *f)
     
     /* Print results */
     fprintf(f, "File sections:\n");
-    fprintf(f, "  Flg File-Addr  File-Size  File-End    Virt-Addr  Virt-Size  Virt-End   Perm  ID Name\n");
-    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
+    fprintf(f, "  Flg File-Addr  File-Size  File-End    Base-VA    Start-RVA  Virt-Size  End-RVA    Perm  ID Name\n");
+    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
     addr_t high_water = 0;
     for (size_t i=0; i<sections.size(); i++) {
         SgAsmGenericSection *section = sections[i];
@@ -452,10 +453,11 @@ SgAsmGenericFile::dump(FILE *f)
 
         /* Mapped addresses */
         if (section->is_mapped()) {
-            fprintf(f, "  0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
-                    section->get_mapped_rva(), section->get_mapped_size(), section->get_mapped_rva()+section->get_mapped_size());
+            fprintf(f, "  0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    section->get_base_va(), section->get_mapped_rva(), section->get_mapped_size(),
+                    section->get_mapped_rva()+section->get_mapped_size());
         } else {
-            fprintf(f, " %*s", 3*11, "");
+            fprintf(f, " %*s", 4*11, "");
         }
 
         /* Permissions */
@@ -483,8 +485,8 @@ SgAsmGenericFile::dump(FILE *f)
     } else if (sections.back()->get_offset() + sections.back()->get_size() < get_size()) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, get_size(), 65, "");
-    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---- --- ----------------------------\n");
+    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, get_size(), 76, "");
+    fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 }
 
 /* Synthesizes sections to describe the parts of the file that are not yet referenced by other sections. */
@@ -660,6 +662,14 @@ SgAsmGenericSection::get_size() const
 {
     ROSE_ASSERT(p_data);
     return p_data->size();
+}
+
+/* Returns base virtual address for a section, or zero if the section is not associated with a header. */
+rose_addr_t
+SgAsmGenericSection::get_base_va() const
+{
+    SgAsmGenericHeader *hdr = get_header();
+    return hdr ? hdr->get_base_va() : 0;
 }
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of
@@ -929,10 +939,8 @@ rose_addr_t
 SgAsmGenericSection::get_va_offset(addr_t va)
 {
     ROSE_ASSERT(is_mapped());
-    SgAsmGenericHeader *hdr = get_header();
-    ROSE_ASSERT(hdr);
-    ROSE_ASSERT(va >= hdr->get_base_va());
-    addr_t rva = va - hdr->get_base_va();
+    ROSE_ASSERT(va >= get_base_va());
+    addr_t rva = va - get_base_va();
     ROSE_ASSERT(rva >= get_mapped_rva());
     return get_offset() + (rva - get_mapped_rva());
 }
