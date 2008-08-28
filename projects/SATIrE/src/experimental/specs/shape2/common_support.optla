@@ -241,10 +241,6 @@ rec_flatten_heapedge_set(s:sets,set) = rec_flatten_heapedge_set(sets, union(set,
 // is_may_alias / is_must_alias
 // ----------------------------
 
-// convert carrier to set of shapegraphs on which the aliases will be computed
-shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
-shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
-
 is_no_alias::Expression,Expression,ShapeGraphSet->bool;
 is_no_alias(a,b,sgs) = !is_may_alias(a,b,sgs);
 
