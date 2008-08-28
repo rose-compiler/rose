@@ -16,7 +16,8 @@ noinst_PROGRAMS = \
     lookupNamedType buildFile movePreprocessingInfo buildIfStmt \
     buildCpreprocessorDefineDeclaration instrumentEndOfFunction \
     isUpcSharedType isUpcPhaseLessSharedType buildLabelStatement \
-    buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement
+    buildSizeOfOp abiStuffTest abiStuffTestUPC buildNullStatement \
+    buildForStmt
 
 # list of test SAGE AST builders 
 buildFunctionDeclaration_SOURCES = buildFunctionDeclaration.C
@@ -43,6 +44,7 @@ buildSizeOfOp_SOURCES            = buildSizeOfOp.C
 abiStuffTest_SOURCES             = abiStuffTest.C
 abiStuffTestUPC_SOURCES          = abiStuffTestUPC.C
 buildNullStatement_SOURCES       = buildNullStatement.C
+buildForStmt_SOURCES             = buildForStmt.C
 
 # libsageInterface.la is included in rose.la already?
 LDADD =  $(ROSE_LIBS)
@@ -51,6 +53,7 @@ LDADD =  $(ROSE_LIBS)
 if ROSE_USE_LONG_MAKE_CHECK_RULE
 else
 endif
+# Be sure to include proper suffixes, like .C
 generatedCodeExamples = \
   rose_inputBlank1.C \
   rose_inputBlank2.C \
@@ -75,7 +78,8 @@ generatedCodeExamples = \
   rose_inputbuildSizeOfOp.C \
   abiStuffTestDone \
   rose_inputAbiStuffTestUPC.upc \
-  rose_inputbuildNullStatement.C
+  rose_inputbuildNullStatement.C \
+  rose_inputbuildForStmt.C
 
 # turn off edg warnings such as "variable x declared but never referenced" for test input files
 TEST_CXXFLAGS = -rose:verbose 0 --edg:no_warnings -g3
@@ -137,6 +141,9 @@ rose_inputAbiStuffTestUPC.upc:abiStuffTestUPC
 rose_inputbuildNullStatement.C:buildNullStatement
 	./buildNullStatement$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildNullStatement.C
 
+rose_inputbuildForStmt.C:buildForStmt
+	./buildForStmt$(EXEEXT) $(TEST_CXXFLAGS) -c $(srcdir)/inputbuildForStmt.C
+
 # MUST keep this up-to-date!!
 EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDeclaration.C \
        inputbuildAssignmentStmt.C inputbuildFunctionCalls.C inputbuildFunctionCalls.h \
@@ -146,7 +153,7 @@ EXTRA_DIST = inputBlank1.C inputBlank2.C inputfindMain.C inputbuildVariableDecla
        inputbuildCpreprocessorDefineDeclaration.C inputinstrumentEndOfFunction.C \
        inputisUpcSharedType.upc inputisUpcPhaseLessSharedType.upc inputbuildLabelStatement.C \
        inputbuildSizeOfOp.C inputAbiStuffTest.c inputAbiStuffTestUPC.upc \
-       inputbuildNullStatement.C
+       inputbuildNullStatement.C inputbuildForStmt.C
 
 check-local:
 	@echo "Test for ROSE SAGE Interfaces."
