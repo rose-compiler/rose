@@ -787,7 +787,11 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "Exec::addr_t" ) ||
               // DQ (8/9/2008): Added typedef to SgAsmExecutableFileFormat so that "Exec::addr_t" can be removed!
                  ( varTypeString == "SgAsmExecutableFileFormat::addr_t" ) ||
+                 ( varTypeString == "rose_addr_t" ) ||
                  ( varTypeString == "uint64_t" ) ||
+                 ( varTypeString == "uint32_t" ) ||
+                 ( varTypeString == "uint16_t" ) ||
+                 ( varTypeString == "uint8_t" ) ||
                  ( varTypeString == "size_t" ) ||
                  ( varTypeString == "time_t" ) ||
               // DQ (8/7/2008): Note that these are not primative types, but I will account 

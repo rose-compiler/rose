@@ -484,3 +484,4 @@ SgIncidenceUndirectedGraph
 SgUndirectedGraphEdge
 SgGraphNodeList
 SgGraphEdgeList
+SgAsmInterpretation

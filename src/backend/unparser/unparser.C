@@ -288,20 +288,12 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                  // string outputFileName = "unparse.s";
                     string outputFileName = file->get_unparse_output_filename();
 
-                    SgAsmFile* astFile = file->get_binaryFile();
-                    ROSE_ASSERT(astFile != NULL);
+                    SgAsmFile* asmFile = file->get_binaryFile();
+                    ROSE_ASSERT(asmFile != NULL);
 
                  // DQ (8/14/2008): Added test to make sure that there is a valid SgAsmBlock with instructions.
                  // So that we can optionally just test the binary file format details.
-                    if (astFile->get_global_block() != NULL)
-                       {
-                         unparseAsmStatementToFile(outputFileName, astFile->get_global_block());
-                       }
-                      else
-                       {
-                         printf ("Warning: SgAsmFile is missing valid global_block: astFile->get_global_block() != NULL \n");
-                       }
-                    
+                    unparseAsmFileToFile(outputFileName, asmFile);
 
                  // DQ (8/20/2008): Output the re-assembled binary from the parts in the represnetation of the binary file format 
                  // (Note that this does not support transformations on instructions, so this is not a backend code generator).
@@ -327,15 +319,15 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                          std::cout << "output re-generated binary as: " << newFilename << std::endl;
 #endif
                  // Regenerate the binary executable.
-                    SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, astFile);
+                    SgAsmExecutableFileFormat::unparseBinaryFormat(newFilename, asmFile);
 
                  // Dump detailed info from the AST representation of the binary executable file format.
                     string baseName = file->get_sourceFileNameWithoutPath();
                     std::string dumpName = baseName + ".dump";
-                    FILE *dumpFile = fopen(dumpName.c_str(), "w");
+                    FILE *dumpFile = fopen(dumpName.c_str(), "wb");
                     if (dumpFile)
                        {
-                         SgAsmGenericFile *ef = astFile->get_genericFile();
+                         SgAsmGenericFile *ef = asmFile->get_genericFile();
                          ROSE_ASSERT(ef != NULL);
 
                       // The file type should be the first; test harness depends on it

@@ -85,8 +85,11 @@ typedef Rose_STL_Container<SgDeclarationStatement*> SgDeclarationStatementPtrLis
 typedef SgDeclarationStatementPtrList*              SgDeclarationStatementPtrListPtr;
 
 // tps (8/20/2007): Added support for binaries.
-typedef std::list<SgAsmBlock*>              SgAsmBlockPtrList;
+typedef Rose_STL_Container<SgAsmBlock*>     SgAsmBlockPtrList;
 typedef SgAsmBlockPtrList*                  SgAsmBlockPtrListPtr;
+
+// JJW (8/28/2008): Added SgAsmInterpretation
+typedef Rose_STL_Container<SgAsmInterpretation*> SgAsmInterpretationPtrList;
 
 #if USE_OLD_BINARY_EXECUTABLE_IR_NODES
 

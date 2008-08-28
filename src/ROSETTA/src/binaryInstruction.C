@@ -261,6 +261,7 @@ Grammar::setUpBinaryInstructions ()
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
   // source code. The kinds of information that we want to save for each is really quire different.
      NEW_TERMINAL_MACRO ( AsmFile, "AsmFile", "AsmFileTag" );
+     NEW_TERMINAL_MACRO ( AsmInterpretation, "AsmInterpretation", "AsmInterpretationTag" );
 
 #if USE_OLD_BINARY_EXECUTABLE_IR_NODES
   // DQ (8/2/2008): these might be required for now, but we need to be removed later!
@@ -281,7 +282,7 @@ Grammar::setUpBinaryInstructions ()
   // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
 #else
-     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
+     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmInterpretation | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
 #endif
 
   // DQ (3/15/2007): Added support forbinaries (along lines of suggestions by Thomas Dullien)
@@ -292,7 +293,7 @@ Grammar::setUpBinaryInstructions ()
      AsmNode.setDataPrototype     ( "AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
   // DQ (8/28/2008): Change "unsigned int" to "addr_t"
-     AsmStatement.setDataPrototype("unsigned int","address","= 0",
+     AsmStatement.setDataPrototype("rose_addr_t","address","= 0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
   // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
      AsmStatement.setDataPrototype("std::string","comment","= \"\"",
@@ -319,16 +320,13 @@ Grammar::setUpBinaryInstructions ()
   // Block of instructions (helps define depth to the AST)
      AsmBlock.setFunctionPrototype              ( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      // added by tps, 05Apr07 ... need this for the control_flow_graph
-
-  // DQ (8/28/2008): Change "unsigned int" to "addr_t"
-     AsmBlock.setDataPrototype("unsigned int","next_block_true_address","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/28/2008): Change "unsigned int" to "addr_t"
-     AsmBlock.setDataPrototype("unsigned int","next_block_false_address","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("rose_addr_t","next_block_true_address","= 0",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmBlock.setDataPrototype("rose_addr_t","next_block_false_address","= 0",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (8/28/2008): Ask Thomas if we should change "unsigned int" to "addr_t"
-     AsmBlock.setDataPrototype("unsigned int","id","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmBlock.setDataPrototype("rose_addr_t","id","= 0",
+                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
      AsmOperandList.setFunctionPrototype        ( "HEADER_BINARY_OPERAND_LIST", "../Grammar/BinaryInstruction.code");
      AsmOperandList.setDataPrototype("SgAsmExpressionPtrList","operands","",
@@ -355,17 +353,21 @@ Grammar::setUpBinaryInstructions ()
   // AsmFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmGenericFile*","genericFile","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmFile.setDataPrototype("SgAsmInterpretationPtrList","interpretations","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
   // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
   // This is redundant with the more complete information in the SgAsmGenericSections of the binary file format.
-  // DQ (8/28/2008): Change "unsigned long" to "addr_t"
-     AsmFile.setDataPrototype("unsigned long", "associated_entry_point","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // JJW (8/28/2008): Removing this
+  // AsmInterpretation.setDataPrototype("rose_addr_t", "associated_entry_point","= 0",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmInterpretation.setDataPrototype("SgAsmGenericHeader*", "header", "= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // This is where the instructions are put...(put it last so the instructions are traversed last, after the binary file format)
-     AsmFile.setDataPrototype("SgAsmBlock*","global_block","= NULL",
+     AsmInterpretation.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // *****************************************************
@@ -401,11 +403,11 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_version","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_entry","= 0",
+     AsmElfFileHeader.setDataPrototype("rose_addr_t","e_entry","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_phoff","= 0",
+     AsmElfFileHeader.setDataPrototype("rose_addr_t","e_phoff","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_shoff","= 0",
+     AsmElfFileHeader.setDataPrototype("rose_addr_t","e_shoff","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_flags","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -477,16 +479,15 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/28/2008): Check against the specification
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_pltrelsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_pltgot","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_pltgot","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_hash","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_hash","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_strtab","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_strtab","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_symtab","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_symtab","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_rela","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_rela","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_relasz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -496,19 +497,19 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_symentsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_init","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_init","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_fini","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_fini","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_pltrel","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_jmprel","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_jmprel","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_verneednum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_verneed","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_verneed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_versym","= 0",
+     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_versym","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","other_entries","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -522,7 +523,7 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/28/2008): Check against the specification
      AsmElfDynamicEntry.setDataPrototype("unsigned","d_tag","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","d_val","= 0",
+     AsmElfDynamicEntry.setDataPrototype("rose_addr_t","d_val","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -550,21 +551,21 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSectionTableEntry.setDataPrototype("uint64_t","sh_flags","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","sh_addr","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addr","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","sh_offset","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","sh_size","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","sh_addralign","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_addralign","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","sh_entsize","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_entsize","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (6/14/2008): I think we can let this be considered an offset into the start of the mapped file (double check on this).
      AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ: Note that this is the size of the "SgUnsignedCharList extra" array, so this may be redundant because we use an STL vector for "extra".
-     AsmElfSectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","nextra","= 0",
+     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","nextra","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // std::vector<ElfSegmentTableEntry*> entries;
@@ -584,17 +585,17 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags","flags","= SgAsmElfSegmentTableEntry::PF_RESERVED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","offset","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","vaddr","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","vaddr","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","paddr","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","paddr","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","filesz","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","filesz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","memsz","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","memsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","align","= 0",
+     AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","align","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
     /* The ELF header can define a segment table entry to be larger than the Elf*SegmentTableEntry_disk struct, so any
      * extra data gets stuffed into this member, which is a pointer directly into the mapped file and is null if there
@@ -627,9 +628,8 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/3/2008): This is now in the base class
   // AsmElfSymbol.setDataPrototype("std::string","name","= \"\"",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
   // DQ (8/28/2008): Check against the specification
-     AsmElfSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","st_name","= 0",
+     AsmElfSymbol.setDataPrototype("rose_addr_t","st_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_info","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -637,7 +637,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned","st_shndx","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","st_size","= 0",
+     AsmElfSymbol.setDataPrototype("rose_addr_t","st_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -671,9 +671,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_time","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_coff_symtab","= 0",
+     AsmPEFileHeader.setDataPrototype("rose_addr_t","e_coff_symtab","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_nt_hdr_size","= 0",
+     AsmPEFileHeader.setDataPrototype("rose_addr_t","e_nt_hdr_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_coff_nsyms","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -697,7 +697,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_data_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_image_base","= 0",
+     AsmPEFileHeader.setDataPrototype("rose_addr_t","e_image_base","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_section_align","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -761,9 +761,9 @@ Grammar::setUpBinaryInstructions ()
 
   // addr_t e_rva, e_size;
      AsmPERVASizePair.setFunctionPrototype ( "HEADER_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
-     AsmPERVASizePair.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_rva","= 0",
+     AsmPERVASizePair.setDataPrototype("rose_addr_t","e_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPERVASizePair.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_size","= 0",
+     AsmPERVASizePair.setDataPrototype("rose_addr_t","e_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPERVASizePair.setDataPrototype("SgAsmGenericSection*", "section", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -786,13 +786,13 @@ Grammar::setUpBinaryInstructions ()
      AsmPESectionTableEntry.setFunctionPrototype ( "HEADER_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmPESectionTableEntry.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","virtual_size","= 0",
+     AsmPESectionTableEntry.setDataPrototype("rose_addr_t","virtual_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","rva","= 0",
+     AsmPESectionTableEntry.setDataPrototype("rose_addr_t","rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","physical_size","= 0",
+     AsmPESectionTableEntry.setDataPrototype("rose_addr_t","physical_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","physical_offset","= 0",
+     AsmPESectionTableEntry.setDataPrototype("rose_addr_t","physical_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (8/28/2008): Check against the specification
      AsmPESectionTableEntry.setDataPrototype("unsigned","coff_line_nums","= 0",
@@ -839,7 +839,7 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffSymbol.setFunctionPrototype ( "HEADER_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbol.setDataPrototype("std::string","st_name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmCoffSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","st_name_offset","= 0",
+     AsmCoffSymbol.setDataPrototype("rose_addr_t","st_name_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmCoffSymbol.setDataPrototype("int","st_section_num","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -871,7 +871,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res2","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEExtendedDOSHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_lfanew","= 0",
+     AsmPEExtendedDOSHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // time_t testVariable;
@@ -879,11 +879,11 @@ Grammar::setUpBinaryInstructions ()
   // time_t    time;
   // unsigned  forwarder_chain;
      AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setDataPrototype("SgAsmExecutableFileFormat::addr_t","hintnames_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_addr_t","hintnames_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmExecutableFileFormat::addr_t","bindings_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_addr_t","bindings_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dll_name_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_addr_t","dll_name_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("time_t","time","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -972,25 +972,25 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("unsigned","e_winvers","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_entrytab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_entrytab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_entrytab_size","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_entrytab_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_sectab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_sectab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_rsrctab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_rsrctab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_resnametab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_resnametab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_modreftab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_modreftab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_importnametab_rfo","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_importnametab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_nonresnametab_offset","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_nonresnametab_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fastload_sector","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_fastload_sector","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fastload_nsectors","= 0",
+     AsmNEFileHeader.setDataPrototype("rose_addr_t","e_fastload_nsectors","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNEFileHeader.setDataPrototype("SgAsmNEExtendedDOSHeader*","dos2_header","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1026,9 +1026,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNESectionTable.setDataPrototype("unsigned","sector","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNESectionTable.setDataPrototype("SgAsmExecutableFileFormat::addr_t","physical_size","= 0",
+     AsmNESectionTable.setDataPrototype("rose_addr_t","physical_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNESectionTable.setDataPrototype("SgAsmExecutableFileFormat::addr_t","virtual_size","= 0",
+     AsmNESectionTable.setDataPrototype("rose_addr_t","virtual_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1074,7 +1074,7 @@ Grammar::setUpBinaryInstructions ()
      AsmNEExtendedDOSHeader.setFunctionPrototype ( "HEADER_NE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
      AsmNEExtendedDOSHeader.setDataPrototype("SgUnsignedList","e_res1","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNEExtendedDOSHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_lfanew","= 0",
+     AsmNEExtendedDOSHeader.setDataPrototype("rose_addr_t","e_lfanew","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // NEEntryFlags flags;         /* bit flags */
@@ -1110,7 +1110,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::NERelocFlags","flags","= SgAsmNERelocEntry::RF_ADDITIVE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNERelocEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","src_offset","= 0",
+     AsmNERelocEntry.setDataPrototype("rose_addr_t","src_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Note that these call default constructors to initialize their data
      AsmNERelocEntry.setDataPrototype("SgAsmNERelocEntry::iref_type","iref","",
@@ -1129,9 +1129,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmNESectionTableEntry.setDataPrototype("unsigned","sector","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","physical_size","= 0",
+     AsmNESectionTableEntry.setDataPrototype("rose_addr_t","physical_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmNESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","virtual_size","= 0",
+     AsmNESectionTableEntry.setDataPrototype("rose_addr_t","virtual_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1196,47 +1196,47 @@ Grammar::setUpBinaryInstructions ()
   // addr_t e_iterpages_offset, e_rsrctab_rfo, e_resnametab_rfo, e_entrytab_rfo, e_fmtdirtab_rfo, e_fixup_pagetab_rfo;
   // addr_t e_fixup_rectab_rfo, e_import_modtab_rfo, e_import_proctab_rfo, e_ppcksumtab_rfo, e_data_pages_offset;
   // addr_t e_nonresnametab_offset, e_debug_info_rfo;
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_npages","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_npages","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_eip","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_eip","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_esp","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_esp","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_page_size","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_page_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fixup_sect_size","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_fixup_sect_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_loader_sect_size","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_loader_sect_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_secttab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_secttab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_pagetab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_pagetab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_iterpages_offset","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_iterpages_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_rsrctab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_rsrctab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_resnametab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_resnametab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_entrytab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_entrytab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fmtdirtab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_fmtdirtab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fixup_pagetab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_fixup_pagetab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_fixup_rectab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_fixup_rectab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_import_modtab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_import_modtab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_import_proctab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_import_proctab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_ppcksumtab_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_ppcksumtab_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_data_pages_offset","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_data_pages_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_nonresnametab_offset","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_nonresnametab_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_debug_info_rfo","= 0",
+     AsmLEFileHeader.setDataPrototype("rose_addr_t","e_debug_info_rfo","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ExtendedDOSHeader *dos2_header;
@@ -1323,7 +1323,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLEEntryPoint.setDataPrototype("unsigned","res1","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLEEntryPoint.setDataPrototype("SgAsmExecutableFileFormat::addr_t","entry_offset","= 0",
+     AsmLEEntryPoint.setDataPrototype("rose_addr_t","entry_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // unsigned    flags, pagemap_index, pagemap_nentries, res1;
@@ -1337,9 +1337,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmLESectionTableEntry.setDataPrototype("unsigned","res1","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","mapped_size","= 0",
+     AsmLESectionTableEntry.setDataPrototype("rose_addr_t","mapped_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmLESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","base_addr","= 0",
+     AsmLESectionTableEntry.setDataPrototype("rose_addr_t","base_addr","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1351,34 +1351,31 @@ Grammar::setUpBinaryInstructions ()
   // ExecSection         *rm_section;    /* Real mode code segment */
      AsmDOSFileHeader.setFunctionPrototype ( "HEADER_DOS_HEADER", "../Grammar/BinaryInstruction.code");
   /* Section in which this segment lives */
-
-  // DQ (8/28/2008): Check against the specification
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_last_page_size","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_last_page_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_total_pages","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_total_pages","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_nrelocs","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_nrelocs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_header_paragraphs","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_header_paragraphs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_minalloc","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_minalloc","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_maxalloc","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_maxalloc","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (8/28/2008): Check against the specification (these should 16bit pointers)
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_ss","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_ss","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_sp","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_sp","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_cksum","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_cksum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_ip","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_ip","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_cs","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_cs","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("unsigned","e_overlay","= 0",
+     AsmDOSFileHeader.setDataPrototype("uint16_t","e_overlay","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmDOSFileHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","e_relocs_offset","= 0",
+     AsmDOSFileHeader.setDataPrototype("rose_addr_t","e_relocs_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("SgUnsignedCharList","e_res1","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1432,10 +1429,10 @@ Grammar::setUpBinaryInstructions ()
 
   /* Size of section in bytes */
   // RPM (2008-08-22): Size is now stored by the 'data' member since 'data' is an STL vector
-  // AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","size","= 0",
+  // AsmGenericSection.setDataPrototype("rose_addr_t","size","= 0",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Starting file offset of the section */
-     AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","offset","= 0",
+     AsmGenericSection.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of just this section; points into file's content */
@@ -1458,9 +1455,9 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setDataPrototype("bool","mapped","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Intended relative virtual address if `mapped' is true */
-     AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","mapped_rva","= 0",
+     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","mapped_size","= 0",
+     AsmGenericSection.setDataPrototype("rose_addr_t","mapped_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","rperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1526,7 +1523,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   /* Base virtual address used by all "relative virtual addresses" (RVA) */
-     AsmGenericHeader.setDataPrototype("SgAsmExecutableFileFormat::addr_t","base_va","= 0",
+     AsmGenericHeader.setDataPrototype("rose_addr_t","base_va","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Code entry point wrt base_va */
      AsmGenericHeader.setDataPrototype("SgAddressList","entry_rvas","",
@@ -1638,9 +1635,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSymbol::SymbolType","type","= SgAsmGenericSymbol::SYM_NO_TYPE",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","value","= 0",
+     AsmGenericSymbol.setDataPrototype("rose_addr_t","value","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","size","= 0",
+     AsmGenericSymbol.setDataPrototype("rose_addr_t","size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSection*","bound","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1704,26 +1701,16 @@ Grammar::setUpBinaryInstructions ()
      AsmFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Not clear if we want to store the offset explicitly
-
-  // DQ (8/28/2008): Change "unsigned long" to "uint64_t"
-     AsmFieldDeclaration.setDataPrototype("unsigned long","offset","= 0",
+     AsmFieldDeclaration.setDataPrototype("uint64_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/28/2008): Change "unsigned char" to "uint8_t"
-     AsmByteValueExpression.setDataPrototype("unsigned char","value","= 0x0",
+     AsmByteValueExpression.setDataPrototype("uint8_t","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/28/2008): Change "unsigned short" to "uint16_t"
-     AsmWordValueExpression.setDataPrototype("unsigned short","value","= 0x0",
+     AsmWordValueExpression.setDataPrototype("uint16_t","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/28/2008): Change "unsigned int" to "uint32_t"
-     AsmDoubleWordValueExpression.setDataPrototype("unsigned int","value","= 0x0",
+     AsmDoubleWordValueExpression.setDataPrototype("uint32_t","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/28/2008): Change "unsigned long long int" to "uint64_t"
-  // This should maybe be "unsigned long long"
-     AsmQuadWordValueExpression.setDataPrototype("unsigned long long int","value","= 0x0",
+     AsmQuadWordValueExpression.setDataPrototype("uint64_t","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmSingleFloatValueExpression.setDataPrototype("float","value","= 0.0F",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
