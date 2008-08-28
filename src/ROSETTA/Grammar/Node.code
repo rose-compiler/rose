@@ -401,7 +401,9 @@ class SgSharedVector {
 
     /**** Erasure ****/
     void clear() {
+	p_pool = NULL;
         p_size = 0;
+	p_capacity = 0;
     }
     void erase(iterator position) {
         abort(); //FIXME

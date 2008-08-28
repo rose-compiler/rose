@@ -130,7 +130,7 @@ SgAsmGenericFile::ctor(std::string fileName)
     }
 
     /* Make file contents available through an STL vector without actually reading the file */
-    p_data = new SgFileContentList(mapped, p_sb.st_size);
+    p_data = SgFileContentList(mapped, p_sb.st_size);
 
     ROSE_ASSERT(p_sections == NULL);
     p_sections = new SgAsmGenericSectionList();
@@ -160,14 +160,10 @@ SgAsmGenericFile::~SgAsmGenericFile()
     ROSE_ASSERT(p_headers->get_headers().empty()   == true);
     
     /* Unmap and close */
-    if (p_data) {
-        if (p_data->size()>0) {
-            unsigned char *mapped = &(p_data->at(0));
-            munmap(mapped, p_data->size());
-        }
-        delete p_data;
-        p_data = NULL;
-    }
+    unsigned char *mapped = p_data.pool();
+    if (mapped && p_data.size()>0)
+        munmap(mapped, p_data.size());
+    p_data.clear();
 
     if ( p_fd >= 0 )
         close(p_fd);
@@ -184,19 +180,17 @@ SgAsmGenericFile::~SgAsmGenericFile()
 rose_addr_t
 SgAsmGenericFile::get_size() const
 {
-    ROSE_ASSERT(p_data);
-    return p_data->size();
+    return p_data.size();
 }
 
 /* Returns a vector that points to part of the file content without actually ever referencing the file content until the
  * vector elements are referenced. */
-SgFileContentList *
+SgFileContentList
 SgAsmGenericFile::content(addr_t offset, addr_t size)
 {
-    ROSE_ASSERT(p_data!=NULL);
-    if (offset+size > p_data->size())
+    if (offset+size > p_data.size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
-    return new SgFileContentList(*p_data, offset, size);
+    return SgFileContentList(p_data, offset, size);
 }
 
 /* Adds a new header to the file. This is called implicitly by the header constructor */
@@ -661,8 +655,7 @@ SgAsmGenericSection::~SgAsmGenericSection()
 rose_addr_t
 SgAsmGenericSection::get_size() const
 {
-    ROSE_ASSERT(p_data);
-    return p_data->size();
+    return p_data.size();
 }
 
 /* Returns starting byte offset in the file */
@@ -731,7 +724,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
     if (!p_congealed && size > 0)
         p_referenced.insert(std::make_pair(offset, offset+size));
 
-    return &(p_data->at(offset));
+    return &(p_data[offset]);
 }
 
 /* Copies the specified part of the section into a buffer. This is more like fread() than the two-argument version in that the
@@ -745,12 +738,12 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
         memset(buf, 0, size);
     } else if (offset+size > get_size()) {
         addr_t nbytes = get_size() - offset;
-        memcpy(buf, &(p_data->at(offset)), nbytes);
+        memcpy(buf, &(p_data[offset]), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+nbytes));
     } else {
-        memcpy(buf, &(p_data->at(offset)), size);
+        memcpy(buf, &(p_data[offset]), size);
         if (!p_congealed)
             p_referenced.insert(std::make_pair(offset, offset+size));
     }
@@ -760,7 +753,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
 const char *
 SgAsmGenericSection::content_str(addr_t offset)
 {
-    const char *ret = (const char*)&(p_data->at(offset));
+    const char *ret = (const char*)&(p_data[offset]);
     size_t nchars=0;
 
 #if 0 /*DEBUGGING*/
@@ -831,11 +824,11 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *b
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, const SgFileContentList *buf)
+SgAsmGenericSection::write(FILE *f, addr_t offset, const SgFileContentList &buf)
 {
-    if (0==buf->size())
+    if (0==buf.size())
         return 0;
-    return write(f, offset, buf->size(), &(buf->at(0)));
+    return write(f, offset, buf.size(), &(buf[0]));
 }
 
 /* See related method above */
@@ -921,10 +914,7 @@ SgAsmGenericSection::extend(addr_t size)
     addr_t new_size = get_size() + size;
     if (p_offset + new_size > get_file()->get_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
-
-    ROSE_ASSERT(p_data);
-    delete p_data;
-    p_data = get_file()->content(p_offset, new_size);
+    p_data.resize(new_size);
 }
 
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
@@ -938,10 +928,7 @@ SgAsmGenericSection::extend_up_to(addr_t size)
         ROSE_ASSERT(p_offset <= get_file()->get_size());
         new_size = get_file()->get_size() - p_offset;
     }
-
-    ROSE_ASSERT(p_data);
-    delete p_data;
-    p_data = get_file()->content(p_offset, new_size);
+    p_data.resize(new_size);
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
