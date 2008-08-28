@@ -35,78 +35,32 @@ SgAsmGenericSection* DisassemblerCommon::AsmFileWithData::getSectionOfAddress(ui
 SgAsmGenericSection*
 DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
    {
-  // This version is about the same as the code above, but it calls a new function 
-  // "get_best_possible_section_by_va()" implemented in to be more conservative about
-  // the selection of segments associated with addresses.
-     SgAsmGenericSection *section = NULL;
+     SgAsmGenericHeader* header = interp->get_header();
+     ROSE_ASSERT (header);
 
-#if 0
-  // Restore original behavior (default is false)
-     Disassembler::aggressive_mode = true;
-#endif
+     uint64_t rva = addr - header->get_base_va();
 
-  // printf ("Disassembler::aggressive_mode = %s \n",Disassembler::aggressive_mode ? "true" : "false");
-     ROSE_ASSERT(Disassembler::aggressive_mode == false);
-     ROSE_ASSERT(ef != NULL);
+     SgAsmGenericFile* file = header->get_file();
+     ROSE_ASSERT (file);
 
-  // Step 1: Call the function that Robb wrote
-  // section = ef->get_section_by_va(addr);
-     section = ef->get_best_possible_section_by_va(addr);
-
-#if 0
-  // ROSE_ASSERT(section != NULL);
-     if (section == NULL)
-        {
-          printf ("Address %p generated a UNDEFINED section \n",(void*)addr);
-        }
-       else
-        {
-          printf ("Address %p generated a VALID section \n",(void*)addr);
-        }
-#endif
-
-  // Look in the section table (because not all sections are supposed to contain code to be disassembled).
-     if (Disassembler::aggressive_mode == true)
-        {
-          printf ("Testing: exit if this is called (agressive mode is not yet available)! \n");
-          ROSE_ASSERT(false);
-
-       // Look in the segment table (because the OS marks pages of the mapped file based on the segment permissions).
-          section = ef->get_section_by_va(addr);
-          if (section == NULL)
-             {
-               vector<SgAsmGenericSection*> possibleSections = ef->get_sections_by_va(addr);
-               vector<SgAsmGenericSection*> possibleSections2;
-               for (size_t i = 0; i < possibleSections.size(); ++i)
-                  {
-                    if (possibleSections[i]->get_id() != -1)
-                       {
-                         possibleSections2.push_back(possibleSections[i]);
-                       }
-                  }
-
-               if (possibleSections2.empty())
-                  {
-                  // There is no section to satisfy the request.
-                     return NULL;
-                  }
-                 else
-                  {
-                     if (possibleSections2.size() != 1)
-                        {
-                       // Multiple sections found and they don't map consistently between file and memory.
-                          cerr << "Trying to disassemble code that is in multiple sections (addr = 0x" << hex << addr << ")" << endl;
-                          abort();
-                        }
-                       else
-                        {
-                          return possibleSections2[0];
-                        }
-                  }
-             }
-        }
-
-     return section;
+     SgAsmGenericSectionList* sectionList = file->get_sections();
+     const SgAsmGenericSectionPtrList& sections = sectionList->get_sections();
+     for (size_t i = 0; i < sections.size(); ++i) {
+       SgAsmGenericSection* section = sections[i];
+       if (section->get_header() != header) continue;
+       if (!section->get_mapped()) continue;
+       if (rva < section->get_mapped_rva()) continue;
+       if (rva >= section->get_mapped_rva() + section->get_mapped_size())
+         continue;
+       if (Disassembler::aggressive_mode) {
+         // Only allow ELF segments
+         ROSE_ASSERT (!"Aggressive mode not supported");
+       } else {
+         if (!isSgAsmElfSection(section) && !isSgAsmPESection(section)) continue;
+         return section;
+       }
+     }
+     return NULL;
    }
 
 bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
@@ -119,12 +73,6 @@ bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
   return false;
 }
 
-size_t DisassemblerCommon::AsmFileWithData::getFileOffsetOfAddress(uint64_t addr) const {
-  SgAsmGenericSection* section = getSectionOfAddress(addr);
-  if (!section) abort();
-  return section->get_va_offset(addr);
-}
-
 SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const {
   SgAsmGenericSection* section = getSectionOfAddress(addr);
   if (!section) return 0;
@@ -132,24 +80,27 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
       !section->get_eperm()) {
     return 0;
   }
-  SgAsmGenericHeader* header = section->get_header();
+  ROSE_ASSERT (section->get_header() == interp->get_header());
+  SgAsmGenericHeader* header = interp->get_header();
   ROSE_ASSERT (header);
   uint64_t rva = addr - header->get_base_va();
+  SgAsmGenericFile* file = section->get_file();
+  ROSE_ASSERT (file);
   size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
-  ROSE_ASSERT (fileOffset < ef->get_size());
+  ROSE_ASSERT (fileOffset < file->get_size());
   const SgAsmGenericArchitecture* arch = header->get_target();
   SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
   SgAsmInstruction* insn = NULL;
   try {
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_32);
-      insn = X86Disassembler::disassemble(params, &(ef->content()[0]), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
     } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
-      insn = X86Disassembler::disassemble(params, &(ef->content()[0]), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
     } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, &(ef->content()[0]), ef->get_size(), fileOffset, &knownSuccessors);
+      insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
     } else {
       cerr << "Bad architecture to disassemble" << endl;
       abort();
@@ -231,72 +182,76 @@ void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t
 bool Disassembler::aggressive_mode = false;
 
 void Disassembler::disassembleFile(SgAsmFile* f) {
+  const SgAsmInterpretationPtrList& interps = f->get_interpretations();
+  for (size_t i = 0; i < interps.size(); ++i) {
+    disassembleInterpretation(interps[i]);
+  }
+}
+
+void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
   // DQ (8/26/2008): Set the agressive mode in the disassembler basedon the SgFile (evaluated from the command line).
-     SgFile* fileNode = isSgFile(f->get_parent());
+     SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
+     ROSE_ASSERT (asmFile);
+     SgFile* fileNode = isSgFile(asmFile->get_parent());
      ROSE_ASSERT(fileNode != NULL);
      aggressive_mode = fileNode->get_aggressive();
 
-  SgAsmGenericFile* ef = SgAsmExecutableFileFormat::parse(f->get_name().c_str());
-  DisassemblerCommon::AsmFileWithData file(ef);
+  DisassemblerCommon::AsmFileWithData file(interp);
   map<uint64_t, SgAsmInstruction*> insns;
   map<uint64_t, bool> basicBlockStarts;
   set<uint64_t> functionStarts;
 
-// DQ (8/23/2008): Since headers are also in the section list, isn't this redundant?
-  const vector<SgAsmGenericHeader*> & headers = ef->get_headers()->get_headers();
-  for (size_t i = 0; i < headers.size(); ++i) {
-    uint64_t entryPoint = headers[i]->get_entry_rva() + headers[i]->get_base_va();
+  SgAsmGenericHeader* header = interp->get_header();
+  ROSE_ASSERT (header);
 
- // DQ: This appears to be the "_start" for the program, at least for ELF (unclear what else it can be).
-    printf ("Disassembler::disassembleFile(): SgAsmGenericHeader list[%zu] = %p = %s = %s: entryPoint = %p \n",i,headers[i],headers[i]->get_name().c_str(),headers[i]->class_name().c_str(),(void*)entryPoint);
+  uint64_t entryPoint = header->get_entry_rva() + header->get_base_va();
 
-    SgAsmDOSFileHeader* DOS_header = isSgAsmDOSFileHeader(headers[i]);
-    if (DOS_header != NULL)
-       {
-         ROSE_ASSERT( headers[i]->get_name() == "DOS File Header" );
-         printf ("Special handling for the DOS File Header in the disassembly \n");
+  SgAsmDOSFileHeader* DOS_header = isSgAsmDOSFileHeader(header);
+  if (DOS_header != NULL)
+     {
+       ROSE_ASSERT( header->get_name() == "DOS File Header" );
+       printf ("Special handling for the DOS File Header in the disassembly \n");
 
-      // There is an additional offset for DOS (and we think is is an offset from the entry point computed using the sections data).
-         entryPoint += (DOS_header->get_e_header_paragraphs() * 16L) + DOS_header->get_e_ip();
-         if (entryPoint != 0x40)
-            {
-           // This is the entry point that we are expecting.
-              printf ("Non standard DOS entry point selected (or we don't know yet how to compute it for the DOES header) \n");
-              ROSE_ASSERT(false);
-            }
+    // There is an additional offset for DOS (and we think is is an offset from the entry point computed using the sections data).
+       entryPoint += (DOS_header->get_e_header_paragraphs() * 16L) + DOS_header->get_e_ip();
+       if (entryPoint != 0x40)
+          {
+         // This is the entry point that we are expecting.
+            printf ("Non standard DOS entry point selected (or we don't know yet how to compute it for the DOES header) \n");
+            ROSE_ASSERT(false);
+          }
 
-         printf ("DOS_header->get_e_total_pages()    = %u \n",DOS_header->get_e_total_pages());
-         printf ("DOS_header->get_e_last_page_size() = %u \n",DOS_header->get_e_last_page_size());
+       printf ("DOS_header->get_e_total_pages()    = %u \n",DOS_header->get_e_total_pages());
+       printf ("DOS_header->get_e_last_page_size() = %u \n",DOS_header->get_e_last_page_size());
 
-         unsigned long extra_data_start = DOS_header->get_e_total_pages() * 512L;
-         if (DOS_header->get_e_last_page_size())
-              extra_data_start -= (512 - DOS_header->get_e_last_page_size());
+       unsigned long extra_data_start = DOS_header->get_e_total_pages() * 512L;
+       if (DOS_header->get_e_last_page_size())
+            extra_data_start -= (512 - DOS_header->get_e_last_page_size());
 
-         printf ("extra_data_start = %lu \n",extra_data_start);
+       printf ("extra_data_start = %lu \n",extra_data_start);
 
-      // entryPoint += 0x40;
+    // entryPoint += 0x40;
 
-         printf ("Using entryPoint = %lu \n",entryPoint);
+       printf ("Using entryPoint = %lu \n",entryPoint);
 #if 0
-         basicBlockStarts[entryPoint] = true;
-         functionStarts.insert(entryPoint);
-         file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
+       basicBlockStarts[entryPoint] = true;
+       functionStarts.insert(entryPoint);
+       file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
 #else
-         printf ("Skipping the DOS header \n");
+       printf ("Skipping the DOS header \n");
 #endif
-       }
-      else
-       {
+     }
+    else
+     {
 #if 1
-         basicBlockStarts[entryPoint] = true;
-         functionStarts.insert(entryPoint);
-         file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
+       basicBlockStarts[entryPoint] = true;
+       functionStarts.insert(entryPoint);
+       file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
 #else
-         printf ("Skipping the PE header \n");
+       printf ("Skipping the PE header \n");
 #endif
-       }
-  }
+     }
 
 #if 0
      printf ("Disassembler::disassembleFile(): Looking for pointers that reference executable code (valid sections) \n");
@@ -376,8 +331,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
     if (!bb) continue;
     SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
     if (!section) continue;
-    SgAsmGenericHeader* header = section->get_header();
-    ROSE_ASSERT (header);
+    ROSE_ASSERT (section->get_header() == header);
     const SgAsmGenericArchitecture* arch = header->get_target();
     SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
     bool isFunctionStart = false;
@@ -397,7 +351,7 @@ void Disassembler::disassembleFile(SgAsmFile* f) {
   }
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
   // blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
-  f->set_global_block(blk);
-  blk->set_parent(f);
+  interp->set_global_block(blk);
+  blk->set_parent(interp);
   blk->set_externallyVisible(true);
 }

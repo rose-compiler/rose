@@ -25,7 +25,9 @@
       graph = new RoseBin_DotGraph(info);
       ROSE_ASSERT(graph);
 
-      dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
+      const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+      ROSE_ASSERT (interps.size() == 1);
+      dfanalysis = new RoseBin_DataFlowAnalysis(interps[0]->get_global_block(), forward, new RoseObj(), info);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
 

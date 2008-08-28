@@ -59,6 +59,9 @@ int main(int argc, char** argv) {
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
   SgAsmFile* file = project->get_file(0).get_binaryFile();
+  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  ROSE_ASSERT (interps.size() == 1);
+  SgAsmInterpretation* interp = interps[0];
 
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   // objdumpToRoseBinaryAst(execName, file, project);
@@ -72,7 +75,7 @@ int main(int argc, char** argv) {
   //  set<SgNode*> skippedNodeSet;
   //SimpleColorFilesTraversal::generateGraph(globalBlock,filename,skippedNodeSet);
   AST_BIN_Traversal* trav = new AST_BIN_Traversal();
-  trav->run(file->get_global_block(), filename);
+  trav->run(interp->get_global_block(), filename);
 
 
 
@@ -84,7 +87,7 @@ int main(int argc, char** argv) {
   RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
   RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
   const char* cfgFileName = "cfg.dot";
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
+  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
   cerr << " Number of nodes == " << cfganalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << cfganalysis->edgesVisited() << endl;
@@ -95,7 +98,7 @@ int main(int argc, char** argv) {
   cerr << " creating call graph ... " << endl;
   const char* callFileName = "callgraph.gml";
   forward = true;
-  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
+  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
   callanalysis->run(gmlGraph, callFileName, !mergedEdges);
   cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
@@ -109,7 +112,7 @@ int main(int argc, char** argv) {
   forward = true;
   bool printEdges = true;
   bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
+  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
   dfanalysis->init(interprocedural, printEdges);
   dfanalysis->run(dotGraph, dfgFileName, mergedEdges);
   cerr << " Number of nodes == " << dfanalysis->nodesVisited() << endl;
@@ -190,6 +193,6 @@ int main(int argc, char** argv) {
   ROSE_ASSERT(var->getName()==" 804837c:_malloc");
 #endif
 
-  unparseAsmStatementToFile("unparsed.s", file->get_global_block());
+  unparseAsmStatementToFile("unparsed.s", interp->get_global_block());
   return 0;
 }

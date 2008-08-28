@@ -1661,7 +1661,7 @@ isBinaryExecutableFile ( string sourceFilename )
   // printf ("Inside of isBinaryExecutableFile(%s) \n",sourceFilename.c_str());
 
   // Open file for reading
-     FILE* f = fopen(sourceFilename.c_str(), "r");
+     FILE* f = fopen(sourceFilename.c_str(), "rb");
      if (!f)
         {
           printf ("Could not open file");
@@ -3025,7 +3025,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
                bool firstBase = isValidFileWithExecutableFileSuffixes(name);
                if (firstBase == true)
                   {
-                    FILE* f = fopen(name.c_str(), "r");
+                    FILE* f = fopen(name.c_str(), "rb");
                     ROSE_ASSERT(f != NULL);
 
                  // Check for if this is a binary executable file!
@@ -3083,7 +3083,7 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
             // printf ("passed test (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0): opening file to double check \n");
 
             // Open file for reading
-               FILE* f = fopen(name.c_str(), "r");
+               FILE* f = fopen(name.c_str(), "rb");
                if (f != NULL)
                   {
                     returnValue = true;
@@ -3914,11 +3914,26 @@ SgFile::callFrontEnd ()
                          this->set_binaryFile(asmFile);
                          asmFile->set_parent(this);
 
+
                       // printf ("Calling generateBinaryExecutableFileInformation() \n");
 
                       // Get the structure of the binary file (only implemented for ELF formatted files currently).
                       // Later we will implement a PE reader to get the structure of MS Windows executables.
                          generateBinaryExecutableFileInformation(executableFileName,asmFile);
+
+                      // Find the headers in the executable format and convert
+                      // them into SgAsmInterpretation objects
+                         SgAsmGenericFile* genericFile = asmFile->get_genericFile();
+                         ROSE_ASSERT (genericFile);
+                         SgAsmGenericHeaderList* headerList = genericFile->get_headers();
+                         ROSE_ASSERT (headerList);
+                         const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
+                         for (size_t i = 0; i < headers.size(); ++i) {
+                           SgAsmInterpretation* interp = new SgAsmInterpretation();
+                           interp->set_parent(asmFile);
+                           interp->set_header(headers[i]);
+                           asmFile->get_interpretations().push_back(interp);
+                         }
 
                       // Fill in the instructions into the SgAsmFile IR node
                          SgProject* project = isSgProject(this->get_parent());

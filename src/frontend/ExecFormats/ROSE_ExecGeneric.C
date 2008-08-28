@@ -622,7 +622,7 @@ SgAsmGenericFile::unfill_holes()
 void
 SgAsmGenericFile::unparse(const std::string &filename)
 {
-    FILE *f = fopen(filename.c_str(), "w");
+    FILE *f = fopen(filename.c_str(), "wb");
     ROSE_ASSERT(f);
 
 #if 0
@@ -1424,7 +1424,7 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
-    FILE *output = fopen(name.c_str(), "w");
+    FILE *output = fopen(name.c_str(), "wb");
     ROSE_ASSERT(output!=NULL);
     ROSE_ASSERT(asmFile!=NULL);
     ROSE_ASSERT(asmFile->get_genericFile() != NULL);

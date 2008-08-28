@@ -2151,8 +2151,7 @@ SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgBasicBlock* appendTo) {
     }
   }
 
-// DQ (8/13/2008): This needs to be modified to use Robb's support in the binary file format (when it is finished and available).
-  SgStatement* sw = makeDispatchSwitch(buildUnsignedLongLongIntValHex(asmFile->get_associated_entry_point()));
+  SgStatement* sw = makeDispatchSwitch(buildUnsignedLongLongIntValHex(asmFile->get_interpretations()[0]->get_header()->get_entry_rva()));
 
   prependStatement(sw, whileBody);
   prependStatement(

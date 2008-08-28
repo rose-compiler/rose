@@ -12,8 +12,12 @@ int main(int argc, char** argv)
 #if 1
      SgAsmFile* file = project->get_file(0).get_binaryFile();
      ROSE_ASSERT (file != NULL);
+     const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+     ROSE_ASSERT (interps.size() == 1);
+     SgAsmInterpretation* interp = interps[0];
+     SgAsmBlock* global_block = interp->get_global_block();
 
-     ROSE_ASSERT (file->get_global_block() != NULL);
+     ROSE_ASSERT (global_block != NULL);
 
   // RoseBin_unparse* unparser = new RoseBin_unparse();
   // RoseBin_support::setUnparseVisitor(unparser->getVisitor());
@@ -22,7 +26,7 @@ int main(int argc, char** argv)
      cout << " writing _binary_tree ... " << endl;
      string filename="_binary_tree.dot";
      AST_BIN_Traversal* trav = new AST_BIN_Traversal();
-     trav->run(file->get_global_block(), filename);
+     trav->run(global_block, filename);
 
   // control flow analysis  *******************************************************
   cout << " creating control flow graph ... " << endl;
@@ -33,7 +37,7 @@ int main(int argc, char** argv)
   RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
   RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
   const char* cfgFileName = "cfg.dot";
-  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
+  RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(global_block, forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
 
 
@@ -41,7 +45,7 @@ int main(int argc, char** argv)
   cout << " creating call graph ... " << endl;
   const char* callFileName = "callgraph.gml";
   forward = true;
-  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
+  RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(global_block, new RoseObj(), info);
 
   // Building a GML file for the call graph
      callanalysis->run(gmlGraph, callFileName, !mergedEdges);
@@ -57,7 +61,7 @@ int main(int argc, char** argv)
   forward = true;
   bool printEdges = true;
   bool interprocedural = true;
-  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
+  RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(global_block, forward, new RoseObj(), info);
   dfanalysis->init(interprocedural, printEdges);
 
   // Building a DOT file for the data-flow graph

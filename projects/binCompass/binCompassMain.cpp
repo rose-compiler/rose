@@ -160,12 +160,15 @@ int main(int argc, char** argv) {
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
   SgAsmFile* file = project->get_file(0).get_binaryFile();
+  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  ROSE_ASSERT (interps.size() == 1);
+  SgAsmInterpretation* interp = interps[0];
 
   if (containsArgument(argc, argv, "-printTree")) {
     fprintf(stderr, "Printing AST... _binary_tree.dot\n");
     string filename="_binary_tree.dot";
     AST_BIN_Traversal* trav = new AST_BIN_Traversal();
-    trav->run(file->get_global_block(), filename);
+    trav->run(interp->get_global_block(), filename);
     if (test) {
       int instrnr = trav->getNrOfInstructions();
       cerr << " Instructions written to file: " << instrnr << endl;
@@ -186,7 +189,7 @@ int main(int argc, char** argv) {
       callFileName = "callgraph.gml";
       graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(file->get_global_block(), new RoseObj(), info);
+    RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
     callanalysis->run(graph, callFileName, !mergedEdges);
     if (test) {
       cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
@@ -204,7 +207,7 @@ int main(int argc, char** argv) {
       cfgFileName = "cfg.gml";
       graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
 	
     set<std::string> partialCFG;
@@ -232,7 +235,7 @@ int main(int argc, char** argv) {
       dfgFileName = "dfg.gml";
       graph= new RoseBin_GMLGraph(info);
     }
-    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
+    RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
     dfanalysis->init(interprocedural, edges);
     dfanalysis->run(graph, dfgFileName, mergedEdges);
     if (test) {
@@ -292,9 +295,9 @@ int main(int argc, char** argv) {
       filename = "out/"+filename+".out";
       cerr << "Writing file : " << filename << endl;
       myfile.open(filename.c_str());
-      asmf->init(file->get_global_block());
-      asmf->traverse(file->get_global_block(), preorder);
-      asmf->finish(file->get_global_block());
+      asmf->init(interp->get_global_block());
+      asmf->traverse(interp->get_global_block(), preorder);
+      asmf->finish(interp->get_global_block());
       string output = asmf->get_output();
       myfile << output << " \n";
       myfile.close();
@@ -310,7 +313,7 @@ int main(int argc, char** argv) {
 	dfgFileName = "dfg.gml";
 	graph= new RoseBin_GMLGraph(info);
       }
-      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
+      RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
       cfganalysis->run(graph, dfgFileName, mergedEdges);
       if (test) {
 	cerr << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
@@ -324,7 +327,7 @@ int main(int argc, char** argv) {
       cerr << "CFG (-checkGraph) finished ----- Graph nr of nodes : " << graph->nodes.size() << endl;
       ROSE_ASSERT(graph->nodes.size()>0);
 
-      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(file->get_global_block(), forward, new RoseObj(), info);
+      RoseBin_DataFlowAnalysis* dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
       //dfanalysis->init(interprocedural, edges,graph);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
@@ -358,7 +361,7 @@ int main(int argc, char** argv) {
     }
   }  
 
-  unparseAsmStatementToFile("unparsed.s", file->get_global_block());
+  unparseAsmStatementToFile("unparsed.s", interp->get_global_block());
 
   lt_dlexit();
 

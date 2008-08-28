@@ -64,17 +64,13 @@ namespace ArmDisassembler {
 namespace DisassemblerCommon {
 
   struct AsmFileWithData {
- // Exec::ExecFile* ef;
-    SgAsmGenericFile* ef;
+    SgAsmInterpretation* interp;
     mutable size_t instructionsDisassembled;
 
- // AsmFileWithData(Exec::ExecFile* ef): ef(ef), instructionsDisassembled(0) {}
-    AsmFileWithData(SgAsmGenericFile* ef): ef(ef), instructionsDisassembled(0) {}
+    AsmFileWithData(SgAsmInterpretation* interp): interp(interp), instructionsDisassembled(0) {}
 
- // Exec::ExecSection* getSectionOfAddress(uint64_t addr) const;
     SgAsmGenericSection* getSectionOfAddress(uint64_t addr) const;
     bool inCodeSegment(uint64_t addr) const;
-    size_t getFileOffsetOfAddress(uint64_t addr) const;
     SgAsmInstruction* disassembleOneAtAddress(uint64_t addr, std::set<uint64_t>& knownSuccessors) const;
 
     // Value field of basicBlockStarts is whether the block came from a
@@ -93,6 +89,7 @@ namespace Disassembler
      extern bool aggressive_mode;
 
      void disassembleFile(SgAsmFile* f);
+     void disassembleInterpretation(SgAsmInterpretation* interp);
    }
 
 #endif // ROSE_DISASSEMBLERS_H

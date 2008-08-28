@@ -59,9 +59,22 @@ unparseAsmStatement(SgAsmStatement* stmt)
   }
 }
 
+static string unparseAsmInterpretation(SgAsmInterpretation* interp) {
+  return "/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
+}
+
 // void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
 void unparseAsmStatementToFile(const string& filename, SgAsmStatement* stmt) {
   ROSE_ASSERT (stmt != NULL);
   ofstream of(filename.c_str());
   of << unparseAsmStatement(stmt);
+}
+
+void unparseAsmFileToFile(const string& filename, SgAsmFile* file) {
+  ROSE_ASSERT (file != NULL);
+  ofstream of(filename.c_str());
+  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  for (size_t i = 0; i < interps.size(); ++i) {
+    of << unparseAsmInterpretation(interps[i]) << '\n';
+  }
 }
