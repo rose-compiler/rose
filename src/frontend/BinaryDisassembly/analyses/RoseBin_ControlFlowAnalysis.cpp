@@ -33,11 +33,12 @@ RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgDirectedGraphNode
     vector<SgDirectedGraphNode*>::iterator succ = successors_f.begin();
     for (;succ!=successors_f.end();++succ) {
       SgDirectedGraphNode* next = *succ;      
-      if (sameParents(current,next)) { 
+
 	std::set<SgDirectedGraphNode*>::iterator 
 	  it =visited_f.find(next);
 	if (it==visited_f.end()) {
-	  worklist.push_back(next);
+	  if (sameParents(current,next)) 
+	    worklist.push_back(next);
 	  visited_f.insert(next);
 	  SgNode* internal = next->get_SgNode();
 	  SgAsmInstruction* inst = isSgAsmInstruction(internal);
@@ -47,7 +48,7 @@ RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgDirectedGraphNode
 	    visited_names.insert(name);
 	  }
 	} 
-      }
+  
     } // for
   } // while
 }
