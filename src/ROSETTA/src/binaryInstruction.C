@@ -1413,7 +1413,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of just this section; points into file's content */
-     AsmGenericSection.setDataPrototype("SgFileContentList*","data","= NULL",
+     AsmGenericSection.setDataPrototype("SgFileContentList","data","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* General contents of the section */
@@ -1539,7 +1539,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of file mapped into memory */
-     AsmGenericFile.setDataPrototype("SgFileContentList*","data","= NULL",
+     AsmGenericFile.setDataPrototype("SgFileContentList","data","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* All known sections for this file */
