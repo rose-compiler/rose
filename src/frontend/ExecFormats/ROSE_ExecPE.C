@@ -421,7 +421,7 @@ SgAsmPEFileHeader::create_table_sections()
     getpid();
 
     for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
-        const SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
+        SgAsmPERVASizePair *pair = p_rvasize_pairs->get_pairs()[i];
         if (0==pair->get_e_size())
             continue;
 
@@ -469,6 +469,7 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_rperm(true);
         tabsec->set_wperm(false);
         tabsec->set_eperm(false);
+        pair->set_section(tabsec);
     }
 }
 
@@ -500,11 +501,14 @@ SgAsmPEFileHeader::unparse(FILE *f)
     addr_t spos = write(f, 0, sizeof fh, &fh);
     spos = write(f, spos, oh_size, oh);
 
-    /* The variable length RVA/size pair table */
+    /* The variable length RVA/size pair table and its sections */
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++) {
         SgAsmPERVASizePair::RVASizePair_disk rvasize_disk;
         p_rvasize_pairs->get_pairs()[i]->encode(&rvasize_disk);
         spos = write(f, spos, sizeof rvasize_disk, &rvasize_disk);
+        SgAsmGenericSection *sizepair_section = p_rvasize_pairs->get_pairs()[i]->get_section();
+        if (sizepair_section)
+            sizepair_section->unparse(f);
     }
 
     /* The extended DOS header */
