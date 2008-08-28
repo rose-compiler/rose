@@ -59,8 +59,8 @@ namespace X86Disassembler {
     SgAsmx86RegisterReferenceExpression* ref = NULL;
     switch (m) {
       case rmLegacyByte: {
-        ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber / 2);
-        ref->set_position_in_register((fullRegisterNumber & 1) ? x86_regpos_high_byte : x86_regpos_low_byte);
+        ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber % 4);
+        ref->set_position_in_register((fullRegisterNumber & 4) ? x86_regpos_high_byte : x86_regpos_low_byte);
         ref->set_type(SgAsmTypeByte::createType());
         break;
       }
