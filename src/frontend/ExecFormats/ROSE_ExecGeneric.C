@@ -130,9 +130,7 @@ SgAsmGenericFile::ctor(std::string fileName)
     }
 
     /* Make file contents available through an STL vector without actually reading the file */
-    SgStaticPool *pool = new SgStaticPool(mapped, p_sb.st_size);
-    ROSE_ASSERT(p_data==NULL);
-    p_data = new SgFileContentList(p_sb.st_size, 0, SgFileContentAllocator(pool));
+    p_data = new SgFileContentList(mapped, p_sb.st_size);
 
     ROSE_ASSERT(p_sections == NULL);
     p_sections = new SgAsmGenericSectionList();
@@ -195,10 +193,10 @@ SgAsmGenericFile::get_size() const
 SgFileContentList *
 SgAsmGenericFile::content(addr_t offset, addr_t size)
 {
+    ROSE_ASSERT(p_data!=NULL);
     if (offset+size > p_data->size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
-    SgStaticPool *pool = p_data->get_allocator().get_pool();
-    return new SgFileContentList(size, 0, SgFileContentAllocator(pool, offset));
+    return new SgFileContentList(*p_data, offset, size);
 }
 
 /* Adds a new header to the file. This is called implicitly by the header constructor */
