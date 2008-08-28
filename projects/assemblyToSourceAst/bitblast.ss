@@ -137,84 +137,86 @@
                                   (hash-table-put! vars v bits)
                                   bits)))))
                (convert-expr (lambda (p)
-                               ;(pretty-print `(convert-expr ,p))
                                (match p
                                  (`(,t . ,e)
-                                  (cond
-                                    ((number? e) (as-bits (bits-in-type t) e))
-                                    ((symbol? e) (get-var e t))
-                                    ((boolean? e) (list e))
-                                    ((list? e)
-                                     (let* ((arg-bits (map convert-expr (cdr e)))
-                                            (types (map car (cdr e)))
-                                            (tmpl (cons (car e) arg-bits)))
-                                     (match tmpl
-                                       (`(and . ,rest)
-                                        (apply must-have-same-length rest)
-                                        (apply and-words! rest))
-                                      (`(or . ,rest)
-                                       (apply must-have-same-length rest)
-                                       (apply or-words! rest))
-                                      (`(xor . ,rest)
-                                       (apply must-have-same-length rest)
-                                       (apply xor-words! rest))
-                                      (`(not ,a) (not-words! a))
-                                      (`(negate ,a) (set-number-size (neg-words! a) 32))
-                                      (`(minus ,a) (set-number-size (neg-words! a) 32))
-                                      (`(add . ,rest)
-                                       (set-number-size
-                                        (let loop ((ls rest))
-                                          (if (null? ls)
-                                              (as-bits 32 0)
-                                              (if (null? (cdr ls))
-                                                  (car ls)
-                                                  (loop (cons (adder! (car ls) (cadr ls) #f) (cddr ls))))))
-                                        32))
-                                      (`(subtract ,a ,b)
-                                       (set-number-size
-                                        (adder! a (not-words! b) #t)
-                                        32))
-                                      (`(if-e ,p ,a ,b)
-                                       (mux-words! (apply or-gate! p) a b))
-                                      (`(logical-and ,a ,b)
-                                       (list (and-gate! (apply or-gate! a) (apply or-gate! b))))
-                                      (`(logical-or ,a ,b)
-                                       (list (apply or-gate! (append a b))))
-                                      (`(logical-not ,a)
-                                       (list (apply nor-gate! a)))
-                                      (`(greater-than-or-equal ,a ,b)
-                                       (list (inv (comparator! a b))))
-                                      (`(less-than ,a ,b)
-                                       (list (comparator! a b)))
-                                      (`(equal ,a ,b)
-                                       (list (equal-words! a b)))
-                                      (`(not-equal ,a ,b)
-                                       (list (inv (equal-words! a b))))
-                                      (`(parity ,a)
-                                       (list (apply xnor-gate! (take a 8)))) ; 8 LSBs
-                                      (`(memoryReadByte ,mem ,addr)
-                                       (append (variables! 8) (make-list 24 #f)))
-                                      (`(memoryWriteByte ,mem ,addr ,data) '())
-                                      (`(multiply ,a ,b)
-                                       (set-number-size (multiplier! a b) 32))
-                                      (`(mulhi32 ,a ,b)
-                                       (set-number-size (drop (multiplier! a b) 32) 32))
-                                      (`(imulhi32 ,a ,b)
-                                       (variables! 32)) ; No constraints
-                                      (`(left-shift ,a ,b)
-                                       (cond
-                                         ((number? (cdr (caddr e))) ; Constant count
-                                          (let ((count (cdr (caddr e))))
-                                            (append (as-bits count 0) (drop-right a count))))
-                                         (else (error "left-shift with non-constant count" e))))
-                                      (`(right-shift ,a ,b)
-                                       (cond
-                                         ((number? (cdr (caddr e))) ; Constant count
-                                          (let ((count (cdr (caddr e))))
-                                            (append (drop a count) (as-bits count 0))))
-                                         (else (error "right-shift with non-constant count" e))))
-                                      (_ (error "Bad operator" (car e))))))
-                                 (else (error "convert-expr" e))))))))
+                                   (let* ((set-len (lambda (e) (set-number-size e (bits-in-type t))))
+                                          (result (begin
+                                    ;(pretty-print `(convert-expr ,e ,t))
+                                    (cond
+                                      ((number? e) (as-bits (bits-in-type t) e))
+                                      ((symbol? e) (set-number-size (get-var e t) (bits-in-type t)))
+                                      ((boolean? e) (list e))
+                                      ((list? e)
+                                       (let* ((arg-bits (map convert-expr (cdr e)))
+                                              (types (map car (cdr e)))
+                                              (tmpl (cons (car e) arg-bits)))
+                                       ;(pretty-print `(convert-expr inner ,(car tmpl) ,(map length (cdr tmpl)) ,types))
+                                       (match tmpl
+                                         (`(and . ,rest)
+                                          (apply and-words! (map set-len rest)))
+                                        (`(or . ,rest)
+                                         (apply or-words! (map set-len rest)))
+                                        (`(xor . ,rest)
+                                         (apply xor-words! (map set-len rest)))
+                                        (`(not ,a) (not-words! (set-len a)))
+                                        (`(negate ,a) (set-number-size (neg-words! (set-len a)) (bits-in-type t)))
+                                        (`(minus ,a) (set-number-size (neg-words! (set-len a)) (bits-in-type t)))
+                                        (`(add . ,rest)
+                                         (set-number-size
+                                          (let loop ((ls (map set-len rest)))
+                                            (if (null? ls)
+                                                (as-bits (bits-in-type t) 0)
+                                                (if (null? (cdr ls))
+                                                    (car ls)
+                                                    (loop (cons (adder! (car ls) (cadr ls) #f) (cddr ls))))))
+                                          (bits-in-type t)))
+                                        (`(subtract ,a ,b)
+                                         (set-number-size
+                                          (adder! (set-len a) (not-words! (set-len b)) #t)
+                                          (bits-in-type t)))
+                                        (`(if-e ,p ,a ,b)
+                                         (mux-words! (apply or-gate! p) (set-len a) (set-len b)))
+                                        (`(logical-and ,a ,b)
+                                         (list (and-gate! (apply or-gate! a) (apply or-gate! b))))
+                                        (`(logical-or ,a ,b)
+                                         (list (apply or-gate! (append a b))))
+                                        (`(logical-not ,a)
+                                         (list (apply nor-gate! a)))
+                                        (`(greater-than-or-equal ,a ,b)
+                                         (list (inv (comparator! (set-len a) (set-len b)))))
+                                        (`(less-than ,a ,b)
+                                         (list (comparator! (set-len a) (set-len b))))
+                                        (`(equal ,a ,b)
+                                         (list (equal-words! (set-len a) (set-len b))))
+                                        (`(not-equal ,a ,b)
+                                         (list (inv (equal-words! (set-len a) (set-len b)))))
+                                        (`(parity ,a)
+                                         (list (apply xnor-gate! (take a 8)))) ; 8 LSBs
+                                        (`(memoryReadByte ,mem ,addr)
+                                         (set-number-size (variables! 8) (bits-in-type t)))
+                                        (`(memoryWriteByte ,mem ,addr ,data) '())
+                                        (`(multiply ,a ,b)
+                                         (set-number-size (multiplier! a b) (bits-in-type t)))
+                                        (`(mulhi32 ,a ,b)
+                                         (set-number-size (drop (multiplier! a b) 32) 32))
+                                        (`(imulhi32 ,a ,b)
+                                         (variables! 32)) ; No constraints
+                                        (`(left-shift ,a ,b)
+                                         (cond
+                                           ((number? (cdr (caddr e))) ; Constant count
+                                            (let ((count (cdr (caddr e))))
+                                              (append (as-bits count 0) (drop-right a count))))
+                                           (else (error "left-shift with non-constant count" e))))
+                                        (`(right-shift ,a ,b)
+                                         (cond
+                                           ((number? (cdr (caddr e))) ; Constant count
+                                            (let ((count (cdr (caddr e))))
+                                              (append (drop a count) (as-bits count 0))))
+                                           (else (error "right-shift with non-constant count" e))))
+                                        (_ (error "Bad operator" (car e))))))
+                                   (else (error "convert-expr" e))))))
+                                     ;(pretty-print `(convert-expr -> ,result))
+                                     (set-number-size result (bits-in-type t))))))))
         (for-each (lambda (c)
                     ;(pretty-print `(converting ,c))
                     (match c
@@ -228,13 +230,39 @@
                        (force-1! (apply or-gate! (convert-expr e))))
                       (_ (error "Cannot handle constraint" c))))
                   (reverse cl)))
-      (pretty-print `(running picosat with ,(variable!) variables ,(hash-table-count vars) of ,(hash-table-count definitions) user-vars))
+      (display `(running picosat with ,(variable!) variables ,(hash-table-count vars) of ,(hash-table-count definitions) user-vars))
       (set! vars '()) ; Save space
       (set! definitions '())
       (let ((picosat-result
              (and (run-picosat) #t)))
         (pretty-print `(--> ,(if picosat-result 'SAT 'UNSAT)))
         picosat-result)))
+
+  (define (possible-boolean-values constraints to-test)
+    (let ((can-be-true (constraints-satisfiable? (cons `(check ,to-test) constraints)))
+          (can-be-false (constraints-satisfiable? (cons `(check (bool logical-not ,to-test)) constraints))))
+      (if can-be-true
+          (if can-be-false
+              '*
+              #t)
+          (if can-be-false
+              #f
+              (error "Inconsistent constraints" `(,to-test . ,constraints))))))
+
+  (define (is-constant? constraints t typed-expr)
+    ;(pretty-print `(is-constant? ,t ,typed-expr))
+    (let ((nbits (bits-in-type t)))
+      (let loop ((shift-amount 0))
+        (if (= shift-amount nbits)
+            0
+            (let ((vals (possible-boolean-values constraints
+                                                 `(bool not-equal (,t . 0) (,t and (,t . ,(expt 2 shift-amount)) ,typed-expr)))))
+              (if (boolean? vals)
+                  (let ((rest (loop (add1 shift-amount))))
+                    (if (number? rest)
+                        (+ (if vals 1 0) (* 2 rest))
+                        #f))
+                  #f))))))
   
   (provide adder!
            multiplier!
@@ -252,6 +280,8 @@
            xnor-words!
            equal-words!
            mux-words!
-           constraints-satisfiable?)
+           constraints-satisfiable?
+           possible-boolean-values
+           is-constant?)
 
   )

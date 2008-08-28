@@ -7,8 +7,15 @@
   
   (define variable-counter 1) ; 0 is not a valid value
   (define clauses '())
+  (define known-unsatisfiable #f)
+  (define or-gate-cse-table (make-hash-table 'equal))
   
-  (define (reset!) (set! variable-counter 1) (set! clauses '()))
+  (define (reset!)
+    (set! variable-counter 1)
+    (set! clauses '())
+    (set! known-unsatisfiable #f)
+    (set! or-gate-cse-table (make-hash-table 'equal)))
+
   (define (variable!) (let ((c variable-counter)) (set! variable-counter (add1 c)) c))
   (define (inv v)
     (cond
@@ -16,12 +23,17 @@
       ((boolean? v) (not v))
       (else (error "inv" v))))
   (define (variables! n) (list-tabulate n (lambda _ (variable!))))
+  (define (sort-numbers ls) ; There doesn't seem to be a good way to import sort
+    (if (null? ls)
+        '()
+        (let ((m (apply min ls)))
+          (cons m (sort-numbers (remove-one m ls))))))
   (define (add-clause! cl)
     (if (memq #t cl)
       (void)
       (let ((cl (filter (lambda (x) x) cl)))
         (if (null? cl)
-          (set! clauses '(())) ; fail
+          (set! known-unsatisfiable #t) ; fail
           (set! clauses (cons cl clauses))))))
   
   (define (to-dimacs)
@@ -82,7 +94,9 @@
         output)))
   
   (define (run-picosat)
-    (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs))))
+    (if known-unsatisfiable
+        (begin #;(pretty-print `(known unsat)) #f)
+        (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs)))))
   
   (define (make-reduction-tree operation-size f output inputs)
     (if (<= (length inputs) operation-size)
@@ -101,7 +115,11 @@
   ; Helpers and logic gates
   ; All of these can have inputs and/or outputs inverted using the inv function
   
-  (define (force-1! var) (add-clause! `(,var)))
+  (define (force-1! var)
+    (cond
+      ((eq? var #f) (unsatisfiable!))
+      ((eq? var #t) (void))
+      (else (add-clause! `(,var)))))
   (define (force-0! var) (force-1! (inv var)))
   (define (unsatisfiable!) (add-clause! `()))
   
@@ -119,14 +137,18 @@
   (define (or-gate! . inputs)
     (if (or (memq #t inputs) (has-inverses? inputs))
         #t
-        (let ((inputs (delete-duplicates (filter (lambda (x) (not (eq? x #f))) inputs) eqv?)))
+        (let ((inputs (sort-numbers (delete-duplicates (filter (lambda (x) (not (eq? x #f))) inputs) eqv?))))
           (cond
             ((null? inputs) #f)
             ((null? (cdr inputs)) (car inputs))
             (else
-             (let ((output (variable!)))
-               (make-reduction-tree 5 or-gate-raw! output inputs)
-               output))))))
+             (let ((cse-entry (hash-table-get or-gate-cse-table inputs #f)))
+               (if cse-entry
+                   (begin #;(pretty-print `(got ,inputs -> ,cse-entry from table)) cse-entry)
+                   (let ((output (variable!)))
+                     (make-reduction-tree 5 or-gate-raw! output inputs)
+                     (hash-table-put! or-gate-cse-table inputs output)
+                     output))))))))
   
   (define (nor-gate! . inputs) (inv (apply or-gate! inputs)))
   (define (and-gate! . inputs) (inv (apply or-gate! (map inv inputs))))
@@ -156,6 +178,7 @@
       ((eq? in-true #f) (and-gate! (inv sel) in-false))
       ((eq? in-false #t) (or-gate! (inv sel) in-true))
       ((eq? in-true #t) (or-gate! sel in-false))
+      ((eqv? in-true in-false) in-true)
       (else
        (let ((output (variable!)))
          (add-clause! `(,sel ,in-false ,(inv output)))
@@ -204,7 +227,7 @@
   (provide variable!)
   (provide inv)
   (provide variables!)
-  (provide add-clause!)
+  ; (provide add-clause!)
   (provide to-dimacs)
   (provide run-picosat)
   (provide force-0!)

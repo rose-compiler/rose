@@ -667,36 +667,27 @@
                 (`(goto ,l) e)
                 (`(begin . ,ls) `(begin . ,(map (lambda (e2) (check-statement e2 csf tenv)) ls)))
                 (`(let ((,t ,var ,val)) ,body)
-                 (let ((val2 (check-expr val csf tenv)))
+                 (let* ((val2 (check-expr val csf tenv))
+                        (csf2 `((define ,var ,(add-types val2 tenv)) . ,csf)))
+                   ;(pretty-print `(is-constant? ,t ,val2 -> ,(is-constant? csf2 t `(,t . ,var))))
                    `(let ((,t ,var ,val2))
-                      ,(check-statement body
-                                        (match t
-                                          (`(memory ,_) csf) ; Do not add this as a constraint
-                                          (_ `((define ,var ,(add-types val2 tenv)) . ,csf)))
-                                        `((,var . ,t) . ,tenv)))))
+                      ,(check-statement body csf2 `((,var . ,t) . ,tenv)))))
                 (`(if (expr ,p) ,a ,b)
                  (let* ((p (check-expr p csf tenv))
                         (p-type (infer-type p tenv))
                         (p-with-types (add-types p tenv))
                         (p-true-constraints `((check ,p-with-types) . ,csf))
-                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf))
-                        (p-true (constraints-satisfiable? p-true-constraints))
-                        (p-false (constraints-satisfiable? p-false-constraints)))
-                     (if p-true
-                         (if p-false
-                             `(if (expr ,p)
-                                  ,(check-statement a p-true-constraints tenv)
-                                  ,(check-statement b p-false-constraints tenv))
-                             (begin 
-                               (pretty-print `(removing false branch ,b))
-                               (check-statement a csf tenv)))
-                         (if p-false
-                             (begin
-                               (pretty-print `(removing true branch ,a))
-                               (check-statement b csf tenv))
-                             (begin
-                               (pretty-print `(in ,e test can be neither true nor false under assumptions ,@csf))
-                               (error "check-constraints"))))))
+                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
+                   (case (possible-boolean-values csf p-with-types)
+                     ((*) `(if (expr ,p)
+                               ,(check-statement a p-true-constraints tenv)
+                               ,(check-statement b p-false-constraints tenv)))
+                     ((#t) (begin 
+                             (pretty-print `(removing false branch ,b))
+                             (check-statement a csf tenv)))
+                     ((#f) (begin
+                             (pretty-print `(removing true branch ,a))
+                             (check-statement b csf tenv))))))
                 (`(case (expr ,key) . ,cases)
                  (let* ((key (check-expr key csf tenv))
                         (key-with-types (add-types key tenv))
@@ -713,6 +704,7 @@
                                                    #f))))
                                           cases))))
                 (`(expr (abort)) e)
+                (`(expr (interrupt ,_)) e)
                 (`(parallel-assign ,prs)
                  `(parallel-assign
                    ,(map (match-lambda (`(,var . ,val) `(,var . ,(check-expr val csf tenv)))) prs)))
@@ -726,22 +718,17 @@
                         (p-type (infer-type p tenv))
                         (p-with-types (add-types p tenv))
                         (p-true-constraints `((check ,p-with-types) . ,csf))
-                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf))
-                        (p-true (constraints-satisfiable? p-true-constraints))
-                        (p-false (constraints-satisfiable? p-false-constraints)))
-                   (if p-true
-                       (if p-false
-                           `(if-e ,p
-                                  ,(check-expr a p-true-constraints tenv)
-                                  ,(check-expr b p-false-constraints tenv))
-                           (begin
+                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
+                   (case (possible-boolean-values csf p-with-types)
+                     ((*) `(if-e ,p
+                                 ,(check-expr a p-true-constraints tenv)
+                                 ,(check-expr b p-false-constraints tenv)))
+                     ((#t) (begin
                              (pretty-print `(removing false if-e branch ,b))
                              (check-expr a csf tenv)))
-                       (if p-false
-                           (begin
+                     ((#f) (begin
                              (pretty-print `(removing true if-e branch ,a))
-                             (check-expr b csf tenv))
-                           (error "if-e not satisfiable" p)))))
+                             (check-expr b csf tenv))))))
                 ((? list?) (cons (car e) (map (lambda (e2) (check-expr e2 csf tenv)) (cdr e))))
                 (_ e)))))
     (check-statement e '() '())))
@@ -797,8 +784,9 @@
 (set! data
       (map change-memory-reads data))
 
+(define c 0)
 (set! data
-      (map (match-lambda (`(label ,l ,body) `(label ,l ,(remove-unused-variables (check-constraints body))))
+      (map (match-lambda (`(label ,l ,body) (set! c (add1 c)) (pretty-print `(entry ,c ,l of ,(length data))) `(label ,l ,(remove-unused-variables (check-constraints body))))
                          (e e))
            data))
 
