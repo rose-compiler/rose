@@ -757,7 +757,7 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
    {
      ROSE_ASSERT(expr != NULL);
 
-  // DQ (9/29/2007): Fortran subscript expressions should not be parenthizized, I think.
+  // DQ (9/29/2007): Fortran subscript expressions should not be parenthesized, I think.
      if (isSgSubscriptExpression(expr) != NULL)
         {
           return false;
@@ -810,7 +810,20 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 #endif
           return false;
         }
-
+#if 1        
+    // Liao, 8/27/2008, bug 229
+    // A nasty workaround since set_need_paren() has no definite effect 
+    //SgExprListExp-> SgAssignInitializer -> SgFunctionCallExp:  
+    // no () is needed for SgAssignInitializer
+    // e.g:  int array[] = {func1()}; // int func1();
+     SgAssignInitializer* assign_init = isSgAssignInitializer(expr); 
+     if ((assign_init!=NULL) &&(isSgExprListExp(parentExpr)))
+     {
+       SgExpression* operand = assign_init->get_operand();
+       if (isSgFunctionCallExp(operand))
+         return false;
+     }
+#endif
 #if 0
   // DQ (8/8/2006): Changed as a temporary test!
   // This will need to be fixed for test2006_115.C (when run with the inliner) and needs 
@@ -832,8 +845,8 @@ bool Unparse_MOD_SAGE::PrintStartParen(SgExpression* expr, SgUnparse_Info& info)
 #else
   // DQ (8/6/2005): Never output "()" where the parent is a SgAssignInitializer
   // DQ (8/2/2005): It would be great if we could avoid parenthesis here, 
-  // only output it if this is part of a contructor initialization list! 
-  // I fixed up the case of constructor intializers so that "()" is always 
+  // only output it if this is part of a constructor initialization list! 
+  // I fixed up the case of constructor initializers so that "()" is always 
   // output there instead of here.
   // printf ("skip output of parenthesis for rhs of all SgAssignInitializer objects \n");
      if (parentExpr != NULL && parentExpr->variantT() == V_SgAssignInitializer)

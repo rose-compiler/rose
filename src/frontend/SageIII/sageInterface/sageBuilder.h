@@ -333,9 +333,12 @@ buildVarRefExp(const char* varName, SgScopeStatement* scope=NULL);
 //! Build a variable reference from an existing symbol
 SgVarRefExp *
 buildVarRefExp(SgVariableSymbol* varSymbol);
+
+//! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
+SgVarRefExp *
+buildVarRefExp(SgVariableDeclaration* vardecl);
  
 //!build a variable reference from an initialized name
-
 //! It first tries to grab the associated symbol, then call buildVarRefExp(const SgName& name, SgScopeStatement*) if symbol does not exist.
 SgVarRefExp *
 buildVarRefExp(SgInitializedName* initname, SgScopeStatement* scope=NULL);
@@ -511,6 +514,9 @@ SgIfStmt * buildIfStmt(SgStatement* conditional, SgStatement * true_body, SgStat
 inline SgIfStmt * buildIfStmt(SgExpression* conditional, SgStatement * true_body, SgStatement * false_body) {
   return buildIfStmt(buildExprStatement(conditional), true_body, false_body);
 }
+
+//!Build a for statement, assume none of the arguments is NULL
+SgForStatement * buildForStatement(SgStatement* initialize_stmt,  SgStatement * test, SgExpression * increment, SgStatement * loop_body);
 
 //! Build while statement
 SgWhileStmt * buildWhileStmt(SgStatement *  condition, SgStatement *body);

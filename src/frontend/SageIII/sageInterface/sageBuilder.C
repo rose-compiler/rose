@@ -1168,6 +1168,16 @@ SageBuilder::buildVarRefExp(const SgName& name, SgScopeStatement* scope/*=NULL*/
   return varRef; 
 }
 
+//! Build a variable reference from an existing variable declaration. The assumption is a SgVariableDeclartion only declares one variable in the ROSE AST.
+SgVarRefExp *
+SageBuilder::buildVarRefExp(SgVariableDeclaration* vardecl)
+{
+  SgVariableSymbol* symbol = getFirstVarSym(vardecl);
+  ROSE_ASSERT(symbol);
+  return buildVarRefExp(symbol);
+}
+
+
 SgVarRefExp *
 SageBuilder::buildVarRefExp(SgVariableSymbol* sym)
 {
@@ -1465,6 +1475,35 @@ SgIfStmt * SageBuilder::buildIfStmt(SgStatement* conditional, SgStatement * true
   true_body->set_parent(ifstmt);
   if (false_body != NULL) false_body->set_parent(ifstmt);
   return ifstmt;
+}
+
+//! Based on the contribution from Pradeep Srinivasa@ LANL
+//Liao, 8/27/2008
+SgForStatement * SageBuilder::buildForStatement(SgStatement* initialize_stmt, SgStatement * test, SgExpression * increment, SgStatement * loop_body)
+{
+  ROSE_ASSERT(initialize_stmt);
+  ROSE_ASSERT(test);
+  ROSE_ASSERT(increment);
+  ROSE_ASSERT(loop_body);
+
+  SgForStatement * result = new SgForStatement(test,increment, loop_body);
+  ROSE_ASSERT(result);
+  setOneSourcePositionForTransformation(result);
+  if (test)
+    test->set_parent(result);
+  if (loop_body)  
+    loop_body->set_parent(result);
+
+  SgForInitStatement* init_stmt = new SgForInitStatement();
+  ROSE_ASSERT(init_stmt);
+  setOneSourcePositionForTransformation(init_stmt);
+  result->set_for_init_stmt(init_stmt);   
+  init_stmt->set_parent(result);
+
+  if (initialize_stmt)
+    init_stmt->append_init_stmt(initialize_stmt);
+
+  return result;
 }
 
 SgWhileStmt * SageBuilder::buildWhileStmt(SgStatement *  condition, SgStatement *body)

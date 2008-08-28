@@ -5473,7 +5473,11 @@ class ConditionalExpGenerator: public StatementGenerator
     ROSE_ASSERT(targetStmt &&newStmt);
     ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
     SgNode* parent = targetStmt->get_parent();
-    ROSE_ASSERT(parent);
+    if (parent==NULL)
+    {
+      cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
+      ROSE_ASSERT(parent);
+    }
 
     // We now have single statement true/false body for IfStmt etc
     // However, IfStmt::insert_child() is ambiguous and not implemented
