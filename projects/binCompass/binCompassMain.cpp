@@ -208,6 +208,8 @@ int main(int argc, char** argv) {
     cfganalysis->run(graph, cfgFileName, mergedEdges);
 	
     set<std::string> partialCFG;
+    partialCFG.insert(" 80483c0_f");
+    partialCFG.insert(" 8048491_f");
     partialCFG.insert(" 8048363_f");
     partialCFG.insert(" 804828f_f");
     cfganalysis->printGraph("thomas.dot",partialCFG);
