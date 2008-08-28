@@ -7,6 +7,7 @@ using namespace std;
 #include <iostream>  
 #include <vector>
 #include <string>
+#include <assert.h>
 #include "PrologTerm.h"
 #include "PrologCompTerm.h"
 #include "PrologList.h"
@@ -59,11 +60,15 @@ void yyerror(const char *);
 /*grammar*/
 pterm:
  comp_term {prote = $1; $$ = $1;}
- | comp_term '.' {prote = $1; $$ = $1;}
+| comp_term OPERATOR { assert(((string)(*$2)) == "."); prote = $1; $$ = $1;}
 ;
 term:
  STRING       { $$ = new PrologString(*$1);  }
  | ATOM       { $$ = new PrologAtom(*$1);    }
+ | OPERATOR   { $$ = new PrologAtom(*$1);    
+   // The problem is, we can't really decide the difference between the 
+   // string-atom '->' and the operator '->'
+   }
  | VARIABLE   { $$ = new PrologVariable(*$1);}
  | comp_term  { $$ = $1;                     }
  | infix_pair { $$ = $1;                     }
@@ -124,6 +129,3 @@ void yyerror(const char* msg) {
 	    << "near token \"" << yytext << "\"" << std::endl;
   exit(1);
 }
-
-
-

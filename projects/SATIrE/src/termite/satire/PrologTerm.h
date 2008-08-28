@@ -54,7 +54,8 @@ protected:
 	else continue;
       }
 
-      if (!islower(*c) && !isupper(*c))
+      if (!islower(*c) && !isupper(*c) && 
+	  !(*c == '_'))
 	return true;
     }
     return false;
