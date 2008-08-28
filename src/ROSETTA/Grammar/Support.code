@@ -9376,11 +9376,6 @@ SgFile::initialization()
      p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
      ROSE_ASSERT(p_root->get_endOfConstruct() != NULL);
 
-  // DQ (4/10/2006): Removed in favor of implementation at SgNode using
-  // a pointer and the interface represented directly at the SgNode
-  // DQ (1/13/2006): Initialize new AstAttributeMechanism pointer (moved from SgNode)
-     p_attributeMechanism = NULL;
-
   // DQ (10/16/2005): Removed as part of cleanup to SgFile
   // DQ (12/6/2003): initialize these here.
   // p_defaultNumberOfCommandLineArguments = 0;
@@ -9391,18 +9386,6 @@ SgFile::initialization()
   // could be set in this inialization function!
   // p_numberOfCommandLineArguments = 0;
   // p_commandLineArgumentList      = NULL;
-
-  // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
-  //               directives and comments into the SgFile)
-  //               the ROSEAttributesListContainer represents all preprocessor 
-  //               declarations and comments from each source file (and its 
-  //               corresponding include files) (thus a list of lists of lists 
-  //               of cpp directives and comments!!!)
-
-  // At construction this is a NULL pointer, it is updated later after construction of the AST.
-     p_preprocessorDirectivesAndCommentsList = NULL; // new ROSEAttributesListContainer();
-  // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-     ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
 
   // DQ (10/15/2005): Don't have a default for this (use an empty string)!
   // p_unparse_output_filename = "rose_unparse.C";
@@ -9430,6 +9413,8 @@ SgFile::initialization()
 
      p_PHP_only                = false;
 
+     p_requires_C_preprocessor = false;
+
      p_binary_only             = false;
 
   // Input code format
@@ -9441,25 +9426,27 @@ SgFile::initialization()
      p_backendCompileFormat    = SgFile::e_unknown_output_format;
      p_fortran_implicit_none   = false;
      p_fortran_openmp          = false;
-     p_requires_C_preprocessor = false;
-     p_compileOnly             = false;
+
+  // DQ (12/8/2007): Added commandline support for cray pointers.
+     p_cray_pointer_support = false;
+
+  // DQ (12/11/2007): Added to support debugging of Fortran support in ROSE using OFP.
+     p_output_parser_actions = false;
+
+  // DQ (12/11/2007): Added to support debugging of Fortran support in ROSE using OFP.
+     p_exit_after_parser = false;
+
+  // DQ (1/4/2008): gFortran versions greater than 4.1 have bugs that prevent it from 
+  // being used to to syntax checking on Fortran 2003 applications.  To allow Fortran
+  // 2003 applications to be processed the syntax checking step done in ROSE using
+  // that backend compiler (typically gfortran) needs to be skipped.  ROSE it self can
+  // handle the Fortran 2003 code, but can not yet do sufficent syntax checking to
+  // report errors in illegal Fortran 2003 code.
+     p_skip_syntax_check = false;
 
   // After higher level ASTs are build optionally apply transformations
      p_skip_transformation     = false;
      p_skip_unparse            = false;
-     p_outputGrammarTreeFiles  = false;  // default should be false (set to true while debugging)
-     p_outputGrammarTreeFilesForHeaderFiles = false; // default is to skip headers
-
-  // DQ (8/27/2007): Support for alternative langauge code generation (unparsing), useful for testing specific language unparsers.
-     p_outputLanguage          = SgFile::e_default_output_language;
-
-  // p_new_unparser            = true;   // by default use the new unparser
-     p_unparse_includes        = false;  // by default do NOT unparse include files into the source code
-     p_unparse_line_directives = false;  // by default do NOT unparse #line directives into the source code
-     p_KCC_frontend            = false;
-
-  // Alternatively we can call the new edg frontend to test the edg process
-     p_new_frontend            = false;
 
 #if 1
   // The default should be to act like a C++ compiler
@@ -9467,6 +9454,129 @@ SgFile::initialization()
 #else
      p_skipfinalCompileStep    = true;
 #endif
+
+  // p_new_unparser            = true;   // by default use the new unparser
+     p_unparse_includes        = false;  // by default do NOT unparse include files into the source code
+     p_unparse_line_directives = false;  // by default do NOT unparse #line directives into the source code
+
+  // DQ (8/27/2007): Support for alternative langauge code generation (unparsing), useful for testing specific language unparsers.
+     p_outputLanguage          = SgFile::e_default_output_language;
+
+#if 0
+// Order of data member entries in support.C, matched against the 
+// initialization to make sure that all data members are initialized.
+X startOfConstruct
+X root
+X verbose
+X output_warnings
+X C_only
+X UPC_only
+X upc_threads
+X C99_only
+X Cxx_only
+X Fortran_only
+X F77_only
+X F90_only
+X F95_only
+X F2003_only
+X PHP_only
+X requires_C_preprocessor
+X binary_only
+X inputFormat
+X outputFormat
+X backendCompileFormat
+X fortran_implicit_none
+X fortran_openmp
+X cray_pointer_support
+X output_parser_actions
+X exit_after_parser
+X skip_syntax_check
+X skip_transformation
+X skip_unparse
+X skipfinalCompileStep
+X unparse_includes
+X unparse_line_directives
+X outputLanguage
+STRING  sourceFileNameWithPath
+STRING  sourceFileNameWithoutPath
+STRING  unparse_output_filename
+X useBackendOnly
+X compileOnly
+STRING  savedEdgCommandLine
+X no_implicit_templates
+X no_implicit_inline_templates
+X skip_commentsAndDirectives
+X collectAllCommentsAndDirectives
+X preprocessorDirectivesAndCommentsList
+X attributeMechanism
+X KCC_frontend
+X new_frontend
+X travTraceToDOT
+X disable_edg_backend
+X disable_sage_backend
+X testingLevel
+X preinit_il
+X enable_cp_backend
+X outputGrammarTreeFiles
+X outputGrammarTreeFilesForHeaderFiles
+X outputGrammarTreeFilesForEDG
+X markGeneratedFiles
+X negative_test
+X strict_language_handling
+X embedColorCodesInGeneratedCode
+X generateSourcePositionCodes
+X sourceFileUsesCppFileExtension
+X sourceFileUsesFortranFileExtension
+X sourceFileUsesFortran77FileExtension
+X sourceFileUsesFortran90FileExtension
+X sourceFileUsesFortran95FileExtension
+X sourceFileUsesPHPFileExtension
+X sourceFileUsesBinaryFileExtension
+X binaryFile
+X read_executable_file_format_only
+X read_instructions_only
+X aggressive
+#endif
+
+  // initialize p_useBackendOnly data member
+     p_useBackendOnly = false;
+
+     p_compileOnly             = false;
+
+  // DQ (6/21/2005): initialize g++ specific template instantiation control flags
+     p_no_implicit_templates        = false;
+     p_no_implicit_inline_templates = false;
+
+  // Added to permit all comments and CPP directives to be skipped (e.g. when unparsing all hearders)
+     p_skip_commentsAndDirectives      = false;
+
+  // DQ (4/19/2006): Added to control comment and directive handling (takes more time to process header files).
+     p_collectAllCommentsAndDirectives = false;
+
+  // DQ (4/7/2001) Added support for multiple files (save the preprocessor 
+  //               directives and comments into the SgFile)
+  //               the ROSEAttributesListContainer represents all preprocessor 
+  //               declarations and comments from each source file (and its 
+  //               corresponding include files) (thus a list of lists of lists 
+  //               of cpp directives and comments!!!)
+
+  // At construction this is a NULL pointer, it is updated later after construction of the AST.
+     p_preprocessorDirectivesAndCommentsList = NULL; // new ROSEAttributesListContainer();
+  // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
+     ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList == NULL);
+
+  // DQ (4/10/2006): Removed in favor of implementation at SgNode using
+  // a pointer and the interface represented directly at the SgNode
+  // DQ (1/13/2006): Initialize new AstAttributeMechanism pointer (moved from SgNode)
+     p_attributeMechanism = NULL;
+
+     p_KCC_frontend            = false;
+
+  // Alternatively we can call the new edg frontend to test the edg process
+     p_new_frontend            = false;
+
+  // DQ (12/6/2003): initialize this here
+     p_travTraceToDOT = false;
 
   // controls call to the edg_main (disables all processing
   // and acts like a shell which calls the compiler)
@@ -9482,24 +9592,11 @@ SgFile::initialization()
      p_preinit_il              = false;
      p_enable_cp_backend       = false;
 
+     p_outputGrammarTreeFiles  = false;  // default should be false (set to true while debugging)
+     p_outputGrammarTreeFilesForHeaderFiles = false; // default is to skip headers
+
   // Support for faster processing of pdf output (where we likely don't need the pdf output of the the EDG AST)
      p_outputGrammarTreeFilesForEDG = false;
-
-  // initialize p_useBackendOnly data member
-     p_useBackendOnly = false;
-
-  // DQ (12/6/2003): initialize this here
-     p_travTraceToDOT = false;
-
-  // DQ (6/21/2005): initialize g++ specific template instantiation control flags
-     p_no_implicit_templates        = false;
-     p_no_implicit_inline_templates = false;
-
-  // DQ (4/19/2006): Added to control comment and directive handling (takes more time to process header files).
-     p_collectAllCommentsAndDirectives = false;
-
-  // Added to permit all comments and CPP directives to be skipped (e.g. when unparsing all hearders)
-     p_skip_commentsAndDirectives      = false;
 
   // DQ (9/5/2006): Added mechanism to optionally watermark files generated by ROSE
      p_markGeneratedFiles = false;
@@ -9520,34 +9617,25 @@ SgFile::initialization()
   // and only ".c" (C files) will turn on C language mode).
      p_sourceFileUsesCppFileExtension = false;
 
-     p_sourceFileUsesPHPFileExtension = false;
-
-  // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
-     p_binaryFile = NULL;
-
-  // DQ (12/8/2007): Added commandline support for cray pointers.
-     p_cray_pointer_support = false;
-
   // DQ (12/11/2007): Added default initialization of these values
      p_sourceFileUsesFortranFileExtension     = false;
      p_sourceFileUsesFortran77FileExtension   = false;
      p_sourceFileUsesFortran90FileExtension   = false;
      p_sourceFileUsesFortran95FileExtension   = false;
-     p_sourceFileUsesFortran2003FileExtension = false;
-     
-  // DQ (12/11/2007): Added to support debugging of Fortran support in ROSE using OFP.
-     p_output_parser_actions = false;
+     p_sourceFileUsesFortran2003FileExtension = false;     
 
-  // DQ (12/11/2007): Added to support debugging of Fortran support in ROSE using OFP.
-     p_exit_after_parser = false;
+     p_sourceFileUsesPHPFileExtension = false;
 
-  // DQ (1/4/2008): gFortran versions greater than 4.1 have bugs that prevent it from 
-  // being used to to syntax checking on Fortran 2003 applications.  To allow Fortran
-  // 2003 applications to be processed the syntax checking step done in ROSE using
-  // that backend compiler (typically gfortran) needs to be skipped.  ROSE it self can
-  // handle the Fortran 2003 code, but can not yet do sufficent syntax checking to
-  // report errors in illegal Fortran 2003 code.
-     p_skip_syntax_check = false;
+     p_sourceFileUsesBinaryFileExtension = false;
+
+  // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
+     p_binaryFile = NULL;
+
+     p_read_executable_file_format_only = false;
+
+     p_read_instructions_only = false;
+
+     p_aggressive = false;
    }
 
 SgGlobal &

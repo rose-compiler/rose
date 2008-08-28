@@ -951,6 +951,21 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "read_executable_file_format_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/26/2008): Adds support for only disassembling the instructions, skips use of information 
+  // gathered from the data structures built from the binary executable file format (symbols, 
+  // section permisions, etc.).
+     File.setDataPrototype         ( "bool", "read_instructions_only", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/26/2008): Adds support for more agressive disassembly of sections that are in 
+  // executable segments but may be in non-executable segments.  Segments are sets of sections
+  // and the OS marks pages based on segment settings, not sections settings, so sections 
+  // settings can be ignored.  This setting follows the segments setting it selecting executable
+  // sets of sections (segments), instead of section settings which could be ignored. Binaries
+  // built using compilers and intended for debugging follow more rules than arbitrary binaries.
+     File.setDataPrototype         ( "bool", "aggressive", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 #if OLD_GRAPH_NODES
    // tps (08/08/07): Added the graph, graph nodes and graph edges 
