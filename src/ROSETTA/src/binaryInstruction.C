@@ -291,7 +291,7 @@ Grammar::setUpBinaryInstructions ()
   // Asm instructions should be able to have attached attributes like other IR nodes in ROSE
      AsmNode.setDataPrototype     ( "AttachedPreprocessingInfoType*", "attachedPreprocessingInfoPtr", "= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, COPY_DATA);
-
+  // DQ (8/28/2008): Change "unsigned int" to "addr_t"
      AsmStatement.setDataPrototype("unsigned int","address","= 0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
   // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
@@ -319,10 +319,14 @@ Grammar::setUpBinaryInstructions ()
   // Block of instructions (helps define depth to the AST)
      AsmBlock.setFunctionPrototype              ( "HEADER_BINARY_BLOCK", "../Grammar/BinaryInstruction.code");
      // added by tps, 05Apr07 ... need this for the control_flow_graph
+
+  // DQ (8/28/2008): Change "unsigned int" to "addr_t"
      AsmBlock.setDataPrototype("unsigned int","next_block_true_address","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Change "unsigned int" to "addr_t"
      AsmBlock.setDataPrototype("unsigned int","next_block_false_address","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Ask Thomas if we should change "unsigned int" to "addr_t"
      AsmBlock.setDataPrototype("unsigned int","id","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
@@ -356,6 +360,7 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
   // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
   // This is redundant with the more complete information in the SgAsmGenericSections of the binary file format.
+  // DQ (8/28/2008): Change "unsigned long" to "addr_t"
      AsmFile.setDataPrototype("unsigned long", "associated_entry_point","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -379,6 +384,9 @@ Grammar::setUpBinaryInstructions ()
   // class ElfSectionTable *section_table;
   // class ElfSegmentTable *segment_table;
      AsmElfFileHeader.setFunctionPrototype ( "HEADER_ELF_HEADER", "../Grammar/BinaryInstruction.code");
+
+
+  // DQ (8/28/2008): Check format of these data members against the ELF specification
      AsmElfFileHeader.setDataPrototype("unsigned char","e_ident_file_class","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned char","e_ident_data_encoding","= 0",
@@ -465,8 +473,11 @@ Grammar::setUpBinaryInstructions ()
   // std::vector<ElfDynamicEntry*> other_entries;        /* Other values not specifically parsed out */
   // std::vector<ElfDynamicEntry*> all_entries;          /* All parsed entries in order of appearance */
      AsmElfDynamicSection.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
+
+  // DQ (8/28/2008): Check against the specification
      AsmElfDynamicSection.setDataPrototype("unsigned","dt_pltrelsz","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_pltgot","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicSection.setDataPrototype("SgAsmExecutableFileFormat::addr_t","dt_hash","= 0",
@@ -508,6 +519,7 @@ Grammar::setUpBinaryInstructions ()
   // unsigned            d_tag;
   // addr_t              d_val;
      AsmElfDynamicEntry.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
+  // DQ (8/28/2008): Check against the specification
      AsmElfDynamicEntry.setDataPrototype("unsigned","d_tag","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","d_val","= 0",
@@ -526,6 +538,8 @@ Grammar::setUpBinaryInstructions ()
   // const unsigned char* extra;
   // addr_t               nextra;
      AsmElfSectionTableEntry.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+
+  // DQ (8/28/2008): Check against the specification
      AsmElfSectionTableEntry.setDataPrototype("unsigned","sh_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSectionTableEntry.setDataPrototype("unsigned long","sh_type","= 0",
@@ -613,6 +627,8 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/3/2008): This is now in the base class
   // AsmElfSymbol.setDataPrototype("std::string","name","= \"\"",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/28/2008): Check against the specification
      AsmElfSymbol.setDataPrototype("SgAsmExecutableFileFormat::addr_t","st_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSymbol.setDataPrototype("unsigned char","st_info","= 0",
@@ -648,6 +664,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setFunctionPrototype ( "HEADER_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setAutomaticGenerationOfDestructor(false);
 
+  // DQ (8/28/2008): Check against the specification
      AsmPEFileHeader.setDataPrototype("unsigned","e_cpu_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_nsections","= 0",
@@ -777,6 +794,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPESectionTableEntry.setDataPrototype("SgAsmExecutableFileFormat::addr_t","physical_offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Check against the specification
      AsmPESectionTableEntry.setDataPrototype("unsigned","coff_line_nums","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPESectionTableEntry.setDataPrototype("unsigned","n_relocs","= 0",
@@ -825,6 +843,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmCoffSymbol.setDataPrototype("int","st_section_num","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Check against the specification
      AsmCoffSymbol.setDataPrototype("unsigned","st_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmCoffSymbol.setDataPrototype("unsigned","st_storage_class","= 0",
@@ -875,10 +894,12 @@ Grammar::setUpBinaryInstructions ()
   // std::string name;
   // unsigned char padding;
      AsmPEImportHintName.setFunctionPrototype ( "HEADER_PE_IMPORT_HINT_NAME", "../Grammar/BinaryInstruction.code");
+  // DQ (8/28/2008): Check against the specification
      AsmPEImportHintName.setDataPrototype("unsigned","hint","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportHintName.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Check against the specification
      AsmPEImportHintName.setDataPrototype("unsigned char","padding","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1330,6 +1351,8 @@ Grammar::setUpBinaryInstructions ()
   // ExecSection         *rm_section;    /* Real mode code segment */
      AsmDOSFileHeader.setFunctionPrototype ( "HEADER_DOS_HEADER", "../Grammar/BinaryInstruction.code");
   /* Section in which this segment lives */
+
+  // DQ (8/28/2008): Check against the specification
      AsmDOSFileHeader.setDataPrototype("unsigned","e_last_page_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("unsigned","e_total_pages","= 0",
@@ -1342,6 +1365,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("unsigned","e_maxalloc","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (8/28/2008): Check against the specification (these should 16bit pointers)
      AsmDOSFileHeader.setDataPrototype("unsigned","e_ss","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmDOSFileHeader.setDataPrototype("unsigned","e_sp","= 0",
@@ -1680,15 +1704,24 @@ Grammar::setUpBinaryInstructions ()
      AsmFieldDeclaration.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // Not clear if we want to store the offset explicitly
+
+  // DQ (8/28/2008): Change "unsigned long" to "uint64_t"
      AsmFieldDeclaration.setDataPrototype("unsigned long","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/28/2008): Change "unsigned char" to "uint8_t"
      AsmByteValueExpression.setDataPrototype("unsigned char","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/28/2008): Change "unsigned short" to "uint16_t"
      AsmWordValueExpression.setDataPrototype("unsigned short","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/28/2008): Change "unsigned int" to "uint32_t"
      AsmDoubleWordValueExpression.setDataPrototype("unsigned int","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/28/2008): Change "unsigned long long int" to "uint64_t"
   // This should maybe be "unsigned long long"
      AsmQuadWordValueExpression.setDataPrototype("unsigned long long int","value","= 0x0",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

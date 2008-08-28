@@ -111,10 +111,10 @@ buildstatus=0
   echo "############ configure done" && \
   make $MAKEFLAGS && \
   echo "############ make ((for source distribution; building libraries for binary distribution) done" && \
-  make $MAKEFLAGS docs && \
-  echo "############ make docs ((for source distribution) done" && \
   make $MAKEFLAGS check && \
   echo "############ make check (for source distribution) done" && \
+  make $MAKEFLAGS docs && \
+  echo "############ make docs ((for source distribution) done" && \
   rmdir ../install && \
   make $MAKEFLAGS install && \
   echo "############ make install (for source distribution) done" && \

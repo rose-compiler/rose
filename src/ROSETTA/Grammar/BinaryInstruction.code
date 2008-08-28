@@ -953,6 +953,9 @@ HEADER_GENERIC_FILE_START
           const SgAsmGenericFormat::fileDetails & get_sb() { return p_sb; }
           void set_sb ( const SgAsmGenericFormat::fileDetails & sb ) { printf ("set_sb() not implemented! \n"); ROSE_ASSERT(false); }
 
+       // DQ (8/26/2008): Added support for alternative section selection for use in disassembler.
+          SgAsmGenericSection* get_best_possible_section_by_va(addr_t va);
+
      private:
           void ctor(std::string file_name);
 
@@ -1406,6 +1409,10 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+       // DQ (8/26/2008): Added support for clearer output in dump function
+          std::string stringifyType  ( SgAsmElfSegmentTableEntry::SegmentType  kind ) const;
+       // std::string stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFlags kind ) const;
 
      private:
           void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk *disk);

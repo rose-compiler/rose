@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
   cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
   // tps (25 Aug 2008) : changed this because of results from IDAPro
-  ROSE_ASSERT(callanalysis->nodesVisited()==12);
+  ROSE_ASSERT(callanalysis->nodesVisited()==10);
   ROSE_ASSERT(callanalysis->edgesVisited()==7);
 
 
@@ -126,12 +126,12 @@ int main(int argc, char** argv) {
   //ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
   //ROSE_ASSERT(dfanalysis->nrOfUses()==26);
 
-  ROSE_ASSERT(dfanalysis->nodesVisited()==365);
-  ROSE_ASSERT(dfanalysis->edgesVisited()==487);
-  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==153);
-  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==43);
-  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==309);
-  ROSE_ASSERT(dfanalysis->nrOfUses()==111);
+  ROSE_ASSERT(dfanalysis->nodesVisited()==237);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==284);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==36);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==183);
+  ROSE_ASSERT(dfanalysis->nrOfUses()==25);
 
 
   // detailed dfa test

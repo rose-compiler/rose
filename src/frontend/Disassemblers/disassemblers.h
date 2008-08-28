@@ -87,8 +87,12 @@ namespace DisassemblerCommon {
 
 }
 
-namespace Disassembler {
-  void disassembleFile(SgAsmFile* f);
-}
+namespace Disassembler
+   {
+  // DQ (8/26/2008): Added initialization for default mode of disassembler
+     extern bool aggressive_mode;
+
+     void disassembleFile(SgAsmFile* f);
+   }
 
 #endif // ROSE_DISASSEMBLERS_H

@@ -747,8 +747,14 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sElfSegmentTableEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    fprintf(f, "%s%-*s = %u\n",                              p, w, "p_type",         p_type);
+
+ // DQ (8/25/2008): Output type in hex because some enum values are set to hex values.
+#if 0
+ // fprintf(f, "%s%-*s = %u\n",                              p, w, "p_type",         p_type);
+    fprintf(f, "%s%-*s = 0x%08x\n",                          p, w, "p_type",         p_type);
+#else
+    fprintf(f, "%s%-*s = 0x%08x = %s\n", p, w, "p_type",  p_type,  stringifyType(p_type).c_str());
+#endif
     fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "p_flags",        p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
     fputc(p_flags & PF_WPERM ? 'w' : '-', f);
@@ -767,6 +773,61 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         hexdump(f, 0, "    ", &(p_extra[0]), p_extra.size());
     }
 }
+
+// DQ (26/2008): Support output of named enum values
+std::string
+SgAsmElfSegmentTableEntry::stringifyType ( SgAsmElfSegmentTableEntry::SegmentType kind ) const
+   {
+     std::string s;
+
+     switch (kind)
+        {
+          case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break;
+          case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break;
+          case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break;
+          case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break;
+          case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break;
+          case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break;
+          case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break;
+          case SgAsmElfSegmentTableEntry::PT_LOPROC:  s = "PT_LOPROC";  break;
+          case SgAsmElfSegmentTableEntry::PT_HIPROC:  s = "PT_HIPROC";  break;
+
+          default:
+             {
+               s = "error";
+               printf ("Error: default reach for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
+             }
+        }
+
+     return s;
+   }
+
+#if 0
+// In retrospect I don't think we need this...
+// DQ (26/2008): Support output of named enum values 
+std::string
+SgAsmElfSegmentTableEntry::stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFlags kind ) const
+   {
+     std::string s;
+
+     switch (kind)
+        {
+          case SgAsmElfSegmentTableEntry::PF_RESERVED:  s = "PF_RESERVED"; break;
+          case SgAsmElfSegmentTableEntry::PF_EPERM:     s = "PF_EPERM"; break;
+          case SgAsmElfSegmentTableEntry::PF_WPERM:     s = "PF_WPERM"; break;
+          case SgAsmElfSegmentTableEntry::PF_RPERM:     s = "PF_RPERM"; break;
+          case SgAsmElfSegmentTableEntry::PF_PROC_MASK: s = "PF_PROC_MASK"; break;
+
+          default:
+             {
+               s = "error";
+               printf ("Error: default reach for SgAsmElfSegmentTableEntry::stringifyFlags = %d \n",kind);
+             }
+        }
+
+     return s;
+   }
+#endif
 
 /* Constructor reads the Elf Segment (Program Header) Table */
 void

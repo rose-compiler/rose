@@ -1293,6 +1293,16 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_read_executable_file_format_only(true);
         }
 
+  // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
+  // executable segments instead of just section based.
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
+        {
+       // printf ("option -rose:aggressive found \n");
+          set_aggressive(true);
+       // Disassembler::aggressive_mode = true;
+        }
+
   //
   // internal testing option (for internal use only, these may disappear at some point)
   //
@@ -1557,6 +1567,10 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
      optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);
+
+  // DQ (8/26/2007): Disassembly support from segments (true) instead of sections (false, default).
+     optionCount = sla(argv, "-rose:", "($)", "(aggressive)",1);
+
    }
 
 void
@@ -3896,6 +3910,10 @@ SgFile::callFrontEnd ()
                          SgAsmFile* asmFile = new SgAsmFile();
                          ROSE_ASSERT(asmFile != NULL);
 
+                      // Attach the SgAsmFile to the SgFile
+                         this->set_binaryFile(asmFile);
+                         asmFile->set_parent(this);
+
                       // printf ("Calling generateBinaryExecutableFileInformation() \n");
 
                       // Get the structure of the binary file (only implemented for ELF formatted files currently).
@@ -3921,10 +3939,6 @@ SgFile::callFrontEnd ()
 #else
                          printf ("\nWARNING: Skipping instruction disassembly \n\n");
 #endif
-
-                      // Attach the SgAsmFile to the SgFile
-                         this->set_binaryFile(asmFile);
-                         asmFile->set_parent(this);
 
                       // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
                       // addresses are unparsed (see Jeremiah for details).

@@ -372,6 +372,82 @@ SgAsmGenericFile::get_section_by_va(addr_t va)
     return best;
 }
 
+SgAsmGenericSection *
+SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
+   {
+  // This function is implemented for use in:
+  //      "DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr)"
+  // It supports a more restrictive selection of valid sections to associate with 
+  // a given address so that we can avoid disassembly of sections that are not code.
+
+     const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va);
+
+     if (0 == possible.size())
+        {
+          return NULL;
+        }
+       else
+        {
+          if (1 == possible.size())
+             {
+            // printf ("Only one alternative: va = %p possible[0] id = %d name = %s (return %s) \n",
+            //      (void*)va,possible[0]->get_id(),possible[0]->get_name().c_str(),(possible[0]->get_id() < 0) ? "NULL" : "it");
+            // return possible[0];
+               if (possible[0]->get_id() < 0)
+                    return NULL;
+                 else
+                    return possible[0];
+             }
+        }
+
+#if 0
+     printf ("Select from %zu alternatives \n",possible.size());
+     for (size_t i = 0; i < possible.size(); i++)
+        {
+          printf ("   va = %p possible[%zu] id = %d name = %s \n",(void*)va,i,possible[i]->get_id(),possible[i]->get_name().c_str());
+        }
+#endif
+
+  /* Choose the "best" section to return. */
+     SgAsmGenericSection *best = possible[0];
+     addr_t fo0 = possible[0]->get_va_offset(va);
+     for (size_t i = 1; i < possible.size(); i++)
+        {
+          if (fo0 != possible[i]->get_va_offset(va))
+            return NULL; /* all possible sections must map the VA to the same file offset */
+
+          if (best->get_id() < 0 && possible[i]->get_id() > 0)
+             {
+               best = possible[i]; /*prefer sections defined in a section or object table*/
+             }
+            else
+               if (best->get_mapped_size() > possible[i]->get_mapped_size())
+                  {
+                    best = possible[i]; /*prefer sections with a smaller mapped size*/
+                  }
+                 else
+                    if (best->get_name().size()==0 && possible[i]->get_name().size()>0)
+                       {
+                         best = possible[i]; /*prefer sections having a name*/
+                       }
+                      else
+                       {
+                      /* prefer section defined earlier*/
+
+                       }
+        }
+
+     ROSE_ASSERT(best != NULL);
+
+  // Add a few things that we just don't want to disassemble
+     if (best->get_name() == "ELF Segment Table")
+          return NULL;
+
+  // printf ("   best: va = %p id = %d name = %s \n",(void*)va,best->get_id(),best->get_name().c_str());
+
+     return best;
+   }
+
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
 rose_addr_t
@@ -1312,6 +1388,8 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
 {
+ // The "prefix" can be used for whitespace to intent the output.
+
     for (size_t i=0; i<n; i+=16) {
         fprintf(f, "%s0x%08"PRIx64, prefix, base_addr+i);
         for (size_t j=0; j<16; j++) {
