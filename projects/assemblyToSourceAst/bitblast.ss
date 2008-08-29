@@ -201,6 +201,10 @@
                                          (set-number-size (drop (multiplier! a b) 32) 32))
                                         (`(imulhi32 ,a ,b)
                                          (variables! 32)) ; No constraints
+                                        (`(idiv32 ,a ,b ,c) (variables! 32))
+                                        (`(imod32 ,a ,b ,c) (variables! 32))
+                                        (`(div32 ,a ,b ,c) (variables! 32))
+                                        (`(mod32 ,a ,b ,c) (variables! 32))
                                         (`(left-shift ,a ,b)
                                          (cond
                                            ((number? (cdr (caddr e))) ; Constant count
