@@ -113,20 +113,16 @@ SgAsmLEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Target architecture */
     switch (p_e_cpu_type) {
-      case 0x01: p_target->set_isa(ISA_IA32_286);     break;
-      case 0x02: p_target->set_isa(ISA_IA32_386);     break;
-      case 0x03: p_target->set_isa(ISA_IA32_486);     break;
-      case 0x04: p_target->set_isa(ISA_IA32_Pentium); break;
-      case 0x20: p_target->set_isa(ISA_I860_860XR);   break; /*N10*/
-      case 0x21: p_target->set_isa(ISA_I860_860XP);   break; /*N11*/
-      case 0x40: p_target->set_isa(ISA_MIPS_MarkI);   break; /*R2000, R3000*/
-      case 0x41: p_target->set_isa(ISA_MIPS_MarkII);  break; /*R6000*/
-      case 0x42: p_target->set_isa(ISA_MIPS_MarkIII); break; /*R4000*/
-   // default:   p_target->set_isa(ISA_OTHER, p_e_cpu_type); break;
-      default:
-        p_target->set_isa(ISA_OTHER);
-        p_target->set_other(p_e_cpu_type);
-        break;
+      case 0x01: set_isa(ISA_IA32_286);     break;
+      case 0x02: set_isa(ISA_IA32_386);     break;
+      case 0x03: set_isa(ISA_IA32_486);     break;
+      case 0x04: set_isa(ISA_IA32_Pentium); break;
+      case 0x20: set_isa(ISA_I860_860XR);   break; /*N10*/
+      case 0x21: set_isa(ISA_I860_860XP);   break; /*N11*/
+      case 0x40: set_isa(ISA_MIPS_MarkI);   break; /*R2000, R3000*/
+      case 0x41: set_isa(ISA_MIPS_MarkII);  break; /*R6000*/
+      case 0x42: set_isa(ISA_MIPS_MarkIII); break; /*R4000*/
+      default:   set_isa(ISA_OTHER);        break;
     }
 
     /* Entry point */

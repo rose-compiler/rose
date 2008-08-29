@@ -86,8 +86,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   ROSE_ASSERT (file);
   size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
   ROSE_ASSERT (fileOffset < file->get_size());
-  const SgAsmGenericArchitecture* arch = header->get_target();
-  SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
+  SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
   SgAsmInstruction* insn = NULL;
   try {
     if (isSgAsmDOSFileHeader(header)) { // FIXME
@@ -239,8 +238,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
       // Scan for pointers to code
       SgAsmGenericHeader* header = sect->get_header();
       ROSE_ASSERT (header);
-      const SgAsmGenericArchitecture * arch = header->get_target();
-      SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
+      SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
       size_t pointerSize = 0;
       if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
         pointerSize = 4;
@@ -306,8 +304,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
     if (!section) continue;
     ROSE_ASSERT (section->get_header() == header);
-    const SgAsmGenericArchitecture* arch = header->get_target();
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = arch->get_isa();
+    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     bool isFunctionStart = false;
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);

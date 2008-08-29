@@ -19,24 +19,33 @@
  * This class is intended to help make those changes more transparent. There are versions specialized for Elf (strings are
  * NUL-teraminted), PE (strings are run length encoded), etc.
  * 
- * Example usage:
+ * Example usage in ELF:
  * An ELF symbol table points to an Elf String Table. Symbol entries contain offsets into the string table for their names. A
  * new string is constructed like:
  * 
- *     symbol_entry[0]->name = SgAsmElfString(string_table, offset);   // "domain"
- *     symbol_table[1]->name = SgAsmElfString(string_table, offset+2); // "main"
+ *     symbol_entry[0].name = SgAsmElfString(string_table, offset);   // "domain"
+ *     symbol_table[1].name = SgAsmElfString(string_table, offset+2); // "main"
  *
- * The name is available with the "to_string" and "c_str" methods. The offset is also available:
+ * The name is available with the "to_string" and "c_str" methods. The offset is also available (called "id" because some
+ * formats might use something other than an offset into the string table).
  * 
- *     symbol_entry[0]->name.to_string()
- *     
- * To change "main" to "pain" one just makes an assignment.
+ *     cerr <<symbol_entry[0].name.to_string();
+ *     printf("id=%"PRIu64", name=\"%s\"\n", symbol_entry[0].name.get_id(), symbol_entry[0].name.c_str());
+ *
+ * To change "main" to "pain" one just makes an assignment:
+ *
+ *     symbol_table[1].name = "pain";
+ *
+ * Names will not be reallocated in the symbol table until get_id() is called for one of the table's modified strings.  This
+ * usually results in more efficient repacking of the string table.
+ * 
+ * Regions of the string table that are never referenced are maintained as "holes" available through the usualy
+ * SgAsmGenericSection interface. The reallocation algorithm keeps all holes at their original offsets relative to the
+ * beginning of the string table.
  */
-
-
 class SgAsmGenericString {
   public:
-    virtual ~SgAsmGenericString() = 0;
+    virtual ~SgAsmGenericString() {};
     virtual const std::string& to_string() const = 0;
     virtual const char *c_str() const {return to_string().c_str();}
     virtual rose_addr_t get_id() const = 0;
@@ -48,16 +57,21 @@ class SgAsmGenericString {
 class SgAsmElfString : public SgAsmGenericString {
   public:
     SgAsmElfString() {};
-    SgAsmElfString(class ElfStringStorage*);
+    SgAsmElfString(class SgAsmElfStrtab *strtab, rose_addr_t offset)
+        {ctor(strtab, offset);}
+    SgAsmElfString(class ElfStringStorage *storage)
+        {ctor(storage);}
     virtual ~SgAsmElfString() {};
     virtual const std::string& to_string() const;
     virtual rose_addr_t get_id() const;
     virtual void assign(const std::string &s);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
   private:
+    void ctor(class SgAsmElfStrtab*, rose_addr_t offset);
+    void ctor(class ElfStringStorage*);
     class ElfStringStorage *storage;
 };
-    
+
 class SgAsmElfStrtab : public SgAsmElfSection {
   public:
     SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
@@ -72,18 +86,16 @@ class SgAsmElfStrtab : public SgAsmElfSection {
   private:
     void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
     rose_addr_t best_fit(addr_t need); /*allocate from free list*/
-    typedef std::vector<ElfStringStorage*> referenced_t;
+    typedef std::vector<class ElfStringStorage*> referenced_t;
     referenced_t referenced;
     typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
     freelist_t freelist;
 };
 #endif /*END OF STUFF TO MOVE INTO ROSETTA*/
 
-/* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
- * unsigned datatype as the address. */
-#define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))
-
-/* String storage class for SgAsmElfString. */
+/* String storage class for SgAsmElfString.  The SgAsmElfString objects point to ElfStringStorage objects which are in turn
+ * stored in the SgAsmElfSection. We do it this way so that all copies of the string (by assignment) still point to their
+ * original location in the string table and we can reallocate all of them when necessary. */
 class ElfStringStorage {
   public:
     ElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
@@ -95,6 +107,12 @@ class ElfStringStorage {
   private:
     ElfStringStorage() {}
 };
+    
+
+/* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
+ * unsigned datatype as the address. */
+#define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))
+
 
 
 // namespace Exec {
@@ -263,39 +281,38 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Target architecture */
     switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
       case 0:
-        p_target->set_isa(ISA_UNSPECIFIED);
+        set_isa(ISA_UNSPECIFIED);
         break;
       case 1:
-        p_target->set_isa(ISA_ATT_WE_32100);
+        set_isa(ISA_ATT_WE_32100);
         break;
       case 2:
-        p_target->set_isa(ISA_SPARC_Family);
+        set_isa(ISA_SPARC_Family);
         break;
       case 3:
-        p_target->set_isa(ISA_IA32_386);
+        set_isa(ISA_IA32_386);
         break;
       case 4:
-        p_target->set_isa(ISA_M68K_Family);
+        set_isa(ISA_M68K_Family);
         break;
       case 5:
-        p_target->set_isa(ISA_M88K_Family);
+        set_isa(ISA_M88K_Family);
         break;
       case 7:
-        p_target->set_isa(ISA_I860_Family);
+        set_isa(ISA_I860_Family);
         break;
       case 8:
-        p_target->set_isa(ISA_MIPS_Family);
+        set_isa(ISA_MIPS_Family);
         break;
       case 40:
-        p_target->set_isa(ISA_ARM_Family);
+        set_isa(ISA_ARM_Family);
         break;
       case 62:
-        p_target->set_isa(ISA_X8664_Family);
+        set_isa(ISA_X8664_Family);
         break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
-        p_target->set_isa(ISA_OTHER);
-        p_target->set_other(p_e_machine);
+        set_isa(ISA_OTHER);
         break;
     }
 
@@ -513,6 +530,19 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // String tables and strings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* String constructors */
+void
+SgAsmElfString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset)
+{
+//    strtab->create_string(offset, this);
+    abort();
+}
+void
+SgAsmElfString::ctor(ElfStringStorage *storage)
+{
+    this->storage = storage;
+}
+
 /* Returns the std::string associated with the SgAsmElfString */
 const std::string&
 SgAsmElfString::to_string() const 
@@ -536,23 +566,6 @@ SgAsmElfString::get_id() const
     return storage->offset;
 }
 
-/* Print some debugging info */
-void
-SgAsmElfString::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sElfString[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sElfString.", prefix);
-    }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)storage);
-    if (storage)
-        storage->dump(f, p, -1);
-}
-
 /* Give the string a new value */
 void
 SgAsmElfString::assign(const std::string &s)
@@ -574,7 +587,24 @@ SgAsmElfString::assign(const std::string &s)
     storage->strtab->free(old_offset, storage->string.size()+1);
     storage->string = s;
 }
-        
+
+/* Print some debugging info */
+void
+SgAsmElfString::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfString[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfString.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)storage);
+    if (storage)
+        storage->dump(f, p, -1);
+}
+
 /* Print some debugging info */
 void
 ElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)

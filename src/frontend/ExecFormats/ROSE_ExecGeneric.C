@@ -1154,7 +1154,6 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
     /* Initialized in the real constructor */
     ROSE_ASSERT(p_symbols     == NULL);
     ROSE_ASSERT(p_dlls        == NULL);
-    ROSE_ASSERT(p_target      == NULL);
     ROSE_ASSERT(p_exec_format == NULL);
 
     /* Create child IR nodes and set their parent */
@@ -1162,8 +1161,6 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
     p_symbols->set_parent(this);
     p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
-    p_target  = new SgAsmGenericArchitecture;
-    p_target->set_parent(this);
     p_exec_format = new SgAsmGenericFormat;
     p_exec_format->set_parent(this);
 }
@@ -1185,12 +1182,10 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
 
     delete p_symbols;
     delete p_dlls;
-    delete p_target;
     delete p_exec_format;
 
     p_symbols = NULL;
     p_dlls = NULL;
-    p_target = NULL;
     p_exec_format = NULL;
 }
 

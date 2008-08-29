@@ -70,7 +70,7 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 #endif
 
     /* Target architecture */
-    p_target->set_isa(ISA_UNSPECIFIED);
+    set_isa(ISA_UNSPECIFIED);
 
     /* Entry point */
     p_base_va = 0;

@@ -191,21 +191,18 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Target architecture */
     switch (p_e_exetype) {
       case 0:
-        p_target->set_isa(ISA_UNSPECIFIED);
+        set_isa(ISA_UNSPECIFIED);
         break;
       case 1:
         throw FormatError("use of reserved value for Windows NE header e_exetype");
       case 2:
-        p_target->set_isa(ISA_IA32_386);
+        set_isa(ISA_IA32_386);
         break;
       case 3:
       case 4:
         throw FormatError("use of reserved value for Windows NE header e_exetype");
-
       default:
-     // p_target->set_isa(ISA_OTHER, p_e_exetype);
-        p_target->set_isa(ISA_OTHER);
-        p_target->set_other(p_e_exetype);
+        set_isa(ISA_OTHER);
         break;
     }
 

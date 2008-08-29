@@ -225,67 +225,65 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Target architecture */
     switch (p_e_cpu_type) {
       case 0x0000:
-        p_target->set_isa(ISA_UNSPECIFIED);
+        set_isa(ISA_UNSPECIFIED);
         break;
       case 0x014c:
-        p_target->set_isa(ISA_IA32_386);
+        set_isa(ISA_IA32_386);
         break;
       case 0x014d:
-        p_target->set_isa(ISA_IA32_486);
+        set_isa(ISA_IA32_486);
         break;
       case 0x014e:
-        p_target->set_isa(ISA_IA32_Pentium);
+        set_isa(ISA_IA32_Pentium);
         break;
       case 0x0162:
-        p_target->set_isa(ISA_MIPS_MarkI); /* R2000, R3000 */
+        set_isa(ISA_MIPS_MarkI); /* R2000, R3000 */
         break;
       case 0x0163:
-        p_target->set_isa(ISA_MIPS_MarkII); /* R6000 */
+        set_isa(ISA_MIPS_MarkII); /* R6000 */
         break;
       case 0x0166:
-        p_target->set_isa(ISA_MIPS_MarkIII); /* R4000 */
+        set_isa(ISA_MIPS_MarkIII); /* R4000 */
         break;
       case 0x01a2: /*Hitachi SH3*/
       case 0x01a3: /*Hitachi SH3 with FPU*/
       case 0x01a6: /*Hitachi SH4*/
       case 0x01a8: /*Hitachi SH5*/
-        p_target->set_isa(ISA_Hitachi_SH);
+        set_isa(ISA_Hitachi_SH);
         break;
       case 0x01c0:
-        p_target->set_isa(ISA_ARM_Family);
+        set_isa(ISA_ARM_Family);
         break;
       case 0x01d3:
-        p_target->set_isa(ISA_Matsushita_AM33);
+        set_isa(ISA_Matsushita_AM33);
         break;
       case 0x01f0: /*w/o FPU*/
       case 0x01f1: /*with FPU*/
-        p_target->set_isa(ISA_PowerPC);
+        set_isa(ISA_PowerPC);
         break;
       case 0x0200:
-        p_target->set_isa(ISA_IA64_Family);
+        set_isa(ISA_IA64_Family);
         break;
       case 0x0266:
-        p_target->set_isa(ISA_MIPS_16);
+        set_isa(ISA_MIPS_16);
         break;
       case 0x0366:
-        p_target->set_isa(ISA_MIPS_FPU);
+        set_isa(ISA_MIPS_FPU);
         break;
       case 0x0466:
-        p_target->set_isa(ISA_MIPS_16FPU);
+        set_isa(ISA_MIPS_16FPU);
         break;
       case 0x0ebc:
-        p_target->set_isa(ISA_EFI_ByteCode);
+        set_isa(ISA_EFI_ByteCode);
         break;
       case 0x8664:
-        p_target->set_isa(ISA_X8664_Family);
+        set_isa(ISA_X8664_Family);
         break;
       case 0x9041:
-        p_target->set_isa(ISA_Mitsubishi_M32R);
+        set_isa(ISA_Mitsubishi_M32R);
         break;
-
       default:
-        p_target->set_isa(ISA_OTHER);
-        p_target->set_other(p_e_cpu_type);
+        set_isa(ISA_OTHER);
         break;
     }
 
