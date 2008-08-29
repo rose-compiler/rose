@@ -4,9 +4,77 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#if 1 /* FIXME: Move these IR nodes into ROSETTA. They're here only to expedite development. (RPM 2008-08-25) */
+
+/* An SgAsmGenericString represents a string as stored in some section/segment/object/part of the executable file. For
+ * instance, an ELF symbol table has symbol table entries that point into a symbol string table section. Using this class for
+ * such strings allows us to do things like modify string values while resolving issues connected with shared strings.
+ * Modifying a single string (e.g., changing an 'a' to a 'b' in a symbol name) has the potential to cause very substantial
+ * changes to the executable: the name may need to be moved, causing a change in the symbol table entry; the symbol string
+ * table may need to be enlarged, causing other sections to move; moving sections causes section and/or segment tables to be
+ * modified; overlapping sections/segments need to be adjusted properly, memory mapping needs to be adjusted; etc. */
+class SgAsmGenericString {
+  public:
+    virtual ~SgAsmGenericString() = 0;
+    virtual const std::string& to_string() const = 0;
+    virtual const char *c_str() const {return to_string().c_str();}
+    virtual rose_addr_t get_id() const = 0;
+    virtual void assign(const std::string &s) = 0;
+    virtual void dump(FILE*, const char *prefix, ssize_t idx) = 0;
+    static const rose_addr_t no_id = -1;
+};
+
+class SgAsmElfString : public SgAsmGenericString {
+  public:
+    SgAsmElfString() {};
+    SgAsmElfString(class ElfStringStorage*);
+    virtual ~SgAsmElfString() {};
+    virtual const std::string& to_string() const;
+    virtual rose_addr_t get_id() const;
+    virtual void assign(const std::string &s);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+  private:
+    class ElfStringStorage *storage;
+};
+    
+class SgAsmElfStrtab : public SgAsmElfSection {
+  public:
+    SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+        : SgAsmElfSection(fhdr, shdr)
+        {ctor(fhdr, shdr);}
+    virtual ~SgAsmElfStrtab() {}
+    //virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    SgAsmElfString *create_string(addr_t offset);
+    void free(addr_t offset, addr_t size); /*mark part of table as free*/
+    void reallocate(); /*allocate storage for all unallocated strings*/
+  private:
+    void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+    rose_addr_t best_fit(addr_t need); /*allocate from free list*/
+    typedef std::vector<ElfStringStorage*> referenced_t;
+    referenced_t referenced;
+    typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
+    freelist_t freelist;
+};
+#endif /*END OF STUFF TO MOVE INTO ROSETTA*/
+
 /* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
  * unsigned datatype as the address. */
 #define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))
+
+/* String storage class for SgAsmElfString. */
+class ElfStringStorage {
+  public:
+    ElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
+        : strtab(strtab), string(string), offset(offset) {}
+    void dump(FILE *s, const char *prefix, ssize_t idx);
+    SgAsmElfStrtab *strtab;
+    std::string string;
+    rose_addr_t offset;
+  private:
+    ElfStringStorage() {}
+};
+
 
 // namespace Exec {
 // namespace ELF {
@@ -421,6 +489,260 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// String tables.
+// An ELF string table is a section that contains NUL-terminated strings. Other parts of the file point into the string table
+// by specifying a byte offset from the beginning of the table.  The first byte of a string table is a NUL by convention, so
+// that all empty strings have a zero offset.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Returns the std::string associated with the SgAsmElfString */
+const std::string&
+SgAsmElfString::to_string() const 
+{
+    static const std::string empty;
+    return storage ? storage->string : empty;
+}
+
+/* Returns the ID (offset into the string table) where the string is allocated. If the string is not allocated then this call
+ * triggers a reallocation. */
+rose_addr_t
+SgAsmElfString::get_id() const
+{
+    if (!storage)
+        return no_id;
+    if (storage->offset == no_id) {
+        ROSE_ASSERT(storage->strtab!=NULL);
+        storage->strtab->reallocate();
+        ROSE_ASSERT(storage->offset != no_id);
+    }
+    return storage->offset;
+}
+
+/* Print some debugging info */
+void
+SgAsmElfString::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfString[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfString.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)storage);
+    if (storage)
+        storage->dump(f, p, -1);
+}
+
+/* Give the string a new value */
+void
+SgAsmElfString::assign(const std::string &s)
+{
+    ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+    if (to_string()==s) return; /* no change in value */
+    
+    /* FIXME: At this point in development we change all strings that happen to point at the same offset in this string table.
+     *        In the future we should probably have another argument that says whether to keep this behavior or copy the string
+     *        to a new storage location if shared (i.e., copy on write semantics). There's no way to know whether a shared
+     *        string should be modified in place or copied on write short of the caller telling us, because the caller might
+     *        want to change all occurrences of symbols called "foo" to "goo", or it might desire to change a single symbol
+     *        but the compiler has optimized the string table.  However, note that two strings that overlap (like "foobar"
+     *        and"bar") always copy-on-write. (RPM 2008-08-28) */
+
+    /* We must mark storage as unallocated before calling the strtab free method since it checks for overlapping strings */
+    rose_addr_t old_offset = storage->offset;
+    storage->offset = no_id;
+    storage->strtab->free(old_offset, storage->string.size()+1);
+    storage->string = s;
+}
+        
+/* Print some debugging info */
+void
+ElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfStringStorage[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfStringStorage.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", strtab->get_id(), strtab->get_name().c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "string", string.c_str());
+    fprintf(f, "%s%-*s = ", p, w, "id");
+    if (offset==SgAsmGenericString::no_id) {
+        fputs("not allocated\n", f);
+    } else {
+        fprintf(f, "%"PRIu64" (byte offset)\n", offset);
+    }
+}
+
+/* Constructor */
+void
+SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
+{
+    /*nothing special to do yet*/
+}
+
+/* Constructs an SgAsmElfString from an offset into this string table. */
+SgAsmElfString *
+SgAsmElfStrtab::create_string(addr_t offset)
+{
+    ROSE_ASSERT(offset!=SgAsmGenericString::no_id);
+
+    /* Has this string already been created? If so, return a new string that points to the same storage. */
+    for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); i++) {
+        if ((*i)->offset==offset)
+            return new SgAsmElfString(*i);
+    }
+    
+    /* Create a new storage object to be shared by all strings at this offset. */
+    const char *s = content_str(offset);
+    ElfStringStorage *storage = new ElfStringStorage(this, s, offset);
+    referenced.push_back(storage);
+    return new SgAsmElfString(storage);
+}
+
+/* Allocates storage for NEED bytes from the free list using best-fit; returns no_id when unable. */
+rose_addr_t
+SgAsmElfStrtab::best_fit(addr_t need)
+{
+    /* Find best entry in the free list */
+    freelist_t::iterator best = freelist.end();
+    for (freelist_t::iterator i=freelist.begin(); i!=freelist.end(); ++i) {
+        if (need==(*i).second) {
+            /* Best possible!  */
+            addr_t retval = i->first;
+            freelist.erase(i);
+            return retval;
+        } else if (need <= i->second &&
+                   (best==freelist.end() || i->second<best->second)) {
+            best = i;
+        }
+    }
+
+    /* Can we rearrange free space to make enough? We do this after the loop above because it's less intrusive. */
+    if (best==freelist.end())
+        return SgAsmGenericString::no_id; /*FIXME: not implemented yet*/
+    
+    /* Adjust free list */
+    ROSE_ASSERT(best != freelist.end());
+    ROSE_ASSERT(need < best->second);
+    addr_t retval = best->first;
+    freelist.insert(freelist_t::value_type(best->first+need, best->second-need));
+    freelist.erase(best);
+    return retval;
+}
+
+/* Add a range of bytes to the free list. Coalesce adjacent free areas.  An ELF string table can have a pointer to the
+ * beginning of a string, but may also have pointers into the middle of strings. For instance, a string table that stores
+ * "bar" and "foobar" can be optimized to store them as "foobar\0" with "bar" at offset 3 and "foobar" at offset 0. So we have
+ * to be careful when freeing one string so we don't inadvertently mark the other string as being free. We do that by scanning
+ * the "referenced" list and not freeing anything that's still referenced. */
+void
+SgAsmElfStrtab::free(addr_t offset, addr_t size)
+{
+    ROSE_ASSERT(offset+size <= get_size());
+    
+#ifndef NDEBUG
+    /* Make sure area is not already in free list */
+    for (freelist_t::iterator i=freelist.begin(); i!=freelist.end(); ++i) {
+        ROSE_ASSERT(offset+size <= i->first ||       /*area is entirely left of free item or*/
+                    offset >= i->first + i->second); /*area is entirely right of free item*/
+    }
+#endif
+
+    /* Preserve anything that's still referenced */
+    for (size_t i=0; i<referenced.size() && size>0; i++) {
+        if (referenced[i]->offset==SgAsmGenericString::no_id) continue;
+        ROSE_ASSERT(referenced[i]->offset!=offset); /*forgot to remove it or mark it unallocated before freeing?*/
+        if (referenced[i]->offset <= offset && referenced[i]->offset+referenced[i]->string.size()+1 > offset) {
+            /* we are freeing "bar" but something references the overlapping "foobar". No not free anything. */
+            ROSE_ASSERT(offset+size == referenced[i]->offset+referenced[i]->string.size()+1);
+            size = 0;
+        }
+        if (referenced[i]->offset > offset && referenced[i]->offset < offset+size) {
+            /* we are freeing "foobar" but something references overlapping "bar". Free only up to "bar" */
+            size = referenced[i]->offset - offset;
+        }
+    }
+
+    /* Nothing to free! */
+    if (0==size) return;
+
+    /* Coalesce */
+    freelist_t::iterator right = freelist.end();
+    freelist_t::iterator left  = freelist.end();
+    for (freelist_t::iterator i=freelist.begin(); i!=freelist.end() && (right!=freelist.end() || left!=freelist.end()); ++i) {
+        if (offset + size == i->first)
+            right = i;
+        if (offset == i->first + i->second)
+            left = i;
+    }
+    if (left!=freelist.end() && right!=freelist.end()) {
+        left->second += size + right->second;
+        freelist.erase(right);
+    } else if (left!=freelist.end()) {
+        left->second += size;
+    } else if (right!=freelist.end()) {
+        freelist.insert(freelist_t::value_type(offset, right->second+size));
+        freelist.erase(right);
+    } else {
+        freelist.insert(freelist_t::value_type(offset, size));
+    }
+}
+
+/* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
+ * space. Any that are left will cause the string table to be extended. */
+void
+SgAsmElfStrtab::reallocate()
+{
+    addr_t extend_size = 0;                                     /* amount by which to extend string table */
+
+    /* First use up existing free space (avoiding holes) */
+    for (size_t i=0; i<referenced.size(); i++) {
+        ElfStringStorage *storage = referenced[i];
+        if (storage->offset==SgAsmGenericString::no_id)
+            storage->offset = best_fit(storage->string.size()+1);    /* +1 for NUL terminator */
+        if (storage->offset==SgAsmGenericString::no_id)
+            extend_size += storage->string.size() + 1;
+    }
+    
+    /* Extend the string table if necessary */
+    ROSE_ASSERT(extend_size==0); /* not implemented yet */
+}
+
+        
+
+/* Print some debugging info */
+void
+SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfStrtab[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfStrtab.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    SgAsmElfSection::dump(f, p, -1);
+
+    fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", referenced.size());
+    for (size_t i=0; i<referenced.size(); i++) {
+        referenced[i]->dump(f, p, i);
+    }
+
+    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", freelist.size());
+    freelist_t::iterator flit = freelist.begin();
+    for (size_t i=0; i<freelist.size(); ++i, ++flit) {
+        fprintf(f, "%s%-*s = [%zu] offset=%"PRIu64", size=%"PRIu64"\n", p, w, "freelist", i, flit->first, flit->second);
+    }
+}   
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Section tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -563,6 +885,9 @@ SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
               case SgAsmElfSectionTableEntry::SHT_DYNSYM:
               case SgAsmElfSectionTableEntry::SHT_SYMTAB:
                 section = new SgAsmElfSymbolSection(fhdr, shdr);
+                break;
+              case SgAsmElfSectionTableEntry::SHT_STRTAB:
+                section = new SgAsmElfStrtab(fhdr, shdr);
                 break;
               default:
                 section = new SgAsmElfSection(fhdr, shdr);
