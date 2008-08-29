@@ -51,6 +51,22 @@ static std::string toStringForRTI(const std::vector<std::pair<T,T> >& x) {
 }
 
 
+// DQ (8/29/2008): Added the support for the Robb's SgSharedVector class.
+template <typename T>
+static std::string toStringForRTI(const SgSharedVector<T>& x)
+   {
+     std::ostringstream ss;
+     ss << "[";
+
+     printf ("Warning: SgSharedVector iterator support is not finished! \n");
+     ROSE_ASSERT(false);
+
+  // for (typename std::vector<T>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << (*i);}
+
+     ss << "]";
+     return ss.str();
+   }
+
 static std::string toStringForRTI(const std::vector<bool>& x) {
   std::ostringstream ss;
   ss << "[";
