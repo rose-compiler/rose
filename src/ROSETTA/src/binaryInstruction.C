@@ -152,7 +152,6 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_TERMINAL_MACRO ( AsmGenericFormat,      "AsmGenericFormat",      "AsmGenericFormatTag" );
 
-     NEW_TERMINAL_MACRO ( AsmGenericArchitecture,"AsmGenericArchitecture","AsmGenericArchitectureTag" );
      NEW_TERMINAL_MACRO ( AsmGenericFile,        "AsmGenericFile",        "AsmGenericFileTag" );
 
   // Support for different types of header for binary executable file formats.
@@ -243,13 +242,13 @@ Grammar::setUpBinaryInstructions ()
   // NEW_TERMINAL_MACRO ( AsmElfSegment,         "AsmElfSegment",         "AsmElfSegmentTag" );
   // NEW_NONTERMINAL_MACRO ( AsmGenericSegment, AsmElfSegment, "AsmGenericSegment", "AsmGenericSegmentTag", false );
   // NEW_NONTERMINAL_MACRO ( AsmGenericSupport, AsmGenericFile        | AsmGenericHeader | AsmGenericSection      | 
-  //                                            AsmGenericSegment     | AsmGenericFormat | AsmGenericArchitecture | 
+  //                                            AsmGenericSegment     | AsmGenericFormat | 
   //                                            AsmGenericSectionList | AsmGenericSegmentList,
   //                         "AsmGenericSupport",    "AsmGenericSupportTag", false );
 
   // Root of class hierarchy for binary file support
      NEW_NONTERMINAL_MACRO ( AsmExecutableFileFormat,
-               AsmGenericDLL           | AsmGenericFormat        | AsmGenericArchitecture | AsmGenericDLLList      |
+               AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList      |
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol       | AsmGenericSymbolList   |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList       | AsmElfDynamicEntry     | AsmElfDynamicEntryList | AsmElfSegmentTableEntryList |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        | AsmPEDLLList |
@@ -1519,8 +1518,8 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericHeader.setDataPrototype("SgCharList","magic","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Machine for which this header and its sections, etc. was compiled */
-     AsmGenericHeader.setDataPrototype("SgAsmGenericArchitecture*","target","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmGenericHeader.setDataPrototype("SgAsmGenericFormat::InsSetArchitecture","isa","= SgAsmGenericFormat::ISA_UNSPECIFIED",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   /* Base virtual address used by all "relative virtual addresses" (RVA) */
      AsmGenericHeader.setDataPrototype("rose_addr_t","base_va","= 0",
@@ -1609,15 +1608,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Initialize to ZERO first and then set as required, in bytes (e.g., Elf32 is 4; Elf64 is 8) */
      AsmGenericFormat.setDataPrototype("size_t","word_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // This data structure represents the ExecFile from file: ExecGeneric.h
-     AsmGenericArchitecture.setFunctionPrototype ( "HEADER_GENERIC_ARCHITECTURE", "../Grammar/BinaryInstruction.code");
-  /* Instruction set architecture */
-     AsmGenericArchitecture.setDataPrototype("SgAsmGenericFormat::InsSetArchitecture","isa","= SgAsmGenericFormat::ISA_UNSPECIFIED",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Actual stored value if isa==ISA_OTHER */
-     AsmGenericArchitecture.setDataPrototype("unsigned long","other","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/3/2008): Added new IR nodes data members.
@@ -1824,7 +1814,6 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericHeader.setFunctionSource ( "SOURCE_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
      AsmGenericSection.setFunctionSource ( "SOURCE_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmGenericFormat.setFunctionSource ( "SOURCE_GENERIC_FORMAT", "../Grammar/BinaryInstruction.code");
-     AsmGenericArchitecture.setFunctionSource ( "SOURCE_GENERIC_ARCHITECTURE", "../Grammar/BinaryInstruction.code");
      AsmGenericSymbol.setFunctionSource ( "SOURCE_GENERIC_SYMBOL", "../Grammar/BinaryInstruction.code");
   // AsmGenericSectionList.setFunctionSource ( "SOURCE_GENERIC_SECTION_LIST", "../Grammar/BinaryInstruction.code");
      AsmGenericSymbolList.setFunctionSource ( "SOURCE_GENERIC_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
