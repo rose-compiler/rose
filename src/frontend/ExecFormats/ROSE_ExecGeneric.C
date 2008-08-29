@@ -256,12 +256,16 @@ SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
     }
 }
 
-/* Returns the pointer to the first section with the specified ID. */
+/* Returns the pointer to the first section with the specified ID. Optionally restrict by header (if hdr!=NULL). */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_id(int id)
+SgAsmGenericFile::get_section_by_id(int id, SgAsmGenericHeader *hdr)
 {
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
-        if ((*i)->get_id() == id) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
+        
+        if ((!hdr || hdr==(*i)->get_header()) &&
+            (*i)->get_id() == id) {
             return *i;
         }
     }
@@ -272,7 +276,7 @@ SgAsmGenericFile::get_section_by_id(int id)
  * are ignored (default is NUL). For instance, if sep=='$' then the following names are all equivalent: .idata, .idata$,
  * .idata$1 */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_name(std::string name, char sep)
+SgAsmGenericFile::get_section_by_name(std::string name, char sep, SgAsmGenericHeader *hdr)
 {
     if (sep) {
         size_t pos = name.find(sep);
@@ -280,8 +284,11 @@ SgAsmGenericFile::get_section_by_name(std::string name, char sep)
             name.erase(pos);
     }
     
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
-        if (0==(*i)->get_name().compare(name))
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
+        if ((!hdr || hdr==(*i)->get_header()) && 
+            0==(*i)->get_name().compare(name))
             return *i;
     }
     return NULL;
@@ -289,12 +296,15 @@ SgAsmGenericFile::get_section_by_name(std::string name, char sep)
 
 /* Returns a vector of sections that contain the specified portion of the file */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size)
+SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size, SgAsmGenericHeader *hdr)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
         SgAsmGenericSection *section = *i;
-        if (offset >= section->get_offset() &&
+        if ((!hdr || hdr==section->get_header()) &&
+            offset >= section->get_offset() &&
             offset < section->get_offset()+section->get_size() &&
             offset-section->get_offset() + size <= section->get_size())
             retval.push_back(section);
@@ -304,12 +314,16 @@ SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size)
 
 /* Returns a vector of sections that are mapped to the specified RVA */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_rva(addr_t rva)
+SgAsmGenericFile::get_sections_by_rva(addr_t rva, SgAsmGenericHeader *hdr)
 {
     std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
         SgAsmGenericSection *section = *i;
-        if (section->is_mapped() && rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
+        if ((!hdr || hdr==section->get_header()) &&
+            section->is_mapped() &&
+            rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
             retval.push_back(section);
         }
     }
@@ -320,18 +334,18 @@ SgAsmGenericFile::get_sections_by_rva(addr_t rva)
  * addresses (RVAs) that are based on the base VA of the section's file header. If the section is mapped but has no associated
  * file header then we assume zero for the base VA. */
 std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_va(addr_t va)
+SgAsmGenericFile::get_sections_by_va(addr_t va, SgAsmGenericHeader *hdr)
 {
     std::vector<SgAsmGenericSection*> retval;
     for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
          i != p_sections->get_sections().end();
          i++) {
         SgAsmGenericSection *section = *i;
-        if (section->is_mapped()) {
-            if (va>=section->get_base_va() + section->get_mapped_rva() &&
-                va < section->get_base_va() + section->get_mapped_rva() + section->get_mapped_size()) {
-                retval.push_back(section);
-            }
+        if ((!hdr || hdr==section->get_header()) &&
+            section->is_mapped() &&
+            va>=section->get_base_va() + section->get_mapped_rva() &&
+            va < section->get_base_va() + section->get_mapped_rva() + section->get_mapped_size()) {
+            retval.push_back(section);
         }
     }
     return retval;
@@ -341,9 +355,9 @@ SgAsmGenericFile::get_sections_by_va(addr_t va)
  * sections containing that VA. It then returns a single section, giving preference to the section with the smallest mapped
  * size and having a non-negative identification number (i.e, appearing in a section table of some sort). */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_va(addr_t va)
+SgAsmGenericFile::get_section_by_va(addr_t va, SgAsmGenericHeader *hdr)
 {
-    const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va);
+    const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va, hdr);
     if (0==possible.size()) {
         return NULL;
     } else if (1==possible.size()) {
@@ -356,11 +370,6 @@ SgAsmGenericFile::get_section_by_va(addr_t va)
     for (size_t i=1; i<possible.size(); i++) {
         if (fo0 != possible[i]->get_va_offset(va))
             return NULL; /* all possible sections must map the VA to the same file offset */
-#if 0 /* Not sure if we want to give table-defined sections special treatment since non-Elf often defines things in headers */
-        if (best->get_id()<0 && possible[i]->get_id()>0) {
-            best = possible[i]; /*prefer sections defined in a section or object table*/
-        } else
-#endif
         if (best->get_mapped_size() > possible[i]->get_mapped_size()) {
             best = possible[i]; /*prefer sections with a smaller mapped size*/
         } else if (best->get_name().size()==0 && possible[i]->get_name().size()>0) {
@@ -451,11 +460,14 @@ SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
 /* Given a file address, return the file offset of the following section(s). If there is no following section then return an
  * address of -1 (when signed) */
 rose_addr_t
-SgAsmGenericFile::get_next_section_offset(addr_t offset)
+SgAsmGenericFile::get_next_section_offset(addr_t offset, SgAsmGenericHeader *hdr)
 {
     addr_t found = ~(addr_t)0;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); i++) {
-        if ((*i)->get_offset() >= offset && (*i)->get_offset() < found)
+    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
+         i != p_sections->get_sections().end();
+         i++) {
+        if ((!hdr || hdr==(*i)->get_header()) &&
+            (*i)->get_offset() >= offset && (*i)->get_offset() < found)
             found = (*i)->get_offset();
     }
     return found;
