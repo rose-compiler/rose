@@ -290,6 +290,11 @@ AC_ARG_WITH(mpi,
 AM_CONDITIONAL(ROSE_MPI,test "$with_mpi" = yes)
 AC_CHECK_TOOLS(MPICXX, [mpiCC mpic++ mpicxx])
 
+# TP SUPPORT FOR OPENGL
+AC_PATH_X dnl We need to do this by hand for some reason
+MDL_HAVE_OPENGL
+# echo "have_GL = '$have_GL' and have_glut = '$have_glut'"
+AM_CONDITIONAL(ROSE_USE_OPENGL, test ! "x$have_GL" = xno -a ! "x$have_glut" = xno)
 
 # Call supporting macro for python
 ROSE_SUPPORT_PYTHON

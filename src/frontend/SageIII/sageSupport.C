@@ -4220,13 +4220,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // printf ("compilerName       = %s \n",compilerName);
   // printf ("compilerNameString = %s \n",compilerNameString.c_str());
-     if (compilerNameString[0].find("icc") != string::npos)
+
+  // tps (28 Aug 2008) : changed this so it does not pick up mpicc for icc
+     string name = StringUtility::stripPathFromFileName(compilerNameString[0]);
+     //     if (compilerNameString[0].find("icc") != string::npos)
+     if (name == "icc")
         {
        // This is the Intel C compiler: icc, we need to add the -restrict option
           compilerNameString.push_back("-restrict");
         }
 
-     if (compilerNameString[0].find("icpc") != string::npos)
+     //     if (compilerNameString[0].find("icpc") != string::npos)
+     if (name == "icpc")
         {
        // This is the Intel C++ compiler: icc, we need to add the -restrict option
           compilerNameString.push_back("-restrict");

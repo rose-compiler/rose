@@ -1,28 +1,24 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-if ROSE_USE_BINARY_SQL
-OPENGL=-L/usr/lib64/ -lGL -lGLU -lglut
+if ROSE_USE_OPENGL
 
-#EXTRA_DIST = buffer2.bin
-
-#SUBDIRS = analyses graphanalyses
-
-INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(LTDLINCL)
+INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(GL_CFLAGS)
 
 bin_PROGRAMS = vizzBinary 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL) $(OPENGL)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(GL_LIBS)
 
 vizzBinary_SOURCES = vizzBinary.C
 
 check-local: vizzBinary 
 
-CLEANFILES = *.o
+else
 
-vizzBinary.o: vizzBinary.C
-
-
-clean:
-	rm *.o
+bin_PROGRAMS =
 
 endif
+
+#EXTRA_DIST = buffer2.bin
+
+#SUBDIRS = analyses graphanalyses
+

@@ -10,16 +10,16 @@ endif
 lib_LTLIBRARIES = libCompass.la
 
 if ROSE_MPI
-LTCXXCOMPILE = \
-	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
-        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-        $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXCOMPILE = \
-	$(MPICXX) $(DEFS) \
-        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-        $(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
-        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+#LTCXXCOMPILE = \
+#	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXCOMPILE = \
+#	$(MPICXX) $(DEFS) \
+#        $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#        $(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+#        $(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 endif
 
 bin_PROGRAMS = compassEmptyMain 

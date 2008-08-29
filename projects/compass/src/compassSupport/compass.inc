@@ -98,16 +98,16 @@ INCLUDES = $(ROSE_INCLUDES) -I$(compass_support_dir) -I$(compass_srcdir) -I$(com
 endif
 
 if ROSE_MPI
-LTCXXCOMPILE = \
-	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CXXFLAGS) $(CXXFLAGS)
-CXXCOMPILE = \
-	$(MPICXX) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CXXFLAGS) $(CXXFLAGS)
-CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
-	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
+#LTCXXCOMPILE = \
+#	$(LIBTOOL) --tag=CXX --mode=compile $(MPICXX) $(DEFS) \
+#	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#	$(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXCOMPILE = \
+#	$(MPICXX) $(DEFS) \
+#	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+#	$(AM_CXXFLAGS) $(CXXFLAGS)
+#CXXLINK = $(LIBTOOL) --tag=CXX --mode=link $(MPICXX) $(AM_CXXFLAGS) \
+#	$(CXXFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
 endif
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la

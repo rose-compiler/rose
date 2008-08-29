@@ -735,6 +735,9 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
   SgAsmFile* file = project->get_file(0).get_binaryFile();
+  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  ROSE_ASSERT (interps.size() == 1);
+  SgAsmInterpretation* interp = interps[0];
 
 #if 0
 
@@ -776,14 +779,14 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
     RoseBin_DotGraph* dotGraph = new RoseBin_DotGraph(info);
     RoseBin_GMLGraph* gmlGraph = new RoseBin_GMLGraph(info);
     char* cfgFileName = "cfg.dot";
-    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(file->get_global_block(), forward, new RoseObj(), edges, info);
+    RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
     cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
 
     //    RoseBin_unparse up;
     //up.init(project, "unparsed.s");
     //up.unparse();
 
-    unparseAsmStatementToFile( "unparsed.s", file->get_global_block());
+    unparseAsmStatementToFile( "unparsed.s", interp->get_global_block());
 
     Traversal trav;
     trav.run(project,max);
