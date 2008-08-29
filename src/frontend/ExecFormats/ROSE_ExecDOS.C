@@ -147,6 +147,9 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
  // the get_header() to be implemented in terms of the get_parent() function.
  // p_rm_section->set_parent(this);
 
+    p_rm_section->set_mapped(0, rm_size);
+    p_rm_section->set_rperm(true);
+    p_rm_section->set_wperm(true);
     p_rm_section->set_eperm(true);
     return p_rm_section;
 }
@@ -234,7 +237,8 @@ SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
 
     /* The DOS file header is followed by optional relocation entries */
     if (fhdr->p_e_nrelocs > 0) {
-        SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr->p_e_relocs_offset, fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
+        SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr->p_e_relocs_offset,
+                                                              fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
         relocs->set_name("DOS relocation table");
         relocs->set_synthesized(true);
         relocs->set_purpose(SP_HEADER);
