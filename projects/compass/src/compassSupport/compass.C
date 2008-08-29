@@ -693,7 +693,7 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
   // if ( CommandlineProcessing::isOptionWithParameter( argvList, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
   if ( CommandlineProcessing::isOptionWithParameter( commandLineArray, std::string("--tgui"), std::string("*"), tguiXML, remove ) )
     {
-      UseToolGear = true; 
+      Compass::UseToolGear = true; 
     }
 
 
