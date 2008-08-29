@@ -6,8 +6,36 @@
 
 #if 1 /* FIXME: Move these IR nodes into ROSETTA. They're here only to expedite development. (RPM 2008-08-25) */
 
-/* An SgAsmGenericString represents a string as stored in some section/segment/object/part of the executable file. For
- * instance, an ELF symbol table has symbol table entries that point into a symbol string table section. Using this class for
+/* An SgAsmGenericString represents a string as stored in some section/segment/object/part of the executable file. Using this
+ * class for such strings (as opposed to just storing the std::string), allows us to modify the string value and thereby cause
+ * the unparser to output the new value.
+ *
+ * In general, making even a very minor one-letter change to a string can cascade into lots of changes in the unparsed
+ * executable. For instance, changing the symbol "main" to "pain", even though it's a single letter, could cause the string to
+ * be reallocated in the string table (e.g., if the string "domain" shares the same storage), which could cause the string
+ * table to grow, which could rearrange other file sections, which could change the way the loader needs to map segments,
+ * which changes the section and segment tables, etc....
+ * 
+ * This class is intended to help make those changes more transparent. There are versions specialized for Elf (strings are
+ * NUL-teraminted), PE (strings are run length encoded), etc.
+ * 
+ * Example usage:
+ * An ELF symbol table points to an Elf String Table. Symbol entries contain offsets into the string table for their names. A
+ * new string is constructed like:
+ * 
+ *     symbol_entry[0]->name = SgAsmElfString(string_table, offset);   // "domain"
+ *     symbol_table[1]->name = SgAsmElfString(string_table, offset+2); // "main"
+ *
+ * The name is available with the "to_string" and "c_str" methods. The offset is also available:
+ * 
+ *     symbol_entry[0]->name.to_string()
+ *     
+ * To change "main" to "pain" one just makes an assignment.
+ */
+
+
+  For instance, an ELF symbol table has symbol table entries that point into a symbol string table section.
+ * Using this class for  
  * such strings allows us to do things like modify string values while resolving issues connected with shared strings.
  * Modifying a single string (e.g., changing an 'a' to a 'b' in a symbol name) has the potential to cause very substantial
  * changes to the executable: the name may need to be moved, causing a change in the symbol table entry; the symbol string
@@ -489,10 +517,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// String tables.
-// An ELF string table is a section that contains NUL-terminated strings. Other parts of the file point into the string table
-// by specifying a byte offset from the beginning of the table.  The first byte of a string table is a NUL by convention, so
-// that all empty strings have a zero offset.
+// String tables and strings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Returns the std::string associated with the SgAsmElfString */
