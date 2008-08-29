@@ -124,12 +124,13 @@ $(TEST_F77_Objects) \
 $(TEST_F90_Objects) \
 $(TEST_F03_Objects)
 
-
-QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
+# DQ (8/29/2008): I have commented this out since it failed when 
+# running "make -j<n> check" in the parent directory for n > 1.
+# QMTEST_Objects = ${ALL_TESTCODES:.f90=.qmt}
 # Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd` $(QMTEST_Objects): ../outlineSelection $(srcdir)/$(@:.qmt=.c)
-	@echo "Calling QMTEST_Objects rule: "
-	$(top_srcdir)/scripts/qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../outlineSelection NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
+#CURRENT_DIRECTORY = `pwd` $(QMTEST_Objects): ../outlineSelection $(srcdir)/$(@:.qmt=.c)
+#	@echo "Calling QMTEST_Objects rule: "
+#	$(top_srcdir)/scripts/qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../outlineSelection NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.f90)
 
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc

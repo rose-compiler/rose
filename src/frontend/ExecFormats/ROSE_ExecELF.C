@@ -1168,7 +1168,9 @@ SgAsmElfSegmentTableEntry::stringifyType ( SgAsmElfSegmentTableEntry::SegmentTyp
           default:
              {
                s = "error";
-               printf ("Error: default reach for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
+
+            // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
+               printf ("Warning: default reach for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
              }
         }
 

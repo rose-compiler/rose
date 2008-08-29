@@ -1433,9 +1433,9 @@ Grammar::setUpBinaryInstructions ()
   /* Starting file offset of the section */
      AsmGenericSection.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
+#if 1 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of just this section; points into file's content */
-     AsmGenericSection.setDataPrototype("SgFileContentList","data","= NULL",
+     AsmGenericSection.setDataPrototype("SgFileContentList","data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* General contents of the section */
@@ -1559,9 +1559,9 @@ Grammar::setUpBinaryInstructions ()
   /* File attributes at time of file open (valid if fd>=0) */
      AsmGenericFile.setDataPrototype("SgAsmGenericFormat::fileDetails","sb","",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#if 0 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
+#if 1 /*FIXME: Commented out while switching implementations (RPM 2008-08-21)*/
   /* Content of file mapped into memory */
-     AsmGenericFile.setDataPrototype("SgFileContentList","data","= NULL",
+     AsmGenericFile.setDataPrototype("SgFileContentList","data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
   /* All known sections for this file */

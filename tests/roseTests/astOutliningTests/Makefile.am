@@ -65,7 +65,8 @@ TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 2 -rose:outline:seq 7
 EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh 
 CLEANFILES = Makefile-1pass LIST.dat
 
-check-local:
+# DQ (8/29/2008): Added dependences
+check-local: outline injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
 	$(MAKE) one-pass
 	test -f Makefile-1pass

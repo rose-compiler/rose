@@ -10,7 +10,14 @@ logo:
 #	can copy it to the where it will put the web pages (./ROSE_HTML_Reference)
 	cp @top_srcdir@/docs/Rose/compass_rose.gif .
 
-docs: logo copyPublications test.cfg
+# DQ (8/29/2008):
+# Added support to build (in the ROSE/docs/Rose directory) the AvailableDocumentation.docs 
+# file from the AvailableDocumentation.docs.in (as required by the generated test.cfg in 
+# this directory.
+AvailableDocumentation.docs:
+	cd ../Rose; $(MAKE) AvailableDocumentation.docs
+
+docs: logo copyPublications test.cfg AvailableDocumentation.docs
 	doxygen test.cfg
 
 # DQ (5/8/2005): Added custon headers and footers for HTML generated documentation

@@ -788,8 +788,8 @@ HEADER_GENERIC_SECTION_START
 	  addr_t	write(FILE *f, addr_t offset, const SgUnsignedCharList &buf);
 
        /* Functions for accessing content */
-#if 1 /*FIXME: data member defined here for now rather than in binaryInstruction.C (RPM 2008-08-22)*/
-	  SgFileContentList p_data;
+#if 0 /*FIXME: data member defined here for now rather than in binaryInstruction.C (RPM 2008-08-22)*/
+          SgFileContentList p_data;
 #endif
           const unsigned char *content(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
           const SgUnsignedCharList content_ucl(addr_t offset, addr_t size);/*returns ptr to SIZE bytes starting at OFFSET */
@@ -911,7 +911,7 @@ HEADER_GENERIC_FILE_START
           void dump(FILE*);                                   /* Print some debugging info */
 
 
-#if 1
+#if 0
 	  /* FIXME: data members defined here for now rather than in binaryInstruction.C (RPM 2008-08-22) */
 	  SgFileContentList p_data;
 #endif
