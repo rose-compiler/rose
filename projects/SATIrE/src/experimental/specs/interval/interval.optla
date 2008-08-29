@@ -352,6 +352,20 @@ branch(exp, state, edge, isLoopBody) =
               updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
           endif;
 
+        EqualityOp(var, _) =>
+          if edge = true then 
+              updatestate(state, var, rhs)!2!2
+          else 
+              newstate
+          endif;
+        NotEqualOp(var, _) =>
+          if edge = true then 
+              newstate
+          else 
+              updatestate(state, var, rhs)!2!2
+          endif;
+
+
         _ => newstate;
       endcase
     else 
