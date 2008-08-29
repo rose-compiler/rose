@@ -328,10 +328,29 @@ branch(exp, state, edge) =
       case exp of 
         LessThanOp(var, _) =>
           if edge = true then 
-              updatestate(state, var, adjust_max(lhs, rhs))!2!2
+              updatestate(state, var, adjust_max_plus(lhs, rhs, 1))!2!2
           else 
               updatestate(state, var, adjust_min(lhs, rhs))!2!2
           endif;
+        LessOrEqualOp(var, _) =>
+          if edge = true then 
+              updatestate(state, var, adjust_max(lhs, rhs))!2!2
+          else 
+              updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+          endif;
+        GreaterThanOp(var, _) =>
+          if edge = true then 
+              updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+          else 
+              updatestate(state, var, adjust_max(lhs, rhs))!2!2
+          endif;
+        GreaterOrEqualOp(var, _) =>
+          if edge = true then 
+              updatestate(state, var, adjust_min(lhs, rhs))!2!2
+          else 
+              updatestate(state, var, adjust_max_plus(lhs, rhs, 1))!2!2
+          endif;
+
         _ => newstate;
       endcase
     else 
@@ -360,6 +379,20 @@ adjust_min((_, a2), (m, _)) = (m, max(m, a2));
 // -- update the max portion of an interval
 adjust_max :: Interval, Interval -> Interval;
 adjust_max((a1, _), (_, m)) = (min(a1, m), m);
+
+// -- update the min portion of an interval and add c
+adjust_min_plus :: Interval, Interval, snum -> Interval;
+adjust_min_plus((_, a2), (m, _), c) = 
+    let m1 <= m; in
+    let m2 = lift(m1+c); in
+      (m2, max(m2, a2));
+
+// -- update the max portion of an interval and add c
+adjust_max_plus :: Interval, Interval, snum -> Interval;
+adjust_max_plus((a1, _), (_, m), c) =
+    let m1 <= m; in
+    let m2 = lift(m1+c); in
+      (min(a1, m2), m2);
 
 
 kill_vars :: State, *VariableSymbolNT -> State;
