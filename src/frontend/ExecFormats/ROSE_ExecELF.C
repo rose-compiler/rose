@@ -34,13 +34,6 @@
  */
 
 
-  For instance, an ELF symbol table has symbol table entries that point into a symbol string table section.
- * Using this class for  
- * such strings allows us to do things like modify string values while resolving issues connected with shared strings.
- * Modifying a single string (e.g., changing an 'a' to a 'b' in a symbol name) has the potential to cause very substantial
- * changes to the executable: the name may need to be moved, causing a change in the symbol table entry; the symbol string
- * table may need to be enlarged, causing other sections to move; moving sections causes section and/or segment tables to be
- * modified; overlapping sections/segments need to be adjusted properly, memory mapping needs to be adjusted; etc. */
 class SgAsmGenericString {
   public:
     virtual ~SgAsmGenericString() = 0;
