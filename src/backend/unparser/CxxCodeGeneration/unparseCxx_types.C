@@ -118,7 +118,7 @@ string get_type_name(SgType* t)
                    {
                      case SgTypeImaginary::e_floatPrecision:
                         {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc")
+                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
                              {
                             // Handle special case of GNU compilers
                                returnString = "float";
@@ -131,7 +131,7 @@ string get_type_name(SgType* t)
                         }
                      case SgTypeImaginary::e_doublePrecision:
                         {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc")
+                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
                              {
                             // Handle special case of GNU compilers
                                returnString = "double";
@@ -144,7 +144,7 @@ string get_type_name(SgType* t)
                         }
                      case SgTypeImaginary::e_longDoublePrecision:
                         {
-                          if (backEndCompiler == "g++" || backEndCompiler == "gcc")
+                          if (backEndCompiler == "g++" || backEndCompiler == "gcc" || backEndCompiler == "mpicc" || backEndCompiler == "mpicxx")
                              {
                             // Handle special case of GNU compilers (use "__imag__" on the rhs 
                             // to extract the real or imaginary part of a complex number).  As
@@ -251,7 +251,7 @@ string get_type_name(SgType* t)
                   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
                   // if ( (string(CXX_COMPILER_NAME) == "g++") || (string(CXX_COMPILER_NAME) == "gcc") ) 
                      string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                     if ( (compilerName == "g++") || (compilerName == "gcc") )
+                     if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
                         res = res + "__restrict__ ";
                      else
                         res = res + "restrict ";
@@ -1382,7 +1382,7 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
                   curprint ( "restrict ");
                else 
                {    
-               if ( (compilerName == "g++") || (compilerName == "gcc") )
+               if ( (compilerName == "g++") || (compilerName == "gcc")  || compilerName == "mpicc" || compilerName == "mpicxx")
                   {
                  // GNU uses a string variation on the C99 spelling of the "restrict" keyword
                     curprint ( "__restrict__ ");
