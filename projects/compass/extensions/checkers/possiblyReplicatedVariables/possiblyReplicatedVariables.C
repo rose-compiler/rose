@@ -258,8 +258,8 @@ static std::set<SgInitializedName*> getPossiblySharableVars(SgProject* proj) {
   for (std::vector<SgNode*>::const_iterator i = allVars.begin(); i != allVars.end(); ++i) {
     SgInitializedName* in = isSgInitializedName(*i);
     ROSE_ASSERT (in);
-    SgType* t = in->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE || SgType::STRIP_MODIFIER_TYPE);
 #if 0
+    SgType* t = in->get_type()->stripType(SgType::STRIP_TYPEDEF_TYPE || SgType::STRIP_MODIFIER_TYPE);
     if (!isSgPointerType(t) && !isSgArrayType(t)) {
       continue;
     }
@@ -307,7 +307,7 @@ static SystemDependenceGraph* makeSDG(SgProject* proj) {
     std::cerr<<"DFAnalysis failed!"<<endl;
   }
 #endif
-  string outputFileName=(*(*proj->get_fileList()).begin())->get_sourceFileNameWithoutPath ();
+  string outputFileName=proj->get_fileList().front()->get_sourceFileNameWithoutPath();
   SystemDependenceGraph *sdg = new SystemDependenceGraph;
   // for all function-declarations in the AST
   vector < SgNode * >functionDeclarations = NodeQuery::querySubTree(proj, V_SgFunctionDeclaration);
@@ -405,16 +405,11 @@ static void run(Compass::Parameters params, Compass::OutputObject* output) {
   CompassAnalyses::PossiblyReplicatedVariables::Traversal(params, output).run(Compass::projectPrerequisite.getProject());
 }
 
-static Compass::AstSimpleProcessingWithRunFunction* createTraversal(Compass::Parameters params, Compass::OutputObject* output) {
-  return new CompassAnalyses::PossiblyReplicatedVariables::Traversal(params, output);
-}
-
 extern const Compass::Checker* const possiblyReplicatedVariablesChecker =
-  new Compass::CheckerUsingAstSimpleProcessing(
+  new Compass::Checker(
         CompassAnalyses::PossiblyReplicatedVariables::checkerName,
         CompassAnalyses::PossiblyReplicatedVariables::shortDescription,
         CompassAnalyses::PossiblyReplicatedVariables::longDescription,
         Compass::C | Compass::Cpp,
         Compass::PrerequisiteList(1, &Compass::projectPrerequisite),
-        run,
-        createTraversal);
+        run);

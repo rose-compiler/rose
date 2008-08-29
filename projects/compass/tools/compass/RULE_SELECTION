@@ -81,7 +81,7 @@
 +:OperatorOverloading
 +:OtherArgument
 +:PlaceConstantOnTheLhs
-+:PossiblyReplicatedVariables
+-:PossiblyReplicatedVariables
 +:PreferAlgorithms
 +:PreferFseekToRewind
 +:PreferSetvbufToSetbuf
