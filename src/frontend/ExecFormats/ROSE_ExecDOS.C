@@ -49,16 +49,6 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_magic.push_back(disk->e_magic[1]);
 
     /* File format */
-#if 0
-    p_exec_format->p_family     = FAMILY_DOS;
-    p_exec_format->p_purpose    = PURPOSE_EXECUTABLE;
-    p_exec_format.p_sex         = ORDER_LSB;
-    p_exec_format.p_abi         = ABI_MSDOS;
-    p_exec_format.p_abi_version = 0;
-    p_exec_format.p_word_size   = 2;
-    p_exec_format.p_version     = 0;
-    p_exec_format.p_is_current_version = true;
-#else
     p_exec_format->set_family(FAMILY_DOS);
     p_exec_format->set_purpose(PURPOSE_EXECUTABLE);
     p_exec_format->set_sex(ORDER_LSB);
@@ -67,10 +57,9 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_exec_format->set_word_size(2);
     p_exec_format->set_version(0);
     p_exec_format->set_is_current_version(true);
-#endif
 
     /* Target architecture */
-    set_isa(ISA_UNSPECIFIED);
+    set_isa(ISA_IA32_Family);
 
     /* Entry point */
     p_base_va = 0;
