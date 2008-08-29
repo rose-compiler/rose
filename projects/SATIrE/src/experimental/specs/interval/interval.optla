@@ -73,22 +73,22 @@ ReturnAssignment(VariableSymbol(_) as var, VariableSymbol(_) as retvar), _:
   endif;
 
 ScopeStatement(IfStmt(ExprStatement(cond))), true_edge:
-  branch(cond, @, true);
+  branch(cond, @, true, false);
 
 ScopeStatement(IfStmt(ExprStatement(cond))), false_edge:
-  branch(cond, @, false);
+  branch(cond, @, false, false);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), true_edge:
-  branch(cond, @, true);
+  branch(cond, @, true, true);
 
 ScopeStatement(WhileStmt(ExprStatement(cond))), false_edge:
-  branch(cond, @, false);
+  branch(cond, @, false, false);
 
 LogicalIf(cond), true_edge:
-  branch(cond, @, true);
+  branch(cond, @, true, false);
 
 LogicalIf(cond), false_edge:
-  branch(cond, @, false);
+  branch(cond, @, false, false);
 
 UndeclareStmt(vars), _:
   kill_vars(@, vars);
@@ -307,8 +307,9 @@ updatestate(state, exp, value) =
   in // --print("\n=> ") print(state) print("\n") 
      (value, newstate);
 
-branch :: Expression, State, bool -> State;
-branch(exp, state, edge) =
+
+branch :: Expression, State, bool, bool -> State;
+branch(exp, state, edge, isLoopBody) =
   // --print("\nbranching...\nexp: ") print(exp) 
   // --print("\nstate: ") print(state) 
   // --print("\nedge: ") print(edge)  
@@ -317,7 +318,7 @@ branch(exp, state, edge) =
   let pair = eval(exp, state); in
   let c = interval_to_bool(pair!1!2); 
           newstate = pair!2!2; in
-  if c = top then 
+  if (c = top || isLoopBody) then 
     // -- We don't know for sure which edge will be taken
     // --print("c=top\n") 
     // --print("Maybe\n") 
@@ -328,7 +329,7 @@ branch(exp, state, edge) =
       case exp of 
         LessThanOp(var, _) =>
           if edge = true then 
-              updatestate(state, var, adjust_max_plus(lhs, rhs, 1))!2!2
+              updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
           else 
               updatestate(state, var, adjust_min(lhs, rhs))!2!2
           endif;
@@ -348,7 +349,7 @@ branch(exp, state, edge) =
           if edge = true then 
               updatestate(state, var, adjust_min(lhs, rhs))!2!2
           else 
-              updatestate(state, var, adjust_max_plus(lhs, rhs, 1))!2!2
+              updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
           endif;
 
         _ => newstate;
