@@ -668,10 +668,16 @@
                 (`(begin . ,ls) `(begin . ,(map (lambda (e2) (check-statement e2 csf tenv)) ls)))
                 (`(let ((,t ,var ,val)) ,body)
                  (let* ((val2 (check-expr val csf tenv))
-                        (csf2 `((define ,var ,(add-types val2 tenv)) . ,csf)))
-                   ;(pretty-print `(is-constant? ,t ,val2 -> ,(is-constant? csf2 t `(,t . ,var))))
-                   `(let ((,t ,var ,val2))
-                      ,(check-statement body csf2 `((,var . ,t) . ,tenv)))))
+                        (csf2 `((define ,var ,(add-types val2 tenv)) . ,csf))
+                        (const (if (number? val2) val2 (is-constant? csf2 t `(,t . ,var)))))
+                   (if const
+                       (begin
+                         (pretty-print `(replacing ,val with ,const))
+                         `(let ((,t ,var ,const))
+                            ,(check-statement body
+                                              `((define ,var (,t . ,const)) . ,csf)
+                                              `((,var . ,t) . ,tenv))))
+                       `(let ((,t ,var ,val2)) ,(check-statement body csf2 `((,var . ,t) . ,tenv))))))
                 (`(if (expr ,p) ,a ,b)
                  (let* ((p (check-expr p csf tenv))
                         (p-type (infer-type p tenv))
@@ -691,17 +697,29 @@
                 (`(case (expr ,key) . ,cases)
                  (let* ((key (check-expr key csf tenv))
                         (key-with-types (add-types key tenv))
-                        (key-type (infer-type key tenv)))
+                        (key-type (infer-type key tenv))
+                        (bogus-dest-possible
+                         (constraints-satisfiable?
+                          `((check (bool equal ,key-with-types (,key-type . ,(sub1 (expt 2 32)))))
+                            . ,csf)
+                          '()))
+                        (_ (pretty-print `(bogus-dest-possible ,(and bogus-dest-possible #t))))
+                        (all-keys-valid bogus-dest-possible))
                    `(case (expr ,key) . ,(filter-map
-                                          (match-lambda
-                                            (`((,k) ,body)
-                                             (let ((cur-constraints
-                                                    `((check (bool equal ,key-with-types (,key-type . ,k)))
-                                                      . ,csf)))
-                                               (if (constraints-satisfiable? cur-constraints)
-                                                   `((,k)
-                                                     ,(check-statement body cur-constraints tenv))
-                                                   #f))))
+                                          (if all-keys-valid
+                                              (match-lambda
+                                                (`((,k) ,body)
+                                                 `((,k) ,(check-statement body csf tenv))))
+                                              (match-lambda
+                                                (`((,k) ,body)
+                                                 (let ((cur-constraints
+                                                        `((check
+                                                           (bool equal ,key-with-types (,key-type . ,k)))
+                                                          . ,csf)))
+                                                   (if (constraints-satisfiable? cur-constraints '())
+                                                       `((,k)
+                                                         ,(check-statement body cur-constraints tenv))
+                                                       #f)))))
                                           cases))))
                 (`(expr (abort)) e)
                 (`(expr (interrupt ,_)) e)
@@ -713,12 +731,14 @@
             (lambda (e csf tenv)
               (match e
                 (`(if-e ,p ,a ,b)
-                 ;(pretty-print `(checking if-e ,p ,a ,b))
+                 ;(pretty-print `(checking if-e ,p))
                  (let* ((p (check-expr p csf tenv))
                         (p-type (infer-type p tenv))
                         (p-with-types (add-types p tenv))
                         (p-true-constraints `((check ,p-with-types) . ,csf))
                         (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
+                   ;(pretty-print `(p-with-types ,p-with-types))
+                   ;(pretty-print `(csf ,csf))
                    (case (possible-boolean-values csf p-with-types)
                      ((*) `(if-e ,p
                                  ,(check-expr a p-true-constraints tenv)
@@ -790,5 +810,4 @@
                          (e e))
            data))
 
-; (pretty-print (map change-to-let* (map simplify-full data)))
-;
+(pretty-print (map change-to-let* data))

@@ -29,12 +29,14 @@
         (let ((m (apply min ls)))
           (cons m (sort-numbers (remove-one m ls))))))
   (define (add-clause! cl)
-    (if (memq #t cl)
-      (void)
-      (let ((cl (filter (lambda (x) x) cl)))
-        (if (null? cl)
-          (set! known-unsatisfiable #t) ; fail
-          (set! clauses (cons cl clauses))))))
+    (cond
+      (known-unsatisfiable (set! clauses '()))
+      ((memq #t cl) (void))
+      (else
+       (let ((cl (filter (lambda (x) x) cl)))
+         (if (null? cl)
+             (set! known-unsatisfiable #t) ; fail
+             (set! clauses (cons cl clauses)))))))
   
   (define (to-dimacs)
     (format "p cnf ~a ~a~n~a"
@@ -119,9 +121,9 @@
     (cond
       ((eq? var #f) (unsatisfiable!))
       ((eq? var #t) (void))
-      (else (add-clause! `(,var)))))
+      (else #;(pretty-print `(force-1! ,var)) (add-clause! `(,var)))))
   (define (force-0! var) (force-1! (inv var)))
-  (define (unsatisfiable!) (add-clause! `()))
+  (define (unsatisfiable!) #;(pretty-print `(unsatisfiable!)) (set! clauses '()) (add-clause! `()))
   
   (define (has-inverses? vars)
     (if (null? vars)
@@ -131,10 +133,12 @@
             (has-inverses? (cdr vars)))))
   
   (define (or-gate-raw! output . inputs)
+    ;(pretty-print `(or-gate-raw! ,@inputs -> ,output))
     (for-each (lambda (in) (add-clause! `(,(inv in) ,output))) inputs)
     (add-clause! `(,(inv output) ,@inputs)))
   
   (define (or-gate! . inputs)
+    ;(pretty-print `(or-gate! . ,inputs))
     (if (or (memq #t inputs) (has-inverses? inputs))
         #t
         (let ((inputs (sort-numbers (delete-duplicates (filter (lambda (x) (not (eq? x #f))) inputs) eqv?))))
@@ -181,6 +185,7 @@
       ((eqv? in-true in-false) in-true)
       (else
        (let ((output (variable!)))
+         ;(pretty-print `(mux! ,sel ,in-true ,in-false -> ,output))
          (add-clause! `(,sel ,in-false ,(inv output)))
          (add-clause! `(,sel ,(inv in-false) ,output))
          (add-clause! `(,(inv sel) ,in-true ,(inv output)))
@@ -225,6 +230,7 @@
   
   (provide reset!)
   (provide variable!)
+  (provide known-unsatisfiable)
   (provide inv)
   (provide variables!)
   ; (provide add-clause!)
