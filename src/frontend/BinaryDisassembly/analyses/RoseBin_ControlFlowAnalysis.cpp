@@ -12,6 +12,8 @@
 
 using namespace std;
 
+static bool debug=true;
+
 void
 RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgDirectedGraphNode*>& visited_f,
 						    std::set<std::string>& visited_names,
@@ -36,15 +38,17 @@ RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgDirectedGraphNode
 
 	std::set<SgDirectedGraphNode*>::iterator 
 	  it =visited_f.find(next);
+	if (sameParents(current,next))  
 	if (it==visited_f.end()) {
-	  if (sameParents(current,next)) 
+	  //	  if (sameParents(current,next)) 
 	    worklist.push_back(next);
 	  visited_f.insert(next);
 	  SgNode* internal = next->get_SgNode();
 	  SgAsmInstruction* inst = isSgAsmInstruction(internal);
 	  if (inst) {
 	    string name = RoseBin_support::HexToString(inst->get_address());
-	    //cerr << " adding node to function : ."<<name<<"."<<endl;
+	    if (debug)
+	    cerr << " adding node to function : ."<<name<<"."<<endl;
 	    visited_names.insert(name);
 	  }
 	} 
@@ -78,22 +82,37 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
 	set<SgDirectedGraphNode*> gns;
 	set<std::string> names;
 	getCFGNodesForFunction(gns,names,node,hex_address);
-	//cerr << " nodes in function: " << gns.size() << " " << names.size() <<endl;
+	if (debug)
+	cerr << " nodes in function: " << gns.size() << " " << names.size() <<endl;
 	ROSE_ASSERT(gns.size()==names.size());
 	set<SgDirectedGraphNode*>::const_iterator it2 = gns.begin();
 	set<std::string>::const_iterator it3 = names.begin();
 	for (;it2!=gns.end();++it2, ++it3) {
 	  std::string name = *it3;
 	  SgDirectedGraphNode* n = *it2;
-	  //cerr << " adding to result ."<<name<<"."<<endl; 
+	  if (debug)
+	  cerr << " adding to result ."<<name<<"."<<endl; 
 	  result[name]=n;
 	}
 
       }
     }
   }
-    vizzGraph->nodes=result;
-  
+  nodeType nodesResult = nodes;
+  nodeType::iterator itn23 = nodes.begin();
+  for (; itn23!=nodes.end();++itn23) {
+    string hex_address = itn23->first;
+    nodeType::iterator it = result.find(hex_address);
+    if (it==result.end()) {
+      // not found in result, i.e. delete
+      nodesResult.erase(hex_address);
+    }
+  }  
+  //  vizzGraph->nodes=nodesResult;
+
+#if 0
+  // vizzGraph->nodes=result;
+
   // create file
   bool forward_analysis=true;
   bool multiedge=false;
@@ -114,6 +133,63 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
 
   vizzGraph->printEpilog(myfile);
   myfile.close();  
+
+#endif
+
+
+
+#if 1  
+  RoseBin_Graph* gr = new RoseBin_DotGraph(vizzGraph->info);
+  gr->graph = new SgDirectedGraph("test","test");
+  gr->nodes=nodesResult;
+
+  typedef rose_hash::hash_multimap < SgDirectedGraphNode*, SgDirectedGraphEdge*> edgeType;
+  edgeType edges = vizzGraph->edges;
+  edgeType resultEdges;
+  edgeType::iterator itEdg = edges.begin();
+  for (; itEdg!=edges.end();++itEdg) {
+    SgDirectedGraphNode* node = itEdg->first;
+    SgDirectedGraphEdge* edge = itEdg->second;
+    SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
+    nodeType::iterator itn2 = nodesResult.begin();
+    bool foundS=false;
+    if (node) 
+      foundS=true;
+    bool foundT=false;
+    for (; itn2!=nodesResult.end();++itn2) {
+      SgDirectedGraphNode* n = itn2->second;
+      //if (n==source) foundS=true;
+      if (n==target) foundT=true;
+    }
+    if (foundS==false || foundT==false) {
+      
+    } else
+      resultEdges.insert(make_pair(node,edge));
+  }
+  
+  gr->edges=resultEdges;
+  
+  // create file
+  bool forward_analysis=true;
+  bool multiedge=false;
+  std::ofstream myfile;
+  myfile.open(fileName.c_str());
+  
+  string name = "ROSE Graph";
+  gr->printProlog(myfile, name);
+
+  string functionName="";
+
+  gr->setGrouping(true);
+  gr->printNodes(true, this, forward_analysis, myfile,functionName);
+  nrNodes=gr->nodes.size();
+
+  gr->printEdges(this,myfile, multiedge);
+  nrEdges=gr->edges.size();
+
+  gr->printEpilog(myfile);
+  myfile.close();  
+#endif
 }
 
 /****************************************************

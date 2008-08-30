@@ -14,6 +14,9 @@
 //class RoseFile;
 
 class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
+  void findClusterOfNode(SgDirectedGraphNode* next_n, 
+			 int& currentCluster, 
+			 std::map<SgAsmFunctionDeclaration*,int>& visited);
 
  public:
 
@@ -39,6 +42,7 @@ class RoseBin_CallGraphAnalysis : public RoseBin_FlowAnalysis {
 
   // run this analysis
   void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) ;
+  void getConnectedComponents(std::map<int,std::set<SgAsmFunctionDeclaration*> >& ret);
 
 };
 

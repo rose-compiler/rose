@@ -3617,7 +3617,7 @@ SgFile::callFrontEnd ()
                            // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what 
                            // version of gfortran (as we do for C and C++))
                               string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                              if (backendCompilerSystem == "g++")
+                              if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
                                  {
                                 // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                                 // warnings += " -Wunused-labels";

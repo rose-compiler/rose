@@ -29,6 +29,11 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   //tabletype_inv usetable_instr;
   tabletype_inv deftable_instr;
 
+  int nrOfFunctions;
+
+  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
+  typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*> edgeType;
+
 
   SgAsmNode* globalBin;
   int func_nr;
@@ -46,6 +51,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   // needed for CallGraphAnalysis
   SgAsmFunctionDeclaration* funcDecl; 
   SgDirectedGraphNode* funcDeclNode;
+
 
   
   // worklist to build the CFG graph
@@ -154,6 +160,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   }
 
   bool sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next);
+  void getRootNodes(std::vector <SgDirectedGraphNode*>& rootNodes);
 
 
 };

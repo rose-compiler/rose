@@ -77,9 +77,11 @@ class RoseBin_Graph {
   bool dfa_unresolved_func;
   bool dfa_conditional;
 
-  VirtualBinCFG::AuxiliaryInformation* info;
+
 
  public:
+
+  VirtualBinCFG::AuxiliaryInformation* info;
 
   typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
   nodeType nodes;

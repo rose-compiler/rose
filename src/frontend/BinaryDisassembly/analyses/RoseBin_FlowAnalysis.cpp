@@ -14,6 +14,23 @@ bool RoseBin_FlowAnalysis::initialized = false;
 
 //#include "AST_BIN_Traversal.h"
 
+void 
+RoseBin_FlowAnalysis::getRootNodes(vector <SgDirectedGraphNode*>& rootNodes) {
+  nrOfFunctions=0;
+  ROSE_ASSERT(vizzGraph);
+  nodeType::iterator itn = vizzGraph->nodes.begin();
+  for (; itn!=vizzGraph->nodes.end();++itn) {
+    string hex_address = itn->first;
+    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
+    SgNode* internal = node->get_SgNode();
+    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
+    if (func) {
+      rootNodes.push_back(node);
+      nrOfFunctions++;
+    }
+  }
+}
+
 
 bool 
 RoseBin_FlowAnalysis::sameParents(SgDirectedGraphNode* node, SgDirectedGraphNode* next) {
@@ -294,6 +311,7 @@ RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
       }
       else{
 	//	std::cerr << "FlowAnalysis ::  from_string failed .. " << std::endl;
+	if (valStr!="")
 	cerr << " WARNING: Cant convert string to long - in process_jump  :: " << regRef->class_name() << 
 	  " inst :: " << inst->get_mnemonic() << "  addr : " << addrhex3.str() << " target : " << valStr << endl;
       }
@@ -633,6 +651,10 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  }
 	}
 	else if (thisbinX86->get_kind() == x86_call) {
+	  //	  cerr << "CallGRAPH: Found call : " << 
+	  //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(thisbinX86).getNode()->get_address()) << " to " << 
+	  //  RoseBin_support::HexToString(VirtualBinCFG::CFGNode(info->getInstructionAtAddress(thisbinX86->get_address() + thisbinX86->get_raw_bytes().size())).getNode()->get_address()) <<  endl;
+
           vector<VirtualBinCFG::CFGEdge> dests = thisbinX86->cfgBinOutEdges(info);
           dests.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(thisbinX86), VirtualBinCFG::CFGNode(info->getInstructionAtAddress(thisbinX86->get_address() + thisbinX86->get_raw_bytes().size())), info));
 	  if (!dests.empty()) {
@@ -672,6 +694,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  ostringstream addrhex_tf;
 	  addrhex_tf << hex << setw(8) << trg_func_address ;
 	  hexStrf = addrhex_tf.str();
+	  //	  cerr << " CALLGRAPH TARGET PARENT : " << hexStrf << endl;
 	}
 
 	string trg_mnemonic = bin_target->get_mnemonic();
@@ -722,6 +745,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  if (analysisName=="callgraph") {
 	    if (currentFunctionName!=trg_func_name && thisbinX86->get_kind() != x86_ret) {
 	      SgDirectedGraphEdge* edge = vizzGraph->createEdge( typeEdge, vizzGraph->graph->get_graph_id(), funcDeclNode, src_address, trg, trg_func_address);
+	      //cerr << "CallGraph : create edge : " << RoseBin_support::HexToString(src_address) << " to func : " << RoseBin_support::HexToString(trg_func_address) << endl; 
 	      vizzGraph->setProperty(RoseBin_Def::type, edge, RoseBin_support::ToString(RoseBin_Edgetype::cfg));
 	    }
 	  } else {

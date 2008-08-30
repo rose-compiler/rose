@@ -179,6 +179,7 @@ int main(int argc, char** argv) {
   RoseBin_Graph* graph;
 
   VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+  std::map<int,std::set<SgAsmFunctionDeclaration*> > components;
 
   // call graph analysis  *******************************************************
   if (containsArgument(argc, argv, "-callgraph")) {
@@ -191,11 +192,24 @@ int main(int argc, char** argv) {
     }
     RoseBin_CallGraphAnalysis* callanalysis = new RoseBin_CallGraphAnalysis(interp->get_global_block(), new RoseObj(), info);
     callanalysis->run(graph, callFileName, !mergedEdges);
+    callanalysis->getConnectedComponents(components);
     if (test) {
       cerr << " nr of nodes visited in callanalysis : " << callanalysis->nodesVisited() << endl;
       ROSE_ASSERT(callanalysis->nodesVisited()==10);
       cerr << " nr of edges visited in callanalysis : " << callanalysis->edgesVisited() << endl;
       ROSE_ASSERT(callanalysis->edgesVisited()==9);
+    }
+  }
+
+  if (containsArgument(argc, argv, "-printTree")) {
+    fprintf(stderr, "Printing AST... _binary_tree2.dot\n");
+    string filename="_binary_tree2.dot";
+    AST_BIN_Traversal* trav = new AST_BIN_Traversal();
+    trav->run(interp->get_global_block(), filename);
+    if (test) {
+      int instrnr = trav->getNrOfInstructions();
+      cerr << " Instructions written to file: " << instrnr << endl;
+      ROSE_ASSERT(instrnr==861);
     }
   }
 
@@ -209,13 +223,41 @@ int main(int argc, char** argv) {
     }
     RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
     cfganalysis->run(graph, cfgFileName, mergedEdges);
-	
+
+#if 1
+    std::map<int,std::set<SgAsmFunctionDeclaration*> >::const_iterator comps = components.begin();
+    //set<std::string> partialCFG;
+    
+    for (;comps!=components.end();++comps) {
+            set<std::string> partialCFG;
+      int nr = comps->first;
+      cerr << " found the following component " << nr << endl;
+      std::set<SgAsmFunctionDeclaration*>  funcs = comps->second;
+      std::set<SgAsmFunctionDeclaration*>::const_iterator it = funcs.begin();
+      for (;it!=funcs.end();++it) {
+	SgAsmFunctionDeclaration* function = *it;
+	string name = function->get_name();
+
+name.append("_f");
+	cerr << "   binCompass CALLGRAPH ANALYSIS : found function : " << name << endl; 
+	partialCFG.insert(name);
+      }
+      string filename = "thomas";	
+      filename.append(RoseBin_support::ToString(nr));
+      filename.append(".dot");
+      cerr << " binCompass writing to file " << filename << endl;
+            cfganalysis->printGraph(filename,partialCFG);
+    }
+    //cfganalysis->printGraph(filename,partialCFG);
+#endif 	
+#if 0
     set<std::string> partialCFG;
     partialCFG.insert(" 80483c0_f");
     partialCFG.insert(" 8048491_f");
     partialCFG.insert(" 8048363_f");
     partialCFG.insert(" 804828f_f");
     cfganalysis->printGraph("thomas.dot",partialCFG);
+#endif
 
     if (test) {
       cout << " cfa -- Number of nodes == " << cfganalysis->nodesVisited() << endl;
@@ -224,6 +266,18 @@ int main(int argc, char** argv) {
       //ROSE_ASSERT(cfganalysis->edgesVisited()==234);
       ROSE_ASSERT(cfganalysis->nodesVisited()==237);
       ROSE_ASSERT(cfganalysis->edgesVisited()==261);
+    }
+  }
+
+  if (containsArgument(argc, argv, "-printTree")) {
+    fprintf(stderr, "Printing AST... _binary_tree3.dot\n");
+    string filename="_binary_tree3.dot";
+    AST_BIN_Traversal* trav = new AST_BIN_Traversal();
+    trav->run(interp->get_global_block(), filename);
+    if (test) {
+      int instrnr = trav->getNrOfInstructions();
+      cerr << " Instructions written to file: " << instrnr << endl;
+      ROSE_ASSERT(instrnr==861);
     }
   }
 

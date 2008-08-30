@@ -429,6 +429,13 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       type = "Buffer Overflow" ;
     }
       regs += eval;
+      string hex_name=hex_address.substr(1,hex_address.length());
+      hex_name="0x"+hex_name;
+      string nameL=name.substr(0,9);
+      if (type!="function") {
+	ROSE_ASSERT(hex_name==nameL);
+	cerr << " hexName : ." << hex_name << ". == ." << nameL << "." << endl;
+      }
       myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
 	" visited: " << visitedCounter <<"\\n" << 
 	"type = " << type << "\\n" << variable << "\\n" << regs << "\"" << add <<"];\n"; 
@@ -494,6 +501,7 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
     SgDirectedGraphNode* source = isSgDirectedGraphNode(edge->get_from());
     SgDirectedGraphNode* target = isSgDirectedGraphNode(edge->get_to());
 
+#if 0
     // extra check to ensure that nodes exist. If not, skip
       nodeType::iterator itn2 = nodes.begin();
       bool foundS=false;
@@ -504,10 +512,27 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	if (n==target) foundT=true;
       }
       if (foundS==false || foundT==false) {
-	cerr <<"WARNING :: printEdges - edge not found." << endl;
+	cerr <<"WARNING :: printEdges - edge not found. " << endl; 
 	return;
+	if (source && target) {
+	  SgAsmFunctionDeclaration* src = isSgAsmFunctionDeclaration(source->get_SgNode());
+	  SgAsmFunctionDeclaration* trg = isSgAsmFunctionDeclaration(target->get_SgNode());
+	  if (src && trg) {
+	  cerr <<"WARNING :: printEdges - edge not found: " << 
+	    RoseBin_support::HexToString(src->get_address()) << " -> " << 
+	    RoseBin_support::HexToString(trg->get_address()) << endl;
+	  //return;
+	  } else {
+	    if (src==NULL)
+	      cerr <<"WARNING :: printEdges - src == NULL " << source->get_SgNode()->class_name() <<endl;
+	    else 
+	      cerr <<"WARNING :: printEdges - trg == NULL " << target->get_SgNode()->class_name() <<endl;
+	  }
+	} else {
+	  cerr <<"WARNING :: printEdges - source or target == NULL " <<endl;
+	}
       }
-
+#endif
     ROSE_ASSERT(source);
     ROSE_ASSERT(target);
     string from_hex = source->get_name();

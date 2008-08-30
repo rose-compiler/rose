@@ -48,22 +48,6 @@ RoseBin_DataFlowAnalysis::getDefForInst( uint64_t inst, std::pair<X86RegisterCla
   return hexSet;
 }
 
-void 
-RoseBin_DataFlowAnalysis::getRootNodes(vector <SgDirectedGraphNode*>& rootNodes) {
-  nrOfFunctions=0;
-  ROSE_ASSERT(vizzGraph);
-  nodeType::iterator itn = vizzGraph->nodes.begin();
-  for (; itn!=vizzGraph->nodes.end();++itn) {
-    string hex_address = itn->first;
-    SgDirectedGraphNode* node = isSgDirectedGraphNode(itn->second);
-    SgNode* internal = node->get_SgNode();
-    SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
-    if (func) {
-      rootNodes.push_back(node);
-      nrOfFunctions++;
-    }
-  }
-}
 
 
 

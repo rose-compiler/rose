@@ -22,7 +22,6 @@
 
 class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
  private:
-  int nrOfFunctions;
   int nrOfNodesVisited;
   bool interprocedural;
   RoseBin_DataFlowAbstract* variableAnalysis;
@@ -33,8 +32,6 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 
   rose_hash::hash_map <SgDirectedGraphNode*, SgDirectedGraphNode*> nodeBeforeMap;
 
-  typedef rose_hash::hash_map <std::string, SgDirectedGraphNode*> nodeType;
-  typedef rose_hash::hash_map < std::string, SgDirectedGraphEdge*> edgeType;
 
   void traverseEdges(RoseBin_DataFlowAbstract* analysis);
 
@@ -87,7 +84,6 @@ class RoseBin_DataFlowAnalysis : public RoseBin_FlowAnalysis {
 		     RoseBin_DataFlowAbstract* defuse, 
 		     bool interprocedural);
 
-  void getRootNodes(std::vector <SgDirectedGraphNode*>& rootNodes);
 
   void init(bool interp, bool pedges) { 
     interprocedural = interp;
