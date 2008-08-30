@@ -12,13 +12,19 @@ vizzBinary_SOURCES = vizzBinary.C
 
 check-local: vizzBinary 
 
+#include_HEADERS = helpers.h
+
+#EXTRA_DIST = helpers.h
+
+CLEANFILES = helpers.h
+
+clean:
+	rm -f *.dot *.gml *.o *.s *~ vizzBinary out
+
 else
 
 bin_PROGRAMS =
 
 endif
 
-#EXTRA_DIST = buffer2.bin
-
-#SUBDIRS = analyses graphanalyses
 
