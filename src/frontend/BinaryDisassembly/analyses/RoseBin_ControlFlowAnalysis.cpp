@@ -12,7 +12,7 @@
 
 using namespace std;
 
-static bool debug=true;
+static bool debug=false;
 
 void
 RoseBin_ControlFlowAnalysis::getCFGNodesForFunction(std::set<SgDirectedGraphNode*>& visited_f,

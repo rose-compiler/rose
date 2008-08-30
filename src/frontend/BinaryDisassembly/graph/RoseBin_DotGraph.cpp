@@ -433,8 +433,9 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       hex_name="0x"+hex_name;
       string nameL=name.substr(0,9);
       if (type!="function") {
-	ROSE_ASSERT(hex_name==nameL);
+	if (hex_name!=nameL)
 	cerr << " hexName : ." << hex_name << ". == ." << nameL << "." << endl;
+	ROSE_ASSERT(hex_name==nameL);
       }
       myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
 	" visited: " << visitedCounter <<"\\n" << 
