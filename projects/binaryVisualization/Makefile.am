@@ -19,7 +19,7 @@ check-local: vizzBinary
 CLEANFILES = helpers.h
 
 clean:
-	rm -f *.dot *.gml *.o *.s *~ vizzBinary out
+	rm -rf *.dot *.gml *.o *.s *~ vizzBinary out
 
 else
 
