@@ -1262,6 +1262,33 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
         }
 
   //
+  // unparse_instruction_addresses option (added 8/30/2008).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_instruction_addresses)",true) == true )
+        {
+       // printf ("option -rose:unparse_instruction_addresses found \n");
+          set_unparse_instruction_addresses(true);
+        }
+
+  //
+  // unparse_raw_memory_contents option (added 8/30/2008).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_raw_memory_contents)",true) == true )
+        {
+       // printf ("option -rose:unparse_raw_memory_contents found \n");
+          set_unparse_raw_memory_contents(true);
+        }
+
+  //
+  // unparse_binary_file_format option (added 8/30/2008).
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_binary_file_format)",true) == true )
+        {
+       // printf ("option -rose:unparse_binary_file_format found \n");
+          set_unparse_binary_file_format(true);
+        }
+
+  //
   // collectAllCommentsAndDirectives option: operates across all files (include files) and significantly slows the compilation.
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(collectAllCommentsAndDirectives)",true) == true )
@@ -1524,6 +1551,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(skip_unparse)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_includes)",1);
      optionCount = sla(argv, "-rose:", "($)", "(unparse_line_directives)",1);
+
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_instruction_addresses)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_raw_memory_contents)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_binary_file_format)",1);
+
      optionCount = sla(argv, "-rose:", "($)", "(collectAllCommentsAndDirectives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_commentsAndDirectives)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skipfinalCompileStep)",1);
@@ -4982,6 +5014,13 @@ SgFile::usage ( int status )
 "                               reference to the original file and line number\n"
 "                               to support view of original source in debuggers\n"
 "                               and external tools\n"
+"     -rose:unparse_instruction_addresses\n"
+"                               Outputs the addresses in left column (output\n"
+"                               inappropriate as input to assembler)\n"
+"     -rose:unparse_raw_memory_contents\n"
+"                               Outputs memory contents in left column\n"
+"     -rose:unparse_binary_file_format\n"
+"                               Outputs binary executable file format information\n"
 "     -rose:unparse_includes\n"
 "                               unparse all include files into the source file.\n"
 "                               This is a backup option for fail-safe processing\n"

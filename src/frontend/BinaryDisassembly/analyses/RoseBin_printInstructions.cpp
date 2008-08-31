@@ -34,15 +34,19 @@ void RoseBin_printInstructions::visit(SgNode* n) {
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
 
-  std::string str=binInst->get_raw_bytes();
-  char *array=strdup(str.c_str());
+//std::string str=binInst->get_raw_bytes();
+//char *array=strdup(str.c_str());
+  SgUnsignedCharList array = binInst->get_raw_bytes();
+
   int size=0;
   string hexcode ="";
-  for(int i=0; array[i]; ++i) {
+//for(int i=0; array[i]; ++i) {
+  for(size_t i=0; i < array.size(); ++i) {
     size++;
     //    std::cerr << std::bitset<sizeof(char)*8>((int)array[i]);
     const char* table = "0123456789abcdef";
-    unsigned char c = (char)array[i];
+ // unsigned char c = (char)array[i];
+    unsigned char c = array[i];
     string S;
     S = table[c>>4];
     S += table[c & 0x0F];

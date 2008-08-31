@@ -29,6 +29,10 @@ std::string unparseInstructionWithAddress(SgAsmInstruction* insn);
 // Fixed to take a SgAsmStatement and added support for comments.
 std::string unparseAsmStatement(SgAsmStatement* stmt);
 
+// DQ (8/30/2008): Added prototype so this can be called from the unparser.
+// As part of work to merge the executable file format dump with instructions.
+std::string unparseAsmInterpretation(SgAsmInterpretation* interp);
+
 void unparseAsmStatementToFile(const std::string& filename, SgAsmStatement* stmt);
 void unparseAsmFileToFile(const std::string& filename, SgAsmFile* file);
 

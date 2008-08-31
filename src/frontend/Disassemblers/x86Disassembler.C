@@ -470,7 +470,11 @@ namespace X86Disassembler {
 
     SgAsmx86Instruction* makeNullaryInstruction(const string& mnemonic, X86InstructionKind kind) {
       SgAsmx86Instruction* newInsn = makeInstructionWithoutOperands(p.ip, mnemonic, kind, p.insnSize, effectiveOperandSize(), effectiveAddressSize(), lock);
-      newInsn->set_raw_bytes(string(insn + positionInVector, insn + positionInVector + positionInInstruction));
+
+   // DQ (8/30/2008): IR node now uses a SgUnsignedCharList instead of a std::string.
+   // newInsn->set_raw_bytes(string(insn + positionInVector, insn + positionInVector + positionInInstruction));
+      newInsn->set_raw_bytes(SgUnsignedCharList(insn + positionInVector, insn + positionInVector + positionInInstruction));
+
       SgAsmOperandList* operands = new SgAsmOperandList();
       newInsn->set_operandList(operands);
       operands->set_parent(newInsn);

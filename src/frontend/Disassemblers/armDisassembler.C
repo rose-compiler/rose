@@ -23,11 +23,17 @@ namespace ArmDisassembler {
     SgAsmOperandList* operands = new SgAsmOperandList();
     instruction->set_operandList(operands);
     operands->set_parent(instruction);
-    string bytes(4, '\0');
+
+ // DQ (8/30/2008): IR node now uses a SgUnsignedCharList instead of a std::string.
+ // string bytes(4, '\0');
+    SgUnsignedCharList bytes(4, '\0');
+
     for (int i = 0; i < 4; ++i) {
       bytes[i] = (insn >> (8 * i)) & 0xFF; // Force little-endian
     }
+
     instruction->set_raw_bytes(bytes);
+
     return instruction;
   }
 
@@ -463,7 +469,10 @@ namespace ArmDisassembler {
       } else { // Unconditional instructions
         cond = arm_cond_al;
         uint16_t opcode1 = (insn >> 20) & 0xFF;
-        uint16_t opcode2 = (insn >> 4) & 0xF;
+
+     // DQ (8/30/2008): Unused value removed to avoid compiler warning.
+     // uint16_t opcode2 = (insn >> 4) & 0xF;
+
         switch (opcode1) {
           case 0x10: {
             if (bit16) {

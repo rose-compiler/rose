@@ -1,5 +1,8 @@
 #include "rose.h"
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 using namespace std;
 
 string unparseInstruction(SgAsmInstruction* insn) {
@@ -18,63 +21,222 @@ string unparseInstructionWithAddress(SgAsmInstruction* insn) {
   }
 }
 
+/* Works like hexdump -C to display N bytes of DATA */
+string
+hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & data, size_t maxLength )
+   {
+  // This function is used to prepend a string representing the memory contents of the instruction.
+  // In the output this make is visually more clear when strings, null padding, and internal 
+  // executable format tables are being disassembled mistakenly as instructions. It many cases 
+  // it makes since to disassemble such sections of the binary file since code can be hidden there.
+
+  // Note that the "prefix" can be used for whitespace to intent the output.
+
+     string returnString;
+
+     char buffer[1024];
+     size_t n = data.size();
+
+  // ROSE_ASSERT(n < maxLength);
+
+     for (size_t i = 0; i < n; i += maxLength)
+        {
+       // Output the memory contents in fixed size chunks of size == maxLength; 
+       // then output the associated instrcutions. Note that since most instructions
+       // are smaller than the selected maxLength, most will be output on a single line.
+          if (i > 0)
+               returnString += "\n";
+
+          sprintf(buffer,"%s0x%08"PRIx64, prefix, base_addr+i);
+          returnString += buffer;
+
+       // Output the hexadecimal representation
+          for (size_t j = 0; j < maxLength; j++)
+             {
+            // if (8 == j) returnString += " ";
+
+               if (i+j < n)
+                  {
+                    sprintf(buffer," %02x", data[i+j]);
+                    returnString += buffer;
+                  }
+                 else
+                  {
+                 // 3 spaces to match the format string
+                 // puts("   ");
+                    returnString += "   ";
+                  }
+             }
+
+          returnString += " |";
+
+       // Output the character representation (where it is a printable character)
+       // for (size_t j = 0; j < maxLength && i+j < n; j++)
+          for (size_t j = 0; j < maxLength; j++)
+             {
+               if (i+j < n)
+                  {
+                    if (isprint(data[i+j]))
+                       {
+                         if (data[i+j] == '"')
+                            {
+                           // Replace double quotes with "." so that output will not be a problem for emacs!
+                              returnString += ".";
+                            }
+                           else
+                            {
+                              returnString += data[i+j];
+                            }
+                       }
+                      else
+                       {
+                         returnString += ".";
+                       }
+                  }
+                 else
+                  {
+                 // 1 spaces to match the format string
+                    returnString += " ";
+                  }
+             }
+
+          returnString += "|";
+        }
+
+     return returnString;
+   }
+
+SgAsmFile*
+get_asmFile(SgAsmStatement* stmt)
+   {
+     SgNode* parent = stmt;
+
+  // printf ("In get_file(): starting at: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     while (isSgAsmFile(parent) == NULL)
+        {
+       // printf ("parent = %p = %s \n",parent,parent->class_name().c_str());
+          parent = parent->get_parent();
+        }
+
+     ROSE_ASSERT(parent != NULL);
+     ROSE_ASSERT(isSgAsmFile(parent) != NULL);
+
+     return isSgAsmFile(parent);
+   }
+
+
 // DQ (8/23/2008): I think this should take an SgAsmStatement
 // string unparseAsmStatement(SgAsmNode* stmt)
 string
 unparseAsmStatement(SgAsmStatement* stmt)
-{
-  ROSE_ASSERT (stmt != NULL);
-  string result;
-  if (stmt->get_comment().empty() == false)
-       result = "/* " + stmt->get_comment() + " */\n";
+   {
+  // This function should use the same mechanism as the source code
+  // for output of strings so that it can eventually work with QROSE.
+
+     ROSE_ASSERT (stmt != NULL);
+
+  // printf ("In unparseAsmStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+
+     string result;
+     if (stmt->get_comment().empty() == false)
+          result = "/* " + stmt->get_comment() + " */\n";
 
 #if 0
-  string addressString = "/* Address: " + StringUtility::intToHex(stmt->get_address()) + " */";
-  printf ("comment empty = %s addressString = %s \n",stmt->get_comment().empty() ? "true" : "false", addressString.c_str());
+     string addressString = "/* Address: " + StringUtility::intToHex(stmt->get_address()) + " */";
+     printf ("comment empty = %s addressString = %s \n",stmt->get_comment().empty() ? "true" : "false", addressString.c_str());
 #endif
 
-  switch (stmt->variantT()) {
-    case V_SgAsmx86Instruction: return result + unparseX86InstructionWithAddress(isSgAsmx86Instruction(stmt)) + '\n';
-    case V_SgAsmArmInstruction: return result + unparseArmInstructionWithAddress(isSgAsmArmInstruction(stmt)) + '\n';
-    case V_SgAsmBlock: {
-      SgAsmBlock* blk = isSgAsmBlock(stmt);
-      result = result + "/* Block " + StringUtility::intToHex(blk->get_address()) + " */\n";
-      for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
-        result += unparseAsmStatement(blk->get_statementList()[i]);
-      }
-      return result;
-    }
-    case V_SgAsmFunctionDeclaration: {
-      SgAsmFunctionDeclaration* blk = isSgAsmFunctionDeclaration(stmt);
-      result = result + "/* Function " + blk->get_name() + " at " + StringUtility::intToHex(blk->get_address()) + " */\n";
-      for (size_t i = 0; i < blk->get_statementList().size(); ++i) {
-        result += unparseAsmStatement(blk->get_statementList()[i]);
-      }
-      return result;
-    }
-    default: {
-      cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << endl;
-      ROSE_ASSERT (false);
-    }
-  }
-}
+#if 1
+     SgAsmFile* asmFile = get_asmFile(stmt);
+     ROSE_ASSERT(asmFile != NULL);
+     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
+     ROSE_ASSERT(genericFile != NULL);
 
-static string unparseAsmInterpretation(SgAsmInterpretation* interp) {
-  return "/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
-}
+     SgAsmInstruction* asmInstruction = isSgAsmInstruction(stmt);
+
+     if (asmInstruction != NULL)
+        {
+       // result += hexdump(stmt->get_address(),"---",&(genericFile->get_data()[0]),asmInstruction->get_raw_bytes().size());
+          size_t max_length = 6;
+#if 0
+          printf ("asmInstruction = %p = %s = %s (length = %zu) \n",asmInstruction,asmInstruction->class_name().c_str(),
+               asmInstruction->get_mnemonic().c_str(),asmInstruction->get_raw_bytes().size());
+#endif
+          result += hexdump(stmt->get_address(),"",asmInstruction->get_raw_bytes(),max_length);
+          result += " :: ";
+        }
+       else
+        {
+       // result += "----------";
+        }
+#endif
+
+     switch (stmt->variantT())
+        {
+          case V_SgAsmx86Instruction:
+             {
+               return result + unparseX86InstructionWithAddress(isSgAsmx86Instruction(stmt)) + '\n';
+             }
+
+          case V_SgAsmArmInstruction:
+             {
+               return result + unparseArmInstructionWithAddress(isSgAsmArmInstruction(stmt)) + '\n';
+             }
+
+          case V_SgAsmBlock:
+             {
+               SgAsmBlock* blk = isSgAsmBlock(stmt);
+               result = result + "/* Block " + StringUtility::intToHex(blk->get_address()) + " */\n";
+               for (size_t i = 0; i < blk->get_statementList().size(); ++i)
+                  {
+                    result += unparseAsmStatement(blk->get_statementList()[i]);
+                  }
+               return result;
+             }
+
+          case V_SgAsmFunctionDeclaration:
+             {
+               SgAsmFunctionDeclaration* blk = isSgAsmFunctionDeclaration(stmt);
+               result = result + "/* Function " + blk->get_name() + " at " + StringUtility::intToHex(blk->get_address()) + " */\n";
+               for (size_t i = 0; i < blk->get_statementList().size(); ++i)
+                  {
+                    result += unparseAsmStatement(blk->get_statementList()[i]);
+                  }
+               return result;
+             }
+
+          default:
+             {
+               cerr << "Unhandled variant " << stmt->class_name() << " in unparseX86Statement" << endl;
+               ROSE_ASSERT (false);
+             }
+        }
+   }
+
+string
+unparseAsmInterpretation(SgAsmInterpretation* interp)
+   {
+     return "/* Interpretation " + std::string(interp->get_header()->format_name()) + " */\n" + (interp->get_global_block() ? unparseAsmStatement(interp->get_global_block()) : "/* No global block */");
+   }
 
 // void unparseAsmStatementToFile(const string& filename, SgAsmNode* stmt) {
-void unparseAsmStatementToFile(const string& filename, SgAsmStatement* stmt) {
-  ROSE_ASSERT (stmt != NULL);
-  ofstream of(filename.c_str());
-  of << unparseAsmStatement(stmt);
-}
+void
+unparseAsmStatementToFile(const string& filename, SgAsmStatement* stmt)
+   {
+     ROSE_ASSERT (stmt != NULL);
+     ofstream of(filename.c_str());
+     of << unparseAsmStatement(stmt);
+   }
 
-void unparseAsmFileToFile(const string& filename, SgAsmFile* file) {
-  ROSE_ASSERT (file != NULL);
-  ofstream of(filename.c_str());
-  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-  for (size_t i = 0; i < interps.size(); ++i) {
-    of << unparseAsmInterpretation(interps[i]) << '\n';
-  }
-}
+void
+unparseAsmFileToFile(const string& filename, SgAsmFile* file)
+   {
+     ROSE_ASSERT (file != NULL);
+     ofstream of(filename.c_str());
+     const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+
+     for (size_t i = 0; i < interps.size(); ++i)
+        {
+          of << unparseAsmInterpretation(interps[i]) << '\n';
+        }
+   }

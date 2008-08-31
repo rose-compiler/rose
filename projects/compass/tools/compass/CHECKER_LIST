@@ -81,7 +81,7 @@ oneLinePerDeclaration
 operatorOverloading
 otherArgument
 placeConstantOnTheLhs
-possiblyReplicatedVariables
+#possiblyReplicatedVariables
 preferAlgorithms
 preferFseekToRewind
 preferSetvbufToSetbuf

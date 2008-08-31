@@ -122,8 +122,11 @@ visit(SgNode* n)
   if (binInst==NULL) return;
   ROSE_ASSERT(binInst);
 
-  std::string str=binInst->get_raw_bytes();
-  char *array=strdup(str.c_str());
+// DQ (8/31/2008): IR nodes now uses SgUnsignedCharList instead of string
+// std::string str=binInst->get_raw_bytes();
+// char *array=strdup(str.c_str());
+  SgUnsignedCharList array = binInst->get_raw_bytes();
+
   int size=0;
   string hexcode ="";
   for(int i=0; array[i]; ++i) {

@@ -9459,6 +9459,11 @@ SgFile::initialization()
      p_unparse_includes        = false;  // by default do NOT unparse include files into the source code
      p_unparse_line_directives = false;  // by default do NOT unparse #line directives into the source code
 
+  // DQ (8/30/2008): Added support to tailor the unparsing of disassembled instructions and the binary file format.
+     p_unparse_instruction_addresses = true;
+     p_unparse_raw_memory_contents   = true;
+     p_unparse_binary_file_format    = true;
+
   // DQ (8/27/2007): Support for alternative langauge code generation (unparsing), useful for testing specific language unparsers.
      p_outputLanguage          = SgFile::e_default_output_language;
 
@@ -9964,6 +9969,10 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_outputGrammarTreeFilesForHeaderFiles = %s \n",(p_outputGrammarTreeFilesForHeaderFiles == true) ? "true" : "false");
      printf ("     p_unparse_includes                     = %s \n",(p_unparse_includes                     == true) ? "true" : "false");
      printf ("     p_unparse_line_directives              = %s \n",(p_unparse_line_directives              == true) ? "true" : "false");
+     printf ("     p_unparse_instruction_addresses        = %s \n",(p_unparse_instruction_addresses        == true) ? "true" : "false");
+     printf ("     p_unparse_raw_memory_contents          = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
+     printf ("     p_unparse_binary_file_format           = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
+
      printf ("     p_KCC_frontend                         = %s \n",(p_KCC_frontend                         == true) ? "true" : "false");
      printf ("     p_new_frontend                         = %s \n",(p_new_frontend                         == true) ? "true" : "false");
      printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep                 == true) ? "true" : "false");

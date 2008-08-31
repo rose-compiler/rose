@@ -306,8 +306,14 @@ Grammar::setUpBinaryInstructions ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
   // AsmInstruction.setDataPrototype("long","basic_block_id","= -1",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmInstruction.setDataPrototype("std::string","raw_bytes","= \"\"",
+
+  // DQ (8/30/2008): since there can be NULL values in the definition of the instructions, std::string is not 
+  // as good of a container for the raw bytes as the SgUnsignedCharList, which is designed for this purpose.
+  // AsmInstruction.setDataPrototype("std::string","raw_bytes","= \"\"",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmInstruction.setDataPrototype("SgUnsignedCharList","raw_bytes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+
   // DQ (8/23/2008): Moved the comment string from the AsmInstruction to the AsmStatement
   // AsmInstruction.setDataPrototype("std::string","comment","= \"\"",
   //                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);

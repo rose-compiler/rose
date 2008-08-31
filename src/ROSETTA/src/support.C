@@ -777,6 +777,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "unparse_line_directives", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/30/2008): Added support for tailoring the output of unparsed disassembled instructions
+     File.setDataPrototype         ( "bool", "unparse_instruction_addresses", "= true",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "unparse_raw_memory_contents", "= true",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "bool", "unparse_binary_file_format", "= true",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (8/27/2007): Added support for simple translation using separately specified language unparser.
   // this is supported for testing alternative language code generation, not for a faithful translation 
   // between languages (which would require translation of the AST to support langauge constructs not

@@ -8,6 +8,9 @@
 // include "array_class_interface.h"
 #include "unparser.h"
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -309,6 +312,9 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                     string newFilename = file->get_unparse_output_filename();
 #else
                     string sourceFilename = file->get_sourceFileNameWithoutPath();
+
+                 // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+                 // generated in the unparse phase of processing a binary.
                     string newFilename = sourceFilename + ".new";
                     size_t slash = sourceFilename.find_last_of('/');
                     if (slash!=sourceFilename.npos)
@@ -323,25 +329,100 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
 
                  // Dump detailed info from the AST representation of the binary executable file format.
                     string baseName = file->get_sourceFileNameWithoutPath();
+
+                 // DQ (8/30/2008): This is temporary, we should review how we want to name the files 
+                 // generated in the unparse phase of processing a binary.
                     std::string dumpName = baseName + ".dump";
                     FILE *dumpFile = fopen(dumpName.c_str(), "wb");
-                    if (dumpFile)
+                    if (dumpFile != NULL)
                        {
-                         SgAsmGenericFile *ef = asmFile->get_genericFile();
-                         ROSE_ASSERT(ef != NULL);
+                         SgAsmGenericFile *genericFile = asmFile->get_genericFile();
+                         ROSE_ASSERT(genericFile != NULL);
 
                       // The file type should be the first; test harness depends on it
-                         fprintf(dumpFile, "%s\n", ef->format_name());
+                         fprintf(dumpFile, "%s\n", genericFile->format_name());
 
                       // A table describing the sections of the file
-                         ef->dump(dumpFile);
+                         genericFile->dump(dumpFile);
 
                       // Detailed info about each section
-                         SgAsmGenericSectionList *sections = ef->get_sections();
+                         SgAsmGenericSectionList *sections = genericFile->get_sections();
                          for (size_t i = 0; i < sections->get_sections().size(); i++)
                             {
                               fprintf(dumpFile, "Section [%zd]:\n", i);
                               sections->get_sections()[i]->dump(dumpFile, "  ", -1);
+
+                              bool outputInstruction = (sections->get_sections()[i]->get_mapped() == true);
+#if 0
+                           // Handle special case of Extended DOS Header (initial part of PE files)
+                              if (sections->get_sections()[i]->get_mapped() == false && sections->get_sections()[i]->get_name() == "Extended DOS Header")
+                                 {
+                                   printf ("Handling the special case of the Extended DOS Header \n");
+                                   outputInstruction = true;
+                                 }
+#endif
+                           // If this section was mapped to memory then output the associated instructions 
+                           // that have been disassembled.
+                              if (outputInstruction == true)
+                                 {
+                                // Output the instructions
+                                   SgAsmGenericHeader* genericHeader = sections->get_sections()[i]->get_header();
+                                   ROSE_ASSERT(genericHeader != NULL);
+                                   printf ("header name = %s \n",genericHeader->get_name().c_str());
+
+                                   SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
+                                   rose_addr_t imageBase = 0ull;
+                                   if (asmPEFileHeader != NULL)
+                                      {
+                                        imageBase = asmPEFileHeader->get_e_image_base();
+                                      }
+ 
+                                   printf ("section %s imageBase = 0x%08"PRIx64"\n",sections->get_sections()[i]->get_name().c_str(),imageBase);
+
+                                   rose_addr_t addressBase  =  imageBase + sections->get_sections()[i]->get_mapped_rva();
+                                   rose_addr_t addressBound =  addressBase + sections->get_sections()[i]->get_mapped_size();
+
+                                // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
+
+                                   printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections->get_sections()[i]->get_name().c_str(),addressBase,addressBound);
+
+                                // Build a bitvector of the current section's mapped address space.
+                                   vector<bool> sectionAddressSpace(sections->get_sections()[i]->get_mapped_size(),true);
+                                   for (size_t j = 0; j < sections->get_sections().size(); j++)
+                                      {
+                                     // exclude all the other sections
+                                        if ( (j != i) && (sections->get_sections()[j]->get_mapped() == true) )
+                                           {
+                                             SgAsmGenericHeader* genericHeader  = sections->get_sections()[j]->get_header();
+                                             SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
+                                             rose_addr_t temp_imageBase = 0ull;
+                                             if (asmPEFileHeader != NULL)
+                                                {
+                                                  temp_imageBase = asmPEFileHeader->get_e_image_base();
+                                                }
+                                             rose_addr_t nestedAddressBase  = temp_imageBase    + sections->get_sections()[j]->get_mapped_rva();
+                                             rose_addr_t nestedAddressBound = nestedAddressBase + sections->get_sections()[j]->get_mapped_size();
+                                             printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections->get_sections()[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
+#if 0
+                                             for (rose_addr_t k = nestedAddressBase; k < nestedAddressBound; k++)
+                                                {
+                                                  rose_addr_t relativeNestedAddressBase = nestedAddressBase - addressBase;
+                                                  if (relativeNestedAddressBase >= 0)
+                                                     sectionAddressSpace[k] = false;
+                                                }
+#endif
+                                           }
+                                         
+                                      }
+                                 }
+                              
+                            }
+
+                         fprintf(dumpFile, "Output the disassembled instructions:\n");
+                         const SgAsmInterpretationPtrList & interps = asmFile->get_interpretations();
+                         for (size_t i = 0; i < interps.size(); ++i)
+                            {
+                              fprintf(dumpFile, "%s\n", unparseAsmInterpretation(interps[i]).c_str());
                             }
 
                          fclose(dumpFile);

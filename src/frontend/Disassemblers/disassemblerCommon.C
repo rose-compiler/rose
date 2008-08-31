@@ -43,8 +43,10 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
      SgAsmGenericFile* file = header->get_file();
      ROSE_ASSERT (file);
 
+  // DQ (8/29/2008): When we get the section list into the headers, then this could should change, I think.
      SgAsmGenericSectionList* sectionList = file->get_sections();
      const SgAsmGenericSectionPtrList& sections = sectionList->get_sections();
+
      for (size_t i = 0; i < sections.size(); ++i) {
        SgAsmGenericSection* section = sections[i];
        if (section->get_header() != header) continue;
@@ -57,6 +59,8 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
          ROSE_ASSERT (!"Aggressive mode not supported");
        } else {
          if (!isSgAsmElfSection(section) && !isSgAsmPESection(section) && !isSgAsmDOSFileHeader(header)) continue;
+
+      // printf ("In DisassemblerCommon::AsmFileWithData::getSectionOfAddress(%p): returning section %s \n",(void*)addr,section->get_name().c_str());
          return section;
        }
      }
@@ -75,9 +79,12 @@ bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
 SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(uint64_t addr, set<uint64_t>& knownSuccessors) const {
   SgAsmGenericSection* section = getSectionOfAddress(addr);
   if (!section) return 0;
+
+// Check if this is marked as executable
   if (!section->get_eperm()) {
     return 0;
   }
+
   ROSE_ASSERT (section->get_header() == interp->get_header());
   SgAsmGenericHeader* header = interp->get_header();
   ROSE_ASSERT (header);
@@ -197,31 +204,86 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
      ROSE_ASSERT(fileNode != NULL);
      aggressive_mode = fileNode->get_aggressive();
 
-  DisassemblerCommon::AsmFileWithData file(interp);
-  map<uint64_t, SgAsmInstruction*> insns;
-  map<uint64_t, bool> basicBlockStarts;
-  set<uint64_t> functionStarts;
+     DisassemblerCommon::AsmFileWithData file(interp);
+     map<uint64_t, SgAsmInstruction*> insns;
+     map<uint64_t, bool> basicBlockStarts;
+     set<uint64_t> functionStarts;
 
-  SgAsmGenericHeader* header = interp->get_header();
-  ROSE_ASSERT (header);
+     SgAsmGenericHeader* header = interp->get_header();
+     ROSE_ASSERT (header);
 
-  uint64_t entryPoint = header->get_entry_rva() + header->get_base_va();
+     uint64_t entryPoint = header->get_entry_rva() + header->get_base_va();
 
-  SgAsmDOSFileHeader* DOS_header = isSgAsmDOSFileHeader(header);
-  if (DOS_header != NULL)
-     {
-       SgAsmGenericFile* gf = isSgAsmGenericFile(header->get_parent()->get_parent());
-       ROSE_ASSERT (gf);
-       const SgAsmGenericSectionPtrList& sections = gf->get_sections()->get_sections();
-       for (size_t i = 0; i < sections.size(); ++i) {
-         if (sections[i]->get_header() == DOS_header) {
-           sections[i]->set_mapped(true);
-           sections[i]->set_mapped_size(DOS_header->get_e_total_pages() * 512 - 512 + (DOS_header->get_e_last_page_size() != 0 ? DOS_header->get_e_last_page_size() : 512));
-         }
-       }
-       ROSE_ASSERT (DOS_header->get_e_cs() == 0); // Don't support executables >64k
-       entryPoint = DOS_header->get_e_ip();
-     }
+     SgAsmDOSFileHeader* DOS_header = isSgAsmDOSFileHeader(header);
+     if (DOS_header != NULL)
+        {
+          SgAsmGenericFile* gf = isSgAsmGenericFile(header->get_parent()->get_parent());
+          ROSE_ASSERT (gf);
+          const SgAsmGenericSectionPtrList& sections = gf->get_sections()->get_sections();
+          for (size_t i = 0; i < sections.size(); ++i)
+             {
+               if (sections[i]->get_header() == DOS_header)
+                  {
+                    printf ("DOS section DOS_header->get_mapped()           = %s (will be reset to true) \n",DOS_header->get_mapped() ? "true" : "false");
+                    printf ("DOS section DOS_header->get_mapped_size()      = %p (will be reset) \n",(void*)DOS_header->get_mapped_size());
+
+                 // DQ (8/31/2008): I think this is temporary code: Don't we want the disassemble to avoid having side-effects on the binary file format?
+                    sections[i]->set_mapped(true);
+
+                 // This details of this formulation appear to be different from different sources 
+                 // (web pages), the one that special cases last_page_size == 0 is the best.
+                 // sections[i]->set_mapped_size(DOS_header->get_e_total_pages() * 512 + DOS_header->get_e_last_page_size());
+                 // sections[i]->set_mapped_size(DOS_header->get_e_total_pages() * 512 - (512 - DOS_header->get_e_last_page_size()));
+                    sections[i]->set_mapped_size(DOS_header->get_e_total_pages() * 512 - 512 + (DOS_header->get_e_last_page_size() != 0 ? DOS_header->get_e_last_page_size() : 512));
+
+                 // If this is a DOS section that is part of a PE then the extended DOS section in the PE SgAsmInterpretation 
+                 // will have the position of the PE section, this limits the size of the mapped DOS section and prevents 
+                 // disassembly of the PE headers as part of the DOS SgAsmInterpretation.  This value is usually 80h, but it 
+                 // does not have to be, so we look it up explicitly by finding the SgAsmPEExtendedDOSHeader.  If the 
+                 // SgAsmPEExtendedDOSHeader does not exist then this is likely a DOS executable and we compute the mapped 
+                 // size using the usual DOS formula (using the total_pages and the last_page_size entries in the DOS header).
+                    rose_addr_t DOS_section_mapped_size = 0x0;
+                    rose_addr_t DOS_header_mapped_size  = 0x0;
+
+                 // Search for the SgAsmPEExtendedDOSHeader section in the section list (the generic file section 
+                 // list may disappear soon, if so we have to find it in the section list in the headers in the 
+                 // different interpretations.
+                    for (size_t j = 0; j < sections.size(); ++j)
+                       {
+                         SgAsmPEExtendedDOSHeader* asmPEExtendedDOSHeader = isSgAsmPEExtendedDOSHeader(sections[j]);
+                         if (asmPEExtendedDOSHeader != NULL)
+                            {
+                           // Size of the DOS header and the DOS Extended Header (should be 0x40 is size)
+                              DOS_header_mapped_size = DOS_header->get_size() + asmPEExtendedDOSHeader->get_size();
+
+                           // DQ: I think this is always true.
+                              ROSE_ASSERT(DOS_header_mapped_size == 0x40);
+
+                           // Get the location of the PE header (pointed to by the Extended DOS header)
+                           // This is actually the file address of the new header but since it is mapped 
+                           // with the DOS text segment it is the position in the mapped address space (I think).
+                              DOS_section_mapped_size = asmPEExtendedDOSHeader->get_e_lfanew();
+
+                              printf ("Resetting the size of the DOS section to be %p - %p (minus %p for the size of the DOS and Extended DOS headers) \n",
+                                   (void*)DOS_section_mapped_size,(void*)DOS_header_mapped_size,(void*)DOS_header_mapped_size);
+
+                           // Set the header file to be explicitly 40h bytes long (the availiable memory mapped from disk before the nest setsion)
+                              sections[i]->set_mapped_size(DOS_section_mapped_size - DOS_header_mapped_size);
+                            }
+                       }
+
+                    printf ("DOS section DOS_header->get_e_total_pages()    = %d \n",DOS_header->get_e_total_pages());
+                    printf ("DOS section DOS_header->get_e_last_page_size() = %d \n",DOS_header->get_e_last_page_size());
+                    printf ("DOS section mapped size                        = %p (hex) = %zu (decimal) \n",(void*)sections[i]->get_mapped_size(),sections[i]->get_mapped_size());
+                  }
+             }
+
+          ROSE_ASSERT (DOS_header->get_e_cs() == 0); // Don't support executables >64k
+          entryPoint = DOS_header->get_e_ip();
+        }
+
+     printf ("In Disassembler::disassembleInterpretation(): entryPoint = %p \n",(void*)entryPoint);
+
      basicBlockStarts[entryPoint] = true;
      functionStarts.insert(entryPoint);
      file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);

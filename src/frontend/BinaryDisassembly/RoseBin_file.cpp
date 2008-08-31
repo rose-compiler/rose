@@ -255,18 +255,18 @@ void RoseBin_FILE::process_instruction_query( ) {
        sequence = atoi(vec_instructions_1[i].sequence.c_str());
        data = vec_instructions_1[i].data;
        if (function_of_basic_block.find(basic_block) == function_of_basic_block.end())
-	 ROSE_ASSERT (!"Basic block is not in a function");
+          ROSE_ASSERT (!"Basic block is not in a function");
        i_func = function_of_basic_block[basic_block];
 
       // patched to adjust to objdump , Apr 26 2007
       if (mnemonic =="retn")
-	mnemonic = "ret";
+         mnemonic = "ret";
       
       if (RoseBin_support::DEBUG_MODE()) {
-	ostringstream addrhex;
-	addrhex << hex << setw(8) << address ;
-	cout << ">> creating instruction : " << addrhex.str() << " " << address << 
-	  " - " << basic_block << " - " << mnemonic << " - " << sequence << endl;
+         ostringstream addrhex;
+         addrhex << hex << setw(8) << address ;
+         cout << ">> creating instruction : " << addrhex.str() << " " << address << 
+                 " - " << basic_block << " - " << mnemonic << " - " << sequence << endl;
       }
       // check if it is an instruction or if it appears in the callgraph,
       // if it is in the callgraph, one wants to create a BinaryCall instead
@@ -278,15 +278,28 @@ void RoseBin_FILE::process_instruction_query( ) {
       if (func_it != rememberFunctions.end()) {
         func = func_it->second;
       } else {
-	if (i_func!=-1)
-	  cerr << " ERROR : cant find the function i_func : " << i_func << " in rememberFunctions for instruction : " << mnemonic << endl;
+        if (i_func!=-1)
+           cerr << " ERROR : cant find the function i_func : " << i_func << " in rememberFunctions for instruction : " << mnemonic << endl;
       }
 
       
       SgAsmInstruction* instruction = NULL;
       instruction = createInstruction(address, func, mnemonic);
-      //	instruction = new SgAsmInstruction(address,bb,mnemonic,"");
-      instruction->set_raw_bytes(data);
+   //	instruction = new SgAsmInstruction(address,bb,mnemonic,"");
+
+   // DQ (8/30/2008): The IR should use an SgUnsignedCharList instead of a string.
+   // instruction->set_raw_bytes(data);
+#if 1
+      SgUnsignedCharList unsignedCharData;
+      for (size_t i = 0; i < data.length(); i++)
+         {
+           unsignedCharData.push_back( (unsigned char)(data[i]) );
+         }
+#else
+      SgUnsignedCharList unsignedCharData( (unsigned char*) &(data[0]),(unsigned char*) &(data[data.length()+1]) );
+#endif
+      instruction->set_raw_bytes(unsignedCharData);
+
       // set file pointer for each instruction
       //instruction->set_file_info(this_file);
 
