@@ -656,7 +656,9 @@ HEADER_EXECUTABLE_FILE_FORMAT_START
        // DQ (11/8/2008): used in the PE support.
        // Looking for function: hexdump(_IO_FILE*&, long unsigned int, const char[5], SgCharList&, size_t&)
           static void hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n);
-          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
+       // static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data);
+          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data);
+          static void hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data);
 
        /* Return byte order of caller */
           static SgAsmExecutableFileFormat::ByteOrder host_order();

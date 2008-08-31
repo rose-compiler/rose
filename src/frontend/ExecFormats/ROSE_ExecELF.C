@@ -468,6 +468,9 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_shentsize",            p_e_shentsize);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -524,6 +527,9 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1045,6 +1051,9 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 
     SgAsmGenericSection::dump(f, p, -1);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
     
 
@@ -1380,6 +1389,9 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i=0; i < p_entries->get_entries().size(); i++) {
         p_entries->get_entries()[i]->dump(f, p, i);
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1635,6 +1647,9 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i = 0; i < p_other_entries->get_entries().size(); i++) {
         p_other_entries->get_entries()[i]->dump(f, p, i);
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1898,6 +1913,9 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
         SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
         p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1145,6 +1145,14 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     if (!was_congealed)
         uncongeal();
+
+ // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
+ // better implementation if the hexdump function was a virtual member function).
+    if (variantT() == V_SgAsmGenericSection)
+       {
+         fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+         hexdump(f, get_offset(), "    ", p_data);
+       }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1420,11 +1428,22 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix
 }
 
 // DQ (11/8/2008): Alternative interface that works better for ROSE IR nodes
+// void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data)
 void
-SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data)
-{
-    hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
-}
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data)
+   {
+     if (data.empty() == false)
+          hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+   }
+
+// DQ (8/31/2008): This is the newest interface function (could not remove the one based on SgUnsignedCharList since it
+// is used in the symbol support).
+void
+SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data)
+   {
+     if (data.empty() == false)
+          hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+   }
 
 /* Writes a new file from the IR node for a parse executable file.  This is primarily to debug the parser by creating
  * an executable that *should* be identical to the original. */

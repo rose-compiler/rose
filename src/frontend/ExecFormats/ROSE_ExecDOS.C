@@ -194,6 +194,9 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n",        p, w, "rm_section");
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, (addr_t) 0x0, "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -247,7 +247,9 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
                  // Search for the SgAsmPEExtendedDOSHeader section in the section list (the generic file section 
                  // list may disappear soon, if so we have to find it in the section list in the headers in the 
-                 // different interpretations.
+                 // different interpretations. Note that this is likely the same for the NE and LE formats, only 
+                 // we want the SgAsmNEExtendedDOSHeader and SgAsmLEExtendedDOSHeader, respectively. Not yet tested 
+                 // with NE or LE executable format files.
                     for (size_t j = 0; j < sections.size(); ++j)
                        {
                          SgAsmPEExtendedDOSHeader* asmPEExtendedDOSHeader = isSgAsmPEExtendedDOSHeader(sections[j]);

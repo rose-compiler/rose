@@ -85,7 +85,10 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[7]",  p_e_res2[7]);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[8]",  p_e_res2[8]);
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
-    fprintf(f, "%s%-*s = %"PRIu64" byte offset\n",  p, w, "e_lfanew",   p_e_lfanew);
+    fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -599,6 +602,9 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -685,6 +691,9 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 /* Constructor */
@@ -786,6 +795,9 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sPESectionTable.", prefix);
     }
     SgAsmGenericSection::dump(f, p, -1);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1123,6 +1135,9 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     
     SgAsmPESection::dump(f, p, -1);
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1506,6 +1521,9 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }
+
+    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
+    hexdump(f, get_offset(), "    ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

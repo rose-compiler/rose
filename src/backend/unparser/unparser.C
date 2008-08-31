@@ -349,6 +349,7 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                          SgAsmGenericSectionList *sections = genericFile->get_sections();
                          for (size_t i = 0; i < sections->get_sections().size(); i++)
                             {
+                              printf ("In unparser: output section #%zu \n",i);
                               fprintf(dumpFile, "Section [%zd]:\n", i);
                               sections->get_sections()[i]->dump(dumpFile, "  ", -1);
 
@@ -418,7 +419,11 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                               
                             }
 
+                         fprintf(dumpFile, "\n\n");
+                         fprintf(dumpFile, "*************************************\n");
                          fprintf(dumpFile, "Output the disassembled instructions:\n");
+                         fprintf(dumpFile, "*************************************\n");
+                         fprintf(dumpFile, "\n");
                          const SgAsmInterpretationPtrList & interps = asmFile->get_interpretations();
                          for (size_t i = 0; i < interps.size(); ++i)
                             {

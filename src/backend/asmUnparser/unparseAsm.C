@@ -21,7 +21,7 @@ string unparseInstructionWithAddress(SgAsmInstruction* insn) {
   }
 }
 
-/* Works like hexdump -C to display N bytes of DATA */
+// This is adapted from Robb's code: Works like hexdump -C to display N bytes of DATA
 string
 hexdump ( rose_addr_t base_addr, const char *prefix, const SgUnsignedCharList & data, size_t maxLength )
    {
