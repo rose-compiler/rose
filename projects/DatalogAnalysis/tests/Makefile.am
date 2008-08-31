@@ -9,15 +9,11 @@ EXTRA_DIST = test.cc datalogExamples
 if ROSE_USE_BDDBDDB
 
 test:
-	rm -f datalogExamples
-	ln -sf $(srcdir)/datalogExamples datalogExamples
 	mkdir -p dump
 	../src/relationTranslator $(srcdir)/test.cc
 	$(srcdir)/../bddbddb -Dbasedir=dump -Dincludedirs=$(srcdir)/datalogExamples/:dump/ $(srcdir)/datalogExamples/switch_without_default
 
 testDan:
-	rm -f datalogExamples
-	ln -sf $(srcdir)/datalogExamples datalogExamples
 	mkdir -p dump
 	../src/relationTranslator $(srcdir)/test.cc
 	$(srcdir)/../bddbddb -Dbasedir=dump -Dincludedirs=$(srcdir)/datalogExamples/:dump/ $(srcdir)/datalogExamples/is_child_of_parent
