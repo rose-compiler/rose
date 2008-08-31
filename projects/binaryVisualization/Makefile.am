@@ -16,10 +16,10 @@ check-local: vizzBinary
 
 #EXTRA_DIST = helpers.h
 
-CLEANFILES = helpers.h
+CLEANFILES = helpers.h *.coord
 
 clean:
-	rm -rf *.dot *.gml *.o *.s *~ vizzBinary out
+	rm -rf *.dot *.gml *.o *.s *~ vizzBinary out *.coord
 
 else
 

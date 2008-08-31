@@ -12,6 +12,7 @@ using namespace std;
 #include <math.h>
 #include "helper.h"
 
+static bool debug_me = true;
 
 #define DELTA 5
 int x = 0;
@@ -27,6 +28,7 @@ int u, v;
 #define LOAD 0
 #define FILE2 0
 
+GLfloat *****pts;
 
 static void 
 display(void)
@@ -38,31 +40,7 @@ display(void)
   glutSwapBuffers();
 }
 
-
-void displayAll(FunctionType& functions,  unsigned int maxX,
-		unsigned int maxY, int argc, char** argv, int nrknots, int max,
-		std::string filen, std::string filen2) 
-{
-
-  string filenC = filen+".coord";
-  string filen2C = filen2+".coord";
-  const char* filename = filenC.c_str();
-  const char* filename2 = filen2C.c_str();
-
-  /************** PRINTOUT *************************/
-#if FILE2
-  cerr << " loading " << filename << " and " << filename2 << endl;
-#else
-  cerr << " loading " << filename << endl;
-#endif
-
-#if LOAD
-#else
-  cerr << "Building array - functions: " << functions.size() <<
-    "  maxX:"<<maxX<<"  maxY:"<<maxY<<endl;
-#endif
-  /************** PRINTOUT *************************/
-
+void initGL(int argc, char** argv) {
   /************** INITGL *************************/
   // store height and weight
   glutInit(&argc, argv);
@@ -83,9 +61,13 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
   gluNurbsProperty(nurb, GLU_DISPLAY_MODE, GLU_FILL);
   /************** INITGL *************************/
 
+}
 
+void 
+loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max, 
+	 unsigned int& pointsX, unsigned int& pointsY) {
   /************** LOAD *************************/  
-#if LOAD
+    //#if LOAD
   // readFromFile
 
   cerr << "Loading " << filename <<".\n";
@@ -95,8 +77,8 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
     myfile >> maxY;
   }
 
-  unsigned int pointsX =maxX/max;
-  unsigned int pointsY =maxY/max;
+  pointsX =maxX/max;
+  pointsY =maxY/max;
   cout << "maxX:"<<maxX << "  pointsX="<<pointsX << endl;
   cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
 
@@ -104,14 +86,29 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 #if FILE2
   GLfloat pts2[pointsX+1][pointsY+1][max][max][3];
 #else
-  GLfloat pts[pointsX+1][pointsY+1][max][max][3];
+  //  GLfloat pts[pointsX+1][pointsY+1][max][max][3];
+  pts= new GLfloat****[pointsX+1];
+  for (unsigned int i=0; i<(pointsX+1);++i) {
+    pts[i] = new GLfloat***[pointsY+1];
+    for (unsigned int ii=0; ii<(pointsY+1);++ii) {
+      pts[i][ii] = new GLfloat**[max];
+      for (int iii=0; iii<max;++iii) {
+	pts[i][ii][iii] = new GLfloat*[max];
+	for ( int iiii=0; iiii<max;++iiii) {
+	  pts[i][ii][iii][iiii] = new GLfloat[3];
+	}
+      }
+    }
+  }
+
+
 #endif
   /************** 2FILES ***********/  
 
   if (myfile.is_open())   {
 
-    int x=0;
-    int y=0;
+    unsigned int x=0;
+    unsigned int y=0;
     GLfloat line1;
     GLfloat line2;
     GLfloat line3;
@@ -218,7 +215,24 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
   /************** 2FILES ***********/  
 
   /************** LOAD CONT *************************/  
-#else
+  //#else
+
+
+
+  GLfloat maxHeightPatch[pointsX][pointsY];
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int fieldY =y/max;
+      maxHeightPatch[fieldX][fieldY] = 0;
+    }
+  }
+
+}
+
+void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
+	       unsigned int& pointsX, unsigned int& pointsY) {
+
   GLfloat input[maxX][maxY][2];
   for (unsigned int x=0; x<maxX;x++) {
     for (unsigned int y=0; y<maxY;y++) {
@@ -239,15 +253,37 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
   cerr << "Done filling the input DB" << endl;
 
   
-  unsigned int pointsX =maxX/max;
-  unsigned int pointsY =maxY/max;
+  pointsX =maxX/max;
+  pointsY =maxY/max;
   cerr << " Initializing fields in x = " <<pointsX<<"  y = " <<pointsY<<endl;
 
   
-  float factor = 2.0f;
+  GLfloat factor = 2.0f;
   //GLfloat max_f =(float) -(max-1);
 
-  GLfloat pts[pointsX][pointsY][max][max][3];
+  //  GLfloat pts[pointsX][pointsY][max][max][3];
+  pts= new GLfloat****[pointsX+1];
+  for (unsigned int i=0; i<(pointsX+1);++i) {
+    pts[i] = new GLfloat***[pointsY+1];
+    for (unsigned int ii=0; ii<(pointsY+1);++ii) {
+      pts[i][ii] = new GLfloat**[max];
+      for (int iii=0; iii<max;++iii) {
+	pts[i][ii][iii] = new GLfloat*[max];
+	for (int iiii=0; iiii<max;++iiii) {
+	  pts[i][ii][iii][iiii] = new GLfloat[3];
+	  //cerr << " creating : pts["<<i<<"]["<<ii<<"]["<<iii<<"]["<<iiii<<"][3]"<<endl;
+	}
+      }
+    }
+  }
+  cerr << " Done creating 5 Dim DB." << endl;
+  if (debug_me) {
+    ROSE_ASSERT(pointsX==5);
+    ROSE_ASSERT(pointsY==5);
+    ROSE_ASSERT(max==8);
+    ROSE_ASSERT(maxX==47);
+    ROSE_ASSERT(maxY==47);
+  }
   for (unsigned int x=0; x<maxX;x++) {
     for (unsigned int y=0; y<maxY;y++) {
       int fieldX = x/max;
@@ -265,10 +301,18 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 	       << "][2]="<<input[x][y][0]<<endl<<endl;
 	}
       }
+#if 0
+      cerr << " factor : " << factor << "   pointsX : " << pointsX << "   pointsY : " << pointsY << "  max : " << max <<endl;
+      cerr << " fieldX : " << fieldX << "   offsetX : " << offsetX << endl;
+      cerr << " fieldY : " << fieldY << "   offsetY : " << offsetY << endl;
+      cerr << " alloc : pts[pointX][pointsY][max][max][3]" <<  endl;
+      cerr << " refer : pts[fieldX][fieldY][offsetX][offsetY][0]" << endl;
+      cerr << " total : " << (factor*((GLfloat)offsetX+((max-1)*fieldX))) << endl;
+#endif
       pts[fieldX][fieldY][offsetX][offsetY][0]=factor*((GLfloat)offsetX+((max-1)*fieldX));
       pts[fieldX][fieldY][offsetX][offsetY][1]=factor*((GLfloat)offsetY+((max-1)*fieldY));
       pts[fieldX][fieldY][offsetX][offsetY][2]=input[x][y][0];
-
+      //      cerr << " result ======== " << pts[fieldX][fieldY][offsetX][offsetY][0] << endl;
     }
   }
   cerr << "Done initializing fields. " << endl;
@@ -325,11 +369,10 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 
 #endif
 
-#endif // LOAD
+  //#endif // LOAD
+  
   /************** LOAD *************************/  
 
-
-  
   GLfloat maxHeightPatch[pointsX][pointsY];
   for (unsigned int x=0; x<maxX;x++) {
     for (unsigned int y=0; y<maxY;y++) {
@@ -338,8 +381,10 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
       maxHeightPatch[fieldX][fieldY] = 0;
     }
   }
-#if LOAD
-#else
+
+
+    //#if LOAD
+    //#else
   /************** NOLOAD *************************/  
 
   // coloring
@@ -453,9 +498,142 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
   }
 
 
-#endif // LOAD
+  //#endif // LOAD
+
   /************** NOLOAD *************************/  
 
+
+}
+
+
+void 
+render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
+
+
+  cerr << "Rendering..." << endl;
+
+
+  glMatrixMode(GL_PROJECTION);
+  gluPerspective(75.0, 1.0, 2.0, 5240.0);
+  glMatrixMode(GL_MODELVIEW);
+  glTranslatef(-40.0, -40.0, -70.0);
+  //    glTranslatef(-218.0, -160.0, -315.0);
+  glRotatef(330.0, 1.0, 0.0, 0.0);
+  glRotatef(-35.0, 1.0, 0.0, 0.0);
+  //    glRotatef(-30.0, 0.0, 0.0, 1.0);
+
+  glNewList(1, GL_COMPILE);
+  /* Render red hill. */
+
+  for (unsigned int x=0;x<pointsX;x++) {
+    for (unsigned int y=0;y<pointsY;y++) {
+      //GLfloat height = maxHeightPatch[x][y];
+
+#if 1
+      if ((y%2)==0 )
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_red_diffuse);
+      else
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
+#else
+      glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
+      /*  
+	  if (height<20)
+	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
+	  else if (height>=20 && height<49)
+	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_yellow_diffuse);
+	  else 
+	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_red_diffuse);
+      */
+#endif
+      gluBeginSurface(nurb);
+      gluNurbsSurface(nurb, nrknots, knots, nrknots, knots,
+		      max * 3, 3, &pts[x][y][0][0][0],
+		      max, max, GL_MAP2_VERTEX_3);
+      gluEndSurface(nurb);
+    }
+  }
+  glEndList();
+}
+
+
+void saveFile(GLfloat *****pts, const char* filename, unsigned int maxX, unsigned int maxY, int max, 
+	 unsigned int& pointsX, unsigned int& pointsY) {
+  /************** SAVE *************************/  
+    //#if SAVE
+  // printToFile
+  ofstream myfile;
+  myfile.open (filename);//+".coord");
+  cerr << "Writing this to a file.\n";
+  myfile << maxX <<endl;
+  myfile << maxY <<endl;
+  if (debug_me) {
+    ROSE_ASSERT(pointsX==5);
+    ROSE_ASSERT(pointsY==5);
+    ROSE_ASSERT(max==8);
+    ROSE_ASSERT(maxX==47);
+    ROSE_ASSERT(maxY==47);
+  }
+
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      //GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
+      myfile << pts[fieldX][fieldY][offsetX][offsetY][0] << endl;
+      myfile << pts[fieldX][fieldY][offsetX][offsetY][1] << endl;
+      myfile << pts[fieldX][fieldY][offsetX][offsetY][2] << endl;
+    }
+  }    
+  myfile.close();
+  cerr << "Done writing this to a file.\n";
+  exit(0);
+  //#else
+
+}
+
+void displayAll(FunctionType& functions,  unsigned int maxX,
+		unsigned int maxY, int argc, char** argv, int nrknots, int max,
+		std::string filen, std::string filen2, bool load, bool save,
+		unsigned int& pointsX, unsigned int& pointsY) 
+{
+
+  string filenC = filen+".coord";
+  string filen2C = filen2+".coord";
+  const char* filename = filenC.c_str();
+  const char* filename2 = filen2C.c_str();
+
+  /************** PRINTOUT *************************/
+#if FILE2
+  cerr << " loading " << filename << " and " << filename2 << endl;
+#else
+  cerr << " loading " << filename << endl;
+#endif
+
+  if (!load)
+    cerr << "Building array - functions: " << functions.size() <<
+      "  maxX:"<<maxX<<"  maxY:"<<maxY<<endl;
+  /************** PRINTOUT *************************/
+
+  initGL(argc, argv);
+
+  pts=NULL;
+  if (load)
+    loadFile(filename, maxX, maxY, max, pointsX, pointsY);
+  else 
+    calculate(functions, maxX, maxY, max, pointsX, pointsY);
+
+  if (debug_me) {
+    ROSE_ASSERT(pointsX==5);
+    ROSE_ASSERT(pointsY==5);
+    ROSE_ASSERT(max==8);
+    ROSE_ASSERT(maxX==47);
+    ROSE_ASSERT(maxY==47);
+  }
+
+  
+  ROSE_ASSERT(pts!=NULL);
 
 #if 1
   // adjust field -- make neighbors go smooth together
@@ -507,81 +685,18 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 #endif
 
 
+  //render(pointsX, pointsY, nrknots, max);
 
-  cerr << "Rendering..." << endl;
-
-
-  glMatrixMode(GL_PROJECTION);
-  gluPerspective(75.0, 1.0, 2.0, 5240.0);
-  glMatrixMode(GL_MODELVIEW);
-  glTranslatef(-40.0, -40.0, -70.0);
-  //    glTranslatef(-218.0, -160.0, -315.0);
-  glRotatef(330.0, 1.0, 0.0, 0.0);
-  glRotatef(-35.0, 1.0, 0.0, 0.0);
-  //    glRotatef(-30.0, 0.0, 0.0, 1.0);
-
-  glNewList(1, GL_COMPILE);
-  /* Render red hill. */
-
-  for (unsigned int x=0;x<pointsX;x++) {
-    for (unsigned int y=0;y<pointsY;y++) {
-      //GLfloat height = maxHeightPatch[x][y];
-
-#if 1
-      if ((y%2)==0 )
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_red_diffuse);
-      else
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
-#else
-      glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
-      /*  
-	  if (height<20)
-	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_green_diffuse);
-	  else if (height>=20 && height<49)
-	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_yellow_diffuse);
-	  else 
-	  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_red_diffuse);
-      */
-#endif
-      gluBeginSurface(nurb);
-      gluNurbsSurface(nurb, nrknots, knots, nrknots, knots,
-		      max * 3, 3, &pts[x][y][0][0][0],
-		      max, max, GL_MAP2_VERTEX_3);
-      gluEndSurface(nurb);
-    }
+  if (save) {
+    saveFile(pts, filename, maxX, maxY, max, pointsX, pointsY);
+    return;
   }
-  glEndList();
 
-
-  /************** SAVE *************************/  
-#if SAVE
-  // printToFile
-  ofstream myfile;
-  myfile.open (filename);//+".coord");
-  cerr << "Writing this to a file.\n";
-  myfile << maxX <<endl;
-  myfile << maxY <<endl;
-  for (int x=0; x<maxX;x++) {
-    for (int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
-      myfile << pts[fieldX][fieldY][offsetX][offsetY][0] << endl;
-      myfile << pts[fieldX][fieldY][offsetX][offsetY][1] << endl;
-      myfile << pts[fieldX][fieldY][offsetX][offsetY][2] << endl;
-    }
-  }    
-  myfile.close();
-  cerr << "Done writing this to a file.\n";
-  exit(0);
-#else
+  delete[] pts;
+  pts=NULL;
 
   glutDisplayFunc(display);
   glutMainLoop();
-#endif
-  /************** SAVE *************************/  
 }
 
 
@@ -668,6 +783,8 @@ int main(int argc, char** argv) {
   }
 
   SgProject* project = NULL;
+  unsigned int pointsX =0;
+  unsigned int pointsY =0;
 
   if (save) {
     // load all binaries iteratively and save it as footprint
@@ -682,6 +799,7 @@ int main(int argc, char** argv) {
       unsigned int maxY = trav.maxY+1;
 
       cout << "Saving Binary Footprint : " << name << endl;
+      displayAll(trav.functions, maxX, maxY, argc, argv, nrknots, max, def_db_name, def_db_name2, load, save, pointsX, pointsY);
     }
   } else if (load) {
     // load all footprints at once and run analyses
@@ -703,14 +821,14 @@ int main(int argc, char** argv) {
       unsigned int maxY = trav.maxY+1;
 
       cout << "Visualizing Binary Footprint : " << name << endl;
-      displayAll(trav.functions, maxX, maxY, argc, argv, nrknots, max, def_db_name, def_db_name2);
+      displayAll(trav.functions, maxX, maxY, argc, argv, nrknots, max, def_db_name, def_db_name2, load, save, pointsX, pointsY);
     }
   }
 
 
 #if LOAD
   Traversal trav;
-  displayAll(trav.functions, 0, 0, argc, argv, nrknots, max, def_db_name, def_db_name2);
+  displayAll(trav.functions, 0, 0, argc, argv, nrknots, max, def_db_name, def_db_name2, load, save, pointsX, pointsY);
 #else
 
   
