@@ -8,6 +8,16 @@ using namespace SageBuilder;
 using X86Disassembler::sizeToType;
 using X86Disassembler::sizeToPos;
 
+int bitSizeOfAsmType(SgAsmType* ty) {
+  switch (ty->variantT()) {
+    case V_SgAsmTypeByte: return 8;
+    case V_SgAsmTypeWord: return 16;
+    case V_SgAsmTypeDoubleWord: return 32;
+    case V_SgAsmTypeQuadWord: return 64;
+    default: {cerr << "Unhandled type " << ty->class_name() << " in bitSizeOfAsmType" << endl; abort();}
+  }
+}
+
 SgType* asmTypeToCType(SgAsmType* ty) {
   switch (ty->variantT()) {
     case V_SgAsmTypeByte: return SgTypeUnsignedChar::createType();
@@ -28,7 +38,6 @@ SgType* asmTypeToCSignedType(SgAsmType* ty) {
   }
 }
 
-// This is not used -- casts are used instead
 static SgExpression* buildMaskForType(SgAsmType* ty) {
   switch (ty->variantT()) {
     case V_SgAsmTypeByte: return buildUnsignedLongLongIntValHex(0xFF);
@@ -1040,11 +1049,18 @@ void SingleInstructionTranslator::translate() {
          SgVariableSymbol* resultsym =
            makeNewVariableInBlock(
              asmTypeToCType(operands[0]->get_type()),
-               buildRshiftOp(
-                 buildCastExp(
-                   buildVarRefExp(op1sym),
-                   asmTypeToCSignedType(operands[0]->get_type())),
-                 buildVarRefExp(shiftCountSym)));
+             buildBitOrOp(
+               buildConditionalExp(
+                 buildNotEqualOp(
+                   buildBitAndOp(
+                     buildVarRefExp(op1sym),
+                     buildSignBitMaskForType(operands[0]->get_type())),
+                   buildIntVal(0)),
+                 buildRshiftOp(
+                   buildMaskForType(operands[0]->get_type()),
+                   buildVarRefExp(shiftCountSym)),
+                 buildIntVal(0)),
+               buildRshiftOp(buildVarRefExp(op1sym), buildVarRefExp(shiftCountSym))));
 
          append(makeWrite(operands[0], buildVarRefExp(resultsym)));
 
@@ -1052,19 +1068,23 @@ void SingleInstructionTranslator::translate() {
 
          setFlagsBasedOnResult(resultsym, operands[0]->get_type(), true, thenBasicBlock);
       // CF is set to ((op1 >> (shiftCount-1)) AND (1)) != 0
+      // equiv to     (op1 & (1 << shiftCount-1)) != 0
+      //              except when shiftCount-1 >= size-1, in which case use the sign bit of op1
+         int size = bitSizeOfAsmType(operands[0]->get_type());
          appendStatement(
            f->makeFlagWrite(
              x86flag_cf,
              buildNotEqualOp(
                buildBitAndOp(
-                 buildRshiftOp(
-                   buildCastExp(
-                     buildVarRefExp(op1sym),
-                     asmTypeToCSignedType(operands[0]->get_type())),
-                   buildSubtractOp(
-                     buildVarRefExp(shiftCountSym),
-                     buildIntValHex(1))),
-                 buildIntValHex(1)),
+                 buildVarRefExp(op1sym),
+                 buildLshiftOp(
+                   buildIntVal(1),
+                   buildConditionalExp(
+                     buildGreaterOrEqualOp(
+                       buildVarRefExp(shiftCountSym),
+                       buildIntVal(size - 1)),
+                     buildIntVal(size - 1),
+                     buildVarRefExp(shiftCountSym)))),
                buildIntValHex(0))),
            thenBasicBlock);
 
