@@ -37,6 +37,8 @@
          (if (null? cl)
              (set! known-unsatisfiable #t) ; fail
              (set! clauses (cons cl clauses)))))))
+
+  (define (clause-count) (if known-unsatisfiable #f (length clauses)))
   
   (define (to-dimacs)
     (format "p cnf ~a ~a~n~a"
@@ -96,9 +98,10 @@
         output)))
   
   (define (run-picosat)
-    (if known-unsatisfiable
-        (begin #;(pretty-print `(known unsat)) #f)
-        (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs)))))
+    (cond 
+      (known-unsatisfiable #;(pretty-print `(known unsat)) #f)
+      ((null? clauses) '())
+      (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs))))))
   
   (define (make-reduction-tree operation-size f output inputs)
     (if (<= (length inputs) operation-size)
@@ -230,6 +233,7 @@
   
   (provide reset!)
   (provide variable!)
+  (provide clause-count)
   (provide known-unsatisfiable)
   (provide inv)
   (provide variables!)

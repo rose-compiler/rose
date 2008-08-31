@@ -258,7 +258,7 @@
                         (_ (error "Cannot handle constraint" c))))
                     (reverse cl))
           (for-each (lambda (var) (convert-expr var)) typed-vars-to-return))
-        (display `(running picosat with ,(variable!) variables ,(hash-table-count vars) of ,(hash-table-count definitions) user-vars))
+        (display `(running picosat with ,(sub1 (variable!)) variables ,(clause-count) clauses ,(hash-table-count vars) of ,(hash-table-count definitions) user-vars))
         (let ((picosat-result (run-picosat)))
           (pretty-print `(--> ,(if picosat-result 'SAT 'UNSAT)))
           (and picosat-result
