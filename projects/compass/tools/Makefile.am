@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS = compass compassVerifier sampleCompassSubset 
+#SUBDIRS = compass compassVerifier sampleCompassSubset 
+SUBDIRS = compassVerifier sampleCompassSubset compass
 
 check-local:
 	@echo "***************************************************************************"

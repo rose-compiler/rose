@@ -56,6 +56,10 @@ check-local:
 	@echo "*** ROSE/projects/compassSupport: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
 
+install-exec-hook: prerequisites.h instantiate_prerequisites.h
+	cp prerequisites.h instantiate_prerequisites.h $(includedir)
+	cp $(compass_prereqs_dir)/*.h $(includedir)
+
 EXTRA_DIST = \
 	compass.C \
         compass.C.gergo \
