@@ -60,6 +60,10 @@ install-exec-hook: prerequisites.h instantiate_prerequisites.h
 	cp prerequisites.h instantiate_prerequisites.h $(includedir)
 	cp $(compass_prereqs_dir)/*.h $(includedir)
 
+uninstall-local:
+	rm -f $(includedir)/prerequisites.h $(includedir)/instantiate_prerequisites.h
+	@sh -c 'for file in `ls $(compass_prereqs_dir)/*.h`; do echo "rm -f $$file"; rm -f $(includedir)/`basename $$file`; done'
+
 EXTRA_DIST = \
 	compass.C \
         compass.C.gergo \
