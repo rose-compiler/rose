@@ -588,11 +588,15 @@ SgAsmGenericFile::dump(FILE *f)
         return;
     }
     
-    /* Sort sections by offset and size */
+    /* Sort sections by offset (lowest to highest), then size (largest to smallest but zero-sized entries first) */
     for (size_t i = 1; i < sections.size(); i++) {
         for (size_t j=0; j<i; j++) {
             if (sections[j]->get_offset() == sections[i]->get_offset()) {
-                if (sections[j]->get_size() > sections[i]->get_size()) {
+                addr_t size_i = sections[i]->get_size();
+                if (0==size_i) size_i = ~(addr_t)0;
+                addr_t size_j = sections[j]->get_size();
+                if (0==size_j) size_j = ~(addr_t)0;
+                if (size_j < size_i) {
                     SgAsmGenericSection *x = sections[j];
                     sections[j] = sections[i];
                     sections[i] = x;
