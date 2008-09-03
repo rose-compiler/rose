@@ -56,13 +56,13 @@ check-local:
 	@echo "*** ROSE/projects/compassSupport: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
 
-install-exec-hook: prerequisites.h instantiate_prerequisites.h
-	cp prerequisites.h instantiate_prerequisites.h $(includedir)
-	cp $(compass_prereqs_dir)/*.h $(includedir)
+nodist_include_HEADERS = prerequisites.h instantiate_prerequisites.h
+
+install-exec-hook: 
+	cp $(compass_prereqs_dir)/*.h $(DESTDIR)$(includedir)
 
 uninstall-local:
-	rm -f $(includedir)/prerequisites.h $(includedir)/instantiate_prerequisites.h
-	@sh -c 'for file in `ls $(compass_prereqs_dir)/*.h`; do rm -f $(includedir)/`basename $$file`; done'
+	@sh -c 'for file in `ls $(compass_prereqs_dir)/*.h`; do rm -f $(DESTDIR)$(includedir)/`basename $$file`; done'
 
 EXTRA_DIST = \
 	compass.C \
