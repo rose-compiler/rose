@@ -859,6 +859,7 @@ HEADER_GENERIC_HEADER_START
           SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size);
 
           virtual ~SgAsmGenericHeader();
+	  virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        // DQ (8/8/2008): We can't make this pure virtual since then we can't allocate this class.
@@ -896,7 +897,7 @@ HEADER_GENERIC_HEADER_START
        /* Section lookup functions (plural) */
 	  SgAsmGenericFile::sections_t get_sections();
 	  SgAsmGenericFile::sections_t get_sections_by_id(int id);
-	  SgAsmGenericFile::sections_t get_sections_by_name(const std::string&, char sep=0);
+	  SgAsmGenericFile::sections_t get_sections_by_name(std::string, char sep=0);
 	  SgAsmGenericFile::sections_t get_sections_by_offset(addr_t offset, addr_t size);
 	  SgAsmGenericFile::sections_t get_sections_by_rva(addr_t rva);
 	  SgAsmGenericFile::sections_t get_sections_by_va(addr_t va);
@@ -961,10 +962,12 @@ HEADER_GENERIC_FILE_START
           SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0);
 	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0);
 	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0);
-	  static SgAsmGenericSection *best_section_by_va(const sections_t &sections);
+	  static SgAsmGenericSection *best_section_by_va(const sections_t &sections, addr_t va);
 
        /* Holes (unreferenced regions in the file) */	
-          addr_t get_next_section_offset(addr_t offset, SgAsmGenericHeader *h=0);      /* Find file offset for next section */
+          addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
+	  void add_hole(SgAsmGenericSection*);		      /* Add section to list of holes */
+	  void remove_hole(SgAsmGenericSection*);             /* Remove section from list of holes */
           void fill_holes();                                  /* Find holes in file and create sections to fill them */
           void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
 
@@ -4105,7 +4108,7 @@ SOURCE_GENERIC_HEADER_END
 SOURCE_GENERIC_FILE_START
 
 SgAsmGenericFile::SgAsmGenericFile(std::string file_name)
-   : p_fd(-1), p_headers(NULL)
+   : p_fd(-1), p_headers(NULL), p_holes(NULL)
    {
      ctor(file_name);
    }

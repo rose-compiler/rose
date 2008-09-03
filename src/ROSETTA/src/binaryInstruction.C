@@ -1576,7 +1576,9 @@ Grammar::setUpBinaryInstructions ()
   /* All known header sections for this file */
      AsmGenericFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+  /* All known holes (areas otherwise unreferenced by parsing) */
+     AsmGenericFile.setDataPrototype("SgAsmGenericSectionList*", "holes", "= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
   // ExecFamily          family;                         // General format: ELF, PE, etc.
