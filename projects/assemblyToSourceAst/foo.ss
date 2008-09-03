@@ -616,7 +616,10 @@
     (`(goto ,l) (get-label l))
     (`(label ,l ,body) `(label ,l ,(expand-one body)))
     (`(if ,p ,a ,b) `(if ,p ,(expand-one a) ,(expand-one b)))
-    (`(case ,k . ,cases) `(case ,k . ,(map (match-lambda (`(,keys ,e) `(,keys ,(expand-one e)))) cases)))
+    (`(case ,k . ,cases)
+     (if (>= (length cases) 4)
+         `(case ,k . ,cases)
+         `(case ,k . ,(map (match-lambda (`(,keys ,e) `(,keys ,(expand-one e)))) cases))))
     (`(expr . ,_) e)
     (`(parallel-assign . ,_) e)
     (`(begin . ,rest) `(begin . ,(map expand-one rest)))
@@ -801,13 +804,29 @@
       (`(label ,l ,body) `(label ,l ,(change-memory-reads body)))
       (_ (error "change-memory-reads" s)))))
 
-(set! data
-      (map change-memory-reads data))
 
-(define c 0)
-(set! data
-      (map (match-lambda (`(label ,l ,body) (set! c (add1 c)) (pretty-print `(entry ,c ,l of ,(length data))) `(label ,l ,(remove-unused-variables (check-constraints body))))
-                         (e e))
-           data))
+(define (sat-simplify-loop)
+  (let ((c 0))
+    (set! data
+          (map (match-lambda
+                 (`(label ,l ,body)
+                  (set! c (add1 c))
+                  (pretty-print `(entry ,c ,l of ,(length data)))
+                  `(label ,l
+                          ,(remove-unused-variables
+                            (copy-and-constant-prop
+                             (check-constraints
+                              (copy-and-constant-prop
+                               (change-memory-reads body)
+                               '()
+                               memory-simple?))
+                             '()
+                             basic-simple?))))
+                 (e e))
+               data))))
+
+(sat-simplify-loop)
+(set! data (map expand-one data))
+(sat-simplify-loop)
 
 (pretty-print (map change-to-let* data))

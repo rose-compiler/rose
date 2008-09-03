@@ -5,49 +5,53 @@
   (require scheme/system)
   (require scheme/pretty)
   
-  (define variable-counter 1) ; 0 is not a valid value
-  (define clauses '())
-  (define known-unsatisfiable #f)
-  (define or-gate-cse-table (make-hash-table 'equal))
+  (define-struct state
+    (variable-counter
+     clauses
+     known-unsatisfiable
+     or-gate-cse-table
+     mux-cse-table)
+    #f)
   
-  (define (reset!)
-    (set! variable-counter 1)
-    (set! clauses '())
-    (set! known-unsatisfiable #f)
-    (set! or-gate-cse-table (make-hash-table 'equal)))
+  (define (make-empty-state)
+    (make-state 1 '() #f (make-hash-table 'equal) (make-hash-table 'equal)))
 
-  (define (variable!) (let ((c variable-counter)) (set! variable-counter (add1 c)) c))
+  (define (variable! st)
+    (let ((c (state-variable-counter st)))
+      (set-state-variable-counter! st (add1 c))
+      c))
   (define (inv v)
     (cond
       ((number? v) (- v))
       ((boolean? v) (not v))
       (else (error "inv" v))))
-  (define (variables! n) (list-tabulate n (lambda _ (variable!))))
+  (define (variables! st n) (list-tabulate n (lambda _ (variable! st))))
   (define (sort-numbers ls) ; There doesn't seem to be a good way to import sort
     (if (null? ls)
         '()
         (let ((m (apply min ls)))
           (cons m (sort-numbers (remove-one m ls))))))
-  (define (add-clause! cl)
+  (define (add-clause! st cl)
     (cond
-      (known-unsatisfiable (set! clauses '()))
+      ((state-known-unsatisfiable st) (set-state-clauses! st '()))
       ((memq #t cl) (void))
       (else
        (let ((cl (filter (lambda (x) x) cl)))
          (if (null? cl)
-             (set! known-unsatisfiable #t) ; fail
-             (set! clauses (cons cl clauses)))))))
+             (set-state-known-unsatisfiable! st #t) ; fail
+             (set-state-clauses! st (cons cl (state-clauses st))))))))
 
-  (define (clause-count) (if known-unsatisfiable #f (length clauses)))
+  (define (variable-count st) (state-variable-counter st))
+  (define (clause-count st) (if (state-known-unsatisfiable st) #f (length (state-clauses st))))
   
-  (define (to-dimacs)
+  (define (to-dimacs st)
     (format "p cnf ~a ~a~n~a"
-            (sub1 variable-counter)
-            (length clauses)
+            (variable-count st)
+            (clause-count st)
             (string-concatenate
              (map (lambda (cl)
                     (format "~a 0~n" (string-join (map number->string cl) " ")))
-                  clauses))))
+                  (state-clauses st)))))
   
   (define (from-picosat output)
     (let* ((tokens (string-tokenize output))
@@ -97,36 +101,39 @@
         (control 'wait)
         output)))
   
-  (define (run-picosat)
+  (define (run-picosat st)
     (cond 
-      (known-unsatisfiable #;(pretty-print `(known unsat)) #f)
-      ((null? clauses) '())
-      (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs))))))
+      ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
+      ((null? (state-clauses st)) '())
+      (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs st))))))
   
-  (define (make-reduction-tree operation-size f output inputs)
+  (define (make-reduction-tree st operation-size f output inputs)
     (if (<= (length inputs) operation-size)
-        (apply f output inputs)
+        (apply f st output inputs)
         (let* ((subtrees
                 (let loop ((ls inputs))
                   (if (<= (length ls) operation-size)
                       (list ls)
                       (cons (take ls operation-size) (loop (drop ls operation-size))))))
-               (new-vars (map (lambda (st) (if (= (length st) 1) #f (variable!))) subtrees)))
-          (for-each (lambda (chunk var) (if var (apply f var chunk) (void))) subtrees new-vars)
-          (make-reduction-tree operation-size f output
-                               (map (lambda (nv st) (or nv (car st)))
+               (new-vars (map (lambda (s) (if (= (length s) 1) #f (variable! st))) subtrees)))
+          (for-each (lambda (chunk var) (if var (apply f st var chunk) (void))) subtrees new-vars)
+          (make-reduction-tree st operation-size f output
+                               (map (lambda (nv s) (or nv (car s)))
                                     new-vars subtrees)))))
   
   ; Helpers and logic gates
   ; All of these can have inputs and/or outputs inverted using the inv function
   
-  (define (force-1! var)
+  (define (force-1! st var)
     (cond
-      ((eq? var #f) (unsatisfiable!))
+      ((eq? var #f) (unsatisfiable! st))
       ((eq? var #t) (void))
-      (else #;(pretty-print `(force-1! ,var)) (add-clause! `(,var)))))
-  (define (force-0! var) (force-1! (inv var)))
-  (define (unsatisfiable!) #;(pretty-print `(unsatisfiable!)) (set! clauses '()) (add-clause! `()))
+      (else #;(pretty-print `(force-1! ,var)) (add-clause! st `(,var)))))
+  (define (force-0! st var) (force-1! st (inv var)))
+  (define (unsatisfiable! st)
+    #;(pretty-print `(unsatisfiable!))
+    (set-state-clauses! st '())
+    (add-clause! st `()))
   
   (define (has-inverses? vars)
     (if (null? vars)
@@ -135,12 +142,12 @@
             #t
             (has-inverses? (cdr vars)))))
   
-  (define (or-gate-raw! output . inputs)
+  (define (or-gate-raw! st output . inputs)
     ;(pretty-print `(or-gate-raw! ,@inputs -> ,output))
-    (for-each (lambda (in) (add-clause! `(,(inv in) ,output))) inputs)
-    (add-clause! `(,(inv output) ,@inputs)))
+    (for-each (lambda (in) (add-clause! st `(,(inv in) ,output))) inputs)
+    (add-clause! st `(,(inv output) ,@inputs)))
   
-  (define (or-gate! . inputs)
+  (define (or-gate! st . inputs)
     ;(pretty-print `(or-gate! . ,inputs))
     (if (or (memq #t inputs) (has-inverses? inputs))
         #t
@@ -149,54 +156,58 @@
             ((null? inputs) #f)
             ((null? (cdr inputs)) (car inputs))
             (else
-             (let ((cse-entry (hash-table-get or-gate-cse-table inputs #f)))
+             (let ((cse-entry (hash-table-get (state-or-gate-cse-table st) inputs #f)))
                (if cse-entry
                    (begin #;(pretty-print `(got ,inputs -> ,cse-entry from table)) cse-entry)
-                   (let ((output (variable!)))
-                     (make-reduction-tree 5 or-gate-raw! output inputs)
-                     (hash-table-put! or-gate-cse-table inputs output)
+                   (let ((output (variable! st)))
+                     (make-reduction-tree st 5 or-gate-raw! output inputs)
+                     (hash-table-put! (state-or-gate-cse-table st) inputs output)
                      output))))))))
   
-  (define (nor-gate! . inputs) (inv (apply or-gate! inputs)))
-  (define (and-gate! . inputs) (inv (apply or-gate! (map inv inputs))))
-  (define (nand-gate! . inputs) (apply or-gate! (map inv inputs)))
-  (define (identify! . vars)
+  (define (nor-gate! st . inputs) (inv (apply or-gate! st inputs)))
+  (define (and-gate! st . inputs) (inv (apply or-gate! st (map inv inputs))))
+  (define (nand-gate! st . inputs) (apply or-gate! st (map inv inputs)))
+  (define (identify! st . vars)
     (cond
-      ((has-inverses? vars) (unsatisfiable!))
+      ((has-inverses? vars) (unsatisfiable! st))
       ((memq #t vars)
-       (for-each force-1! vars))
+       (for-each (lambda (v) (force-1! st v)) vars))
       ((memq #f vars)
-       (for-each force-0! vars))
+       (for-each (lambda (v) (force-0! st v)) vars))
       (else
        (let ((v1 (car vars)))
          (let loop ((vars (cdr vars)))
            (if (null? vars)
                (void)
                (let ((v2 (car vars)))
-                 (add-clause! `(,v1 ,(inv v2)))
-                 (add-clause! `(,(inv v1) ,v2))
+                 (add-clause! st `(,v1 ,(inv v2)))
+                 (add-clause! st `(,(inv v1) ,v2))
                  (loop (cdr vars)))))))))
   
-  (define (mux! sel in-true in-false)
+  (define (mux! st sel in-true in-false)
     (cond
       ((eq? sel #t) in-true)
       ((eq? sel #f) in-false)
-      ((eq? in-false #f) (and-gate! sel in-true))
-      ((eq? in-true #f) (and-gate! (inv sel) in-false))
-      ((eq? in-false #t) (or-gate! (inv sel) in-true))
-      ((eq? in-true #t) (or-gate! sel in-false))
+      ((eq? in-false #f) (and-gate! st sel in-true))
+      ((eq? in-true #f) (and-gate! st (inv sel) in-false))
+      ((eq? in-false #t) (or-gate! st (inv sel) in-true))
+      ((eq? in-true #t) (or-gate! st sel in-false))
       ((eqv? in-true in-false) in-true)
+      ((< in-false in-true) (mux! st (inv sel) in-false in-true))
+      ((hash-table-get (state-mux-cse-table st) (list sel in-true in-false) #f)
+       => (lambda (output) output))
       (else
-       (let ((output (variable!)))
+       (let ((output (variable! st)))
          ;(pretty-print `(mux! ,sel ,in-true ,in-false -> ,output))
-         (add-clause! `(,sel ,in-false ,(inv output)))
-         (add-clause! `(,sel ,(inv in-false) ,output))
-         (add-clause! `(,(inv sel) ,in-true ,(inv output)))
-         (add-clause! `(,(inv sel) ,(inv in-true) ,output))
+         (add-clause! st `(,sel ,in-false ,(inv output)))
+         (add-clause! st `(,sel ,(inv in-false) ,output))
+         (add-clause! st `(,(inv sel) ,in-true ,(inv output)))
+         (add-clause! st `(,(inv sel) ,(inv in-true) ,output))
+         (hash-table-put! (state-mux-cse-table st) (list sel in-true in-false) output)
          output))))
   
-  (define (xor2-gate! in1 in2)
-    (mux! in1 (inv in2) in2))
+  (define (xor2-gate! st in1 in2)
+    (mux! st in1 (inv in2) in2))
   
   (define (remove-one elt ls)
     (cond
@@ -204,7 +215,7 @@
       ((eqv? elt (car ls)) (cdr ls))
       (else (cons (car ls) (remove-one elt (cdr ls))))))
   
-  (define (xor-gate! . inputs)
+  (define (xor-gate! st . inputs)
     (let loop ((inputs (filter (lambda (x) (not (eq? x #f))) inputs)))
       (cond
         ((null? inputs) #f)
@@ -212,29 +223,36 @@
         ((memv (inv (car inputs)) (cdr inputs)) (inv (loop (remove-one (inv (car inputs)) (cdr inputs)))))
         ((memv (car inputs) (cdr inputs)) (loop (remove-one (car inputs) (cdr inputs))))
         (else
-         (xor2-gate! (car inputs) (loop (cdr inputs)))))))
+         (xor2-gate! st (car inputs) (loop (cdr inputs)))))))
   
-  (define (xnor-gate! . inputs) (inv (apply xor-gate! inputs)))
+  (define (xnor-gate! st . inputs) (inv (apply xor-gate! st inputs)))
   
-  (define (threshold-gate! required-count . inputs)
+  (define (threshold-gate! st required-count . inputs)
     (cond
       ((zero? required-count) #t)
       ((> required-count (length inputs)) #f)
-      ((= required-count (length inputs)) (apply and-gate! inputs))
-      ((= required-count 1) (apply or-gate! inputs))
-      ((memq #f inputs) (apply threshold-gate! required-count (remove-one #f inputs)))
-      ((memq #t inputs) (apply threshold-gate! (sub1 required-count) (remove-one #t inputs)))
-      (else (mux! (car inputs)
-                  (apply threshold-gate! (sub1 required-count) (cdr inputs))
-                  (apply threshold-gate! required-count (cdr inputs))))))
+      ((= required-count (length inputs)) (apply and-gate! st inputs))
+      ((= required-count 1) (apply or-gate! st inputs))
+      ((memq #f inputs) (apply threshold-gate! st required-count (remove-one #f inputs)))
+      ((memq #t inputs) (apply threshold-gate! st (sub1 required-count) (remove-one #t inputs)))
+      (else (mux! st
+                  (car inputs)
+                  (apply threshold-gate! st (sub1 required-count) (cdr inputs))
+                  (apply threshold-gate! st required-count (cdr inputs))))))
   
-  (define (majority-gate! in1 in2 in3)
-    (threshold-gate! 2 in1 in2 in3))
+  (define (majority-gate! st in1 in2 in3)
+    (threshold-gate! st 2 in1 in2 in3))
   
-  (provide reset!)
+  (provide state)
+  (provide state-variable-counter)
+  (provide state-clauses)
+  (provide state-known-unsatisfiable)
+  (provide state-or-gate-cse-table)
+  (provide state-mux-cse-table)
+  (provide make-empty-state)
   (provide variable!)
+  (provide variable-count)
   (provide clause-count)
-  (provide known-unsatisfiable)
   (provide inv)
   (provide variables!)
   ; (provide add-clause!)
