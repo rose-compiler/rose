@@ -125,10 +125,6 @@ SgAsmGenericFile::ctor(std::string fileName)
     /* Make file contents available through an STL vector without actually reading the file */
     p_data = SgFileContentList(mapped, p_sb.st_size);
 
-    ROSE_ASSERT(p_sections == NULL);
-    p_sections = new SgAsmGenericSectionList();
-    p_sections->set_parent(this);
-
     ROSE_ASSERT(p_headers  == NULL);
     p_headers  = new SgAsmGenericHeaderList();
     p_headers->set_parent(this);
@@ -137,19 +133,12 @@ SgAsmGenericFile::ctor(std::string fileName)
 /* Destructs by closing and unmapping the file and destroying all sections, headers, etc. */
 SgAsmGenericFile::~SgAsmGenericFile() 
 {
-    /* Delete subclasses before super classes (e.g., ExecHeader before ExecSection) */
+    /* Delete child headers before this */
     while (p_headers->get_headers().size()) {
         SgAsmGenericHeader *header = p_headers->get_headers().back();
         p_headers->get_headers().pop_back();
         delete header;
     }
-    while (p_sections->get_sections().size()) {
-        SgAsmGenericSection *section = p_sections->get_sections().back();
-        p_sections->get_sections().pop_back();
-        delete section;
-    }
-
-    ROSE_ASSERT(p_sections->get_sections().empty() == true);
     ROSE_ASSERT(p_headers->get_headers().empty()   == true);
     
     /* Unmap and close */
@@ -162,10 +151,7 @@ SgAsmGenericFile::~SgAsmGenericFile()
         close(p_fd);
 
  // Delete the pointers to the IR nodes containing the STL lists
-    delete p_sections;
     delete p_headers;
-
-    p_sections = NULL;
     p_headers = NULL;
 }
 
@@ -217,208 +203,156 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
     }
 }
 
-/* FIXME: declare 'sections_t' and 'headers_t'
 /* Returns list of all sections in the file, including headers. */
-std::vector<SgAsmGenericSection*>
+SgAsmGenericFile::sections_t
 SgAsmGenericFile::get_sections()
 {
-    headers_t retval = p_headers->get_headers();
+    sections_t retval;
+
+    retval.insert(retval.end(), p_headers->get_headers().begin(), p_headers->get_headers().end());
     for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-      retval.push_back((*i)->get_sections());
+        const sections_t &recurse = (*i)->get_sections();
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
 }
 
-/* FIXME: move, needs prototype */
-/* Returns list of next sections that have the specified ID. */
-sections_t
-SgAsmGenericHeader::get_sections_by_id(int id)
-{
-  sections_t retval;
-  for (sections_t::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-    if ((*i)->get_id() == id) {
-      retval.push_back(*i);
-    }
-  }
-  return retval;
-}
-
-/* FIXME: move, prototype */
-/* Like the plural version but returns non-null only if there's exactly one section with the specified ID */
-SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound=0)
-{
-  sections_t possible = get_sections_by_id(int it);
-  if (nfound) *nfound = possible.size();
-  return possible.size()==1 ? possible[0] : NULL;
-}
-
-/* FIXME: prototype */
-sections_t
+/* Returns all sections having specified ID in all headers */
+SgAsmGenericFile::sections_t
 SgAsmGenericFile::get_sections_by_id(int id)
 {
-  sections_t retval;
-  for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-    retval.push_back((*i)->get_sections_by_id(id));
-  }
-  return retval;
+    sections_t retval;
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        const sections_t &recurse = (*i)->get_sections_by_id(id);
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
+    }
+    return retval;
 }
 
-/* FIXME: prototype */
-/* Returns the pointer to section with the specified ID only if there's exactly one match. */
+/* Returns the pointer to section with the specified ID across all headers only if there's exactly one match. */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_id(int id, size_t *nfound=0)
+SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/)
 {
-  sections_t possible = get_sections_by_id(id);
-  if (nfound) *nfound = possible.size();
-  return possible.size()==1 ? possible[0] : NULL;
+    sections_t possible = get_sections_by_id(id);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
 }
 
-/* FIXME: move, prototype */
-/* Returns sections that have the specified name. If 'SEP' is a non-null string then ignore any part of name at and after SEP. */
-sections_t
-SgAsmGenericHeader::get_sections_by_name(std::string name, char *sep=0)
+/* Returns all sections having specified name across all headers. */
+SgAsmGenericFile::sections_t
+SgAsmGenericFile::get_sections_by_name(const std::string &name, char sep/*or NUL*/)
 {
-  if (sep) {
-    size_t pos = name.find(sep);
-    if (pos!=name.npos)
-      name.erase(pos);
-  }
-
-  sections_t retval;
-  for (sections_t::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); ++i) {
-    if (0==(*i)->get_name().compare(name))
-      retval.push_back(*i);
-  }
-  return retval;
+    sections_t retval;
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        const sections_t &recurse = (*i)->get_sections_by_name(name, sep);
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
+    }
+    return retval;
 }
 
-/* FIXME: move, prototype */
-SgAsmGenericSection *
-SgAsmGenericHeader::get_section_by_name(std::string name, char *sep=0, size_t *nfound=0)
-{
-  sections_t possible = find_sections_by_name(name, sep);
-  if (nfound) *nfound = possible.size();
-  return possible.size()==1 ? possible[0] : NULL;
-}
-
-/* FIXME: prototype */
-sections_t
-SgAsmGenericFile::get_sections_by_name(std::string name, char *sep=0)
-{
-  sections_t retval;
-  for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-    retval.push_back((*i)->get_sections_by_name(name, sep));
-  }
-  return retval;
-}
-
-/* FIXME: prototype */
 /* Returns pointer to the section with the specified name, or NULL if there isn't exactly one match. Any characters in the name
  * after the first occurrence of SEP are ignored (default is NUL). For instance, if sep=='$' then the following names are all
  * equivalent: .idata, .idata$, and .idata$1 */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_name(std::string name, char sep=0, size_t *nfound)
+SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*/, size_t *nfound/*optional*/)
 {
-  sections_t possible = get_sections_by_name(name, sep);
-  if (nfound) *nfound = possible.size();
-  return possible.size()==1 ? possible[0] : NULL;
+    sections_t possible = get_sections_by_name(name, sep);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
 }
 
-
-
-
-
-
-    --- HERE ---
-
-
-
-
-
-
-
-
-/* Returns a vector of sections that contain the specified portion of the file */
-std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size, SgAsmGenericHeader *hdr)
+/* Returns all sections that contain all of the specified portion of the file across all headers. */
+SgAsmGenericFile::sections_t
+SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size)
 {
-    std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
-         i != p_sections->get_sections().end();
-         i++) {
-        SgAsmGenericSection *section = *i;
-        if ((!hdr || hdr==section->get_header()) &&
-            offset >= section->get_offset() &&
-            offset < section->get_offset()+section->get_size() &&
-            offset-section->get_offset() + size <= section->get_size())
-            retval.push_back(section);
+    sections_t retval;
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        const sections_t &recurse = (*i)->get_sections_by_offset(offset, size);
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
 }
 
-/* Returns a vector of sections that are mapped to the specified RVA */
-std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_rva(addr_t rva, SgAsmGenericHeader *hdr)
-{
-    std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
-         i != p_sections->get_sections().end();
-         i++) {
-        SgAsmGenericSection *section = *i;
-        if ((!hdr || hdr==section->get_header()) &&
-            section->is_mapped() &&
-            rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
-            retval.push_back(section);
-        }
-    }
-    return retval;
-}
-
-/* Returns a vector of sections that are mapped to the specified virtual address (VA). Sections are mapped by relative virtual
- * addresses (RVAs) that are based on the base VA of the section's file header. If the section is mapped but has no associated
- * file header then we assume zero for the base VA. */
-std::vector<SgAsmGenericSection*>
-SgAsmGenericFile::get_sections_by_va(addr_t va, SgAsmGenericHeader *hdr)
-{
-    std::vector<SgAsmGenericSection*> retval;
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
-         i != p_sections->get_sections().end();
-         i++) {
-        SgAsmGenericSection *section = *i;
-        if ((!hdr || hdr==section->get_header()) &&
-            section->is_mapped() &&
-            va>=section->get_base_va() + section->get_mapped_rva() &&
-            va < section->get_base_va() + section->get_mapped_rva() + section->get_mapped_size()) {
-            retval.push_back(section);
-        }
-    }
-    return retval;
-}
-
-/* Like get_sections_by_va() except it verifies that the specified virtual address maps to the same file offset in all
- * sections containing that VA. It then returns a single section, giving preference to the section with the smallest mapped
- * size and having a non-negative identification number (i.e, appearing in a section table of some sort). */
+/* Returns single section that contains all of the specified portion of the file across all headers. */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_va(addr_t va, SgAsmGenericHeader *hdr)
+SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound)
 {
-    const std::vector<SgAsmGenericSection*> &possible = get_sections_by_va(va, hdr);
-    if (0==possible.size()) {
-        return NULL;
-    } else if (1==possible.size()) {
-        return possible[0];
-    }
+    sections_t possible = get_sections_by_offset(offset, size);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
 
-    /* Choose the "best" section to return. */
-    SgAsmGenericSection *best = possible[0];
-    addr_t fo0 = possible[0]->get_va_offset(va);
-    for (size_t i=1; i<possible.size(); i++) {
-        if (fo0 != possible[i]->get_va_offset(va))
-            return NULL; /* all possible sections must map the VA to the same file offset */
-        if (best->get_mapped_size() > possible[i]->get_mapped_size()) {
-            best = possible[i]; /*prefer sections with a smaller mapped size*/
-        } else if (best->get_name().size()==0 && possible[i]->get_name().size()>0) {
-            best = possible[i]; /*prefer sections having a name*/
+/* Returns all sections that are mapped to include the specified relative virtual address across all headers. */
+SgAsmGenericFile::sections_t
+SgAsmGenericFile::get_sections_by_rva(addr_t rva)
+{
+    sections_t retval;
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        const sections_t &recurse = (*i)->get_sections_by_rva(rva);
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
+    }
+    return retval;
+}
+
+/* Returns single section that is mapped to include the specified relative virtual file address across all headers. */
+SgAsmGenericSection *
+SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/)
+{
+    sections_t possible = get_sections_by_rva(rva);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Returns all sections that are mapped to include the specified virtual address across all headers. */
+SgAsmGenericFile::sections_t
+SgAsmGenericFile::get_sections_by_va(addr_t va)
+{
+    sections_t retval;
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        const sections_t &recurse = (*i)->get_sections_by_va(va);
+        retval.insert(retval.end(), recurse.begin(), recurse.end());
+    }
+    return retval;
+}
+
+/* Returns single section that is mapped to include the specified virtual address across all headers. */
+SgAsmGenericSection *
+SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound)
+{
+    sections_t possible = get_sections_by_va(va);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Similar to get_section_by_va() except when more than one section contains the specified virtual address we choose the
+ * "best" one. All candidates must map the virtual address to the same file address or else we fail (return null and number of
+ * candidates). See code below for definition of "best". */
+SgAsmGenericSection *
+SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound)
+{
+    const sections_t &candidates = get_sections_by_va(va);
+    if (nfound)
+        *nfound = candidates.size();
+    return best_section_by_va(condidates);
+}
+
+/* Definition for "best" as used by
+ * SgAsmGenericFile::get_best_section_by_va() and
+ * SgAsmGenericHeader::get_best_section_by_va() */
+static SgAsmGenericSection *
+SgAsmGenericFile::best_section_by_va(const sections_t &sections)
+{
+    if (1==sections.size()) 
+        return sections[0];
+    SgAsmGenericSection *best = sections[0];
+    addr_t fo0 = sections[0]->get_va_offset(va);
+    for (size_t i=1; i<sections.size(); i++) {
+        if (fo0 != sections[i]->get_va_offset(va))
+            return NULL; /* all sections sections must map the VA to the same file offset */
+        if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
+            best = sections[i]; /*prefer sections with a smaller mapped size*/
+        } else if (best->get_name().size()==0 && sections[i]->get_name().size()>0) {
+            best = sections[i]; /*prefer sections having a name*/
         } else {
             /*prefer section defined earlier*/
         }
@@ -769,7 +703,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     }
 }
 
-/* Destructor must remove the section from its parent file's section list */
+/* Destructor must remove the section from its parent file's or header's section list */
 SgAsmGenericSection::~SgAsmGenericSection()
 {
     SgAsmGenericFile* ef = get_file();
@@ -1239,25 +1173,41 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
     /* Create child IR nodes and set their parent */
     p_symbols = new SgAsmGenericSymbolList;
     p_symbols->set_parent(this);
+
     p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
+
     p_exec_format = new SgAsmGenericFormat;
     p_exec_format->set_parent(this);
+
+    p_sections = new SgAsmGenericSectionList;
+    p_sections->set_parent(this);
 }
 
 /* Destructor must remove the header from its parent file's headers list. */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
+    /* Delete child sections before this */
+    while (p_sections->get_sections().size()) {
+        SgAsmGenericSection *section = p_sections->get_sections().back();
+        p_sections->get_sections().pop_back();
+        delete section;
+    }
+    ROSE_ASSERT(p_sections->get_sections().empty() == true);
+
     if (get_file() != NULL)
         get_file()->remove_header(this);
 
     delete p_symbols;
     delete p_dlls;
     delete p_exec_format;
+    delete p_sections;
 
     p_symbols = NULL;
     p_dlls = NULL;
     p_exec_format = NULL;
+    p_sections = NULL;
+
 }
 
 /* Adds a new section to the header. This is called implicitly by the section constructor. */
@@ -1333,6 +1283,135 @@ SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
      *        (RPM 2008-08-19) */
     p_symbols->get_symbols().back()->set_parent(p_symbols);
 }
+
+/* Returns sections in this header that have the specified ID. */
+SgAsmGenericFile::sections_t
+SgAsmGenericHeader::get_sections_by_id(int id)
+{
+    SgAsmGenericFile::sections_t retval;
+    for (sections_t::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+        if ((*i)->get_id() == id) {
+            retval.push_back(*i);
+        }
+    }
+    return retval;
+}
+
+/* Returns single section in this header that has the specified ID. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound=0)
+{
+    sections_t possible = get_sections_by_id(int it);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Returns sections in this header that have the specified name. If 'SEP' is a non-null string then ignore any part of name at
+ * and after SEP. */
+sections_t
+SgAsmGenericHeader::get_sections_by_name(std::string name, char *sep=0)
+{
+    if (sep) {
+        size_t pos = name.find(sep);
+        if (pos!=name.npos)
+            name.erase(pos);
+    }
+
+    sections_t retval;
+    for (sections_t::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); ++i) {
+        if (0==(*i)->get_name().compare(name))
+            retval.push_back(*i);
+    }
+    return retval;
+}
+
+/* Returns single section in this header that has the specified name. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_name(const std::string &name, char *sep=0, size_t *nfound=0)
+{
+    sections_t possible = get_sections_by_name(name, sep);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Returns sectons in this header that contain all of the specified portion of the file. */
+sections_t
+SgAsmGenericHeader::get_sections_by_offset(addr_t offset, addr_t size)
+{
+    sections_t retval;
+    for (sections_t::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); ++i) {
+        SgAsmGenericSection *section = *i;
+        if (offset >= section->get_offset() &&
+            offset < section->get_offset()+section->get_size() &&
+            offset-section->get_offset() + size <= section->get_size())
+            retval.push_back(section);
+    }
+    return retval;
+}
+
+/* Returns single section in this header that contains all of the specified portion of the file. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0)
+{
+    sections_t possible = get_sections_by_offset(offset, size);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Returns sections in this header that are mapped to include the specified relative virtual address. */
+sections_t
+SgAsmGenericHeader::get_sections_by_rva(addr_t rva)
+{
+    sections_t retval;
+    for (sections_t::iterator i = p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+        SgAsmGenericSection *section = *i;
+        if (section->is_mapped() &&
+            rva >= section->get_mapped_rva() && rva < section->get_mapped_rva() + section->get_mapped_size()) {
+            retval.push_back(section);
+        }
+    }
+    return retval;
+}
+
+/* Returns single section in this header that is mapped to include the specified relative virtual address. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_rva(addr_t rva, size_t *nfound=0)
+{
+    sections_t possible = get_section_by_rva(rva);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Returns sections in this header that are mapped to include the specified virtual address */
+sections_t
+SgAsmGenericHeader::get_sections_by_va(addr_t va)
+{
+    if (va < get_base_va())
+        return sections_t();
+    addr_t rva = va - get_base_va();
+    return get_sections_by_rva(rva);
+}
+
+/* Returns single section in this header that is mapped to include the specified virtual address. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_va_FIXME(addr_t va, size_t *nfound=0)
+{
+    sections_t possible = get_section_by_va(va);
+    if (nfound) *nfound = possible.size();
+    return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* Like SgAsmGenericFile::get_best_section_by_va() except considers only sections defined in this header. */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_best_section_by_va(addr_t va, size_t *nfound)
+{
+    const sections_t &candidates = get_sections_by_va(va);
+    if (nfound)
+        *nfound = candiates.size();
+    return SgAsmGenericFile::best_section_by_va(candiates);
+}
+
+
 
 /* Print some debugging info */
 void

@@ -889,9 +889,26 @@ HEADER_GENERIC_HEADER_START
        // size_t get_word_size() const {return p_exec_format.p_word_size;}
           size_t get_word_size() const;
 
-       /* Functions for sections (plurals return vectors; singular return one or NULL) */
+       /* Functions for sections */
           void add_section(SgAsmGenericSection*);             /* Add new section to the file; called implicitly by section ctor */
           void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
+
+       /* Section lookup functions (plural) */
+	  SgAsmGenericFile::sections_t get_sections();
+	  SgAsmGenericFile::sections_t get_sections_by_id(int id);
+	  SgAsmGenericFile::sections_t get_sections_by_name(const std::string&, char sep=0);
+	  SgAsmGenericFile::sections_t get_sections_by_offset(addr_t offset, addr_t size);
+	  SgAsmGenericFile::sections_t get_sections_by_rva(addr_t rva);
+	  SgAsmGenericFile::sections_t get_sections_by_va(addr_t va);
+
+       /* Section lookup functions (singular) */
+	  SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0);
+          SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0);
+	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0);
+
 
   // protected:
        // ExecFormat          exec_format;                    /* General info about the executable format */
@@ -909,6 +926,8 @@ HEADER_GENERIC_HEADER_END
 
 HEADER_GENERIC_FILE_START
      public:
+	  typedef std::vector<SgAsmGenericSection*> sections_t;
+	  typedef std::vector<SgAsmGenericHeader*> headers_t;
 
           SgAsmGenericFile(std::string file_name);
 
@@ -927,13 +946,24 @@ HEADER_GENERIC_FILE_START
           const SgFileContentList& content() { return p_data; }     	/* Entire file contents */
           SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents */
 
-	  std::vector<SgAsmGenericSection*> get_sections();             /* Return all sections, including headers */
-          SgAsmGenericSection *get_section_by_id(int id, SgAsmGenericHeader *h=0); /* Returns first section having specified ID */
-          SgAsmGenericSection *get_section_by_name(std::string, char sep='\0', SgAsmGenericHeader *h=0);/* Find section within file by name */
-          std::vector<SgAsmGenericSection*> get_sections_by_offset(addr_t offset, addr_t size, SgAsmGenericHeader *h=0);
-          std::vector<SgAsmGenericSection*> get_sections_by_rva(addr_t rva, SgAsmGenericHeader *h=0); /*Return sections mapped to specified relative virtual address */
-          SgAsmGenericSection *get_section_by_va(addr_t va, SgAsmGenericHeader *h=0); /* Return single section mapped to specified virtual address */
-          std::vector<SgAsmGenericSection*> get_sections_by_va(addr_t va, SgAsmGenericHeader *h=0); /*Return all sections mapped to specified virtual address */
+       /* Section lookup functions (plural) */
+	  sections_t get_sections();
+	  sections_t get_sections_by_id(int id);
+	  sections_t get_sections_by_name(const std::string&, char sep='\0');
+	  sections_t get_sections_by_offset(addr_t offset, addr_t size);
+	  sections_t get_sections_by_rva(addr_t rva);
+	  sections_t get_sections_by_va(addr_t va);
+
+       /* Section lookup functions (singular) */
+	  SgAsmGenericSection *get_section_by_id(int id, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_name(const std::string&, char sep=0, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_offset(addr_t offset, addr_t size, size_t *nfound=0);
+          SgAsmGenericSection *get_section_by_rva(addr_t rva, size_t *nfound=0);
+	  SgAsmGenericSection *get_section_by_va(addr_t va, size_t *nfound=0);
+	  SgAsmGenericSection *get_best_section_by_va(addr_t va, size_t *nfound=0);
+	  static SgAsmGenericSection *best_section_by_va(const sections_t &sections);
+
+       /* Holes (unreferenced regions in the file) */	
           addr_t get_next_section_offset(addr_t offset, SgAsmGenericHeader *h=0);      /* Find file offset for next section */
           void fill_holes();                                  /* Find holes in file and create sections to fill them */
           void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
@@ -3947,9 +3977,6 @@ SOURCE_GENERIC_SECTION_START
 
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
    : 
-#if 0
-p_file(NULL), 
-#endif
 p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
 p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
@@ -4041,7 +4068,7 @@ SOURCE_GENERIC_HEADER_START
 
 SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
    : SgAsmGenericSection(ef, NULL, offset, size),
-     p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL)
+     p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL), p_sections(NULL)
    {
      ctor(ef, offset, size);
    }
@@ -4078,7 +4105,7 @@ SOURCE_GENERIC_HEADER_END
 SOURCE_GENERIC_FILE_START
 
 SgAsmGenericFile::SgAsmGenericFile(std::string file_name)
-   : p_fd(-1), p_sections(NULL), p_headers(NULL)
+   : p_fd(-1), p_headers(NULL)
    {
      ctor(file_name);
    }
