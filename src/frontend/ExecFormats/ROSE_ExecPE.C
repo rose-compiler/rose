@@ -749,7 +749,7 @@ SgAsmPESectionTable::unparse(FILE *f)
 {
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr != NULL);
-    SgAsmGenericFile::sections_t sections = fhdr->get_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id()>=0) {

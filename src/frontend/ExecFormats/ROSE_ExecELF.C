@@ -1003,7 +1003,7 @@ SgAsmElfSectionTable::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
-    SgAsmGenericFile::sections_t sections = fhdr->get_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
     /* Write the remaining entries */
     for (size_t i = 0; i < sections.size(); i++) {
