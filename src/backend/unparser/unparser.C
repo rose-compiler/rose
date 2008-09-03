@@ -346,17 +346,17 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                          genericFile->dump(dumpFile);
 
                       // Detailed info about each section
-                         SgAsmGenericSectionList *sections = genericFile->get_sections();
-                         for (size_t i = 0; i < sections->get_sections().size(); i++)
+                         const SgAsmGenericSectionPtrList &sections = genericFile->get_sections();
+                         for (size_t i = 0; i < sections.size(); i++)
                             {
                               printf ("In unparser: output section #%zu \n",i);
                               fprintf(dumpFile, "Section [%zd]:\n", i);
-                              sections->get_sections()[i]->dump(dumpFile, "  ", -1);
+                              sections[i]->dump(dumpFile, "  ", -1);
 
-                              bool outputInstruction = (sections->get_sections()[i]->get_mapped() == true);
+                              bool outputInstruction = (sections[i]->get_mapped() == true);
 #if 0
                            // Handle special case of Extended DOS Header (initial part of PE files)
-                              if (sections->get_sections()[i]->get_mapped() == false && sections->get_sections()[i]->get_name() == "Extended DOS Header")
+                              if (sections[i]->get_mapped() == false && sections[i]->get_name() == "Extended DOS Header")
                                  {
                                    printf ("Handling the special case of the Extended DOS Header \n");
                                    outputInstruction = true;
@@ -367,7 +367,7 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                               if (outputInstruction == true)
                                  {
                                 // Output the instructions
-                                   SgAsmGenericHeader* genericHeader = sections->get_sections()[i]->get_header();
+                                   SgAsmGenericHeader* genericHeader = sections[i]->get_header();
                                    ROSE_ASSERT(genericHeader != NULL);
                                    printf ("header name = %s \n",genericHeader->get_name().c_str());
 
@@ -378,32 +378,32 @@ Unparser::unparseFile ( SgFile* file, SgUnparse_Info& info )
                                         imageBase = asmPEFileHeader->get_e_image_base();
                                       }
  
-                                   printf ("section %s imageBase = 0x%08"PRIx64"\n",sections->get_sections()[i]->get_name().c_str(),imageBase);
+                                   printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name().c_str(),imageBase);
 
-                                   rose_addr_t addressBase  =  imageBase + sections->get_sections()[i]->get_mapped_rva();
-                                   rose_addr_t addressBound =  addressBase + sections->get_sections()[i]->get_mapped_size();
+                                   rose_addr_t addressBase  =  imageBase + sections[i]->get_mapped_rva();
+                                   rose_addr_t addressBound =  addressBase + sections[i]->get_mapped_size();
 
                                 // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
 
-                                   printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections->get_sections()[i]->get_name().c_str(),addressBase,addressBound);
+                                   printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name().c_str(),addressBase,addressBound);
 
                                 // Build a bitvector of the current section's mapped address space.
-                                   vector<bool> sectionAddressSpace(sections->get_sections()[i]->get_mapped_size(),true);
-                                   for (size_t j = 0; j < sections->get_sections().size(); j++)
+                                   vector<bool> sectionAddressSpace(sections[i]->get_mapped_size(),true);
+                                   for (size_t j = 0; j < sections.size(); j++)
                                       {
                                      // exclude all the other sections
-                                        if ( (j != i) && (sections->get_sections()[j]->get_mapped() == true) )
+                                        if ( (j != i) && (sections[j]->get_mapped() == true) )
                                            {
-                                             SgAsmGenericHeader* genericHeader  = sections->get_sections()[j]->get_header();
+                                             SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
                                              SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
                                              rose_addr_t temp_imageBase = 0ull;
                                              if (asmPEFileHeader != NULL)
                                                 {
                                                   temp_imageBase = asmPEFileHeader->get_e_image_base();
                                                 }
-                                             rose_addr_t nestedAddressBase  = temp_imageBase    + sections->get_sections()[j]->get_mapped_rva();
-                                             rose_addr_t nestedAddressBound = nestedAddressBase + sections->get_sections()[j]->get_mapped_size();
-                                             printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections->get_sections()[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
+                                             rose_addr_t nestedAddressBase  = temp_imageBase    + sections[j]->get_mapped_rva();
+                                             rose_addr_t nestedAddressBound = nestedAddressBase + sections[j]->get_mapped_size();
+                                             printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
 #if 0
                                              for (rose_addr_t k = nestedAddressBase; k < nestedAddressBound; k++)
                                                 {

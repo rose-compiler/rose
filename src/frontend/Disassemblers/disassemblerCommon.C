@@ -218,7 +218,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
         {
           SgAsmGenericFile* gf = isSgAsmGenericFile(header->get_parent()->get_parent());
           ROSE_ASSERT (gf);
-          const SgAsmGenericSectionPtrList& sections = gf->get_sections()->get_sections();
+          const SgAsmGenericSectionPtrList& sections = gf->get_sections();
           for (size_t i = 0; i < sections.size(); ++i)
              {
                if (sections[i]->get_header() == DOS_header)
