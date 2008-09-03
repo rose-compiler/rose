@@ -1389,6 +1389,10 @@ Grammar::setUpBinaryInstructions ()
      AsmDOSFileHeader.setDataPrototype("SgAsmGenericSection*","rm_section","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
+     AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // This data structure represents the ExecSection from file: ExecGeneric.h
   // ExecFile            *file;                          /* The file to which this section belongs */
@@ -1477,16 +1481,12 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentVector","holes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */
   // AsmGenericSection.setDataPrototype("SgAsmGenericSegmentPtrListPtr","segmentsList","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // Need a separate IR node to hold the list of SgAsmGenericSection pointers.
-     AsmGenericSectionList.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/17/2008): SgAsmGenericHeader are derived from the SgAsmGenericSection and so already appear 
   // in the AsmGenericFile::sections list, so set to: NO_TRAVERSAL.
@@ -1575,7 +1575,7 @@ Grammar::setUpBinaryInstructions ()
 #endif
   /* All known header sections for this file */
      AsmGenericFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
