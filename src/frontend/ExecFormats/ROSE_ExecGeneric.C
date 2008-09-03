@@ -217,6 +217,20 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
     }
 }
 
+/* Returns list of all sections in the file, including headers. */
+std::vector<SgAsmGenericSection*>
+SgAsmGenericFile::get_sections()
+{
+    std::vector<SgAsmGnericSection*> retval = p_headers->get_headers();
+    for (std::vector<SgAsmGenericHeader*>::iterator i=p_headers->get_headers().begin(),
+	 i!=p_headers->get_headers().end();
+	 ++i) {
+      SgAsmGenericHeader *fhdr = *i;
+      retval.push_back(fhdr->get_headers()->get_headers().begin(), fhdr->get_headers()->get_headers().end);
+    }
+    return retval;
+}
+
 /* Returns the pointer to the first section with the specified ID. Optionally restrict by header (if hdr!=NULL). */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_id(int id, SgAsmGenericHeader *hdr)
