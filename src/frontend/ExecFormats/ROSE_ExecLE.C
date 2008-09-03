@@ -607,10 +607,9 @@ SgAsmLESectionTable::ctor()
 void
 SgAsmLESectionTable::unparse(FILE *f)
 {
-    SgAsmGenericFile *ef = get_file();
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
+    SgAsmGenericFile::sections_t sections = fhdr->get_sections();
 
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id() >= 0) {
