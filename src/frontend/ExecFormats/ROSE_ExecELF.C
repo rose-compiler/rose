@@ -1929,9 +1929,7 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 
     ROSE_ASSERT(f != NULL);
     
-    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
-     * important in them. */
-    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
     ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
 
     try {
@@ -1941,11 +1939,7 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
         /* cleanup is below */
     }
 
- // DQ (8/16/2008): Remove the SgAsmGenericSection from the SgAsmGenericFile p_sections list
-    f->remove_section(hdr);
-
-    /* See Dan's comment in SgAsmPEFileHeader::is_PE */
-    f->get_sections()->get_sections().clear();
+    /* Remove the SgAsmGenericSection from the SgAsmGenericFile p_headers list */
     f->get_headers()->get_headers().clear();
 
     delete hdr;

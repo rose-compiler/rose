@@ -1517,9 +1517,7 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
-    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
-     * important in them. */
-    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
     ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
 
     try {
@@ -1531,18 +1529,10 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
         /* cleanup is below */
     }
 
- // DQ (8/16/2008): Remove the SgAsmGenericSection from the SgAsmGenericFile p_sections list
-    f->remove_section(dos_hdr);
-    f->remove_section(dos2_hdr);
-    f->remove_section(pe_hdr);
-
- // Do we have to implement a "remove_header() function too!
-
  // The constructor for sections adds the object being constructed to list in the SgAsmGenericFile, 
  // so we have to undo this explicitly.  The previous alternative was to save a pointer to the 
  // SgAsmGenericFile so that the destructor could do the cleanup.  but this caused redundant information
  // in the IR which would be a consistancy problem later (I think), since the AST is mutable by design.
-    f->get_sections()->get_sections().clear();
     f->get_headers()->get_headers().clear();
 
     delete dos_hdr;

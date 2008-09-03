@@ -1279,12 +1279,6 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
     }
 
     /* Remove sections explicitly since section destructors no longer do that. */
-    f->remove_section(dos_hdr);
-    f->remove_section(dos2_hdr);
-    f->remove_section(ne_hdr);
-
-    /* See Dan's comment in SgAsmPEFileHeader::is_PE */
-    f->get_sections()->get_sections().clear();
     f->get_headers()->get_headers().clear();
 
     delete dos_hdr;

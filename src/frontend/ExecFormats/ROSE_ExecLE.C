@@ -933,9 +933,7 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
-    /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
-     * important in them. */
-    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
+    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
     ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
 
     try {
@@ -948,12 +946,6 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
     }
 
     /* Remove sections explicitly since section destructors no longer do that. */
-    f->remove_section(dos_hdr);
-    f->remove_section(dos2_hdr);
-    f->remove_section(le_hdr);
-
-    /* See Dan's comment in SgAsmPEFileHeader::is_PE */
-    f->get_sections()->get_sections().clear();
     f->get_headers()->get_headers().clear();
 
     delete dos_hdr;

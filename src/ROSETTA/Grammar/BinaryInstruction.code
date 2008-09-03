@@ -943,7 +943,8 @@ HEADER_GENERIC_FILE_START
           void unfill_holes();                                /* Undoes what fill_holes() did, returning hole sections to unused pool */
 
        /* Functions for file headers (a kind of section) */
-          void add_header(SgAsmGenericHeader*);                       /* Add a new file header to the list of headers for this file */
+          void add_header(SgAsmGenericHeader*);               /* Add a new file header to the list of headers for this file */
+          void remove_header(SgAsmGenericHeader*);            /* Remove file header from the file */
 
        // DQ (8/15/2008): This is now an automatically generated access function.
        // std::vector<SgAsmGenericHeader*>& get_headers() {return p_headers;}/* all file header sections */

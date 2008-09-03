@@ -1,10 +1,5 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-// #include "ExecELF.h"
-// #include "ExecLE.h"
-// #include "ExecNE.h"
-// #include "ExecPE.h"
-
 #define _FILE_OFFSET_BITS 64
 #include <sys/stat.h>
 
@@ -17,8 +12,6 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <sys/wait.h>
-
-// namespace Exec {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecFormat
@@ -197,7 +190,6 @@ SgAsmGenericFile::content(addr_t offset, addr_t size)
 void
 SgAsmGenericFile::add_header(SgAsmGenericHeader *header) 
 {
-    ROSE_ASSERT(p_sections != NULL);
     ROSE_ASSERT(p_headers  != NULL);
 
 #ifndef NDEBUG
@@ -206,9 +198,24 @@ SgAsmGenericFile::add_header(SgAsmGenericHeader *header)
         ROSE_ASSERT(p_headers->get_headers()[i] != header);
     }
 #endif
+    header->set_parent(p_headers);
     p_headers->get_headers().push_back(header);
+}
 
-    p_headers->get_headers().back()->set_parent(p_headers);
+/* Removes a header from the header list in a file */
+void
+SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
+{
+    if (hdr!=NULL) {
+        ROSE_ASSERT(p_headers  != NULL);
+        
+        std::vector<SgAsmGenericSection*>::iterator i = find(p_headers->get_headers().begin(),
+                                                             p_headers->get_headers().end(),
+							     hdr);
+        if (i != p_headers->get_headers().end()) {
+            p_headers->get_headers().erase(i);
+        }
+    }
 }
 
 /* Adds a new section to the file. This is called implicitly by the section constructor. */
@@ -240,9 +247,6 @@ SgAsmGenericFile::add_section(SgAsmGenericSection *section)
 void
 SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
 {
-
- // printf ("SgAsmGenericFile::remove_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
-
     if (section!=NULL) {
         ROSE_ASSERT(p_sections != NULL);
         ROSE_ASSERT(p_headers  != NULL);
@@ -678,7 +682,6 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 {
     SgAsmGenericHeader *retval = NULL;
     for (size_t i = 0; i < p_headers->get_headers().size(); i++) {
-     // if (p_headers[i]->get_exec_format().get_family() == efam) {
         if (p_headers->get_headers()[i]->get_exec_format()->get_family() == efam) {
             ROSE_ASSERT(NULL == retval);
             retval = p_headers->get_headers()[i];
@@ -717,13 +720,11 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     p_data = ef->content(offset, size);
     set_header(hdr);
 
-    /* Add this section to either the file's section list or the header's section list. */
+    /* Add this section to either the file's header list or the header's section list. */
     if (hdr) {
         hdr->add_section(this);
-        ROSE_ASSERT(hdr->get_sections()!=NULL);
     } else {
-        ef->add_section(this);
-        ROSE_ASSERT(ef->get_sections() != NULL);
+        ef->add_header(this);
     }
 }
 
@@ -1206,17 +1207,8 @@ SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 /* Destructor must remove the header from its parent file's headers list. */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
-    if (get_file() != NULL) {
-        std::vector<SgAsmGenericHeader*> & headers = get_file()->get_headers()->get_headers();
-        std::vector<SgAsmGenericHeader*>::iterator i = headers.begin();
-        while (i != headers.end()) {
-            if (*i==this) {
-                i = headers.erase(i);
-            } else {
-                i++;
-            }
-        }
-    }
+    if (get_file() != NULL)
+        get_file()->remove_header(this);
 
     delete p_symbols;
     delete p_dlls;
@@ -1654,5 +1646,3 @@ SgAsmExecutableFileFormat::parse(const char *name)
     return ef;
 }
 #endif
-
-// }; /*namespace*/
