@@ -351,7 +351,7 @@ Grammar::setUpBinaryInstructions ()
      AsmFile.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (8/16/2008): Robb suggested that this be a list since some PE files have multiple headers.
+  // DQ (8/16/2008): Robb suggested that this be a list since some formats (e.g., PE) have multiple headers.
   // DQ (8/12/2008): This is the connection to Robb's work.
   // AsmFile.setDataPrototype("SgAsmGenericHeader*","header","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1476,7 +1476,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentVector","holes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+     AsmGenericSection.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */
   // AsmGenericSection.setDataPrototype("SgAsmGenericSegmentPtrListPtr","segmentsList","= NULL",
@@ -1488,8 +1490,10 @@ Grammar::setUpBinaryInstructions ()
 
   // DQ (8/17/2008): SgAsmGenericHeader are derived from the SgAsmGenericSection and so already appear 
   // in the AsmGenericFile::sections list, so set to: NO_TRAVERSAL.
+  // RPM (8/30/2008): AST-wise, headers are children of SgAsmGenericFile, and the children of each header are
+  // the sections that belong to that header. So we now do need to traverse the headers.
      AsmGenericHeaderList.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AsmGenericDLLList.setFunctionPrototype ( "HEADER_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
 
@@ -1508,7 +1512,7 @@ Grammar::setUpBinaryInstructions ()
   // This data structure represents the ExecHeader from file: ExecGeneric.h
   // ExecFormat          exec_format;                    /* General info about the executable format */
   // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
-  // Architecture        target                         /* Machine for which this header and its sections, etc. was compiled */
+  // Architecture        target                          /* Machine for which this header and its sections, etc. was compiled */
   // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
   // std::vector<addr_t> entry_rvas;                     /* Code entry points wrt base_va */
   // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
@@ -1548,7 +1552,6 @@ Grammar::setUpBinaryInstructions ()
   // int                 fd;             // File descriptor opened for read-only (or negative)
   // struct stat64       sb;             // File attributes at time of file open (valid if fd>=0)
   // unsigned char       *data;          // Content of file mapped into memory   (or null on file error)
-  // std::vector<ExecSection*> sections; // All known sections for this file
   // std::vector<ExecHeader*> headers;   // All format headers belonging to this file
      AsmGenericFile.setFunctionPrototype ( "HEADER_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
 
@@ -1570,13 +1573,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFile.setDataPrototype("SgFileContentList","data","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-  /* All known sections for this file */
-  // AsmGenericFile.setDataPrototype("SgAsmGenericSectionPtrList","sections","",
-  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // AsmGenericFile.setDataPrototype("SgAsmGenericHeaderPtrList","headers","",
-  //                       NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  /* All known header sections for this file */
      AsmGenericFile.setDataPrototype("SgAsmGenericHeaderList*","headers","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
