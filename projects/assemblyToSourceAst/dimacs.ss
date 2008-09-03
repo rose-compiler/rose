@@ -81,6 +81,28 @@
         (is-unsatisfiable? #f)
         (else (error "Invalid second token" second-token)))))
   
+  (define (from-minisat output)
+    (let* (;(_ (write `(output . ,output)))
+           ;(_ (newline))
+           (tokens (string-tokenize output))
+           ;(_ (display `(tokens . ,tokens)))
+           ;(_ (newline))
+           (first-token (car tokens))
+           (is-satisfiable? (equal? first-token "SAT"))
+           (is-unsatisfiable? (equal? first-token "UNSAT")))
+      (cond
+        (is-satisfiable? 
+         (let* ((other-tokens (cdr tokens)))
+           (filter-map (lambda (var-str)
+                         (let ((n (string->number var-str)))
+                           (cond
+                             ((< n 0) `(,(inv n) . #f))
+                             ((> n 0) `(,n . #t))
+                             ((zero? n) (error "End of variable list reached too early")))))
+                       (drop-right other-tokens 2))))
+        (is-unsatisfiable? #f)
+        (else (error "Invalid first token" first-token)))))
+  
   (define (run-process-raw proc-name input)
     (let* ((proc (process proc-name))
            (stdout (car proc))
@@ -106,6 +128,14 @@
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
       ((null? (state-clauses st)) '())
       (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs st))))))
+  
+  (define (run-minisat st)
+    (cond 
+      ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
+      ((null? (state-clauses st)) '())
+      (else (from-minisat (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))))
+
+  (define run-solver run-minisat)
   
   (define (make-reduction-tree st operation-size f output inputs)
     (if (<= (length inputs) operation-size)
@@ -257,7 +287,7 @@
   (provide variables!)
   ; (provide add-clause!)
   (provide to-dimacs)
-  (provide run-picosat)
+  (provide run-solver)
   (provide force-0!)
   (provide force-1!)
   (provide unsatisfiable!)

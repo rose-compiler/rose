@@ -151,7 +151,7 @@
                   (hash-table-copy (bbstate-vars st))
                   (hash-table-copy (bbstate-definitions st))))
   
-  (define (convert-expr st p return)
+  (define (convert-expr st orig-p return)
     (letrec ((get-var (lambda (v t)
                         (let ((p (hash-table-get (bbstate-vars st) v #f)))
                           (if p
@@ -163,7 +163,7 @@
                                           (variables! st (bits-in-type t)))))
                                 (hash-table-put! (bbstate-vars st) v bits)
                                 bits))))))
-      (let convert-expr ((p p))
+      (let convert-expr ((p orig-p))
         (if (state-known-unsatisfiable st) (return #f))
         (match p
           (`(,t . ,e)
@@ -262,7 +262,8 @@
                                    (_ (error "Bad operator" (car e))))))
                               (else (error "convert-expr" e))))))
              ;(pretty-print `(convert-expr ,e -> ,result))
-             (set-number-size result (bits-in-type t))))))))
+             (set-number-size result (bits-in-type t))))
+          (e (error "No type given" orig-p))))))
   
   (define (convert-constraints st cl return)
     (for-each (lambda (c)
@@ -273,25 +274,26 @@
                      ((not (symbol? a)) (error "Invalid define symbol" a))
                      ((or (hash-table-get (bbstate-vars st) a #f)
                           (hash-table-get (bbstate-definitions st) a #f))
-                      (convert-constraints st `((check (bool equal ,a ,b)))))
+                      ; (car b) is type of b
+                      (convert-constraints st `((check (bool equal (,(car b) . ,a) ,b))) return))
                      (else (hash-table-put! (bbstate-definitions st) a b))))
                   (`(check ,e)
                    (force-1! st (apply or-gate! st (convert-expr st e return))))
                   (_ (error "Cannot handle constraint" c))))
               (reverse cl)))
   
-  (define (run-picosat-annotated st)
-    (display `(running picosat with ,(variable-count st) variables ,(clause-count st) clauses ,(hash-table-count (bbstate-vars st)) of ,(hash-table-count (bbstate-definitions st)) user-vars))
-    (let ((picosat-result (run-picosat st)))
-      (pretty-print `(--> ,(if picosat-result 'SAT 'UNSAT)))
-      picosat-result))
+  (define (run-solver-annotated st)
+    (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(hash-table-count (bbstate-vars st)) of ,(hash-table-count (bbstate-definitions st)) user-vars))
+    (let ((solver-result (run-solver st)))
+      (pretty-print `(--> ,(if solver-result 'SAT 'UNSAT)))
+      solver-result))
   
   (define (constraints-satisfiable? cl typed-vars-to-return)
     (let/cc return
       (let* ((st (make-empty-bbstate)))
         (convert-constraints st cl return)
         (for-each (lambda (var) (convert-expr st var return)) typed-vars-to-return)
-        (let ((picosat-result (run-picosat-annotated st)))
+        (let ((picosat-result (run-solver-annotated st)))
           (and picosat-result
                (map (lambda (var)
                       (get-number (hash-table-get (bbstate-vars st) (cdr var)) picosat-result))
@@ -304,12 +306,12 @@
              (let/cc return1
                (let ((st-copy (copy-bbstate st)))
                  (convert-constraints st-copy `((check ,to-test)) return1)
-                 (run-picosat-annotated st-copy))))
+                 (run-solver-annotated st-copy))))
             (can-be-false
              (let/cc return1
                (let ((st-copy (copy-bbstate st)))
                  (convert-constraints st-copy `((check (bool logical-not ,to-test))) return1)
-                 (run-picosat-annotated st-copy)))))
+                 (run-solver-annotated st-copy)))))
         (if can-be-true
             (if can-be-false
                 '*
@@ -326,13 +328,13 @@
         (let* ((converted-expr (convert-expr st typed-expr return)))
           (if (andmap boolean? converted-expr)
               (get-number converted-expr '())
-              (let* ((picosat-result (run-picosat-annotated st))
-                     (first-result (and picosat-result (get-number converted-expr picosat-result))))
-                (and picosat-result
+              (let* ((solver-result (run-solver-annotated st))
+                     (first-result (and solver-result (get-number converted-expr solver-result))))
+                (and solver-result
                      (number? first-result)
                      (begin
                        (force-0! st (equal-words! st converted-expr (as-bits (bits-in-type t) first-result)))
-                       (not (run-picosat-annotated st))))))))))
+                       (not (run-solver-annotated st))))))))))
       
       (provide make-empty-bbstate
                adder!
