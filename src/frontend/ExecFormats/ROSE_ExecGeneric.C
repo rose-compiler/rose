@@ -208,54 +208,11 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
 {
     if (hdr!=NULL) {
         ROSE_ASSERT(p_headers  != NULL);
-        
-        std::vector<SgAsmGenericSection*>::iterator i = find(p_headers->get_headers().begin(),
-                                                             p_headers->get_headers().end(),
-							     hdr);
+        std::vector<SgAsmGenericHeader*>::iterator i = find(p_headers->get_headers().begin(),
+                                                            p_headers->get_headers().end(),
+							    hdr);
         if (i != p_headers->get_headers().end()) {
             p_headers->get_headers().erase(i);
-        }
-    }
-}
-
-/* Adds a new section to the file. This is called implicitly by the section constructor. */
-void
-SgAsmGenericFile::add_section(SgAsmGenericSection *section)
-{
-    ROSE_ASSERT(section != NULL);
-
-    ROSE_ASSERT(p_sections != NULL);
-    ROSE_ASSERT(p_headers  != NULL);
-
- // printf ("SgAsmGenericFile::add_section(%p = %s): p_sections->get_sections().size() = %zu \n",section,section->class_name().c_str(),p_sections->get_sections().size());
-
-#ifndef NDEBUG
-    /* New section must not already be present. */
-    for (size_t i = 0; i < p_sections->get_sections().size(); i++) {
-        ROSE_ASSERT(p_sections->get_sections()[i] != section);
-    }
-#endif
-
-    p_sections->get_sections().push_back(section);
-    section->set_parent(p_sections);
-}
-
-// DQ (8/16/2008): Added this support to remove the effects of the SgAsmGenericFile::add_section()
-// bacause get_file() returns NULL in the SgAsmGenericSection destructor now that we have remove the
-// SgAsmGenericFile pointer from the SgAsmGenericSection IR node.
-// RPM (8/18/2008): No longer fails assertion if section is null, but rather does nothing.
-void
-SgAsmGenericFile::remove_section(SgAsmGenericSection *section)
-{
-    if (section!=NULL) {
-        ROSE_ASSERT(p_sections != NULL);
-        ROSE_ASSERT(p_headers  != NULL);
-        
-        std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),
-                                                             p_sections->get_sections().end(),
-                                                             section);
-        if (i != p_sections->get_sections().end()) {
-            p_sections->get_sections().erase(i);
         }
     }
 }
@@ -1217,6 +1174,39 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     p_symbols = NULL;
     p_dlls = NULL;
     p_exec_format = NULL;
+}
+
+/* Adds a new section to the header. This is called implicitly by the section constructor. */
+void
+SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
+{
+    ROSE_ASSERT(section != NULL);
+
+    ROSE_ASSERT(p_sections != NULL);
+
+#ifndef NDEBUG
+    /* New section must not already be present. */
+    for (size_t i = 0; i < p_sections->get_sections().size(); i++) {
+        ROSE_ASSERT(p_sections->get_sections()[i] != section);
+    }
+#endif
+    section->set_parent(p_sections);
+    p_sections->get_sections().push_back(section);
+}
+
+/* Removes a secton from the header's section list. */
+void
+SgAsmGenericHeader:remove_section(SgAsmGenericSection *section)
+{
+    if (section!=NULL) {
+        ROSE_ASSERT(p_sections != NULL);
+        std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),
+                                                             p_sections->get_sections().end(),
+                                                             section);
+        if (i != p_sections->get_sections().end()) {
+            p_sections->get_sections().erase(i);
+        }
+    }
 }
 
 /* Add a new DLL to the header DLL list */

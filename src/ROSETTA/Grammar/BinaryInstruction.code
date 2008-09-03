@@ -889,6 +889,10 @@ HEADER_GENERIC_HEADER_START
        // size_t get_word_size() const {return p_exec_format.p_word_size;}
           size_t get_word_size() const;
 
+       /* Functions for sections (plurals return vectors; singular return one or NULL) */
+          void add_section(SgAsmGenericSection*);             /* Add new section to the file; called implicitly by section ctor */
+          void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
+
   // protected:
        // ExecFormat          exec_format;                    /* General info about the executable format */
        // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
@@ -923,15 +927,6 @@ HEADER_GENERIC_FILE_START
           const SgFileContentList& content() { return p_data; }     	/* Entire file contents */
           SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents */
 
-       /* Functions for sections (plurals return vectors; singular return one or NULL) */
-          void add_section(SgAsmGenericSection*);                     /* Add new section to the file; called implicitly by section constructor */
-
-       // DQ (8/16/2008): Added function to remove effects of add_section()
-          void remove_section(SgAsmGenericSection*);                  /* Remove section from the file */
-
-       // DQ (8/15/2008): This is now an automatically generated access function.
-       // std::vector<SgAsmGenericSection*>& get_sections() {return p_sections;}/* all sections (including file headers) */
-
           SgAsmGenericSection *get_section_by_id(int id, SgAsmGenericHeader *h=0); /* Returns first section having specified ID */
           SgAsmGenericSection *get_section_by_name(std::string, char sep='\0', SgAsmGenericHeader *h=0);/* Find section within file by name */
           std::vector<SgAsmGenericSection*> get_sections_by_offset(addr_t offset, addr_t size, SgAsmGenericHeader *h=0);
@@ -945,9 +940,6 @@ HEADER_GENERIC_FILE_START
        /* Functions for file headers (a kind of section) */
           void add_header(SgAsmGenericHeader*);               /* Add a new file header to the list of headers for this file */
           void remove_header(SgAsmGenericHeader*);            /* Remove file header from the file */
-
-       // DQ (8/15/2008): This is now an automatically generated access function.
-       // std::vector<SgAsmGenericHeader*>& get_headers() {return p_headers;}/* all file header sections */
 
           SgAsmGenericHeader *get_header(SgAsmGenericFormat::ExecFamily);                 /* Returns the specified header (exception if more than one) */
           const char *format_name();                          /* Return a string describing the file format */
