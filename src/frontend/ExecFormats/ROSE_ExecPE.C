@@ -462,7 +462,6 @@ SgAsmPEFileHeader::create_table_sections()
 
         SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, file_offset, pair->get_e_size());
         if (tabname) tabsec->set_name(tabname);
-        tabsec->set_parent(this); // FIXME: Is this necessary since we call set_header() also? (RPM 2008-08-27)
         tabsec->set_header(this);
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
