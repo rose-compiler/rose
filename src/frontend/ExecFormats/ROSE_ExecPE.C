@@ -1516,9 +1516,6 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
-    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
-    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
-
     try {
         dos_hdr  = new SgAsmDOSFileHeader(f, 0);
         dos2_hdr = new SgAsmPEExtendedDOSHeader(f, dos_hdr->get_size());
@@ -1528,16 +1525,9 @@ SgAsmPEFileHeader::is_PE(SgAsmGenericFile *f)
         /* cleanup is below */
     }
 
- // The constructor for sections adds the object being constructed to list in the SgAsmGenericFile, 
- // so we have to undo this explicitly.  The previous alternative was to save a pointer to the 
- // SgAsmGenericFile so that the destructor could do the cleanup.  but this caused redundant information
- // in the IR which would be a consistancy problem later (I think), since the AST is mutable by design.
-    f->get_headers()->get_headers().clear();
-
     delete dos_hdr;
     delete dos2_hdr;
     delete pe_hdr;
-
     return retval;
 }
 

@@ -699,7 +699,11 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 // ExecSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor */
+/* Constructor.
+ * Section constructors (here and in derived classes) set the optional section header relationship--a bidirectional link
+ * between this new section and its optional, single header.  This new section points to its header and the header contains a
+ * list that points to this new section.  The section-to-header part of the link is deleted by the default destructor by
+ * virtue of being a simple pointer, but we also need to delete the other half of the link in the destructors. */
 void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
@@ -707,47 +711,31 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     if (offset > ef->get_size() || offset+size > ef->get_size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
 
-    /* Is this also a header? */
-    SgAsmGenericHeader *this_header = NULL;
-    if (!hdr) {
-        try {
-            this_header = dynamic_cast<SgAsmGenericHeader*>(this);
-        } catch(...) {
-            this_header = NULL;
-        }
-    }
-
     /* Initialize data members */
     p_offset = offset;
     p_data = ef->content(offset, size);
-    set_header(hdr);
 
-    /* Add this section to the appropriate list */
-    if (hdr) {
-        hdr->add_section(this);
-    } else if (this_header) {
-        ef->add_header(this_header);
-    } else {
-        ef->add_hole(this);
-    }
+    /* Add this section to the header's section list */
+    set_header(hdr);
+    if (hdr) hdr->add_section(this);
 }
 
-/* Destructor must remove the section from appropriate lists */
+/* Destructor must remove section/header link */
 SgAsmGenericSection::~SgAsmGenericSection()
 {
     SgAsmGenericFile* ef = get_file();
     SgAsmGenericHeader *hdr = get_header();
 
-    try {
-        SgAsmGenericHeader *this_header = dynamic_cast<SgAsmGenericHeader*>(this);
-        ef->remove_header(this_header);
-    } catch(...) {
+    /* See constructor comment. This deletes both halves of the header/section link. */
+    if (hdr) {
+        hdr->remove_section(this);
+        set_header(NULL);
     }
     
+    /* FIXME: holes should probably be their own class, which would make the file/hole bidirectional linking more like the
+     *        header/section bidirectional links (RPM 2008-09-02) */
     ef->remove_hole(this);
 
-    if (hdr)
-        hdr->remove_section(this);
 }
 
 /* Returns the file size of the section in bytes */
@@ -1170,59 +1158,67 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // ExecHeader
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor */
+/* Constructor.
+ * Headers (SgAsmGenericHeader and derived classes) set the file/header relationship--a bidirectional link between this new
+ * header and the single file that contains this new header. This new header points to its file and the file contains a list
+ * that points to this new header. The header-to-file half of the link is deleted by the default destructor by virtue of being
+ * a simple pointer, but we also need to delete the other half of the link in the destructors. */
 void
 SgAsmGenericHeader::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
 {
     set_synthesized(true);
     set_purpose(SP_HEADER);
+
+    /* The bidirectional link between file and header */
+    set_file(ef);
     ef->add_header(this);
 
-
- // DQ (8/16/2008): This is defined only for SgAsmGenericHeader, and not for SgAsmGenericSection
-    set_file(ef);
-
-    /* Initialized in the real constructor */
-    ROSE_ASSERT(p_symbols     == NULL);
-    ROSE_ASSERT(p_dlls        == NULL);
-    ROSE_ASSERT(p_exec_format == NULL);
-
-    /* Create child IR nodes and set their parent */
+    /* Create child IR nodes and set their parent (initialized to null in real constructor) */
+    ROSE_ASSERT(p_symbols == NULL);
     p_symbols = new SgAsmGenericSymbolList;
     p_symbols->set_parent(this);
 
+    ROSE_ASSERT(p_dlls == NULL);
     p_dlls    = new SgAsmGenericDLLList;
     p_dlls->set_parent(this);
 
+    ROSE_ASSERT(p_exec_format == NULL);
     p_exec_format = new SgAsmGenericFormat;
     p_exec_format->set_parent(this);
 
+    ROSE_ASSERT(p_sections == NULL);
     p_sections = new SgAsmGenericSectionList;
     p_sections->set_parent(this);
 }
 
-/* Destructor must remove the header from its parent file's headers list. */
+/* Destructor must remove header/file link. */
 SgAsmGenericHeader::~SgAsmGenericHeader() 
 {
     /* Delete child sections before this */
-    while (p_sections->get_sections().size()) {
-        SgAsmGenericSection *section = p_sections->get_sections().back();
-        p_sections->get_sections().pop_back();
+    SgAsmGenericSectionPtrList to_delete = get_sections()->get_sections();
+    for (size_t i=0; i<to_delete.size(); i++) {
+        SgAsmGenericSection *section = to_delete[i];
         delete section;
     }
+
+    /* Deletion of section children should have emptied the list of header-to-section links */
     ROSE_ASSERT(p_sections->get_sections().empty() == true);
 
-    if (get_file() != NULL)
-        get_file()->remove_header(this);
+    /* Destroy the header/file bidirectional link. See comment in constructor. */
+    ROSE_ASSERT(get_file()!=NULL);
+    get_file()->remove_header(this);
+    //set_file(NULL);   -- the file pointer was moved into the superclass in order to be easily available to all sections
 
     delete p_symbols;
-    delete p_dlls;
-    delete p_exec_format;
-    delete p_sections;
-
     p_symbols = NULL;
+
+    delete p_dlls;
     p_dlls = NULL;
+
+    delete p_exec_format;
     p_exec_format = NULL;
+
+    delete p_sections;
     p_sections = NULL;
 }
 

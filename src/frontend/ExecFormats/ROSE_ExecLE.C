@@ -932,9 +932,6 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
 
     bool retval  = false;
 
-    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
-    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
-
     try {
         dos_hdr  = new SgAsmDOSFileHeader(f, 0);
         dos2_hdr = new SgAsmLEExtendedDOSHeader(f, dos_hdr->get_size());
@@ -943,9 +940,6 @@ SgAsmLEFileHeader::is_LE(SgAsmGenericFile *f)
     } catch (...) {
         /* cleanup is below */
     }
-
-    /* Remove sections explicitly since section destructors no longer do that. */
-    f->get_headers()->get_headers().clear();
 
     delete dos_hdr;
     delete dos2_hdr;

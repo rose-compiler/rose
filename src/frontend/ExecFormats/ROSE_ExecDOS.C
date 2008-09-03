@@ -201,18 +201,12 @@ SgAsmDOSFileHeader::is_DOS(SgAsmGenericFile *f)
     SgAsmDOSFileHeader *fhdr    = NULL;
     bool           retval  = false;
 
-    /* RPM (2008-08-18): We're clearing this list below, so it better not already have something important in it. */
-    ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
-
     try {
         fhdr = new SgAsmDOSFileHeader(f, 0);
         retval = true;
     } catch (...) {
         /* cleanup is below */
     }
-
-    /* Remove header sections explicitly since section destructors no longer do that. */
-    f->get_headers()->get_headers().clear();
 
     delete fhdr;
     return retval;
