@@ -895,7 +895,6 @@ HEADER_GENERIC_HEADER_START
           void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
 
        /* Section lookup functions (plural) */
-	  SgAsmGenericFile::sections_t get_sections();
 	  SgAsmGenericFile::sections_t get_sections_by_id(int id);
 	  SgAsmGenericFile::sections_t get_sections_by_name(std::string, char sep=0);
 	  SgAsmGenericFile::sections_t get_sections_by_offset(addr_t offset, addr_t size);

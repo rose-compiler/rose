@@ -43,13 +43,12 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
      SgAsmGenericFile* file = header->get_file();
      ROSE_ASSERT (file);
 
-  // DQ (8/29/2008): When we get the section list into the headers, then this could should change, I think.
-     SgAsmGenericSectionList* sectionList = file->get_sections();
+     SgAsmGenericSectionList* sectionList = header->get_sections();
      const SgAsmGenericSectionPtrList& sections = sectionList->get_sections();
 
      for (size_t i = 0; i < sections.size(); ++i) {
        SgAsmGenericSection* section = sections[i];
-       if (section->get_header() != header) continue;
+       ROSE_ASSERT(section->get_header() == header);
        if (!section->get_mapped() && !isSgAsmDOSFileHeader(header)) continue; // Workaround for bug FIXME
        if (rva < section->get_mapped_rva()) continue;
        if (rva >= section->get_mapped_rva() + section->get_mapped_size())
