@@ -1000,11 +1000,10 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmElfSectionTable::unparse(FILE *f)
 {
-    SgAsmGenericFile *ef = get_file();
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
+    SgAsmGenericFile::sections_t sections = fhdr->get_sections();
 
     /* Write the remaining entries */
     for (size_t i = 0; i < sections.size(); i++) {

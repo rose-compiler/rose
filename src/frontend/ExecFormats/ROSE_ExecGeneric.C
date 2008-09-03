@@ -355,7 +355,7 @@ SgAsmGenericFile::get_sections_by_va(addr_t va)
 /* Returns single section that is mapped to include the specified virtual address across all headers. See also
  * get_best_section_by_va(). */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound)
+SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound/*optional*/)
 {
     sections_t possible = get_sections_by_va(va);
     if (nfound) *nfound = possible.size();
@@ -366,7 +366,7 @@ SgAsmGenericFile::get_section_by_va(addr_t va, size_t *nfound)
  * "best" one. All candidates must map the virtual address to the same file address or else we fail (return null and number of
  * candidates). See code below for definition of "best". */
 SgAsmGenericSection *
-SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound)
+SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound/*optional*/)
 {
     const sections_t &candidates = get_sections_by_va(va);
     if (nfound)
@@ -1259,9 +1259,9 @@ SgAsmGenericHeader::remove_section(SgAsmGenericSection *section)
 {
     if (section!=NULL) {
         ROSE_ASSERT(p_sections != NULL);
-        std::vector<SgAsmGenericSection*>::iterator i = find(p_sections->get_sections().begin(),
-                                                             p_sections->get_sections().end(),
-                                                             section);
+        SgAsmGenericFile::sections_t::iterator i = find(p_sections->get_sections().begin(),
+                                                        p_sections->get_sections().end(),
+                                                        section);
         if (i != p_sections->get_sections().end()) {
             p_sections->get_sections().erase(i);
         }
@@ -1480,7 +1480,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64, p, w, "entry_rva", i, p_entry_rvas[i]);
-        std::vector<SgAsmGenericSection*> sections = get_file()->get_sections_by_rva(p_entry_rvas[i]);
+        SgAsmGenericFile::sections_t sections = get_file()->get_sections_by_rva(p_entry_rvas[i]);
         for (size_t j = 0; j < sections.size(); j++) {
             fprintf(f, "%s in section [%d] \"%s\"", j?also:"",  sections[j]->get_id(), sections[j]->get_name().c_str());
         }
