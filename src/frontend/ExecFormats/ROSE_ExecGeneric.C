@@ -236,7 +236,7 @@ SgAsmGenericFile::remove_hole(SgAsmGenericSection *hole)
     }
 }
 
-/* Returns list of all sections in the file, including headers. */
+/* Returns list of all sections in the file (including headers, holes, etc). */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections()
 {
@@ -254,19 +254,30 @@ SgAsmGenericFile::get_sections()
     return retval;
 }
 
-/* Returns all sections having specified ID in all headers */
+/* Returns sections having specified ID across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_id(int id)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* Holes */
+    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+        if ((*i)->get_id()==id)
+            retval.push_back(*i);
+    }
+
+    /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        if ((*i)->get_id()==id)
+            retval.push_back(*i);
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_id(id);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
 }
 
-/* Returns the pointer to section with the specified ID across all headers only if there's exactly one match. */
+/* Returns the pointer to section with the specified ID across all headers only if there's exactly one match. Headers and
+ * holes are included in the results. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/)
 {
@@ -275,12 +286,42 @@ SgAsmGenericFile::get_section_by_id(int id, size_t *nfound/*optional*/)
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/* Returns all sections having specified name across all headers. */
+/* Returns all sections having specified name across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
-SgAsmGenericFile::get_sections_by_name(const std::string &name, char sep/*or NUL*/)
+SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* Truncate name */
+    if (sep) {
+        size_t pos = name.find(sep);
+        if (pos!=name.npos)
+            name.erase(pos);
+    }
+
+    /* Holes */
+    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+        std::string secname = (*i)->get_name();
+        if (sep) {
+            size_t pos = secname.find(sep);
+            if (pos!=secname.npos)
+                secname.erase(pos);
+        }
+        if (0==secname.compare(name))
+            retval.push_back(*i);
+    }
+
+    /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        std::string secname = (*i)->get_name();
+        if (sep) {
+            size_t pos = secname.find(sep);
+            if (pos!=secname.npos)
+                secname.erase(pos);
+        }
+        if (0==secname.compare(name))
+            retval.push_back(*i);
+
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_name(name, sep);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
@@ -298,19 +339,34 @@ SgAsmGenericFile::get_section_by_name(const std::string &name, char sep/*or NUL*
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/* Returns all sections that contain all of the specified portion of the file across all headers. */
+/* Returns all sections that contain all of the specified portion of the file across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_offset(addr_t offset, addr_t size)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* Holes */
+    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+        if (offset >= (*i)->get_offset() &&
+            offset < (*i)->get_offset()+(*i)->get_size() &&
+            offset-(*i)->get_offset() + size <= (*i)->get_size())
+            retval.push_back(*i);
+    }
+
+    /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        if (offset >= (*i)->get_offset() &&
+            offset < (*i)->get_offset()+(*i)->get_size() &&
+            offset-(*i)->get_offset() + size <= (*i)->get_size())
+            retval.push_back(*i);
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_offset(offset, size);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
 }
 
-/* Returns single section that contains all of the specified portion of the file across all headers. */
+/* Returns single section that contains all of the specified portion of the file across all headers, including headers and
+ * holes. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfound)
 {
@@ -319,19 +375,33 @@ SgAsmGenericFile::get_section_by_offset(addr_t offset, addr_t size, size_t *nfou
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/* Returns all sections that are mapped to include the specified relative virtual address across all headers. */
+/* Returns all sections that are mapped to include the specified relative virtual address across all headers, including
+ * headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_rva(addr_t rva)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* Holes (probably not mapped anyway) */
+    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+        if ((*i)->is_mapped() &&
+            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            retval.push_back(*i);
+    }
+
+    /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        if ((*i)->is_mapped() &&
+            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            retval.push_back(*i);
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_rva(rva);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
     return retval;
 }
 
-/* Returns single section that is mapped to include the specified relative virtual file address across all headers. */
+/* Returns single section that is mapped to include the specified relative virtual file address across all headers, including
+ * headers and holes. */
 SgAsmGenericSection *
 SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/)
 {
@@ -340,12 +410,30 @@ SgAsmGenericFile::get_section_by_rva(addr_t rva, size_t *nfound/*optional*/)
     return possible.size()==1 ? possible[0] : NULL;
 }
 
-/* Returns all sections that are mapped to include the specified virtual address across all headers. */
+/* Returns all sections that are mapped to include the specified virtual address across all headers, including headers and
+ * holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_va(addr_t va)
 {
     SgAsmGenericSectionPtrList retval;
+
+    /* Holes (probably not mapped anyway) */
+    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+        addr_t rva = va; /* Holes don't belong to any header and therefore have a zero base_va */
+        if ((*i)->is_mapped() &&
+            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            retval.push_back(*i);
+    }
+
+    /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+        /* Headers probably aren't mapped, but just in case... */
+        addr_t rva = va; /* Headers don't belong to any header and therefore have a zero base_va */
+        if ((*i)->is_mapped() &&
+            rva >= (*i)->get_mapped_rva() && rva < (*i)->get_mapped_rva() + (*i)->get_mapped_size())
+            retval.push_back(*i);
+
+        /* Header sections */
         const SgAsmGenericSectionPtrList &recurse = (*i)->get_sections_by_va(va);
         retval.insert(retval.end(), recurse.begin(), recurse.end());
     }
@@ -593,6 +681,10 @@ SgAsmGenericFile::dump(FILE *f)
 void
 SgAsmGenericFile::fill_holes()
 {
+#if 1 /* DEBUGGIING */
+    dump(stderr);
+#endif
+
     /* Find the holes and store their extent info */
     SgAsmGenericSection::ExtentVector extents;
     addr_t offset = 0;
@@ -1345,7 +1437,13 @@ SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/)
 
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        if (0==(*i)->get_name().compare(name))
+        std::string secname = (*i)->get_name();
+        if (sep) {
+            size_t pos = secname.find(sep);
+            if (pos!=secname.npos)
+                secname.erase(pos);
+        }
+        if (0==secname.compare(name))
             retval.push_back(*i);
     }
     return retval;
