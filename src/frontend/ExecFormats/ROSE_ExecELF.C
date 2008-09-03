@@ -1178,7 +1178,7 @@ SgAsmElfSegmentTableEntry::stringifyType ( SgAsmElfSegmentTableEntry::SegmentTyp
                s = "error";
 
             // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
-               printf ("Warning: default reach for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
+               printf ("Warning: default reached for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
              }
         }
 
@@ -1204,7 +1204,7 @@ SgAsmElfSegmentTableEntry::stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFl
           default:
              {
                s = "error";
-               printf ("Error: default reach for SgAsmElfSegmentTableEntry::stringifyFlags = %d \n",kind);
+               printf ("Error: default reached for SgAsmElfSegmentTableEntry::stringifyFlags = %d \n",kind);
              }
         }
 

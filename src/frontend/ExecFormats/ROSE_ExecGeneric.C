@@ -714,6 +714,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     /* Initialize data members */
     p_offset = offset;
     p_data = ef->content(offset, size);
+    p_file = ef;
 
     /* Add this section to the header's section list */
     set_header(hdr);
