@@ -1296,6 +1296,7 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* The extended part of the DOS header is owned by the NE header */
     dos2_header->set_header(ne_header);
+    ne_header->add_section(dos2_header);
     ne_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

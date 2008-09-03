@@ -1552,6 +1552,7 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* The extended part of the DOS header is owned by the PE header */
     dos2_header->set_header(pe_header);
+    pe_header->add_section(dos2_header);
     pe_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

@@ -681,10 +681,6 @@ SgAsmGenericFile::dump(FILE *f)
 void
 SgAsmGenericFile::fill_holes()
 {
-#if 1 /* DEBUGGIING */
-    dump(stderr);
-#endif
-
     /* Find the holes and store their extent info */
     SgAsmGenericSection::ExtentVector extents;
     addr_t offset = 0;
