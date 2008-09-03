@@ -1420,10 +1420,8 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setAutomaticGenerationOfDestructor(false);
 
   /* The file to which this section belongs */
-#if 0
      AsmGenericSection.setDataPrototype("SgAsmGenericFile*","file","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
 
   // DQ (8/15/2008): Put this back since the sections are in a list and the list is not in the header
   // (as I thought).  The list is in the SgAsmGenericFile which has a SgAsmFile as a parent.
@@ -1541,12 +1539,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericSectionList*","sections","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
-  // DQ (8/16/2008): Added this here instead of in SgAsmGenericSection because it can be computed from the 
-  // parent pointer in the SgAsmGenericSection where as it is reuired in the AsmGenericHeader IR node.
-     AsmGenericHeader.setDataPrototype("SgAsmGenericFile*","file","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // This data structure represents the ExecFile from file: ExecGeneric.h
   // int                 fd;             // File descriptor opened for read-only (or negative)
