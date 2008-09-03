@@ -217,57 +217,127 @@ SgAsmGenericFile::remove_header(SgAsmGenericHeader *hdr)
     }
 }
 
+/* FIXME: declare 'sections_t' and 'headers_t'
 /* Returns list of all sections in the file, including headers. */
 std::vector<SgAsmGenericSection*>
 SgAsmGenericFile::get_sections()
 {
-    std::vector<SgAsmGnericSection*> retval = p_headers->get_headers();
-    for (std::vector<SgAsmGenericHeader*>::iterator i=p_headers->get_headers().begin(),
-	 i!=p_headers->get_headers().end();
-	 ++i) {
-      SgAsmGenericHeader *fhdr = *i;
-      retval.push_back(fhdr->get_headers()->get_headers().begin(), fhdr->get_headers()->get_headers().end);
+    headers_t retval = p_headers->get_headers();
+    for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+      retval.push_back((*i)->get_sections());
     }
     return retval;
 }
 
-/* Returns the pointer to the first section with the specified ID. Optionally restrict by header (if hdr!=NULL). */
-SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_id(int id, SgAsmGenericHeader *hdr)
+/* FIXME: move, needs prototype */
+/* Returns list of next sections that have the specified ID. */
+sections_t
+SgAsmGenericHeader::get_sections_by_id(int id)
 {
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
-         i != p_sections->get_sections().end();
-         i++) {
-        
-        if ((!hdr || hdr==(*i)->get_header()) &&
-            (*i)->get_id() == id) {
-            return *i;
-        }
+  sections_t retval;
+  for (sections_t::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+    if ((*i)->get_id() == id) {
+      retval.push_back(*i);
     }
-    return NULL;
+  }
+  return retval;
 }
 
-/* Returns pointer to the first section with the specified name. Any characters in the name after the first occurrence of SEP
- * are ignored (default is NUL). For instance, if sep=='$' then the following names are all equivalent: .idata, .idata$,
- * .idata$1 */
+/* FIXME: move, prototype */
+/* Like the plural version but returns non-null only if there's exactly one section with the specified ID */
 SgAsmGenericSection *
-SgAsmGenericFile::get_section_by_name(std::string name, char sep, SgAsmGenericHeader *hdr)
+SgAsmGenericHeader::get_section_by_id(int id, size_t *nfound=0)
 {
-    if (sep) {
-        size_t pos = name.find(sep);
-        if (pos!=name.npos)
-            name.erase(pos);
-    }
-    
-    for (std::vector<SgAsmGenericSection*>::iterator i = p_sections->get_sections().begin();
-         i != p_sections->get_sections().end();
-         i++) {
-        if ((!hdr || hdr==(*i)->get_header()) && 
-            0==(*i)->get_name().compare(name))
-            return *i;
-    }
-    return NULL;
+  sections_t possible = get_sections_by_id(int it);
+  if (nfound) *nfound = possible.size();
+  return possible.size()==1 ? possible[0] : NULL;
 }
+
+/* FIXME: prototype */
+sections_t
+SgAsmGenericFile::get_sections_by_id(int id)
+{
+  sections_t retval;
+  for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+    retval.push_back((*i)->get_sections_by_id(id));
+  }
+  return retval;
+}
+
+/* FIXME: prototype */
+/* Returns the pointer to section with the specified ID only if there's exactly one match. */
+SgAsmGenericSection *
+SgAsmGenericFile::get_section_by_id(int id, size_t *nfound=0)
+{
+  sections_t possible = get_sections_by_id(id);
+  if (nfound) *nfound = possible.size();
+  return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* FIXME: move, prototype */
+/* Returns sections that have the specified name. If 'SEP' is a non-null string then ignore any part of name at and after SEP. */
+sections_t
+SgAsmGenericHeader::get_sections_by_name(std::string name, char *sep=0)
+{
+  if (sep) {
+    size_t pos = name.find(sep);
+    if (pos!=name.npos)
+      name.erase(pos);
+  }
+
+  sections_t retval;
+  for (sections_t::iterator i = p_sections->get_sections().begin(); i != p_sections->get_sections().end(); ++i) {
+    if (0==(*i)->get_name().compare(name))
+      retval.push_back(*i);
+  }
+  return retval;
+}
+
+/* FIXME: move, prototype */
+SgAsmGenericSection *
+SgAsmGenericHeader::get_section_by_name(std::string name, char *sep=0, size_t *nfound=0)
+{
+  sections_t possible = find_sections_by_name(name, sep);
+  if (nfound) *nfound = possible.size();
+  return possible.size()==1 ? possible[0] : NULL;
+}
+
+/* FIXME: prototype */
+sections_t
+SgAsmGenericFile::get_sections_by_name(std::string name, char *sep=0)
+{
+  sections_t retval;
+  for (headers_t::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+    retval.push_back((*i)->get_sections_by_name(name, sep));
+  }
+  return retval;
+}
+
+/* FIXME: prototype */
+/* Returns pointer to the section with the specified name, or NULL if there isn't exactly one match. Any characters in the name
+ * after the first occurrence of SEP are ignored (default is NUL). For instance, if sep=='$' then the following names are all
+ * equivalent: .idata, .idata$, and .idata$1 */
+SgAsmGenericSection *
+SgAsmGenericFile::get_section_by_name(std::string name, char sep=0, size_t *nfound)
+{
+  sections_t possible = get_sections_by_name(name, sep);
+  if (nfound) *nfound = possible.size();
+  return possible.size()==1 ? possible[0] : NULL;
+}
+
+
+
+
+
+
+    --- HERE ---
+
+
+
+
+
+
+
 
 /* Returns a vector of sections that contain the specified portion of the file */
 std::vector<SgAsmGenericSection*>
