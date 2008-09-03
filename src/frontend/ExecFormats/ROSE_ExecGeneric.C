@@ -597,7 +597,7 @@ SgAsmGenericFile::fill_holes()
     SgAsmGenericSection::ExtentVector extents;
     addr_t offset = 0;
     while (offset < get_size()) {
-        SgAsmGenericSectionPtrList sections = get_sections_by_offset(offset, 0); /*all sections at this file offset*/
+        SgAsmGenericSectionPtrList sections = get_sections_by_offset(offset, 1); /*all sections at this file offset*/
         
         /* Find the maximum ending offset */
         addr_t end_offset = 0;
@@ -635,10 +635,14 @@ SgAsmGenericFile::fill_holes()
 void
 SgAsmGenericFile::unfill_holes()
 {
-    for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        delete *i;
+    SgAsmGenericSectionPtrList to_delete = get_holes()->get_sections();
+    for (size_t i=0; i<to_delete.size(); i++) {
+        SgAsmGenericSection *hole = to_delete[i];
+        delete hole;
     }
-    p_holes->get_sections().clear();
+    
+    /* Destructor for holes should have removed links to those holes. */
+    ROSE_ASSERT(get_holes()->get_sections().size()==0);
 }
 
 /* Mirror image of parsing an executable file. The result should be identical to the original file. */
