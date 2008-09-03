@@ -1487,6 +1487,14 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fputc('\n', f);
     }
 
+    fprintf(f, "%s%-*s = %zu sections\n", p, w, "section", p_sections->get_sections().size());
+    for (size_t i=0; i<p_sections->get_sections().size(); i++) {
+        SgAsmGenericSection *section = p_sections->get_sections()[i];
+        char label[1024];
+        sprintf(label, "section[%zu]", i);
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name().c_str());
+    }
+    
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecDLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
