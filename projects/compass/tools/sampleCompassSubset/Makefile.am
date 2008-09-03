@@ -6,12 +6,21 @@
 
 include $(top_srcdir)/projects/compass/src/compassSupport/compass.inc
 
+BUILT_SOURCES = buildCheckers.C checkers.h
+
+lib_LTLIBRARIES = libSampleCompassSubsetCheckers.la
+libSampleCompassSubsetCheckers_la_SOURCES = buildCheckers.C checkers.h
+libSampleCompassSubsetCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
+
+libSampleCompassSubsetCheckers.la: $(libSampleCompassSubsetCheckers_la_OBJECTS) $(libSampleCompassSubsetCheckers_la_DEPENDENCIES) $(COMPASS_CHECKER_OBJS)
+	$(CXXLINK) -rpath $(libdir) $(libSampleCompassSubsetCheckers_la_LDFLAGS) $(libSampleCompassSubsetCheckers_la_OBJECTS) $(COMPASS_CHECKER_OBJS) $(libSampleCompassSubsetCheckers_la_LIBADD) $(LIBS)
+
 bin_PROGRAMS = sampleCompassSubset
 
 sampleCompassSubset_SOURCES = compassMain.C checkers.h
-sampleCompassSubset_LDADD = -lCompassCheckers $(ROSE_LIBS)
+sampleCompassSubset_LDADD = -lSampleCompassSubsetCheckers $(ROSE_LIBS)
 
-sampleCompassSubset_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassCheckers.la
+sampleCompassSubset_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libSampleCompassSubsetCheckers.la
 
 test: sampleCompassSubset compass_parameters $(compass_test_dir)/exampleTest_1.C
 	env COMPASS_PARAMETERS=./compass_parameters ./sampleCompassSubset $(compass_test_dir)/exampleTest_1.C 

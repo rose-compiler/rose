@@ -6,13 +6,22 @@
 
 include $(top_srcdir)/projects/compass/src/compassSupport/compass.inc
 
+BUILT_SOURCES = buildCheckers.C checkers.h
+
+lib_LTLIBRARIES = libCompassVerifierCheckers.la
+libCompassVerifierCheckers_la_SOURCES = buildCheckers.C checkers.h
+libCompassVerifierCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
+
+libCompassVerifierCheckers.la: $(libCompassVerifierCheckers_la_OBJECTS) $(libCompassVerifierCheckers_la_DEPENDENCIES) $(COMPASS_CHECKER_OBJS)
+	$(CXXLINK) -rpath $(libdir) $(libCompassVerifierCheckers_la_LDFLAGS) $(libCompassVerifierCheckers_la_OBJECTS) $(COMPASS_CHECKER_OBJS) $(libCompassVerifierCheckers_la_LIBADD) $(LIBS)
+
 bin_PROGRAMS = compassVerifier
 
 compassVerifier_SOURCES = compassMain.C checkers.h
-compassVerifier_LDADD = -lCompassCheckers $(ROSE_LIBS)
+compassVerifier_LDADD = -lCompassVerifierCheckers $(ROSE_LIBS)
 
 # This does not contribute to the link line
-compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassCheckers.la
+compassVerifier_DEPENDENCIES = $(compass_support_bdir)/libCompass.la $(compass_detector_libs) libCompassVerifierCheckers.la
 
 test: compassVerifier compass_parameters $(compass_test_dir)/exampleTest_1.C
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier $(compass_test_dir)/exampleTest_1.C 

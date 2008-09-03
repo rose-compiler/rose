@@ -62,7 +62,7 @@ install-exec-hook: prerequisites.h instantiate_prerequisites.h
 
 uninstall-local:
 	rm -f $(includedir)/prerequisites.h $(includedir)/instantiate_prerequisites.h
-	@sh -c 'for file in `ls $(compass_prereqs_dir)/*.h`; do echo "rm -f $$file"; rm -f $(includedir)/`basename $$file`; done'
+	@sh -c 'for file in `ls $(compass_prereqs_dir)/*.h`; do rm -f $(includedir)/`basename $$file`; done'
 
 EXTRA_DIST = \
 	compass.C \

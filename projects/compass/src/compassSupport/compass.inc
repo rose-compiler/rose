@@ -111,12 +111,3 @@ if ROSE_MPI
 endif
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
-
-lib_LTLIBRARIES = libCompassCheckers.la
-libCompassCheckers_la_SOURCES = buildCheckers.C checkers.h
-libCompassCheckers_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(compass_support_bdir)/libCompass.la
-
-BUILT_SOURCES = buildCheckers.C checkers.h
-
-libCompassCheckers.la: $(libCompassCheckers_la_OBJECTS) $(libCompassCheckers_la_DEPENDENCIES) $(COMPASS_CHECKER_OBJS)
-	$(CXXLINK) -rpath $(libdir) $(libCompassCheckers_la_LDFLAGS) $(libCompassCheckers_la_OBJECTS) $(COMPASS_CHECKER_OBJS) $(libCompassCheckers_la_LIBADD) $(LIBS)
