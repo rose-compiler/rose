@@ -391,20 +391,16 @@ SgAsmLEPageTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmLEPageTable::ctor(SgAsmLEFileHeader *fhdr)
+SgAsmLEPageTable::ctor()
 {
+    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     char section_name[64];
     sprintf(section_name, "%s Page Table", fhdr->format_name());
-
     set_synthesized(true);
     set_name(section_name);
     set_purpose(SP_HEADER);
-
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
 
     const addr_t entry_size = sizeof(SgAsmLEPageTableEntry::LEPageTableEntry_disk);
     for (addr_t entry_offset=0; entry_offset+entry_size <= get_size(); entry_offset+=entry_size) {
@@ -544,19 +540,16 @@ SgAsmLESection::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmLESectionTable::ctor(SgAsmLEFileHeader *fhdr)
+SgAsmLESectionTable::ctor()
 {
+    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     set_synthesized(true);
     char section_name[64];
     sprintf(section_name, "%s Section Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
-
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
 
     SgAsmLEPageTable *pages = fhdr->get_page_table();
     
@@ -589,17 +582,10 @@ SgAsmLESectionTable::ctor(SgAsmLEFileHeader *fhdr)
             section_size = std::min(entry->get_mapped_size(), (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
         }
 
-        SgAsmLESection *section = new SgAsmLESection(fhdr->get_file(), section_offset, section_size);
+        SgAsmLESection *section = new SgAsmLESection(fhdr, section_offset, section_size);
         section->set_synthesized(false);
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
-
-     // DQ (8/15/2008): Put this back!
-        section->set_header(fhdr);
-     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
-     // the get_header() to be implemented in terms of the get_parent() function.
-     // section->set_parent(fhdr);
-
         section->set_st_entry(entry);
 
         /* Section permissions */
@@ -663,20 +649,17 @@ SgAsmLESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor assumes SgAsmGenericSection is zero bytes long so far */
 void
-SgAsmLENameTable::ctor(SgAsmLEFileHeader *fhdr)
+SgAsmLENameTable::ctor()
 {
+    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     set_synthesized(true);
     char section_name[64];
     sprintf(section_name, "%s Name Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
 
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
-    
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
     addr_t at = 0;
@@ -810,20 +793,17 @@ SgAsmLEEntryPoint::dump(FILE *f, const char *prefix, ssize_t idx)
 /* Constructor. We don't know the size of the LE Entry table until after reading the first byte. Therefore the SgAsmGenericSection is
  * created with an initial size of zero. */
 void
-SgAsmLEEntryTable::ctor(SgAsmLEFileHeader *fhdr)
+SgAsmLEEntryTable::ctor()
 {
+    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     set_synthesized(true);
     char section_name[64];
     sprintf(section_name, "%s Entry Table", fhdr->format_name());
     set_name(section_name);
     set_purpose(SP_HEADER);
 
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
-    
     ROSE_ASSERT(0 == get_size());
 
     if (FAMILY_LX == fhdr->get_exec_format()->get_family()) {
@@ -891,19 +871,16 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor. */
 void
-SgAsmLERelocTable::ctor(SgAsmLEFileHeader *fhdr)
+SgAsmLERelocTable::ctor()
 {
+    SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     char name[64];
     sprintf(name, "%s Relocation Table", fhdr->format_name());
     set_synthesized(true);
     set_name(name);
     set_purpose(SP_HEADER);
-
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
 
     ROSE_ASSERT(0 == get_size());
 
@@ -1002,12 +979,7 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmLEFileHeader *le_header = new SgAsmLEFileHeader(ef, dos2_header->get_e_lfanew());
 
     /* The extended part of the DOS header is owned by the LE header */
- // DQ (8/15/2008): Put this back!
     dos2_header->set_header(le_header);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // dos2_header->set_parent(le_header);
-
     le_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it

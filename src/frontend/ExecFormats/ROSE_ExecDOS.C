@@ -130,7 +130,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     }
 
     try {
-        p_rm_section = new SgAsmGenericSection(get_file(), rm_offset, rm_size);
+        p_rm_section = new SgAsmGenericSection(get_file(), this, rm_offset, rm_size);
     } catch (ShortRead &p_ex) {
         /* If the offset or size is out of bounds for the file then assume that the real-mode section does not exist. This
          * can indicate that the DOS header is being used for something other than a DOS header. See
@@ -141,13 +141,6 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     p_rm_section->set_name("DOS real-mode text/data");
     p_rm_section->set_synthesized(true);
     p_rm_section->set_purpose(SP_PROGRAM);
-
- // DQ (8/15/2008): Put this back!
-    p_rm_section->set_header(this);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // p_rm_section->set_parent(this);
-
     p_rm_section->set_mapped(0, rm_size);
     p_rm_section->set_rperm(true);
     p_rm_section->set_wperm(true);
@@ -241,18 +234,11 @@ SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
 
     /* The DOS file header is followed by optional relocation entries */
     if (fhdr->p_e_nrelocs > 0) {
-        SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr->p_e_relocs_offset,
+        SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr, fhdr->p_e_relocs_offset,
                                                               fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
         relocs->set_name("DOS relocation table");
         relocs->set_synthesized(true);
         relocs->set_purpose(SP_HEADER);
-
-     // DQ (8/15/2008): Put this back!
-        relocs->set_header(fhdr);
-     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
-     // the get_header() to be implemented in terms of the get_parent() function.
-     // relocs->set_parent(fhdr);
-
         fhdr->set_relocs(relocs);
     }
 

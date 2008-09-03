@@ -460,9 +460,8 @@ SgAsmPEFileHeader::create_table_sections()
         addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva());
         
 
-        SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, file_offset, pair->get_e_size());
+        SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
         if (tabname) tabsec->set_name(tabname);
-        tabsec->set_header(this);
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
         tabsec->set_mapped(pair->get_e_rva(), pair->get_e_size());
@@ -697,18 +696,15 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
+SgAsmPESectionTable::ctor()
 {
     set_synthesized(true);
     set_name("PE Section Table");
     set_purpose(SP_HEADER);
 
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
-    
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     const size_t entsize = sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
     for (size_t i=0; i<fhdr->get_e_nsections(); i++) {
         /* Parse the section table entry */
@@ -721,24 +717,15 @@ SgAsmPESectionTable::ctor(SgAsmPEFileHeader *fhdr)
         if (entry->get_name() == ".idata") {
             section = new SgAsmPEImportSection(fhdr, entry->get_physical_offset(), entry->get_physical_size(), entry->get_rva());
         } else {
-            section = new SgAsmPESection(fhdr->get_file(), entry->get_physical_offset(), entry->get_physical_size());
+            section = new SgAsmPESection(fhdr, entry->get_physical_offset(), entry->get_physical_size());
         }
         section->set_synthesized(false);
         section->set_name(entry->get_name());
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
 
-     // DQ (8/15/2008): Put this back!
-        section->set_header(fhdr);
-
-        entry->set_parent(section);
-
      // DQ (8/18/2008): I think we need to set the parent explicit here, but I am not certain what to set it to be (using "this" is a default).
         section->set_parent(this);
-
-     // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
-     // the get_header() to be implemented in terms of the get_parent() function.
-     // section->set_parent(fhdr);
 
         section->set_mapped(entry->get_rva(), entry->get_virtual_size());
         section->set_st_entry(entry);
@@ -925,8 +912,11 @@ SgAsmPEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmPEImportSection::ctor(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
+SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
     size_t entry_size = sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
     SgAsmPEImportDirectory::PEImportDirectory_disk zero;
     memset(&zero, 0, sizeof zero);
@@ -1442,35 +1432,25 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmCoffSymbolTable::ctor( SgAsmGenericFile *ef, SgAsmPEFileHeader *fhdr)
+SgAsmCoffSymbolTable::ctor()
 {
     set_synthesized(true);
     set_name("COFF Symbols");
     set_purpose(SP_SYMTAB);
 
- // DQ (8/15/2008): Put this back!
-    set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // set_parent(fhdr);
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
 
     p_symbols = new SgAsmCoffSymbolList;
-
     p_symbols->set_parent(this);
 
     /* The string table immediately follows the symbols. The first four bytes of the string table are the size of the
      * string table in little endian. */
     addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
-    p_strtab = new SgAsmGenericSection(ef, strtab_offset, sizeof(uint32_t));
+    p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr, strtab_offset, sizeof(uint32_t));
     p_strtab->set_synthesized(true);
     p_strtab->set_name("COFF Symbol Strtab");
     p_strtab->set_purpose(SP_HEADER);
-
- // DQ (8/15/2008): Put this back!
-    p_strtab->set_header(fhdr);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // p_strtab->set_parent(fhdr);
 
     uint32_t word;
     p_strtab->content(0, sizeof word, &word);
@@ -1592,13 +1572,7 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     pe_header->add_rvasize_pairs();
 
     /* The extended part of the DOS header is owned by the PE header */
-
- // DQ (8/15/2008): Put this back!
     dos2_header->set_header(pe_header);
- // Set the parent of this IR node to be the SgAsmElfFileHeader, this also allows 
- // the get_header() to be implemented in terms of the get_parent() function.
- // dos2_header->set_parent(pe_header);
-
     pe_header->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
@@ -1615,7 +1589,7 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* Parse the COFF symbol table and add symbols to the PE header */
     if (pe_header->get_e_coff_symtab() && pe_header->get_e_coff_nsyms()) {
-        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(ef, pe_header);
+        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(pe_header);
         std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
         for (size_t i = 0; i < symbols.size(); i++)
             pe_header->add_symbol(symbols[i]);

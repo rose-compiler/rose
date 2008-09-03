@@ -766,7 +766,7 @@ HEADER_GENERIC_SECTION_START
           typedef std::pair<addr_t,addr_t> ExtentPair;        /* Begin/end offsets for part of a section */
           typedef std::vector<ExtentPair> ExtentVector;       /* Vector of extents; usually non-overlapping, sorted by starting offset */
 
-          SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size);
+          SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 
        // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
           virtual ~SgAsmGenericSection();
@@ -848,7 +848,7 @@ HEADER_GENERIC_SECTION_START
        // bool                get_synthesized() {return synthesized;}
 
      protected:
-          void ctor(SgAsmGenericFile*, addr_t offset, addr_t size);
+          void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
           void unparse_holes(FILE*);
 
 HEADER_GENERIC_SECTION_END
@@ -1162,7 +1162,7 @@ HEADER_ELF_SECTION_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmElfFileHeader *fhdr);    
+          void ctor();    
 
 HEADER_ELF_SECTION_TABLE_END
 
@@ -1263,7 +1263,7 @@ HEADER_ELF_SECTION_START
           virtual void set_linked_section ( SgAsmElfSection* linked_section );
 
      private:
-          void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+          void ctor(SgAsmElfSectionTableEntry*);
 
 HEADER_ELF_SECTION_END
 
@@ -1323,7 +1323,7 @@ HEADER_ELF_SEGMENT_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmElfFileHeader*);
+          void ctor();
 
 HEADER_ELF_SEGMENT_TABLE_END
 
@@ -1668,7 +1668,7 @@ HEADER_PE_FILE_HEADER_END
 
 HEADER_PE_SECTION_START
      public:
-          SgAsmPESection(SgAsmGenericFile *ef, addr_t offset, addr_t size);
+          SgAsmPESection(SgAsmPEFileHeader*, addr_t offset, addr_t size);
        // virtual ~PESection() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -1695,7 +1695,7 @@ HEADER_PE_IMPORT_SECTION_START
        // const std::vector<PEDLL*>& get_dlls() {return dlls;}
 
      private:
-          void ctor(SgAsmPEFileHeader*, addr_t offset, addr_t size, addr_t mapped_rva);
+          void ctor(addr_t offset, addr_t size, addr_t mapped_rva);
        // std::vector<PEDLL*> dlls;
 
 HEADER_PE_IMPORT_SECTION_END
@@ -1709,13 +1709,13 @@ HEADER_PE_SECTION_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
   private:
-          void ctor(SgAsmPEFileHeader*);
+          void ctor();
 
 HEADER_PE_SECTION_TABLE_END
 
 HEADER_PE_COFF_SYMBOL_TABLE_START
      public:
-          SgAsmCoffSymbolTable(SgAsmGenericFile *f, SgAsmPEFileHeader *fhdr);
+          SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr);
        // virtual ~COFFSymtab() {}
 
           virtual void unparse(FILE*);
@@ -1726,7 +1726,7 @@ HEADER_PE_COFF_SYMBOL_TABLE_START
        // ExecSection *get_strtab() {return strtab;}
 
      private:
-          void ctor(SgAsmGenericFile*, SgAsmPEFileHeader*);
+          void ctor();
        // std::vector<COFFSymbol*> symbols;
        // ExecSection *strtab;                /* Section containing symbol names */
 
@@ -1741,7 +1741,7 @@ HEADER_PE_IMPORT_HINT_NAME_START
             /* Optional byte to pad struct to an even number of bytes */
              };
 
-          SgAsmPEImportHintName(SgAsmGenericSection *section, addr_t offset);
+          SgAsmPEImportHintName(SgAsmGenericSection*, addr_t offset);
        // virtual ~PEImportHintName() {};
 
           void unparse(FILE *f, SgAsmGenericSection*, addr_t spos); /*not the standard unparse() function*/
@@ -2071,7 +2071,7 @@ HEADER_NE_FILE_HEADER_END
 
 HEADER_NE_SECTION_START
      public:
-          SgAsmNESection(SgAsmGenericFile *ef, addr_t offset, addr_t size);
+          SgAsmNESection(SgAsmNEFileHeader*, addr_t offset, addr_t size);
        // virtual ~NESection() {}
 
           virtual void unparse(FILE*);
@@ -2097,7 +2097,7 @@ HEADER_NE_SECTION_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmNEFileHeader*);
+          void ctor();
 
 HEADER_NE_SECTION_TABLE_END
 
@@ -2111,7 +2111,7 @@ HEADER_NE_NAME_TABLE_START
           std::vector<std::string> get_names_by_ordinal(unsigned ordinal);
 
      private:
-          void ctor(SgAsmNEFileHeader*);
+          void ctor();
        // std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
        // std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
 
@@ -2126,7 +2126,7 @@ HEADER_NE_MODULE_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmNEFileHeader *fhdr);
+          void ctor();
 
        // NEStringTable *strtab;
        // std::vector<addr_t> name_offsets;
@@ -2145,7 +2145,7 @@ HEADER_NE_STRING_TABLE_START
           std::string get_string(addr_t offset);
 
      private:
-          void ctor(SgAsmNEFileHeader*);
+          void ctor();
 
 HEADER_NE_STRING_TABLE_END
 
@@ -2159,7 +2159,7 @@ HEADER_NE_ENTRY_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmNEFileHeader*);
+          void ctor();
 
        // std::vector<size_t> bundle_sizes;
        // std::vector<NEEntryPoint> entries;
@@ -2175,7 +2175,7 @@ HEADER_NE_RELOC_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmNEFileHeader*);
+          void ctor();
 
        // std::vector<NERelocEntry> entries;
 
@@ -2509,7 +2509,7 @@ HEADER_LE_FILE_HEADER_END
 
 HEADER_LE_SECTION_START
      public:
-          SgAsmLESection(SgAsmGenericFile *ef, addr_t offset, addr_t size);
+          SgAsmLESection(SgAsmLEFileHeader*, addr_t offset, addr_t size);
        // virtual ~LESection() {}
 
        // virtual void unparse(FILE*); /*nothing special to do*/
@@ -2533,7 +2533,7 @@ HEADER_LE_SECTION_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmLEFileHeader*);
+          void ctor();
 
 HEADER_LE_SECTION_TABLE_END
 
@@ -2553,7 +2553,7 @@ HEADER_LE_NAME_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmLEFileHeader*);
+          void ctor();
 
        // std::vector<std::string> names; /*first name is module name; remainder are symbols within the module*/
        // std::vector<unsigned> ordinals; /*first entry is ignored but present in file*/
@@ -2570,7 +2570,7 @@ HEADER_LE_PAGE_TABLE_START
           SgAsmLEPageTableEntry *get_page(size_t idx);
 
      private:
-          void ctor(SgAsmLEFileHeader*);
+          void ctor();
 
        // std::vector<LEPageTableEntry*> entries;
 
@@ -2585,7 +2585,7 @@ HEADER_LE_ENTRY_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmLEFileHeader*);
+          void ctor();
 
        // std::vector<size_t> bundle_sizes;
        // std::vector<LEEntryPoint> entries;
@@ -2601,7 +2601,7 @@ HEADER_LE_RELOC_TABLE_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:
-          void ctor(SgAsmLEFileHeader*);
+          void ctor();
 
        // std::vector<LERelocEntry> entries;
 
@@ -3951,7 +3951,7 @@ SOURCE_EXECUTABLE_FILE_FORMAT_END
 
 SOURCE_GENERIC_SECTION_START
 
-SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, addr_t offset, addr_t size)
+SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
    : 
 #if 0
 p_file(NULL), 
@@ -3959,7 +3959,7 @@ p_file(NULL),
 p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
 p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
    {
-     ctor(f, offset, size);
+     ctor(f, fhdr, offset, size);
    }
 
 
@@ -4046,7 +4046,7 @@ SOURCE_GENERIC_SECTION_END
 SOURCE_GENERIC_HEADER_START
 
 SgAsmGenericHeader::SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size),
+   : SgAsmGenericSection(ef, NULL, offset, size),
      p_exec_format(NULL), p_isa(ISA_OTHER), p_base_va(0), p_dlls(NULL), p_symbols(NULL)
    {
      ctor(ef, offset, size);
@@ -4263,9 +4263,9 @@ SOURCE_ELF_HEADER_END
 
 SOURCE_ELF_SECTION_TABLE_START
 SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection( fhdr->get_file(), fhdr->get_e_shoff(), fhdr->get_e_shnum() * fhdr->get_e_shentsize() )
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_shoff(), fhdr->get_e_shnum() * fhdr->get_e_shentsize())
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_ELF_SECTION_TABLE_END
@@ -4290,16 +4290,18 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-   : SgAsmGenericSection(fhdr->get_file(), shdr->get_sh_offset(), shdr->get_sh_size()), p_linked_section(NULL), p_st_entry(NULL)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), shdr->get_sh_size()),
+     p_linked_section(NULL), p_st_entry(NULL)
    {
-     ctor(fhdr, shdr);
+     ctor(shdr);
    }
 
 /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size)
-   : SgAsmGenericSection(fhdr->get_file(), shdr->get_sh_offset(), file_size), p_linked_section(NULL), p_st_entry(NULL)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), file_size),
+     p_linked_section(NULL), p_st_entry(NULL)
    {
-     ctor(fhdr, shdr);
+     ctor(shdr);
    }
 
 SgAsmElfFileHeader*
@@ -4347,9 +4349,9 @@ SOURCE_ELF_DYNAMIC_ENTRY_END
 
 SOURCE_ELF_SEGMENT_TABLE_START
 SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr->get_e_phoff(), fhdr->get_e_phnum() * fhdr->get_e_phentsize())
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_phoff(), fhdr->get_e_phnum() * fhdr->get_e_phentsize())
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_ELF_SEGMENT_TABLE_END
@@ -4484,8 +4486,8 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 SOURCE_PE_FILE_HEADER_END
 
 SOURCE_PE_SECTION_START
-SgAsmPESection::SgAsmPESection(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size), p_st_entry(NULL)
+SgAsmPESection::SgAsmPESection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_st_entry(NULL)
    {
    }
 
@@ -4494,9 +4496,9 @@ SOURCE_PE_SECTION_END
 SOURCE_PE_IMPORT_SECTION_START
 
 SgAsmPEImportSection::SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
-   : SgAsmPESection(fhdr->get_file(), offset, size)
+   : SgAsmPESection(fhdr, offset, size)
    {
-     ctor(fhdr, offset, size, mapped_rva);
+     ctor(offset, size, mapped_rva);
    }
 
 void
@@ -4510,18 +4512,19 @@ SOURCE_PE_IMPORT_SECTION_END
 
 SOURCE_PE_SECTION_TABLE_START
 SgAsmPESectionTable::SgAsmPESectionTable(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), offset, size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_PE_SECTION_TABLE_END
 
 SOURCE_PE_COFF_SYMBOL_TABLE_START
-SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmGenericFile *f, SgAsmPEFileHeader *fhdr)
-   : SgAsmGenericSection(f, fhdr->get_e_coff_symtab(), fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size)
+SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_coff_symtab(),
+	                 fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size)
    {
-     ctor(f, fhdr);
+     ctor();
    }
 
 SOURCE_PE_COFF_SYMBOL_TABLE_END
@@ -4545,7 +4548,7 @@ SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_EXTENDED_DOS_HEADER_START
 SgAsmPEExtendedDOSHeader::SgAsmPEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericSection(f, offset, sizeof(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk))
+   : SgAsmGenericSection(f, NULL, offset, sizeof(SgAsmPEExtendedDOSHeader::ExtendedDOSHeader_disk))
    {
      ctor(f, offset);
    }
@@ -4640,8 +4643,8 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
 SOURCE_NE_FILE_HEADER_END
 
 SOURCE_NE_SECTION_START
-SgAsmNESection::SgAsmNESection(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size), p_st_entry(NULL), p_reloc_table(NULL)
+SgAsmNESection::SgAsmNESection(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_st_entry(NULL), p_reloc_table(NULL)
    {
    }
 
@@ -4649,61 +4652,62 @@ SOURCE_NE_SECTION_END
 
 SOURCE_NE_SECTION_TABLE_START
 SgAsmNESectionTable::SgAsmNESectionTable(SgAsmNEFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr->end_offset(), fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk))
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->end_offset(),
+                         fhdr->get_e_nsections() * sizeof(SgAsmNESectionTableEntry::NESectionTableEntry_disk))
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_SECTION_TABLE_END
 
 SOURCE_NE_NAME_TABLE_START
 SgAsmNENameTable::SgAsmNENameTable(SgAsmNEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), offset, 0)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_NAME_TABLE_END
 
 SOURCE_NE_MODULE_TABLE_START
 SgAsmNEModuleTable::SgAsmNEModuleTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size, SgAsmNEStringTable *strtab)
-   : SgAsmGenericSection(fhdr->get_file(), offset, size), p_strtab(strtab)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_strtab(strtab)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_MODULE_TABLE_END
 
 SOURCE_NE_STRING_TABLE_START
 SgAsmNEStringTable::SgAsmNEStringTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t length)
-   : SgAsmGenericSection(fhdr->get_file(), offset, length)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, length)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_STRING_TABLE_END
 
 SOURCE_NE_ENTRY_TABLE_START
 SgAsmNEEntryTable::SgAsmNEEntryTable(SgAsmNEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), offset, size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_ENTRY_TABLE_END
 
 SOURCE_NE_RELOC_TABLE_START
 SgAsmNERelocTable::SgAsmNERelocTable(SgAsmNEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), offset, 0)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_NE_RELOC_TABLE_END
 
 SOURCE_NE_EXTENDED_DOS_HEADER_START
 SgAsmNEExtendedDOSHeader::SgAsmNEExtendedDOSHeader(SgAsmGenericFile *f, addr_t offset)
-   : SgAsmGenericSection(f, offset, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk))
+   : SgAsmGenericSection(f, NULL, offset, sizeof(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_disk))
    {
      ctor(f, offset);
    }
@@ -4787,8 +4791,8 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
 SOURCE_LE_FILE_HEADER_END
 
 SOURCE_LE_SECTION_START
-SgAsmLESection::SgAsmLESection(SgAsmGenericFile *ef, addr_t offset, addr_t size)
-   : SgAsmGenericSection(ef, offset, size), p_st_entry(NULL)
+SgAsmLESection::SgAsmLESection(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size), p_st_entry(NULL)
    {
    }
 
@@ -4796,45 +4800,45 @@ SOURCE_LE_SECTION_END
 
 SOURCE_LE_SECTION_TABLE_START
 SgAsmLESectionTable::SgAsmLESectionTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), offset, size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_LE_SECTION_TABLE_END
 
 SOURCE_LE_NAME_TABLE_START
 SgAsmLENameTable::SgAsmLENameTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), offset, 0)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_LE_NAME_TABLE_END
 
 SOURCE_LE_PAGE_TABLE_START
 SgAsmLEPageTable::SgAsmLEPageTable(SgAsmLEFileHeader *fhdr, addr_t offset, addr_t size)
-   : SgAsmGenericSection(fhdr->get_file(), offset, size)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_LE_PAGE_TABLE_END
 
 SOURCE_LE_ENTRY_TABLE_START
 SgAsmLEEntryTable::SgAsmLEEntryTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), offset, 0)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_LE_ENTRY_TABLE_END
 
 SOURCE_LE_RELOC_TABLE_START
 SgAsmLERelocTable::SgAsmLERelocTable(SgAsmLEFileHeader *fhdr, addr_t offset)
-   : SgAsmGenericSection(fhdr->get_file(), offset, 0)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, 0)
    {
-     ctor(fhdr);
+     ctor();
    }
 
 SOURCE_LE_RELOC_TABLE_END

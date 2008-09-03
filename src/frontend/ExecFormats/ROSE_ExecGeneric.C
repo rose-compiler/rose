@@ -228,9 +228,9 @@ SgAsmGenericFile::add_section(SgAsmGenericSection *section)
         ROSE_ASSERT(p_sections->get_sections()[i] != section);
     }
 #endif
-    p_sections->get_sections().push_back(section);
 
-    p_sections->get_sections().back()->set_parent(p_sections);
+    p_sections->get_sections().push_back(section);
+    section->set_parent(p_sections);
 }
 
 // DQ (8/16/2008): Added this support to remove the effects of the SgAsmGenericFile::add_section()
@@ -606,7 +606,7 @@ SgAsmGenericFile::fill_holes()
 
     /* Create the sections representing the holes */
     for (size_t i=0; i<extents.size(); i++) {
-        SgAsmGenericSection *section = new SgAsmGenericSection(this, extents[i].first, extents[i].second);
+        SgAsmGenericSection *section = new SgAsmGenericSection(this, NULL, extents[i].first, extents[i].second);
         section->set_synthesized(true);
         section->set_name("hole");
         section->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
@@ -694,44 +694,62 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
 
 /* Constructor */
 void
-SgAsmGenericSection::ctor(SgAsmGenericFile *ef, addr_t offset, addr_t size)
+SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);
     if (offset > ef->get_size() || offset+size > ef->get_size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
 
- // printf ("In SgAsmGenericSection::ctor() \n");
+    /* Assert that if HDR is null then "this" is a header. */
+    if (!hdr) {
+        bool this_is_a_header;
+        try {
+            SgAsmGenericHeader *this_header = dynamic_cast<SgAsmGenericHeader*>(this);
+            this_is_a_header = this_header!=NULL;
+        } catch(...) {
+            this_is_a_header = false;
+        }
+        ROSE_ASSERT(this_is_a_header);
+    }
 
-#if 0
- // This data member is removed from the SgAsmGenericSection, but it is added for the SgAsmGenericHeader.
-    p_file = ef;
-#endif
-    ROSE_ASSERT(ef->get_sections() != NULL);
-    set_parent(ef->get_sections());
-
+    /* Initialize data members */
     p_offset = offset;
     p_data = ef->content(offset, size);
+    set_header(hdr);
 
-    /* The section is added to the file's list of sections. It may also be added to other lists by the caller. The destructor
-     * will remove it from the file's list but does not know about other lists. */
-    ef->add_section(this);
+    /* Add this section to either the file's section list or the header's section list. */
+    if (hdr) {
+        hdr->add_section(this);
+        ROSE_ASSERT(hdr->get_sections()!=NULL);
+    } else {
+        ef->add_section(this);
+        ROSE_ASSERT(ef->get_sections() != NULL);
+    }
 }
 
 /* Destructor must remove the section from its parent file's section list */
 SgAsmGenericSection::~SgAsmGenericSection()
 {
- // if (p_file) {
- //     std::vector<SgAsmGenericSection*> & sections = p_file->get_sections()->get_sections();
-
-    SgAsmGenericFile* genericFile = get_file();
- // printf ("In SgAsmGenericSection destructor: genericFile = %p \n",genericFile);
-
-    if (genericFile != NULL) {
-        std::vector<SgAsmGenericSection*> & sections = genericFile->get_sections()->get_sections();
-        std::vector<SgAsmGenericSection*>::iterator i = sections.begin();
-        while (i != sections.end()) {
+    SgAsmGenericFile* ef = get_file();
+    SgAsmGenericHeader *hdr = get_header();
+    
+    /* Remove section from file's or header's section list */
+    for (int pass=0; pass<2; pass++) {
+        std::vector<SgAsmGenericSection*> *sections;
+        switch (pass) {
+          case 0:
+            if (hdr)
+                sections = &(hdr->get_sections()->get_sections());
+            break;
+          case 1:
+            if (ef)
+                sections = &(ef->get_sections()->get_sections());
+            break;
+        }
+        std::vector<SgAsmGenericSection*>::iterator i = sections->begin();
+        while (i != sections->end()) {
             if (*i==this) {
-                i = sections.erase(i);
+                i = sections->erase(i);
             } else {
                 i++;
             }

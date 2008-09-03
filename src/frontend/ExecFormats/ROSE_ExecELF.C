@@ -479,10 +479,9 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmElfSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
 {
     set_synthesized(false);
-    set_header(fhdr);
 
     /* Section purpose */
     switch (shdr->get_sh_type()) {
@@ -868,13 +867,14 @@ SgAsmElfSectionTableEntry::encode(ByteOrder sex, Elf64SectionTableEntry_disk *di
 
 /* Constructor reads the Elf Section Table (i.e., array of section headers) */
 void
-SgAsmElfSectionTable::ctor(SgAsmElfFileHeader *fhdr)
+SgAsmElfSectionTable::ctor()
 {
     set_synthesized(true);                              /* the section table isn't really a section itself */
     set_name("ELF section table");
     set_purpose(SP_HEADER);
-    set_header(fhdr);
 
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
 
     if (fhdr->get_e_shnum() > 0) {
@@ -1215,17 +1215,17 @@ SgAsmElfSegmentTableEntry::stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFl
 
 /* Constructor reads the Elf Segment (Program Header) Table */
 void
-SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
+SgAsmElfSegmentTable::ctor()
 {
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
     set_name("ELF Segment Table");
     set_purpose(SP_HEADER);
-    set_header(fhdr);
 
     p_entries = new SgAsmElfSegmentTableEntryList;
-
     p_entries->set_parent(this);
     
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
     
     if (fhdr->get_e_phnum() > 0) {
@@ -1317,11 +1317,10 @@ SgAsmElfSegmentTable::ctor(SgAsmElfFileHeader *fhdr)
                     sprintf(name, "ELF segment 0x%08x (segment %zu)", shdr->get_type(), i);
                     break;
                 }
-                s = new SgAsmGenericSection(fhdr->get_file(), shdr->get_offset(), shdr->get_filesz());
+                s = new SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz());
                 s->set_synthesized(true);
                 s->set_name(name);
                 s->set_purpose(SP_HEADER);
-                s->set_header(fhdr);
             } else if (1 == matching.size()) {
                 /* Use the single matching section. */
                 s = matching[0];
@@ -1954,33 +1953,6 @@ SgAsmElfFileHeader::is_ELF(SgAsmGenericFile *f)
 
     return retval;
 }
-
-#if 0
-/* Parses the structure of an ELF file and adds the information to the asmFile */
-void
-parseBinaryFormat(SgAsmGenericFile *f, SgAsmFile* asmFile)
-   {
-     ROSE_ASSERT(f);
-    
-     SgAsmElfFileHeader *fhdr = new SgAsmElfFileHeader(f, 0);
-
-     ROSE_ASSERT(fhdr != NULL);
-  // SgAsmElfFileHeader* roseElfHeader = new SgAsmElfFileHeader(fhdr);
-  // ROSE_ASSERT(roseElfHeader != NULL);
-  // asmFile->set_header(roseElfHeader);
-     asmFile->set_header(fhdr);
-
-  /* Read the optional section and segment tables and the sections/segments to which they point. */
-     if (fhdr->get_e_shnum())
-          fhdr->set_section_table( new SgAsmElfSectionTable(fhdr) );
-
-     if (fhdr->get_e_phnum())
-          fhdr->set_segment_table( new SgAsmElfSegmentTable(fhdr) );
-
-  /* Identify parts of the file that we haven't encountered during parsing */
-     f->fill_holes();
-   }
-#endif
 
 /* Parses the structure of an ELF file and adds the info to the ExecFile */
 SgAsmElfFileHeader *
