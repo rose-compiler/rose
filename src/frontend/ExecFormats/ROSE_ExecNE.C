@@ -521,10 +521,9 @@ SgAsmNESectionTable::ctor()
 void
 SgAsmNESectionTable::unparse(FILE *f)
 {
-    SgAsmGenericFile *ef = get_file();
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections()->get_sections();
+    SgAsmGenericFile::sections_t sections = fhdr->get_sections();
 
     for (size_t i=0; i<sections.size(); i++) {
         if (sections[i]->get_id()>=0) {
@@ -1266,7 +1265,6 @@ SgAsmNEFileHeader::is_NE(SgAsmGenericFile *f)
 
     /* RPM (2008-08-18): We're clearing these lists below, so they better not already have something
      * important in them. */
-    ROSE_ASSERT(f->get_sections()->get_sections().size()==0);
     ROSE_ASSERT(f->get_headers()->get_headers().size()==0);
 
     try {
