@@ -5,7 +5,7 @@
 using namespace std;
 
 set<SgDeclarationStatement*>
-MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( SgNode* node, SgFile* file )
+MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( SgNode* node, SgSourceFile* file )
    {
      ROSE_ASSERT(file != NULL);
 
@@ -127,7 +127,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
 void
 MarkTemplateInstantiationsForOutput::
-ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file )
+ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file )
    {
      ROSE_ASSERT(file != NULL);
 
@@ -624,7 +624,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
 
 
 void
-MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file )
+MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file )
    {
      ROSE_ASSERT(file != NULL);
 
@@ -689,7 +689,7 @@ MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations ( set<S
    }
 
 void
-MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file )
+MarkTemplateInstantiationsForOutput::ProcessClassTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file )
    {
      ROSE_ASSERT(file != NULL);
 
@@ -794,11 +794,11 @@ markTemplateInstantiationsForOutput( SgNode* node )
 
   // DQ (8/2/2005): Added better handling of AST fragments where template handling is not required!
   // DQ (7/29/2005): Added support with Qing for AST framents that occure in the ASTInterface classes.
-     SgFile* file                = NULL;
+     SgSourceFile* file                = NULL;
   // bool buildImplicitTemplates = false;
 
      ROSE_ASSERT(node != NULL);
-     file = TransformationSupport::getFile(node);
+     file = TransformationSupport::getSourceFile(node);
   // buildImplicitTemplates = (file != NULL) && (file->get_no_implicit_templates() == false);
 
   // printf ("buildImplicitTemplates = %s \n",buildImplicitTemplates ? "true" : "false");
@@ -860,7 +860,7 @@ MarkTemplateInstantiationsForOutputSupportSynthesizedAttribute::MarkTemplateInst
    }
 
 
-MarkTemplateInstantiationsForOutputSupport::MarkTemplateInstantiationsForOutputSupport (SgFile* inputFile)
+MarkTemplateInstantiationsForOutputSupport::MarkTemplateInstantiationsForOutputSupport (SgSourceFile* inputFile)
    {
   // Save the file in the traversal class so that we can access the backend specific 
   // template instatiation control flags easily.

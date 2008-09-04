@@ -1247,7 +1247,9 @@ querySolverGrammarElementFromVariantVector (
           case V_SgBaseClassModifier:
           case V_SgDeclarationModifier:
           case V_Sg_File_Info:
-          case V_SgFile:
+       // case V_SgFile:
+          case V_SgSourceFile:
+          case V_SgBinaryFile:
           case V_SgProject:
           case V_SgOptions:
           case V_SgUnparse_Info:
@@ -1448,8 +1450,8 @@ querySolverGrammarElementFromVariantVector (
           case V_SgAsmArmRegisterReferenceExpression:
           case V_SgAsmWordValueExpression:
           case V_SgAsmDoubleWordValueExpression:
-	  case V_SgAsmQuadWordValueExpression:
-	  case V_SgAsmByteValueExpression:
+          case V_SgAsmQuadWordValueExpression:
+          case V_SgAsmByteValueExpression:
           case V_SgAsmInstruction:
           case V_SgAsmx86Instruction:
           case V_SgAsmArmInstruction:
@@ -1518,16 +1520,15 @@ querySolverGrammarElementFromVariantVector (
           case V_SgUpcThreads:
           case V_SgUpcMythread:
              {
-
-//             printf ("Error unimplemented case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
+            // printf ("Error unimplemented case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
             // ROSE_ASSERT(false);
                break;
              }
 
           default:
              {
-               printf ("Warning: querySolverGrammarElementFromVariantVector()'s default case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
-	       //               ROSE_ASSERT(false);
+               printf ("Error default case in querySolverGrammarElementFromVariantVector() switch: ignoring astNode = %s \n",astNode->sage_class_name());
+	         // ROSE_ASSERT(false);
                break;
              }
         }

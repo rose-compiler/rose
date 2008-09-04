@@ -1180,7 +1180,8 @@ TransformationSupport::getTransformationOptions (
                break;
              }
 
-          case V_SgFile:
+       // case V_SgFile:
+          case V_SgSourceFile:
              {
                SgFile* file = isSgFile(astNode);
                ROSE_ASSERT (file != NULL);
@@ -1426,7 +1427,8 @@ TransformationSupport::getTransformationOptions (
                break;
              }
 
-          case V_SgFile:
+       // case V_SgFile:
+          case V_SgSourceFile:
              {
                SgFile* file = isSgFile(astNode);
                ROSE_ASSERT (file != NULL);
@@ -2062,6 +2064,88 @@ TransformationSupport::getFile( const SgNode* astNode )
 
   // return file;
      return const_cast<SgFile*>(file);
+   }
+
+// DQ (9/3/2008): This used to use SgFile and was switched to use SgSourceFile.
+SgSourceFile*
+TransformationSupport::getSourceFile( const SgNode* astNode )
+   {
+     const SgNode* parentNode = astNode;
+     while ( (isSgSourceFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+        {
+          parentNode = parentNode->get_parent();
+        }
+
+  // DQ (8/2/2005): Modified this so that we can return NULL so that AST framents 
+  // not associated with a primary AST can be used with this function!
+  // Check to see if we made it back to the root (current root is SgProject).
+  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
+     if ( isSgSourceFile(parentNode) == NULL &&
+          dynamic_cast<const SgType*>(parentNode) == NULL &&
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+        {
+       // printf ("Error: could not trace back to SgSourceFile node \n");
+       // ROSE_ASSERT(false);
+        }
+       else
+        {
+          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+             {
+               printf ("Error: can't locate an associated SgSourceFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+               return NULL;
+             }
+        }
+
+
+  // Make sure we have a SgSourceFile node
+     const SgSourceFile* file = isSgSourceFile(parentNode);
+
+  // DQ (8/2/2005): Allow to return NULL
+  // ROSE_ASSERT (file != NULL);
+
+  // return file;
+     return const_cast<SgSourceFile*>(file);
+   }
+
+// DQ (9/3/2008): This used to use SgFile and was switched to use SgBinaryFile.
+SgBinaryFile*
+TransformationSupport::getBinaryFile( const SgNode* astNode )
+   {
+     const SgNode* parentNode = astNode;
+     while ( (isSgBinaryFile(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+        {
+          parentNode = parentNode->get_parent();
+        }
+
+  // DQ (8/2/2005): Modified this so that we can return NULL so that AST framents 
+  // not associated with a primary AST can be used with this function!
+  // Check to see if we made it back to the root (current root is SgProject).
+  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
+     if ( isSgBinaryFile(parentNode) == NULL &&
+          dynamic_cast<const SgType*>(parentNode) == NULL &&
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+        {
+       // printf ("Error: could not trace back to SgBinaryFile node \n");
+       // ROSE_ASSERT(false);
+        }
+       else
+        {
+          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+             {
+               printf ("Error: can't locate an associated SgBinaryFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+               return NULL;
+             }
+        }
+
+
+  // Make sure we have a SgBinaryFile node
+     const SgBinaryFile* file = isSgBinaryFile(parentNode);
+
+  // DQ (8/2/2005): Allow to return NULL
+  // ROSE_ASSERT (file != NULL);
+
+  // return file;
+     return const_cast<SgBinaryFile*>(file);
    }
 
 SgGlobal*

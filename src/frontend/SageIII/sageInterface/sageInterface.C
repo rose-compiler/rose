@@ -902,7 +902,9 @@ SageInterface::get_name ( const SgSupport* node )
              }
 
        // DQ (5/31/2007): Implemented case for SgFile
-          case V_SgFile:
+       // case V_SgFile:
+          case V_SgSourceFile:
+          case V_SgBinaryFile:
              {
                name = "_file_";
                break;
@@ -2912,8 +2914,10 @@ SageInterface::generateFileList()
 
      FileTraversal fileTraversal;
 
-  // traverse just the SgFile nodes!
-     SgFile::visitRepresentativeNode(fileTraversal);
+  // traverse just the SgFile nodes (both the SgSourceFile and SgBinaryFile IR nodes)!
+  // SgFile::visitRepresentativeNode(fileTraversal);
+     SgSourceFile::visitRepresentativeNode(fileTraversal);
+     SgBinaryFile::visitRepresentativeNode(fileTraversal);
 
   // This would alternatively traverse all IR nodes in thememory pool!
   // fileTraversal.traverseMemoryPool();
@@ -3699,14 +3703,21 @@ SageInterface::generateProjectName( const SgProject* project )
    {
      ROSE_ASSERT(project != NULL);
      string projectName;
-     Rose_STL_Container<string> fileList = project->getFileNames();
+
+  // DQ (9/2/2008): Removed the redundant function getFileNames().
+  // Rose_STL_Container<string> fileList = project->get_sourceFileNameList();
+     Rose_STL_Container<string> fileList = project->getAbsolutePathFileNames();
+
      Rose_STL_Container<string>::iterator i = fileList.begin();
-     while (i !=   fileList.end())
+     while (i != fileList.end())
         {
           string filename = *i;
        // printf ("In SageInterface::generateProjectName(): absolute filename = %s \n",filename.c_str());
           string filenameWithoutSuffix       = StringUtility::stripFileSuffixFromFileName(filename);
           string filenameWithoutPathOrSuffix = StringUtility::stripPathFromFileName(filenameWithoutSuffix);
+
+       // printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
+       // printf ("filenameWithoutPathOrSuffix = %s \n",filenameWithoutPathOrSuffix.c_str());
 
           filename = filenameWithoutPathOrSuffix;
 
@@ -3719,9 +3730,18 @@ SageInterface::generateProjectName( const SgProject* project )
              }
 
        // printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
+
+          if (i != fileList.begin())
+               projectName += "--";
+
           projectName += filename;
+
+       // printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
+
           i++;
         }
+
+  // printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
 
      return projectName;
    }
@@ -4175,8 +4195,7 @@ SgNode * SageInterface::deepCopyNode (const SgNode* n)
 // by Jeremiah
 // Return bool for C++ code, and int for C code
 SgType* SageInterface::getBoolType(SgNode* n) {
-  bool isC = TransformationSupport::getFile(n)->get_outputLanguage() ==
-SgFile::e_C_output_language;
+  bool isC = TransformationSupport::getSourceFile(n)->get_outputLanguage() == SgFile::e_C_output_language;
   if (isC) {
     return SgTypeInt::createType();
   } else {
@@ -4674,7 +4693,7 @@ SgFile * SageInterface::getEnclosingFileNode(SgNode* astNode)
      SgNode* parent = astNode;
      while ( (parent != NULL) && (isSgFile(parent) == NULL) )
         {
-// printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
+       // printf ("In getFileNameByTraversalBackToFileNode(): parent = %p = %s \n",parent,parent->class_name().c_str());
           parent = parent->get_parent();
         }
  if (!parent) 

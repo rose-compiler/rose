@@ -36,6 +36,11 @@ int copy_backend( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NUL
 void generatePDF ( const SgProject & project );
 void generateDOT ( const SgProject & project, std::string filenamePostfix = "" );
 
+// DQ (9/1/2008): Added function to generate the compete AST when specificed with multiple files 
+// on the command line.  This is the older default behavior of generateDOT (from last year, or so).
+void generateDOT_withIncludes   ( const SgProject & project, std::string filenamePostfix = "" );
+void generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix = "" );
+
 // DQ (6/14/2007): Support for whole AST graphs output with attributes (types, symbols, all edges, etc.)
 // We define a default value for the maximum graph size (number of nodes).
 void generateAstGraph ( const SgProject* project, int maxSize = 2000, std::string filenameSuffix = "" );

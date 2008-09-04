@@ -1924,7 +1924,8 @@ SgTypeFloat * SageBuilder::buildFloatType()
   }
 
   //! Build a SgFile node
-  SgFile* SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
+SgSourceFile*
+SageBuilder::buildFile(const std::string& inputFileName, const std::string& outputFileName, SgProject* project/*=NULL*/)
   {
      ROSE_ASSERT(inputFileName.size()!=0);// empty file name is not allowed.
      string sourceFilename = inputFileName, fullname;
@@ -1969,7 +1970,11 @@ SgTypeFloat * SageBuilder::buildFloatType()
 
       Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist);
       CommandlineProcessing::removeAllFileNamesExcept(arglist,fileList,sourceFilename);
-      SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
+
+   // DQ (9/3/2008): Added support for SgSourceFile IR node
+   // SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
+      SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
+
       ROSE_ASSERT(result!=NULL);
       result->set_parent(project);
       project->set_file(*result); 

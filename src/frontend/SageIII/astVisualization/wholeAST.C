@@ -1237,7 +1237,9 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                     break;
                   }
 
-               case V_SgFile:
+            // case V_SgFile:
+               case V_SgSourceFile:
+               case V_SgBinaryFile:
                   {
                     SgFile* file = isSgFile(node);
                     additionalNodeOptions = "shape=ellipse,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=2,color=\"Blue\",fillcolor=pink,fontname=\"7x13bold\",fontcolor=black,style=filled";

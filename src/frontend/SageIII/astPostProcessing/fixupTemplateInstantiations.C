@@ -74,7 +74,7 @@ FixupTemplateInstantiations::visit (SgNode* node)
        // generated buy the EDG/Sage connection!
 
        // printf ("Calling isFirstUseInSourceFile \n");
-          SgFile* file = TransformationSupport::getFile(node);
+          SgSourceFile* file = TransformationSupport::getSourceFile(node);
           ROSE_ASSERT(file != NULL);
        // printf ("current file is: %s \n",file->getFileName());
 
@@ -127,7 +127,7 @@ FixupTemplateInstantiations::visit (SgNode* node)
         {
        // DQ (5/27/2005): Mark the declaration and its subtree (for all SgTemplateInstantiationFunctionDecl IR nodes)
        // printf ("Calling isFirstUseInSourceFile \n");
-          SgFile* file = TransformationSupport::getFile(node);
+          SgSourceFile* file = TransformationSupport::getSourceFile(node);
           ROSE_ASSERT(file != NULL);
        // printf ("current file is: %s \n",file->getFileName());
 
@@ -155,7 +155,7 @@ FixupTemplateInstantiations::visit (SgNode* node)
        // Make sure that the classDeclaration has not be accedentally reset to not be marked as compiler generated!
           ROSE_ASSERT ( memberFunctionDeclaration->get_file_info()->isCompilerGeneratedNodeToBeUnparsed() == true );
 #else
-          SgFile* file = TransformationSupport::getFile(node);
+          SgSourceFile* file = TransformationSupport::getSourceFile(node);
           ROSE_ASSERT(file != NULL);
        // printf ("current file is: %s \n",file->getFileName());
 

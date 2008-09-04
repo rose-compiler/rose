@@ -3743,7 +3743,7 @@ HEADER_APPLICATION_FILE_START
           void generateBinaryExecutableFileInformation ( std::string sourceFilename, SgAsmFile* asmFile );
 
       //! Default constructor (not meant to be used)
-          SgFile() ROSE_DEPRECATED_FUNCTION;
+      //  SgFile() ROSE_DEPRECATED_FUNCTION;
 
       //! Destructor
       // ~SgFile();
@@ -3793,6 +3793,9 @@ HEADER_APPLICATION_FILE_START
 
        // Get the commandline from where it is stored internally
           int callFrontEnd();
+
+       // DQ (9/2/2008): Added to factor out detail fo building the AST in callFrontEnd().
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
        // DQ (6/17/2005): I think that this should be a static function and perhaps moved to SgProject instead of in SgFile
       //! Move this function from ROSE into the AST restructuring tool
@@ -3878,6 +3881,38 @@ HEADER_APPLICATION_FILE_START
 #endif
 
 HEADER_APPLICATION_FILE_END
+
+HEADER_APPLICATION_SOURCE_FILE_START
+     public:
+       // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
+          SgSourceFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+          SgSourceFile ( const SgSourceFile & X );
+
+      //! Default constructor (not meant to be used)
+          SgSourceFile() ROSE_DEPRECATED_FUNCTION;
+
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
+      //! Divide up the handling of different languages
+          int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_PHP_AST();
+
+HEADER_APPLICATION_SOURCE_FILE_END
+
+HEADER_APPLICATION_BINARY_FILE_START
+     public:
+       // SgBinaryFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
+          SgBinaryFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+          SgBinaryFile ( const SgBinaryFile & X );
+
+      //! Default constructor (not meant to be used)
+          SgBinaryFile() ROSE_DEPRECATED_FUNCTION;
+
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
+HEADER_APPLICATION_BINARY_FILE_END
+
 
 HEADER_APPLICATION_FILE_LIST_START
 HEADER_APPLICATION_FILE_LIST_END
@@ -3981,9 +4016,13 @@ HEADER_APPLICATION_PROJECT_START
        // static int project_argc;
        // static char** project_argv;
 
-      //! DQ: Get list of file names in project (generated from the list of SgFile nodes)
-      //! I think this is redundant with the otehr lists of filenames!
-          Rose_STL_Container<std::string> getFileNames() const;
+       // DQ (9/2/2008): Removed this redundant function
+       // DQ: Get list of file names in project (generated from the list of SgFile nodes)
+       // I think this is redundant with the other lists of filenames!
+       // Rose_STL_Container<std::string> getFileNames() const;
+
+      //! This function generates a list of files resolved to absolute paths (symbolic links should not be resolved).
+          Rose_STL_Container<std::string> getAbsolutePathFileNames() const;
 
       //! DQ: Modified to accept a value on the command line (no longer a boolean variable)
       //! value of 0 means quiet and higher values output more information, default value 
@@ -9224,6 +9263,12 @@ SOURCE_FILE_INFORMATION_END
 
 SOURCE_APPLICATION_FILE_START
 
+int SgFile::buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine )
+   {
+     printf ("Base class of virtual function, SgFile::buildAST(), called by mistake! \n");
+     ROSE_ASSERT(false);
+   }
+
 Sg_File_Info*
 SgFile::get_file_info() const
    {
@@ -9282,6 +9327,8 @@ SgFile::SgFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgP
      doSetupForConstructor(argv, errorCode, fileNameIndex, project);
    }
 
+#if 0
+// Commented out 9/2/2008): We now have new SgSourceFile and SgBinaryFile IR nodes.
 SgFile::SgFile ()
    {
   // Default constructor
@@ -9296,7 +9343,9 @@ SgFile::SgFile ()
   // ROSE_ABORT();
 
      p_root                         = NULL;
-     p_binaryFile                   = NULL;
+
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
+  // p_binaryFile                   = NULL;
 
   // DQ (10/16/2005): Removed as part of cleanup to SgFile
   // p_numberOfCommandLineArguments = 0;
@@ -9316,6 +9365,7 @@ SgFile::SgFile ()
   // p_numberOfCommandLineArguments = p_defaultNumberOfCommandLineArguments;
   // p_commandLineArgumentList      = p_defaultCommandLineArgumentList;
    }
+#endif
 
 // DQ (1/17/2006): Added this (copy constructor) to be explicit 
 // and avoid difficult bugs where it is compiler generated.
@@ -9356,7 +9406,9 @@ SgFile::initialization()
      ROSE_ASSERT(get_file_info() != NULL);
 
      ROSE_ASSERT (p_root == NULL);
-     ROSE_ASSERT (p_binaryFile == NULL);
+
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
+  // ROSE_ASSERT (p_binaryFile == NULL);
 
   // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
   // enforce that the filename is always an absolute path (starting with "/").
@@ -9416,10 +9468,6 @@ SgFile::initialization()
      p_requires_C_preprocessor = false;
 
      p_binary_only             = false;
-
-  // Input code format
-  // p_fixedFormat             = false;
-  // p_freeFormat              = false;
 
      p_inputFormat             = SgFile::e_unknown_output_format;
      p_outputFormat            = SgFile::e_unknown_output_format;
@@ -9501,6 +9549,9 @@ X skip_unparse
 X skipfinalCompileStep
 X unparse_includes
 X unparse_line_directives
+X unparse_instruction_addresses
+X unparse_raw_memory_contents
+X unparse_binary_file_format
 X outputLanguage
 STRING  sourceFileNameWithPath
 STRING  sourceFileNameWithoutPath
@@ -9633,14 +9684,16 @@ X aggressive
 
      p_sourceFileUsesBinaryFileExtension = false;
 
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
   // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
-     p_binaryFile = NULL;
+  // p_binaryFile = NULL;
 
      p_read_executable_file_format_only = false;
 
      p_read_instructions_only = false;
 
-     p_aggressive = false;
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
+  // p_aggressive = false;
    }
 
 SgGlobal &
@@ -9955,34 +10008,12 @@ SgFile::display ( const std::string & label ) const
      ROSE_ASSERT (get_startOfConstruct() != NULL);
      get_startOfConstruct()->display("Called from SgFile::display");
 
-     printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
-  // ROSE_ASSERT (p_preprocessorDirectivesAndCommentsList != NULL);
-
-  // printf ("     p_unparse_output_filename = %s \n",(p_unparse_output_filename != NULL) ? p_unparse_output_filename : "NULL POINTER");
-     printf ("     p_unparse_output_filename = %s \n",p_unparse_output_filename.c_str());
-
      printf ("     p_verbose                              = %s (value=%d) \n",                      (p_verbose > 1) ? "true" : "false",p_verbose);
-     printf ("     p_useBackendOnly                       = %s \n",(p_useBackendOnly                       == true) ? "true" : "false");
-     printf ("     p_skip_transformation                  = %s \n",(p_skip_transformation                  == true) ? "true" : "false");
-     printf ("     p_skip_unparse                         = %s \n",(p_skip_unparse                         == true) ? "true" : "false");
-     printf ("     p_outputGrammarTreeFiles               = %s \n",(p_outputGrammarTreeFiles               == true) ? "true" : "false");
-     printf ("     p_outputGrammarTreeFilesForHeaderFiles = %s \n",(p_outputGrammarTreeFilesForHeaderFiles == true) ? "true" : "false");
-     printf ("     p_unparse_includes                     = %s \n",(p_unparse_includes                     == true) ? "true" : "false");
-     printf ("     p_unparse_line_directives              = %s \n",(p_unparse_line_directives              == true) ? "true" : "false");
-     printf ("     p_unparse_instruction_addresses        = %s \n",(p_unparse_instruction_addresses        == true) ? "true" : "false");
-     printf ("     p_unparse_raw_memory_contents          = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
-     printf ("     p_unparse_binary_file_format           = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
+     printf ("     p_output_warnings                      = %s \n",                      (p_output_warnings == true) ? "true" : "false");
 
-     printf ("     p_KCC_frontend                         = %s \n",(p_KCC_frontend                         == true) ? "true" : "false");
-     printf ("     p_new_frontend                         = %s \n",(p_new_frontend                         == true) ? "true" : "false");
-     printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep                 == true) ? "true" : "false");
-     printf ("     p_disable_edg_backend                  = %s \n",(p_disable_edg_backend                  == true) ? "true" : "false");
-     printf ("     p_disable_sage_backend                 = %s \n",(p_disable_sage_backend                 == true) ? "true" : "false");
-     printf ("     p_testingLevel                         = %d \n",p_testingLevel);
-     printf ("     p_preinit_il                           = %s \n",(p_preinit_il                           == true) ? "true" : "false");
-     printf ("     p_enable_cp_backend                    = %s \n",(p_enable_cp_backend                    == true) ? "true" : "false");
-
-     printf ("     p_C_only()                             = %s \n",(p_C_only == true) ? "true" : "false");
+     printf ("     p_C_only()                             = %s \n",(p_C_only == true)   ? "true" : "false");
+     printf ("     p_UPC_only()                           = %s \n",(p_UPC_only == true) ? "true" : "false");
+     printf ("     p_upc_threads                          = %s (value=%d) \n",  (p_upc_threads > 1) ? "true" : "false",p_upc_threads);
      printf ("     p_C99_only()                           = %s \n",(p_C99_only == true) ? "true" : "false");
      printf ("     p_Cxx_only()                           = %s \n",(p_Cxx_only == true) ? "true" : "false");
      printf ("     p_Fortran_only()                       = %s \n",(p_Fortran_only == true) ? "true" : "false");
@@ -9990,11 +10021,11 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_F90_only()                           = %s \n",(p_F90_only == true) ? "true" : "false");
      printf ("     p_F95_only()                           = %s \n",(p_F95_only == true) ? "true" : "false");
      printf ("     p_F2003_only()                         = %s \n",(p_F2003_only == true) ? "true" : "false");
-     printf ("     p_PHP_only()                         = %s \n",(p_PHP_only == true) ? "true" : "false");
-     printf ("     p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
+     printf ("     p_PHP_only()                           = %s \n",(p_PHP_only == true) ? "true" : "false");
 
-  // printf ("     p_fixedFormat                          = %s \n",(p_fixedFormat == true) ? "true" : "false");
-  // printf ("     p_freeFormat                           = %s \n",(p_freeFormat == true) ? "true" : "false");
+     printf ("     p_requires_C_preprocessor              = %s \n",(p_requires_C_preprocessor == true) ? "true" : "false");
+
+     printf ("     p_binary_only()                        = %s \n",(p_binary_only == true) ? "true" : "false");
 
      string inputFormatName;
      switch(p_inputFormat)
@@ -10044,6 +10075,23 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_backendCompileFormat                 = %s output format \n",backendCompileFormatName.c_str());
 
+     printf ("     p_fortran_implicit_none                = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
+     printf ("     p_fortran_openmp                       = %s \n",(p_fortran_openmp == true) ? "true" : "false");
+     printf ("     p_cray_pointer_support                 = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
+     printf ("     p_output_parser_actions                = %s \n",(p_output_parser_actions == true) ? "true" : "false");
+     printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
+
+     printf ("     p_skip_syntax_check                    = %s \n",(p_skip_syntax_check      == true) ? "true" : "false");
+     printf ("     p_skip_transformation                  = %s \n",(p_skip_transformation    == true) ? "true" : "false");
+     printf ("     p_skip_unparse                         = %s \n",(p_skip_unparse           == true) ? "true" : "false");
+     printf ("     p_skipfinalCompileStep                 = %s \n",(p_skipfinalCompileStep   == true) ? "true" : "false");
+
+     printf ("     p_unparse_includes                     = %s \n",(p_unparse_includes                     == true) ? "true" : "false");
+     printf ("     p_unparse_line_directives              = %s \n",(p_unparse_line_directives              == true) ? "true" : "false");
+     printf ("     p_unparse_instruction_addresses        = %s \n",(p_unparse_instruction_addresses        == true) ? "true" : "false");
+     printf ("     p_unparse_raw_memory_contents          = %s \n",(p_unparse_raw_memory_contents          == true) ? "true" : "false");
+     printf ("     p_unparse_binary_file_format           = %s \n",(p_unparse_binary_file_format           == true) ? "true" : "false");
+
      string outputLanguageName;
      switch(p_outputLanguage)
         {
@@ -10064,19 +10112,150 @@ SgFile::display ( const std::string & label ) const
 
      printf ("     p_outputLanguage                       = %s output language \n",outputLanguageName.c_str());
 
-     printf ("     p_fortran_implicit_none                = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
-     printf ("     p_fortran_openmp                       = %s \n",(p_fortran_openmp == true) ? "true" : "false");
-     printf ("     p_cray_pointer_support                 = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
-     printf ("     p_output_parser_actions                = %s \n",(p_output_parser_actions == true) ? "true" : "false");
-     printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");
+     printf ("     p_sourceFileNameWithPath               = %s \n",p_sourceFileNameWithPath.c_str());
+     printf ("     p_sourceFileNameWithoutPath            = %s \n",p_sourceFileNameWithoutPath.c_str());
+     printf ("     p_unparse_output_filename              = %s \n",p_unparse_output_filename.c_str());
 
-     printf ("     p_sourceFileNameWithPath    = %s \n",p_sourceFileNameWithPath.c_str());
-     printf ("     p_sourceFileNameWithoutPath = %s \n",p_sourceFileNameWithoutPath.c_str());
+     printf ("     p_useBackendOnly                       = %s \n",(p_useBackendOnly == true) ? "true" : "false");
+     printf ("     p_compileOnly                          = %s \n",(p_compileOnly  == true) ? "true" : "false");
 
-     printf ("     p_outputGrammarTreeFilesForEDG  = %s \n",(p_outputGrammarTreeFilesForEDG  == true) ? "true" : "false");
+     printf ("     p_savedEdgCommandLine                  = %s \n",p_savedEdgCommandLine.c_str());
+
+     printf ("     p_no_implicit_templates                = %s \n",(p_no_implicit_templates == true) ? "true" : "false");
+     printf ("     p_no_implicit_inline_templates         = %s \n",(p_no_implicit_inline_templates == true) ? "true" : "false");
+     printf ("     p_skip_commentsAndDirectives           = %s \n",(p_skip_commentsAndDirectives == true) ? "true" : "false");
+     printf ("     p_collectAllCommentsAndDirectives      = %s \n",(p_collectAllCommentsAndDirectives == true) ? "true" : "false");
+
+     printf ("     p_preprocessorDirectivesAndCommentsList is %s pointer \n",(p_preprocessorDirectivesAndCommentsList != NULL) ? "VALID" : "NULL");
+
+     printf ("     p_KCC_frontend                         = %s \n",(p_KCC_frontend                         == true) ? "true" : "false");
+     printf ("     p_new_frontend                         = %s \n",(p_new_frontend                         == true) ? "true" : "false");
+     printf ("     p_travTraceToDOT                       = %s \n",                      (p_travTraceToDOT == true) ? "true" : "false");
+     printf ("     p_disable_edg_backend                  = %s \n",(p_disable_edg_backend                  == true) ? "true" : "false");
+     printf ("     p_disable_sage_backend                 = %s \n",(p_disable_sage_backend                 == true) ? "true" : "false");
+     printf ("     p_testingLevel                         = %d \n",p_testingLevel);
+
+     printf ("     p_preinit_il                           = %s \n",(p_preinit_il                           == true) ? "true" : "false");
+     printf ("     p_enable_cp_backend                    = %s \n",(p_enable_cp_backend                    == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFiles               = %s \n",(p_outputGrammarTreeFiles               == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFilesForHeaderFiles = %s \n",(p_outputGrammarTreeFilesForHeaderFiles == true) ? "true" : "false");
+     printf ("     p_outputGrammarTreeFilesForEDG         = %s \n",(p_outputGrammarTreeFilesForEDG  == true) ? "true" : "false");
+
+     printf ("     p_markGeneratedFiles                   = %s \n",(p_markGeneratedFiles == true) ? "true" : "false");
+     printf ("     p_negative_test                        = %s \n",(p_negative_test == true) ? "true" : "false");
+     printf ("     p_strict_language_handling             = %s \n",(p_strict_language_handling == true) ? "true" : "false");
+     printf ("     p_embedColorCodesInGeneratedCode       = %s \n",(p_embedColorCodesInGeneratedCode == true) ? "true" : "false");
+     printf ("     p_generateSourcePositionCodes          = %s \n",(p_generateSourcePositionCodes == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesCppFileExtension       = %s \n",(p_sourceFileUsesCppFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortranFileExtension   = %s \n",(p_sourceFileUsesFortranFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran77FileExtension = %s \n",(p_sourceFileUsesFortran77FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran90FileExtension = %s \n",(p_sourceFileUsesFortran90FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesFortran95FileExtension = %s \n",(p_sourceFileUsesFortran95FileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesPHPFileExtension       = %s \n",(p_sourceFileUsesPHPFileExtension == true) ? "true" : "false");
+     printf ("     p_sourceFileUsesBinaryFileExtension    = %s \n",(p_sourceFileUsesBinaryFileExtension == true) ? "true" : "false");
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
+  // printf ("     p_binaryFile                           = %p \n",p_binaryFile);
+     printf ("     p_read_executable_file_format_only     = %s \n",(p_read_executable_file_format_only == true) ? "true" : "false");
+     printf ("     p_read_instructions_only               = %s \n",(p_read_instructions_only == true) ? "true" : "false");
+
+  // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
+  // printf ("     p_aggressive                           = %s \n",(p_aggressive == true) ? "true" : "false");
+
+#if 0
+// Order of data member entries in support.C, matched against the 
+// initialization to make sure that all data members are initialized.
+X startOfConstruct
+X root
+X verbose
+X output_warnings
+X C_only
+X UPC_only
+X upc_threads
+X C99_only
+X Cxx_only
+X Fortran_only
+X F77_only
+X F90_only
+X F95_only
+X F2003_only
+X PHP_only
+X requires_C_preprocessor
+X binary_only
+X inputFormat
+X outputFormat
+X backendCompileFormat
+X fortran_implicit_none
+X fortran_openmp
+X cray_pointer_support
+X output_parser_actions
+X exit_after_parser
+X skip_syntax_check
+X skip_transformation
+X skip_unparse
+X skipfinalCompileStep
+X unparse_includes
+X unparse_line_directives
+X unparse_instruction_addresses
+X unparse_raw_memory_contents
+X unparse_binary_file_format
+X outputLanguage
+STRING  sourceFileNameWithPath
+STRING  sourceFileNameWithoutPath
+STRING  unparse_output_filename
+X useBackendOnly
+X compileOnly
+STRING  savedEdgCommandLine
+X no_implicit_templates
+X no_implicit_inline_templates
+X skip_commentsAndDirectives
+X collectAllCommentsAndDirectives
+X preprocessorDirectivesAndCommentsList
+X attributeMechanism
+X KCC_frontend
+X new_frontend
+X travTraceToDOT
+X disable_edg_backend
+X disable_sage_backend
+X testingLevel
+X preinit_il
+X enable_cp_backend
+X outputGrammarTreeFiles
+X outputGrammarTreeFilesForHeaderFiles
+X outputGrammarTreeFilesForEDG
+
+X markGeneratedFiles
+X negative_test
+X strict_language_handling
+X embedColorCodesInGeneratedCode
+X generateSourcePositionCodes
+X sourceFileUsesCppFileExtension
+X sourceFileUsesFortranFileExtension
+X sourceFileUsesFortran77FileExtension
+X sourceFileUsesFortran90FileExtension
+X sourceFileUsesFortran95FileExtension
+X sourceFileUsesPHPFileExtension
+X sourceFileUsesBinaryFileExtension
+X binaryFile
+X read_executable_file_format_only
+X read_instructions_only
+X aggressive
+#endif
+
    }
 
 SOURCE_APPLICATION_FILE_END
+
+
+SOURCE_APPLICATION_SOURCE_FILE_START
+SgSourceFile::SgSourceFile ()
+   {
+  // Default constructor
+   }
+
+SOURCE_APPLICATION_SOURCE_FILE_END
+
+SOURCE_APPLICATION_BINARY_FILE_START
+SOURCE_APPLICATION_BINARY_FILE_END
 
 SOURCE_APPLICATION_FILE_LIST_START
 SOURCE_APPLICATION_FILE_LIST_END
@@ -10222,84 +10401,7 @@ SgProject::parse()
    {
      int errorCode = 0;
 
-  // DQ (7/6/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("AST (SgProject::parse()):");
-
-     ROSE_ASSERT (p_fileList != NULL);
-
-  // Simplify multi-file handling so that a single file is just the trivial 
-  // case and not a special separate case.
-  // printf ("Loop through the source files on the command line! \n");
-  // for (unsigned int i = 0; i < p_sourceFileNameList.size(); i++)
-     Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
-     unsigned int i = 0;
-     while (nameIterator != p_sourceFileNameList.end())
-        {
-       // printf ("Build a SgFile object for file #%d \n",i);
-          int nextErrorCode = 0;
-
-       // DQ (4/20/2006): Exclude other files from list in argc and argv
-          vector<string> argv = get_originalCommandLineArgumentList();
-          string currentFileName = *nameIterator;
-          CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
-
-       // printf ("Command line being passed to SgFile constructor: \n%s\n",CommandlineProcessing::generateStringFromArgcArgv(argc,(const char**)argv,false,false).c_str());
-
-       // DQ (2/24/2004): Added support for SgProject to be passed so that the parent 
-       // pointer could be set earily in the construction process.
-       // SgFile* newFile = new SgFile ( argc, argv, nextErrorCode, i, this );
-          SgFile* newFile = new SgFile ( argv, nextErrorCode, 0, this );
-          ROSE_ASSERT (newFile != NULL);
-
-          ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
-
-       // Set the parent explicitly (so that we can easily find the SgProject from the SgFile).
-          newFile->set_parent(this);
-
-       // This just adds the new file to the list of files stored internally
-          set_file ( *newFile );
-
-#if 0
-          printf ("In Project::parse(): get_file(%d).get_skipfinalCompileStep() = %s \n",
-               i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
-#endif
-
-       // errorCode = (errorCode >= nextErrorCode) ? errorCode : nextErrorCode; // use STL max
-          errorCode = max(errorCode,nextErrorCode); // use STL max
-
-          nameIterator++;
-          i++;
-        }
-
-     if ( get_verbose() > 0 )
-        {
-       // Report the error code if it is non-zero (but only in verbose mode)
-          if (errorCode > 0)
-             {
-               printf ("Frontend Warnings only: errorCode = %d \n",errorCode);
-               if (errorCode > 3)
-                  {
-                    printf ("Frontend Errors found: errorCode = %d \n",errorCode);
-                  }
-             }
-        }
-
-  // warnings from EDG processing are OK but not errors
-     ROSE_ASSERT (errorCode <= 3);
-
-  // if (get_useBackendOnly() == false)
-     if ( SgProject::get_verbose() >= 1 )
-          cout << "C++ source(s) parsed. AST generated." << endl;
-
-     if ( get_verbose() > 3 )
-        {
-          printf ("In SgProject::parse() (verbose mode ON): \n");
-          display ("In SgProject::parse()");
-        }
-
-  // DQ (5/22/2007): Moved to astPostProcessing
-  // DQ (5/8/2007): Now build the hidden lists for types and declarations (Robert Preissl's work)
-  // buildHiddenTypeAndDeclarationLists(this);
+#error "DEAD CODE!"
 
      return errorCode;
    }
@@ -10356,6 +10458,8 @@ SgProject::unparse ( UnparseFormatHelp *unparseFormatHelp, UnparseDelegate* unpa
 
 // Moved to sageSupport.C: int SgProject::compileOutput( const std::string& compilerName )
 
+#if 0
+// DQ (9/2/2008): Removed this redundant function
 // DQ (10/16/2005): I would like to get rid of this function since it is redundant with other 
 // automatically generated functions containing list of source files (with and without paths).
 Rose_STL_Container<string>
@@ -10370,6 +10474,24 @@ SgProject::getFileNames() const
 
      return nameList;
    }
+#endif
+
+#if 1
+// DQ (9/2/2008): Readded this function with a clearer name, since it is different from the
+// list of filenames that appear on the command line; these are resolved to be absolute paths.
+Rose_STL_Container<string>
+SgProject::getAbsolutePathFileNames() const
+   {
+     Rose_STL_Container<string> nameList;
+     for (int i = 0; i < numberOfFiles(); i++)
+        {
+          SgFile & file = get_file(i);
+          nameList.push_back(std::string(file.getFileName()));
+        }
+
+     return nameList;
+   }
+#endif
 
 // DQ (1/5/2008): I think this could be an automatically generated function!
 // Unless the point is that it should not trigger a transformation to be recorded on the AST.
