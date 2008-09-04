@@ -85,7 +85,7 @@ querySolverGrammarElementFromVariantVector (
    VariantVector targetVariantVector )
    {
   // This function extracts type nodes that would not be traversed so that they can
-  // accumulated to a list.  The specific nodes collected into the list is controled
+  // accumulated to a list.  The specific nodes collected into the list is controlled
   // by targetVariantVector.
 
      ROSE_ASSERT (astNode != NULL);
@@ -1506,7 +1506,19 @@ querySolverGrammarElementFromVariantVector (
           case V_SgActualArgumentExpression:
           case V_SgAsteriskShapeExp:
           case V_SgDesignatedInitializer:
+         // Liao, 8/28/2008, ignore  UPC nodes for now
+          case V_SgUpcLocalsizeofExpression:
+          case V_SgUpcBlocksizeofExpression:
+          case V_SgUpcElemsizeofExpression:
+          case V_SgUpcNotifyStatement:
+          case V_SgUpcWaitStatement:
+          case V_SgUpcBarrierStatement:
+          case V_SgUpcFenceStatement:
+          case V_SgUpcForAllStatement:
+          case V_SgUpcThreads:
+          case V_SgUpcMythread:
              {
+
 //             printf ("Error unimplemented case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
             // ROSE_ASSERT(false);
                break;
@@ -1514,7 +1526,7 @@ querySolverGrammarElementFromVariantVector (
 
           default:
              {
-               printf ("Error default case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
+               printf ("Warning: querySolverGrammarElementFromVariantVector()'s default case in switch: ignoring astNode = %s \n",astNode->sage_class_name());
 	       //               ROSE_ASSERT(false);
                break;
              }

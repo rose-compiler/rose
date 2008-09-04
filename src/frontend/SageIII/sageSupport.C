@@ -1423,7 +1423,8 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(skipfinalCompileStep)",true) == true )
         {
-          printf ("option -rose:skipfinalCompileStep found \n");
+          if (get_verbose()>0) // Liao, 8/29/2008, Only show it in verbose mode.
+            printf ("option -rose:skipfinalCompileStep found \n");
           set_skipfinalCompileStep(true);
         }
 
@@ -4600,7 +4601,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
                printf ("COMPILER NOT CALLED: compilerNameString = %s \n", "<unknown>" /* compilerNameString.c_str() */);
 
        // DQ (8/21/2008): If this is a binary then we don't need the message output.
-          if (get_binary_only() == false)
+       // Liao 8/29/2008: disable it for non-verbose model
+          if ((get_binary_only() == false)&&(get_verbose()>0))
              {
                printf ("Skipped call to backend vendor compiler! \n");
              }
