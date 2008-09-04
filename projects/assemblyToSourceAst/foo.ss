@@ -816,17 +816,31 @@
                           ,(remove-unused-variables
                             (copy-and-constant-prop
                              (check-constraints
-                              (copy-and-constant-prop
-                               (change-memory-reads body)
-                               '()
-                               memory-simple?))
+                              (change-memory-reads 
+                               (copy-and-constant-prop
+                                body
+                                '()
+                                memory-simple?)))
                              '()
                              basic-simple?))))
                  (e e))
                data))))
 
+(define (count-points e)
+  (if (pair? e)
+      (+ 1 (count-points (car e)) (count-points (cdr e)))
+      1))
+
+(pretty-print `(starting-points = ,(count-points data)))
 (sat-simplify-loop)
-(set! data (map expand-one data))
-(sat-simplify-loop)
+(pretty-print `(after-simplify-points = ,(count-points data)))
+(let loop ((n 5))
+  (unless (zero? n)
+    (pretty-print `(,n stages left))
+    (set! data (map expand-one data))
+    (pretty-print `(after-expand-points = ,(count-points data)))
+    (sat-simplify-loop)
+    (pretty-print `(after-loop-simplify-points = ,(count-points data)))
+    (loop (sub1 n))))
 
 (pretty-print (map change-to-let* data))
