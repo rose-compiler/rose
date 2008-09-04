@@ -1028,7 +1028,7 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, const SgUnsignedCharList &buf
 rose_addr_t
 SgAsmGenericSection::write(FILE *f, addr_t offset, const std::string &str)
 {
-    return write(f, offset, str.size(), str.c_str());
+    return write(f, offset, str.size(), &(str[0]));
 }
 
 /* See related method above. */

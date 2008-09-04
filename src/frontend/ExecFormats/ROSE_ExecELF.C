@@ -21,19 +21,20 @@
  * 
  * Example usage in ELF:
  * An ELF symbol table points to an Elf String Table. Symbol entries contain offsets into the string table for their names. A
- * new string is constructed like:
+ * new string is constructed like this:
  * 
  *     symbol_entry[0].name = SgAsmElfString(string_table, offset);   // "domain"
- *     symbol_table[1].name = SgAsmElfString(string_table, offset+2); // "main"
+ *     symbol_table[1].name = SgAsmElfString(string_table, offset+2); // "main", overlaps with "domain"
  *
- * The name is available with the "to_string" and "c_str" methods. The offset is also available for ELF strings.
+ * The name is available with the "get_string" method. The offset within the string table is also available for ELF strings.
  * 
  *     cerr <<symbol_entry[0].name.to_string();
- *     printf("offset=%"PRIu64", name=\"%s\"\n", symbol_entry[0].name.get_offset(), symbol_entry[0].name.c_str());
+ *     printf("offset=%"PRIu64", name=\"%s\"\n", symbol_entry[0].name.get_offset(), symbol_entry[0].name.get_string().c_str());
  *
  * To change "main" to "pain" one just makes an assignment:
  *
  *     symbol_table[1].name = "pain";
+ *     symbol_table[1].name.set_string("pain"); // an alternative method of assignment
  *
  * Names will not be reallocated in the symbol table until get_offset() is called for one of the table's modified strings.  This
  * usually results in more efficient repacking of the string table.
@@ -50,19 +51,26 @@ class SgAsmGenericString {
     virtual ~SgAsmGenericString() {};
     virtual const std::string& get_string() const = 0;                  /*no non-const version; use only set_string() to modify!*/
     virtual void set_string(const std::string &s) = 0;                  /*assignment calls this*/
-    virtual const char *c_str() const {return get_string().c_str();}
     virtual void dump(FILE*, const char *prefix, ssize_t idx) = 0;
+
+    /* Assignment (plus the default assignment) */
+    SgAsmGenericString& operator=(const std::string &s);                /*short for set_string()*/
+    SgAsmGenericString& operator=(const char *s);                       /*short for set_string()*/
 };
+
 
 class SgAsmBasicString : public SgAsmGenericString {
   public:
     SgAsmBasicString() {}
     virtual ~SgAsmBasicString() {}
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+    /* Accessors */
     virtual const std::string& get_string() const                       /*no non-const version; use only set_string() to modify!*/
         {return p_string;}
     virtual void set_string(const std::string &s)
         {p_string = s;}
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
   private:
     std::string p_string;
 };
@@ -70,10 +78,10 @@ class SgAsmBasicString : public SgAsmGenericString {
 class SgAsmElfString : public SgAsmGenericString {
   public:
     SgAsmElfString() 
-        : storage(0) {}
+        : p_storage(0) {}
     SgAsmElfString(class SgAsmElfStrtab *strtab, rose_addr_t offset)    /*string in string table*/
         {ctor(strtab, offset);}
-    SgAsmElfString(class ElfStringStorage *storage)                     /*string shares other storage*/
+    SgAsmElfString(class SgAsmElfStringStorage *storage)                /*string shares other storage*/
         {ctor(storage);}
     SgAsmElfString(const char *s)                                       /*non-storage constructor*/
         {ctor(std::string(s));}
@@ -86,13 +94,16 @@ class SgAsmElfString : public SgAsmGenericString {
     /* Accessors */
     virtual const std::string& get_string() const;                      /*no non-const version; use only set_string() to modify!*/
     virtual void set_string(const std::string&);                        /*assignment calls this*/
-    virtual rose_addr_t get_offset() const;                             /*offset is read-only--no set_offset()*/
+    rose_addr_t get_offset() const;                                     /*offset is read-only--no set_offset(); triggers realloc*/
+    class SgAsmElfStringStorage* get_storage() const {                  /*read only; managed by constructor/destructor*/
+        return p_storage;
+    }
 
   private:
     void ctor(class SgAsmElfStrtab*, rose_addr_t offset);
-    void ctor(class ElfStringStorage*);
+    void ctor(class SgAsmElfStringStorage*);
     void ctor(const std::string &s);
-    class ElfStringStorage *storage;
+    class SgAsmElfStringStorage *p_storage;                             /*child of the string table in the AST*/
 };
 
 class SgAsmElfStrtab : public SgAsmElfSection {
@@ -101,36 +112,63 @@ class SgAsmElfStrtab : public SgAsmElfSection {
         : SgAsmElfSection(fhdr, shdr)
         {ctor(fhdr, shdr);}
     virtual ~SgAsmElfStrtab();
-    //virtual void unparse(FILE*);
+    virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    class ElfStringStorage *create_storage(addr_t offset);
+    class SgAsmElfStringStorage *create_storage(addr_t offset);
     SgAsmElfString *create_string(addr_t offset);
     void free(addr_t offset, addr_t size); /*mark part of table as free*/
     void reallocate(); /*allocate storage for all unallocated strings*/
   private:
     void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
     rose_addr_t best_fit(addr_t need); /*allocate from free list*/
-    typedef std::vector<class ElfStringStorage*> referenced_t;
+    typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
     referenced_t referenced;
     typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
     freelist_t freelist;
 };
-#endif /*END OF STUFF TO MOVE INTO ROSETTA*/
 
-/* String storage class for SgAsmElfString.  The SgAsmElfString objects point to ElfStringStorage objects which are in turn
+/* String storage class for SgAsmElfString.  The SgAsmElfString objects point to SgAsmElfStringStorage objects which are in turn
  * stored in the SgAsmElfSection. We do it this way so that all copies of the string (by assignment) still point to their
  * original location in the string table and we can reallocate all of them when necessary. */
-class ElfStringStorage {
+class SgAsmElfStringStorage {
   public:
-    ElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
-        : strtab(strtab), string(string), offset(offset) {}
+    SgAsmElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
+        : p_strtab(strtab), p_string(string), p_offset(offset) {}
     void dump(FILE *s, const char *prefix, ssize_t idx);
-    SgAsmElfStrtab *strtab;
-    std::string string;
-    rose_addr_t offset;
+
+    /* Accessors. The set_* accessors are private because we don't want anyone messing with them. These data members are used
+     * to control string allocation in ELF string tables and must only be modified by allocators in closely related classes.
+     * For instance, to change the value of the string one should call SgAsmGenericString::set_string() instead. */
+  public:
+    SgAsmElfStrtab* get_strtab() const {
+        return p_strtab;
+    }
+    const std::string& get_string() const {             /*read-only; set string with SgAsmGenericString::set_string()*/
+        return p_string;
+    }
+    const rose_addr_t get_offset() const {              /*read-only; set only by the string table allocator*/
+        return p_offset;                                /*does not trigger reallocation; cf. SgAsmElfString::get_offset()*/
+    }
   private:
-    ElfStringStorage() {}
+    friend class SgAsmElfString;                        /*allowed to set private data members*/
+    friend class SgAsmElfStrtab;                        /*allowed to set private data members*/
+    void set_string(const std::string &s) {
+        p_string = s;
+    }
+    void set_strtab(SgAsmElfStrtab *strtab) {
+        p_strtab = strtab;
+    }
+    void set_offset(rose_addr_t offset) {
+        p_offset = offset;
+    }
+    
+  private:
+    SgAsmElfStringStorage() {abort();}                  /*no default constructor; cf. SgAsmElfString::create_storage()*/
+    SgAsmElfStrtab *p_strtab;
+    std::string p_string;
+    rose_addr_t p_offset;
 };
+#endif /*END OF STUFF TO MOVE INTO ROSETTA*/
     
 
 /* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
@@ -559,6 +597,22 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // String tables and strings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*FIXME: move to ROSE_ExecGeneric.C */
+SgAsmGenericString&
+SgAsmGenericString::operator=(const std::string &s)
+{
+    set_string(s);
+    return *this;
+}
+/*FIXME: move to ROSE_ExecGeneric.C */
+SgAsmGenericString&
+SgAsmGenericString::operator=(const char *s)
+{
+    set_string(s);
+    return *this;
+}
+
+/*FIXME: move to ROSE_ExecGeneric.C */
 /* Print some debugging info */
 void
 SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -570,7 +624,7 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sBasicString.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string().c_str());
 }
     
 /* String constructors */
@@ -580,23 +634,23 @@ SgAsmElfString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset)
     ctor(strtab->create_storage(offset));
 }
 void
-SgAsmElfString::ctor(ElfStringStorage *storage)
+SgAsmElfString::ctor(SgAsmElfStringStorage *storage)
 {
-    this->storage = storage;
+    this->p_storage = storage;
 }
 void
 SgAsmElfString::ctor(const std::string &s)
 {
-    this->storage = new ElfStringStorage(NULL, s, unallocated);
+    this->p_storage = new SgAsmElfStringStorage(NULL, s, unallocated);
 }
 SgAsmElfString::~SgAsmElfString()
 {
 #if 0 /* FIXME: Strings may share storage, so we can't free it. (RPM 2008-09-03) */
     /* Free storage if it isn't associated with a string table. */
-    if (storage && NULL==storage->strtab)
-        delete storage;
+    if (p_storage && NULL==p_storage->strtab)
+        delete p_storage;
 #endif
-    storage = NULL;
+    p_storage = NULL;
 }
 
 /* Returns the std::string associated with the SgAsmElfString */
@@ -604,7 +658,7 @@ const std::string&
 SgAsmElfString::get_string() const 
 {
     static const std::string empty;
-    return storage ? storage->string : empty;
+    return get_storage() ? get_storage()->get_string() : empty;
 }
 
 /* Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
@@ -612,21 +666,21 @@ SgAsmElfString::get_string() const
 rose_addr_t
 SgAsmElfString::get_offset() const
 {
-    if (!storage)
+    if (NULL==get_storage())
         return unallocated;
-    if (storage->offset == unallocated) {
-        ROSE_ASSERT(storage->strtab!=NULL);
-        storage->strtab->reallocate();
-        ROSE_ASSERT(storage->offset != unallocated);
+    if (get_storage()->get_offset() == unallocated) {
+        ROSE_ASSERT(get_storage()->get_strtab()!=NULL);
+        get_storage()->get_strtab()->reallocate();
+        ROSE_ASSERT(get_storage()->get_offset() != unallocated);
     }
-    return storage->offset;
+    return get_storage()->get_offset();
 }
 
 /* Give the string a new value */
 void
 SgAsmElfString::set_string(const std::string &s)
 {
-    ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+    ROSE_ASSERT(get_storage()!=NULL); /* we don't even know which string table! */
     if (get_string()==s) return; /* no change in value */
     
     /* FIXME: At this point in development we change all strings that happen to point at the same offset in this string table.
@@ -637,11 +691,14 @@ SgAsmElfString::set_string(const std::string &s)
      *        but the compiler has optimized the string table.  However, note that two strings that overlap (like "foobar"
      *        and"bar") always copy-on-write. (RPM 2008-08-28) */
 
-    /* We must mark storage as unallocated before calling the strtab free method since it checks for overlapping strings */
-    rose_addr_t old_offset = storage->offset;
-    storage->offset = unallocated;
-    storage->strtab->free(old_offset, storage->string.size()+1);
-    storage->string = s;
+    /* Add old value to free list */
+    if (get_storage()->get_offset()!=unallocated) {
+        /* We must mark storage as unallocated before calling the strtab free method since it checks for overlapping strings */
+        rose_addr_t old_offset = get_storage()->get_offset();
+        get_storage()->set_offset(unallocated);
+        get_storage()->get_strtab()->free(old_offset, get_storage()->get_string().size()+1);
+    }
+    get_storage()->set_string(s);
 }
 
 /* Print some debugging info */
@@ -656,14 +713,14 @@ SgAsmElfString::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)storage);
-    if (storage)
-        storage->dump(f, p, -1);
+    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)get_storage());
+    if (get_storage())
+        get_storage()->dump(f, p, -1);
 }
 
 /* Print some debugging info */
 void
-ElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
@@ -673,16 +730,14 @@ ElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", strtab->get_id(), strtab->get_name().c_str());
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "string", string.c_str());
+    fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", get_strtab()->get_id(), get_strtab()->get_name().c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "string", get_string().c_str());
 
-    /* NOTE: strtab->get_id() will reallocate unallocated strings. Therefore obtain ID directly so we can indicate what
-     *       strings are not currently allocated. */
-    fprintf(f, "%s%-*s = ", p, w, "id");
-    if (offset==SgAsmElfString::unallocated) {
+    fprintf(f, "%s%-*s = ", p, w, "offset");
+    if (get_offset()==SgAsmElfString::unallocated) {
         fputs("not allocated\n", f);
     } else {
-        fprintf(f, "%"PRIu64" (byte offset)\n", offset);
+        fprintf(f, "%"PRIu64" (byte offset)\n", get_offset());
     }
 }
 
@@ -700,28 +755,28 @@ SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
 SgAsmElfStrtab::~SgAsmElfStrtab()
 {
     for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); ++i) {
-        ElfStringStorage *storage = *i;
-        storage->strtab = NULL;
-        storage->offset = SgAsmElfString::unallocated;
+        SgAsmElfStringStorage *storage = *i;
+        storage->set_strtab(NULL);
+        storage->set_offset(SgAsmElfString::unallocated);
     }
     referenced.clear();
 }
 
 /* Creates the storage item for the string at the specified offset. At most one storage object is created per offset. */
-ElfStringStorage *
+SgAsmElfStringStorage *
 SgAsmElfStrtab::create_storage(addr_t offset)
 {
     ROSE_ASSERT(offset!=SgAsmElfString::unallocated);
 
     /* Has this string already been created? If so, return previous storage object. */
     for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); i++) {
-        if ((*i)->offset==offset)
+        if ((*i)->get_offset()==offset)
             return *i;
     }
     
     /* Create a new storage object to be shared by all strings at this offset. */
     const char *s = content_str(offset);
-    ElfStringStorage *storage = new ElfStringStorage(this, s, offset);
+    SgAsmElfStringStorage *storage = new SgAsmElfStringStorage(this, s, offset);
     referenced.push_back(storage);
     return storage;
 }
@@ -730,7 +785,7 @@ SgAsmElfStrtab::create_storage(addr_t offset)
 SgAsmElfString *
 SgAsmElfStrtab::create_string(addr_t offset)
 {
-    ElfStringStorage *storage = create_storage(offset);
+    SgAsmElfStringStorage *storage = create_storage(offset);
     return new SgAsmElfString(storage);
 }
 
@@ -786,16 +841,16 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmGenericString::no_id to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     for (size_t i=0; i<referenced.size() && size>0; i++) {
-        if (referenced[i]->offset==SgAsmElfString::unallocated) continue;
-        ROSE_ASSERT(referenced[i]->offset!=offset); /*forgot to remove it or mark it unallocated before freeing?*/
-        if (referenced[i]->offset <= offset && referenced[i]->offset+referenced[i]->string.size()+1 > offset) {
+        if (referenced[i]->get_offset()==SgAsmElfString::unallocated) continue;
+        ROSE_ASSERT(referenced[i]->get_offset()!=offset); /*forgot to remove it or mark it unallocated before freeing?*/
+        if (referenced[i]->get_offset() <= offset && referenced[i]->get_offset()+referenced[i]->get_string().size()+1 > offset) {
             /* we are freeing "bar" but something references the overlapping "foobar". No not free anything. */
-            ROSE_ASSERT(offset+size == referenced[i]->offset+referenced[i]->string.size()+1);
+            ROSE_ASSERT(offset+size == referenced[i]->get_offset()+referenced[i]->get_string().size()+1);
             size = 0;
         }
-        if (referenced[i]->offset > offset && referenced[i]->offset < offset+size) {
+        if (referenced[i]->get_offset() > offset && referenced[i]->get_offset() < offset+size) {
             /* we are freeing "foobar" but something references overlapping "bar". Free only up to "bar" */
-            size = referenced[i]->offset - offset;
+            size = referenced[i]->get_offset() - offset;
         }
     }
 
@@ -833,18 +888,42 @@ SgAsmElfStrtab::reallocate()
 
     /* First use up existing free space (avoiding holes) */
     for (size_t i=0; i<referenced.size(); i++) {
-        ElfStringStorage *storage = referenced[i];
-        if (storage->offset==SgAsmElfString::unallocated)
-            storage->offset = best_fit(storage->string.size()+1);    /* +1 for NUL terminator */
-        if (storage->offset==SgAsmElfString::unallocated)
-            extend_size += storage->string.size() + 1;
+        SgAsmElfStringStorage *storage = referenced[i];
+        if (storage->get_offset()==SgAsmElfString::unallocated) {
+            addr_t new_offset = best_fit(storage->get_string().size()+1);    /* +1 for NUL terminator */
+            storage->set_offset(new_offset);
+        }
+        if (storage->get_offset()==SgAsmElfString::unallocated)
+            extend_size += storage->get_string().size() + 1;
     }
     
     /* Extend the string table if necessary */
     ROSE_ASSERT(extend_size==0); /* not implemented yet */
 }
 
-        
+/* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
+void
+SgAsmElfStrtab::unparse(FILE *f)
+{
+    /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
+    reallocate();
+    
+    /* Write strings with NUL termination */
+    for (size_t i=0; i<referenced.size(); i++) {
+        SgAsmElfStringStorage *storage = referenced[i];
+        ROSE_ASSERT(storage->get_offset()!=SgAsmElfString::unallocated);
+        addr_t at = write(f, storage->get_offset(), storage->get_string());
+        write(f, at, '\0');
+    }
+    
+    /* Fill free areas with zero */
+    for (freelist_t::const_iterator i=freelist.begin(); i!=freelist.end(); ++i) {
+        write(f, i->first, std::string(i->second, '\0'));
+    }
+    
+    /* Write original data from holes */
+    unparse_holes(f);
+}
 
 /* Print some debugging info */
 void
@@ -1544,7 +1623,6 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab)
     ROSE_ASSERT(fhdr!=NULL && fhdr == strtab->get_elf_header());
 
     ROSE_ASSERT(strtab != NULL);
- // ROSE_ASSERT(0 == strtab->get_name().compare(".dynstr"));
     ROSE_ASSERT(strtab->get_name() == ".dynstr");
 
     size_t section_size = get_size(), entry_size = 0, nentries = 0;
@@ -1575,8 +1653,14 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab)
             break;
           case 1: {
               /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
+#if 1 /*FIXME: Testing out some new stuff. Eventually the SgAsmGenericDLL will contain an SgAsmGenericString*/
+              SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
+              SgAsmElfString name(xxx, p_all_entries->get_entries()[i]->get_d_val());
+              fhdr->add_dll(new SgAsmGenericDLL(name.get_string()));
+#else
               const char *name = (const char*)strtab->content_str(p_all_entries->get_entries()[i]->get_d_val());
               fhdr->add_dll(new SgAsmGenericDLL(name));
+#endif
               break;
           }
           case 2:
