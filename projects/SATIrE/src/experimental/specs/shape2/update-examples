@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# copies all relevant files into examples/ folder of satire
+
+target=../../../../examples
+
+# srw98
+cpp -C -P srw98/srw98.set > $target/srw98_shape/srw98_shape.set
+cpp -C -P srw98/srw98.code > $target/srw98_shape/srw98_shape.optla
+cp srw98/main.h $target/srw98_shape/main.h
+cp srw98/main.C $target/srw98_shape/main.C
+cp srw98/Makefile.custom $target/srw98_shape/Makefile.custom
+cp GraphStats.h $target/srw98_shape/GraphStats.h
+
+# nnh99
+cpp -C -P nnh99/nnh99.set > $target/nnh99_shape/nnh99_shape.set
+cpp -C -P nnh99/nnh99.code > $target/nnh99_shape/nnh99_shape.optla
+cp nnh99/main.h $target/nnh99_shape/main.h
+cp nnh99/main.C $target/nnh99_shape/main.C
+cp nnh99/Makefile.custom $target/nnh99_shape/Makefile.custom
+cp GraphStats.h $target/nnh99_shape/GraphStats.h

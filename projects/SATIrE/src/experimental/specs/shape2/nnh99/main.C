@@ -20,7 +20,7 @@ PAG_BOOL get_universal_attribute__option_kill_unreachable_nodes() {
 
 ShapeAnalyzerOptions *opt;
 
-#include "../GraphStats.h"
+#include "GraphStats.h"
 GraphStats gstats;
 /* AliasPairsCounter 
  * counts may alias pairs using GraphStats interface */

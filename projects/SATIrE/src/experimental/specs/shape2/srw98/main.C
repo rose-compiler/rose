@@ -11,7 +11,7 @@ PAG_BOOL get_universal_attribute__option_kill_normalisation_temps()
 
 ShapeAnalyzerOptions *opt;
 
-#include "../GraphStats.h"
+#include "GraphStats.h"
 GraphStats gstats;
 /* AliasPairsCounter 
  * counts may alias pairs using GraphStats interface */
