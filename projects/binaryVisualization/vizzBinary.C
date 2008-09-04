@@ -12,6 +12,8 @@ using namespace std;
 #include <math.h>
 #include "helper.h"
 
+#include "boost/multi_array.hpp"
+
 static bool debug_me = true;
 
 #define DELTA 5
@@ -28,7 +30,11 @@ int u, v;
 #define LOAD 0
 #define FILE2 0
 
-GLfloat *****pts;
+//GLfloat *****pts;
+//GLfloat   pts[100][100][100][100][3];
+
+typedef boost::multi_array<GLfloat, 5> array_type;
+array_type pts(boost::extents[0][0][0][0][3]);
 
 static void 
 display(void)
@@ -83,6 +89,7 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
   cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
 
   /************** 2FILES ***********/  
+#if 0
 #if FILE2
   GLfloat pts2[pointsX+1][pointsY+1][max][max][3];
 #else
@@ -102,6 +109,7 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
   }
 
 
+#endif
 #endif
   /************** 2FILES ***********/  
 
@@ -252,38 +260,32 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
   }
   cerr << "Done filling the input DB" << endl;
 
-  
-  pointsX =maxX/max;
-  pointsY =maxY/max;
+
+   pointsX =(maxX+max-1)/max;
+   pointsY =(maxY+max-1)/max;
   cerr << " Initializing fields in x = " <<pointsX<<"  y = " <<pointsY<<endl;
 
   
   GLfloat factor = 2.0f;
   //GLfloat max_f =(float) -(max-1);
+  //GLfloat pts[pointsX][pointsY][max][max][3];
 
-  //  GLfloat pts[pointsX][pointsY][max][max][3];
-  pts= new GLfloat****[pointsX+1];
-  for (unsigned int i=0; i<(pointsX+1);++i) {
-    pts[i] = new GLfloat***[pointsY+1];
-    for (unsigned int ii=0; ii<(pointsY+1);++ii) {
-      pts[i][ii] = new GLfloat**[max];
-      for (int iii=0; iii<max;++iii) {
-	pts[i][ii][iii] = new GLfloat*[max];
-	for (int iiii=0; iiii<max;++iiii) {
-	  pts[i][ii][iii][iiii] = new GLfloat[3];
-	  //cerr << " creating : pts["<<i<<"]["<<ii<<"]["<<iii<<"]["<<iiii<<"][3]"<<endl;
-	}
-      }
-    }
-  }
+#if 1
+
+  typedef array_type::index index;
+
+  // Create a 3D array that is 3 x 4 x 2
+  //array_type pts(boost::extents[pointsX][pointsY][max][max][3]);
+  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
+  for(index i = 0; i != pointsX; ++i) 
+    for(index j = 0; j != pointsY; ++j)
+      for(index k = 0; k != max; ++k)
+	for(index l = 0; l != max; ++l)
+	  for(index m = 0; m != 3; ++m)
+	    pts[i][j][k][l][m] = 0;
+
+#endif
   cerr << " Done creating 5 Dim DB." << endl;
-  if (debug_me) {
-    ROSE_ASSERT(pointsX==5);
-    ROSE_ASSERT(pointsY==5);
-    ROSE_ASSERT(max==8);
-    ROSE_ASSERT(maxX==47);
-    ROSE_ASSERT(maxY==47);
-  }
   for (unsigned int x=0; x<maxX;x++) {
     for (unsigned int y=0; y<maxY;y++) {
       int fieldX = x/max;
@@ -618,22 +620,16 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 
   initGL(argc, argv);
 
-  pts=NULL;
+
+  //pts=NULL;
   if (load)
     loadFile(filename, maxX, maxY, max, pointsX, pointsY);
   else 
     calculate(functions, maxX, maxY, max, pointsX, pointsY);
 
-  if (debug_me) {
-    ROSE_ASSERT(pointsX==5);
-    ROSE_ASSERT(pointsY==5);
-    ROSE_ASSERT(max==8);
-    ROSE_ASSERT(maxX==47);
-    ROSE_ASSERT(maxY==47);
-  }
 
   
-  ROSE_ASSERT(pts!=NULL);
+  //ROSE_ASSERT(pts!=NULL);
 
 #if 1
   // adjust field -- make neighbors go smooth together
@@ -685,15 +681,15 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 #endif
 
 
-  //render(pointsX, pointsY, nrknots, max);
+  render(pointsX, pointsY, nrknots, max);
 
   if (save) {
-    saveFile(pts, filename, maxX, maxY, max, pointsX, pointsY);
+    //saveFile(pts, filename, maxX, maxY, max, pointsX, pointsY);
     return;
   }
 
-  delete[] pts;
-  pts=NULL;
+  //delete[] pts;
+  //pts=NULL;
 
   glutDisplayFunc(display);
   glutMainLoop();
