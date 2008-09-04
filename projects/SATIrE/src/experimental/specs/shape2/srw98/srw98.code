@@ -44,9 +44,10 @@ tassign_xsel_new::VariableId,VariableId,ShapeGraph->ShapeGraph;
 tassign_x_y::VariableId,VariableId,ShapeGraph->ShapeGraph;
 tassign_x_ysel::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraph;
 tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraph;
-#include "../common_highlevel.optla"
+#include "../common_tassign.optla"
 #include "../common_support.optla"
 #include "../common_normalisation.optla"
+#include "../common_debug.optla"
 
 // convert carrier to set of shapegraphs for alias computation
 shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;

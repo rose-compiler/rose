@@ -2,7 +2,7 @@
 
 class N {
 public:
-  N *sel1,*sel2;
+  N *sel1,*sel2,*sel3;
 };
 
 int main() {
@@ -19,11 +19,25 @@ int main() {
   w = new N;
   y = new N;
   y->sel1 = t;
+
+  // before adding more in-edges, change t
+  // into summary node to avoid introducing
+  // of sharing. this needs to be done as
+  // the example in the nielson slides has
+  // {} unshared (supposedly to avoid too
+  // large a number of resulting graphs)
+
   t = NULL;
-  v->sel1 = y->sel1;
-  y->sel1->sel1 = y->sel1;
-  y->sel1->sel2 = w;
-  
+
+  t = new N;
+  v->sel1 = t;
+  t = NULL;
+
+  t = new N;
+  t->sel2 = w;
+  t->sel3 = t;
+  t = NULL;
+
   //[x:=y.sel] case 3
   x = y->sel1;
 

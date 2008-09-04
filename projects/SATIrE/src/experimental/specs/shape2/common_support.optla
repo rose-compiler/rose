@@ -195,7 +195,16 @@ stackedges_by_dest(dest,edges) = {e !! (_,d) as e <-- edges, if d = dest};
 
 // all vars of stackedges
 vars_by_stackedges::StackEdgeSet->VarList;
-vars_by_stackedges(ES) = no_duplicates([v !! (v,n) <-- ES]);
+//vars_by_stackedges(ES) = no_duplicates([v !! (v,n) <-- ES]);
+vars_by_stackedges(S) = [v1 !! v1 <-- {v2 !! (v2,_) <-- S}];
+
+// all vars of stackedges (as set)
+nodes_by_stackedges::StackEdgeSet->NodeSet;
+nodes_by_stackedges(S) = {{nx} !! (nx,_) <-- S};
+
+// all vars of heapedges (as set)
+nodes_by_heapedges::HeapEdgeSet->NodeSet;
+nodes_by_heapedges(H) = {n !! n <-- union({nv !! (nv,_,_) <-- H},{nw !! (_,_,nw) <-- H})};
 
 stackedge_subtract::StackEdgeSet,StackEdgeSet->StackEdgeSet;
 stackedge_subtract(S1,S2) = {x!!x<--S1, if !(x ? S2)};

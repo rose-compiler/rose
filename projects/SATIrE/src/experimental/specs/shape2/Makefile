@@ -10,12 +10,12 @@ clean: nnh99clean srw98clean
 
 
 nnh99shape: nnh99/nnh99.optla nnh99/Makefile\
-	common.set common_highlevel.optla common_normalisation.optla\
+	common.set common_tassign.optla common_normalisation.optla\
 	common_support.optla common_transfer.optla
 	$(MAKE) all -C nnh99
 
 nnh99/nnh99.optla: nnh99/nnh99.code
-	cpp -C -P -traditional-cpp nnh99/nnh99.code > nnh99/nnh99.optla
+	cpp -C -P nnh99/nnh99.code > nnh99/nnh99.optla
 
 nnh99/Makefile:
 	newanalysis -u nnh99
@@ -30,12 +30,12 @@ nnh99clean:
 
 
 srw98shape: srw98/srw98.optla srw98/Makefile\
-	common.set common_highlevel.optla common_normalisation.optla\
+	common.set common_tassign.optla common_normalisation.optla\
 	common_support.optla common_transfer.optla
 	$(MAKE) all -C srw98
 
 srw98/srw98.optla: srw98/srw98.code
-	cpp -C -P -traditional-cpp srw98/srw98.code > srw98/srw98.optla
+	cpp -C -P srw98/srw98.code > srw98/srw98.optla
 
 srw98/Makefile:
 	newanalysis -u srw98
