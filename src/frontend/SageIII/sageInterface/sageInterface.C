@@ -4695,6 +4695,17 @@ void SageInterface::removeStatement(SgStatement* stmt)
   LowLevelRewrite::remove(stmt);
 }
 
+//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
+void SageInterface::deepDelete(SgNode* root)
+{
+   struct Visitor: public AstSimpleProcessing {
+    virtual void visit(SgNode* n) {
+        delete (n);
+     }
+    };
+  Visitor().traverse(root, postorder);
+}
+
 //! Replace a statement with another
 void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
 {
@@ -4712,8 +4723,7 @@ void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt)
 // Used to replace shared variables with the dereference expression of their addresses
 // e.g. to replace shared1 with (*__pp_shared1)
 
-void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp)
-//void replaceExpression(SgExpression* oldExp, SgExpression newExp, bool keepOldExp=false)
+void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp, bool keepOldExp/*=false*/)
 {
   ROSE_ASSERT(oldExp);
   ROSE_ASSERT(newExp);
@@ -4781,9 +4791,12 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   ROSE_ASSERT(false);
   }
 
-  if (!keepOldExp) delete(oldExp); // avoid dangling node in memory pool
+  if (!keepOldExp) 
+  {
+    deepDelete(oldExp); // avoid dangling node in memory pool
+  }
   
-}
+} //replaceExpression()
 
 #if 0 // move to header 
 // Contributed by Jeremiah
@@ -5731,7 +5744,11 @@ class ConditionalExpGenerator: public StatementGenerator
 	SgName varName=initname->get_name();
 	SgSymbol* realSymbol = lookupSymbolInParentScopes(varName,getScope(varRef));
 	// should find a real symbol at this final fixing stage!
-	ROSE_ASSERT(realSymbol);
+        if (realSymbol==NULL) 
+        {
+          cerr<<"Error: cannot find a symbol for "<<varName.getString()<<endl;
+          ROSE_ASSERT(realSymbol);
+        }
 	// release placeholder initname and symbol
 	ROSE_ASSERT(realSymbol!=(varRef->get_symbol()));
 

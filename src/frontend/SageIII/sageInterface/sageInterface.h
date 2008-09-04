@@ -684,6 +684,31 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgReturnStmt*> findReturnStmts(SgStatement* scope);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw); 
+  
+  //! Find a declaration given its name, scope, and defining or nondefining flag. 
+  template <typename T>
+  T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
+  {
+    if (!root) return 0;
+    T* decl = dynamic_cast<T*>(root);
+    if (decl!=NULL)
+    {
+     if ((decl->get_scope() == scope)&&
+       (decl->search_for_symbol_from_symbol_table()->get_name()==name))
+     return decl;
+    }
+
+    std::vector<SgNode*> children = root->get_traversalSuccessorContainer();
+    for (std::vector<SgNode*>::const_iterator i = children.begin(); 
+            i != children.end(); ++i) 
+    {
+     T* target= findDeclarationStatement<T> (*i,name, scope, isDefining);
+     if (target) 
+       return target;
+    }
+    return 0;
+  }
+
 #if 0 //TODO
   // 1. preorder traversal from current SgNode till find next SgNode of type V_SgXXX
   //    until reach the end node
@@ -859,6 +884,9 @@ void insertStatementListAfter(SgStatement *targetStmt, const std::vector<SgState
 
 //! Remove a statement
 void removeStatement(SgStatement* stmt);
+
+//! Deep delete a sub AST tree. It uses postorder traversal to delete each child node.
+void deepDelete(SgNode* root);
 
 //! Replace a statement with another
 void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt);
