@@ -242,7 +242,9 @@ ASTtools::isC99 (const SgNode* n)
           return proj->get_C99_only ();
         }
         break;
-      case V_SgFile:
+   // case V_SgFile:
+      case V_SgSourceFile:
+      case V_SgBinaryFile:
         {
           const SgFile* file = isSgFile (n);
           ROSE_ASSERT (file);

@@ -484,10 +484,15 @@ evaluateInheritedAttribute (
   // Make sure that we start off the traversal correctly (with the correct file name)
   // This way the use need not set the file name in the inherited attribute before 
   // starting the traversal.
-     if (astNode->variantT() == V_SgFile)
+
+  // DQ (9/2/2008): Fixup to support SgSourceFile and SgBinaryFile IR nodes.
+  // if (astNode->variantT() == V_SgFile)
+     if ( isSgFile(astNode) != NULL )
         {
        // Record the filename associated with the SgFile (the current file)
           SgFile* file = dynamic_cast<SgFile*>(astNode);
+          ROSE_ASSERT(file != NULL);
+
        // returnAttribute.currentFileName             = ROSE::getFileName(file);
           returnAttribute.currentFileName             = file->getFileName();
           returnAttribute.treeFragmentFromCorrectFile = true;

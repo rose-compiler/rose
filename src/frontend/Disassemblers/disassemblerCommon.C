@@ -199,7 +199,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
   // DQ (8/26/2008): Set the agressive mode in the disassembler basedon the SgFile (evaluated from the command line).
      SgAsmFile* asmFile = isSgAsmFile(interp->get_parent());
      ROSE_ASSERT (asmFile);
-     SgFile* fileNode = isSgFile(asmFile->get_parent());
+     SgBinaryFile* fileNode = isSgBinaryFile(asmFile->get_parent());
      ROSE_ASSERT(fileNode != NULL);
      aggressive_mode = fileNode->get_aggressive();
 

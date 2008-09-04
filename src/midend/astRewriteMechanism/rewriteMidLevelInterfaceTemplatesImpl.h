@@ -292,7 +292,8 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // a name that will make it unique to the compilation/transformation support of the 
   // input file and with a number so that the independent transformation will not collide 
   // and we can simplify the debugging of the transformations.
-     SgFile* currentFile = TransformationSupport::getFile(astNode);
+  // SgFile* currentFile = TransformationSupport::getFile(astNode);
+     SgSourceFile* currentFile = TransformationSupport::getSourceFile(astNode);
      ROSE_ASSERT (currentFile != NULL);
   // string currentFileNameWithSuffix = ROSE::stripPathFromFileName(currentFile->getFileName());
   // printf ("currentFileNameWithSuffix = %s \n",currentFileNameWithSuffix.c_str());
@@ -331,7 +332,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
   // We need the lifetime to be extended beyond that of this function (to avoid purify error)
   // SgFile transformationAST (transformation_argc,transformation_argv,errorCode);
-     SgFile* transformationASTPointer = new SgFile (transformation_argv,errorCode, 0, project);
+     SgSourceFile* transformationASTPointer = new SgSourceFile (transformation_argv,errorCode, 0, project);
      ROSE_ASSERT (transformationASTPointer != NULL);
      ROSE_ASSERT (errorCode <= 2);
 

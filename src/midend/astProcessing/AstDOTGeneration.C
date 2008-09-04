@@ -29,6 +29,10 @@ AstDOTGeneration::generate(SgProject* node, traversalType tt, string filenamePos
   traversal=tt;
   this->filenamePostfix=filenamePostfix;
   DOTInheritedAttribute ia;
+
+  ROSE_ASSERT(node != NULL);
+// printf ("Starting AstDOTGeneration::generate() at node = %s \n",node->class_name().c_str());
+
   traverse(node,ia);
 }
 
@@ -38,6 +42,10 @@ AstDOTGeneration::generateInputFiles(SgProject* node, traversalType tt, string f
   traversal=tt;
   this->filenamePostfix=filenamePostfix;
   DOTInheritedAttribute ia;
+
+  ROSE_ASSERT(node != NULL);
+// printf ("Starting AstDOTGeneration::generateInputFiles() at node = %s \n",node->class_name().c_str());
+
   traverseInputFiles(node,ia);
 }
 
@@ -47,6 +55,10 @@ AstDOTGeneration::generateWithinFile(SgFile* node, traversalType tt, string file
   traversal=tt;
   this->filenamePostfix=filenamePostfix;
   DOTInheritedAttribute ia;
+
+  ROSE_ASSERT(node != NULL);
+// printf ("Starting AstDOTGeneration::generateWithinFile() at node = %s \n",node->class_name().c_str());
+
   traverseWithinFile(node,ia);
 }
 
@@ -55,6 +67,8 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
    {
   // I think this may no longer be required, but I will leave it in place for now
      visitedNodes.insert(node);
+
+  // printf ("AstDOTGeneration::evaluateInheritedAttribute(): node = %s \n",node->class_name().c_str());
 
   // We might not want to increment the trace position information for
   // the IR nodes from rose_edg_required_macros_and_functions.h
@@ -109,6 +123,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
    {
      SubTreeSynthesizedAttributes::iterator iter;
      ROSE_ASSERT(node);
+
+  // printf ("AstDOTGeneration::evaluateSynthesizedAttribute(): node = %s \n",node->class_name().c_str());
 
   // DQ (5/3/2006): Skip this IR node if it is specified as such in the inherited attribute
      if (ia.skipSubTree == true)
@@ -283,16 +299,48 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
 
      switch(node->variantT())
         {
-          case V_SgFile: 
+       // DQ (9/1/2008): Added case for output of SgProject rooted DOT file.
+       // This allows source code and binary files to be combined into the same DOT file.
+          case V_SgProject: 
              {
-               string filename = (static_cast<SgFile*>(node))->getFileName();
+               SgProject* project = dynamic_cast<SgProject*>(node);
+               ROSE_ASSERT(project != NULL);
+
+               string generatedProjectName = SageInterface::generateProjectName( project );
+            // printf ("generatedProjectName = %s \n",generatedProjectName.c_str());
+
+               string filename2 = string("./")+generatedProjectName+".dot";
+
+               dotrep.writeToFileAsGraph(filename2);
+               break;
+             }
+
+       // case V_SgFile: 
+          case V_SgSourceFile: 
+          case V_SgBinaryFile: 
+             {
+               SgFile* file = dynamic_cast<SgFile*>(node);
+               ROSE_ASSERT(file != NULL);
+
+               string filename = file->getFileName();
 
             // DQ (7/4/2008): Fix filenamePostfix to go before the "."
             // string filename2=string("./")+ROSE::stripPathFromFileName(filename)+"."+filenamePostfix+"dot";
                string filename2=string("./")+ROSE::stripPathFromFileName(filename)+filenamePostfix+".dot";
 
+            // printf ("file->get_parent() = %p \n",file->get_parent());
+
             // cout << "generating DOT file: " << filename2 << " ... ";
-               dotrep.writeToFileAsGraph(filename2);
+
+            // DQ (9/1/2008): this effects the output of DOT files when multiple files are specified 
+            // on the command line.  A SgProject is still built even when a single file is specificed 
+            // on the command line, however there are cases where a SgFile can be built without a 
+            // SgProject and this case allows those SgFile rooted subtrees to be output as DOT files.
+            // If there is a SgProject then output the dot file from there, else output as a SgFile.
+               if (file->get_parent() == NULL)
+                  {
+                    dotrep.writeToFileAsGraph(filename2);
+                  }
             // cout << "done." << endl;
                break;
              }

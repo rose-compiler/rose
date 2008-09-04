@@ -662,7 +662,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                   {
                  // I wanted to leave the SgFile case in the switch statement rather 
                  // than separating it out in a conditional statement at the top of the file.
-                    case V_SgFile:
+                 // case V_SgFile:
+                    case V_SgSourceFile:
+                    case V_SgBinaryFile:
                           {
                          // printf ("Case SgFile: See if we can find a better target to attach these comments than %s \n",
                          //      previousLocNodePtr->sage_class_name());

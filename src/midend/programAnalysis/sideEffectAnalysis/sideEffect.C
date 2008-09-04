@@ -3012,6 +3012,8 @@ stripFileExtensions(list<string> fileNames)
   return strippedFileNames;
 }
 
+#if 0
+// DQ (9/2/2008): This is not used and redundant with functionality on the SgProject IR node.
 list<string>
 getFileNames(SgFilePtrListPtr fileList)
 {
@@ -3025,6 +3027,7 @@ getFileNames(SgFilePtrListPtr fileList)
 
   return fileNames;
 }
+#endif
 
 string
 sanitizeFileName(string fileName)

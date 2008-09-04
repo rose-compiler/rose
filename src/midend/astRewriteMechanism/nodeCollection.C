@@ -867,9 +867,10 @@ insertStatementList (
                                    ROSE_ASSERT (newFunctionDefinition->get_parent() != NULL);
                                    break;
                                  }
-                              case V_SgFile:
+                           // case V_SgFile:
+                              case V_SgSourceFile:
                                  {
-                                   SgFile* file = isSgFile(parentNode);
+                                   SgSourceFile* file = isSgSourceFile(parentNode);
                                    ROSE_ASSERT (file != NULL);
                                    SgGlobal* newGlobalScope = isSgGlobal(target);
                                    ROSE_ASSERT (newGlobalScope != NULL);
@@ -1664,7 +1665,8 @@ MidLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, b
        // ROSE_ASSERT(toSave.size() != 0);
           ROSE_ASSERT(newStatement != NULL);
           SgNode *curr = newStatement;
-          while (curr->variantT() != V_SgFile)
+       // while (curr->variantT() != V_SgFile)
+          while (curr->variantT() != V_SgSourceFile)
              {
                SgNode * tmp = curr->get_parent();
                ROSE_ASSERT(tmp != NULL);
@@ -1751,9 +1753,10 @@ MidLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, b
                               functionDeclaration->set_definition(newFunctionDefinition);
                               break;
                             }
-                         case V_SgFile:
+                      // case V_SgFile:
+                         case V_SgSourceFile:
                             {
-                              SgFile* file = isSgFile(parentNode);
+                              SgSourceFile* file = isSgSourceFile(parentNode);
                               ROSE_ASSERT (file != NULL);
                               SgGlobal* newGlobalScope = new SgGlobal();
                               file->set_root(newGlobalScope);
@@ -2004,7 +2007,8 @@ HighLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, 
           ROSE_ASSERT(toSave.size() != 0);
           ROSE_ASSERT(newStatement != NULL);
           curr = newStatement;
-          while (curr->variantT() != V_SgFile)
+       // while (curr->variantT() != V_SgFile)
+          while (curr->variantT() != V_SgSourceFile)
              {
                SgNode * tmp = curr->get_parent();
                ROSE_ASSERT(tmp != NULL);
@@ -2098,9 +2102,10 @@ HighLevelInterfaceNodeCollection::writeAllChangeRequests ( SgStatement* target, 
                               functionDeclaration->set_definition(newFunctionDefinition);
                               break;
                             }
-                         case V_SgFile:
+                      // case V_SgFile:
+                         case V_SgSourceFile:
                             {
-                              SgFile* file = isSgFile(parentNode);
+                              SgSourceFile* file = isSgSourceFile(parentNode);
                               ROSE_ASSERT (file != NULL);
                               SgGlobal* newGlobalScope = new SgGlobal();
                               file->set_root(newGlobalScope);

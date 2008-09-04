@@ -159,6 +159,8 @@ SgExpressionRoot
 SgExprListExp
 SgExprStatement
 SgFile
+SgSourceFile
+SgBinaryFile
 Sg_File_Info
 SgFileList
 SgFloatVal

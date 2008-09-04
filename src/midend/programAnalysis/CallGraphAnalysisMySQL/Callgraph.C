@@ -195,10 +195,17 @@ CallgraphTraversal::evaluateInheritedAttribute (
 
 	switch(astNode->variantT())
 	{
-		case V_SgFile: {
-			cerr << " found V_SgFile" << endl; // debug
+   // case V_SgFile:
+   // case V_SgBinaryFile:
+      case V_SgSourceFile:
+        {
+			cerr << " found V_SgSourceFile or SgBinaryFile" << endl; // debug
 			// found a file node
-			SgFile *fileNode = isSgFile( astNode );
+
+      // DQ (9/2/2008): Modified to support SgSourceFile IR node
+			SgSourceFile *fileNode = isSgSourceFile( astNode );
+         ROSE_ASSERT(fileNode != NULL);
+
 			filesTableAccess files( gdb );
 
 			// get file info FIXME?

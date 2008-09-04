@@ -1320,13 +1320,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_read_executable_file_format_only(true);
         }
 
+  // DQ (9/2/2008): This is now set in the new SgBinaryFile IR node.
   // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
   // executable segments instead of just section based.
   //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
         {
-       // printf ("option -rose:aggressive found \n");
-          set_aggressive(true);
+          printf ("option -rose:aggressive found (not handled internally) \n");
+       // set_aggressive(true);
        // Disassembler::aggressive_mode = true;
         }
 
@@ -1702,12 +1703,17 @@ isBinaryExecutableFile ( string sourceFilename )
         }
 
      int character0 = fgetc(f);
+     int character1 = fgetc(f);
 
   // The first character of an ELF binary is '\127' and for a PE binary it is 'M'
   // if (character0 == 127)
      if (character0 == 127 || character0 == 77)
         {
-          returnValue = true;
+       // returnValue = true;
+          if (character1 == 'E' || character1 == 'Z')
+             {
+               returnValue = true;
+             }
         }
 
       fclose(f);
@@ -2748,6 +2754,31 @@ SgProject::parse(const vector<string>& argv)
      return errorCode;
    }
 
+
+
+
+SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
+// : SgFile (argv,errorCode,fileNameIndex,project)
+   {
+  // printf ("In the SgSourceFile constructor \n");
+
+  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
+     doSetupForConstructor(argv, errorCode, fileNameIndex, project);
+    }
+ 
+SgBinaryFile::SgBinaryFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
+// : SgFile (argv,errorCode,fileNameIndex,project)
+   {
+     p_binaryFile = NULL;
+     p_aggressive = false;
+
+  // printf ("In the SgBinaryFile constructor \n");
+
+  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
+     doSetupForConstructor(argv, errorCode, fileNameIndex, project);
+   }
+
+
 int 
 SgProject::parse()
    {
@@ -2775,22 +2806,80 @@ SgProject::parse()
           string currentFileName = *nameIterator;
           CommandlineProcessing::removeAllFileNamesExcept(argv,p_sourceFileNameList,currentFileName);
 
-       // printf ("Command line being passed to SgFile constructor: \n%s\n",CommandlineProcessing::generateStringFromArgcArgv(argc,(const char**)argv,false,false).c_str());
+       // printf ("In SgProject::parse(): command line for file = %s \n",CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
+       // printf ("currentFileName = %s \n",currentFileName.c_str());
+
+          SgFile* newFile = NULL;
+
+#if 0
+          if (isBinaryExecutableFile(currentFileName) == true)
+             {
+            // If this file matches a source file name then include it in it's binary file pointer.
+            // If there are more than one source files, then we can't so easily associate the binary 
+            // file with a specific source file and the binary file will be built as a separate SgFile
+            // in the same SgProject as the other source files.
+
+               for (Rose_STL_Container<SgFile*>::iterator i = p_fileList.begin(); i != p_fileList.end(); i++)
+                  {
+                    string filenameWithoutSuffix = StringUtility::stripFileSuffixFromFileName((*i)->get_sourceFileNameWithoutPath());
+                    printf ("Comparing currentFileName for binary = %s to previously built source file = %s filenameWithoutSuffix = %s \n",
+                         currentFileName.c_str(),(*i)->get_sourceFileNameWithoutPath().c_str(),filenameWithoutSuffix.c_str());
+                    if ( filenameWithoutSuffix == currentFileName )
+                       {
+                      // This is a binary file that matches the name of a source file so
+                      // put the binary AST into the same SgFile IR node with the source.
+                      // So reuse the SgFile from the generation of the source file.
+
+                      // Hopefuly this does not change the data fields in the SgFile IR nodes to be inconsistant with it being a source file.
+
+                      // newFile = *i;
+                       }
+                  }
+
+               newFile = new SgBinaryFile ( argv, nextErrorCode, 0, this );
+             }
+#endif
 
        // DQ (2/24/2004): Added support for SgProject to be passed so that the parent 
        // pointer could be set earily in the construction process.
        // SgFile* newFile = new SgFile ( argc, argv, nextErrorCode, i, this );
-          SgFile* newFile = new SgFile ( argv, nextErrorCode, 0, this );
+       // SgFile* newFile = new SgFile ( argv, nextErrorCode, 0, this );
+          if (newFile == NULL)
+             {
+            // newFile = new SgFile ( argv, nextErrorCode, 0, this );
+
+            // printf ("currentFileName = %s \n",currentFileName.c_str());
+
+               if (isBinaryExecutableFile(currentFileName) == true)
+                  {
+                 // printf ("This is a binary file so building a SgBinaryFile IR node! \n");
+                    newFile = new SgBinaryFile ( argv, nextErrorCode, 0, this );
+                  }
+                 else
+                  {
+                 // printf ("This is NOT a binary file so building a SgSourceFile IR node! \n");
+                    newFile = new SgSourceFile ( argv, nextErrorCode, 0, this );
+                  }
+
+               ROSE_ASSERT (newFile != NULL);
+
+            // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
+
+               ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
+
+               ROSE_ASSERT (newFile->get_parent() != NULL);
+
+            // DQ (9/2/2008): This should have already been set!
+            // Set the parent explicitly (so that we can easily find the SgProject from the SgFile).
+            // newFile->set_parent(this);
+
+            // This just adds the new file to the list of files stored internally
+               set_file ( *newFile );
+
+            // newFile->display("Called from SgProject::parse()");
+             }
+
           ROSE_ASSERT (newFile != NULL);
-
-          ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
-
-       // Set the parent explicitly (so that we can easily find the SgProject from the SgFile).
-          newFile->set_parent(this);
-
-       // This just adds the new file to the list of files stored internally
-          set_file ( *newFile );
-
 #if 0
           printf ("In Project::parse(): get_file(%d).get_skipfinalCompileStep() = %s \n",
                i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
@@ -2858,14 +2947,20 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      if (project != NULL)
           set_parent(project);
 
-     ROSE_ASSERT (project);
+     ROSE_ASSERT (project != NULL);
+
+     ROSE_ASSERT(get_parent() != NULL);
 
   // DQ (5/9/2007): The initialization() should do this, so this should not be required.
      p_root = NULL;
-     p_binaryFile = NULL;
+
+  // This should be set in the new SgBinaryFile IR node.
+  // p_binaryFile = NULL;
 
   // initalize all local variables to default values
      initialization();
+
+     ROSE_ASSERT(get_parent() != NULL);
 
   // DQ (4/21/2006): Setup the source filename as early as possible
      setupSourceFilename(argv);
@@ -2924,7 +3019,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // p_fileNameIndex = fileNameIndex;
 
 #if 0
-     printf ("In SgFile::SgFile() after initialization: get_skipfinalCompileStep() = %s \n",
+     printf ("In SgFile::doSetupForConstructor() after initialization: get_skipfinalCompileStep() = %s \n",
           get_skipfinalCompileStep() ? "true" : "false");
 #endif
 
@@ -2942,7 +3037,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // printf ("DONE with copy of command line in SgFile constructor! \n");
 
 #if 0
-     printf ("In SgFile::SgFile() before callFrontEnd(): get_skipfinalCompileStep() = %s \n",
+     printf ("In SgFile::doSetupForConstructor() before callFrontEnd(): get_skipfinalCompileStep() = %s \n",
           get_skipfinalCompileStep() ? "true" : "false");
 #endif
 
@@ -2952,6 +3047,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // int EDG_FrontEndErrorCode = callFrontEnd ( argc, argv, *this, fileNameIndex );
   // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList, *this, fileNameIndex );
   // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList );
+  // int EDG_FrontEndErrorCode = callFrontEnd();
      int EDG_FrontEndErrorCode = callFrontEnd();
 
   // Warning from EDG processing are OK but not errors
@@ -2963,7 +3059,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
 #endif
 
 #if 0
-     printf ("In SgFile::SgFile() after callFrontEnd(): get_skipfinalCompileStep() = %s \n",
+     printf ("In SgFile::doSetupForConstructor() after callFrontEnd(): get_skipfinalCompileStep() = %s \n",
           get_skipfinalCompileStep() ? "true" : "false");
 #endif
 
@@ -2975,7 +3071,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
 
   // DQ (10/15/2005): This has not been converted to a C++ string!
   // DQ (5/24/2005): Now fixup the file info's file name in the global scope!
-  // printf ("In SgFile::SgFile p_sourceFileNamesWithPath[%d] = %s \n",fileNameIndex,p_sourceFileNamesWithPath[fileNameIndex]);
+  // printf ("In SgFile::doSetupForConstructor p_sourceFileNamesWithPath[%d] = %s \n",fileNameIndex,p_sourceFileNamesWithPath[fileNameIndex]);
   // p_root->get_file_info()->set_filename(p_sourceFileNamesWithPath[fileNameIndex]);
 
   // DQ (1/22/2008): This should have been set above!
@@ -2992,7 +3088,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      get_file_info()->set_filenameString(p_sourceFileNameWithPath);
 
 #if 0
-     printf ("In SgFile::SgFile(): get_skipfinalCompileStep() = %s \n",
+     printf ("In SgFile::doSetupForConstructor(): get_skipfinalCompileStep() = %s \n",
           get_skipfinalCompileStep() ? "true" : "false");
 #endif
 
@@ -3344,19 +3440,8 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 int openFortranParser_main(int argc, char **argv );
 
 int
-SgFile::callFrontEnd ()
+SgFile::callFrontEnd()
    {
-  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
-     int edg_main(int, char *[], SgFile & sageFile );
-
-  // This is how we pass the pointer to the SgFile created in ROSE before the Open 
-  // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
-  // EDG the SgFile is passed through the edg_main() function, but not so with the 
-  // Open Fortran Parser's openFortranParser_main() function API.  So we use this
-  // global variable to pass the SgFile (so that the parser c_action functions can
-  // build the Fotran AST using the existing SgFile.
-     extern SgFile* OpenFortranParser_globalFilePointer;
-
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
@@ -3542,7 +3627,7 @@ SgFile::callFrontEnd ()
                printf ("get_PHP_only()     = %s \n",(get_PHP_only()     == true) ? "true" : "false");
                printf ("get_binary_only()  = %s \n",(get_binary_only()  == true) ? "true" : "false");
 
-            // DQ (18/2008): We not explicit mark files that require C preprocessing...
+            // DQ (18/2008): We now explicit mark files that require C preprocessing...
                printf ("get_requires_C_preprocessor() = %s \n",(get_requires_C_preprocessor() == true) ? "true" : "false");
 #endif
 #if 0
@@ -3550,510 +3635,57 @@ SgFile::callFrontEnd ()
                ROSE_ASSERT(false);
 #endif
 
-               if (get_Fortran_only() == true)
+            // DQ (9/2/2008): Factored out the details of building the AST for Source code (SgSourceFile IR node) and Binaries (SgBinaryFile IR node)
+            // Note that making buildAST() a virtual function does not appear to solve the problems since it is called form the base class.  This is 
+            // awkward code which is temporary.
+
+            // printf ("Before calling buildAST(): this->class_name() = %s \n",this->class_name().c_str());
+
+               switch (this->variantT())
                   {
-                    bool requires_C_preprocessor = get_requires_C_preprocessor();
-                    if (requires_C_preprocessor == true)
+                    case V_SgFile:
+                    case V_SgSourceFile:
                        {
-                         vector<string> fortran_C_preprocessor_commandLine;
+                         SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+                         frontendErrorLevel = sourceFile->buildAST(argv,inputCommandLine);
+                         break;
+                       }
 
-                      // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
-                      // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
-                      // gfortran to call cpp.
-                         fortran_C_preprocessor_commandLine.push_back("gfortran");
+                    case V_SgBinaryFile:
+                       {
+                         SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
+                         frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
+                         break;
+                       }
 
-                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-                         for (size_t i = 0; i < includeList.size(); i++)
-                            {
-                              fortran_C_preprocessor_commandLine.push_back(includeList[i]);
-                            }
-
-                         fortran_C_preprocessor_commandLine.push_back("-E");
-
-                      // DQ (5/20/2008): Need to select between fixed and free format
-                         fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
-
-                         string sourceFilename              = get_sourceFileNameWithPath();
-                         fortran_C_preprocessor_commandLine.push_back(sourceFilename);
-
-                         fortran_C_preprocessor_commandLine.push_back("-o");
-                         string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-                         fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
-
-                         printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
-
-                      // Some security checking here could be helpful!!!
-                         systemFromVector (fortran_C_preprocessor_commandLine);
-
-#if 0
-                         printf ("Exiting as a test ... (after calling C preprocessor)\n");
+                    default:
+                       {
+                         printf ("Error: default reached in unparser: class name = %s \n",this->class_name().c_str());
                          ROSE_ASSERT(false);
-#endif
                        }
-
-
-                 // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 
-                 // and let it report on the syntax errors).  Later we can make this a command line switch to disable (default 
-                 // should be true).
-                 // bool syntaxCheckInputCode = true;
-                    bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
-
-                    if (syntaxCheckInputCode == true)
-                       {
-                      // Note that syntax checking of Fortran 2003 code using gfortran versions greater than 4.1 can 
-                      // be a problem because there are a lot of bugs in the Fortran 2003 support in later versions 
-                      // of gfortran (not present in initial Fortran 2003 support for syntax checking only). This problem 
-                      // has been verified in version 4.2 and 4.3 of gfortran.
-
-                      // DQ (9/30/2007): Introduce tracking of performance of ROSE.
-                         TimingPerformance timer ("Fortran syntax checking of input:");
-
-                      // DQ (9/30/2007): For Fortran, we want to run gfortran up front so that we can verify that
-                      // the input file is syntax error free.  First lets see what data is avilable to use to check
-                      // that we have a fortran file.
-                      // display("Before calling OpenFortranParser, what are the values in the SgFile");
-
-                      // DQ (9/30/2007): Call the backend Fortran compiler (typically gfortran) to check the syntax 
-                      // of the input program.  When using GNU gfortran, use the "-S" option which means:
-                      // "Compile only; do not assemble or link".
-
-                      // DQ (11/17/2007): Note that syntax and semantics checking is turned on using -fno-backend not -S 
-                      // as I previously thought.  Also I have turned on all possible warnings and specified the Fortran 2003
-                      // features.  I have also specified use of cray-pointers.
-                      // string syntaxCheckingCommandline = "gfortran -S " + get_sourceFileNameWithPath();
-                      // string warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow -Wunused-labels";
-                      // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
-
-                         vector<string> fortranCommandLine;
-                         fortranCommandLine.push_back(ROSE_GFORTRAN_PATH);
-                         fortranCommandLine.push_back("-fsyntax-only");
-
-                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-                         for (size_t i = 0; i < includeList.size(); i++)
-                            {
-                              fortranCommandLine.push_back(includeList[i]);
-                            }
-
-                         if (get_output_warnings() == true)
-                            {
-                           // These are gfortran specific options
-                           // As of 2004, -Wall implied: -Wunused-labels, -Waliasing, -Wsurprising and -Wline-truncation
-                           // Additional major options include:
-                           //      -fsyntax-only -pedantic -pedantic-errors -w -Wall -Waliasing -Wconversion -Wimplicit-interface
-                           //      -Wsurprising -Wunderflow -Wunused-labels -Wline-truncation -Werror -W
-                           // warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow";
-
-                           // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at leas for how)
-
-                           // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what 
-                           // version of gfortran (as we do for C and C++))
-                              string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                              if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
-                                 {
-                                // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
-                                // warnings += " -Wunused-labels";
-                                // warnings = "-Wall -Wconversion -Wampersand -Wimplicit-interface -Wnonstd-intrinsics -Wunderflow";
-                                   fortranCommandLine.push_back("-Wall");
-
-                                // Add in the gfortran extra warnings
-                                   fortranCommandLine.push_back("-W");
-
-                                // More warnings not yet turned on.
-                                   fortranCommandLine.push_back("-Wconversion");
-                                   fortranCommandLine.push_back("-Wampersand");
-                                   fortranCommandLine.push_back("-Wimplicit-interface");
-                                   fortranCommandLine.push_back("-Wnonstd-intrinsics");
-                                   fortranCommandLine.push_back("-Wunderflow");
-                                 }
-                                else
-                                 {
-                                   printf ("Currently only the GNU compiler backend is supported (gfortran) backendCompilerSystem = %s \n",backendCompilerSystem.c_str());
-                                   ROSE_ASSERT(false);
-                                 }
-                            }
-
-                      // DQ (11/17/2007): Set the fortran mode used with gfortran.
-                         if (get_F90_only() == true || get_F95_only() == true)
-                            {
-                           // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
-                              fortranCommandLine.push_back("-std=f95");
-
-                           // DQ (5/20/2008)
-                              fortranCommandLine.push_back("-ffree-line-length-none");
-                            }
-                           else
-                            {
-                              if (get_F2003_only() == true)
-                                 {
-                                   fortranCommandLine.push_back("-std=f2003");
-
-                                // DQ (5/20/2008)
-                                   fortranCommandLine.push_back("-ffree-line-length-none");
-                                 }
-                                else
-                                 {
-                                // This should be the default mode (fortranMode string is empty). So is it f77?
-
-                                // DQ (5/20/2008)
-                                   fortranCommandLine.push_back("-ffixed-line-length-none");
-                                 }
-                            }
-
-                      // DQ (12/8/2007): Added support for cray pointers from commandline.
-                         if (get_cray_pointer_support() == true)
-                            {
-                              fortranCommandLine.push_back("-fcray-pointer");
-                            }
-
-                      // Note that "-c" is required to enforce that we only compile and not link the result (even though -fno-backend is specified)
-                      // A web page specific to -fno-backend suggests using -fsyntax-only instead (so the "-c" options is not required).
+                  }          
 #if 0
-                      // if ( SgProject::get_verbose() > 0 )
-                         if ( get_verbose() > 0 )
-                            {
-                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
-                            }
-#endif
-                      // Call the OS with the commandline defined by: syntaxCheckingCommandline
-#if 0
-                         fortranCommandLine.push_back(get_sourceFileNameWithPath());
-#else
-                      // DQ (5/19/2008): Support for C preprocessing
-                         if (requires_C_preprocessor == true)
-                            {
-                           // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-                              string sourceFilename    = get_sourceFileNameWithPath();
-                              string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-                              fortranCommandLine.push_back(sourceFileNameOutputFromCpp);
-                            }
-                           else
-                            {
-                              fortranCommandLine.push_back(get_sourceFileNameWithPath());
-                            }
-#endif
-                      // At this point we have the full command line with the source file name
-                         if ( get_verbose() > 0 )
-                            {
-                              printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
-                            }
-
-                         int returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
-
-                      // Check that there are no errors, I think that warnings are ignored!
-                         if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
-                            {
-                              printf ("Syntax errors detected in input fortran program ... \n");
-                              exit(1);
-                            }
-                         ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
-
-#if 0
-                         printf ("Exiting as a test ... (after syntax check) \n");
-                         ROSE_ASSERT(false);
-#endif
-                       }
-
-                 // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
-                    if (get_output_parser_actions() == true)
-                       {
-                      // DQ (1/19/2008): New version of OFP requires different calling syntax.
-                      // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
-                         vector<string> OFPCommandLine;
-                         OFPCommandLine.push_back("java");
-                         OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-                         OFPCommandLine.push_back("--dump");
-
-                      // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-                         for (size_t i = 0; i < includeList.size(); i++)
-                            {
-                              OFPCommandLine.push_back(includeList[i]);
-                            }
-
-#if 0
-                         OFPCommandLine.push_back(get_sourceFileNameWithPath());
-#else
-                      // DQ (5/19/2008): Support for C preprocessing
-                         if (requires_C_preprocessor == true)
-                            {
-                           // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-                              string sourceFilename              = get_sourceFileNameWithPath();
-                              string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-                              OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
-                            }
-                           else
-                            {
-                              OFPCommandLine.push_back(get_sourceFileNameWithPath());
-                            }
-#endif
-#if 1
-                         printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
-#endif
-#if 1
-                      // Some security checking here could be helpful!!!
-                         systemFromVector (OFPCommandLine);
-#else
-                      // This fails, I think because we can't call the openFortranParser_main twice.
-                         int openFortranParser_dump_argc    = 0;
-                         char** openFortranParser_dump_argv = NULL;
-                         CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
-                         frontendErrorLevel = openFortranParser_main (openFortranParser_dump_argc, openFortranParser_dump_argv);
-#endif
-                      // If this was selected as an option then we can stop here (rather than call OFP again).
-                      // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
-                         if (get_exit_after_parser() == true)
-                            {
-                              printf ("Exiting after parsing... \n");
-                              exit(0);
-                            }
-                       }
-
-                 // Option to just run the parser (not constructing the AST) and quit.
-                 // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
-                    if (get_exit_after_parser() == true)
-                       {
-                      // DQ (1/19/2008): New version of OFP requires different calling syntax.
-                      // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
-                         vector<string> OFPCommandLine;
-                         OFPCommandLine.push_back("java");
-                         OFPCommandLine.push_back("fortran.ofp.FrontEnd");
-
-                      // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
-                         const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-                         for (size_t i = 0; i < includeList.size(); i++)
-                            {
-                              OFPCommandLine.push_back(includeList[i]);
-                            }
-
-                         OFPCommandLine.push_back(get_sourceFileNameWithPath());
-
-                      // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
-#if 1
-                      // Some security checking here could be helpful!!!
-                         systemFromVector (OFPCommandLine);
-#else
-                      // This fails, I think because we can't call the openFortranParser_main twice.
-                         int openFortranParser_only_argc    = 0;
-                         char** openFortranParser_only_argv = NULL;
-                         CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
-                         frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
-#endif
-                         printf ("Exiting after parsing... (get_exit_after_parser() == true) \n");
-                         exit(0);
-                       }
-                    
-                 // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
-                 // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
-                    vector<string> frontEndCommandLine;
-                    frontEndCommandLine.push_back(argv[0]);
-                    frontEndCommandLine.push_back("--class");
-                    frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
-#if 0
-                    get_project()->display("Calling SgProject display");
-                    display("Calling SgFile display");
-#endif
-                    const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-
-                    bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
-
-                 // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
-                    for (size_t i = 0; i < includeList.size(); i++)
-                       {
-                         frontEndCommandLine.push_back(includeList[i]);
-
-                      // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
-
-                      // I think we have to permit an optional space between the "-I" and the path
-                         if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
-                            {
-                           // The source file path is already included!
-                              foundSourceDirectoryExplicitlyListedInIncludePaths = true;
-                            }
-                       }
-
-                    printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-                    if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
-                       {
-                      // Add the source directory to the include list so that we reproduce the semantics of gfortran
-                         frontEndCommandLine.push_back("-I" + getSourceDirectory() );
-                       }
-
-#if 0
-                    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-#else
-                 // DQ (5/19/2008): Support for C preprocessing
-                    if (requires_C_preprocessor == true)
-                       {
-                      // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
-                         string sourceFilename    = get_sourceFileNameWithPath();
-                         string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
-                         frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
-                       }
-                      else
-                       {
-                         frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-                       }
-#endif
-
-#if 1
-                    if ( get_verbose() > 0 )
-                         printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
-#endif
-
-                    int openFortranParser_argc    = 0;
-                    char** openFortranParser_argv = NULL;
-                    CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
-
-                    // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
-
-                 // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser 
-                 // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it 
-                 // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
-                    OpenFortranParser_globalFilePointer = const_cast<SgFile*>(this);
-                    ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
-
-                    if ( get_verbose() > 1 )
-                         printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
-
-                 // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
-                    frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
-
-                    if ( get_verbose() > 1 )
-                         printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
-
-                 // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
-                    OpenFortranParser_globalFilePointer = NULL;
+               SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+               SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
+               if (binaryFile != NULL)
+                  {
+                    ROSE_ASSERT(sourceFile == NULL);
+                    frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
                   }
                  else
                   {
-                    if (get_binary_only() == true)
+                    if (sourceFile != NULL)
                        {
-                         string executableFileName = this->get_sourceFileNameWithPath();
-
-                         if ( get_verbose() > 0 )
-                              printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
-
-                      // We likely need some error reporting from objdumpToRoseBinaryAst()
-                         frontendErrorLevel = 0;
-
-                      // Disassemble the binary file (using recursive disassembler based on objdump.
-                      // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
-                         SgAsmFile* asmFile = new SgAsmFile();
-                         ROSE_ASSERT(asmFile != NULL);
-
-                      // Attach the SgAsmFile to the SgFile
-                         this->set_binaryFile(asmFile);
-                         asmFile->set_parent(this);
-
-
-                      // printf ("Calling generateBinaryExecutableFileInformation() \n");
-
-                      // Get the structure of the binary file (only implemented for ELF formatted files currently).
-                      // Later we will implement a PE reader to get the structure of MS Windows executables.
-                         generateBinaryExecutableFileInformation(executableFileName,asmFile);
-
-                      // Find the headers in the executable format and convert
-                      // them into SgAsmInterpretation objects
-                         SgAsmGenericFile* genericFile = asmFile->get_genericFile();
-                         ROSE_ASSERT (genericFile);
-                         SgAsmGenericHeaderList* headerList = genericFile->get_headers();
-                         ROSE_ASSERT (headerList);
-                         const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
-                         for (size_t i = 0; i < headers.size(); ++i) {
-                           SgAsmInterpretation* interp = new SgAsmInterpretation();
-                           interp->set_parent(asmFile);
-                           interp->set_header(headers[i]);
-                           asmFile->get_interpretations().push_back(interp);
-                         }
-
-                      // Fill in the instructions into the SgAsmFile IR node
-                         SgProject* project = isSgProject(this->get_parent());
-                         ROSE_ASSERT(project != NULL);
-
-#if 1
-                      // DQ (8/16/2008): Added support to only read the binary executable file format.
-                      // this will allow us to separate out different kinds of testing.
-                         if (get_read_executable_file_format_only() == false)
-                            {
-                              Disassembler::disassembleFile(asmFile);
-                            }
-                           else
-                            {
-                              printf ("\nWARNING: Skipping instruction disassembly \n\n");
-                            }
-
-#else
-                         printf ("\nWARNING: Skipping instruction disassembly \n\n");
+                         ROSE_ASSERT(binaryFile == NULL);
+                         frontendErrorLevel = sourceFile->buildAST(argv,inputCommandLine);
+                       }
+                      else
+                       {
+                         printf ("Error: neither sourceFile nor binaryFile are valid pointers this = %s \n",class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
 #endif
-
-                      // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
-                      // addresses are unparsed (see Jeremiah for details).
-                      // Skip running gnu assemble on the output since we include text that would make this a problem.
-                         if (get_verbose() > 1) {
-                           printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
-                         }
-                         this->set_skipfinalCompileStep(true);
-
-                      // This is now done below in the Secondary file processing phase.
-                      // Generate the ELF executable format structure into the AST
-                      // generateBinaryExecutableFileInformation(executableFileName,asmFile);
-                       }
-                      else
-                       {
-                           if ( get_PHP_only() == true )
-                              {
-                                 string phpFileName = this->get_sourceFileNameWithPath();                                 
-                                 frontendErrorLevel = php_main(phpFileName, this);
-                              }
-                             else
-                              {
-                                 std::string frontEndCommandLineString;
-                                 frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
-
-                                 if ( get_verbose() > 1 )
-                                    printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
-
-                                 int edg_argc = 0;
-                                 char **edg_argv = NULL;
-                                 CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
-                                 
-                                 frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
-                              } 
-                           
-                       }
-                  }
-
-               if ( get_verbose() > 1 )
-                    printf ("DONE: frontend called (frontendErrorLevel = %d) \n",frontendErrorLevel);
-
-            // If we had any errors reported by the frontend then quite now
-               if (frontendErrorLevel > 3)
-                  {
-                 // cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
-                    if ( get_verbose() > 1 )
-                         printf ("frontendErrorLevel = %d \n",frontendErrorLevel);
-
-                 // DQ (9/22/2006): We need to invert the test result (return code) for 
-                 // negative tests (where failure is expected and success is an error).
-                    if (get_negative_test() == true)
-                       {
-                         if ( get_verbose() > 1 )
-                            {
-                              printf ("(evaluation of frontend results) This is a negative tests, so an error in compilation is a PASS but a successful \n");
-                              printf ("compilation is not a FAIL since the faulure might happen in the compilation of the generated code by the vendor compiler. \n");
-                            }
-                         exit(0);
-                       }
-                      else
-                       {
-                      // Exit because there are errors in the input program
-                         cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
-                         ROSE_ABORT();
-                       }
-                  }
-
             // if there are warnings report that there are in the verbose mode and continue 
                if (frontendErrorLevel > 0)
                   {
@@ -4155,6 +3787,568 @@ SgFile::callFrontEnd ()
   // return the error code associated with the call to the C++ Front-end
      return frontendErrorLevel;
    }
+
+
+int
+SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // This is how we pass the pointer to the SgFile created in ROSE before the Open 
+  // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
+  // EDG the SgFile is passed through the edg_main() function, but not so with the 
+  // Open Fortran Parser's openFortranParser_main() function API.  So we use this
+  // global variable to pass the SgFile (so that the parser c_action functions can
+  // build the Fotran AST using the existing SgFile.
+     extern SgFile* OpenFortranParser_globalFilePointer;
+
+     bool requires_C_preprocessor = get_requires_C_preprocessor();
+     if (requires_C_preprocessor == true)
+        {
+          vector<string> fortran_C_preprocessor_commandLine;
+
+                      // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
+                      // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
+                      // gfortran to call cpp.
+          fortran_C_preprocessor_commandLine.push_back("gfortran");
+
+                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               fortran_C_preprocessor_commandLine.push_back(includeList[i]);
+             }
+
+          fortran_C_preprocessor_commandLine.push_back("-E");
+
+                      // DQ (5/20/2008): Need to select between fixed and free format
+          fortran_C_preprocessor_commandLine.push_back("-ffree-line-length-none");
+
+          string sourceFilename              = get_sourceFileNameWithPath();
+          fortran_C_preprocessor_commandLine.push_back(sourceFilename);
+
+          fortran_C_preprocessor_commandLine.push_back("-o");
+          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+          fortran_C_preprocessor_commandLine.push_back(sourceFileNameOutputFromCpp);
+
+          printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
+
+                      // Some security checking here could be helpful!!!
+          systemFromVector (fortran_C_preprocessor_commandLine);
+
+#if 0
+          printf ("Exiting as a test ... (after calling C preprocessor)\n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+
+  // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler 
+  // and let it report on the syntax errors).  Later we can make this a command line switch to disable (default 
+  // should be true).
+  // bool syntaxCheckInputCode = true;
+     bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
+
+     if (syntaxCheckInputCode == true)
+        {
+       // Note that syntax checking of Fortran 2003 code using gfortran versions greater than 4.1 can 
+       // be a problem because there are a lot of bugs in the Fortran 2003 support in later versions 
+       // of gfortran (not present in initial Fortran 2003 support for syntax checking only). This problem 
+       // has been verified in version 4.2 and 4.3 of gfortran.
+
+       // DQ (9/30/2007): Introduce tracking of performance of ROSE.
+          TimingPerformance timer ("Fortran syntax checking of input:");
+
+       // DQ (9/30/2007): For Fortran, we want to run gfortran up front so that we can verify that
+       // the input file is syntax error free.  First lets see what data is avilable to use to check
+       // that we have a fortran file.
+       // display("Before calling OpenFortranParser, what are the values in the SgFile");
+
+       // DQ (9/30/2007): Call the backend Fortran compiler (typically gfortran) to check the syntax 
+       // of the input program.  When using GNU gfortran, use the "-S" option which means:
+       // "Compile only; do not assemble or link".
+
+       // DQ (11/17/2007): Note that syntax and semantics checking is turned on using -fno-backend not -S 
+       // as I previously thought.  Also I have turned on all possible warnings and specified the Fortran 2003
+       // features.  I have also specified use of cray-pointers.
+       // string syntaxCheckingCommandline = "gfortran -S " + get_sourceFileNameWithPath();
+       // string warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow -Wunused-labels";
+       // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
+
+          vector<string> fortranCommandLine;
+          fortranCommandLine.push_back(ROSE_GFORTRAN_PATH);
+          fortranCommandLine.push_back("-fsyntax-only");
+
+       // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               fortranCommandLine.push_back(includeList[i]);
+             }
+
+          if (get_output_warnings() == true)
+             {
+            // These are gfortran specific options
+            // As of 2004, -Wall implied: -Wunused-labels, -Waliasing, -Wsurprising and -Wline-truncation
+            // Additional major options include:
+            //      -fsyntax-only -pedantic -pedantic-errors -w -Wall -Waliasing -Wconversion -Wimplicit-interface
+            //      -Wsurprising -Wunderflow -Wunused-labels -Wline-truncation -Werror -W
+            // warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow";
+
+            // If warnings are requested (on the comandline to ROSE translator) then we want to output all possible warnings by defaul (at leas for how)
+
+            // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what 
+            // version of gfortran (as we do for C and C++))
+               string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
+               if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+                  {
+                 // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
+                 // warnings += " -Wunused-labels";
+                 // warnings = "-Wall -Wconversion -Wampersand -Wimplicit-interface -Wnonstd-intrinsics -Wunderflow";
+                    fortranCommandLine.push_back("-Wall");
+
+                 // Add in the gfortran extra warnings
+                    fortranCommandLine.push_back("-W");
+
+                 // More warnings not yet turned on.
+                    fortranCommandLine.push_back("-Wconversion");
+                    fortranCommandLine.push_back("-Wampersand");
+                    fortranCommandLine.push_back("-Wimplicit-interface");
+                    fortranCommandLine.push_back("-Wnonstd-intrinsics");
+                    fortranCommandLine.push_back("-Wunderflow");
+                  }
+                 else
+                  {
+                    printf ("Currently only the GNU compiler backend is supported (gfortran) backendCompilerSystem = %s \n",backendCompilerSystem.c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+       // DQ (11/17/2007): Set the fortran mode used with gfortran.
+          if (get_F90_only() == true || get_F95_only() == true)
+             {
+            // For now let's consider f90 to be syntax checked under f95 rules (since gfortran does not support a f90 specific mode)
+               fortranCommandLine.push_back("-std=f95");
+
+            // DQ (5/20/2008)
+               fortranCommandLine.push_back("-ffree-line-length-none");
+             }
+            else
+             {
+               if (get_F2003_only() == true)
+                  {
+                    fortranCommandLine.push_back("-std=f2003");
+
+                 // DQ (5/20/2008)
+                    fortranCommandLine.push_back("-ffree-line-length-none");
+                  }
+                 else
+                  {
+                 // This should be the default mode (fortranMode string is empty). So is it f77?
+
+                 // DQ (5/20/2008)
+                    fortranCommandLine.push_back("-ffixed-line-length-none");
+                  }
+             }
+
+       // DQ (12/8/2007): Added support for cray pointers from commandline.
+          if (get_cray_pointer_support() == true)
+             {
+               fortranCommandLine.push_back("-fcray-pointer");
+             }
+
+       // Note that "-c" is required to enforce that we only compile and not link the result (even though -fno-backend is specified)
+       // A web page specific to -fno-backend suggests using -fsyntax-only instead (so the "-c" options is not required).
+#if 0
+       // if ( SgProject::get_verbose() > 0 )
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
+             }
+#endif
+       // Call the OS with the commandline defined by: syntaxCheckingCommandline
+#if 0
+          fortranCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+       // DQ (5/19/2008): Support for C preprocessing
+          if (requires_C_preprocessor == true)
+             {
+            // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+               string sourceFilename    = get_sourceFileNameWithPath();
+               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+               fortranCommandLine.push_back(sourceFileNameOutputFromCpp);
+             }
+            else
+             {
+               fortranCommandLine.push_back(get_sourceFileNameWithPath());
+             }
+#endif
+       // At this point we have the full command line with the source file name
+          if ( get_verbose() > 0 )
+             {
+               printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
+             }
+
+          int returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
+
+       // Check that there are no errors, I think that warnings are ignored!
+          if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
+             {
+               printf ("Syntax errors detected in input fortran program ... \n");
+               exit(1);
+             }
+          ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+#if 0
+          printf ("Exiting as a test ... (after syntax check) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
+     if (get_output_parser_actions() == true)
+        {
+       // DQ (1/19/2008): New version of OFP requires different calling syntax.
+       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
+          vector<string> OFPCommandLine;
+          OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+          OFPCommandLine.push_back("--dump");
+
+       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               OFPCommandLine.push_back(includeList[i]);
+             }
+
+#if 0
+          OFPCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+       // DQ (5/19/2008): Support for C preprocessing
+          if (requires_C_preprocessor == true)
+             {
+            // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+               string sourceFilename              = get_sourceFileNameWithPath();
+               string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+               OFPCommandLine.push_back(sourceFileNameOutputFromCpp);
+             }
+            else
+             {
+               OFPCommandLine.push_back(get_sourceFileNameWithPath());
+             }
+#endif
+#if 1
+          printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
+#endif
+#if 1
+       // Some security checking here could be helpful!!!
+          systemFromVector (OFPCommandLine);
+#else
+       // This fails, I think because we can't call the openFortranParser_main twice.
+          int openFortranParser_dump_argc    = 0;
+          char** openFortranParser_dump_argv = NULL;
+          CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_dump_argc,openFortranParser_dump_argv);
+          frontendErrorLevel = openFortranParser_main (openFortranParser_dump_argc, openFortranParser_dump_argv);
+#endif
+       // If this was selected as an option then we can stop here (rather than call OFP again).
+       // printf ("--- get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+          if (get_exit_after_parser() == true)
+             {
+               printf ("Exiting after parsing... \n");
+               exit(0);
+             }
+        }
+
+  // Option to just run the parser (not constructing the AST) and quit.
+  // printf ("get_exit_after_parser() = %s \n",get_exit_after_parser() ? "true" : "false");
+     if (get_exit_after_parser() == true)
+        {
+       // DQ (1/19/2008): New version of OFP requires different calling syntax.
+       // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
+          vector<string> OFPCommandLine;
+          OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back("fortran.ofp.FrontEnd");
+
+       // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+          const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+          for (size_t i = 0; i < includeList.size(); i++)
+             {
+               OFPCommandLine.push_back(includeList[i]);
+             }
+
+          OFPCommandLine.push_back(get_sourceFileNameWithPath());
+
+       // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
+#if 1
+       // Some security checking here could be helpful!!!
+          systemFromVector (OFPCommandLine);
+#else
+       // This fails, I think because we can't call the openFortranParser_main twice.
+          int openFortranParser_only_argc    = 0;
+          char** openFortranParser_only_argv = NULL;
+          CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
+          frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
+#endif
+          printf ("Exiting after parsing... (get_exit_after_parser() == true) \n");
+          exit(0);
+       }
+                    
+  // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
+  // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
+     vector<string> frontEndCommandLine;
+     frontEndCommandLine.push_back(argv[0]);
+     frontEndCommandLine.push_back("--class");
+     frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
+#if 0
+     get_project()->display("Calling SgProject display");
+     display("Calling SgFile display");
+#endif
+     const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
+
+     bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
+
+  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
+     for (size_t i = 0; i < includeList.size(); i++)
+        {
+          frontEndCommandLine.push_back(includeList[i]);
+
+       // printf ("includeList[%d] = %s \n",i,includeList[i].c_str());
+
+       // I think we have to permit an optional space between the "-I" and the path
+          if (	"-I" + getSourceDirectory() == includeList[i] || "-I " + getSourceDirectory() == includeList[i])
+             {
+            // The source file path is already included!
+               foundSourceDirectoryExplicitlyListedInIncludePaths = true;
+             }
+        }
+
+     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+     if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
+        {
+       // Add the source directory to the include list so that we reproduce the semantics of gfortran
+          frontEndCommandLine.push_back("-I" + getSourceDirectory() );
+        }
+
+#if 0
+     frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+  // DQ (5/19/2008): Support for C preprocessing
+     if (requires_C_preprocessor == true)
+        {
+       // If C preprocessing was required then we have to provide the generated filename of the preprocessed file!
+          string sourceFilename    = get_sourceFileNameWithPath();
+          string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
+          frontEndCommandLine.push_back(sourceFileNameOutputFromCpp);
+        }
+       else
+        {
+          frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+        }
+#endif
+
+#if 1
+     if ( get_verbose() > 0 )
+          printf ("numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+#endif
+
+     int openFortranParser_argc    = 0;
+     char** openFortranParser_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
+
+  // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
+
+  // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser 
+  // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it 
+  // would be more ackward to pass a pointer to a C++ object through the commandline or the Java interface.
+     OpenFortranParser_globalFilePointer = const_cast<SgSourceFile*>(this);
+     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+
+     if ( get_verbose() > 1 )
+          printf ("Calling openFortranParser_main(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
+
+  // frontendErrorLevel = openFortranParser_main (numberOfCommandLineArguments, inputCommandLine);
+     int frontendErrorLevel = openFortranParser_main (openFortranParser_argc, openFortranParser_argv);
+
+     if ( get_verbose() > 1 )
+          printf ("DONE: Calling the openFortranParser_main() function (which loads the JVM) \n");
+
+  // Reset this global pointer after we are done (just to be safe and avoid it being used later and causing strange bugs).
+     OpenFortranParser_globalFilePointer = NULL;
+
+     return frontendErrorLevel;
+   }
+
+ 
+int
+SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
+     int edg_main(int, char *[], SgFile & sageFile );
+
+     std::string frontEndCommandLineString;
+     frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
+
+     if ( get_verbose() > 1 )
+          printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+
+     int edg_argc = 0;
+     char **edg_argv = NULL;
+     CommandlineProcessing::generateArgcArgvFromList(inputCommandLine, edg_argc, edg_argv);
+                                 
+     int frontendErrorLevel = edg_main (edg_argc, edg_argv, *this);
+
+     return frontendErrorLevel;
+   }
+ 
+int
+SgSourceFile::build_PHP_AST()
+   {
+     string phpFileName = this->get_sourceFileNameWithPath();                                 
+     int frontendErrorLevel = php_main(phpFileName, this);
+
+     return frontendErrorLevel;
+   }
+
+int
+SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // Note that inputCommandLine is unused!
+
+  // printf ("Calling SgBinaryFile::buildAST() \n");
+
+     string executableFileName = this->get_sourceFileNameWithPath();
+
+     if ( get_verbose() > 0 )
+          printf ("Disassemble executableFileName = %s \n",executableFileName.c_str());
+
+  // We likely need some error reporting from objdumpToRoseBinaryAst()
+     int frontendErrorLevel = 0;
+
+  // Disassemble the binary file (using recursive disassembler based on objdump.
+  // SgAsmFile* asmFile = objdumpToRoseBinaryAst(executableFileName);
+     SgAsmFile* asmFile = new SgAsmFile();
+     ROSE_ASSERT(asmFile != NULL);
+
+  // printf ("ERROR: The SgAsmFile should be in the SgBinaryFile \n");
+  // ROSE_ASSERT(false);
+
+  // Attach the SgAsmFile to the SgFile
+
+  // DQ (9/2/2008): commented out the setting of the binaryFile, now moved to the new SgBinaryFile IR node.
+     this->set_binaryFile(asmFile);
+     asmFile->set_parent(this);
+
+  // printf ("Calling generateBinaryExecutableFileInformation() \n");
+
+  // Get the structure of the binary file (only implemented for ELF formatted files currently).
+  // Later we will implement a PE reader to get the structure of MS Windows executables.
+     generateBinaryExecutableFileInformation(executableFileName,asmFile);
+
+  // Find the headers in the executable format and convert
+  // them into SgAsmInterpretation objects
+     SgAsmGenericFile* genericFile = asmFile->get_genericFile();
+     ROSE_ASSERT (genericFile);
+     SgAsmGenericHeaderList* headerList = genericFile->get_headers();
+     ROSE_ASSERT (headerList);
+     const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
+     for (size_t i = 0; i < headers.size(); ++i)
+        {
+          SgAsmInterpretation* interp = new SgAsmInterpretation();
+          interp->set_parent(asmFile);
+          interp->set_header(headers[i]);
+          asmFile->get_interpretations().push_back(interp);
+        }
+
+  // Fill in the instructions into the SgAsmFile IR node
+     SgProject* project = isSgProject(this->get_parent());
+     ROSE_ASSERT(project != NULL);
+
+#if 1
+  // DQ (8/16/2008): Added support to only read the binary executable file format.
+  // this will allow us to separate out different kinds of testing.
+     if (get_read_executable_file_format_only() == false)
+        {
+          Disassembler::disassembleFile(asmFile);
+        }
+       else
+        {
+          printf ("\nWARNING: Skipping instruction disassembly \n\n");
+        }
+#else
+     printf ("\nWARNING: Skipping instruction disassembly \n\n");
+#endif
+
+  // DQ (1/22/2008): The generated unparsed assemble code can not currently be compiled because the 
+  // addresses are unparsed (see Jeremiah for details).
+  // Skip running gnu assemble on the output since we include text that would make this a problem.
+     if (get_verbose() > 1)
+        {
+          printf("set_skipfinalCompileStep(true) because we are on a binary '%s'\n", this->get_sourceFileNameWithoutPath().c_str());
+        }
+     this->set_skipfinalCompileStep(true);
+
+  // This is now done below in the Secondary file processing phase.
+  // Generate the ELF executable format structure into the AST
+  // generateBinaryExecutableFileInformation(executableFileName,asmFile);
+
+     return frontendErrorLevel;
+   }
+ 
+int
+SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
+   {
+  // printf ("Calling SgSourceFile::buildAST() \n");
+
+     int frontendErrorLevel = 0;
+     if (get_Fortran_only() == true)
+        {
+          frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
+        }
+       else
+        {
+          if ( get_PHP_only() == true )
+             {
+               frontendErrorLevel = build_PHP_AST();
+             }
+            else
+             {
+               frontendErrorLevel = build_C_and_Cxx_AST(argv,inputCommandLine);
+             }
+        }
+
+  // Uniform processing fothe error code!
+
+     if ( get_verbose() > 1 )
+          printf ("DONE: frontend called (frontendErrorLevel = %d) \n",frontendErrorLevel);
+
+  // If we had any errors reported by the frontend then quite now
+     if (frontendErrorLevel > 3)
+        {
+       // cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
+          if ( get_verbose() > 1 )
+               printf ("frontendErrorLevel = %d \n",frontendErrorLevel);
+
+       // DQ (9/22/2006): We need to invert the test result (return code) for 
+       // negative tests (where failure is expected and success is an error).
+          if (get_negative_test() == true)
+             {
+               if ( get_verbose() > 1 )
+                  {
+                    printf ("(evaluation of frontend results) This is a negative tests, so an error in compilation is a PASS but a successful \n");
+                    printf ("compilation is not a FAIL since the faulure might happen in the compilation of the generated code by the vendor compiler. \n");
+                  }
+               exit(0);
+             }
+            else
+             {
+            // Exit because there are errors in the input program
+               cout << "Errors in Processing: (frontendErrorLevel > 3)" << endl;
+               ROSE_ABORT();
+             }
+        }
+
+     return frontendErrorLevel;
+   }
+
 
 
 vector<string>

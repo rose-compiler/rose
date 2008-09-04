@@ -49,7 +49,7 @@ int main(int argc, char * argv[]) {
 
   AstTests::runAllTests(project);
 
-  vector<string> files = project->getFileNames();
+  vector<string> files = project->getAbsolutePathFileNames();
   printf("Number of files: %zu \n", files.size());
 
   createDOT(project);

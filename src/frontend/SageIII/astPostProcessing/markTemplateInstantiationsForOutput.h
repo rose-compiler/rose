@@ -34,8 +34,8 @@ class MarkTemplateInstantiationsForOutputSupport
                                         MarkTemplateInstantiationsForOutputSupportSynthesizedAttribute>
    {
      public:
-      //! Saved reference to SgFile (where the template instatiation data is held)
-          SgFile* currentFile;
+      //! Saved reference to SgSourceFile (where the template instatiation data is held)
+          SgSourceFile* currentFile;
 
        // List of declarations referenced in source code or functions and member 
        // functions marked as to be output in source code.  These are the list 
@@ -43,7 +43,7 @@ class MarkTemplateInstantiationsForOutputSupport
           std::list<SgDeclarationStatement*> listOfTemplateDeclarationsToOutput;
 
       //! Constructor to provide access to file's backend specific template instantiation options
-          MarkTemplateInstantiationsForOutputSupport(SgFile* file);
+          MarkTemplateInstantiationsForOutputSupport(SgSourceFile* file);
 
        // Required traversal function
        // void visit (SgNode* node);
@@ -87,11 +87,11 @@ class MarkTemplateInstantiationsForOutput
      public:
 //        static void BuildTemplateDeclarationLists ( SgFile* file );
 
-          static std::set<SgDeclarationStatement*> BuildSetOfRequiredTemplateDeclarations ( SgNode* node, SgFile* file );
+          static std::set<SgDeclarationStatement*> BuildSetOfRequiredTemplateDeclarations ( SgNode* node, SgSourceFile* file );
 
-          static void ProcessClassTemplateDeclarations          ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file );
-          static void ProcessFunctionTemplateDeclarations       ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file );
-          static void ProcessMemberFunctionTemplateDeclarations ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgFile* file );
+          static void ProcessClassTemplateDeclarations          ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file );
+          static void ProcessFunctionTemplateDeclarations       ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file );
+          static void ProcessMemberFunctionTemplateDeclarations ( std::set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file );
 
 
           

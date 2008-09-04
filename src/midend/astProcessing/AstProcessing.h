@@ -364,19 +364,27 @@ set_useDefaultIndexBasedTraversal(bool val)
 // MS: 03/22/02
 // function to traverse all ASTs representing inputfiles (excluding include files), 
 template<class InheritedAttributeType, class SynthesizedAttributeType>
-void SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
+void
+SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 traverseInputFiles(SgProject* projectNode,
         InheritedAttributeType inheritedValue,
         t_traverseOrder travOrder)
-{
-    const SgFilePtrList& fList = projectNode->get_fileList();
-    for (SgFilePtrList::const_iterator fl_iter = fList.begin();
-        fl_iter != fList.end(); fl_iter++)
-    {
-        ROSE_ASSERT(*fl_iter!=0);
-        traverseWithinFile((*fl_iter), inheritedValue, travOrder);
-    }
-}
+   {
+     const SgFilePtrList& fList = projectNode->get_fileList();
+
+  // DQ (9/1/2008): It is observed that this prevents a SgProject from being built on the generated DOT file!
+  // We might want a better design to be used here or call the evaluation directly to force the handling of 
+  // inherited and synthesized attributes on the SgProject.  This detail effect the handling of multiple
+  // files on the command line (something we want to get a global perspective on if possible).
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Warning: The traverseInputFiles() iteration over the file list prevents the evaluation of inherited and synthesized attributes on the SgProject IR node! \n");
+
+     for (SgFilePtrList::const_iterator fl_iter = fList.begin(); fl_iter != fList.end(); fl_iter++)
+        {
+          ROSE_ASSERT(*fl_iter != NULL);
+          traverseWithinFile((*fl_iter), inheritedValue, travOrder);
+        }
+   }
 
 //////////////////////////////////////////////////////
 //// TOP DOWN BOTTOM UP PROCESSING IMPLEMENTATION ////
@@ -608,90 +616,90 @@ SgTreeTraversal<InheritedAttributeType, SynthesizedAttributeType>::
 performTraversal(SgNode* node,
         InheritedAttributeType inheritedValue,
         t_traverseOrder treeTraversalOrder)
-{
-    // 1. node can be a null pointer, only traverse it if !=0.
-    //    (since the SuccessorContainer is order preserving we require 0 values as well!)
-    // 2. inFileToTraverse is false if we are trying to go to a different file (than the input file)
-    //    and only if traverseInputFiles was invoked, otherwise it's always true
+   {
+  // 1. node can be a null pointer, only traverse it if !=0.
+  //    (since the SuccessorContainer is order preserving we require 0 values as well!)
+  // 2. inFileToTraverse is false if we are trying to go to a different file (than the input file)
+  //    and only if traverseInputFiles was invoked, otherwise it's always true
 
-    if (node && SgTreeTraversal_inFileToTraverse(node, traversalConstraint, fileToVisit))
-    {
-        // In case of a preorder traversal call the function to be applied to each node of the AST
-        // GB (7/6/2007): Because AstPrePostProcessing was introduced, a
-        // treeTraversalOrder can now be pre *and* post at the same time! The
-        // == comparison was therefore replaced by a bit mask check.
-        if (treeTraversalOrder & preorder)
-            inheritedValue = evaluateInheritedAttribute(node, inheritedValue);
+     if (node && SgTreeTraversal_inFileToTraverse(node, traversalConstraint, fileToVisit))
+        {
+       // In case of a preorder traversal call the function to be applied to each node of the AST
+       // GB (7/6/2007): Because AstPrePostProcessing was introduced, a
+       // treeTraversalOrder can now be pre *and* post at the same time! The
+       // == comparison was therefore replaced by a bit mask check.
+          if (treeTraversalOrder & preorder)
+               inheritedValue = evaluateInheritedAttribute(node, inheritedValue);
   
-        // Visit the traversable data members of this AST node.
-        // GB (09/25/2007): Added support for index-based traversals. The useDefaultIndexBasedTraversal flag tells us
-        // whether to use successor containers or direct index-based access to the node's successors.
-        AstSuccessorsSelectors::SuccessorsContainer succContainer;
-        size_t numberOfSuccessors;
-        if (!useDefaultIndexBasedTraversal)
-        {
-            setNodeSuccessors(node, succContainer);
-            numberOfSuccessors = succContainer.size();
-        }
-        else
-        {
-            numberOfSuccessors = node->get_numberOfTraversalSuccessors();
-        }
-
-        for (size_t idx = 0; idx < numberOfSuccessors; idx++)
-        {
-            SgNode *child = NULL;
-
-            if (useDefaultIndexBasedTraversal)
-               {
-              // ROSE_ASSERT(node->get_traversalSuccessorByIndex(idx) != NULL || node->get_traversalSuccessorByIndex(idx) == NULL);
-                 child = node->get_traversalSuccessorByIndex(idx);
-               }
-              else
-               {
-              // ROSE_ASSERT(succContainer[idx] != NULL || succContainer[idx] == NULL);
-                 child = succContainer[idx];
-               }
-
-            if (child != NULL)
-            {
-                // performTraversal computes the synthesized attribute for the child and pushes it onto the stack
-                performTraversal(child, inheritedValue, treeTraversalOrder);
-            }
+       // Visit the traversable data members of this AST node.
+       // GB (09/25/2007): Added support for index-based traversals. The useDefaultIndexBasedTraversal flag tells us
+       // whether to use successor containers or direct index-based access to the node's successors.
+          AstSuccessorsSelectors::SuccessorsContainer succContainer;
+          size_t numberOfSuccessors;
+          if (!useDefaultIndexBasedTraversal)
+             {
+               setNodeSuccessors(node, succContainer);
+               numberOfSuccessors = succContainer.size();
+             }
             else
-            {
-                // null pointer (not traversed): we put the default value(s) of SynthesizedAttribute onto the stack
-                if (treeTraversalOrder & postorder)
-                    synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
-            }
-        }
+             {
+               numberOfSuccessors = node->get_numberOfTraversalSuccessors();
+             }
+
+          for (size_t idx = 0; idx < numberOfSuccessors; idx++)
+             {
+               SgNode *child = NULL;
+
+               if (useDefaultIndexBasedTraversal)
+                  {
+                 // ROSE_ASSERT(node->get_traversalSuccessorByIndex(idx) != NULL || node->get_traversalSuccessorByIndex(idx) == NULL);
+                    child = node->get_traversalSuccessorByIndex(idx);
+                  }
+                 else
+                  {
+                 // ROSE_ASSERT(succContainer[idx] != NULL || succContainer[idx] == NULL);
+                    child = succContainer[idx];
+                  }
+
+               if (child != NULL)
+                  {
+                 // performTraversal computes the synthesized attribute for the child and pushes it onto the stack
+                    performTraversal(child, inheritedValue, treeTraversalOrder);
+                  }
+                 else
+                  {
+                 // null pointer (not traversed): we put the default value(s) of SynthesizedAttribute onto the stack
+                    if (treeTraversalOrder & postorder)
+                         synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
+                  }
+             }
  
-        // In case of a postorder traversal call the function to be applied to each node of the AST
-        // GB (7/6/2007): Because AstPrePostProcessing was introduced, a
-        // treeTraversalOrder can now be pre *and* post at the same time! The
-        // == comparison was therefore replaced by a bit mask check.
-        // The call to evaluateInheritedAttribute at this point also had to be
-        // changed; it was never elegant anyway as we were not really
-        // evaluating attributes here.
-        if (treeTraversalOrder & postorder)
-        {
+       // In case of a postorder traversal call the function to be applied to each node of the AST
+       // GB (7/6/2007): Because AstPrePostProcessing was introduced, a
+       // treeTraversalOrder can now be pre *and* post at the same time! The
+       // == comparison was therefore replaced by a bit mask check.
+       // The call to evaluateInheritedAttribute at this point also had to be
+       // changed; it was never elegant anyway as we were not really
+       // evaluating attributes here.
+          if (treeTraversalOrder & postorder)
+             {
             // Now that every child's synthesized attributes are on the stack:
             // Tell the stack how big the stack frame containing those
             // attributes is to be, and pass that frame to
             // evaluateSynthesizedAttribute(); then replace those results by
             // pushing the computed value onto the stack (which pops off the
             // previous stack frame).
-            synthesizedAttributes->setFrameSize(numberOfSuccessors);
-            ROSE_ASSERT(synthesizedAttributes->size() == numberOfSuccessors);
-            synthesizedAttributes->push(evaluateSynthesizedAttribute(node, inheritedValue, *synthesizedAttributes));
+               synthesizedAttributes->setFrameSize(numberOfSuccessors);
+               ROSE_ASSERT(synthesizedAttributes->size() == numberOfSuccessors);
+               synthesizedAttributes->push(evaluateSynthesizedAttribute(node, inheritedValue, *synthesizedAttributes));
+             }
         }
-    }
-    else // if (node && inFileToTraverse(node))
-    {
-        if (treeTraversalOrder & postorder)
-            synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
-    }
-} // function body
+       else // if (node && inFileToTraverse(node))
+        {
+          if (treeTraversalOrder & postorder)
+               synthesizedAttributes->push(defaultSynthesizedAttribute(inheritedValue));
+        }
+   } // function body
 
 // GB (05/30/2007)
 template <class InheritedAttributeType, class SynthesizedAttributeType>

@@ -189,7 +189,9 @@ refineClassification ( SgNode* astNode )
                project = isSgProject(astNode);
                break;
 
-          case V_SgFile:
+       // case V_SgFile:
+          case V_SgSourceFile:
+          case V_SgBinaryFile:
                file = isSgFile(astNode);
                break;
 

@@ -338,7 +338,9 @@ MySynthesizedAttribute
 
   switch (astNode->variantT ())
     {
-    case V_SgFile:
+ // case V_SgFile:
+    case V_SgSourceFile:
+    case V_SgBinaryFile:
       {
 	//set filename information
 	SgFile *sageFile = isSgFile (astNode);

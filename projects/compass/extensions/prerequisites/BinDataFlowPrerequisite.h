@@ -9,7 +9,12 @@
   public:
   BinDataFlowPrerequisite(): Prerequisite("BinDataFlow"), dfanalysis(NULL) {}
     void run(SgProject* project) {
-      SgAsmFile* file = project->get_file(0).get_binaryFile();
+
+   // DQ (9/3/2008): Using new SgBinaryFile IR node.
+   // SgAsmFile* file = project->get_file(0).get_binaryFile();
+      SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
+      SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+
       if (file==NULL)
         done =true;
       if (done) return;

@@ -373,15 +373,57 @@ generateDOT ( const SgProject & project, std::string filenamePostfix )
   // DQ (6/14/2007): Added support for timing of the generateDOT() function.
      TimingPerformance timer ("ROSE generateDOT():");
 
-  // test ROSE specific class
      AstDOTGeneration astdotgen;
      SgProject & nonconstProject = (SgProject &) project;
 
-  // Note that the use of generateInputFiles cause the graph to be generated 
+  // Note that the use of generateInputFiles causes the graph to be generated 
   // for only the input source file and not any included header files. The 
   // result is a much smaller file (and generally a more useful one).
-  // astdotgen.generate(&nonconstProject);
+#if 0
+  // This used to be the default, but it would output too much data (from include files).
+     astdotgen.generate(&nonconstProject);
+#else
+  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
+  // is not being processed (which appears to be a bug). This is because in the implementation
+  // of the generateInputFiles the function traverseInputFiles is called.
      astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+#endif
+   }
+
+void
+generateDOT_withIncludes ( const SgProject & project, std::string filenamePostfix )
+   {
+     TimingPerformance timer ("ROSE generateDOT_withIncludes():");
+
+     AstDOTGeneration astdotgen;
+     SgProject & nonconstProject = (SgProject &) project;
+
+  // Note that the use of generateInputFiles causes the graph to be generated 
+  // for only the input source file and not any included header files. The 
+  // result is a much smaller file (and generally a more useful one).
+#if 1
+  // This used to be the default, but it would output too much data (from include files).
+  // It is particularly useful when handling multiple files on the command line and 
+  // traversing the files included from each file.
+     astdotgen.generate(&nonconstProject);
+#else
+  // DQ (9/1/2008): This is the default for the last long while, but the SgProject IR nodes 
+  // is not being processed (which appears to be a bug). This is because in the implementation
+  // of the generateInputFiles the function traverseInputFiles is called.
+     astdotgen.generateInputFiles(&nonconstProject,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,filenamePostfix);
+#endif
+   }
+
+void
+generateDOTforMultipleFile ( const SgProject & project, std::string filenamePostfix )
+   {
+     TimingPerformance timer ("ROSE generateDOT():");
+
+  // This is the best way to handle generation of DOT files where multiple files
+  // are specified on the command line.  Later we may be able to filter out the
+  // include files (but this is a bit difficult until generateInputFiles() can be
+  // implemetned to call the evaluation of inherited and synchizied attributes.
+     generateDOT_withIncludes(project,filenamePostfix);
    }
 
 void

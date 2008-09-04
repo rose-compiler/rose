@@ -58,7 +58,12 @@ int main(int argc, char** argv) {
 
   SgProject* project = frontend(argc,argv);
   ROSE_ASSERT (project != NULL);
-  SgAsmFile* file = project->get_file(0).get_binaryFile();
+
+// DQ (9/3/2008): Using new SgBinaryFile IR node.
+// SgAsmFile* file = project->get_file(0).get_binaryFile();
+  SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
+  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+
   const SgAsmInterpretationPtrList& interps = file->get_interpretations();
   ROSE_ASSERT (interps.size() == 1);
   SgAsmInterpretation* interp = interps[0];

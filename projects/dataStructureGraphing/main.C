@@ -204,7 +204,11 @@ MyTraversal::graphGenerateProject (SgProject * project)
 
   const SgFilePtrList& sageFilePtrList = project->get_fileList ();
   //Find  all fileNames in the project.
-  Rose_STL_Container< string > fileNamesInProjectList = project->getFileNames ();
+
+// DQ (9/3/2008): Use the new function with a clearer name.
+// Rose_STL_Container< string > fileNamesInProjectList = project->getFileNames ();
+  Rose_STL_Container< string > fileNamesInProjectList = project->getAbsolutePathFileNames();
+
   //Put the fileNames into a strctures which is more handy
   set < string > fileNamesInProject;
   for (Rose_STL_Container< string >::iterator elm = fileNamesInProjectList.begin ();

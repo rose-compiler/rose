@@ -10,7 +10,11 @@ int main(int argc, char** argv)
      RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
 
 #if 1
-     SgAsmFile* file = project->get_file(0).get_binaryFile();
+  // DQ (9/3/2008): Using new SgBinaryFile IR node.
+  // SgAsmFile* file = project->get_file(0).get_binaryFile();
+     SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
+     SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+
      ROSE_ASSERT (file != NULL);
      const SgAsmInterpretationPtrList& interps = file->get_interpretations();
      ROSE_ASSERT (interps.size() == 1);
