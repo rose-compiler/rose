@@ -84,13 +84,15 @@ main ( int argc,  char * argv[] )
   if (DebugAnnot())
      funcInfo->Dump();
   AssumeNoAlias aliasInfo;
-  SgProject *sageProject = new SgProject ( argvList);
+  SgProject *project = new SgProject ( argvList);
 #endif
 
-   int filenum = sageProject->numberOfFiles();
+   int filenum = project->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject->get_file(i);
-     SgGlobal *root = sageFile.get_root();
+  // SgFile &sageFile = sageProject->get_file(i);
+  // SgGlobal *root = sageFile.get_root();
+     SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
+     SgGlobal *root = file->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
@@ -111,11 +113,11 @@ main ( int argc,  char * argv[] )
    }
 
    if (CmdOptions::GetInstance()->HasOption("-fd")) {
-       simpleIndexFiniteDifferencing(sageProject);
+       simpleIndexFiniteDifferencing(project);
    }
 
    if (CmdOptions::GetInstance()->HasOption("-pre")) {
-       PRE::partialRedundancyElimination(sageProject);
+       PRE::partialRedundancyElimination(project);
    }
 #ifdef USE_OMEGA
      DepStats.SetDepChoice(0x1 | 0x2 | 0x4);
@@ -123,9 +125,9 @@ main ( int argc,  char * argv[] )
 #endif
   //Qing's loop transformations are not robust enough to pass all tests.
    //AstTests::runAllTests(sageProject);
-   unparseProject(sageProject);
+   unparseProject(project);
    if (GenerateObj())
-      return sageProject->compileOutput();
+      return project->compileOutput();
    return 0;
 }
 

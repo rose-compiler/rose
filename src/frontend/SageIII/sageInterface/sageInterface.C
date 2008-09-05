@@ -3974,7 +3974,11 @@ SgGlobal * SageInterface::getFirstGlobalScope(SgProject *project)
 {
   
   ROSE_ASSERT(project);
-  SgGlobal* global = project->get_file(0).get_root();
+
+// SgGlobal* global = project->get_file(0).get_root();
+  SgSourceFile* file = isSgSourceFile(project->get_fileList()[0]);
+  SgGlobal* global = file->get_globalScope();
+
 #if 0
   SgFilePtrListPtr fileList = project->get_fileList();
   SgFilePtrList::const_iterator i= fileList->begin();

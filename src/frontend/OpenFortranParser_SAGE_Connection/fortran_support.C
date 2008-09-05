@@ -2,7 +2,7 @@
 
 #include "fortran_support.h"
 
-SgFile* OpenFortranParser_globalFilePointer = NULL;
+SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
@@ -2306,7 +2306,7 @@ initialize_global_scope_if_required()
                printf ("In initialize_global_scope_if_required(): OpenFortranParser_globalFilePointer = %p \n",OpenFortranParser_globalFilePointer);
 
           ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
-          SgFile* file = OpenFortranParser_globalFilePointer;
+          SgSourceFile* file = OpenFortranParser_globalFilePointer;
           SgGlobal* globalScope = file->get_globalScope();
           ROSE_ASSERT(globalScope != NULL);
           ROSE_ASSERT(globalScope->get_parent() != NULL);

@@ -69,8 +69,9 @@ namespace ROSE
        // static int isSameName ( const std::string& s1, const std::string& s2 );
           int containsString ( const std::string& masterString, const std::string& targetString );
 
+        // DQ (9/5/2008): Try to remove these functions...
           std::string getFileNameByTraversalBackToFileNode ( const SgNode* astNode );
-          std::string getFileName ( const SgFile* file );
+       // std::string getFileName ( const SgFile* file );
 
        // DQ (5/25/2005): Removed from ROSE class (since they are redundant with other uses)
           std::string getFileName     ( SgLocatedNode* locatedNodePointer ) ROSE_DEPRECATED_FUNCTION;

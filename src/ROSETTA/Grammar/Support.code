@@ -3529,7 +3529,12 @@ HEADER_FILE_INFORMATION_START
           bool hasPositionInSource() const;
 
        // DQ (6/21/2005): check if this file info object is from the same file
+
+       // DQ (9/5/2008): Switched back to using SgFile instead of SgSourceFile.
+       // bool isSameFile(SgFile* file) const;
+       // bool isSameFile(SgSourceFile* file) const;
           bool isSameFile(SgFile* file) const;
+
        // DQ (1/18/2006): Added new function with more useful interface.
           bool isSameFile(Sg_File_Info* fileInfo) const;
        // DQ (11/1/2006): Alternative use case.
@@ -3757,13 +3762,16 @@ HEADER_APPLICATION_FILE_START
       //! Unparsing support for generating C++ code from the internal Abstract Syntax Tree (AST)
       //  void unparse ( std::ostream & os );
 
-      //! Root of the Abstract Syntax Tree (AST) representing this file 
-      //! (a Sg global declaration scope statement).
-          SgGlobal & root() ROSE_DEPRECATED_FUNCTION;
+       // Root of the Abstract Syntax Tree (AST) representing this file 
+       // (a Sg global declaration scope statement).
+       // SgGlobal & root() ROSE_DEPRECATED_FUNCTION;
 
       //! Root of the Abstract Syntax Tree (AST) representing this file 
        // DQ (7/19/2005): Added to support future name change from "root"
-          SgGlobal* get_globalScope() const;
+       // SgGlobal* get_globalScope() const;
+
+       // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
+       // SgGlobal* get_root() const;
 
        // DQ (3/18/2006): Modified the unparse function interface to permit specification of default 
        // arguments to control code generation formatting and use of alternative code generation 
@@ -3780,7 +3788,7 @@ HEADER_APPLICATION_FILE_START
        // void outputPDF();
 
       //! associated filename
-          std::string getFileName();
+          std::string getFileName() const;
 
       //! Move this function from ROSE into the AST restructuring tool
 //        friend void roseDisplayMechanism( SgFile *file );
@@ -3870,6 +3878,40 @@ HEADER_APPLICATION_FILE_START
       //! Access function calling set_startOfConstruct(), provided to support older interface.
           void set_file_info( Sg_File_Info* fileinfo );
 
+#if 0
+// DQ (9/5/2008): Moved to SgSourceFile
+#if ALT_FIXUP_COPY
+       // DQ (11/7/2007): These need to be called separately (see documentation)
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const;
+#else
+       // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
+          virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
+#endif
+#endif
+
+HEADER_APPLICATION_FILE_END
+
+HEADER_APPLICATION_SOURCE_FILE_START
+     public:
+       // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
+          SgSourceFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+       // SgSourceFile ( const SgSourceFile & X );
+
+      //! Default constructor (not meant to be used)
+       // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
+
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+
+      //! Divide up the handling of different languages
+          int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
+          int build_PHP_AST();
+
+       // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
+       // SgGlobal* get_root() const;
+
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
           virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const;
@@ -3880,31 +3922,13 @@ HEADER_APPLICATION_FILE_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
-HEADER_APPLICATION_FILE_END
-
-HEADER_APPLICATION_SOURCE_FILE_START
-     public:
-       // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgSourceFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
-          SgSourceFile ( const SgSourceFile & X );
-
-      //! Default constructor (not meant to be used)
-          SgSourceFile() ROSE_DEPRECATED_FUNCTION;
-
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-
-      //! Divide up the handling of different languages
-          int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-          int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
-          int build_PHP_AST();
-
 HEADER_APPLICATION_SOURCE_FILE_END
 
 HEADER_APPLICATION_BINARY_FILE_START
      public:
        // SgBinaryFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgBinaryFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
-          SgBinaryFile ( const SgBinaryFile & X );
+       // SgBinaryFile ( const SgBinaryFile & X );
 
       //  Default constructor (not meant to be used)
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
@@ -8852,6 +8876,9 @@ Sg_File_Info::hasPositionInSource() const
      return result;
    }
 
+// DQ (9/5/2008): Switched back to using SgFile instead of SgSourceFile.
+// bool Sg_File_Info::isSameFile(SgFile* file) const
+// bool Sg_File_Info::isSameFile(SgSourceFile* file) const
 bool
 Sg_File_Info::isSameFile(SgFile* file) const
    {
@@ -8876,10 +8903,14 @@ Sg_File_Info::isSameFile(SgFile* file) const
 
      bool result = (currentFilename == inputFilename);
      */
-
+#if 0
      SgScopeStatement * globalScope = (SgScopeStatement *)(file->get_root());
      ROSE_ASSERT(globalScope != NULL);
      Sg_File_Info* fileInfo = globalScope->get_file_info();
+#else
+  // DQ (9/5/2008): Use the local Sg_File_Info instead of the one on the root (which is only available for a SgSourceFile)
+     Sg_File_Info* fileInfo = file->get_startOfConstruct();
+#endif
      ROSE_ASSERT(fileInfo != NULL);
 
   // DQ (10/27/2007): Make this consistant with new semantics of get_file_id() 
@@ -9287,15 +9318,19 @@ SgFile::set_file_info( Sg_File_Info* fileinfo )
    }
 
 std::string
-SgFile::getFileName ()
+SgFile::getFileName () const
    {
   // Get the filename from the Sage III file object
 
   // ROSE_ASSERT(get_fileInfo() != NULL);
-
+#if 0
+  // DQ (9/4/2008): Moved the global scope to the new SgSourceFile IR node.
      SgScopeStatement *globalScope = (SgScopeStatement *)(&(root()));
      ROSE_ASSERT (globalScope != NULL);
      Sg_File_Info* fileInfo = globalScope->get_file_info();
+#else
+     Sg_File_Info* fileInfo = p_startOfConstruct;
+#endif
      ROSE_ASSERT (fileInfo != NULL);
      std::string fileName = fileInfo->get_filenameString();
      return fileName;
@@ -9406,28 +9441,36 @@ SgFile::initialization()
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      ROSE_ASSERT(get_file_info() != NULL);
 
-     ROSE_ASSERT (p_root == NULL);
+  // DQ (9/4/2008): This is now part of the SgSourceFile
+  // ROSE_ASSERT (p_root == NULL);
 
   // DQ (9/2/2008): This is moved to the new SgBinaryFile (derived from SgFile)
   // ROSE_ASSERT (p_binaryFile == NULL);
 
-  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
-  // enforce that the filename is always an absolute path (starting with "/").
-  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
-     Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
-     ROSE_ASSERT (globalScopeFileInfo != NULL);
+#if 1
+  // DQ (9/5/2008): This part needs to be rewritten, this is temporary code!
+     SgSourceFile* sourceFile = const_cast<SgSourceFile*>(isSgSourceFile(this));
+     if (sourceFile != NULL)
+        {
+       // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
+       // enforce that the filename is always an absolute path (starting with "/").
+       // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
+          Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
+          ROSE_ASSERT (globalScopeFileInfo != NULL);
 
-     p_root = new SgGlobal( globalScopeFileInfo );
-     ROSE_ASSERT (p_root != NULL);
+          sourceFile->set_globalScope( new SgGlobal( globalScopeFileInfo ) );
+          ROSE_ASSERT (sourceFile->get_globalScope() != NULL);
 
-  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
-     p_root->set_parent(this);
+       // DQ (2/15/2006): Set the parent of the SgGlobal IR node
+          sourceFile->get_globalScope()->set_parent(this);
 
-  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
-  // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
-     ROSE_ASSERT(p_root->get_endOfConstruct() == NULL);
-     p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
-     ROSE_ASSERT(p_root->get_endOfConstruct() != NULL);
+       // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
+       // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct() == NULL);
+          sourceFile->get_globalScope()->set_endOfConstruct(new Sg_File_Info("",0,0));
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct() != NULL);
+        }
+#endif
 
   // DQ (10/16/2005): Removed as part of cleanup to SgFile
   // DQ (12/6/2003): initialize these here.
@@ -9697,13 +9740,17 @@ X aggressive
   // p_aggressive = false;
    }
 
+#if 0
+// DQ (9/4/2008): This is now in SgSourceFile (and built using ROSETTA with a different name)
 SgGlobal &
 SgFile::root() ROSE_DEPRECATED_FUNCTION
    {
      assert(p_root != NULL);
      return *p_root;
    }
+#endif
 
+#if 0
 // DQ (7/19/2005): Added to support better naming of global scope (root is not very clear)
 // get_root() set_root() and root() will be depricated.
 SgGlobal*
@@ -9713,6 +9760,18 @@ SgFile::get_globalScope() const
      ROSE_ASSERT(p_root != NULL);
      return p_root;
    }
+#endif
+
+#if 0
+// DQ (5/9/2008): Added to support for previous variable name for some backward compatability.
+SgGlobal*
+SgSourceFile::get_root() const
+   {
+  // This variable name will be changed in the future (to globalScope)
+     ROSE_ASSERT(p_globalScope != NULL);
+     return p_globalScope;
+   }
+#endif
 
 int
 SgFile::compileOutput ( int fileNameIndex, const std::string& compilerName )
@@ -9999,9 +10058,11 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
-
+#if 0
+  // DQ (9/4/2008): Moved p_root to SgSourceFile
      printf ("     p_root is %s pointer \n",(p_root != NULL) ? "VALID" : "NULL");
      ROSE_ASSERT (p_root != NULL);
+#endif
 
   // printf ("Output the SgFile::p_file_info object = %p \n",get_file_info());
   // get_file_info()->display("Called from SgFile::display");
@@ -10248,10 +10309,34 @@ SOURCE_APPLICATION_FILE_END
 
 
 SOURCE_APPLICATION_SOURCE_FILE_START
+
+#if 0
 SgSourceFile::SgSourceFile ()
    {
   // Default constructor
+
+     ROSE_ASSERT (p_root == NULL);
+
+  // DQ (9/4/2008): Setup of global scope moved from SgFile to SgSourceFile
+  // DQ (8/31/2006): Generate a NULL_FILE (instead of SgFile::SgFile) so that we can 
+  // enforce that the filename is always an absolute path (starting with "/").
+  // Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("SgGlobal::SgGlobal",0,0);
+     Sg_File_Info* globalScopeFileInfo = new Sg_File_Info("",0,0);
+     ROSE_ASSERT (globalScopeFileInfo != NULL);
+
+     p_root = new SgGlobal( globalScopeFileInfo );
+     ROSE_ASSERT (p_root != NULL);
+
+  // DQ (2/15/2006): Set the parent of the SgGlobal IR node
+     p_root->set_parent(this);
+
+  // DQ (8/21/2008): Set the end of the global scope (even if it is updated later)
+  // printf ("In SgFile::initialization(): p_root->get_endOfConstruct() = %p \n",p_root->get_endOfConstruct());
+     ROSE_ASSERT(p_root->get_endOfConstruct() == NULL);
+     p_root->set_endOfConstruct(new Sg_File_Info("",0,0));
+     ROSE_ASSERT(p_root->get_endOfConstruct() != NULL);
    }
+#endif
 
 SOURCE_APPLICATION_SOURCE_FILE_END
 

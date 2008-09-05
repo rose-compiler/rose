@@ -163,7 +163,8 @@ main( int argc, char * argv[] )
         }
 
   // Access the first file and add a struct with data members specified
-     SgFile* file = (*project)[0];
+     SgSourceFile* file = isSgSourceFile((*project)[0]);
+     ROSE_ASSERT(file != NULL);
      SgVariableDeclaration* variableDeclaration = buildStructVariable(file->get_globalScope(),memberTypes,memberNames,"X","x",structureInitializer);
      file->get_globalScope()->prepend_declaration(variableDeclaration);
      variableDeclaration->set_parent(file->get_globalScope());

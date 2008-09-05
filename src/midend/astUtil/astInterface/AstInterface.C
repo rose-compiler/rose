@@ -624,16 +624,16 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
      argv.push_back(uniqueFilename);
 
   // Build the AST
-  std::cerr << "generating declaration: \n";
-     SgFile* addDecls = new SgFile(argv, error);
-  std::cerr << "Finished generating declaration \n";
+  // std::cerr << "generating declaration: \n";
+     SgSourceFile* addDecls = new SgSourceFile(argv, error);
+  // std::cerr << "Finished generating declaration \n";
 
   // system( "rm _astInterface_Tmp.c");
      unlink( uniqueFilename );
   // string systemString = string("rm '") + uniqueFilename + "'";
   // system( systemString.c_str() );
 
-     SgGlobal *declRoot = addDecls->get_root();
+     SgGlobal *declRoot = addDecls->get_globalScope();
      SgDeclarationStatementPtrList& decls = declRoot->get_declarations ();
 
      SgDeclarationStatementPtrList localList;

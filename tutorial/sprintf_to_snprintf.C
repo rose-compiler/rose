@@ -22,7 +22,10 @@ main( int argc, char* argv[] )
      std::vector<SgNode*> functionCalls = NodeQuery::querySubTree (project,V_SgFunctionCallExp);
 
   // Find the SgFunctionSymbol for snprintf so that we can reset references to "sprintf" to "snprintf" instead.
-     SgGlobal* globalScope = (*project)[0]->get_globalScope();
+  // SgGlobal* globalScope = (*project)[0]->get_globalScope();
+     SgSourceFile* sourceFile = isSgSourceFile(project->get_fileList()[0]);
+     ROSE_ASSERT(sourceFile != NULL);
+     SgGlobal* globalScope = sourceFile->get_globalScope();
      SgFunctionSymbol* snprintf_functionSymbol = globalScope->lookup_function_symbol("snprintf");
      ROSE_ASSERT(snprintf_functionSymbol != NULL);
 

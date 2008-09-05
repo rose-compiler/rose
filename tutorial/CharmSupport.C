@@ -6,7 +6,7 @@
 using namespace std;
 
 Rose_STL_Container<SgInitializedName*>
-buildListOfGlobalVariables ( SgFile* file )
+buildListOfGlobalVariables ( SgSourceFile* file )
    {
   // This function builds a list of global variables (from a SgFile).
      assert(file != NULL);
@@ -51,7 +51,7 @@ buildListOfGlobalVariables ( SgProject* project )
   // when multiple source files are placed on the command line).
      while(file != fileList.end())
         {
-          Rose_STL_Container<SgInitializedName*> fileGlobalVariableList = buildListOfGlobalVariables(*file);
+          Rose_STL_Container<SgInitializedName*> fileGlobalVariableList = buildListOfGlobalVariables(isSgSourceFile(*file));
 
        // DQ (9/26/2007): Moved from std::list to std::vector
        // globalVariableList.merge(fileGlobalVariableList);
@@ -316,7 +316,7 @@ fixupReferencesToGlobalVariables ( Rose_STL_Container<SgVarRefExp*> & variableRe
 #define OUTPUT_NAMES_OF_GLOBAL_VARIABLE_REFERENCES 0
 
 void
-transformGlobalVariablesToUseStruct ( SgFile *file )
+transformGlobalVariablesToUseStruct ( SgSourceFile *file )
    {
      assert(file != NULL);
 
@@ -371,7 +371,7 @@ transformGlobalVariablesToUseStruct ( SgProject *project )
      SgFilePtrList::const_iterator file = fileList.begin();
      while(file != fileList.end())
         {
-          transformGlobalVariablesToUseStruct(*file);
+          transformGlobalVariablesToUseStruct(isSgSourceFile(*file));
           file++;
         }
    }

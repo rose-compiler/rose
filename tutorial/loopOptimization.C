@@ -26,8 +26,8 @@ main ( int argc,  char * argv[] )
      int filenum = project->numberOfFiles();
      for (int i = 0; i < filenum; ++i)
         {
-          SgFile & file = project->get_file(i);
-          SgGlobal *root = file.get_root();
+          SgSourceFile* file = isSgSourceFile(project->get_fileList()[i]);
+          SgGlobal *root = file->get_globalScope();
           SgDeclarationStatementPtrList& declList = root->get_declarations ();
 
        // Loop over the declaration in the global scope of each file

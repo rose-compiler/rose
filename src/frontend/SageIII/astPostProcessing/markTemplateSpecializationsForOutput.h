@@ -21,10 +21,10 @@ class MarkTemplateSpecializationsForOutput
    {
      public:
       //! Saved reference to SgFile (where the template instatiation data is held)
-          SgFile* currentFile;
+          SgSourceFile* currentFile;
 
       //! Constructor to provide access to file's backend specific template instantiation options
-          MarkTemplateSpecializationsForOutput(SgFile* file);
+          MarkTemplateSpecializationsForOutput(SgSourceFile* file);
  
        // Required traversal function
        // void visit (SgNode* node);

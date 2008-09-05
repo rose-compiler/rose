@@ -15,7 +15,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
 
   // DQ (8/2/2005): Added better handling of AST fragments where template handling is not required!
   // DQ (7/29/2005): Added support with Qing for AST framents that occure in the ASTInterface classes.
-     SgFile* file = NULL;
+     SgSourceFile* file = NULL;
 
      if (node->get_parent() == NULL)
         {
@@ -28,7 +28,7 @@ markTemplateSpecializationsForOutput( SgNode* node )
 #if 0
           printf ("In markTemplateSpecializationsForOutput(): Getting the SgFile from the AST node \n");
 #endif
-          file = TransformationSupport::getFile(node);
+          file = TransformationSupport::getSourceFile(node);
        // When processing templates we need to get the SgFile so that we can check the command line options.
        // ROSE_ASSERT(file != NULL);
 
@@ -56,7 +56,7 @@ MarkTemplateSpecializationsForOutputInheritedAttribute::MarkTemplateSpecializati
      insideDeclarationToOutput = false;
    }
 
-MarkTemplateSpecializationsForOutput::MarkTemplateSpecializationsForOutput (SgFile* inputFile)
+MarkTemplateSpecializationsForOutput::MarkTemplateSpecializationsForOutput (SgSourceFile* inputFile)
    {
   // Save the file in the traversal class so that we can access the backend specific 
   // template instatiation control flags easily.

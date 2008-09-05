@@ -39,24 +39,25 @@ bool TestCopyRepl( SgProject & proj)
   int filenum = proj.numberOfFiles();
 
   for (int i = 0; i < filenum; ++i) {
-     SgFile &file = proj.get_file(i);
-     SgGlobal *root = file.get_root();
+  // SgFile &file = proj.get_file(i);
+     SgSourceFile* file = isSgSourceFile(proj.get_fileList()[i]);
+     SgGlobal *root = file->get_globalScope();
      SgTreeCopy tc;
      SgGlobal *rootCopy = static_cast<SgGlobal*>(root->copy(tc));
 
      
-     file.unparse();
+     file->unparse();
 
   // DQ (101/17/2005): Changed interface to use C++ strings
   // char *outname = file.get_unparse_output_filename();
   // string move1 = "mv " + string(outname) + " orig_" + string(outname);
-     string outname = file.get_unparse_output_filename();
+     string outname = file->get_unparse_output_filename();
      string move1 = "mv " + outname + " orig_" + outname;
      bool fail = system(move1.c_str());
      assert(!fail);
 
-     file.set_root(rootCopy);
-     file.unparse();
+     file->set_globalScope(rootCopy);
+     file->unparse();
   // string move2 = "mv " + string(outname) + " copy_" + string(outname);
      string move2 = "mv " + outname + " copy_" + outname;
      fail = system(move2.c_str());
@@ -74,7 +75,7 @@ bool TestCopyRepl( SgProject & proj)
         return false;
 
      InterleaveSgTree( root, rootCopy);
-     file.unparse();
+     file->unparse();
      string move3 = "mv " + outname + " repl_" + outname;
      fail = system(move3.c_str());
      assert(!fail);

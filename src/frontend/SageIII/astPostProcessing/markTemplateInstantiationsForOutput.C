@@ -127,9 +127,9 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
 void
 MarkTemplateInstantiationsForOutput::
-ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* file )
+ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRequiredDeclarations, SgSourceFile* input_file )
    {
-     ROSE_ASSERT(file != NULL);
+     ROSE_ASSERT(input_file != NULL);
 
      for ( set<SgDeclarationStatement*>::iterator i = setOfRequiredDeclarations.begin(); i != setOfRequiredDeclarations.end(); i++ )
         {
@@ -170,7 +170,7 @@ ProcessMemberFunctionTemplateDeclarations ( set<SgDeclarationStatement*> setOfRe
                printf ("templateDeclaration->get_definingDeclaration()         = %p \n",templateDeclaration->get_definingDeclaration());
 #endif
             // string currentFilename = TransformationSupport::getFile(templateDeclaration)->getFileName();
-               SgFile* file = TransformationSupport::getFile(memberFunctionInstantiation);
+               SgSourceFile* file = TransformationSupport::getSourceFile(memberFunctionInstantiation);
                ROSE_ASSERT(file != NULL);
                string currentFilename = (file != NULL) ? file->getFileName() : "";
                string filenameOfTemplateDeclaration = templateDeclaration->get_file_info()->get_filename();

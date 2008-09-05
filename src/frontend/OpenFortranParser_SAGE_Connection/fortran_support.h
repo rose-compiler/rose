@@ -2,7 +2,7 @@
 #ifndef ROSE_FORTRAN_SUPPORT
 #define ROSE_FORTRAN_SUPPORT
 
-extern SgFile* OpenFortranParser_globalFilePointer;
+extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
 
 #ifdef __cplusplus
