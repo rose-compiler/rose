@@ -2762,8 +2762,20 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNa
    {
   // printf ("In the SgSourceFile constructor \n");
 
+     set_globalScope(NULL);
+
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
      doSetupForConstructor(argv, errorCode, fileNameIndex, project);
+
+  // DQ (1/21/2008): This must be set for all languages
+     ROSE_ASSERT(get_globalScope() != NULL);
+     ROSE_ASSERT(get_globalScope()->get_file_info() != NULL);
+     ROSE_ASSERT(get_globalScope()->get_file_info()->get_filenameString().empty() == false);
+  // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
+
+  // DQ (8/21/2008): Added assertion.
+     ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
+     ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
     }
  
 SgBinaryFile::SgBinaryFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
@@ -2952,7 +2964,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      ROSE_ASSERT(get_parent() != NULL);
 
   // DQ (5/9/2007): The initialization() should do this, so this should not be required.
-     p_root = NULL;
+  // p_root = NULL;
 
   // This should be set in the new SgBinaryFile IR node.
   // p_binaryFile = NULL;
@@ -2965,6 +2977,29 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // DQ (4/21/2006): Setup the source filename as early as possible
      setupSourceFilename(argv);
 
+#if 1
+  // DQ (9/5/2008): Handle the case that this is a SgSourceFile.  This is awkward code, and may be a temporary fix.
+     const SgSourceFile* sourceFile = isSgSourceFile(this);
+     if (sourceFile != NULL)
+        {
+       // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
+          ROSE_ASSERT (sourceFile->get_globalScope() != NULL);
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_startOfConstruct() != NULL);
+
+       // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
+       // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct()   != NULL);
+
+       // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+       // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
+          sourceFile->get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
+
+       // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
+          sourceFile->get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+          ROSE_ASSERT(sourceFile->get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
+        }
+#else
   // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
      ROSE_ASSERT (p_root != NULL);
      ROSE_ASSERT(p_root->get_startOfConstruct() != NULL);
@@ -2981,6 +3016,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
      p_root->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
      ROSE_ASSERT(p_root->get_endOfConstruct()->get_filenameString().empty() == false);
+#endif
 
   // printf ("Found a Sg_File_Info using filename == NULL_FILE: fileInfo = %p SgGlobal (p_root = %p) p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info(),p_root,p_root->get_file_info()->get_filenameString().c_str());
 
@@ -3029,7 +3065,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // set_NumberOfCommandLineArguments ( argc );
   // set_CommandLineArgumentList ( argv );
 
-     ROSE_ASSERT (p_root != NULL);
+  // ROSE_ASSERT (p_root != NULL);
 
   // error checking
      ROSE_ASSERT (argv.size() > 1);
@@ -3069,6 +3105,9 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // ROSE_ASSERT (localfileInfo != NULL);
   // set_file_info(localfileInfo);
 
+#if 0
+  // DQ (9/5/2008): This was easier to move to the constructor for SgSourceFile
+
   // DQ (10/15/2005): This has not been converted to a C++ string!
   // DQ (5/24/2005): Now fixup the file info's file name in the global scope!
   // printf ("In SgFile::doSetupForConstructor p_sourceFileNamesWithPath[%d] = %s \n",fileNameIndex,p_sourceFileNamesWithPath[fileNameIndex]);
@@ -3082,6 +3121,7 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      ROSE_ASSERT(p_root->get_file_info() != NULL);
      ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
   // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
+#endif
 
   // DQ (1/18/2006): Set the filename in the SgFile::p_file_info
      ROSE_ASSERT(get_file_info() != NULL);
@@ -3096,8 +3136,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      ROSE_ASSERT (get_startOfConstruct() != NULL);
 
   // DQ (8/21/2008): Added assertion.
-     ROSE_ASSERT (p_root->get_startOfConstruct() != NULL);
-     ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
+  // ROSE_ASSERT (p_root->get_startOfConstruct() != NULL);
+  // ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
    }
 
 
@@ -3798,7 +3838,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // Open Fortran Parser's openFortranParser_main() function API.  So we use this
   // global variable to pass the SgFile (so that the parser c_action functions can
   // build the Fotran AST using the existing SgFile.
-     extern SgFile* OpenFortranParser_globalFilePointer;
+     extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
@@ -4182,7 +4222,7 @@ int
 SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputCommandLine )
    {
   // This is the function call to the EDG front-end (modified in ROSE to pass a SgFile)
-     int edg_main(int, char *[], SgFile & sageFile );
+     int edg_main(int, char *[], SgSourceFile & sageFile );
 
      std::string frontEndCommandLineString;
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);

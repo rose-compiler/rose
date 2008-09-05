@@ -466,8 +466,8 @@ InheritedAttributeSgScopeStatement HiddenListComputationTraversal :: evaluateInh
         TimingPerformance::time_type startTime;
         TimingPerformance::startTimer(startTime);
 
-        if( isSgFile(n) ) {
-                this->sg_file_pointer = isSgFile(n);
+        if( isSgSourceFile(n) ) {
+                this->sg_file_pointer = isSgSourceFile(n);
              // cout << " >> File-Name: " << this->sg_file_pointer->getFileName() << endl;
         }
 
@@ -2521,7 +2521,7 @@ void buildHiddenTypeAndDeclarationLists( SgNode* node /*SgProject* project*/ )
         //ROSE_ASSERT(project != NULL);
 
         // Robert Preissl, July 9 2007 : this function is called in astPostProcessing for SgFile
-        SgFile* project = isSgFile(node);
+        SgSourceFile* project = isSgSourceFile(node);
 
         if (project == NULL)
            {

@@ -71,8 +71,12 @@ main ( int argc,  char * argv[] )
 
    int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject->get_file(i);
-     SgGlobal *root = sageFile.get_root();
+
+     SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
+     ROSE_ASSERT(sageFile != NULL);
+     SgGlobal *root = sageFile->get_globalScope();
+     ROSE_ASSERT(root != NULL);
+
      SgDeclarationStatementPtrList declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);

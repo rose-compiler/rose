@@ -114,7 +114,7 @@ SIDL_TreeTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynth
 				//find the values for the version line of the SIDL file
 				string sidlPackageName   = getPackageName(OptionList);
 				string sidlVersionNumber = getVersionNumber(OptionList);
-				string sidlClassDeclarations = synthesizedAttributeList[SgFile_root].getSIDLDeclarationString();
+				string sidlClassDeclarations = synthesizedAttributeList[SgSourceFile_globalScope].getSIDLDeclarationString();
 
 				//build the version line of the SIDL file
 				string sourceCodeString = "\npackage $PACKAGE version $VERSION_NUMBER\n   { $CLASS_DECLARATIONS \n";
@@ -130,7 +130,8 @@ SIDL_TreeTraversal::evaluateSynthesizedAttribute ( SgNode* astNode, SubTreeSynth
 				SgFile* file = isSgFile(astNode);
 				ROSE_ASSERT (file != NULL);
 
-				string fileNameWithPath    = ROSE::getFileName(file);
+         // string fileNameWithPath    = ROSE::getFileName(file);
+            string fileNameWithPath    = file->getFileName();
 				string fileNameWithoutPath = ROSE::stripPathFromFileName ( (char*) fileNameWithPath.c_str() );
 				string pathOfFile          = ROSE::getPathFromFileName ( (char*) fileNameWithPath.c_str() );
 				

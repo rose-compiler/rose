@@ -493,7 +493,7 @@ class HiddenListComputationTraversal : public AstTopDownBottomUpProcessing<Inher
 
                 // Robert Preissl, June 4 2007: Call the intersection procedure only when we are in one of the input-files
                 //  (all other files will also be traversed (to collect namespace & class information), but no hiddenlist will be calculated!
-                SgFile* sg_file_pointer;
+                SgSourceFile* sg_file_pointer;
 
                 // hash_map (Key: name / Value: vector of symbols) for storing namespaces (Feature: can be updated)
                 //  will be used for updating the current scope if a using-directive or using-declaration is encountered

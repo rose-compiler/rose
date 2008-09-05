@@ -472,7 +472,7 @@ Grammar::setUpSupport ()
         }
 
      SourceFile.setFunctionPrototype          ( "HEADER_APPLICATION_SOURCE_FILE", "../Grammar/Support.code");
-     SourceFile.setAutomaticGenerationOfConstructor(false);
+  // SourceFile.setAutomaticGenerationOfConstructor(false);
 
      BinaryFile.setFunctionPrototype          ( "HEADER_APPLICATION_BINARY_FILE", "../Grammar/Support.code");
 
@@ -693,8 +693,13 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // DQ (9/2/2008): We want to move this to be in the SgSourceFile
+#if 0
      File.setDataPrototype         ( "SgGlobal*", "root", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+     SourceFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
   // DQ (10/16/2005): Added to support C++ style argument handling in SgFile
   // File.setDataPrototype("std::list<std::string>","originalCommandLineArgumentList", "",

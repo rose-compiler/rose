@@ -781,6 +781,8 @@ ROSE::concatenate ( const SgName & X, const SgName & Y )
      return X + Y;
    }
 
+#if 0
+// DQ (9/5/2008): Try to remove this function!
 std::string
 ROSE::getFileName ( const SgFile* file )
    {
@@ -793,7 +795,10 @@ ROSE::getFileName ( const SgFile* file )
      ROSE_ASSERT (fileInfo != NULL);
      return fileInfo->get_filenameString();
    }
+#endif
 
+#if 1
+// DQ (9/5/2008): Try to remove this function!
 string
 ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
    {
@@ -822,14 +827,17 @@ ROSE::getFileNameByTraversalBackToFileNode ( const SgNode* astNode )
           ROSE_ASSERT (file != NULL);
           if (file != NULL)
              {
-               returnString = ROSE::getFileName(file);
+            // returnString = ROSE::getFileName(file);
+               returnString = file->getFileName();
              }
 
-          ROSE_ASSERT (returnString.length() > 0);
+       // ROSE_ASSERT (returnString.length() > 0);
+          ROSE_ASSERT (returnString.empty() == false);
         }
 
      return returnString;
    }
+#endif
 
 void
 ROSE::usage (int status)
@@ -840,7 +848,7 @@ ROSE::usage (int status)
 
 int 
 ROSE::containsString ( const std::string& masterString, const std::string& targetString )
-        {
+   {
      return masterString.find(targetString) != string::npos;
    }
 

@@ -69,7 +69,10 @@ void InstrumentationFunction::buildDeclaration(SgProject* project) {
    ROSE_ASSERT(functionDeclaration->get_parameterList() != NULL);
    functionDeclaration->get_parameterList()->append_arg(var1_init_name);
    */
-   SgGlobal* globalScope = project->get_file(0).get_root();
+   SgSourceFile* sourceFile = isSgSourceFile(project->get_fileList()[0]);
+   ROSE_ASSERT(sourceFile != NULL);
+   SgGlobal* globalScope = sourceFile->get_globalScope();
+   ROSE_ASSERT(globalScope != NULL);
 
    // Set the parent node in the AST (this could be done by the AstPostProcessing
    functionDeclaration->set_parent(globalScope);

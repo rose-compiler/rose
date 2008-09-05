@@ -158,7 +158,11 @@ main ( int argc, char* argv[] )
      ROSE_ASSERT (project != NULL);
 
   // SgGlobal* globalScope = project->get_file(0).get_globalScope();
-     SgGlobal* globalScope = project->operator[](0)->get_globalScope();
+  // SgGlobal* globalScope = project->operator[](0)->get_globalScope();
+     SgSourceFile* sourceFile = isSgSourceFile(project->get_fileList()[0]);
+     ROSE_ASSERT(sourceFile != NULL);
+
+     SgGlobal* globalScope = sourceFile->get_globalScope();
      ROSE_ASSERT(globalScope != NULL);
 
 #if 0

@@ -3407,7 +3407,7 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
 
   for (std::vector<SgFile*>::const_iterator i = fileptrlist.begin();i!=fileptrlist.end();i++) 
   {
-    SgFile* sgfile = isSgFile(*i);
+    SgSourceFile* sgfile = isSgSourceFile(*i);
     ROSE_ASSERT(sgfile != NULL);
 
   SgFunctionDeclaration * mainDecl=findMain(sgfile);
@@ -3419,7 +3419,7 @@ int OmpMidend::insertRTLinitAndCleanCode(SgProject* project, OmpFrontend *ompfro
    }
 
   // declare pointers for threadprivate variables and global lock
-  addGlobalOmpDeclarations(ompfrontend, sgfile->get_root(), hasMain );
+  addGlobalOmpDeclarations(ompfrontend, sgfile->get_globalScope(), hasMain );
 
   if (hasMain){  // only insert into main function
   // add parameter  int argc , char* argv[] if not exist

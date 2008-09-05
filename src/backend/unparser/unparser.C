@@ -261,7 +261,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info )
           u_exprStmt->markGeneratedFile();
         }
 
-     SgScopeStatement* globalScope = (SgScopeStatement*) (&(file->root()));
+  // SgScopeStatement* globalScope = (SgScopeStatement*) (&(file->root()));
+     SgScopeStatement* globalScope = file->get_globalScope();
      ROSE_ASSERT(globalScope != NULL);
 
   // Make sure that both the C/C++ and Fortran unparsers are present!
@@ -987,11 +988,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                   }
                  else
                   {
+#if 1
                     fileNameOfStatementsToUnparse = ROSE::getFileNameByTraversalBackToFileNode(locatedNode);
+#else
+                    SgSourceFile* sourceFile = TransformationSupport::getSourceFile(locatedNode);
+                    ROSE_ASSERT(sourceFile != NULL);
+                    fileNameOfStatementsToUnparse = sourceFile->getFileName();
+#endif
                   }
              }
-          
         }
+
      ROSE_ASSERT (fileNameOfStatementsToUnparse.size() > 0);
 
   // Unparser roseUnparser ( &outputString, fileNameOfStatementsToUnparse, roseOptions, lineNumber );
@@ -1110,32 +1117,33 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
   // "Implementation Note".
 
   // Both SgProject and SgFile are handled via recursive calls
-     if ( (isSgProject(astNode) != NULL) || (isSgFile(astNode) != NULL) )
+     if ( (isSgProject(astNode) != NULL) || (isSgSourceFile(astNode) != NULL) )
         {
        // printf ("Implementation Note: Put these cases (unparsing the SgProject and SgFile into the cases for nodes derived from SgSupport below! \n");
 
        // Handle recursive call for SgProject
-          if (isSgProject(astNode) != NULL)
+          const SgProject* project = isSgProject(astNode);
+          if (project != NULL)
              {
-               const SgProject* project = isSgProject(astNode);
-               ROSE_ASSERT(project != NULL);
                for (int i = 0; i < project->numberOfFiles(); i++)
                   {
-                    SgFile* file = &(project->get_file(i));
+                 // SgFile* file = &(project->get_file(i));
+                    SgFile* file = project->get_fileList()[i];
                     ROSE_ASSERT(file != NULL);
                     string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
-                    string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
-                    string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                 // string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
+                 // string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
+                    string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
+                    string suffixString       = string("\n/* BOTTOM:") + file->getFileName() + string(" */ \n\n");
                     returnString += prefixString + unparsedFileString + suffixString;
                   }
              }
 
        // Handle recursive call for SgFile
-          if (isSgFile(astNode) != NULL)
+          const SgSourceFile* file = isSgSourceFile(astNode);
+          if (file != NULL)
              {
-               const SgFile* file = isSgFile(astNode);
-               ROSE_ASSERT(file != NULL);
-               SgGlobal* globalScope = file->get_root();
+               SgGlobal* globalScope = file->get_globalScope();
                ROSE_ASSERT(globalScope != NULL);
                returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
              }
@@ -1208,7 +1216,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                        {
                          SgFile* file = isSgFile(astNode);
                          ROSE_ASSERT(file != NULL);
-                         SgGlobal* globalScope = file->get_root();
+                         SgGlobal* globalScope = file->get_globalScope();
                          ROSE_ASSERT(globalScope != NULL);
                          returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
                          break;

@@ -88,7 +88,16 @@ deleteSetErrorCheck( SgProject* project, const set<SgNode*> & listToDelete )
    {
   // DQ (2/15/2007): Error checking on the finalDeleteSet
      printf ("In deleteSetErrorCheck(): calling computeSetIntersection() \n");
-     set<SgNode*> intersectionSet = computeSetIntersection(project->get_file(0).get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
+
+  // set<SgNode*> intersectionSet = computeSetIntersection(project->get_file(0).get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
+  // set<SgNode*> intersectionSet = computeSetIntersection(project->get_fileList()[0]->get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
+     SgSourceFile* sourceFile = isSgSourceFile(project->get_fileList()[0]);
+     ROSE_ASSERT(sourceFile != NULL);
+     ROSE_ASSERT(sourceFile->get_globalScope() != NULL);
+     ROSE_ASSERT(sourceFile->get_globalScope()->get_symbol_table() != NULL);
+
+     set<SgNode*> intersectionSet = computeSetIntersection(sourceFile->get_globalScope()->get_symbol_table()->get_symbols(),listToDelete);
+
      printf ("In deleteSetErrorCheck(): calling computeSetIntersection(): DONE \n");
 
      printf ("In deleteSetErrorCheck(): intersectionSet.size() = %zu \n",intersectionSet.size());

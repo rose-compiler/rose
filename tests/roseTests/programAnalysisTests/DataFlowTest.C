@@ -92,8 +92,9 @@ main ( int argc,  char * argv[] )
 
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
-     SgGlobal *root = sageFile.get_root();
+     SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+     ROSE_ASSERT(sageFile != NULL);
+     SgGlobal *root = sageFile->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);
@@ -108,12 +109,12 @@ main ( int argc,  char * argv[] )
           StmtVarAliasCollect alias;
           alias(fa, AstNodePtrImpl(defn));
           if (GenerateDOT(argc, argv)) {
-             string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".dot";
+             string name = string(strrchr(sageFile->getFileName().c_str(),'/')+1) + ".dot";
              TestDUWrap_DOT op(alias);
              op(fa, defn, name);
           }
           else {
-             string name = string(strrchr(sageFile.getFileName().c_str(),'/')+1) + ".outx";
+             string name = string(strrchr(sageFile->getFileName().c_str(),'/')+1) + ".outx";
              TestDUWrap_Text op(alias,name);
              op(fa, defn);
           }

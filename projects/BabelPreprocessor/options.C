@@ -52,11 +52,11 @@ TransformationSupport::getTransformationOptions ( SgNode* astNode, list<OptionDe
                break;
              }
 
-          case FileTag:
+          case SourceFileTag:
              {
-               SgFile* file = isSgFile(astNode);
+               SgSourceFile* file = isSgSourceFile(astNode);
                ROSE_ASSERT (file != NULL);
-               SgGlobal* globalScope = &(file->root());
+               SgGlobal* globalScope = file->get_globalScope();
                ROSE_ASSERT (globalScope != NULL);
                ROSE_ASSERT (isSgGlobal(globalScope) != NULL);
                getTransformationOptions ( globalScope, generatedList, identifingTypeName );

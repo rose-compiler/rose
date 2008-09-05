@@ -45,7 +45,11 @@ void buildFunctionDeclaration(SgProject* project)
   // Create the functionDeclaration
   // *****************************************************
 
-     SgGlobal* globalScope = project->get_file(0).get_root();
+  // SgGlobal* globalScope = project->get_file(0).get_root();
+     SgSourceFile* sourceFile = isSgSourceFile(project->get_fileList()[0]);
+     ROSE_ASSERT(sourceFile != NULL);
+     SgGlobal* globalScope = sourceFile->get_globalScope();
+     ROSE_ASSERT(globalScope != NULL);
 
      Sg_File_Info * file_info            = Sg_File_Info::generateDefaultFileInfoForTransformationNode();
      SgType * function_return_type       = new SgTypeVoid();

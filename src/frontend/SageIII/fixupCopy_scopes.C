@@ -1405,13 +1405,13 @@ SgProject::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
-SgFile::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
+SgSourceFile::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
-     printf ("Inside of SgFile::fixupCopy_scopes() \n");
+     printf ("Inside of SgSourceFile::fixupCopy_scopes() \n");
 #endif
 
-     SgFile* file_copy = isSgFile(copy);
+     SgSourceFile* file_copy = isSgSourceFile(copy);
      ROSE_ASSERT(file_copy != NULL);
 
   // Call fixup on the global scope
@@ -1419,6 +1419,7 @@ SgFile::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
      ROSE_ASSERT(file_copy->get_globalScope() != NULL);
      get_globalScope()->fixupCopy_scopes(file_copy->get_globalScope(),help);
    } 
+
 
 
 void

@@ -123,7 +123,7 @@ class X86AssemblyToCWithVariables: public X86AssemblyToCFramework {
   SgStatement* makeDispatchSwitch(SgExpression* ipExpr);
 
   public:
-  X86AssemblyToCWithVariables(SgFile* templateFile, SgAsmFile* asmFile);
+  X86AssemblyToCWithVariables(SgSourceFile* templateFile, SgAsmFile* asmFile);
   SgBasicBlock* makeAllCode(SgBasicBlock* appendTo);
 };
 

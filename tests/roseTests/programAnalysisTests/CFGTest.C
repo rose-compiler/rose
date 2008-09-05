@@ -116,16 +116,18 @@ main ( int argc,  char * argv[] )
 
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
+      SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+      ROSE_ASSERT(sageFile != NULL);
+
       TestCFGWrap::AnalysisDomain t = UseOA(argc, argv)? TestCFGWrap::OA : TestCFGWrap::ROSE;
       //string txtname = string(strrchr(sageFile.getFileName(),'/')+1) + ".outx";
-      string filename = sageFile.getFileName();
+      string filename = sageFile->getFileName();
       string txtname = filename.substr(filename.rfind('/')+1) + ".outx"; 
       TestCFGWrap_Text txtop(t,txtname);
       //string dotname = string(strrchr(sageFile.getFileName(),'/')+1) + ".dot";
       string dotname = filename.substr(filename.rfind('/')+1) + ".dot";
       TestCFGWrap_DOT dotop(t);
-     SgGlobal *root = sageFile.get_root();
+     SgGlobal *root = sageFile->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
      for (SgDeclarationStatementPtrList::iterator p = declList.begin(); p != declList.end(); ++p) {
           SgFunctionDeclaration *func = isSgFunctionDeclaration(*p);

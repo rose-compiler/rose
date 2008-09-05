@@ -227,9 +227,9 @@ MyTraversal::graphGenerateProject (SgProject * project)
 
   for (unsigned int i = 0; i < sageFilePtrList.size (); i += 1)
     {
-      const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
+      const SgSourceFile *sageFile = isSgSourceFile (sageFilePtrList[i]);
       ROSE_ASSERT (sageFile != NULL);
-      sageGlobal = sageFile->get_root ();
+      sageGlobal = sageFile->get_globalScope();
       ROSE_ASSERT (sageGlobal != NULL);
 
       //gets all the declarations from the global scope.

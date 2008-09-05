@@ -179,9 +179,9 @@ findScopes (SgNode * astNode)
       SgNodePtrVector globalScopes;
       for (unsigned int i = 0; i < sageFilePtrList.size (); i += 1)
 	{
-	  const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
+	  const SgSourceFile *sageFile = isSgSourceFile (sageFilePtrList[i]);
 	  ROSE_ASSERT (sageFile != NULL);
-	  SgGlobal *sageGlobal = sageFile->get_root ();
+	  SgGlobal *sageGlobal = sageFile->get_globalScope();
 	  ROSE_ASSERT (sageGlobal != NULL);
 
 	  returnVector.push_back (sageGlobal);
@@ -461,9 +461,9 @@ findClassDeclarationFromType (SgNodePtrVector nodeVector, SgType * sageType)
 		//Iterate over all global scopes in the all the files the project spans.
 		for (unsigned int i = 0; i < sageFilePtrList.size (); i += 1)
 		  {
-		    const SgFile *sageFile = isSgFile (sageFilePtrList[i]);
+		    const SgSourceFile *sageFile = isSgSourceFile (sageFilePtrList[i]);
 		    ROSE_ASSERT (sageFile != NULL);
-		    SgGlobal *sageGlobal = sageFile->get_root ();
+		    SgGlobal *sageGlobal = sageFile->get_globalScope();
 		    ROSE_ASSERT (sageGlobal != NULL);
 
 		    SgTypedefDeclaration* typedefDeclaration;

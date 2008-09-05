@@ -877,13 +877,13 @@ SgProject::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    }
 
 void
-SgFile::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
+SgSourceFile::fixupCopy_references(SgNode* copy, SgCopyHelp & help) const
    {
 #if DEBUG_FIXUP_COPY
      printf ("Inside of SgFile::fixupCopy_references() \n");
 #endif
 
-     SgFile* file_copy = isSgFile(copy);
+     SgSourceFile* file_copy = isSgSourceFile(copy);
      ROSE_ASSERT(file_copy != NULL);
 
   // Call fixup on the global scope

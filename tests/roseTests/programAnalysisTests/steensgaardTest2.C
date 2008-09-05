@@ -42,8 +42,9 @@ main ( int argc,  char * argv[] )
    TestPtrAnal op;
    int filenum = sageProject.numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-     SgFile &sageFile = sageProject.get_file(i);
-     SgGlobal *root = sageFile.get_root();
+     SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+     ROSE_ASSERT(sageFile != NULL);
+     SgGlobal *root = sageFile->get_globalScope();
      AstInterfaceImpl scope(root);
      AstInterface fa(&scope);
      SgDeclarationStatementPtrList& declList = root->get_declarations ();

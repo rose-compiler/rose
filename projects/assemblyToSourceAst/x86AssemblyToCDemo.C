@@ -2011,7 +2011,8 @@ void moveVariableDeclarationsToTop(SgBasicBlock* top) {
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ROSE_ASSERT (proj);
-  SgFile* newFile = proj->get_fileList().front();
+  SgSourceFile* newFile = isSgSourceFile(proj->get_fileList().front());
+  ROSE_ASSERT(newFile != NULL);
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);

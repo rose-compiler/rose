@@ -1840,7 +1840,7 @@ SgFunctionSymbol* X86AssemblyToCWithVariables::addHelperFunction(const std::stri
   return sym;
 }
 
-X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
+X86AssemblyToCWithVariables::X86AssemblyToCWithVariables(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();

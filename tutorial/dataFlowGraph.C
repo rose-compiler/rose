@@ -37,8 +37,8 @@ main (int argc, char *argv[])
      for (int i = 0; i < filenum; ++i)
         {
        // In each file find all declarations in global scope
-          SgFile & sageFile = sageProject.get_file (i);
-          SgGlobal *root = sageFile.get_root ();
+          SgSourceFile* sageFile = isSgSourceFile(sageProject.get_fileList()[i]);
+          SgGlobal *root = sageFile->get_globalScope();
           SgDeclarationStatementPtrList & declList = root->get_declarations ();
           for (SgDeclarationStatementPtrList::iterator p = declList.begin (); p != declList.end (); ++p)
              {
@@ -60,7 +60,7 @@ main (int argc, char *argv[])
                alias (fa, AstNodePtrImpl(funcDefn));
 
             // Generate dot graph output for the data flow graph
-               std::string name = std::string (sageFile.get_sourceFileNameWithoutPath()) + ".dot";
+               std::string name = std::string (sageFile->get_sourceFileNameWithoutPath()) + ".dot";
                DefUseGraphToDOT op (alias);
                op (fa, funcDefn, name);
              }
