@@ -94,7 +94,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (BinaryFile, "BinaryFile", "BinaryFileTag" );
 
   // Mark this as being able to be an IR node for now and later make it false.
-     NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryFile, "File", "FileTag", true);
+     NEW_NONTERMINAL_MACRO (File, SourceFile | BinaryFile, "File", "FileTag", false);
 #endif
      NEW_TERMINAL_MACRO (FileList, "FileList", "FileListTag" );
      NEW_TERMINAL_MACRO (Directory, "Directory", "DirectoryTag" );
