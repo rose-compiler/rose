@@ -1045,11 +1045,10 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
 const SgAsmGenericSection::ExtentVector &
 SgAsmGenericSection::congeal()
 {
-
     if (!p_congealed) {
         p_holes.clear();
         addr_t old_end = 0;
-        for (RefMap::iterator it = p_referenced.begin(); it != p_referenced.end(); it++) {
+        for (RefMap::iterator it = p_referenced.begin(); it != p_referenced.end(); ++it) {
             ExtentPair value = *it;
             ROSE_ASSERT(value.first <= value.second);
             if (value.first > old_end)

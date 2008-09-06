@@ -120,7 +120,7 @@ class SgAsmElfString : public SgAsmGenericString {
 class SgAsmElfStrtab : public SgAsmElfSection {
   public:
     SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-        : SgAsmElfSection(fhdr, shdr), num_freed(0)
+        : SgAsmElfSection(fhdr, shdr), num_freed(0), empty_string(0)
         {ctor(fhdr, shdr);}
     virtual ~SgAsmElfStrtab();
     virtual void unparse(FILE*);
@@ -128,6 +128,7 @@ class SgAsmElfStrtab : public SgAsmElfSection {
     class SgAsmElfStringStorage *create_storage(addr_t offset, bool shared);
     SgAsmElfString *create_string(addr_t offset, bool shared);
     void free(class SgAsmElfStringStorage*);
+    void free_all_strings();
     void reallocate(); /*allocate storage for all unallocated strings*/
   private:
     void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
@@ -138,6 +139,7 @@ class SgAsmElfStrtab : public SgAsmElfSection {
     typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
     freelist_t freelist;
     size_t num_freed;
+    class SgAsmElfStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
 };
 
 /* String storage class for SgAsmElfString.  The SgAsmElfString objects point to SgAsmElfStringStorage objects which are in turn
@@ -747,7 +749,10 @@ SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
 {
-    /*nothing special to do yet*/
+    /* The first byte of an ELF String Table should always be NUL. We don't want the allocation functions to ever free this
+     * byte, so we'll create a special storage item for it. */
+    if (content(0, 1)[0]=='\0')
+        empty_string = create_storage(0, false);
 }
 
 /* Free ElfStrStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
@@ -762,6 +767,7 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
         storage->set_offset(SgAsmElfString::unallocated);
     }
     referenced.clear();
+    empty_string = NULL; /*FIXME: can't delete for same reason as in SgAsmElfString destructor. (RPM 2008-09-05) */
 }
 
 /* Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
@@ -772,10 +778,12 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmElfString::unallocated);
 
-    /* Has this string already been created? If so, return previous storage object. */
+    /* Has this string already been created? If so, return previous storage object. However, never share the empty_string at
+     * offset zero created when this string table was constructed because the ELF spec says it needs to stay there whether
+     * referenced or not. */
     if (shared) {
         for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); i++) {
-            if ((*i)->get_offset()==offset)
+            if ((*i)->get_offset()==offset && (*i)!=empty_string)
                 return *i;
         }
     }
@@ -786,7 +794,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     if (num_freed) {
         fprintf(stderr,
                 "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
-                " %s been modified!\n",
+                " %s been modified and/or reallocated!\n",
                 offset, num_freed, 1==num_freed?"":"s", referenced.size(), get_id(), get_name().c_str(),
                 1==num_freed?"has":"have");
         ROSE_ASSERT(0==num_freed);
@@ -843,6 +851,8 @@ SgAsmElfStrtab::best_fit(addr_t need)
 void
 SgAsmElfStrtab::free(SgAsmElfStringStorage *storage)
 {
+    ROSE_ASSERT(storage!=NULL);
+    ROSE_ASSERT(storage!=empty_string);
     addr_t old_offset = storage->get_offset();
     if (old_offset!=SgAsmElfString::unallocated) {
         storage->set_offset(SgAsmElfString::unallocated);
@@ -908,6 +918,56 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
     }
 }
 
+/* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. */
+void
+SgAsmElfStrtab::free_all_strings()
+{
+    /* Mark all storage objects as being unallocated. Never free the empty_string at offset zero. */
+    for (size_t i=0; i<referenced.size(); i++) {
+        if (referenced[i]->get_offset()!=SgAsmElfString::unallocated && referenced[i]!=empty_string) {
+            num_freed++;
+            referenced[i]->set_offset(SgAsmElfString::unallocated);
+        }
+    }
+
+    /* Get list of referenced extents (i.e., complement of holes) */
+    bool was_congealed = get_congealed();
+    const RefMap &refs = uncongeal();
+
+    /* Prime the freelist_extent to point to the first freeable byte */
+    ExtentPair free_extent(0, 0); /*begin, end addresses (NOT SIZE!)*/
+    if (empty_string) {
+        /* Do not free empty_string at offset zero */
+        ROSE_ASSERT(empty_string->get_offset()==0);
+        ROSE_ASSERT(empty_string->get_string()=="");
+        free_extent = ExtentPair(1, 1);
+    }
+    
+    /* Recompute free list to include entire section sans holes. */
+    freelist.clear();
+    for (RefMap::const_iterator i=refs.begin(); i!=refs.end(); ++i) {
+        ExtentPair ref_extent = *i;
+        ROSE_ASSERT(ref_extent.first <= ref_extent.second);
+        ROSE_ASSERT(ref_extent.first >= free_extent.first);
+
+        if (ref_extent.first > free_extent.second) {
+            /* Save old free area, start new free area. */
+            if (free_extent.first<free_extent.second)
+                freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
+            free_extent = ref_extent;
+        } else {
+            /* Referenced extent extends free extent */
+            free_extent.second = ref_extent.second;
+        }
+    }
+    if (free_extent.first<free_extent.second)
+        freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
+    
+    /* Restore state */
+    if (was_congealed)
+        congeal();
+}
+
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
  * space. Any that are left will cause the string table to be extended. */
 void
@@ -925,29 +985,45 @@ SgAsmElfStrtab::reallocate()
     }
     for (size_t i=1; i<map.size(); i++) {
         for (size_t j=0; j<i; j++) {
-            if (referenced[map[j]]->get_string().size() > referenced[map[i]]->get_string().size()) {
+            if (referenced[map[j]]->get_string().size() < referenced[map[i]]->get_string().size()) {
                 size_t x = map[i];
-                map[j] = map[i];
-                map[i] = x;
+                map[i] = map[j];
+                map[j] = x;
             }
         }
     }
+
+#if 1 /*DEBUGGING*/
+    for (size_t i=1; i<map.size(); i++) {
+        fprintf(stderr, "map[%zu] = %zu; referenced[%zu] = %p: ", i, map[i], map[i], referenced[map[i]]);
+        referenced[map[i]]->dump(stderr, "", -1);
+    }
+#endif
     
     /* Allocate from largest to smallest so we have the best chance of finding overlaps */
     for (size_t i=0; i<map.size(); i++) {
         SgAsmElfStringStorage *storage = referenced[map[i]];
         ROSE_ASSERT(storage->get_offset()==SgAsmElfString::unallocated);
 
+        /* Empty strings should point to the first byte of the file (without sharing empty_string) according to ELF spec. */
+        if (storage->get_string()=="" && empty_string) {
+            ROSE_ASSERT(empty_string->get_offset()==0);
+            ROSE_ASSERT(empty_string->get_string()=="");
+            storage->set_offset(0);
+        }
+
 #if 1 /*safe to comment this out to avoid sharing*/
         /* Is there an existing string that we can use? */
-        for (size_t j=0; j<referenced.size(); j++) {
-            SgAsmElfStringStorage *previous = referenced[j];
-            size_t need = storage->get_string().size();
-            size_t have = previous->get_string().size();
-            if (previous->get_offset()!=SgAsmElfString::unallocated &&
-                need <= have && 0==previous->get_string().compare(have-need, need, storage->get_string())) {
-                storage->set_offset(previous->get_offset()+(have-need));
-                break;
+        if (storage->get_offset()==SgAsmElfString::unallocated) {
+            for (size_t j=0; j<referenced.size(); j++) {
+                SgAsmElfStringStorage *previous = referenced[j];
+                size_t need = storage->get_string().size();
+                size_t have = previous->get_string().size();
+                if (previous->get_offset()!=SgAsmElfString::unallocated &&
+                    need <= have && 0==previous->get_string().compare(have-need, need, storage->get_string())) {
+                    storage->set_offset(previous->get_offset()+(have-need));
+                    break;
+                }
             }
         }
 #endif
@@ -965,7 +1041,11 @@ SgAsmElfStrtab::reallocate()
     }
     
     /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
-    ROSE_ASSERT(extend_size==0); /* not implemented yet */
+    if (extend_size>0) {
+        fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
+                get_id(), get_name().c_str(), extend_size, 1==extend_size?"":"s");
+        ROSE_ASSERT(extend_size==0); /* not implemented yet */
+    }
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
@@ -1006,6 +1086,13 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     
     SgAsmElfSection::dump(f, p, -1);
 
+    fprintf(f, "%s%-*s = 0x%08lx", p, w, "empty_string", (unsigned long)empty_string);
+    if (empty_string) {
+        empty_string->dump(f, "", -1);
+    } else {
+        fputc('\n', f);
+    }
+    
     fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", referenced.size());
     for (size_t i=0; i<referenced.size(); i++) {
         referenced[i]->dump(f, p, i);
@@ -2119,11 +2206,11 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
 
 #ifdef USE_ELF_STRING /*FIXME*/
     /*Testing rename*/
-    strtab->dump(stdout, "before ::: ", -1);
-    test->set_string("fprintf");
-    strtab->dump(stdout, "after  ::: ", -1);
+    xxx->dump(stdout, "before ::: ", -1);
+    xxx->free_all_strings();
+    xxx->dump(stdout, "after  ::: ", -1);
     xxx->reallocate();
-    strtab->dump(stdout, "end    ::: ", -1);
+    xxx->dump(stdout, "end    ::: ", -1);
 #endif
 }
 
