@@ -112,7 +112,7 @@ class SgAsmElfString : public SgAsmGenericString {
 class SgAsmElfStrtab : public SgAsmElfSection {
   public:
     SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-        : SgAsmElfSection(fhdr, shdr)
+        : SgAsmElfSection(fhdr, shdr), num_freed(0)
         {ctor(fhdr, shdr);}
     virtual ~SgAsmElfStrtab();
     virtual void unparse(FILE*);
@@ -128,6 +128,7 @@ class SgAsmElfStrtab : public SgAsmElfSection {
     referenced_t referenced;
     typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
     freelist_t freelist;
+    size_t num_freed;
 };
 
 /* String storage class for SgAsmElfString.  The SgAsmElfString objects point to SgAsmElfStringStorage objects which are in turn
@@ -779,6 +780,16 @@ SgAsmElfStrtab::create_storage(addr_t offset)
         if ((*i)->get_offset()==offset)
             return *i;
     }
+
+    /* It's a bad idea to free (e.g., modify) strings before we've identified all the strings in the table. Consider the case
+     * where offset zero is "domain" and offset 2 is "main" (i.e., they overlap). If we modify "main" before knowing that it
+     * overlaps with "domain" then we're in trouble. */
+    if (num_freed) {
+        fprintf(stderr,
+                "SgAsmElfStrtab::create_storage(%"PRIu64"): other strings in [%d] \"%s\" have already been modified!\n",
+                offset, get_id(), get_name().c_str());
+        ROSE_ASSERT(0==num_freed);
+    }
     
     /* Create a new storage object to be shared by all strings at this offset. */
     const char *s = content_str(offset);
@@ -862,6 +873,7 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
 
     /* Nothing to free! */
     if (0==size) return;
+    num_freed++;
 
     /* Coalesce with neighbors */
     freelist_t::iterator right = freelist.end();
@@ -892,18 +904,58 @@ SgAsmElfStrtab::reallocate()
 {
     addr_t extend_size = 0;                                     /* amount by which to extend string table */
 
-    /* First use up existing free space (avoiding holes) */
+    /* Get list of strings that need to be allocated and sort by descending size. */
+    std::vector<size_t> map;
     for (size_t i=0; i<referenced.size(); i++) {
         SgAsmElfStringStorage *storage = referenced[i];
+        if (storage->get_offset()==SgAsmElfString::unallocated) {
+            map.push_back(i);
+        }
+    }
+    for (size_t i=1; i<map.size(); i++) {
+        for (size_t j=0; j<i; j++) {
+            if (referenced[map[j]]->get_string().size() > referenced[map[i]]->get_string().size()) {
+                size_t x = map[i];
+                map[j] = map[i];
+                map[i] = x;
+            }
+        }
+    }
+    
+    /* Allocate from largest to smallest so we have the best chance of finding overlaps */
+    for (size_t i=0; i<map.size(); i++) {
+        SgAsmElfStringStorage *storage = referenced[map[i]];
+        ROSE_ASSERT(storage->get_offset()==SgAsmElfString::unallocated);
+
+#if 1 /*safe to comment this out to avoid sharing*/
+        /* Is there an existing string that we can use? */
+        for (size_t j=0; j<referenced.size(); j++) {
+            SgAsmElfStringStorage *previous = referenced[j];
+            size_t need = storage->get_string().size();
+            size_t have = previous->get_string().size();
+            if (previous->get_offset()!=SgAsmElfString::unallocated &&
+                need <= have &&
+                0==previous->get_string().compare(have-need, need, storage->get_string())) {
+                ROSE_ASSERT(need<have); /*FIXME: not implemented yet: shared strings at same offset (RPM 2008-09-04)*/
+                storage->set_offset(previous->get_offset()+(have-need));
+                break;
+            }
+        }
+#endif
+        
+        /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmElfString::unallocated) {
             addr_t new_offset = best_fit(storage->get_string().size()+1);    /* +1 for NUL terminator */
             storage->set_offset(new_offset);
         }
-        if (storage->get_offset()==SgAsmElfString::unallocated)
+
+        /* If no free space area large enough then prepare to extend the section. */
+        if (storage->get_offset()==SgAsmElfString::unallocated) {
             extend_size += storage->get_string().size() + 1;
+        }
     }
     
-    /* Extend the string table if necessary */
+    /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
     ROSE_ASSERT(extend_size==0); /* not implemented yet */
 }
 
@@ -918,10 +970,6 @@ SgAsmElfStrtab::unparse(FILE *f)
     for (size_t i=0; i<referenced.size(); i++) {
         SgAsmElfStringStorage *storage = referenced[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmElfString::unallocated);
-#if 1 /*DEBUGGING*/
-        printf("ROBB: write at abs 0x%08"PRIx64" (%"PRIu64"): \"%s\"\n",
-               get_offset()+storage->get_offset(), get_offset()+storage->get_offset(), storage->get_string().c_str());
-#endif
         addr_t at = write(f, storage->get_offset(), storage->get_string());
         write(f, at, '\0');
     }
@@ -2036,8 +2084,10 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
 #ifdef USE_ELF_STRING /*FIXME*/
         SgAsmGenericString *name = new SgAsmElfString(xxx, symbol->get_st_name());
         symbol->set_name(name->get_string());
-        if (name->get_string()=="memset")
+        if (name->get_string()=="memset") {
             test = name;
+            //name->set_string("YYY"); /*should result in a failed assertion*/
+        }
 #else
         symbol->set_name(strtab->content_str(symbol->get_st_name()));
 #endif
@@ -2059,12 +2109,12 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
     }
 
 #ifdef USE_ELF_STRING /*FIXME*/
-//    /*Testing rename*/
-//    strtab->dump(stdout, "before ::: ", -1);
-//    test->set_string("XXX");
-//    strtab->dump(stdout, "after  ::: ", -1);
-//    xxx->reallocate();
-//    strtab->dump(stdout, "end    ::: ", -1);
+    /*Testing rename*/
+    strtab->dump(stdout, "before ::: ", -1);
+    test->set_string("fprintf");
+    strtab->dump(stdout, "after  ::: ", -1);
+    xxx->reallocate();
+    strtab->dump(stdout, "end    ::: ", -1);
 #endif
 }
 
