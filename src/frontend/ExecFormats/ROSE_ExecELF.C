@@ -26,8 +26,14 @@
  * An ELF symbol table points to an Elf String Table. Symbol entries contain offsets into the string table for their names. A
  * new string is constructed like this:
  * 
- *     symbol_entry[0].name = SgAsmElfString(string_table, offset);   // "domain"
- *     symbol_table[1].name = SgAsmElfString(string_table, offset+2); // "main", overlaps with "domain"
+ *     symbol_entry[0].name = SgAsmElfString(string_table, offset);    // "domain"
+ *     symbol_table[1].name = SgAsmElfString(string_table, offset+2);  // "main", overlaps with "domain"
+ *     symbol_table[2].name = SgAsmElfString(string_table, offset);    // another symbol named "domain"
+ *
+ * When the SgAsmElfString constructor is called more than once with the same offset (as in entries 0 and 2 above) then the
+ * two strings returned are independent of each other: freeing or modifying one string does not affect the other. On the other
+ * hand, copying one string object to another (SgAsmElfString second=symbol_entry[0].name) will cause both to reference the
+ * same storage so that changing one changes the other.
  *
  * The name is available with the "get_string" method. The offset within the string table is also available for ELF strings.
  * 
@@ -39,8 +45,10 @@
  *     symbol_table[1].name = "pain";
  *     symbol_table[1].name.set_string("pain"); // an alternative method of assignment
  *
- * Names will not be reallocated in the symbol table until get_offset() is called for one of the table's modified strings.  This
- * usually results in more efficient repacking of the string table.
+ * Name objects should not be modified or freed from a particular string table until all strings in that table have been
+ * parsed (the code will detect when a string is parsed after the table is modified). Also, names will not be reallocated in
+ * the symbol table until get_offset() is called for one of the table's modified strings.  This usually results in more
+ * efficient repacking of the string table.
  * 
  * Regions of the string table that are never referenced are maintained as "holes" available through the usual
  * SgAsmGenericSection interface. The reallocation algorithm keeps all holes at their original offsets relative to the
@@ -83,7 +91,7 @@ class SgAsmElfString : public SgAsmGenericString {
     SgAsmElfString() 
         : p_storage(0) {}
     SgAsmElfString(class SgAsmElfStrtab *strtab, rose_addr_t offset)    /*string in string table*/
-        {ctor(strtab, offset);}
+        {ctor(strtab, offset, false);}
     explicit SgAsmElfString(class SgAsmElfStringStorage *storage)       /*string shares other storage*/
         {ctor(storage);}
     explicit SgAsmElfString(const char *s)                              /*non-storage constructor*/
@@ -103,7 +111,7 @@ class SgAsmElfString : public SgAsmGenericString {
     }
 
   private:
-    void ctor(class SgAsmElfStrtab*, rose_addr_t offset);
+    void ctor(class SgAsmElfStrtab*, rose_addr_t offset, bool shared);
     void ctor(class SgAsmElfStringStorage*);
     void ctor(const std::string &s);
     class SgAsmElfStringStorage *p_storage;                             /*child of the string table in the AST*/
@@ -117,12 +125,13 @@ class SgAsmElfStrtab : public SgAsmElfSection {
     virtual ~SgAsmElfStrtab();
     virtual void unparse(FILE*);
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    class SgAsmElfStringStorage *create_storage(addr_t offset);
-    SgAsmElfString *create_string(addr_t offset);
-    void free(addr_t offset, addr_t size); /*mark part of table as free*/
+    class SgAsmElfStringStorage *create_storage(addr_t offset, bool shared);
+    SgAsmElfString *create_string(addr_t offset, bool shared);
+    void free(class SgAsmElfStringStorage*);
     void reallocate(); /*allocate storage for all unallocated strings*/
   private:
     void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+    void free(addr_t offset, addr_t size); /*mark part of table as free*/
     rose_addr_t best_fit(addr_t need); /*allocate from free list*/
     typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
     referenced_t referenced;
@@ -631,9 +640,9 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
     
 /* String constructors */
 void
-SgAsmElfString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset)
+SgAsmElfString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset, bool shared)
 {
-    ctor(strtab->create_storage(offset));
+    ctor(strtab->create_storage(offset, shared));
 }
 void
 SgAsmElfString::ctor(SgAsmElfStringStorage *storage)
@@ -682,25 +691,11 @@ SgAsmElfString::get_offset() const
 void
 SgAsmElfString::set_string(const std::string &s)
 {
-    ROSE_ASSERT(get_storage()!=NULL); /* we don't even know which string table! */
     if (get_string()==s) return; /* no change in value */
-    
-    /* FIXME: At this point in development we change all strings that happen to point at the same offset in this string table.
-     *        In the future we should probably have another argument that says whether to keep this behavior or copy the string
-     *        to a new storage location if shared (i.e., copy on write semantics). There's no way to know whether a shared
-     *        string should be modified in place or copied on write short of the caller telling us, because the caller might
-     *        want to change all occurrences of symbols called "foo" to "goo", or it might desire to change a single symbol
-     *        but the compiler has optimized the string table.  However, note that two strings that overlap (like "foobar"
-     *        and"bar") always copy-on-write. (RPM 2008-08-28) */
-
-    /* Add old value to free list */
-    if (get_storage()->get_offset()!=unallocated) {
-        /* We must mark storage as unallocated before calling the strtab free method since it checks for overlapping strings */
-        rose_addr_t old_offset = get_storage()->get_offset();
-        get_storage()->set_offset(unallocated);
-        get_storage()->get_strtab()->free(old_offset, get_storage()->get_string().size()+1);
-    }
-    get_storage()->set_string(s);
+    SgAsmElfStringStorage *storage = get_storage();
+    ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+    storage->get_strtab()->free(storage);
+    storage->set_string(s);
 }
 
 /* Print some debugging info */
@@ -769,16 +764,20 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
     referenced.clear();
 }
 
-/* Creates the storage item for the string at the specified offset. At most one storage object is created per offset. */
+/* Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
+ * storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
+ * strings share the same storage object, changing one string changes the other. */
 SgAsmElfStringStorage *
-SgAsmElfStrtab::create_storage(addr_t offset)
+SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmElfString::unallocated);
 
     /* Has this string already been created? If so, return previous storage object. */
-    for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); i++) {
-        if ((*i)->get_offset()==offset)
-            return *i;
+    if (shared) {
+        for (referenced_t::iterator i=referenced.begin(); i!=referenced.end(); i++) {
+            if ((*i)->get_offset()==offset)
+                return *i;
+        }
     }
 
     /* It's a bad idea to free (e.g., modify) strings before we've identified all the strings in the table. Consider the case
@@ -786,12 +785,14 @@ SgAsmElfStrtab::create_storage(addr_t offset)
      * overlaps with "domain" then we're in trouble. */
     if (num_freed) {
         fprintf(stderr,
-                "SgAsmElfStrtab::create_storage(%"PRIu64"): other strings in [%d] \"%s\" have already been modified!\n",
-                offset, get_id(), get_name().c_str());
+                "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
+                " %s been modified!\n",
+                offset, num_freed, 1==num_freed?"":"s", referenced.size(), get_id(), get_name().c_str(),
+                1==num_freed?"has":"have");
         ROSE_ASSERT(0==num_freed);
     }
     
-    /* Create a new storage object to be shared by all strings at this offset. */
+    /* Create a new storage object at this offset. */
     const char *s = content_str(offset);
     SgAsmElfStringStorage *storage = new SgAsmElfStringStorage(this, s, offset);
     referenced.push_back(storage);
@@ -800,9 +801,9 @@ SgAsmElfStrtab::create_storage(addr_t offset)
 
 /* Constructs an SgAsmElfString from an offset into this string table. */
 SgAsmElfString *
-SgAsmElfStrtab::create_string(addr_t offset)
+SgAsmElfStrtab::create_string(addr_t offset, bool shared)
 {
-    SgAsmElfStringStorage *storage = create_storage(offset);
+    SgAsmElfStringStorage *storage = create_storage(offset, shared);
     return new SgAsmElfString(storage);
 }
 
@@ -837,6 +838,18 @@ SgAsmElfStrtab::best_fit(addr_t need)
     return retval;
 }
 
+/* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
+ * version of free() when possible. */
+void
+SgAsmElfStrtab::free(SgAsmElfStringStorage *storage)
+{
+    addr_t old_offset = storage->get_offset();
+    if (old_offset!=SgAsmElfString::unallocated) {
+        storage->set_offset(SgAsmElfString::unallocated);
+        free(old_offset, storage->get_string().size()+1);
+    }
+}
+
 /* Add a range of bytes to the free list. Coalesce adjacent free areas.  An ELF string table can have a pointer to the
  * beginning of a string, but may also have pointers into the middle of strings. For instance, a string table that stores
  * "bar" and "foobar" can be optimized to store them as "foobar\0" with "bar" at offset 3 and "foobar" at offset 0. So we have
@@ -847,26 +860,24 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
 {
     ROSE_ASSERT(offset+size <= get_size());
     
-#ifndef NDEBUG
     /* Make sure area is not already in free list. */
-    for (freelist_t::iterator i=freelist.begin(); i!=freelist.end(); ++i) {
-        ROSE_ASSERT(offset+size <= i->first ||       /*area is entirely left of free item or*/
-                    offset >= i->first + i->second); /*area is entirely right of free item*/
+    for (freelist_t::const_iterator i=freelist.begin(); i!=freelist.end(); ++i) {
+        ROSE_ASSERT(offset+size <= i->first ||       /*to-free area is entirely left of existing free item or*/
+                    offset >= i->first + i->second); /*to-free area is entirely right of existing free item*/
     }
-#endif
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmGenericString::no_id to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     for (size_t i=0; i<referenced.size() && size>0; i++) {
         if (referenced[i]->get_offset()==SgAsmElfString::unallocated) continue;
-        ROSE_ASSERT(referenced[i]->get_offset()!=offset); /*forgot to remove it or mark it unallocated before freeing?*/
         if (referenced[i]->get_offset() <= offset && referenced[i]->get_offset()+referenced[i]->get_string().size()+1 > offset) {
-            /* we are freeing "bar" but something references the overlapping "foobar". No not free anything. */
+            /* We are freeing "bar" but something references the overlapping "foobar" (or even just "bar"). Do not free
+             * anything. */
             ROSE_ASSERT(offset+size == referenced[i]->get_offset()+referenced[i]->get_string().size()+1);
             size = 0;
         }
         if (referenced[i]->get_offset() > offset && referenced[i]->get_offset() < offset+size) {
-            /* we are freeing "foobar" but something references overlapping "bar". Free only up to "bar" */
+            /* We are freeing "foobar" but something references overlapping "bar". Free only up to "bar" */
             size = referenced[i]->get_offset() - offset;
         }
     }
@@ -934,9 +945,7 @@ SgAsmElfStrtab::reallocate()
             size_t need = storage->get_string().size();
             size_t have = previous->get_string().size();
             if (previous->get_offset()!=SgAsmElfString::unallocated &&
-                need <= have &&
-                0==previous->get_string().compare(have-need, need, storage->get_string())) {
-                ROSE_ASSERT(need<have); /*FIXME: not implemented yet: shared strings at same offset (RPM 2008-09-04)*/
+                need <= have && 0==previous->get_string().compare(have-need, need, storage->get_string())) {
                 storage->set_offset(previous->get_offset()+(have-need));
                 break;
             }
@@ -966,7 +975,7 @@ SgAsmElfStrtab::unparse(FILE *f)
     /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
     reallocate();
     
-    /* Write strings with NUL termination */
+    /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<referenced.size(); i++) {
         SgAsmElfStringStorage *storage = referenced[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmElfString::unallocated);
