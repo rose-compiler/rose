@@ -3720,6 +3720,13 @@ SageInterface::generateProjectName( const SgProject* project, bool supressSuffix
      Rose_STL_Container<string> fileList = project->getAbsolutePathFileNames();
 
      Rose_STL_Container<string>::iterator i = fileList.begin();
+
+  // Handle the case of an empty list (e.g. for link lines).
+     if ( fileList.empty() == true ) 
+        {
+          return "empty_file_list";
+        }
+
      do {
           string filename = *i;
 
