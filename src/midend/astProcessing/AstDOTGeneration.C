@@ -332,7 +332,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
             // string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
                string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
 
-               printf ("generated filename for dot file (from SgSourceFile or SgBinaryFile) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
+            // printf ("generated filename for dot file (from SgSourceFile or SgBinaryFile) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 
             // printf ("file->get_parent() = %p \n",file->get_parent());
             // cout << "generating DOT file (from SgSourceFile or SgBinaryFile): " << filename2 << " ... ";
