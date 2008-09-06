@@ -2226,11 +2226,12 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
     /* Some tests for string allocation functions. Some of these assume that the string table complies with the ELF
      * specification, which guarantees that the first byte of the string table is NUL. The parser can handle non-compliant
      * string tables. */
+    SgAsmElfStrtab *dynstr = xxx;
 
     /* Test 1: Create another reference to the empty string and then try to modify it. This should create a new string rather
      *         than modifying the empty string. The ELF specification reserves offset zero to hold a NUL to represent the
      *         empty string and we must leave the NUL there even if nothing references it. */
-    SgAsmElfString *s1 = new SgAsmElfString(xxx, 0);
+    SgAsmElfString *s1 = new SgAsmElfString(dynstr, 0);
     ROSE_ASSERT(s1->get_string()==""); /*must comply with spec!*/
     s1->set_string("fprintf");
     ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
@@ -2238,7 +2239,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
     
     /* Test 2: Create a new string that happens to have the same initial value as something already in the string table. When
      *         allocated the new string will share the same space as the existing string. */
-    s1 = new SgAsmElfString(xxx, test->get_offset());
+    s1 = new SgAsmElfString(dynstr, test->get_offset());
     ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
     ROSE_ASSERT(s1->get_offset()==test->get_offset());
 
@@ -2277,24 +2278,23 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
     /* Test 8: Reallocate the entire string table, leaving holes (unparsed areas) at their original offsets. Ideally the table
      *         size should not increase even though the compiler/linker may have agressively shared string storage. */
     addr_t orig_size = get_size();
-    xxx->free_all_strings();
-    xxx->reallocate();
+    dynstr->free_all_strings();
+    dynstr->reallocate();
     ROSE_ASSERT(orig_size==get_size());
 
     /* Test 9: Reallocate the *entire* string table, blowing away holes in the process. */
-    xxx->free_all_strings(true);
-    xxx->reallocate();
+    dynstr->free_all_strings(true);
+    dynstr->reallocate();
     ROSE_ASSERT(orig_size==get_size());
-    xxx->dump(stderr, "blown::: ", -1);
 
     /* Test 10: After reallocating an entire table, the empty string should remain at offset zero. */
-    SgAsmElfString *s2 = new SgAsmElfString(xxx, 0);
+    SgAsmElfString *s2 = new SgAsmElfString(dynstr, 0);
     ROSE_ASSERT(s2->get_offset()==0);
     ROSE_ASSERT(s2->get_string()=="");
 
     /* Test 11: It's not legal to (re)parse a new region of the string table after we've made modifications. */
     fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
-    s2 = new SgAsmElfString(xxx, test->get_offset());
+    s2 = new SgAsmElfString(dynstr, test->get_offset());
 #endif
 }
 
