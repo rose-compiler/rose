@@ -1200,8 +1200,8 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name.c_str());
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
-    fprintf(f, "%s%-*s = %" PRId64 " bytes into file\n", p, w, "offset",      p_offset);
-    fprintf(f, "%s%-*s = %" PRId64 " bytes\n",           p, w, "size",        get_size());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "size", get_size(), get_size());
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", p_synthesized?"yes":"no");
     if (p_header) {
         fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name().c_str());
@@ -1234,21 +1234,27 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %s\n", p, w, "congealed", p_congealed?"true":"false");
     bool was_congealed = p_congealed;
     const ExtentVector & holes = congeal();
+    fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
     for (size_t i = 0; i < holes.size(); i++) {
         ExtentPair extent = holes[i];
         addr_t hole_size = extent.second - extent.first;
-        fprintf(f, "%s%-*s = [%zu] at %"PRIu64", %"PRIu64" bytes\n", p, w, "hole", i, extent.first, hole_size);
+        char label[64];
+        sprintf(label, "hole[%zu]", i);
+        if (extent.first==0 && hole_size==get_size()) {
+            fprintf(f, "%s%-*s = entire section\n", p, w, label);
+        } else {
+            fprintf(f, "%s%-*s = %"PRIu64" bytes at rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")\n", 
+                    p, w, label, hole_size, extent.first, extent.first, get_offset()+extent.first, get_offset()+extent.first);
+        }
     }
     if (!was_congealed)
         uncongeal();
 
  // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
  // better implementation if the hexdump function was a virtual member function).
-    if (variantT() == V_SgAsmGenericSection)
-       {
-         fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-         hexdump(f, get_offset(), "    ", p_data);
-       }
+    if (variantT() == V_SgAsmGenericSection) {
+        hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1699,7 +1705,7 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix
  // The "prefix" can be used for whitespace to intent the output.
 
     for (size_t i=0; i<n; i+=16) {
-        fprintf(f, "%s0x%08"PRIx64, prefix, base_addr+i);
+        fprintf(f, "%s0x%08"PRIx64": ", prefix, base_addr+i);
         for (size_t j=0; j<16; j++) {
             if (8==j) fputc(' ', f);
             if (i+j<n) {
@@ -1724,19 +1730,19 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix
 // void SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgCharList &data)
 void
 SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgUnsignedCharList &data)
-   {
-     if (data.empty() == false)
-          hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
-   }
+{
+    if (data.empty() == false)
+        hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+}
 
 // DQ (8/31/2008): This is the newest interface function (could not remove the one based on SgUnsignedCharList since it
 // is used in the symbol support).
 void
 SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string &prefix, const SgFileContentList &data)
-   {
-     if (data.empty() == false)
-          hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
-   }
+{
+    if (data.empty() == false)
+        hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
+}
 
 /* Writes a new file from the IR node for a parse executable file.  This is primarily to debug the parser by creating
  * an executable that *should* be identical to the original. */

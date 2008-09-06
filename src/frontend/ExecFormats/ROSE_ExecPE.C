@@ -87,8 +87,7 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
     fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,8 +600,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -686,12 +684,12 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPESection.", prefix);
     }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 /* Constructor */
@@ -779,10 +777,11 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPESectionTable.", prefix);
     }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
     SgAsmGenericSection::dump(f, p, -1);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1121,11 +1120,11 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPEImportSection.", prefix);
     }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     SgAsmPESection::dump(f, p, -1);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1425,8 +1424,8 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", p_st_name.c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
-    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_size", p_aux_data.size());
-    hexdump(f, 0, "        ", p_aux_data);
+    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_data", p_aux_data.size());
+    hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
 }
 
 /* Constructor */
@@ -1500,8 +1499,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

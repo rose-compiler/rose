@@ -1,5 +1,8 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
+/* This is for temporary debugging only; will be removed shortly! (RPM 2008-09-04) */
+#define USE_ELF_STRING
+
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -81,11 +84,11 @@ class SgAsmElfString : public SgAsmGenericString {
         : p_storage(0) {}
     SgAsmElfString(class SgAsmElfStrtab *strtab, rose_addr_t offset)    /*string in string table*/
         {ctor(strtab, offset);}
-    SgAsmElfString(class SgAsmElfStringStorage *storage)                /*string shares other storage*/
+    explicit SgAsmElfString(class SgAsmElfStringStorage *storage)       /*string shares other storage*/
         {ctor(storage);}
-    SgAsmElfString(const char *s)                                       /*non-storage constructor*/
+    explicit SgAsmElfString(const char *s)                              /*non-storage constructor*/
         {ctor(std::string(s));}
-    SgAsmElfString(const std::string &s)                                /*non-storage constructor*/
+    explicit SgAsmElfString(const std::string &s)                       /*non-storage constructor*/
         {ctor(s);}
     virtual ~SgAsmElfString();
     virtual void dump(FILE*, const char *prefix, ssize_t idx);
@@ -531,8 +534,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -589,8 +591,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -729,16 +730,21 @@ SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sElfStringStorage.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-
-    fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", get_strtab()->get_id(), get_strtab()->get_name().c_str());
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "string", get_string().c_str());
-
-    fprintf(f, "%s%-*s = ", p, w, "offset");
-    if (get_offset()==SgAsmElfString::unallocated) {
-        fputs("not allocated\n", f);
+    
+    fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
+    SgAsmElfStrtab *strtab = get_strtab();
+    if (strtab) {
+        fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name().c_str());
     } else {
-        fprintf(f, "%"PRIu64" (byte offset)\n", get_offset());
+        fputs(" no section", f);
     }
+    if (!strtab || get_offset()==SgAsmElfString::unallocated) {
+        fputs(", not allocated", f);
+    } else {
+        fprintf(f, ", byte rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")",
+                get_offset(), get_offset(), strtab->get_offset()+get_offset(), strtab->get_offset()+get_offset());
+    }
+    fprintf(f, ", \"%s\"\n", get_string().c_str());
 }
 
 /* Constructor */
@@ -912,6 +918,10 @@ SgAsmElfStrtab::unparse(FILE *f)
     for (size_t i=0; i<referenced.size(); i++) {
         SgAsmElfStringStorage *storage = referenced[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmElfString::unallocated);
+#if 1 /*DEBUGGING*/
+        printf("ROBB: write at abs 0x%08"PRIx64" (%"PRIu64"): \"%s\"\n",
+               get_offset()+storage->get_offset(), get_offset()+storage->get_offset(), storage->get_string().c_str());
+#endif
         addr_t at = write(f, storage->get_offset(), storage->get_string());
         write(f, at, '\0');
     }
@@ -947,7 +957,12 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", freelist.size());
     freelist_t::iterator flit = freelist.begin();
     for (size_t i=0; i<freelist.size(); ++i, ++flit) {
-        fprintf(f, "%s%-*s = [%zu] offset=%"PRIu64", size=%"PRIu64"\n", p, w, "freelist", i, flit->first, flit->second);
+        addr_t offset = flit->first;
+        addr_t size = flit->second;
+        char label[64];
+        sprintf(label, "freelist[%zu]", i);
+        fprintf(f, "%s%-*s = %"PRIu64" bytes at offset rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")\n", 
+                p, w, label, size, offset, offset, get_offset()+offset, get_offset()+offset);
     }
 }   
 
@@ -1066,13 +1081,18 @@ SgAsmElfSectionTable::ctor()
         }
 
         /* Read the string table section first because we'll need this to initialize section names. */
-        SgAsmElfSection *strtab = NULL;
+        SgAsmElfStrtab *strtab = NULL;
         if (fhdr->get_e_shstrndx() > 0) {
             SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
-            strtab = new SgAsmElfSection(fhdr, shdr);
+            strtab = new SgAsmElfStrtab(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_st_entry(shdr);
+#ifdef USE_ELF_STRING /*FIXME*/
+            SgAsmElfString name(strtab, shdr->get_sh_name());
+            strtab->set_name(name.get_string());
+#else
             strtab->set_name(strtab->content_str(shdr->get_sh_name()));
+#endif
         }
 
         /* Read all other sections */
@@ -1105,8 +1125,14 @@ SgAsmElfSectionTable::ctor()
             }
             section->set_id(i);
             section->set_st_entry(shdr);
-            if (strtab)
+            if (strtab) {
+#ifdef USE_ELF_STRING /*FIXME*/
+                SgAsmElfString name(strtab, shdr->get_sh_name());
+                section->set_name(name.get_string());
+#else
                 section->set_name(strtab->content_str(shdr->get_sh_name()));
+#endif
+            }
             section->set_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
             section->set_eperm((shdr->get_sh_flags() & 0x04) == 0x04);
 
@@ -1207,8 +1233,7 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
     
 
@@ -1306,8 +1331,8 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_memsz",        p_memsz);
     fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "p_align",        p_align);
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = (%zu bytes)\n", p, w, "extra", p_extra.size());
-        hexdump(f, 0, "    ", &(p_extra[0]), p_extra.size());
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
 
@@ -1544,8 +1569,7 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
         p_entries->get_entries()[i]->dump(f, p, i);
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1653,7 +1677,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab)
             break;
           case 1: {
               /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-#if 1 /*FIXME: Testing out some new stuff. Eventually the SgAsmGenericDLL will contain an SgAsmGenericString*/
+#ifdef USE_ELF_STRING
+              /*FIXME: Testing out some new stuff. Eventually the SgAsmGenericDLL will contain an SgAsmGenericString*/
               SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
               SgAsmElfString name(xxx, p_all_entries->get_entries()[i]->get_d_val());
               fhdr->add_dll(new SgAsmGenericDLL(name.get_string()));
@@ -1807,8 +1832,7 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
         p_other_entries->get_entries()[i]->dump(f, p, i);
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2000,12 +2024,23 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
 void
 SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
 {
+#ifdef USE_ELF_STRING /*FIXME*/
+    SgAsmGenericString *test = NULL;
+    SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
+#endif
     SgAsmElfSection::set_linked_section(strtab);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
         /* Get symbol name */
+#ifdef USE_ELF_STRING /*FIXME*/
+        SgAsmGenericString *name = new SgAsmElfString(xxx, symbol->get_st_name());
+        symbol->set_name(name->get_string());
+        if (name->get_string()=="memset")
+            test = name;
+#else
         symbol->set_name(strtab->content_str(symbol->get_st_name()));
+#endif
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
@@ -2022,6 +2057,15 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
     }
+
+#ifdef USE_ELF_STRING /*FIXME*/
+//    /*Testing rename*/
+//    strtab->dump(stdout, "before ::: ", -1);
+//    test->set_string("XXX");
+//    strtab->dump(stdout, "after  ::: ", -1);
+//    xxx->reallocate();
+//    strtab->dump(stdout, "end    ::: ", -1);
+#endif
 }
 
 /* Write symbol table sections back to disk */
@@ -2073,8 +2117,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
 
-    fprintf (f, "%sSaved raw data (size = %zu) \n",prefix,p_data.size());
-    hexdump(f, get_offset(), "    ", p_data);
+    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
