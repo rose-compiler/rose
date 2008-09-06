@@ -273,7 +273,7 @@ extern int gensym_counter;
 
   // DQ (1/20/2007): 
   //! Added mechanism to generate project name from list of file names
-    std::string generateProjectName (const SgProject * project);
+    std::string generateProjectName (const SgProject * project, bool supressSuffix = false );
 
   /*! \brief Returns STL vector of SgFile IR node pointers. 
 

@@ -433,15 +433,21 @@ generateAstGraph ( const SgProject* project, int maxSize, std::string filenameSu
      TimingPerformance timer ("ROSE generateAstGraph():");
 
   // Generate a name from all the files on the command line
-     string filename = SageInterface::generateProjectName(project);
+     string filename = SageInterface::generateProjectName(project, /* supressSuffix = */ true );
+
+     filename += "_WholeAST";
 
      filename += filenameSuffix;
 
-  // Compute the number of IR nodes for the AST
      int numberOfASTnodes = numberOfNodes();
+
+     if ( SgProject::get_verbose() >= 1 )
+          printf ("In generateAstGraph(): numberOfASTnodes = %d maxSize = %d filename = %s \n",numberOfASTnodes,maxSize,filename.c_str());
+
+  // Compute the number of IR nodes for the AST
      if (numberOfASTnodes < maxSize)
         {
-          generateWholeGraphOfAST(filename+"_WholeAST");
+          generateWholeGraphOfAST(filename);
         }
    }
 
@@ -678,6 +684,7 @@ ROSE::getFileNameWithoutPath ( SgStatement* statementPointer )
      return stripPathFromFileName(fileName);
    }
 
+#if 1
 std::string
 ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
    {
@@ -688,14 +695,34 @@ ROSE::stripPathFromFileName ( const std::string& fileNameWithPath )
        return fileNameWithPath.substr(pos + 1);
    }
    }
+#endif
 
+#if 0
 std::string
 ROSE::stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix )
    {
+  // This function is not sophisticated enough to handle binaries with paths such as:
+  //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
+#if 1
      size_t lastDotPos = fileNameWithSuffix.rfind('.');
      return fileNameWithSuffix.substr(0, lastDotPos);
-   } 
+#else
+  // Handle the case of files where the filename does not have a suffix
+     size_t lastSlashPos = fileNameWithSuffix.rfind('/');
+     size_t lastDotPos   = fileNameWithSuffix.rfind('.');
 
+     string returnString;
+     if (lastDotPos < lastSlashPos)
+          returnString = fileNameWithSuffix;
+       else
+          returnString = fileNameWithSuffix.substr(0, lastDotPos);
+
+     return returnString;
+#endif
+   } 
+#endif
+
+#if 1
 // DQ (3/15/2005): New, simpler and better implementation suggested function from Tom, thanks Tom!
 string
 ROSE::getPathFromFileName ( const string fileName )
@@ -707,6 +734,7 @@ ROSE::getPathFromFileName ( const string fileName )
        return fileName.substr(0, pos);
      }
    } 
+#endif
 
 // Later I expect we will move these functions to be SgFile member functions
 

@@ -320,6 +320,12 @@ testWholeASTGraphGenerator_large: wholeASTGraphGenerator
 	@echo "Generate pdf file (default name: test.pdf) from dot file ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_wholeAST_2_WholeAST.dot inputCode_WholeAST_large.pdf
 
+# DQ (9/6/2008): Added test to generate a graph of the binary for the tiny program example (with debugging data).
+testBinaryASTGraphGenerator: wholeASTGraphGenerator
+	gcc -g $(srcdir)/inputCode_binaryAST_1.c -o inputCode_binaryAST_1
+	./wholeASTGraphGenerator inputCode_binaryAST_1
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_binaryAST_1_WholeAST.dot inputCode_binaryAST_1_WholeAST.pdf
+
 testLoopRecognition: loopRecognition
 	./loopRecognition $(srcdir)/inputCode_1.C
 
@@ -578,6 +584,7 @@ testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
 
 testVolatileTypeModifier: volatileTypeModifier
 	./volatileTypeModifier -rose:verbose 0 -c $(srcdir)/inputCode_volatileTypeModifier.C
+
 
 # #####################################
 # Output files use in tutorial
@@ -938,9 +945,10 @@ binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable
 	@echo "Building an example BinaryAnalysis ..."
 	cp -f $(srcdir)/buffer2.bin ./bin_example_2
 	./binaryAnalysis_symbolTable -rose:read_executable_file_format_only bin_example_2
-	@echo "BinaryAnalysis: Building postscript file from AST and whole graph dot files..."
-	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
-	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
+#	DQ (9/6/2008): We are not ready for these yet, so don't generate them.
+#	@echo "BinaryAnalysis: Building postscript file from AST and whole graph dot files..."
+#	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
+#	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
 
 # rose_bin_example.s.aa: binaryAnalysis_pic1.pdf
 
