@@ -299,7 +299,8 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // printf ("currentFileNameWithSuffix = %s \n",currentFileNameWithSuffix.c_str());
   // string currentFileName = ROSE::stripFileSuffixFromFileName(currentFileNameWithSuffix.c_str());
   // printf ("currentFileName = %s \n",currentFileName.c_str());
-     std::string currentFileName = ROSE::stripFileSuffixFromFileName(ROSE::stripPathFromFileName(currentFile->getFileName()));
+  // std::string currentFileName = ROSE::stripFileSuffixFromFileName(ROSE::stripPathFromFileName(currentFile->getFileName()));
+     std::string currentFileName = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(currentFile->getFileName()));
 
   // Make the file name different each time a new set of transformation strings are compiled
      static int fileNumber = 1;

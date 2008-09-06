@@ -3699,8 +3699,19 @@ SageInterface::functionCallExpressionPreceedsDeclarationWhichAssociatesScope ( S
 
 
 string
-SageInterface::generateProjectName( const SgProject* project )
+SageInterface::generateProjectName( const SgProject* project, bool supressSuffix )
    {
+  // This function generates a string to use as a unique project name for
+  // a collection of files.  The last file will include it's suffix so that
+  // we generate proper names that cummunicate the source language.
+  // Also also allows the single file case to be consistant with the previous
+  // version of names generated for "DOT" files in the tutorial.
+
+  // DQ (9/6/2008): Introduced optional parameter to supresse the suffix in the 
+  // generation of the project name so that we can support more complex name 
+  // construction as required for the generation of names for the whole AST 
+  // graphs which append an additional suffix to avoid filename collision.
+
      ROSE_ASSERT(project != NULL);
      string projectName;
 
@@ -3709,11 +3720,24 @@ SageInterface::generateProjectName( const SgProject* project )
      Rose_STL_Container<string> fileList = project->getAbsolutePathFileNames();
 
      Rose_STL_Container<string>::iterator i = fileList.begin();
-     while (i != fileList.end())
-        {
+     do {
           string filename = *i;
+
        // printf ("In SageInterface::generateProjectName(): absolute filename = %s \n",filename.c_str());
-          string filenameWithoutSuffix       = StringUtility::stripFileSuffixFromFileName(filename);
+
+       // string filenameWithoutSuffix       = StringUtility::stripFileSuffixFromFileName(filename);
+
+          if (i != fileList.begin())
+               projectName += "--";
+
+          i++;
+
+          string filenameWithoutSuffix;
+          if ( i != fileList.end() || supressSuffix == true )
+               filenameWithoutSuffix = StringUtility::stripFileSuffixFromFileName(filename);
+            else
+               filenameWithoutSuffix = filename;
+
           string filenameWithoutPathOrSuffix = StringUtility::stripPathFromFileName(filenameWithoutSuffix);
 
        // printf ("filenameWithoutSuffix       = %s \n",filenameWithoutSuffix.c_str());
@@ -3731,15 +3755,11 @@ SageInterface::generateProjectName( const SgProject* project )
 
        // printf ("In SageInterface:generateProjectName(): modified absolute filename = %s \n",filename.c_str());
 
-          if (i != fileList.begin())
-               projectName += "--";
-
           projectName += filename;
 
        // printf ("In SageInterface:generateProjectName(): evolving projectName = %s \n",projectName.c_str());
-
-          i++;
         }
+     while (i != fileList.end());
 
   // printf ("In SageInterface:generateProjectName(): projectName = %s \n",projectName.c_str());
 

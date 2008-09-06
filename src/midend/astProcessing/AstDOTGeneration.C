@@ -307,11 +307,15 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                ROSE_ASSERT(project != NULL);
 
                string generatedProjectName = SageInterface::generateProjectName( project );
-            // printf ("generatedProjectName = %s \n",generatedProjectName.c_str());
+            // printf ("generatedProjectName (from SgProject) = %s \n",generatedProjectName.c_str());
 
-               string filename2 = string("./")+generatedProjectName+".dot";
+               string filename = string("./") + generatedProjectName + ".dot";
 
-               dotrep.writeToFileAsGraph(filename2);
+            // printf ("generated filename for dot file (from SgProject) = %s \n",filename.c_str());
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Output the DOT graph from the SgProject IR node (filename = %s) \n",filename.c_str());
+
+               dotrep.writeToFileAsGraph(filename);
                break;
              }
 
@@ -322,15 +326,16 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                SgFile* file = dynamic_cast<SgFile*>(node);
                ROSE_ASSERT(file != NULL);
 
-               string filename = file->getFileName();
+               string original_filename = file->getFileName();
 
             // DQ (7/4/2008): Fix filenamePostfix to go before the "."
-            // string filename2=string("./")+ROSE::stripPathFromFileName(filename)+"."+filenamePostfix+"dot";
-               string filename2=string("./")+ROSE::stripPathFromFileName(filename)+filenamePostfix+".dot";
+            // string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+               string filename = string("./") + ROSE::stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+
+               printf ("generated filename for dot file (from SgSourceFile or SgBinaryFile) = %s file->get_parent() = %p \n",filename.c_str(),file->get_parent());
 
             // printf ("file->get_parent() = %p \n",file->get_parent());
-
-            // cout << "generating DOT file: " << filename2 << " ... ";
+            // cout << "generating DOT file (from SgSourceFile or SgBinaryFile): " << filename2 << " ... ";
 
             // DQ (9/1/2008): this effects the output of DOT files when multiple files are specified 
             // on the command line.  A SgProject is still built even when a single file is specificed 
@@ -339,8 +344,35 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
             // If there is a SgProject then output the dot file from there, else output as a SgFile.
                if (file->get_parent() == NULL)
                   {
-                    dotrep.writeToFileAsGraph(filename2);
+                 // If there is no SgProject then output the file now!
+                    if ( SgProject::get_verbose() >= 1 )
+                         printf ("Output the DOT graph from the SgFile IR node (no SgProject available) \n");
+
+                    dotrep.writeToFileAsGraph(filename);
                   }
+                 else
+                  {
+                 // There is a SgProject IR node, but if we will be traversing it we want to output the 
+                 // graph then (so that the graph will include the SgProject IR nodes and connect multiple 
+                 // files (SgSourceFile or SgBinaryFile IR nodes).
+                    if ( visitedNodes.find(file->get_parent()) == visitedNodes.end() )
+                       {
+                      // This SgProject node was not input as part of the traversal, 
+                      // so we will not be traversing the SgProject IR nodes and we 
+                      // have to output the graph now!
+
+                         if ( SgProject::get_verbose() >= 1 )
+                              printf ("Output the DOT graph from the SgFile IR node (SgProject was not traversed) \n");
+
+                         dotrep.writeToFileAsGraph(filename);
+                       }
+                      else
+                       {
+                         if ( SgProject::get_verbose() >= 1 )
+                              printf ("Skip the output of the DOT graph from the SgFile IR node (SgProject will be traversed) \n");
+                       }
+                  }
+               
             // cout << "done." << endl;
                break;
              }

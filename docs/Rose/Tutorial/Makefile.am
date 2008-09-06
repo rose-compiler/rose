@@ -47,7 +47,7 @@ make-web-pages: $(TUTORIAL_NAME)
 	mkdir -p ../ROSE_WebPages/ROSE_Tutorial
 	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/
 
-$(TUTORIAL_NAME): tutorial.tex gettingStarted.tex
+$(TUTORIAL_NAME): tutorial.tex gettingStarted.tex $(latexFiles)
 	cd $(top_builddir)/tutorial; $(MAKE) docs
 	$(PDFLATEX) tutorial.tex && \
 	$(PDFLATEX) tutorial.tex && \

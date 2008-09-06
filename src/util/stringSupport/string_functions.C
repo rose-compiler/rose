@@ -1008,41 +1008,69 @@ StringUtility::generate_checksum( string s )
 
 //Rama: 12/06/06
 //Replaced the functionality by a call to basename
-	string
+string
 StringUtility::stripPathFromFileName ( const string & fileNameWithPath )
    {
   // This function removes the path from the filename if it includes a path
   // and returns the filename
-       string returnString;
-       char c_version[PATH_MAX]; 
-       ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
-       strcpy(c_version, fileNameWithPath.c_str());
 
-       returnString = basename(c_version);
-       return returnString;
+  // printf ("StringUtility::stripPathFromFileName(fileNameWithPath = %s) \n",fileNameWithPath.c_str());
+
+#if 1
+  // DQ (9/6/2008): It seems that the problem might have been the stripFileSuffixFromFileName(), so this is put back!
+
+  // DQ (9/6/2008): This version does not work on paths that have "." in them (basename() function does not work well).
+  //    Example of input that fails: ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
+  // returns: svn-LINUX-64bit-4.2
+
+     string returnString;
+     char c_version[PATH_MAX]; 
+     ROSE_ASSERT (fileNameWithPath.size() + 1 < PATH_MAX);
+     strcpy(c_version, fileNameWithPath.c_str());
+
+     returnString = basename(c_version);
+     return returnString;
+#endif
+
 #if 0
+  // DQ (9/6/2008): Use this version of the code which handles more complex patha names.
   // Make it safe to input a filename without a path name (return the filename)
      string::size_type positionOfLastSlash  = fileNameWithPath.rfind('/');
      string::size_type positionOfFirstSlash = fileNameWithPath.find('/');
+
+     printf ("positionOfLastSlash = %zu \n",positionOfLastSlash);
+     printf ("positionOfFirstSlash = %zu \n",positionOfFirstSlash);
+
      string returnString;
      if (positionOfLastSlash != string::npos)
-	  returnString = fileNameWithPath.substr(positionOfLastSlash+1);
-     else
-	  returnString = fileNameWithPath;
+        {
+          returnString = fileNameWithPath.substr(positionOfLastSlash+1);
+        }
+       else
+        {
+          returnString = fileNameWithPath;
+        }
+
+     printf ("StringUtility::stripPathFromFileName() (after substr) returnString = %s \n",returnString.c_str());
 
      if (positionOfFirstSlash < positionOfLastSlash)
-	{
-       // printf (" Look for leading \'/\' from the front \n");
-	  while (returnString[0] == '/')
-	     {
-	       returnString.erase(0,1);
-	     }
-	}
+        {
+          printf (" Look for leading \'/\' from the front \n");
+          while (returnString[0] == '/')
+             {
+               returnString.erase(0,1);
+             }
+
+          printf ("StringUtility::stripPathFromFileName() (after erase) returnString = %s \n",returnString.c_str());
+        }
+
+     printf ("StringUtility::stripPathFromFileName() returnString = %s \n",returnString.c_str());
 
      return returnString;
 #endif
 
 #if 0
+  // This is a older version using C style strings
      const size_t len = fileNameWithPath.size();
      const char *startOfString = &(fileNameWithPath[0]);
      const char *search = &(fileNameWithPath[len]);
@@ -1062,12 +1090,33 @@ string
 StringUtility::stripFileSuffixFromFileName ( const string & fileNameWithSuffix )
    {
   // Make it safe to input a filename without a suffix (return the filename)
-     string::size_type positionOfDot = fileNameWithSuffix.rfind('.');
+
      string returnString;
+
+#if 0
+  // This function is not sophisticated enough to handle binaries with paths such as:
+  //    ROSE/ROSE_CompileTree/svn-LINUX-64bit-4.2.2/tutorial/inputCode_binaryAST_1
+
+     string::size_type positionOfDot = fileNameWithSuffix.rfind('.');
      if (positionOfDot != string::npos)
           returnString = fileNameWithSuffix.substr(0,positionOfDot);
      else
           returnString = fileNameWithSuffix;
+#else
+  // Handle the case of files where the filename does not have a suffix
+     size_t lastSlashPos = fileNameWithSuffix.rfind('/');
+     size_t lastDotPos   = fileNameWithSuffix.rfind('.');
+
+  // printf ("lastSlashPos = %zu \n",lastSlashPos);
+  // printf ("lastDotPos   = %zu \n",lastDotPos);
+
+     if (lastSlashPos != string::npos && lastDotPos < lastSlashPos)
+          returnString = fileNameWithSuffix;
+       else
+          returnString = fileNameWithSuffix.substr(0, lastDotPos);
+#endif
+
+  // printf ("fileNameWithSuffix = %s returnString = %s \n",fileNameWithSuffix.c_str(),returnString.c_str());
 
      return returnString;
 
@@ -1126,7 +1175,7 @@ StringUtility::getPathFromFileName ( const string & fileNameWithPath )
      //I am not sure why this function was written and so, preserve the functionality using empty return string in such cases.
 
      if(returnString == ".")
-	 returnString = "";
+          returnString = "";
      return returnString;
 
 #if 0
