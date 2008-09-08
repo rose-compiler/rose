@@ -70,6 +70,80 @@ void initGL(int argc, char** argv) {
 
 }
 
+
+
+void postProcess(unsigned int maxX,
+		unsigned int maxY, int max,
+		unsigned int& pointsX, unsigned int& pointsY) 
+{
+
+
+  // adjust field -- make neighbors go smooth together
+  cerr << "Adjusting fields. " << endl;
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
+
+      // left
+      if (offsetX==0 && fieldX!=0) {
+	assert ((fieldX - 1) >= (int)0 && (fieldX - 1) < (int)pointsX);
+	assert (fieldY >= (int)0 );
+	//cerr << " fieldY (y/max): " << fieldY << "  y:" << y << " max : " << max << "  pointsY : " << pointsY <<
+	//      " maxY :" << maxY << endl; 
+	assert (fieldY < (int)pointsY);
+	GLfloat neighborHeight = pts[fieldX-1][fieldY][(max-1)][offsetY][2];
+	
+	if (neighborHeight>height) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  // right side
+	  assert (fieldX - 1 >= (int)0 && fieldX - 1 < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  pts[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
+	}
+      } 
+    }
+  }
+
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
+      // bottom
+      if (offsetY==0 && fieldY!=0) {
+	assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	GLfloat neighborHeight = pts[fieldX][fieldY-1][offsetX][(max-1)][2];
+	if (neighborHeight>height) {
+	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	  // top side
+	  pts[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
+	}
+      }
+    }
+  } // adjust fields
+
+
+}
+
+
+
 void 
 loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max, 
 	 unsigned int& pointsX, unsigned int& pointsY) {
@@ -234,6 +308,9 @@ loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max,
 
 }
 
+
+
+
 void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
 	       unsigned int& pointsX, unsigned int& pointsY) {
 
@@ -249,10 +326,6 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
     FunctionInfo* info = it->second;
     input[info->x][info->y][0]=info->height;
     input[info->x][info->y][1]=info->weight;
-    if (debug) {
-      //cerr <<" input["<<info->x<<"]["<<info->y<<"][0]="<<info->height<<endl;
-      //cerr <<" input["<<info->x<<"]["<<info->y<<"][1]="<<info->weight<<endl<<endl;
-    }
   }
   cerr << "Done filling the input DB" << endl;
 
@@ -263,16 +336,10 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 
   
   GLfloat factor = 2.0f;
-  //GLfloat max_f =(float) -(max-1);
-#if 0
-  //  GLfloat pts[pointsX][pointsY][max][max][3];
-
-#else
 
   typedef array_type::index index;
 
   // Create a 3D array that is 3 x 4 x 2
-  //array_type pts(boost::extents[pointsX][pointsY][max][max][3]);
   pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
 
   for(index i = 0; i != pointsX; ++i) 
@@ -282,7 +349,6 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 	  for(index m = 0; m != 3; ++m)
 	    pts[i][j][k][l][m] = 0;
 
-#endif
   cerr << " Done creating 5 Dim DB." << endl;
   for (unsigned int x=0; x<maxX;x++) {
     for (unsigned int y=0; y<maxY;y++) {
@@ -299,74 +365,9 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 
 
 
+  postProcess(maxX, maxY, max, pointsX, pointsY);
 
-#if 1
-  // adjust field -- make neighbors go smooth together
-  cerr << "Adjusting fields. " << endl;
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
 
-      // left
-      if (offsetX==0 && fieldX!=0) {
-	assert ((fieldX - 1) >= (int)0 && (fieldX - 1) < (int)pointsX);
-	assert (fieldY >= (int)0 );
-	//cerr << " fieldY (y/max): " << fieldY << "  y:" << y << " max : " << max << "  pointsY : " << pointsY <<
-	//      " maxY :" << maxY << endl; 
-	assert (fieldY < (int)pointsY);
-	GLfloat neighborHeight = pts[fieldX-1][fieldY][(max-1)][offsetY][2];
-	
-	if (neighborHeight>height) {
-	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  // right side
-	  assert (fieldX - 1 >= (int)0 && fieldX - 1 < (int)pointsX);
-	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-	  pts[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
-	}
-      } 
-    }
-  }
-
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
-      // bottom
-      if (offsetY==0 && fieldY!=0) {
-	assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
-	GLfloat neighborHeight = pts[fieldX][fieldY-1][offsetX][(max-1)][2];
-	if (neighborHeight>height) {
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	  assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
-	  // top side
-	  pts[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
-	}
-      }
-    }
-  } // adjust fields
-
-#endif
-
-  //#endif // LOAD
-  
-  /************** LOAD *************************/  
 
   GLfloat maxHeightPatch[pointsX][pointsY];
   for (unsigned int x=0; x<maxX;x++) {
@@ -378,9 +379,10 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
   }
 
 
-    //#if LOAD
-    //#else
-  /************** NOLOAD *************************/  
+
+
+
+
 
   // coloring
   for (unsigned int x=0; x<maxX;x++) {
@@ -581,65 +583,9 @@ void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max,
   cerr << "Done writing this to a file.\n";
 }
 
-void postProcess(unsigned int maxX,
-		unsigned int maxY, int argc, char** argv, int nrknots, int max,
-		unsigned int& pointsX, unsigned int& pointsY) 
-{
 
 
-  
-#if 1
-  // adjust field -- make neighbors go smooth together
-  cerr << "Adjusting fields. " << endl;
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
 
-      // left
-      if (offsetX==0 && fieldX!=0) {
-	GLfloat neighborHeight = pts[fieldX-1][fieldY][(max-1)][offsetY][2];
-	
-	if (neighborHeight>height) {
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  // right side
-	  pts[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
-	}
-      } 
-    }
-  }
-
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
-      // bottom
-      if (offsetY==0 && fieldY!=0) {
-	GLfloat neighborHeight = pts[fieldX][fieldY-1][offsetX][(max-1)][2];
-	if (neighborHeight>height) {
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  // top side
-	  pts[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
-	}
-      }
-    }
-  } // adjust fields
-
-#endif
-
-  //  if (!save) {
-  //}
-}
 
  void displayAll( int nrknots, int max,
 		const unsigned int pointsX, const unsigned int pointsY) {
@@ -753,7 +699,7 @@ int main(int argc, char** argv) {
       string filenC = name+".coord";
       cout << "Saving Binary Footprint : " << filenC << endl;
       calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
-      postProcess(maxX, maxY, argc, argv, nrknots, max, pointsX, pointsY);
+      postProcess(maxX, maxY, max, pointsX, pointsY);
       saveFile(filenC, maxX, maxY, max, pointsX, pointsY);
     }
   } else if (load) {
@@ -769,7 +715,7 @@ int main(int argc, char** argv) {
       unsigned int maxX = 0;
       unsigned int maxY = 0;
       loadFile(filenC, maxX, maxY, max, pointsX, pointsY);
-      postProcess(maxX, maxY, argc, argv, nrknots, max,  pointsX, pointsY);
+      postProcess(maxX, maxY,  max,  pointsX, pointsY);
       displayAll(nrknots, max, pointsX, pointsY);
     }
   } else {
@@ -782,10 +728,10 @@ int main(int argc, char** argv) {
       Traversal trav;
       trav.run(project,max);
       unsigned int maxX = trav.maxX+2;
-      unsigned int maxY = trav.maxY+2;
+      unsigned int maxY = trav.maxY+1;
       cout << "Visualizing Binary Footprint : " << name << endl;
       calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
-      postProcess(maxX, maxY, argc, argv, nrknots, max, pointsX, pointsY);
+      postProcess(maxX, maxY,  max, pointsX, pointsY);
       displayAll(nrknots, max, pointsX, pointsY);
     }
   }
