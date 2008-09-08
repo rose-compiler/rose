@@ -87,7 +87,8 @@ namespace ROSE
 
           std::string getPathFromFileName   ( std::string fileNameWithPath ); //! get the path from the full filename
 
-          std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
+       // DQ (9/8/2008): This is removed since it is redundant with the version in StringUtility.
+       // std::string stripFileSuffixFromFileName ( const std::string& fileNameWithSuffix ); //! get the name without the ".C"
 
        // std::string getPragmaString ( SgStatement  *stmt );
        // std::string getPragmaString ( SgExpression *expr );
