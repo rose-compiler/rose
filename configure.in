@@ -774,6 +774,22 @@ export with_png
 with_zlib=no
 export with_zlib
 
+# GMY (9/3/2008) QT4 & QROSE Optional Packages
+AC_ARG_WITH(QRose,
+	[--with-QRose=PATH	prefix of QRose installation],
+	[QROSE_PREFIX=$with_QRose])
+
+AC_SUBST(QROSE_PREFIX)
+AM_CONDITIONAL(USE_QROSE, test "$with_QRose" != no)
+QROSE_LDFLAGS="-L${QROSE_PREFIX}/lib -lqrose"
+QROSE_CXXFLAGS="-I${QROSE_PREFIX}/include"
+AC_SUBST(QROSE_LDFLAGS)
+AC_SUBST(QROSE_CXXFLAGS)
+
+AC_PATH_QT
+AC_PATH_QT_MOC
+
+
 AC_CONFIG_SUBDIRS([src/3rdPartyLibraries/libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
@@ -919,6 +935,7 @@ projects/compass/src/util/MPIAbstraction/alt-mpi-headers/mpich-1.2.7p1/include/m
 projects/compass/tools/Makefile
 projects/compass/tools/compass/Makefile
 projects/compass/tools/compass/doc/compass.tex
+projects/compass/tools/compass/gui/Makefile
 projects/compass/tools/compass/doc/Makefile
 projects/compass/tools/compass/tests/Makefile
 projects/compass/tools/compass/tests/C_tests/Makefile
