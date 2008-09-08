@@ -73,8 +73,8 @@ void initGL(int argc, char** argv) {
 
 
 void postProcess(unsigned int maxX,
-		unsigned int maxY, int max,
-		unsigned int& pointsX, unsigned int& pointsY) 
+		 unsigned int maxY, int max,
+		 unsigned int& pointsX, unsigned int& pointsY) 
 {
 
 
@@ -146,7 +146,7 @@ void postProcess(unsigned int maxX,
 
 void 
 loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max, 
-	 unsigned int& pointsX, unsigned int& pointsY) {
+	  unsigned int& pointsX, unsigned int& pointsY) {
   /************** LOAD *************************/  
   const char* filename = filenC.c_str();
   cerr << "Loading " << filename <<".\n";
@@ -192,18 +192,18 @@ loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max,
 	y=0; x++;
 	if (x==maxX) break;
       }
-      cout << endl << x <<" " << y << " "  << "  max: " <<max << endl;
+      //cout << endl << x <<" " << y << " "  << "  max: " <<max << endl;
       int fieldX = x/max;
       int offsetX = x%max;
       int fieldY =y/max;
       int offsetY = y%max;
-      cout  << fieldX<<" "<<fieldY<<" -- " <<offsetX<<" " << offsetY << endl;
+      //cout  << fieldX<<" "<<fieldY<<" -- " <<offsetX<<" " << offsetY << endl;
       myfile >> line1;
       myfile >> line2;
       myfile >> line3;
-      cout  << line1<<" "<<line2<<" " <<line3 << endl;
+      //cout  << line1<<" "<<line2<<" " <<line3 << endl;
 
-  /************** 2FILES ***********/  
+      /************** 2FILES ***********/  
 #if FILE2
       pts2[fieldX][fieldY][offsetX][offsetY][0] =line1;
       pts2[fieldX][fieldY][offsetX][offsetY][1] =line2;
@@ -215,7 +215,7 @@ loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max,
       pts[fieldX][fieldY][offsetX][offsetY][1] =line2;
       pts[fieldX][fieldY][offsetX][offsetY][2] =line3;
 #endif
-  /************** 2FILES ***********/  
+      /************** 2FILES ***********/  
 
       y++; 
     }
@@ -311,63 +311,9 @@ loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max,
 
 
 
-void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
-	       unsigned int& pointsX, unsigned int& pointsY) {
 
-  GLfloat input[maxX][maxY][2];
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      input[x][y][0]=0;
-      input[x][y][1]=0;
-    }
-  }
-  FunctionType::iterator it = functions.begin();
-  for (;it!=functions.end();it++) {
-    FunctionInfo* info = it->second;
-    input[info->x][info->y][0]=info->height;
-    input[info->x][info->y][1]=info->weight;
-  }
-  cerr << "Done filling the input DB" << endl;
-
-
-   pointsX =(maxX+max-1)/max;
-   pointsY =(maxY+max-1)/max;
-  cerr << " Initializing fields in x = " <<pointsX<<"  y = " <<pointsY<<endl;
-
-  
-  GLfloat factor = 2.0f;
-
-  typedef array_type::index index;
-
-  // Create a 3D array that is 3 x 4 x 2
-  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
-
-  for(index i = 0; i != pointsX; ++i) 
-    for(index j = 0; j != pointsY; ++j)
-      for(index k = 0; k != max; ++k)
-	for(index l = 0; l != max; ++l)
-	  for(index m = 0; m != 3; ++m)
-	    pts[i][j][k][l][m] = 0;
-
-  cerr << " Done creating 5 Dim DB." << endl;
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      pts[fieldX][fieldY][offsetX][offsetY][0]=factor*((GLfloat)offsetX+((max-1)*fieldX));
-      pts[fieldX][fieldY][offsetX][offsetY][1]=factor*((GLfloat)offsetY+((max-1)*fieldY));
-      pts[fieldX][fieldY][offsetX][offsetY][2]=input[x][y][0];
-    }
-  }
-  cerr << "Done initializing fields. " << endl;
-
-
-
-  postProcess(maxX, maxY, max, pointsX, pointsY);
-
-
+void widenFields(unsigned int maxX, unsigned int maxY, int max,
+		 unsigned int pointsX, unsigned int pointsY) {
 
   GLfloat maxHeightPatch[pointsX][pointsY];
   for (unsigned int x=0; x<maxX;x++) {
@@ -377,11 +323,6 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
       maxHeightPatch[fieldX][fieldY] = 0;
     }
   }
-
-
-
-
-
 
 
   // coloring
@@ -444,8 +385,8 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 	      int fieldY_w = coord_y/max;
 	      int offsetY_w = coord_y%max;
 	      if (coord_x<0 || coord_x>=(int)maxX || coord_y<0 || coord_y>=(int)maxY) continue;
-		  assert (fieldX_w>=0 && fieldX_w<(int)pointsX);
-		  assert (fieldY_w>=0 && fieldY_w<(int)pointsY);
+	      assert (fieldX_w>=0 && fieldX_w<(int)pointsX);
+	      assert (fieldY_w>=0 && fieldY_w<(int)pointsY);
 	      if (pts[fieldX_w][fieldY_w][offsetX_w][offsetY_w][2]<maxHeight)
 		pts[fieldX_w][fieldY_w][offsetX_w][offsetY_w][2]+=0.2f;
 	    }
@@ -501,6 +442,63 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 
   /************** NOLOAD *************************/  
 
+}
+
+void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
+	       unsigned int& pointsX, unsigned int& pointsY) {
+
+  GLfloat input[maxX][maxY][2];
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      input[x][y][0]=0;
+      input[x][y][1]=0;
+    }
+  }
+  FunctionType::iterator it = functions.begin();
+  for (;it!=functions.end();it++) {
+    FunctionInfo* info = it->second;
+    input[info->x][info->y][0]=info->height;
+    input[info->x][info->y][1]=info->weight;
+  }
+  cerr << "Done filling the input DB" << endl;
+
+
+  pointsX =(maxX+max-1)/max;
+  pointsY =(maxY+max-1)/max;
+  cerr << " Initializing fields in x = " <<pointsX<<"  y = " <<pointsY<<endl;
+
+  
+  GLfloat factor = 2.0f;
+
+  typedef array_type::index index;
+
+  // Create a 3D array that is 3 x 4 x 2
+  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
+
+  for(index i = 0; i != pointsX; ++i) 
+    for(index j = 0; j != pointsY; ++j)
+      for(index k = 0; k != max; ++k)
+	for(index l = 0; l != max; ++l)
+	  for(index m = 0; m != 3; ++m)
+	    pts[i][j][k][l][m] = 0;
+
+  cerr << " Done creating 5 Dim DB." << endl;
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      pts[fieldX][fieldY][offsetX][offsetY][0]=factor*((GLfloat)offsetX+((max-1)*fieldX));
+      pts[fieldX][fieldY][offsetX][offsetY][1]=factor*((GLfloat)offsetY+((max-1)*fieldY));
+      pts[fieldX][fieldY][offsetX][offsetY][2]=input[x][y][0];
+    }
+  }
+  cerr << "Done initializing fields. " << endl;
+
+
+  postProcess(maxX, maxY, max, pointsX, pointsY);
+  widenFields(maxX, maxY, max, pointsX, pointsY);
 
 }
 
@@ -515,7 +513,7 @@ render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
   glMatrixMode(GL_PROJECTION);
   gluPerspective(75.0, 1.0, 2.0, 5240.0);
   glMatrixMode(GL_MODELVIEW);
-  glTranslatef(-40.0, -40.0, -70.0);
+  glTranslatef(-55.0, -40.0, -85.0);
   //    glTranslatef(-218.0, -160.0, -315.0);
   glRotatef(330.0, 1.0, 0.0, 0.0);
   glRotatef(-35.0, 1.0, 0.0, 0.0);
@@ -556,9 +554,9 @@ render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
 
 
 void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max, 
-	 unsigned int& pointsX, unsigned int& pointsY) {
+	      unsigned int& pointsX, unsigned int& pointsY) {
   /************** SAVE *************************/  
-    //#if SAVE
+  //#if SAVE
   // printToFile
   const char* filename = filenC.c_str();
   ofstream myfile;
@@ -587,13 +585,13 @@ void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max,
 
 
 
- void displayAll( int nrknots, int max,
-		const unsigned int pointsX, const unsigned int pointsY) {
-    render(pointsX, pointsY, nrknots, max);
-    glutDisplayFunc(display);
-    glutMainLoop();
+void displayAll( int nrknots, int max,
+		 const unsigned int pointsX, const unsigned int pointsY) {
+  render(pointsX, pointsY, nrknots, max);
+  glutDisplayFunc(display);
+  glutMainLoop();
 
- }
+}
 
 
 SgProject* 
@@ -694,8 +692,8 @@ int main(int argc, char** argv) {
       project= parseBinaryFile(name);
       Traversal trav;
       trav.run(project,max);
-      unsigned int maxX = trav.maxX+2;
-      unsigned int maxY = trav.maxY+2;
+      unsigned int maxX = trav.maxX;
+      unsigned int maxY = trav.maxY;
       string filenC = name+".coord";
       cout << "Saving Binary Footprint : " << filenC << endl;
       calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
@@ -727,15 +725,15 @@ int main(int argc, char** argv) {
       project = parseBinaryFile(name);
       Traversal trav;
       trav.run(project,max);
-      unsigned int maxX = trav.maxX+2;
-      unsigned int maxY = trav.maxY+1;
+      unsigned int maxX = trav.maxX;
+      unsigned int maxY = trav.maxY;
       cout << "Visualizing Binary Footprint : " << name << endl;
+      cout << " maxX = " << maxX << "  maxY = " << maxY << endl;
       calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
       postProcess(maxX, maxY,  max, pointsX, pointsY);
       displayAll(nrknots, max, pointsX, pointsY);
     }
   }
-
   
   return 0;
 }
