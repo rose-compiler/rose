@@ -364,7 +364,7 @@ void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,in
 	if (!o_dfi_istop(info) && !o_dfi_isbottom(info)) {
 		int n_graphs = 0;
 		
-		o_SrwNnhPair gpair = o_srw_extract_graphs(o_dfi_drop(info));
+		o_SrwNnhPair gpair = o_extract_graphs(o_dfi_drop(info));
 		
 		if (opt->gdlShowSummaryGraph()) {
 			gstats.addGraphs(1);

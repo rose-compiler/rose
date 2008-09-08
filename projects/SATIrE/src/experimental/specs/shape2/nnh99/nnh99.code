@@ -54,6 +54,9 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 //remove_empty_graph::ShapeGraphSet->ShapeGraphSet;
 //remove_empty_graph(g) = if g = {(({},{}),{})} then {(({},{}),{})} else if option_kill_empty_graph then g # (({},{}),{}) else g endif endif;
 
+extract_graphs::ShapeGraphSet->SrwNnhPair;
+extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
+
 shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
 shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
 

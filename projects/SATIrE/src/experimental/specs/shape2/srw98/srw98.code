@@ -49,6 +49,9 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraph;
 #include "../common_normalisation.optla"
 #include "../common_debug.optla"
 
+extract_graphs::ShapeGraph->SrwNnhPair;
+extract_graphs(sg) = (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)));
+
 // convert carrier to set of shapegraphs for alias computation
 shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
 shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg));

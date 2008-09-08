@@ -42,12 +42,6 @@ heapedge_by_var_sel(x,sel,edges) = hd([e !! (nv,sv,_) as e <-- edges, if (x ? nv
 no_duplicates::VarList->VarList;
 no_duplicates(list) = [x !! x <-- {y !! y <- list}];
 
-srw_extract_graphs::ShapeGraph->SrwNnhPair;
-srw_extract_graphs(sg) = (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)));
-
-nnh_extract_graphs::ShapeGraphSet->SrwNnhPair;
-nnh_extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
-
 sgSet_to_sgList::ShapeGraphSet->ShapeGraphList;
 sgSet_to_sgList(sgs) = [sg !! sg <-- sgs];
 
