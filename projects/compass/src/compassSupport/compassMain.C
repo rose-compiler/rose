@@ -133,7 +133,7 @@ int main(int argc, char** argv)
   // Support for ToolGear
      if (Compass::UseToolGear == true)
         {
-          Compass::outputTgui( Compass::tguiXML, traversals, output );
+          Compass::outputTgui( Compass::tguiXML, traversals, &output );
         }
 
   // Output errors specific to any checkers that didn't initialize properly

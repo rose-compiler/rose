@@ -360,7 +360,7 @@ namespace Compass {
   };
 
   // ToolGear Support
-  void outputTgui( std::string & tguiXML, std::vector<const Compass::Checker*> & checkers, PrintingOutputObject & output );
+  void outputTgui( std::string & tguiXML, std::vector<const Compass::Checker*> & checkers, Compass::OutputObject *output );
 
   #include "prerequisites.h"
 

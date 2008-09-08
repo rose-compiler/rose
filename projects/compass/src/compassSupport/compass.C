@@ -708,7 +708,7 @@ Compass::commandLineProcessing(Rose_STL_Container<std::string> & commandLineArra
 void
 Compass::outputTgui( std::string & tguiXML,
 		     std::vector<const Compass::Checker*> & checkers,
-		     Compass::PrintingOutputObject & output )
+		     Compass::OutputObject *output )
 {
   // DQ (1/3/2008): This has to be read/write since we generate an output file for use with ToolGear.
   std::fstream xml( tguiXML.c_str(), std::ios::out|std::ios::app );
@@ -742,7 +742,7 @@ Compass::outputTgui( std::string & tguiXML,
     } //if( pos == 0 )
 
   const std::vector<Compass::OutputViolationBase*>& outputList = 
-    output.getOutputList();
+    output->getOutputList();
 
   for( std::vector<Compass::OutputViolationBase*>::const_iterator itr =
          outputList.begin(); itr != outputList.end(); itr++ )
