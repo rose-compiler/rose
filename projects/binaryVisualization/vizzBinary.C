@@ -71,12 +71,10 @@ void initGL(int argc, char** argv) {
 }
 
 void 
-loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max, 
+loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max, 
 	 unsigned int& pointsX, unsigned int& pointsY) {
   /************** LOAD *************************/  
-    //#if LOAD
-  // readFromFile
-
+  const char* filename = filenC.c_str();
   cerr << "Loading " << filename <<".\n";
   ifstream myfile (filename);//+".coord");
   if (myfile.is_open())   {
@@ -91,27 +89,20 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
   cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
 
   /************** 2FILES ***********/  
-#if 0
 #if FILE2
   GLfloat pts2[pointsX+1][pointsY+1][max][max][3];
 #else
-  //  GLfloat pts[pointsX+1][pointsY+1][max][max][3];
-  pts= new GLfloat****[pointsX+1];
-  for (unsigned int i=0; i<(pointsX+1);++i) {
-    pts[i] = new GLfloat***[pointsY+1];
-    for (unsigned int ii=0; ii<(pointsY+1);++ii) {
-      pts[i][ii] = new GLfloat**[max];
-      for (int iii=0; iii<max;++iii) {
-	pts[i][ii][iii] = new GLfloat*[max];
-	for ( int iiii=0; iiii<max;++iiii) {
-	  pts[i][ii][iii][iiii] = new GLfloat[3];
-	}
-      }
-    }
-  }
 
+  typedef array_type::index index;
+  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
 
-#endif
+  for(index i = 0; i != pointsX; ++i) 
+    for(index j = 0; j != pointsY; ++j)
+      for(index k = 0; k != max; ++k)
+	for(index l = 0; l != max; ++l)
+	  for(index m = 0; m != 3; ++m)
+	    pts[i][j][k][l][m] = 0;
+
 #endif
   /************** 2FILES ***********/  
 
@@ -144,6 +135,8 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
       pts2[fieldX][fieldY][offsetX][offsetY][1] =line2;
       pts2[fieldX][fieldY][offsetX][offsetY][2] =line3;
 #else
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
       pts[fieldX][fieldY][offsetX][offsetY][0] =line1;
       pts[fieldX][fieldY][offsetX][offsetY][1] =line2;
       pts[fieldX][fieldY][offsetX][offsetY][2] =line3;
@@ -174,6 +167,8 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
   cout << "maxX:"<<maxX << "  pointsX="<<pointsX << endl;
   cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
 
+  assert (fieldX+1 >= (int)0 && fieldX+1 < (int)pointsX);
+  assert (fieldY+1 >= (int)0 && fieldY+1 < (int)pointsY);
   GLfloat pts[pointsX+1][pointsY+1][max][max][3];
   if (myfile2.is_open())   {
 
@@ -203,6 +198,8 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
 
       GLfloat max=0;
       GLfloat min=0;
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
       if (pts2[fieldX][fieldY][offsetX][offsetY][2]>=line3) {
 	max = pts2[fieldX][fieldY][offsetX][offsetY][2]; min=line3;}
       else {
@@ -220,12 +217,9 @@ loadFile( const char* filename, unsigned int maxX, unsigned int maxY, int max,
 
   cerr << "Done loading a file.\n";
 
-
-#endif
   /************** 2FILES ***********/  
+#endif
 
-  /************** LOAD CONT *************************/  
-  //#else
 
 
 
@@ -559,11 +553,12 @@ render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
 }
 
 
-void saveFile(const char* filename, unsigned int maxX, unsigned int maxY, int max, 
+void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max, 
 	 unsigned int& pointsX, unsigned int& pointsY) {
   /************** SAVE *************************/  
     //#if SAVE
   // printToFile
+  const char* filename = filenC.c_str();
   ofstream myfile;
   myfile.open (filename);//+".coord");
   cerr << "Writing this to a file.\n";
@@ -586,28 +581,10 @@ void saveFile(const char* filename, unsigned int maxX, unsigned int maxY, int ma
   cerr << "Done writing this to a file.\n";
 }
 
-void displayAll(FunctionType& functions,  unsigned int maxX,
+void postProcess(unsigned int maxX,
 		unsigned int maxY, int argc, char** argv, int nrknots, int max,
-		std::string filen, std::string filen2, bool load, bool save,
 		unsigned int& pointsX, unsigned int& pointsY) 
 {
-
-  string filenC = filen+".coord";
-  string filen2C = filen2+".coord";
-  const char* filename = filenC.c_str();
-  const char* filename2 = filen2C.c_str();
-
-
-  if (!load)
-    cerr << "Building array - functions: " << functions.size() <<
-      "  maxX:"<<maxX<<"  maxY:"<<maxY<<endl;
-
-  initGL(argc, argv);
-
-  if (load)
-    loadFile(filename, maxX, maxY, max, pointsX, pointsY);
-  else 
-    calculate(functions, maxX, maxY, max, pointsX, pointsY);
 
 
   
@@ -660,16 +637,17 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 
 #endif
 
-  if (!save) {
-    render(pointsX, pointsY, nrknots, max);
-  } else {
-    saveFile(filename, maxX, maxY, max, pointsX, pointsY);
-    return;
-  } 
-
-  glutDisplayFunc(display);
-  glutMainLoop();
+  //  if (!save) {
+  //}
 }
+
+ void displayAll( int nrknots, int max,
+		const unsigned int pointsX, const unsigned int pointsY) {
+    render(pointsX, pointsY, nrknots, max);
+    glutDisplayFunc(display);
+    glutMainLoop();
+
+ }
 
 
 SgProject* 
@@ -758,42 +736,57 @@ int main(int argc, char** argv) {
   unsigned int pointsX =0;
   unsigned int pointsY =0;
 
+
+  initGL(argc, argv);
+
   if (save) {
     // load all binaries iteratively and save it as footprint
     cout << "... Saving all binaries to footprint." << endl;
     for (unsigned int i = 0;i < files.size();i++) {
       string name = files[i];
-      cout << "\nAnalysing Binary : " << name << endl;
+      cout << "\nAnalysing Binary (save): " << name << endl;
       project= parseBinaryFile(name);
       Traversal trav;
       trav.run(project,max);
       unsigned int maxX = trav.maxX+2;
       unsigned int maxY = trav.maxY+2;
-
-      cout << "Saving Binary Footprint : " << name << endl;
-      displayAll(trav.functions, maxX, maxY, argc, argv, nrknots, max, def_db_name, def_db_name2, load, save, pointsX, pointsY);
+      string filenC = name+".coord";
+      cout << "Saving Binary Footprint : " << filenC << endl;
+      calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
+      postProcess(maxX, maxY, argc, argv, nrknots, max, pointsX, pointsY);
+      saveFile(filenC, maxX, maxY, max, pointsX, pointsY);
     }
   } else if (load) {
     // load all footprints at once and run analyses
     cout << "... Loading all footprints in out directory." << endl;
     for (unsigned int i = 0;i < files.size();i++) {
       string name = files[i];
-      cout << "\nLoading Binary and Visualizing footprint: " << name << endl;
+      string filenC = name+".coord";
+      cout << "\nLoading Binary and Visualizing footprint: " << filenC << endl;
+      //string filen2C = filen2+".coord";
+      //const char* filename = filenC.c_str();
+      //const char* filename2 = filen2C.c_str();
+      unsigned int maxX = 0;
+      unsigned int maxY = 0;
+      loadFile(filenC, maxX, maxY, max, pointsX, pointsY);
+      postProcess(maxX, maxY, argc, argv, nrknots, max,  pointsX, pointsY);
+      displayAll(nrknots, max, pointsX, pointsY);
     }
   } else {
     // preform simple analysis on current file(s)
     cout << "... Running footprint analyses without load/save." << endl;
     for (unsigned int i = 0;i < files.size();i++) {
       string name = files[i];
-      cout << "\nAnalysing Binary : " << name << endl;
+      cout << "\nAnalysing Binary (run): " << name << endl;
       project = parseBinaryFile(name);
       Traversal trav;
       trav.run(project,max);
       unsigned int maxX = trav.maxX+2;
       unsigned int maxY = trav.maxY+2;
-
       cout << "Visualizing Binary Footprint : " << name << endl;
-      displayAll(trav.functions, maxX, maxY, argc, argv, nrknots, max, def_db_name, def_db_name2, load, save, pointsX, pointsY);
+      calculate(trav.functions, maxX, maxY, max, pointsX, pointsY);
+      postProcess(maxX, maxY, argc, argv, nrknots, max, pointsX, pointsY);
+      displayAll(nrknots, max, pointsX, pointsY);
     }
   }
 
