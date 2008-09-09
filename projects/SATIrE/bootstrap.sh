@@ -8,9 +8,8 @@ then
     exit 1
 fi
 
-
 autoreconf -i && \
-  ./configure --prefix=$1 --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag CXXFLAGS="-O2 -ggdb -Werror" && \
+  ./configure --prefix=$1 --with-rosedir=/usr/local/mstools/rose --with-pagdir=/usr/local/mstools/pag --with-boostdir=/usr/local/mstools/boost CXXFLAGS="-O2 -ggdb -Werror" && \
   make && \
   make distcheck && \
   make install && \

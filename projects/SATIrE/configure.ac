@@ -17,37 +17,64 @@ AC_PROG_RANLIB
 
 # ROSE PATH
 ROSEDIR='/opt/rose'
-AC_ARG_WITH(rosedir, [  --with-rosedir=DIR             ROSE install path (default in /opt/rose)], [ROSEDIR="$withval"])
+AC_ARG_WITH(rosedir,
+           [  --with-rosedir=DIR           ROSE install path (default in /opt/rose)],
+           [ROSEDIR="$withval"])
 AC_SUBST(ROSEDIR)
 
 ROSE_INCLUDE_DIR="$ROSEDIR/include"
-AC_ARG_WITH(rose_includedir, [  --with-rose-includedir=DIR     ROSE include path (default in /opt/rose/include)], [ROSE_INCLUDE_DIR="$withval"])
+AC_ARG_WITH(rose_includedir,
+           [  --with-rose-includedir=DIR   ROSE include path (default in /opt/rose/include)],
+           [ROSE_INCLUDE_DIR="$withval"])
 AC_SUBST(ROSE_INCLUDE_DIR)
 
 ROSE_LIB_DIR="$ROSEDIR/lib"
-AC_ARG_WITH(rose_libdir, [  --with-rose-libdir=DIR         ROSE library path (default in /opt/rose/lib)], [ROSE_LIB_DIR="$withval"])
+AC_ARG_WITH(rose_libdir,
+           [  --with-rose-libdir=DIR       ROSE library path (default in /opt/rose/lib)],
+           [ROSE_LIB_DIR="$withval"])
 AC_SUBST(ROSE_LIB_DIR)
 
 # PAG PATH
 PAGDIR='/opt/pag'
-AC_ARG_WITH(pagdir, [  --with-pagdir=DIR             PAG install path (default in /opt/pag)], [PAGDIR="$withval"])
+AC_ARG_WITH(pagdir,
+           [  --with-pagdir=DIR            PAG install path (default in /opt/pag)],
+           [PAGDIR="$withval"])
 AC_SUBST(PAGDIR)
 
 PAG_INCLUDE_DIR="$PAGDIR/include"
-AC_ARG_WITH(pag_includedir, [  --with-pag-includedir=DIR     PAG include path (default in /opt/pag/include)], [PAG_INCLUDE_DIR="$withval"])
+AC_ARG_WITH(pag_includedir,
+           [  --with-pag-includedir=DIR    PAG include path (default in /opt/pag/include)],
+           [PAG_INCLUDE_DIR="$withval"])
 AC_SUBST(PAG_INCLUDE_DIR)
 
 PAG_LIB_DIR="$PAGDIR/lib/pag"
-AC_ARG_WITH(pag_libdir, [  --with-pag-libdir=DIR         PAG library path (default in /opt/pag/lib)], [PAG_LIB_DIR="$withval"])
+AC_ARG_WITH(pag_libdir,
+           [  --with-pag-libdir=DIR        PAG library path (default in /opt/pag/lib)],
+           [PAG_LIB_DIR="$withval"])
 AC_SUBST(PAG_LIB_DIR)
 
+# BOOST PATH
+BOOSTDIR='/usr'
+AC_ARG_WITH(boostdir,
+           [  --with-boostdir=DIR          Boost install path (default in /usr)],
+           [BOOSTDIR="$withval"])
+AC_SUBST(BOOSTDIR)
+
+BOOST_LIB_DIR="$BOOSTDIR/lib"
+AC_ARG_WITH(boost_libdir,
+           [  --with-boost-libdir=DIR      Boost library path (default in /usr/lib)],
+           [BOOST_LIB_DIR="$withval"])
+AC_SUBST(BOOST_LIB_DIR)
+
+# additional Boost stuff: it encodes the compiler version into its lib names
+BOOST_COMPILER_STRING="gcc42"
+AC_ARG_WITH(boost_compiler_string,
+           [  --with-boost-compiler-string=STR    Boost compiler string (default: gcc42)],
+           [BOOST_COMPILER_STRING="$withval"])
 
 # Checks for libraries.
-# FIXME: Replace `main' with a function in `-ledg':
-#AC_CHECK_LIB([edg], [main])
+# GB (2008-09-09): The following libs are not needed anymore: edg, rt, fl.
 AC_SEARCH_LIBS([fcosf], [m])
-AC_SEARCH_LIBS([clock_gettime], [rt])
-AC_SEARCH_LIBS([yywrap], [fl])
 AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"], 
              [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
               echo "Please consider using one of the --with-pag* options."
@@ -55,9 +82,15 @@ AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"],
               [-L${PAG_LIB_DIR}])
 AC_CHECK_LIB([rose], [ROSE_DEBUG], [echo "Found ROSE!"], 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
-	      echo "Please consider using one of the --with-rose* options."
-	      exit -1 ], 
-             [-L${ROSE_LIB_DIR} -lfl])
+              echo "Please consider using one of the --with-rose* options."
+              exit -1 ], 
+             [-L${ROSE_LIB_DIR}])
+AC_CHECK_FILE(${BOOST_LIB_DIR}/libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so,
+             [echo "Found Boost (hopefully)!"],
+             [echo "Could not find 'libboost_filesystem-${BOOST_COMPILER_STRING}-mt.so' in '${BOOST_LIB_DIR}'."
+              echo "Please consider using one of the --with-boost* options."
+              exit -1 ])
+
 
 # Checks for header files.
 AC_HEADER_STDC

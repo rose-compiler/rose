@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.46 2008-08-04 13:28:29 gergo Exp $
+// $Id: CFGTraversal.C,v 1.47 2008-09-09 14:21:19 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -1049,7 +1049,7 @@ CFGTraversal::processFunctionDeclarations(SgFunctionDeclaration *decl)
 
     BasicBlock *begin
       = transform_block(decl->get_definition()->get_body(),
-                        last_node, NULL, NULL);
+                        last_node, NULL, NULL, NULL);
     if (proc->arg_block != NULL) {
       add_link(proc->entry, proc->first_arg_block, NORMAL_EDGE);
       add_link(proc->last_arg_block, begin, NORMAL_EDGE);
@@ -1167,9 +1167,10 @@ CFGTraversal::introduceUndeclareStatements(SgBasicBlock *block,
 }
 
 BasicBlock*
-CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
+CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
                               BasicBlock *break_target,
-                              BasicBlock *continue_target)
+                              BasicBlock *continue_target,
+                              BasicBlock *enclosing_switch)
 {
     /*
      * The basic block is split into several new ones: One block per
@@ -1179,13 +1180,30 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
      * without successors, and the last block, are linked to after.
      */
     BasicBlock *new_block = NULL, *last_block_of_this_block = NULL;
-    SgStatementPtrList stmts = block->get_statements();
-
- // GB (2008-05-05): Refactored.
-    std::pair<BasicBlock *, BasicBlock* > after_lastblock
-        = introduceUndeclareStatements(block, after);
-    after = after_lastblock.first;
-    last_block_of_this_block = after_lastblock.second;
+ // GB (2008-08-21): Starting with ROSE 0.9.3a, many things that used to be
+ // SgBasicBlocks are now SgStatements. This is closer to the C++ grammar,
+ // where the bodies of if statements and loops can be any statement, not
+ // only compound statements. This change made it necessary to change this
+ // method's first parameter from SgBasicBlock to SgStatement; now we cannot
+ // simply get the list of statements in the block as before:
+ // SgStatementPtrList stmts = block->get_statements();
+ // In the new version, if the statement is not a block, we simply create a
+ // list of statements of one element, and iterate over it as before.
+    SgStatementPtrList stmts;
+    if (SgBasicBlock *block = isSgBasicBlock(ast_statement))
+    {
+        stmts = block->get_statements();
+        std::pair<BasicBlock *, BasicBlock* > after_lastblock
+            = introduceUndeclareStatements(block, after);
+        after = after_lastblock.first;
+        last_block_of_this_block = after_lastblock.second;
+    }
+    else
+    {
+        stmts.push_back(ast_statement);
+     // after unchanged, I think that's fine
+     // not sure what to do about last_block_of_this_block
+    }
 
     /* Iterate over statements backwards: We need to know the blocks
      * that come later on to be able to set links. This is similar
@@ -1240,12 +1258,12 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
                 Ir::createIfStmt(Ir::createExprStatement(new_expr)));
 
 	    BasicBlock *t = transform_block(ifs->get_true_body(),
-                after, break_target, continue_target);
+                after, break_target, continue_target, enclosing_switch);
         add_link(if_block, t, TRUE_EDGE);
-        SgBasicBlock *false_body = ifs->get_false_body();
-        if (false_body != NULL && false_body->get_statements().size() > 0) {
-            BasicBlock *f = transform_block(ifs->get_false_body(),
-                    after, break_target, continue_target);
+        SgStatement *false_body = ifs->get_false_body();
+        if (false_body != NULL) {
+            BasicBlock *f = transform_block(false_body,
+                    after, break_target, continue_target, enclosing_switch);
             add_link(if_block, f, FALSE_EDGE);
         } else {
             add_link(if_block, after, FALSE_EDGE);
@@ -1583,7 +1601,8 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
         /* unfold the body */
         BasicBlock *body = transform_block(fors->get_loop_body(),
                                            incr_block_after,
-                                           after, incr_block_after);
+                                           after, incr_block_after,
+                                           enclosing_switch);
      // Now add the final link to the body.
         add_link(for_block, body, TRUE_EDGE);
 
@@ -1651,7 +1670,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 
 	add_link(while_block, after, FALSE_EDGE);
 	BasicBlock *body = transform_block(whiles->get_body(), et.get_after(),
-					   after, et.get_after());
+					   after, et.get_after(), enclosing_switch);
 	add_link(while_block, body, TRUE_EDGE);
 
 	/* incoming information is at the incoming edge of
@@ -1710,7 +1729,7 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	add_link(dowhile_block, after, FALSE_EDGE);
 	BasicBlock* body
 	  = transform_block(dowhiles->get_body(), et.get_after(),
-                            after, et.get_after());
+                            after, et.get_after(), enclosing_switch);
 	add_link(dowhile_block, body, TRUE_EDGE);
 	
 	/* incoming analysis information is at the beginning
@@ -1821,24 +1840,26 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
 	SgSwitchStatement* switchStatement
 	  = Ir::createSwitchStatement(Ir::createExprStatement(new_expr));
 	switch_block->statements.push_front(switchStatement);
-                
-	BlockList* body
-	  = do_switch_body(switchs->get_body(), after,
-			   continue_target);
-	BlockList::const_iterator bli;
-	bool default_case = false;
-	for (bli = body->begin(); bli != body->end(); ++bli) {
-	  if (isSgDefaultOptionStmt((*bli)->statements[0])
-	      || isSgCaseOptionStmt((*bli)->statements[0])) {
-	    add_link(switch_block, *bli, NORMAL_EDGE);
-	  }
-	  if (isSgDefaultOptionStmt((*bli)->statements[0])) {
-	    default_case = true;
-	  }
-	}
-	if (!default_case) {
-	  add_link(switch_block, after, NORMAL_EDGE);
-	}
+
+ // GB (2008-08-21): Since ROSE 0.9.3a fixed handling of switch statements
+ // and their cases, we had to change our handling as well. We do not use
+ // do_switch_body anymore; instead, we pass the switch block into the
+ // recursive call of transform_block, and every case statement links itself
+ // with the block. This is also why we now have the enclosing_switch
+ // parameter to transform_block.
+ // This is not the nicest design, but we detect presence of a default case
+ // as follows: Wherever do_switch_body finds a default case, it gets an
+ // attribute saying so. If that attribute is missing, we know that a
+ // default edge from switch_block to the after block must be added to
+ // bypass all the switch cases.
+    BasicBlock *after_whole_switch = after;
+    after = transform_block(switchs->get_body(),
+                            after,
+                            /* break target = */ after,
+                            continue_target,
+                            switch_block);
+    if (!switchStatement->attributeExists("SATIrE: switch has default case"))
+        add_link(switch_block, after_whole_switch, NORMAL_EDGE);
 
 	/* incoming information is at the incoming edge of
 	 * the code produced by et */
@@ -1855,12 +1876,67 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
       }
 	break;
 
+ // GB (2008-08-22): Added this case here, adapted from old do_switch_body
+ // function.
+    case V_SgDefaultOptionStmt: {
+      SgDefaultOptionStmt *defaults = isSgDefaultOptionStmt(*i);
+   // The default case might have a body, although it's usually empty,
+   // apparently. Transform it anyway.
+      after = transform_block(defaults->get_body(),
+                              after, break_target,
+                              continue_target, enclosing_switch);
+   // Build the new block for the default case.
+      BasicBlock *case_block = allocate_new_block(NULL, after);
+      case_block->statements.push_front(defaults);
+   // Add a link from the enclosing switch block to this block.
+      add_link(enclosing_switch, case_block, NORMAL_EDGE);
+   // Mark the enclosing switch block with an attribute saying that it has a
+   // default case.
+      enclosing_switch->statements[0]
+          ->addNewAttribute("SATIrE: switch has default case", NULL);
+   // I think the pre and post attributes are simply the pre and post
+   // positions of this case block. Previously, we struggled to put the post
+   // info at the end of the case's "body". But in C and C++, the concept of
+   // a case body is quite fuzzy, so we don't even try to mess with it.
+      stmt_start = new StatementAttribute(case_block, POS_PRE);
+      stmt_end = new StatementAttribute(case_block, POS_POST);
+   // And make sure the following links are set correctly.
+      after = case_block;
+    }
+      break;
+
+ // GB (2008-08-22): Adapted from the default case above. It's so similar
+ // that it hurts.
+    case V_SgCaseOptionStmt: {
+      SgCaseOptionStmt *cases = isSgCaseOptionStmt(*i);
+   // The case might have a body, although it's usually empty, apparently.
+   // Transform it anyway.
+      after = transform_block(cases->get_body(),
+                              after, break_target, 
+                              continue_target, enclosing_switch);
+   // Build the new block for the default case.
+      BasicBlock *case_block = allocate_new_block(NULL, after);
+      case_block->statements.push_front(cases);
+   // Add a link from the enclosing switch block to this block.
+      add_link(enclosing_switch, case_block, NORMAL_EDGE);
+   // I think the pre and post attributes are simply the pre and post
+   // positions of this case block. Previously, we struggled to put the post
+   // info at the end of the case's "body". But in C and C++, the concept of
+   // a case body is quite fuzzy, so we don't even try to mess with it.
+      stmt_start = new StatementAttribute(case_block, POS_PRE);
+      stmt_end = new StatementAttribute(case_block, POS_POST);
+   // And make sure the following links are set correctly.
+      after = case_block;
+    }
+      break;
+
       case V_SgBasicBlock: {
 	SgBasicBlock *block = isSgBasicBlock(*i);
 	BasicBlock *body = transform_block(block, 
 					   after,
 					   break_target, 
-					   continue_target);
+					   continue_target,
+                       enclosing_switch);
 
 	/* incoming information is at the body's incoming
 	 * edge */
@@ -2231,29 +2307,41 @@ CFGTraversal::transform_block(SgBasicBlock *block, BasicBlock *after,
     return after;
 }
 
+// GB (2008-08-22): This function is not needed anymore with ROSE 0.9.3,
+// which fixed switch handling. Everything is now much simpler, and handled
+// directly using transform_block.
+#if 0
 BlockList* 
 CFGTraversal::do_switch_body(SgBasicBlock *block,
+                          // BasicBlock *switch_block,
                              BasicBlock *after, 
                              BasicBlock *continue_target) {
+  std::cerr
+      << "*** ICFG builder warning: internal inconsistency! "
+      << "deprecated function do_switch_body was called"
+      << std::endl;
+
   BlockList *blocks = new BlockList();
+#if 0
   SgStatementPtrList stmts = block->get_statements();
-  SgBasicBlock *spare_block = NULL;
+  SgStatement *spare_stmt = NULL;
   
   BasicBlock *previous = after;
   SgStatementPtrList::reverse_iterator i;
   for (i = stmts.rbegin(); i != stmts.rend(); ++i) {
     switch ((*i)->variantT()) {
     case V_SgCaseOptionStmt: {
-      if (spare_block != NULL) {
-        previous = transform_block(spare_block, previous,
-                                   after, continue_target);
-        delete spare_block;
-        spare_block = NULL;
+      if (spare_stmt != NULL) {
+        previous = transform_block(spare_stmt, previous,
+                                   after, continue_target,
+                                   switch_block);
+        spare_stmt = NULL;
       }
       SgCaseOptionStmt *cases = isSgCaseOptionStmt(*i);
       /* transform this block */
       previous = transform_block(cases->get_body(),
-                                 previous, after, continue_target);
+                                 previous, after, continue_target,
+                                 switch_block);
       /*
         previous->statements.push_front(cases);
         blocks->push_front(previous);
@@ -2274,6 +2362,7 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
    // info of the last statement in the case body THAT HAS A POST INFO. The
    // final part of the body may be unreachable as in test5.C.
       AstAttribute *stmt_end = NULL;
+#if 0
       if (!cases->get_body()->get_statements().empty()) {
      // AstAttribute* stmt_end =
      //   cases->get_body()->get_statements().back()->getAttribute("PAG statement end");
@@ -2292,6 +2381,30 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
             stmt_end = (*stmt)->getAttribute("PAG statement end");
         }
       }
+#endif
+   // GB (2008-08-21): With ROSE 0.9.3a, cases->get_body() returns a
+   // SgStatement *, not a SgBasicBlock * anymore. We need to differentiate
+   // what we do.
+      SgStatement *body = cases->get_body();
+      if (body->attributeExists("PAG statement end"))
+          stmt_end = body->getAttribute("PAG statement end");
+      else if (SgBasicBlock *block = isSgBasicBlock(body))
+      {
+       // Code adapted from the commented-out section above.
+          SgStatementPtrList &stmts = block->get_statements();
+          SgStatementPtrList::reverse_iterator stmt;
+          stmt = stmts.rbegin();
+          while (stmt != stmts.rend()
+                  && !(*stmt)->attributeExists("PAG statement end"))
+          {
+              ++stmt;
+          }
+          if (stmt != stmts.rend()
+                  && (*stmt)->attributeExists("PAG statement end"))
+          {
+              stmt_end = (*stmt)->getAttribute("PAG statement end");
+          }
+      }
       if (stmt_end != NULL)
         cases->addNewAttribute("PAG statement end", stmt_end);
       else
@@ -2300,11 +2413,10 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       break;
 
     case V_SgDefaultOptionStmt: {
-      if (spare_block != NULL) {
-        previous = transform_block(spare_block, previous,
-                                   after, continue_target);
-        delete spare_block;
-        spare_block = NULL;
+      if (spare_stmt != NULL) {
+        previous = transform_block(spare_stmt, previous,
+                                   after, continue_target, switch_block);
+        spare_stmt = NULL;
       }
                 
       SgDefaultOptionStmt *defaults = isSgDefaultOptionStmt(*i);
@@ -2315,7 +2427,8 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
       defaults->get_body()->addNewAttribute("PAG statement end", stmt_end);
       /* transform this block */
       previous = transform_block(defaults->get_body(),
-                                 previous, after, continue_target);
+                                 previous, after, continue_target,
+                                 switch_block);
       /* pre info is the pre info of the first block in
        * the case body */
       StatementAttribute *stmt_start =
@@ -2333,16 +2446,27 @@ CFGTraversal::do_switch_body(SgBasicBlock *block,
     }
       break;
     default:
-      if (spare_block == NULL) {
-        spare_block = new SgBasicBlock(NULL, *i);
+      if (spare_stmt == NULL) {
+     // spare_stmt = new SgBasicBlock(NULL, *i);
+        spare_stmt = *i;
       } else {
-        spare_block->prepend_statement(*i);
+     // spare_stmt->prepend_statement(*i);
+     // GB (2008-08-22): It would have been nice if I had documented this
+     // function when I wrote it. I think the right thing to do when we
+     // encounter two "spare statements" next to each other is to process
+     // the old one using transform_block, and to save the new one as a
+     // spare.
+        previous = transform_block(spare_stmt, previous,
+                                   after, continue_target, switch_block);
+        spare_stmt = *i;
       }
       break;
     }
   }
+#endif
   return blocks;
 }
+#endif
 
 int 
 CFGTraversal::find_procnum(std::string name) const

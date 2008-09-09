@@ -11,7 +11,7 @@ INCLUDES = -I$(top_srcdir)/src/satire \
 	   -I$(PAG_INCLUDE_DIR)/pag \
            -I$(PAG_INCLUDE_DIR)/pag/analyzer
 
-AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR)
+AM_LDFLAGS=-L$(ROSE_LIB_DIR) -Wl,-rpath $(ROSE_LIB_DIR) -L$(BOOST_LIB_DIR) -Wl,-rpath $(BOOST_LIB_DIR)
 
 bin_PROGRAMS = termpretty rose2term term2rose
 bin_SCRIPTS = c2term term2c
@@ -46,8 +46,8 @@ termpretty_SOURCES = termpretty.l++
 rose2term_SOURCES = toProlog.C 
 term2rose_SOURCES = toC.C 
 
-term2rose_LDADD = libtermite.a -lrose -lrt
-rose2term_LDADD = libtermite.a -lrose -lrt
+term2rose_LDADD = libtermite.a -lrose
+rose2term_LDADD = libtermite.a -lrose
 
 CLEANFILES = termparser.c++ termparser.h termlexer.c++ termpretty.c++ \
 	     termparser.tab.c++ termparser.tab.h++ \

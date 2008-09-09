@@ -1,4 +1,8 @@
-V ?????
+V0.8.4 AP,GB
+
+* General changes [GB]
+  - made SATIrE work with ROSE 0.9.3a (build 1593)
+  - better handling of switch statements in ICFG (including Duff's Device)
 
 * Termite [AP]
   - fixed the quoting of Prolog atoms.

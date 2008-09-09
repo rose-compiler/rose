@@ -3,6 +3,7 @@
 PAGDIR=@pagdir@
 ROSE_INCLUDE=@roseinclude@
 ROSE_LIB=@roselib@
+BOOST_LIB=@boostlib@
 SATIRE_LIB=@satirelib@
 SATIRE_INCLUDE=@satireinclude@
 SATIRE_DATA=@pkgdatadir@
@@ -20,8 +21,8 @@ OTHERANALYSISLIBS = ${OTHERANALYSES:%=otheranalyses/%.a}
 
 PAG = $(PAGDIR)/bin/pag
 CXXFLAGS = -O2 -Wall -ggdb -I$(ROSE_INCLUDE) -I$(PAGDIR)/include/pag -I$(PAGDIR)/include/pag/analyzer -I$(SATIRE_INCLUDE) -I$(ANALYSIS)-out/src/
-LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
-LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lpagdatatypes -lrose -lrt -lpag -lfl
+LPATH = -L$(ROSE_LIB) -Wl,-rpath $(ROSE_LIB) -L$(BOOST_LIB) -Wl,-rpath $(BOOST_LIB) -L $(PAGDIR)/lib/pag -L$(SATIRE_LIB) 
+LIBS = $(ANALYSIS).a $(OTHERANALYSISLIBS) -lsatire -lsyntree -ltermite -lpagdatatypes -lrose -lpag
 
 # common macro definitions passed on the command line
 D_FLAGS = -DANALYSIS=$(ANALYSIS) -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFIX_SET)

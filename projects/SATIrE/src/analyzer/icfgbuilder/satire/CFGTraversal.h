@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.10 2008-06-02 11:27:39 gergo Exp $
+// $Id: CFGTraversal.h,v 1.11 2008-09-09 14:21:20 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -35,10 +35,15 @@ protected:
 
 private:
     CFGTraversal();
-    BasicBlock *transform_block(SgBasicBlock *block, BasicBlock *after,
-            BasicBlock *break_target, BasicBlock *continue_target);
+ // BasicBlock *transform_block(SgBasicBlock *block, BasicBlock *after,
+    BasicBlock *transform_block(SgStatement *ast_statement, BasicBlock *after,
+            BasicBlock *break_target, BasicBlock *continue_target,
+            BasicBlock *enclosing_switch);
+#if 0
+ // GB (2008-08-22): Deprecated this function.
     BlockList *do_switch_body(SgBasicBlock *block, BasicBlock *after,
             BasicBlock *continue_target);
+#endif
     int find_procnum(std::string funcname) const;
     BasicBlock *allocate_new_block(BasicBlock *, BasicBlock *);
     BasicBlock *allocate_block_without_successor(BasicBlock *);

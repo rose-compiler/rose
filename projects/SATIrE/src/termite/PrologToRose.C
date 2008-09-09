@@ -1799,13 +1799,16 @@ PrologToRose::createVariableDeclaration(Sg_File_Info* fi,vector<SgNode*>* succs,
 SgIfStmt* 
 PrologToRose::createIfStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, SgNode* child3, PrologCompTerm* t) {
   /* condition*/
-  SgStatement* test_stmt = dynamic_cast<SgStatement*>(child1);
+  /* GB (2008-08-21): True and false bodies are now SgStatements, not
+   * SgBasicBlocks anymore; changed dynamic_casts to less verbose and more
+   * idiomatic is... calls. */
+  SgStatement* test_stmt = isSgStatement(child1);
   ROSE_ASSERT(test_stmt != NULL);
   /* if-branch*/
-  SgBasicBlock* true_branch = dynamic_cast<SgBasicBlock*>(child2);
+  SgStatement* true_branch = isSgStatement(child2);
   ROSE_ASSERT(true_branch != NULL);
   /* else branch*/
-  SgBasicBlock* false_branch = dynamic_cast<SgBasicBlock*>(child3);
+  SgStatement* false_branch = isSgStatement(child3);
   SgIfStmt* if_stmt = NULL;
   /* create statement*/
   if_stmt = new SgIfStmt(fi,test_stmt,true_branch,false_branch);
@@ -1817,7 +1820,7 @@ PrologToRose::createIfStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, SgN
 SgDoWhileStmt*
 PrologToRose::createDoWhileStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2,PrologCompTerm* t) {
   /* retrieve basic block -- there is always one*/
-  SgBasicBlock* b = isSgBasicBlock(child1);
+  SgStatement* b = isSgStatement(child1);
   /* retrieve statement */
   SgStatement* s = isSgStatement(child2);
   ROSE_ASSERT(s != NULL);
@@ -1834,7 +1837,7 @@ PrologToRose::createWhileStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, 
   SgStatement* s = isSgStatement(child1);
   ROSE_ASSERT(s != NULL);
   /* retrieve basic block*/
-  SgBasicBlock* b = isSgBasicBlock(child2);
+  SgStatement* b = isSgStatement(child2);
   /*create while statement*/
   SgWhileStmt* w = new SgWhileStmt(fi,s,b);
   ROSE_ASSERT(w != NULL);
@@ -1864,7 +1867,7 @@ SgForStatement*
 PrologToRose::createForStatement(Sg_File_Info* fi, SgNode* child1, SgNode* child2, SgNode* child3, SgNode* child4,PrologCompTerm* t) {
   SgForInitStatement* ini_stmt = dynamic_cast<SgForInitStatement*>(child1);
   SgStatement* test_stmt = dynamic_cast<SgStatement*>(child2);
-  SgBasicBlock* loop_body = dynamic_cast<SgBasicBlock*>(child4);
+  SgStatement* loop_body = dynamic_cast<SgStatement*>(child4);
   SgForStatement* f = NULL;
   //std::cerr<<ini_stmt<<std::endl;
   if (SgExpression* e = dynamic_cast<SgExpression*>(child3)) {
@@ -1911,10 +1914,10 @@ PrologToRose::createSwitchStatement(Sg_File_Info* fi, SgNode* child1, SgNode* ch
 SgCaseOptionStmt*
 PrologToRose::createCaseOptionStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, SgNode* child3, PrologCompTerm* t) {
   SgCaseOptionStmt* case_stmt = NULL;
-  SgBasicBlock* case_block = NULL;
-  /* second child must be a SgBasicBlock*/
+  SgStatement* case_block = NULL;
+  /* second child must be a SgStatement*/
   abort_unless(
-	       case_block = isSgBasicBlock(child2),
+	       case_block = isSgStatement(child2),
 	       "Could not retrieve body of case statement"
 	       );
   /* first child must be either a SgExpressionRoot or a SgExpression*/
@@ -1943,10 +1946,10 @@ PrologToRose::createCaseOptionStmt(Sg_File_Info* fi, SgNode* child1, SgNode* chi
 SgDefaultOptionStmt*
 PrologToRose::createDefaultOptionStmt(Sg_File_Info* fi, SgNode* child1, PrologCompTerm* t) {
   SgDefaultOptionStmt* default_stmt = NULL;
-  SgBasicBlock* b = NULL;
+  SgStatement* b = NULL;
   /*make sure the body is actually one.*/
   abort_unless(
-	       b = isSgBasicBlock(child1),
+	       b = isSgStatement(child1),
 	       "Body of default option is not a basic block"
 	       );
   /* make sure the statement is actually created */
@@ -2967,8 +2970,8 @@ PrologToRose::createFunctionCallExp(Sg_File_Info* fi, SgNode* child1, SgNode* ch
  */
 SgTryStmt*
 PrologToRose::createTryStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, PrologCompTerm* ct) {
-  /* first child is a SgBasicBlock*/
-  SgBasicBlock* b = isSgBasicBlock(child1);
+  /* first child is a SgStatement*/
+  SgStatement* b = isSgStatement(child1);
   ROSE_ASSERT(b != NULL);
   /*second child is a SgCatchStatementSeq*/
   SgCatchStatementSeq* s = isSgCatchStatementSeq(child2);
@@ -2988,7 +2991,7 @@ SgCatchOptionStmt*
 PrologToRose::createCatchOptionStmt(Sg_File_Info* fi, SgNode* child1, SgNode* child2, PrologCompTerm* ct) {
   SgVariableDeclaration* dec = isSgVariableDeclaration(child1);
   ROSE_ASSERT(dec != NULL);
-  SgBasicBlock* bl = isSgBasicBlock(child2);
+  SgStatement* bl = isSgStatement(child2);
   ROSE_ASSERT(bl != NULL);
   SgCatchOptionStmt* s = new SgCatchOptionStmt(fi,dec,bl,NULL);
   ROSE_ASSERT(s != NULL);

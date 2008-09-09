@@ -55,6 +55,9 @@ for file in $FILES; do
       expected_fails=$(( $expected_fails + 1 ))
       if [ $result != 0 ]; then
         fails_ok=$(( $fails_ok + 1 ))
+      # GB (2008-08-23): This is sometimes useful to see *why* expected
+      # successes fail. But mostly it should be suppressed.
+      # cat $TMPFILE
       else
         echo "** ERROR: Expected failure succeeded $analysis $options $file"
         fail_errors="$fail_errors $analysis:$file"
@@ -93,7 +96,7 @@ for file in $FILES; do
         if [ $debug == 42 ]; then echo "time_rose_ast = $time_rose_ast because: \"`grep 'AST EDG/Sage III Translation' $TMPFILE`\""; fi
         time_ast_postprocess=` cat $TMPFILE | awk '/AST post-processing: time = .* .sec/ {print $5;exit}'`
         if [ $debug == 42 ]; then echo "time_ast_postprocess = $time_ast_postprocess because: \"`grep 'AST post-processing' $TMPFILE`\""; fi
-        time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*: time = .* .sec/ {print $10;exit}'`
+        time_ast_comment=` cat $TMPFILE | awk '/AST Comment.*Wave.: time = .* .sec/ {print $12;exit}'`
         if [ $debug == 42 ]; then echo "time_ast_comment = $time_ast_comment because: \"`grep 'AST Comment' $TMPFILE`\""; fi
 
         # grep ICFG builder stats

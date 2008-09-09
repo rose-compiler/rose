@@ -1,6 +1,6 @@
 // -*- C++ -*-
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.5 2008-04-10 07:57:08 gergo Exp $
+// $Id: StatementAttributeTraversal.h,v 1.6 2008-09-09 14:21:17 gergo Exp $
 
 #ifndef STATEMENTATTRIBUTETRAVERSAL_H
 #define STATEMENTATTRIBUTETRAVERSAL_H
@@ -89,7 +89,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: StatementAttributeTraversal.h,v 1.5 2008-04-10 07:57:08 gergo Exp $
+// $Id: StatementAttributeTraversal.h,v 1.6 2008-09-09 14:21:17 gergo Exp $
 
 /* this file is inlcuded by StatementAttributeTraversal.h for template instantiation */
 
@@ -120,9 +120,10 @@ void DfiCommentAnnotator<DFI_STORE_TYPE>::addComment(std::string comment, Prepro
     new PreprocessingInfo(PreprocessingInfo::CplusplusStyleComment, 
 			  comment,
 			  "user-generated",0, 0, 0, 
-			  posSpecifier, // e.g. PreprocessingInfo::before
-			  false, 
-			  true);
+			  posSpecifier // e.g. PreprocessingInfo::before
+           // GB (2008-09-09): This function used to have two parameters
+           // more; they are gone since ROSE 0.9.3a (at least).
+              );
   node->addToAttachedPreprocessingInfo(commentInfo);
 }
 

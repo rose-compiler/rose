@@ -43,6 +43,8 @@
     #define o_@PREFIX@o_typeid_str              o_typeid_str
     #define o_@PREFIX@o_exprid_typeid           o_exprid_typeid
     #define o_@PREFIX@o_add_tmpvarid            o_add_tmpvarid
+    #define o_@PREFIX@o_expr_asttext            o_expr_asttext
+    #define o_@PREFIX@o_stmt_asttext            o_stmt_asttext
 
  /* deprecated support functions */ 
     #define o_@PREFIX@o_type_to_typenum         o_type_to_typenum
