@@ -23,7 +23,7 @@ stack based implementation).  So then we assume:
 In this memory model a write to the {\em return address} is a security flaw (violation).
 The development of a grammar specific to security flaws that uses a specific memory model
 may be a way of enumerating all the variations of a specific security flaws instantiation.
-Gnerating code for each enumerated security flaw in the grammar would define all possible
+Generating code for each enumerated security flaw in the grammar would define all possible
 security flaw programs.  Limiting the depth of the recursion would make this a finite
 number of programs.
 
@@ -37,7 +37,7 @@ number of programs.
          at least argue it better).
 
    \item ROSE is well suited to construct these sorts of tools this since it has a high
-         level AST represnetation, most of the program analysis required, the AST subtree
+         level AST representation, most of the program analysis required, the AST subtree
          copy mechanisms, the transformation support to introduce the security flaws, and 
          the code generation support to many different generate different versions of
          the security flaw.

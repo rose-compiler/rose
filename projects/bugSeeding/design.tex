@@ -419,7 +419,7 @@ to security flaws).
 
 \section{Design}
 
-The define of a tranlator to seed bugs into existing applications will be based on 
+The define of a translator to seed bugs into existing applications will be based on 
 the ROSE source-to-source compiler infrastructure.  Likely any source-to-source
 compiler infrastructure might alternatively work as well, or could be adapted.
 
@@ -438,19 +438,19 @@ be seeded, it does not detect an existing security flaw in the input application
 this part of the project is expected to be of value all alone as a way to count
 and record the locations of opportunities for flaw so that the number of identified
 flaws by static analysis tools can be reasoned via a percentable of the opportunities
-for the flaw instead of just a totla count.  This sort of evaluation does not
+for the flaw instead of just a total count.  This sort of evaluation does not
 require the security flaw seeding that is much of the purpose of the rest of the
-design.  Note that markes (AST Attributes) are attached to relevant IR nodes during this
+design.  Note that markers (AST Attributes) are attached to relevant IR nodes during this
 phase.  A data structure called {\tt SecurityVulnerabilityAttribute} is placed at
 each location in the source code where a specific type of vulnerability could exist
 (see figure xxx).
 
-   \item Clone fragements of code in the application to support seeding \\
+   \item Clone fragments of code in the application to support seeding \\
    The user decides if flaws will be seeded into the application or into copied pieces 
 of the applications (clones). It is expected that if all possible security flaws were to
 be seeded into a single application that this would confuse the static analysis and 
 we would not have a meaningful evaluation of static analysis tools.  To support 
-a more refined approach fragements of different sizes are copied to support the 
+a more refined approach fragments of different sizes are copied to support the 
 seeding of flaws (with a definable number of flaws per clone).
 
 

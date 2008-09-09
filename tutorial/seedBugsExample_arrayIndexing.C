@@ -73,7 +73,7 @@ BugSeeding::evaluateInheritedAttribute (
             // Build a new expression: "array[n]" --> "array[n+arraySizeCopy]", where the arraySizeCopy is a size of "array"
                SgExpression* newIndexExpression = buildAddOp(indexExpression,arraySizeCopy);
 
-            // Subsitute the new expression for the old expression
+            // Substitute the new expression for the old expression
                arrayReference->set_rhs_operand(newIndexExpression);
              }
         }
@@ -92,7 +92,7 @@ main (int argc, char *argv[])
 
      treeTraversal.traverseInputFiles (project,inheritedAttribute);
 
-  // Running interlan tests (optional)
+  // Running internal tests (optional)
      AstTests::runAllTests (project);
 
   // Output the new code seeded with a specific form of bug.
