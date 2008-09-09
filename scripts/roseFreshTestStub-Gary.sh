@@ -22,11 +22,6 @@ MAILADDRS="yuangm@gmail.com"
 
 export ROSE_TOP=${ROSE_TEST_REGRESSION_ROOT}/rose/fresh/`date +%F-%H%M`
 
-MYCC="${ROSE_TEST_REGRESSION_ROOT}/scripts/utils/gcc"
-MYCXX="${ROSE_TEST_REGRESSION_ROOT}/scripts/utils/g++"
-#UTILS=${ROSE_TEST_REGRESSION_ROOT}/scripts/utils
-MAKEFLAGS="CC=${MYCC} CXX=${MYCXX} CCLD=${MYCC} CXXLD=${MYCXX}"
-
 KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes
 
