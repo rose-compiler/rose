@@ -12,8 +12,9 @@ BLOCK
 label: snum#
 
 PROBLEM srw98
+  prefix    : srw98
   direction : forward
-  carrier   : dfi
+  carrier   : ShapeGraphLifted
   init      : bot
   init_start: lift((({},{}),{}))
   combine   : comb
@@ -25,14 +26,14 @@ TRANSFER
 #include "../common_transfer.optla"
 
 SUPPORT
-comb::dfi,dfi->dfi;
+comb::ShapeGraphLifted,ShapeGraphLifted->ShapeGraphLifted;
 comb(a,bot) = a;
 comb(a,top) = top;
 comb(bot,b) = b;
 comb(top,b) = top;
 comb(  a,b) = case drop(a),drop(b) of ((V1,E1),I1),((V2,E2),I2) => lift(((union(V1,V2),union(E1,E2)),union(I1,I2))); endcase;
 
-wide::dfi,dfi->dfi;
+wide::ShapeGraphLifted,ShapeGraphLifted->ShapeGraphLifted;
 wide(a,b) = b;
 
 eq(a,b) = a=b;
@@ -52,8 +53,8 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraph->ShapeGraph;
 extract_graphs::ShapeGraph->SrwNnhPair;
 extract_graphs(sg) = (sg,sgSet_to_sgList(srwSG_to_nnhSG(sg)));
 
-// convert carrier to set of shapegraphs for alias computation
-shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
+// FIXME still required for alias computation:
+shape_carrier_to_shapegraphset::ShapeGraphLifted->ShapeGraphSet;
 shape_carrier_to_shapegraphset(lifted_sg) = srwSG_to_nnhSG(drop(lifted_sg));
 
 // ----------------------------------------

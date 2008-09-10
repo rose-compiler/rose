@@ -8,11 +8,20 @@
 // assign normalises to handle arbitrarily nested expressions
 // ----------------------------------------------------------
 
+delete_vars::dfi,*VariableSymbolNT->dfi;
+delete_vars(g,[!]) = g;
+delete_vars(g,VariableSymbol(_) as v::vs) = delete_vars(delete_var(g,varsym_varid(v)), vs);
+
+delete_var::dfi,VariableId->dfi;
+delete_var(top,_) = top;
+delete_var(bot,_) = bot;
+delete_var(  g,v) = lift(tassign_x_null(v,drop(g)));
+
 assign::Expression,Expression,dfi-> dfi;
 assign(_,_,top) = top;
 assign(_,_,bot) = bot;
 assign(lhs,rhs,lifted_g) =
-  let dummy = debug_print_str("assign", expr_asttext(lhs)." = ".expr_asttext(rhs)."\n"); in
+  /* let dummy = debug_print_str("assign", expr_asttext(lhs)." = ".expr_asttext(rhs)."\n"); in */
 
   // allocate one tempvar for each normalisation step
   let lhs_vars = allocate_tmpvars(lhs,expr_depth(lhs));
@@ -86,7 +95,7 @@ normalisation_ops(Side_LHS, e, 0, tmpvars) = // create fragment as last opcode
     VarRefExp(_) as ref_x                                   => [(LHS_X, [varref_varid(ref_x)])];
     ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) => [(LHS_XSEL, [varref_varid(ref_x),varref_varid(ref_sel)])];
     DotExp(PointerDerefExp(_),VarRefExp(_) as ref_sel)      => [(LHS_XSEL, [pick(tmpvars,1),varref_varid(ref_sel)])];
-    ex                                                      => print(expr_asttext(ex)) print(": ") error("unhandled lhs expression");
+    ex                                                      => /* print(expr_asttext(ex)) print(": ")*/ error("unhandled lhs expression");
   endcase;
 
 normalisation_ops(Side_RHS, e, 0, tmpvars) = // create fragment as last opcode
@@ -97,7 +106,7 @@ normalisation_ops(Side_RHS, e, 0, tmpvars) = // create fragment as last opcode
     NewExp(_,_,_)                                           => [(RHS_NEW,  [])];
     CastExp(IntVal(n),_)                                    => [(RHS_NULL, [])];
     IntVal(_)                                               => [(RHS_NULL, [])];
-    ex                                                      => print(expr_asttext(ex)) print(": ") error("unhandled rhs expression");
+    ex                                                      => /* print(expr_asttext(ex)) print(": ")*/ error("unhandled rhs expression");
   endcase;
 normalisation_ops(side,_,0,_) = print(side) print(": ") error("unknown EnumSide value.");
 normalisation_ops(side, e, e_cursor, tmpvars) = // create opcodes for normalisation steps
@@ -105,7 +114,7 @@ normalisation_ops(side, e, e_cursor, tmpvars) = // create opcodes for normalisat
   case expr_at(e,e_cursor) of
     ArrowExp(VarRefExp(_) as ref_x,VarRefExp(_) as ref_sel) => [(OP_X_YSEL, [tmp,varref_varid(ref_x),varref_varid(ref_sel)])];       // $tmp = x.sel
     DotExp(PointerDerefExp(_),VarRefExp(_) as ref_sel)      => [(OP_X_YSEL, [tmp,pick(tmpvars,e_cursor+1),varref_varid(ref_sel)])];  // $tmp = $prev_tmp.sel
-    ex                                                      => print(expr_asttext(ex)) print(": ") error("unhandled expression");
+    ex                                                      => /* print(expr_asttext(ex)) print(": ")*/ error("unhandled expression");
   endcase ++ normalisation_ops(side, e, e_cursor - 1, tmpvars);
 
 // ----------------------------------------------------------

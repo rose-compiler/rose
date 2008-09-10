@@ -12,4 +12,4 @@ HeapEdgeTupleSet  = set(HeapEdgeTuple)   // for check_inv3
 NodeSetList       = list(NodeSet)        // for check_inv4
 
 DOMAIN
-dfi = flat(ShapeGraphSet)
+ShapeGraphSetLifted = flat(ShapeGraphSet)

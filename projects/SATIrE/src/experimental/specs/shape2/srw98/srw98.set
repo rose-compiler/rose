@@ -7,4 +7,4 @@ SET
 #include "../common.set"
 
 DOMAIN
-dfi = flat(ShapeGraph)
+ShapeGraphLifted = flat(ShapeGraph)

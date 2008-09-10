@@ -9,3 +9,14 @@ nnh99/ The analysis described in the book "Principle of Program Analysis"
 
 srw98/ The analysis from TOPLAS'98, "Solving shape-analysis problems
        in languages with destructive updating" (M. Sagiv, T. Reps, R. Wilhelm)
+
+
+
+Targets to choose from:
+
+  nnh99shape -- builds nnh99 standalone
+  srw98shape -- builds srw98 standalone
+  all -- both of the above
+
+  shapetool -- both analyses in a single executable
+

@@ -14,8 +14,9 @@ BLOCK
 label       : snum#
 
 PROBLEM nnh99
+  prefix    : nnh99
   direction : forward
-  carrier   : dfi
+  carrier   : ShapeGraphSetLifted
   init      : bot
   init_start: lift({(({},{}),{})})
   combine   : comb
@@ -27,14 +28,14 @@ TRANSFER
   #include "../common_transfer.optla"
 
   SUPPORT
-comb::dfi,dfi->dfi;
+comb::ShapeGraphSetLifted,ShapeGraphSetLifted->ShapeGraphSetLifted;
 comb(a,bot) = a;
 comb(a,top) = top;
 comb(bot,b) = b;
 comb(top,b) = top;
 comb(  a,b) = lift(union(drop(a),drop(b)));
 
-wide::dfi,dfi->dfi;
+wide::ShapeGraphSetLifted,ShapeGraphSetLifted->ShapeGraphSetLifted;
 wide(a,b) = b;
 
 eq(a,b) = a=b;
@@ -57,7 +58,8 @@ tassign_xsel_y::VariableId,VariableId,VariableId,ShapeGraphSet->ShapeGraphSet;
 extract_graphs::ShapeGraphSet->SrwNnhPair;
 extract_graphs(sg) = (nnhSG_to_srwSG(sg), sgSet_to_sgList(sg));
 
-shape_carrier_to_shapegraphset::dfi->ShapeGraphSet;
+// FIXME still required for alias-computation
+shape_carrier_to_shapegraphset::ShapeGraphSetLifted->ShapeGraphSet;
 shape_carrier_to_shapegraphset(lifted_sg) = drop(lifted_sg);
 
 // ----------------------------------------

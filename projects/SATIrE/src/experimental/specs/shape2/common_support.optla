@@ -4,16 +4,6 @@
 // E-mail: e0425543@student.tuwien.ac.at
 // Year  : 2006, 2007, 2008
 
-
-delete_vars::dfi,*VariableSymbolNT->dfi;
-delete_vars(g,[!]) = g;
-delete_vars(g,VariableSymbol(_) as v::vs) = delete_vars(delete_var(g,varsym_varid(v)), vs);
-
-delete_var::dfi,VariableId->dfi;
-delete_var(top,_) = top;
-delete_var(bot,_) = bot;
-delete_var(  g,v) = lift(tassign_x_null(v,drop(g)));
-
 extract_stackedge_set::ShapeGraph->StackEdgeSet;
 extract_stackedge_set(((se,_),_)) = se;
 
