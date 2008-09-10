@@ -487,3 +487,8 @@ SgUndirectedGraphEdge
 SgGraphNodeList
 SgGraphEdgeList
 SgAsmInterpretation
+SgAsmGenericString
+SgAsmBasicString
+SgAsmElfString
+SgAsmElfStringStorage
+SgAsmElfStrtab

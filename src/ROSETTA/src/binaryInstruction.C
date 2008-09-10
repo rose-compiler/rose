@@ -165,7 +165,11 @@ Grammar::setUpBinaryInstructions ()
   // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
      NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
      NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
+
+  // DQ (9/9/2008): Added support for String Table (part of Robb's work)
+     NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
+
+     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStrtab, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTable,  "AsmElfSegmentTable",  "AsmElfSegmentTableTag"  );
@@ -246,15 +250,28 @@ Grammar::setUpBinaryInstructions ()
   //                                            AsmGenericSectionList | AsmGenericSegmentList,
   //                         "AsmGenericSupport",    "AsmGenericSupportTag", false );
 
+#if 1
+  // New IR nodes to support string table transformations in Binary
+     NEW_TERMINAL_MACRO ( AsmBasicString,        "AsmBasicString",        "AsmBasicStringTag"        );
+     NEW_TERMINAL_MACRO ( AsmElfString,          "AsmElfString",          "AsmElfStringTag"          );
+     NEW_NONTERMINAL_MACRO ( AsmGenericString, AsmBasicString | AsmElfString, "AsmGenericString", "AsmGenericStringTag", false /* canHaveInstances = false */ );
+
+     NEW_TERMINAL_MACRO ( AsmElfStringStorage,   "AsmElfStringStorage",   "AsmElfStringStorageTag"   );
+#endif
+
+
+
   // Root of class hierarchy for binary file support
      NEW_NONTERMINAL_MACRO ( AsmExecutableFileFormat,
-               AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList      |
-               AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol       | AsmGenericSymbolList   |
-               AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList       | AsmElfDynamicEntry     | AsmElfDynamicEntryList | AsmElfSegmentTableEntryList |
-               AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry | AsmPERVASizePair       | AsmCoffSymbolList      | AsmPERVASizePairList        | AsmPEDLLList |
-               AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry |
-               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry | 
-               AsmGenericSectionList   | AsmGenericHeaderList    | AsmPEImportHintNameList, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
+               AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList           |
+               AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | 
+               AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString |
+               AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | 
+               AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmElfStringStorage |
+               AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry      | 
+               AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmPEDLLList | AsmPEImportHintNameList |
+               AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      |
+               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
@@ -382,6 +399,28 @@ Grammar::setUpBinaryInstructions ()
   // This is a location where we can put some types that are used everywhere in the binary file format support.
      AsmExecutableFileFormat.setFunctionPrototype ( "HEADER_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
 
+     AsmGenericString.setFunctionPrototype ( "HEADER_GENERIC_STRING", "../Grammar/BinaryInstruction.code");
+
+  // std::string p_string;
+     AsmBasicString.setFunctionPrototype ( "HEADER_BASIC_STRING", "../Grammar/BinaryInstruction.code");
+     AsmBasicString.setDataPrototype("std::string","string","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmElfString.setFunctionPrototype ( "HEADER_ELF_STRING", "../Grammar/BinaryInstruction.code");
+     AsmElfString.setDataPrototype("SgAsmElfStringStorage*","storage","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // SgAsmElfStrtab *p_strtab;
+  // std::string p_string;
+  // rose_addr_t p_offset;
+     AsmElfStringStorage.setFunctionPrototype ( "HEADER_ELF_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
+     AsmElfStringStorage.setDataPrototype("SgAsmElfStrtab*","strtab","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfStringStorage.setDataPrototype("std::string","string","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfStringStorage.setDataPrototype("rose_addr_t","offset","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // These are the native-format versions of the same members described in Elf*FileHeader_disk
   // unsigned char       e_ident_file_class, e_ident_data_encoding, e_ident_file_version, e_ident_padding[9];
   // unsigned            e_type, e_machine, e_version;
@@ -458,6 +497,24 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","st_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+  // typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
+  // referenced_t referenced;
+  // typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
+  // freelist_t freelist;
+  // size_t num_freed;
+  // class SgAsmElfStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
+     AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+     AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
+     AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::freelist_t","freelist","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfStrtab.setDataPrototype("SgAsmElfStringStorage*","empty_string","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
@@ -1808,6 +1865,9 @@ Grammar::setUpBinaryInstructions ()
   // Binary File Format
      AsmExecutableFileFormat.setFunctionSource ( "SOURCE_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
 
+  // DQ (9/9/2008): This is the class has has the std::string data member
+     AsmBasicString.setFunctionSource ( "SOURCE_BASIC_STRING", "../Grammar/BinaryInstruction.code");
+
      AsmGenericHeader.setFunctionSource ( "SOURCE_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
      AsmGenericSection.setFunctionSource ( "SOURCE_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmGenericFormat.setFunctionSource ( "SOURCE_GENERIC_FORMAT", "../Grammar/BinaryInstruction.code");
@@ -1817,11 +1877,13 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericFile.setFunctionSource ( "SOURCE_GENERIC_FILE", "../Grammar/BinaryInstruction.code");
      AsmGenericDLL.setFunctionSource ( "SOURCE_GENERIC_DLL", "../Grammar/BinaryInstruction.code");
      AsmGenericDLLList.setFunctionSource ( "SOURCE_GENERIC_DLL_LIST", "../Grammar/BinaryInstruction.code");
+     AsmGenericString.setFunctionSource ( "SOURCE_GENERIC_STRING", "../Grammar/BinaryInstruction.code");
 
      AsmElfFileHeader.setFunctionSource ( "SOURCE_ELF_HEADER", "../Grammar/BinaryInstruction.code");
      AsmElfSectionTable.setFunctionSource ( "SOURCE_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfSectionTableEntry.setFunctionSource ( "SOURCE_ELF_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSection.setFunctionSource ( "SOURCE_ELF_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfStrtab.setFunctionSource ( "SOURCE_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicSection.setFunctionSource ( "SOURCE_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicEntry.setFunctionSource ( "SOURCE_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
      AsmElfSegmentTable.setFunctionSource ( "SOURCE_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
@@ -1831,7 +1893,8 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSymbolSection.setFunctionSource ( "SOURCE_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolList.setFunctionSource ( "SOURCE_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbol.setFunctionSource ( "SOURCE_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
-     AsmPEDLL.setFunctionSource ( "SOURCE_PE_DLL", "../Grammar/BinaryInstruction.code");
+     AsmElfString.setFunctionSource ( "SOURCE_ELF_STRING", "../Grammar/BinaryInstruction.code");
+     AsmElfStringStorage.setFunctionSource ( "SOURCE_ELF_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
 
      AsmPERVASizePair.setFunctionSource ( "SOURCE_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setFunctionSource ( "SOURCE_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
@@ -1843,6 +1906,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEImportSection.setFunctionSource ( "SOURCE_PE_IMPORT_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPEExtendedDOSHeader.setFunctionSource ( "SOURCE_PE_EXTENDED_DOS_HEADER", "../Grammar/BinaryInstruction.code");
      AsmPESectionTableEntry.setFunctionSource ( "SOURCE_PE_SECTION_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmPEDLL.setFunctionSource ( "SOURCE_PE_DLL", "../Grammar/BinaryInstruction.code");
   // AsmCoffSymbolList.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbol.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
 

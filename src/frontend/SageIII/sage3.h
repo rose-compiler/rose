@@ -199,8 +199,11 @@ using namespace __gnu_cxx;
 // DQ (9/231/2005): Map these to the C library memory alloction/deallocation functions.
 // These could use alternative allocators which allocate on page boundaries in the future.
 // This is part of the support for memory pools for the Sage III IR nodes.
-#define ROSE_MALLOC malloc
-#define ROSE_FREE free
+// #define ROSE_MALLOC malloc
+// #define ROSE_FREE free
+// DQ (9/9/2008): Don't let this be confused by a member function called "free" in Robb's work.
+#define ROSE_MALLOC ::malloc
+#define ROSE_FREE ::free
 
 // DQ (10/6/2006): Allow us to skip the support for caching so that we can measure the effects.
 #define SKIP_BLOCK_NUMBER_CACHING 0

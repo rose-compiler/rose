@@ -113,6 +113,12 @@ HEADER_START
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
 #endif
 
+      /*! \brief Computes the number of nodes in the defined subtree of the AST.
+
+          This function is used as a basis for steps in AST isomophism tests.
+       */
+          size_t numberOfNodesInSubtree();
+
      public:
        // [MK] Member function to access attached preprocessing info 
           AttachedPreprocessingInfoType*& getAttachedPreprocessingInfo(void);

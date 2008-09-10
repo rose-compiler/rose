@@ -104,7 +104,7 @@ if ROSE_USE_YICES
 endif
 
 # ROSE-WINE Package (Wine is a package to permit execution of Windows binaries under Linux)
-if ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT
+if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
   ROSE_WINE_INCLUDES = -I$(wine_path)/include
 endif
 
@@ -191,11 +191,12 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
-	 $(ROSE_PHP_INCLUDES) \
+     $(ROSE_PHP_INCLUDES) \
      $(VALGRIND_CFLAGS) \
-	 $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
-#     $(WAVE_INCLUDES) \
-#     $(ROSE_YICES_INCLUDES) \
+     $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
+
+# DQ: Not used currently
+#     $(ROSE_YICES_INCLUDES)
 #     $(ROSE_WINE_INCLUDES)
 
 # DQ (5/3/2007): Removed from ROSE

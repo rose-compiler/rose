@@ -1176,6 +1176,23 @@ HEADER_START
        */
        // static std::map<SgNode*,std::string> & get_globalMangledNameMap();
 
+      /*! \brief Computes the number of nodes in the defined subtree of the AST.
+
+          This function is used as a basis for steps in AST isomophism tests.
+          The implementation uses a traversal of the AST subtree to count the 
+          number of IR nodes. So the complexity if order N in the size of the subtree. 
+       */
+          int numberOfNodesInSubtree();
+
+      /*! \brief Computes the depth of the current defined subtree of the AST.
+
+          This function is used as a basis for steps in AST isomophism tests.
+          The implementation uses a traversal of the AST subtree to count the 
+          depth of the AST traversal. So the complexity if order N in the size 
+          of the subtree. 
+       */
+          int depthOfSubtree();
+
      protected:
 
         /*! \brief Final initializaion for constructors
