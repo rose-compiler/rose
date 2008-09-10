@@ -7,14 +7,13 @@
   
   (define-struct state
     (variable-counter
-     clauses
-     known-unsatisfiable
-     or-gate-cse-table
-     mux-cse-table)
+     clause-string
+     num-clauses
+     known-unsatisfiable)
     #f)
   
   (define (make-empty-state)
-    (make-state 1 '() #f (make-hash-table 'equal) (make-hash-table 'equal)))
+    (make-state 1 "" 0 #f))
 
   (define (variable! st)
     (let ((c (state-variable-counter st)))
@@ -33,25 +32,27 @@
           (cons m (sort-numbers (remove-one m ls))))))
   (define (add-clause! st cl)
     (cond
-      ((state-known-unsatisfiable st) (set-state-clauses! st '()))
+      ((state-known-unsatisfiable st) (set-state-clause-string! st "0") (set-state-num-clauses! 1))
       ((memq #t cl) (void))
+      ((has-inverses? cl) (void))
       (else
        (let ((cl (filter (lambda (x) x) cl)))
          (if (null? cl)
              (set-state-known-unsatisfiable! st #t) ; fail
-             (set-state-clauses! st (cons cl (state-clauses st))))))))
+             (begin
+               (set-state-clause-string! st (string-append (state-clause-string st) (clause-to-string cl)))
+               (set-state-num-clauses! st (add1 (state-num-clauses st)))))))))
+  (define (clause-to-string cl)
+    (format "~a 0~n" (string-join (map number->string cl) " ")))
 
   (define (variable-count st) (state-variable-counter st))
-  (define (clause-count st) (if (state-known-unsatisfiable st) #f (length (state-clauses st))))
+  (define (clause-count st) (if (state-known-unsatisfiable st) #f (state-num-clauses st)))
   
   (define (to-dimacs st)
     (format "p cnf ~a ~a~n~a"
             (variable-count st)
             (clause-count st)
-            (string-concatenate
-             (map (lambda (cl)
-                    (format "~a 0~n" (string-join (map number->string cl) " ")))
-                  (state-clauses st)))))
+            (state-clause-string st)))
   
   (define (from-picosat output)
     (let* ((tokens (string-tokenize output))
@@ -126,14 +127,18 @@
   (define (run-picosat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((null? (state-clauses st)) '())
+      ((zero? (state-num-clauses st)) '())
       (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs st))))))
   
   (define (run-minisat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((null? (state-clauses st)) '())
-      (else (from-minisat (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))))
+      ((zero? (state-num-clauses st)) '())
+      (else
+        (let ((minisat-result (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))
+          ;(pretty-print (to-dimacs st))
+          ;(pretty-print minisat-result)
+          (from-minisat minisat-result)))))
 
   (define run-solver run-minisat)
   
@@ -162,8 +167,9 @@
   (define (force-0! st var) (force-1! st (inv var)))
   (define (unsatisfiable! st)
     #;(pretty-print `(unsatisfiable!))
-    (set-state-clauses! st '())
-    (add-clause! st `()))
+    (set-state-known-unsatisfiable! st #t)
+    (set-state-clause-string! st "0")
+    (set-state-num-clauses! st 1))
   
   (define (has-inverses? vars)
     (if (null? vars)
@@ -186,13 +192,9 @@
             ((null? inputs) #f)
             ((null? (cdr inputs)) (car inputs))
             (else
-             (let ((cse-entry (hash-table-get (state-or-gate-cse-table st) inputs #f)))
-               (if cse-entry
-                   (begin #;(pretty-print `(got ,inputs -> ,cse-entry from table)) cse-entry)
-                   (let ((output (variable! st)))
-                     (make-reduction-tree st 5 or-gate-raw! output inputs)
-                     (hash-table-put! (state-or-gate-cse-table st) inputs output)
-                     output))))))))
+              (let ((output (variable! st)))
+                (apply or-gate-raw! st output inputs)
+                output))))))
   
   (define (nor-gate! st . inputs) (inv (apply or-gate! st inputs)))
   (define (and-gate! st . inputs) (inv (apply or-gate! st (map inv inputs))))
@@ -224,8 +226,6 @@
       ((eq? in-true #t) (or-gate! st sel in-false))
       ((eqv? in-true in-false) in-true)
       ((< in-false in-true) (mux! st (inv sel) in-false in-true))
-      ((hash-table-get (state-mux-cse-table st) (list sel in-true in-false) #f)
-       => (lambda (output) output))
       (else
        (let ((output (variable! st)))
          ;(pretty-print `(mux! ,sel ,in-true ,in-false -> ,output))
@@ -233,11 +233,10 @@
          (add-clause! st `(,sel ,(inv in-false) ,output))
          (add-clause! st `(,(inv sel) ,in-true ,(inv output)))
          (add-clause! st `(,(inv sel) ,(inv in-true) ,output))
-         (hash-table-put! (state-mux-cse-table st) (list sel in-true in-false) output)
          output))))
   
   (define (xor2-gate! st in1 in2)
-    (mux! st in1 (inv in2) in2))
+    (and-gate! st (or-gate! st in1 in2) (nand-gate! st in1 in2)))
   
   (define (remove-one elt ls)
     (cond
@@ -257,28 +256,31 @@
   
   (define (xnor-gate! st . inputs) (inv (apply xor-gate! st inputs)))
   
-  (define (threshold-gate! st required-count . inputs)
+  (define (threshold-gate-chain! st k . inputs) ; Returns list of at-least-0-of-n, at-least-1-of-n, ..., at-least-k-of-n
     (cond
-      ((zero? required-count) #t)
-      ((> required-count (length inputs)) #f)
-      ((= required-count (length inputs)) (apply and-gate! st inputs))
-      ((= required-count 1) (apply or-gate! st inputs))
-      ((memq #f inputs) (apply threshold-gate! st required-count (remove-one #f inputs)))
-      ((memq #t inputs) (apply threshold-gate! st (sub1 required-count) (remove-one #t inputs)))
-      (else (mux! st
-                  (car inputs)
-                  (apply threshold-gate! st (sub1 required-count) (cdr inputs))
-                  (apply threshold-gate! st required-count (cdr inputs))))))
+      ((zero? k) '())
+      ((null? inputs) (list #t))
+      ((memq #f inputs) (take (append (apply threshold-gate-chain! st k (remove-one #f inputs)) (list #f)) k))
+      ((memq #t inputs) (cons #t (apply threshold-gate-chain! st (sub1 k) (remove-one #t inputs))))
+      (else (let* ((rest (apply threshold-gate-chain! st k (cdr inputs)))
+                   (chain-for-false (take (append rest (list #f)) k))
+                   (chain-for-true (cons #t (take rest (sub1 k)))))
+              (map (lambda (cf ct)
+                     (add-clause! st `(,(inv cf) ,ct))
+                     (mux! st (car inputs) ct cf))
+                   chain-for-false chain-for-true)))))
   
+  (define (threshold-gate! st required-count . inputs)
+    (last (apply threshold-gate-chain! st required-count inputs)))
+
   (define (majority-gate! st in1 in2 in3)
     (threshold-gate! st 2 in1 in2 in3))
   
   (provide state)
   (provide state-variable-counter)
-  (provide state-clauses)
+  (provide state-clause-string)
+  (provide state-num-clauses)
   (provide state-known-unsatisfiable)
-  (provide state-or-gate-cse-table)
-  (provide state-mux-cse-table)
   (provide make-empty-state)
   (provide variable!)
   (provide variable-count)
@@ -300,6 +302,7 @@
   (provide xor-gate!)
   (provide xnor-gate!)
   (provide threshold-gate!)
+  (provide threshold-gate-chain!)
   (provide majority-gate!)
   
   )

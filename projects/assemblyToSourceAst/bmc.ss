@@ -1,3 +1,5 @@
+(module bmc scheme
+(require (only-in (lib "mzscheme") fluid-let))
 (require scheme/pretty)
 (require scheme/match)
 (require srfi/1)
@@ -310,6 +312,19 @@
 
 (set! data (map fold-lets data))
 
+(define (basic-simple? x) (or (number? x) (boolean? x) (symbol? x)))
+(define (always-simple? x) #t)
+(define (memory-simple? x)
+  (or (basic-simple? x)
+      (and (list? x)
+           (memq (car x) '(memoryWriteDWord memoryWriteWord memoryWriteByte)))))
+
+(define (annotate-types e tenv)
+  `(,(infer-type e tenv) . ,(if (list? e) 
+                                (cons (car e) (map (lambda (e2) (annotate-types e2 tenv)) (cdr e)))
+                                e)))
+
+
 (define (copy-and-constant-prop e al simple?)
   ;(pretty-print `(copy-and-constant-prop ,e ,al ,simple?))
   (letrec ((subst-expr
@@ -335,9 +350,6 @@
                               ,@(map (match-lambda (`(,k* ,body) `(,k* ,(copy-and-constant-prop body al simple?))))
                                      cases)))
     (_ (error "copy-and-constant-prop" e)))))
-
-(define (basic-simple? x) (or (number? x) (boolean? x) (symbol? x)))
-(define (always-simple? x) #t)
 
 (set! data (map (lambda (e) (copy-and-constant-prop e '() basic-simple?)) data))
 
@@ -397,6 +409,134 @@
     (`(parallel-assign ,al) e)
     (`(expr ,_) e)
     (_ (error "remove-unused-variables" e))))
+
+(define (simplify-one-pass s)
+  (let ((st (make-empty-bbstate)))
+    (letrec ((simplify-expr
+              (lambda (e ccp-map tenv)
+                (let loop ((e e))
+                  (fluid-let ((st (copy-bbstate st)))
+                  ;(pretty-print `(simplify-expr ,e))
+                  ;(pretty-print `(-> ,(annotate-types e tenv) ,tenv))
+                  (let* ((e (cond
+                              ((list? e) (cons (car e) (map loop (cdr e))))
+                              ((assq e ccp-map) => cdr)
+                              (else e)))
+                         ;(_ (pretty-print `(e2 ,e)))
+                         (t (infer-type e tenv))
+                         ;(_ (pretty-print `(,e ,t)))
+                         (c
+                          (match t
+                            (`(memory ,_) #f)
+                            (_ (is-constant-base? st t (annotate-types e tenv))))))
+                    (or c
+                        (match e
+                          ((? number?) e)
+                          (`(if-e 0 ,a ,b) (pretty-print `(picking false branch)) b)
+                          (`(if-e ,(? number?) ,a ,b) (pretty-print `(picking true branch)) a)
+                          (`(if-e ,p ,a ,b)
+                           (let ((c2 (is-constant-base?
+                                      st
+                                      t
+                                      `(,t xor ,(annotate-types a tenv) ,(annotate-types b tenv)))))
+                             (if (eqv? c2 0)
+                                 (begin (pretty-print `(branches are same)) a)
+                                 `(if-e ,p
+                                        ,(fluid-let ((st (copy-bbstate st)))
+                                           (convert-constraints
+                                            st
+                                            (list `(check ,(annotate-types p tenv)))
+                                            (lambda _ (void)))
+                                           (simplify-expr a ccp-map tenv))
+                                        ,(fluid-let ((st (copy-bbstate st)))
+                                           (convert-constraints
+                                            st
+                                            (list `(check (bool logical-not ,(annotate-types p tenv))))
+                                            (lambda _ (void)))
+                                           (simplify-expr b ccp-map tenv))))))
+                          (`(memoryReadByte (memoryWriteByte ,m ,addr ,val) ,addr2)
+                           (loop `(if-e (equal ,addr ,addr2) ,val (memoryReadByte ,m ,addr2))))
+                          (e e))))))))
+             (simplify-stmt
+              (lambda (s ccp-map tenv) ; -> s'
+                (fluid-let ((st (copy-bbstate st)))
+                  (match s
+                    (`(begin . ,s*) `(begin . ,(map (lambda (s) (simplify-stmt s ccp-map tenv)) s*)))
+                    (`(goto ,l) s)
+                    (`(let ((,t ,var ,val)) ,body)
+                     (let ((val2 (simplify-expr val ccp-map tenv))
+                           (tenv (cons (cons var t) tenv))
+                           (_ (convert-constraints st
+                                                   (list `(define ,var ,(annotate-types val tenv)))
+                                                   (lambda _ (void)))))
+                       (if (memory-simple? val2)
+                           (simplify-stmt body (cons (cons var val2) ccp-map) tenv)
+                           `(let ((,t ,var ,val2)) ,(simplify-stmt body ccp-map tenv)))))
+                    (`(if (expr ,p) ,a ,b)
+                     (let ((p (simplify-expr p ccp-map tenv)))
+                       (cond
+                         ((and (number? p) (zero? p))
+                          (begin
+                            (pretty-print `(picking false if branch))
+                            (convert-constraints st
+                                                 `((check (bool logical-not ,(annotate-types p tenv))))
+                                                 (lambda _ (void)))
+                            (simplify-stmt b ccp-map tenv)))
+                         ((number? p)
+                          (begin
+                            (pretty-print `(picking true if branch))
+                            (convert-constraints st
+                                                 `((check ,(annotate-types p tenv)))
+                                                 (lambda _ (void)))
+                            (simplify-stmt a ccp-map tenv)))
+                         (else `(if (expr ,p)
+                                    ,(fluid-let ((st (copy-bbstate st)))
+                                       (convert-constraints st
+                                                            `((check ,(annotate-types p tenv)))
+                                                            (lambda _ (void)))
+                                       (simplify-stmt a
+                                                      ccp-map
+                                                      tenv))
+                                    ,(fluid-let ((st (copy-bbstate st)))
+                                       (convert-constraints st
+                                                            `((check
+                                                               (bool logical-not ,(annotate-types p tenv))))
+                                                            (lambda _ (void)))
+                                       (simplify-stmt b
+                                                      ccp-map
+                                                      tenv)))))))
+                    (`(case (expr ,p) . ,cases)
+                     (let ((p (simplify-expr p ccp-map tenv)))
+                       (cond
+                         ((number? p) (simplify-stmt (assoc (list p) cases) ccp-map tenv))
+                         (else
+                          `(case (expr ,p) .
+                             ,(map (match-lambda
+                                     (`(,case ,body)
+                                      `(,case ,(simplify-stmt body
+                                                              ccp-map
+                                                              tenv))))
+                                   cases))))))
+                    (`(parallel-assign ,bindings)
+                     `(parallel-assign
+                       ,(map (match-lambda (`(,var . ,val) `(,var . ,(simplify-expr val ccp-map tenv))))
+                             bindings)))
+                    (`(expr (abort)) s)
+                    (`(expr (assign ,a ,b)) `(expr (assign ,a ,(simplify-expr b ccp-map tenv))))
+                    (`(expr (interrupt ,i)) s)
+                    (_ (error "simplify-stmt" s)))))))
+      (match s
+        (`(label ,l ,body)
+         `(label ,l ,(fluid-let ((st (make-empty-bbstate))) (simplify-stmt body '() '()))))
+        (e e)))))
+
+(set! data (map (lambda (i s)
+                  (pretty-print `(label ,i ,(match s (`(label ,l ,_) l) (_ #f)) of ,(length data)))
+                  (remove-unused-variables (simplify-one-pass s)))
+                (iota (length data))
+                data))
+(pretty-print data)
+(exit 0)
 
 (define (split-and-value-number e)
   ;(pretty-print `(split-and-value-number ,e))
@@ -633,11 +773,6 @@
         e
         (loop-simplify-and-ccp e2))))
 
-(define (memory-simple? x)
-  (or (basic-simple? x)
-      (and (list? x)
-           (memq (car x) '(memoryWriteDWord memoryWriteWord memoryWriteByte)))))
-
 (define (simplify-full e)
   (remove-unused-variables
    (copy-and-constant-prop
@@ -657,11 +792,6 @@
 (define (expand-many n e)
   (if (zero? n) e (expand-one-simp (expand-many (sub1 n) e))))
 
-(define (add-types e tenv)
-  `(,(infer-type e tenv) . ,(if (list? e) 
-                                (cons (car e) (map (lambda (e2) (add-types e2 tenv)) (cdr e)))
-                                e)))
-
 (define (check-constraints e)
   (letrec ((check-statement
             (lambda (e csf tenv)
@@ -671,7 +801,7 @@
                 (`(begin . ,ls) `(begin . ,(map (lambda (e2) (check-statement e2 csf tenv)) ls)))
                 (`(let ((,t ,var ,val)) ,body)
                  (let* ((val2 (check-expr val csf tenv))
-                        (csf2 `((define ,var ,(add-types val2 tenv)) . ,csf))
+                        (csf2 `((define ,var ,(annotate-types val2 tenv)) . ,csf))
                         (const (if (number? val2) val2 (is-constant? csf2 t `(,t . ,var)))))
                    (if const
                        (begin
@@ -684,7 +814,7 @@
                 (`(if (expr ,p) ,a ,b)
                  (let* ((p (check-expr p csf tenv))
                         (p-type (infer-type p tenv))
-                        (p-with-types (add-types p tenv))
+                        (p-with-types (annotate-types p tenv))
                         (p-true-constraints `((check ,p-with-types) . ,csf))
                         (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
                    (case (possible-boolean-values csf p-with-types)
@@ -699,7 +829,7 @@
                              (check-statement b csf tenv))))))
                 (`(case (expr ,key) . ,cases)
                  (let* ((key (check-expr key csf tenv))
-                        (key-with-types (add-types key tenv))
+                        (key-with-types (annotate-types key tenv))
                         (key-type (infer-type key tenv))
                         (bogus-dest-possible
                          (constraints-satisfiable?
@@ -737,7 +867,7 @@
                  ;(pretty-print `(checking if-e ,p))
                  (let* ((p (check-expr p csf tenv))
                         (p-type (infer-type p tenv))
-                        (p-with-types (add-types p tenv))
+                        (p-with-types (annotate-types p tenv))
                         (p-true-constraints `((check ,p-with-types) . ,csf))
                         (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
                    ;(pretty-print `(p-with-types ,p-with-types))
@@ -844,3 +974,4 @@
     (loop (sub1 n))))
 
 (pretty-print (map change-to-let* data))
+)

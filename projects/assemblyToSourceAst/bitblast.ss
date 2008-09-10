@@ -6,6 +6,12 @@
   
   ; Words are LSB first, and outputs are truncated at length of output-bits
   
+  (define (list-get al key def)
+    (let ((p (assq key al)))
+      (if p (cdr p) def)))
+
+  (define (list-put al key val) (cons (cons key val) al))
+  
   (define (as-bits count n)
     (let loop ((i 0) (n n))
       (if (= i count)
@@ -43,9 +49,9 @@
           ((null? in1) (error "Should not happen"))
           ((null? in2) (error "Should not happen"))
           (else
-           (let ((carry-out (majority-gate! st (car in1) (car in2) carry-in))
-                 (sum-out (xor-gate! st (car in1) (car in2) carry-in)))
-             (cons sum-out (loop (cdr in1) (cdr in2) carry-out))))))))
+            (let ((sum (xor-gate! st (car in1) (car in2) carry-in))
+                  (carry-out (majority-gate! st (car in1) (car in2) carry-in)))
+              (cons sum (loop (cdr in1) (cdr in2) carry-out))))))))
   
   (define (incrementer! st input-bits)
     (adder! st input-bits '() #t))
@@ -134,34 +140,32 @@
   (define-struct (bbstate state) (vars definitions) #f)
   (define (make-empty-bbstate)
     (make-bbstate 1 ; variable-counter
-                  '() ; clauses
+                  "" ; clause-string
+                  0 ; num-clauses
                   #f ; known-unsatisfiable
-                  (make-hash-table 'equal) ; or-gate-cse-table
-                  (make-hash-table 'equal) ; mux-cse-table
-                  (make-hash-table) ; vars
-                  (make-hash-table) ; definitions
+                  '() ; vars
+                  '() ; definitions
                   ))
   
   (define (copy-bbstate st)
     (make-bbstate (state-variable-counter st)
-                  (state-clauses st)
+                  (state-clause-string st)
+                  (state-num-clauses st)
                   (state-known-unsatisfiable st)
-                  (hash-table-copy (state-or-gate-cse-table st))
-                  (hash-table-copy (state-mux-cse-table st))
-                  (hash-table-copy (bbstate-vars st))
-                  (hash-table-copy (bbstate-definitions st))))
+                  (bbstate-vars st)
+                  (bbstate-definitions st)))
   
   (define (convert-expr st orig-p return)
     (letrec ((get-var (lambda (v t)
-                        (let ((p (hash-table-get (bbstate-vars st) v #f)))
+                        (let ((p (list-get (bbstate-vars st) v #f)))
                           (if p
                               p
-                              (let* ((def (hash-table-get (bbstate-definitions st) v #f))
+                              (let* ((def (list-get (bbstate-definitions st) v #f))
                                      (bits
                                       (if def
                                           (convert-expr st def return)
                                           (variables! st (bits-in-type t)))))
-                                (hash-table-put! (bbstate-vars st) v bits)
+                                (set-bbstate-vars! st (list-put (bbstate-vars st) v bits))
                                 bits))))))
       (let convert-expr ((p orig-p))
         (if (state-known-unsatisfiable st) (return #f))
@@ -272,18 +276,18 @@
                   (`(define ,a ,b)
                    (cond
                      ((not (symbol? a)) (error "Invalid define symbol" a))
-                     ((or (hash-table-get (bbstate-vars st) a #f)
-                          (hash-table-get (bbstate-definitions st) a #f))
+                     ((or (list-get (bbstate-vars st) a #f)
+                          (list-get (bbstate-definitions st) a #f))
                       ; (car b) is type of b
                       (convert-constraints st `((check (bool equal (,(car b) . ,a) ,b))) return))
-                     (else (hash-table-put! (bbstate-definitions st) a b))))
+                     (else (set-bbstate-definitions! st (list-put (bbstate-definitions st) a b)))))
                   (`(check ,e)
                    (force-1! st (apply or-gate! st (convert-expr st e return))))
                   (_ (error "Cannot handle constraint" c))))
               (reverse cl)))
   
   (define (run-solver-annotated st)
-    (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(hash-table-count (bbstate-vars st)) of ,(hash-table-count (bbstate-definitions st)) user-vars))
+    (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(length (bbstate-vars st)) of ,(length (bbstate-definitions st)) user-vars))
     (let ((solver-result (run-solver st)))
       (pretty-print `(--> ,(if solver-result 'SAT 'UNSAT)))
       solver-result))
@@ -296,7 +300,7 @@
         (let ((picosat-result (run-solver-annotated st)))
           (and picosat-result
                (map (lambda (var)
-                      (get-number (hash-table-get (bbstate-vars st) (cdr var)) picosat-result))
+                      (get-number (list-get (bbstate-vars st) (cdr var) #f) picosat-result))
                     typed-vars-to-return))))))
   
   (define (possible-boolean-values constraints to-test)
@@ -320,42 +324,52 @@
                 #f
                 (error "Inconsistent constraints" `(,to-test . ,constraints)))))))
   
+  (define (is-constant-base? st t typed-expr)
+    ;(pretty-print `(is-constant? ,typed-expr))
+    (let/cc return
+      (let* ((st (copy-bbstate st))
+             (converted-expr (convert-expr st typed-expr return)))
+        (if (andmap boolean? converted-expr)
+          (get-number converted-expr '())
+          (let ((solver-result (run-solver-annotated st)))
+            (unless solver-result (return 0)) ; Inconsistent constraints
+            (let ((first-result (get-number converted-expr solver-result)))
+              (unless first-result (return #f))
+              (force-0! st (equal-words! st converted-expr (as-bits (bits-in-type t) first-result)))
+              (if (run-solver-annotated st) (return #f) (void))
+              (pretty-print `(,typed-expr -> constant ,first-result))
+              first-result))))))
+      
   (define (is-constant? constraints t typed-expr)
     ;(pretty-print `(is-constant? ,typed-expr))
     (let/cc return
       (let* ((st (make-empty-bbstate)))
         (convert-constraints st constraints return)
-        (let* ((converted-expr (convert-expr st typed-expr return)))
-          (if (andmap boolean? converted-expr)
-              (get-number converted-expr '())
-              (let* ((solver-result (run-solver-annotated st))
-                     (first-result (and solver-result (get-number converted-expr solver-result))))
-                (and solver-result
-                     (number? first-result)
-                     (begin
-                       (force-0! st (equal-words! st converted-expr (as-bits (bits-in-type t) first-result)))
-                       (not (run-solver-annotated st))))))))))
+        (is-constant-base? st t typed-expr))))
       
-      (provide make-empty-bbstate
-               adder!
-               multiplier!
-               incrementer!
-               less-than-comparator!
-               neg-words!
-               not-words!
-               as-bits
-               get-number
-               and-words!
-               or-words!
-               nand-words!
-               nor-words!
-               xor-words!
-               xnor-words!
-               equal-words!
-               mux-words!
-               constraints-satisfiable?
-               possible-boolean-values
-               is-constant?)
+  (provide make-empty-bbstate
+           copy-bbstate
+           adder!
+           multiplier!
+           incrementer!
+           less-than-comparator!
+           neg-words!
+           not-words!
+           as-bits
+           get-number
+           and-words!
+           or-words!
+           nand-words!
+           nor-words!
+           xor-words!
+           xnor-words!
+           equal-words!
+           mux-words!
+           convert-constraints
+           constraints-satisfiable?
+           possible-boolean-values
+           is-constant-base?
+           is-constant?)
       
       )
     
