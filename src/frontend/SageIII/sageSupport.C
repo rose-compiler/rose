@@ -5457,3 +5457,91 @@ get_distanceFromSourceDirectory ( Sg_File_Info* X )
 
 
 
+int
+SgNode::numberOfNodesInSubtree()
+   {
+     int value = 0;
+
+     class CountTraversal : public SgSimpleProcessing
+        {
+          public:
+              int count;
+              CountTraversal() : count(0) {}
+              void visit ( SgNode* n ) { count++; }
+        };
+
+     CountTraversal counter;
+     SgNode* thisNode = const_cast<SgNode*>(this);
+     counter.traverse(thisNode,preorder);
+     value = counter.count;
+
+     return value;
+   }
+
+ namespace SgNode_depthOfSubtree
+   {
+  // This class (AST traversal) could not be defined in the function SgNode::depthOfSubtree()
+  // So I have constructed a namespace for this class to be implemented outside of the function.
+
+     class DepthInheritedAttribute
+        {
+          public:
+               int treeDepth;
+               DepthInheritedAttribute( int depth ) : treeDepth(depth) {}         
+        };
+
+     class MaxDepthTraversal : public AstTopDownProcessing<DepthInheritedAttribute>
+        {
+          public:
+              int maxDepth;
+              MaxDepthTraversal() : maxDepth(0) {}
+
+              DepthInheritedAttribute evaluateInheritedAttribute ( SgNode* astNode, DepthInheritedAttribute inheritedAttribute )
+                 {
+                   if (inheritedAttribute.treeDepth > maxDepth)
+                        maxDepth = inheritedAttribute.treeDepth;
+
+                   return DepthInheritedAttribute(inheritedAttribute.treeDepth + 1);
+                 }
+        };
+   }
+
+int
+SgNode::depthOfSubtree()
+   {
+     int value = 0;
+
+     SgNode_depthOfSubtree::MaxDepthTraversal depthCounter;
+     SgNode_depthOfSubtree::DepthInheritedAttribute inheritedAttribute(0);
+     SgNode* thisNode = const_cast<SgNode*>(this);
+
+     depthCounter.traverse(thisNode,inheritedAttribute);
+
+     value = depthCounter.maxDepth;
+
+     return value;
+   }
+
+#if 0
+// We only need one definition for this function at the SgNode IR node.
+size_t
+SgFile::numberOfNodesInSubtree()
+   {
+     printf ("Base class of virtual function (SgFile::numberOfNodesInSubtree() should not be called! \n");
+     ROSE_ASSERT(false);
+
+     return 0;
+   }
+
+size_t
+SgSourceFile::numberOfNodesInSubtree()
+   {
+     return get_globalScope()->numberOfNodesInSubtree() + 1;
+   }
+
+size_t
+SgBinaryFile::numberOfNodesInSubtree()
+   {
+     return get_binaryFile()->numberOfNodesInSubtree() + 1;
+   }
+#endif

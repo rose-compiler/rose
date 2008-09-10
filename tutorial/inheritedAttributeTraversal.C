@@ -52,6 +52,9 @@ main ( int argc, char* argv[] )
   // Call the traversal starting at the project node of the AST
      exampleTraversal.traverseInputFiles(project,inheritedAttribute);
 
+  // Or the traversal over all AST IR nodes can be called!
+     exampleTraversal.traverse(project,inheritedAttribute);
+
      return 0;
    }
 

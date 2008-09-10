@@ -260,11 +260,11 @@ HASH_ROSE_BINARY_SQL
 AM_CONDITIONAL(ROSE_USE_BINARY_SQL,test ! "$with_binarysql" = no)
 
 
-# Call supporting macro for Binary Analysis
-ROSE_SUPPORT_WINDOWS_BINARY_ANALYSIS
+# Call supporting macro for Windows Source Code Analysis
+ROSE_SUPPORT_WINDOWS_ANALYSIS
 
 # Setup Automake conditional in Projects/programModeling/Makefile.am
-AM_CONDITIONAL(ROSE_USE_WINDOWS_BINARY_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
+AM_CONDITIONAL(ROSE_USE_WINDOWS_ANALYSIS_SUPPORT,test ! "$with_wine" = no)
 
 # Control use of debugging support to convert most unions in EDG to structs.
 ROSE_SUPPORT_EDG_DEBUGGING
@@ -1135,6 +1135,8 @@ developersScratchSpace/Dan/nameQualificationAndTypeElaboration_tests/Makefile
 developersScratchSpace/Dan/Disassembler_tests/Makefile
 developersScratchSpace/Dan/Yices_tests/Makefile
 developersScratchSpace/Dan/Compass_tests/Makefile
+developersScratchSpace/Dan/astEquivalence_tests/Makefile
+developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 ])
 
 AC_CONFIG_COMMANDS([default],[[
