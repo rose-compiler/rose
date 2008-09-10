@@ -7,13 +7,13 @@
   
   (define-struct state
     (variable-counter
-     clause-string
-     num-clauses
+     clauses
+     units
      known-unsatisfiable)
     #f)
   
   (define (make-empty-state)
-    (make-state 1 "" 0 #f))
+    (make-state 1 '() '() #f))
 
   (define (variable! st)
     (let ((c (state-variable-counter st)))
@@ -31,28 +31,41 @@
         (let ((m (apply min ls)))
           (cons m (sort-numbers (remove-one m ls))))))
   (define (add-clause! st cl)
-    (cond
-      ((state-known-unsatisfiable st) (set-state-clause-string! st "0") (set-state-num-clauses! 1))
-      ((memq #t cl) (void))
-      ((has-inverses? cl) (void))
-      (else
-       (let ((cl (filter (lambda (x) x) cl)))
-         (if (null? cl)
-             (set-state-known-unsatisfiable! st #t) ; fail
-             (begin
-               (set-state-clause-string! st (string-append (state-clause-string st) (clause-to-string cl)))
-               (set-state-num-clauses! st (add1 (state-num-clauses st)))))))))
+    (let ((cl (map (lambda (l)
+                     (cond ((boolean? l) l)
+                           ((assv (abs l) (state-units st)) => (lambda (p) (if (< l 0) (inv (cdr p)) (cdr p))))
+                           (else l)))
+                   cl)))
+      ;(pretty-print `(new cl ,cl ,(state-units st)))
+      (cond
+        ((state-known-unsatisfiable st) (set-state-clauses! st `(())))
+        ((memq #t cl) (void))
+        ((has-inverses? cl) (void))
+        (else
+          (let ((cl (filter (lambda (x) x) cl)))
+            (if (null? cl)
+              (set-state-known-unsatisfiable! st #t) ; fail
+              (begin
+                (when (= (length cl) 1)
+                  (pretty-print `(unit clause ,cl))
+                  (set-state-units! st (cons `(,(car cl) . ,(< (car cl) 0)) (state-units st))))
+                (set-state-clauses! st (cons cl (state-clauses st))))))))))
+  (define (simplify-state! st) ; Reprocess to apply new unit clause information
+    ;(pretty-print `(simplify-state! ,(state-units st)))
+    (let ((clauses (state-clauses st)))
+      (for-each (lambda (cl) (add-clause! st cl)) clauses)
+      #;(pretty-print `(end simplify-state!))))
   (define (clause-to-string cl)
     (format "~a 0~n" (string-join (map number->string cl) " ")))
 
   (define (variable-count st) (state-variable-counter st))
-  (define (clause-count st) (if (state-known-unsatisfiable st) #f (state-num-clauses st)))
+  (define (clause-count st) (if (state-known-unsatisfiable st) #f (length (state-clauses st))))
   
   (define (to-dimacs st)
     (format "p cnf ~a ~a~n~a"
             (variable-count st)
             (clause-count st)
-            (state-clause-string st)))
+            (string-concatenate (map clause-to-string (state-clauses st)))))
   
   (define (from-picosat output)
     (let* ((tokens (string-tokenize output))
@@ -127,13 +140,13 @@
   (define (run-picosat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((zero? (state-num-clauses st)) '())
+      ((null? (state-clauses st)) '())
       (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs st))))))
   
   (define (run-minisat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((zero? (state-num-clauses st)) '())
+      ((null? (state-clauses st)) '())
       (else
         (let ((minisat-result (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))
           ;(pretty-print (to-dimacs st))
@@ -168,8 +181,7 @@
   (define (unsatisfiable! st)
     #;(pretty-print `(unsatisfiable!))
     (set-state-known-unsatisfiable! st #t)
-    (set-state-clause-string! st "0")
-    (set-state-num-clauses! st 1))
+    (set-state-clauses! st '(())))
   
   (define (has-inverses? vars)
     (if (null? vars)
@@ -278,8 +290,8 @@
   
   (provide state)
   (provide state-variable-counter)
-  (provide state-clause-string)
-  (provide state-num-clauses)
+  (provide state-clauses)
+  (provide state-units)
   (provide state-known-unsatisfiable)
   (provide make-empty-state)
   (provide variable!)
@@ -288,6 +300,7 @@
   (provide inv)
   (provide variables!)
   ; (provide add-clause!)
+  (provide simplify-state!)
   (provide to-dimacs)
   (provide run-solver)
   (provide force-0!)

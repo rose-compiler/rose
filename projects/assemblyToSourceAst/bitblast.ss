@@ -140,8 +140,8 @@
   (define-struct (bbstate state) (vars definitions) #f)
   (define (make-empty-bbstate)
     (make-bbstate 1 ; variable-counter
-                  "" ; clause-string
-                  0 ; num-clauses
+                  '() ; clauses
+                  '() ; units
                   #f ; known-unsatisfiable
                   '() ; vars
                   '() ; definitions
@@ -149,8 +149,8 @@
   
   (define (copy-bbstate st)
     (make-bbstate (state-variable-counter st)
-                  (state-clause-string st)
-                  (state-num-clauses st)
+                  (state-clauses st)
+                  (state-units st)
                   (state-known-unsatisfiable st)
                   (bbstate-vars st)
                   (bbstate-definitions st)))
@@ -284,9 +284,11 @@
                   (`(check ,e)
                    (force-1! st (apply or-gate! st (convert-expr st e return))))
                   (_ (error "Cannot handle constraint" c))))
-              (reverse cl)))
+              (reverse cl))
+    (simplify-state! st))
   
   (define (run-solver-annotated st)
+    (simplify-state! st)
     (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(length (bbstate-vars st)) of ,(length (bbstate-definitions st)) user-vars))
     (let ((solver-result (run-solver st)))
       (pretty-print `(--> ,(if solver-result 'SAT 'UNSAT)))

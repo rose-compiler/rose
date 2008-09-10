@@ -459,6 +459,7 @@
                           (e e))))))))
              (simplify-stmt
               (lambda (s ccp-map tenv) ; -> s'
+                ; (pretty-print `(simplify-stmt ,s))
                 (fluid-let ((st (copy-bbstate st)))
                   (match s
                     (`(begin . ,s*) `(begin . ,(map (lambda (s) (simplify-stmt s ccp-map tenv)) s*)))
@@ -508,7 +509,13 @@
                     (`(case (expr ,p) . ,cases)
                      (let ((p (simplify-expr p ccp-map tenv)))
                        (cond
-                         ((number? p) (simplify-stmt (assoc (list p) cases) ccp-map tenv))
+                         ((number? p)
+                          (let ((pr (assoc (list p) cases)))
+                            (if pr
+                              (simplify-stmt pr ccp-map tenv)
+                              (begin
+                                (pretty-print `(label for address ,p not found))
+                                `(expr (abort))))))
                          (else
                           `(case (expr ,p) .
                              ,(map (match-lambda
