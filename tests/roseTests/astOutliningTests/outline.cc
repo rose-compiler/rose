@@ -1,5 +1,5 @@
 /*!
- *  \file liaoutliner.cc
+ *  \file outline.cc
  *
  *  \brief Demonstrates the pragma-interface of the Outliner.
  *

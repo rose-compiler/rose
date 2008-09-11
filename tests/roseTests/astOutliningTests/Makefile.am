@@ -26,8 +26,9 @@ TEST_INCLUDES = \
 
 # INCLUDES += -I.
 
+# We install a standalone outliner to be installed with ROSE
+bin_PROGRAMS = outline
 noinst_PROGRAMS = \
-        outline \
         injectOutlinePragmas \
         outlineRandom \
         outlineSelection
@@ -61,13 +62,17 @@ endif # ROSE_USE_LONG_MAKE_CHECK_RULE
 OUTLINER_BIN = ./outlineSelection$(EXEEXT)
 TEST_CXXFLAGS = $(TEST_INCLUDES) -rose:verbose 2 -rose:outline:seq 7
 
+# Additional test, Liao, 9/11/2008
+rose_moreTest1.c:outline
+	./outline$(EXEEXT) -c $(srcdir)/moreTest1.c
 
-EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh 
+EXTRA_DIST = build_tests-1pass.sh RandomStmtSelector.hh moreTest1.c
 CLEANFILES = Makefile-1pass LIST.dat
 
 # DQ (8/29/2008): Added dependences
 check-local: outline injectOutlinePragmas outlineRandom outlineSelection
 	@echo "Test for ROSE outliner."
+	$(MAKE) rose_moreTest1.c
 	$(MAKE) one-pass
 	test -f Makefile-1pass
 	$(MAKE) -f Makefile-1pass \

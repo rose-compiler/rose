@@ -26,6 +26,8 @@ typedef std::map<const SgVariableSymbol *, SgVariableSymbol *> VarSymRemap_t;
 // =====================================================================
 
 using namespace std;
+using namespace SageInterface;
+using namespace SageBuilder;
 
 /* ===========================================================
  */
@@ -190,6 +192,12 @@ createParam (const string& init_name, const SgType* init_type)
  *  \brief Creates a local variable declaration to "unpack" an
  *  outlined-function parameter that has been passed as a pointer
  *  value.
+ *
+ *  OUT_XXX(int *ip__)
+ *  {
+ *    // This is call unpacking declaration, Liao, 9/11/2008
+ *   int i = * (int *) ip__;
+ *  }
  */
 static
 SgVariableDeclaration *
@@ -205,6 +213,7 @@ createUnpackDecl (SgInitializedName* param,
                                             param_sym);
   ROSE_ASSERT (param_ref);
 
+  // the original data type of the variable
   SgType* param_deref_type = const_cast<SgType *> (local_var_type);
   ROSE_ASSERT (param_deref_type);
 
@@ -237,9 +246,9 @@ createUnpackDecl (SgInitializedName* param,
     new SgAssignInitializer (ASTtools::newFileInfo (),
                              param_deref_expr, param_deref_type);
   ROSE_ASSERT (local_val);
-  SgType* local_type = isSgReferenceType (param_deref_type)
-    ? param_deref_type
-    : SgReferenceType::createType (param_deref_type);
+  SgType* local_type = isSgReferenceType(param_deref_type)
+    ? SgReferenceType::createType(param_deref_type)
+    :param_deref_type;
   ROSE_ASSERT (local_type);
   SgVariableDeclaration* decl =
     new SgVariableDeclaration (ASTtools::newFileInfo (),
@@ -334,10 +343,23 @@ createPackExpr (SgInitializedName* local_unpack_def)
 }
 
 /*!
- *  \brief qCreates a pack statement.
+ *  \brief Creates a pack statement 
  *
  *  This routine creates an SgExprStatement wrapper around the return
  *  of createPackExpr.
+ *  
+ *  void OUT__1__4305__(int *ip__,int *sump__)
+ * {
+ *   int i =  *((int *)ip__);
+ *   int sum =  *((int *)sump__);
+ *   for (i = 0; i < 100; i++) {
+ *     sum += i;
+ *   }
+ *  //The following are called (re)pack statements
+ *    *((int *)sump__) = sum;
+ *    *((int *)ip__) = i;
+}
+
  */
 static
 SgExprStatement *
@@ -463,7 +485,7 @@ appendParams (const ASTtools::VarSymSet_t& syms,
       p_init_name->set_parent (params); //!< \todo Set in 'createInitName()'?
       p_init_name->set_scope (def); //!< \todo Set in 'createInitName()'?
 
-	// pack/unpack is not necessary for Frotran, Liao 12/14/2007
+	// pack/unpack is not necessary for Fortran, Liao 12/14/2007
      if (!SageInterface::is_Fortran_language())
       {
       // Create and insert unpack statement.
@@ -486,11 +508,11 @@ appendParams (const ASTtools::VarSymSet_t& syms,
      //TODO Not sure the right scope for Fortran parameter, assuming function definition now
    // recordSymRemap() has two instances: the 2nd parameter could be initialized name in one case
      // p_init_name should already have a symbol associated with it after call createInitName()
-     // pass NULL scope to avoid duplicated insertation
+     // pass NULL scope to avoid duplicated insertion
      //recordSymRemap (*i, i_name, def, sym_remap);
         recordSymRemap (*i, p_init_name, NULL, sym_remap);
 
-	// Liao, 12/26/2007, addtional work for Fortran
+	// Liao, 12/26/2007, additional work for Fortran
 	// for translator-generated arguments, prepend explicit type specifications to the body
 	SgVariableDeclaration * varDecl= new SgVariableDeclaration(ASTtools::newFileInfo (),\
 		p_sg_name,i_type,NULL);
@@ -562,8 +584,18 @@ Outliner::Transform::generateFunction (const SgBasicBlock* s,
    SgFunctionSymbol * func_symbol = new SgFunctionSymbol(func);
    const_cast<SgBasicBlock *>(s)->insert_symbol(func->get_name(), func_symbol);
 
-// not apply to Fortran
-  if (!SageInterface::is_Fortran_language())
+// Only apply to C++ , pure C has trouble in recognizing extern "C"
+//  Another way is to attach the function with preprocessing info:
+//  #if __cplusplus 
+//  extern "C"
+//  #endif
+//  We don't choose it since the language linkage information is not explicit in AST
+//  if (!SageInterface::is_Fortran_language())
+  if (SageInterface::is_Cxx_language()||
+      is_mixed_C_and_Cxx_language ()||
+      is_mixed_Fortran_and_Cxx_language ()||
+      is_mixed_Fortran_and_C_and_Cxx_language ()
+      )
   {
   // Make function 'extern "C"'
   func->get_declarationModifier ().get_storageModifier ().setExtern ();
