@@ -1,4 +1,4 @@
-(module bitblast mzscheme
+(module bitblast scheme
   (require "dimacs.ss")
   (require scheme/match)
   (require scheme/pretty)
@@ -137,14 +137,14 @@
     (let ((max-len (max (length w1) (length w2))))
       (list (set-number-size w1 max-len) (set-number-size w2 max-len))))
   
-  (define-struct (bbstate state) (vars definitions) #f)
+  (define-struct (bbstate state) (vars definitions) #:mutable #:transparent)
   (define (make-empty-bbstate)
     (make-bbstate 1 ; variable-counter
-                  '() ; clauses
-                  '() ; units
+                  (make-immutable-hash '()) ; clauses
+                  (make-immutable-hasheq '()) ; units
                   #f ; known-unsatisfiable
-                  '() ; vars
-                  '() ; definitions
+                  (make-immutable-hasheq '()) ; vars
+                  (make-immutable-hasheq '()) ; definitions
                   ))
   
   (define (copy-bbstate st)
@@ -157,18 +157,18 @@
   
   (define (convert-expr st orig-p return)
     (letrec ((get-var (lambda (v t)
-                        (let ((p (list-get (bbstate-vars st) v #f)))
+                        (let ((p (hash-ref (bbstate-vars st) v #f)))
                           (if p
                               p
-                              (let* ((def (list-get (bbstate-definitions st) v #f))
+                              (let* ((def (hash-ref (bbstate-definitions st) v #f))
                                      (bits
                                       (if def
                                           (convert-expr st def return)
                                           (variables! st (bits-in-type t)))))
-                                (set-bbstate-vars! st (list-put (bbstate-vars st) v bits))
+                                (set-bbstate-vars! st (hash-set (bbstate-vars st) v bits))
                                 bits))))))
       (let convert-expr ((p orig-p))
-        (if (state-known-unsatisfiable st) (return #f))
+        (when (state-known-unsatisfiable st) (return #f))
         (match p
           (`(,t . ,e)
            (let* ((set-len (lambda (e) (set-number-size e (bits-in-type t))))
@@ -276,11 +276,11 @@
                   (`(define ,a ,b)
                    (cond
                      ((not (symbol? a)) (error "Invalid define symbol" a))
-                     ((or (list-get (bbstate-vars st) a #f)
-                          (list-get (bbstate-definitions st) a #f))
+                     ((or (hash-ref (bbstate-vars st) a #f)
+                          (hash-ref (bbstate-definitions st) a #f))
                       ; (car b) is type of b
                       (convert-constraints st `((check (bool equal (,(car b) . ,a) ,b))) return))
-                     (else (set-bbstate-definitions! st (list-put (bbstate-definitions st) a b)))))
+                     (else (set-bbstate-definitions! st (hash-set (bbstate-definitions st) a b)))))
                   (`(check ,e)
                    (force-1! st (apply or-gate! st (convert-expr st e return))))
                   (_ (error "Cannot handle constraint" c))))
@@ -289,10 +289,13 @@
   
   (define (run-solver-annotated st)
     (simplify-state! st)
-    (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(length (bbstate-vars st)) of ,(length (bbstate-definitions st)) user-vars))
-    (let ((solver-result (run-solver st)))
-      (pretty-print `(--> ,(if solver-result 'SAT 'UNSAT)))
-      solver-result))
+    (let ((do-printout (or (>= (variable-count st) 200) (and (number? (clause-count st)) (>= (clause-count st) 500)))))
+      (when do-printout
+        (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(hash-count (bbstate-vars st)) of ,(hash-count (bbstate-definitions st)) user-vars))
+        (flush-output (current-output-port)))
+      (let ((solver-result (run-solver st)))
+        (when do-printout (pretty-print `(--> ,(if solver-result 'SAT 'UNSAT))))
+        solver-result)))
   
   (define (constraints-satisfiable? cl typed-vars-to-return)
     (let/cc return
@@ -302,7 +305,7 @@
         (let ((picosat-result (run-solver-annotated st)))
           (and picosat-result
                (map (lambda (var)
-                      (get-number (list-get (bbstate-vars st) (cdr var) #f) picosat-result))
+                      (get-number (hash-ref (bbstate-vars st) (cdr var) #f) picosat-result))
                     typed-vars-to-return))))))
   
   (define (possible-boolean-values constraints to-test)
@@ -334,7 +337,7 @@
         (if (andmap boolean? converted-expr)
           (get-number converted-expr '())
           (let ((solver-result (run-solver-annotated st)))
-            (unless solver-result (return 0)) ; Inconsistent constraints
+            (unless solver-result (return #f)) ; Inconsistent constraints
             (let ((first-result (get-number converted-expr solver-result)))
               (unless first-result (return #f))
               (force-0! st (equal-words! st converted-expr (as-bits (bits-in-type t) first-result)))

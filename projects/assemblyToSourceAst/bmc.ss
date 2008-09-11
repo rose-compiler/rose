@@ -429,7 +429,7 @@
                           (match t
                             (`(memory ,_) #f)
                             (_ (is-constant-base? st t (annotate-types e tenv))))))
-                    (or c
+                    (or (if c (if (eq? t 'bool) (if (zero? c) #f #t) c) #f)
                         (match e
                           ((? number?) e)
                           (`(if-e 0 ,a ,b) (pretty-print `(picking false branch)) b)
@@ -438,8 +438,8 @@
                            (let ((c2 (is-constant-base?
                                       st
                                       t
-                                      `(,t xor ,(annotate-types a tenv) ,(annotate-types b tenv)))))
-                             (if (eqv? c2 0)
+                                      `(bool equal ,(annotate-types a tenv) ,(annotate-types b tenv)))))
+                             (if (eqv? c2 1)
                                  (begin (pretty-print `(branches are same)) a)
                                  `(if-e ,p
                                         ,(fluid-let ((st (copy-bbstate st)))
@@ -536,6 +536,54 @@
         (`(label ,l ,body)
          `(label ,l ,(fluid-let ((st (make-empty-bbstate))) (simplify-stmt body '() '()))))
         (e e)))))
+  
+  (define (check-types s)
+    (letrec ((simplify-expr
+              (lambda (e tenv)
+                (let loop ((e e))
+                  (let* ((_ (cond
+                              ((list? e) (for-each loop (cdr e)))
+                              (else e)))
+                         (t (infer-type e tenv))
+                         ;(_ (pretty-print `(,e ,t)))
+                         (c
+                          (match t
+                            (`(memory ,_) #f)
+                            (_ (annotate-types e tenv)))))
+                    (void)))))
+             (simplify-stmt
+              (lambda (s tenv)
+                (match s
+                  (`(begin . ,s*) `(begin . ,(map (lambda (s) (simplify-stmt s tenv)) s*)))
+                  (`(goto ,l) s)
+                  (`(let ((,t ,var ,val)) ,body)
+                   (simplify-expr val tenv)
+                   (annotate-types val tenv)
+                   (simplify-stmt body (cons (cons var t) tenv)))
+                  (`(if (expr ,p) ,a ,b)
+                   (simplify-expr p tenv)
+                   (annotate-types p tenv)
+                   (simplify-stmt a tenv)
+                   (simplify-stmt b tenv))
+                  (`(case (expr ,p) . ,cases)
+                   (simplify-expr p tenv)
+                   (for-each (match-lambda
+                               (`(,case ,body)
+                                (simplify-stmt body tenv)))
+                             cases))
+                  (`(parallel-assign ,bindings)
+                   (for-each (match-lambda (`(,var . ,val) (simplify-expr val tenv)))
+                             bindings))
+                  (`(expr (abort)) (void))
+                  (`(expr (assign ,a ,b)) (simplify-expr b tenv))
+                  (`(expr (interrupt ,i)) (void))
+                  (_ (error "simplify-stmt" s))))))
+      (match s
+        (`(label ,l ,body)
+         (simplify-stmt body '()))
+        (e e))))
+
+(for-each check-types data)
 
 (set! data (map (lambda (i s)
                   (pretty-print `(label ,i ,(match s (`(label ,l ,_) l) (_ #f)) of ,(length data)))

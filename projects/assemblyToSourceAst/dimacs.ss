@@ -1,4 +1,4 @@
-(module dimacs mzscheme
+(module dimacs scheme
   
   (require srfi/1)
   (require srfi/13)
@@ -6,14 +6,14 @@
   (require scheme/pretty)
   
   (define-struct state
-    (variable-counter
-     clauses
-     units
-     known-unsatisfiable)
-    #f)
-  
+    ((variable-counter)
+     (clauses)
+     (units)
+     (known-unsatisfiable))
+    #:mutable #:transparent)
+
   (define (make-empty-state)
-    (make-state 1 '() '() #f))
+    (make-state 1 (make-immutable-hash '()) (make-immutable-hasheq '()) #f))
 
   (define (variable! st)
     (let ((c (state-variable-counter st)))
@@ -33,39 +33,39 @@
   (define (add-clause! st cl)
     (let ((cl (map (lambda (l)
                      (cond ((boolean? l) l)
-                           ((assv (abs l) (state-units st)) => (lambda (p) (if (< l 0) (inv (cdr p)) (cdr p))))
+                           ((hash-ref (state-units st) (abs l) #f) => (lambda (p) (if (< l 0) (inv p) p)))
                            (else l)))
                    cl)))
       ;(pretty-print `(new cl ,cl ,(state-units st)))
       (cond
-        ((state-known-unsatisfiable st) (set-state-clauses! st `(())))
+        ((state-known-unsatisfiable st) (set-state-clauses! st (make-immutable-hash (list (cons '() #t)))))
         ((memq #t cl) (void))
         ((has-inverses? cl) (void))
         (else
-          (let ((cl (filter (lambda (x) x) cl)))
+          (let ((cl (sort-numbers (filter (lambda (x) (not (eq? x #f))) cl))))
             (if (null? cl)
               (set-state-known-unsatisfiable! st #t) ; fail
               (begin
                 (when (= (length cl) 1)
-                  (pretty-print `(unit clause ,cl))
-                  (set-state-units! st (cons `(,(car cl) . ,(< (car cl) 0)) (state-units st))))
-                (set-state-clauses! st (cons cl (state-clauses st))))))))))
+                  ;(pretty-print `(unit clause ,cl))
+                  (set-state-units! st (hash-set (state-units st) (car cl) (> (car cl) 0))))
+                (set-state-clauses! st (hash-set (state-clauses st) cl #t)))))))))
   (define (simplify-state! st) ; Reprocess to apply new unit clause information
     ;(pretty-print `(simplify-state! ,(state-units st)))
     (let ((clauses (state-clauses st)))
-      (for-each (lambda (cl) (add-clause! st cl)) clauses)
+      (hash-for-each clauses (lambda (cl _) (add-clause! st cl)))
       #;(pretty-print `(end simplify-state!))))
   (define (clause-to-string cl)
     (format "~a 0~n" (string-join (map number->string cl) " ")))
 
   (define (variable-count st) (state-variable-counter st))
-  (define (clause-count st) (if (state-known-unsatisfiable st) #f (length (state-clauses st))))
+  (define (clause-count st) (if (state-known-unsatisfiable st) #f (hash-count (state-clauses st))))
   
   (define (to-dimacs st)
     (format "p cnf ~a ~a~n~a"
             (variable-count st)
             (clause-count st)
-            (string-concatenate (map clause-to-string (state-clauses st)))))
+            (string-concatenate (hash-map (state-clauses st) (lambda (cl _) (clause-to-string cl))))))
   
   (define (from-picosat output)
     (let* ((tokens (string-tokenize output))
@@ -140,13 +140,13 @@
   (define (run-picosat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((null? (state-clauses st)) '())
+      ((zero? (hash-count (state-clauses st))) '())
       (else (from-picosat (run-process-raw "/home/willcock2/picosat-632/picosat" (to-dimacs st))))))
   
   (define (run-minisat st)
     (cond 
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
-      ((null? (state-clauses st)) '())
+      ((zero? (hash-count (state-clauses st))) '())
       (else
         (let ((minisat-result (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))
           ;(pretty-print (to-dimacs st))
@@ -181,7 +181,7 @@
   (define (unsatisfiable! st)
     #;(pretty-print `(unsatisfiable!))
     (set-state-known-unsatisfiable! st #t)
-    (set-state-clauses! st '(())))
+    (set-state-clauses! st (make-immutable-hash (list (cons '() #t)))))
   
   (define (has-inverses? vars)
     (if (null? vars)
