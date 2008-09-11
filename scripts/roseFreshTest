@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 # This script does a fresh checkout of ROSE and conducts series tests
 # Please provide your customized configurations in a .sh file before using this script:
 #
@@ -196,6 +196,16 @@ if [ $buildstatus == 0 ]; then
   #------------------------------------------------------
   # Optional uploading Section: for successful tests only
   #------------------------------------------------------
+  if [ $ENABLE_RRQM ] ; then
+    echo "Running QMtest on Plumhall..." >> $mailtext
+    cd ${ROSE_TEST_REGRESSION_ROOT}
+    make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose && make -f ${ROSE_TEST_REGRESSION_ROOT}/plumhall.makefile publish
+    if [ $? -ne 0 ]; then
+      echo "Error: make plumhall finishes abnormally!" >>$mailtext
+    else
+      echo "make plumhall finishes normally.">>$mailtext
+    fi
+  fi
    # documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
