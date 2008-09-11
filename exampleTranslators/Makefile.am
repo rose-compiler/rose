@@ -5,6 +5,9 @@ SUBDIRS = \
      defaultTranslator  \
      DOTGenerator       \
      PDFGenerator       \
-     AstCopyReplTester  \
-     graphicalUserInterfaceExamples
+     AstCopyReplTester
+
+# DQ (9/11/2008): We can add these later but these are older QRose examples.
+# Current examples are in developersScratchSpace/Dan/QRose_tests.
+#    graphicalUserInterfaceExamples
 

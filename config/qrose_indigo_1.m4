@@ -78,10 +78,11 @@ AC_DEFUN([AC_PATH_QT],
 [
 AC_MSG_CHECKING([for Qt])
 
+dnl DQ (9/11/2008): Modified to set the "n" so that tests without QT would work.
 AC_ARG_WITH(qt,
     [  --with-qt=DIR where the QT root directory is. ],
-    [  ac_qt_path="$withval"
-    ])    
+    [  ac_qt_path="$withval"],
+    [  with_qt=no ])
 
 AC_ARG_WITH(qt-inc,
     [  --with-qt-inc=DIR   where the QT includes are. ],
@@ -96,7 +97,7 @@ AC_ARG_WITH(qt-lib,
 dnl ---------------------------[check Qt headers]------------
   qt_incdirs="$ac_qt_includes $ac_qt_path/include /usr/include/qt4"
   AC_FIND_FILE(QtGui/qapplication.h, $qt_incdirs, qt_incdir)
-  if test "$with_QRose" != no && test "$qt_incdir" = NONE; then
+  if test "x$with_QRose" != xno && test "$qt_incdir" = NONE; then
      AC_MSG_ERROR([ Qt headers not found,  use --with-qt=DIR or --with-qt-includes=DIR])
   fi
   QT_INCLUDES="-I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir"

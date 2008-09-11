@@ -40,7 +40,7 @@ if ROSE_USE_MYSQL_DATABASE
    ROSE_SIDEEFFECTS_INCLUDE             = -I$(top_srcdir)/src/midend/programAnalysis/sideEffectAnalysis
    ROSE_SIDEEFFECTS_OBJS                = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/*.o
    ROSE_SIDEEFFECTS_LIB_NAME            = sideEffect
-   ROSE_SIDEEFFECTS_LIB_FILE            = lib$(ROSE_SIDEEFFECTS_LIB_NAME).so
+#  ROSE_SIDEEFFECTS_LIB_FILE            = lib$(ROSE_SIDEEFFECTS_LIB_NAME).so
    ROSE_SIDEEFFECTS_LIBS_FILE_WITH_PATH = $(top_builddir)/src/midend/programAnalysis/sideEffectAnalysis/$(ROSE_SIDEEFFECTS_LIB_FILE)
    ROSE_SIDEEFFECTS_LIBS                = -l$(ROSE_SIDEEFFECTS_LIB_NAME)
 
@@ -50,7 +50,7 @@ if ROSE_USE_MYSQL_DATABASE
    ROSE_DATABASE_INCLUDE             = -I$(top_srcdir)/src/roseExtensions/databaseConnection $(BOOST_INCLUDE)
    ROSE_DATABASE_OBJS                = $(top_builddir)/src/roseExtensions/databaseConnection/*.o
    ROSE_DATABASE_LIB_NAME            = rosedatabase
-   ROSE_DATABASE_LIB_FILE            = lib$(ROSE_DATABASE_LIB_NAME).so
+#  ROSE_DATABASE_LIB_FILE            = lib$(ROSE_DATABASE_LIB_NAME).so
    ROSE_DATABASE_LIBS_FILE_WITH_PATH = $(top_builddir)/src/roseExtensions/databaseConnection/lib$(ROSE_DATABASE_LIB_FILE).a
    ROSE_DATABASE_LIBS                = -l$(ROSE_DATABASE_LIB_NAME)
 
@@ -66,7 +66,7 @@ if ROSE_USE_SQLITE_DATABASE
    SQLITE_DATABASE_LIBS          = $(SQLITE3_LDFLAGS)
    ROSE_SQLITE_DATABASE_OBJS     = $(top_builddir)/src/roseExtensions/SQLiteConnection/*.o
    ROSE_SQLITE_DATABASE_LIB_NAME = roseSQLiteDatabase
-   ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
+#  ROSE_SQLITE_DATABASE_LIB_FILE = lib$(ROSE_SQLITE_DATABASE_LIB_NAME).so
    ROSE_SQLITE_DATABASE_LIBS     = -l$(ROSE_SQLITE_DATABASE_LIB_NAME)
 endif
 
@@ -79,12 +79,17 @@ VALGRIND_BINARY = @VALGRIND_BINARY@
 
 # Conditional support for Gabriel's QRose GUI Library 
 if ROSE_USE_QROSE
-ROSE_GUI_INCLUDE = \
-   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRGui \
-   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox \
-   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRTree \
-   -I$(top_srcdir)/src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox \
-   $(QT_INCLUDES)
+  ROSE_GUI_INCLUDE = -I${QROSE_PREFIX}/include
+# ROSE_GUI_LIBS = -lqrose
+  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
+# ROSE_GUI_LIB_FILE = libqrose.a
+endif
+
+if ROSE_USE_QT
+  ROSE_QT_INCLUDE = $(QT_INCLUDES)
+# ROSE_QT_LIBS = -lqt
+  ROSE_QT_LIBS_WITH_PATH = ${QT_LDFLAGS}
+# ROSE_QT_LIB_FILE = libqt.a
 endif
 
 # ROSE-HPCToolkit module
@@ -92,7 +97,7 @@ if ROSE_BUILD_ROSEHPCT
   ROSE_ROSEHPCT_INCLUDES = -I$(top_srcdir)/src/roseExtensions/roseHPCToolkit/include
   ROSE_ROSEHPCT_LIBS = -lrosehpct
   ROSE_ROSEHPCT_LIBS_WITH_PATH = $(top_builddir)/src/roseExtensions/roseHPCToolkit/src/librosehpct.la
-  ROSE_ROSEHPCT_LIB_FILE = librosehpct.so
+# ROSE_ROSEHPCT_LIB_FILE = librosehpct.so
 endif
 
 # ROSE-YICES Package (destributed by SRI as a static library)
@@ -100,7 +105,7 @@ if ROSE_USE_YICES
   ROSE_YICES_INCLUDES = -I$(yices_path)/include
   ROSE_YICES_LIBS = -lyices
   ROSE_YICES_LIBS_WITH_PATH = $(yices_path)/lib/libyices.a
-  ROSE_YICES_LIB_FILE = libyices.a
+# ROSE_YICES_LIB_FILE = libyices.a
 endif
 
 # ROSE-WINE Package (Wine is a package to permit execution of Windows binaries under Linux)
@@ -173,6 +178,7 @@ ROSE_INCLUDES = \
       $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
+      $(ROSE_QT_INCLUDE) \
       $(MYSQL_DATABASE_INCLUDE) \
       $(ROSE_SQLITE_DATABASE_INCLUDE) \
       $(SQLITE_DATABASE_INCLUDE) \
@@ -218,10 +224,12 @@ ROSE_LIBS_WITH_PATH = $(ROSE_LIBS)
 
 # ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(LEXLIB) $(MYSQL_DATABASE_LIBS) $(SQLITE_DATABASE_LIBS) $(LIB_QT) $(WAVE_LDFLAGS) $(WAVE_LIBRARIES) $(WAVE_LIBS) $(JAVA_JVM_LIB) $(RT_LIBS)
 ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
-    $(SQLITE_DATABASE_LIBS) $(LIB_QT)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
-	$(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
-	$(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
-	$(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH)
+  $(SQLITE_DATABASE_LIBS) $(LIB_QT)  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+  $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
+  $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
+  $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) \
+  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
+  $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH)
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
 # development. The use of the seperate libraries make the linking faster where the

@@ -157,11 +157,18 @@ CxxGrammarMetaProgram_SOURCES = \
 
 CxxGrammarMetaProgram_LDADD = $(top_builddir)/src/util/libroseutil.la
 
+# DQ (9/11/2008):
+# The rose_paths.c is built in ROSE/src/util and this dependence causes
+# ROSE to rebuild a lot of code each time configure is rerun. Let's see
+# if this can be make a little more tolerable for those without larger
+# computers working on ROSE (e.g. students).
+# CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
+CxxGrammarMetaProgram_DEPENDENCIES = 
+
+
 # DQ (7/8/2005): Avoid building Sage III when util changes!
 # $(top_builddir)/util/libroseutil.so:
 #	cd $(top_builddir)/util; $(MAKE)
-
-CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
 
 
 # Force recompilation of source files if any of the header files 
