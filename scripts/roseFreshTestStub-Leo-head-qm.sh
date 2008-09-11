@@ -42,7 +42,7 @@ SVNOP=checkout
 MAKEFLAGS="-j16"
 
 # my additional stuff
-#KEEP_TEST_DIR=yes
+KEEP_TEST_DIR=yes
 #NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 SKIP_DIST_TEST=yes
 
