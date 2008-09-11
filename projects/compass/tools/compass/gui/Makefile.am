@@ -1,7 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
-if USE_QROSE
+if ROSE_USE_QROSE
 
 $(compass_build_tooldir)/compass/libCompassCheckers.la:
 	cd .. && $(MAKE) libCompassCheckers.la
@@ -19,7 +19,8 @@ compassMainGui_SOURCES = \
 
 compassMainGui_LDADD = -L$(compass_build_tooldir)/compass -lCompassCheckers $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
-INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES) $(QROSE_CXXFLAGS) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
+# INCLUDES = $(ROSE_INCLUDES) $(QT_INCLUDES) $(QROSE_CXXFLAGS) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
+INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I$(compass_support_dir) -I$(compass_srcdir) -I$(compass_checker_dir) -I$(compass_prereqs_dir) -I$(compass_support_bdir) -I.
 
 compassMainGui_DEPENDENCIES = $(compass_build_tooldir)/compass/libCompassCheckers.la
 

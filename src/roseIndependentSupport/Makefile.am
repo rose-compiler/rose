@@ -6,4 +6,5 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 #                 The dot2gml is only compiled if the DOT_TO_GML_TRANSLATOR configure option is used
 #                 The graphicalUserInterface is compiled only if the ROSE_USE_QROSE configure option is used
 # SUBDIRS = graphicalUserInterface graphics visualization dot2gml
-SUBDIRS = graphicalUserInterface dot2gml
+# SUBDIRS = graphicalUserInterface dot2gml
+SUBDIRS = dot2gml
