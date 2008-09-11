@@ -246,10 +246,13 @@ createUnpackDecl (SgInitializedName* param,
     new SgAssignInitializer (ASTtools::newFileInfo (),
                              param_deref_expr, param_deref_type);
   ROSE_ASSERT (local_val);
-  SgType* local_type = isSgReferenceType(param_deref_type)
-    ? SgReferenceType::createType(param_deref_type)
-    :param_deref_type;
+
+//  SgType* local_type = isSgReferenceType(param_deref_type)
+  SgType* local_type = isSgArrayType(param_deref_type)
+    ?SgReferenceType::createType(param_deref_type): // wrong for regular types!
+    param_deref_type;
   ROSE_ASSERT (local_type);
+
   SgVariableDeclaration* decl =
     new SgVariableDeclaration (ASTtools::newFileInfo (),
                                local_name, local_type, local_val);
