@@ -5500,7 +5500,9 @@ SgNode::numberOfNodesInSubtree()
                  {
                    if (inheritedAttribute.treeDepth > maxDepth)
                         maxDepth = inheritedAttribute.treeDepth;
-
+#if 0
+                   printf ("maxDepth = %d for IR nodes = %p = %s \n",maxDepth,astNode,astNode->class_name().c_str());
+#endif
                    return DepthInheritedAttribute(inheritedAttribute.treeDepth + 1);
                  }
         };

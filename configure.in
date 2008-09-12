@@ -923,13 +923,6 @@ src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage/Makefile
 src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
-src/roseIndependentSupport/graphicalUserInterface/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/QRTree/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
-src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
 projects/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
@@ -1093,11 +1086,6 @@ exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile
 exampleTranslators/documentedExamples/AstRewriteExamples/Makefile
 exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/defaultTranslator/Makefile
-exampleTranslators/graphicalUserInterfaceExamples/Makefile
-exampleTranslators/graphicalUserInterfaceExamples/slicing/Makefile
-exampleTranslators/graphicalUserInterfaceExamples/attributes/Makefile
-exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
-exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
 docs/Makefile
 docs/Rose/rose.html
 docs/Rose/projects.html
@@ -1149,6 +1137,20 @@ developersScratchSpace/Dan/astEquivalence_tests/Makefile
 developersScratchSpace/Dan/MicrosoftWindows_tests/Makefile
 developersScratchSpace/Dan/QRose_tests/Makefile
 ])
+
+# DQ (9/12/2008): Removed older version of QRose (now an external project)
+# src/roseIndependentSupport/graphicalUserInterface/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRTree/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRCodeBox/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRGui/icons22/Makefile
+# src/roseIndependentSupport/graphicalUserInterface/src/QRQueryBox/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/slicing/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/attributes/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/query/Makefile
+# exampleTranslators/graphicalUserInterfaceExamples/layout/Makefile
 
 AC_CONFIG_COMMANDS([default],[[
      echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
