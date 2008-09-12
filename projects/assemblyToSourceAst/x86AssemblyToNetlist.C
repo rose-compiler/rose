@@ -32,6 +32,11 @@ inline VarList(Len) invertWord(const VarList(Len)& a) {
 inline Var invertMaybe(Var a, bool inv) {
   return inv ? invert(a) : a;
 }
+inline VarList(1) single(Var a) {
+  VarList(1) result;
+  result[0] = a;
+  return result;
+}
 
 template <size_t From, size_t To, size_t InputSize>
 VarList(To - From) extract(const VarList(InputSize)& in) {
@@ -167,6 +172,181 @@ struct NetlistTranslator {
     flagMap.insert(make_pair(x86flag_of, newVar()));
   }
 
+  void addClause(const vector<Var>& cl) { // FIXME
+    vector<Var> newCl;
+    for (size_t i = 0; i < cl.size(); ++i) {
+      if (cl[i] == FALSE) {
+      } else if (cl[i] == TRUE) {
+        return;
+      } else {
+        newCl.push_back(cl[i]);
+      }
+    }
+    if (newCl.empty()) { /* FIXME */ }
+    std::sort(newCl.begin(), newCl.end());
+    printf("(");
+    for (size_t i = 0; i < newCl.size(); ++i) printf("%d ", newCl[i]);
+    printf(")\n");
+    // FIXME
+  }
+
+  template <size_t Len>
+  void addClause(const VarList(Len)& cl) {
+    vector<Var> cl2(Len);
+    for (size_t i = 0; i < Len; ++i) cl2[i] = cl[i];
+    addClause(cl2);
+  }
+
+  void condEquivalence(Var sel, Var a, Var b) {
+    VarList(3) cl;
+    cl[0] = invert(sel);
+    cl[1] = invert(a);
+    cl[2] = b;
+    addClause(cl);
+    cl[1] = a;
+    cl[2] = invert(b);
+    addClause(cl);
+  }
+
+  Var mux(Var sel, Var ifTrue, Var ifFalse) {
+    if (sel == FALSE) {
+      return ifFalse;
+    } else if (sel == TRUE) {
+      return ifTrue;
+    } else if (ifTrue == ifFalse) {
+      return ifTrue;
+    } else if (ifTrue == TRUE && ifFalse == FALSE) {
+      return sel;
+    } else if (ifTrue == FALSE && ifFalse == TRUE) {
+      return invert(sel);
+    } else {
+      Var output = newVar();
+      condEquivalence(sel, ifTrue, output);
+      condEquivalence(invert(sel), ifFalse, output);
+      return output;
+    }
+  }
+
+  template <size_t Len>
+  Var andAcross(const VarList(Len)& a) {
+    vector<Var> newA;
+    for (size_t i = 0; i < Len; ++i) {
+      if (a[i] == FALSE) {
+        return FALSE;
+      } else if (a[i] == TRUE) {
+      } else {
+        newA.push_back(a[i]);
+      }
+    }
+    if (newA.size() == 1) {
+      return newA[0];
+    }
+    if (newA.empty()) return TRUE;
+    Var output = newVar();
+    for (size_t i = 0; i < newA.size(); ++i) {
+      VarList(2) cl1;
+      cl1[0] = invert(output);
+      cl1[1] = newA[i];
+      addClause(cl1);
+    }
+    vector<Var> cl2;
+    for (size_t i = 0; i < newA.size(); ++i) {
+      cl2.push_back(invert(newA[i]));
+    }
+    cl2.push_back(output);
+    addClause(cl2);
+    return output;
+  }
+
+  Var andGate(Var a, Var b) {
+    VarList(2) inputs;
+    inputs[0] = a;
+    inputs[1] = b;
+    return andAcross(inputs);
+  }
+
+  Var nandGate(Var a, Var b) {
+    return invert(andGate(a, b));
+  }
+
+  Var orGate(Var a, Var b) {
+    return invert(andGate(invert(a), invert(b)));
+  }
+
+  template <size_t Len>
+  Var orAcross(const VarList(Len)& a) {
+    VarList(Len) aInv = invertWord(a);
+    return invert(andAcross(aInv));
+  }
+
+  Var norGate(Var a, Var b) {
+    return invert(orGate(a, b));
+  }
+
+  template <size_t Len>
+  Var norAcross(const VarList(Len)& a) {
+    return invert(orAcross(a));
+  }
+
+  Var xorGate(Var a, Var b) {
+    return mux(a, invert(b), b);
+  }
+
+  template <size_t Len>
+  Var xorAcross(const VarList(Len)& a) {
+    Var result = (Len == 0 ? FALSE : a[0]);
+    for (size_t i = 1; i < Len; ++i) result = xorGate(result, a[i]);
+    return result;
+  }
+
+  template <size_t Len>
+  VarList(Len) invertWord(const VarList(Len)& a) {
+    VarList(Len) result;
+    for (size_t i = 0; i < Len; ++i) result[i] = invert(a[i]);
+    return result;
+  }
+
+  template <size_t Len>
+  VarList(Len) andWords(const VarList(Len)& a, const VarList(Len)& b) {
+    VarList(Len) output;
+    for (size_t i = 0; i < Len; ++i) {
+      output[i] = andGate(a[i], b[i]);
+    }
+    return output;
+  }
+
+  template <size_t Len>
+  VarList(Len) orWords(const VarList(Len)& a, const VarList(Len)& b) {
+    VarList(Len) output;
+    for (size_t i = 0; i < Len; ++i) {
+      output[i] = orGate(a[i], b[i]);
+    }
+    return output;
+  }
+
+  template <size_t Len>
+  VarList(Len) xorWords(const VarList(Len)& a, const VarList(Len)& b) {
+    VarList(Len) output;
+    for (size_t i = 0; i < Len; ++i) {
+      output[i] = xorGate(a[i], b[i]);
+    }
+    return output;
+  }
+
+  template <size_t NBits>
+  Var equal(const VarList(NBits)& a, const VarList(NBits)& b) {
+    return norAcross(xorWords(a, b));
+  }
+
+  template <size_t NBits>
+  VarList(NBits) ite(Var cond, const VarList(NBits)& ifTrue, const VarList(NBits)& ifFalse) {
+    VarList(NBits) output;
+    for (size_t i = 0; i < NBits; ++i) {
+      output[i] = mux(cond, ifTrue[i], ifFalse[i]);
+    }
+    return output;
+  }
+
   template <size_t NBits>
   VarList(NBits) adder(const VarList(NBits)& a, const VarList(NBits)& b, Var carryIn = FALSE, VarList(NBits)* carriesOutOpt = NULL) {
     if (carriesOutOpt != NULL) {
@@ -186,74 +366,103 @@ struct NetlistTranslator {
   }
 
   template <size_t Len1, size_t Len2>
+  VarList(Len1 + Len2) signedDivider(const VarList(Len1)& dividend, const VarList(Len2)& divisor) {
+    // Returns Len1 bits quotient, Len2 bits remainder concatenated
+    return newVars<Len1 + Len2>(); // FIXME
+  }
+
+  template <size_t Len1, size_t Len2>
   VarList(Len1 + Len2) unsignedDivider(const VarList(Len1)& dividend, const VarList(Len2)& divisor) {
     // Returns Len1 bits quotient, Len2 bits remainder concatenated
     return newVars<Len1 + Len2>(); // FIXME
   }
 
-  Var andGate(Var a, Var b) {
-    return newVar(); // FIXME
+  template <size_t Len, size_t SCLen>
+  VarList(Len) rightShifter(const VarList(Len)& in, const VarList(SCLen)& shiftCount) {
+    // Logarithmic shifter
+    VarList(Len) result = in;
+    for (size_t scBit = SCLen, pow2scBit = 1 << (SCLen - 1); scBit > 0; --scBit, pow2scBit >>= 1) {
+      VarList(Len) resultCopy = result;
+      for (size_t i = 0; i < Len; ++i) {
+        resultCopy[i] = mux(shiftCount[scBit - 1], (i >= pow2scBit ? result[i - pow2scBit] : FALSE), result[i]);
+      }
+      result = resultCopy;
+    }
+    return result;
   }
 
-  Var nandGate(Var a, Var b) {
-    return newVar(); // FIXME
+  template <size_t Len, size_t SCLen>
+  VarList(Len) leftShifter(const VarList(Len)& in, const VarList(SCLen)& shiftCount) {
+    // Logarithmic shifter
+    VarList(Len) result = in;
+    for (size_t scBit = SCLen, pow2scBit = 1 << (SCLen - 1); scBit > 0; --scBit, pow2scBit >>= 1) {
+      VarList(Len) resultCopy = result;
+      for (size_t i = 0; i < Len; ++i) {
+        resultCopy[i] = mux(shiftCount[scBit - 1], (i + pow2scBit >= Len ? FALSE : result[i + pow2scBit]), result[i]);
+      }
+      result = resultCopy;
+    }
+    return result;
   }
 
-  Var orGate(Var a, Var b) {
-    return newVar(); // FIXME
+  template <size_t Len, size_t SCLen>
+  VarList(Len) arithmeticLeftShifter(const VarList(Len)& in, const VarList(SCLen)& shiftCount) {
+    // Logarithmic shifter
+    VarList(Len) result = in;
+    for (size_t scBit = SCLen, pow2scBit = 1 << (SCLen - 1); scBit > 0; --scBit, pow2scBit >>= 1) {
+      VarList(Len) resultCopy = result;
+      for (size_t i = 0; i < Len; ++i) {
+        resultCopy[i] = mux(shiftCount[scBit - 1], (i + pow2scBit >= Len ? result[Len - 1] : result[i + pow2scBit]), result[i]);
+      }
+      result = resultCopy;
+    }
+    return result;
   }
 
-  Var norGate(Var a, Var b) {
-    return newVar(); // FIXME
+  template <size_t Len, size_t SCLen>
+  VarList(Len) rightRotater(const VarList(Len)& in, const VarList(SCLen)& shiftCount) {
+    // Logarithmic shifter
+    VarList(Len) result = in;
+    for (size_t scBit = SCLen, pow2scBit = 1 << (SCLen - 1); scBit > 0; --scBit, pow2scBit >>= 1) {
+      VarList(Len) resultCopy = result;
+      for (size_t i = 0; i < Len; ++i) {
+        resultCopy[i] = mux(shiftCount[scBit - 1], result[(i - pow2scBit + Len) % Len], result[i]);
+      }
+      result = resultCopy;
+    }
+    return result;
   }
 
-  Var xorGate(Var a, Var b) {
-    return newVar(); // FIXME
+  template <size_t Len, size_t SCLen>
+  VarList(Len) leftRotater(const VarList(Len)& in, const VarList(SCLen)& shiftCount) {
+    // Logarithmic shifter
+    VarList(Len) result = in;
+    for (size_t scBit = SCLen, pow2scBit = 1 << (SCLen - 1); scBit > 0; --scBit, pow2scBit >>= 1) {
+      VarList(Len) resultCopy = result;
+      for (size_t i = 0; i < Len; ++i) {
+        resultCopy[i] = mux(shiftCount[scBit - 1], result[(i + pow2scBit) % Len], result[i]);
+      }
+      result = resultCopy;
+    }
+    return result;
   }
 
   template <size_t Len>
-  VarList(Len) andWords(const VarList(Len)& a, const VarList(Len)& b) {
-    return newVars<Len>(); // FIXME
+  VarList(Len) bitReverse(const VarList(Len)& in) {
+    VarList(Len) result;
+    for (size_t i = Len; i > 0; --i) {
+      result[i - 1] = in[Len - i];
+    }
+    return result;
   }
 
   template <size_t Len>
-  VarList(Len) orWords(const VarList(Len)& a, const VarList(Len)& b) {
-    return newVars<Len>(); // FIXME
-  }
-
-  template <size_t Len>
-  VarList(Len) xorWords(const VarList(Len)& a, const VarList(Len)& b) {
-    return newVars<Len>(); // FIXME
-  }
-
-  template <size_t Len>
-  Var andAcross(const VarList(Len)& a) {
-    return newVar(); // FIXME
-  }
-
-  template <size_t Len>
-  Var orAcross(const VarList(Len)& a) {
-    return newVar(); // FIXME
-  }
-
-  template <size_t Len>
-  Var xorAcross(const VarList(Len)& a) {
-    return newVar(); // FIXME
-  }
-
-  template <size_t Len>
-  Var norAcross(const VarList(Len)& a) {
-    return invert(orAcross(a));
-  }
-
-  template <size_t NBits>
-  Var equal(const VarList(NBits)& a, const VarList(NBits)& b) {
-    return norAcross(xorWords(a, b));
-  }
-
-  template <size_t NBits>
-  VarList(NBits) ite(Var cond, const VarList(NBits)& ifTrue, const VarList(NBits)& ifFalse) {
-    return newVars<NBits>(); // FIXME
+  VarList(Len) leastSignificantSetBit(const VarList(Len)& in) {
+    VarList(Len) result = number<Len>(0);
+    for (size_t i = Len; i > 0; --i) {
+      result = ite(in[i - 1], number<Len>(i - 1), result);
+    }
+    return result;
   }
 
   template <size_t Len> // In bits
@@ -430,12 +639,13 @@ struct NetlistTranslator {
   }
 
   template <size_t Len>
-  VarList(Len) doIncOperation(const VarList(Len)& a, bool dec) { // Does inc (dec with dec set), and sets correct flags
+  VarList(Len) doIncOperation(const VarList(Len)& a, bool dec, bool setCarry) { // Does inc (dec with dec set), and sets correct flags
     VarList(Len) carries;
     VarList(Len) result = adder(a, number<Len>(dec ? -1 : 1), FALSE, &carries);
     setFlagsForResult(result);
     flag(x86flag_af) = invertMaybe(carries[3], dec);
     flag(x86flag_of) = xorGate(carries[Len - 1], carries[Len - 2]);
+    if (setCarry) flag(x86flag_cf) = carries[Len - 1];
     return result;
   }
 
@@ -450,6 +660,16 @@ struct NetlistTranslator {
           case 1: write(operands[0], read<8>(operands[1])); break;
           case 2: write(operands[0], read<16>(operands[1])); break;
           case 4: write(operands[0], read<32>(operands[1])); break;
+          default: ROSE_ASSERT ("Bad size"); break;
+        }
+        break;
+      }
+      case x86_xchg: {
+        ROSE_ASSERT (operands.size() == 2);
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {VarList(8) temp = read<8>(operands[1]); write(operands[1], read<8>(operands[0])); write(operands[0], temp); break;}
+          case 2: {VarList(16) temp = read<16>(operands[1]); write(operands[1], read<16>(operands[0])); write(operands[0], temp); break;}
+          case 4: {VarList(32) temp = read<32>(operands[1]); write(operands[1], read<32>(operands[0])); write(operands[0], temp); break;}
           default: ROSE_ASSERT ("Bad size"); break;
         }
         break;
@@ -650,6 +870,28 @@ struct NetlistTranslator {
         flag(x86flag_cf) = FALSE;
         break;
       }
+      case x86_not: {
+        ROSE_ASSERT (operands.size() == 1);
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) result = invertWord(read<8>(operands[0]));
+            write(operands[0], result);
+            break;
+          }
+          case 2: {
+            VarList(16) result = invertWord(read<16>(operands[0]));
+            write(operands[0], result);
+            break;
+          }
+          case 4: {
+            VarList(32) result = invertWord(read<32>(operands[0]));
+            write(operands[0], result);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size"); break;
+        }
+        break;
+      }
       case x86_add: {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
@@ -757,21 +999,43 @@ struct NetlistTranslator {
         }
         break;
       }
-      case x86_inc: {
+      case x86_neg: {
         ROSE_ASSERT (operands.size() == 1);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            VarList(8) result = doIncOperation(read<8>(operands[0]), false);
+            VarList(8) result = doIncOperation(invertWord(read<8>(operands[0])), false, true);
             write(operands[0], result);
             break;
           }
           case 2: {
-            VarList(16) result = doIncOperation(read<16>(operands[0]), false);
+            VarList(16) result = doIncOperation(invertWord(read<16>(operands[0])), false, true);
             write(operands[0], result);
             break;
           }
           case 4: {
-            VarList(32) result = doIncOperation(read<32>(operands[0]), false);
+            VarList(32) result = doIncOperation(invertWord(read<32>(operands[0])), false, true);
+            write(operands[0], result);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size"); break;
+        }
+        break;
+      }
+      case x86_inc: {
+        ROSE_ASSERT (operands.size() == 1);
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) result = doIncOperation(read<8>(operands[0]), false, false);
+            write(operands[0], result);
+            break;
+          }
+          case 2: {
+            VarList(16) result = doIncOperation(read<16>(operands[0]), false, false);
+            write(operands[0], result);
+            break;
+          }
+          case 4: {
+            VarList(32) result = doIncOperation(read<32>(operands[0]), false, false);
             write(operands[0], result);
             break;
           }
@@ -783,21 +1047,333 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 1);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            VarList(8) result = doIncOperation(read<8>(operands[0]), true);
+            VarList(8) result = doIncOperation(read<8>(operands[0]), true, false);
             write(operands[0], result);
             break;
           }
           case 2: {
-            VarList(16) result = doIncOperation(read<16>(operands[0]), true);
+            VarList(16) result = doIncOperation(read<16>(operands[0]), true, false);
             write(operands[0], result);
             break;
           }
           case 4: {
-            VarList(32) result = doIncOperation(read<32>(operands[0]), true);
+            VarList(32) result = doIncOperation(read<32>(operands[0]), true, false);
             write(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
+        }
+        break;
+      }
+      case x86_shl: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) op = read<8>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(9) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(9) outputWithCf = rightShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[8];
+            flag(x86flag_of) = xorGate(outputWithCf[7], outputWithCf[8]);
+            write(operands[0], extract<0, 8>(outputWithCf));
+            setFlagsForResult(extract<0, 8>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 2: {
+            VarList(16) op = read<16>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(17) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(17) outputWithCf = rightShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[16];
+            flag(x86flag_of) = xorGate(outputWithCf[15], outputWithCf[16]);
+            write(operands[0], extract<0, 16>(outputWithCf));
+            setFlagsForResult(extract<0, 16>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(33) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(33) outputWithCf = rightShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[32];
+            flag(x86flag_of) = xorGate(outputWithCf[31], outputWithCf[32]);
+            write(operands[0], extract<0, 32>(outputWithCf));
+            setFlagsForResult(extract<0, 32>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_shr: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) op = read<8>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(9) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(9) outputWithCf = leftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[8];
+            flag(x86flag_of) = xorGate(outputWithCf[7], outputWithCf[8]);
+            write(operands[0], extract<0, 8>(outputWithCf));
+            setFlagsForResult(extract<0, 8>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 2: {
+            VarList(16) op = read<16>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(17) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(17) outputWithCf = leftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[16];
+            flag(x86flag_of) = xorGate(outputWithCf[15], outputWithCf[16]);
+            write(operands[0], extract<0, 16>(outputWithCf));
+            setFlagsForResult(extract<0, 16>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(33) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(33) outputWithCf = leftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[32];
+            flag(x86flag_of) = xorGate(outputWithCf[31], outputWithCf[32]);
+            write(operands[0], extract<0, 32>(outputWithCf));
+            setFlagsForResult(extract<0, 32>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_sar: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) op = read<8>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(9) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(9) outputWithCf = arithmeticLeftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[8];
+            flag(x86flag_of) = xorGate(outputWithCf[7], outputWithCf[8]);
+            write(operands[0], extract<0, 8>(outputWithCf));
+            setFlagsForResult(extract<0, 8>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 2: {
+            VarList(16) op = read<16>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(17) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(17) outputWithCf = arithmeticLeftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[16];
+            flag(x86flag_of) = xorGate(outputWithCf[15], outputWithCf[16]);
+            write(operands[0], extract<0, 16>(outputWithCf));
+            setFlagsForResult(extract<0, 16>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(33) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(33) outputWithCf = arithmeticLeftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[32];
+            flag(x86flag_of) = xorGate(outputWithCf[31], outputWithCf[32]);
+            write(operands[0], extract<0, 32>(outputWithCf));
+            setFlagsForResult(extract<0, 32>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_rol: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) op = read<8>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(8) output = rightRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[0]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[0], output[7]));
+            write(operands[0], output);
+            break;
+          }
+          case 2: {
+            VarList(16) op = read<16>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(16) output = rightRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[0]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[0], output[15]));
+            write(operands[0], output);
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(32) output = rightRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[0]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[0], output[31]));
+            write(operands[0], output);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_ror: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(8) op = read<8>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(8) output = leftRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[7]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[6], output[7]));
+            write(operands[0], output);
+            break;
+          }
+          case 2: {
+            VarList(16) op = read<16>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(16) output = leftRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[15]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[14], output[15]));
+            write(operands[0], output);
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[0]);
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[1]));
+            VarList(32) output = leftRotater(op, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = mux(norAcross(shiftCount), flag(x86flag_cf), output[31]);
+            flag(x86flag_of) = mux(norAcross(shiftCount), flag(x86flag_of), xorGate(output[30], output[31]));
+            write(operands[0], output);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_shld: { // FIXME check this
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 2: {
+            VarList(32) op = concat(read<16>(operands[1]), read<16>(operands[0]));
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[2]));
+            VarList(33) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(33) outputWithCf = rightShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[32];
+            flag(x86flag_of) = xorGate(outputWithCf[31], outputWithCf[32]);
+            write(operands[0], extract<16, 32>(outputWithCf));
+            setFlagsForResult(extract<16, 32>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 4: {
+            VarList(64) op = concat(read<32>(operands[1]), read<32>(operands[0]));
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[2]));
+            VarList(65) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(65) outputWithCf = rightShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[64];
+            flag(x86flag_of) = xorGate(outputWithCf[63], outputWithCf[64]);
+            write(operands[0], extract<32, 64>(outputWithCf));
+            setFlagsForResult(extract<32, 64>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_shrd: { // FIXME check this
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 2: {
+            VarList(32) op = concat(read<16>(operands[0]), read<16>(operands[1]));
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[2]));
+            VarList(33) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(33) outputWithCf = leftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[16];
+            flag(x86flag_of) = xorGate(outputWithCf[15], outputWithCf[16]);
+            write(operands[0], extract<0, 16>(outputWithCf));
+            setFlagsForResult(extract<0, 16>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          case 4: {
+            VarList(64) op = concat(read<32>(operands[0]), read<32>(operands[1]));
+            VarList(5) shiftCount = extract<0, 5>(read<8>(operands[2]));
+            VarList(65) opWithCf = concat(op, single(flag(x86flag_cf)));
+            VarList(65) outputWithCf = leftShifter(opWithCf, shiftCount); // Because op is LSB first
+            flag(x86flag_cf) = outputWithCf[32];
+            flag(x86flag_of) = xorGate(outputWithCf[31], outputWithCf[32]);
+            write(operands[0], extract<0, 32>(outputWithCf));
+            setFlagsForResult(extract<0, 32>(outputWithCf));
+            flag(x86flag_af) = FALSE; // Undefined
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_bsf: {
+        flag(x86flag_of) = FALSE; // Undefined
+        flag(x86flag_sf) = FALSE; // Undefined
+        flag(x86flag_af) = FALSE; // Undefined
+        flag(x86flag_pf) = FALSE; // Undefined
+        flag(x86flag_cf) = FALSE; // Undefined
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 2: {
+            VarList(16) op = read<16>(operands[1]);
+            flag(x86flag_zf) = norAcross(op);
+            VarList(16) result = ite(flag(x86flag_zf),
+                                     read<16>(operands[0]),
+                                     leastSignificantSetBit(op));
+            write(operands[0], result);
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[1]);
+            flag(x86flag_zf) = norAcross(op);
+            VarList(32) result = ite(flag(x86flag_zf),
+                                     read<32>(operands[0]),
+                                     leastSignificantSetBit(op));
+            write(operands[0], result);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        break;
+      }
+      case x86_bsr: {
+        flag(x86flag_of) = FALSE; // Undefined
+        flag(x86flag_sf) = FALSE; // Undefined
+        flag(x86flag_af) = FALSE; // Undefined
+        flag(x86flag_pf) = FALSE; // Undefined
+        flag(x86flag_cf) = FALSE; // Undefined
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 2: {
+            VarList(16) op = read<16>(operands[1]);
+            flag(x86flag_zf) = norAcross(op);
+            VarList(16) result = ite(flag(x86flag_zf),
+                                     read<16>(operands[0]),
+                                     xorWords(number<16>(15),
+                                              leastSignificantSetBit(bitReverse(op))));
+            write(operands[0], result);
+            break;
+          }
+          case 4: {
+            VarList(32) op = read<32>(operands[1]);
+            flag(x86flag_zf) = norAcross(op);
+            VarList(32) result = ite(flag(x86flag_zf),
+                                     read<32>(operands[0]),
+                                     xorWords(number<32>(31),
+                                              leastSignificantSetBit(bitReverse(op))));
+            write(operands[0], result);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
         }
         break;
       }
@@ -887,6 +1463,47 @@ struct NetlistTranslator {
         flag(x86flag_pf) = FALSE; // Undefined
         break;
       }
+      case x86_idiv: {
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            VarList(16) op0 = extract<0, 16>(vars(gpr(x86_gpr_ax)));
+            VarList(8) op1 = read<8>(operands[0]);
+            // if op1 == 0, we should trap
+            VarList(24) divResult = signedDivider(op0, op1); // 16 bits quotient, 8 remainder
+            // if result overflows, we should trap
+            vars(gpr(x86_gpr_ax)) = concat(concat(extract<0, 8>(divResult), extract<16, 24>(divResult)), extract<16, 32>(vars(gpr(x86_gpr_ax))));
+            break;
+          }
+          case 2: {
+            VarList(32) op0 = concat(extract<0, 16>(vars(gpr(x86_gpr_ax))), extract<0, 16>(vars(gpr(x86_gpr_dx))));
+            VarList(16) op1 = read<16>(operands[0]);
+            // if op1 == 0, we should trap
+            VarList(48) divResult = signedDivider(op0, op1); // 32 bits quotient, 16 remainder
+            // if result overflows, we should trap
+            vars(gpr(x86_gpr_ax)) = concat(extract<0, 16>(divResult), extract<16, 32>(vars(gpr(x86_gpr_ax))));
+            vars(gpr(x86_gpr_dx)) = concat(extract<32, 48>(divResult), extract<16, 32>(vars(gpr(x86_gpr_dx))));
+            break;
+          }
+          case 4: {
+            VarList(64) op0 = concat(vars(gpr(x86_gpr_ax)), vars(gpr(x86_gpr_dx)));
+            VarList(32) op1 = read<32>(operands[0]);
+            // if op1 == 0, we should trap
+            VarList(96) divResult = signedDivider(op0, op1); // 64 bits quotient, 32 remainder
+            // if result overflows, we should trap
+            vars(gpr(x86_gpr_ax)) = extract<0, 32>(divResult);
+            vars(gpr(x86_gpr_dx)) = extract<64, 96>(divResult);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size");
+        }
+        flag(x86flag_sf) = FALSE; // Undefined
+        flag(x86flag_zf) = FALSE; // Undefined
+        flag(x86flag_af) = FALSE; // Undefined
+        flag(x86flag_pf) = FALSE; // Undefined
+        flag(x86flag_cf) = FALSE; // Undefined
+        flag(x86flag_of) = FALSE; // Undefined
+        break;
+      }
       case x86_div: {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
@@ -974,68 +1591,80 @@ struct NetlistTranslator {
         vars(ip()) = read<32>(operands[0]);
         break;
       }
-      case x86_jne: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_zf), vars(ip()), read<32>(operands[0]));
+#define FLAGCOMBO_ne invert(flag(x86flag_zf))
+#define FLAGCOMBO_e flag(x86flag_zf)
+#define FLAGCOMBO_ns invert(flag(x86flag_sf))
+#define FLAGCOMBO_s flag(x86flag_sf)
+#define FLAGCOMBO_ae invert(flag(x86flag_cf))
+#define FLAGCOMBO_b flag(x86flag_cf)
+#define FLAGCOMBO_be orGate(FLAGCOMBO_b, FLAGCOMBO_e)
+#define FLAGCOMBO_a andGate(FLAGCOMBO_ae, FLAGCOMBO_ne)
+#define FLAGCOMBO_l xorGate(flag(x86flag_sf), flag(x86flag_of))
+#define FLAGCOMBO_ge invert(xorGate(flag(x86flag_sf), flag(x86flag_of)))
+#define FLAGCOMBO_le orGate(FLAGCOMBO_e, FLAGCOMBO_l)
+#define FLAGCOMBO_g andGate(FLAGCOMBO_ge, FLAGCOMBO_ne)
+#define FLAGCOMBO_cxz norAcross(extract<0, 16>(vars(gpr(x86_gpr_cx))))
+#define FLAGCOMBO_ecxz norAcross(vars(gpr(x86_gpr_cx)))
+#define JUMP(tag) case x86_j##tag: {ROSE_ASSERT(operands.size() == 1); vars(ip()) = ite(FLAGCOMBO_##tag, read<32>(operands[0]), vars(ip())); break;}
+      JUMP(ne)
+      JUMP(e)
+      JUMP(ns)
+      JUMP(s)
+      JUMP(ae)
+      JUMP(b)
+      JUMP(be)
+      JUMP(a)
+      JUMP(le)
+      JUMP(g)
+      JUMP(ge)
+      JUMP(l)
+      JUMP(cxz)
+      JUMP(ecxz)
+#undef JUMP
+#define SET(tag) case x86_set##tag: {ROSE_ASSERT (operands.size() == 1); write<8>(operands[0], concat(single(FLAGCOMBO_##tag), number<7>(0))); break;}
+      SET(ne)
+      SET(e)
+      SET(ns)
+      SET(s)
+      SET(ae)
+      SET(b)
+      SET(be)
+      SET(a)
+      SET(le)
+      SET(g)
+      SET(ge)
+      SET(l)
+#undef SET
+      case x86_cld: {
+        ROSE_ASSERT (operands.size() == 0);
+        flag(x86flag_df) = FALSE;
         break;
       }
-      case x86_je: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_zf), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_jns: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_sf), vars(ip()), read<32>(operands[0]));
-        break;
-      }
-      case x86_js: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_sf), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_jae: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_cf), vars(ip()), read<32>(operands[0]));
-        break;
-      }
-      case x86_jb: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(flag(x86flag_cf), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_jbe: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(orGate(flag(x86flag_zf), flag(x86flag_cf)), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_ja: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(orGate(flag(x86flag_zf), flag(x86flag_cf)), vars(ip()), read<32>(operands[0]));
-        break;
-      }
-      case x86_jle: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(orGate(flag(x86flag_zf), xorGate(flag(x86flag_sf), flag(x86flag_of))), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_jg: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(orGate(flag(x86flag_zf), xorGate(flag(x86flag_sf), flag(x86flag_of))), vars(ip()), read<32>(operands[0]));
-        break;
-      }
-      case x86_jl: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(xorGate(flag(x86flag_sf), flag(x86flag_of)), read<32>(operands[0]), vars(ip()));
-        break;
-      }
-      case x86_jge: {
-        ROSE_ASSERT (operands.size() == 1);
-        vars(ip()) = ite(xorGate(flag(x86flag_sf), flag(x86flag_of)), vars(ip()), read<32>(operands[0]));
+      case x86_std: {
+        ROSE_ASSERT (operands.size() == 0);
+        flag(x86flag_df) = TRUE;
         break;
       }
       case x86_nop: break;
+      case x86_repne_scasb: break; // FIXME
+      case x86_repe_cmpsb: break; // FIXME
+      case x86_lodsd: {
+        vars(gpr(x86_gpr_ax)) = readMemory<32>(vars(gpr(x86_gpr_si)));
+        vars(gpr(x86_gpr_si)) = adder(vars(gpr(x86_gpr_si)), ite(flag(x86flag_df), number<32>(-4), number<32>(4)));
+        break;
+      }
+      case x86_lodsw: {
+        vars(gpr(x86_gpr_ax)) = concat(readMemory<16>(vars(gpr(x86_gpr_si))), extract<16, 32>(vars(gpr(x86_gpr_ax))));
+        vars(gpr(x86_gpr_si)) = adder(vars(gpr(x86_gpr_si)), ite(flag(x86flag_df), number<32>(-2), number<32>(2)));
+        break;
+      }
+      case x86_lodsb: {
+        vars(gpr(x86_gpr_ax)) = concat(readMemory<8>(vars(gpr(x86_gpr_si))), extract<8, 32>(vars(gpr(x86_gpr_ax))));
+        vars(gpr(x86_gpr_si)) = adder(vars(gpr(x86_gpr_si)), ite(flag(x86flag_df), number<32>(-1), number<32>(1)));
+        break;
+      }
       case x86_hlt: break; // FIXME
+      case x86_int: break; // FIXME
       default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); abort();
     }
   }
