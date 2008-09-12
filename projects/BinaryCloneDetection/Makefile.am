@@ -2,6 +2,9 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # Use --with-libxml2 on configure command-line for ROSE to activate this
 
+SUBDIRS =  gui
+
+
 if ROSE_USE_SQLITE_DATABASE
 
 INCLUDES = $(ROSE_INCLUDES)  $(SQLITE_DATABASE_INCLUDE)
