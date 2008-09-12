@@ -952,6 +952,7 @@ projects/compass/tools/compass/tests/Cxx_tests/Makefile
 projects/compass/tools/sampleCompassSubset/Makefile
 projects/compass/tools/compassVerifier/Makefile
 projects/BinaryCloneDetection/Makefile
+projects/BinaryCloneDetection/gui/Makefile
 projects/binCompass/Makefile
 projects/binCompass/analyses/Makefile
 projects/binCompass/graphanalyses/Makefile
