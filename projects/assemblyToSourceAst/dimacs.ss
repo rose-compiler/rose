@@ -8,7 +8,7 @@
   (define-struct state
     ((variable-counter)
      (clauses)
-     (units)
+     (definitions)
      (known-unsatisfiable))
     #:mutable #:transparent)
 
@@ -31,12 +31,7 @@
         (let ((m (apply min ls)))
           (cons m (sort-numbers (remove-one m ls))))))
   (define (add-clause! st cl)
-    (let ((cl (map (lambda (l)
-                     (cond ((boolean? l) l)
-                           ((hash-ref (state-units st) (abs l) #f) => (lambda (p) (if (< l 0) (inv p) p)))
-                           (else l)))
-                   cl)))
-      ;(pretty-print `(new cl ,cl ,(state-units st)))
+    (let loop ((cl cl))
       (cond
         ((state-known-unsatisfiable st) (set-state-clauses! st (make-immutable-hash (list (cons '() #t)))))
         ((memq #t cl) (void))
@@ -46,15 +41,12 @@
             (if (null? cl)
               (set-state-known-unsatisfiable! st #t) ; fail
               (begin
-                (when (= (length cl) 1)
-                  ;(pretty-print `(unit clause ,cl))
-                  (set-state-units! st (hash-set (state-units st) (car cl) (> (car cl) 0))))
+                (for-each (lambda (lit)
+                            (create-gate! st #f lit '()))
+                          cl)
                 (set-state-clauses! st (hash-set (state-clauses st) cl #t)))))))))
-  (define (simplify-state! st) ; Reprocess to apply new unit clause information
-    ;(pretty-print `(simplify-state! ,(state-units st)))
-    (let ((clauses (state-clauses st)))
-      (hash-for-each clauses (lambda (cl _) (add-clause! st cl)))
-      #;(pretty-print `(end simplify-state!))))
+
+  (define (simplify-state! st) st)
   (define (clause-to-string cl)
     (format "~a 0~n" (string-join (map number->string cl) " ")))
 
@@ -148,7 +140,9 @@
       ((state-known-unsatisfiable st) #;(pretty-print `(known unsat)) #f)
       ((zero? (hash-count (state-clauses st))) '())
       (else
-        (let ((minisat-result (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" (to-dimacs st))))
+        (let* ((dimacs (to-dimacs st))
+               ;(_ (when (>= (hash-count (state-clauses st)) 600) (with-output-to-file "foo.dimacs" (lambda () (write-string dimacs)) #:exists 'replace) (exit 0)))
+               (minisat-result (run-process-raw "/home/willcock2/minisat/simp/minisat_static -verbosity=0 /dev/stdin /dev/stdout 2>/dev/null" dimacs)))
           ;(pretty-print (to-dimacs st))
           ;(pretty-print minisat-result)
           (from-minisat minisat-result)))))
@@ -176,7 +170,7 @@
     (cond
       ((eq? var #f) (unsatisfiable! st))
       ((eq? var #t) (void))
-      (else #;(pretty-print `(force-1! ,var)) (add-clause! st `(,var)))))
+      (else (create-gate! st #f var `((,var))))))
   (define (force-0! st var) (force-1! st (inv var)))
   (define (unsatisfiable! st)
     #;(pretty-print `(unsatisfiable!))
@@ -189,11 +183,24 @@
         (if (memv (inv (car vars)) (cdr vars))
             #t
             (has-inverses? (cdr vars)))))
+
+  (define (create-gate! st force-generation output clauses)
+    ; If output is already defined, insert its definitions
+    (let* ((var (abs output))
+           (def (hash-ref (state-definitions st) var #f)))
+      (if (or force-generation def)
+        (begin
+          (set-state-definitions! st (hash-set (state-definitions st) var #t)) ; Mark this variable as being used
+          (when (list? def) (for-each (lambda (cl) (add-clause! st cl)) (append def clauses))))
+        (set-state-definitions! st (hash-set (state-definitions st) var clauses)))))
   
   (define (or-gate-raw! st output . inputs)
     ;(pretty-print `(or-gate-raw! ,@inputs -> ,output))
-    (for-each (lambda (in) (add-clause! st `(,(inv in) ,output))) inputs)
-    (add-clause! st `(,(inv output) ,@inputs)))
+    (create-gate! st
+                  #f
+                  output
+                  `(,@(map (lambda (in) `(,(inv in) ,output)) inputs)
+                    (,(inv output) ,@inputs))))
   
   (define (or-gate! st . inputs)
     ;(pretty-print `(or-gate! . ,inputs))
@@ -224,8 +231,8 @@
            (if (null? vars)
                (void)
                (let ((v2 (car vars)))
-                 (add-clause! st `(,v1 ,(inv v2)))
-                 (add-clause! st `(,(inv v1) ,v2))
+                 (create-gate! st #f v2 `((,v1 ,(inv v2)) (,(inv v1) ,v2)))
+                 (create-gate! st #f v1 `((,v1 ,(inv v2)) (,(inv v1) ,v2)))
                  (loop (cdr vars)))))))))
   
   (define (mux! st sel in-true in-false)
@@ -241,10 +248,14 @@
       (else
        (let ((output (variable! st)))
          ;(pretty-print `(mux! ,sel ,in-true ,in-false -> ,output))
-         (add-clause! st `(,sel ,in-false ,(inv output)))
-         (add-clause! st `(,sel ,(inv in-false) ,output))
-         (add-clause! st `(,(inv sel) ,in-true ,(inv output)))
-         (add-clause! st `(,(inv sel) ,(inv in-true) ,output))
+         (create-gate!
+           st
+           #f
+           output
+           `((,sel ,in-false ,(inv output))
+             (,sel ,(inv in-false) ,output)
+             (,(inv sel) ,in-true ,(inv output))
+             (,(inv sel) ,(inv in-true) ,output)))
          output))))
   
   (define (xor2-gate! st in1 in2)
@@ -278,7 +289,6 @@
                    (chain-for-false (take (append rest (list #f)) k))
                    (chain-for-true (cons #t (take rest (sub1 k)))))
               (map (lambda (cf ct)
-                     (add-clause! st `(,(inv cf) ,ct))
                      (mux! st (car inputs) ct cf))
                    chain-for-false chain-for-true)))))
   
@@ -291,7 +301,7 @@
   (provide state)
   (provide state-variable-counter)
   (provide state-clauses)
-  (provide state-units)
+  (provide state-definitions)
   (provide state-known-unsatisfiable)
   (provide make-empty-state)
   (provide variable!)

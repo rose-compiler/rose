@@ -410,56 +410,67 @@
     (`(expr ,_) e)
     (_ (error "remove-unused-variables" e))))
 
+(define (count-points e)
+  (if (pair? e)
+      (+ 1 (count-points (car e)) (count-points (cdr e)))
+      1))
+
 (define (simplify-one-pass s)
-  (let ((st (make-empty-bbstate)))
+  (let ((st (make-empty-bbstate))
+        (depth 0))
     (letrec ((simplify-expr
               (lambda (e ccp-map tenv)
                 (let loop ((e e))
                   (fluid-let ((st (copy-bbstate st)))
                   ;(pretty-print `(simplify-expr ,e))
+                  (when (and #f (list? e))
+                    (pretty-print `(simplify-expr ,(hash-count (bbstate-definitions st)) ,(count-points e), (equal-hash-code e) ,depth))
+                    (set! depth (add1 depth)))
                   ;(pretty-print `(-> ,(annotate-types e tenv) ,tenv))
-                  (let* ((e (cond
+                  (let ((e2 (cond
                               ((list? e) (cons (car e) (map loop (cdr e))))
                               ((assq e ccp-map) => cdr)
-                              (else e)))
-                         ;(_ (pretty-print `(e2 ,e)))
-                         (t (infer-type e tenv))
-                         ;(_ (pretty-print `(,e ,t)))
-                         (c
-                          (match t
-                            (`(memory ,_) #f)
-                            (_ (is-constant-base? st t (annotate-types e tenv))))))
-                    (or (if c (if (eq? t 'bool) (if (zero? c) #f #t) c) #f)
-                        (match e
-                          ((? number?) e)
-                          (`(if-e 0 ,a ,b) (pretty-print `(picking false branch)) b)
-                          (`(if-e ,(? number?) ,a ,b) (pretty-print `(picking true branch)) a)
-                          (`(if-e ,p ,a ,b)
-                           (let ((c2 (is-constant-base?
-                                      st
-                                      t
-                                      `(bool equal ,(annotate-types a tenv) ,(annotate-types b tenv)))))
-                             (if (eqv? c2 1)
-                                 (begin (pretty-print `(branches are same)) a)
-                                 `(if-e ,p
-                                        ,(fluid-let ((st (copy-bbstate st)))
-                                           (convert-constraints
-                                            st
-                                            (list `(check ,(annotate-types p tenv)))
-                                            (lambda _ (void)))
-                                           (simplify-expr a ccp-map tenv))
-                                        ,(fluid-let ((st (copy-bbstate st)))
-                                           (convert-constraints
-                                            st
-                                            (list `(check (bool logical-not ,(annotate-types p tenv))))
-                                            (lambda _ (void)))
-                                           (simplify-expr b ccp-map tenv))))))
-                          (`(memoryReadByte (memoryWriteByte ,m ,addr ,val) ,addr2)
-                           (loop `(if-e (equal ,addr ,addr2) ,val (memoryReadByte ,m ,addr2))))
-                          (e e))))))))
+                              (else e))))
+                    (let inner-loop ((e2 e2))
+                      (let* ((t (infer-type e2 tenv))
+                             ;(_ (pretty-print `(,e ,t)))
+                             (c
+                               (match t
+                                      (`(memory ,_) #f)
+                                      (_ (is-constant-base? st t (annotate-types e2 tenv))))))
+                        (begin0
+                          (or (if c (if (eq? t 'bool) (if (zero? c) #f #t) c) #f)
+                              (match e2
+                                     ((? number?) e2)
+                                     (`(if-e 0 ,a ,b) (pretty-print `(picking false branch)) b)
+                                     (`(if-e ,(? number?) ,a ,b) (pretty-print `(picking true branch)) a)
+                                     (`(if-e ,p ,a ,b)
+                                       (let ((c2 (is-constant-base?
+                                                   st
+                                                   t
+                                                   `(bool equal ,(annotate-types a tenv) ,(annotate-types b tenv)))))
+                                         (if (eqv? c2 1)
+                                           (begin (pretty-print `(branches are same)) a)
+                                           `(if-e ,p
+                                                  ,(fluid-let ((st (copy-bbstate st)))
+                                                              (convert-constraints
+                                                                st
+                                                                (list `(check ,(annotate-types p tenv)))
+                                                                (lambda _ (void)))
+                                                              (simplify-expr a ccp-map tenv))
+                                                  ,(fluid-let ((st (copy-bbstate st)))
+                                                              (convert-constraints
+                                                                st
+                                                                (list `(check (bool logical-not ,(annotate-types p tenv))))
+                                                                (lambda _ (void)))
+                                                              (simplify-expr b ccp-map tenv))))))
+                                     (`(memoryReadByte (memoryWriteByte ,m ,addr ,val) ,addr2)
+                                       (inner-loop `(if-e ,(loop `(equal ,addr ,addr2)) ,val (memoryReadByte ,m ,addr2))))
+                                     (e e)))
+                          (when (and #f (list? e)) (pretty-print 'end) (set! depth (sub1 depth)))))))))))
              (simplify-stmt
               (lambda (s ccp-map tenv) ; -> s'
-                ; (pretty-print `(simplify-stmt ,s))
+                ;(pretty-print `(simplify-stmt ,s))
                 (fluid-let ((st (copy-bbstate st)))
                   (match s
                     (`(begin . ,s*) `(begin . ,(map (lambda (s) (simplify-stmt s ccp-map tenv)) s*)))
@@ -585,224 +596,6 @@
 
 (for-each check-types data)
 
-(set! data (map (lambda (i s)
-                  (pretty-print `(label ,i ,(match s (`(label ,l ,_) l) (_ #f)) of ,(length data)))
-                  (remove-unused-variables (simplify-one-pass s)))
-                (iota (length data))
-                data))
-(pretty-print data)
-(exit 0)
-
-(define (split-and-value-number e)
-  ;(pretty-print `(split-and-value-number ,e))
-  (letrec ((split-expr
-            (lambda (expr exprs-known k)
-              ;(pretty-print `(split-expr ,expr ,exprs-known))
-              (cond
-                ((and (list? expr) (ormap list? (cdr expr)))
-                 (let* ((first-list (find list? (cdr expr))))
-                   (split-expr first-list
-                               exprs-known
-                               (lambda (fl2 ek2)
-                                 (let ((plugged-in (cons (car expr)
-                                                         (map (lambda (e)
-                                                                (if (equal? e first-list) fl2 e))
-                                                              (cdr expr)))))
-                                   (split-expr plugged-in ek2 k))))))
-                  ((assoc expr exprs-known) => (lambda (p) (k (cddr p) exprs-known)))
-                  ((list? expr)
-                   (let* ((var (gensym 'temp))
-                          (type (infer-type expr
-                                            (map (match-lambda (`(,expr ,t . ,name) (cons name t)))
-                                                 exprs-known)))
-                          (new-exprs-known (cons (cons* expr type var) exprs-known)))
-                     `(let ((,type ,var ,expr)) ,(k var new-exprs-known))))
-                  (else (k expr exprs-known)))))
-             (split-in-stmt
-              (lambda (e exprs-known)
-                ;(pretty-print `(split-in-stmt ,(length exprs-known)))
-                (match e
-                  (`(label ,l ,body)
-                   `(label ,l ,(split-in-stmt body exprs-known)))
-                  (`(let ((,t ,v ,def)) ,body)
-                   (split-expr def exprs-known
-                               (lambda (def2 ek2)
-                                 (let ((exprs-known (cons (cons* def2 t v) ek2)))
-                                   `(let ((,t ,v ,def2)) ,(split-in-stmt body exprs-known))))))
-                  (`(expr (assign ,a ,b))
-                   (split-expr b exprs-known (lambda (b2 _) `(expr (assign ,a ,b2)))))
-                  (`(expr (abort)) e)
-                  (`(expr (interrupt ,i)) e)
-                  (`(parallel-assign ,pairs)
-                   (let loop ((pairs pairs) (acc-rev '()) (exprs-known exprs-known))
-                     (match pairs
-                       (`() `(parallel-assign ,(reverse acc-rev)))
-                       (`((,var1 . ,def1) . ,rest)
-                        (split-expr def1
-                                    exprs-known
-                                    (lambda (def2 ek2)
-                                      (loop rest `((,var1 . ,def2) . ,acc-rev) ek2)))))))
-                  (`(begin . ,ls) `(begin . ,(map (lambda (s) (split-in-stmt s exprs-known)) ls)))
-                  (`(if (expr ,p) ,a ,b)
-                   (split-expr p exprs-known
-                               (lambda (p2 ek2)
-                                 `(if (expr ,p2)
-                                      ,(split-in-stmt a ek2)
-                                      ,(split-in-stmt b ek2)))))
-                  (`(case (expr ,p) . ,cases)
-                   (split-expr p exprs-known
-                               (lambda (p2 ek2)
-                                 `(case (expr ,p2)
-                                    . ,(map (match-lambda
-                                              (`(,keys ,body)
-                                               `(,keys ,(split-in-stmt body ek2))))
-                                            cases)))))
-                  (`(goto ,l) `(goto ,l))
-                  (else (error "split-in-stmt" e))))))
-      (split-in-stmt e '())))
-
-(define ((term-with-functor? f) t)
-  (and (list? t) (eq? (car t) f)))
-
-(define ((associative-list f id) t)
-  (if ((term-with-functor? f) t) (cdr t) (if (equal? t id) '() (list t))))
-
-(define ((flatten-assoc f id) t)
-  (let ((result
-         (if ((term-with-functor? f) t)
-             (let ((ls (append-map (associative-list f id) (cdr t))))
-               (cond
-                 ((null? ls) id)
-                 ((null? (cdr ls)) (car ls))
-                 (else (cons f ls))))
-             t)))
-    (if (equal? result t) #f result)))
-
-(define ((flatten-idem f) t)
-  (and ((term-with-functor? f) t)
-       (let ((tl (delete-duplicates (cdr t) equal?)))
-         (if (equal? tl (cdr t))
-             #f
-             (cons (car t) tl)))))
-
-(define ((flatten-zero f z) t)
-  (and ((term-with-functor? f) t)
-       (member z (cdr t))
-       z))
-
-(define (remove-all ls1 ls2) ; Like lset-difference but handles multisets properly
-  (let loop ((ls1 ls1) (ls2 ls2))
-    (if (null? ls2)
-        ls1
-        (loop
-         (let remove ((ls ls1))
-           (if (null? ls) '() (if (equal? (car ls) (car ls2)) (cdr ls) (cons (car ls) (remove (cdr ls))))))
-         (cdr ls2)))))
-
-(define (simplify-expr e)
-  (letrec ((simp
-            (lambda (e)
-              (if (boolean? e)
-                  (if e 1 0)
-                  (or
-                   (match e (`(subtract ,a ,b) `(add ,a (negate ,b))) (_ #f))
-                   (match e (`(negate ,x) (and (number? x) (if (zero? x) 0 (- (expt 2 32) x)))) (_ #f))
-                   (match e (`(negate (negate ,x)) x) (_ #f))
-                   ((flatten-assoc 'add 0) e)
-                   ((flatten-assoc 'and (- (expt 2 32) 1)) e)
-                   ((flatten-zero 'and 0) e)
-                   ((flatten-idem 'and) e)
-                   ((flatten-assoc 'or 0) e)
-                   ((flatten-idem 'or) e)
-                   ((flatten-zero 'or (- (expt 2 32) 1)) e)
-                   ((flatten-assoc 'xor 0) e)
-                   ((flatten-assoc 'logical-and 1) e)
-                   ((flatten-idem 'logical-and) e)
-                   ((flatten-zero 'logical-and 0) e)
-                   ((flatten-assoc 'logical-or 0) e)
-                   ((flatten-idem 'logical-or) e)
-                   ((flatten-zero 'logical-or 1) e)
-                   (match e (`(logical-not ,x) (and (number? x) (if (zero? x) 1 0))) (_ #f))
-                   (match e (`(if-e ,p ,a ,b) (and (number? p) (if (zero? p) b a))) (_ #f))
-                   (match e (`(xor ,a ,b) (and (equal? a b) 0)) (_ #f))
-                   (match e (`(left-shift ,a ,b) (and (number? a) (number? b) (arithmetic-shift a b))) (_ #f))
-                   (match e (`(right-shift ,a ,b) (and (number? a) (number? b) (arithmetic-shift a (- b)))) (_ #f))
-                   (match e (`(memoryWriteByte ,m1 ,a (memoryReadByte ,m2 ,b)) (and (equal? m1 m2) (equal? a b) m2)) (_ #f))
-                   (match e
-                     (`(memoryReadByte (memoryWriteByte ,m ,a ,v) ,b)
-                      `(if-e (equal ,a ,b)
-                             ,v
-                             (memoryReadByte ,m ,b)))
-                     (_ #f))
-                   (match e
-                     (`(add . ,ls) (and (>= (length (filter number? ls)) 2)
-                                        `(add ,@(filter (lambda (x) (not (number? x))) ls)
-                                              ,(remainder (apply + (filter number? ls)) (expt 2 32)))))
-                     (_ #f))
-                   (match e
-                     (`(and . ,ls) (and (>= (length (filter number? ls)) 2)
-                                        `(and ,@(filter (lambda (x) (not (number? x))) ls)
-                                              ,(apply bitwise-and (filter number? ls)))))
-                     (_ #f))
-                   (match e
-                     (`(xor . ,ls) (and (>= (length (filter number? ls)) 2)
-                                        `(xor ,@(filter (lambda (x) (not (number? x))) ls)
-                                              ,(apply bitwise-xor (filter number? ls)))))
-                     (_ #f))
-                   (match e
-                     (`(equal ,x ,y)
-                      (let* ((x-ls ((associative-list 'add 0) x))
-                             (y-ls ((associative-list 'add 0) y))
-                             (isect (lset-intersection equal? x-ls y-ls)))
-                        (and (not (null? isect))
-                             (let ((x-ls-minus-isect (remove-all x-ls isect))
-                                   (y-ls-minus-isect (remove-all y-ls isect)))
-                               `(equal (add . ,x-ls-minus-isect) (add . ,y-ls-minus-isect))))))
-                     (_ #f))
-                   (match e 
-                     (`(equal ,a ,b)
-                      (cond
-                        ((equal? a b) 1)
-                        ((and (number? a) (number? b)) (if (= a b) 1 0))
-                        (else #f)))
-                     (_ #f))
-                   (match e 
-                     (`(less-than ,a ,b)
-                      (cond
-                        ((equal? a b) 0)
-                        ((and (number? a) (number? b)) (if (< a b) 1 0))
-                        ((and (number? b) (zero? b)) 0)
-                        (else #f)))
-                     (_ #f))
-                   (match e (`(not-equal ,a ,b) `(logical-not (equal ,a ,b))) (_ #f))
-                   (match e
-                     (`(parity ,n) (and (number? n)
-                                        (let parity ((n (bitwise-and n 255)))
-                                          (cond
-                                            ((zero? n) 1)
-                                            ((odd? n) (- 1 (parity (/ (sub1 n) 2))))
-                                            (else (parity (/ n 2)))))))
-                     (_ #f))
-                   (if (list? e) (cons (car e) (map simp (cdr e))) e))))))
-    (let loop ((e e))
-      (let ((new-e (simp e)))
-        (if (equal? e new-e) new-e (loop new-e))))))
-
-(define (simplify e)
-  (match e
-    (`(begin . ,rest) `(begin . ,(map simplify rest)))
-    (`(let ((,t ,var ,val)) ,body)
-     `(let ((,t ,var ,(simplify-expr val))) ,(simplify body)))
-    (`(goto ,_) e)
-    (`(label ,l ,body) `(label ,l ,(simplify body)))
-    (`(if ,p ,a ,b) `(if ,(simplify p) ,(simplify a) ,(simplify b)))
-    (`(case ,key . ,cases)
-     `(case ,(simplify key) . ,(map (match-lambda (`(,k ,body) `(,k ,(simplify body)))) cases)))
-    (`(parallel-assign ,al)
-     `(parallel-assign ,(map (match-lambda (`(,lhs . ,rhs) `(,lhs . ,(simplify-expr rhs)))) al)))
-    (`(expr ,e) `(expr ,(simplify-expr e)))
-    (_ (error "simplify" e))))
-
 (define (init-code) `(begin . ,(filter (match-lambda (`(label . ,_) #f) (_ #t)) data)))
 (define (get-label l) (or (ormap (match-lambda (`(label ,l2 ,body) (if (eq? l l2) body #f)) (_ #f)) data) (error "Label not found" l)))
 
@@ -821,175 +614,6 @@
     (`(let ,vars ,body) `(let ,vars ,(expand-one body)))
     (_ (error "expand-one" e))))
 
-(define (loop-simplify-and-ccp e)
-  (let* ((e1 (simplify e))
-         (e2 (copy-and-constant-prop e1 '() basic-simple?)))
-    (if (equal? e2 e)
-        e
-        (loop-simplify-and-ccp e2))))
-
-(define (simplify-full e)
-  (remove-unused-variables
-   (copy-and-constant-prop
-    (split-and-value-number
-     (loop-simplify-and-ccp
-      (simplify-begins
-       (remove-unused-variables
-        (copy-and-constant-prop
-         (fold-lets e)
-         '()
-         always-simple?)))))
-    '()
-    basic-simple?)))
-
-(define (expand-one-simp e) (simplify-full (expand-one e)))
-
-(define (expand-many n e)
-  (if (zero? n) e (expand-one-simp (expand-many (sub1 n) e))))
-
-(define (check-constraints e)
-  (letrec ((check-statement
-            (lambda (e csf tenv)
-              ;(pretty-print `(check-constraints ,e ,constraints-so-far))
-              (match e
-                (`(goto ,l) e)
-                (`(begin . ,ls) `(begin . ,(map (lambda (e2) (check-statement e2 csf tenv)) ls)))
-                (`(let ((,t ,var ,val)) ,body)
-                 (let* ((val2 (check-expr val csf tenv))
-                        (csf2 `((define ,var ,(annotate-types val2 tenv)) . ,csf))
-                        (const (if (number? val2) val2 (is-constant? csf2 t `(,t . ,var)))))
-                   (if const
-                       (begin
-                         (pretty-print `(replacing ,val with ,const))
-                         `(let ((,t ,var ,const))
-                            ,(check-statement body
-                                              `((define ,var (,t . ,const)) . ,csf)
-                                              `((,var . ,t) . ,tenv))))
-                       `(let ((,t ,var ,val2)) ,(check-statement body csf2 `((,var . ,t) . ,tenv))))))
-                (`(if (expr ,p) ,a ,b)
-                 (let* ((p (check-expr p csf tenv))
-                        (p-type (infer-type p tenv))
-                        (p-with-types (annotate-types p tenv))
-                        (p-true-constraints `((check ,p-with-types) . ,csf))
-                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
-                   (case (possible-boolean-values csf p-with-types)
-                     ((*) `(if (expr ,p)
-                               ,(check-statement a p-true-constraints tenv)
-                               ,(check-statement b p-false-constraints tenv)))
-                     ((#t) (begin 
-                             (pretty-print `(removing false branch ,b))
-                             (check-statement a csf tenv)))
-                     ((#f) (begin
-                             (pretty-print `(removing true branch ,a))
-                             (check-statement b csf tenv))))))
-                (`(case (expr ,key) . ,cases)
-                 (let* ((key (check-expr key csf tenv))
-                        (key-with-types (annotate-types key tenv))
-                        (key-type (infer-type key tenv))
-                        (bogus-dest-possible
-                         (constraints-satisfiable?
-                          `((check (bool equal ,key-with-types (,key-type . ,(sub1 (expt 2 32)))))
-                            . ,csf)
-                          '()))
-                        (_ (pretty-print `(bogus-dest-possible ,(and bogus-dest-possible #t))))
-                        (all-keys-valid bogus-dest-possible))
-                   `(case (expr ,key) . ,(filter-map
-                                          (if all-keys-valid
-                                              (match-lambda
-                                                (`((,k) ,body)
-                                                 `((,k) ,(check-statement body csf tenv))))
-                                              (match-lambda
-                                                (`((,k) ,body)
-                                                 (let ((cur-constraints
-                                                        `((check
-                                                           (bool equal ,key-with-types (,key-type . ,k)))
-                                                          . ,csf)))
-                                                   (if (constraints-satisfiable? cur-constraints '())
-                                                       `((,k)
-                                                         ,(check-statement body cur-constraints tenv))
-                                                       #f)))))
-                                          cases))))
-                (`(expr (abort)) e)
-                (`(expr (interrupt ,_)) e)
-                (`(parallel-assign ,prs)
-                 `(parallel-assign
-                   ,(map (match-lambda (`(,var . ,val) `(,var . ,(check-expr val csf tenv)))) prs)))
-                (_ (error "check-constraints" e)))))
-           (check-expr
-            (lambda (e csf tenv)
-              (match e
-                (`(if-e ,p ,a ,b)
-                 ;(pretty-print `(checking if-e ,p))
-                 (let* ((p (check-expr p csf tenv))
-                        (p-type (infer-type p tenv))
-                        (p-with-types (annotate-types p tenv))
-                        (p-true-constraints `((check ,p-with-types) . ,csf))
-                        (p-false-constraints `((check (bool logical-not ,p-with-types)) . ,csf)))
-                   ;(pretty-print `(p-with-types ,p-with-types))
-                   ;(pretty-print `(csf ,csf))
-                   (case (possible-boolean-values csf p-with-types)
-                     ((*) `(if-e ,p
-                                 ,(check-expr a p-true-constraints tenv)
-                                 ,(check-expr b p-false-constraints tenv)))
-                     ((#t) (begin
-                             (pretty-print `(removing false if-e branch ,b))
-                             (check-expr a csf tenv)))
-                     ((#f) (begin
-                             (pretty-print `(removing true if-e branch ,a))
-                             (check-expr b csf tenv))))))
-                ((? list?) (cons (car e) (map (lambda (e2) (check-expr e2 csf tenv)) (cdr e))))
-                (_ e)))))
-    (check-statement e '() '())))
-
-#;(set! data
-      (map (lambda (x)
-             (let ((result
-                    (match (simplify-full x)
-                      (`(label ,l ,body)
-                       `(label ,l ,(change-to-let* (remove-unused-variables (check-constraints body)))))
-                      (e (change-to-let* e)))))
-               (pretty-print result)
-               '() #;result))
-           data))
-
-; (set! data (map (match-lambda (`(label ,l ,body) `(label ,l ,(check-constraints body))) (e e)) data))
-
-; (pretty-print (change-to-let* (map expand-one-simp data)))
-; (for-each (lambda (x) (pretty-print (change-to-let* (copy-and-constant-prop x '() always-simple?)))) data)
-; (for-each (lambda (x) (pretty-print (change-to-let* (simplify-full x)))) data)
-(set! data
-      (map (lambda (x)
-             (remove-unused-variables
-              (copy-and-constant-prop
-               (split-and-value-number x)
-               '()
-               memory-simple?)))
-           data))
-
-(define (change-memory-reads s)
-  (letrec ((do-expr (lambda (e)
-                      (match e
-                        (`(memoryReadByte (memoryWriteByte ,m ,addr1 ,d) ,addr2)
-                         `(if-e (equal ,(do-expr addr1) ,(do-expr addr2))
-                                ,(do-expr d)
-                                ,(do-expr `(memoryReadByte ,m ,addr2))))
-                        ((? list?) (cons (car e) (map do-expr (cdr e))))
-                        (_ e)))))
-    (match s
-      (`(begin . ,ls) `(begin . ,(map change-memory-reads ls)))
-      (`(parallel-assign ,pairs)
-       `(parallel-assign ,(map (match-lambda (`(,v . ,val) `(,v . ,(do-expr val)))) pairs)))
-      (`(expr ,e) `(expr ,(do-expr e)))
-      (`(let ((,t ,v ,val)) ,body)
-       `(let ((,t ,v ,(do-expr val))) ,(change-memory-reads body)))
-      (`(goto ,l) s)
-      (`(if ,p ,a ,b) `(if ,(do-expr p) ,(change-memory-reads a) ,(change-memory-reads b)))
-      (`(case ,key . ,cases)
-       `(case ,(do-expr key) . ,(map (match-lambda (`(,k ,body) `(,k ,(change-memory-reads body)))) cases)))
-      (`(label ,l ,body) `(label ,l ,(change-memory-reads body)))
-      (_ (error "change-memory-reads" s)))))
-
-
 (define (sat-simplify-loop)
   (let ((c 0))
     (set! data
@@ -998,27 +622,24 @@
                   (set! c (add1 c))
                   (pretty-print `(entry ,c ,l of ,(length data)))
                   `(label ,l
-                          ,(remove-unused-variables
-                            (copy-and-constant-prop
-                             (check-constraints
-                              (change-memory-reads 
-                               (copy-and-constant-prop
-                                body
-                                '()
-                                memory-simple?)))
-                             '()
-                             basic-simple?))))
+                          ,(remove-unused-variables (simplify-one-pass `(label ,l ,body)))))
                  (e e))
                data))))
 
-(define (count-points e)
-  (if (pair? e)
-      (+ 1 (count-points (car e)) (count-points (cdr e)))
-      1))
+(define (expand-many n)
+  (sat-simplify-loop)
+  (let loop ((n n))
+    (unless (zero? n)
+      (set! data (expand-one data))
+      (sat-simplify-loop)
+      (loop (sub1 n)))))
 
 (pretty-print `(starting-points = ,(count-points data)))
-(sat-simplify-loop)
+(expand-many 0)
 (pretty-print `(after-simplify-points = ,(count-points data)))
+(pretty-print data)
+(exit 0)
+
 (let loop ((n 5))
   (unless (zero? n)
     (pretty-print `(,n stages left))

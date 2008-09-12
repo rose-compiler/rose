@@ -150,7 +150,7 @@
   (define (copy-bbstate st)
     (make-bbstate (state-variable-counter st)
                   (state-clauses st)
-                  (state-units st)
+                  (state-definitions st)
                   (state-known-unsatisfiable st)
                   (bbstate-vars st)
                   (bbstate-definitions st)))
@@ -289,7 +289,8 @@
   
   (define (run-solver-annotated st)
     (simplify-state! st)
-    (let ((do-printout (or (>= (variable-count st) 200) (and (number? (clause-count st)) (>= (clause-count st) 500)))))
+    (let ((do-printout (or (and (>= (variable-count st) 100) (not (zero? (clause-count st))))
+                           (and (number? (clause-count st)) (>= (clause-count st) 1)))))
       (when do-printout
         (display `(running solver with ,(variable-count st) variables ,(clause-count st) clauses ,(hash-count (bbstate-vars st)) of ,(hash-count (bbstate-definitions st)) user-vars))
         (flush-output (current-output-port)))
@@ -374,7 +375,8 @@
            constraints-satisfiable?
            possible-boolean-values
            is-constant-base?
-           is-constant?)
+           is-constant?
+           bbstate-definitions)
       
       )
     
