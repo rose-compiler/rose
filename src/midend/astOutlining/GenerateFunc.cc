@@ -247,10 +247,24 @@ createUnpackDecl (SgInitializedName* param,
                              param_deref_expr, param_deref_type);
   ROSE_ASSERT (local_val);
 
-//  SgType* local_type = isSgReferenceType(param_deref_type)
-  SgType* local_type = isSgArrayType(param_deref_type)
-    ?SgReferenceType::createType(param_deref_type): // wrong for regular types!
-    param_deref_type;
+  SgType* local_type = NULL;
+// Rich's idea was to leverage C++'s reference type: two cases:
+//  a) for variables of reference type: no additional work
+//  b) for others: make a reference type to them
+//   all variable accesses in the outlined function will have
+//   access the address of the by default, not variable substitution is needed 
+// but this method won't work for non-C++ code, where & on left side of assignment 
+//  is not recognized at all.
+  if (is_C_language())
+ {   
+    //TODO more C cases
+    local_type = param_deref_type;
+ }
+  else
+  { 
+    local_type= isSgReferenceType(param_deref_type)
+    ?param_deref_type:SgReferenceType::createType(param_deref_type);
+  }
   ROSE_ASSERT (local_type);
 
   SgVariableDeclaration* decl =
