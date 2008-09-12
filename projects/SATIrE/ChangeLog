@@ -1,7 +1,16 @@
 V0.8.4 AP,GB
 
+* Tested with:
+  - ROSE 0.9.3a-1593
+  - PAG 8.7.6.17
+  - flex 2.5.33
+  - bison 2.3
+  - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
+  - Boost 1_36 (>= 1_35 required by ROSE)
+
 * General changes [GB]
-  - made SATIrE work with ROSE 0.9.3a (build 1593)
+  - made SATIrE work with ROSE 0.9.3a (build 1593); changes are incompatible
+    to older versions!
   - better handling of switch statements in ICFG (including Duff's Device)
 
 * Termite [AP]
