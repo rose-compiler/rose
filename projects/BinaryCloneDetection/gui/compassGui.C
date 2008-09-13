@@ -348,7 +348,7 @@ void CompassGui::save()
   } //else
 
   return;
-} //CompassGui::save()
+} //CompassGui::open()
 
 void CompassGui::highlightRow(int row)
 {
