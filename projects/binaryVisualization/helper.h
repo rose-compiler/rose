@@ -159,8 +159,10 @@ public:
 
       if (call>maxY) maxY=call;
       if (control>maxX) maxX=control;
-      //      if (nrInst>0)
-      //	nrInst =nrInst/divHeight;
+
+      // we should round maxX and maxY to a multiple of 8
+      while (maxX%8!=0) maxX++;
+      while (maxY%8!=0) maxY++;
 
       FunctionType::iterator fit= 
 	functions.find(make_pair(control,call));
@@ -170,8 +172,8 @@ public:
 					      nrInst, 0, 
 					      funcDecl->get_name());
 	functions[make_pair(control,call)] = info;
-	cerr << "  .. creating : x="<<control<<" y="<<call
-	     << "  height="<<nrInst<<" weight=0"<<endl;
+	//cerr << "  .. creating : x="<<control<<" y="<<call
+	//     << "  height="<<nrInst<<" weight=0"<<endl;
       } else {
 	FunctionInfo* info = fit->second;
 	info->height=info->height+nrInst;
@@ -179,8 +181,8 @@ public:
 	info->weight=info->weight+1;
 	info->addName(funcDecl->get_name());
 	functions[make_pair(control,call)] = info;
-	cerr << "  .. adding : x="<<control<<" y="<<call
-	     << "  height="<<info->height<<" weight="<<info->weight<<endl;
+	//cerr << "  .. adding : x="<<control<<" y="<<call
+	//     << "  height="<<info->height<<" weight="<<info->weight<<endl;
       }
     } // if
   }

@@ -23,7 +23,7 @@ int rotateZ = 0;
 int speed = 0;
 int u, v;
 
-#define SAVE 1
+#define SAVE 0
 #define LOAD 0
 #define FILE2 0
 
@@ -62,7 +62,7 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
     "  maxX:"<<maxX<<"  maxY:"<<maxY<<endl;
 #endif
   /************** PRINTOUT *************************/
-#if 0
+#if 1
   /************** INITGL *************************/
   // store height and weight
   glutInit(&argc, argv);
@@ -507,7 +507,7 @@ void displayAll(FunctionType& functions,  unsigned int maxX,
 #endif
 
 
-#if 0
+#if 1
   cerr << "Rendering..." << endl;
 
 

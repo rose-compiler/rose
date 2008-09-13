@@ -82,6 +82,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   int nrNodes;
   int nrEdges;
 
+
  public:
   //  RoseBin* roseBin;
 
@@ -121,6 +122,10 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
     //usetable_instr.clear();
   }
   virtual ~RoseBin_FlowAnalysis() {}
+
+  void setInitializedFalse() {
+    initialized=false;
+  }
 
   bool forward_analysis;
 

@@ -7,6 +7,7 @@
 
 #include "rose.h"
 #include "RoseBin_DotGraph.h"
+#include <cctype>
 
 using namespace std;
 using namespace VirtualBinCFG;
@@ -430,12 +431,25 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     }
       regs += eval;
       string hex_name=hex_address.substr(1,hex_address.length());
+      if (hex_name.size()>1 && hex_name[0]==' ')
+	hex_name=hex_name.substr(1,hex_name.size());
       hex_name="0x"+hex_name;
-      string nameL=name.substr(0,9);
+      string nameL="0x";
+      for (unsigned int j=2;j<name.size();++j){
+	char c = name[j];
+	if (c==':')
+	  break;
+	else
+	  nameL+=name[j];
+	//	else 
+	//  cerr << " not a digit : " << name[j] << endl;
+      }
+      //      string nameL=name.substr(0,9);
       if (type!="function") {
 	if (hex_name!=nameL)
-	cerr << " hexName : ." << hex_name << ". == ." << nameL << "." << endl;
-	ROSE_ASSERT(hex_name==nameL);
+	  cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of " << name << endl;
+	//	cerr << " ERROR ................... SOMETHING WRONG HERE . ALLOWING THIS FOR NOW . " << endl;
+		ROSE_ASSERT(hex_name==nameL);
       }
       myfile << "\"" << hex_address << "\"[label=\""  << name << "\\n" << dfa_info << dfa_variable <<
 	" visited: " << visitedCounter <<"\\n" << 

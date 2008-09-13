@@ -8,13 +8,14 @@ using namespace std;
 #define debug 1
 
 #include <GL/glut.h>
+#include <GL/freeglut.h> 
 
 #include <math.h>
 #include "helper.h"
 
 #include "boost/multi_array.hpp"
 
-static bool debug_me = true;
+static bool debug_me = false;
 
 #define DELTA 5
 int x = 0;
@@ -26,16 +27,29 @@ int rotateZ = 0;
 int speed = 0;
 int u, v;
 
-#define SAVE 0
-#define LOAD 0
-#define FILE2 0
 
-
-//GLfloat *****pts;
-//GLfloat   pts[100][100][100][100][3];
+bool nextKey=false;
 
 typedef boost::multi_array<GLfloat, 5> array_type;
 array_type pts(boost::extents[0][0][0][0][3]);
+
+//array_type pts2(boost::extents[0][0][0][0][3]);
+
+
+class Element {
+public:
+  Element(string name, unsigned int maxX, unsigned int maxY, unsigned int pointsX, unsigned int pointsY):name(name),maxX(maxX),maxY(maxY),pointsX(pointsX),pointsY(pointsY){};
+  string name;
+  unsigned int maxX;
+  unsigned int maxY;
+  unsigned int pointsX;
+  unsigned int pointsY;
+};
+
+std::map <std::string, Element*> elements;
+std::map <std::string, array_type*> arrays;
+
+int callList = 0;
 
 static void 
 display(void)
@@ -43,17 +57,76 @@ display(void)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
-  glCallList(1);
+  for (int i=1; i<=callList;++i)
+    if (i>(callList-4))
+      glCallList(i);
   glutSwapBuffers();
+
 }
 
-void initGL(int argc, char** argv) {
+Element* getElement(std::string name) {
+  std::map <std::string, Element*>::const_iterator el=  elements.find(name);
+  Element* element=NULL;
+  if (el!=elements.end())
+    element=el->second;
+  return element;
+}
+
+array_type* getArray(std::string name) {
+  std::map <std::string, array_type*>::const_iterator ar= arrays.find(name);
+  array_type* array = NULL;
+  if (ar!=arrays.end())
+    array=ar->second;
+  return array;
+}
+
+
+
+void idle() {
+
+}
+
+void key(unsigned char k, int x, int y)
+{
+  if (k == 27)
+    {
+      exit(0);
+    }
+}
+
+
+void specialkey(int k, int x, int y)
+{
+  if (k == GLUT_KEY_LEFT)
+    ;
+  else if (k == GLUT_KEY_RIGHT) {
+    cerr << " right key pressed " << endl;
+    nextKey=true;
+  }
+  else if (k == GLUT_KEY_UP)
+    ;
+  else if (k == GLUT_KEY_DOWN)
+    ;
+  else if (k == GLUT_KEY_HOME)
+    ;
+  else if (k == GLUT_KEY_END)
+    ;
+  else if (k == GLUT_KEY_PAGE_UP)
+    ;
+  else if (k == GLUT_KEY_PAGE_DOWN)
+    ;
+}
+
+
+
+int initGL(string name,int pX, int pY) {
   /************** INITGL *************************/
   // store height and weight
-  glutInit(&argc, argv);
+  int id=0;
   glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
   glutInitWindowSize(800, 800);
-  glutCreateWindow("Binary File Visualizer");
+  id=glutCreateWindow(name.c_str());
+  glutPositionWindow(pX,pY);
 
 
   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -68,245 +141,15 @@ void initGL(int argc, char** argv) {
   gluNurbsProperty(nurb, GLU_DISPLAY_MODE, GLU_FILL);
   /************** INITGL *************************/
 
+
+  glutDisplayFunc(display);
+  glutKeyboardFunc(key);
+  glutSpecialFunc(specialkey);
+  glutIdleFunc(idle);
+  return id;
 }
 
 
-
-void postProcess(unsigned int maxX,
-		 unsigned int maxY, int max,
-		 unsigned int& pointsX, unsigned int& pointsY) 
-{
-
-
-  // adjust field -- make neighbors go smooth together
-  cerr << "Adjusting fields. " << endl;
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
-
-      // left
-      if (offsetX==0 && fieldX!=0) {
-	assert ((fieldX - 1) >= (int)0 && (fieldX - 1) < (int)pointsX);
-	assert (fieldY >= (int)0 );
-	//cerr << " fieldY (y/max): " << fieldY << "  y:" << y << " max : " << max << "  pointsY : " << pointsY <<
-	//      " maxY :" << maxY << endl; 
-	assert (fieldY < (int)pointsY);
-	GLfloat neighborHeight = pts[fieldX-1][fieldY][(max-1)][offsetY][2];
-	
-	if (neighborHeight>height) {
-	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  // right side
-	  assert (fieldX - 1 >= (int)0 && fieldX - 1 < (int)pointsX);
-	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-	  pts[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
-	}
-      } 
-    }
-  }
-
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
-      // bottom
-      if (offsetY==0 && fieldY!=0) {
-	assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
-	GLfloat neighborHeight = pts[fieldX][fieldY-1][offsetX][(max-1)][2];
-	if (neighborHeight>height) {
-	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
-	}
-	else if (height>neighborHeight) {
-	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-	  assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
-	  // top side
-	  pts[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
-	}
-      }
-    }
-  } // adjust fields
-
-
-}
-
-
-
-void 
-loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max, 
-	  unsigned int& pointsX, unsigned int& pointsY) {
-  /************** LOAD *************************/  
-  const char* filename = filenC.c_str();
-  cerr << "Loading " << filename <<".\n";
-  ifstream myfile (filename);//+".coord");
-  if (myfile.is_open())   {
-    myfile >> maxX;
-    myfile >> maxY;
-  }
-
-  pointsX =(maxX+max-1)/max;
-  pointsY =(maxY+max-1)/max;
-
-  cout << "maxX:"<<maxX << "  pointsX="<<pointsX << endl;
-  cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
-
-  /************** 2FILES ***********/  
-#if FILE2
-  GLfloat pts2[pointsX+1][pointsY+1][max][max][3];
-#else
-
-  typedef array_type::index index;
-  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
-
-  for(index i = 0; i != pointsX; ++i) 
-    for(index j = 0; j != pointsY; ++j)
-      for(index k = 0; k != max; ++k)
-	for(index l = 0; l != max; ++l)
-	  for(index m = 0; m != 3; ++m)
-	    pts[i][j][k][l][m] = 0;
-
-#endif
-  /************** 2FILES ***********/  
-
-  if (myfile.is_open())   {
-
-    unsigned int x=0;
-    unsigned int y=0;
-    GLfloat line1;
-    GLfloat line2;
-    GLfloat line3;
-    while (! myfile.eof() )  {
-      if (y>=maxY) {
-	y=0; x++;
-	if (x==maxX) break;
-      }
-      //cout << endl << x <<" " << y << " "  << "  max: " <<max << endl;
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      //cout  << fieldX<<" "<<fieldY<<" -- " <<offsetX<<" " << offsetY << endl;
-      myfile >> line1;
-      myfile >> line2;
-      myfile >> line3;
-      //cout  << line1<<" "<<line2<<" " <<line3 << endl;
-
-      /************** 2FILES ***********/  
-#if FILE2
-      pts2[fieldX][fieldY][offsetX][offsetY][0] =line1;
-      pts2[fieldX][fieldY][offsetX][offsetY][1] =line2;
-      pts2[fieldX][fieldY][offsetX][offsetY][2] =line3;
-#else
-      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-      pts[fieldX][fieldY][offsetX][offsetY][0] =line1;
-      pts[fieldX][fieldY][offsetX][offsetY][1] =line2;
-      pts[fieldX][fieldY][offsetX][offsetY][2] =line3;
-#endif
-      /************** 2FILES ***********/  
-
-      y++; 
-    }
-    myfile.close();
-  }
-  else cout << "Unable to open file"; 
-
-  cerr << "Done loading a file.\n";
-
-
-  /************** 2FILES ***********/    
-#if FILE2
-
-  cerr << "Loading " << filename2 <<".\n";
-  ifstream myfile2 (filename2);//+".coord");
-  if (myfile2.is_open())   {
-    myfile2 >> maxX;
-    myfile2 >> maxY;
-  }
-
-  pointsX =(maxX+max-1)/max;
-  pointsY =(maxY+max-1)/max;
-  cout << "maxX:"<<maxX << "  pointsX="<<pointsX << endl;
-  cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
-
-  assert (fieldX+1 >= (int)0 && fieldX+1 < (int)pointsX);
-  assert (fieldY+1 >= (int)0 && fieldY+1 < (int)pointsY);
-  GLfloat pts[pointsX+1][pointsY+1][max][max][3];
-  if (myfile2.is_open())   {
-
-    int x=0;
-    int y=0;
-    GLfloat line1;
-    GLfloat line2;
-    GLfloat line3;
-    while (! myfile2.eof() )  {
-      if (y>=maxY) {
-	y=0; x++;
-      }
-      cout << endl << x <<" " << y << " "  << "  max: " <<max << endl;
-      int fieldX = x/max;
-      int offsetX = x%max;
-      int fieldY =y/max;
-      int offsetY = y%max;
-      if (x>=maxX) {
-	break;
-      };
-	  
-      cout  << fieldX<<" "<<fieldY<<" -- " <<offsetX<<" " << offsetY << endl;
-      myfile2 >> line1;
-      myfile2 >> line2;
-      myfile2 >> line3;
-      cout  << line1<<" "<<line2<<" " <<line3 << endl;
-
-      GLfloat max=0;
-      GLfloat min=0;
-      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
-      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
-      if (pts2[fieldX][fieldY][offsetX][offsetY][2]>=line3) {
-	max = pts2[fieldX][fieldY][offsetX][offsetY][2]; min=line3;}
-      else {
-	max = line3; min = pts2[fieldX][fieldY][offsetX][offsetY][2];
-      }
-      pts[fieldX][fieldY][offsetX][offsetY][0] =line1;
-      pts[fieldX][fieldY][offsetX][offsetY][1] =line2;
-      pts[fieldX][fieldY][offsetX][offsetY][2] =max-min;
-
-      y++; 
-    }
-    myfile2.close();
-  }
-  else cout << "Unable to open file"; 
-
-  cerr << "Done loading a file.\n";
-
-  /************** 2FILES ***********/  
-#endif
-
-
-
-
-  GLfloat maxHeightPatch[pointsX][pointsY];
-  for (unsigned int x=0; x<maxX;x++) {
-    for (unsigned int y=0; y<maxY;y++) {
-      int fieldX = x/max;
-      int fieldY =y/max;
-      maxHeightPatch[fieldX][fieldY] = 0;
-    }
-  }
-
-}
 
 
 
@@ -432,17 +275,394 @@ void widenFields(unsigned int maxX, unsigned int maxY, int max,
 
       } // if
 
+    } // for
+  } //for
+
+}
 
 
+void postProcess(unsigned int maxX,
+		 unsigned int maxY, int max,
+		 unsigned int& pointsX, unsigned int& pointsY) 
+{
+
+
+  // adjust field -- make neighbors go smooth together
+  cerr << "Adjusting fields. " << endl;
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
+
+      // left
+      if (offsetX==0 && fieldX!=0) {
+	assert ((fieldX - 1) >= (int)0 && (fieldX - 1) < (int)pointsX);
+	assert (fieldY >= (int)0 );
+	//cerr << " fieldY (y/max): " << fieldY << "  y:" << y << " max : " << max << "  pointsY : " << pointsY <<
+	//      " maxY :" << maxY << endl; 
+	assert (fieldY < (int)pointsY);
+	GLfloat neighborHeight = pts[fieldX-1][fieldY][(max-1)][offsetY][2];
+	
+	if (neighborHeight>height) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  // right side
+	  assert (fieldX - 1 >= (int)0 && fieldX - 1 < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  pts[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
+	}
+      } 
     }
   }
 
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+      GLfloat height = pts[fieldX][fieldY][offsetX][offsetY][2];
+      // bottom
+      if (offsetY==0 && fieldY!=0) {
+	assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	GLfloat neighborHeight = pts[fieldX][fieldY-1][offsetX][(max-1)][2];
+	if (neighborHeight>height) {
+	  pts[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	  // top side
+	  pts[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
+	}
+      }
+    }
+  } // adjust fields
 
-  //#endif // LOAD
-
-  /************** NOLOAD *************************/  
+  //  widenFields(maxX, maxY, max, pointsX, pointsY);
 
 }
+
+void postProcess(array_type* arr, unsigned int maxX,
+		 unsigned int maxY, int max,
+		 unsigned int& pointsX, unsigned int& pointsY) 
+{
+
+  ROSE_ASSERT(arr);
+  // adjust field -- make neighbors go smooth together
+  cerr << "Adjusting fields. " << endl;
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      GLfloat height = (*arr)[fieldX][fieldY][offsetX][offsetY][2];
+
+      // left
+      if (offsetX==0 && fieldX!=0) {
+	assert ((fieldX - 1) >= (int)0 && (fieldX - 1) < (int)pointsX);
+	assert (fieldY >= (int)0 );
+	//cerr << " fieldY (y/max): " << fieldY << "  y:" << y << " max : " << max << "  pointsY : " << pointsY <<
+	//      " maxY :" << maxY << endl; 
+	assert (fieldY < (int)pointsY);
+	GLfloat neighborHeight = (*arr)[fieldX-1][fieldY][(max-1)][offsetY][2];
+	
+	if (neighborHeight>height) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  (*arr)[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  // right side
+	  assert (fieldX - 1 >= (int)0 && fieldX - 1 < (int)pointsX);
+	  assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+	  (*arr)[fieldX-1][fieldY][(max-1)][offsetY][2]=height;
+	}
+      } 
+    }
+  }
+
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+      GLfloat height = (*arr)[fieldX][fieldY][offsetX][offsetY][2];
+      // bottom
+      if (offsetY==0 && fieldY!=0) {
+	assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	GLfloat neighborHeight = (*arr)[fieldX][fieldY-1][offsetX][(max-1)][2];
+	if (neighborHeight>height) {
+	  (*arr)[fieldX][fieldY][offsetX][offsetY][2]=neighborHeight;
+	}
+	else if (height>neighborHeight) {
+	  assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+	  assert (fieldY-1 >= (int)0 && fieldY-1 < (int)pointsY);
+	  // top side
+	  (*arr)[fieldX][fieldY-1][offsetX][(max-1)][2]=height;
+	}
+      }
+    }
+  } // adjust fields
+
+  //  widenFields(maxX, maxY, max, pointsX, pointsY);
+
+  cerr << " Fields adjusted " << endl;
+}
+
+void 
+loadAllFiles( vector<string>& filesCoord, int max, 
+	      unsigned int& maxX, unsigned int& maxY) {
+  typedef array_type::index index;
+  for (unsigned int i = 0;i < filesCoord.size();i++) {
+    string name = filesCoord[i];
+    unsigned int mX = 0;
+    unsigned int mY = 0;
+    /************** LOAD *************************/  
+    const char* filename = name.c_str();
+    cerr << "------ Loading " << name << endl;
+    ifstream myfile (filename);//+".coord");
+    if (myfile.is_open())   {
+      myfile >> mX;
+      myfile >> mY;
+    }
+
+    if (mX>maxX) maxX=mX;
+    if (mY>maxY) maxY=mY;
+  }
+  unsigned int pointsX = 0;
+  unsigned int pointsY = 0;
+  pointsX =(maxX+max-1)/max;
+  pointsY =(maxY+max-1)/max;
+
+  cerr << "\nTOTAL  -- maxX: " << maxX << "  maxY: " << maxY << "   pointsX: " << pointsX << "  pointsY: " << pointsY << endl << endl;
+  for (unsigned int i = 0;i < filesCoord.size();i++) {
+    string name = filesCoord[i];
+    const char* filename = name.c_str();
+    Element* el = new Element(filename,maxX,maxY,pointsX,pointsY);
+    elements[filename]=el;
+
+    array_type* pts3 = new array_type(boost::extents[pointsX][pointsY][max][max][3]);
+    for(index i = 0; i != pointsX; ++i)
+      for(index j = 0; j != pointsY; ++j)
+	for(index k = 0; k != max; ++k)
+	  for(index l = 0; l != max; ++l)
+	    for(index m = 0; m != 3; ++m)
+	      (*pts3)[i][j][k][l][m] = 0;
+
+    arrays[filename]=pts3;
+  }  
+
+  Element* element=NULL;
+  array_type* array=NULL;
+  cerr << "------ Filling elements " << endl;
+  for (unsigned int i = 0;i < filesCoord.size();i++) {
+    string name = filesCoord[i];
+    element = getElement(name);
+    array = getArray(name);
+    const char* filename = name.c_str();
+    ifstream myfile (filename);//+".coord");
+
+    unsigned int tmpX;
+    unsigned int tmpY;
+    if (myfile.is_open())   {
+      myfile >> tmpX;
+      myfile >> tmpY;
+    }
+
+    if (myfile.is_open())   {
+      unsigned int x=0;
+      unsigned int y=0;
+      GLfloat line1;
+      GLfloat line2;
+      GLfloat line3;
+      while (! myfile.eof() )  {
+	if (y>=tmpY) {
+	  y=0; x++;
+	  if (x==tmpX) break;
+	}
+	int fieldX = x/max;
+	int offsetX = x%max;
+	int fieldY =y/max;
+	int offsetY = y%max;
+	myfile >> line1;
+	myfile >> line2;
+	myfile >> line3;
+	if (fieldX >= (int)0 && fieldX < (int)pointsX && fieldY >= (int)0 && fieldY < (int)pointsY) {
+	  (*array)[fieldX][fieldY][offsetX][offsetY][0] =line1;
+	  (*array)[fieldX][fieldY][offsetX][offsetY][1] =line2;
+	  (*array)[fieldX][fieldY][offsetX][offsetY][2] =line3;
+	}
+	y++; 
+      }
+      myfile.close();
+    }
+    else cout << "Unable to open file"; 
+  }
+  cerr << "Done filling elements." << endl;;
+
+}
+
+
+
+
+
+void 
+loadFile( string filenC, unsigned int &maxX, unsigned int &maxY, int max, 
+	  unsigned int& pointsX, unsigned int& pointsY) {
+  /************** LOAD *************************/  
+  const char* filename = filenC.c_str();
+  cerr << "\n------ Loading " << filename << ".\n";
+  ifstream myfile (filename);//+".coord");
+  if (myfile.is_open())   {
+    myfile >> maxX;
+    myfile >> maxY;
+  }
+  pointsX =(maxX+max-1)/max;
+  pointsY =(maxY+max-1)/max;
+
+  cout << "maxX:"<<maxX << "  pointsX="<<pointsX << "  max: " << max << endl;
+  cout << "maxY:"<<maxY << "  pointsY="<<pointsY << endl;
+
+  typedef array_type::index index;
+  pts.resize(boost::extents[pointsX][pointsY][max][max][3]);
+  cout << " Alloc pts: " << pointsX << " " << pointsY << endl;
+ 
+ 
+  cerr << " Filling pts with 0 ... " << pointsX << " " << pointsY << endl;
+  for(index i = 0; i != pointsX; ++i) 
+    for(index j = 0; j != pointsY; ++j)
+      for(index k = 0; k != max; ++k)
+	for(index l = 0; l != max; ++l)
+	  for(index m = 0; m != 3; ++m)
+	    pts[i][j][k][l][m] = 0;
+  cerr << " Done Filling." << endl;
+
+  if (myfile.is_open())   {
+
+    unsigned int x=0;
+    unsigned int y=0;
+    GLfloat line1;
+    GLfloat line2;
+    GLfloat line3;
+    while (! myfile.eof() )  {
+      if (y>=maxY) {
+	y=0; x++;
+	if (x==maxX) break;
+      }
+      //cout << endl << x <<" " << y << " "  << "  max: " <<max << endl;
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      //cout  << fieldX<<" "<<fieldY<<" -- " <<offsetX<<" " << offsetY << endl;
+      myfile >> line1;
+      myfile >> line2;
+      myfile >> line3;
+      //cout  << line1<<" "<<line2<<" " <<line3 << endl;
+
+ 
+      //      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      //assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+      if (fieldX >= (int)0 && fieldX < (int)pointsX && fieldY >= (int)0 && fieldY < (int)pointsY) {
+	pts[fieldX][fieldY][offsetX][offsetY][0] =line1;
+	pts[fieldX][fieldY][offsetX][offsetY][1] =line2;
+	pts[fieldX][fieldY][offsetX][offsetY][2] =line3;
+      }
+      y++; 
+    }
+    myfile.close();
+  }
+  else cout << "Unable to open file"; 
+
+  cerr << "Done loading a file.\n";
+
+}
+
+
+
+bool evaluateTwoFiles(array_type* arr1, array_type* arr2, array_type*& arr3, 
+		      unsigned int maxX,
+		      unsigned int maxY, int max,
+		      unsigned int pointsX, unsigned int pointsY) {
+ 
+  //  cerr << " Creating array : " << pointsX << " " << pointsY << endl;
+  arr3 = new array_type(boost::extents[pointsX][pointsY][max][max][3]);
+  int countNrOfHeightLarger50Percent=0;
+  int totalFields=0;
+  bool interesting=false;
+  int totalBefore=0;
+  int totalAfter=0;
+  int totalMax=0;
+  int outOfBounds=0;
+  for (unsigned int x=0; x<maxX;x++) {
+    for (unsigned int y=0; y<maxY;y++) {
+      int fieldX = x/max;
+      int offsetX = x%max;
+      int fieldY =y/max;
+      int offsetY = y%max;
+      GLfloat max=0;
+      GLfloat min=0;
+      assert (fieldX >= (int)0 && fieldX < (int)pointsX);
+      assert (fieldY >= (int)0 && fieldY < (int)pointsY);
+      if ((*arr2)[fieldX][fieldY][offsetX][offsetY][2]>=(*arr1)[fieldX][fieldY][offsetX][offsetY][2]) {
+	max = (*arr2)[fieldX][fieldY][offsetX][offsetY][2]; 
+	min = (*arr1)[fieldX][fieldY][offsetX][offsetY][2]; 
+      } else {
+	max = (*arr1)[fieldX][fieldY][offsetX][offsetY][2]; 
+	min = (*arr2)[fieldX][fieldY][offsetX][offsetY][2];
+      }
+      // if the diff is more than 50% of max then mark
+      bool smaller = (max-min)<(max/2);
+      //cerr << " max-min = " << (max-min) << " max/2 : " << (max/2) << "    " << smaller << endl;
+      if (smaller)
+	countNrOfHeightLarger50Percent++;
+      totalFields++;
+      (*arr3)[fieldX][fieldY][offsetX][offsetY][0] =(*arr1)[fieldX][fieldY][offsetX][offsetY][0]; 
+      (*arr3)[fieldX][fieldY][offsetX][offsetY][1] =(*arr1)[fieldX][fieldY][offsetX][offsetY][1]; 
+      (*arr3)[fieldX][fieldY][offsetX][offsetY][2] =max-min;
+      totalBefore+=max+min;
+      totalAfter+=(max-min);
+      if (max>totalMax) totalMax=max;
+      if ((max-min)>200)
+	outOfBounds++;
+    }
+  }
+  // if we have marked more than 50% of values
+  ROSE_ASSERT(totalFields>0);
+  double result = ((double)((double)countNrOfHeightLarger50Percent/(double)totalFields))*100;
+  double result2 = 100-((double)((double)totalAfter/(double)totalBefore))*100;
+  if (result>90 && result2>90 && outOfBounds<4)
+    interesting=true;
+  if (interesting )
+  cerr << " Number of diffs>50% : " << countNrOfHeightLarger50Percent << "/" << totalFields << 
+    "   in % : " << result << "    totals : " << totalAfter << "/" << totalBefore << "  in % : " << result2 << "   totalMax : " << totalMax << 
+    "   outOfBounds : " << outOfBounds << endl;
+  else
+    if (debug_me)
+  cout << " Number of diffs>50% : " << countNrOfHeightLarger50Percent << "/" << totalFields << 
+    "   in % : " << result << "    totals : " << totalAfter << "/" << totalBefore << "  in % : " << result2 << "   totalMax : " << totalMax << 
+    "   outOfBounds : " << outOfBounds << endl;
+
+  return interesting;
+}
+
+
+
 
 void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, int max,
 	       unsigned int& pointsX, unsigned int& pointsY) {
@@ -499,17 +719,11 @@ void calculate(FunctionType& functions, unsigned int maxX, unsigned int maxY, in
 
   postProcess(maxX, maxY, max, pointsX, pointsY);
   widenFields(maxX, maxY, max, pointsX, pointsY);
-
 }
 
 
 void 
-render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
-
-
-  cerr << "Rendering..." << endl;
-
-
+render(array_type* arr, unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
   glMatrixMode(GL_PROJECTION);
   gluPerspective(75.0, 1.0, 2.0, 5240.0);
   glMatrixMode(GL_MODELVIEW);
@@ -518,9 +732,12 @@ render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
   glRotatef(330.0, 1.0, 0.0, 0.0);
   glRotatef(-35.0, 1.0, 0.0, 0.0);
   //    glRotatef(-30.0, 0.0, 0.0, 1.0);
-
-  glNewList(1, GL_COMPILE);
+  callList++;
+  //  glNewList(1, GL_COMPILE);
+  glNewList(callList, GL_COMPILE);
   /* Render red hill. */
+  cerr << "Rendering... display list : " << callList << endl;
+
 
   for (unsigned int x=0;x<pointsX;x++) {
     for (unsigned int y=0;y<pointsY;y++) {
@@ -543,13 +760,21 @@ render(unsigned int pointsX, unsigned int pointsY, int nrknots, int max) {
       */
 #endif
       gluBeginSurface(nurb);
-      gluNurbsSurface(nurb, nrknots, knots, nrknots, knots,
-		      max * 3, 3, &pts[x][y][0][0][0],
-		      max, max, GL_MAP2_VERTEX_3);
+      if (arr==NULL)
+	gluNurbsSurface(nurb, nrknots, knots, nrknots, knots,
+			max * 3, 3, &pts[x][y][0][0][0],
+			max, max, GL_MAP2_VERTEX_3);
+      else
+	gluNurbsSurface(nurb, nrknots, knots, nrknots, knots,
+			max * 3, 3, &(*arr)[x][y][0][0][0],
+			max, max, GL_MAP2_VERTEX_3);
+
       gluEndSurface(nurb);
     }
   }
   glEndList();
+  display();
+  //  display;
 }
 
 
@@ -585,12 +810,21 @@ void saveFile(string filenC, unsigned int maxX, unsigned int maxY, int max,
 
 
 
+void displayAll( array_type* arr, int nrknots, int max,
+		 const unsigned int pointsX, const unsigned int pointsY) {
+  render(arr, pointsX, pointsY, nrknots, max);
+  glutDisplayFunc(display);
+}
+
 void displayAll( int nrknots, int max,
 		 const unsigned int pointsX, const unsigned int pointsY) {
-  render(pointsX, pointsY, nrknots, max);
-  glutDisplayFunc(display);
-  glutMainLoop();
+  array_type* n=NULL;
+  render(n,pointsX, pointsY, nrknots, max);
 
+  glutDisplayFunc(display);
+  while (nextKey==false)
+    glutMainLoopEvent();
+  nextKey=false;
 }
 
 
@@ -604,12 +838,19 @@ parseBinaryFile(std::string name) {
   char* argv[] = {"vizzBinary",nameChar};
   SgProject* project = frontend(2,argv);
   ROSE_ASSERT (project != NULL);
-  SgAsmFile* file = project->get_file(0).get_binaryFile();
+  //SgAsmFile* file = project->get_file(0).get_binaryFile();
+  SgBinaryFile* binFile = isSgBinaryFile(project->get_fileList()[0]);
+  ROSE_ASSERT(binFile);
+  //  SgAsmFile* file = binFile->get_binaryFile();
+  SgAsmFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
+
+
   const SgAsmInterpretationPtrList& interps = file->get_interpretations();
   ROSE_ASSERT (interps.size() == 1);
   SgAsmInterpretation* interp = interps[0];
 
   string fname = StringUtility::stripPathFromFileName(name);
+
 
   // control flow analysis  *******************************************************
   bool forward = true;
@@ -623,10 +864,16 @@ parseBinaryFile(std::string name) {
   RoseBin_ControlFlowAnalysis* cfganalysis = new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
   cfganalysis->run(dotGraph, cfgFileName, mergedEdges);
 
+
   cerr << " Creating assembly : " << fname+"-unp.s" << endl;
   unparseAsmStatementToFile( fname+"-unp.s", interp->get_global_block());
+  cfganalysis->setInitializedFalse();
+  cfganalysis=NULL;
+  delete cfganalysis;
   return project;
 }
+
+
 
 
 int main(int argc, char** argv) {
@@ -637,7 +884,8 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Usage: %s [executableName|-dir dirname] [OPTIONS]\n", argv[0]);
     cout << "\nOPTIONS: " <<endl;
     cout << "-save             - run all binaries and save footprints. " << endl; 
-    cout << "-load             - load all footprints and run analyses. " << endl; 
+    cout << "-load             - load one footprint and run analyses. " << endl; 
+    cout << "-eval             - evaluate all footprints and run analyses. " << endl; 
     return 1;
   }
   string execName = argv[1];
@@ -645,10 +893,6 @@ int main(int argc, char** argv) {
   if (execName=="-dir")
     dir=argv[2];
 
-  // create out folder
-  string filenameDir="out";
-  mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
-  mkdir(filenameDir.c_str(), mode);
 
   bool save = false;
   if (containsArgument(argc, argv, "-save")) {
@@ -659,35 +903,68 @@ int main(int argc, char** argv) {
     load = true;
     save=false;
   }
+  bool eval = false;
+  if (containsArgument(argc, argv, "-eval")) {
+    eval = true;
+    load=false;
+    save=false;
+  }
 
-  string def_db_name    ="kleza";
-  string def_db_name2    ="klezb";
+  // string def_db_name    ="kleza";
+  //string def_db_name2    ="klezb";
 
   vector<string> files = vector<string>();
+  vector<string> filesBin = vector<string>();
+  vector<string> filesCoord = vector<string>();
   if (dir!="") {
     cout << "Loading Binaries at : " << dir << endl;
     getdir(dir,files);
   }  else {
+    filesBin.push_back(execName);
+    execName+=".coord";
     cout << "Loading file : " << execName << endl;
-    files.push_back(execName);
+    filesCoord.push_back(execName);
   }
   for (unsigned int i = 0;i < files.size();i++) {
     string name = files[i];
-    cout << "Adding Binary : " << name << endl;
+    string test="";
+    string test2="";
+    string test4="";
+    if (name.size()>6)
+      test=name.substr(name.size()-6,name.size());
+    if (name.size()>2)
+      test2=name.substr(name.size()-2,name.size());
+    if (name.size()>4)
+      test4=name.substr(name.size()-4,name.size());
+    if (test==".coord") {
+      filesCoord.push_back(name);
+      cout << "Adding Binary Coord: " << name << endl;
+    } else if (test2==".s" || test4==".dot") {
+    } else {
+      cout << "Adding Binary Bin: " << name << endl;
+      filesBin.push_back(name);
+    }
   }
 
+  // create out folder
+  string filenameDir="out";
+  mode_t mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+  mkdir(filenameDir.c_str(), mode);
+
   SgProject* project = NULL;
-  unsigned int pointsX =0;
-  unsigned int pointsY =0;
+  //  unsigned int pointsX =0;
+  //unsigned int pointsY =0;
 
-
-  initGL(argc, argv);
+  glutInit(&argc, argv);
 
   if (save) {
     // load all binaries iteratively and save it as footprint
     cout << "... Saving all binaries to footprint." << endl;
-    for (unsigned int i = 0;i < files.size();i++) {
-      string name = files[i];
+    unsigned int pointsX =0;
+    unsigned int pointsY =0;
+    for (unsigned int i = 0;i < filesBin.size();i++) {
+      string name = filesBin[i];
+      initGL(name,0,0);
       cout << "\nAnalysing Binary (save): " << name << endl;
       project= parseBinaryFile(name);
       Traversal trav;
@@ -702,25 +979,88 @@ int main(int argc, char** argv) {
     }
   } else if (load) {
     // load all footprints at once and run analyses
-    cout << "... Loading all footprints in out directory." << endl;
-    for (unsigned int i = 0;i < files.size();i++) {
-      string name = files[i];
-      string filenC = name+".coord";
-      cout << "\nLoading Binary and Visualizing footprint: " << filenC << endl;
-      //string filen2C = filen2+".coord";
-      //const char* filename = filenC.c_str();
-      //const char* filename2 = filen2C.c_str();
+    unsigned int pointsX =0;
+    unsigned int pointsY =0;
+    cout << "... Loading all footprints in directory." << endl;
+    for (unsigned int i = 0;i < filesCoord.size();i++) {
+      string name = filesCoord[i];
+      initGL(name,0,0);
+      //      string filenC = name+".coord";
+      cout << "\nLoading Binary and Visualizing footprint: " << name << endl;
       unsigned int maxX = 0;
       unsigned int maxY = 0;
-      loadFile(filenC, maxX, maxY, max, pointsX, pointsY);
+      loadFile(name, maxX, maxY, max, pointsX, pointsY);
       postProcess(maxX, maxY,  max,  pointsX, pointsY);
       displayAll(nrknots, max, pointsX, pointsY);
+
+    }
+  } else if (eval && dir!="") { 
+    // load all footprints at once and run analyses
+    cout << "... Evaluating all footprints in  directory." << endl;
+    unsigned int maxX=0;
+    unsigned int maxY=0;
+    loadAllFiles(filesCoord, max, maxX, maxY);
+    unsigned int pointsX =(maxX+max-1)/max;
+    unsigned int pointsY =(maxY+max-1)/max;
+    Element* element=NULL;
+    array_type* array=NULL;
+    Element* element2=NULL;
+    array_type* array2=NULL;
+    array_type* arrayDiff=NULL;
+    for (unsigned int i = 0;i < filesCoord.size();i++) {
+      string name = filesCoord[i];
+      element = getElement(name);
+      array = getArray(name);
+      if (element!=NULL && array!=NULL) {
+
+	for (unsigned int k = (i+1);k < filesCoord.size();k++) {
+	  string name2 = filesCoord[k];
+	  if (debug_me)
+	  cout << "\nEvaluating " << i << "/" << k << "/" << filesCoord.size()
+	       <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
+	  if ((i%10)==0 && k==(i+1))
+	  cerr << "\nEvaluating " << i << "/" << k << "/" << filesCoord.size()
+	       <<"  Binary and Visualizing footprint: " << name << " and " << name2 <<endl;
+	  element2 = getElement(name2);
+	  array2 = getArray(name2);
+	  if (element2!=NULL && array2!=NULL) {
+	    bool interesting = evaluateTwoFiles(array,array2,arrayDiff,maxX, maxY,  max,  pointsX, pointsY);
+	    ROSE_ASSERT(arrayDiff);
+	    if ( interesting) {
+	      int win0 = initGL(name+" "+name2,0,0);
+	      postProcess(arrayDiff, maxX, maxY,  max,  pointsX, pointsY);
+	      displayAll(arrayDiff, nrknots, max, pointsX, pointsY);
+	    
+	      int win1 = initGL(name,810,0);
+	      postProcess(array, maxX, maxY,  max,  pointsX, pointsY);
+	      displayAll(array, nrknots, max, pointsX, pointsY);
+
+	      int win2 = initGL(name2,1620,0);
+	      postProcess(array2, maxX, maxY,  max,  pointsX, pointsY);
+	      displayAll(array2,nrknots, max, pointsX, pointsY);
+
+	      while (nextKey==false)
+		glutMainLoopEvent();
+	      nextKey=false;
+
+	      glutDestroyWindow(win0);
+	      glutDestroyWindow(win1);
+	      glutDestroyWindow(win2);
+	    }
+	    delete arrayDiff;
+	  }
+	}
+      }
     }
   } else {
     // preform simple analysis on current file(s)
     cout << "... Running footprint analyses without load/save." << endl;
-    for (unsigned int i = 0;i < files.size();i++) {
-      string name = files[i];
+    unsigned int pointsX =0;
+    unsigned int pointsY =0;
+
+    for (unsigned int i = 0;i < filesBin.size();i++) {
+      string name = filesBin[i];
+      initGL(name,0,0);
       cout << "\nAnalysing Binary (run): " << name << endl;
       project = parseBinaryFile(name);
       Traversal trav;
@@ -734,6 +1074,6 @@ int main(int argc, char** argv) {
       displayAll(nrknots, max, pointsX, pointsY);
     }
   }
-  
+  cerr << " ALL DONE . " << endl;
   return 0;
 }
