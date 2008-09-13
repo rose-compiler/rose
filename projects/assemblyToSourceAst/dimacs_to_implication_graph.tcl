@@ -13,13 +13,14 @@ if {[lindex $header 0] == "p"} {
   set nclauses unknown
 }
 
-puts "digraph clausegraph {"
+puts "digraph implicationgraph {"
 array set usedVars {}
 foreach line $data {
   if {$line == ""} {continue}
   set clause [split $line " "]
   if {[lindex $clause end] != 0} {error "Bad clause $line"}
   set clause [lrange $clause 0 end-1]
+  if {[llength $clause] >= 3} {continue}
   foreach lit $clause {
     set usedVars([expr {abs($lit)}]) ""
   }
@@ -27,33 +28,21 @@ foreach line $data {
     0 {error "Empty clause"}
     1 {
       set l0 [lindex $clause 0]
-      if {$l0 < 0} {
-        puts "[expr {-$l0}] \[color=red\]"
-      } else {
-        puts "$l0 \[color=green\]"
-      }
+      puts "[expr {-$l0}] \[color=red\]"
+      puts "$l0 \[color=green\]"
     }
     2 {
       set l0 [lindex $clause 0]
       set l1 [lindex $clause 1]
-      set v0 [expr {abs($l0)}]
-      set v1 [expr {abs($l1)}]
-      set s0 [expr {$l0 < 0 ? "-" : "+"}]
-      set s1 [expr {$l1 < 0 ? "-" : "+"}]
-      switch -exact -- "$s0 $s1" {
-        "- -" {puts "$v0 -> $v1 \[color=red, arrowhead=none\]"}
-        "+ +" {puts "$v0 -> $v1 \[color=black, arrowhead=none\]"}
-        "- +" {puts "$v0 -> $v1 \[color=green\]"}
-        "+ -" {puts "$v1 -> $v0 \[color=green\]"}
-      }
+      puts "[expr {-$l0}] -> $l1"
+      puts "$l0 -> [expr {-$l1}] \[arrowhead=none, arrowtail=normal\]"
     }
     default {
-      puts "\"$clause\" \[shape=rect, label=\"\", width=.1, height=.1\]"
-      foreach lit $clause {
-        puts "[expr {abs($lit)}] -> \"$clause\" \[arrowhead=none, color=[expr {$lit > 0 ? "palegreen" : "pink"}]\]"
-      }
     }
   }
+}
+foreach v [array names usedVars] {
+  # puts "$v -> [expr {-$v}] \[arrowhead=none, color=blue\]"
 }
 puts "}"
 puts stderr "Used variables: [llength [array names usedVars]] of $nvars"

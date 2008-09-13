@@ -8,9 +8,9 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
-x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C
+x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
 
-include_HEADERS = x86AssemblyToC.h
+include_HEADERS = x86AssemblyToC.h satProblem.h
 
 jeremiah-check: x86AssemblyToCDemo x86AssemblyToNetlist
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
