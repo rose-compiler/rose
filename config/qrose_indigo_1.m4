@@ -97,8 +97,18 @@ AC_ARG_WITH(qt-lib,
 dnl ---------------------------[check Qt headers]------------
   qt_incdirs="$ac_qt_includes $ac_qt_path/include /usr/include/qt4"
   AC_FIND_FILE(QtGui/qapplication.h, $qt_incdirs, qt_incdir)
-  if test "x$with_QRose" != xno && test "$qt_incdir" = NONE; then
-     AC_MSG_ERROR([ Qt headers not found,  use --with-qt=DIR or --with-qt-includes=DIR])
+
+dnl echo "qt_incdir = $qt_incdir"
+dnl echo "with_QRose = $with_QRose"
+
+dnl DQ (9/12/2008): Only test for failure if we have configured for QRose use.
+dnl This prevents failing when we find Qt3 and we have not configured
+dnl ROSE to use QRose. Also fixed in code below.
+dnl if test "x$with_QRose" != xno && test "$qt_incdir" = NONE; then
+  if test "x$with_QRose" != xno; then
+     if test "$qt_incdir" = NONE; then
+        AC_MSG_ERROR([ Qt headers not found,  use --with-qt=DIR or --with-qt-includes=DIR])
+     fi
   fi
   QT_INCLUDES="-I$qt_incdir/QtCore -I$qt_incdir/QtGui -I$qt_incdir"
   AC_SUBST(QT_INCLUDES)
@@ -106,8 +116,11 @@ dnl ---------------------------[check Qt headers]------------
 dnl ---------------------------[check Qt Libraries]------------
   qt_libdirs="$ac_qt_libraries $ac_qt_path/lib /usr/lib"
   AC_FIND_FILE_EXT(libQtGui, $qt_libdirs, qt_libdir)
-  if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
-     AC_MSG_ERROR([ Qt libraries not found,  use --with-qt=DIR or --with-qt-libraries=DIR ])
+dnl if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
+  if test "$with_QRose" != no; then
+     if test "$qt_libdir" = NONE; then
+        AC_MSG_ERROR([ Qt libraries not found,  use --with-qt=DIR or --with-qt-libraries=DIR ])
+     fi
   fi
 dnl  LIB_QT="-lQtCore -lQtGui"
   QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui"
@@ -142,20 +155,26 @@ dnl ------------------------[get binary]-----------------
 dnl ------------------------[check if moc exists]-----------------
    AC_MSG_CHECKING([for Qt meta-object compiler])
    AC_FIND_FILE($moc_binary, $moc_dirs, moc_dir)
-   if test "$with_QRose" != no && test "$moc_dir" = NONE; then
-     AC_MSG_ERROR([ No Qt meta object compiler ($moc_binary) found! (should be found in PATH, or --with-qt=DIR-qt_root, or --with-qt-bin=DIR-qt_bin)])
+dnl if test "$with_QRose" != no && test "$moc_dir" = NONE; then
+   if test "$with_QRose" != no; then
+      if test "$moc_dir" = NONE; then
+         AC_MSG_ERROR([ No Qt meta object compiler ($moc_binary) found! (should be found in PATH, or --with-qt=DIR-qt_root, or --with-qt-bin=DIR-qt_bin)])
+      fi
    fi
    MOC=$moc_dir/$moc_binary
    AC_MSG_RESULT([$MOC])
 dnl ------------------------[check if moc is version 4]-----------------
    AC_MSG_CHECKING([Qt meta-object compiler version])
 
-   if test "$moc_dir" != NONE; then
-     try=`$MOC -v 2>&1 | grep "Qt 4."`
-     if test -z "$try"; then
-        AC_MSG_ERROR([ invalid version - $MOC must be version 4.x.x])
-     else
-        AC_MSG_RESULT([passed])
+dnl DQ (9/12/2008): Added to test for use of QRose to prevent error if Qt3 is found.
+   if test "$with_QRose" != no; then
+      if test "$moc_dir" != NONE; then
+         try=`$MOC -v 2>&1 | grep "Qt 4."`
+         if test -z "$try"; then
+            AC_MSG_ERROR([ invalid version - $MOC must be version 4.x.x])
+         else
+            AC_MSG_RESULT([passed])
+         fi
      fi
      AC_SUBST(MOC)
    fi

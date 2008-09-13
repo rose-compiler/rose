@@ -795,7 +795,7 @@ echo "with_QRose = $with_QRose"
 AC_PATH_QT
 AC_PATH_QT_MOC
 
-echo "with_qt = $with_qt"
+# echo "with_qt = $with_qt"
 
 AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
 
