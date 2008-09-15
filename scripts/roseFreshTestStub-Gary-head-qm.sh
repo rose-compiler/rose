@@ -35,7 +35,10 @@ CONFIGURE_FLAGS=( --with-edg_source_code=true --with-CXX_DEBUG=-g --with-C_DEBUG
 KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 ENABLE_RRQM=yes
+ENABLE_RRQM_PUBLISH=yes
 SKIP_DIST_TEST=yes
+
+MAKEFLAGS="-j2"
 
 set -e
 set -o pipefail
