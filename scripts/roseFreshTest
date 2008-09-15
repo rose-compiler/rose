@@ -196,17 +196,26 @@ if [ $buildstatus == 0 ]; then
   #------------------------------------------------------
   # Optional uploading Section: for successful tests only
   #------------------------------------------------------
+
+  #
   if [ $ENABLE_RRQM ] ; then
     echo "Running QMtest on Plumhall..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
-    make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose && make -f ${ROSE_TEST_REGRESSION_ROOT}/plumhall.makefile publish
+    make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose
+
+    if [[ $ENABLE_RRQM_PUBLISH && $LBL_RRQM_ROOT && $? -eq 0 ]] ; then
+      echo "Publishing plumhall results..." >> $mailtext
+      make -f ${ROSE_TEST_REGRESSION_ROOT}/plumhall.makefile publish
+    fi
+
     if [ $? -ne 0 ]; then
       echo "Error: make plumhall finishes abnormally!" >>$mailtext
     else
       echo "make plumhall finishes normally.">>$mailtext
     fi
   fi
-   # documentations to www.roseCompiler.org
+
+  # documentations to www.roseCompiler.org
   if [ $ENABLE_UPLOAD_WEB ] ; then
     # update the web site
     cd ${ROSE_TOP}/build/docs/Rose
