@@ -4,6 +4,11 @@
 
 #include <qrose.h>
 #include <QTextBrowser>
+#include <QComboBox>
+#include <QGridLayout>
+#include <QGroupBox>
+#include <QLabel>
+#include <QLineEdit>
 #include "sqlite3x.h"
 
 #include <boost/smart_ptr.hpp>
@@ -65,22 +70,39 @@ class BinaryCloneGui
     std::string normalizeInstructions(std::vector<SgAsmx86Instruction*>::iterator beg, 
     std::vector<SgAsmx86Instruction*>::iterator end);
 
-    std::string getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
+    std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
+
+    void selectView(int selection);
 
   protected:
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
     QTextEdit *codeWidget;
+    QTextEdit *codeWidget2;
+    QComboBox *comboBox;
+    QComboBox *wholeFunction;
 
     QTextBrowser *codeBrowser;
+    QLineEdit *fileDataRestriction;
+    QLineEdit *functionDataRestriction;
+
   private:
 
+
+    double similarity;
+    int stride;
+    int windowSize;
+    
     int activeRow;
 
     std::string relativePathPrefix;
     sqlite3x::sqlite3_connection con;
     scoped_array_with_size<Element > vectorOfClones;
 
+
+    std::pair<std::string,std::string> normalizedView;
+    std::pair<std::string,std::string> unparsedView;
+    
 }; //class BinaryCloneGui
 
 #endif

@@ -85,6 +85,34 @@ static void tableCellActivated(int col, int row, int oldCol, int oldRow)
 } //tableCellActivated(int col, int row, int oldCol, int oldRow)
 
 
+static void viewBoxActivated(int selection) 
+{
+
+  BinaryCloneGui *instance = QROSE::cbData<BinaryCloneGui *>();
+  instance->selectView(selection);
+
+  return;
+}
+
+void
+BinaryCloneGui::selectView(int selection)
+{
+
+  switch (selection) {
+    case 0:
+      codeWidget->setPlainText(QString(unparsedView.first.c_str()));
+      codeWidget2->setPlainText(QString(unparsedView.second.c_str()));
+      break;
+    case 1:
+      codeWidget->setPlainText(QString(normalizedView.first.c_str()));
+      codeWidget2->setPlainText(QString(normalizedView.second.c_str()));
+      break;
+  }
+
+
+};
+
+
 BinaryCloneGui::BinaryCloneGui( ) :
   window(0)
 {
@@ -108,14 +136,80 @@ BinaryCloneGui::BinaryCloneGui( ) :
 
 
 
-  tableWidget = *window << new QRTable( 8, "file A", "function A", "begin address", "end address", "file B", "function B", "begin address", "end address" );
-  QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), &tableCellActivated, this);
+  QRPanel &tiledPanel = *window << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
+    {
 
-  codeWidget = *window << new QTextEdit;//new QREdit(QREdit::Box);
-  codeWidget->setReadOnly(true);
-  codeWidget->setPlainText(QString("foobar\nBar\nFoobar"));
+       QRPanel &lowerInnerTiledPanel = tiledPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
 
-  
+       {
+      tableWidget = lowerInnerTiledPanel << new QRTable( 8, "file A", "function A", "begin address", "end address", "file B", "function B", "begin address", "end address" );
+      QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), &tableCellActivated, this);
+
+
+      QRPanel &parameters = lowerInnerTiledPanel << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
+
+      QGroupBox *selectGroup =  parameters <<  new QGroupBox(("Data Selection Parameters"));
+      {
+
+
+        QGridLayout *echoLayout =  new QGridLayout;
+        QLabel *echoLabel = new QLabel("File:");
+                echoLayout->addWidget(echoLabel, 0, 0);
+        fileDataRestriction = new QLineEdit;
+        echoLayout->addWidget(fileDataRestriction, 0, 1);
+        
+        QLabel *functionLabel = new QLabel("Function:");
+        echoLayout->addWidget(functionLabel, 1, 0);
+        functionDataRestriction = new QLineEdit;
+        echoLayout->addWidget(functionDataRestriction, 1, 1 );
+
+
+       wholeFunction = new QComboBox;
+       wholeFunction->addItem(("No"));
+       wholeFunction->addItem(("Yes"));
+
+       QLabel *wholeFunctionLabel = new QLabel("Only whole functions:");
+       echoLayout->addWidget(wholeFunctionLabel, 2, 0 );
+
+       echoLayout->addWidget(wholeFunction, 2, 1 );
+
+        selectGroup->setLayout(echoLayout);
+      }
+      
+      comboBox = new QComboBox;
+      comboBox->addItem(("Instruction"));
+      comboBox->addItem(("Normalized"));
+
+      
+      QGroupBox *echoGroup =  parameters <<  new QGroupBox(("Selection Clone-View"));
+      QGridLayout *echoLayout =  new QGridLayout;
+      QLabel *echoLabel = new QLabel("Views:");
+      echoLayout->addWidget(echoLabel, 0, 0);
+      echoLayout->addWidget(comboBox, 0, 1);
+      echoGroup->setLayout(echoLayout);
+      
+      QROSE::link(comboBox, SIGNAL(activated(int)), &viewBoxActivated, this);
+
+       }
+
+       
+      
+      QRPanel &upperInnerTiledPanel = tiledPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
+
+      {
+
+        codeWidget = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
+        codeWidget->setReadOnly(true);
+        codeWidget->setPlainText(QString("foobar\nBar\nFoobar"));
+
+        codeWidget2 = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
+        codeWidget2->setReadOnly(true);
+
+      } //tiledPanel
+    tiledPanel.setTileSize(40,60);
+  } //window 
+
+
   window->setGeometry(0,0,1280,800);
   window->setTitle("BinaryCloneMainGui (QROSE)");
 
@@ -169,11 +263,64 @@ BinaryCloneGui::run( )
 
     vectorOfClones.allocate(eltCount);
 
+    try {
+      similarity = sqlite3x::sqlite3_command(con, "select similarity_threshold from detection_parameters limit 1").executedouble();
+    } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
+    try {
+      windowSize = sqlite3x::sqlite3_command(con, "select window_size from run_parameters limit 1").executeint();
+    } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
+    try {
+      stride = sqlite3x::sqlite3_command(con, "select stride from run_parameters limit 1").executeint();
+    } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
+
+
+
 
     //Read whole dataset from database
     try{
-      std::string selectSeparateDatasets ="select   function_id_A, function_id_B, begin_index_within_function_A, end_index_within_function_A, begin_index_within_function_B, end_index_within_function_B, f1.file, f1.function_name, f2.file, f2.function_name from largest_clones c join function_ids f1 on f1.row_number=c.function_id_A join function_ids f2 on f2.row_number=c.function_id_B";
+      std::string selectSeparateDatasets ="select   function_id_A, function_id_B, begin_index_within_function_A, end_index_within_function_A, begin_index_within_function_B, end_index_within_function_B, f1.file, f1.function_name, f2.file, f2.function_name from largest_clones c join function_ids f1 on f1.row_number=c.function_id_A join function_ids f2 on f2.row_number=c.function_id_B ";
 
+
+      if( wholeFunction->currentIndex() == 1)
+      {
+        selectSeparateDatasets += " join function_statistics stat1 on stat1.function_id=function_id_A join function_statistics stat2 on stat2.function_id=function_id_B ";
+
+        selectSeparateDatasets += " where ( (stat1.num_instructions - " +boost::lexical_cast<string>(windowSize)+ ")/" +boost::lexical_cast<string>(stride)+") =( end_index_within_function_A-begin_index_within_function_A  )";
+        selectSeparateDatasets += " AND   ( (stat2.num_instructions - " +boost::lexical_cast<string>(windowSize)+ ")/" +boost::lexical_cast<string>(stride)+") =( end_index_within_function_B-begin_index_within_function_B  )"  ;
+
+      }
+      
+      if( fileDataRestriction->text() != "" || functionDataRestriction->text() != ""  )
+      {
+       
+
+        if(wholeFunction->currentIndex() == 1) 
+          selectSeparateDatasets += " AND ";
+        else
+          selectSeparateDatasets+=" where ";
+
+
+        
+        if( fileDataRestriction->text() != ""  )
+        {
+          std::string text( fileDataRestriction->text().toAscii());
+          selectSeparateDatasets+= " ( f1.file like \""+ text + "\" OR f2.file like \"" + 
+            text  +"\" ) ";
+          
+          if( functionDataRestriction->text() != ""  )
+            selectSeparateDatasets+=" AND ";
+        }
+
+        if( functionDataRestriction->text() != ""  )
+        {
+          std::string text( functionDataRestriction->text().toAscii());
+          selectSeparateDatasets+= "( f1.function_name like \""+ text + "\" OR f2.function_name like \"" + 
+            text  +"\" )";
+        }
+      }
+
+      std::cout << "SQL QUERY : " << selectSeparateDatasets << std::endl;
+      
       sqlite3_command cmd(con, selectSeparateDatasets.c_str());
       sqlite3_reader datasets=cmd.executereader();
 
@@ -296,19 +443,28 @@ SgNode* BinaryCloneGui::disassembleFile(std::string tsv_directory){
 };
 
 
-std::string BinaryCloneGui::getAddressFromVectorsTable(uint64_t function_id, uint64_t index)
+std::pair<std::string,std::string> BinaryCloneGui::getAddressFromVectorsTable(uint64_t function_id, uint64_t index)
 {
-  std::string address;
+  std::string line;
+  std::string offset;
   try {
-    std::string selectQuery = "select row_number from vectors where function_id=";
+    std::string selectQuery = "select line,offset from vectors where function_id=";
                 selectQuery +=boost::lexical_cast<std::string>(function_id);
                 selectQuery +=" and index_within_function=";
                 selectQuery +=boost::lexical_cast<std::string>(index);
                 selectQuery +=" limit 1";
-    address = sqlite3x::sqlite3_command(con, selectQuery.c_str()).executestring();
+
+    std::cout << "Query " << selectQuery << std::endl; 
+    sqlite3_command cmd(con, selectQuery.c_str());
+    sqlite3_reader datasets=cmd.executereader();
+    datasets.read(); 
+    line   = datasets.getstring(0);
+    offset = datasets.getstring(1);
+
+//    address = sqlite3x::sqlite3_command(con, selectQuery.c_str()).executestring();
   } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
 
-  return address;
+  return std::pair<std::string,std::string>(line,offset);
 }  ;
 
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
@@ -425,7 +581,7 @@ std::string BinaryCloneGui::normalizeInstructions(std::vector<SgAsmx86Instructio
 
         normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") + boost::lexical_cast<string>(num);
       }
-      normalizedUnparsedInstructions += ";";
+      normalizedUnparsedInstructions += ";\n";
   
     }
    
@@ -441,10 +597,16 @@ void BinaryCloneGui::showClone(int row)
   Element& elem = vectorOfClones[row];
 
  
-  std::string beginAddressFileA = getAddressFromVectorsTable(elem.function_A, elem.begin_index_within_function_A);
-  std::string beginAddressFileB = getAddressFromVectorsTable(elem.function_B, elem.begin_index_within_function_B);
-  std::string endAddressFileA = getAddressFromVectorsTable(elem.function_A, elem.end_index_within_function_A);
-  std::string endAddressFileB = getAddressFromVectorsTable(elem.function_B, elem.end_index_within_function_B);
+  std::string beginAddressFileA = getAddressFromVectorsTable(elem.function_A, elem.begin_index_within_function_A).first;
+  std::string beginAddressFileB = getAddressFromVectorsTable(elem.function_B, elem.begin_index_within_function_B).first;
+  std::string endAddressFileA = getAddressFromVectorsTable(elem.function_A, elem.end_index_within_function_A).second;
+  std::string endAddressFileB = getAddressFromVectorsTable(elem.function_B, elem.end_index_within_function_B).second;
+
+
+  std::string addresses = beginAddressFileA + " " + endAddressFileA + " " + beginAddressFileB + " "
+                          + endAddressFileB; 
+
+
 
   SgNode* fileA = disassembleFile(elem.file_A);
   SgNode* fileB = disassembleFile(elem.file_B);
@@ -454,8 +616,11 @@ void BinaryCloneGui::showClone(int row)
 
   std::string normalizedFileA;
   std::string normalizedFileB;
- 
 
+  ROSE_ASSERT(fileA != NULL);
+  ROSE_ASSERT(fileB != NULL);
+
+  std::cout << "Adddresses is : " << addresses << std::endl;
   bool first =true;
   while(true)
   {
@@ -467,8 +632,12 @@ void BinaryCloneGui::showClone(int row)
 
     int beg = 0;
     int end = 0;
+
     for(size_t i=0; i < insns.size(); i++ )
     {
+
+      std::cout << insns[i]->get_address() << " " << beginAddressFileA << " " << (boost::lexical_cast<uint64_t>(beginAddressFileA)-insns[i]->get_address()) << std::endl; 
+      //unparsed = "FILLERN" ;
       if(insns[i]->get_address() == boost::lexical_cast<uint64_t>( first ? beginAddressFileA : beginAddressFileB ) ) 
         beg = i;
        if(insns[i]->get_address() == boost::lexical_cast<uint64_t>( first ? endAddressFileA : endAddressFileB ) ) 
@@ -480,17 +649,31 @@ void BinaryCloneGui::showClone(int row)
 
 //    first ? normalizedFileA : normalizedFileB = normalizeInstructions(insns.begin()+beg, insns.begin()+end);
 
-    std::string unparsed;
+     std::cout <<  "INSNS : "  << insns.size()  << std::endl ;
+
+     std::cout << "beg: "<< beg << " end: " << end << std::endl;
+     
+     std::string unparsed;
+
     for(int i =beg; i < end; i++)
     {
       unparsed += unparseInstructionWithAddress(insns[i]);
       unparsed += "\n";
+      std::cout << "unparsed " << unparseInstructionWithAddress(insns[i]) << std::endl;
     }
-     codeWidget->setPlainText(QString(unparsed.c_str()));
 
-     break;
-    codeWidget->setReadOnly(true);
-    codeWidget->setPlainText(QString(normalizeInstructions(insns.begin()+beg, insns.begin()+end).c_str()));
+    (first? codeWidget : codeWidget2 )->setPlainText(QString(unparsed.c_str()));
+
+    std::string normalized = normalizeInstructions(insns.begin()+beg, insns.begin()+end); 
+
+    (first? unparsedView.first : unparsedView.second ) = unparsed;
+
+    (first? normalizedView.first : normalizedView.second ) = normalized;
+
+    selectView(0);
+     
+    //codeWidget->setReadOnly(true);
+    //codeWidget->setPlainText(QString(normalizeInstructions(insns.begin()+beg, insns.begin()+end).c_str()));
 
 
    
