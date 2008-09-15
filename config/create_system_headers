@@ -60,7 +60,8 @@ process_headers()
     ln -s $src_dir $target_dir
   else
     echo "$src_dir needs to be copied and modified"
-    cp -Rps $src_dir/ $target_dir || cp -Rp $src_dir/ $target_dir ; # Also makes the directory; -s makes files symlinks rather than copies but only works using GNU cp
+    find "$src_dir" -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|$target_dir/\\1|p" | xargs mkdir -p
+    find "$src_dir" -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|&\n$target_dir/\\1|p" | xargs -L2 ln -s
     echo "Done copying"
     # Find the special-case files to process
     find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | \
@@ -68,7 +69,7 @@ process_headers()
      # echo "processing files in directory $srcDirName to put into $targetDirName"
      # this is not the most efficient thing to do ...
        targetName=`echo "$srcName" | sed "s|$src_dir|$target_dir|g"`
-       rm "$targetName" # In case targetName is a symbol link to something in the base include directory
+       rm "$targetName" # In case targetName is a link to something in the base include directory
        case "`basename $srcName`" in
          "complex" )
            echo "Processing complex header file (commenting out private constructor) at $targetName"
