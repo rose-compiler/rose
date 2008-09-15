@@ -61,7 +61,7 @@ process_headers()
   else
     echo "$src_dir needs to be copied and modified"
     find "$src_dir" -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|$target_dir/\\1|p" | xargs mkdir -p
-    find "$src_dir" -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|&\n$target_dir/\\1|p" | xargs -L2 ln -s
+    find "$src_dir" -type f -a -print | sed -n "p;s|^${src_dir}\\(.*\\)\$|$target_dir/\\1|p" | xargs -L2 ln -s
     echo "Done copying"
     # Find the special-case files to process
     find "$src_dir/." \( -name complex -o -name c++config.h \) -a -type f -a -print 2>/dev/null | \
