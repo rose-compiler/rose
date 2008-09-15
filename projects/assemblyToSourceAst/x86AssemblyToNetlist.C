@@ -68,11 +68,13 @@ struct NetlistTranslator {
   typedef map<FullReg, LitList(32)> RegMap;
   typedef map<X86Flag, Lit> FlagMap;
   typedef vector<pair<LitList(32), LitList(8) > > MemoryWriteList;
+  typedef vector<pair<LitList(32), LitList(8) > > MemoryReadList;
   RegMap registerMap;
   RegMap newRegisterMap;
   FlagMap flagMap;
   FlagMap newFlagMap;
   MemoryWriteList memoryWrites;
+  MemoryReadList initialMemoryReads;
   SatProblem problem;
 
   static FullReg gpr(X86GeneralPurposeRegister reg) {
@@ -143,10 +145,25 @@ struct NetlistTranslator {
   }
 
   LitList(8) readMemoryByte(const LitList(32)& addr) {
+    // The priority order for reads goes from bottom to top.  First, we check
+    // for any writes that have the same address, and use the most recent of
+    // those that match.  Next, we look at those previous reads that did not
+    // match a write (i.e., use the values from the beginning of the basic
+    // block), using any with the same address, or an arbitrary value if there
+    // are no matches.  The point of the memory read list is that we want two
+    // memory reads with the same address to return the same result, even if we
+    // don't have a definition of what that value actually is.
     LitList(8) result = problem.newVars<8>();
+    for (size_t i = 0; i < initialMemoryReads.size(); ++i) {
+      Lit thisEquality = problem.equal(addr, initialMemoryReads[i].first);
+      for (size_t j = 0; j < 8; ++j) {
+        problem.condEquivalence(thisEquality, initialMemoryReads[i].second[j], result[j]);
+      }
+    }
     for (size_t i = 0; i < memoryWrites.size(); ++i) {
       result = problem.ite(problem.equal(addr, memoryWrites[i].first), memoryWrites[i].second, result);
     }
+    initialMemoryReads.push_back(make_pair(addr, result)); // If address doesn't alias any previous reads or writes
     return result;
   }
 
@@ -281,20 +298,20 @@ struct NetlistTranslator {
   }
 
   template <size_t Len>
-  void setFlagsForResult(const LitList(Len)& result) {
-    flag(x86flag_pf) = problem.xorAcross(extract<0, 8>(result));
-    flag(x86flag_sf) = result[Len - 1];
-    flag(x86flag_zf) = problem.norAcross(result);
+  void setFlagsForResult(const LitList(Len)& result, Lit cond = TRUE) {
+    flag(x86flag_pf) = problem.mux(cond, problem.xorAcross(extract<0, 8>(result)), flag(x86flag_pf));
+    flag(x86flag_sf) = problem.mux(cond, result[Len - 1], flag(x86flag_sf));
+    flag(x86flag_zf) = problem.mux(cond, problem.norAcross(result), flag(x86flag_zf));
   }
 
   template <size_t Len>
-  LitList(Len) doAddOperation(const LitList(Len)& a, const LitList(Len)& b, bool invertCarries, Lit carryIn = FALSE) { // Does add (subtract with two's complement input and invertCarries set), and sets correct flags
+  LitList(Len) doAddOperation(const LitList(Len)& a, const LitList(Len)& b, bool invertCarries, Lit carryIn, Lit cond) { // Does add (subtract with two's complement input and invertCarries set), and sets correct flags; only does this if cond is true
     LitList(Len) carries;
     LitList(Len) result = problem.adder(a, b, invertMaybe(carryIn, invertCarries), &carries);
-    setFlagsForResult(result);
-    flag(x86flag_af) = invertMaybe(carries[3], invertCarries);
-    flag(x86flag_cf) = invertMaybe(carries[Len - 1], invertCarries);
-    flag(x86flag_of) = problem.xorGate(carries[Len - 1], carries[Len - 2]);
+    setFlagsForResult(result, cond);
+    flag(x86flag_af) = problem.mux(cond, invertMaybe(carries[3], invertCarries), flag(x86flag_af));
+    flag(x86flag_cf) = problem.mux(cond, invertMaybe(carries[Len - 1], invertCarries), flag(x86flag_cf));
+    flag(x86flag_of) = problem.mux(cond, problem.xorGate(carries[Len - 1], carries[Len - 2]), flag(x86flag_of));
     return result;
   }
 
@@ -556,17 +573,17 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            LitList(8) result = doAddOperation(read<8>(operands[0]), read<8>(operands[1]), false);
+            LitList(8) result = doAddOperation(read<8>(operands[0]), read<8>(operands[1]), false, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
           case 2: {
-            LitList(16) result = doAddOperation(read<16>(operands[0]), read<16>(operands[1]), false);
+            LitList(16) result = doAddOperation(read<16>(operands[0]), read<16>(operands[1]), false, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
           case 4: {
-            LitList(32) result = doAddOperation(read<32>(operands[0]), read<32>(operands[1]), false);
+            LitList(32) result = doAddOperation(read<32>(operands[0]), read<32>(operands[1]), false, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
@@ -578,17 +595,17 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            LitList(8) result = doAddOperation(read<8>(operands[0]), read<8>(operands[1]), false, flag(x86flag_cf));
+            LitList(8) result = doAddOperation(read<8>(operands[0]), read<8>(operands[1]), false, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
           case 2: {
-            LitList(16) result = doAddOperation(read<16>(operands[0]), read<16>(operands[1]), false, flag(x86flag_cf));
+            LitList(16) result = doAddOperation(read<16>(operands[0]), read<16>(operands[1]), false, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
           case 4: {
-            LitList(32) result = doAddOperation(read<32>(operands[0]), read<32>(operands[1]), false, flag(x86flag_cf));
+            LitList(32) result = doAddOperation(read<32>(operands[0]), read<32>(operands[1]), false, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
@@ -600,17 +617,17 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            LitList(8) result = doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true);
+            LitList(8) result = doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
           case 2: {
-            LitList(16) result = doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true);
+            LitList(16) result = doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
           case 4: {
-            LitList(32) result = doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true);
+            LitList(32) result = doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true, FALSE, TRUE);
             write(operands[0], result);
             break;
           }
@@ -622,17 +639,17 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            LitList(8) result = doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true, flag(x86flag_cf));
+            LitList(8) result = doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
           case 2: {
-            LitList(16) result = doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true, flag(x86flag_cf));
+            LitList(16) result = doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
           case 4: {
-            LitList(32) result = doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true, flag(x86flag_cf));
+            LitList(32) result = doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true, flag(x86flag_cf), TRUE);
             write(operands[0], result);
             break;
           }
@@ -644,15 +661,15 @@ struct NetlistTranslator {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            LitList(8) result = doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true);
+            doAddOperation(read<8>(operands[0]), invertWord(read<8>(operands[1])), true, FALSE, TRUE);
             break;
           }
           case 2: {
-            LitList(16) result = doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true);
+            doAddOperation(read<16>(operands[0]), invertWord(read<16>(operands[1])), true, FALSE, TRUE);
             break;
           }
           case 4: {
-            LitList(32) result = doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true);
+            doAddOperation(read<32>(operands[0]), invertWord(read<32>(operands[1])), true, FALSE, TRUE);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -1306,8 +1323,26 @@ struct NetlistTranslator {
         break;
       }
       case x86_nop: break;
-      case x86_repne_scasb: break; // FIXME
-      case x86_repe_cmpsb: break; // FIXME
+      case x86_repne_scasb: {
+        ROSE_ASSERT (operands.size() == 0);
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        Lit ecxNotZero = problem.orAcross(vars(gpr(x86_gpr_cx)));
+        doAddOperation(extract<0, 8>(vars(gpr(x86_gpr_ax))), invertWord(readMemoryByte(vars(gpr(x86_gpr_di)))), true, FALSE, ecxNotZero);
+        vars(ip()) = problem.ite(problem.andGate(ecxNotZero, invert(flag(x86flag_zf))), // If true, repeat this instruction, otherwise go to the next one
+                                 vars(ip()),
+                                 number<32>((uint32_t)(insn->get_address())));
+        break;
+      }
+      case x86_repe_cmpsb: {
+        ROSE_ASSERT (operands.size() == 0);
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        Lit ecxNotZero = problem.orAcross(vars(gpr(x86_gpr_cx)));
+        doAddOperation(readMemoryByte(vars(gpr(x86_gpr_si))), invertWord(readMemoryByte(vars(gpr(x86_gpr_di)))), true, FALSE, ecxNotZero);
+        vars(ip()) = problem.ite(problem.andGate(ecxNotZero, flag(x86flag_zf)), // If true, repeat this instruction, otherwise go to the next one
+                                 number<32>((uint32_t)(insn->get_address())),
+                                 vars(ip()));
+        break;
+      }
       case x86_lodsd: {
         vars(gpr(x86_gpr_ax)) = readMemory<32>(vars(gpr(x86_gpr_si)));
         vars(gpr(x86_gpr_si)) = problem.adder(vars(gpr(x86_gpr_si)), problem.ite(flag(x86flag_df), number<32>(-4), number<32>(4)));
@@ -1342,17 +1377,86 @@ struct NetlistTranslator {
     fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.numClauses);
   }
 
-  void processBlock(SgAsmBlock* b, const LitList(32)& origIp) {
-    const SgAsmStatementPtrList& stmts = b->get_statementList();
-    if (stmts.empty()) return;
-    if (!isSgAsmInstruction(stmts[0])) return; // A block containing functions or something
-    fprintf(stderr, "Block 0x%08X contains %zu instruction(s)\n", (unsigned int)(b->get_address()), stmts.size());
-    for (size_t i = 0; i < stmts.size(); ++i) {
+  void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end, const LitList(32)& origIp) {
+    if (begin == end) return;
+    fprintf(stderr, "Block 0x%08X contains %zu instruction(s)\n", (unsigned int)(stmts[begin]->get_address()), end - begin);
+    for (size_t i = begin; i < end; ++i) {
       SgAsmx86Instruction* insn = isSgAsmx86Instruction(stmts[i]);
       ROSE_ASSERT (insn);
       translate(insn);
     }
-    writeBack(problem.equal(origIp, number<32>(b->get_address())));
+    writeBack(problem.equal(origIp, number<32>(stmts[begin]->get_address())));
+  }
+
+  static bool isRepeatedStringOp(SgAsmStatement* s) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(s);
+    if (!insn) return false;
+    switch (insn->get_kind()) {
+      case x86_repe_cmpsb: return true;
+      case x86_repe_cmpsd: return true;
+      case x86_repe_cmpsq: return true;
+      case x86_repe_cmpsw: return true;
+      case x86_repe_scasb: return true;
+      case x86_repe_scasd: return true;
+      case x86_repe_scasq: return true;
+      case x86_repe_scasw: return true;
+      case x86_rep_insb: return true;
+      case x86_rep_insd: return true;
+      case x86_rep_insw: return true;
+      case x86_rep_lodsb: return true;
+      case x86_rep_lodsd: return true;
+      case x86_rep_lodsq: return true;
+      case x86_rep_lodsw: return true;
+      case x86_rep_movsb: return true;
+      case x86_rep_movsd: return true;
+      case x86_rep_movsq: return true;
+      case x86_rep_movsw: return true;
+      case x86_repne_cmpsb: return true;
+      case x86_repne_cmpsd: return true;
+      case x86_repne_cmpsq: return true;
+      case x86_repne_cmpsw: return true;
+      case x86_repne_scasb: return true;
+      case x86_repne_scasd: return true;
+      case x86_repne_scasq: return true;
+      case x86_repne_scasw: return true;
+      case x86_rep_outsb: return true;
+      case x86_rep_outsd: return true;
+      case x86_rep_outsw: return true;
+      case x86_rep_stosb: return true;
+      case x86_rep_stosd: return true;
+      case x86_rep_stosq: return true;
+      case x86_rep_stosw: return true;
+      default: return false;
+    }
+  }
+
+  static bool isHltOrInt(SgAsmStatement* s) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(s);
+    if (!insn) return false;
+    switch (insn->get_kind()) {
+      case x86_hlt: return true;
+      case x86_int: return true;
+      default: return false;
+    }
+  }
+
+  void processBlock(SgAsmBlock* b, const LitList(32)& origIp) {
+    const SgAsmStatementPtrList& stmts = b->get_statementList();
+    if (stmts.empty()) return;
+    if (!isSgAsmInstruction(stmts[0])) return; // A block containing functions or something
+    size_t i = 0;
+    while (i < stmts.size()) {
+      size_t oldI = i;
+      // Advance until either i points to a repeated string op or it is just after a hlt or int
+      while (i < stmts.size() && !isRepeatedStringOp(stmts[i]) && (i == oldI || !isHltOrInt(stmts[i - 1]))) ++i;
+      processBlock(stmts, oldI, i, origIp);
+      if (i >= stmts.size()) break;
+      if (isRepeatedStringOp(stmts[i])) {
+        processBlock(stmts, i, i + 1, origIp);
+        ++i;
+      }
+      ROSE_ASSERT (i != oldI);
+    }
   }
 
 };
@@ -1372,6 +1476,7 @@ int main(int argc, char** argv) {
     t.registerMap = origRegisterMap;
     t.flagMap = origFlagMap;
     t.memoryWrites.clear();
+    t.initialMemoryReads.clear();
     t.processBlock(b, origRegisterMap[NetlistTranslator::ip()]);
   }
   t.problem.toDimacs();

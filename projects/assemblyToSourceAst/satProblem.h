@@ -57,12 +57,18 @@ LitList(NumBits) number(unsigned int n) {
   return result;
 }
 
+static bool absLess(Lit a, Lit b) {
+  return abs(a) < abs(b);
+}
+
 struct UnsatisfiableException {};
 
 struct SatProblem {
   int numVariables;
   size_t numClauses;
   std::vector<Lit> clauses; // Ending with 0 just like for Dimacs
+  std::map<std::vector<Lit>, Lit> andGateCSE;
+  std::map<LitList(3), Lit> muxCSE; // Fields are sel, ifTrue, ifFalse
   FILE* outfile;
 
   public:
@@ -84,7 +90,7 @@ struct SatProblem {
       }
     }
     if (newCl.empty()) {throw UnsatisfiableException();}
-    std::sort(newCl.begin(), newCl.end());
+    std::sort(newCl.begin(), newCl.end(), absLess);
     newCl.erase(std::unique(newCl.begin(), newCl.end()), newCl.end());
     for (size_t i = 0; i < cl.size(); ++i) {
       for (size_t j = 0; j < i; ++j) {
@@ -147,9 +153,20 @@ struct SatProblem {
     } else if (ifTrue == FALSE && ifFalse == TRUE) {
       return invert(sel);
     } else {
+      if (sel < 0) {
+        sel = invert(sel);
+        std::swap(ifTrue, ifFalse);
+      }
+      LitList(3) cseLookup;
+      cseLookup[0] = sel;
+      cseLookup[1] = ifTrue;
+      cseLookup[2] = ifFalse;
+      std::map<LitList(3), Lit>::const_iterator it = muxCSE.find(cseLookup);
+      if (it != muxCSE.end()) return it->second;
       Lit output = newVar();
       condEquivalence(sel, ifTrue, output);
       condEquivalence(invert(sel), ifFalse, output);
+      muxCSE.insert(std::make_pair(cseLookup, output));
       return output;
     }
   }
@@ -169,6 +186,9 @@ struct SatProblem {
       return newA[0];
     }
     if (newA.empty()) return TRUE;
+    std::sort(newA.begin(), newA.end(), absLess);
+    std::map<std::vector<Lit>, Lit>::const_iterator it = andGateCSE.find(newA);
+    if (it != andGateCSE.end()) return it->second;
     Lit output = newVar();
     for (size_t i = 0; i < newA.size(); ++i) {
       LitList(2) cl1;
@@ -182,6 +202,7 @@ struct SatProblem {
     }
     cl2.push_back(output);
     addClause(cl2);
+    andGateCSE.insert(std::make_pair(newA, output));
     return output;
   }
 
