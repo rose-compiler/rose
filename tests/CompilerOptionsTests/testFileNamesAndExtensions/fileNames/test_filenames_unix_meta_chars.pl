@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 #MAXPATHLEN
 
 #test if machine is LINUX. If not exit
