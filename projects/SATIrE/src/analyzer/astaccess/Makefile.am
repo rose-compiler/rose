@@ -37,10 +37,15 @@ syntree.o: satire/syntree.c satire/syntree.h
 	$(CXXCOMPILE) -c -o syntree.o -Isatire satire/syntree.c	 
 
 $(PIG):
-	$(MAKE) -C $(PIG) # FIXME won't work for parallel builds
+	$(MAKE) -C $(PIG)
 
-satire/syntree.h satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
-	$(PIG) -ip $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig
-        # An ugly hack indeed, but haven't found a better way to confine those header files into include/satire
-	mkdir -p satire
-	mv syntree.h syntree.c satire/
+# An ugly hack indeed, but haven't found a better way 
+# to confine those header files into include/satire
+satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
+	$(PIG) -ip $(top_srcdir)/src/analyzer/astaccess/satire/syn \
+	           $(top_srcdir)/src/analyzer/astaccess/rose.pig \
+	&& mkdir -p satire \
+	&& mv syntree.h syntree.c satire/ 
+
+satire/syntree.h: satire/syntree.c # dummy dependenvy for parallel builds
+

@@ -1,3 +1,7 @@
+V ??? AP, ...
+* General changes [AP]
+  - parallel builds with 'make -j N' work now
+
 V0.8.4 AP,GB
 
 * Tested with:

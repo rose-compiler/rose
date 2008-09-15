@@ -20,9 +20,11 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's,[@]cxx[@],$(CXX),g'
 
 newanalysis: newanalysis.in Makefile
-	$(do_subst) < $(srcdir)/newanalysis.in > newanalysis
-	$(do_subst) < $(srcdir)/newcombinedanalysis.in > newcombinedanalysis
-	chmod +x newanalysis newcombinedanalysis
+	$(do_subst) < $(srcdir)/newanalysis.in > newanalysis \
+	&& $(do_subst) < $(srcdir)/newcombinedanalysis.in > newcombinedanalysis\
+	&& chmod +x newanalysis newcombinedanalysis
+
+newcombinedanalysis: newanalysis # dummy dep. for make -j
 
 Makefile-template: Makefile-template.in Makefile
 	$(do_subst) < $(srcdir)/Makefile-template.in > Makefile-template

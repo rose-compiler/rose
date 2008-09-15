@@ -1,3 +1,4 @@
+
 ## Process this file with automake to create Makefile.in.
 
 INCLUDES = -I$(top_srcdir)/src/satire \
@@ -28,16 +29,20 @@ libtermite_a_SOURCES = \
 	dfiparser.tab.c++ dfiparser.tab.h++ dfiscanner.c++ \
 	PrologToRose.C
 
-termparser.tab.h++ termparser.tab.c++: $(srcdir)/termparser.y++ 
-	$(YACC) -d $(srcdir)/termparser.y++
-	mv y.tab.c termparser.tab.c++
+termparser.tab.c++: $(srcdir)/termparser.y++ 
+	$(YACC) -d $(srcdir)/termparser.y++ && \
+	mv y.tab.c termparser.tab.c++ && \
 	mv y.tab.h termparser.tab.h++
 
-dfiparser.tab.h++ dfiparser.tab.c++: $(srcdir)/dfiparser.y++ 
+dfiparser.tab.c++: $(srcdir)/dfiparser.y++ 
 	bison -p dfi -d $(srcdir)/dfiparser.y++
 
+# dummy dep. for make -j
+termparser.tab.h++: termparser.tab.c++
+dfiparser.tab.h++: dfiparser.tab.c++
+
 dfiscanner.c++: $(srcdir)/dfiscanner.l++ 
-	flex -Pdfi $(srcdir)/dfiscanner.l++
+	flex -Pdfi $(srcdir)/dfiscanner.l++ && \
 	mv lex.dfi.c dfiscanner.c++
 
 
