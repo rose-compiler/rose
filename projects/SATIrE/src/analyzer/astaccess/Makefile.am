@@ -20,7 +20,7 @@ CLEANFILES =    satire/syntree.h  satire/syntree.c \
                       pig_temp.h        pig_temp.c \
                      pig_temp2.h       pig_temp2.c 
 
-PIG = ../../pig/pig
+PIG = $(top_builddir)/src/pig/pig
 
 lib_LIBRARIES = satire/libsyntree.a libpagdatatypes.a
 satire_libsyntree_a_SOURCES = satire/syntree.c
@@ -37,7 +37,7 @@ syntree.o: satire/syntree.c satire/syntree.h
 	$(CXXCOMPILE) -c -o syntree.o -Isatire satire/syntree.c	 
 
 $(PIG):
-	$(MAKE) -C ../../pig
+	$(MAKE) -C $(PIG) # FIXME won't work for parallel builds
 
 satire/syntree.h satire/syntree.c: $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig $(PIG)
 	$(PIG) -ip $(top_srcdir)/src/analyzer/astaccess/satire/syn $(top_srcdir)/src/analyzer/astaccess/rose.pig
