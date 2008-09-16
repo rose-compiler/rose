@@ -35,14 +35,17 @@ foreach line $data {
       set l0 [lindex $clause 0]
       set l1 [lindex $clause 1]
       puts "[expr {-$l0}] -> $l1"
-      puts "$l0 -> [expr {-$l1}] \[arrowhead=none, arrowtail=normal\]"
+      # puts "$l0 -> [expr {-$l1}] \[arrowhead=none, arrowtail=normal\]"
+      puts "[expr {-$l1}] -> $l0"
     }
     default {
     }
   }
 }
-foreach v [array names usedVars] {
-  # puts "$v -> [expr {-$v}] \[arrowhead=none, color=blue\]"
+if {0} {
+  foreach v [array names usedVars] {
+    puts "$v -> [expr {-$v}] \[arrowhead=none, color=blue\]"
+  }
 }
 puts "}"
 puts stderr "Used variables: [llength [array names usedVars]] of $nvars"

@@ -119,12 +119,12 @@ int main(int, char**) {
     fprintf(stderr, "Pass %zu\n", passCount);
 
     map<Var, set<Var> > variableCoincidences;
-    map<Var, vector<Clause> > variableUses;
+    map<Var, vector<size_t> > variableUses;
     for (size_t i = 0; i < clauses.size(); ++i) {
       const Clause& cl = clauses[i];
       for (size_t j = 0; j < cl.size(); ++j) {
         Var varJ = abs(cl[j]);
-        variableUses[varJ].push_back(cl);
+        variableUses[varJ].push_back(i);
         for (size_t k = 0; k < j; ++k) {
           Var varK = abs(cl[k]);
           variableCoincidences[varJ].insert(varK);
@@ -133,7 +133,7 @@ int main(int, char**) {
       }
     }
 
-    set<Var> variablesToRemove;
+    set<size_t> clausesToRemove;
     size_t numRemovalFailed = 0;
     vector<Clause> newClauses; // Some new clauses may be added here to replace those simplified out
     for (map<Var, set<Var> >::const_iterator i = variableCoincidences.begin();
@@ -144,16 +144,24 @@ int main(int, char**) {
       // fprintf(stderr, "Variable %d has degree %zu\n", var, edgeList.size());
       uint64_t fullTruthTable = (1UL << (1 << (edgeList.size() + 1))) - 1;
       uint64_t truthTable = fullTruthTable;
-      for (size_t j = 0; j < variableUses[var].size(); ++j) {
-        const Clause& cl = variableUses[var][j];
-        bool skipThisClause = true;
+      set<size_t> clausesForThisVariable;
+      set<size_t> clausesToCheck(variableUses[var].begin(), variableUses[var].end());
+      for (size_t j = 0; j < edgeList.size(); ++j) {
+        clausesToCheck.insert(variableUses[edgeList[j]].begin(), variableUses[edgeList[j]].end());
+      }
+      for (set<size_t>::const_iterator j = clausesToCheck.begin(); j != clausesToCheck.end(); ++j) {
+        const Clause& cl = clauses[*j];
+        // We now process any clause that contains only variables that are in edgeList, not just those that actually contain the current variable
+        bool skipThisClause = false;
         for (size_t k = 0; k < cl.size(); ++k) {
-          if (cl[k] == var || cl[k] == -var) {
-            skipThisClause = false;
+          if (abs(cl[k]) != var &&
+              find(edgeList.begin(), edgeList.end(), abs(cl[k])) == edgeList.end()) {
+            skipThisClause = true;
             break;
           }
         }
         if (skipThisClause) continue;
+        clausesForThisVariable.insert(*j);
         uint64_t thisMask = 0ULL;
         for (size_t l = 0; l < cl.size(); ++l) {
           bool isNegated = (cl[l] < 0);
@@ -179,7 +187,7 @@ int main(int, char**) {
       // fprintf(stderr, "anyFalse = %d\n", (int)anyFalse);
       if (anyFalse && edgeList.size() <= 5) {
         minimizeCnf(maskedTruthTable, edgeList, newClauses);
-        variablesToRemove.insert(var);
+        clausesToRemove.insert(clausesForThisVariable.begin(), clausesForThisVariable.end());
       } else if (anyFalse) {
 #if 0
         for (size_t j = 0; j < (1UL << edgeList.size()); ++j) { // Project out first variable
@@ -188,30 +196,25 @@ int main(int, char**) {
 #endif
         ++numRemovalFailed;
       } else {
-        variablesToRemove.insert(var);
+        clausesToRemove.insert(clausesForThisVariable.begin(), clausesForThisVariable.end());
       }
     }
-    fprintf(stderr, "Removing %zu variable(s), failed to remove %zu\n", variablesToRemove.size(), numRemovalFailed);
+    fprintf(stderr, "Removing %zu clause(s), failed to remove %zu\n", clausesToRemove.size(), numRemovalFailed);
+
+    set<Clause> newClauseSet(newClauses.begin(), newClauses.end());
 
     size_t clausesRemoved = 0;
     for (size_t i = 0; i < clauses.size(); ++i) {
-      Clause& cl = clauses[i];
-      bool remove = false;
-      for (size_t j = 0; j < cl.size(); ++j) {
-        if (variablesToRemove.find(abs(cl[j])) != variablesToRemove.end()) {
-          remove = true;
-          break;
-        }
-      }
+      bool remove = (clausesToRemove.find(i) != clausesToRemove.end());
       if (!remove) {
-        changed = true;
-        newClauses.push_back(cl);
+        newClauseSet.insert(clauses[i]);
       } else {
+        changed = true;
         ++clausesRemoved;
       }
     }
 
-    clauses = newClauses;
+    clauses = vector<Clause>(newClauseSet.begin(), newClauseSet.end());
     fprintf(stderr, "Removed %zu clause(s)\n", clausesRemoved);
 
   }
