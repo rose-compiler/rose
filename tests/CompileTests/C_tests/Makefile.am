@@ -74,18 +74,18 @@ test2008_02.o: $(srcdir)/test2008_02.c
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
-QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
-
+#QMTEST_Objects = ${ALL_TESTCODES:.c=.qmt}
+#
 # Make rule to build the QMTest database files
-CURRENT_DIRECTORY = `pwd`
-$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.c)
-
-test2005_168.qmt: $(srcdir)/test2005_168.c
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/$(@:.qmt=.c)
-
+#CURRENT_DIRECTORY = `pwd`
+#$(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -c $(srcdir)/$(@:.qmt=.c)
+#
+#test2005_168.qmt: $(srcdir)/test2005_168.c
+#	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(top_srcdir)/src/util/commandlineProcessing -c $(srcdir)/$(@:.qmt=.c)
+#
 # Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+#include $(top_srcdir)/config/QMTest_makefile.inc
 
 EXTRA_DIST = $(ALL_TESTCODES)
 
@@ -106,3 +106,39 @@ clean-local:
 	rm -f *.o rose_*.[cC] rose_performance_report_lockfile.lock
 	rm -rf QMTest
 
+################################################################################
+#
+# Addition to show how to hook QMTest ROSE_Regression with automake
+# Uncomment lines 115,$
+#
+
+#export ROSE_TEST_REGRESSION_ROOT=/home/yuan5/tmp/18/ROSE_Regression
+#QMTEST=/home/yuan5/opt/qmtest-2.3/bin/qmtest
+#ALL_Objects = ${ALL_TESTCODES:.c=.o}
+#
+#force:
+#
+#testTranslator_wrapper: force
+#	rm -f ../../testTranslator
+#	echo -e "#!/bin/bash\n${ROSE_TEST_REGRESSION_ROOT}/roseQMGen/bin/qm.sh ../../../testTranslator \"\$$@\"" > ../../testTranslator && chmod +x ../../testTranslator
+#
+#rrqm_generate: testTranslator_wrapper $(ALL_Objects)
+#	test -d ./c_tests_testdatabase || mkdir c_tests_testdatabase 
+#	rm -rf ./c_tests_testdatabase/*
+#	find . -type f -mindepth 1 -maxdepth 1 -name "*.qmt" -exec mv {} c_tests_testdatabase/ \;
+#	$(QMTEST) -D`pwd`/c_tests_testdatabase create-tdb
+#	rm -f ../../testTranslator
+#	cd ../..; $(MAKE) testTranslator
+#
+#c_tests_testdatabase/QMTest:
+#	$(MAKE) rrqm_generate
+#
+#rrqm_run: c_tests_testdatabase/QMTest
+#	-cd c_tests_testdatabase && $(QMTEST) run
+#
+#c_tests_testdatabase/results.qmr:
+#	$(MAKE) rrqm_run
+#
+#rrqm_report: c_tests_testdatabase/results.qmr
+#	sh -c "source ${ROSE_TEST_REGRESSION_ROOT}/scripts/rosetestrc; report.sh c_tests_testdatabase/results.qmr c_tests_testdatabase report_c_tests"
+#	@echo -e "\nThe results are in `pwd`/report_c_tests/results.xml"
