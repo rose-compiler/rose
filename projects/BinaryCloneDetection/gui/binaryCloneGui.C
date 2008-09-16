@@ -26,7 +26,18 @@ using namespace boost;
 using namespace sqlite3x;
 using namespace __gnu_cxx;
 
-
+static string htmlEscape(const string& s) {
+  string s2;
+  for (size_t i = 0; i < s.size(); ++i) {
+    switch (s[i]) {
+      case '<': s2 += "&lt;"; break;
+      case '>': s2 += "&gt;"; break;
+      case '&': s2 += "&amp;"; break;
+      default: s2 += s[i]; break;
+    }
+  }
+  return s2;
+}
 class DeleteAST : public SgSimpleProcessing
    {
      public:
@@ -94,6 +105,17 @@ static void viewBoxActivated(int selection)
   return;
 }
 
+
+static void selectLockOrUnlockBars(int selection) 
+{
+
+  BinaryCloneGui *instance = QROSE::cbData<BinaryCloneGui *>();
+  instance->lockBars(selection);
+
+  return;
+}
+
+
 void
 BinaryCloneGui::selectView(int selection)
 {
@@ -107,10 +129,40 @@ BinaryCloneGui::selectView(int selection)
       codeWidget->setHtml(QString(normalizedView.first.c_str()));
       codeWidget2->setHtml(QString(normalizedView.second.c_str()));
       break;
+    case 2:
+      codeWidget->setHtml(QString(allInsnsUnparsedView.first.c_str()));
+      codeWidget2->setHtml(QString(allInsnsUnparsedView.second.c_str()));
+      break;
+
   }
 
 
 };
+
+
+void
+BinaryCloneGui::lockBars(int selection)
+{
+  switch(selection)
+  {
+    case 0:
+      QROSE::disconnect_ex((const QObject*)(codeWidget->verticalScrollBar()), SIGNAL(valueChanged(int)),
+          (const QObject*)(codeWidget2->verticalScrollBar()), SLOT(setValue(int)));
+      QROSE::disconnect_ex((const QObject*)(codeWidget2->verticalScrollBar()), SIGNAL(valueChanged(int)),
+          (const QObject*)(codeWidget->verticalScrollBar()), SLOT(setValue(int)));
+
+      break;
+    case 1:
+      QROSE::connect_ex((const QObject*)(codeWidget->verticalScrollBar()), SIGNAL(valueChanged(int)),
+          (const QObject*)(codeWidget2->verticalScrollBar()), SLOT(setValue(int)));
+      QROSE::connect_ex((const QObject*)(codeWidget2->verticalScrollBar()), SIGNAL(valueChanged(int)),
+          (const QObject*)(codeWidget->verticalScrollBar()), SLOT(setValue(int)));
+
+      break;
+
+  }
+
+}
 
 
 BinaryCloneGui::BinaryCloneGui( ) :
@@ -179,6 +231,7 @@ BinaryCloneGui::BinaryCloneGui( ) :
       comboBox = new QComboBox;
       comboBox->addItem(("Instruction"));
       comboBox->addItem(("Normalized"));
+      comboBox->addItem(("Whole Function"));
 
       
       QGroupBox *echoGroup =  parameters <<  new QGroupBox(("Selection Clone-View"));
@@ -186,9 +239,23 @@ BinaryCloneGui::BinaryCloneGui( ) :
       QLabel *echoLabel = new QLabel("Views:");
       echoLayout->addWidget(echoLabel, 0, 0);
       echoLayout->addWidget(comboBox, 0, 1);
+
+
+      QLabel *lockBarsLabel = new QLabel("Lock ScrollBars:");
+      checkBoxLockBars = new QComboBox;
+      checkBoxLockBars->addItem(("No"));
+      checkBoxLockBars->addItem(("Yes"));
+
+      echoLayout->addWidget(lockBarsLabel,1,0);
+      echoLayout->addWidget(checkBoxLockBars,1,1);
       echoGroup->setLayout(echoLayout);
       
+
+      QROSE::link(checkBoxLockBars, SIGNAL(activated(int)), &selectLockOrUnlockBars, this);
+     
+      
       QROSE::link(comboBox, SIGNAL(activated(int)), &viewBoxActivated, this);
+      
 
        }
 
@@ -204,6 +271,7 @@ BinaryCloneGui::BinaryCloneGui( ) :
         codeWidget2 = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
         codeWidget2->setReadOnly(true);
 
+      
       } //tiledPanel
     tiledPanel.setTileSize(40,60);
   } //window 
@@ -553,7 +621,7 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
     }
   }
 }
-std::string BinaryCloneGui::normalizeInstructions(std::vector<SgAsmx86Instruction*>::iterator beg, 
+std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
     std::vector<SgAsmx86Instruction*>::iterator end)
 {
     string normalizedUnparsedInstructions;
@@ -565,12 +633,15 @@ std::string BinaryCloneGui::normalizeInstructions(std::vector<SgAsmx86Instructio
       SgAsmx86Instruction* insn = *beg;
       string mne = insn->get_mnemonic();
       boost::to_lower(mne);
+      mne = "<font color=\"red\">" + htmlEscape(mne)+"</font>";
+
       normalizedUnparsedInstructions += mne;
       const SgAsmExpressionPtrList& operands = getOperands(insn);
       // Add to total for this variant
       // Add to total for each kind of operand
       size_t operandCount = operands.size();
 
+      normalizedUnparsedInstructions += "<font color=\"blue\">";
       for (size_t i = 0; i < operandCount; ++i) {
         SgAsmExpression* operand = operands[i];
         ExpressionCategory cat = getCategory(operand);
@@ -578,27 +649,16 @@ std::string BinaryCloneGui::normalizeInstructions(std::vector<SgAsmx86Instructio
         assert (numIter != valueNumbers[(int)cat].end());
         size_t num = numIter->second;
 
-        normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") + boost::lexical_cast<string>(num);
+        normalizedUnparsedInstructions += (cat == ec_reg ? " R" : cat == ec_mem ? " M" : " V") + boost::lexical_cast<string>(num);
       }
-      normalizedUnparsedInstructions += "; <br> ";
+      normalizedUnparsedInstructions += "; </font> <br> ";
   
     }
    
     return normalizedUnparsedInstructions;
 };
 
-static string htmlEscape(const string& s) {
-  string s2;
-  for (size_t i = 0; i < s.size(); ++i) {
-    switch (s[i]) {
-      case '<': s2 += "&lt;"; break;
-      case '>': s2 += "&gt;"; break;
-      case '&': s2 += "&amp;"; break;
-      default: s2 += s[i]; break;
-    }
-  }
-  return s2;
-}
+
 
 string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   if (insn == NULL) return "BOGUS:NULL";
@@ -652,24 +712,56 @@ void BinaryCloneGui::showClone(int row)
   ROSE_ASSERT(fileA != NULL);
   ROSE_ASSERT(fileB != NULL);
 
-  std::cout << "Adddresses is : " << addresses << std::endl;
+
+  bool noFunctionsFileA = false;
+  bool noFunctionsFileB = false;
+
+  if( elem.file_A+"all-instructions" == elem.function_name_A)
+    noFunctionsFileA = true;
+   if( elem.file_B+"all-instructions" == elem.function_name_B)
+    noFunctionsFileB = true;
+ 
+  //std::cout << "Adddresses is : " << addresses << std::endl;
   bool first =true;
   while(true)
   {
     SgNode* currentRoot = first ? fileA : fileB;
-    
+   
     vector<SgAsmx86Instruction*> insns;
     FindInstructionsVisitor vis;
-    AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( vis, &insns ));
 
+    if( (first & noFunctionsFileA ) | (!first & noFunctionsFileB)  )
+      AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( vis, &insns ));
+    else
+    {
+      vector<SgAsmFunctionDeclaration*> funcs;
+      FindAsmFunctionsVisitor funcVis;
+      AstQueryNamespace::querySubTree(currentRoot, std::bind2nd( funcVis, &funcs ));
+
+      for (size_t i = 0; i < funcs.size(); ++i) {
+        if( funcs[i]->get_name() == (first ? elem.function_name_A : elem.function_name_B) )
+        {
+          AstQueryNamespace::querySubTree(funcs[i], std::bind2nd( vis, &insns ));
+          break;
+        }
+      }
+
+    }
+
+    
+    
     int beg = 0;
     int end = 0;
 
+
+    std::string allInsnsUnparsed;
+    
     for(size_t i=0; i < insns.size(); i++ )
     {
+      allInsnsUnparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmx86Instruction(insns[i])) + "</code>";
+      allInsnsUnparsed += "<br> \n";
 
-      std::cout << insns[i]->get_address() << " " << beginAddressFileA << " " << (boost::lexical_cast<uint64_t>(beginAddressFileA)-insns[i]->get_address()) << std::endl; 
-      //unparsed = "FILLERN" ;
+      //std::cout << insns[i]->get_address() << " " << beginAddressFileA << " " << (boost::lexical_cast<uint64_t>(beginAddressFileA)-insns[i]->get_address()) << std::endl; 
       if(insns[i]->get_address() == boost::lexical_cast<uint64_t>( first ? beginAddressFileA : beginAddressFileB ) ) 
         beg = i;
        if(insns[i]->get_address() == boost::lexical_cast<uint64_t>( first ? endAddressFileA : endAddressFileB ) ) 
@@ -698,11 +790,12 @@ void BinaryCloneGui::showClone(int row)
 
     (first? codeWidget : codeWidget2 )->setPlainText(QString(unparsed.c_str()));
 
-    std::string normalized = normalizeInstructions(insns.begin()+beg, insns.begin()+end); 
+    std::string normalized = normalizeInstructionsToHTML(insns.begin()+beg, insns.begin()+end); 
 
     (first? unparsedView.first : unparsedView.second ) = unparsed;
 
     (first? normalizedView.first : normalizedView.second ) = normalized;
+    (first? allInsnsUnparsedView.first : allInsnsUnparsedView.second ) = allInsnsUnparsed;
 
     selectView(0);
      

@@ -9,6 +9,7 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QLineEdit>
+#include <QCheckBox>
 #include "sqlite3x.h"
 
 #include <boost/smart_ptr.hpp>
@@ -67,12 +68,14 @@ class BinaryCloneGui
 
     void showClone(int row);
     SgNode* disassembleFile(std::string tsv_directory);
-    std::string normalizeInstructions(std::vector<SgAsmx86Instruction*>::iterator beg, 
+    std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
     std::vector<SgAsmx86Instruction*>::iterator end);
 
     std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
 
     void selectView(int selection);
+
+    void lockBars(int selection);
 
   protected:
     qrs::QRWindow *window;
@@ -85,7 +88,7 @@ class BinaryCloneGui
     QTextBrowser *codeBrowser;
     QLineEdit *fileDataRestriction;
     QLineEdit *functionDataRestriction;
-
+    QComboBox *checkBoxLockBars;
   private:
 
 
@@ -102,7 +105,8 @@ class BinaryCloneGui
 
     std::pair<std::string,std::string> normalizedView;
     std::pair<std::string,std::string> unparsedView;
-    
+    std::pair<std::string,std::string> allInsnsUnparsedView;
+   
 }; //class BinaryCloneGui
 
 #endif
