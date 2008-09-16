@@ -18,6 +18,7 @@ export PATH="/home/yuan5/lib/swig-1.3.36/install/bin:/usr/apps/java/jdk1.5.0_11/
 export BOOST_ROOTX="/home/yuan5/lib/boost_1_35_0/install"
 
 export ROSE_TOP=/home/yuan5/tmp/fresh/`date +%F-%H%M`
+#export ROSE_TOP=/home/yuan5/tmp/fresh/2008-09-14-0030
 export LBL_RRQM_ROOT=liaoch@web-dev.nersc.gov:/www/host/rosecompiler/rrqm
 source /home/yuan5/tmp/fresh/NIGHTLY_ROSE_Regression/scripts/rosetestrc
 
@@ -34,8 +35,9 @@ CONFIGURE_FLAGS=( --with-edg_source_code=true --with-CXX_DEBUG=-g --with-C_DEBUG
 
 KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
-ENABLE_RRQM=yes
-ENABLE_RRQM_PUBLISH=yes
+ENABLE_RRQM_PLUMHALL=yes
+ENABLE_RRQM_MOZILLA=yes
+#ENABLE_RRQM_PUBLISH=yes
 SKIP_DIST_TEST=yes
 
 MAKEFLAGS="-j2"

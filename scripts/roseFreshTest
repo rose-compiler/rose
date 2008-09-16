@@ -198,7 +198,7 @@ if [ $buildstatus == 0 ]; then
   #------------------------------------------------------
 
   #
-  if [ $ENABLE_RRQM ] ; then
+  if [ $ENABLE_RRQM_PLUMHALL ] ; then
     echo "Running QMtest on Plumhall..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
     make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose
@@ -212,6 +212,23 @@ if [ $buildstatus == 0 ]; then
       echo "Error: make plumhall finishes abnormally!" >>$mailtext
     else
       echo "make plumhall finishes normally.">>$mailtext
+    fi
+  fi
+
+  if [ $ENABLE_RRQM_MOZILLA ] ; then
+    echo "Running QMtest on Mozilla..." >> $mailtext
+    cd ${ROSE_TEST_REGRESSION_ROOT}
+    make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile mozilla_using_rose
+
+    if [[ $ENABLE_RRQM_PUBLISH && $LBL_RRQM_ROOT && $? -eq 0 ]] ; then
+      echo "Publishing mozilla results..." >> $mailtext
+      make -f ${ROSE_TEST_REGRESSION_ROOT}/mozilla.makefile publish
+    fi
+
+    if [ $? -ne 0 ]; then
+      echo "Error: make mozilla finishes abnormally!" >>$mailtext
+    else
+      echo "make mozilla finishes normally.">>$mailtext
     fi
   fi
 
