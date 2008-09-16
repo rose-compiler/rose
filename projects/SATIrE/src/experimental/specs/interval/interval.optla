@@ -370,6 +370,7 @@ branch(exp, state, edge, isLoopBody) =
       endcase
     else 
       lift([-> (top,top)])
+      //newstate
     endif
   else if c = bot then 
     print("FIXME c=bot\n") 

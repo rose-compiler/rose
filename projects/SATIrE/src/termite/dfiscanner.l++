@@ -32,7 +32,7 @@ bottom BOTTOM
 int \-?[0-9]+
 assign \-\>
 /* kudos to kregexpeditor: */
-token (::)?[a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
+token (::)?[_a-zA-Z\$][A-Za-z_0-9\$]*(::[a-zA-Z][A-Za-z_0-9]*)?
 undef \<undefined\ dfi\>
 
 %%
