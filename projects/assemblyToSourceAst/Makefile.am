@@ -5,10 +5,13 @@ if USE_BINARY_ANALYSIS_TESTS
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist
+bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
+simplifyCnf_SOURCES = simplifyCnf.C
+simplifyCnf_CPPFLAGS =
+simplifyCnf_LDADD =
 
 include_HEADERS = x86AssemblyToC.h satProblem.h
 

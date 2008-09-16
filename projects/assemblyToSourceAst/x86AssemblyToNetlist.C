@@ -327,6 +327,7 @@ struct NetlistTranslator {
   }
 
   void translate(SgAsmx86Instruction* insn) {
+    fprintf(stderr, "%s\n", unparseInstructionWithAddress(insn).c_str());
     vars(ip()) = number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size()));
     X86InstructionKind kind = insn->get_kind();
     const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
