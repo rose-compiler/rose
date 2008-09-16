@@ -100,12 +100,12 @@ BinaryCloneGui::selectView(int selection)
 
   switch (selection) {
     case 0:
-      codeWidget->setPlainText(QString(unparsedView.first.c_str()));
-      codeWidget2->setPlainText(QString(unparsedView.second.c_str()));
+      codeWidget->setHtml(QString(unparsedView.first.c_str()));
+      codeWidget2->setHtml(QString(unparsedView.second.c_str()));
       break;
     case 1:
-      codeWidget->setPlainText(QString(normalizedView.first.c_str()));
-      codeWidget2->setPlainText(QString(normalizedView.second.c_str()));
+      codeWidget->setHtml(QString(normalizedView.first.c_str()));
+      codeWidget2->setHtml(QString(normalizedView.second.c_str()));
       break;
   }
 
@@ -200,7 +200,6 @@ BinaryCloneGui::BinaryCloneGui( ) :
 
         codeWidget = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
         codeWidget->setReadOnly(true);
-        codeWidget->setPlainText(QString("foobar\nBar\nFoobar"));
 
         codeWidget2 = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
         codeWidget2->setReadOnly(true);
@@ -211,7 +210,7 @@ BinaryCloneGui::BinaryCloneGui( ) :
 
 
   window->setGeometry(0,0,1280,800);
-  window->setTitle("BinaryCloneMainGui (QROSE)");
+  window->setTitle("BinaryCloneMainGui");
 
 } //BinaryCloneGui::BinaryCloneGui()
 
@@ -581,13 +580,46 @@ std::string BinaryCloneGui::normalizeInstructions(std::vector<SgAsmx86Instructio
 
         normalizedUnparsedInstructions += (cat == ec_reg ? "R" : cat == ec_mem ? "M" : "V") + boost::lexical_cast<string>(num);
       }
-      normalizedUnparsedInstructions += ";\n";
+      normalizedUnparsedInstructions += "; <br> ";
   
     }
    
     return normalizedUnparsedInstructions;
 };
 
+static string htmlEscape(const string& s) {
+  string s2;
+  for (size_t i = 0; i < s.size(); ++i) {
+    switch (s[i]) {
+      case '<': s2 += "&lt;"; break;
+      case '>': s2 += "&gt;"; break;
+      case '&': s2 += "&amp;"; break;
+      default: s2 += s[i]; break;
+    }
+  }
+  return s2;
+}
+
+string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
+  if (insn == NULL) return "BOGUS:NULL";
+  string result = "<font color=\"green\">" + htmlEscape(StringUtility::intToHex(insn->get_address())) + "</font>:";
+  result += "<font color=\"red\">" + htmlEscape(insn->get_mnemonic());
+  switch (insn->get_branchPrediction()) {
+    case x86_branch_prediction_none: break;
+    case x86_branch_prediction_taken: result += ",pt"; break;
+    case x86_branch_prediction_not_taken: result += ",pn"; break;
+    default: ROSE_ASSERT (!"Bad branch prediction");
+  }
+  result += "</font>";
+  result += std::string((result.size() >= 7 ? 1 : 7 - result.size()), ' ');
+  SgAsmOperandList* opList = insn->get_operandList();
+  const SgAsmExpressionPtrList& operands = opList->get_operands();
+  for (size_t i = 0; i < operands.size(); ++i) {
+    if (i != 0) result += ", ";
+    result += "<font color=\"blue\">" + htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
+  }
+  return result;
+}
 
 void BinaryCloneGui::showClone(int row)
 {
@@ -657,9 +689,11 @@ void BinaryCloneGui::showClone(int row)
 
     for(int i =beg; i < end; i++)
     {
-      unparsed += unparseInstructionWithAddress(insns[i]);
-      unparsed += "\n";
-      std::cout << "unparsed " << unparseInstructionWithAddress(insns[i]) << std::endl;
+      //      unparsed += unparseInstructionWithAddress(insns[i]);
+      
+      unparsed += "<code>" + unparseX86InstructionToHTMLWithAddress(isSgAsmx86Instruction(insns[i])) + "</code>";
+      unparsed += "<br> \n";
+//      std::cout << "unparsed " << unparseInstructionWithAddress(insns[i]) << std::endl;
     }
 
     (first? codeWidget : codeWidget2 )->setPlainText(QString(unparsed.c_str()));
