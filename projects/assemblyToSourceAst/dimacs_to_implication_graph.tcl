@@ -3,6 +3,11 @@
 exec tclsh "$0" "$@"
 
 set data [split [read stdin] "\n"]
+set i 0
+while {[string match "c *" [lindex $data $i]]} {
+  incr i
+}
+set data [lrange $data $i end]
 set header [split [lindex $data 0] " "]
 if {[lindex $header 0] == "p"} {
   set data [lrange $data 1 end]

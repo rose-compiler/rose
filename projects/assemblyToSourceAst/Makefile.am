@@ -5,13 +5,17 @@ if USE_BINARY_ANALYSIS_TESTS
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf
+bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedVariables unitResolve
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
+x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
+x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
+x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
+x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 simplifyCnf_SOURCES = simplifyCnf.C
-simplifyCnf_CPPFLAGS =
-simplifyCnf_LDADD =
+removeUnusedVariables_SOURCES = removeUnusedVariables.C
+unitResolve_SOURCES = unitResolve.C
 
 include_HEADERS = x86AssemblyToC.h satProblem.h
 
@@ -27,5 +31,5 @@ CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C
 
 endif
 
-EXTRA_DIST = outputFileTemplate.C x86AssemblyToCDemo.C x86AssemblyToC.C x86AssemblyToC.h x86AssemblyToNetlist.C
+EXTRA_DIST = outputFileTemplate.C
 
