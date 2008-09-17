@@ -55,6 +55,7 @@ NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 source /home/liao6/daily-test-rose/NIGHTLY_ROSE_Regression/scripts/rosetestrc
 ENABLE_RRQM_PLUMHALL=yes
 ENABLE_RRQM_MOZILLA=yes
+ENABLE_RRQM_PUBLISH=yes
 SKIP_DIST_TEST=yes
 set -e
 set -o pipefail
