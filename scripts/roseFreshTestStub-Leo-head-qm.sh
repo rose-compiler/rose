@@ -4,6 +4,8 @@
 
 #required by make docs!
 source /usr/apps/graphviz/2.6/setup.sh
+#qmtest
+source /usr/apps/xercesc/2.7.0/setup.sh
 #export PATH="/usr/apps/java/jdk1.5.0_11/bin:$PATH"
 #export LD_LIBRARY_PATH="/home/dquinlan/ROSE/OpenFortranParser/ofp_install/lib/:$LD_LIBRARY_PATH"
 
@@ -51,7 +53,8 @@ KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 
 source /home/liao6/daily-test-rose/NIGHTLY_ROSE_Regression/scripts/rosetestrc
-ENABLE_RRQM=yes
+ENABLE_RRQM_PLUMHALL=yes
+ENABLE_RRQM_MOZILLA=yes
 SKIP_DIST_TEST=yes
 set -e
 set -o pipefail
