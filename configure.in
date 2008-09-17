@@ -242,6 +242,9 @@ AM_CONDITIONAL(ROSE_USE_SQLITE_DATABASE,[test "x$SQLITE3_VERSION" != "x"])
 # Call supporting macro for MAPLE
 ROSE_SUPPORT_MAPLE
 
+#Call supporting macro for IDA PRO
+ROSE_SUPPORT_IDA
+
 # Setup Automake conditional in Projects/programModeling/Makefile.am
 AM_CONDITIONAL(ROSE_USE_MAPLE,test ! "$with_maple" = no)
 
