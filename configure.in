@@ -924,6 +924,7 @@ src/roseExtensions/roseHPCToolkit/docs/Makefile
 src/roseIndependentSupport/Makefile
 src/roseIndependentSupport/dot2gml/Makefile
 projects/Makefile
+projects/AstEquivalence/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
 projects/compass/src/compassSupport/Makefile
