@@ -10,7 +10,6 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QCheckBox>
-#include "sqlite3x.h"
 
 #include <boost/smart_ptr.hpp>
 #include <boost/lexical_cast.hpp>
@@ -103,7 +102,6 @@ class BinaryCloneGui
     int activeRow;
 
     std::string relativePathPrefix;
-    sqlite3x::sqlite3_connection con;
     scoped_array_with_size<Element > vectorOfClones;
 
 

@@ -23,7 +23,6 @@ using namespace qrs;
 using namespace boost::filesystem;
 using namespace std;
 using namespace boost;
-using namespace sqlite3x;
 using namespace __gnu_cxx;
 class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
 {
@@ -309,10 +308,8 @@ void BinaryCloneGui::open()
 
   if(exists(database) == true) 
   {
-     con.close();
      codeWidget->setReadOnly(true);
      codeWidget->setPlainText(QString("foobar\nBar\nFoobari3"));
-     con.open(database.c_str());
   }
   
 
@@ -441,30 +438,6 @@ SgNode* BinaryCloneGui::disassembleFile(std::string tsv_directory){
   return globalBlock;
 };
 
-
-std::pair<std::string,std::string> BinaryCloneGui::getAddressFromVectorsTable(uint64_t function_id, uint64_t index)
-{
-  std::string line;
-  std::string offset;
-  try {
-    std::string selectQuery = "select line,offset from vectors where function_id=";
-                selectQuery +=boost::lexical_cast<std::string>(function_id);
-                selectQuery +=" and index_within_function=";
-                selectQuery +=boost::lexical_cast<std::string>(index);
-                selectQuery +=" limit 1";
-
-    std::cout << "Query " << selectQuery << std::endl; 
-    sqlite3_command cmd(con, selectQuery.c_str());
-    sqlite3_reader datasets=cmd.executereader();
-    datasets.read(); 
-    line   = datasets.getstring(0);
-    offset = datasets.getstring(1);
-
-//    address = sqlite3x::sqlite3_command(con, selectQuery.c_str()).executestring();
-  } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
-
-  return std::pair<std::string,std::string>(line,offset);
-}  ;
 
 
 
