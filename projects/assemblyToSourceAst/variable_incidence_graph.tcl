@@ -18,13 +18,13 @@ while 1 {
       if {$a <= $b} {continue}
       lappend outedges($a) $b
       lappend outedges($b) $a
-      array set edges [list "$a -- $b" ""]
+      incr "edges($a -- $b)"
     }
   }
 }
 
 puts "graph variable_incidence {"
-foreach p [array names edges] {puts $p}
+foreach p [array names edges] {puts "$p \[label=\"$edges($p)\"\]"}
 puts "}"
 
 foreach v [array names outedges] {
