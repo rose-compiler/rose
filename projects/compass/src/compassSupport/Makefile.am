@@ -28,7 +28,7 @@ include_HEADERS = compass.h
 
 libCompass_la_SOURCES = compass.C
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) libCompass.la
+LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
 
 if ROSE_USE_GCC_OMP
  LDADD += -lgomp
@@ -37,7 +37,7 @@ endif
 
 
 compassEmptyMain_SOURCES = compassEmptyMain.C
-compassEmptyMain_LDADD = $(ROSE_LIBS_WITH_PATH) libCompass.la
+compassEmptyMain_LDADD = libCompass.la $(ROSE_LIBS_WITH_PATH)
 
 BUILT_SOURCES = prerequisites.h instantiate_prerequisites.h 
 

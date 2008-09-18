@@ -6,7 +6,7 @@ LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 PALETTEFLAGS = 
 
-BUILT_SOURCES = palette2cpp $(srcdir)/rose.P
+BUILT_SOURCES = palette2cpp$(EXEEXT) $(srcdir)/rose.P
 
 bin_PROGRAMS = palette2cpp
 
@@ -23,18 +23,18 @@ include_HEADERS = paletteCommon.h
 
 noinst_PROGRAMS = qsolve simple_example null_deref switch_without_default sortTest
 qsolve_SOURCES = qsolve.P
-qsolve_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+qsolve_DEPENDENCIES = $(dist_data_DATA) palette2cpp$(EXEEXT)
 simple_example_SOURCES = simple_example.P
-simple_example_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+simple_example_DEPENDENCIES = $(dist_data_DATA) palette2cpp$(EXEEXT)
 null_deref_SOURCES = null_deref.P
-null_deref_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+null_deref_DEPENDENCIES = $(dist_data_DATA) palette2cpp$(EXEEXT)
 switch_without_default_SOURCES = switch_without_default.P
-switch_without_default_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+switch_without_default_DEPENDENCIES = $(dist_data_DATA) palette2cpp$(EXEEXT)
 sortTest_SOURCES = sortTest.P
-sortTest_DEPENDENCIES = $(dist_data_DATA) palette2cpp
+sortTest_DEPENDENCIES = $(dist_data_DATA) palette2cpp$(EXEEXT)
 
-.P.C: palette2cpp
-	./palette2cpp $(PALETTEFLAGS) -- $< > $@ || (rm -f $@ && exit 1)
+.P.C: palette2cpp$(EXEEXT)
+	./palette2cpp$(EXEEXT) $(PALETTEFLAGS) -- $< > $@ || (rm -f $@ && exit 1)
 
 SUFFIXES = .P
 
