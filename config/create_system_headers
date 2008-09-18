@@ -187,7 +187,7 @@ fi
          compilerHeadersDirCmd="$1 -v -E -x $language /dev/null 2>&1 | sed -n '/^#include </,/^End/p' | sed '/^#include </d; /^End/d; /\/usr\/include$/d; /\/Library\/Frameworks$/d; /[(]framework directory[)]$/d'"
 
        # DQ (1/14/2007): To work with Wave we supress the __STDC_HOSTED__ macro
-         tmpFile="`mktemp -t roseconfigtemp`"
+         tmpFile="`mktemp -t roseconfigtempXXXXXXXXXX`"
          "$1" -E -dM -x $language /dev/null | grep -F -v -w -f "$roseHome/config/macro_names_to_remove" > "$tmpFile"
          sed "/REPLACE_ME_WITH_MACRO_DEFINITIONS/r$tmpFile" < "$roseHome/config/rose_edg_required_macros_and_functions.h.in" > "$mainTargetDir/rose_edg_required_macros_and_functions.h"
          rm "$tmpFile"
