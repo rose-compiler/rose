@@ -49,9 +49,9 @@ AC_SUBST(configure_date)
 # echo "In configure: prefix = $prefix"
 # echo "In configure: pwd = $PWD"
 
-if (test "$prefix" = NONE); then
+if test "$prefix" = NONE; then
    echo "Setting prefix to default: $PWD"
-   prefix=$PWD
+   prefix="$PWD"
 # else
 #   echo "prefix was exlicitly set to: $prefix"
 fi
@@ -1158,8 +1158,8 @@ developersScratchSpace/Dan/QRose_tests/Makefile
 
 AC_CONFIG_COMMANDS([default],[[
      echo "Ensuring Grammar in the compile tree (assuming source tree is not the same as the compile tree)."
-     pathToSourceDir=`cd $srcdir && pwd`
-     test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s $pathToSourceDir/src/ROSETTA/Grammar src/ROSETTA/Grammar )
+     pathToSourceDir="`cd $srcdir && pwd`"
+     test -d src/ROSETTA/Grammar || ( rm -rf src/ROSETTA/Grammar && ln -s "$pathToSourceDir/src/ROSETTA/Grammar" src/ROSETTA/Grammar )
 ]],[[
 ]])
 
