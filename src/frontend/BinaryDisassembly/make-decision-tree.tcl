@@ -5,9 +5,9 @@ exec tclsh "$0" "$@"
 proc doLeaf {insn platform} {
   global astNode$platform
   if {[info exists astNode${platform}($insn)]} {
-    return [format "{return new SgAsm${platform}Instruction(address,  mnemonic, [string tolower $platform]_[string tolower [set astNode${platform}($insn)]]);}"]
+    return [format "insn->set_kind([string tolower $platform]_[string tolower [set astNode${platform}($insn)]]);"]
   } else {
-    return [format "{return new SgAsm${platform}Instruction(address,  mnemonic, [string tolower $platform]_unknown_instruction);}"]
+    return [format ";"]
   }
 }
 
@@ -27,17 +27,15 @@ proc makeSwitch {len prefix platform outFile indent} {
   } elseif {[array size firstChar] == 1} {
     puts $outFile "${indent}if (mnemonic\[$offset\] == '$c') { // '$prefix$c'"
     makeSwitch $len "$prefix$c" $platform $outFile "${indent}  "
-    puts $outFile "${indent}} else {"
-    puts $outFile "${indent}  return new SgAsm${platform}Instruction(address,  mnemonic, [string tolower $platform]_unknown_instruction);"
     puts $outFile "${indent}}"
   } else {
     puts $outFile "${indent}switch (mnemonic\[$offset\]) {"
     foreach c [lsort [array names firstChar]] {
       puts $outFile "${indent}  case '$c': { // '$prefix$c'"
       makeSwitch $len "$prefix$c" $platform $outFile "${indent}    "
-      puts $outFile "${indent}  }"
+      puts $outFile "${indent}  break;}"
     }
-    puts $outFile "${indent}  default: return new SgAsm${platform}Instruction(address,  mnemonic, [string tolower $platform]_unknown_instruction);"
+    puts $outFile "${indent}  default: break;"
     puts $outFile "${indent}}"
   }
 }
@@ -60,13 +58,16 @@ proc makeSwitchForLanguage {platform outFile} {
   }
 
   puts $outFile "SgAsm${platform}Instruction* create${platform}Instruction(uint64_t address, const std::string& mnemonic) {"
-  puts $outFile "switch (mnemonic.size()) {"
+  puts $outFile "  SgAsm${platform}Instruction* insn = new SgAsm${platform}Instruction(address, mnemonic, [string tolower $platform]_unknown_instruction);"
+  puts $outFile "  switch (mnemonic.size()) {"
   foreach len [lsort -integer [array names byLength]] {
-    puts $outFile "  case $len:"
-    makeSwitch $len "" $platform $outFile "    "
+    puts $outFile "    case $len:"
+    makeSwitch $len "" $platform $outFile "      "
+    puts $outFile "    break;"
   }
-  puts $outFile "  default: return new SgAsm${platform}Instruction(address,  mnemonic, [string tolower $platform]_unknown_instruction);"
-  puts $outFile "}"
+  puts $outFile "    default: break;"
+  puts $outFile "  }"
+  puts $outFile "  return insn;"
   puts $outFile "}"
 }
 
