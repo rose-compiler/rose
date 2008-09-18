@@ -25,16 +25,16 @@ process_headers()
   fi
 
 # get full path for the current working directory, the src and target dirs
-  current_dir=`pwd`
+  current_dir="`pwd`"
   src_parent_dir=`dirname "$2"`
-  src_base_dir=`basename "$2"`
+  src_base_dir="`basename "$2"`"
   src_dir="`cd \"$src_parent_dir\" 2>/dev/null && pwd || echo \"$src_parent_dir\"`/$src_base_dir"
 
-  target_parent_dir=`dirname "$3"`
-  target_base_dir=`basename "$3"`
+  target_parent_dir="`dirname "$3"`"
+  target_base_dir="`basename "$3"`"
   target_dir="`cd \"$target_parent_dir\" 2>/dev/null && pwd || echo \"$target_parent_dir\"`/$target_base_dir"
 
-  roseHome=$4
+  roseHome="$4"
 
 # echo "*****************************************"
 # echo "Parameter 1 = $1"
