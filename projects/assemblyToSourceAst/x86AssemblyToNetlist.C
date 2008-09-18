@@ -326,7 +326,6 @@ struct NetlistTranslator {
     return result;
   }
 
-
   void translate(SgAsmx86Instruction* insn) {
     fprintf(stderr, "%s\n", unparseInstructionWithAddress(insn).c_str());
     vars(ip()) = number<32>((unsigned int)(insn->get_address() + insn->get_raw_bytes().size()));
