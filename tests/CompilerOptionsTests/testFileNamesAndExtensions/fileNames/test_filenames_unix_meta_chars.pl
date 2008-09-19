@@ -3,7 +3,7 @@
 
 #test if machine is LINUX. If not exit
 use English;
-die "exiting" unless($OSNAME eq "linux");
+exit 0 unless($OSNAME eq "linux");
 
 #$identity_translator="../../../../../gcc3.3.2-compile_dir/tutorial/identityTranslator";
 $identity_translator="../../../../tutorial/identityTranslator";
