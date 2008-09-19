@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 
 
   }
-  catch(exception& e) {
+  catch(std::exception& e) {
 	cout << e.what() << "\n";
   }
 
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
 
     else
     eltCount = lexical_cast<size_t>(con.executestring("select count(distinct cluster) from clusters"));
-  } catch (exception& e) {cerr << "Exception: " << e.what() << endl;}
+  } catch (std::exception& e) {cerr << "Exception: " << e.what() << endl;}
 
   if (eltCount == 0) {
     cerr << "No largest_clones table found -- invalid database?" << endl;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[])
       vectorOfClusters[clone_cluster].push_back(cur_elem);
       
     }
-  }catch(exception &ex) {
+  }catch(std::exception &ex) {
 	cerr << "Exception Occured: " << ex.what() << endl;
   }
 
