@@ -306,7 +306,8 @@ ROSE_SUPPORT_PYTHON
 AC_CHECK_PROGS(PERL, [perl])
 
 if test "x$JAVA_HOME" = "x"; then
-  JAVA="`which java`"
+  JAVA="`which javac`"
+  JAVA="` readlink -f ${JAVA}`"
   JAVA_HOME="`dirname $JAVA`/.."
 fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
