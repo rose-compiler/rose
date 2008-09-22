@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 
   size_t maxFilledCountGuess = maxCount; // Must be an overestimate
 
-  const size_t sizeLimit = 2; // Keep this many duplicates
+  const size_t sizeLimit = 3; // Keep this many duplicates
 
   while (true) {
     assert (maxFilledCountGuess <= maxCount);

@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
   size_t nclauses;
   scanf("p cnf %d %zu\n", &nvars, &nclauses);
   vector<Clause> clauses(nclauses);
+  vector<bool> clausesToRemove(nclauses, false);
   for (size_t i = 0; i < clauses.size(); ++i) {
     Clause& cl = clauses[i];
     while (true) {
@@ -49,90 +50,112 @@ int main(int argc, char** argv) {
 
   map<Lit, bool> units;
 
-  for (size_t i = 1; i < argc; ++i) {
-    Lit l = atoi(argv[i]);
-    units[l] = true;
-    units[-l] = false;
+  map<Lit, set<size_t> > literalUses;
+  map<Lit, set<Lit> > binaryClauses;
+  set<size_t> worklist;
+
+#define ADD_UNIT(lit) do { \
+  units.insert(make_pair((lit), true)); \
+  units.insert(make_pair(-(lit), false)); \
+  worklist.insert(literalUses[(lit)].begin(), literalUses[(lit)].end()); \
+  worklist.insert(literalUses[-(lit)].begin(), literalUses[-(lit)].end()); \
+  /* fprintf(stderr, "Added unit %d\n", (lit)); */ \
+} while (0)
+
+  for (size_t i = 0; i < clauses.size(); ++i) {
+    if (clausesToRemove[i]) continue;
+    const Clause& cl = clauses[i];
+    for (size_t j = 0; j < cl.size(); ++j) {
+      literalUses[cl[j]].insert(i);
+    }
   }
 
-  bool changed = true;
-  while (changed) {
-    changed = false;
-#if 0
-    map<Lit, set<size_t> > literalUses;
-#endif
+  for (size_t i = 0; i < clauses.size(); ++i) {
+    if (clausesToRemove[i]) continue;
+    const Clause& cl = clauses[i];
+    if (cl.size() == 1) {
+      ADD_UNIT(cl[0]);
+    }
+    if (cl.size() == 2) {
+      binaryClauses[cl[0]].insert(cl[1]);
+      binaryClauses[cl[1]].insert(cl[0]);
+    }
+  }
 
-    map<Lit, set<Lit> > binaryClauses;
+  size_t unitsAddedFromBinary = 0;
+  for (map<Lit, set<Lit> >::iterator i = binaryClauses.begin();
+      i != binaryClauses.end(); ++i) {
+    const set<Lit>& ls = i->second;
+    for (set<Lit>::const_iterator j = ls.begin(); j != ls.end(); ++j) {
+      if (ls.find(-*j) != ls.end() && units.find(i->first) == units.end()) {
+        ADD_UNIT(i->first);
+        ++unitsAddedFromBinary;
+        break;
+      }
+    }
+  }
+  fprintf(stderr, "Added %zu unit(s) from binary resolution\n", unitsAddedFromBinary);
 
-    for (size_t i = 0; i < clauses.size(); ++i) {
-      const Clause& cl = clauses[i];
-#if 0
-      for (size_t j = 0; j < cl.size(); ++j) {
+  fprintf(stderr, "Units so far = %zu\n", units.size() / 2);
+
+  while (!worklist.empty()) {
+    size_t i = *worklist.begin();
+    worklist.erase(worklist.begin());
+
+    if (clausesToRemove[i] == true) continue;
+    Clause& cl = clauses[i];
+    Clause newCl;
+    bool thisClauseChanged = false;
+    for (size_t j = 0; j < cl.size(); ++j) {
+      literalUses[cl[j]].erase(i);
+    }
+    for (size_t j = 0; j < cl.size(); ++j) {
+      map<Lit, bool>::const_iterator k = units.find(cl[j]);
+      if (k != units.end()) {
+        binaryClauses[cl[j]].erase(i);
+        thisClauseChanged = true;
+        bool val = k->second;
+        if (val) {
+          clausesToRemove[i] = true;
+          goto skipThisClause;
+        } else {
+          continue; // skip literal
+        }
+      } else {
+        newCl.push_back(cl[j]);
         literalUses[cl[j]].insert(i);
       }
-#endif
-      if (cl.size() == 1) {
-        units[cl[0]] = true;
-        units[-cl[0]] = false;
-      }
-      if (cl.size() == 2) {
-        binaryClauses[cl[0]].insert(cl[1]);
-        binaryClauses[cl[1]].insert(cl[0]);
-      }
     }
-
-    size_t unitsAddedFromBinary = 0;
-    for (map<Lit, set<Lit> >::const_iterator i = binaryClauses.begin();
-         i != binaryClauses.end(); ++i) {
-      const set<Lit>& ls = i->second;
-      for (set<Lit>::const_iterator j = ls.begin(); j != ls.end(); ++j) {
-        if (ls.find(-*j) != ls.end()) {
-          units[i->first] = true;
-          units[-i->first] = false;
-          ++unitsAddedFromBinary;
-          changed = true;
-          break;
-        }
+    cl = newCl;
+    if (cl.size() == 1) {
+      ADD_UNIT(cl[0]);
+    }
+    if (cl.size() == 2) {
+      binaryClauses[cl[0]].insert(cl[1]);
+      binaryClauses[cl[1]].insert(cl[0]);
+      if (binaryClauses[cl[0]].find(-cl[1]) != binaryClauses[cl[0]].end()) {
+        ADD_UNIT(cl[0]);
+      }
+      if (binaryClauses[cl[1]].find(-cl[0]) != binaryClauses[cl[1]].end()) {
+        ADD_UNIT(cl[1]);
       }
     }
-    fprintf(stderr, "Added %zu unit(s) from binary resolution\n", unitsAddedFromBinary);
-
-    vector<Clause> newClauses;
-    size_t changedClauses = 0;
-    for (size_t i = 0; i < clauses.size(); ++i) {
-      const Clause& cl = clauses[i];
-      Clause newCl;
-      bool thisClauseChanged = false;
-      for (size_t j = 0; j < cl.size(); ++j) {
-        map<Lit, bool>::const_iterator k = units.find(cl[j]);
-        if (k != units.end()) {
-          thisClauseChanged = true;
-          bool val = k->second;
-          if (val) {
-            goto skipThisClause;
-          } else {
-            continue; // skip literal
-          }
-        } else {
-          newCl.push_back(cl[j]);
-        }
-      }
-      newClauses.push_back(newCl);
-      skipThisClause:
-      if (thisClauseChanged) ++changedClauses;
-    }
-
-    if (changedClauses != 0) {
-      changed = true;
-      clauses = newClauses;
-    }
-
-    fprintf(stderr, "Units so far = %zu, changed this pass = %zu\n", units.size() / 2, changedClauses);
+    skipThisClause:
+    ;
   }
 
-  printf("p cnf %d %zu\n", nvars, clauses.size());
+  fprintf(stderr, "Units at end = %zu\n", units.size() / 2);
+
+  vector<Clause> newClauses;
+  // newClauses.reserve(clauses.size());
   for (size_t i = 0; i < clauses.size(); ++i) {
-    const Clause& cl = clauses[i];
+    if (clausesToRemove[i] == false) {
+      newClauses.push_back(clauses[i]);
+    }
+  }
+  printf("p cnf %d %zu\n", nvars, newClauses.size());
+  for (size_t i = 0; i < newClauses.size(); ++i) {
+    const Clause& cl = newClauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
       printf("%d ", cl[j]);
     }

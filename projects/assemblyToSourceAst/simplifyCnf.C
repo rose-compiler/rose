@@ -153,7 +153,7 @@ int main(int, char**) {
     variablesToCheck.insert(i);
   }
 
-  while (changed && passCount < 40) {
+  while (changed && passCount < 80) {
     changed = false;
     ++passCount;
     fprintf(stderr, "Pass %zu\n", passCount);
