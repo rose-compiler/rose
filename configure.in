@@ -307,9 +307,13 @@ AC_CHECK_PROGS(PERL, [perl])
 
 if test "x$JAVA_HOME" = "x"; then
   JAVA="`which javac`"
-  while test `readlink "$JAVA"` ; do 
+  if test -f /usr/bin/javaconfig; then # Mac Java
+    :
+  else
+    while test `readlink "$JAVA"` ; do 
       JAVA=`readlink "$JAVA"` ; 
-  done
+    done
+  fi
   JAVA_HOME="`dirname $JAVA`/.."
 fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
