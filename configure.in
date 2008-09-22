@@ -310,7 +310,6 @@ if test "x$JAVA_HOME" = "x"; then
   while test `readlink "$JAVA"` ; do 
       JAVA=`readlink "$JAVA"` ; 
   done
-  JAVA="` readlink -f ${JAVA}`"
   JAVA_HOME="`dirname $JAVA`/.."
 fi
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
