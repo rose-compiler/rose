@@ -49,7 +49,7 @@ MAKEFLAGS="-j16"
 #ENABLE_UPLOAD_SVN=yes
 #ENABLE_UPLOAD_WEB=yes
 
-KEEP_TEST_DIR=yes
+#KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 
 source /home/liao6/daily-test-rose/NIGHTLY_ROSE_Regression/scripts/rosetestrc
