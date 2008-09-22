@@ -307,6 +307,9 @@ AC_CHECK_PROGS(PERL, [perl])
 
 if test "x$JAVA_HOME" = "x"; then
   JAVA="`which javac`"
+  while test `readlink "$JAVA"` ; do 
+      JAVA=`readlink "$JAVA"` ; 
+  done
   JAVA="` readlink -f ${JAVA}`"
   JAVA_HOME="`dirname $JAVA`/.."
 fi
