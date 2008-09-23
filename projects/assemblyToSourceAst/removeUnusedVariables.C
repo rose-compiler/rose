@@ -1,3 +1,4 @@
+#include "cnf.h"
 #include <cassert>
 #include <cstdio>
 #include <stdint.h>
@@ -8,34 +9,18 @@
 #include <set>
 #include <algorithm>
 
+#undef DO_PURE_LITERAL_ELIMINATION
+
 using namespace std;
 
-typedef int Var;
-typedef int Lit; // DIMACS convention
-typedef vector<Lit> Clause;
-
 int main(int, char**) {
-  int nvars;
-  size_t nclauses;
-  scanf("p cnf %d %zu\n", &nvars, &nclauses);
-  vector<Clause> clauses(nclauses);
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    while (true) {
-      Lit lit;
-      scanf("%d", &lit);
-      if (lit == 0) {
-        break;
-      } else {
-        clauses[i].push_back(lit);
-      }
-    }
-  }
-
-  fprintf(stderr, "Starting with %d var(s) and %zu clause(s)\n", nvars, nclauses);
+  CNF cnf;
+  cnf.parse(stdin);
+  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   set<Lit> usedLits;
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    const Clause& cl = clauses[i];
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
+    const Clause& cl = cnf.clauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
       usedLits.insert(cl[j]);
     }
@@ -43,9 +28,27 @@ int main(int, char**) {
 
   set<Var> usedVars;
   for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
+#ifdef DO_PURE_LITERAL_ELIMINATION
     if (*i < 0) continue;
-    if (usedLits.find(-*i) != usedLits.end()) {usedVars.insert(*i);}
+    if (usedLits.find(-*i) != usedLits.end()) {
+      usedVars.insert(*i);
+    }
+#else
+    usedVars.insert(abs(*i));
+#endif
   }
+
+#ifndef DO_PURE_LITERAL_ELIMINATION
+  for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
+    InterfaceVariable& iv = cnf.interfaceVariables[i];
+    for (size_t j = 0; j < iv.second.size(); ++j) {
+      Lit oldLit = iv.second[j];
+      if (oldLit != -oldLit) {
+        usedVars.insert(abs(oldLit));
+      }
+    }
+  }
+#endif
 
   map<Var, Var> varMap;
   size_t c = 1;
@@ -57,30 +60,43 @@ int main(int, char**) {
     }
 #endif
   }
+#ifdef DO_PURE_LITERAL_ELIMINATION
   for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
-    if (usedLits.find(-*i) == usedLits.end()) varMap[abs(*i)] = 0;
+    if (usedLits.find(-*i) == usedLits.end()) {
+      varMap[abs(*i)] = ((*i < 0) ? FALSE : TRUE);
+    }
+  }
+#endif
+
+  for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
+    InterfaceVariable& iv = cnf.interfaceVariables[i];
+    for (size_t j = 0; j < iv.second.size(); ++j) {
+      Lit oldLit = iv.second[j];
+      Lit newLit = (oldLit < 0 ? inv(varMap[-oldLit]) : varMap[oldLit]);
+      iv.second[j] = newLit;
+    }
   }
 
   vector<Clause> newClauses;
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    Clause cl = clauses[i];
-    for (size_t j = 0; j < cl.size(); ++j) {
-      cl[j] = (cl[j] < 0 ? -varMap[-cl[j]] : varMap[cl[j]]);
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
+    Clause cl;
+    for (size_t j = 0; j < cnf.clauses[i].size(); ++j) {
+      Lit oldLit = cnf.clauses[i][j];
+      Lit newLit = (oldLit < 0 ? inv(varMap[-oldLit]) : varMap[oldLit]);
+      // These two lines do pure literal elimination
+      if (newLit == FALSE) continue;
+      if (newLit == TRUE) goto skipClause;
+      cl.push_back(newLit);
     }
-    if (find(cl.begin(), cl.end(), 0) != cl.end()) continue; // Pure literal elim
     newClauses.push_back(cl);
+    skipClause: ;
   }
 
-  clauses = newClauses;
+  cnf.clauses = newClauses;
+  cnf.nvars = c;
 
-  printf("p cnf %zu %zu\n", c - 1, clauses.size());
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    const Clause& cl = clauses[i];
-    for (size_t j = 0; j < cl.size(); ++j) {
-      printf("%d ", cl[j]);
-    }
-    printf("0\n");
-  }
+  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
+  cnf.unparse(stdout);
 
   return 0;
 }

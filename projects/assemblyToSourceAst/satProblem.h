@@ -2,6 +2,7 @@
 #define ROSE_SATPROBLEM_H
 
 #include <boost/array.hpp>
+#include <boost/lexical_cast.hpp>
 #include <vector>
 #include <set>
 
@@ -58,26 +59,50 @@ LitList(NumBits) number(unsigned int n) {
 }
 
 static bool absLess(Lit a, Lit b) {
-  return abs(a) < abs(b);
+  if (abs(a) < abs(b)) return true;
+  if (abs(a) > abs(b)) return false;
+  return a < b;
+}
+
+static bool clauseLess(const Clause& a, const Clause& b) {
+  Clause absa(a), absb(b);
+  for (size_t i = 0; i < absa.size(); ++i) absa[i] = abs(absa[i]);
+  for (size_t i = 0; i < absb.size(); ++i) absb[i] = abs(absb[i]);
+  if (absa < absb) return true;
+  if (absb < absa) return false;
+  return a < b;
+}
+
+template <size_t Len>
+static std::vector<Lit> toVector(const LitList(Len)& lits) {
+  return std::vector<Lit>(lits.begin(), lits.end());
+}
+
+static std::vector<Lit> toVector(Lit l) {
+  return std::vector<Lit>(1, l);
 }
 
 struct UnsatisfiableException {};
 
 struct SatProblem {
   int numVariables;
-  size_t numClauses;
-  std::vector<Lit> clauses; // Ending with 0 just like for Dimacs
+  std::set<Clause, bool(*)(const Clause&, const Clause&)> clauses;
   std::map<std::vector<Lit>, Lit> andGateCSE;
   std::map<LitList(3), Lit> muxCSE; // Fields are sel, ifTrue, ifFalse
+  std::vector<std::pair<std::string, std::vector<Lit> > > interfaceLiterals;
   FILE* outfile;
 
   public:
-  SatProblem(FILE* f): numVariables(0), numClauses(0), outfile(f) {}
+  SatProblem(FILE* f): numVariables(0), clauses(clauseLess), outfile(f) {}
 
   Var newVar() {return ++numVariables;}
 
   template <size_t Count>
   LitList(Count) newVars() {LitList(Count) vl; for (size_t i = 0; i < Count; ++i) vl[i] = newVar(); return vl;}
+
+  void addInterface(const std::string& name, const std::vector<Lit>& values) {
+    interfaceLiterals.push_back(std::make_pair(name, values));
+  }
 
   void addClause(const Clause& cl) {
     Clause newCl;
@@ -99,34 +124,33 @@ struct SatProblem {
         }
       }
     }
-    newCl.push_back(0);
-    clauses.insert(clauses.end(), newCl.begin(), newCl.end());
-    ++numClauses;
-#if 0
-    if (clauses.size() >= 500000) {
-      fprintf(stderr, "Dumping %zu literals\n", clauses.size());
-      toDimacsWithoutHeader();
-      clauses.clear();
-    }
-#endif
+    clauses.insert(newCl);
   }
 
   template <size_t Len>
   void addClause(const LitList(Len)& cl) {
-    Clause cl2(Len);
-    for (size_t i = 0; i < Len; ++i) cl2[i] = cl[i];
-    addClause(cl2);
+    addClause(toVector(cl));
   }
 
   void toDimacs() const {
-    fprintf(outfile, "p cnf %d %zu\n", numVariables, numClauses);
+    for (size_t i = 0; i < interfaceLiterals.size(); ++i) {
+      fprintf(outfile, "c %s %zu", interfaceLiterals[i].first.c_str(), interfaceLiterals[i].second.size());
+      for (size_t j = 0; j < interfaceLiterals[i].second.size(); ++j) {
+        fprintf(outfile, " %d", interfaceLiterals[i].second[j]);
+      }
+      fputc('\n', outfile);
+    }
+    fprintf(outfile, "p cnf %d %zu\n", numVariables, clauses.size());
     toDimacsWithoutHeader();
   }
 
   void toDimacsWithoutHeader() const {
-    for (std::vector<Lit>::const_iterator i = clauses.begin(); i != clauses.end(); ++i) {
-      Lit lit = *i;
-      fprintf(outfile, "%d%c", lit, (lit == 0 ? '\n' : ' '));
+    for (std::set<Clause, bool(*)(const Clause&, const Clause&)>::const_iterator i = clauses.begin(); i != clauses.end(); ++i) {
+      const Clause& cl = *i;
+      for (size_t j = 0; j < cl.size(); ++j) {
+        fprintf(outfile, "%d ", cl[j]);
+      }
+      fputs("0\n", outfile);
     }
   }
 

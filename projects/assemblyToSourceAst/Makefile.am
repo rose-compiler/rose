@@ -13,12 +13,12 @@ x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-simplifyCnf_SOURCES = simplifyCnf.C
+simplifyCnf_SOURCES = simplifyCnf.C cnf.h
 removeUnusedVariables_SOURCES = removeUnusedVariables.C
 unitResolve_SOURCES = unitResolve.C
 factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C
 
-include_HEADERS = x86AssemblyToC.h satProblem.h
+include_HEADERS = x86AssemblyToC.h satProblem.h cnf.h
 
 jeremiah-check: x86AssemblyToCDemo x86AssemblyToNetlist
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \

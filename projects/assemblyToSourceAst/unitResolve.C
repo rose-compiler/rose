@@ -1,3 +1,5 @@
+#include "cnf.h"
+
 #include <cassert>
 #include <cstdio>
 #include <stdint.h>
@@ -10,43 +12,11 @@
 
 using namespace std;
 
-typedef int Var;
-typedef int Lit; // DIMACS convention
-typedef vector<Lit> Clause;
-
-bool clauseLess(const Clause& a, const Clause& b) {
-  Clause absa(a.size()), absb(b.size());
-  for (size_t i = 0; i < a.size(); ++i) {
-    absa[i] = abs(a[i]);
-  }
-  for (size_t i = 0; i < b.size(); ++i) {
-    absb[i] = abs(b[i]);
-  }
-  if (absa < absb) return true;
-  if (absa > absb) return false;
-  return a < b;
-}
-
 int main(int argc, char** argv) {
-  int nvars;
-  size_t nclauses;
-  scanf("p cnf %d %zu\n", &nvars, &nclauses);
-  vector<Clause> clauses(nclauses);
-  vector<bool> clausesToRemove(nclauses, false);
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    Clause& cl = clauses[i];
-    while (true) {
-      Lit lit;
-      scanf("%d", &lit);
-      if (lit == 0) {
-        break;
-      } else {
-        cl.push_back(lit);
-      }
-    }
-  }
-
-  fprintf(stderr, "Starting with %d var(s) and %zu clause(s)\n", nvars, nclauses);
+  CNF cnf;
+  cnf.parse(stdin);
+  vector<bool> clausesToRemove(cnf.clauses.size(), false);
+  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   map<Lit, bool> units;
 
@@ -62,17 +32,17 @@ int main(int argc, char** argv) {
   /* fprintf(stderr, "Added unit %d\n", (lit)); */ \
 } while (0)
 
-  for (size_t i = 0; i < clauses.size(); ++i) {
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
     if (clausesToRemove[i]) continue;
-    const Clause& cl = clauses[i];
+    const Clause& cl = cnf.clauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
       literalUses[cl[j]].insert(i);
     }
   }
 
-  for (size_t i = 0; i < clauses.size(); ++i) {
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
     if (clausesToRemove[i]) continue;
-    const Clause& cl = clauses[i];
+    const Clause& cl = cnf.clauses[i];
     if (cl.size() == 1) {
       ADD_UNIT(cl[0]);
     }
@@ -103,7 +73,7 @@ int main(int argc, char** argv) {
     worklist.erase(worklist.begin());
 
     if (clausesToRemove[i] == true) continue;
-    Clause& cl = clauses[i];
+    Clause& cl = cnf.clauses[i];
     Clause newCl;
     bool thisClauseChanged = false;
     for (size_t j = 0; j < cl.size(); ++j) {
@@ -148,19 +118,23 @@ int main(int argc, char** argv) {
 
   vector<Clause> newClauses;
   // newClauses.reserve(clauses.size());
-  for (size_t i = 0; i < clauses.size(); ++i) {
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
     if (clausesToRemove[i] == false) {
-      newClauses.push_back(clauses[i]);
+      newClauses.push_back(cnf.clauses[i]);
     }
   }
-  printf("p cnf %d %zu\n", nvars, newClauses.size());
-  for (size_t i = 0; i < newClauses.size(); ++i) {
-    const Clause& cl = newClauses[i];
-    for (size_t j = 0; j < cl.size(); ++j) {
-      printf("%d ", cl[j]);
+  cnf.clauses = newClauses;
+
+  for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
+    InterfaceVariable& iv = cnf.interfaceVariables[i];
+    for (size_t j = 0; j < iv.second.size(); ++j) {
+      map<Lit, bool>::const_iterator it = units.find(iv.second[j]);
+      if (it == units.end()) continue;
+      iv.second[j] = it->second ? TRUE : FALSE;
     }
-    printf("0\n");
   }
 
+  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
+  cnf.unparse(stdout);
   return 0;
 }

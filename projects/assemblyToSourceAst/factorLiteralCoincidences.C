@@ -1,3 +1,5 @@
+#include "cnf.h"
+
 #include <cassert>
 #include <cstdio>
 #include <stdint.h>
@@ -13,31 +15,6 @@
 using namespace std;
 using namespace __gnu_cxx;
 
-typedef int Var;
-typedef int Lit; // DIMACS convention
-typedef vector<Lit> Clause;
-
-bool absLess(Lit a, Lit b) {
-  Lit absa = abs(a);
-  Lit absb = abs(b);
-  if (absa < absb) return true;
-  if (absa > absb) return false;
-  return a < b;
-}
-
-bool clauseLess(const Clause& a, const Clause& b) {
-  Clause absa(a.size()), absb(b.size());
-  for (size_t i = 0; i < a.size(); ++i) {
-    absa[i] = abs(a[i]);
-  }
-  for (size_t i = 0; i < b.size(); ++i) {
-    absb[i] = abs(b[i]);
-  }
-  if (absa < absb) return true;
-  if (absa > absb) return false;
-  return a < b;
-}
-
 namespace __gnu_cxx {
   template <>
   struct hash<std::pair<int, int> > {
@@ -48,30 +25,15 @@ namespace __gnu_cxx {
 }
 
 int main(int argc, char** argv) {
-  int nvars;
-  size_t nclauses;
-  scanf("p cnf %d %zu\n", &nvars, &nclauses);
-  vector<Clause> clauses(nclauses);
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    Clause& cl = clauses[i];
-    while (true) {
-      Lit lit;
-      scanf("%d", &lit);
-      if (lit == 0) {
-        break;
-      } else {
-        cl.push_back(lit);
-      }
-    }
-  }
-
-  fprintf(stderr, "Starting with %d var(s) and %zu clause(s)\n", nvars, nclauses);
+  CNF cnf;
+  cnf.parse(stdin);
+  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   hash_map<pair<Lit, Lit>, size_t> coincidences;
 
   size_t maxCount = 0;
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    const Clause& cl = clauses[i];
+  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
+    const Clause& cl = cnf.clauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
       for (size_t k = 0; k < cl.size(); ++k) {
         Lit l1 = cl[j], l2 = cl[k];
@@ -109,9 +71,9 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "Found coincidence (%d, %d) with count %zu\n", biggestCoincidence.first, biggestCoincidence.second, biggestCoincidenceSet);
 
-    Var newVar = ++nvars;
-    for (size_t i = 0; i < clauses.size(); ++i) {
-      Clause& cl = clauses[i];
+    Var newVar = ++cnf.nvars;
+    for (size_t i = 0; i < cnf.clauses.size(); ++i) {
+      Clause& cl = cnf.clauses[i];
       int hasCoincidence = 0;
       size_t clSize = cl.size();
       Lit newCl[clSize];
@@ -171,22 +133,12 @@ int main(int argc, char** argv) {
     baseClause[2] = biggestCoincidence.second;
     ++coincidences[biggestCoincidence];
     sort(baseClause.begin(), baseClause.end(), absLess);
-    clauses.push_back(baseClause);
+    cnf.clauses.push_back(baseClause);
 
     // fprintf(stderr, "Restarting loop with %d var(s) and %zu clause(s)\n", nvars, clauses.size());
   }
 
-  sort(clauses.begin(), clauses.end(), clauseLess);
-  clauses.erase(unique(clauses.begin(), clauses.end()), clauses.end());
-
-  printf("p cnf %d %zu\n", nvars, clauses.size());
-  for (size_t i = 0; i < clauses.size(); ++i) {
-    const Clause& cl = clauses[i];
-    for (size_t j = 0; j < cl.size(); ++j) {
-      printf("%d ", cl[j]);
-    }
-    printf("0\n");
-  }
-
+  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
+  cnf.unparse(stdout);
   return 0;
 }

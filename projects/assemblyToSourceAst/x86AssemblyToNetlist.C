@@ -73,6 +73,8 @@ struct NetlistTranslator {
   RegMap newRegisterMap;
   FlagMap flagMap;
   FlagMap newFlagMap;
+  size_t memoryWriteCountBase;
+  size_t memoryReadCountBase;
   MemoryWriteList memoryWrites;
   MemoryReadList initialMemoryReads;
   SatProblem problem;
@@ -109,22 +111,28 @@ struct NetlistTranslator {
     return i->second;
   }
 
-  void makeRegMaps(RegMap& rm, FlagMap& fm) {
+  void makeRegMaps(RegMap& rm, FlagMap& fm, const std::string& prefix) {
     for (int r = 0; r < 8; ++r) {
+      LitList(32) thisReg = problem.newVars<32>();
+      problem.addInterface(prefix + "_gpr" + boost::lexical_cast<std::string>(r), toVector(thisReg));
       rm.insert(make_pair(gpr((X86GeneralPurposeRegister)r), problem.newVars<32>()));
     }
-    rm.insert(make_pair(ip(), problem.newVars<32>()));
-    fm.insert(make_pair(x86flag_cf, problem.newVar()));
-    fm.insert(make_pair(x86flag_pf, problem.newVar()));
-    fm.insert(make_pair(x86flag_af, problem.newVar()));
-    fm.insert(make_pair(x86flag_zf, problem.newVar()));
-    fm.insert(make_pair(x86flag_sf, problem.newVar()));
-    fm.insert(make_pair(x86flag_df, problem.newVar()));
-    fm.insert(make_pair(x86flag_of, problem.newVar()));
+    LitList(32) ipReg = problem.newVars<32>();
+    problem.addInterface(prefix + "_ip", toVector(ipReg));
+    rm.insert(make_pair(ip(), ipReg));
+    LitList(7) flagsReg = problem.newVars<7>();
+    problem.addInterface(prefix + "_flags", toVector(flagsReg));
+    fm.insert(make_pair(x86flag_cf, flagsReg[0]));
+    fm.insert(make_pair(x86flag_pf, flagsReg[1]));
+    fm.insert(make_pair(x86flag_af, flagsReg[2]));
+    fm.insert(make_pair(x86flag_zf, flagsReg[3]));
+    fm.insert(make_pair(x86flag_sf, flagsReg[4]));
+    fm.insert(make_pair(x86flag_df, flagsReg[5]));
+    fm.insert(make_pair(x86flag_of, flagsReg[6]));
   }
 
-  NetlistTranslator(FILE* outfile): problem(outfile) {
-    makeRegMaps(newRegisterMap, newFlagMap);
+  NetlistTranslator(FILE* outfile): memoryWriteCountBase(0), memoryReadCountBase(0), problem(outfile) {
+    makeRegMaps(newRegisterMap, newFlagMap, "out");
   }
 
   template <size_t Len> // In bits
@@ -164,6 +172,8 @@ struct NetlistTranslator {
       result = problem.ite(problem.equal(addr, memoryWrites[i].first), memoryWrites[i].second, result);
     }
     initialMemoryReads.push_back(make_pair(addr, result)); // If address doesn't alias any previous reads or writes
+    problem.addInterface("memoryRead_" + boost::lexical_cast<std::string>(memoryReadCountBase), toVector(concat(addr, result)));
+    ++memoryReadCountBase;
     return result;
   }
 
@@ -1366,7 +1376,7 @@ struct NetlistTranslator {
   }
 
   void writeBack(Lit isThisIp) {
-    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.numClauses);
+    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
     for (RegMap::const_iterator i = registerMap.begin(); i != registerMap.end(); ++i) {
       for (size_t j = 0; j < 32; ++j) {
         problem.condEquivalence(isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
@@ -1375,7 +1385,11 @@ struct NetlistTranslator {
     for (FlagMap::const_iterator i = flagMap.begin(); i != flagMap.end(); ++i) {
       problem.condEquivalence(isThisIp, i->second, newFlagMap[i->first]);
     }
-    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.numClauses);
+    for (MemoryWriteList::const_iterator i = memoryWrites.begin(); i != memoryWrites.end(); ++i) {
+      problem.addInterface("memoryWrite_" + boost::lexical_cast<std::string>(memoryWriteCountBase), toVector(concat(single(isThisIp), concat(i->first, i->second))));
+      ++memoryWriteCountBase;
+    }
+    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
   }
 
   void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end, const LitList(32)& origIp) {
@@ -1469,7 +1483,7 @@ int main(int argc, char** argv) {
   NetlistTranslator t(f);
   NetlistTranslator::RegMap origRegisterMap;
   NetlistTranslator::FlagMap origFlagMap;
-  t.makeRegMaps(origRegisterMap, origFlagMap);
+  t.makeRegMaps(origRegisterMap, origFlagMap, "in");
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);
