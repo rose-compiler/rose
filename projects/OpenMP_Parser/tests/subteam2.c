@@ -2,7 +2,6 @@
  and a single thread in the 3rd subteam
 */ 
 #include <stdio.h>
-#include <malloc.h>
 
 #if defined(_OPENMP)
 #include <omp.h>
