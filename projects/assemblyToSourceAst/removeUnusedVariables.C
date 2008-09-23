@@ -33,12 +33,18 @@ int main(int, char**) {
 
   fprintf(stderr, "Starting with %d var(s) and %zu clause(s)\n", nvars, nclauses);
 
-  set<Var> usedVars;
+  set<Lit> usedLits;
   for (size_t i = 0; i < clauses.size(); ++i) {
     const Clause& cl = clauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
-      usedVars.insert(abs(cl[j]));
+      usedLits.insert(cl[j]);
     }
+  }
+
+  set<Var> usedVars;
+  for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
+    if (*i < 0) continue;
+    if (usedLits.find(-*i) != usedLits.end()) {usedVars.insert(*i);}
   }
 
   map<Var, Var> varMap;
@@ -51,12 +57,27 @@ int main(int, char**) {
     }
 #endif
   }
+  for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
+    if (usedLits.find(-*i) == usedLits.end()) varMap[abs(*i)] = 0;
+  }
+
+  vector<Clause> newClauses;
+  for (size_t i = 0; i < clauses.size(); ++i) {
+    Clause cl = clauses[i];
+    for (size_t j = 0; j < cl.size(); ++j) {
+      cl[j] = (cl[j] < 0 ? -varMap[-cl[j]] : varMap[cl[j]]);
+    }
+    if (find(cl.begin(), cl.end(), 0) != cl.end()) continue; // Pure literal elim
+    newClauses.push_back(cl);
+  }
+
+  clauses = newClauses;
 
   printf("p cnf %zu %zu\n", c - 1, clauses.size());
   for (size_t i = 0; i < clauses.size(); ++i) {
     const Clause& cl = clauses[i];
     for (size_t j = 0; j < cl.size(); ++j) {
-      printf("%d ", (cl[j] < 0 ? -varMap[-cl[j]] : varMap[cl[j]]));
+      printf("%d ", cl[j]);
     }
     printf("0\n");
   }
