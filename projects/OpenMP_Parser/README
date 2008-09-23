@@ -1,0 +1,18 @@
+This is a project to 
+* use Flex/Bison to parse OpenMP pragmas based on Markus's contributions
+* support the latest OpenMP 3.0 syntax
+* refine the OmpAttribute data structure to separate interface from implementation
+
+File List:
+* OpenMP persistent attributes:  OmpAttribute.C and OmpAttribute.h
+* Flex scanner:   omplexer.ll (omplexer.cc )
+* Bison parser:   ompparser.yy (ompparser.cc, ompparser.hh)
+* test parser:    parseOmp.C
+
+ompparser.cc and omplexer.cc are put into distribution to eliminate
+the dependence on bison and flex for end-users.
+Maintainers should update them whenever .yy or .ll are changed!!
+
+By Liao, 9/19/2008
+
+

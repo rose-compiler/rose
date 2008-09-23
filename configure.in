@@ -994,6 +994,8 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
+projects/OpenMP_Parser/Makefile
+projects/OpenMP_Parser/tests/Makefile
 projects/MPICodeMotion/Makefile
 projects/javaport/Makefile
 projects/palette/Makefile
