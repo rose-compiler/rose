@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 include $(top_srcdir)/projects/compass/src/compassSupport/compass_dirs.inc
 
 PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex --interaction=batchmode
-# PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
+#PDFLATEX = env TEXINPUTS=$(srcdir):$(top_srcdir)/tests:.: pdflatex 
 
 # Later we will add ROSETTA documentation here ...
 SUBDIRS = Tutorial 
@@ -192,7 +192,8 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex gettingStarted.tex
 	$(PDFLATEX) manual.tex && \
 	mv -f manual.pdf $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
 
-docs: html-docs latex-docs
+#docs: html-docs latex-docs
+docs: latex-docs html-docs 
 
 html-docs: html
 

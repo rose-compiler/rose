@@ -486,7 +486,7 @@ testCustomGraphGeneration: customGraphGeneration customGraphGenerationWithFilter
 	@echo "Building postscript file from foo.dot ..."
 	$(top_srcdir)/scripts/dotgenLetterPDF customGraph.dot customGraph.pdf
 	./customGraphGenerationWithFiltering
-	$(top_srcdir)/scripts/dotgenLetterPDF customGraphWithFiltering.dot customGraphWithFiltering.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF customGraphWithFiltering.dot customGraphWithFiltering_test.pdf
 
 testInlineTransformations: inlineTransformations
 	./inlineTransformations -c $(srcdir)/inputCode_inlineTransformations.C
@@ -947,8 +947,8 @@ binaryAnalysis_pic3.pdf: binaryAnalysis_symbolTable
 	./binaryAnalysis_symbolTable -rose:read_executable_file_format_only bin_example_2
 #	DQ (9/6/2008): We are not ready for these yet, so don't generate them.
 #	@echo "BinaryAnalysis: Building postscript file from AST and whole graph dot files..."
-#	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
-#	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2_WholeAST.dot binaryAnalysis_pic3.pdf
+	$(top_srcdir)/scripts/dotgenLetterPDF bin_example_2.dot binaryAnalysis_pic4.pdf
 
 # rose_bin_example.s.aa: binaryAnalysis_pic1.pdf
 
