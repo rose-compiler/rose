@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 #The cases are the following:
 # the file could be present and given as 
 #       absolute path

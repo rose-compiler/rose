@@ -1,4 +1,4 @@
-#!/bin/env perl 
+#!/usr/bin/env perl 
 #file: test_filenames_looong_torture.pl
 #This file is an extension of test_filenames.pl
 #Mainly wierd cases are dumped into this file

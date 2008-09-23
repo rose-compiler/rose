@@ -1,4 +1,4 @@
-#!/bin/env perl
+#!/usr/bin/env perl
 #Test which file names are recognized by gcc, g++, EDG and identityTranslator
 
 #test if machine is LINUX. If not exit
