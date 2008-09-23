@@ -5,7 +5,7 @@
 use English;
 use Term::ANSIColor;
 
-die "exiting" unless($OSNAME eq "linux");
+exit 0 unless($OSNAME eq "linux");
 
 $gcc_command_line="gcc";
 $g_plus_plus_command_line="g++";

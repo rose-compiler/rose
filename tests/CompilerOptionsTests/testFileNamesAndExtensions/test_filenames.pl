@@ -13,7 +13,7 @@
 
 #test if machine is LINUX. If not exit
 use English;
-die "exiting" unless($OSNAME eq "linux");
+exit 0 unless($OSNAME eq "linux");
 
 $identity_translator="../../testTranslator";
 $output_line="-o output";
