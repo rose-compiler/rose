@@ -90,7 +90,7 @@ check-local:
 	@echo "****** ROSE/projects/OpenMP_Parser/tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES)
+EXTRA_DIST = $(ALL_TESTCODES) omp.h
 
 clean-local:
 	rm -f *.o rose_*.* *.out
