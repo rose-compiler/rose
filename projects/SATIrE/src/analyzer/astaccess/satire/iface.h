@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: iface.h,v 1.5 2008-05-29 08:03:22 gergo Exp $
+// $Id: iface.h,v 1.6 2008-09-23 07:50:38 gergo Exp $
 
 #ifndef H_IFACE
 #define H_IFACE
@@ -173,5 +173,10 @@ KFG_NODE_LIST kfg_returns(KFG);
 extern "C"
 #endif
 KFG_NODE_LIST kfg_exits(KFG);
+
+// Headers for support types defined by SATIrE.
+#include "o_ExpressionId.h"
+#include "o_TypeId.h"
+#include "o_VariableId.h"
 
 #endif
