@@ -226,7 +226,7 @@ of interface required to make manipulation generally more simple.
 % Dan
 
 
-// DQ (8/7/2008): Added more questions from email on 8/7/2008.
+% DQ (8/7/2008): Added more questions from email on 8/7/2008.
 \item  We have read, that the rose compiler is provided under the BSD license. Is every
     part of the rose compiler under BSD licence and is it free for commercial use? \\
    ROSE is free for commercial use, our research license with EDG has no
@@ -255,6 +255,111 @@ a while back, but was not tested often, so we have to fix some
 details for it to work again.  So it is not a big deal, but I can't
 promise when it would happen.
 
+% Questions recieved 9/23/2008 (via Thomas):
+\item ROSE computes different kinds of stuff from the actual AST (and semantic/type info): 
+      the docs mention control flow, data flow, slicing(?), and some more.
+      Are these types of things computed accurately? That is, can you fully rely on the computed info?
+      Are they computed for the entire C/C++ language, or a subset? Just to give an
+      example: there are implicit calls to destructors of static objects, e.g. f() { A a; }
+      will get a \~A call at the end of f()'s scope. Do you take such info into account when
+      computing call/dataflow/control graphs? If so, I wonder how you built this info in: do
+      you first construct some form of IR (intermediate rep.) atop of which you compute the
+      dataflow/call graphs and similar? If so, did you actually add all the 'implicit'
+      semantics of C++ manually to the AST? Hope the question is not too unclear.
+      How do you handle global static objects?
+
+   The information computed is as accurate as possible and alwasy represent the full
+   languge (including full C++, Fortran 2003, etc.).  Some languges are newer
+   (e.g. Fortran 2003 and PHP so that will still has to mature).  Implicit calls to
+   constructors, destructors, short curcuit evaluation, etc. are not inserted specific analysis in:
+   {\tt src/midend/programTransformation/implicitCodeGeneration} is used. This code introduces
+   implicit calls into the AST as explicit calls which are ignored by the code generation
+   (unparser). \fixme{Check if this code is tested in our regression tests.}.
+   Global static objects are not handles specially, but are structurally represented in
+   the AST (Note that C++ static constructor evaluation orders are compiler implementation dependent).
+
+\item Linking: to do general full program analysis, you need linking. How did you
+    implement this? Did you actually build in all the C/C++ linking semantics by hand?
+
+   We support whole program analysis by permitting the AST's from several files to be
+   merged, this saves space in the header file duplication and provides an efficient means
+   of handling large scale applications.  This work is currently experemental, and works
+   on a 100K C program seperated over 50+ files, but is less robust for C++ code.  It is 
+   ongoing research work.  A less scalable alternative is to just list multiple source
+   files on the command line, however this is not a meaningful solution for applications
+   contianing hundreds or thousands of files.  C++ template details are addressed by
+   having each file instantiate all the templates that it requires and then we record
+   which of these are used by the file.  All used instantiated templates are represented
+   as specialized templates in the AST and any transformed instatiated (specialized)
+   templates are output as template specializations, else the backend compiler is used to
+   instantiate the required templates so that we can reduce the code generation required.
+
+
+\item Filtering: say you have a program like \#include <iostream> f() { cout$<<$"x"; }. I
+    assume you don't save all the stuff in iostream, and included headers, in your fact
+    database - it'll be huge, then. If not, however, you cannot simply discard all stuff
+    from system headers, since the user code may refer to them, like, you need the def of
+    std::cout in the example above. How do you handle this?
+    There also were some remarks in the docs about something like 'sharing' of
+    semantically-identical declarations that occur in different parts of the code. Like,
+    if you have n declarations of int f(), you would only store one. Is this done within a
+    translation unit, or across translation units?
+
+    In the file containing a CPP include directive, the the generated file will be
+    essentially identical (i.e. with the CPP include directive).  However, a traversal of the AST
+    will include all the items in the include files (and alternative traversal will allow
+    you to only travers the input file and skips all other files (e.g. header files).  
+    We don't have a database, unless you
+    consider the AST as a database (in memory). For the case of {\tt iostream} this will
+    be large, but that is what your program really is, so that is how it has to be
+    represented; such details are important for type analysis and that trickles into
+    every other part of analysis (especially for C++).  The {\bf sharing} is part of
+    the support for whole program analysis (global analysis) and it permits redundant 
+    parts of the code (e.g. declarations, namespaces, etc.) from being represented
+    more than one when handling many files (acorss translation units; tens, hundreds, 
+    or thousands).
+
+
+\item Preprocessing: you mention that ROSE can refer to code locations as they are before
+    preprocessing, although it inputs preprocessed files. So, where exactly do you get the
+    fine-grained (row,column) info from if you only see the preprocessed files? I assume
+    you use \#line directives, but is this really enough (e.g. in the presence of
+    whitespace removal by some preprocessors).
+
+    The frontend of EDG includes CPP and thus it reports source code positions
+    before the CPP translation, thus we get and save this information.  For Fortran
+    we have to handle the CPP translation more explicitly and so we only have the
+    source position after translation (but Fortran is always a bit special when it
+    is preprocessed).  I am not aware the CPP will remove whitespace, but it is not
+    an issue since we get the information from EDG where it is generated before CPP
+    translation.
+
+\item Code correctness: say someone analyzes some code which isn't fully correct/complete,
+    e.g. misses some includes, or misses some declarations, or plainly has syntax
+    errors. What do you do in such a case? Skip somehow the erroneous code, or
+    alternatively simply abort?
+
+    We can not currently handl incomplete code, I would argue that any analysis of such
+    code would have huge question marks. The essential reasom for this limitation is that 
+    we use EDG for C and C++ and it can't handle incomplete code in version 3.4. 
+    However, the newer 3.11 version of EDG is expected to handle incomplete code and then
+    we will support this, we have no experience with this yet.
+
+\item Dialects: how would you handle different language dialects, e.g. c89,c99,the
+    different flavors of C++, Visual C++, etc? Do you build a 'super' grammar that unifies
+    all these somehow? Or you have alternative grammars / type checkers?
+
+    We support C89, C99, C++ (98 standard), Fortran 4, Fortran 66, Fortran 77, Fortran 90,
+    Fortran 95, Fortran 2003, PHP and Binary Analysis for x86 and ARM using ELF and PE,
+    NE, LE, and DOS binary formats).  We will start work on C++0x when we upgrade to the newest
+    version of EDG.  We support C++ compiled using Microsoft Visual Studio, but not all
+    the MS extensions.  We support a number of GNU specific C and C++ extensions, but not
+    all. Since we use EDG for the frontend, we don't have any {\bf super} grammar
+    representation (evn EDG does not have such a construction in the design of there
+    frontend).  Such concepts don't work well for real languges when you need to handle
+    all the corners (which is itself a sad commentary on parser generators and/or modern 
+    languages).  For C and C++ the typechecking is mostly done by EDG and we save this
+    information and add to it in the ROSE IR.
 
 
 \end{enumerate}
