@@ -41,6 +41,10 @@ user_config_file="$1"
 shift
 . $user_config_file
 
+# Assume we are in the ROSE/scripts directory
+myuserid=`whoami`
+myname="`./getRealName "$myuserid" || echo "$myuserid"`"
+
 set -e
 rm -rf ${ROSE_TOP}
 mkdir -p ${ROSE_TOP}
@@ -50,9 +54,6 @@ cd ${ROSE_TOP}
 mkdir tmp
 TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
-
-myuserid=`whoami`
-myname="`./getRealName "$myuserid" || echo "$myuserid"`"
 
 #------------------------------------------------------
 # Starting Section
