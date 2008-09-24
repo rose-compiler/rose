@@ -166,10 +166,23 @@ SageBuilder::buildVariableDeclaration \
 SgTypedefDeclaration* 
 SageBuilder::buildTypedefDeclaration(const std::string& name, SgType* base_type)
 {
+   SgScopeStatement* scope = SageBuilder::topScopeStack();
+   ROSE_ASSERT(scope!=NULL);
+
    SgTypedefDeclaration* type_decl = new SgTypedefDeclaration(SgName(name),base_type,NULL, NULL, NULL);
    ROSE_ASSERT(type_decl);
    type_decl->set_firstNondefiningDeclaration (type_decl);
    setOneSourcePositionForTransformation(type_decl);
+
+   if (scope != NULL)
+   {
+     SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+     ROSE_ASSERT(typedef_symbol);
+     scope->insert_symbol(SgName(name),typedef_symbol);
+     type_decl->set_scope(scope);
+     type_decl->set_parent(scope);
+   }
+
    return type_decl;
 }
 
@@ -1783,6 +1796,13 @@ SgTypeShort * SageBuilder::buildShortType()
 { 
   SgTypeShort * result =SgTypeShort::createType(); 
   ROSE_ASSERT(result); 
+  return result;
+}
+
+SgTypeUnsignedShort * SageBuilder::buildUnsignedShortType()
+{
+  SgTypeUnsignedShort * result = SgTypeUnsignedShort::createType();
+  ROSE_ASSERT(result);
   return result;
 }
 
