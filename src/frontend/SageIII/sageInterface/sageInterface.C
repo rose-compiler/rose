@@ -4907,6 +4907,11 @@ bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
             )
          result = true; 
       }
+      else if (is_Fortran_language())
+      {
+        if (func1->get_name() == func2->get_name())
+          result = true;
+      }
       else
       {
         cout<<"Error: SageInterface::isSameFunction(): unhandled language"<<endl;

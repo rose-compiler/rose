@@ -3669,15 +3669,19 @@ void c_action_array_spec(int count)
        // see test2008_18.f90.
           if (astAttributeSpecStack.empty() == false)
              {
-               printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+      		
+                printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
                int attributeSpec = astAttributeSpecStack.front();
                printf ("attributeSpec = %d \n",attributeSpec);
+  	       
+	       if (attributeSpec == AttrSpec_POINTER)
+	          { 
+                      SgPointerType* pointerType = new SgPointerType(arrayType);
 
-               SgPointerType* pointerType = new SgPointerType(arrayType);
-
-            // Remove the base type and push the pointerType
-               astTypeStack.pop_front();
-               astTypeStack.push_front(pointerType);
+                   // Remove the base type and push the pointerType
+                      astTypeStack.pop_front();
+                      astTypeStack.push_front(pointerType);
+	          }
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -8255,7 +8259,8 @@ void c_action_where_construct(int numConstructs, ofp_bool hasMaskedElsewhere, of
                numConstructs, hasMaskedElsewhere ? "true" : "false", hasElsewhere ? "true" : "false");
 
   // ROSE_ASSERT(hasElsewhere == false);
-     ROSE_ASSERT(hasMaskedElsewhere == false);
+  // ROSE_ASSERT(hasMaskedElsewhere == false); 
+	   
 #if 0
      SgExpression* condition = NULL;
      SgBasicBlock* trueBlock = new SgBasicBlock();
@@ -8363,10 +8368,16 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
   // Get the associated where statement and push the false body onto the scope stack.
      ROSE_ASSERT(astScopeStack.empty() == false);
      SgBasicBlock* current_where_body = isSgBasicBlock(astScopeStack.front());
-     SgWhereStatement* whereStatement = isSgWhereStatement(current_where_body->get_parent());
-     ROSE_ASSERT(whereStatement != NULL);
+     SgWhereStatement* parentWhereStmt = isSgWhereStatement(current_where_body->get_parent());
+     SgElseWhereStatement* parentElseWhereStmt = isSgElseWhereStatement(current_where_body->get_parent());
 
-  // SgExpression* condition  = new SgNullExpression();
+     bool parentIsWhereStmt = true;
+	   
+     if (parentWhereStmt == NULL) {
+       parentIsWhereStmt = false;
+       ROSE_ASSERT(parentElseWhereStmt != NULL);
+     }
+
      ROSE_ASSERT(astExpressionStack.empty() == false);
      SgExpression* condition  = astExpressionStack.front();
      astExpressionStack.pop_front();
@@ -8375,22 +8386,30 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
 
      SgElseWhereStatement* elseWhereStatement = new SgElseWhereStatement(condition,body,NULL);
 
-  // setSourcePosition(elseWhereStatement);
      ROSE_ASSERT(elseKeyword != NULL);
      setSourcePosition(elseWhereStatement,elseKeyword);
 
-     condition->set_parent(whereStatement);
-  // setSourcePosition(condition);
+     condition->set_parent(elseWhereStatement);
+     //setSourcePosition(condition);
 
      body->set_parent(elseWhereStatement);
      setSourcePosition(body);
 
-     whereStatement->set_elsewhere(elseWhereStatement);
-     elseWhereStatement->set_parent(whereStatement);
-
-     ROSE_ASSERT(whereStatement->get_elsewhere() != NULL);
-     SgBasicBlock* elseWhereBody = whereStatement->get_elsewhere()->get_body();
+     SgBasicBlock* elseWhereBody = NULL;
+     if (parentIsWhereStmt) {
+       parentWhereStmt->set_elsewhere(elseWhereStatement);
+       elseWhereStatement->set_parent(parentWhereStmt);
+       ROSE_ASSERT(parentWhereStmt->get_elsewhere() != NULL);
+       elseWhereBody = parentWhereStmt->get_elsewhere()->get_body();
+     } else {
+       parentElseWhereStmt->set_elsewhere(elseWhereStatement);
+       elseWhereStatement->set_parent(parentElseWhereStmt);
+       ROSE_ASSERT(parentElseWhereStmt->get_elsewhere() != NULL);
+       elseWhereBody = parentElseWhereStmt->get_elsewhere()->get_body();
+     }
      ROSE_ASSERT(elseWhereBody != NULL);
+
+     astScopeStack.pop_front();
      astScopeStack.push_front(elseWhereBody);
 
 #if 0
@@ -8399,6 +8418,27 @@ void c_action_masked_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_
 #endif
    }
 
+	
+/** R749 end
+ * masked_elsewhere_stmt__end
+ *
+ * @param numBodyConstructs The number of where-body-constructs in the elsewhere-stmt (called from R744)
+ */
+	
+void c_action_masked_elsewhere_stmt__end(int numBodyConstructs)
+	{
+	  if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+			printf ("In R749 c_action_masked_elsewhere_stmt__end() numBodyConstructs = %d \n",numBodyConstructs);
+		
+	  ROSE_ASSERT(astScopeStack.empty() == false);
+	  SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
+	  ROSE_ASSERT(basicBlock != NULL);
+		
+	  // the elsewhere needs to attach itself to the elsewhere-stmt
+	  //astScopeStack.pop_front();
+	}
+	
+	
 /** R750 
  * elsewhere_stmt
  *
@@ -8417,15 +8457,21 @@ void c_action_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_t *wher
   // Get the associated where statement and push the false body onto the scope stack.
      ROSE_ASSERT(astScopeStack.empty() == false);
      SgBasicBlock* current_where_body = isSgBasicBlock(astScopeStack.front());
-     SgWhereStatement* whereStatement = isSgWhereStatement(current_where_body->get_parent());
-     ROSE_ASSERT(whereStatement != NULL);
+     SgWhereStatement* parentWhereStmt = isSgWhereStatement(current_where_body->get_parent());
+     SgElseWhereStatement* parentElseWhereStmt = isSgElseWhereStatement(current_where_body->get_parent());
+
+     bool parentIsWhereStmt = true;
+	   
+     if (parentWhereStmt == NULL) {
+       parentIsWhereStmt = false;
+       ROSE_ASSERT(parentElseWhereStmt != NULL);
+     }
 
      SgExpression* condition  = new SgNullExpression();
-     SgBasicBlock* body       = new SgBasicBlock();
+     SgBasicBlock* body = new SgBasicBlock();
 
      SgElseWhereStatement* elseWhereStatement = new SgElseWhereStatement(condition,body,NULL);
 
-  // setSourcePosition(elseWhereStatement);
      ROSE_ASSERT(elseKeyword != NULL);
      setSourcePosition(elseWhereStatement,elseKeyword);
 
@@ -8435,12 +8481,22 @@ void c_action_elsewhere_stmt(Token_t *label, Token_t *elseKeyword, Token_t *wher
      body->set_parent(elseWhereStatement);
      setSourcePosition(body);
 
-     whereStatement->set_elsewhere(elseWhereStatement);
-     elseWhereStatement->set_parent(whereStatement);
-
-     ROSE_ASSERT(whereStatement->get_elsewhere() != NULL);
-     SgBasicBlock* elseWhereBody = whereStatement->get_elsewhere()->get_body();
+     SgBasicBlock* elseWhereBody = NULL;
+     if (parentIsWhereStmt) {
+       parentWhereStmt->set_elsewhere(elseWhereStatement);
+       elseWhereStatement->set_parent(parentWhereStmt);
+       ROSE_ASSERT(parentWhereStmt->get_elsewhere() != NULL);
+       elseWhereBody = parentWhereStmt->get_elsewhere()->get_body();
+     } else {
+       parentElseWhereStmt->set_elsewhere(elseWhereStatement);
+       elseWhereStatement->set_parent(parentElseWhereStmt);
+       ROSE_ASSERT(parentElseWhereStmt->get_elsewhere() != NULL);
+       elseWhereBody = parentElseWhereStmt->get_elsewhere()->get_body();
+       printf("In else where part %s\r\n", __FUNCTION__);
+     }
      ROSE_ASSERT(elseWhereBody != NULL);
+
+     astScopeStack.pop_front();
      astScopeStack.push_front(elseWhereBody);
    }
 
@@ -8458,7 +8514,7 @@ void c_action_elsewhere_stmt__end(int numBodyConstructs)
      SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
      ROSE_ASSERT(basicBlock != NULL);
 
-     astScopeStack.pop_front();
+     //     astScopeStack.pop_front();
    }
 
 /** R751 
@@ -8476,15 +8532,15 @@ void c_action_end_where_stmt(Token_t *label, Token_t *endKeyword, Token_t *where
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R751 c_action_end_where_stmt() label = %p id = %p = %s \n",label,id,id ? id->text : "NULL");
 
-     ROSE_ASSERT(astScopeStack.empty() == false);
-     SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
-     ROSE_ASSERT(basicBlock != NULL);
+     //     ROSE_ASSERT(astScopeStack.empty() == false);
+     //     SgBasicBlock* basicBlock = isSgBasicBlock(astScopeStack.front());
+     //     ROSE_ASSERT(basicBlock != NULL);
 
-     SgWhereStatement* whereStatement = isSgWhereStatement(basicBlock->get_parent());
-     ROSE_ASSERT(whereStatement != NULL);
+     //     SgWhereStatement* whereStatement = isSgWhereStatement(basicBlock->get_parent());
+     //     ROSE_ASSERT(whereStatement != NULL);
 
   // The c_action_where_stmt() is called when we don't have an end where statement
-     whereStatement->set_has_end_statement(true);
+  //   whereStatement->set_has_end_statement(true);
 
      astScopeStack.pop_front();
 

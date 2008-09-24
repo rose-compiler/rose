@@ -1363,7 +1363,7 @@ FortranCodeGeneration_locatedNode::unparseElseWhereStmt(SgStatement* stmt, SgUnp
      SgElseWhereStatement* nested_elseWhereStatement = elseWhereStatement->get_elsewhere();
      if (nested_elseWhereStatement != NULL)
         {
-          unparseStatement(nested_elseWhereStatement->get_body(),info);
+          unparseStatement(nested_elseWhereStatement,info);
         }
 
   // There is no end statement label for an elsewhere statement, I think.
