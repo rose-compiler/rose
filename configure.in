@@ -1100,8 +1100,8 @@ exampleTranslators/documentedExamples/AstRewriteExamples/Makefile
 exampleTranslators/documentedExamples/dataBaseExamples/Makefile
 exampleTranslators/defaultTranslator/Makefile
 docs/Makefile
-docs/Rose/rose.html
-docs/Rose/projects.html
+docs/Rose/footer.html
+docs/Rose/leftmenu.html
 docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
