@@ -51,6 +51,9 @@ mkdir tmp
 TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
 
+myuserid=`whoami`
+myname="`getenv passwd $myuserid | cut -f 5 -d :`"
+
 #------------------------------------------------------
 # Starting Section
 #------------------------------------------------------
@@ -70,7 +73,7 @@ else
   echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
 fi  
 echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> mailtext1
-echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> mailtext1
+echo "Reply-to: $myname <`whoami`@llnl.gov>" >> mailtext1
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog on `hostname` for status" >> mailtext1
 echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
@@ -169,9 +172,9 @@ fi
       make binary_edg_tarball || exit 1
       ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
       ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree ${ROSE_TOP}/sourcetree "${SYSTEM_NAME}" || exit 1
-    fi
     make $MAKEFLAGS source_with_binary_edg_dist DOT_SVNREV=-${svnversion} || exit 1
     echo "############ make source_with_binary_edg_dist done"
+    fi
   fi
 ) >buildlog 2>&1 || buildstatus=1
 
@@ -186,7 +189,7 @@ if [ $buildstatus == 0 ]; then
     echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
   fi
   echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> $mailtext
-  echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> $mailtext
+  echo "Reply-to: $myname <`whoami`@llnl.gov>" >> $mailtext
   echo "" >> $mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
@@ -264,7 +267,7 @@ else
     echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
   fi  
   echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> $mailtext
-  echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> $mailtext
+  echo "Reply-to: $myname <`whoami`@llnl.gov>" >> $mailtext
   echo "" >> $mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
