@@ -11,10 +11,18 @@ astEquivalence_SOURCES = \
       
 astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
+copyFiles:
+	cp $(srcdir)/split-into-tables.tcl $(top_builddir)/projects/AstEquivalence/.
+
+runIDA_DEPENDENCIES = copyFiles
 runIDA_SOURCES = \
         runIDA.C 
-runIDA_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
- 
+runIDA_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt \
+                     $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB) \
+		    $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
+		    $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
+		    $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) 
+
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 
