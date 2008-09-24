@@ -29,7 +29,7 @@
 if [ $# -lt 1 ]
 then
   echo This script needs at least one argument
-  echo Exampe:$0 your_config_stub.sh
+  echo Example:$0 your_config_stub.sh
   exit 1
 fi
 
@@ -69,6 +69,8 @@ if [ $TIMESTAMP ]; then
 else
   echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
 fi  
+echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> mailtext1
+echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> mailtext1
 echo "" >> mailtext1
 echo ">>> See build log in ${ROSE_TOP}/buildlog on `hostname` for status" >> mailtext1
 echo "SVN root = ${ROSE_SVNROOT}" >> mailtext1
@@ -183,6 +185,8 @@ if [ $buildstatus == 0 ]; then
   else
     echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
   fi
+  echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> $mailtext
+  echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> $mailtext
   echo "" >> $mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
@@ -259,6 +263,8 @@ else
   else
     echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
   fi  
+  echo "From: ROSE regression tester on `hostname | cut -f 1 -d .` <`whoami`@llnl.gov>" >> $mailtext
+  echo "Reply-to: `getent passwd willcock2 | cut -f 5 -d :` <`whoami`@llnl.gov>" >> $mailtext
   echo "" >> $mailtext
   echo "SVN root = ${ROSE_SVNROOT}" >> $mailtext
   echo "SVN repository version ${svnversion} as of ${svnmodificationdate}" >> $mailtext
