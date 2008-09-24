@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>ROSE</title>
+<link href="../Templates/css_audim.css" rel="stylesheet" type="text/css">
+<link href="../css.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+.style3 {color: #CC6600}
+.style4 {font-size: 10px}
+-->
+</style>
+</head>
+
+<body>
+
+<IFRAME id="iframe1" width="800" height="250" src="header.html"  frameborder="0" marginheight="0" marginwidth="0" scrolling="no"></IFRAME>
+
+<table width="800" border="0" cellpadding="0" cellspacing="0">
+  <!--DWLayoutTable-->
+  <tr>
+    <td width="221" height="800" valign="top">
+
+<IFRAME id="iframe2" width="221" height="800" valign="top" src="leftmenu.html"  frameborder="0" marginheight="0" marginwidth="0" scrolling="no"></IFRAME>
+      </td>
+    <td width="12">&nbsp;</td>
+    <td width="567" valign="top"><table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <!--DWLayoutTable-->
+      <tr>
+        <td width="567" height="388" class="plaintext14">    
+        <p>ROSE is an open source compiler infrastructure to build source-to-source program 
+        transformation and analysis tools for large-scale Fortran 77/95/2003, C, C++, OpenMP, 
+        and UPC applications. The intended users of ROSE could be either experienced compiler 
+        researchers or library and tool developers who may have minimal compiler experience. 
+        ROSE is particularly well suited for building custom tools for static analysis, program
+        optimization, arbitrary program transformation, domain-specific optimizations, complex
+        loop optimizations, performance analysis, and cyber-security.</p>
+
+        <p>Like other compiler infrastructures, ROSE consists of front-ends, a midend, 
+        unparsers, along with a set of analyses and optimizations. The Edison Design Group 
+        (EDG) front-end is used to parse C and C++ applications. Although the EDG 
+        source code and interfaces are protected, they may be distributed freely in binary 
+        form. Language support for Fortran 2003 and earlier versions (including Fortran 90/95,
+        F77, F66, and Fortran 4) is based on the Open Fortran Parser developed at Los Alamos 
+        National Laboratory. ROSE converts the intermediate representations (IRs) produced by
+        the front-ends into abstract syntax trees. The Sage AST used by ROSE is an intuitive,
+        object-oriented IR with several levels of interfaces for building source-to-source 
+        translators. All information in the original application is carefully preserved in
+        its ROSE AST, including C preprocessor control structure, source comments, source
+        position information, and template information (e.g., template arguments). Generic
+        and custom program analysis and optimization tools can be built on top of the Sage 
+        III AST, after an optional phase to recognize high-level abstractions found in
+        scientific applications. The ROSE unparsers generate source code in the original
+        source languages from the optimized AST, with all original comments and C preprocessor
+        control structures preserved. Finally, vendor compilers can be used to compile the 
+        optimized source code into executables for different platforms.</p>
+
+        <p>A number of program analyses and transformations have been developed for ROSE. 
+        They are designed to be utilized by users via simple function calls to interfaces.
+        The program analyses available include call graph analysis, control flow analysis,
+        data flow analysis (live variables, def-use chain, reaching definition, alias 
+        analysis, etc.), class hierarchy analysis, data dependence and system dependence
+        analysis, and MPI communication pattern analysis. Representative program 
+        optimizations and translations developed with ROSE are partial redundancy 
+        elimination, constant folding, inlining, outlining (separating out a portion of 
+        code as a function), OpenMP directive lowering, and loop transformations (a loop 
+        optimizer supporting aggressive loop optimizations such as fusion, fission, 
+        interchange, unrolling, and blocking).</p>
+  
+        <p> ROSE is released under a BSD-style license and is portable to Linux and Mac OS X
+        on IA-32 and x86-64 platforms. It has attracted more than three dozen user groups
+        worldwide for various research, development, and education purposes. For example, 
+        internal users at Lawrence Livermore National Laboratory are using it for optimizing
+        data structure abstractions and components. External users from other national
+        laboratories and universities have been using ROSE for code instrumentation,
+        static analysis, formal rewrite systems, empirical tuning, MPI verification, etc. 
+        It also is being used by five universities for teaching and seven companies to
+        support the development of commercial products.</p>
+      </td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td height="100" colspan="3" valign="top">
+ <IFRAME id="iframe3" width="800" height="100" src="footer.html"  frameborder="0" marginheight="0" marginwidth="0" scrolling="no"></IFRAME>
+    </td>
+  </tr>
+    </table>
+</body>
+</html>

@@ -137,24 +137,27 @@ latexDependences = \
 
 html-local: AvailableDocumentation.docs $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz
 
-rose.html: rose.html.in
+footer.html: footer.html.in
+leftmenu.html: leftmenu.html.in
 AvailableDocumentation.docs: AvailableDocumentation.docs.in
 # Liao, 6/11/2008. Added a new directory (Projects) for various ROSE projects 
-projects.html: projects.html.in
 COMPASS_MANUAL = $(compass_build_tooldir)/compass/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass && $(MAKE) docs
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf rose.html projects.html $(COMPASS_MANUAL)
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
-	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
-	mkdir -p ROSE_WebPages/Projects;
-	cp -f $(srcdir)/compass_rose.gif ROSE_WebPages
-	cp -f rose.html ROSE_WebPages
-	cp -f rose.html ROSE_WebPages/index.html
-	cp -f projects.html ROSE_WebPages/Projects/projects.html
-	cp -f $(COMPASS_MANUAL) ROSE_WebPages/Projects/
 	mkdir -p ROSE_WebPages
+	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
+	cp -f $(srcdir)/compass_rose.gif ROSE_WebPages/compass_rose.gif
+	cp -f $(srcdir)/header.html ROSE_WebPages/header.html
+	cp -f leftmenu.html ROSE_WebPages/leftmenu.html
+	cp -f footer.html ROSE_WebPages/footer.html
+	cp -f $(srcdir)/rose.html ROSE_WebPages/rose.html
+	cp -f $(srcdir)/rose.html ROSE_WebPages/index.html
+	cp -f $(srcdir)/projects.html ROSE_WebPages/projects.html
+	cp -f $(srcdir)/regressionTest.html ROSE_WebPages/regressionTest.html
+	cp -f $(COMPASS_MANUAL) ROSE_WebPages/
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
@@ -219,5 +222,5 @@ CLEANFILES = roseDoxygen.tags SageIntermediateForm *.log *.aux *.dvi \
 	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf \
 	     rose.cfg roseCommandline.txt roseConfigureOptions* roseExecutionOutput.txt \
 	     roseHelpOutput.txt rose_roseTestProgram.C roseTestProgram.C sage.cfg \
-	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz rose.html index.html \
-	     AvailableDocumentation.docs projects.html
+	     $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz footer.html \
+	     AvailableDocumentation.docs  leftmenu.html
