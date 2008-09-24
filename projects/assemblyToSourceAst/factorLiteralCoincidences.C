@@ -1,4 +1,4 @@
-#include "cnf.h"
+#include "satProblem.h"
 
 #include <cassert>
 #include <cstdio>
@@ -25,9 +25,8 @@ namespace __gnu_cxx {
 }
 
 int main(int argc, char** argv) {
-  CNF cnf;
+  SatProblem cnf;
   cnf.parse(stdin);
-  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   hash_map<pair<Lit, Lit>, size_t> coincidences;
 
@@ -71,7 +70,7 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "Found coincidence (%d, %d) with count %zu\n", biggestCoincidence.first, biggestCoincidence.second, biggestCoincidenceSet);
 
-    Var newVar = ++cnf.nvars;
+    Var newVar = cnf.newVar();
     for (size_t i = 0; i < cnf.clauses.size(); ++i) {
       Clause& cl = cnf.clauses[i];
       int hasCoincidence = 0;
@@ -90,7 +89,6 @@ int main(int argc, char** argv) {
         }
       }
       if (hasCoincidence != 2) continue;
-      sort(newCl, newCl + clSize, absLess);
       assert (*newCl == 0);
       for (size_t j = 0; j < clSize; ++j) {
         Lit l1 = cl[j];
@@ -132,13 +130,11 @@ int main(int argc, char** argv) {
     baseClause[1] = biggestCoincidence.first;
     baseClause[2] = biggestCoincidence.second;
     ++coincidences[biggestCoincidence];
-    sort(baseClause.begin(), baseClause.end(), absLess);
     cnf.clauses.push_back(baseClause);
 
     // fprintf(stderr, "Restarting loop with %d var(s) and %zu clause(s)\n", nvars, clauses.size());
   }
 
-  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
   cnf.unparse(stdout);
   return 0;
 }

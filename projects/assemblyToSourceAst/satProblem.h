@@ -3,8 +3,15 @@
 
 #include <boost/array.hpp>
 #include <boost/lexical_cast.hpp>
+#include <ext/hash_map>
+#include <ext/hash_set>
 #include <vector>
-#include <set>
+#include <string>
+#include <utility>
+#include <algorithm>
+#include <stdio.h>
+#include <cassert>
+#include <math.h>
 
 typedef int Var;
 typedef int Lit; // Using Dimacs conventions, but with 0 for false and 0x80000000 for true
@@ -12,7 +19,36 @@ typedef int Lit; // Using Dimacs conventions, but with 0 for false and 0x8000000
 typedef std::vector<Lit> Clause;
 // Len and similar template parameters are always in bits, not bytes
 const Lit TRUE = 0x80000000, FALSE = 0;
-inline bool isConstantBool(Lit lit) {return (lit & 0x7fffffff) == 0;}
+typedef std::pair<std::string, std::vector<Lit> > InterfaceVariable;
+typedef std::vector<InterfaceVariable> InterfaceVariableList;
+
+namespace __gnu_cxx {
+  template <size_t N>
+  struct hash<LitList(N)> {
+    size_t operator()(const LitList(N)& a) const {
+      size_t result = 0;
+      for (size_t i = 0; i < N; ++i) {
+        result *= 3;
+        result += (size_t)a[i];
+      }
+      return result;
+    }
+  };
+
+  template <>
+  struct hash<Clause> {
+    size_t operator()(const Clause& a) const {
+      size_t result = 0;
+      for (size_t i = 0; i < a.size(); ++i) {
+        result *= 3;
+        result += (size_t)a[i];
+      }
+      return result;
+    }
+  };
+}
+
+inline bool isConstantBool(Lit lit) {return lit == -lit;}
 inline int invert(Lit lit) {if (isConstantBool(lit)) return lit ^ 0x80000000; else return -lit;}
 
 template <size_t Len>
@@ -85,15 +121,14 @@ static std::vector<Lit> toVector(Lit l) {
 struct UnsatisfiableException {};
 
 struct SatProblem {
-  int numVariables;
-  std::set<Clause, bool(*)(const Clause&, const Clause&)> clauses;
-  std::map<std::vector<Lit>, Lit> andGateCSE;
-  std::map<LitList(3), Lit> muxCSE; // Fields are sel, ifTrue, ifFalse
-  std::vector<std::pair<std::string, std::vector<Lit> > > interfaceLiterals;
-  FILE* outfile;
+  size_t numVariables;
+  std::vector<Clause> clauses;
+  __gnu_cxx::hash_map<std::vector<Lit>, Lit> andGateCSE;
+  __gnu_cxx::hash_map<LitList(3), Lit> muxCSE; // Fields are sel, ifTrue, ifFalse
+  InterfaceVariableList interfaceVariables;
 
   public:
-  SatProblem(FILE* f): numVariables(0), clauses(clauseLess), outfile(f) {}
+  SatProblem(): numVariables(0), clauses() {}
 
   Var newVar() {return ++numVariables;}
 
@@ -101,7 +136,7 @@ struct SatProblem {
   LitList(Count) newVars() {LitList(Count) vl; for (size_t i = 0; i < Count; ++i) vl[i] = newVar(); return vl;}
 
   void addInterface(const std::string& name, const std::vector<Lit>& values) {
-    interfaceLiterals.push_back(std::make_pair(name, values));
+    interfaceVariables.push_back(std::make_pair(name, values));
   }
 
   void addClause(const Clause& cl) {
@@ -124,7 +159,7 @@ struct SatProblem {
         }
       }
     }
-    clauses.insert(newCl);
+    clauses.push_back(newCl);
   }
 
   template <size_t Len>
@@ -132,20 +167,68 @@ struct SatProblem {
     addClause(toVector(cl));
   }
 
-  void toDimacs() const {
-    for (size_t i = 0; i < interfaceLiterals.size(); ++i) {
-      fprintf(outfile, "c %s %zu", interfaceLiterals[i].first.c_str(), interfaceLiterals[i].second.size());
-      for (size_t j = 0; j < interfaceLiterals[i].second.size(); ++j) {
-        fprintf(outfile, " %d", interfaceLiterals[i].second[j]);
+  void parse(FILE* f) {
+    interfaceVariables.clear();
+    numVariables = (size_t)(-1);
+    while (true) {
+      char* firstWord = NULL;
+      fscanf(f, "%as", &firstWord);
+      assert (firstWord);
+      std::string fwString = firstWord;
+      // fprintf(stderr, "firstWord = %s\n", firstWord);
+      free(firstWord);
+      if (fwString == "p") {
+        break;
+      } else if (fwString == "c") {
+        const char* tag = NULL;
+        size_t count = 0;
+        fscanf(f, "%as %zu", &tag, &count);
+        assert (tag);
+        // fprintf(stderr, "tag=%s count=%zu\n", tag, count);
+        std::vector<Lit> lits(count);
+        for (size_t i = 0; i < count; ++i) {
+          fscanf(f, "%d", &lits[i]);
+        }
+        interfaceVariables.push_back(std::make_pair(std::string(tag), lits));
+      } else {
+        assert (!"Bad first word");
+      }
+    }
+    size_t nclauses;
+    fscanf(f, " cnf %zu %zu\n", &numVariables, &nclauses);
+    assert (numVariables != (size_t)(-1));
+    // fprintf(stderr, "nvars=%zu nclauses=%zu\n", numVariables, nclauses);
+    clauses.resize(nclauses);
+    for (size_t i = 0; i < nclauses; ++i) {
+      Clause& cl = clauses[i];
+      while (true) {
+        Lit lit;
+        fscanf(f, "%d", &lit);
+        if (lit == 0) {
+          break;
+        } else {
+          cl.push_back(lit);
+        }
+      }
+      std::sort(cl.begin(), cl.end(), absLess);
+    }
+    fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", numVariables, clauses.size());
+  }
+
+  void unparse(FILE* outfile) {
+    fprintf(stderr, "Have %zu clauses before sorting\n", clauses.size());
+    std::sort(clauses.begin(), clauses.end(), clauseLess);
+    clauses.erase(std::unique(clauses.begin(), clauses.end()), clauses.end());
+    fprintf(stderr, "Finished with %zu variables and %zu clauses\n", numVariables, clauses.size());
+    for (size_t i = 0; i < interfaceVariables.size(); ++i) {
+      fprintf(outfile, "c %s %zu", interfaceVariables[i].first.c_str(), interfaceVariables[i].second.size());
+      for (size_t j = 0; j < interfaceVariables[i].second.size(); ++j) {
+        fprintf(outfile, " %d", interfaceVariables[i].second[j]);
       }
       fputc('\n', outfile);
     }
-    fprintf(outfile, "p cnf %d %zu\n", numVariables, clauses.size());
-    toDimacsWithoutHeader();
-  }
-
-  void toDimacsWithoutHeader() const {
-    for (std::set<Clause, bool(*)(const Clause&, const Clause&)>::const_iterator i = clauses.begin(); i != clauses.end(); ++i) {
+    fprintf(outfile, "p cnf %zu %zu\n", numVariables, clauses.size());
+    for (std::vector<Clause>::const_iterator i = clauses.begin(); i != clauses.end(); ++i) {
       const Clause& cl = *i;
       for (size_t j = 0; j < cl.size(); ++j) {
         fprintf(outfile, "%d ", cl[j]);
@@ -185,7 +268,7 @@ struct SatProblem {
       cseLookup[0] = sel;
       cseLookup[1] = ifTrue;
       cseLookup[2] = ifFalse;
-      std::map<LitList(3), Lit>::const_iterator it = muxCSE.find(cseLookup);
+      __gnu_cxx::hash_map<LitList(3), Lit>::const_iterator it = muxCSE.find(cseLookup);
       if (it != muxCSE.end()) return it->second;
       Lit output = newVar();
       condEquivalence(sel, ifTrue, output);
@@ -211,7 +294,7 @@ struct SatProblem {
     }
     if (newA.empty()) return TRUE;
     std::sort(newA.begin(), newA.end(), absLess);
-    std::map<std::vector<Lit>, Lit>::const_iterator it = andGateCSE.find(newA);
+    __gnu_cxx::hash_map<std::vector<Lit>, Lit>::const_iterator it = andGateCSE.find(newA);
     if (it != andGateCSE.end()) return it->second;
     Lit output = newVar();
     for (size_t i = 0; i < newA.size(); ++i) {

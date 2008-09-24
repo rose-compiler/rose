@@ -1,4 +1,4 @@
-#include "cnf.h"
+#include "satProblem.h"
 #include <cassert>
 #include <cstdio>
 #include <stdint.h>
@@ -14,9 +14,8 @@
 using namespace std;
 
 int main(int, char**) {
-  CNF cnf;
+  SatProblem cnf;
   cnf.parse(stdin);
-  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   set<Lit> usedLits;
   for (size_t i = 0; i < cnf.clauses.size(); ++i) {
@@ -72,7 +71,7 @@ int main(int, char**) {
     InterfaceVariable& iv = cnf.interfaceVariables[i];
     for (size_t j = 0; j < iv.second.size(); ++j) {
       Lit oldLit = iv.second[j];
-      Lit newLit = (oldLit < 0 ? inv(varMap[-oldLit]) : varMap[oldLit]);
+      Lit newLit = (oldLit < 0 ? invert(varMap[-oldLit]) : varMap[oldLit]);
       iv.second[j] = newLit;
     }
   }
@@ -82,7 +81,7 @@ int main(int, char**) {
     Clause cl;
     for (size_t j = 0; j < cnf.clauses[i].size(); ++j) {
       Lit oldLit = cnf.clauses[i][j];
-      Lit newLit = (oldLit < 0 ? inv(varMap[-oldLit]) : varMap[oldLit]);
+      Lit newLit = (oldLit < 0 ? invert(varMap[-oldLit]) : varMap[oldLit]);
       // These two lines do pure literal elimination
       if (newLit == FALSE) continue;
       if (newLit == TRUE) goto skipClause;
@@ -93,9 +92,8 @@ int main(int, char**) {
   }
 
   cnf.clauses = newClauses;
-  cnf.nvars = c;
+  cnf.numVariables = c;
 
-  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
   cnf.unparse(stdout);
 
   return 0;

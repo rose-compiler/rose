@@ -1,4 +1,4 @@
-#include "cnf.h"
+#include "satProblem.h"
 
 #include <cassert>
 #include <cstdio>
@@ -13,10 +13,9 @@
 using namespace std;
 
 int main(int argc, char** argv) {
-  CNF cnf;
+  SatProblem cnf;
   cnf.parse(stdin);
   vector<bool> clausesToRemove(cnf.clauses.size(), false);
-  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   map<Lit, bool> units;
 
@@ -134,7 +133,6 @@ int main(int argc, char** argv) {
     }
   }
 
-  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
   cnf.unparse(stdout);
   return 0;
 }

@@ -5,7 +5,7 @@ if USE_BINARY_ANALYSIS_TESTS
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences
+bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
@@ -13,12 +13,13 @@ x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-simplifyCnf_SOURCES = simplifyCnf.C cnf.h
-removeUnusedVariables_SOURCES = removeUnusedVariables.C
-unitResolve_SOURCES = unitResolve.C
-factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C
+simplifyCnf_SOURCES = simplifyCnf.C satProblem.h
+removeUnusedVariables_SOURCES = removeUnusedVariables.C satProblem.h
+unitResolve_SOURCES = unitResolve.C satProblem.h
+factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C satProblem.h
+doubleStep_SOURCES = doubleStep.C satProblem.h
 
-include_HEADERS = x86AssemblyToC.h satProblem.h cnf.h
+include_HEADERS = x86AssemblyToC.h satProblem.h satProblem.h
 
 jeremiah-check: x86AssemblyToCDemo x86AssemblyToNetlist
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \

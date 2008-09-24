@@ -131,7 +131,7 @@ struct NetlistTranslator {
     fm.insert(make_pair(x86flag_of, flagsReg[6]));
   }
 
-  NetlistTranslator(FILE* outfile): memoryWriteCountBase(0), memoryReadCountBase(0), problem(outfile) {
+  NetlistTranslator(): memoryWriteCountBase(0), memoryReadCountBase(0), problem() {
     makeRegMaps(newRegisterMap, newFlagMap, "out");
   }
 
@@ -1376,7 +1376,7 @@ struct NetlistTranslator {
   }
 
   void writeBack(Lit isThisIp) {
-    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
+    fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
     for (RegMap::const_iterator i = registerMap.begin(); i != registerMap.end(); ++i) {
       for (size_t j = 0; j < 32; ++j) {
         problem.condEquivalence(isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
@@ -1389,7 +1389,7 @@ struct NetlistTranslator {
       problem.addInterface("memoryWrite_" + boost::lexical_cast<std::string>(memoryWriteCountBase), toVector(concat(single(isThisIp), concat(i->first, i->second))));
       ++memoryWriteCountBase;
     }
-    fprintf(stderr, "Have %d variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
+    fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
   }
 
   void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end, const LitList(32)& origIp) {
@@ -1480,7 +1480,7 @@ int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   FILE* f = fopen("foo.dimacs", "w");
   assert (f);
-  NetlistTranslator t(f);
+  NetlistTranslator t;
   NetlistTranslator::RegMap origRegisterMap;
   NetlistTranslator::FlagMap origFlagMap;
   t.makeRegMaps(origRegisterMap, origFlagMap, "in");
@@ -1494,7 +1494,7 @@ int main(int argc, char** argv) {
     t.initialMemoryReads.clear();
     t.processBlock(b, origRegisterMap[NetlistTranslator::ip()]);
   }
-  t.problem.toDimacs();
+  t.problem.unparse(f);
   fclose(f);
   return 0;
 }

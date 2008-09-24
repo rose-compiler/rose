@@ -8,7 +8,7 @@
 #include <set>
 #include <algorithm>
 #include <bitset>
-#include "cnf.h"
+#include "satProblem.h"
 
 using namespace std;
 
@@ -114,6 +114,36 @@ void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix) {
     }
     nextWorklistEntry: ;
   }
+
+  // Filter out redundant clauses (those that are resolvents of other kept clauses
+  vector<bool> signMatrixKeep(signMatrix.size(), true);
+  for (size_t i = 0; i < signMatrix.size(); ++i) {
+    // Resolvents of non-kept clauses (i.e., those that are themselves redundant) are also redundant
+    // if (!signMatrixKeep[i]) continue;
+    SimplificationClauseSet cs1 = signMatrix[i];
+    for (size_t j = 0; j < i; ++j) {
+      // if (!signMatrixKeep[j]) continue;
+      SimplificationClauseSet cs2 = signMatrix[j];
+      SimplificationClauseSet res;
+      bool resolutionSucceeded = resolve(cs1, cs2, res);
+      if (!resolutionSucceeded) continue;
+      for (size_t k = 0; k < signMatrix.size(); ++k) {
+        if (res == signMatrix[k]) {
+          signMatrixKeep[k] = false;
+        }
+      }
+    }
+  }
+
+  vector<SimplificationClauseSet> signMatrix2;
+  for (size_t i = 0; i < signMatrix.size(); ++i) {
+    if (signMatrixKeep[i]) {
+      signMatrix2.push_back(signMatrix[i]);
+    }
+  }
+
+  signMatrix.swap(signMatrix2);
+
 #if 0
   fprintf(stderr, "Out:\n");
   for (size_t i = 0; i < signMatrix.size(); ++i) {
@@ -174,7 +204,7 @@ int main(int argc, char** argv) {
   assert (argc == 2);
   size_t variableLimit = (size_t)atoi(argv[1]);
   assert (variableLimit <= maxVariableCountToSimplify);
-  CNF cnf;
+  SatProblem cnf;
   cnf.parse(stdin);
   set<Var> frozenVars;
   vector<bool> liveClauses(cnf.clauses.size(), true);
@@ -187,12 +217,11 @@ int main(int argc, char** argv) {
       }
     }
   }
-  fprintf(stderr, "Starting with %zu var(s) and %zu clause(s)\n", cnf.nvars, cnf.clauses.size());
 
   bool changed = true;
   size_t passCount = 0;
   set<Var> variablesToCheck;
-  for (size_t i = 1; i <= cnf.nvars; ++i) {
+  for (size_t i = 1; i <= cnf.numVariables; ++i) {
     variablesToCheck.insert(i);
   }
 
@@ -201,8 +230,8 @@ int main(int argc, char** argv) {
     ++passCount;
     fprintf(stderr, "Pass %zu\n", passCount);
 
-    std::vector<std::vector<Var> > variableCoincidences(cnf.nvars + 1);
-    std::vector<std::vector<size_t> > variableUses(cnf.nvars + 1);
+    std::vector<std::vector<Var> > variableCoincidences(cnf.numVariables + 1);
+    std::vector<std::vector<size_t> > variableUses(cnf.numVariables + 1);
     for (size_t i = 0; i < cnf.clauses.size(); ++i) {
       if (!liveClauses[i]) continue;
       const Clause& cl = cnf.clauses[i];
@@ -314,7 +343,6 @@ int main(int argc, char** argv) {
     if (liveClauses[i]) finalClauses.push_back(cnf.clauses[i]);
   }
   cnf.clauses = finalClauses;
-  fprintf(stderr, "Finished with %zu variables and %zu clauses\n", cnf.nvars, cnf.clauses.size());
   cnf.unparse(stdout);
 
   return 0;
