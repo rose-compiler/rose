@@ -52,7 +52,7 @@ TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
 
 myuserid=`whoami`
-myname="`getenv passwd $myuserid | cut -f 5 -d :`"
+myname="`getent passwd $myuserid | cut -f 5 -d :`"
 
 #------------------------------------------------------
 # Starting Section
