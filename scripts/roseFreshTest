@@ -52,7 +52,7 @@ TMPDIR=${ROSE_TOP}/tmp/
 export TMPDIR
 
 myuserid=`whoami`
-myname="`getent passwd $myuserid | cut -f 5 -d :`"
+myname="`./getRealName "$myuserid" || echo "$myuserid"`"
 
 #------------------------------------------------------
 # Starting Section
