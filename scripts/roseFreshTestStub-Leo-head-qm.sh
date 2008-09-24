@@ -32,7 +32,7 @@ ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="liaoch@llnl.gov yuan5@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.4.5/bin/svn
+SVN=/nfs/apps/subversion/1.5.1/bin/svn
 SVNOP=checkout
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
 # using data as revision number needs {}

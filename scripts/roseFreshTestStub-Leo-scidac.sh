@@ -23,7 +23,7 @@ ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
 MAILADDRS="liaoch@llnl.gov willcock2@llnl.gov"
 
 # the right version of subversion is essential!!
-SVN=/nfs/apps/subversion/1.4.5/bin/svn
+SVN=/nfs/apps/subversion/1.5.1/bin/svn
 SVNOP=checkout
 
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
@@ -44,8 +44,10 @@ MAKEFLAGS="-j16"
 
 #KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
-# skip make dist, make distcheck, make source_with_binary_edg_dist etc
-SKIP_DIST_TEST=yes
+# skip make dist, make distcheck, 
+#SKIP_DIST_TEST=yes
 
+#make source_with_binary_edg_dist etc
+#ENABLE_BUILD_BINARY_EDG=1
 set -e
 set -o pipefail
