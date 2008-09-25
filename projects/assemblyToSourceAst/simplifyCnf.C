@@ -9,14 +9,17 @@
 #include <algorithm>
 #include <bitset>
 #include "satProblem.h"
+#include <boost/smart_ptr.hpp>
 
 using namespace std;
 
-static const size_t maxVariableCountToSimplify = 128;
+static const size_t maxVariableCountToSimplify = 64;
+
+typedef bitset<maxVariableCountToSimplify> SimplificationClauseSetEntry;
 
 struct SimplificationClauseSet {
-  bitset<maxVariableCountToSimplify> positive;
-  bitset<maxVariableCountToSimplify> negative;
+  SimplificationClauseSetEntry positive;
+  SimplificationClauseSetEntry negative;
   // Invariant: positive & negative is empty
 
   friend bool operator==(const SimplificationClauseSet& a, const SimplificationClauseSet& b) {
@@ -24,95 +27,146 @@ struct SimplificationClauseSet {
   }
 };
 
-enum SubsumptionStatus {
-  A_SUBSUMES_B, B_SUBSUMES_A, A_AND_B_ARE_EQUAL, INCOMPARABLE
-};
-
-SubsumptionStatus checkSubsumption(const SimplificationClauseSet& a, const SimplificationClauseSet& b) {
+static inline bool aSubsumesB(const SimplificationClauseSet& a, const SimplificationClauseSet& b) {
   bool a_is_subset_of_b = (a.positive & b.positive) == a.positive && (a.negative & b.negative) == a.negative;
-  bool b_is_subset_of_a = (a.positive & b.positive) == b.positive && (a.negative & b.negative) == b.negative;
-  if (a_is_subset_of_b) {
-    return b_is_subset_of_a ? A_AND_B_ARE_EQUAL : A_SUBSUMES_B;
-  } else {
-    return b_is_subset_of_a ? B_SUBSUMES_A : INCOMPARABLE;
-  }
+  return a_is_subset_of_b;
 }
 
-bool resolve(const SimplificationClauseSet& a, const SimplificationClauseSet& b, SimplificationClauseSet& out) {
-  out.positive = a.positive | b.positive;
-  out.negative = a.negative | b.negative;
-  bitset<maxVariableCountToSimplify> variablesToResolveOnMask = out.positive & out.negative;
-  if (variablesToResolveOnMask.count() != 1) return false;
-  out.positive &= ~variablesToResolveOnMask;
-  out.negative &= ~variablesToResolveOnMask;
+static inline bool resolve(const SimplificationClauseSet& a, const SimplificationClauseSet& b, SimplificationClauseSet& out) {
+  SimplificationClauseSetEntry outPositive = a.positive | b.positive;
+  SimplificationClauseSetEntry outNegative = a.negative | b.negative;
+  SimplificationClauseSetEntry variablesToResolveOnMask = outPositive & outNegative;
+  if (variablesToResolveOnMask.none()) return false;
+  // From PowerPC Compiler Writer's Guide: check whether at most one bit of variablesToResolveOnMask is set
+  unsigned long variablesToResolveOnMaskLong = variablesToResolveOnMask.to_ulong();
+  if ((variablesToResolveOnMaskLong & (variablesToResolveOnMaskLong - 1)) != 0) return false;
+  out.positive = outPositive & ~variablesToResolveOnMask;
+  out.negative = outNegative & ~variablesToResolveOnMask;
   return true;
 }
 
-void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix) {
+void printSCS(SimplificationClauseSet scs) {
+  for (size_t j = 0; j < maxVariableCountToSimplify; ++j) {
+    char c;
+    if (scs.positive[j]) {
+      if (scs.negative[j]) {
+        c = 'X';
+      } else {
+        c = '+';
+      }
+    } else if (scs.negative[j]) {
+      c = '-';
+    } else {
+      c = ' ';
+    }
+    fputc(c, stderr);
+  }
+  fputc('\n', stderr);
+}
+
+void printSignMatrix(const vector<SimplificationClauseSet>& signMatrix) {
+  for (size_t i = 0; i < signMatrix.size(); ++i) {
+    printSCS(signMatrix[i]);
+  }
+}
+
+void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix, bool doPrint) {
   for (size_t i = 0; i < signMatrix.size(); ++i) { // size may be updated
     // fprintf(stderr, "signMatrix.size() == %zu\n", signMatrix.size());
     for (size_t j = 0; j < i; ++j) {
       SimplificationClauseSet res;
       bool didResolve = resolve(signMatrix[i], signMatrix[j], res);
       if (didResolve) {
+#if 0
+        if (doPrint) {
+          fprintf(stderr, "Trying to add\n");
+          printSCS(res);
+          fprintf(stderr, "from\n");
+          printSCS(signMatrix[i]);
+          printSCS(signMatrix[j]);
+        }
+#endif
         bool doInsert = true;
         for (size_t k = 0; k < signMatrix.size(); ++k) {
-          SubsumptionStatus ss = checkSubsumption(signMatrix[k], res);
-          if (ss == A_SUBSUMES_B || ss == A_AND_B_ARE_EQUAL) {
+          if (aSubsumesB(signMatrix[k], res)) {
             doInsert = false;
+#if 0
+            if (doPrint) {
+              fprintf(stderr, "Subsumed by\n");
+              printSCS(signMatrix[k]);
+            }
+#endif
             break;
-          } else if (ss == B_SUBSUMES_A) {
+          } else if (aSubsumesB(res, signMatrix[k])) {
             signMatrix[k] = res;
             doInsert = false;
+#if 0
+            if (doPrint) {
+              fprintf(stderr, "Subsumes (replacing)\n");
+              printSCS(signMatrix[k]);
+            }
+#endif
             break;
           }
         }
         if (doInsert) {
+#if 0
+          if (doPrint) {
+            fprintf(stderr, "Adding\n");
+            printSCS(res);
+          }
+#endif
           signMatrix.push_back(res);
         }
       }
     }
   }
 
-  vector<SimplificationClauseSet> worklist(signMatrix.begin(), signMatrix.end());
-  while (!worklist.empty()) {
-    // fprintf(stderr, "Worklist size = %zu\n", worklist.size());
-    SimplificationClauseSet a = worklist.back();
-    worklist.pop_back();
+  {
     vector<bool> keep(signMatrix.size(), true);
-    for (size_t j = 0; j < signMatrix.size(); ++j) {
-      if (keep[j] == false) continue;
-      const SimplificationClauseSet& b = signMatrix[j];
-      switch (checkSubsumption(a, b)) {
-        case A_SUBSUMES_B:
-        case A_AND_B_ARE_EQUAL: {
+    for (size_t i = 0; i < signMatrix.size(); ++i) {
+      if (keep[i] == false) continue;
+      SimplificationClauseSet a = signMatrix[i];
+      for (size_t j = 0; j < i; ++j) {
+        if (keep[j] == false) continue;
+        SimplificationClauseSet b = signMatrix[j];
+        if (aSubsumesB(a, b)) {
           // Skip b
-          // fprintf(stderr, "Removing %zu\n", j);
+#if 0
+          if (doPrint) {
+            fprintf(stderr, "Removing\n");
+            printSCS(b);
+            fprintf(stderr, "Subsumed by\n");
+            printSCS(a);
+          }
+#endif
           keep[j] = false;
-          goto nextJ;
-        }
-        case B_SUBSUMES_A: {
+        } else if (aSubsumesB(b, a)) {
           // Skip a
           // fprintf(stderr, "Removing a\n");
-          goto nextWorklistEntry;
-        }
-        case INCOMPARABLE: {
-          break;
-        }
+#if 0
+          if (doPrint) {
+            fprintf(stderr, "Removing\n");
+            printSCS(a);
+            fprintf(stderr, "Subsumed by\n");
+            printSCS(b);
+          }
+#endif
+          keep[i] = false;
+          goto nextI;
+        } else {}
       }
-      nextJ: ;
+      nextI: ;
     }
     {
-      vector<SimplificationClauseSet> newSignMatrix;
+      size_t newSignMatrixSize = 0;
       for (size_t i = 0; i < signMatrix.size(); ++i) {
         if (keep[i]) {
-          newSignMatrix.push_back(signMatrix[i]);
+          signMatrix[newSignMatrixSize++] = signMatrix[i];
         }
       }
-      signMatrix.swap(newSignMatrix);
-      signMatrix.push_back(a);
+      signMatrix.resize(newSignMatrixSize);
     }
-    nextWorklistEntry: ;
   }
 
   // Filter out redundant clauses (those that are resolvents of other kept clauses
@@ -135,27 +189,16 @@ void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix) {
     }
   }
 
-  vector<SimplificationClauseSet> signMatrix2;
+  size_t newSignMatrixSize = 0;
   for (size_t i = 0; i < signMatrix.size(); ++i) {
     if (signMatrixKeep[i]) {
-      signMatrix2.push_back(signMatrix[i]);
+      signMatrix[newSignMatrixSize++] = signMatrix[i];
     }
   }
-
-  signMatrix.swap(signMatrix2);
-
-#if 0
-  fprintf(stderr, "Out:\n");
-  for (size_t i = 0; i < signMatrix.size(); ++i) {
-    for (size_t j = 0; j < signMatrix[i].size(); ++j) {
-      fputc((signMatrix[i][j] == 0 ? ' ' : signMatrix[i][j] == 1 ? '+' : '-'), stderr);
-    }
-    fputc('\n', stderr);
-  }
-#endif
+  signMatrix.resize(newSignMatrixSize);
 }
 
-void minimizeCnf(const vector<Clause>& input, vector<Clause>& output) {
+void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, bool doPrint) {
   vector<Var> variables;
   for (size_t i = 0; i < input.size(); ++i) {
     const Clause& cl = input[i];
@@ -165,6 +208,15 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output) {
   }
   sort(variables.begin(), variables.end());
   variables.erase(unique(variables.begin(), variables.end()), variables.end());
+#if 0
+  if (doPrint) {
+    fprintf(stderr, "variables =");
+    for (size_t i = 0; i < variables.size(); ++i) {
+      fprintf(stderr, " %d", variables[i]);
+    }
+    fprintf(stderr, "\n");
+  }
+#endif
 
   assert (variables.size() <= maxVariableCountToSimplify);
 
@@ -176,7 +228,9 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output) {
     sc.negative.reset();
     for (size_t j = 0; j < cl.size(); ++j) {
       Lit l = cl[j];
-      size_t idx = find(variables.begin(), variables.end(), abs(l)) - variables.begin();
+      pair<vector<Var>::const_iterator, vector<Var>::const_iterator> range = equal_range(variables.begin(), variables.end(), abs(l));
+      assert (range.first != range.second);
+      size_t idx = range.first - variables.begin();
       if (l < 0) {
         sc.negative.set(idx);
       } else {
@@ -185,7 +239,22 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output) {
     }
   }
 
-  doAllMinimizations(temp);
+#if 0
+  if (doPrint) {
+    fprintf(stderr, "%*sv\n", (int)(find(variables.begin(), variables.end(), 131) - variables.begin()), "");
+    fprintf(stderr, "In:\n");
+    printSignMatrix(temp);
+  }
+#endif
+
+  doAllMinimizations(temp, doPrint);
+
+#if 0
+  if (doPrint) {
+    fprintf(stderr, "Out:\n");
+    printSignMatrix(temp);
+  }
+#endif
 
   for (size_t i = 0; i < temp.size(); ++i) {
     Clause cl;
@@ -274,8 +343,9 @@ int main(int argc, char** argv) {
         const Clause& cl = cnf.clauses[*j];
         // We now process any clause that contains only variables that are in edgeList, not just those that actually contain the current variable
         bool skipThisClause = !liveClauses[*j];
-        for (size_t k = 0; k < cl.size(); ++k) {
-          if (find(varsToExamine.begin(), varsToExamine.end(), abs(cl[k])) == varsToExamine.end()) {
+        for (size_t k = 0; !skipThisClause && k < cl.size(); ++k) {
+          if (!binary_search(edgeList.begin(), edgeList.end(), abs(cl[k])) &&
+              abs(cl[k]) != var) {
             skipThisClause = true;
             break;
           }
@@ -286,7 +356,16 @@ int main(int argc, char** argv) {
       }
       std::vector<Clause> newClausesTemp;
       std::vector<Clause> newClausesTemp2;
-      minimizeCnf(oldClausesTemp, newClausesTemp2);
+#if 0
+      if (find(varsToExamine.begin(), varsToExamine.end(), 131) != varsToExamine.end()) {
+        fprintf(stderr, "varsToExamine =");
+        for (size_t i = 0; i < varsToExamine.size(); ++i) {
+          fprintf(stderr, " %d", varsToExamine[i]);
+        }
+        fprintf(stderr, "\n");
+      }
+#endif
+      minimizeCnf(oldClausesTemp, newClausesTemp2, (find(varsToExamine.begin(), varsToExamine.end(), 131) != varsToExamine.end()));
       if (frozenVars.find(var) != frozenVars.end()) {
         newClausesTemp = newClausesTemp2;
       } else {

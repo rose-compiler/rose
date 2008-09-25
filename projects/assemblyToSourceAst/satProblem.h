@@ -94,18 +94,17 @@ LitList(NumBits) number(unsigned int n) {
   return result;
 }
 
-static bool absLess(Lit a, Lit b) {
+static inline bool absLess(Lit a, Lit b) {
   if (abs(a) < abs(b)) return true;
   if (abs(a) > abs(b)) return false;
   return a < b;
 }
 
-static bool clauseLess(const Clause& a, const Clause& b) {
-  Clause absa(a), absb(b);
-  for (size_t i = 0; i < absa.size(); ++i) absa[i] = abs(absa[i]);
-  for (size_t i = 0; i < absb.size(); ++i) absb[i] = abs(absb[i]);
-  if (absa < absb) return true;
-  if (absb < absa) return false;
+static inline bool clauseLess(const Clause& a, const Clause& b) {
+  for (size_t i = 0; i < a.size() && i < b.size(); ++i) {
+    if (abs(a[i]) < abs(b[i])) return true;
+    if (abs(a[i]) > abs(b[i])) return false;
+  }
   return a < b;
 }
 

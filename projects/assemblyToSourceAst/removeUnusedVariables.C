@@ -9,7 +9,7 @@
 #include <set>
 #include <algorithm>
 
-#undef DO_PURE_LITERAL_ELIMINATION
+#define DO_PURE_LITERAL_ELIMINATION
 
 using namespace std;
 
@@ -26,6 +26,19 @@ int main(int, char**) {
   }
 
   set<Var> usedVars;
+  set<Var> interfaceUsedVars;
+
+  for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
+    const InterfaceVariable& iv = cnf.interfaceVariables[i];
+    for (size_t j = 0; j < iv.second.size(); ++j) {
+      Lit oldLit = iv.second[j];
+      if (oldLit != -oldLit) {
+        interfaceUsedVars.insert(abs(oldLit));
+      }
+    }
+  }
+  usedVars.insert(interfaceUsedVars.begin(), interfaceUsedVars.end());
+
   for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
 #ifdef DO_PURE_LITERAL_ELIMINATION
     if (*i < 0) continue;
@@ -37,19 +50,16 @@ int main(int, char**) {
 #endif
   }
 
-#ifndef DO_PURE_LITERAL_ELIMINATION
-  for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
-    InterfaceVariable& iv = cnf.interfaceVariables[i];
-    for (size_t j = 0; j < iv.second.size(); ++j) {
-      Lit oldLit = iv.second[j];
-      if (oldLit != -oldLit) {
-        usedVars.insert(abs(oldLit));
-      }
+  map<Var, Var> varMap;
+#ifdef DO_PURE_LITERAL_ELIMINATION
+  for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
+    if (usedLits.find(-*i) == usedLits.end() && interfaceUsedVars.find(abs(*i)) == interfaceUsedVars.end()) {
+      varMap[abs(*i)] = ((*i < 0) ? FALSE : TRUE);
+      usedVars.erase(abs(*i));
     }
   }
 #endif
 
-  map<Var, Var> varMap;
   size_t c = 1;
   for (set<Var>::const_iterator i = usedVars.begin(); i != usedVars.end(); ++i, ++c) {
     varMap[*i] = c;
@@ -59,20 +69,14 @@ int main(int, char**) {
     }
 #endif
   }
-#ifdef DO_PURE_LITERAL_ELIMINATION
-  for (set<Lit>::const_iterator i = usedLits.begin(); i != usedLits.end(); ++i) {
-    if (usedLits.find(-*i) == usedLits.end()) {
-      varMap[abs(*i)] = ((*i < 0) ? FALSE : TRUE);
-    }
-  }
-#endif
 
   for (size_t i = 0; i < cnf.interfaceVariables.size(); ++i) {
     InterfaceVariable& iv = cnf.interfaceVariables[i];
     for (size_t j = 0; j < iv.second.size(); ++j) {
       Lit oldLit = iv.second[j];
+      assert (oldLit == -oldLit || varMap[abs(oldLit)] != 0);
       Lit newLit = (oldLit < 0 ? invert(varMap[-oldLit]) : varMap[oldLit]);
-      iv.second[j] = newLit;
+      iv.second[j] = (oldLit == -oldLit ? oldLit : newLit);
     }
   }
 
@@ -93,8 +97,6 @@ int main(int, char**) {
 
   cnf.clauses = newClauses;
   cnf.numVariables = c;
-
   cnf.unparse(stdout);
-
   return 0;
 }

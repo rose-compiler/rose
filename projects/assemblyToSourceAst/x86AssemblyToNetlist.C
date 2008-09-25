@@ -115,7 +115,7 @@ struct NetlistTranslator {
     for (int r = 0; r < 8; ++r) {
       LitList(32) thisReg = problem.newVars<32>();
       problem.addInterface(prefix + "_gpr" + boost::lexical_cast<std::string>(r), toVector(thisReg));
-      rm.insert(make_pair(gpr((X86GeneralPurposeRegister)r), problem.newVars<32>()));
+      rm.insert(make_pair(gpr((X86GeneralPurposeRegister)r), thisReg));
     }
     LitList(32) ipReg = problem.newVars<32>();
     problem.addInterface(prefix + "_ip", toVector(ipReg));
@@ -1379,6 +1379,7 @@ struct NetlistTranslator {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
     for (RegMap::const_iterator i = registerMap.begin(); i != registerMap.end(); ++i) {
       for (size_t j = 0; j < 32; ++j) {
+        // fprintf(stderr, "Adding register output equivalence %d -> %d == %d\n", isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
         problem.condEquivalence(isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
       }
     }

@@ -5,7 +5,7 @@ if USE_BINARY_ANALYSIS_TESTS
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep
+bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables
 
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
@@ -18,6 +18,7 @@ removeUnusedVariables_SOURCES = removeUnusedVariables.C satProblem.h
 unitResolve_SOURCES = unitResolve.C satProblem.h
 factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C satProblem.h
 doubleStep_SOURCES = doubleStep.C satProblem.h
+eliminateRedundantVariables_SOURCES = eliminateRedundantVariables.C satProblem.h
 
 include_HEADERS = x86AssemblyToC.h satProblem.h satProblem.h
 
