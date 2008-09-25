@@ -89,6 +89,7 @@ int main(int argc, char** argv) {
         }
       }
       if (hasCoincidence != 2) continue;
+      sort(&newCl[0], &newCl[clSize], absLess);
       assert (*newCl == 0);
       for (size_t j = 0; j < clSize; ++j) {
         Lit l1 = cl[j];

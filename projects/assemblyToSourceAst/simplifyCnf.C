@@ -12,7 +12,7 @@
 
 using namespace std;
 
-static const size_t maxVariableCountToSimplify = 64;
+static const size_t maxVariableCountToSimplify = 128;
 
 struct SimplificationClauseSet {
   bitset<maxVariableCountToSimplify> positive;
