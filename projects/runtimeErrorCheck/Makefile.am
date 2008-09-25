@@ -42,19 +42,19 @@ CLEANFILES = *.out *.ti *.pdf test_runtime*
 
 # DQ (7/25/2005): The current changes to the AST break these test programs:
 check-local: runtimeCheck $(TESTCODES)
-	./runtimeCheck $(TESTCODES) -run -o test_bin
-	./runtimeCheck $(TESTCODES) -pdf -o test_bin
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES) -run -o test_bin
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES) -pdf -o test_bin
 	./test_bin 
-	./runtimeCheck $(TESTCODES2) -run -o test_bin2
-	./runtimeCheck $(TESTCODES2) -pdf -o test_bin2
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES2) -run -o test_bin2
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES2) -pdf -o test_bin2
 	./test_bin2 
-	./runtimeCheck $(TESTCODES4) -run -o test_bin4
-	./runtimeCheck $(TESTCODES4) -pdf -o test_bin4
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES4) -run -o test_bin4
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES4) -pdf -o test_bin4
 	./test_bin4 
-	./runtimeCheck $(TESTCODES5) -run -o test_bin5
-	./runtimeCheck $(TESTCODES5) -pdf -o test_bin5
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES5) -run -o test_bin5
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES5) -pdf -o test_bin5
 	./test_bin5 
-	./runtimeCheck $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
+	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
 	$(LIBTOOL) --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
 	./test_bin3 $(srcdir)/example.C -run
 #	@echo "*********************************************************************************************************************"

@@ -909,8 +909,8 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
      return syn;
    }
 
+#if CAN_NOT_COMPILE_WITH_ROSE != true
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
 ///////////////////////////////////////////////////////////////////////////////
 //  Include Wave itself
 #include <boost/wave.hpp>
@@ -924,6 +924,9 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
 #include "advanced_preprocessing_hooks.h"
 // #include "attachPreprocessingInfo.h"
 #include "attributeListMap.h"
+
+#endif
+
 
 //Include files to get the current path
 #include <unistd.h>
@@ -944,8 +947,6 @@ std::list<SgNode*> findNodes(SgNode* astNode){
      return returnList;
 }
 
-// endif for USE_ROSE_BOOST_WAVE_SUPPORT
-#endif
 
 
 // AS (011306) Support for Wave preprocessor
@@ -984,17 +985,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   // Build the AST used by ROSE
   // SgProject* project = frontend(argc,argv);
      std::vector<std::string>  includeSpecifierlist;
-  //     std::vector<std::string>  includesFromProject = sageFilePtr->get_project()->get_includeDirectorySpecifierList();
-  //     std::vector<std::string>  includesFromProject = sageFilePtr->get_includeDirectorySpecifierList();
 
-  // const std::vector<std::string>  sourceFileNameList   = project->get_sourceFileNameList();
-  // ROSE_ASSERT(project != NULL);
-
-  // These are defined in "rose_config.h", and automatically generated header file (by autoheader)
-  /* Include path for backend C++ compiler. */
-  // define CXX_INCLUDE_STRING "-I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs1 -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs2 -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs3 -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs4 -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs5 -I/home/dquinlan2/ROSE/LINUX-3.3.2/g++_HEADERS/hdrs6 "
-  /* -D options to hand to EDG C++ front-end. */
-  // define CXX_SPEC_DEF " -D__GNUG__=3 -D__GNUC__=3 -D__GNUC_MINOR__=3 -D__GNUC_PATCHLEVEL__=2 -D_GNU_SOURCE --preinclude rose_edg_macros_and_functions_required_for_gnu.h "
 
   // Build the list that we will hand off to boost-wave
   //std::vector<std::string> includeSpecifierlist;
@@ -1071,39 +1062,19 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      if(SgProject::get_verbose() >= 1)
           std::cout << "DONE INCLUDES FROM COMMANDLInE" << std::endl;
 
-  //Add the current working directory to the include path
-  //char CurrentPath[MAXPATHLEN];
-  //getcwd(CurrentPath, MAXPATHLEN);
-  //std::cout << "CURRENT PATH IS: " << CurrentPath << std::endl;
-  //includeSpecifierlist.push_back("-I"+string(CurrentPath)+"/");
-  // Debugging support
- 
-                                 
-     if(SgProject::get_verbose() >= 1){
-       // tps (Mar 12, 2008) : commented this out since the arguments are not valid anymore
-       //printf ("include paths are: %s \n",CommandlineProcessing::generateStringFromArgList(includeSpecifierlist).c_str());
-       //     printf ("macros are: %s \n",CommandlineProcessing::generateStringFromArgList(macroList).c_str());
-       //    printf ("preinclude headers are: %s \n",CommandlineProcessing::generateStringFromArgList(preincludeList).c_str());
-     }
-
      std::vector<SgNode*> accessFunctionsList;
 
   // Build list of value expressions
-  // std::vector<SgNode*> valueExp = NodeQuery::querySubTree (project,&queryFloatDoubleValExp);
      std::vector<SgNode*> valueExp = NodeQuery::querySubTree (sageFilePtr,&queryFloatDoubleValExp);
 
   // Open and read in the specified input file.
-  // std::string sourceFileName = *(sourceFileNameList.begin());
      std::string sourceFileName = sageFilePtr->getFileName();
 
-  //     if(sourceFileName == string(sageFilePtr->getFileName()))
-  //       sourceFileName = sageFilePtr->getWorkingDirectory() + string("/")+sourceFileName;
      if(SgProject::get_verbose() >= 1){
 	     std::cout << "Source file name: \"" << sourceFileName << "\"" << std::endl;
 	     std::cout << "Source file name: \"" << sageFilePtr->getFileName()<< "\"" <<  std::endl;
      }
-  //if(sourceFileName.find("/",0)==string::npos)
-  //     sourceFileName=string(CurrentPath)+"/"+sourceFileName;
+       sourceFileName=string(CurrentPath)+"/"+sourceFileName;
      std::ifstream instream(sourceFileName.c_str());
      std::string instring;
 

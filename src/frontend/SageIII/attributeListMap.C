@@ -1,6 +1,7 @@
 #include "rose_config.h"
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+#if CAN_NOT_COMPILE_WITH_ROSE != true
+
 
 #include "attributeListMap.h"
 
@@ -231,43 +232,4 @@ void AttributeListMap::addElement(boost::wave::token_id wave_typeid, const strin
 }
 #endif
 
-
-#if 0
-ROSEAttributesList *AttributeListMap::getPreprocessorDirectives(string filename) {
-     ROSE_ASSERT(currentMapOfAttributes.find(filename)!=currentMapOfAttributes.end());
-
-     FILE *fp = NULL;
-  // int j = 0;
-     ROSEAttributesList *preprocessorInfoList = new ROSEAttributesList; /* create a new list */
-     ROSE_ASSERT (preprocessorInfoList != NULL);
-/*
-     if( fileName != NULL ) {
-          fp = fopen( fileName, "r");
-          if(fp) {
-               yyin = fp;
-               yylex();
-
-	            // preprocessorList.display("MSTEST"); // writes all gathered information to stdout
-
-               // bugfix (9/29/2001)
-               // The semantics required here is to move the elements accumulated into the
-               // preprocessorList into the preprocessorInfoList and delete them from the
-               // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
-               // when the next file is processed).  We have to be able to process several files using
-               // this getPreprocessorDirectives() function.
-                  preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
-
-               // The accumulator list should now be empty
-               assert (preprocessorList.getLength() == 0);
-               fclose(fp);  
-          }
-     }
-*/
-     return *currentMapOfAttributes.find(filename);
-}
 #endif
-
-
-// endif for USE_ROSE_BOOST_WAVE_SUPPORT
-#endif
-

@@ -11,11 +11,14 @@
 #include "general_token_defs.h"
 
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+#if CAN_NOT_COMPILE_WITH_ROSE != true
 
 #include <boost/wave/cpplexer/cpp_lex_token.hpp>    // token class
+#include <boost/wave/cpplexer/cpp_lex_iterator.hpp>   // lexer type
+
 #endif
 
+//template boost::wave::cpplexer::impl::token_data<std::string, boost::wave::util::file_position_type>::delete(std::size_t) ; 
 // DQ (10/16/2002): Required for compiling with SUN 5.2 C++ compiler
 #ifndef NAMESPACE_IS_BROKEN
 // DQ (12/30/2005): This is a Bad Bad thing to do (I can explain)
@@ -39,12 +42,21 @@ class Sg_File_Info;
 // DQ (1/21/2008): Need forward declaration
 class SgFile;
 
+#if CAN_NOT_COMPILE_WITH_ROSE != true
+
+typedef boost::wave::cpplexer::lex_token<> token_type;
+typedef std::vector<token_type>            token_container;
+typedef std::list<token_type>              token_list_container;
+typedef std::vector<std::list<token_type> >       token_container_container;
+
+#endif
+
 //! For preprocessing information including source comments, #include , #if, #define, etc
 class  PreprocessingInfo
    {
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
 
+#if CAN_NOT_COMPILE_WITH_ROSE != true
      public:
 
        //AS using the lexer_token from boost_wave in order to store structures
@@ -65,6 +77,7 @@ class  PreprocessingInfo
      public:
 
 
+         
 	  typedef struct r_include_directive{
 	    //  The parameter 'directive' contains the (expanded) file name found after 
 	    //  the #include directive. This has the format '<file>', '"file"' or 
@@ -125,6 +138,8 @@ class  PreprocessingInfo
           rose_include_directive* get_include_directive();
 
 	  const token_container* get_token_stream();
+          void push_front_token_stream(token_type tok);
+          void push_back_token_stream(token_type tok);
 
      private:
        // AS add macro definition
@@ -188,7 +203,10 @@ class  PreprocessingInfo
 	    // AS (11/18/05): Added macro support
 	       CSkippedToken,
 	       CMacroCall,
-
+            // AS & LIAO (8/12/2008): A PreprocessingInfo that is a 
+            // hand made MacroCall that will expand into a valid
+            // statement.
+               CMacroCallStatement,
 	    // A line replacement will replace a sub-tree in the AST
 	    // after a node with position (filename,line)
 	       LineReplacement,
@@ -226,7 +244,7 @@ class  PreprocessingInfo
          ~PreprocessingInfo();
           PreprocessingInfo();
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT
+#if CAN_NOT_COMPILE_WITH_ROSE != true
        // AS (112105) Added constructors to support macros
           PreprocessingInfo(token_container, DirectiveType, RelativePositionType); 
           PreprocessingInfo(rose_macro_call*, RelativePositionType); 
@@ -234,6 +252,7 @@ class  PreprocessingInfo
           PreprocessingInfo(token_type, token_list_container, bool, DirectiveType,RelativePositionType); 
           PreprocessingInfo(rose_include_directive*, RelativePositionType);
 #endif
+          
        // This constructor is called from the C++ code generated from the lex file (preproc.lex)
        // PreprocessingInfo(DirectiveType, const char *inputStringPointer, int line_no , int col_no,
        //                   int nol, RelativePositionType relPos, bool copiedFlag, bool unparsedFlag) ROSE_DEPRECATED_FUNCTION;
@@ -410,8 +429,10 @@ class ROSEAttributesListContainer
    };
 
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+#if CAN_NOT_COMPILE_WITH_ROSE != true
+
 extern PreprocessingInfo::token_container wave_tokenStream;
+
 #endif
 
 #endif

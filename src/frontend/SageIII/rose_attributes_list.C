@@ -4,7 +4,7 @@
 // #include "rose_attributes_list.h"
 
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+#if CAN_NOT_COMPILE_WITH_ROSE != true
 PreprocessingInfo::token_container wave_tokenStream;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -14,7 +14,8 @@ PreprocessingInfo::token_container wave_tokenStream;
 #include <boost/wave.hpp>
 //#include <boost/wave/grammars/cpp_xpression_grammar.hpp> //as_string
 
-#endif
+#endif 
+
 
 //AS(01/04/07) Global map of filenames to PreprocessingInfo*'s as it is inefficient
 //to get this by a traversal of the AST
@@ -78,13 +79,6 @@ char* PreprocessingInfo::packed()  const
      std::cout << "  packed data in PrerocessingInfo ... " << std::endl;
 #endif
 
-  // DQ and AS (6/23/2006): and the stuff of macros ...
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
-  // AS add macro definition
-  // macroDef = NULL;
-  // AS add macro call
-  // macroCall = NULL;
-#endif
 
      return returnData;
    }
@@ -120,14 +114,17 @@ void PreprocessingInfo::unpacked( char* storePointer )
      std::cout << " but survived " << std::endl;
 #endif
 
+
+#if CAN_NOT_COMPILE_WITH_ROSE != true
+
   // DQ and AS (6/23/2006): and the stuff of macros ...
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
   // AS add macro definition
      macroDef = NULL;
   // AS add macro call
      macroCall = NULL;
+
      tokenStream = NULL;
-#endif
+#endif     
    }
 
 
@@ -135,8 +132,8 @@ void PreprocessingInfo::unpacked( char* storePointer )
 // Member functions for class PreprocessingInfo
 // ********************************************
 
+#if CAN_NOT_COMPILE_WITH_ROSE != true
 
-#if USE_ROSE_BOOST_WAVE_SUPPORT
 // AS(012006) Added to support macros
 PreprocessingInfo::rose_macro_call* PreprocessingInfo::get_macro_call(){ return macroCall; } 
 // AS(012006) Added to support macros
@@ -146,6 +143,16 @@ PreprocessingInfo::rose_macro_definition* PreprocessingInfo::get_macro_def(){ re
 PreprocessingInfo::rose_include_directive* PreprocessingInfo::get_include_directive(){ return includeDirective; } 
 
 const PreprocessingInfo::token_container* PreprocessingInfo::get_token_stream(){ return tokenStream; } 
+
+void PreprocessingInfo::push_back_token_stream(token_type tok){ 
+  tokenStream->push_back(tok);
+  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+  } 
+
+void PreprocessingInfo::push_front_token_stream(token_type tok){ 
+  tokenStream->insert(tokenStream->begin(),tok);
+  internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) ;
+  } 
 
 
 // AS(012006) Added to support macros
@@ -367,9 +374,7 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 
    }
 
- // endif for USE_ROSE_BOOST_WAVE_SUPPORT
 #endif
-
 
 PreprocessingInfo::PreprocessingInfo()
    {
@@ -458,6 +463,7 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
      relativePosition    = prepInfo.getRelativePosition();
      internalString      = prepInfo.internalString;
    }
+
 
 PreprocessingInfo::~PreprocessingInfo()
    {

@@ -1224,6 +1224,10 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                     case PreprocessingInfo::CMacroCall:
                          //AS(1/04/07) Macro rewrapping is currently not supported
                          break;
+                    case PreprocessingInfo::CMacroCallStatement:
+                         curprint ( (*i)->getString());
+                         break;
+
                     case PreprocessingInfo::LineReplacement:
                       // AS(12/07/05) Do nothing. This is a helper case in order to allow unparsing of the
                       // unexpanded macro calls instead of the exapnded macro calls found in the AST. This can
