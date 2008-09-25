@@ -188,7 +188,7 @@ AM_CONDITIONAL(ROSE_USE_LONG_MAKE_CHECK_RULE,test "$with_ROSE_LONG_MAKE_CHECK_RU
 with_xml="no"
 AM_PATH_XML2(2.0.0, [with_xml="yes"])
 
-# Make the use of libxml2 explicitly controled.
+# Make the use of libxml2 explicitly controlled.
 AM_CONDITIONAL(ROSE_USE_XML,test "$with_xml" != no)
 
 # Check for objdump for BinaryContextLookup since it doesn't normally exist on
