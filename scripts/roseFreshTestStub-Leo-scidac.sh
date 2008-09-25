@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Stub file to test the head of  the external ROSE repository
-# 9/6/2008
+# 9/24/2008
 
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
 export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
