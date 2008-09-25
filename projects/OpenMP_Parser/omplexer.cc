@@ -525,6 +525,7 @@ extern int omp_lex();
 
 #include <stdio.h>
 #include <string>
+#include <string.h>
 #include "ompparser.hh"
 
 static const char* ompparserinput = NULL;
@@ -539,7 +540,7 @@ static std::string gExpressionString;
 		} \
 		}
 
-#line 543 "omplexer.cc"
+#line 544 "omplexer.cc"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -690,10 +691,10 @@ YY_DECL
 	register char *yy_cp = NULL, *yy_bp = NULL;
 	register int yy_act;
 
-#line 36 "omplexer.ll"
+#line 37 "omplexer.ll"
 
 
-#line 697 "omplexer.cc"
+#line 698 "omplexer.cc"
 
 	if ( yy_init )
 		{
@@ -778,227 +779,227 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 38 "omplexer.ll"
+#line 39 "omplexer.ll"
 { return ( OMP); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 39 "omplexer.ll"
+#line 40 "omplexer.ll"
 { return ( PARALLEL); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 40 "omplexer.ll"
+#line 41 "omplexer.ll"
 { return ( IF); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 41 "omplexer.ll"
+#line 42 "omplexer.ll"
 { return ( NUM_THREADS); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 42 "omplexer.ll"
+#line 43 "omplexer.ll"
 { return ( ORDERED  ); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 43 "omplexer.ll"
+#line 44 "omplexer.ll"
 { return ( SCHEDULE ); }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 44 "omplexer.ll"
+#line 45 "omplexer.ll"
 { return ( STATIC ); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 45 "omplexer.ll"
+#line 46 "omplexer.ll"
 { return ( DYNAMIC ); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 46 "omplexer.ll"
+#line 47 "omplexer.ll"
 { return ( GUIDED ); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 47 "omplexer.ll"
+#line 48 "omplexer.ll"
 { return ( RUNTIME ); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 48 "omplexer.ll"
+#line 49 "omplexer.ll"
 { return ( AUTO ); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 49 "omplexer.ll"
+#line 50 "omplexer.ll"
 { return ( SECTIONS ); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 50 "omplexer.ll"
+#line 51 "omplexer.ll"
 { return ( SECTION ); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 51 "omplexer.ll"
+#line 52 "omplexer.ll"
 { return ( SINGLE ); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 52 "omplexer.ll"
+#line 53 "omplexer.ll"
 { return ( NOWAIT); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 53 "omplexer.ll"
+#line 54 "omplexer.ll"
 { return ( FOR ); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 54 "omplexer.ll"
+#line 55 "omplexer.ll"
 { return ( MASTER ); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 55 "omplexer.ll"
+#line 56 "omplexer.ll"
 { return ( CRITICAL ); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 56 "omplexer.ll"
+#line 57 "omplexer.ll"
 { return ( BARRIER ); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 57 "omplexer.ll"
+#line 58 "omplexer.ll"
 { return ( ATOMIC ); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 58 "omplexer.ll"
+#line 59 "omplexer.ll"
 { return ( FLUSH ); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 59 "omplexer.ll"
+#line 60 "omplexer.ll"
 { return ( THREADPRIVATE ); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 60 "omplexer.ll"
+#line 61 "omplexer.ll"
 { return ( PRIVATE ); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 61 "omplexer.ll"
+#line 62 "omplexer.ll"
 { return ( COPYPRIVATE ); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 62 "omplexer.ll"
+#line 63 "omplexer.ll"
 { return ( FIRSTPRIVATE ); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 63 "omplexer.ll"
+#line 64 "omplexer.ll"
 { return ( LASTPRIVATE ); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 64 "omplexer.ll"
+#line 65 "omplexer.ll"
 { return ( SHARED ); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 65 "omplexer.ll"
+#line 66 "omplexer.ll"
 { return ( DEFAULT ); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 66 "omplexer.ll"
+#line 67 "omplexer.ll"
 { return ( NONE ); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 67 "omplexer.ll"
+#line 68 "omplexer.ll"
 { return ( REDUCTION ); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 68 "omplexer.ll"
+#line 69 "omplexer.ll"
 { return ( COPYIN ); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 69 "omplexer.ll"
+#line 70 "omplexer.ll"
 { return ('('); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 70 "omplexer.ll"
+#line 71 "omplexer.ll"
 { return (')'); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 71 "omplexer.ll"
+#line 72 "omplexer.ll"
 { return (','); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 72 "omplexer.ll"
+#line 73 "omplexer.ll"
 { return (':'); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 73 "omplexer.ll"
+#line 74 "omplexer.ll"
 { return ('+'); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 74 "omplexer.ll"
+#line 75 "omplexer.ll"
 { return ('*'); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 75 "omplexer.ll"
+#line 76 "omplexer.ll"
 { return ('-'); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 76 "omplexer.ll"
+#line 77 "omplexer.ll"
 { return ('&'); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 77 "omplexer.ll"
+#line 78 "omplexer.ll"
 { return ('^'); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 78 "omplexer.ll"
+#line 79 "omplexer.ll"
 { return ('|'); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 79 "omplexer.ll"
+#line 80 "omplexer.ll"
 { return (LOGAND); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 80 "omplexer.ll"
+#line 81 "omplexer.ll"
 { return (LOGOR); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 81 "omplexer.ll"
+#line 82 "omplexer.ll"
 { return (NEWLINE); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 83 "omplexer.ll"
+#line 84 "omplexer.ll"
 { int c = yytext[0];
 		  int parenCount = 1;
 		  for (;;) {
@@ -1024,35 +1025,35 @@ YY_RULE_SETUP
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 106 "omplexer.ll"
+#line 107 "omplexer.ll"
 { return (EXPRESSION); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 107 "omplexer.ll"
+#line 108 "omplexer.ll"
 { return (IDENTIFIER); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 108 "omplexer.ll"
+#line 109 "omplexer.ll"
 { omp_lval = (long)strdup(yytext); return (ID_EXPRESSION); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 110 "omplexer.ll"
+#line 111 "omplexer.ll"
 ;
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 111 "omplexer.ll"
+#line 112 "omplexer.ll"
 { return (LEXICALERROR);}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 113 "omplexer.ll"
+#line 114 "omplexer.ll"
 ECHO;
 	YY_BREAK
-#line 1056 "omplexer.cc"
+#line 1057 "omplexer.cc"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(EXPR):
 	yyterminate();
@@ -1935,7 +1936,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 113 "omplexer.ll"
+#line 114 "omplexer.ll"
 
 
 

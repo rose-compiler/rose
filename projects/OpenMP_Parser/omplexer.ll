@@ -12,6 +12,7 @@ extern int omp_lex();
 
 #include <stdio.h>
 #include <string>
+#include <string.h>
 #include "ompparser.hh"
 
 static const char* ompparserinput = NULL;
