@@ -65,17 +65,17 @@ class advanced_preprocessing_hooks
 
 public:
     AttributeListMap* attributeListMap;
-    PreprocessingInfo::token_type lastPreprocDirective;
+    token_type lastPreprocDirective;
     int numberOfIfs;
 
-    PreprocessingInfo::token_type last_elif;
+    token_type last_elif;
 
     std::string includeDirective;
-    PreprocessingInfo::token_type includeDirectiveToken;    
+    token_type includeDirectiveToken;    
     advanced_preprocessing_hooks() /*: need_comment(true)*/ {
        numberOfIfs = 0;
        using namespace boost::wave;
-       last_elif = PreprocessingInfo::token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
+       last_elif = token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
 
     }
 
@@ -458,10 +458,10 @@ public:
                  if(lineNo==lineNoElif)
                    if(filename == std::string(last_elif.get_position().get_file().c_str()) ){
         		 attributeListMap->skipped_token(last_elif);
-                         last_elif = PreprocessingInfo::token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
+                         last_elif = token_type(boost::wave::T_SPACE," ",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),lineNo,0));
         		 attributeListMap->skipped_token(last_elif);
 
-                         last_elif = PreprocessingInfo::token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
+                         last_elif = token_type(boost::wave::T_PP_ELIF,"#elif",boost::wave::util::file_position_type(BOOST_WAVE_STRINGTYPE(),0,0));
 
                    }
  
@@ -497,7 +497,7 @@ public:
 	    void
 	    undefined_macro(ContextT const& ctx, TokenT const& macro_name)
 	       {
-		 PreprocessingInfo::token_list_container tokListCont;
+		 token_list_container tokListCont;
 		 tokListCont.push_back(macro_name);
 		 attributeListMap->found_directive(lastPreprocDirective,tokListCont, false);
 	       }
@@ -567,7 +567,7 @@ public:
 		 if(SgProject::get_verbose() >= 1)
 		      std::cout << "On line found" << std::endl;
 	      /*
-		 PreprocessingInfo::token_list_container toexpand;
+		 token_list_container toexpand;
 		 std::copy(first, make_ref_transform_iterator(end, boost::wave::util::get_value),
 		 std::inserter(toexpand, toexpand.end()));
 	       */

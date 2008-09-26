@@ -58,13 +58,13 @@ class  PreprocessingInfo
 
 #if CAN_NOT_COMPILE_WITH_ROSE != true
      public:
-
+/*
        //AS using the lexer_token from boost_wave in order to store structures
           typedef boost::wave::cpplexer::lex_token<> token_type;
           typedef std::vector<token_type>            token_container;
           typedef std::list<token_type>              token_list_container;
           typedef std::vector<std::list<token_type> >       token_container_container;
-
+*/
      private:
          //FIXME: To support Jochens AST binary save work the tokenSteam must
          //have a pointer type.
@@ -82,7 +82,7 @@ class  PreprocessingInfo
 	    //  The parameter 'directive' contains the (expanded) file name found after 
 	    //  the #include directive. This has the format '<file>', '"file"' or 
 	    //  'file'.
-	       PreprocessingInfo::token_type directive;
+	       token_type directive;
 	    //  The paths plus name to the include directive filename
 	       std::string absname;
 	       std::string relname;
@@ -431,7 +431,7 @@ class ROSEAttributesListContainer
 
 #if CAN_NOT_COMPILE_WITH_ROSE != true
 
-extern PreprocessingInfo::token_container wave_tokenStream;
+extern token_container wave_tokenStream;
 
 #endif
 

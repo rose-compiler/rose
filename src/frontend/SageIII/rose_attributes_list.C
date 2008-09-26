@@ -5,7 +5,7 @@
 
 
 #if CAN_NOT_COMPILE_WITH_ROSE != true
-PreprocessingInfo::token_container wave_tokenStream;
+token_container wave_tokenStream;
 
 ///////////////////////////////////////////////////////////////////////////////
 //  Include the token class from Wave
@@ -142,7 +142,7 @@ PreprocessingInfo::rose_macro_definition* PreprocessingInfo::get_macro_def(){ re
 //AS(060706) Added support for include directive
 PreprocessingInfo::rose_include_directive* PreprocessingInfo::get_include_directive(){ return includeDirective; } 
 
-const PreprocessingInfo::token_container* PreprocessingInfo::get_token_stream(){ return tokenStream; } 
+const token_container* PreprocessingInfo::get_token_stream(){ return tokenStream; } 
 
 void PreprocessingInfo::push_back_token_stream(token_type tok){ 
   tokenStream->push_back(tok);
