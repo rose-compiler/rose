@@ -70,7 +70,7 @@ void printSignMatrix(const vector<SimplificationClauseSet>& signMatrix) {
   }
 }
 
-void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix, bool doPrint) {
+void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix, const vector<unsigned int>& variablesToProjectOut) {
   for (size_t i = 0; i < signMatrix.size(); ++i) { // size may be updated
     // fprintf(stderr, "signMatrix.size() == %zu\n", signMatrix.size());
     for (size_t j = 0; j < i; ++j) {
@@ -169,6 +169,23 @@ void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix, bool doPrin
     }
   }
 
+  // Project out (existentially quantify) variables from variablesToProjectOut;
+  // this must be done before the filtering done next
+  {
+    size_t newSignMatrixSize = 0;
+    for (size_t i = 0; i < signMatrix.size(); ++i) {
+      for (size_t j = 0; j < variablesToProjectOut.size(); ++j) {
+        unsigned int var = variablesToProjectOut[j];
+        if (signMatrix[i].positive[var] || signMatrix[i].negative[var]) {
+          goto clauseQuantifiedOut;
+        }
+      }
+      signMatrix[newSignMatrixSize++] = signMatrix[i];
+      clauseQuantifiedOut: ;
+    }
+    signMatrix.resize(newSignMatrixSize);
+  }
+
   // Filter out redundant clauses (those that are resolvents of other kept clauses
   vector<bool> signMatrixKeep(signMatrix.size(), true);
   for (size_t i = 0; i < signMatrix.size(); ++i) {
@@ -198,7 +215,7 @@ void doAllMinimizations(vector<SimplificationClauseSet>& signMatrix, bool doPrin
   signMatrix.resize(newSignMatrixSize);
 }
 
-void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, bool doPrint) {
+void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, const vector<Var>& variablesToProjectOut) {
   vector<Var> variables;
   for (size_t i = 0; i < input.size(); ++i) {
     const Clause& cl = input[i];
@@ -247,7 +264,11 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, bool doPri
   }
 #endif
 
-  doAllMinimizations(temp, doPrint);
+  vector<unsigned int> variablesToProjectOutInGroup(variablesToProjectOut.size());
+  for (size_t i = 0; i < variablesToProjectOut.size(); ++i) {
+    variablesToProjectOutInGroup[i] = find(variables.begin(), variables.end(), variablesToProjectOut[i]) - variables.begin();
+  }
+  doAllMinimizations(temp, variablesToProjectOutInGroup);
 
 #if 0
   if (doPrint) {
@@ -355,7 +376,6 @@ int main(int argc, char** argv) {
         oldClausesTemp.push_back(cl);
       }
       std::vector<Clause> newClausesTemp;
-      std::vector<Clause> newClausesTemp2;
 #if 0
       if (find(varsToExamine.begin(), varsToExamine.end(), 131) != varsToExamine.end()) {
         fprintf(stderr, "varsToExamine =");
@@ -365,18 +385,11 @@ int main(int argc, char** argv) {
         fprintf(stderr, "\n");
       }
 #endif
-      minimizeCnf(oldClausesTemp, newClausesTemp2, (find(varsToExamine.begin(), varsToExamine.end(), 131) != varsToExamine.end()));
-      if (frozenVars.find(var) != frozenVars.end()) {
-        newClausesTemp = newClausesTemp2;
-      } else {
-        // Project out this variable
-        for (size_t x = 0; x < newClausesTemp2.size(); ++x) {
-          if (find(newClausesTemp2[x].begin(), newClausesTemp2[x].end(), var) == newClausesTemp2[x].end() &&
-              find(newClausesTemp2[x].begin(), newClausesTemp2[x].end(), -var) == newClausesTemp2[x].end()) {
-            newClausesTemp.push_back(newClausesTemp2[x]);
-          }
-        }
+      vector<Var> variablesToProjectOut;
+      if (frozenVars.find(var) == frozenVars.end()) {
+        variablesToProjectOut.push_back(var);
       }
+      minimizeCnf(oldClausesTemp, newClausesTemp, variablesToProjectOut);
       int oldScore = 0;
       for (size_t x = 0; x < oldClausesTemp.size(); ++x) {
         oldScore += (int)oldClausesTemp[x].size() - 1;
