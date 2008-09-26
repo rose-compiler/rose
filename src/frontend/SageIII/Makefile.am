@@ -32,7 +32,8 @@ preproc.o : $(srcdir)/preproc.C
 # for developers to worry about in the generation of sufficently portable distributions.
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
-EXTRA_DIST = preproc.lex preproc.C docs rtiHelpers.h
+EXTRA_DIST = preproc.lex preproc.C docs rtiHelpers.h attributeListMap.h \
+            advanced_preprocessing_hooks.h rose_attributes_list.h
 CLEANFILES = preproc.o haveRosettaGeneratedSource
 
 
