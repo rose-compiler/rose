@@ -47,7 +47,7 @@ class AttributeListMap {
        //If rescan_macro_status!=0 the variable macro_call_to_expand should point to the macro call which is expanded. If other macros are 
        //called as an argument or as part of the macro definition corresponding to the macro call this data is *not* inside this variable.
 	  PreprocessingInfo::rose_macro_call* macro_call_to_expand;
-	  PreprocessingInfo::token_container currentTokSeq;
+	  token_container currentTokSeq;
 
        //For optimization and practical purposes a list of preprocessor attributes is created
        //for each file. Since the preprocessor does an auxiliary pass over the AST a map
@@ -58,7 +58,7 @@ class AttributeListMap {
 	  typedef  std::map<std::string,ROSEAttributesList*> attribute_map_type;
 	  attribute_map_type currentMapOfAttributes;
 
-	  PreprocessingInfo::token_container* skippedTokenStream;
+	  token_container* skippedTokenStream;
 
        //A map over all macro definitions found and their corresponding {filename, line number} 
 	  std::map<std::pair<std::string,int>, PreprocessingInfo*> defMap;
@@ -66,7 +66,7 @@ class AttributeListMap {
   // DQ (4/13/2007): These were required to support holding literals as strings (not required as a result of Rama's work).
   // std::list<SgNode*> valueExpList;
   // DQ (4/13/2007): This is due to a bug in ROSE, or a misunderstanding about constant folded values and their source position information.
-  // PreprocessingInfo::token_type lastOperator;
+  // token_type lastOperator;
 
           AttributeListMap(SgFile* sageFilePtr);
 
@@ -159,7 +159,7 @@ class AttributeListMap {
 		    }
 		    // 
 		    std::string filename(directive.get_position().get_file().c_str());
-		    PreprocessingInfo::token_list_container tokListCont;
+		    token_list_container tokListCont;
 
 		    copy (expression.begin(), expression.end(),
 				    inserter(tokListCont, tokListCont.end()));
@@ -264,7 +264,7 @@ class AttributeListMap {
 
 		       //std::cout << "THE FOUND DIRECTIVE IS: " << directive.get_value().c_str() << std::endl;
 
-		       PreprocessingInfo::token_container currentTokSeq2;
+		       token_container currentTokSeq2;
 		       currentTokSeq2.push_back(directive);
 		       std::string filename(directive.get_position().get_file().c_str());
 		       if(currentMapOfAttributes.find(filename)==currentMapOfAttributes.end())
@@ -437,7 +437,7 @@ class AttributeListMap {
 			       };
 
 
-			       //       typedef typename std::vector<std::list<PreprocessingInfo::token_type,boost::fast_pool_allocator<PreprocessingInfo::token_type> > > testType;
+			       //       typedef typename std::vector<std::list<token_type,boost::fast_pool_allocator<token_type> > > testType;
 			       typedef typename std::vector<ContainerT>::const_iterator vec_call_iterator_t;
 
 			       //BEGIN: Make a copy of the arguments
@@ -455,7 +455,7 @@ class AttributeListMap {
 				       if(SgProject::get_verbose() >= 1){
 					       std::cout << boost::wave::util::impl::as_string(*it);
 				       }
-				       std::list<PreprocessingInfo::token_type> tk;
+				       std::list<token_type> tk;
 
 				       copy (it->begin(), it->end(),
 						       inserter(tk, tk.end()));
@@ -544,7 +544,7 @@ class AttributeListMap {
 				       bool is_function_like = false;
 				       bool is_predefined    = false;
 
-				       PreprocessingInfo::token_container parameters;
+				       token_container parameters;
 				       macro_call_to_expand->macro_def = build_preprocessingInfo_macro_def(macro, is_function_like, parameters, definition, is_predefined);
 			       }
 
@@ -672,13 +672,13 @@ class AttributeListMap {
 		       //is evaluated as false. The false part is handled here.
 
 		       if(skippedTokenStream == NULL)
-			       skippedTokenStream = new PreprocessingInfo::token_container();
+			       skippedTokenStream = new token_container();
 
 		       if(last_skipped == false){
 			       skippedTokenStream->push_back(token);
 		       }else        {
 
-			       findDirectiveInList<PreprocessingInfo::token_container::value_type,boost::wave::token_id> x;
+			       findDirectiveInList<token_container::value_type,boost::wave::token_id> x;
 
 			       std::list<boost::wave::token_id> directivesInSkippedBranch;
 			       directivesInSkippedBranch.push_back( boost::wave::T_PP_ENDIF );
