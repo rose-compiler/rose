@@ -8,6 +8,9 @@
 # Location of include directory after "make install"
 ROSE_INCLUDE_DIR = @prefix@/include
 
+# Location of Boost include directory
+BOOST_CPPFLAGS = @BOOST_CPPFLAGS@
+
 # Location of library directory after "make install"
 ROSE_LIB_DIR = @prefix@/lib
 
@@ -25,7 +28,7 @@ all: exampleTranslator
 
 # Compile the exampleTranslator using the file identityTranslator.C
 exampleTranslator.lo:
-	@top_builddir@/libtool --mode=compile g++ -I$(ROSE_INCLUDE_DIR) -c -o exampleTranslator.lo $(ROSE_SOURCE_DIR)/identityTranslator.C
+	@top_builddir@/libtool --mode=compile g++ -I$(ROSE_INCLUDE_DIR) $(BOOST_CPPFLAGS) -c -o exampleTranslator.lo $(ROSE_SOURCE_DIR)/identityTranslator.C
 
 exampleTranslator: exampleTranslator.lo
 	@top_builddir@/libtool --mode=link g++ -o exampleTranslator exampleTranslator.lo $(ROSE_LIBS)
