@@ -97,7 +97,7 @@ dot -V >> mailtext1 2>&1 || echo "dot not found" >> mailtext1
 (latex --version | head -1 || echo "latex not found") >> mailtext1
 (latex2html -v | grep -w LaTeX2HTML || echo "latex2html not found") >> mailtext1
 (swig -version | grep -w SWIG || echo "swig not found") >> mailtext1
-(grep '#define *BOOST_LIB_VERSION' ${BOOST_ROOTX}/include/*/boost/version.hpp | cut -f 3 -d ' ' | tr -d '"' | tr _ . | sed 's/^/Boost version: /' || echo "Boost not found") >> mailtext1
+(grep '#define *BOOST_LIB_VERSION' ${BOOST_ROOT}/include/*/boost/version.hpp | cut -f 3 -d ' ' | tr -d '"' | tr _ . | sed 's/^/Boost version: /' || echo "Boost not found") >> mailtext1
 echo "" >> mailtext1
 echo "> Environment:" >> mailtext1
 printenv >> mailtext1
