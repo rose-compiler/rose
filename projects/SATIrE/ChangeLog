@@ -1,8 +1,4 @@
-V ??? AP, ...
-* General changes [AP]
-  - parallel builds with 'make -j N' work now
-
-V0.8.4 AP,GB
+V0.8.4 2008-09-26 GB,AP
 
 * Tested with:
   - ROSE 0.9.3a-1593
@@ -12,7 +8,8 @@ V0.8.4 AP,GB
   - g++ 4.2.0 (>= 4.2.0 required by ROSE with EDG binaries)
   - Boost 1_36 (>= 1_35 required by ROSE)
 
-* General changes [GB]
+* General changes [GB,AP]
+  - parallel builds with 'make -j N' work now
   - made SATIrE work with ROSE 0.9.3a (build 1593); changes are incompatible
     to older versions!
   - better handling of switch statements in ICFG (including Duff's Device)
