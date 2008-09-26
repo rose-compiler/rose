@@ -526,6 +526,15 @@ struct SatProblem {
     return result;
   }
 
+  template <size_t Len>
+  LitList(Len) mostSignificantSetBit(const LitList(Len)& in) {
+    LitList(Len) result = number<Len>(0);
+    for (size_t i = 0; i < Len; --i) {
+      result = ite(in[i], number<Len>(i), result);
+    }
+    return result;
+  }
+
 };
 
 #endif // ROSE_SATPROBLEM_H

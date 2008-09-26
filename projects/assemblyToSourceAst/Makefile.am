@@ -10,7 +10,7 @@ bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist simplifyCnf removeUnusedV
 x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h
+x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h x86InstructionSemantics.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 simplifyCnf_SOURCES = simplifyCnf.C satProblem.h
@@ -20,7 +20,7 @@ factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C satProblem.h
 doubleStep_SOURCES = doubleStep.C satProblem.h
 eliminateRedundantVariables_SOURCES = eliminateRedundantVariables.C satProblem.h
 
-include_HEADERS = x86AssemblyToC.h satProblem.h satProblem.h
+include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h
 
 jeremiah-check: x86AssemblyToCDemo x86AssemblyToNetlist
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
