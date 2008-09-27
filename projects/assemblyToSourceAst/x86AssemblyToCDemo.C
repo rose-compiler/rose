@@ -37,7 +37,7 @@ SgValueExp* buildConstantOfType(unsigned long long val, SgType* t) {
 }
 
 // Returns true only if top level expr was changed
-bool simplifyExpression(SgExpression*& expr, bool& changed, const X86AssemblyToCWithVariables& conv) {
+bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPolicy& conv) {
   // cerr << "simplifyExpression " << expr->class_name() << endl;
   SgUnaryOp* uo = isSgUnaryOp(expr);
   SgBinaryOp* bo = isSgBinaryOp(expr);

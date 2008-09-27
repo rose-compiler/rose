@@ -2,7 +2,6 @@
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 
 #include "rose.h"
-#include "x86AssemblyToC.h"
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -15,6 +14,49 @@ static int numBytesInAsmType(SgAsmType* ty) {
     case V_SgAsmTypeQuadWord: return 8;
     default: {std::cerr << "Unhandled type " << ty->class_name() << " in numBytesInAsmType" << std::endl; abort();}
   }
+}
+
+enum X86Flag { // These match the bit positions in rFLAGS, only the user-mode flags are in here
+  x86flag_cf = 0,
+  x86flag_pf = 2,
+  x86flag_af = 4,
+  x86flag_zf = 6,
+  x86flag_sf = 7,
+  x86flag_df = 10,
+  x86flag_of = 11
+};
+
+enum X86Condition {
+  x86cond_o,
+  x86cond_no,
+  x86cond_b,
+  x86cond_ae,
+  x86cond_e,
+  x86cond_ne,
+  x86cond_be,
+  x86cond_a,
+  x86cond_s,
+  x86cond_ns,
+  x86cond_pe,
+  x86cond_po,
+  x86cond_l,
+  x86cond_ge,
+  x86cond_le,
+  x86cond_g
+};
+
+template <size_t> struct NumberTag {};
+
+static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferenceExpression* mr) {
+  X86SegmentRegister segreg = x86_segreg_none;
+  SgAsmx86RegisterReferenceExpression* seg = isSgAsmx86RegisterReferenceExpression(mr->get_segment());
+  if (seg) {
+    ROSE_ASSERT (seg->get_register_class() == x86_regclass_segment);
+    segreg = (X86SegmentRegister)(seg->get_register_number());
+  } else {
+    ROSE_ASSERT (!"Bad segment expr");
+  }
+  return segreg;
 }
 
 template <typename Policy>
@@ -34,8 +76,8 @@ struct X86InstructionSemantics {
   }
 
   template <size_t Len> // In bits
-  Word(Len) readMemory(const Word(32)& addr) {
-    return policy.template readMemory<Len>(addr);
+  Word(Len) readMemory(X86SegmentRegister segreg, const Word(32)& addr) {
+    return policy.template readMemory<Len>(segreg, addr);
   }
 
   Word(32) readEffectiveAddress(SgAsmExpression* expr) {
@@ -43,20 +85,12 @@ struct X86InstructionSemantics {
     return read<32>(isSgAsmMemoryReferenceExpression(expr)->get_address());
   }
 
-  Word(8) readMemoryByte(const Word(32)& addr) {
-    return readMemory<8>(addr);
-  }
-
-  void writeMemoryByte(const Word(32)& addr, const Word(8)& data) {
-    writeMemory<8>(addr, data);
-  }
-
   template <size_t Len>
-  void writeMemory(const Word(32)& addr, const Word(Len)& data) {
-    policy.template writeMemory<Len>(addr, data);
+  void writeMemory(X86SegmentRegister segreg, const Word(32)& addr, const Word(Len)& data) {
+    policy.template writeMemory<Len>(segreg, addr, data);
   }
 
-  Word(8) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, Word(8)) {
+  Word(8) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, NumberTag<8>) {
     switch (pos) {
       case x86_regpos_low_byte: return policy.template extract<0, 8>(rawValue);
       case x86_regpos_high_byte: return policy.template extract<8, 16>(rawValue);
@@ -64,14 +98,14 @@ struct X86InstructionSemantics {
     }
   }
 
-  Word(16) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, Word(16)) {
+  Word(16) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, NumberTag<16>) {
     switch (pos) {
       case x86_regpos_word: return policy.template extract<0, 16>(rawValue);
       default: ROSE_ASSERT (!"Bad position in register");
     }
   }
 
-  Word(32) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, Word(32)) {
+  Word(32) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, NumberTag<32>) {
     switch (pos) {
       case x86_regpos_dword: return rawValue;
       case x86_regpos_all: return rawValue;
@@ -88,7 +122,7 @@ struct X86InstructionSemantics {
           case x86_regclass_gpr: {
             X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
             Word(32) rawValue = policy.readGPR(reg);
-            return readRegHelper(rawValue, rre->get_position_in_register(), policy.template number<Len>(0));
+            return readRegHelper(rawValue, rre->get_position_in_register(), NumberTag<Len>());
           }
           default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
         }
@@ -104,7 +138,7 @@ struct X86InstructionSemantics {
         return policy.template extract<0, Len>(policy.template unsignedMultiply<Len, 8>(read<Len>(lhs), read<8>(rhs)));
       }
       case V_SgAsmMemoryReferenceExpression: {
-        return readMemory<Len>(readEffectiveAddress(e));
+        return readMemory<Len>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e));
       }
       case V_SgAsmByteValueExpression: {
         uint64_t val = isSgAsmByteValueExpression(e)->get_value();
@@ -138,19 +172,17 @@ struct X86InstructionSemantics {
           case x86_regclass_gpr: {
             X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
             Word(32) oldValue = policy.readGPR(reg);
-            Word(32) newValue;
             switch (rre->get_position_in_register()) {
               case x86_regpos_low_byte: {
-                newValue = policy.template concat<8, 24>(value, policy.template extract<8, 32>(oldValue));
+                policy.writeGPR(reg, policy.template concat<8, 24>(value, policy.template extract<8, 32>(oldValue)));
                 break;
               }
               case x86_regpos_high_byte: {
-                newValue = policy.template concat<8, 24>(policy.template extract<0, 8>(oldValue), policy.template concat<8, 16>(value, policy.template extract<16, 32>(oldValue)));
+                policy.writeGPR(reg, policy.template concat<8, 24>(policy.template extract<0, 8>(oldValue), policy.template concat<8, 16>(value, policy.template extract<16, 32>(oldValue))));
                 break;
               }
               default: ROSE_ASSERT (!"Bad position in register");
             }
-            policy.writeGPR(reg, newValue);
             break;
           }
           default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
@@ -158,7 +190,7 @@ struct X86InstructionSemantics {
         break;
       }
       case V_SgAsmMemoryReferenceExpression: {
-        writeMemory<8>(readEffectiveAddress(e), value);
+        writeMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
       default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
@@ -173,15 +205,13 @@ struct X86InstructionSemantics {
           case x86_regclass_gpr: {
             X86GeneralPurposeRegister reg = (X86GeneralPurposeRegister)(rre->get_register_number());
             Word(32) oldValue = policy.readGPR(reg);
-            Word(32) newValue;
             switch (rre->get_position_in_register()) {
               case x86_regpos_word: {
-                newValue = policy.template concat<16, 16>(value, policy.template extract<16, 32>(oldValue));
+                policy.writeGPR(reg, policy.template concat<16, 16>(value, policy.template extract<16, 32>(oldValue)));
                 break;
               }
               default: ROSE_ASSERT (!"Bad position in register");
             }
-            policy.writeGPR(reg, newValue);
             break;
           }
           default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
@@ -189,7 +219,7 @@ struct X86InstructionSemantics {
         break;
       }
       case V_SgAsmMemoryReferenceExpression: {
-        writeMemory<16>(readEffectiveAddress(e), value);
+        writeMemory<16>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
       default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
@@ -218,7 +248,7 @@ struct X86InstructionSemantics {
         break;
       }
       case V_SgAsmMemoryReferenceExpression: {
-        writeMemory<32>(readEffectiveAddress(e), value);
+        writeMemory<32>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
       default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
@@ -234,7 +264,7 @@ struct X86InstructionSemantics {
 
   template <size_t Len>
   Word(Len) doAddOperation(const Word(Len)& a, const Word(Len)& b, bool invertCarries, Word(1) carryIn, Word(1) cond) { // Does add (subtract with two's complement input and invertCarries set), and sets correct flags; only does this if cond is true
-    Word(Len) carries;
+    Word(Len) carries = policy.template number<Len>(0);
     Word(Len) result = policy.template addWithCarries<Len>(a, b, invertMaybe<1>(carryIn, invertCarries), carries);
     setFlagsForResult<Len>(result, cond);
     policy.writeFlag(x86flag_af, policy.ite(cond, invertMaybe<1>(policy.template extract<3, 4>(carries), invertCarries), policy.readFlag(x86flag_af)));
@@ -245,7 +275,7 @@ struct X86InstructionSemantics {
 
   template <size_t Len>
   Word(Len) doIncOperation(const Word(Len)& a, bool dec, bool setCarry) { // Does inc (dec with dec set), and sets correct flags
-    Word(Len) carries;
+    Word(Len) carries = policy.template number<Len>(0);
     Word(Len) result = policy.template addWithCarries<Len>(a, policy.template number<Len>(dec ? -1 : 1), policy.false_(), carries);
     setFlagsForResult<Len>(result, policy.true_());
     policy.writeFlag(x86flag_af, invertMaybe<1>(policy.template extract<3, 4>(carries), dec));
@@ -1148,7 +1178,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
         Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(-4));
-        writeMemory<32>(newSp, read<32>(operands[0]));
+        writeMemory<32>(x86_segreg_ss, newSp, read<32>(operands[0]));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
@@ -1158,7 +1188,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
         Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(4));
-        write(operands[0], readMemory<32>(oldSp));
+        write(operands[0], readMemory<32>(x86_segreg_ss, oldSp));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
@@ -1168,7 +1198,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
         Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(-4));
-        writeMemory<32>(newSp, policy.readIP());
+        writeMemory<32>(x86_segreg_ss, newSp, policy.readIP());
         policy.writeIP(read<32>(operands[0]));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
@@ -1179,7 +1209,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
         Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(4));
-        policy.writeIP(readMemory<32>(oldSp));
+        policy.writeIP(readMemory<32>(x86_segreg_ss, oldSp));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
@@ -1261,7 +1291,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
-        doAddOperation<8>(policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax)), policy.invert(readMemoryByte(policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
+        doAddOperation<8>(policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax)), policy.invert(readMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
         policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86flag_zf))), // If true, repeat this instruction, otherwise go to the next one
                                  policy.readIP(),
                                  policy.template number<32>((uint32_t)(insn->get_address()))));
@@ -1271,29 +1301,39 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
-        doAddOperation<8>(readMemoryByte(policy.readGPR(x86_gpr_si)), policy.invert(readMemoryByte(policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
+        doAddOperation<8>(readMemory<8>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.invert(readMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
         policy.readIP() = policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86flag_zf)), // If true, repeat this instruction, otherwise go to the next one
                                  policy.template number<32>((uint32_t)(insn->get_address())),
                                  policy.readIP());
         break;
       }
       case x86_lodsd: {
-        policy.writeGPR(x86_gpr_ax, readMemory<32>(policy.readGPR(x86_gpr_si)));
+        policy.writeGPR(x86_gpr_ax, readMemory<32>(x86_segreg_ds, policy.readGPR(x86_gpr_si)));
         policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-4), policy.template number<32>(4))));
         break;
       }
       case x86_lodsw: {
-        policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<16>(policy.readGPR(x86_gpr_si)), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
+        policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<16>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
         policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-2), policy.template number<32>(2))));
         break;
       }
       case x86_lodsb: {
-        policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<8>(policy.readGPR(x86_gpr_si)), policy.template extract<8, 32>(policy.readGPR(x86_gpr_ax))));
+        policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<8>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.template extract<8, 32>(policy.readGPR(x86_gpr_ax))));
         policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-1), policy.template number<32>(1))));
         break;
       }
-      case x86_hlt: break; // FIXME
-      case x86_int: break; // FIXME
+      case x86_hlt: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.hlt();
+        break;
+      }
+      case x86_int: {
+        ROSE_ASSERT (operands.size() == 1);
+        SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
+        ROSE_ASSERT (bv);
+        policy.interrupt(bv->get_value());
+        break;
+      }
       default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); abort();
     }
   }

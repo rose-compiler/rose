@@ -8,15 +8,15 @@ using boost::array;
 
 template <size_t Len, size_t Offset, typename NLTranslator>
 struct WriteMemoryHelper {
-  static void go(const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {
-    trans.writeMemoryByte((Offset == 0 ? addr : trans.problem.adder(addr, number<32>(Offset / 8))), extract<Offset, Offset + 8>(data));
-    WriteMemoryHelper<Len, Offset + 8, NLTranslator>::go(addr, data, trans);
+  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {
+    trans.writeMemoryByte(segreg, (Offset == 0 ? addr : trans.problem.adder(addr, number<32>(Offset / 8))), extract<Offset, Offset + 8>(data));
+    WriteMemoryHelper<Len, Offset + 8, NLTranslator>::go(segreg, addr, data, trans);
   }
 };
 
 template <size_t Len, typename NLTranslator>
 struct WriteMemoryHelper<Len, Len, NLTranslator> {
-  static void go(const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {}
+  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {}
 };
 
 struct NetlistTranslationPolicy {
@@ -263,10 +263,10 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len> // In bits
-  LitList(Len) readMemory(const LitList(32)& addr) {
+  LitList(Len) readMemory(X86SegmentRegister segreg, const LitList(32)& addr) {
     LitList(Len) result;
     for (size_t i = 0; i < Len / 8; ++i) {
-      LitList(8) thisByte = readMemoryByte(problem.adder(addr, number<32>(i)));
+      LitList(8) thisByte = readMemoryByte(segreg, problem.adder(addr, number<32>(i)));
       for (size_t j = 0; j < 8; ++j) {
         result[i * 8 + j] = thisByte[j];
       }
@@ -274,7 +274,7 @@ struct NetlistTranslationPolicy {
     return result;
   }
 
-  LitList(8) readMemoryByte(const LitList(32)& addr) {
+  LitList(8) readMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr) {
     // The priority order for reads goes from bottom to top.  First, we check
     // for any writes that have the same address, and use the most recent of
     // those that match.  Next, we look at those previous reads that did not
@@ -299,14 +299,17 @@ struct NetlistTranslationPolicy {
     return result;
   }
 
-  void writeMemoryByte(const LitList(32)& addr, const LitList(8)& data) {
+  void writeMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(8)& data) {
     memoryWrites.push_back(make_pair(addr, data));
   }
 
   template <size_t Len>
-  void writeMemory(const LitList(32)& addr, const LitList(Len)& data) {
-    WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(addr, data, *this);
+  void writeMemory(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data) {
+    WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, *this);
   }
+
+  void hlt() {} // FIXME
+  void interrupt(uint8_t num) {} // FIXME
 
   void writeBack(Lit isThisIp) {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
