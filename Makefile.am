@@ -154,6 +154,7 @@ clean_binary_distribution: distdir
 	rm -rf $(distdir)/src/frontend/CxxFrontend/Makefile.am # Will be replaced with another version in the binary_edg_tarball rule
 	rm -rf $(distdir)/proposals
 	rm -rf $(distdir)/developersScratchSpace
+	rm -rf $(distdir)/projects/assemblyToSourceAst
 	rm -rf $(distdir)/docs/testDoxygen
 
 if BINARY_EDG_TARBALL_ENABLED
@@ -191,6 +192,7 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	cp $(srcdir)/src/frontend/CxxFrontend/roseBinaryEDG-*-$${ROSE_BINARY_COMPATIBILITY_SIGNATURE}.tar.gz $(distdir)/src/frontend/CxxFrontend && \
 	cat $(top_srcdir)/configure.in | \
 		grep -v '^developersScratchSpace/' | \
+		grep -v '^projects/assemblyToSourceAst/' | \
 		grep -v '^proposals/' | \
 		grep -v '^src/frontend/CxxFrontend/EDG' | \
 		grep -v '^docs/testDoxygen/' | \
@@ -199,6 +201,9 @@ source_with_binary_edg_dist: rose_binary_compatibility_signature
 	cat $(top_srcdir)/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/Makefile.am # Remove SUBDIRS references to developersScratchSpace and proposals
+	cat $(top_srcdir)/projects/Makefile.am | \
+		grep -v 'assemblyToSourceAst' > \
+		$(distdir)/projects/Makefile.am # Remove SUBDIRS reference to assemblyToSourceAst
 	cat $(top_srcdir)/docs/Makefile.am | \
 		grep -v 'DEVELOPER_DISTRIBUTION_DIRECTORY *=' > \
 		$(distdir)/docs/Makefile.am # Remove SUBDIRS reference to testDoxygen
