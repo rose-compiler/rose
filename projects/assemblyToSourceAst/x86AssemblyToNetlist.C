@@ -243,13 +243,23 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len1, size_t Len2>
-  LitList(Len1 + Len2) signedDivide(const LitList(Len1)& a, const LitList(Len2)& b) {
-    return problem.signedDivider(a, b);
+  LitList(Len1) signedDivide(const LitList(Len1)& a, const LitList(Len2)& b) {
+    return extract<0, Len1>(problem.signedDivider(a, b));
   }
 
   template <size_t Len1, size_t Len2>
-  LitList(Len1 + Len2) unsignedDivide(const LitList(Len1)& a, const LitList(Len2)& b) {
-    return problem.unsignedDivider(a, b);
+  LitList(Len2) signedModulo(const LitList(Len1)& a, const LitList(Len2)& b) {
+    return extract<Len1, Len1 + Len2>(problem.signedDivider(a, b));
+  }
+
+  template <size_t Len1, size_t Len2>
+  LitList(Len1) unsignedDivide(const LitList(Len1)& a, const LitList(Len2)& b) {
+    return extract<0, Len1>(problem.unsignedDivider(a, b));
+  }
+
+  template <size_t Len1, size_t Len2>
+  LitList(Len2) unsignedModulo(const LitList(Len1)& a, const LitList(Len2)& b) {
+    return extract<Len1, Len1 + Len2>(problem.unsignedDivider(a, b));
   }
 
   template <size_t Len>
@@ -340,6 +350,9 @@ struct NetlistTranslationPolicy {
   void finishBlock(uint64_t addr) {
     writeBack(problem.equal(origRegisterMap[ip()], ::number<32>(addr)));
   }
+
+  void startInstruction(SgAsmInstruction*) {}
+  void finishInstruction(SgAsmInstruction*) {}
 
 };
 

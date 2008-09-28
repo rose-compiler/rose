@@ -1,6 +1,7 @@
 #include "rose.h"
 #include "x86AssemblyToC.h"
 #include <boost/static_assert.hpp>
+#include <boost/lexical_cast.hpp>
 #include <iostream>
 
 using namespace std;
@@ -9,10 +10,23 @@ using namespace SageBuilder;
 using X86Disassembler::sizeToType;
 using X86Disassembler::sizeToPos;
 
+SgBasicBlock* bb; // Global location to append new statements
+
+static size_t WordWithExpression_nameCounter = 0;
+
 template <size_t Len>
 struct WordWithExpression {
-  SgExpression* expr;
-  WordWithExpression(SgExpression* expr): expr(buildBitAndOp(expr, buildUnsignedLongLongIntValHex((1ULL << Len) - 1))) {}
+  private:
+  SgVariableSymbol* sym;
+  public:
+  WordWithExpression(SgExpression* expr) {
+    std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
+    ++WordWithExpression_nameCounter;
+    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex((Len == 64 ? 0 : (1ULL << Len)) - 1))), bb);
+    appendStatement(decl, bb);
+    sym = getFirstVarSym(decl);
+  }
+  SgExpression* expr() const {return buildVarRefExp(sym);}
   private: BOOST_STATIC_ASSERT (Len <= 64); // FIXME handle longer operations
 };
 
@@ -20,11 +34,10 @@ struct CTranslationPolicy {
   template <size_t Len>
   struct wordType {typedef WordWithExpression<Len> type;};
 
-  CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile, SgBasicBlock* bb);
+  CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
   SgAsmFile* asmFile;
   SgGlobal* globalScope;
-  SgBasicBlock* bb;
   SgFunctionSymbol* paritySym;
   SgFunctionSymbol* mulhi16Sym;
   SgFunctionSymbol* mulhi32Sym;
@@ -67,7 +80,7 @@ struct CTranslationPolicy {
   SgFunctionSymbol* abortSym;
   SgFunctionSymbol* interruptSym;
   SgFunctionSymbol* startingInstructionSym;
-  SgBasicBlock* whileBody;
+  SgBasicBlock* switchBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
   std::set<uint64_t> externallyVisibleBlocks;
@@ -76,18 +89,18 @@ struct CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> number(uint64_t n) {
-    return buildUnsignedLongLongIntVal(n);
+    return buildUnsignedLongLongIntValHex(n);
   }
 
   template <size_t From, size_t To, size_t Len>
   WordWithExpression<To - From> extract(WordWithExpression<Len> a) {
-    return buildRshiftOp(a.expr, buildIntVal(From)); // Other bits will automatically be masked off
+    return (From == 0) ? a.expr() : buildRshiftOp(a.expr(), buildIntVal(From)); // Other bits will automatically be masked off
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1 + Len2> concat(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
     // Concats a on LSB side of b
-    return buildBitOrOp(a.expr, buildLshiftOp(b.expr, buildIntVal(Len1)));
+    return buildBitOrOp(a.expr(), buildLshiftOp(b.expr(), buildIntVal(Len1)));
   }
 
   WordWithExpression<1> true_() {return buildIntVal(1);}
@@ -95,112 +108,144 @@ struct CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitAndOp(a.expr, b.expr);
+    return buildBitAndOp(a.expr(), b.expr());
   }
 
   template <size_t Len>
   WordWithExpression<Len> or_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitOrOp(a.expr, b.expr);
+    return buildBitOrOp(a.expr(), b.expr());
   }
 
   template <size_t Len>
   WordWithExpression<Len> nor_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitComplementOp(buildBitOrOp(a.expr, b.expr));
+    return buildBitComplementOp(buildBitOrOp(a.expr(), b.expr()));
   }
 
   template <size_t Len>
   WordWithExpression<Len> xor_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitXorOp(a.expr, b.expr);
+    return buildBitXorOp(a.expr(), b.expr());
   }
 
   template <size_t Len>
   WordWithExpression<1> parity(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(paritySym, buildExprListExp(a.expr));
+    return buildFunctionCallExp(paritySym, buildExprListExp(a.expr()));
   }
 
   template <size_t Len>
   WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr, buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
+    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
   }
 
   template <size_t Len>
   WordWithExpression<Len> ite(WordWithExpression<1> sel, WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildConditionalExp(sel.expr, a.expr, b.expr);
+    return buildConditionalExp(sel.expr(), a.expr(), b.expr());
   }
 
   template <size_t Len>
   WordWithExpression<1> equalToZero(WordWithExpression<Len> a) {
-    return buildEqualityOp(a.expr, buildIntVal(0));
+    return buildEqualityOp(a.expr(), buildIntVal(0));
   }
 
   template <size_t Len>
   WordWithExpression<1> equalToNegativeOne(WordWithExpression<Len> a) {
-    return buildEqualityOp(a.expr, buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
+    return buildEqualityOp(a.expr(), buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
   }
 
   template <size_t Len>
   WordWithExpression<1> notEqualToZero(WordWithExpression<Len> a) {
-    return buildNotEqualOp(a.expr, buildIntVal(0));
+    return buildNotEqualOp(a.expr(), buildIntVal(0));
   }
 
   template <size_t Len>
   WordWithExpression<Len> add(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildAddOp(a.expr, b.expr);
+    return buildAddOp(a.expr(), b.expr());
   }
 
   template <size_t Len>
   WordWithExpression<Len> addWithCarries(WordWithExpression<Len> a, WordWithExpression<Len> b, WordWithExpression<1> carryIn, WordWithExpression<Len>& carries) {
-    ROSE_ASSERT (!"addWithCarries not implemented");
+    WordWithExpression<Len + 1> e = buildAddOp(a.expr(), buildAddOp(b.expr(), carryIn.expr()));
+    carries = buildRshiftOp(
+                buildBitXorOp(buildBitXorOp(a.expr(), b.expr()), e.expr()),
+                buildIntVal(1));
+    return extract<0, Len>(e);
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> shiftLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildLshiftOp(a.expr, b.expr);
+    return buildLshiftOp(a.expr(), b.expr());
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> shiftRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildRshiftOp(a.expr, b.expr);
+    return buildRshiftOp(a.expr(), b.expr());
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> shiftRightArithmetic(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr, b.expr),
-                        buildConditionalExp(buildNotEqualOp(buildBitAndOp(copyExpression(a.expr), buildUnsignedLongLongIntValHex(1ULL << (Len1 - 1))),
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()),
+                        buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(1ULL << (Len1 - 1))),
                                                             buildIntVal(0)),
                                             buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex((1ULL << Len1) - 1),
-                                                                               copyExpression(b.expr))),
+                                                                               b.expr())),
                                             buildIntVal(0)));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildLshiftOp(a.expr, b.expr), buildRshiftOp(copyExpression(a.expr), buildSubtractOp(buildIntVal(Len1), copyExpression(b.expr))));
+    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr, b.expr), buildLshiftOp(copyExpression(a.expr), buildSubtractOp(buildIntVal(Len1), copyExpression(b.expr))));
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1 + Len2> unsignedMultiply(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildMultiplyOp(a.expr, b.expr);
+    return buildMultiplyOp(a.expr(), b.expr());
+  }
+
+  // FIXME
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1 + Len2> signedMultiply(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildMultiplyOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> unsignedDivide(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildDivideOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len2> unsignedModulo(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildModOp(a.expr(), b.expr());
+  }
+
+  // FIXME
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> signedDivide(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildDivideOp(a.expr(), b.expr());
+  }
+
+  // FIXME
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len2> signedModulo(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildModOp(a.expr(), b.expr());
   }
 
   template <size_t From, size_t To>
   WordWithExpression<To> signExtend(WordWithExpression<From> a) {
-    return buildBitOrOp(a.expr, buildConditionalExp(buildNotEqualOp(buildBitAndOp(copyExpression(a.expr), buildUnsignedLongLongIntValHex(1ULL << (From - 1))), buildIntVal(0)), buildUnsignedLongLongIntValHex((1ULL << To) - (1ULL << From)), buildIntVal(0)));
+    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(1ULL << (From - 1))), buildIntVal(0)), buildUnsignedLongLongIntValHex((To == 64 ? 0 : (1ULL << To)) - (1ULL << From)), buildIntVal(0)));
   }
 
   template <size_t Len>
   WordWithExpression<Len> leastSignificantSetBit(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(bsfSym, buildExprListExp(a.expr));
+    return buildFunctionCallExp(bsfSym, buildExprListExp(a.expr()));
   }
 
   template <size_t Len>
   WordWithExpression<Len> mostSignificantSetBit(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(bsrSym, buildExprListExp(a.expr));
+    return buildFunctionCallExp(bsrSym, buildExprListExp(a.expr()));
   }
 
   WordWithExpression<1> readFlag(X86Flag flag) {
@@ -212,7 +257,7 @@ struct CTranslationPolicy {
   void writeFlag(X86Flag flag, WordWithExpression<1> value) {
     SgVariableSymbol* fl = flagsSym[flag];
     ROSE_ASSERT (fl);
-    appendStatement(buildAssignStatement(buildVarRefExp(fl), value.expr), bb);
+    appendStatement(buildAssignStatement(buildVarRefExp(fl), value.expr()), bb);
   }
 
   WordWithExpression<32> readGPR(X86GeneralPurposeRegister num) {
@@ -220,7 +265,7 @@ struct CTranslationPolicy {
   }
 
   void writeGPR(X86GeneralPurposeRegister num, WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(gprSym[num]), val.expr)), bb);
+    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(gprSym[num]), val.expr())), bb);
   }
 
   WordWithExpression<32> readIP() {
@@ -228,7 +273,7 @@ struct CTranslationPolicy {
   }
 
   void writeIP(WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(ipSym), val.expr)), bb);
+    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(ipSym), val.expr())), bb);
   }
 
   template <size_t Len>
@@ -242,7 +287,7 @@ struct CTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mrSym);
-    return buildFunctionCallExp(mrSym, buildExprListExp(address.expr));
+    return buildFunctionCallExp(mrSym, buildExprListExp(address.expr()));
   }
 
   template <size_t Len>
@@ -256,7 +301,7 @@ struct CTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mwSym);
-    appendStatement(buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr, data.expr))), bb);
+    appendStatement(buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), bb);
   }
 
   void hlt() {
@@ -267,6 +312,20 @@ struct CTranslationPolicy {
     appendStatement(buildExprStatement(buildFunctionCallExp(interruptSym, buildExprListExp(buildIntVal(num)))), bb);
   }
 
+  void startBlock(uint64_t addr) {
+    bb = buildBasicBlock();
+    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(addr), bb), switchBody);
+  }
+
+  void finishBlock(uint64_t addr) {
+    appendStatement(buildContinueStmt(), bb);
+  }
+
+  void startInstruction(SgAsmInstruction* insn) {
+    appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
+  }
+
+  void finishInstruction(SgAsmInstruction* insn) {}
 };
 
 static int sizeOfInsnSize(X86InstructionSize s) {
@@ -286,7 +345,7 @@ SgFunctionSymbol* CTranslationPolicy::addHelperFunction(const std::string& name,
   return sym;
 }
 
-CTranslationPolicy::CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile, SgBasicBlock* bb): asmFile(asmFile), globalScope(NULL), bb(bb) {
+CTranslationPolicy::CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
@@ -349,6 +408,7 @@ CTranslationPolicy::CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile, SgBa
   flagsSym[13] = NULL;
   flagsSym[14] = NULL;
   flagsSym[15] = NULL;
+  ipSym = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
   LOOKUP_FUNC(memoryReadByte);
   LOOKUP_FUNC(memoryReadWord);
   LOOKUP_FUNC(memoryReadDWord);
@@ -541,14 +601,19 @@ int main(int argc, char** argv) {
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
-  CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]), body);
+  CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
+  policy.switchBody = buildBasicBlock();
+  SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
+  SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
+  appendStatement(whileStmt, body);
   X86InstructionSemantics<CTranslationPolicy> t(policy);
-  vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
+  vector<SgNode*> blocks = NodeQuery::querySubTree(asmFiles[0], V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);
     ROSE_ASSERT (b);
     t.processBlock(b);
   }
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
+  AstTests::runAllTests(proj);
   return backend(proj);
 }
