@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: testcfg.c,v 1.4 2008-04-10 07:58:23 gergo Exp $
+// $Id: testcfg.c,v 1.5 2008-09-29 12:33:35 gergo Exp $
 
 /*
  * TestCFG: consistency test for a cfg and its PAG-interface
@@ -1621,7 +1621,7 @@ static void test_13 (void)
 /*
  * write a gdl-file with the control flow graph
  */
-static void writegdl (char *name)
+static void writegdl (const char *name)
 {
   KFG_NODE node, n2;
   KFG_NODE_LIST list;
@@ -1765,7 +1765,7 @@ int kfg_testit (KFG kfg, int quiet_mode)
   return (error_found == 0);
 }
 
-void outputIcfg(KFG kfg, char *gdl_name) {
+void outputIcfg(KFG kfg, const char *gdl_name) {
   cfg=kfg;
   writegdl (gdl_name);
 }

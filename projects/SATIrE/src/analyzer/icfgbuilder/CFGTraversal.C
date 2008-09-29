@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.47 2008-09-09 14:21:19 gergo Exp $
+// $Id: CFGTraversal.C,v 1.48 2008-09-29 12:33:35 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -17,7 +17,7 @@
 #define REPLACE_FOR_BY_WHILE
 
 // CFGTraversal::CFGTraversal(std::deque<Procedure *> *procs)
-CFGTraversal::CFGTraversal(ProcTraversal &p)
+CFGTraversal::CFGTraversal(ProcTraversal &p, AnalyzerOptions *options)
     : node_id(0), procnum(0), cfg(new CFG()), real_cfg(NULL), proc(NULL),
       call_num(0), lognum(0), expnum(0), traversalTimer(NULL),
       flag_numberExpressions(true)
@@ -26,7 +26,7 @@ CFGTraversal::CFGTraversal(ProcTraversal &p)
   cfg->procedures = p.get_procedures();
   cfg->proc_map = p.proc_map;
   cfg->mangled_proc_map = p.mangled_proc_map;
-  cfg->analyzerOptions = NULL;
+  cfg->analyzerOptions = options;
 
   cfg->global_return_variable_symbol = p.global_return_variable_symbol;
   cfg->global_argument_variable_symbols = p.global_argument_variable_symbols;

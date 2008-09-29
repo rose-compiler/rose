@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.11 2008-09-09 14:21:20 gergo Exp $
+// $Id: CFGTraversal.h,v 1.12 2008-09-29 12:33:37 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -16,7 +16,7 @@ class CFGTraversal : public AstSimpleProcessing
 {
 public:
  // CFGTraversal(std::deque<Procedure *> *);
-    CFGTraversal(ProcTraversal &);
+    CFGTraversal(ProcTraversal &, AnalyzerOptions *options = NULL);
     CFG *getCFG();
 
     void print_map() const;
