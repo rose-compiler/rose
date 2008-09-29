@@ -32,6 +32,9 @@
 #include "resolveFortranReferences.h"
 #include "insertFortranContainsStatement.h"
 
+// DQ (9/28/2008): This is for Fortran and eventually maybe C++ support.
+#include "fixupUseAndUsingDeclarations.h"
+
 /*! \brief Postprocessing that is not likely to be handled in the EDG/Sage III translation.
  */
 void postProcessingSupport (SgNode* node);

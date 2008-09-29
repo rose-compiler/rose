@@ -492,3 +492,4 @@ SgAsmBasicString
 SgAsmElfString
 SgAsmElfStringStorage
 SgAsmElfStrtab
+SgAliasSymbol

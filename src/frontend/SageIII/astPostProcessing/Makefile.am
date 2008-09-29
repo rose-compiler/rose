@@ -29,7 +29,8 @@ libastPostProcessing_la_SOURCES      = \
      propagateHiddenListData.C \
      resolveFortranReferences.C \
      insertFortranContainsStatement.C \
-     markLhsValues.C 
+     markLhsValues.C \
+     fixupUseAndUsingDeclarations.C 
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
@@ -59,4 +60,5 @@ include_HEADERS = \
      propagateHiddenListData.h \
      resolveFortranReferences.h \
      insertFortranContainsStatement.h \
-     markLhsValues.h
+     markLhsValues.h \
+     fixupUseAndUsingDeclarations.h
