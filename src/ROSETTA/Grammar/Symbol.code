@@ -64,6 +64,12 @@ HEADER_LABEL_SYMBOL_START
 
 HEADER_LABEL_SYMBOL_END
 
+HEADER_ALIAS_SYMBOL_START
+       // SgName  get_name() const;
+       // SgType* get_type() const;
+       // SgNode* get_symbol_basis() const;
+HEADER_ALIAS_SYMBOL_END
+
 
 // #########################################################
 // #########################################################
@@ -516,6 +522,42 @@ SgInterfaceSymbol::get_symbol_basis() const
    }
 
 SOURCE_INTERFACE_GET_NAME_END
+
+
+
+SOURCE_ALIAS_SYMBOL_START
+SgName
+SgAliasSymbol::get_name() const
+   {
+     ROSE_ASSERT(p_alias != NULL);
+
+     SgName name;
+     if (get_isRenamed() == true)
+        {
+          name = get_name();
+        }
+       else
+        {
+          name = get_alias()->get_name();
+        }
+
+     return name;
+   }
+
+SgNode*
+SgAliasSymbol::get_symbol_basis() const
+   {
+     ROSE_ASSERT(p_alias != NULL);
+     return get_alias()->get_symbol_basis();
+   }
+
+SgType*
+SgAliasSymbol::get_type() const 
+   {
+     ROSE_ASSERT(p_alias != NULL);
+     return get_alias()->get_type();
+   }
+SOURCE_ALIAS_SYMBOL_END
 
 
 

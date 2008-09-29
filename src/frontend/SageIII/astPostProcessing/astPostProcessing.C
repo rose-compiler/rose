@@ -319,6 +319,10 @@ void postProcessingSupport (SgNode* node)
           insertFortranContainsStatement(node);
         }
 
+  // DQ (9/26/2008): fixup the handling of use declarations (SgUseStatement).
+  // This also will fixup C++ using declarations.
+     fixupFortranUseDeclarations(node);
+
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 

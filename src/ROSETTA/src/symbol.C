@@ -5,6 +5,8 @@
 
 // What should be the behavior of the default constructor for Grammar
 
+#define ADD_ALIAS_SYMBOL 1
+
 void
 Grammar::setUpSymbols ()
    {
@@ -54,20 +56,23 @@ Grammar::setUpSymbols ()
 
      NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
-#if USE_FORTRAN_IR_NODES
-  // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
-  // (adding IntrinsicSymbol, ModuleSymbol, InterfaceSymbol, and CommonSymbol)
+#if ADD_ALIAS_SYMBOL
+  // DQ (9/26/2008): Added support for references to symbols to support: "use" declaration in F90, "using" declaration in C++, and "namespace aliasing" in C++.
+     NEW_TERMINAL_MACRO ( AliasSymbol,         "AliasSymbol",         "ALIAS_SYMBOL" );
+
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol /*| TypeSymbol*/   | FunctionSymbol | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol    |
-          IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol,
+          IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol       | 
+          AliasSymbol,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
           VariableSymbol /*| TypeSymbol*/   | FunctionSymbol | FunctionTypeSymbol | 
           ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
-          TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol,
+          TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol    |
+          IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -214,6 +219,16 @@ Grammar::setUpSymbols ()
 					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#if ADD_ALIAS_SYMBOL
+     AliasSymbol.setFunctionPrototype   ( "HEADER_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
+     AliasSymbol.setDataPrototype       ( "SgSymbol*", "alias", "= NULL",
+					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AliasSymbol.setDataPrototype       ( "bool", "isRenamed", "= false",
+					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AliasSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
+					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -297,6 +312,10 @@ Grammar::setUpSymbols ()
   // ModuleSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
   // InterfaceSymbol.setFunctionSource ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
   // CommonSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+#endif
+
+#if ADD_ALIAS_SYMBOL
+     AliasSymbol.setFunctionSource          ( "SOURCE_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
 #endif
    }
 
