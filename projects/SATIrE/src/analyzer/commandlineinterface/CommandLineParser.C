@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany, Adrian Prantl
-// $Id: CommandLineParser.C,v 1.25 2008-08-23 13:46:50 gergo Exp $
+// $Id: CommandLineParser.C,v 1.26 2008-09-29 12:32:04 gergo Exp $
 
 #include <config.h>
 
@@ -38,7 +38,7 @@ void CommandLineParser::parse(AnalyzerOptions *cl, int argc, char**argv) {
   if (cl->getNumberOfInputFiles() == 0 && !cl->inputBinaryAst()) {
     exitError("no input files to analyze");
   } else if (cl->getNumberOfInputFiles() != 0 && cl->inputBinaryAst()) {
-    exitError("both source and binary input files specified");
+    exitError("both source and binary input files");
   }
 
   /* extend command line with ROSE options for front end language selection */
@@ -168,12 +168,20 @@ int CommandLineParser::handleOption(AnalyzerOptions* cl, int i, int argc, char *
   } else if (optionMatch(argv[i], "--no-check-icfg")) {
     cl->checkIcfgOff();
   } else if (optionMatchPrefix(argv[i], "--output-source=")) {
+    if (strlen(argv[i]+prefixLength) == 0) {
+      cl->setOptionsErrorMessage("empty output file name");
+      return 1;
+    }
     cl->outputSourceOn();
     cl->setOutputSourceFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-icfg=")) {
     cl->outputIcfgOn();
     cl->setOutputIcfgFileName(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-sourceprefix=")) {
+    if (strlen(argv[i]+prefixLength) == 0) {
+      cl->setOptionsErrorMessage("empty output file name prefix");
+      return 1;
+    }
     cl->outputSourceOn();
     cl->setOutputFilePrefix(strdup(argv[i]+prefixLength));
   } else if (optionMatchPrefix(argv[i], "--output-term=")) {
