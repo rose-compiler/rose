@@ -2,6 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	atomic.c \
+	collapse.c \
 	copyin.c \
 	copyprivate2.c \
 	copyprivate3.c \
@@ -44,6 +45,9 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	staticChunk.c \
 	subteam2.c \
 	subteam.c \
+	task_orphaned.c \
+	task_untied.c \
+	task_wait.c \
 	threadprivate2.c \
 	threadprivate3.c \
 	threadprivate.c \
@@ -55,10 +59,7 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_tree.cpp 
 
 TESTCODE_CURRENTLY_FAILING = \
-	task_largenumber.c \
-	task_untied.c \
-	task_wait.c \
-	task_orphaned.c 
+	task_largenumber.c 
 
 ROSE_FLAGS = -D_OPENMP --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 # used to find omp.h

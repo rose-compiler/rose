@@ -39,8 +39,10 @@ main ()
 // i is firstprivate, item is shared
       {
 	for (i = 0; i < LARGE_NUMBER; i++)
+	{
 #pragma omp task
 	  process (item[i]);
+	}
       }
     }
   }

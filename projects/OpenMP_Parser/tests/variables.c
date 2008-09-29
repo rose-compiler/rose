@@ -35,7 +35,9 @@ int main(void)
  i=omp_get_thread_num();
 #endif
  printf("Hello,world! I am thread %d\n",i);
-#pragma omp for shared(mm)
+//#pragma omp for shared(mm) 
+// shared () cannot be used with 'omp for' according to the specification 
+#pragma omp for
 for (i=0;i<100;i++)
  {i+=mm;}
 

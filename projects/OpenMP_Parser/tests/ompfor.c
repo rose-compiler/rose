@@ -12,7 +12,7 @@ int main(void)
   int i;
 // #pragma omp parallel
 //#pragma omp parallel for schedule(dynamic,2)
-#pragma omp parallel for 
+#pragma omp parallel for schedule (auto)
   for (i=0;i<20;i++)
    {
     a[i]=i*2;

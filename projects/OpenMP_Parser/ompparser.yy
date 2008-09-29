@@ -60,9 +60,10 @@ static SgNode* gNode;
 
 %}
 
-%token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME AUTO SECTIONS SINGLE NOWAIT SECTION
+%token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH 
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
+	TASK TASKWAIT UNTIED COLLAPSE AUTO
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR
         EXPRESSION ID_EXPRESSION IDENTIFIER
         NEWLINE LEXICALERROR
@@ -77,30 +78,34 @@ static SgNode* gNode;
  */
 expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
 
-openmp_directive: barrier_directive 
-		| flush_directive
-		| parallel_directive 
+openmp_directive
+		: parallel_directive 
 		| for_directive
 		| sections_directive
 		| single_directive
 		| parallel_for_directive
 		| parallel_sections_directive
+		| task_directive
 		| master_directive
 		| critical_directive
 		| atomic_directive
 		| ordered_directive
+                | barrier_directive 
+		| taskwait_directive
+		| flush_directive
 		| threadprivate_directive
 		| section_directive
 		;
 
 parallel_directive
 		: /* # pragma */ OMP PARALLEL
-		                { ompattribute = buildOmpAttribute(e_parallel,gNode);
-				  omptype = e_parallel; }
-				parallel_clauseoptseq new_line
+		  { ompattribute = buildOmpAttribute(e_parallel,gNode);
+		    omptype = e_parallel; 
+		  }
+		  parallel_clause_optseq new_line
 		;
 
-parallel_clauseoptseq
+parallel_clause_optseq
 		: /* empty */
 		| parallel_clause_seq
 		;
@@ -112,7 +117,11 @@ parallel_clause_seq
 		;
 
 parallel_clause	: unique_parallel_clause 
-		| data_clause
+		| data_default_clause
+		| data_privatization_clause
+		| data_privatization_in_clause
+		| data_sharing_clause
+		| data_reduction_clause
 		;
 
 unique_parallel_clause
@@ -125,17 +134,20 @@ unique_parallel_clause
                     ompattribute->addClause(e_num_threads);       
 		    omptype = e_num_threads;
 		   } '(' expression ')'
-
+		| COPYIN
+		  { ompattribute->addClause(e_copyin);
+		    omptype = e_copyin;
+		  } '(' variable_list ')'
 		; 
 
 for_directive	: /* # pragma */ OMP FOR
-		                { 
-                                  ompattribute = buildOmpAttribute(e_for,gNode); 
-                                }
-				for_clauseoptseq new_line
+		   { 
+                   ompattribute = buildOmpAttribute(e_for,gNode); 
+                   }
+		   for_clause_optseq new_line
 		;
 
-for_clauseoptseq: /* empty*/
+for_clause_optseq: /* empty*/
             	| for_clause_seq
             	;
 
@@ -145,7 +157,10 @@ for_clause_seq	: for_clause
 		;
 
 for_clause	: unique_for_clause 
-		| data_clause 
+		| data_privatization_clause
+		| data_privatization_in_clause
+		| data_privatization_out_clause
+		| data_reduction_clause
 		| NOWAIT { 
                            ompattribute->addClause(e_nowait);
                            //Not correct since nowait cannot have expression or var_list
@@ -169,22 +184,28 @@ unique_for_clause
 		    ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
 		    omptype = e_schedule;
 		  } expression ')'
+		| COLLAPSE 
+		  {
+		    ompattribute->addClause(e_collapse);
+		    omptype = e_collapse;
+		  }
+		  '(' expression ')'
 		;
 
 schedule_kind	: STATIC  { $$ = e_schedule_static; }
 		| DYNAMIC { $$ = e_schedule_dynamic; }
 		| GUIDED  { $$ = e_schedule_guided; }
-		| RUNTIME { $$ = e_schedule_runtime; }
 		| AUTO    { $$ = e_schedule_auto; }
+		| RUNTIME { $$ = e_schedule_runtime; }
 		;
 
 sections_directive
 		: /* # pragma */ OMP SECTIONS
-		                { ompattribute = buildOmpAttribute(e_sections,gNode); }
-				sections_clauseoptseq new_line
+		  { ompattribute = buildOmpAttribute(e_sections,gNode); }
+		  sections_clause_optseq new_line
 		;
 
-sections_clauseoptseq
+sections_clause_optseq
 		: /* empty*/
             	| sections_clause_seq
             	;
@@ -195,7 +216,10 @@ sections_clause_seq
 		| sections_clause_seq ',' sections_clause
 		;
 
-sections_clause	: data_clause 
+sections_clause	: data_privatization_clause
+		| data_privatization_in_clause
+		| data_privatization_out_clause
+		| data_reduction_clause
 		| NOWAIT { 
 			   ompattribute->addClause(e_nowait);
 			 }
@@ -203,15 +227,16 @@ sections_clause	: data_clause
 
 section_directive
 		: /* # pragma */  OMP SECTION new_line 
-		                { ompattribute = buildOmpAttribute(e_section,gNode); }
+		  { ompattribute = buildOmpAttribute(e_section,gNode); }
 		;
 
 single_directive: /* # pragma */ OMP SINGLE
-		                { ompattribute = buildOmpAttribute(e_single,gNode); }
-				single_clauseoptseq new_line
+		  { ompattribute = buildOmpAttribute(e_single,gNode); 
+		    omptype = e_single; }
+	           single_clause_optseq new_line
 		;
 
-single_clauseoptseq
+single_clause_optseq
 		: /* empty*/
             	| single_clause_seq
             	;
@@ -222,16 +247,49 @@ single_clause_seq
 		| single_clause_seq ',' single_clause
 		;
 
-single_clause	: data_clause 
+single_clause	: unique_single_clause
+		| data_privatization_clause
+		| data_privatization_in_clause
 		| NOWAIT { 
                             ompattribute->addClause(e_nowait);
 			 }
 		;
+unique_single_clause : COPYPRIVATE 
+			{ ompattribute->addClause(e_copyprivate);
+			  omptype = e_copyprivate; }
+			'(' variable_list ')'
 
+task_directive: /* #pragma */ OMP TASK 
+                 {ompattribute = buildOmpAttribute(e_task,gNode);
+		  omptype = e_task; }
+		task_clause_optseq new_line
+		;
+
+task_clause_optseq: task_clause
+		| task_clause_optseq task_clause
+		| task_clause_optseq ',' task_clause
+		;
+
+task_clause	: unique_task_clause
+		| data_default_clause
+		| data_privatization_clause
+		| data_privatization_in_clause
+		| data_sharing_clause
+		;
+
+unique_task_clause : IF 
+		  { ompattribute = buildOmpAttribute(e_if, gNode);
+		    omptype = e_if; }
+		    '(' expression ')'
+		| UNTIED 
+                  {
+		   ompattribute->addClause(e_untied);
+		  }
+		;
 parallel_for_directive
 		: /* # pragma */ OMP PARALLEL FOR
-		                { ompattribute = buildOmpAttribute(e_parallel_for,gNode); }
-				parallel_for_clauseoptseq new_line
+		  { ompattribute = buildOmpAttribute(e_parallel_for,gNode); }
+		  parallel_for_clauseoptseq new_line
 		;
 
 parallel_for_clauseoptseq	
@@ -248,18 +306,22 @@ parallel_for_clause_seq
 parallel_for_clause
 		: unique_parallel_clause 
 		| unique_for_clause 
-		| data_clause 
+		| data_default_clause
+		| data_privatization_clause
+		| data_privatization_in_clause
+		| data_privatization_out_clause
+		| data_sharing_clause
+		| data_reduction_clause
 		;
 
 parallel_sections_directive
 		: /* # pragma */ OMP PARALLEL SECTIONS
-		                { ompattribute =buildOmpAttribute(e_parallel_sections,gNode); 
-				  omptype = e_parallel_sections; 
-                                 }
-				parallel_sections_clauseoptseq new_line
+		  { ompattribute =buildOmpAttribute(e_parallel_sections,gNode); 
+		    omptype = e_parallel_sections; }
+		  parallel_sections_clause_optseq new_line
 		;
 
-parallel_sections_clauseoptseq
+parallel_sections_clause_optseq
 		: /* empty*/
             	| parallel_sections_clause_seq
             	;
@@ -272,19 +334,24 @@ parallel_sections_clause_seq
 
 parallel_sections_clause
 		: unique_parallel_clause 
-		| data_clause
+		| data_default_clause
+		| data_privatization_clause
+		| data_privatization_in_clause
+		| data_privatization_out_clause
+		| data_sharing_clause
+		| data_reduction_clause
 		;
 
 master_directive: /* # pragma */ OMP MASTER new_line
-		                { ompattribute = buildOmpAttribute(e_master, gNode);}
+		  { ompattribute = buildOmpAttribute(e_master, gNode);}
 		;
 
 critical_directive
 		: /* # pragma */ OMP CRITICAL
-		                {
-                                  ompattribute = buildOmpAttribute(e_critical, gNode); 
-                                }
-				region_phraseopt new_line
+		  {
+                  ompattribute = buildOmpAttribute(e_critical, gNode); 
+                  }
+		  region_phraseopt new_line
 		;
 
 region_phraseopt: /* empty */
@@ -303,17 +370,21 @@ region_phrase	: '(' ID_EXPRESSION ')'
 
 barrier_directive
 		: /* # pragma */ OMP BARRIER new_line
-		                { ompattribute = buildOmpAttribute(e_barrier,gNode); }
+		 { ompattribute = buildOmpAttribute(e_barrier,gNode); }
+		;
+
+taskwait_directive : /* #pragma */ OMP TASKWAIT new_line
+		  { ompattribute = buildOmpAttribute(e_taskwait, gNode); } 
 		;
 
 atomic_directive: /* # pragma */ OMP ATOMIC new_line
-		                { ompattribute = buildOmpAttribute(e_atomic,gNode); }
+		  { ompattribute = buildOmpAttribute(e_atomic,gNode); }
 		;
 
 flush_directive	: /* # pragma */ OMP FLUSH
-		                { ompattribute = buildOmpAttribute(e_flush,gNode);
-				omptype = e_flush; }
-				flush_varsopt new_line
+		 { ompattribute = buildOmpAttribute(e_flush,gNode);
+	           omptype = e_flush; }
+		flush_varsopt new_line
 		;
 
 flush_varsopt   : /* empty */
@@ -325,43 +396,53 @@ flush_vars	: '(' variable_list ')'
 
 ordered_directive
 		: /* # pragma */ OMP ORDERED new_line
-		                { ompattribute = buildOmpAttribute(e_ordered_directive,gNode); }
+		  { ompattribute = buildOmpAttribute(e_ordered_directive,gNode); }
 		;
 
 threadprivate_directive
 		: /* # pragma */ OMP THREADPRIVATE
-		                { ompattribute = buildOmpAttribute(e_threadprivate,gNode); 
-                                  omptype = e_threadprivate; }
-				'(' variable_list ')' new_line
+		  { ompattribute = buildOmpAttribute(e_threadprivate,gNode); 
+                    omptype = e_threadprivate; }
+		 '(' variable_list ')' new_line
 		;
 
-data_clause	: PRIVATE
-		  { ompattribute->addClause(e_private); omptype = e_private;}  
-		  '(' variable_list ')' 
-		| COPYPRIVATE
-		  { ompattribute->addClause(e_copyprivate); omptype = e_copyprivate;}
-		  '(' variable_list ')' 
-		| FIRSTPRIVATE
-		  { ompattribute->addClause(e_firstprivate); omptype = e_firstprivate;}
-		  '(' variable_list ')' 
-		| LASTPRIVATE
-		  { ompattribute->addClause(e_lastprivate), omptype = e_lastprivate;}
-		  '(' variable_list ')' 
-		| SHARED
-		  { ompattribute->addClause(e_shared); omptype = e_shared; }
-		  '(' variable_list ')' 
-		| DEFAULT '(' SHARED ')'
-		  { ompattribute->addClause(e_default); 
-                    ompattribute->setDefaultValue(e_default_shared); }
-                | DEFAULT '(' NONE ')'
-		  { ompattribute->addClause(e_default);
-                    ompattribute->setDefaultValue(e_default_none);}
-                | REDUCTION
+data_default_clause
+		:DEFAULT '(' SHARED ')'
+                  { 
+		    ompattribute->addClause(e_default);
+		    ompattribute->setDefaultValue(e_default_shared); 
+		  }
+		 | DEFAULT '(' NONE ')'
+		  {
+		    ompattribute->addClause(e_default);
+		    ompattribute->setDefaultValue(e_default_none);
+		  }
+		 ;
+data_privatization_clause :  PRIVATE
+                  { ompattribute->addClause(e_private); omptype = e_private;}
+		  '(' variable_list ')'
+		;
+
+data_privatization_in_clause: FIRSTPRIVATE
+                  { ompattribute->addClause(e_firstprivate); 
+		    omptype = e_firstprivate;}
+		  '(' variable_list ')'
+		;
+
+data_privatization_out_clause: LASTPRIVATE
+                  { ompattribute->addClause(e_lastprivate); 
+		    omptype = e_lastprivate;}
+		  '(' variable_list ')'
+		;
+
+data_sharing_clause: SHARED
+                  { ompattribute->addClause(e_shared); omptype = e_shared; }
+		   '(' variable_list ')'
+		;
+
+data_reduction_clause: REDUCTION
 		  { ompattribute->addClause(e_reduction); omptype = e_reduction;}
 		  '(' reduction_operator ':' variable_list ')' 
-		| COPYIN
-		  { ompattribute->addClause(e_copyin); omptype = e_copyin;}
-		  '(' variable_list ')'
 		;
 
 reduction_operator

@@ -43,7 +43,15 @@ namespace OmpSupport{
    void OmpAttribute::addClause(omp_construct_enum clause_type)
    {
      if (isClause(clause_type))
-        clauses[clause_type]=true;
+     {
+       //We only store a clause type once
+       //Logically, the content will be merged into the first occurence.
+       if (!hasClause(clause_type))
+       { 
+        clause_map[clause_type]=true;
+	clauses.push_back(clause_type);
+       }
+     }
      else
      {
        cerr<<"OmpAttribute::addClause(): Unrecognized clause type:"<<clause_type<<endl;
@@ -54,10 +62,9 @@ namespace OmpSupport{
 //! Get a vector of clauses existing in the directive
 // We only maintain a map internally, so generated the vector on the fly   
 // This implementation detail is hidden from users, can be changed any time   
-std::vector<omp_construct_enum> OmpAttribute::getClauseVector()
+std::vector<omp_construct_enum> OmpAttribute::getClauses()
 {
-  std::vector<omp_construct_enum> result;
-
+/*
   if (hasClause(e_default))     result.push_back(e_default);
   if (hasClause(e_shared))    result.push_back(e_shared);
   if (hasClause(e_private))    result.push_back(e_private);
@@ -74,7 +81,8 @@ std::vector<omp_construct_enum> OmpAttribute::getClauseVector()
   if (hasClause(e_schedule)) result.push_back(e_schedule);
   if (hasClause(e_collapse)) result.push_back(e_collapse);
   if (hasClause(e_untied))  result.push_back(e_untied);
-  return result;
+  */
+  return clauses;
 }
 
 //! get the associated SgPragmaDeclaration
@@ -341,7 +349,7 @@ bool OmpAttribute::hasClause(omp_construct_enum omp_type)
 {
   bool result = false;
   if (isClause(omp_type))
-     result =clauses[omp_type];
+     result =clause_map[omp_type];
   else
   {        
     cerr<<"OmpAttribute::hasClause(): Unrecognized clause type as a parameter:"<<omp_type<<endl;
@@ -431,10 +439,12 @@ std::string OmpAttribute::toOpenMPString(omp_construct_enum omp_type)
     } // schedule(kind, exp)
     else if (omp_type == e_schedule)
     {
-      result +=" ("+ OmpSupport::toString(getScheduleKind())+",";
+      result +=" ("+ OmpSupport::toString(getScheduleKind());
       // TODO Cheat here, since we don't parse expression yet
       string expString= getExpression(omp_type).first;
-      result += expString+ ")";
+      if (expString.size()>0)
+        result += "," + expString;
+      result += ")";
     }
   }// end clauses
   return result; 
@@ -475,7 +485,7 @@ std::string OmpAttribute::toOpenMPString()
   result += toOpenMPString(omp_type);
 
   // Convert clauses then
-  vector<omp_construct_enum> clause_vector = getClauseVector();
+  vector<omp_construct_enum> clause_vector = getClauses();
   vector<omp_construct_enum>::iterator iter;
   for (iter=clause_vector.begin();iter!=clause_vector.end();iter++)
   {  

@@ -168,7 +168,7 @@ class OmpAttribute : public AstAttribute
    bool hasClause(omp_construct_enum clause_type);
 
    //! Get all existing clauses
-   std::vector<omp_construct_enum> getClauseVector();
+   std::vector<omp_construct_enum> getClauses();
 
    //! Add a variable into a variable list of a construct
    void addVariable(omp_construct_enum targetConstruct, const std::string& varString);
@@ -221,7 +221,11 @@ private:
    enum omp_construct_enum  omp_type; 
 
    //! Clause information 
-   std::map<omp_construct_enum,bool> clauses;
+   // vector is used to preserve the order of clauses in the directive
+   // map is used to fast query if a clause exists or not
+   // Some clauses are allowed to appear more than once, merge the content into the first occurrence in our implementation.
+   std::vector<omp_construct_enum> clauses;
+   std::map<omp_construct_enum,bool> clause_map;
 
    //variable lists------------------- 
    //appeared within some directives and clauses

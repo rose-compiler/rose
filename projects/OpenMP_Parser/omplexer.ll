@@ -38,6 +38,9 @@ id              [a-zA-Z_][a-zA-Z0-9_]*
 
 omp             { return ( OMP); }
 parallel        { return ( PARALLEL); }
+task		{ return ( TASK ); }
+taskwait	{ return ( TASKWAIT ); }
+untied          { return ( UNTIED );}
 if		{ return ( IF); }
 num_threads     { return ( NUM_THREADS); }
 ordered         { return ( ORDERED  ); }
@@ -52,6 +55,7 @@ section         { return ( SECTION ); }
 single          { return ( SINGLE ); }
 nowait          { return ( NOWAIT); }
 for             { return ( FOR ); }
+collapse	{ return ( COLLAPSE ); }
 master          { return ( MASTER ); }
 critical        { return ( CRITICAL ); }
 barrier         { return ( BARRIER ); }

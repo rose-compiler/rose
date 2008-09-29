@@ -39,34 +39,38 @@
      DYNAMIC = 265,
      GUIDED = 266,
      RUNTIME = 267,
-     AUTO = 268,
-     SECTIONS = 269,
-     SINGLE = 270,
-     NOWAIT = 271,
-     SECTION = 272,
-     FOR = 273,
-     MASTER = 274,
-     CRITICAL = 275,
-     BARRIER = 276,
-     ATOMIC = 277,
-     FLUSH = 278,
-     THREADPRIVATE = 279,
-     PRIVATE = 280,
-     COPYPRIVATE = 281,
-     FIRSTPRIVATE = 282,
-     LASTPRIVATE = 283,
-     SHARED = 284,
-     DEFAULT = 285,
-     NONE = 286,
-     REDUCTION = 287,
-     COPYIN = 288,
-     LOGAND = 289,
-     LOGOR = 290,
-     EXPRESSION = 291,
-     ID_EXPRESSION = 292,
-     IDENTIFIER = 293,
-     NEWLINE = 294,
-     LEXICALERROR = 295
+     SECTIONS = 268,
+     SINGLE = 269,
+     NOWAIT = 270,
+     SECTION = 271,
+     FOR = 272,
+     MASTER = 273,
+     CRITICAL = 274,
+     BARRIER = 275,
+     ATOMIC = 276,
+     FLUSH = 277,
+     THREADPRIVATE = 278,
+     PRIVATE = 279,
+     COPYPRIVATE = 280,
+     FIRSTPRIVATE = 281,
+     LASTPRIVATE = 282,
+     SHARED = 283,
+     DEFAULT = 284,
+     NONE = 285,
+     REDUCTION = 286,
+     COPYIN = 287,
+     TASK = 288,
+     TASKWAIT = 289,
+     UNTIED = 290,
+     COLLAPSE = 291,
+     AUTO = 292,
+     LOGAND = 293,
+     LOGOR = 294,
+     EXPRESSION = 295,
+     ID_EXPRESSION = 296,
+     IDENTIFIER = 297,
+     NEWLINE = 298,
+     LEXICALERROR = 299
    };
 #endif
 #define OMP 258
@@ -79,34 +83,38 @@
 #define DYNAMIC 265
 #define GUIDED 266
 #define RUNTIME 267
-#define AUTO 268
-#define SECTIONS 269
-#define SINGLE 270
-#define NOWAIT 271
-#define SECTION 272
-#define FOR 273
-#define MASTER 274
-#define CRITICAL 275
-#define BARRIER 276
-#define ATOMIC 277
-#define FLUSH 278
-#define THREADPRIVATE 279
-#define PRIVATE 280
-#define COPYPRIVATE 281
-#define FIRSTPRIVATE 282
-#define LASTPRIVATE 283
-#define SHARED 284
-#define DEFAULT 285
-#define NONE 286
-#define REDUCTION 287
-#define COPYIN 288
-#define LOGAND 289
-#define LOGOR 290
-#define EXPRESSION 291
-#define ID_EXPRESSION 292
-#define IDENTIFIER 293
-#define NEWLINE 294
-#define LEXICALERROR 295
+#define SECTIONS 268
+#define SINGLE 269
+#define NOWAIT 270
+#define SECTION 271
+#define FOR 272
+#define MASTER 273
+#define CRITICAL 274
+#define BARRIER 275
+#define ATOMIC 276
+#define FLUSH 277
+#define THREADPRIVATE 278
+#define PRIVATE 279
+#define COPYPRIVATE 280
+#define FIRSTPRIVATE 281
+#define LASTPRIVATE 282
+#define SHARED 283
+#define DEFAULT 284
+#define NONE 285
+#define REDUCTION 286
+#define COPYIN 287
+#define TASK 288
+#define TASKWAIT 289
+#define UNTIED 290
+#define COLLAPSE 291
+#define AUTO 292
+#define LOGAND 293
+#define LOGOR 294
+#define EXPRESSION 295
+#define ID_EXPRESSION 296
+#define IDENTIFIER 297
+#define NEWLINE 298
+#define LEXICALERROR 299
 
 
 
