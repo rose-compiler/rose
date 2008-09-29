@@ -536,9 +536,8 @@ void RoseBin_DB_IDAPRO::process_instruction_query(MYSQL* conn, MYSQL_RES* res_se
       SgAsmInstruction* instruction = NULL;
       instruction = createInstruction(address, func, mnemonic);
       //	instruction = new SgAsmInstruction(address,bb,mnemonic,"");
-      instruction->set_raw_bytes(data);
-      // set file pointer for each instruction
-      //instruction->set_file_info(this_file);
+      // Sep 29, tps : commented the following line out, since the function was removed.
+      //instruction->set_raw_bytes(data);
 
       ROSE_ASSERT(instruction);
 
