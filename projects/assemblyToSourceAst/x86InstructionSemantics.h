@@ -1319,6 +1319,17 @@ struct X86InstructionSemantics {
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
+      case x86_leave: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.writeGPR(x86_gpr_sp, policy.readGPR(x86_gpr_bp));
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
+        Word(32) oldSp = policy.readGPR(x86_gpr_sp);
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(4));
+        policy.writeGPR(x86_gpr_bp, readMemory<32>(x86_segreg_ss, oldSp));
+        policy.writeGPR(x86_gpr_sp, newSp);
+        break;
+      }
       case x86_call: {
         ROSE_ASSERT (operands.size() == 1);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
