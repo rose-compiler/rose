@@ -129,13 +129,13 @@ struct X86InstructionSemantics {
         break;
       }
       case V_SgAsmBinaryAdd: {
-        return policy.template add<Len>(read<Len>(isSgAsmBinaryAdd(e)->get_lhs()), read<Len>(isSgAsmBinaryAdd(e)->get_rhs()));
+        return policy.add(read<Len>(isSgAsmBinaryAdd(e)->get_lhs()), read<Len>(isSgAsmBinaryAdd(e)->get_rhs()));
       }
       case V_SgAsmBinaryMultiply: {
         SgAsmByteValueExpression* rhs = isSgAsmByteValueExpression(isSgAsmBinaryMultiply(e)->get_rhs());
         ROSE_ASSERT (rhs);
         SgAsmExpression* lhs = isSgAsmBinaryMultiply(e)->get_lhs();
-        return policy.template extract<0, Len>(policy.template unsignedMultiply<Len, 8>(read<Len>(lhs), read<8>(rhs)));
+        return policy.template extract<0, Len>(policy.unsignedMultiply(read<Len>(lhs), read<8>(rhs)));
       }
       case V_SgAsmMemoryReferenceExpression: {
         return readMemory<Len>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e));
@@ -164,7 +164,7 @@ struct X86InstructionSemantics {
     }
   }
 
-  void write(SgAsmExpression* e, const Word(8)& value) {
+  void write8(SgAsmExpression* e, const Word(8)& value) {
     switch (e->variantT()) {
       case V_SgAsmx86RegisterReferenceExpression: {
         SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
@@ -174,11 +174,11 @@ struct X86InstructionSemantics {
             Word(32) oldValue = policy.readGPR(reg);
             switch (rre->get_position_in_register()) {
               case x86_regpos_low_byte: {
-                policy.writeGPR(reg, policy.template concat<8, 24>(value, policy.template extract<8, 32>(oldValue)));
+                policy.writeGPR(reg, policy.concat(value, policy.template extract<8, 32>(oldValue)));
                 break;
               }
               case x86_regpos_high_byte: {
-                policy.writeGPR(reg, policy.template concat<8, 24>(policy.template extract<0, 8>(oldValue), policy.template concat<8, 16>(value, policy.template extract<16, 32>(oldValue))));
+                policy.writeGPR(reg, policy.concat(policy.template extract<0, 8>(oldValue), policy.concat(value, policy.template extract<16, 32>(oldValue))));
                 break;
               }
               default: ROSE_ASSERT (!"Bad position in register");
@@ -193,11 +193,11 @@ struct X86InstructionSemantics {
         writeMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
-      default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
+      default: fprintf(stderr, "Bad variant %s in write8\n", e->class_name().c_str()); abort();
     }
   }
 
-  void write(SgAsmExpression* e, const Word(16)& value) {
+  void write16(SgAsmExpression* e, const Word(16)& value) {
     switch (e->variantT()) {
       case V_SgAsmx86RegisterReferenceExpression: {
         SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
@@ -207,7 +207,7 @@ struct X86InstructionSemantics {
             Word(32) oldValue = policy.readGPR(reg);
             switch (rre->get_position_in_register()) {
               case x86_regpos_word: {
-                policy.writeGPR(reg, policy.template concat<16, 16>(value, policy.template extract<16, 32>(oldValue)));
+                policy.writeGPR(reg, policy.concat(value, policy.template extract<16, 32>(oldValue)));
                 break;
               }
               default: ROSE_ASSERT (!"Bad position in register");
@@ -222,11 +222,11 @@ struct X86InstructionSemantics {
         writeMemory<16>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
-      default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
+      default: fprintf(stderr, "Bad variant %s in write16\n", e->class_name().c_str()); abort();
     }
   }
 
-  void write(SgAsmExpression* e, const Word(32)& value) {
+  void write32(SgAsmExpression* e, const Word(32)& value) {
     switch (e->variantT()) {
       case V_SgAsmx86RegisterReferenceExpression: {
         SgAsmx86RegisterReferenceExpression* rre = isSgAsmx86RegisterReferenceExpression(e);
@@ -251,8 +251,15 @@ struct X86InstructionSemantics {
         writeMemory<32>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), value);
         break;
       }
-      default: fprintf(stderr, "Bad variant %s in write\n", e->class_name().c_str()); abort();
+      default: fprintf(stderr, "Bad variant %s in write32\n", e->class_name().c_str()); abort();
     }
+  }
+
+  template <size_t Len>
+  void setFlagsForResult(const Word(Len)& result) {
+    policy.writeFlag(x86flag_pf, policy.parity(policy.template extract<0, 8>(result)));
+    policy.writeFlag(x86flag_sf, policy.template extract<Len - 1, Len>(result));
+    policy.writeFlag(x86flag_zf, policy.equalToZero(result));
   }
 
   template <size_t Len>
@@ -263,9 +270,20 @@ struct X86InstructionSemantics {
   }
 
   template <size_t Len>
+  Word(Len) doAddOperation(const Word(Len)& a, const Word(Len)& b, bool invertCarries, Word(1) carryIn) { // Does add (subtract with two's complement input and invertCarries set), and sets correct flags; only does this if cond is true
+    Word(Len) carries = policy.template number<Len>(0);
+    Word(Len) result = policy.addWithCarries(a, b, invertMaybe<1>(carryIn, invertCarries), carries);
+    setFlagsForResult<Len>(result);
+    policy.writeFlag(x86flag_af, invertMaybe<1>(policy.template extract<3, 4>(carries), invertCarries));
+    policy.writeFlag(x86flag_cf, invertMaybe<1>(policy.template extract<Len - 1, Len>(carries), invertCarries));
+    policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<Len - 1, Len>(carries), policy.template extract<Len - 2, Len - 1>(carries)));
+    return result;
+  }
+
+  template <size_t Len>
   Word(Len) doAddOperation(const Word(Len)& a, const Word(Len)& b, bool invertCarries, Word(1) carryIn, Word(1) cond) { // Does add (subtract with two's complement input and invertCarries set), and sets correct flags; only does this if cond is true
     Word(Len) carries = policy.template number<Len>(0);
-    Word(Len) result = policy.template addWithCarries<Len>(a, b, invertMaybe<1>(carryIn, invertCarries), carries);
+    Word(Len) result = policy.addWithCarries(a, b, invertMaybe<1>(carryIn, invertCarries), carries);
     setFlagsForResult<Len>(result, cond);
     policy.writeFlag(x86flag_af, policy.ite(cond, invertMaybe<1>(policy.template extract<3, 4>(carries), invertCarries), policy.readFlag(x86flag_af)));
     policy.writeFlag(x86flag_cf, policy.ite(cond, invertMaybe<1>(policy.template extract<Len - 1, Len>(carries), invertCarries), policy.readFlag(x86flag_cf)));
@@ -276,8 +294,8 @@ struct X86InstructionSemantics {
   template <size_t Len>
   Word(Len) doIncOperation(const Word(Len)& a, bool dec, bool setCarry) { // Does inc (dec with dec set), and sets correct flags
     Word(Len) carries = policy.template number<Len>(0);
-    Word(Len) result = policy.template addWithCarries<Len>(a, policy.template number<Len>(dec ? -1 : 1), policy.false_(), carries);
-    setFlagsForResult<Len>(result, policy.true_());
+    Word(Len) result = policy.addWithCarries(a, policy.template number<Len>(dec ? -1 : 1), policy.false_(), carries);
+    setFlagsForResult<Len>(result);
     policy.writeFlag(x86flag_af, invertMaybe<1>(policy.template extract<3, 4>(carries), dec));
     policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<Len - 1, Len>(carries), policy.template extract<Len - 2, Len - 1>(carries)));
     if (setCarry) {
@@ -295,9 +313,9 @@ struct X86InstructionSemantics {
       case x86_mov: {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
-          case 1: write(operands[0], read<8>(operands[1])); break;
-          case 2: write(operands[0], read<16>(operands[1])); break;
-          case 4: write(operands[0], read<32>(operands[1])); break;
+          case 1: write8(operands[0], read<8>(operands[1])); break;
+          case 2: write16(operands[0], read<16>(operands[1])); break;
+          case 4: write32(operands[0], read<32>(operands[1])); break;
           default: ROSE_ASSERT ("Bad size"); break;
         }
         break;
@@ -305,9 +323,9 @@ struct X86InstructionSemantics {
       case x86_xchg: {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
-          case 1: {Word(8) temp = read<8>(operands[1]); write(operands[1], read<8>(operands[0])); write(operands[0], temp); break;}
-          case 2: {Word(16) temp = read<16>(operands[1]); write(operands[1], read<16>(operands[0])); write(operands[0], temp); break;}
-          case 4: {Word(32) temp = read<32>(operands[1]); write(operands[1], read<32>(operands[0])); write(operands[0], temp); break;}
+          case 1: {Word(8) temp = read<8>(operands[1]); write8(operands[1], read<8>(operands[0])); write8(operands[0], temp); break;}
+          case 2: {Word(16) temp = read<16>(operands[1]); write16(operands[1], read<16>(operands[0])); write16(operands[0], temp); break;}
+          case 4: {Word(32) temp = read<32>(operands[1]); write32(operands[1], read<32>(operands[0])); write32(operands[0], temp); break;}
           default: ROSE_ASSERT ("Bad size"); break;
         }
         break;
@@ -315,11 +333,11 @@ struct X86InstructionSemantics {
       case x86_movzx: {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
-          case 2: write(operands[0], policy.concat(read<8>(operands[1]), policy.template number<8>(0))); break;
+          case 2: write16(operands[0], policy.concat(read<8>(operands[1]), policy.template number<8>(0))); break;
           case 4: {
             switch (numBytesInAsmType(operands[1]->get_type())) {
-              case 1: write(operands[0], policy.concat(read<8>(operands[1]), policy.template number<24>(0))); break;
-              case 2: write(operands[0], policy.concat(read<16>(operands[1]), policy.template number<16>(0))); break;
+              case 1: write32(operands[0], policy.concat(read<8>(operands[1]), policy.template number<24>(0))); break;
+              case 2: write32(operands[0], policy.concat(read<16>(operands[1]), policy.template number<16>(0))); break;
               default: ROSE_ASSERT ("Bad size");
             }
             break;
@@ -334,7 +352,7 @@ struct X86InstructionSemantics {
           case 2: {
             Word(8) op1 = read<8>(operands[1]);
             Word(16) result = policy.template signExtend<8, 16>(op1);
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
@@ -342,13 +360,13 @@ struct X86InstructionSemantics {
               case 1: {
                 Word(8) op1 = read<8>(operands[1]);
                 Word(32) result = policy.template signExtend<8, 32>(op1);
-                write(operands[0], result);
+                write32(operands[0], result);
                 break;
               }
               case 2: {
                 Word(16) op1 = read<16>(operands[1]);
                 Word(32) result = policy.template signExtend<16, 32>(op1);
-                write(operands[0], result);
+                write32(operands[0], result);
                 break;
               }
               default: ROSE_ASSERT ("Bad size");
@@ -381,7 +399,7 @@ struct X86InstructionSemantics {
       }
       case x86_lea: {
         ROSE_ASSERT (operands.size() == 2);
-        write(operands[0], readEffectiveAddress(operands[1]));
+        write32(operands[0], readEffectiveAddress(operands[1]));
         break;
       }
       case x86_and: {
@@ -389,20 +407,20 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = policy.and_(read<8>(operands[0]), read<8>(operands[1]));
-            setFlagsForResult<8>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<8>(result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = policy.and_(read<16>(operands[0]), read<16>(operands[1]));
-            setFlagsForResult<16>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<16>(result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = policy.and_(read<32>(operands[0]), read<32>(operands[1]));
-            setFlagsForResult<32>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<32>(result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -417,20 +435,20 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = policy.or_(read<8>(operands[0]), read<8>(operands[1]));
-            setFlagsForResult<8>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<8>(result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = policy.or_(read<16>(operands[0]), read<16>(operands[1]));
-            setFlagsForResult<16>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<16>(result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = policy.or_(read<32>(operands[0]), read<32>(operands[1]));
-            setFlagsForResult<32>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<32>(result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -445,17 +463,17 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = policy.and_(read<8>(operands[0]), read<8>(operands[1]));
-            setFlagsForResult<8>(result, policy.true_());
+            setFlagsForResult<8>(result);
             break;
           }
           case 2: {
             Word(16) result = policy.and_(read<16>(operands[0]), read<16>(operands[1]));
-            setFlagsForResult<16>(result, policy.true_());
+            setFlagsForResult<16>(result);
             break;
           }
           case 4: {
             Word(32) result = policy.and_(read<32>(operands[0]), read<32>(operands[1]));
-            setFlagsForResult<32>(result, policy.true_());
+            setFlagsForResult<32>(result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -470,20 +488,20 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = policy.xor_(read<8>(operands[0]), read<8>(operands[1]));
-            setFlagsForResult<8>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<8>(result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = policy.xor_(read<16>(operands[0]), read<16>(operands[1]));
-            setFlagsForResult<16>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<16>(result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = policy.xor_(read<32>(operands[0]), read<32>(operands[1]));
-            setFlagsForResult<32>(result, policy.true_());
-            write(operands[0], result);
+            setFlagsForResult<32>(result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -498,17 +516,17 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = policy.invert(read<8>(operands[0]));
-            write(operands[0], result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = policy.invert(read<16>(operands[0]));
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = policy.invert(read<32>(operands[0]));
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -519,18 +537,18 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = doAddOperation<8>(read<8>(operands[0]), read<8>(operands[1]), false, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(8) result = doAddOperation<8>(read<8>(operands[0]), read<8>(operands[1]), false, policy.false_());
+            write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = doAddOperation<16>(read<16>(operands[0]), read<16>(operands[1]), false, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(16) result = doAddOperation<16>(read<16>(operands[0]), read<16>(operands[1]), false, policy.false_());
+            write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = doAddOperation<32>(read<32>(operands[0]), read<32>(operands[1]), false, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(32) result = doAddOperation<32>(read<32>(operands[0]), read<32>(operands[1]), false, policy.false_());
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -541,18 +559,18 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = doAddOperation<8>(read<8>(operands[0]), read<8>(operands[1]), false, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(8) result = doAddOperation<8>(read<8>(operands[0]), read<8>(operands[1]), false, policy.readFlag(x86flag_cf));
+            write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = doAddOperation<16>(read<16>(operands[0]), read<16>(operands[1]), false, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(16) result = doAddOperation<16>(read<16>(operands[0]), read<16>(operands[1]), false, policy.readFlag(x86flag_cf));
+            write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = doAddOperation<32>(read<32>(operands[0]), read<32>(operands[1]), false, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(32) result = doAddOperation<32>(read<32>(operands[0]), read<32>(operands[1]), false, policy.readFlag(x86flag_cf));
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -563,18 +581,18 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(8) result = doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.false_());
+            write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(16) result = doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.false_());
+            write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.false_(), policy.true_());
-            write(operands[0], result);
+            Word(32) result = doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.false_());
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -585,18 +603,18 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(8) result = doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.readFlag(x86flag_cf));
+            write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(16) result = doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.readFlag(x86flag_cf));
+            write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.readFlag(x86flag_cf), policy.true_());
-            write(operands[0], result);
+            Word(32) result = doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.readFlag(x86flag_cf));
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -607,15 +625,15 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 2);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.false_(), policy.true_());
+            doAddOperation<8>(read<8>(operands[0]), policy.invert(read<8>(operands[1])), true, policy.false_());
             break;
           }
           case 2: {
-            doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.false_(), policy.true_());
+            doAddOperation<16>(read<16>(operands[0]), policy.invert(read<16>(operands[1])), true, policy.false_());
             break;
           }
           case 4: {
-            doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.false_(), policy.true_());
+            doAddOperation<32>(read<32>(operands[0]), policy.invert(read<32>(operands[1])), true, policy.false_());
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -627,17 +645,17 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = doIncOperation<8>(policy.invert(read<8>(operands[0])), false, true);
-            write(operands[0], result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = doIncOperation<16>(policy.invert(read<16>(operands[0])), false, true);
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = doIncOperation<32>(policy.invert(read<32>(operands[0])), false, true);
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -649,17 +667,17 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = doIncOperation<8>(read<8>(operands[0]), false, false);
-            write(operands[0], result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = doIncOperation<16>(read<16>(operands[0]), false, false);
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = doIncOperation<32>(read<32>(operands[0]), false, false);
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -671,17 +689,17 @@ struct X86InstructionSemantics {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) result = doIncOperation<8>(read<8>(operands[0]), true, false);
-            write(operands[0], result);
+            write8(operands[0], result);
             break;
           }
           case 2: {
             Word(16) result = doIncOperation<16>(read<16>(operands[0]), true, false);
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
             Word(32) result = doIncOperation<32>(read<32>(operands[0]), true, false);
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -697,8 +715,8 @@ struct X86InstructionSemantics {
             Word(9) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<8, 9>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf), policy.true_());
+            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
+            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -709,8 +727,8 @@ struct X86InstructionSemantics {
             Word(17) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<16, 17>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf), policy.true_());
+            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
+            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -721,8 +739,8 @@ struct X86InstructionSemantics {
             Word(33) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<32, 33>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf), policy.true_());
+            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
+            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -739,8 +757,8 @@ struct X86InstructionSemantics {
             Word(9) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<8, 9>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf), policy.true_());
+            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
+            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -751,8 +769,8 @@ struct X86InstructionSemantics {
             Word(17) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<16, 17>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf), policy.true_());
+            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
+            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -763,8 +781,8 @@ struct X86InstructionSemantics {
             Word(33) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<32, 33>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf), policy.true_());
+            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
+            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -781,8 +799,8 @@ struct X86InstructionSemantics {
             Word(9) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<8, 9>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf), policy.true_());
+            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
+            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -793,8 +811,8 @@ struct X86InstructionSemantics {
             Word(17) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<16, 17>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf), policy.true_());
+            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
+            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -805,8 +823,8 @@ struct X86InstructionSemantics {
             Word(33) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<32, 33>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf), policy.true_());
+            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
+            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -822,7 +840,7 @@ struct X86InstructionSemantics {
             Word(8) output = policy.rotateLeft(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<0, 1>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<0, 1>(output), policy.template extract<7, 8>(output))));
-            write(operands[0], output);
+            write8(operands[0], output);
             break;
           }
           case 2: {
@@ -831,7 +849,7 @@ struct X86InstructionSemantics {
             Word(16) output = policy.rotateLeft(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<0, 1>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<0, 1>(output), policy.template extract<15, 16>(output))));
-            write(operands[0], output);
+            write16(operands[0], output);
             break;
           }
           case 4: {
@@ -840,7 +858,7 @@ struct X86InstructionSemantics {
             Word(32) output = policy.rotateLeft(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<0, 1>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<0, 1>(output), policy.template extract<31, 32>(output))));
-            write(operands[0], output);
+            write32(operands[0], output);
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -855,7 +873,7 @@ struct X86InstructionSemantics {
             Word(8) output = policy.rotateRight(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<7, 8>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<6, 7>(output), policy.template extract<7, 8>(output))));
-            write(operands[0], output);
+            write8(operands[0], output);
             break;
           }
           case 2: {
@@ -864,7 +882,7 @@ struct X86InstructionSemantics {
             Word(16) output = policy.rotateRight(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<15, 16>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<14, 15>(output), policy.template extract<15, 16>(output))));
-            write(operands[0], output);
+            write16(operands[0], output);
             break;
           }
           case 4: {
@@ -873,7 +891,7 @@ struct X86InstructionSemantics {
             Word(32) output = policy.rotateRight(op, shiftCount);
             policy.writeFlag(x86flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_cf), policy.template extract<31, 32>(output)));
             policy.writeFlag(x86flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86flag_of), policy.xor_(policy.template extract<30, 31>(output), policy.template extract<31, 32>(output))));
-            write(operands[0], output);
+            write32(operands[0], output);
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -889,8 +907,8 @@ struct X86InstructionSemantics {
             Word(33) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<32, 33>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write(operands[0], policy.template extract<16, 32>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<16, 32>(outputWithCf), policy.true_());
+            write16(operands[0], policy.template extract<16, 32>(outputWithCf));
+            setFlagsForResult<16>(policy.template extract<16, 32>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -911,8 +929,8 @@ struct X86InstructionSemantics {
                                        policy.readFlag(x86flag_of), 
                                        policy.xor_(policy.template extract<31, 32>(output), newCf));
             policy.writeFlag(x86flag_of, newOf);
-            write(operands[0], output);
-            setFlagsForResult<32>(output, policy.true_());
+            write32(operands[0], output);
+            setFlagsForResult<32>(output);
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -929,8 +947,8 @@ struct X86InstructionSemantics {
             Word(33) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
             policy.writeFlag(x86flag_cf, policy.template extract<16, 17>(outputWithCf));
             policy.writeFlag(x86flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf), policy.true_());
+            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
+            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -951,8 +969,8 @@ struct X86InstructionSemantics {
                                        policy.readFlag(x86flag_of), 
                                        policy.xor_(policy.template extract<31, 32>(output), newCf));
             policy.writeFlag(x86flag_of, newOf);
-            write(operands[0], output);
-            setFlagsForResult<32>(output, policy.true_());
+            write32(operands[0], output);
+            setFlagsForResult<32>(output);
             policy.writeFlag(x86flag_af, policy.false_()); // Undefined
             break;
           }
@@ -973,7 +991,7 @@ struct X86InstructionSemantics {
             Word(16) result = policy.ite(policy.readFlag(x86flag_zf),
                                          read<16>(operands[0]),
                                          policy.leastSignificantSetBit(op));
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
@@ -982,7 +1000,7 @@ struct X86InstructionSemantics {
               Word(32) result = policy.ite(policy.readFlag(x86flag_zf),
                                            read<32>(operands[0]),
                                            policy.leastSignificantSetBit(op));
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -1002,7 +1020,7 @@ struct X86InstructionSemantics {
             Word(16) result = policy.ite(policy.readFlag(x86flag_zf),
                                          read<16>(operands[0]),
                                          policy.mostSignificantSetBit(op));
-            write(operands[0], result);
+            write16(operands[0], result);
             break;
           }
           case 4: {
@@ -1011,7 +1029,7 @@ struct X86InstructionSemantics {
             Word(32) result = policy.ite(policy.readFlag(x86flag_zf),
                                          read<32>(operands[0]),
                                          policy.mostSignificantSetBit(op));
-            write(operands[0], result);
+            write32(operands[0], result);
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -1038,7 +1056,7 @@ struct X86InstructionSemantics {
               policy.writeGPR(x86_gpr_ax, policy.concat(policy.template extract<0, 16>(mulResult), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
               policy.writeGPR(x86_gpr_dx, policy.concat(policy.template extract<16, 32>(mulResult), policy.template extract<16, 32>(policy.readGPR(x86_gpr_dx))));
             } else {
-              write(operands[0], policy.template extract<0, 16>(mulResult));
+              write16(operands[0], policy.template extract<0, 16>(mulResult));
             }
             Word(1) carry = policy.nor_(policy.equalToNegativeOne(policy.template extract<7, 32>(mulResult)), policy.equalToZero(policy.template extract<7, 32>(mulResult)));
             policy.writeFlag(x86flag_cf, carry);
@@ -1053,7 +1071,7 @@ struct X86InstructionSemantics {
               policy.writeGPR(x86_gpr_ax, policy.template extract<0, 32>(mulResult));
               policy.writeGPR(x86_gpr_dx, policy.template extract<32, 64>(mulResult));
             } else {
-              write(operands[0], policy.template extract<0, 32>(mulResult));
+              write32(operands[0], policy.template extract<0, 32>(mulResult));
             }
             Word(1) carry = policy.nor_(policy.equalToNegativeOne(policy.template extract<7, 64>(mulResult)), policy.equalToZero(policy.template extract<7, 64>(mulResult)));
             policy.writeFlag(x86flag_cf, carry);
@@ -1255,7 +1273,7 @@ struct X86InstructionSemantics {
         policy.writeFlag(x86flag_of, policy.false_()); // Undefined
         policy.writeFlag(x86flag_af, policy.false_()); // Undefined
         policy.writeFlag(x86flag_cf, policy.false_()); // Undefined
-        setFlagsForResult<8>(newAl, policy.true_());
+        setFlagsForResult<8>(newAl);
         break;
       }
 
@@ -1269,7 +1287,7 @@ struct X86InstructionSemantics {
         policy.writeFlag(x86flag_of, policy.false_()); // Undefined
         policy.writeFlag(x86flag_af, policy.false_()); // Undefined
         policy.writeFlag(x86flag_cf, policy.false_()); // Undefined
-        setFlagsForResult<8>(newAl, policy.true_());
+        setFlagsForResult<8>(newAl);
         break;
       }
 
@@ -1277,7 +1295,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 1);
         Word(32) oldVal = read<32>(operands[0]);
         Word(32) newVal = policy.concat(policy.template extract<24, 32>(oldVal), policy.concat(policy.template extract<16, 24>(oldVal), policy.concat(policy.template extract<8, 16>(oldVal), policy.template extract<0, 8>(oldVal))));
-        write(operands[0], newVal);
+        write32(operands[0], newVal);
         break;
       }
 
@@ -1286,7 +1304,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
-        Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(-4));
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(-4));
         writeMemory<32>(x86_segreg_ss, newSp, read<32>(operands[0]));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
@@ -1296,8 +1314,8 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
-        Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(4));
-        write(operands[0], readMemory<32>(x86_segreg_ss, oldSp));
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(4));
+        write32(operands[0], readMemory<32>(x86_segreg_ss, oldSp));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
@@ -1306,7 +1324,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
-        Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(-4));
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(-4));
         writeMemory<32>(x86_segreg_ss, newSp, policy.readIP());
         policy.writeIP(read<32>(operands[0]));
         policy.writeGPR(x86_gpr_sp, newSp);
@@ -1317,7 +1335,7 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
         ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
-        Word(32) newSp = policy.template add<32>(oldSp, policy.template number<32>(4));
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(4));
         policy.writeIP(readMemory<32>(x86_segreg_ss, oldSp));
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
@@ -1357,7 +1375,7 @@ struct X86InstructionSemantics {
       JUMP(cxz)
       JUMP(ecxz)
 #undef JUMP
-#define SET(tag) case x86_set##tag: {ROSE_ASSERT (operands.size() == 1); write(operands[0], policy.concat(FLAGCOMBO_##tag, policy.template number<7>(0))); break;}
+#define SET(tag) case x86_set##tag: {ROSE_ASSERT (operands.size() == 1); write8(operands[0], policy.concat(FLAGCOMBO_##tag, policy.template number<7>(0))); break;}
       SET(ne)
       SET(e)
       SET(ns)
@@ -1418,17 +1436,17 @@ struct X86InstructionSemantics {
       }
       case x86_lodsd: {
         policy.writeGPR(x86_gpr_ax, readMemory<32>(x86_segreg_ds, policy.readGPR(x86_gpr_si)));
-        policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-4), policy.template number<32>(4))));
+        policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-4), policy.template number<32>(4))));
         break;
       }
       case x86_lodsw: {
         policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<16>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
-        policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-2), policy.template number<32>(2))));
+        policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-2), policy.template number<32>(2))));
         break;
       }
       case x86_lodsb: {
-        policy.writeGPR(x86_gpr_ax, policy.concat(readMemory<8>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.template extract<8, 32>(policy.readGPR(x86_gpr_ax))));
-        policy.writeGPR(x86_gpr_si, policy.template add<32>(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-1), policy.template number<32>(1))));
+        policy.writeGPR(x86_gpr_ax, policy.concat(policy.template readMemory<8>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.template extract<8, 32>(policy.readGPR(x86_gpr_ax))));
+        policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(policy.readFlag(x86flag_df), policy.template number<32>(-1), policy.template number<32>(1))));
         break;
       }
       case x86_hlt: {
