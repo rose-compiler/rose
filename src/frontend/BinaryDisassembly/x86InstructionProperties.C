@@ -469,3 +469,37 @@ bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
   }
 }
 
+const char* gprToString(X86GeneralPurposeRegister n) {
+  static const char* names[] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
+  ROSE_ASSERT ((int)n >= 0 && (int)n <= 15);
+  return names[(int)n];
+}
+
+const char* flagToString(X86Flag n) {
+  static const char* names[] = {
+    "cf",
+    "?1",
+    "pf",
+    "?3",
+    "af",
+    "?5",
+    "zf",
+    "sf",
+    "tf",
+    "if",
+    "df",
+    "of",
+    "iopl0",
+    "iopl1",
+    "nt",
+    "?15",
+    "rf",
+    "vm",
+    "ac",
+    "vif",
+    "vip",
+    "id"
+  };
+  ROSE_ASSERT ((int)n >= 0 && (int)n <= 21);
+  return names[(int)n];
+}
