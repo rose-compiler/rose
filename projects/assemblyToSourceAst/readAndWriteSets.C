@@ -4,18 +4,6 @@
 #include <vector>
 #include <boost/array.hpp>
 
-static const char* gprToString(X86GeneralPurposeRegister n) {
-  const char* names[] = {"EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"};
-  ROSE_ASSERT ((int)n >= 0 && (int)n <= 7);
-  return names[(int)n];
-}
-
-static const char* flagToString(X86Flag n) {
-  const char* names[] = {"CF", "?1", "PF", "?3", "AF", "?5", "ZF", "SF", "?8", "?9", "DF", "OF"};
-  ROSE_ASSERT ((int)n >= 0 && (int)n <= 11);
-  return names[(int)n];
-}
-
 using namespace std;
 using boost::array;
 
@@ -241,6 +229,7 @@ struct ReadAndWriteSetPolicy {
 
   void hlt() {} // FIXME
   void interrupt(uint8_t num) {} // FIXME
+  W rdtsc() {return W();} // FIXME
 
   void startBlock(uint64_t addr) {
   }

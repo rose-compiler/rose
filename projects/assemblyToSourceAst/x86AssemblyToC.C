@@ -317,6 +317,10 @@ struct CTranslationPolicy {
     appendStatement(buildExprStatement(buildFunctionCallExp(interruptSym, buildExprListExp(buildIntVal(num)))), bb);
   }
 
+  WordWithExpression<64> rdtsc() {
+    return buildUnsignedLongLongIntValHex(0); // FIXME
+  }
+
   void startBlock(uint64_t addr) {
     bb = buildBasicBlock();
     appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(addr), bb), switchBody);

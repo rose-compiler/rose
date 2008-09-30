@@ -83,13 +83,13 @@ struct NetlistTranslationPolicy {
     rm.insert(make_pair(ip(), ipReg));
     LitList(7) flagsReg = problem.newVars<7>();
     problem.addInterface(prefix + "_flags", toVector(flagsReg));
-    fm.insert(make_pair(x86flag_cf, flagsReg[0]));
-    fm.insert(make_pair(x86flag_pf, flagsReg[1]));
-    fm.insert(make_pair(x86flag_af, flagsReg[2]));
-    fm.insert(make_pair(x86flag_zf, flagsReg[3]));
-    fm.insert(make_pair(x86flag_sf, flagsReg[4]));
-    fm.insert(make_pair(x86flag_df, flagsReg[5]));
-    fm.insert(make_pair(x86flag_of, flagsReg[6]));
+    fm.insert(make_pair(x86_flag_cf, flagsReg[0]));
+    fm.insert(make_pair(x86_flag_pf, flagsReg[1]));
+    fm.insert(make_pair(x86_flag_af, flagsReg[2]));
+    fm.insert(make_pair(x86_flag_zf, flagsReg[3]));
+    fm.insert(make_pair(x86_flag_sf, flagsReg[4]));
+    fm.insert(make_pair(x86_flag_df, flagsReg[5]));
+    fm.insert(make_pair(x86_flag_of, flagsReg[6]));
   }
 
   NetlistTranslationPolicy(): memoryWriteCountBase(0), memoryReadCountBase(0), problem() {
@@ -327,6 +327,7 @@ struct NetlistTranslationPolicy {
 
   void hlt() {} // FIXME
   void interrupt(uint8_t num) {} // FIXME
+  LitList(64) rdtsc() {return number<64>(0);} // FIXME
 
   void writeBack(Lit isThisIp) {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
