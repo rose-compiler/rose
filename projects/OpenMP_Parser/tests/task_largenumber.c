@@ -18,7 +18,7 @@ main ()
       printf("Using %d threads.\n",omp_get_num_threads());
       for (i = 0; i < LARGE_NUMBER; i++)
         #pragma omp task
-        process (item[i]);
+         process (item[i]);
     }
   }
 }

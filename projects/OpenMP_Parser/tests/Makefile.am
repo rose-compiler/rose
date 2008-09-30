@@ -45,6 +45,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	staticChunk.c \
 	subteam2.c \
 	subteam.c \
+	task_largenumber.c \
 	task_orphaned.c \
 	task_untied.c \
 	task_wait.c \
@@ -58,8 +59,8 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	task_link.cpp \
 	task_tree.cpp 
 
-TESTCODE_CURRENTLY_FAILING = \
-	task_largenumber.c 
+TESTCODE_CURRENTLY_FAILING = \ 
+	task_underIf.c 
 
 ROSE_FLAGS = -D_OPENMP --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 # used to find omp.h
