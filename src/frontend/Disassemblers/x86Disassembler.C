@@ -1127,8 +1127,8 @@ namespace X86Disassembler {
       case 0xD1: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeByteValue(1)); goto done;}
       case 0xD2: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeRegister(2, rmLegacyByte)); goto done;}
       case 0xD3: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeRegister(2, rmLegacyByte)); goto done;}
-      case 0xD4: {not64(); insn = MAKE_INSN0(aam, aam); goto done;}
-      case 0xD5: {not64(); insn = MAKE_INSN0(aad, aad); goto done;}
+      case 0xD4: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aam, aam, imm); goto done;}
+      case 0xD5: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aad, aad, imm); goto done;}
       case 0xD6: {not64(); insn = MAKE_INSN0(salc, salc); goto done;}
       case 0xD7: {insn = MAKE_INSN0(xlatb, xlatb); goto done;}
       case 0xD8: {insn = decodeX87InstructionD8(); goto done;}
