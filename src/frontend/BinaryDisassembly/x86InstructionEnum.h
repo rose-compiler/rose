@@ -667,6 +667,31 @@ enum X86InstructionSize {
   x86_insnsize_64
 };
 
+enum X86Flag { // These match the bit positions in rFLAGS
+  x86_flag_cf = 0,
+  x86_flag_1 = 1,
+  x86_flag_pf = 2,
+  x86_flag_3 = 3,
+  x86_flag_af = 4,
+  x86_flag_5 = 5,
+  x86_flag_zf = 6,
+  x86_flag_sf = 7,
+  x86_flag_tf = 8,
+  x86_flag_if = 9,
+  x86_flag_df = 10,
+  x86_flag_of = 11,
+  x86_flag_iopl0 = 12,
+  x86_flag_iopl1 = 13,
+  x86_flag_nt = 14,
+  x86_flag_15 = 15,
+  x86_flag_rf = 16,
+  x86_flag_vm = 17,
+  x86_flag_ac = 18,
+  x86_flag_vif = 19,
+  x86_flag_vip = 20,
+  x86_flag_id = 21
+};
+
 std::string toString(X86InstructionKind k);
 
 #endif /* ROSE_X86INSTRUCTIONENUM_H */
