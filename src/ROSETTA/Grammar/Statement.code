@@ -4461,7 +4461,9 @@ SgScopeStatement::getStatementList ()
              { 
                SgForStatement* forScope = isSgForStatement(currentScope);
                ROSE_ASSERT (forScope != NULL);
-               ROSE_ASSERT (forScope->get_loop_body() != NULL);
+            // Liao, 9/29/2008, This function could be called during parsing and 
+            // the loop body is not yet filled up
+            //   ROSE_ASSERT (forScope->get_loop_body() != NULL);
             // Should this be defined given that there are two SgBasicBlock objects in a SgForStatement
             // currentStatementList = forScope->get_init_stmt();
                currentStatementList = &(SageInterface::ensureBasicBlockAsBodyOfFor(forScope)->getStatementList());
