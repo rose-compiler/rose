@@ -157,6 +157,11 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len>
+  WordWithExpression<1> greaterOrEqual(WordWithExpression<Len> a, WordWithExpression<Len> b) {
+    return buildGreaterOrEqualOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len>
   WordWithExpression<Len> add(WordWithExpression<Len> a, WordWithExpression<Len> b) {
     return buildAddOp(a.expr(), b.expr());
   }

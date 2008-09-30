@@ -1198,6 +1198,89 @@ struct X86InstructionSemantics {
         policy.writeFlag(x86flag_of, policy.false_()); // Undefined
         break;
       }
+
+      case x86_aaa: {
+        ROSE_ASSERT (operands.size() == 0);
+        Word(1) incAh = policy.or_(policy.readFlag(x86flag_af),
+                                   policy.greaterOrEqual(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), policy.template number<4>(10)));
+        policy.writeGPR(x86_gpr_ax,
+          policy.concat(
+            policy.add(policy.ite(incAh, policy.template number<4>(6), policy.template number<4>(0)),
+                       policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax))),
+            policy.concat(
+              policy.template number<4>(0),
+              policy.concat(
+                policy.add(policy.ite(incAh, policy.template number<8>(1), policy.template number<8>(0)),
+                           policy.template extract<8, 16>(policy.readGPR(x86_gpr_ax))),
+                policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))))));
+        policy.writeFlag(x86flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_sf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_zf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_af, incAh);
+        policy.writeFlag(x86flag_cf, incAh);
+        break;
+      }
+
+      case x86_aas: {
+        ROSE_ASSERT (operands.size() == 0);
+        Word(1) decAh = policy.or_(policy.readFlag(x86flag_af),
+                                   policy.greaterOrEqual(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), policy.template number<4>(10)));
+        policy.writeGPR(x86_gpr_ax,
+          policy.concat(
+            policy.add(policy.ite(decAh, policy.template number<4>(-6), policy.template number<4>(0)),
+                       policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax))),
+            policy.concat(
+              policy.template number<4>(0),
+              policy.concat(
+                policy.add(policy.ite(decAh, policy.template number<8>(-1), policy.template number<8>(0)),
+                           policy.template extract<8, 16>(policy.readGPR(x86_gpr_ax))),
+                policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))))));
+        policy.writeFlag(x86flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_sf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_zf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_af, decAh);
+        policy.writeFlag(x86flag_cf, decAh);
+        break;
+      }
+
+      case x86_aam: {
+        ROSE_ASSERT (operands.size() == 1);
+        Word(8) al = policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax));
+        Word(8) divisor = read<8>(operands[0]);
+        Word(8) newAh = policy.unsignedDivide(al, divisor);
+        Word(8) newAl = policy.unsignedModulo(al, divisor);
+        policy.writeGPR(x86_gpr_ax, policy.concat(newAl, policy.concat(newAh, policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax)))));
+        policy.writeFlag(x86flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_cf, policy.false_()); // Undefined
+        setFlagsForResult<8>(newAl, policy.true_());
+        break;
+      }
+
+      case x86_aad: {
+        ROSE_ASSERT (operands.size() == 1);
+        Word(8) al = policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax));
+        Word(8) ah = policy.template extract<8, 16>(policy.readGPR(x86_gpr_ax));
+        Word(8) divisor = read<8>(operands[0]);
+        Word(8) newAl = policy.add(al, policy.template extract<0, 8>(policy.unsignedMultiply(ah, divisor)));
+        policy.writeGPR(x86_gpr_ax, policy.concat(newAl, policy.concat(policy.template number<8>(0), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax)))));
+        policy.writeFlag(x86flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86flag_cf, policy.false_()); // Undefined
+        setFlagsForResult<8>(newAl, policy.true_());
+        break;
+      }
+
+      case x86_bswap: {
+        ROSE_ASSERT (operands.size() == 1);
+        Word(32) oldVal = read<32>(operands[0]);
+        Word(32) newVal = policy.concat(policy.template extract<24, 32>(oldVal), policy.concat(policy.template extract<16, 24>(oldVal), policy.concat(policy.template extract<8, 16>(oldVal), policy.template extract<0, 8>(oldVal))));
+        write(operands[0], newVal);
+        break;
+      }
+
       case x86_push: {
         ROSE_ASSERT (operands.size() == 1);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
@@ -1364,15 +1447,18 @@ struct X86InstructionSemantics {
     }
   }
 
+  void processInstruction(SgAsmx86Instruction* insn) {
+    ROSE_ASSERT (insn);
+    policy.startInstruction(insn);
+    translate(insn);
+    policy.finishInstruction(insn);
+  }
+
   void processBlock(const SgAsmStatementPtrList& stmts, size_t begin, size_t end) {
     if (begin == end) return;
     policy.startBlock(stmts[begin]->get_address());
     for (size_t i = begin; i < end; ++i) {
-      SgAsmx86Instruction* insn = isSgAsmx86Instruction(stmts[i]);
-      ROSE_ASSERT (insn);
-      policy.startInstruction(insn);
-      translate(insn);
-      policy.finishInstruction(insn);
+      processInstruction(isSgAsmx86Instruction(stmts[i]));
     }
     policy.finishBlock(stmts[begin]->get_address());
   }

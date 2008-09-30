@@ -198,6 +198,13 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len>
+  LitList(1) greaterOrEqual(const LitList(Len)& a, const LitList(Len)& b) {
+    LitList(Len) carries;
+    problem.adder(a, invertWord(b), TRUE, &carries);
+    return single(carries[Len - 1]);
+  }
+
+  template <size_t Len>
   LitList(Len) add(const LitList(Len)& a, const LitList(Len)& b) { // Simple case
     return ::extract<0, Len>(problem.adder(a, b));
   }
