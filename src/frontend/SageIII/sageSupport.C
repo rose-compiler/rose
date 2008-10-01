@@ -3318,7 +3318,11 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (8/20/2008): Add support for Qing's options!
           argument == "-annot" ||
           argument == "-bs" ||
-          isOptionTakingThirdParameter(argument) )
+          isOptionTakingThirdParameter(argument) ||
+
+       // DQ (9/30/2008): Added support for java class specification required for Fortran use of OFP.
+          argument == "--class" ||
+          false)
         {
           result = true;
         }
@@ -3829,6 +3833,22 @@ SgFile::callFrontEnd()
    }
 
 
+// DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
+string
+SgSourceFile::build_classpath()
+   {
+  // This function builds the class path for use with Java and the cal to the OFP.
+     string classpath = "-Djava.class.path=";
+     classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-3.0.1.jar", "lib/antlr-3.0.1.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
+     classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
+     classpath += ".";
+
+     return classpath;
+   }
+ 
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -3872,7 +3892,15 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
                       // Some security checking here could be helpful!!!
-          systemFromVector (fortran_C_preprocessor_commandLine);
+          int errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
+
+       // DQ (10/1/2008): Added error checking on return value from CPP.
+          if (errorCode != 0)
+             {
+               printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
+               ROSE_ASSERT(false);
+             }
+          
 
 #if 0
           printf ("Exiting as a test ... (after calling C preprocessor)\n");
@@ -4033,6 +4061,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
              {
                printf ("Syntax errors detected in input fortran program ... \n");
+
+            // We should define some convention for error codes returned by ROSE
                exit(1);
              }
           ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
@@ -4043,6 +4073,9 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
         }
 
+  // Build the classpath list for Java support.
+     const string classpath = build_classpath();
+
   // printf ("get_output_parser_actions() = %s \n",get_output_parser_actions() ? "true" : "false");
      if (get_output_parser_actions() == true)
         {
@@ -4050,6 +4083,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
 
@@ -4060,9 +4094,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                OFPCommandLine.push_back(includeList[i]);
              }
 
-#if 0
-          OFPCommandLine.push_back(get_sourceFileNameWithPath());
-#else
        // DQ (5/19/2008): Support for C preprocessing
           if (requires_C_preprocessor == true)
              {
@@ -4075,13 +4106,24 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              {
                OFPCommandLine.push_back(get_sourceFileNameWithPath());
              }
-#endif
+
 #if 1
           printf ("output_parser_actions: OFPCommandLine = %s \n",CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
 #endif
+
 #if 1
        // Some security checking here could be helpful!!!
-          systemFromVector (OFPCommandLine);
+       // int errorCode = systemFromVector(OFPCommandLine);
+       // system ("printenv");
+       // int errorCode = system (CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
+
+          int errorCode = systemFromVector(OFPCommandLine);
+
+          if (errorCode != 0)
+             {
+               printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
+               ROSE_ASSERT(false);
+             }
 #else
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_dump_argc    = 0;
@@ -4106,6 +4148,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
           OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
 
        // DQ (5/18/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
@@ -4120,7 +4163,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // printf ("exit_after_parser: OFPCommandLineString = %s \n",OFPCommandLineString.c_str());
 #if 1
        // Some security checking here could be helpful!!!
-          systemFromVector (OFPCommandLine);
+          int errorCode = systemFromVector (OFPCommandLine);
+
+       // DQ (9/30/2008): Added error checking of return value
+          if (errorCode != 0)
+             {
+               printf ("Using option -rose:exit_after_parser (errorCode = %d) \n",errorCode);
+               ROSE_ASSERT(false);
+             }
 #else
        // This fails, I think because we can't call the openFortranParser_main twice.
           int openFortranParser_only_argc    = 0;
@@ -4135,13 +4185,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // DQ (1/19/2008): New version of OFP requires different calling syntax; new lib name is: libfortran_ofp_parser_java_FortranParserActionJNI.so old name: libparser_java_FortranParserActionJNI.so
   // frontEndCommandLineString = std::string(argv[0]) + " --class parser.java.FortranParserActionJNI " + get_sourceFileNameWithPath();
      vector<string> frontEndCommandLine;
+
      frontEndCommandLine.push_back(argv[0]);
+  // frontEndCommandLine.push_back(classpath);
      frontEndCommandLine.push_back("--class");
      frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
+
 #if 0
+  // Debugging output
      get_project()->display("Calling SgProject display");
      display("Calling SgFile display");
 #endif
+
      const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
 
      bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
@@ -4168,9 +4223,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           frontEndCommandLine.push_back("-I" + getSourceDirectory() );
         }
 
-#if 0
-     frontEndCommandLine.push_back(get_sourceFileNameWithPath());
-#else
   // DQ (5/19/2008): Support for C preprocessing
      if (requires_C_preprocessor == true)
         {
@@ -4183,7 +4235,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         {
           frontEndCommandLine.push_back(get_sourceFileNameWithPath());
         }
-#endif
 
 #if 1
      if ( get_verbose() > 0 )
@@ -4818,15 +4869,19 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // allow conditional skipping of the final compile step for testing ROSE
      if (get_skipfinalCompileStep() == false)
         {
-          if ( get_verbose() > 1 ) {
+       // Debugging code
+          if ( get_verbose() > 1 )
+             {
                printf ("calling systemFromVector() \n");
                printf ("Number of command line arguments: %zu\n", compilerNameString.size());
-               for (size_t i = 0; i < compilerNameString.size(); ++i) {
-                 printf ("Compiler arg %zu: %s\n", i, compilerNameString[i].c_str());
-               }
+               for (size_t i = 0; i < compilerNameString.size(); ++i)
+                  {
+                    printf ("Compiler arg %zu: %s\n", i, compilerNameString[i].c_str());
+                  }
                printf("End of command line for backend compiler\n");
-          }
+             }
 
+       // Call the backend compiler
           returnValueForCompiler = systemFromVector (compilerNameString);
         }
        else
@@ -4836,13 +4891,14 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 
        // DQ (8/21/2008): If this is a binary then we don't need the message output.
        // Liao 8/29/2008: disable it for non-verbose model
-          if ((get_binary_only() == false)&&(get_verbose()>0))
+          if ( (get_binary_only() == false) && (get_verbose() > 0) )
              {
                printf ("Skipped call to backend vendor compiler! \n");
              }
         }
 
-  // DQ (7/20/2006): Catch errors returned from unix "system" function (commonly "out of memory" errors, suggested by Peter and Jeremiah).
+  // DQ (7/20/2006): Catch errors returned from unix "system" function 
+  // (commonly "out of memory" errors, suggested by Peter and Jeremiah).
      if (returnValueForCompiler < 0)
         {
           perror("Serious Error returned from internal systemFromVector command");
@@ -4869,9 +4925,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
         {
           if ( get_verbose() > 1 )
                printf ("This is a negative tests, so an error in compilation is a PASS and successful compilation is a FAIL (vendor compiler return value = %d) \n",returnValueForCompiler);
-       // printf ("     (before) finalCompiledExitStatus = %d \n",finalCompiledExitStatus);
+
           finalCompiledExitStatus = (finalCompiledExitStatus == 0) ? /* error */ 1 : /* success */ 0;
-       // printf ("     (after) finalCompiledExitStatus = %d \n",finalCompiledExitStatus);
         }
 
   // printf ("Program Terminated Normally (exit status = %d)! \n\n\n\n",finalCompiledExitStatus);

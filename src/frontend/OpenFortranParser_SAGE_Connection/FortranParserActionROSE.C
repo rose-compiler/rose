@@ -83,6 +83,11 @@ void c_action_generic_name_list__begin()
    {
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R102 c_action_generic_name_list__begin()");
+#endif
+
      ROSE_ASSERT(astNameStack.empty() == true);
    }
 
@@ -13659,7 +13664,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                hasRenameList ? "true" : "false",
                hasOnly ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1109 c_action_use_stmt()");
 #endif
@@ -13680,10 +13685,283 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
      astScopeStack.front()->append_statement(useStatement);
 
+     printf ("Found the SgUseStatement \n");
+     SgScopeStatement* currentScope = astScopeStack.front();
+
+     SgClassSymbol* moduleSymbol = NULL;
+     trace_back_through_parent_scopes_searching_for_module(name,currentScope,moduleSymbol);
+
+     SgModuleStatement* moduleStatement = NULL;
+     if ( moduleSymbol == NULL )
+        {
+       // This is part of work with Rice, this case is currently an error until we get their 
+       // support in place for reading the *.mod files of any previously declared modules 
+       // from other translation units.
+
+       // Once we find the module declaration to the module
+
+          printf ("Error: module not found in current translation unit! (need contribution from Rice) \n");
+          ROSE_ASSERT(false);
+        }
+       else
+        {
+       // Need to use the defining declaration to get the module (class) definition.
+          SgClassDeclaration* nonDefiningClassDeclaration = moduleSymbol->get_declaration();
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(nonDefiningClassDeclaration->get_definingDeclaration());
+          ROSE_ASSERT(classDeclaration != NULL);
+          printf ("classDeclaration = %p classDeclaration->get_definition() = %p classDeclaration->get_definingDeclaration() = %p classDeclaration->get_firstNondefiningDeclaration() = %p \n",
+               classDeclaration,classDeclaration->get_definition(),classDeclaration->get_definingDeclaration(),classDeclaration->get_firstNondefiningDeclaration());
+          ROSE_ASSERT(classDeclaration->get_definition() != NULL);
+
+          moduleStatement = isSgModuleStatement(classDeclaration);
+          ROSE_ASSERT(moduleStatement != NULL);
+        }
+     
+  // Found the module, now read the module's symbols for public members...
+     printf ("Found the module, now read the symbols from the module's symbol table for all public members...\n");
+
+  // This appears to always be false, and I think it is a bug in OFP.
+  // Actually, the c_action_only steals the result, so this does work when not using the "only" option.
+  // ROSE_ASSERT(hasRenameList == false);
+
+  // Only supporting hasOnly == false in initial work.
+     if (hasOnly == false)
+        {
+       // This case can only include optional rename entries (and it must be on the astNodeList).
+
+          SgClassDefinition* classDefinition = moduleStatement->get_definition();
+          ROSE_ASSERT(classDefinition != NULL);
+
+          printf ("Case hasOnly == false: astNodeStack.size() = %zu \n",astNodeStack.size());
+          if (astNodeStack.empty() == true)
+             {
+            // There are no rename IR nodes
+               ROSE_ASSERT(hasRenameList == false);
+
+            // DQ (9/29/2008): inject all symbols from the module's symbol table into symbol table at current scope.
+               SgSymbol* symbol = classDefinition->first_any_symbol();
+               while(symbol != NULL)
+                  {
+                 // Assume for now that there is no renaming of symbols
+                    if (isPubliclyAccessible(symbol) == true)
+                       {
+                         SgName symbolName = symbol->get_name();
+                         SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
+
+                         printf ("Insert aliased symbol name = %s \n",symbolName.str());
+                         currentScope->insert_symbol(symbolName,aliasSymbol);
+                       }
+
+                 // Look at the next symbol in the module's symbol table
+                    symbol = classDefinition->next_any_symbol();
+                  }
+             }
+            else
+             {
+            // There are a number of rename pairs on the stack which we have to handle
+            // We handle these first and then all the other symbols (not-renamed) from the module's symbol table.
+
+            // Handle the rename entries first
+               set<SgSymbol*> setOfRenamedSymbols;
+               while(astNodeStack.empty() == false)
+                  {
+                    SgRenamePair* renamePair = isSgRenamePair(astNodeStack.front());
+                    astNodeStack.pop_front();
+
+                    printf ("renamePair->get_local_name() = %s renamePair->get_use_name() = %s \n",renamePair->get_local_name().str(),renamePair->get_use_name().str());
+
+                 // DQ (9/29/2008): inject symbols from module into symbol table at current scope.
+                    SgSymbol* symbol = classDefinition->first_any_symbol();
+                    while(symbol != NULL)
+                       {
+                      // Assume for now that there is no renaming of declarations
+                         printf ("renamePair->get_use_name() = %s symbol->get_name() = %s renamePair->get_local_name() = %s \n",renamePair->get_use_name().str(),symbol->get_name().str(),renamePair->get_local_name().str());
+
+                      // Look for a match against the name used in the module
+                         if (renamePair->get_use_name() == symbol->get_name() && isPubliclyAccessible(symbol) == true)
+                            {
+                              bool isRenamed = hasRenameList;
+                              SgName declarationName = renamePair->get_local_name();
+                              SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed = true */ true,declarationName);
+
+                              printf ("Insert aliased symbol name = %s (renamed = %s)\n",declarationName.str(),isRenamed ? "true" : "false");
+                              currentScope->insert_symbol(declarationName,aliasSymbol);
+
+                              setOfRenamedSymbols.insert(symbol);
+                            }
+
+                      // Look at the next symbol in the module's symbol table
+                         symbol = classDefinition->next_any_symbol();
+                       }
+
+                    outputState("In R1109 c_action_use_stmt(): hasOnly == true");
+                  }
+
+            // New add the non-renamed symbols from the module's symbol table, retraverse the module's symbol table to do this.
+               SgSymbol* symbol = classDefinition->first_any_symbol();
+               while(symbol != NULL)
+                  {
+                    bool isRenamedSymbol = ( setOfRenamedSymbols.find(symbol) != setOfRenamedSymbols.end() );
+
+                    printf ("symbol->get_name() = %s isRenamedSymbol = %s \n",symbol->get_name().str(),isRenamedSymbol ? "true" : "false");
+
+                    if (isRenamedSymbol == false && isPubliclyAccessible(symbol) == true)
+                       {
+                      // Add the symbols not renamed explicitly.
+                         SgName symbolName = symbol->get_name();
+                         SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol,/* isRenamed */ false);
+
+                         printf ("Insert aliased symbol name = %s (non-renamed symbol) \n",symbolName.str());
+                         currentScope->insert_symbol(symbolName,aliasSymbol);
+                       }
+
+                 // Look at the next symbol in the module's symbol table
+                    symbol = classDefinition->next_any_symbol();
+                  }
+             }
+        }
+       else
+        {
+       // For the case of hasOnly == true, we don't have to check if the current symbol table has already 
+       // has symbols from the module already (semantics assumes the union of all use statements), I think.
+
+          SgClassDefinition* classDefinition = moduleStatement->get_definition();
+          ROSE_ASSERT(classDefinition != NULL);
+
+          outputState("In R1109 c_action_use_stmt(): hasOnly == true");
+
+          printf ("Case hasOnly == true: astNodeStack.size() = %zu \n",astNodeStack.size());
+
+       // SgRenamePair IR nodes are on the stack (even if there is no renaming done), this provides a uniform interface.
+          while(astNodeStack.empty() == false)
+             {
+               SgRenamePair* renamePair = isSgRenamePair(astNodeStack.front());
+               astNodeStack.pop_front();
+
+               ROSE_ASSERT(renamePair != NULL);
+
+               printf ("renamePair->get_local_name() = %s renamePair->get_use_name() = %s \n",renamePair->get_local_name().str(),renamePair->get_use_name().str());
+
+            // DQ (9/29/2008): inject symbols from module's symbol table into local symbol table at current scope.
+               SgSymbol* symbol = classDefinition->first_any_symbol();
+               while(symbol != NULL)
+                  {
+                 // Assume for now that there is no renaming of declarations
+                    bool isRenamed = ( renamePair->get_use_name() != renamePair->get_local_name() );
+
+                    SgName useName = renamePair->get_use_name();
+                 // SgName declarationName = symbol->get_name();
+                    SgName symbolName = symbol->get_name();
+
+                    printf ("Test useName = %s symbol name = %s \n",useName.str(),symbolName.str());
+
+                    if (useName == symbol->get_name())
+                       {
+                      // This should be a public sysmbol, but check to make sure!
+                         ROSE_ASSERT(isPubliclyAccessible(symbol) == true);
+
+                         SgAliasSymbol* aliasSymbol = NULL;
+                         SgName declarationName = renamePair->get_local_name();
+
+                         if (isRenamed == true)
+                            {
+                              aliasSymbol = new SgAliasSymbol(symbol,isRenamed,renamePair->get_local_name());
+                            }
+                           else
+                            {
+                              aliasSymbol = new SgAliasSymbol(symbol,isRenamed);
+                            }
+
+                         printf ("Insert aliased symbol name = %s \n",declarationName.str());
+                         currentScope->insert_symbol(declarationName,aliasSymbol);
+                       }
+
+                 // Increment to the next symbol in the module's symbol table
+                    symbol = classDefinition->next_any_symbol();
+                  }
+
+               outputState("In R1109 c_action_use_stmt(): hasOnly == true");
+             }
 #if 0
+          printf ("Error: hasOnly == true case not implemented! (need to check symbol table for any existing symbols from a previous use statement and readd restricted set) \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+  // DQ (10/1/2008): There is still more work to do to fill in the SgUseStatement fields.
+     printf ("Note that we still have to build the rename list or the use only list \n");
+
+#if 0
+          SgStringList localList;
+          ROSE_ASSERT(astNameStack.size() == (size_t)(count + 1));
+          for (int i=0; i < count; i++)
+             {
+               string variableName = astNameStack.front()->text;
+               localList.push_back(variableName);
+            // nameGroup->get_name_list().push_back(variableName);
+               astNameStack.pop_front();
+             }
+
+       // Now reverse list to put list into ROSE in the reverse order.
+          for (int i=count-1; i >= 0; i--)
+             {
+               nameGroup->get_name_list().push_back(localList[i]);
+             }
+#endif
+
+  // astScopeStack.front()->print_symboltable("Output from R1109 c_action_use_stmt()");
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1109 c_action_use_stmt()");
 #endif
+   }
+
+/**
+ * R1110
+ * module_nature
+ * 
+ * @param nature T_INTRINSIC or T_NON_INTRINSIC token.
+ */
+void c_action_module_nature(Token_t *nature)
+   {
+  // This controls use of keyword: INTRINSIC or NON_INTRINSIC
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_module_nature(): nature = %p = %s \n",nature,nature != NULL ? nature->text : "NULL");
+
+  // outputState("At BOTTOM of R1110 c_action_module_nature()");
+   }
+
+/**
+ * R1111 
+ * rename
+ * 
+ * @param id1 First T_IDENT for alt1 or null if alt2.
+ * @param id2 Second T_IDENT for alt1 or null if alt2.
+ * @param op1 First T_OPERATOR for alt2 or null if alt1.
+ * @param defOp1 First T_DEFINED_OP for alt2 or null if alt1.
+ * @param op2 Second T_OPERATOR for alt2 or null if alt1.
+ * @param defOp2 Second T_DEFINED_OP for alt2 or null if alt1.
+ */
+void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, Token_t *op2, Token_t *defOp2)
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_rename(): id1 = %p = %s id2 = %p = %s op1 = %p = %s defOp1 = %p = %s op2 = %p = %s defOp2 = %p = %s \n",
+               id1,id1 != NULL ? id1->text : "NULL",
+               id2,id2 != NULL ? id2->text : "NULL",
+               op1,op1 != NULL ? op1->text : "NULL",
+               defOp1,defOp1 != NULL ? defOp1->text : "NULL",
+               op2,op2 != NULL ? op2->text : "NULL",
+               defOp2,defOp2 != NULL ? defOp2->text : "NULL");
+
+  // Construct the name pair used
+     SgRenamePair* renamePair = new SgRenamePair(id1->text,id2->text);
+     astNodeStack.push_front(renamePair);
+
+  // Note that any variable reference to the name id1->text will use the alias symbol that will be built in later steps (R1109)
+
+  // outputState("At BOTTOM of R1111 c_action_rename()");
    }
 
 /** R1111 list
@@ -13693,11 +13971,35 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
  * @param count The number of items in the list.
  */
 void c_action_rename_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_rename__begin() \n");
+
+  // outputState("At BOTTOM of R1111 c_action_rename__begin()");
+   }
+
 void c_action_rename_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_rename_list(): count = %d \n",count);
+
+  // Since the SgRenamePair IR nodes was built in R1111 (above), I don't think there is anything to do here.
+
+  // outputState("At BOTTOM of R1111 c_action_rename_list()");
+   }
+
+/**
+ * R1112
+ * only
+ *
+ */
+void c_action_only()
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_only() \n");
+
+  // outputState("At BOTTOM of R1112 c_action_only()");
+   }
 
 /** R1112 list
  * only_list
@@ -13706,11 +14008,63 @@ void c_action_rename_list(int count)
  * @param count The number of items in the list.
  */
 void c_action_only_list__begin()
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_only_list__begin() \n");
+   }
+
 void c_action_only_list(int count)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_only_list(): count = %d \n",count);
+
+  // DQ (10/1/2008): Bug in OFP, discussed with Craig, will be fixed to permit 
+  // this value to be passed in (assume false for now). Remove this declaration
+  // when the bug is fixed to have it be passed in via the parameter list.
+  // ofp_bool hasRenameList = astNameStack.empty() ? false : true;
+     ofp_bool hasRenameList = astNameStack.empty() ? true : false;
+
+  // outputState("At TOP of R1112 list c_action_only_list()");
+
+  // printf ("In c_action_only_list(): hasRenameList = %s \n",hasRenameList ? "true" : "false");
+
+  // If we don't have a renameList then the tokens are on the astNameStack, else 
+  // they are already processed into SgRenamePair IR nodes and on the astNodeStack.
+     if (hasRenameList == false)
+        {
+       // If there was not renaming, then build the SgRenamePair using empty names for the local name to signal
+       // that there was no renaming. This permits a consistant interface when they are processed by R1109.
+          for (int i = 0; i < count; i++)
+             {
+            // Construct the name pair for the case of the "only" clause, where there is no renaming.
+               ROSE_ASSERT(astNameStack.empty() == false);
+               SgName name = astNameStack.front()->text;
+               astNameStack.pop_front();
+
+            // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
+
+            // Use the rename pir IR node to provide a uniform interface to the construction of the SgUseStatement, but set the local-name to be "".
+            // SgRenamePair* renamePair = new SgRenamePair("",name);
+               SgRenamePair* renamePair = new SgRenamePair(name,name);
+               astNodeStack.push_front(renamePair);
+             }
+        }
+       else
+        {
+       // The SgRenamePair nodes should already be on the astNodeStack.
+          ROSE_ASSERT(astNodeStack.empty() == false);
+
+          if (astNameStack.empty() == false)
+             {
+               printf ("Error: rename list with only clause not supported yet, bug in OFP. \n");
+               ROSE_ASSERT(false);
+             }
+          ROSE_ASSERT(astNameStack.empty() == true);
+        }
+#if 0
+     outputState("At BOTTOM of R1112 list c_action_only_list()");
+#endif
+   }
 
 /**
  * R1116
@@ -13963,6 +14317,14 @@ void c_action_end_interface_stmt(Token_t *label, Token_t *kw1, Token_t *kw2, Tok
 
   // astScopeStack.pop_front();
 
+  // DQ (10/1/2008): Fixup astNameStack to clear any remaining entries (see test2008_42.f90)
+     if (astNameStack.empty() == false)
+        {
+          printf ("WARNING: astNameStack not empty in c_action_end_interface_stmt() \n");
+          astNameStack.clear();
+        }
+     ROSE_ASSERT(astNameStack.empty() == true);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1204 c_action_end_interface_stmt()");
@@ -14053,7 +14415,7 @@ void c_action_generic_spec(Token_t *keyword, Token_t *name, int type)
   // ROSE_ASSERT(name != NULL);
   // astNameStack.push_front(name);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1207 c_action_generic_spec()");
 #endif

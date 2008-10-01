@@ -1046,6 +1046,15 @@ SageInterface::get_name ( const SgSupport* node )
                break;
              }
 
+       // DQ (12/23/2007): Added support for repeat_specification
+          case V_SgRenamePair:
+             {
+               const SgRenamePair* renamePair = isSgRenamePair(node);
+               ROSE_ASSERT(renamePair != NULL);
+               name = renamePair->get_local_name() + "__" + renamePair->get_use_name() + "_rename_pair_";
+               break;
+             }
+
           default:
              {
                printf ("Default reached in switch for SgSupport IR node = %s \n",node->class_name().c_str());
@@ -1066,8 +1075,14 @@ SageInterface::get_name ( const SgSymbol* symbol )
   // This is the most general case of a function to return a name for an IR node.
      ROSE_ASSERT(symbol != NULL);
 
+     string aliasSymbolPrefix = "";
+     if (isSgAliasSymbol(symbol) != NULL)
+        {
+          aliasSymbolPrefix = "_ALIAS";
+        }
+
   // This is a call to the "get_name()" virtual function
-     return symbol->get_name() + "_symbol_";
+     return symbol->get_name() + aliasSymbolPrefix + "_symbol_";
    }
 
 string

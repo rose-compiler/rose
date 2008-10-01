@@ -2469,6 +2469,17 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(variableSymbol->get_declaration() != NULL);
                          break;
                        }
+
+                 // DQ (9/29/2008): Added support for symbols that are alias for other symbol from othe scopes.
+                    case V_SgAliasSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgAliasSymbol* aliasSymbol = isSgAliasSymbol(symbol);
+                         ROSE_ASSERT(aliasSymbol != NULL);
+                         ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
+                         break;
+                       }
                     default:
                        {
                          printf ("Error: default reached in switch (AstFixes.C) symbol = %s \n",symbol->class_name().c_str());

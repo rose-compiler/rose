@@ -38,7 +38,7 @@ void CppToCppTranslator::backend()
   // Avoid all I/O to stdout if useBackendOnly == true
   // if (getAstRoot()->get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
-          cout << "C++ source(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
+          cout << "source file(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
 
      getAstRoot()->set_backendErrorCode(finalCombinedExitStatus);
 #endif
@@ -96,7 +96,7 @@ void CppToVendorTranslator::backend()
      ostringstream ss;
      if ( SgProject::get_verbose() >= 1 )
         {
-          ss << "C++ source(s) compiled with vendor compiler. (exit status = " 
+          ss << "source file(s) compiled with vendor compiler. (exit status = " 
              << finalCombinedExitStatus << ").\n";
           printMessage(ss.str());
         }
