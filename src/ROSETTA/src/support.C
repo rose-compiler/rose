@@ -202,6 +202,9 @@ Grammar::setUpSupport ()
 
   // DQ (12/23/2007): Added a list version (required for repeat_sepcification support
      NEW_TERMINAL_MACRO (FormatItemList, "FormatItemList", "TEMP_FormatItemList" );
+
+  // DQ (11/19/2007): Support for the Fortran "USE" statement and its rename list option.
+     NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
 #endif
 
   // tps (08/08/07): Added the graph, graph nodes and graph edges 
@@ -211,8 +214,8 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
-          TemplateParameterList | 
-          Graph                     | GraphNode           | GraphEdge            | 
+          TemplateParameterList | RenamePair                |
+          Graph                 | GraphNode                 | GraphEdge           | 
 
 #if !OLD_GRAPH_NODES
        /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
@@ -1629,6 +1632,12 @@ Specifiers that can have only one value (implemented with a protected enum varia
      FormatItemList.setDataPrototype     ( "SgFormatItemPtrList", "format_item_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/Support.code");
+     RenamePair.setDataPrototype     ( "SgName", "local_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     RenamePair.setDataPrototype     ( "SgName", "use_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -1787,6 +1796,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
 
      FormatItem.setFunctionSource ( "SOURCE_FORMAT_ITEM", "../Grammar/Support.code");
      FormatItemList.setFunctionSource ( "SOURCE_FORMAT_ITEM_LIST", "../Grammar/Support.code");
+
+     RenamePair.setFunctionSource ( "SOURCE_RENAME_PAIR", "../Grammar/Support.code");
    }
 
 

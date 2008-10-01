@@ -2002,9 +2002,9 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
   
      SgUseStatement* useStmt = isSgUseStatement(stmt);
      ROSE_ASSERT (useStmt != NULL);
-  
-     SgExprListExp* u_rename = useStmt->get_rename_list();
-     SgUseOnlyExpression* u_only = useStmt->get_use_only();
+
+     SgExprListExp*       u_rename = useStmt->get_rename_list();
+     SgUseOnlyExpression* u_only   = useStmt->get_use_only();
   
      curprint("USE ");
      curprint(useStmt->get_name().str());

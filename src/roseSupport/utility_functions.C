@@ -238,7 +238,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
           project->unparse(unparseFormatHelp,unparseDelagate);
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
-               cout << "C++ source(s) generated. (from AST)" << endl;
+               cout << "source file(s) generated. (from AST)" << endl;
         }
 
   // printf ("Inside of backend(SgProject*): SgProject::get_verbose() = %d \n",SgProject::get_verbose());
@@ -306,7 +306,7 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // Avoid all I/O to stdout if useBackendOnly == true.
   // if (project->get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
-          cout << "C++ source(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
+          cout << "source file(s) compiled with vendor compiler. (exit status = " << finalCombinedExitStatus << ").\n" << endl;
 
   // Set the final error code to be returned to the user.
      project->set_backendErrorCode(finalCombinedExitStatus);

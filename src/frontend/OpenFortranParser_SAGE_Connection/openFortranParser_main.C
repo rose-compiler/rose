@@ -52,9 +52,11 @@ using namespace std;
   void handleException(JavaVM *jvm, JNIEnv *env);
   void handleExceptionMaybe(JavaVM *jvm, JNIEnv *env);
   int runOFP(int argc, char **argv);
-  
 
-/* Include the patsh to the source tree and build tree for ROSE */
+// Include rose.h so that we can reference SgSourceFile::build_classpath() 
+#include "rose.h"
+
+/* Include the paths to the source tree and build tree for ROSE */
 #include "rose_config.h"
 
 /* This is defined if ROSE is configured to use the Java Open Fortran Parser */
@@ -147,6 +149,8 @@ int runOFP(int argc, char **argv)
 	 JavaVMInitArgs jvm_args;  /* VM initialization args.  */
 	 jboolean retval = JNI_TRUE; // Error by default
 
+#if 0
+ // This needs to be setup anytime we call OFP, so it is setup outside of the OFP main function since OFP is frequently called directly via java (using the system command).
 	 string classpath = "-Djava.class.path=";
          classpath += findRoseSupportPathFromBuild("/src/3rdPartyLibraries/fortran-parser/OpenFortranParser.jar", "lib/OpenFortranParser.jar") + ":";
          classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-2.7.7.jar", "lib/antlr-2.7.7.jar") + ":";
@@ -154,12 +158,21 @@ int runOFP(int argc, char **argv)
          classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/antlr-runtime-3.0.1.jar", "lib/antlr-runtime-3.0.1.jar") + ":";
          classpath += findRoseSupportPathFromSource("/src/3rdPartyLibraries/antlr-jars/stringtemplate-3.1b1.jar", "lib/stringtemplate-3.1b1.jar") + ":";
          classpath += ".";
+#else
+    string classpath = SgSourceFile::build_classpath();
+#endif
 
 	 /* Set up the VM initialization args.  */
-         jvm_args.version = JNI_VERSION_1_4;
+    jvm_args.version = JNI_VERSION_1_4;
+#if 1
 	 jvm_args.nOptions = 1;
 	 jvm_args.options = new JavaVMOption[jvm_args.nOptions];
 	 jvm_args.options[0].optionString = strdup(classpath.c_str());
+#else
+ // The class path is not passed in as input anymore
+	 jvm_args.nOptions = 0;
+	 jvm_args.options = NULL;
+#endif
 	 jvm_args.ignoreUnrecognized = JNI_FALSE;
 
 	 /* Create and load the Java VM.  */

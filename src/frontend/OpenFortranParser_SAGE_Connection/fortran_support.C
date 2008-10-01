@@ -1637,6 +1637,36 @@ setStatementStringLabel(SgStatement* stmt, Token_t* label)
 
 
 void
+trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName, SgScopeStatement* currentScope, SgClassSymbol* & moduleSymbol )
+   {
+  // This function traces back through the parent scopes to search for the named module symbol in an outer scope
+  // It returns NULL if it is not found in any scope.  It also chases all modules included via SgUseStatements.
+
+     if ( SgProject::get_verbose() > 0 )
+          printf ("In trace_back_through_parent_scopes_searching_for_module(): moduleName = %s currentScope = %p \n",moduleName.str(),currentScope);
+
+     SgScopeStatement* tempScope = currentScope;
+
+  // DQ (12/12/2007): Added test for if this is a function!
+     while (moduleSymbol == NULL && tempScope != NULL)
+        {
+       // Note that modules are represented at classes.
+          moduleSymbol = tempScope->lookup_class_symbol(moduleName);
+#if 1
+          printf ("In trace_back_through_parent_scopes_searching_for_module(): tempScope = %p = %s moduleSymbol = %p \n",
+               tempScope,tempScope->class_name().c_str(),moduleSymbol);
+#endif
+       // If we have processed the global scope then we can stop (if we have not found the symbol at this
+       // point then it is not available (or it is only availalbe through a USE statment.
+          tempScope = isSgGlobal(tempScope) ? NULL : tempScope->get_scope();
+        }
+
+  // This function could have returned a NULL pointer if there was no symbol found ???
+     if ( SgProject::get_verbose() > 0 )
+          printf ("Leaving trace_back_through_parent_scopes_searching_for_module(): moduleSymbol = %p \n",moduleSymbol);
+   }
+
+void
 trace_back_through_parent_scopes_lookup_variable_symbol_but_do_not_build_variable(const SgName & variableName, SgScopeStatement* currentScope, SgVariableSymbol* & variableSymbol, SgFunctionSymbol* & functionSymbol, SgClassSymbol* & classSymbol)
    {
   // This function traces back through the parent scopes to search for the named symbol in an outer scope
@@ -1723,7 +1753,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
      if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
         {
-          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          if ( SgProject::get_verbose() > -1 )
                printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
        // printf ("astNameStack.front() = %p = %s = %s \n",astNameStack.front(),astNameStack.front()->class_name().c_str(),SageInterface::get_name(astNameStack.front()).c_str());
 
@@ -4203,3 +4233,56 @@ buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStrid
      ROSE_ASSERT(subscript != NULL);
      return subscript;
    }
+
+
+
+bool
+isPubliclyAccessible( SgSymbol* symbol )
+   {
+     bool returnValue = false;
+     SgNode* symbol_basis = symbol->get_symbol_basis();
+
+     SgDeclarationStatement* declaration = isSgDeclarationStatement(symbol_basis);
+     if (declaration != NULL)
+        {
+          printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+
+       // Publically accessible is either declared explicitly as public, or not defined as anything (default in Fortran is public).
+          if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
+              declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+             {
+               returnValue = true;
+             }
+
+          declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
+        }
+       else
+        {
+          SgInitializedName* initializedName = isSgInitializedName(symbol_basis);
+          if (initializedName != NULL)
+             {
+               SgNode* parent = initializedName->get_parent();
+               SgDeclarationStatement* declaration = isSgDeclarationStatement(parent);
+               if (declaration != NULL)
+                  {
+                    printf ("declaration (from SgInitializedName) = %p = %s \n",declaration,declaration->class_name().c_str());
+                    if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
+                        declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
+                       {
+                         returnValue = true;
+                       }
+
+                    declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
+                  }
+             }
+            else
+             {
+            // This case is not handled yet
+               printf ("Uknown symbol_basis = %p = %s \n",symbol_basis,symbol_basis->class_name().c_str());
+               ROSE_ASSERT(false);
+             }
+        }
+
+     return returnValue;
+   }
+

@@ -534,7 +534,7 @@ SgAliasSymbol::get_name() const
      SgName name;
      if (get_isRenamed() == true)
         {
-          name = get_name();
+          name = get_new_name();
         }
        else
         {

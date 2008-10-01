@@ -176,6 +176,8 @@ SgExpression* buildLabelRefExp(SgExpression* expression);
 SgLabelSymbol* buildNumericLabelSymbol(Token_t* label);
 SgLabelSymbol* buildNumericLabelSymbolAndAssociateWithStatement(SgStatement* stmt, Token_t* label);
 
+void trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName, SgScopeStatement* currentScope, SgClassSymbol* & moduleSymbol );
+
 SgVariableSymbol* trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableName, SgScopeStatement* currentScope );
 
 // DQ (4/30/2008): Modified to handle derived types
@@ -226,6 +228,8 @@ void markDoLoopAsUsingEndDo();
 SgExpression* buildSubscriptExpression ( bool hasLowerBound, bool hasUpperBound, bool hasStride, bool isAmbiguous );
 
 bool isImplicitNoneScope();
+
+bool isPubliclyAccessible( SgSymbol* symbol );
 
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
