@@ -154,18 +154,8 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len>
-  LitList(Len) nor_(const LitList(Len)& a, const LitList(Len)& b) {
-    return invert(problem.orWords(a, b));
-  }
-
-  template <size_t Len>
   LitList(Len) xor_(const LitList(Len)& a, const LitList(Len)& b) {
     return problem.xorWords(a, b);
-  }
-
-  template <size_t Len>
-  LitList(1) parity(const LitList(Len)& a) {
-    return single(problem.xorAcross(a));
   }
 
   template <size_t From, size_t To>
@@ -187,21 +177,15 @@ struct NetlistTranslationPolicy {
     return single(problem.norAcross(a));
   }
 
-  template <size_t Len>
-  LitList(1) equalToNegativeOne(const LitList(Len)& a) {
-    return single(problem.andAcross(a));
-  }
-
-  template <size_t Len>
-  LitList(1) notEqualToZero(const LitList(Len)& a) {
-    return single(problem.orAcross(a));
-  }
-
-  template <size_t Len>
-  LitList(1) greaterOrEqual(const LitList(Len)& a, const LitList(Len)& b) {
-    LitList(Len) carries;
-    problem.adder(a, invertWord(b), TRUE, &carries);
-    return single(carries[Len - 1]);
+  template <size_t Len, size_t SCLen>
+  LitList(Len) generateMask(LitList(SCLen) w) {
+    LitList(Len) result;
+    assert (Len != 0);
+    result[0] = problem.equal(w, ::number<SCLen>(1));
+    for (size_t i = 1; i < Len; ++i) {
+      result[i] = problem.orGate(result[i - 1], problem.equal(w, ::number<SCLen>(i + 1)));
+    }
+    return result;
   }
 
   template <size_t Len>
@@ -215,28 +199,8 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len, size_t SALen>
-  LitList(Len) shiftLeft(const LitList(Len)& a, const LitList(SALen)& cnt) {
-    return problem.rightShifter(a, cnt); // Flipped because words are LSB first
-  }
-
-  template <size_t Len, size_t SALen>
-  LitList(Len) shiftRight(const LitList(Len)& a, const LitList(SALen)& cnt) {
-    return problem.leftShifter(a, cnt); // Flipped because words are LSB first
-  }
-
-  template <size_t Len, size_t SALen>
-  LitList(Len) shiftRightArithmetic(const LitList(Len)& a, const LitList(SALen)& cnt) {
-    return problem.arithmeticLeftShifter(a, cnt); // Flipped because words are LSB first
-  }
-
-  template <size_t Len, size_t SALen>
   LitList(Len) rotateLeft(const LitList(Len)& a, const LitList(SALen)& cnt) {
     return problem.rightRotater(a, cnt); // Flipped because words are LSB first
-  }
-
-  template <size_t Len, size_t SALen>
-  LitList(Len) rotateRight(const LitList(Len)& a, const LitList(SALen)& cnt) {
-    return problem.leftRotater(a, cnt); // Flipped because words are LSB first
   }
 
   template <size_t Len1, size_t Len2>

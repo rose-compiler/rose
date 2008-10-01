@@ -117,18 +117,8 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len>
-  WordWithExpression<Len> nor_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildBitComplementOp(buildBitOrOp(a.expr(), b.expr()));
-  }
-
-  template <size_t Len>
   WordWithExpression<Len> xor_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
     return buildBitXorOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
-  WordWithExpression<1> parity(WordWithExpression<Len> a) {
-    return buildFunctionCallExp(paritySym, buildExprListExp(a.expr()));
   }
 
   template <size_t Len>
@@ -147,21 +137,6 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len>
-  WordWithExpression<1> equalToNegativeOne(WordWithExpression<Len> a) {
-    return buildEqualityOp(a.expr(), buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
-  }
-
-  template <size_t Len>
-  WordWithExpression<1> notEqualToZero(WordWithExpression<Len> a) {
-    return buildNotEqualOp(a.expr(), buildIntVal(0));
-  }
-
-  template <size_t Len>
-  WordWithExpression<1> greaterOrEqual(WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildGreaterOrEqualOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len>
   WordWithExpression<Len> add(WordWithExpression<Len> a, WordWithExpression<Len> b) {
     return buildAddOp(a.expr(), b.expr());
   }
@@ -176,33 +151,18 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildLshiftOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildRshiftOp(a.expr(), b.expr());
-  }
-
-  template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> shiftRightArithmetic(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()),
-                        buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(1ULL << (Len1 - 1))),
-                                                            buildIntVal(0)),
-                                            buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex((1ULL << Len1) - 1),
-                                                                               b.expr())),
-                                            buildIntVal(0)));
-  }
-
-  template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
     return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
   }
 
   template <size_t Len1, size_t Len2>
-  WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+  WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
+    return buildConditionalExp(
+             buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
+             buildUnsignedLongLongIntValHex((1 << Len1) - 1),
+             buildSubtractOp(
+               buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
+               buildIntVal(1)));
   }
 
   template <size_t Len1, size_t Len2>

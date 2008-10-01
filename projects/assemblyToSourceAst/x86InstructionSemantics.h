@@ -46,6 +46,54 @@ struct X86InstructionSemantics {
     }
   }
 
+  template <size_t Len>
+  Word(Len) negate(const Word(Len)& w) {
+    return policy.add(policy.invert(w), policy.template number<Len>(1));
+  }
+
+  template <size_t Len, size_t SCLen>
+  Word(Len) rotateRight(Word(Len) w, Word(SCLen) sc) {
+    return policy.rotateLeft(w, negate<SCLen>(sc));
+  }
+
+  template <size_t Len, size_t SCLen>
+  Word(Len) shiftLeft(Word(Len) w, Word(SCLen) sc) {
+    BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
+    return policy.and_(policy.rotateLeft(w, sc),
+                       policy.invert(policy.template generateMask<Len>(sc)));
+  }
+
+  template <size_t Len, size_t SCLen>
+  Word(Len) shiftRight(Word(Len) w, Word(SCLen) sc) {
+    BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
+    return policy.and_(rotateRight<Len, SCLen>(w, sc),
+                       policy.ite(
+                         policy.equalToZero(sc),
+                         policy.invert(policy.template number<Len>(0)),
+                         policy.template generateMask<Len>(negate<SCLen>(sc))));
+  }
+
+  template <size_t Len, size_t SCLen>
+  Word(Len) shiftRightArithmetic(Word(Len) w, Word(SCLen) sc) {
+    BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
+    return policy.ite(
+             policy.equalToZero(sc),
+             w,
+             policy.or_(
+               shiftRight<Len, SCLen>(w, sc),
+               policy.ite(
+                 policy.template extract<Len - 1, Len>(w),
+                 policy.invert(policy.template generateMask<Len>(negate<SCLen>(sc))),
+                 policy.template number<Len>(0))));
+  }
+
+  template <size_t Len>
+  Word(1) greaterOrEqual(Word(Len) w, uint64_t n) {
+    Word(Len) carries = policy.template number<Len>(0);
+    policy.addWithCarries(w, policy.template number<Len>((~n) & ((1 << Len) - 1)), policy.true_(), carries);
+    return policy.template extract<Len - 1, Len>(carries);
+  }
+
   template <size_t Len> // In bits
   Word(Len) readMemory(X86SegmentRegister segreg, const Word(32)& addr) {
     return policy.template readMemory<Len>(segreg, addr);
@@ -226,16 +274,26 @@ struct X86InstructionSemantics {
     }
   }
 
+  Word(1) parity(Word(8) w) {
+    Word(1) p01 = policy.xor_(policy.template extract<0, 1>(w), policy.template extract<1, 2>(w));
+    Word(1) p23 = policy.xor_(policy.template extract<2, 3>(w), policy.template extract<3, 4>(w));
+    Word(1) p45 = policy.xor_(policy.template extract<4, 5>(w), policy.template extract<5, 6>(w));
+    Word(1) p67 = policy.xor_(policy.template extract<6, 7>(w), policy.template extract<7, 8>(w));
+    Word(1) p0123 = policy.xor_(p01, p23);
+    Word(1) p4567 = policy.xor_(p45, p67);
+    return policy.xor_(p0123, p4567);
+  }
+
   template <size_t Len>
   void setFlagsForResult(const Word(Len)& result) {
-    policy.writeFlag(x86_flag_pf, policy.parity(policy.template extract<0, 8>(result)));
+    policy.writeFlag(x86_flag_pf, parity(policy.template extract<0, 8>(result)));
     policy.writeFlag(x86_flag_sf, policy.template extract<Len - 1, Len>(result));
     policy.writeFlag(x86_flag_zf, policy.equalToZero(result));
   }
 
   template <size_t Len>
   void setFlagsForResult(const Word(Len)& result, Word(1) cond) {
-    policy.writeFlag(x86_flag_pf, policy.ite(cond, policy.parity(policy.template extract<0, 8>(result)), policy.readFlag(x86_flag_pf)));
+    policy.writeFlag(x86_flag_pf, policy.ite(cond, parity(policy.template extract<0, 8>(result)), policy.readFlag(x86_flag_pf)));
     policy.writeFlag(x86_flag_sf, policy.ite(cond, policy.template extract<Len - 1, Len>(result), policy.readFlag(x86_flag_sf)));
     policy.writeFlag(x86_flag_zf, policy.ite(cond, policy.equalToZero(result), policy.readFlag(x86_flag_zf)));
   }
@@ -615,17 +673,17 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 1);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = doIncOperation<8>(policy.invert(read<8>(operands[0])), false, true);
+            Word(8) result = negate<8>(read<8>(operands[0]));
             write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = doIncOperation<16>(policy.invert(read<16>(operands[0])), false, true);
+            Word(16) result = negate<16>(read<16>(operands[0]));
             write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = doIncOperation<32>(policy.invert(read<32>(operands[0])), false, true);
+            Word(32) result = negate<32>(read<32>(operands[0]));
             write32(operands[0], result);
             break;
           }
@@ -678,41 +736,38 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_shl: {
+        Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
+        Word(1) shiftCountZero = policy.equalToZero(shiftCount);
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read<8>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(9) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(9) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<8, 9>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(8) output = shiftLeft<8, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<7, 8>(shiftLeft<8, 5>(op, policy.add(shiftCount, policy.template number<5>(7)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<7, 8>(output), newCf)));
+            write8(operands[0], output);
+            setFlagsForResult<8>(output, policy.invert(shiftCountZero));
             break;
           }
           case 2: {
             Word(16) op = read<16>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(17) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(17) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<16, 17>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(16) output = shiftLeft<16, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<15, 16>(shiftLeft<16, 5>(op, policy.add(shiftCount, policy.template number<5>(15)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<15, 16>(output), newCf)));
+            write16(operands[0], output);
+            setFlagsForResult<16>(output, policy.invert(shiftCountZero));
             break;
           }
           case 4: {
             Word(32) op = read<32>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(33) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(33) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<32, 33>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(32) output = shiftLeft<32, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<31, 32>(shiftLeft<32, 5>(op, policy.add(shiftCount, policy.template number<5>(31)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<31, 32>(output), newCf)));
+            write32(operands[0], output);
+            setFlagsForResult<32>(output, policy.invert(shiftCountZero));
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -720,41 +775,38 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_shr: {
+        Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
+        Word(1) shiftCountZero = policy.equalToZero(shiftCount);
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read<8>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(9) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(9) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<8, 9>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(8) output = shiftRight<8, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<8, 5>(op, policy.add(shiftCount, policy.template number<5>(7)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.template extract<7, 8>(op)));
+            write8(operands[0], output);
+            setFlagsForResult<8>(output, policy.invert(shiftCountZero));
             break;
           }
           case 2: {
             Word(16) op = read<16>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(17) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(17) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<16, 17>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(16) output = shiftRight<16, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<16, 5>(op, policy.add(shiftCount, policy.template number<5>(15)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.template extract<15, 16>(op)));
+            write16(operands[0], output);
+            setFlagsForResult<16>(output, policy.invert(shiftCountZero));
             break;
           }
           case 4: {
             Word(32) op = read<32>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(33) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(33) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<32, 33>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(32) output = shiftRight<32, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<32, 5>(op, policy.add(shiftCount, policy.template number<5>(31)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.template extract<31, 32>(op)));
+            write32(operands[0], output);
+            setFlagsForResult<32>(output, policy.invert(shiftCountZero));
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -762,41 +814,39 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_sar: {
+        Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
+        Word(1) shiftCountZero = policy.equalToZero(shiftCount);
+        Word(1) shiftCountNotZero = policy.invert(shiftCountZero);
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read<8>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(9) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(9) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<8, 9>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<7, 8>(outputWithCf), policy.template extract<8, 9>(outputWithCf)));
-            write8(operands[0], policy.template extract<0, 8>(outputWithCf));
-            setFlagsForResult<8>(policy.template extract<0, 8>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(8) output = shiftRightArithmetic<8, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<8, 5>(op, policy.add(shiftCount, policy.template number<5>(7)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.false_())); // No change with sc = 0, clear when sc = 1, undefined otherwise
+            write8(operands[0], output);
+            setFlagsForResult<8>(output, shiftCountNotZero);
             break;
           }
           case 2: {
             Word(16) op = read<16>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(17) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(17) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<16, 17>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(16) output = shiftRightArithmetic<16, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<16, 5>(op, policy.add(shiftCount, policy.template number<5>(15)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.false_())); // No change with sc = 0, clear when sc = 1, undefined otherwise
+            write16(operands[0], output);
+            setFlagsForResult<16>(output, shiftCountNotZero);
             break;
           }
           case 4: {
             Word(32) op = read<32>(operands[0]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(33) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(33) outputWithCf = policy.shiftRightArithmetic(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<32, 33>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write32(operands[0], policy.template extract<0, 32>(outputWithCf));
-            setFlagsForResult<32>(policy.template extract<0, 32>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(32) output = shiftRightArithmetic<32, 5>(op, shiftCount);
+            Word(1) newCf = policy.ite(shiftCountZero, policy.readFlag(x86_flag_cf), policy.template extract<0, 1>(shiftRight<32, 5>(op, policy.add(shiftCount, policy.template number<5>(31)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            policy.writeFlag(x86_flag_of, policy.ite(shiftCountZero, policy.readFlag(x86_flag_of), policy.false_())); // No change with sc = 0, clear when sc = 1, undefined otherwise
+            write32(operands[0], output);
+            setFlagsForResult<32>(output, shiftCountNotZero);
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -841,7 +891,7 @@ struct X86InstructionSemantics {
           case 1: {
             Word(8) op = read<8>(operands[0]);
             Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(8) output = policy.rotateRight(op, shiftCount);
+            Word(8) output = rotateRight<8, 5>(op, shiftCount);
             policy.writeFlag(x86_flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_cf), policy.template extract<7, 8>(output)));
             policy.writeFlag(x86_flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<6, 7>(output), policy.template extract<7, 8>(output))));
             write8(operands[0], output);
@@ -850,7 +900,7 @@ struct X86InstructionSemantics {
           case 2: {
             Word(16) op = read<16>(operands[0]);
             Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(16) output = policy.rotateRight(op, shiftCount);
+            Word(16) output = rotateRight<16, 5>(op, shiftCount);
             policy.writeFlag(x86_flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_cf), policy.template extract<15, 16>(output)));
             policy.writeFlag(x86_flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<14, 15>(output), policy.template extract<15, 16>(output))));
             write16(operands[0], output);
@@ -859,7 +909,7 @@ struct X86InstructionSemantics {
           case 4: {
             Word(32) op = read<32>(operands[0]);
             Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[1]));
-            Word(32) output = policy.rotateRight(op, shiftCount);
+            Word(32) output = rotateRight<32, 5>(op, shiftCount);
             policy.writeFlag(x86_flag_cf, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_cf), policy.template extract<31, 32>(output)));
             policy.writeFlag(x86_flag_of, policy.ite(policy.equalToZero(shiftCount), policy.readFlag(x86_flag_of), policy.xor_(policy.template extract<30, 31>(output), policy.template extract<31, 32>(output))));
             write32(operands[0], output);
@@ -869,32 +919,44 @@ struct X86InstructionSemantics {
         }
         break;
       }
-      case x86_shld: { // FIXME check this
+      case x86_shld: {
+        Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 2: {
-            Word(32) op = policy.concat(read<16>(operands[1]), read<16>(operands[0]));
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
-            Word(33) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(33) outputWithCf = policy.shiftLeft(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<32, 33>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<31, 32>(outputWithCf), policy.template extract<32, 33>(outputWithCf)));
-            write16(operands[0], policy.template extract<16, 32>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<16, 32>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(16) op1 = read<16>(operands[0]);
+            Word(16) op2 = read<16>(operands[1]);
+            Word(16) output1 = shiftLeft<16, 5>(op1, shiftCount);
+            Word(16) output2 = policy.ite(policy.equalToZero(shiftCount),
+                                          policy.template number<16>(0),
+                                          shiftRight<16, 5>(op2, negate<5>(shiftCount)));
+            Word(16) output = policy.or_(output1, output2);
+            Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
+                                       policy.readFlag(x86_flag_cf),
+                                       policy.template extract<15, 16>(shiftLeft<16, 5>(op1, policy.add(shiftCount, policy.template number<5>(15)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
+                                       policy.readFlag(x86_flag_of), 
+                                       policy.xor_(policy.template extract<15, 16>(output), newCf));
+            policy.writeFlag(x86_flag_of, newOf);
+            write16(operands[0], output);
+            setFlagsForResult<16>(output);
+            policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
+                                                     policy.readFlag(x86_flag_af),
+                                                     policy.false_())); // Undefined
             break;
           }
           case 4: {
             Word(32) op1 = read<32>(operands[0]);
             Word(32) op2 = read<32>(operands[1]);
             Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
-            Word(32) output1 = policy.shiftLeft(op1, shiftCount);
+            Word(32) output1 = shiftLeft<32, 5>(op1, shiftCount);
             Word(32) output2 = policy.ite(policy.equalToZero(shiftCount),
                                           policy.template number<32>(0),
-                                          policy.shiftRight(op2, policy.add(policy.template number<5>(1), policy.invert(shiftCount))));
+                                          shiftRight<32, 5>(op2, negate<5>(shiftCount)));
             Word(32) output = policy.or_(output1, output2);
             Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
                                        policy.readFlag(x86_flag_cf),
-                                       policy.template extract<31, 32>(policy.shiftLeft(op1, policy.add(shiftCount, policy.template number<5>(31)))));
+                                       policy.template extract<31, 32>(shiftLeft<32, 5>(op1, policy.add(shiftCount, policy.template number<5>(31)))));
             policy.writeFlag(x86_flag_cf, newCf);
             Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
                                        policy.readFlag(x86_flag_of), 
@@ -902,7 +964,9 @@ struct X86InstructionSemantics {
             policy.writeFlag(x86_flag_of, newOf);
             write32(operands[0], output);
             setFlagsForResult<32>(output);
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
+                                                     policy.readFlag(x86_flag_af),
+                                                     policy.false_())); // Undefined
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -910,39 +974,54 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_shrd: { // FIXME check this
+        Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 2: {
-            Word(32) op = policy.concat(read<16>(operands[0]), read<16>(operands[1]));
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
-            Word(33) opWithCf = policy.concat(op, policy.readFlag(x86_flag_cf));
-            Word(33) outputWithCf = policy.shiftRight(opWithCf, shiftCount);
-            policy.writeFlag(x86_flag_cf, policy.template extract<16, 17>(outputWithCf));
-            policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<15, 16>(outputWithCf), policy.template extract<16, 17>(outputWithCf)));
-            write16(operands[0], policy.template extract<0, 16>(outputWithCf));
-            setFlagsForResult<16>(policy.template extract<0, 16>(outputWithCf));
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            Word(16) op1 = read<16>(operands[0]);
+            Word(16) op2 = read<16>(operands[1]);
+            Word(16) output1 = shiftRight<16, 5>(op1, shiftCount);
+            Word(16) output2 = policy.ite(policy.equalToZero(shiftCount),
+                                          policy.template number<16>(0),
+                                          shiftLeft<16, 5>(op2, negate<5>(shiftCount)));
+            Word(16) output = policy.or_(output1, output2);
+            Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
+                                       policy.readFlag(x86_flag_cf),
+                                       policy.template extract<0, 1>(shiftRight<16, 5>(op1, policy.add(shiftCount, policy.template number<5>(15)))));
+            policy.writeFlag(x86_flag_cf, newCf);
+            Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
+                                       policy.readFlag(x86_flag_of), 
+                                       policy.xor_(policy.template extract<15, 16>(output),
+                                                   policy.template extract<15, 16>(op1)));
+            policy.writeFlag(x86_flag_of, newOf);
+            write16(operands[0], output);
+            setFlagsForResult<16>(output);
+            policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
+                                                     policy.readFlag(x86_flag_af),
+                                                     policy.false_())); // Undefined
             break;
           }
           case 4: {
             Word(32) op1 = read<32>(operands[0]);
             Word(32) op2 = read<32>(operands[1]);
-            Word(5) shiftCount = policy.template extract<0, 5>(read<8>(operands[2]));
-            Word(32) output1 = policy.shiftRight(op1, shiftCount);
+            Word(32) output1 = shiftRight<32, 5>(op1, shiftCount);
             Word(32) output2 = policy.ite(policy.equalToZero(shiftCount),
                                           policy.template number<32>(0),
-                                          policy.shiftLeft(op2, policy.add(policy.template number<5>(1), policy.invert(shiftCount))));
+                                          shiftLeft<32, 5>(op2, negate<5>(shiftCount)));
             Word(32) output = policy.or_(output1, output2);
             Word(1) newCf = policy.ite(policy.equalToZero(shiftCount),
                                        policy.readFlag(x86_flag_cf),
-                                       policy.template extract<0, 1>(policy.shiftRight(op1, policy.add(shiftCount, policy.template number<5>(31)))));
+                                       policy.template extract<0, 1>(shiftRight<32, 5>(op1, policy.add(shiftCount, policy.template number<5>(31)))));
             policy.writeFlag(x86_flag_cf, newCf);
             Word(1) newOf = policy.ite(policy.equalToZero(shiftCount),
                                        policy.readFlag(x86_flag_of), 
-                                       policy.xor_(policy.template extract<31, 32>(output), newCf));
+                                       policy.xor_(policy.template extract<31, 32>(output),
+                                                   policy.template extract<31, 32>(op1)));
             policy.writeFlag(x86_flag_of, newOf);
             write32(operands[0], output);
             setFlagsForResult<32>(output);
-            policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+            policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
+                                                     policy.readFlag(x86_flag_af),
+                                                     policy.false_())); // Undefined
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -1014,7 +1093,7 @@ struct X86InstructionSemantics {
             Word(8) op1 = read<8>(operands[0]);
             Word(16) mulResult = policy.signedMultiply(op0, op1);
             policy.writeGPR(x86_gpr_ax, policy.concat(mulResult, policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
-            Word(1) carry = policy.nor_(policy.equalToNegativeOne(policy.template extract<7, 16>(mulResult)), policy.equalToZero(policy.template extract<7, 16>(mulResult)));
+            Word(1) carry = policy.invert(policy.or_(policy.equalToZero(policy.invert(policy.template extract<7, 16>(mulResult))), policy.equalToZero(policy.template extract<7, 16>(mulResult))));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1029,7 +1108,7 @@ struct X86InstructionSemantics {
             } else {
               write16(operands[0], policy.template extract<0, 16>(mulResult));
             }
-            Word(1) carry = policy.nor_(policy.equalToNegativeOne(policy.template extract<7, 32>(mulResult)), policy.equalToZero(policy.template extract<7, 32>(mulResult)));
+            Word(1) carry = policy.invert(policy.or_(policy.equalToZero(policy.invert(policy.template extract<7, 32>(mulResult))), policy.equalToZero(policy.template extract<7, 32>(mulResult))));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1044,7 +1123,7 @@ struct X86InstructionSemantics {
             } else {
               write32(operands[0], policy.template extract<0, 32>(mulResult));
             }
-            Word(1) carry = policy.nor_(policy.equalToNegativeOne(policy.template extract<7, 64>(mulResult)), policy.equalToZero(policy.template extract<7, 64>(mulResult)));
+            Word(1) carry = policy.invert(policy.or_(policy.equalToZero(policy.invert(policy.template extract<7, 64>(mulResult))), policy.equalToZero(policy.template extract<7, 64>(mulResult))));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1064,7 +1143,7 @@ struct X86InstructionSemantics {
             Word(8) op1 = read<8>(operands[0]);
             Word(16) mulResult = policy.unsignedMultiply(op0, op1);
             policy.writeGPR(x86_gpr_ax, policy.concat(mulResult, policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
-            Word(1) carry = policy.notEqualToZero(policy.template extract<8, 16>(mulResult));
+            Word(1) carry = policy.invert(policy.equalToZero(policy.template extract<8, 16>(mulResult)));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1075,7 +1154,7 @@ struct X86InstructionSemantics {
             Word(32) mulResult = policy.unsignedMultiply(op0, op1);
             policy.writeGPR(x86_gpr_ax, policy.concat(policy.template extract<0, 16>(mulResult), policy.template extract<16, 32>(policy.readGPR(x86_gpr_ax))));
             policy.writeGPR(x86_gpr_dx, policy.concat(policy.template extract<16, 32>(mulResult), policy.template extract<16, 32>(policy.readGPR(x86_gpr_dx))));
-            Word(1) carry = policy.notEqualToZero(policy.template extract<16, 32>(mulResult));
+            Word(1) carry = policy.invert(policy.equalToZero(policy.template extract<16, 32>(mulResult)));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1086,7 +1165,7 @@ struct X86InstructionSemantics {
             Word(64) mulResult = policy.unsignedMultiply(op0, op1);
             policy.writeGPR(x86_gpr_ax, policy.template extract<0, 32>(mulResult));
             policy.writeGPR(x86_gpr_dx, policy.template extract<32, 64>(mulResult));
-            Word(1) carry = policy.notEqualToZero(policy.template extract<32, 64>(mulResult));
+            Word(1) carry = policy.invert(policy.equalToZero(policy.template extract<32, 64>(mulResult)));
             policy.writeFlag(x86_flag_cf, carry);
             policy.writeFlag(x86_flag_of, carry);
             break;
@@ -1191,7 +1270,7 @@ struct X86InstructionSemantics {
       case x86_aaa: {
         ROSE_ASSERT (operands.size() == 0);
         Word(1) incAh = policy.or_(policy.readFlag(x86_flag_af),
-                                   policy.greaterOrEqual(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), policy.template number<4>(10)));
+                                   greaterOrEqual<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), 10));
         policy.writeGPR(x86_gpr_ax,
           policy.concat(
             policy.add(policy.ite(incAh, policy.template number<4>(6), policy.template number<4>(0)),
@@ -1214,7 +1293,7 @@ struct X86InstructionSemantics {
       case x86_aas: {
         ROSE_ASSERT (operands.size() == 0);
         Word(1) decAh = policy.or_(policy.readFlag(x86_flag_af),
-                                   policy.greaterOrEqual(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), policy.template number<4>(10)));
+                                   greaterOrEqual<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), 10));
         policy.writeGPR(x86_gpr_ax,
           policy.concat(
             policy.add(policy.ite(decAh, policy.template number<4>(-6), policy.template number<4>(0)),
@@ -1438,7 +1517,7 @@ struct X86InstructionSemantics {
       case x86_repne_scasb: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         doAddOperation<8>(policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax)), policy.invert(readMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
         policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86_flag_zf))), // If true, repeat this instruction, otherwise go to the next one
@@ -1449,7 +1528,7 @@ struct X86InstructionSemantics {
       case x86_repe_cmpsb: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         doAddOperation<8>(readMemory<8>(x86_segreg_ds, policy.readGPR(x86_gpr_si)), policy.invert(readMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di))), true, policy.false_(), ecxNotZero);
         policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
@@ -1461,7 +1540,7 @@ struct X86InstructionSemantics {
       case x86_rep_movsb: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         writeMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di), readMemory<8>(insn->get_segmentOverride(), policy.readGPR(x86_gpr_si)));
         policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
@@ -1473,7 +1552,7 @@ struct X86InstructionSemantics {
       case x86_rep_movsd: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         writeMemory<32>(x86_segreg_es, policy.readGPR(x86_gpr_di), readMemory<32>(insn->get_segmentOverride(), policy.readGPR(x86_gpr_si)));
         policy.writeGPR(x86_gpr_si, policy.add(policy.readGPR(x86_gpr_si), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-4), policy.template number<32>(4)), policy.template number<32>(0))));
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-4), policy.template number<32>(4)), policy.template number<32>(0))));
@@ -1485,7 +1564,7 @@ struct X86InstructionSemantics {
       case x86_rep_stosb: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         writeMemory<8>(x86_segreg_es, policy.readGPR(x86_gpr_di), policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax)));
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-1), policy.template number<32>(1)), policy.template number<32>(0))));
         policy.readIP() = policy.ite(ecxNotZero, // If true, repeat this instruction, otherwise go to the next one
@@ -1496,7 +1575,7 @@ struct X86InstructionSemantics {
       case x86_rep_stosd: {
         ROSE_ASSERT (operands.size() == 0);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
-        Word(1) ecxNotZero = policy.notEqualToZero(policy.readGPR(x86_gpr_cx));
+        Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
         writeMemory<32>(x86_segreg_es, policy.readGPR(x86_gpr_di), policy.readGPR(x86_gpr_ax));
         policy.writeGPR(x86_gpr_di, policy.add(policy.readGPR(x86_gpr_di), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-4), policy.template number<32>(4)), policy.template number<32>(0))));
         policy.readIP() = policy.ite(ecxNotZero, // If true, repeat this instruction, otherwise go to the next one

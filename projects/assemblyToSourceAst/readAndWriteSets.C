@@ -119,10 +119,6 @@ struct ReadAndWriteSetPolicy {
     return W();
   }
 
-  W nor_(const W& a, const W& b) {
-    return W();
-  }
-
   W xor_(const W& a, const W& b) {
     return W();
   }
@@ -144,15 +140,8 @@ struct ReadAndWriteSetPolicy {
     return W();
   }
 
-  W equalToNegativeOne(const W& a) {
-    return W();
-  }
-
-  W notEqualToZero(const W& a) {
-    return W();
-  }
-
-  W greaterOrEqual(const W& a, const W& b) {
+  template <size_t Len>
+  W generateMask(W) {
     return W();
   }
 
@@ -164,23 +153,7 @@ struct ReadAndWriteSetPolicy {
     return W();
   }
 
-  W shiftLeft(const W& a, const W& cnt) {
-    return W();
-  }
-
-  W shiftRight(const W& a, const W& cnt) {
-    return W();
-  }
-
-  W shiftRightArithmetic(const W& a, const W& cnt) {
-    return W();
-  }
-
   W rotateLeft(const W& a, const W& cnt) {
-    return W();
-  }
-
-  W rotateRight(const W& a, const W& cnt) {
     return W();
   }
 
