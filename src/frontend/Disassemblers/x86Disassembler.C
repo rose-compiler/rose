@@ -1125,8 +1125,8 @@ namespace X86Disassembler {
       case 0xCF: {isUnconditionalJump = true; insn = MAKE_INSN0(iret, iret); goto done;}
       case 0xD0: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeByteValue(1)); goto done;}
       case 0xD1: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeByteValue(1)); goto done;}
-      case 0xD2: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeRegister(2, rmLegacyByte)); goto done;}
-      case 0xD3: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeRegister(2, rmLegacyByte)); goto done;}
+      case 0xD2: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeRegister(1, rmLegacyByte)); goto done;}
+      case 0xD3: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeRegister(1, rmLegacyByte)); goto done;}
       case 0xD4: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aam, aam, imm); goto done;}
       case 0xD5: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aad, aad, imm); goto done;}
       case 0xD6: {not64(); insn = MAKE_INSN0(salc, salc); goto done;}
@@ -2262,7 +2262,7 @@ done:
       case 0xA2: return MAKE_INSN0(cpuid, cpuid);
       case 0xA3: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(bt, bt, modrm, reg);
       case 0xA4: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shld, shld, modrm, reg, getImmByte());
-      case 0xA5: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shld, shld, modrm, reg, makeRegister(2, rmLegacyByte));
+      case 0xA5: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shld, shld, modrm, reg, makeRegister(1, rmLegacyByte));
       case 0xA6: throw BadInstruction();
       case 0xA7: throw BadInstruction();
       case 0xA8: return MAKE_INSN1(push, push, makeRegister(5, rmSegment));
@@ -2270,7 +2270,7 @@ done:
       case 0xAA: return MAKE_INSN0(rsm, rsm);
       case 0xAB: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(btr, btr, modrm, reg);
       case 0xAC: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shrd, shrd, modrm, reg, getImmByte());
-      case 0xAD: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shrd, shrd, modrm, reg, makeRegister(2, rmLegacyByte));
+      case 0xAD: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shrd, shrd, modrm, reg, makeRegister(1, rmLegacyByte));
       case 0xAE: return decodeGroup15();
       case 0xAF: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(imul, imul, reg, modrm);
       case 0xB0: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN2(cmpxchg, cmpxchg, modrm, reg);
