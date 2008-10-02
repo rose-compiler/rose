@@ -190,13 +190,13 @@ struct ReadAndWriteSetPolicy {
   }
 
   template <size_t Len> // In bits
-  W readMemory(X86SegmentRegister segreg, const W& addr) {
+  W readMemory(X86SegmentRegister segreg, const W& addr, W cond) {
     readAndWriteSets[currentInstruction].readMemory = true;
     return W();
   }
 
   template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, const W& addr, const W& data) {
+  void writeMemory(X86SegmentRegister segreg, const W& addr, const W& data, W cond) {
     readAndWriteSets[currentInstruction].writtenMemory = true;
   }
 

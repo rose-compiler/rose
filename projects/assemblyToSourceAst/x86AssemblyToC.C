@@ -242,7 +242,7 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len>
-  WordWithExpression<Len> readMemory(X86SegmentRegister segreg, WordWithExpression<32> address) {
+  WordWithExpression<Len> readMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<1> cond) {
     SgFunctionSymbol* mrSym = NULL;
     switch (Len) {
       case 8: mrSym = memoryReadByteSym; break;
@@ -252,11 +252,11 @@ struct CTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mrSym);
-    return buildFunctionCallExp(mrSym, buildExprListExp(address.expr()));
+    return buildConditionalExp(cond.expr(), buildFunctionCallExp(mrSym, buildExprListExp(address.expr())), buildIntVal(0));
   }
 
   template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data) {
+  void writeMemory(X86SegmentRegister segreg, WordWithExpression<32> address, WordWithExpression<Len> data, WordWithExpression<1> cond) {
     SgFunctionSymbol* mwSym = NULL;
     switch (Len) {
       case 8: mwSym = memoryWriteByteSym; break;
@@ -266,7 +266,7 @@ struct CTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mwSym);
-    appendStatement(buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), bb);
+    appendStatement(buildIfStmt(cond.expr(), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
   }
 
   void hlt() {

@@ -6,17 +6,24 @@
 using namespace std;
 using boost::array;
 
+struct MemoryAccess {
+  LitList(32) addr;
+  LitList(8) data;
+  Lit cond;
+  MemoryAccess(LitList(32) addr, LitList(8) data, Lit cond): addr(addr), data(data), cond(cond) {}
+};
+
 template <size_t Len, size_t Offset, typename NLTranslator>
 struct WriteMemoryHelper {
-  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {
-    trans.writeMemoryByte(segreg, (Offset == 0 ? addr : trans.problem.adder(addr, number<32>(Offset / 8))), extract<Offset, Offset + 8>(data));
-    WriteMemoryHelper<Len, Offset + 8, NLTranslator>::go(segreg, addr, data, trans);
+  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, Lit cond, NLTranslator& trans) {
+    trans.writeMemoryByte(segreg, (Offset == 0 ? addr : trans.problem.adder(addr, number<32>(Offset / 8))), extract<Offset, Offset + 8>(data), cond);
+    WriteMemoryHelper<Len, Offset + 8, NLTranslator>::go(segreg, addr, data, cond, trans);
   }
 };
 
 template <size_t Len, typename NLTranslator>
 struct WriteMemoryHelper<Len, Len, NLTranslator> {
-  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, NLTranslator& trans) {}
+  static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, Lit cond, NLTranslator& trans) {}
 };
 
 struct NetlistTranslationPolicy {
@@ -26,8 +33,7 @@ struct NetlistTranslationPolicy {
   typedef pair<X86RegisterClass, int> FullReg;
   typedef map<FullReg, LitList(32)> RegMap;
   typedef map<X86Flag, Lit> FlagMap;
-  typedef vector<pair<LitList(32), LitList(8) > > MemoryWriteList;
-  typedef vector<pair<LitList(32), LitList(8) > > MemoryReadList;
+  typedef vector<MemoryAccess> MemoryAccessList;
   RegMap registerMap;
   RegMap newRegisterMap;
   RegMap origRegisterMap;
@@ -36,8 +42,8 @@ struct NetlistTranslationPolicy {
   FlagMap origFlagMap;
   size_t memoryWriteCountBase;
   size_t memoryReadCountBase;
-  MemoryWriteList memoryWrites;
-  MemoryReadList initialMemoryReads;
+  MemoryAccessList memoryWrites;
+  MemoryAccessList initialMemoryReads;
   SatProblem problem;
 
   static FullReg gpr(X86GeneralPurposeRegister reg) {
@@ -244,7 +250,7 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len> // In bits
-  LitList(Len) readMemory(X86SegmentRegister segreg, const LitList(32)& addr) {
+  LitList(Len) readMemory(X86SegmentRegister segreg, const LitList(32)& addr, LitList(1) cond) {
     LitList(Len) result;
     for (size_t i = 0; i < Len / 8; ++i) {
       LitList(8) thisByte = readMemoryByte(segreg, problem.adder(addr, number<32>(i)));
@@ -266,27 +272,27 @@ struct NetlistTranslationPolicy {
     // don't have a definition of what that value actually is.
     LitList(8) result = problem.newVars<8>();
     for (size_t i = 0; i < initialMemoryReads.size(); ++i) {
-      Lit thisEquality = problem.equal(addr, initialMemoryReads[i].first);
+      Lit thisEquality = problem.andGate(initialMemoryReads[i].cond, problem.equal(addr, initialMemoryReads[i].addr));
       for (size_t j = 0; j < 8; ++j) {
-        problem.condEquivalence(thisEquality, initialMemoryReads[i].second[j], result[j]);
+        problem.condEquivalence(thisEquality, initialMemoryReads[i].data[j], result[j]);
       }
     }
     for (size_t i = 0; i < memoryWrites.size(); ++i) {
-      result = problem.ite(problem.equal(addr, memoryWrites[i].first), memoryWrites[i].second, result);
+      result = problem.ite(problem.andGate(memoryWrites[i].cond, problem.equal(addr, memoryWrites[i].addr)), memoryWrites[i].data, result);
     }
-    initialMemoryReads.push_back(make_pair(addr, result)); // If address doesn't alias any previous reads or writes
+    initialMemoryReads.push_back(MemoryAccess(addr, result, TRUE)); // If address doesn't alias any previous reads or writes
     problem.addInterface("memoryRead_" + boost::lexical_cast<std::string>(memoryReadCountBase), toVector(concat(addr, result)));
     ++memoryReadCountBase;
     return result;
   }
 
-  void writeMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(8)& data) {
-    memoryWrites.push_back(make_pair(addr, data));
+  void writeMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(8)& data, Lit cond) {
+    memoryWrites.push_back(MemoryAccess(addr, data, cond));
   }
 
   template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data) {
-    WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, *this);
+  void writeMemory(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, LitList(1) cond) {
+    WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, cond[0], *this);
   }
 
   void hlt() {} // FIXME
@@ -304,8 +310,8 @@ struct NetlistTranslationPolicy {
     for (FlagMap::const_iterator i = flagMap.begin(); i != flagMap.end(); ++i) {
       problem.condEquivalence(isThisIp, i->second, newFlagMap[i->first]);
     }
-    for (MemoryWriteList::const_iterator i = memoryWrites.begin(); i != memoryWrites.end(); ++i) {
-      problem.addInterface("memoryWrite_" + boost::lexical_cast<std::string>(memoryWriteCountBase), toVector(concat(single(isThisIp), concat(i->first, i->second))));
+    for (MemoryAccessList::const_iterator i = memoryWrites.begin(); i != memoryWrites.end(); ++i) {
+      problem.addInterface("memoryWrite_" + boost::lexical_cast<std::string>(memoryWriteCountBase), toVector(concat(single(problem.andGate(i->cond, isThisIp)), concat(i->addr, i->data))));
       ++memoryWriteCountBase;
     }
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
