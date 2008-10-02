@@ -233,6 +233,14 @@ struct CTranslationPolicy {
     appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(gprSym[num]), val.expr())), bb);
   }
 
+  WordWithExpression<16> readSegreg(X86SegmentRegister sr) {
+    return buildIntValHex(0x2B); // FIXME
+  }
+
+  void writeSegreg(X86SegmentRegister sr, WordWithExpression<16> val) {
+    // FIXME
+  }
+
   WordWithExpression<32> readIP() {
     return buildVarRefExp(ipSym);
   }

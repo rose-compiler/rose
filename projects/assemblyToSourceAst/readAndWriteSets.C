@@ -74,6 +74,13 @@ struct ReadAndWriteSetPolicy {
     readAndWriteSets[currentInstruction].writtenGprs.insert(r);
   }
 
+  W readSegreg(X86SegmentRegister r) {
+    return W();
+  }
+
+  void writeSegreg(X86SegmentRegister r, const W& value) {
+  }
+
   W readIP() {
     return W();
   }

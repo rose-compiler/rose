@@ -110,6 +110,14 @@ struct NetlistTranslationPolicy {
     vars(gpr(r)) = value;
   }
 
+  LitList(16) readSegreg(X86SegmentRegister sr) {
+    return ::number<16>(0x2B); // FIXME
+  }
+
+  void writeSegreg(X86SegmentRegister sr, LitList(16) val) {
+    // FIXME
+  }
+
   LitList(32) readIP() {
     return vars(ip());
   }

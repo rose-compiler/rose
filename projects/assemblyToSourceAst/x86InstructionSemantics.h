@@ -42,6 +42,7 @@ static inline X86SegmentRegister getSegregFromMemoryReference(SgAsmMemoryReferen
   } else {
     ROSE_ASSERT (!"Bad segment expr");
   }
+  if (segreg == x86_segreg_none) segreg = x86_segreg_ds;
   return segreg;
 }
 
@@ -170,6 +171,11 @@ struct X86InstructionSemantics {
             Word(32) rawValue = policy.readGPR(reg);
             return readRegHelper(rawValue, rre->get_position_in_register(), NumberTag<Len>());
           }
+          case x86_regclass_segment: {
+            X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+            Word(16) value = policy.readSegreg(sr);
+            return readRegHelper(policy.concat(value, policy.template number<16>(0)), x86_regpos_word, NumberTag<Len>());
+          }
           default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
         }
         break;
@@ -258,6 +264,11 @@ struct X86InstructionSemantics {
               case x86_regpos_word: updateGPRLowWord(reg, value); break;
               default: ROSE_ASSERT (!"Bad position in register");
             }
+            break;
+          }
+          case x86_regclass_segment: {
+            X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+            policy.writeSegreg(sr, value);
             break;
           }
           default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
@@ -756,6 +767,37 @@ struct X86InstructionSemantics {
           case 4: {
             Word(32) result = doIncOperation<32>(read<32>(operands[0]), true, false);
             write32(operands[0], result);
+            break;
+          }
+          default: ROSE_ASSERT (!"Bad size"); break;
+        }
+        break;
+      }
+      case x86_cmpxchg: {
+        ROSE_ASSERT (operands.size() == 2);
+        switch (numBytesInAsmType(operands[0]->get_type())) {
+          case 1: {
+            Word(8) op0 = read<8>(operands[0]);
+            Word(8) oldAx = policy.template extract<0, 8>(policy.readGPR(x86_gpr_ax));
+            doAddOperation<8>(oldAx, policy.invert(op0), true, policy.false_());
+            write8(operands[0], policy.ite(policy.readFlag(x86_flag_zf), read<8>(operands[1]), op0));
+            updateGPRLowByte(x86_gpr_ax, policy.ite(policy.readFlag(x86_flag_zf), oldAx, op0));
+            break;
+          }
+          case 2: {
+            Word(16) op0 = read<16>(operands[0]);
+            Word(16) oldAx = policy.template extract<0, 16>(policy.readGPR(x86_gpr_ax));
+            doAddOperation<16>(oldAx, policy.invert(op0), true, policy.false_());
+            write16(operands[0], policy.ite(policy.readFlag(x86_flag_zf), read<16>(operands[1]), op0));
+            updateGPRLowWord(x86_gpr_ax, policy.ite(policy.readFlag(x86_flag_zf), oldAx, op0));
+            break;
+          }
+          case 4: {
+            Word(32) op0 = read<32>(operands[0]);
+            Word(32) oldAx = policy.readGPR(x86_gpr_ax);
+            doAddOperation<32>(oldAx, policy.invert(op0), true, policy.false_());
+            write32(operands[0], policy.ite(policy.readFlag(x86_flag_zf), read<32>(operands[1]), op0));
+            policy.writeGPR(x86_gpr_ax, policy.ite(policy.readFlag(x86_flag_zf), oldAx, op0));
             break;
           }
           default: ROSE_ASSERT (!"Bad size"); break;
@@ -1544,7 +1586,7 @@ struct X86InstructionSemantics {
                     policy.writeGPR(reg, policy.add(policy.readGPR(reg), policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-amount), policy.template number<32>(amount))));
 #define STRINGOP_UPDATE_REG_COND(reg, amount) \
                     policy.writeGPR(reg, policy.add(policy.readGPR(reg), policy.ite(ecxNotZero, policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-amount), policy.template number<32>(amount)), policy.template number<32>(0))));
-#define STRINGOP_LOAD_SI(len, cond) readMemory<(8 * (len))>(insn->get_segmentOverride(), policy.readGPR(x86_gpr_si), (cond))
+#define STRINGOP_LOAD_SI(len, cond) readMemory<(8 * (len))>((insn->get_segmentOverride() == x86_segreg_none ? x86_segreg_ds : insn->get_segmentOverride()), policy.readGPR(x86_gpr_si), (cond))
 #define STRINGOP_LOAD_DI(len, cond) readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
 #define STRINGOP_STORE_DI(len, cond, val) writeMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (val), (cond))
 #define STRINGOP_LOOP \
