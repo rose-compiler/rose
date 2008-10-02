@@ -214,6 +214,7 @@ void RoseBin_CallGraphAnalysis::run(RoseBin_Graph* vg, string fileN, bool multie
   //graphs[analysisName] =vizzGraph->graph;
   //  }
 
+
   //graph->set_nodes(nodes);
   //graph->set_edges(edges);
   if (RoseBin_support::DEBUG_MODE_MIN()) {

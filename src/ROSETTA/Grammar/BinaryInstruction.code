@@ -3020,7 +3020,7 @@ HEADER_BINARY_OPERAND_LIST_END
 
 
 HEADER_BINARY_FUNCTION_DECLARATION_START
-	int nrOfValidInstructions();
+	int nrOfValidInstructions(std::vector<SgNode*>& succs);
           //void append_block( SgAsmBlock* operand );
           void append_statement( SgAsmStatement* statement );
           void remove_statement( SgAsmStatement* statement );	
@@ -3276,8 +3276,8 @@ SOURCE_BINARY_DATA_STRUCTURE_END
 
 SOURCE_BINARY_FUNCTION_DECLARATION_START
 int 
-SgAsmFunctionDeclaration::nrOfValidInstructions(  ) {
-  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
+SgAsmFunctionDeclaration::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
+//  std::vector<SgNode*> succs = this->get_traversalSuccessorContainer();
   std::vector<SgNode*>::reverse_iterator j = succs.rbegin();
   int instructions = succs.size();
   bool foundRet=false;
@@ -3294,7 +3294,7 @@ SgAsmFunctionDeclaration::nrOfValidInstructions(  ) {
           foundRet=true;
           break;
     } else {
-       if (n->get_kind() != x86_nop) {
+       if (n && n->get_kind() != x86_nop) {
           nodeOtherThanNopAfterRetExists= true;
        }
        instructions--;

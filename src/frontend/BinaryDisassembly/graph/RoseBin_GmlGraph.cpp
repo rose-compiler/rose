@@ -31,7 +31,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
   
   funcMap.clear();
   nodesMap.clear();
-  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << endl;
+  cerr << " Preparing graph - Nr of Nodes : " << nodes.size() << "  edges : " << edges.size() << endl;
   int counter=nodes.size();
   int count=0;
   nodeType::iterator itn2 = nodes.begin();
@@ -44,7 +44,11 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
     if (func) {
-      int validInstructions = func->nrOfValidInstructions();
+      vector<SgNode*> list;
+      FindInstructionsVisitorx86 vis;
+      AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &list ));
+      
+      int validInstructions = func->nrOfValidInstructions(list);
       funcMap[func]=counter;
       nodesMap[func]=count;
       string name = func->get_name();
@@ -98,6 +102,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     interrupt = false;
     if (func) {
       string name = func->get_name();
+      //cerr << " if part name : " << name << endl;
       ROSE_ASSERT(node);
       if (grouping==false) {
 	map < int , string> node_p = node->get_properties();
@@ -144,12 +149,17 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       text +="   skip_ 1 \n";
       text +="   gid_ "+RoseBin_support::ToString(parent)+" ]\n";
       // skip functions for now
-      if (skipFunctions)
-	text ="";
+      //      if (skipFunctions)
+      //	text ="";
     } /*not a func*/ else {
       SgAsmx86Instruction* bin_inst = isSgAsmx86Instruction(internal);
-      SgAsmFunctionDeclaration* funcDecl_parent = 
-	isSgAsmFunctionDeclaration(bin_inst->get_parent());
+      cerr << " else part " << endl;
+      SgAsmFunctionDeclaration* funcDecl_parent = NULL;
+      if (bin_inst) {
+	funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent());
+	if (funcDecl_parent==NULL)
+	  funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
+      }
       if (funcDecl_parent==NULL) {
 	cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
 	  "  " << hex_address << endl;
@@ -181,7 +191,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
     }
     
     myfile << text;
-
+    //    cerr << " this node : " << text << endl;
   } 
   funcMap.clear();
 }
@@ -463,10 +473,10 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
       }
 
       // skip the function declaration edges for now
-      bool blankOutput=false;
-      if (skipFunctions)
-	if (isSgAsmFunctionDeclaration(binStat_s))
-	  blankOutput=true;
+      //      bool blankOutput=false;
+      //if (skipFunctions)
+      //if (isSgAsmFunctionDeclaration(binStat_s))
+      //  blankOutput=true;
       if (skipInternalEdges) {
 	SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
 	if (contrl && x86InstructionIsControlTransfer(contrl) && contrl->get_kind() != x86_ret) {
@@ -477,17 +487,17 @@ void RoseBin_GMLGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
 	  else
 	    output += "  Edge_Color_ 0000FF  \n   ";
 	}
-	else
-	  blankOutput=true;
+	//else
+	//  blankOutput=true;
       }
 
       if (add=="")
 	output += "   graphics [ type \"line\" arrow \"last\" fill \"#000000\" ]  ]\n";
       else output +=add;
 
-      if (blankOutput)
-	output="";
-
+      //if (blankOutput)
+      //	output="";
+      //cerr <<"  writing to file : " << output << endl;
       myfile << output;
     }
 

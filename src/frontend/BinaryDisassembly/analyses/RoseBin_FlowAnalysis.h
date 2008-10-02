@@ -20,6 +20,25 @@
 
 #include <cstdlib>
 
+class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmInstruction *>* , void* >
+{
+ public:
+  void* operator()(first_argument_type node, std::vector<SgAsmInstruction*>* insns ) const{
+    if (isSgAsmInstruction(node)) insns->push_back(isSgAsmInstruction(node));
+    return NULL;
+  }
+};
+
+class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
+{
+ public:
+  void* operator()(first_argument_type node, std::vector<SgAsmx86Instruction*>* insns ) const{
+    if (isSgAsmx86Instruction(node)) insns->push_back(isSgAsmx86Instruction(node));
+    return NULL;
+  }
+};
+
+
 class RoseBin_FlowAnalysis : public AstSimpleProcessing {
  protected:
    rose_hash::hash_map <uint64_t, SgAsmInstruction* > rememberInstructions; // Insn address -> ROSE insn
@@ -105,16 +124,17 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
       if (!db)
 	flattenBlocks(globalBin);
 #endif 
-      //#if 0
+#if 0
       if (!db)
 	convertBlocksToFunctions(globalBin);
-      //#endif
+#endif
       initFunctionList(globalBin);
-      //#if 0
+#if 0
       if (!db) {
       	resolveFunctions(globalBin);
       }
-      //#endif
+#endif
+      //      printAST(globalBin);
       process_jumps();
       initialized = true;
     }
@@ -128,7 +148,7 @@ class RoseBin_FlowAnalysis : public AstSimpleProcessing {
   }
 
   bool forward_analysis;
-
+  void printAST(SgAsmNode* globalNode);
   // run this analysis
   virtual void run(RoseBin_Graph* vg, std::string fileN, bool multiedge) =0;
 

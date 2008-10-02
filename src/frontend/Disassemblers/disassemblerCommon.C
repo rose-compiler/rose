@@ -385,7 +385,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     }
   }
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
-  // blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
+   blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
   interp->set_global_block(blk);
   blk->set_parent(interp);
   blk->set_externallyVisible(true);

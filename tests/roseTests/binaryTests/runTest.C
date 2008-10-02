@@ -67,6 +67,7 @@ int main(int argc, char** argv) {
   const SgAsmInterpretationPtrList& interps = file->get_interpretations();
   ROSE_ASSERT (interps.size() == 1);
   SgAsmInterpretation* interp = interps[0];
+  unparseAsmStatementToFile("unparsed.s", interp->get_global_block());
 
   RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
   // objdumpToRoseBinaryAst(execName, file, project);
@@ -108,8 +109,8 @@ int main(int argc, char** argv) {
   cerr << " Number of nodes == " << callanalysis->nodesVisited() << endl;
   cerr << " Number of edges == " << callanalysis->edgesVisited() << endl;
   // tps (25 Aug 2008) : changed this because of results from IDAPro
-  ROSE_ASSERT(callanalysis->nodesVisited()==10);
-  ROSE_ASSERT(callanalysis->edgesVisited()==7);
+  ROSE_ASSERT(callanalysis->nodesVisited()==16);
+  ROSE_ASSERT(callanalysis->edgesVisited()==20);
 
 
   cerr << " creating dataflow graph ... " << endl;
@@ -127,20 +128,21 @@ int main(int argc, char** argv) {
   cerr << " Number of definitions == " << dfanalysis->nrOfDefinitions() << endl;
   cerr << " Number of uses == " << dfanalysis->nrOfUses() << endl;
   // values for old implementation -- using objdump
-  //ROSE_ASSERT(dfanalysis->nodesVisited()==209);
-  //ROSE_ASSERT(dfanalysis->edgesVisited()==255);
-  //ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==18);
-  //ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==45);
-  //ROSE_ASSERT(dfanalysis->nrOfDefinitions()==176);
-  //ROSE_ASSERT(dfanalysis->nrOfUses()==26);
 
+  ROSE_ASSERT(dfanalysis->nodesVisited()==211);
+  ROSE_ASSERT(dfanalysis->edgesVisited()==252);
+  ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==8);
+  ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==56);
+  ROSE_ASSERT(dfanalysis->nrOfDefinitions()==161);
+  ROSE_ASSERT(dfanalysis->nrOfUses()==24);
+  /*
   ROSE_ASSERT(dfanalysis->nodesVisited()==237);
   ROSE_ASSERT(dfanalysis->edgesVisited()==284);
   ROSE_ASSERT(dfanalysis->nrOfMemoryWrites()==12);
   ROSE_ASSERT(dfanalysis->nrOfRegisterWrites()==36);
   ROSE_ASSERT(dfanalysis->nrOfDefinitions()==183);
   ROSE_ASSERT(dfanalysis->nrOfUses()==25);
-
+  */
 
   // detailed dfa test
   set<uint64_t> result;

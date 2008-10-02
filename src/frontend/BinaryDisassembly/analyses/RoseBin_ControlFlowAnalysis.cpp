@@ -147,6 +147,7 @@ void RoseBin_ControlFlowAnalysis::printGraph(std::string fileName, std::set<std:
   edgeType edges = vizzGraph->edges;
   edgeType resultEdges;
   edgeType::iterator itEdg = edges.begin();
+  
   for (; itEdg!=edges.end();++itEdg) {
     SgDirectedGraphNode* node = itEdg->first;
     SgDirectedGraphEdge* edge = itEdg->second;

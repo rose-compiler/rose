@@ -132,6 +132,10 @@ RoseBin_Graph::isDirectCFGEdge(SgDirectedGraphNode* sgNode,
   if (instSgNode && instSgNodeBefore) {
     SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
     SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
+    if (f1==NULL)
+      f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent()->get_parent());
+    if (f2==NULL)
+      f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent()->get_parent());
     if (f1 && f2) {
       vector<VirtualBinCFG::CFGEdge> outEdges = instSgNodeBefore->cfgBinOutEdges(info);
       for (size_t i = 0; i < outEdges.size(); ++i) {
@@ -166,6 +170,10 @@ RoseBin_Graph::isValidCFGEdge(SgDirectedGraphNode* sgNode,
     cout << " *** instSgNode && instSgNodeBefore " << endl;
     SgAsmFunctionDeclaration* f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent());
     SgAsmFunctionDeclaration* f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent());
+    if (f1==NULL)
+      f1 = isSgAsmFunctionDeclaration(instSgNode->get_parent()->get_parent());
+    if (f2==NULL)
+      f2 = isSgAsmFunctionDeclaration(instSgNodeBefore->get_parent()->get_parent());
     if (f1 && f2) {
       // (tps - 05/23/08) : the semantics of the previous implementation is:
       // check the node before in the instruction set and check if it is the same as the previous node
@@ -274,7 +282,7 @@ RoseBin_Graph::createNode(string& name, string& type, int address, int graph_id,
 void
 RoseBin_Graph::createUniqueEdges() {
   if (unique_edges.size()==0) {
-    cerr << " Creating unique edge map. " << endl;
+    cerr << " Creating unique edge map. Edges : " << edges.size() << endl;
     edgeType::const_iterator it2 = edges.begin();
     for (;it2!=edges.end();it2++) {
       SgDirectedGraphEdge* edgeIt = it2->second;

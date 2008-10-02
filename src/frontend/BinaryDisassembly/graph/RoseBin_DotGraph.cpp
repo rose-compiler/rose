@@ -195,6 +195,8 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
     SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
     SgAsmFunctionDeclaration* funcDecl_parent = 
       isSgAsmFunctionDeclaration(bin_inst->get_parent());
+    if (    funcDecl_parent ==NULL)
+      funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : printNodes preparation . No parent found for node : " << bin_inst->class_name() <<
 	"  " << hex_address << endl;
@@ -205,6 +207,7 @@ RoseBin_DotGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow, bool forw
 	cout << " preparing function " << counter << endl;			     
     inverse_nodesMap.insert(make_pair ( funcDecl_parent, nt )) ;
   }
+
 
   cerr << " Number of nodes in inverseMap : " << inverse_nodesMap.size() << endl;
 
@@ -325,7 +328,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     //string type = node->get_type();
     for (; prop!=node_p.end(); ++prop) {
       int addr = prop->first;
-      //cerr << " dot : property for addr : " << addr << " and node " << hex_address << " is " << prop->second << endl;
+      //      cerr << " dot : property for addr : " << addr << " and node " << hex_address << " is " << prop->second << endl;
       if (addr==RoseBin_Def::name)
 	name = prop->second;
       else if (addr==RoseBin_Def::eval)
@@ -366,7 +369,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
 	cerr << " *************** dotgraph: unknown property found :: " << addr << endl;
       }
     }
-    
+
     ROSE_ASSERT(node);
     SgNode* internal = node->get_SgNode();
     SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(internal);
@@ -375,6 +378,8 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
     SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
     SgAsmFunctionDeclaration* funcDecl_parent = 
       isSgAsmFunctionDeclaration(bin_inst->get_parent());
+    if (    funcDecl_parent ==NULL)
+      funcDecl_parent = isSgAsmFunctionDeclaration(bin_inst->get_parent()->get_parent());
     if (funcDecl_parent==NULL) {
       cerr << " ERROR : InternalNodes . No parent found for node : " << bin_inst->class_name() <<
 	"  " << hex_address << endl;
@@ -447,7 +452,7 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       //      string nameL=name.substr(0,9);
       if (type!="function") {
 	if (hex_name!=nameL)
-	  cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of " << name << endl;
+	  cerr << " hexName : ." << hex_name << ". == ." << nameL << ".   out of : " << name << endl;
 	//	cerr << " ERROR ................... SOMETHING WRONG HERE . ALLOWING THIS FOR NOW . " << endl;
 		ROSE_ASSERT(hex_name==nameL);
       }
@@ -639,6 +644,10 @@ void RoseBin_DotGraph::printEdges( bool forward_analysis, std::ofstream& myfile,
       if (thisNode && nextNode) {
 	SgAsmFunctionDeclaration* f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent());
 	SgAsmFunctionDeclaration* f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent());
+	if (f_1==NULL)
+	  f_1 = isSgAsmFunctionDeclaration(thisNode->get_parent()->get_parent());
+	if (f_2==NULL)
+	  f_2 = isSgAsmFunctionDeclaration(nextNode->get_parent()->get_parent());
 	if (f_1==f_2)
 	  if (nextNode->get_kind() == x86_call || nextNode->get_kind() == x86_jmp) {
 	    string add = ",color=\"Green\",  style=\"invis\"";

@@ -3074,12 +3074,16 @@ done:
   bool doesBBStartFunction(SgAsmBlock* bb, bool use64bit) {
     const SgAsmStatementPtrList& contents = bb->get_statementList();
     size_t i = 0;
-    while (i < contents.size() && isSgAsmx86Instruction(contents[i]) && isSgAsmx86Instruction(contents[i])->get_kind() == x86_nop) ++i;
-    if (!use64bit && i < contents.size() && is_mov_edi_edi(contents[i])) ++i;
-    if (contents.size() < i + 2) return false;
-    if (!is_push_ebp(contents[i], use64bit)) return false;
-    if (!is_mov_ebp_esp(contents[i + 1], use64bit)) return false;
-    return true;
+    //    while (i < contents.size() && isSgAsmx86Instruction(contents[i]) && isSgAsmx86Instruction(contents[i])->get_kind() == x86_nop) ++i;
+    //if (!use64bit && i < contents.size() && is_mov_edi_edi(contents[i])) ++i;
+    for (unsigned int k=i;(k+1)< (contents.size() );++k) {
+      if (isSgAsmx86Instruction(contents[k]) && isSgAsmx86Instruction(contents[k+1]))
+	if ((is_push_ebp(contents[k], use64bit) && is_mov_ebp_esp(contents[k + 1], use64bit))) {
+	  return true;
+      }
+    }
+    
+    return false;
   }
 
 }

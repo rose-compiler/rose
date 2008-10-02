@@ -30,7 +30,7 @@ class RoseBin_GMLGraph : public RoseBin_Graph {
  public:
   RoseBin_GMLGraph(VirtualBinCFG::AuxiliaryInformation* info): RoseBin_Graph(info) {
     //added this for vizz3d visualization
-    skipFunctions=true;
+    skipFunctions=false;
     skipInternalEdges=true;
     onlyControlStructure=true;
   }
