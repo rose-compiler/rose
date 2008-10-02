@@ -22,6 +22,7 @@ bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr);
 // std::vector<SgAsmx86Instruction*> x86GetInstructionOutEdges(SgAsmx86Instruction* inst); // Returns all possible targets and fallthrough
 
 const char* gprToString(X86GeneralPurposeRegister n);
+const char* segregToString(X86SegmentRegister n);
 const char* flagToString(X86Flag n);
 
 #endif // ROSE_X86INSTRUCTIONPROPERTIES_H

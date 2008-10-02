@@ -475,6 +475,12 @@ const char* gprToString(X86GeneralPurposeRegister n) {
   return names[(int)n];
 }
 
+const char* segregToString(X86SegmentRegister n) {
+  static const char* names[] = {"es", "cs", "ss", "ds", "fs", "gs"};
+  ROSE_ASSERT ((int)n >= 0 && (int)n <= 5);
+  return names[(int)n];
+}
+
 const char* flagToString(X86Flag n) {
   static const char* names[] = {
     "cf",
