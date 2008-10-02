@@ -253,7 +253,7 @@ struct NetlistTranslationPolicy {
   LitList(Len) readMemory(X86SegmentRegister segreg, const LitList(32)& addr, LitList(1) cond) {
     LitList(Len) result;
     for (size_t i = 0; i < Len / 8; ++i) {
-      LitList(8) thisByte = readMemoryByte(segreg, problem.adder(addr, number<32>(i)));
+      LitList(8) thisByte = readMemoryByte(segreg, problem.adder(addr, number<32>(i)), cond[0]);
       for (size_t j = 0; j < 8; ++j) {
         result[i * 8 + j] = thisByte[j];
       }
@@ -261,7 +261,7 @@ struct NetlistTranslationPolicy {
     return result;
   }
 
-  LitList(8) readMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr) {
+  LitList(8) readMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, Lit cond) {
     // The priority order for reads goes from bottom to top.  First, we check
     // for any writes that have the same address, and use the most recent of
     // those that match.  Next, we look at those previous reads that did not
@@ -280,7 +280,7 @@ struct NetlistTranslationPolicy {
     for (size_t i = 0; i < memoryWrites.size(); ++i) {
       result = problem.ite(problem.andGate(memoryWrites[i].cond, problem.equal(addr, memoryWrites[i].addr)), memoryWrites[i].data, result);
     }
-    initialMemoryReads.push_back(MemoryAccess(addr, result, TRUE)); // If address doesn't alias any previous reads or writes
+    initialMemoryReads.push_back(MemoryAccess(addr, result, cond)); // If address doesn't alias any previous reads or writes
     problem.addInterface("memoryRead_" + boost::lexical_cast<std::string>(memoryReadCountBase), toVector(concat(addr, result)));
     ++memoryReadCountBase;
     return result;

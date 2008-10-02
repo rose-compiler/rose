@@ -52,8 +52,23 @@ struct X86InstructionSemantics {
   }
 
   template <size_t Len, size_t SCLen>
+  Word(Len) generateMaskReverse(Word(SCLen) sc) { // bit-reversal of policy.generateMask(sc)
+    Word(1) allBitsSet = greaterOrEqual<SCLen>(sc, Len);
+    // sc2 is the number of off bits at the RHS of the number
+    Word(SCLen) sc2 = policy.ite( // sc >= Len ? 0 : Len - sc
+                        allBitsSet,
+                        policy.template number<SCLen>(0),
+                        policy.add( // Len - sc
+                          policy.invert(sc),
+                          policy.template number<SCLen>(Len + 1)));
+    return policy.invert(policy.template generateMask<Len>(sc2));
+  }
+             
+
+  template <size_t Len, size_t SCLen>
   Word(Len) rotateRight(Word(Len) w, Word(SCLen) sc) {
-    return policy.rotateLeft(w, negate<SCLen>(sc));
+    // Because of RCL and RCR, this needs to work when Len is not a power of 2
+    return policy.rotateLeft(w, policy.add(policy.invert(sc), policy.template number<SCLen>((1 + Len) % (1 << SCLen))));
   }
 
   template <size_t Len, size_t SCLen>
@@ -67,10 +82,7 @@ struct X86InstructionSemantics {
   Word(Len) shiftRight(Word(Len) w, Word(SCLen) sc) {
     BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
     return policy.and_(rotateRight<Len, SCLen>(w, sc),
-                       policy.ite(
-                         policy.equalToZero(sc),
-                         policy.invert(policy.template number<Len>(0)),
-                         policy.template generateMask<Len>(negate<SCLen>(sc))));
+                       policy.invert(generateMaskReverse<Len, SCLen>(sc)));
   }
 
   template <size_t Len, size_t SCLen>
@@ -83,7 +95,7 @@ struct X86InstructionSemantics {
                shiftRight<Len, SCLen>(w, sc),
                policy.ite(
                  policy.template extract<Len - 1, Len>(w),
-                 policy.invert(policy.template generateMask<Len>(negate<SCLen>(sc))),
+                 generateMaskReverse<Len, SCLen>(sc),
                  policy.template number<Len>(0))));
   }
 
@@ -1633,6 +1645,11 @@ struct X86InstructionSemantics {
 #undef STRINGOP_LOOP
 #undef STRINGOP_LOOP_E
 #undef STRINGOP_LOOP_NE
+      case x86_hlt: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.hlt();
+        break;
+      }
       case x86_rdtsc: {
         ROSE_ASSERT (operands.size() == 0);
         Word(64) tsc = policy.rdtsc();

@@ -33,8 +33,11 @@ jeremiah-check: x86AssemblyToCDemo x86AssemblyToNetlist
 	fi
 
 check:
+	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
+	  ./readAndWriteSets $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 > fnord.rws ; \
+	fi
 
-CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C
+CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C fnord.rws
 
 endif
 
