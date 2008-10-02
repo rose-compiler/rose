@@ -2,6 +2,11 @@
 #define ROSE_X86INSTRUCTIONSEMANTICS_H
 
 #include "rose.h"
+#include <stdint.h>
+#ifndef __STDC_FORMAT_MACROS
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 #include <cassert>
 #include <cstdio>
 #include <iostream>
@@ -15,6 +20,16 @@ static int numBytesInAsmType(SgAsmType* ty) {
     default: {std::cerr << "Unhandled type " << ty->class_name() << " in numBytesInAsmType" << std::endl; abort();}
   }
 }
+
+static inline uint64_t shl1(unsigned int amount) { // 2**amount, safe for when amount >= 64
+  if (amount >= 64) return 0;
+  return 1ULL << amount;
+}
+
+template <uint64_t Amount>
+struct SHL1 {
+  static const uint64_t value = (Amount >= 64) ? 0 : (1ULL << Amount);
+};
 
 template <size_t> struct NumberTag {};
 
@@ -53,22 +68,23 @@ struct X86InstructionSemantics {
 
   template <size_t Len, size_t SCLen>
   Word(Len) generateMaskReverse(Word(SCLen) sc) { // bit-reversal of policy.generateMask(sc)
-    Word(1) allBitsSet = greaterOrEqual<SCLen>(sc, Len);
+    Word(1) allBitsSet = Len >= (SHL1<SCLen>::value) ? policy.false_() : greaterOrEqual<SCLen>(sc, Len);
     // sc2 is the number of off bits at the RHS of the number
     Word(SCLen) sc2 = policy.ite( // sc >= Len ? 0 : Len - sc
                         allBitsSet,
                         policy.template number<SCLen>(0),
                         policy.add( // Len - sc
                           policy.invert(sc),
-                          policy.template number<SCLen>(Len + 1)));
-    return policy.invert(policy.template generateMask<Len>(sc2));
+                          policy.template number<SCLen>((Len + 1) % (SHL1<SCLen>::value))));
+    Word(Len) mask = policy.ite(policy.equalToZero(sc), policy.template number<Len>(0), policy.invert(policy.template generateMask<Len>(sc2)));
+    return mask;
   }
              
 
   template <size_t Len, size_t SCLen>
   Word(Len) rotateRight(Word(Len) w, Word(SCLen) sc) {
     // Because of RCL and RCR, this needs to work when Len is not a power of 2
-    return policy.rotateLeft(w, policy.add(policy.invert(sc), policy.template number<SCLen>((1 + Len) % (1 << SCLen))));
+    return policy.rotateLeft(w, policy.add(policy.invert(sc), policy.template number<SCLen>((1 + Len) % (SHL1<SCLen>::value))));
   }
 
   template <size_t Len, size_t SCLen>
@@ -81,28 +97,27 @@ struct X86InstructionSemantics {
   template <size_t Len, size_t SCLen>
   Word(Len) shiftRight(Word(Len) w, Word(SCLen) sc) {
     BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
-    return policy.and_(rotateRight<Len, SCLen>(w, sc),
-                       policy.invert(generateMaskReverse<Len, SCLen>(sc)));
+    Word(Len) result =
+      policy.and_(rotateRight<Len, SCLen>(w, sc),
+                  policy.invert(generateMaskReverse<Len, SCLen>(sc)));
+    return result;
   }
 
   template <size_t Len, size_t SCLen>
   Word(Len) shiftRightArithmetic(Word(Len) w, Word(SCLen) sc) {
     BOOST_STATIC_ASSERT ((Len & (Len - 1)) == 0); // Len is power of 2
-    return policy.ite(
-             policy.equalToZero(sc),
-             w,
-             policy.or_(
-               shiftRight<Len, SCLen>(w, sc),
-               policy.ite(
-                 policy.template extract<Len - 1, Len>(w),
-                 generateMaskReverse<Len, SCLen>(sc),
-                 policy.template number<Len>(0))));
+    return policy.or_(
+             shiftRight<Len, SCLen>(w, sc),
+             policy.ite(
+               policy.template extract<Len - 1, Len>(w),
+               generateMaskReverse<Len, SCLen>(sc),
+               policy.template number<Len>(0)));
   }
 
   template <size_t Len>
   Word(1) greaterOrEqual(Word(Len) w, uint64_t n) {
     Word(Len) carries = policy.template number<Len>(0);
-    policy.addWithCarries(w, policy.template number<Len>((~n) & ((1 << Len) - 1)), policy.true_(), carries);
+    policy.addWithCarries(w, policy.template number<Len>((~n) & ((SHL1<Len>::value) - 1)), policy.true_(), carries);
     return policy.template extract<Len - 1, Len>(carries);
   }
 
@@ -173,19 +188,19 @@ struct X86InstructionSemantics {
       }
       case V_SgAsmByteValueExpression: {
         uint64_t val = isSgAsmByteValueExpression(e)->get_value();
-        return policy.template number<Len>(val & ((1 << Len) - 1));
+        return policy.template number<Len>(val & ((SHL1<Len>::value) - 1));
       }
       case V_SgAsmWordValueExpression: {
         uint64_t val = isSgAsmWordValueExpression(e)->get_value();
-        return policy.template number<Len>(val & ((1 << Len) - 1));
+        return policy.template number<Len>(val & ((SHL1<Len>::value) - 1));
       }
       case V_SgAsmDoubleWordValueExpression: {
         uint64_t val = isSgAsmDoubleWordValueExpression(e)->get_value();
-        return policy.template number<Len>(val & ((1 << Len) - 1));
+        return policy.template number<Len>(val & ((SHL1<Len>::value) - 1));
       }
       case V_SgAsmQuadWordValueExpression: {
         uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
-        return policy.template number<Len>(val & ((1 << Len) - 1));
+        return policy.template number<Len>(val & ((SHL1<Len>::value) - 1));
       }
       default: fprintf(stderr, "Bad variant %s in read\n", e->class_name().c_str()); abort();
     }
