@@ -328,7 +328,7 @@ struct X86InstructionSemantics {
     policy.writeFlag(x86_flag_af, invertMaybe<1>(policy.template extract<3, 4>(carries), dec));
     policy.writeFlag(x86_flag_of, policy.xor_(policy.template extract<Len - 1, Len>(carries), policy.template extract<Len - 2, Len - 1>(carries)));
     if (setCarry) {
-      policy.writeFlag(x86_flag_cf, policy.template extract<Len - 1, Len>(carries));
+      policy.writeFlag(x86_flag_cf, invertMaybe<1>(policy.template extract<Len - 1, Len>(carries), dec));
     }
     return result;
   }
@@ -673,17 +673,17 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (operands.size() == 1);
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
-            Word(8) result = negate<8>(read<8>(operands[0]));
+            Word(8) result = doAddOperation<8>(policy.template number<8>(0), policy.invert(read<8>(operands[0])), true, policy.false_());
             write8(operands[0], result);
             break;
           }
           case 2: {
-            Word(16) result = negate<16>(read<16>(operands[0]));
+            Word(16) result = doAddOperation<16>(policy.template number<16>(0), policy.invert(read<16>(operands[0])), true, policy.false_());
             write16(operands[0], result);
             break;
           }
           case 4: {
-            Word(32) result = negate<32>(read<32>(operands[0]));
+            Word(32) result = doAddOperation<32>(policy.template number<32>(0), policy.invert(read<32>(operands[0])), true, policy.false_());
             write32(operands[0], result);
             break;
           }
@@ -1511,7 +1511,8 @@ struct X86InstructionSemantics {
       }
       case x86_nop: break;
 #define STRINGOP_SETUP_LOOP \
-                    Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx)));
+                    Word(1) ecxNotZero = policy.invert(policy.equalToZero(policy.readGPR(x86_gpr_cx))); \
+                    policy.writeGPR(x86_gpr_cx, policy.add(policy.readGPR(x86_gpr_cx), policy.ite(ecxNotZero, policy.template number<32>(-1), policy.template number<32>(0))));
 #define STRINGOP_UPDATE_REG(reg, amount) \
                     policy.writeGPR(reg, policy.add(policy.readGPR(reg), policy.ite(policy.readFlag(x86_flag_df), policy.template number<32>(-amount), policy.template number<32>(amount))));
 #define STRINGOP_UPDATE_REG_COND(reg, amount) \
@@ -1519,20 +1520,15 @@ struct X86InstructionSemantics {
 #define STRINGOP_LOAD_SI(len, cond) readMemory<(8 * (len))>(insn->get_segmentOverride(), policy.readGPR(x86_gpr_si), (cond))
 #define STRINGOP_LOAD_DI(len, cond) readMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (cond))
 #define STRINGOP_STORE_DI(len, cond, val) writeMemory<(8 * (len))>(x86_segreg_es, policy.readGPR(x86_gpr_di), (val), (cond))
-#define STRINGOP_UPDATE_CX \
-                    policy.writeGPR(x86_gpr_cx, policy.add(policy.readGPR(x86_gpr_cx), policy.ite(ecxNotZero, policy.template number<32>(-1), policy.template number<32>(0))));
 #define STRINGOP_LOOP \
-        STRINGOP_UPDATE_CX \
         policy.writeIP(policy.ite(ecxNotZero, /* If true, repeat this instruction, otherwise go to the next one */ \
                                  policy.template number<32>((uint32_t)(insn->get_address())), \
                                  policy.readIP()));
 #define STRINGOP_LOOP_E \
-        STRINGOP_UPDATE_CX \
         policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.readFlag(x86_flag_zf)), /* If true, repeat this instruction, otherwise go to the next one */ \
                                  policy.template number<32>((uint32_t)(insn->get_address())), \
                                  policy.readIP()));
 #define STRINGOP_LOOP_NE \
-        STRINGOP_UPDATE_CX \
         policy.writeIP(policy.ite(policy.and_(ecxNotZero, policy.invert(policy.readFlag(x86_flag_zf))), /* If true, repeat this instruction, otherwise go to the next one */ \
                                  policy.template number<32>((uint32_t)(insn->get_address())), \
                                  policy.readIP()));
@@ -1621,15 +1617,6 @@ struct X86InstructionSemantics {
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
         regupdate(x86_gpr_ax, STRINGOP_LOAD_SI(len, policy.true_())); \
         STRINGOP_UPDATE_REG(x86_gpr_si, len) \
-        break; \
-      } \
-      case x86_rep_lods##suffix: { \
-        ROSE_ASSERT (operands.size() == 0); \
-        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
-        STRINGOP_SETUP_LOOP \
-        regupdate(x86_gpr_ax, policy.ite(ecxNotZero, STRINGOP_LOAD_SI(len, ecxNotZero), policy.template extract<0, (8 * (len))>(policy.readGPR(x86_gpr_ax)))); \
-        STRINGOP_UPDATE_REG_COND(x86_gpr_si, len) \
-        STRINGOP_LOOP \
         break; \
       }
       LODS(b, 1, updateGPRLowByte)
