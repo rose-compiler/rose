@@ -283,7 +283,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
           entryPoint = DOS_header->get_e_ip();
         }
 
-     printf ("In Disassembler::disassembleInterpretation(): entryPoint = %p \n",(void*)entryPoint);
+  // printf ("In Disassembler::disassembleInterpretation(): entryPoint = %p \n",(void*)entryPoint);
 
      basicBlockStarts[entryPoint] = true;
      functionStarts.insert(entryPoint);
@@ -344,7 +344,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     }
   }
 #else
-     printf ("Warning (conservative disassembly): Skipping search for pointers that reference executable code (valid sections) \n");
+  // printf ("Warning (conservative disassembly): Skipping search for pointers that reference executable code (valid sections) \n");
 #endif
 
   map<uint64_t, SgAsmBlock*> basicBlocks;
