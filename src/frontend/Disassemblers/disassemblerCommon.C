@@ -294,7 +294,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
 // This is a test that attempts to detect executable code in the sections of the binary
 // by looking for pointers to existing executable sections.
-  const vector<SgAsmGenericSection*> & sections = ef->get_sections()->get_sections();
+  const vector<SgAsmGenericSection*> & sections = interp->get_header()->get_sections()->get_sections();
   for (size_t i = 0; i < sections.size(); ++i) {
     SgAsmGenericSection* sect = sections[i];
     if (sect->is_mapped()) {
@@ -314,10 +314,9 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
         abort();
       }
       ROSE_ASSERT (pointerSize != 0);
-      uint64_t endOffset = sect->get_offset() + sect->get_size(); // Size within file
-      ROSE_ASSERT (endOffset <= ef->get_size());
+      uint64_t endOffset = sect->get_size(); // Size within section
 
-      for (uint64_t j = sect->get_offset();
+      for (uint64_t j = 0;
            j + pointerSize <= endOffset;
            j += pointerSize) {
         uint64_t addr = 0;
@@ -330,7 +329,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
           addr <<= 8;
 
        // This could be a perfomance problem depending upon the implementation of the "content()" function using STL.
-          addr |= ef->content()[j + k - 1];
+          addr |= *sect->content(j + k - 1, 1);
         }
 
         addr += header->get_base_va();
