@@ -113,42 +113,49 @@ eval(_, top) = top;
 eval(exp, state) =  
   // --print("eval(") print(exp) print(",") print(state) print(")\n")
   let s <= state; in
-  if is_unary(exp) then
-    unary(unary_get_child(exp), exp, state)
-  else if is_binary(exp) then
-    let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
-        exp, state); in r // --print("BINARY <----") print(r) print("\n") r
-  else if is_value(exp) then
-    case exp of
-      BoolValExp(value) => (duplift(val-astint(value)), state);
-      EnumVal(value)    => (duplift(val-astint(value)), state);
-      IntVal(value)     => (duplift(val-astint(value)), state);
-      ShortVal(value)   => (duplift(val-astshort(value)), state);
-      LongIntVal(value) => (duplift(val-astlong(value)), state);
 
-      CharVal(value)  => (duplift(snum(val-astchar(value))), state);
-      // -- FIXME: incorrect type conversions
-      UnsignedCharVal(value)  => (duplift(snum(val-astuchar(value))), state);
-      UnsignedIntVal(value)   => (duplift(snum(val-astuint(value))), state);
-      UnsignedShortVal(value) => (duplift(snum(val-astushort(value))), state);
-      UnsignedLongVal(value)  => (duplift(snum(val-astulong(value))), state);
-      // -- NOT IMPLEMENTED
-      FloatVal(_) => ((top,top), state);
-      DoubleVal(_) => ((top,top), state);
-      _         => print("unsupported value exp: ")
-                   print(exp) print("\n") ((top,top), state);
-    endcase
-  else case exp of
-    VarRefExp(name)       =>  // --print("###is_VARREF") 
-                              // --print(val-aststring(name)) print("\n") 
-                              (s{!varref_varid(exp)!}, state);
-    AssignInitializer(e1) => eval(e1, state);
-    NewExp(_,_,_)         => ((bot,bot), state);
-    _                     => print("**WARNING: ignoring unknown exp: ")
-                             print(exp) print("\n") ((top,top), state); 
+  case exp of 
+    CommaOpExp(exp1, exp2) => let state1 = 
+                                eval(exp1, state)!2!2; in
+                                eval(exp2, state1);
+    _ =>
+      if is_unary(exp) then
+        unary(unary_get_child(exp), exp, state)
+      else if is_binary(exp) then
+        let r = binary(binary_get_left_child(exp), binary_get_right_child(exp),
+          exp, state); in r // --print("BINARY <----") print(r) print("\n") r
+      else if is_value(exp) then
+        case exp of
+          BoolValExp(value) => (duplift(val-astint(value)), state);
+          EnumVal(value)    => (duplift(val-astint(value)), state);
+          IntVal(value)     => (duplift(val-astint(value)), state);
+          ShortVal(value)   => (duplift(val-astshort(value)), state);
+          LongIntVal(value) => (duplift(val-astlong(value)), state);
+
+          CharVal(value)  => (duplift(snum(val-astchar(value))), state);
+          // -- FIXME: incorrect type conversions
+          UnsignedCharVal(value) => (duplift(snum(val-astuchar(value))), state);
+          UnsignedIntVal(value)  => (duplift(snum(val-astuint(value))), state);
+          UnsignedShortVal(value)=>(duplift(snum(val-astushort(value))), state);
+          UnsignedLongVal(value) => (duplift(snum(val-astulong(value))), state);
+          // -- NOT IMPLEMENTED
+          FloatVal(_) => ((top,top), state);
+          DoubleVal(_) => ((top,top), state);
+          _         => print("unsupported value exp: ")
+                       print(exp) print("\n") ((top,top), state);
+        endcase
+    else case exp of
+      VarRefExp(name)       =>  // --print("###is_VARREF") 
+                                // --print(val-aststring(name)) print("\n") 
+                                (s{!varref_varid(exp)!}, state);
+      AssignInitializer(e1) => eval(e1, state);
+      NewExp(_,_,_)         => ((bot,bot), state);
+      _                     => print("**WARNING: ignoring unknown exp: ")
+                               print(exp) print("\n") ((top,top), state); 
                                       // --((top,top), lift([-> top]));
-  endcase endif endif endif;
-
+    endcase endif endif endif;
+  endcase;
+          
 // -- TODO kill temporary variables - Possible Memory leak
 
 
@@ -322,56 +329,7 @@ branch(exp, state, edge, isLoopBody) =
     // -- We don't know for sure which edge will be taken
     // --print("c=top\n") 
     // --print("Maybe\n") 
-    if is_binary(exp) then
-      let lhs = eval(binary_get_left_child(exp), state)!1!2;
-          rhs = eval(binary_get_right_child(exp), state)!1!2; in
-
-      case exp of 
-        LessThanOp(var, _) =>
-          if edge = true then 
-              updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
-          else 
-              updatestate(state, var, adjust_min(lhs, rhs))!2!2
-          endif;
-        LessOrEqualOp(var, _) =>
-          if edge = true then 
-              updatestate(state, var, adjust_max(lhs, rhs))!2!2
-          else 
-              updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
-          endif;
-        GreaterThanOp(var, _) =>
-          if edge = true then 
-              updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
-          else 
-              updatestate(state, var, adjust_max(lhs, rhs))!2!2
-          endif;
-        GreaterOrEqualOp(var, _) =>
-          if edge = true then 
-              updatestate(state, var, adjust_min(lhs, rhs))!2!2
-          else 
-              updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
-          endif;
-
-        EqualityOp(var, _) =>
-          if edge = true then 
-              updatestate(state, var, rhs)!2!2
-          else 
-              newstate
-          endif;
-        NotEqualOp(var, _) =>
-          if edge = true then 
-              newstate
-          else 
-              updatestate(state, var, rhs)!2!2
-          endif;
-
-
-        _ => newstate;
-      endcase
-    else 
-      lift([-> (top,top)])
-      //newstate
-    endif
+    eval_branch_condition(exp, state, newstate, edge, isLoopBody)
   else if c = bot then 
     print("FIXME c=bot\n") 
     state
@@ -386,6 +344,64 @@ branch(exp, state, edge, isLoopBody) =
     // --print("Never\n") 
     bot
   endif endif endif;
+
+
+eval_branch_condition :: Expression, State, State, bool, bool -> State;
+eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
+  if is_binary(exp) then
+    let lhs = eval(binary_get_left_child(exp), state)!1!2;
+        rhs = eval(binary_get_right_child(exp), state)!1!2; in
+
+    case exp of 
+      AndOp(exp1, exp2) =>
+        let state1 = 
+          eval_branch_condition(exp1, state, newstate, edge, isLoopBody); in
+          eval_branch_condition(exp2, state1, newstate, edge, isLoopBody);
+  
+      LessThanOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+        else 
+            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+        endif;
+      LessOrEqualOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+        else 
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+        endif;
+      GreaterThanOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_min_plus(lhs, rhs, 1))!2!2
+        else 
+            updatestate(state, var, adjust_max(lhs, rhs))!2!2
+        endif;
+      GreaterOrEqualOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, adjust_min(lhs, rhs))!2!2
+        else 
+            updatestate(state, var, adjust_max_plus(lhs, rhs,-1))!2!2
+        endif;
+
+      EqualityOp(var, _) =>
+        if edge = true then 
+            updatestate(state, var, rhs)!2!2
+        else 
+            newstate
+        endif;
+      NotEqualOp(var, _) =>
+        if edge = true then 
+            newstate
+        else 
+            updatestate(state, var, rhs)!2!2
+        endif;
+
+      _ => newstate;
+    endcase
+  else 
+    //lift([-> (top,top)])
+    newstate
+  endif;
 
 
 // -- update the min portion of an interval
