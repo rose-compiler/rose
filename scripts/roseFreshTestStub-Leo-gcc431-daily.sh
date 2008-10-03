@@ -12,7 +12,12 @@ export BOOST_ROOT="/home/liao6/opt/boost_1_35_0"
 export LD_LIBRARY_PATH="${JAVA_HOME}/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
-source /usr/apps/gcc/4.3.1/setup.sh
+#source /usr/apps/gcc/4.3.1/setup.sh
+#source /usr/apps/gcc/4.0.2/setup.sh
+# GCC 3.4.6
+export PATH="/usr/apps/gcc/3.4.6/bin:$PATH"
+export LD_LIBRARY_PATH="/usr/apps/gcc/3.4.6/lib:$LD_LIBRARY_PATH"
+
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 
 # using a time stamp to avoid overwriting previous tests
@@ -37,12 +42,12 @@ SVNVERSIONOPTION="{`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`}"
 MAKEFLAGS="-j16"
 
 # my additional stuff
-# Disable upload svn for now, waiting for binary distribution package to be ready
-ENABLE_UPLOAD_SVN=yes
-ENABLE_UPLOAD_WEB=yes
+# this is not the one to do the uploading!!
+#ENABLE_UPLOAD_SVN=yes
+#ENABLE_UPLOAD_WEB=yes
 #KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 
-ENABLE_BUILD_BINARY_EDG=1
+#ENABLE_BUILD_BINARY_EDG=1
 set -e
 set -o pipefail

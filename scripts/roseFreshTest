@@ -125,11 +125,15 @@ buildstatus=0
 
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
+# should not run this for external repository or released packages
+if [ $SKIP_BUILD_SOURCE ]; then
+  echo "Skipping ./build in the source tree..."
+else  
   echo "Build configuration and Makefile.in in the source tree...."
   cd sourcetree
   ./build
   cd ..
-
+fi
 #------------------------------------------------------
 # prepare a fresh build tree
   echo "Making a temporary build directory:... "
