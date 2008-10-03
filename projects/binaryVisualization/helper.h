@@ -119,8 +119,11 @@ public:
       isSgAsmFunctionDeclaration(node);
     if (funcDecl) {
       cerr << " preprocessing function: " << funcDecl->get_name() <<endl;
-      vector<SgAsmStatement*> instructions= 
-	funcDecl->get_statementList();
+      vector<SgAsmStatement*> instructions;
+      FindInstructionsVisitor vis;
+      AstQueryNamespace::querySubTree(funcDecl, std::bind2nd( vis, &instructions ));
+      //      vector<SgAsmStatement*> instructions= 
+      //	funcDecl->get_statementList();
       int nrInst=0;
       unsigned int control=0;
       unsigned int call=0;

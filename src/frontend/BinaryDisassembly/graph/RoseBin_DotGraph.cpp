@@ -442,7 +442,8 @@ RoseBin_DotGraph::printInternalNodes(    bool dfg, bool forward_analysis,
       string nameL="0x";
       for (unsigned int j=2;j<name.size();++j){
 	char c = name[j];
-	if (c==':')
+	if (c==' ') continue;
+	else if (c==':')
 	  break;
 	else
 	  nameL+=name[j];

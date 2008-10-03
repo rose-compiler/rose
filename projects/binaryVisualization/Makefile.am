@@ -4,22 +4,22 @@ if ROSE_USE_OPENGL
 
 INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(GL_CFLAGS)
 
-bin_PROGRAMS = vizzBinary #vizzBinaryOld vizzBinary2 vizzBinaryOldBoost
+bin_PROGRAMS = vizzBinary 
 
 LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(GL_LIBS)
 
 vizzBinary_SOURCES = vizzBinary.C
 
-check-local: vizzBinary #vizzBinaryOld vizzBinary2 vizzBinaryOldBoost
+check-local: vizzBinary 
 
-#include_HEADERS = helpers.h
+include_HEADERS = helper.h
 
-#EXTRA_DIST = helpers.h
+EXTRA_DIST = helper.h
 
-CLEANFILES = helpers.h *.coord
+CLEANFILES = helper.h *.coord
 
 clean:
-	rm -rf *.dot *.gml *.o *.s *~ vizzBinary out *.coord # vizzBinaryOld vizzBinary2 vizzBinaryOldBoost
+	rm -rf *.dot *.gml *.o *.s *~ vizzBinary out *.coord 
 
 else
 

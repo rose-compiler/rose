@@ -1,8 +1,8 @@
 #include <rose.h>
 #include <stdio.h>
 #include <iostream>
-//#include <mysql.h>
 #include <string>
+
 
 using namespace std;
 #define debug 1
