@@ -51,19 +51,38 @@ and limitations on how their software may be used.
   The following software is required in order to build and use ROSE:
 \begin{itemize}
    \item {\bf ROSE} : \\ 
-     There are two versions of ROSE supported: the 
-     {\it Distribution Version} for users (typical) and the {\it Development Version}
-     (intended only for ROSE development team), which is what is found in the ROSE software
-     repository and has additional software requirements (autoconf, automake, Doxygen, LaTeX,
-     etc.).  The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version 
-     numbers for each release of ROSE).
+     There are three versions of ROSE supported: the 
+     {\it Distribution Version} for users (typical), the {\it External
+     Development Version} for advanced users and collaborators, 
+     and the {\it Internal Development Version}
+     (intended only for ROSE development team). The development versions
+     are what are found in the ROSE software
+     repositories and have additional software requirements (subversion,
+     JDK, autoconf, automake, Doxygen, LaTeX, etc.).  
+%     The exact requirements are listed in the {\tt ROSE/ChangeLog} (including version numbers for each release of ROSE).
      \begin{itemize}
      \item {\bf Distribution Version} \\
        Provided as a tared and compressed file in the form,
-       ROSE-\VersionNumber.tar.gz.  This is the most typical way that users will
-       see and work with ROSE.  Instructions are also located in the ROSE/README file.
-     \item {\bf Development Version} \\
-       Only available directly from the Subversion (SVN) repository. The details of building this
+       ROSE-\VersionNumber.tar.gz.  It can be obtained from
+       \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}. 
+       This is the most typical way that users will
+       see and work with ROSE. But it is less up-to-date compared to
+       development versions. 
+
+       \item {\bf External Development Version } \\
+       It is available from the SciDAC Outreach Center's subversion
+       repository:
+       \htmladdnormallink{outreach.scidac.gov/projects/rose}{https://outreach.scidac.gov/projects/rose/}.
+       We put a subset (excluding the EDG part essentially) of the internal developer version of
+       ROSE into the external repository to enable people to
+       have quick access to the most recent new features in ROSE. 
+       The external repository is synchronized with the internal repository
+       once a day in ideal conditions. Several branches also exist to accept
+       contributions from external collaborators. 
+
+     \item {\bf Internal Development Version} \\
+       Only available directly from the LLNL's internal Subversion (SVN) repository. 
+       The details of building this
        version are located in the Appendix of the Manual. %\ref{gettingStarted:DeveloperInstructions}.
      \end{itemize}  
 %     ROSE is delivered as either a development version (svn) or
@@ -74,10 +93,19 @@ and limitations on how their software may be used.
      Visit \htmladdnormallink{www.boost.org}{http://www.boost.org/}
      for more details about BOOST and \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}
      for download and installation instructions.
-   \item {\bf Autoconf} : version $>=$ 2.59. Needed \emph{ONLY} for development version.  \\
+   \item {\bf JAVA} : version $>$1.5.0\_11 \\
+          A SUN Java virtual machine (JVM) is needed. A Java compiler
+          (JDK)
+          is also required for development versions.  
+   \item {\bf Autoconf} : version $>=$ 2.59. Needed \emph{ONLY} for
+   development versions.  \\
      Autoconf is an extensible package of M4 macros that produce shell scripts to automatically configure software source code packages. 
-   \item {\bf Automake} : version $>=$ 1.96. Needed \emph{ONLY} for development version.  \\
-     Automake is a tool for automatically generating `Makefile.in' files compliant with the GNU Coding Standards.
+   \item {\bf Automake} : version $>=$ 1.96. Needed \emph{ONLY} for
+   development versions.  \\
+     Automake is a tool for automatically generating `Makefile.in' files
+     compliant with the GNU Coding Standards.
+     \item {\bf Libtool}: version $>=$1.5.6.  Needed \emph{ONLY} for
+     development versions. 
 \end{itemize}
 
 To simplify the descriptions of the build process, we define:
@@ -108,6 +136,9 @@ and tested internally using separate {\bf Compile Trees}. \\
 %ROSE does not presently require any special software, but more
 More functionality within ROSE is available if one has additional (freely available) software installed:
 \begin{itemize}
+   \item {\bf libxml2-devel }: \\
+         Several optional features of ROSE need to handle XML files, such as
+         roseHPCT and BinaryContextLookup.
    \item {\bf Doxygen} : \\
           Most ROSE documentation is generated using LaTex and Doxygen, thus
           Doxygen is required for ROSE developers that want to regenerate the ROSE
@@ -142,9 +173,6 @@ More functionality within ROSE is available if one has additional (freely availa
           mpicc is a compiler for MPI development. If ROSE is configures with MPI
           enabled, one can utilize features in ROSE that allow for distributed
           parallel AST traversals.
-   \item {\bf Java} : \\
-          A Java compiler and virtual machine are required to use the Open
-          Fortran Parser and other Java-based parts of ROSE.
 \end{itemize}
 
 % \subsection{Installation and Testing }
@@ -268,6 +296,12 @@ these can be ignored.
      \item Change directory to the new compile tree directory. \\
            Type {\tt cd compileTree; }. This changes the current directory to the newly
            created directory.
+     \item Add JAVA environment variables. \\
+           For example:\\
+           {\tt export JAVA\_HOME=/usr/apps/java/jdk1.5.0\_11} \\
+        {\tt export
+        LD\_LIBRARY\_PATH=\$JAVA\_HOME/jre/lib/i386/server:\$LD\_LIBRARY\_PATH}
+
      \item Add the Boost library path into your LD\_LIBRARY\_PATH.\\
            For example: {\tt
            LD\_LIBRARY\_PATH=\$LD\_LIBRARY\_PATH:/home/youraccount/opt/boost\_1\_35\_0/lib}
