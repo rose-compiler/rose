@@ -301,8 +301,36 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
 
      curprint("include ");
 
+  // DQ (10/3/2008): Added special case code generation to support an inconsistant 
+  // behavior between gfortran 4.2 and previous versions in the Fortran include mechanism.
+     string fortranCompilerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
+     string includeFileName = includeLine->get_filename();
+
+     if (fortranCompilerName == "gfortran")
+        {
+          if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
+               ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER >= 4) && (BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER <= 1) ) )
+             {
+            // gfortran versions before 4.2 can not handle absolute path names in the Fortran specific include mechanism.
+
+            // Note that this fix would mistakenly strip all specified include files to their basename, even include files 
+            // specified as "../sys/math.h" would become "math.h" and this could cause an error.
+               printf ("Warning: gfortran versions before 4.2 can not handle absolute path names in the Fortran specific include mechanism (using basename)... \n");
+
+               includeFileName = StringUtility::stripPathFromFileName(includeLine->get_filename());
+             }
+        }
+       else
+        {
+       // What is this compiler
+          printf ("Default compiler behavior ... in code generation (Fortran include uses absolute paths) \n");
+       // ROSE_ASSERT(false);
+        }
+
+  // printf ("Unparsing Fortran include using includeFileName = %s \n",includeFileName.c_str());
+
      curprint("\"");
-     curprint(includeLine->get_filename());
+     curprint(includeFileName);
      curprint("\"");
 
      unp->cur.insert_newline(1);
@@ -1654,15 +1682,51 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
 
   // ROSE_ASSERT(interfaceStatement->get_body() != NULL);
   // unparseStatement(interfaceStatement->get_body(), info);
+#if 0
      if (interfaceStatement->get_function() != NULL)
         {
           unparseStatement(interfaceStatement->get_function(), info);
         }
+#else
+  // DQ (10/1/2008): Modified IR to support multiple interface specifications (function).
+  // However, this needs more work to just support the output of a non-defining declaration 
+  // instead of the defining declaration as is done currently.
+     for (size_t i = 0; i < interfaceStatement->get_interface_procedure_declarations().size(); i++)
+        {
+#if 0
+          printf ("interfaceStatement->get_interface_procedure_declarations()[i] = %p = %s \n",
+               interfaceStatement->get_interface_procedure_declarations()[i],
+               interfaceStatement->get_interface_procedure_declarations()[i]->class_name().c_str());
+#endif
+       // unparseStatement(interfaceStatement->get_interface_specifications()[i], info);
+          SgProcedureHeaderStatement* procedure = isSgProcedureHeaderStatement(interfaceStatement->get_interface_procedure_declarations()[i]);
+
+          if (interfaceStatement->get_generic_spec() == SgInterfaceStatement::e_assignment_interface_type)
+             {
+            // Assignment operators are handled as a special case (since there may not have been 
+            // enough information in the origianl source to build the function prototype)...
+               string procedureName = procedure->get_name().getString();
+               curprint("MODULE PROCEDURE ");
+               curprint(procedureName);
+             }
+            else
+             {
+#if 0
+               printf ("procedure = %p procedure->get_definingDeclaration() = %p procedure->get_firstNondefiningDeclaration() = %p \n",procedure,procedure->get_definingDeclaration(),procedure->get_firstNondefiningDeclaration());
+#endif
+               unparseStatement(procedure, info);
+             }
+
+          unp->cur.insert_newline(1); 
+        }
+#endif
 
      unparseStatementNumbersSupport(interfaceStatement->get_end_numeric_label(),info);
 
      curprint("END INTERFACE ");
-     curprint(nm);
+
+  // DQ (10/2/2008): At least for an "interface assignment(=)", it is an error to output the name
+  // curprint(nm);
 
      ROSE_ASSERT(unp != NULL);
      unp->cur.insert_newline(1); 
@@ -1741,7 +1805,8 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
                ninfo.set_CheckAccess();
         }
 
-     printAccessModifier(vardecl, ninfo);
+  // DQ (10/3/2008): This should not be called for Fortran code!
+  // printAccessModifier(vardecl, ninfo);
 
   // Save the input information
      SgUnparse_Info saved_ninfo(ninfo);
@@ -1758,16 +1823,16 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
   // specified in a type declaration.  The alternative is that we could build separate 
   // variable declarations for each variable (as is done in C/C++).
      bool isSameVariant = true;
-     printf ("Initial value: isSameVariant = %s \n",isSameVariant ? "true" : "false");
+  // printf ("Initial value: isSameVariant = %s \n",isSameVariant ? "true" : "false");
      SgType* previousType = (*i)->get_type();
      while (i != vardecl->get_variables().end())
         {
           SgType* type = (*i)->get_type();
-          printf ("type = %p = %s \n",type,type->class_name().c_str());
+       // printf ("type = %p = %s \n",type,type->class_name().c_str());
 
        // printf ("type->variantT() = %d \n",(int)(type->variantT()));
           isSameVariant = ( (isSameVariant == true) && (variantType == type->variantT()) );
-          printf ("isSameVariant = %s \n",isSameVariant ? "true" : "false");
+       // printf ("isSameVariant = %s \n",isSameVariant ? "true" : "false");
           SgArrayType* arrayType = isSgArrayType(type);
           if (isSameVariant == true && arrayType != NULL)
              {
@@ -1893,10 +1958,10 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
      isSameVariant = false;
 #endif
 
-     printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
+  // printf ("In unparseVarDeclStmt(): isSameVariant = %s \n",isSameVariant ? "true" : "false");
      if (isSameVariant == true)
         {
-          printf ("These types are all the same so use the type attributes \n");
+       // printf ("These types are all the same so use the type attributes \n");
 
           ninfo.set_useTypeAttributes();
 
@@ -1924,7 +1989,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         }
        else
         {
-          printf ("These types are different so do NOT use the type attributes \n");
+       // printf ("These types are different so do NOT use the type attributes \n");
 
           SgInitializedNamePtrList::iterator p = vardecl->get_variables().begin();
 
@@ -3592,7 +3657,7 @@ FortranCodeGeneration_locatedNode::unparseVarDecl(SgStatement* stmt, SgInitializ
                curprint(", EXTERNAL");
              }
 
-          printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
+       // printf ("variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() = %s \n",variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() ? "true" : "false");
           if (variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().isConst() == true)
              {
             // PARAMETER in Fortran implies const in C/C++
@@ -3780,7 +3845,9 @@ FortranCodeGeneration_locatedNode::printDeclModifier(SgDeclarationStatement* dec
      printf ("Access modifiers are handled differently for Fortran, this function printDeclModifier() should not be called! \n");
      ROSE_ASSERT(false);
 
-     printAccessModifier(decl_stmt, info);
+  // DQ (10/3/2008): This should not be called for Fortran code!
+  // printAccessModifier(decl_stmt, info);
+
      printStorageModifier(decl_stmt, info);
    }
 

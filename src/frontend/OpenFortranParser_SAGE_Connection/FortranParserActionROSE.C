@@ -13571,6 +13571,68 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
           printf ("Warning: entry remaining in name stack astNameStack.front() = %s \n",astNameStack.front()->text);
         }
      astNameStack.clear();
+
+  // DQ (10/3/2008): At the end of the module all interface functions should be defined, so we can 
+  // fixup any interface blocks that referenced functions before they were defined (before the 
+  // prototypes existed (this is mostly an issue for interfaces for assignment operators where the 
+  // function prototype is often not available until the function definition is seen. So get the 
+  // list of interfaces and match up procedure names in the interfaces with functions defined in the 
+  // module (each should find a match). See test code test2008_48.f90.
+     std::vector<SgInterfaceStatement*> interfaceList = moduleStatement->get_interfaces();
+     printf ("interfaceList.size() = %zu \n",interfaceList.size());
+
+  // SgModuleStatement* definingModuleStatement = isSgModuleStatement(moduleStatement->get_definingDeclaration());
+  // ROSE_ASSERT(definingModuleStatement != NULL);
+  // SgClassDefinition* moduleDefinition = definingModuleStatement->get_definition();
+
+     SgClassDefinition* moduleDefinition = moduleStatement->get_definition();
+     ROSE_ASSERT(moduleDefinition != NULL);
+
+     moduleDefinition->print_symboltable ("In c_action_end_module_stmt()");
+
+     for (size_t i = 0; i < interfaceList.size(); i++)
+        {
+          SgInterfaceStatement* interfaceStatement = interfaceList[i];
+          printf ("Fixup interface = %s \n",interfaceStatement->get_name().str());
+
+       // SgSymbol * 	lookup_symbol (const SgName &n) const
+       // SgFunctionSymbol * 	lookup_function_symbol (const SgName &n) const
+
+          for (size_t j = 0; j < interfaceStatement->get_interface_procedure_names().size(); j++)
+             {
+               SgName procedureName = interfaceStatement->get_interface_procedure_names()[j];
+               if (interfaceStatement->get_interface_procedure_declarations().size() <= j)
+                  {
+                 // Find the function declaration and append it to the interface_procedure_declarations list
+
+                    SgFunctionSymbol* functionSymbol = moduleDefinition->lookup_function_symbol(procedureName);
+                    SgFunctionDeclaration* functionDeclaration = functionSymbol->get_declaration();
+                    interfaceStatement->get_interface_procedure_declarations().push_back(functionDeclaration);
+                  }
+                 else
+                  {
+                 // Check if the declaration matches the name
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(interfaceStatement->get_interface_procedure_declarations()[j]);
+                    ROSE_ASSERT(functionDeclaration != NULL);
+
+                    if (functionDeclaration->get_name() != procedureName)
+                       {
+                      // Find the function declaration and insert it into the interface_procedure_declarations list
+                       }
+                      else
+                       {
+                      // Correctly matched the interface_procedure_names list entry to the interface_procedure_declarations list entyr, nothing to do.
+                       }
+                  }
+             }
+          if (interfaceStatement->get_interface_procedure_declarations().size() != interfaceStatement->get_interface_procedure_names().size())
+             {
+               printf ("interfaceStatement->get_interface_procedure_names().size()        = %zu \n",interfaceStatement->get_interface_procedure_names().size());
+               printf ("interfaceStatement->get_interface_procedure_declarations().size() = %zu \n",interfaceStatement->get_interface_procedure_declarations().size());
+               printf ("Error: interface names and declarations do not match! \n");
+             }
+          ROSE_ASSERT(interfaceStatement->get_interface_procedure_declarations().size() == interfaceStatement->get_interface_procedure_names().size());
+        }
    }
 
 /**
@@ -14234,7 +14296,7 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
                abstractToken,abstractToken != NULL ? abstractToken->text : "NULL",
                keyword,keyword != NULL ? keyword->text : "NULL",hasGenericSpec ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1203 c_action_interface_stmt()");
 #endif
@@ -14245,11 +14307,15 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
   // Note that an interface need not have a name!
   // ROSE_ASSERT(astNameStack.empty() == false);
 
+     SgInterfaceStatement::generic_spec_enum generic_spec_kind = SgInterfaceStatement::e_unnamed_interface_type;
+
      string interfaceNameString;
      if (astNameStack.empty() == false)
         {
           interfaceNameString = astNameStack.front()->text;
           astNameStack.pop_front();
+
+          generic_spec_kind = SgInterfaceStatement::e_named_interface_type;
         }
 
   // Use case insensitive string compare
@@ -14260,6 +14326,8 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
           string interfaceOperatorNameString = astNameStack.front()->text;
           interfaceNameString += "(" + interfaceOperatorNameString + ")";
           astNameStack.pop_front();
+
+          generic_spec_kind = SgInterfaceStatement::e_operator_interface_type;
         }
        else
         {
@@ -14270,6 +14338,8 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
                ROSE_ASSERT(astNameStack.empty() == true);
                interfaceNameString += "(=)";
             // astNameStack.pop_front();
+
+               generic_spec_kind = SgInterfaceStatement::e_assignment_interface_type;
              }
         }
 
@@ -14282,12 +14352,18 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
 
      SgName interfaceName = interfaceNameString;
   // SgInterfaceStatement* interfaceStatement = new SgInterfaceStatement(interfaceName,body,currentScope);
-     SgInterfaceStatement* interfaceStatement = new SgInterfaceStatement(interfaceName,NULL);
+  // SgInterfaceStatement* interfaceStatement = new SgInterfaceStatement(interfaceName,NULL);
+
+  // DQ (10/1/2008): Changed interface to support a list of interface blocks (now a SgDeclarationStatementPtrList).
+     SgInterfaceStatement* interfaceStatement = new SgInterfaceStatement(interfaceName,generic_spec_kind);
 
      ROSE_ASSERT(keyword != NULL);
      setSourcePosition(interfaceStatement,keyword);
 
      astScopeStack.front()->append_statement(interfaceStatement);
+
+  // DQ (10/2/2008): Push the new SgInterfaceStatement onto the astInterfaceStack.
+     astInterfaceStack.push_front(interfaceStatement);
 
   // astScopeStack.push_front(body);
 
@@ -14325,6 +14401,21 @@ void c_action_end_interface_stmt(Token_t *label, Token_t *kw1, Token_t *kw2, Tok
         }
      ROSE_ASSERT(astNameStack.empty() == true);
 
+  // Check if we have to fixup the interface with references to any declarations that were built outside of the interface.
+     SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
+     int numberOfInterfaceNames        = interfaceStatement->get_interface_procedure_names().size();
+     int numberOfInterfaceDeclarations = interfaceStatement->get_interface_procedure_declarations().size();
+     printf ("numberOfInterfaceNames = %d numberOfInterfaceDeclarations = %d \n",numberOfInterfaceNames,numberOfInterfaceDeclarations);
+     if (numberOfInterfaceNames != numberOfInterfaceDeclarations)
+        {
+          printf ("WARNING: interface IR nodes will need to be fixed up! \n");
+       // ROSE_ASSERT(false);
+        }
+
+  // DQ (10/2/2008): Pop the interface stack
+     ROSE_ASSERT(astInterfaceStack.empty() == false);
+     astInterfaceStack.pop_front();
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1204 c_action_end_interface_stmt()");
@@ -14354,8 +14445,56 @@ void c_action_interface_body(ofp_bool hasPrefix)
  */
 // void c_action_procedure_stmt(Token_t * label, Token_t * module)
 void c_action_procedure_stmt(Token_t *label, Token_t *module, Token_t *procedureKeyword, Token_t *eos)
-{
-}
+   {
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_procedure_stmt(): module = %p = %s procedureKeyword = %p = %s \n",module,module != NULL ? module->text : "NULL",procedureKeyword,procedureKeyword != NULL ? procedureKeyword->text : "NULL");
+
+  // This function is called when processing function prototypes in interface blocks.
+  // At this point we may not have seen the function definition yet, so there may not be a valid function declaration.
+  // Except for the case of an assignment interface there should be enough information to construct the non-defining declaration.
+  // For the case of an assignment interface it is not clear that we can do more than just save the name and fixup the 
+  // interace statement to have a proper function declaration when we later see the function definition.
+
+#if 0
+     bool processedAsInterfaceSpecification = false;
+     if (statementList.empty() == false)
+        {
+          SgStatement* lastStatement = statementList.back();
+       // printf ("Scope not empty lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+          SgInterfaceStatement* interfaceStatement = isSgInterfaceStatement(lastStatement);
+          if (interfaceStatement != NULL)
+             {
+            // printf ("Adding procedureDeclaration = %p to interfaceStatement = %p \n",procedureDeclaration,interfaceStatement);
+            // interfaceStatement->set_function(procedureDeclaration);
+               interfaceStatement->get_interface_procedure_declarations().push_back(procedureDeclaration);
+               procedureDeclaration->set_parent(interfaceStatement);
+
+               processedAsInterfaceSpecification = true;
+             }
+        }
+#else
+     if (astInterfaceStack.empty() == false)
+        {
+          SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
+
+          ROSE_ASSERT(astNameStack.empty() == false);
+          string procedure_name = astNameStack.front()->text;
+          printf ("procedure_name = %s \n",procedure_name.c_str());
+
+       // Save these names for later when the functions are built and then use them to 
+       // build the interfaceStatement->get_interface_procedure_declarations() list.
+          interfaceStatement->get_interface_procedure_names().push_back(procedure_name);
+
+          astNameStack.pop_front();
+        }
+#endif
+
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R1206 c_action_procedure_stmt()");
+#endif
+   }
 
 /** R1207
  * generic_spec
@@ -15534,19 +15673,42 @@ void c_action_return_stmt(Token_t * label, Token_t * keyword, Token_t * eos, ofp
      astScopeStack.front()->append_statement(returnStatement);
    }
 
-	/** R1237
-	 * contains_stmt
-	 *
-	 *	(label)? T_CONTAINS ( expr )? T_EOS
-	 *
-	 * @param label The label.
-	 * @param keyword The CONTAINS keyword token.
-	 * @param eos End of statement token.
-	 */
+/** R1237
+ * contains_stmt
+ *
+ *	(label)? T_CONTAINS ( expr )? T_EOS
+ *
+ * @param label The label.
+ * @param keyword The CONTAINS keyword token.
+ * @param eos End of statement token.
+ */
 void c_action_contains_stmt(Token_t *label, Token_t *keyword, Token_t *eos)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_contains_stmt(): label = %p = %s keyword = %p = %s \n",label,label != NULL ? label->text : "NULL",keyword,keyword != NULL ? keyword->text : "NULL");
+
+     SgContainsStatement* containsStatement = new SgContainsStatement();
+     SageInterface::setSourcePosition(containsStatement);
+     containsStatement->set_definingDeclaration(containsStatement);
+
+#if 0
+     SgClassDefinition* classDefinition = isSgClassDefinition(astScopeStack.front());
+     if (classDefinition != NULL)
+        {
+       // This insert function does not set the parent (unlike for SgBasicBlock)
+       // classDefinition->get_members().insert(i,containsStatement);
+          containsStatement->set_parent(classDefinition);
+          ROSE_ASSERT(containsStatement->get_parent() != NULL);
+        }
+       else
+        {
+          printf ("Unsupported case in c_action_contains_stmt() \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     astScopeStack.front()->append_statement(containsStatement);
+     ROSE_ASSERT(containsStatement->get_parent() != NULL);
    }
 
 /** R1238

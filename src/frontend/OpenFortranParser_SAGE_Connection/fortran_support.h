@@ -109,11 +109,22 @@ extern std::list<SgIfStmt*> astIfStatementStack;
 // test2007_162.h demonstrates this problems (and test2007_184.f)
 extern AstNameListType astActualArgumentNameStack;
 
+// DQ (10/1/2008): To simplify the handling of interfaces and the many functions 
+// and function prototypes of function not defined in the interface we need attach 
+// declarations and names to the SgInterfaceStatement as they are seen.  Since this 
+// is nt always just the last statement, it is easier to support this using a stack.
+extern std::list<SgInterfaceStatement*> astInterfaceStack;
+
 // DQ (2/18/2008): This is the support for the Frotran include stack.
 // This is specific to the Fortran include mechanism, not the CPP include 
 // mechanism. Though at some point a unified approach might be required.
 extern std::vector<std::string> astIncludeStack;
 
+
+
+// ***********************************************
+//              Function Prototypes
+// ***********************************************
 
 std::string getCurrentFilename();
 

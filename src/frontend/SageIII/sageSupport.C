@@ -4471,6 +4471,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      display("SgFile::buildCompilerCommandLineOptions()");
      printf ("C   compiler       = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("C++ compiler       = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+     printf ("Fortran compiler   = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
      printf ("get_C_only()       = %s \n",(get_C_only() == true) ? "true" : "false");
      printf ("get_C99_only()     = %s \n",(get_C99_only() == true) ? "true" : "false");
      printf ("get_Cxx_only()     = %s \n",(get_Cxx_only() == true) ? "true" : "false");
@@ -5602,3 +5603,34 @@ SgBinaryFile::numberOfNodesInSubtree()
      return get_binaryFile()->numberOfNodesInSubtree() + 1;
    }
 #endif
+
+
+// DQ (10/3/2008): Added support for getting interfaces in a module
+std::vector<SgInterfaceStatement*>
+SgModuleStatement::get_interfaces() const
+   {
+     std::vector<SgInterfaceStatement*> returnList;
+
+     SgModuleStatement* definingModuleStatement = isSgModuleStatement(get_definingDeclaration());
+     ROSE_ASSERT(definingModuleStatement != NULL);
+
+     SgClassDefinition* moduleDefinition = definingModuleStatement->get_definition();
+     ROSE_ASSERT(moduleDefinition != NULL);
+
+     SgDeclarationStatementPtrList & declarationList = moduleDefinition->getDeclarationList();
+
+     SgDeclarationStatementPtrList::iterator i = declarationList.begin();
+     while (i != declarationList.end())
+        {
+          SgInterfaceStatement* interfaceStatement = isSgInterfaceStatement(*i);
+          if (interfaceStatement != NULL)
+             {
+               returnList.push_back(interfaceStatement);
+             }
+
+          i++;
+        }
+
+     return  returnList;
+   }
+ 

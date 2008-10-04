@@ -1826,13 +1826,10 @@ Grammar::setUpStatements ()
                "SgNamespaceDeclarationStatement*", "namespaceDeclaration", "= NULL",
                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     NamespaceDefinitionStatement.setFunctionPrototype ( "HEADER_NAMESPACE_DEFINITION_STATEMENT",
-                                                         "../Grammar/Statement.code" );
+     NamespaceDefinitionStatement.setFunctionPrototype ( "HEADER_NAMESPACE_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
   // NamespaceDefinitionStatement.setDataPrototype ("SgDeclarationStatementPtrList", "declarationList", "",
   //           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
-     NamespaceDefinitionStatement.editSubstitute   ( "HEADER_LIST_DECLARATIONS",
-                                                     "HEADER_LIST_DECLARATIONS",
-                                                     "../Grammar/Statement.code" );
+     NamespaceDefinitionStatement.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      NamespaceDefinitionStatement.editSubstitute   ( "LIST_DATA_TYPE", "SgDeclarationStatementPtrList" );
      NamespaceDefinitionStatement.editSubstitute   ( "LIST_NAME", "declarations" );
      NamespaceDefinitionStatement.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "void" );
@@ -1948,9 +1945,22 @@ Grammar::setUpStatements ()
 
      InterfaceStatement.setFunctionPrototype ( "HEADER_INTERFACE_STATEMENT", "../Grammar/Statement.code" );
      InterfaceStatement.setDataPrototype ( "SgName", "name", "= \"\"",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     InterfaceStatement.setDataPrototype ( "SgFunctionDeclaration*", "function", "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // DQ (10/2/2008): Added support for specification of interface types
+     InterfaceStatement.setDataPrototype ( "SgInterfaceStatement::generic_spec_enum", "generic_spec", "= SgInterfaceStatement::e_default_interface_type",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // InterfaceStatement.setDataPrototype ( "SgFunctionDeclaration*", "function", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     InterfaceStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "interface_procedure_declarations", "",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/2/2008): When we build the SgInterfaceStatement IR node we only have limited information about the functions.
+  // Later when we see the functions following the "contains statement" we can access the function declarations.
+  // This information is saved and the names are connected to the function declaration in the final processing of
+  // the module (I hope that earlier than that will not be required).
+     InterfaceStatement.setDataPrototype ( "SgStringList", "interface_procedure_names", "",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
      InterfaceStatement.setDataPrototype ( "SgBasicBlock*", "body"   , "= NULL",
 					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

@@ -5,11 +5,9 @@ void insertFortranContainsStatement (SgNode* node)
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("Fixup Fortran references:");
 
-  // printf ("Fixup the Fortran array vs. function references ... \n");
-
-  // FixUpGlobalFunctionTypeTable v;
-  // SgFunctionType::traverseMemoryPoolNodes(v);
-  // SgMemberFunctionType::traverseMemoryPoolNodes(v);
+  // DQ (10/3/2008): This bug in OFP is now fixed so no fixup is required.
+     printf ("Error: fixup of contains statement no longer required. \n");
+     ROSE_ASSERT(false);
 
      InsertFortranContainsStatement astFixupTraversal;
 
@@ -21,6 +19,10 @@ void insertFortranContainsStatement (SgNode* node)
 void
 InsertFortranContainsStatement::visit ( SgNode* node )
    {
+  // DQ (10/3/2008): This bug in OFP is now fixed so no fixup is required.
+     printf ("Error: fixup of contains statement no longer required. \n");
+     ROSE_ASSERT(false);
+
   // DQ (11/24/2007): Output the current IR node for debugging the traversal of the Fortran AST.
      ROSE_ASSERT(node != NULL);
 #if 0
@@ -79,6 +81,7 @@ InsertFortranContainsStatement::visit ( SgNode* node )
                          ROSE_ASSERT(containsStatement->get_parent() != NULL);
                        }
                   }
+
                i++;
              }
         }
@@ -91,9 +94,13 @@ InsertFortranContainsStatement::visit ( SgNode* node )
 
           bool firstFunctionDeclaration = false;
           bool functionDeclarationSeen  = false;
+#if 0
+       // OFP now has better support for the CONTAINS statement so this code is not longer required.
 
           while (i != statementList.end() && firstFunctionDeclaration == false)
              {
+               printf ("InsertFortranContainsStatement: *i in statementList in module = %p = %s \n",*i,(*i)->class_name().c_str());
+
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(*i);
                if (functionDeclaration != NULL)
                   {
@@ -114,7 +121,9 @@ InsertFortranContainsStatement::visit ( SgNode* node )
                          ROSE_ASSERT(containsStatement->get_parent() != NULL);
                        }
                   }
+
                i++;
              }
+#endif
         }
    }

@@ -702,6 +702,12 @@ Grammar::setUpSupport ()
 #else
      SourceFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/1/2008): Added support for lists of SgModuleStatement where they are
+  // not a part of the current translation unit.  A place for the information in
+  // the *.mod files to be put.  This is the data member for the list.
+     SourceFile.setDataPrototype   ( "SgModuleStatementPtrList", "module_list", "",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (10/16/2005): Added to support C++ style argument handling in SgFile

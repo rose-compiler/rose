@@ -339,6 +339,12 @@ typedef SgAsmGenericDLLPtrList*              SgAsmGenericDLLPtrListPtr;
 typedef Rose_STL_Container<unsigned char>    SgUnsignedCharList;
 typedef SgUnsignedCharList*                  SgUnsignedCharListPtr;
 
+// DQ (10/1/2008): Added support for lists of SgModuleStatement where they are
+// not a part of the current translation unit.  A place for the information in
+// the *.mod files to be put.  This is just the type declaration for the list.
+typedef Rose_STL_Container<SgModuleStatement*> SgModuleStatementPtrList;
+typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
+
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:
  *

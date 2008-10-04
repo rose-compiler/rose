@@ -2269,6 +2269,18 @@ HEADER_FORTRAN_NONBLOCKED_DO_START
 HEADER_FORTRAN_NONBLOCKED_DO_END
 
 HEADER_INTERFACE_STATEMENT_START
+
+          enum generic_spec_enum
+             {
+               e_error_interface_type      = 0, /*!< error value */
+               e_default_interface_type    = 1, /*!< default value */
+               e_unnamed_interface_type    = 2, /*!< default value */
+               e_named_interface_type      = 3, /*!< named interface value */
+               e_operator_interface_type   = 4, /*!< operator value */
+               e_assignment_interface_type = 5, /*!< assignement operator value */
+               e_last_interface_type       = 6  /*!< last value (upper bound on range of values, used in error checking) */
+             };
+
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
@@ -2295,6 +2307,8 @@ HEADER_MODULE_STATEMENT_START
           virtual unsigned int cfgIndexForEnd() const;
           virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
           virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+
+          std::vector<SgInterfaceStatement*> get_interfaces() const;
 
        // const SgDeclarationStatementPtrList & get_members() const;
        // SgDeclarationStatementPtrList & get_members();
@@ -14998,32 +15012,37 @@ SOURCE_FORTRAN_NONBLOCKED_DO_STATEMENT_END
 
 SOURCE_INTERFACE_STATEMENT_START
 unsigned int
-SgInterfaceStatement::cfgIndexForEnd() const {
-  return 0;
-}
+SgInterfaceStatement::cfgIndexForEnd() const
+   {
+     return 0;
+   }
 
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
+   {
+     ROSE_ASSERT (idx == 0);
+     std::vector<VirtualCFG::CFGEdge> result;
+     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
+     return result;
+   }
 
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
+std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
+   {
+     ROSE_ASSERT (idx == 0);
+     std::vector<VirtualCFG::CFGEdge> result;
+     VirtualCFG::addIncomingFortranGotos(this, idx, result);
+     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
+     return result;
+   }
 
 void
 SgInterfaceStatement::post_construction_initialization()
    {
+#if 0
      if (p_function != NULL)
         {
           p_function->set_parent(this);
         }
+#endif
    }
 
 SgName
