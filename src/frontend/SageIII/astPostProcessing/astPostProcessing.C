@@ -315,8 +315,9 @@ void postProcessingSupport (SgNode* node)
        // array reference or a function call.
           fixupFortranReferences(node);
 
+       // DQ (10/3/2008): This bug in OFP is now fixed so no fixup is required.
        // This is the most reliable way to introduce the Fortran "contains" statement.
-          insertFortranContainsStatement(node);
+       // insertFortranContainsStatement(node);
         }
 
   // DQ (9/26/2008): fixup the handling of use declarations (SgUseStatement).

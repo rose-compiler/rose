@@ -73,11 +73,16 @@ std::list<SgIfStmt*> astIfStatementStack;
 // test2007_162.h demonstrates this problems (and test2007_184.f)
 AstNameListType astActualArgumentNameStack;
 
+// DQ (10/1/2008): To simplify the handling of interfaces and the many functions 
+// and function prototypes of function not defined in the interface we need attach 
+// declarations and names to the SgInterfaceStatement as they are seen.  Since this 
+// is nt always just the last statement, it is easier to support this using a stack.
+std::list<SgInterfaceStatement*> astInterfaceStack;
+
 // DQ (2/18/2008): This is the support for the Fortran include stack.
 // This is specific to the Fortran include mechanism, not the CPP include 
 // mechanism. Though at some point a unified approach might be required.
 std::vector<std::string> astIncludeStack;
-
 
 #if 0
 // Global state used to accumulate the IO control spec for R913 list
@@ -3843,6 +3848,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
   // ROSE_ASSERT(isSgBasicBlock(currentScopeOfFunctionDeclaration) == NULL);
      ROSE_ASSERT(isSgFunctionDefinition(currentScopeOfFunctionDeclaration) == NULL);
 
+#if 0
   // Check if the last staement was an interface declaration, if so then this is part of that.
   // currentScopeOfFunctionDeclaration->append_statement(procedureDeclaration);
   // if (currentScopeOfFunctionDeclaration->get_statements().empty() == false)
@@ -3857,17 +3863,43 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
           if (interfaceStatement != NULL)
              {
             // printf ("Adding procedureDeclaration = %p to interfaceStatement = %p \n",procedureDeclaration,interfaceStatement);
-               interfaceStatement->set_function(procedureDeclaration);
+            // interfaceStatement->set_function(procedureDeclaration);
+               interfaceStatement->get_interface_procedure_declarations().push_back(procedureDeclaration);
+               procedureDeclaration->set_parent(interfaceStatement);
 
                processedAsInterfaceSpecification = true;
              }
         }
 
+  // Interface specifications (functions in interface blocks) must appear in the scope of the interface specification.  
+  // The InterfaceStatement can not be treated as a nested scope else the scoping rules will be violated.  But there can
+  // be more than one function listed in an interface.  Technically each function is considered an interface body and 
+  // the interface (interface block) can have many interface bodies, but I don't see the value in the interface body concept.
      if (processedAsInterfaceSpecification == false)
         {
        // The function was not processed as part of an interface so add it to the current scope.
           currentScopeOfFunctionDeclaration->append_statement(procedureDeclaration);
         }
+
+#else
+     if (astInterfaceStack.empty() == false)
+        {
+          SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
+          interfaceStatement->get_interface_procedure_declarations().push_back(procedureDeclaration);
+          procedureDeclaration->set_parent(interfaceStatement);
+
+       // DQ (10/3/2008): Keep the list of interface_procedure_names matched with the 
+       // list of interface_procedure_declarations so that we can fixup the list of 
+       // interface_procedure_declarations in R1106 (c_action_end_module_stmt()).
+          SgName procedureName = procedureDeclaration->get_name();
+          interfaceStatement->get_interface_procedure_names().push_back(procedureName);
+        }
+       else
+        {
+       // The function was not processed as part of an interface so add it to the current scope.
+          currentScopeOfFunctionDeclaration->append_statement(procedureDeclaration);
+        }
+#endif
 
   // Go looking for if this was a previously declared function
   // SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(procedureDeclaration->get_name(),astScopeStack.front());

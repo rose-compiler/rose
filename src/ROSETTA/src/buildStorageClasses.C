@@ -757,6 +757,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::NERelocModifiers" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocTgtType" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocFlags" ) ||
+                 ( varTypeString == "SgInterfaceStatement::generic_spec_enum" ) ||
                  false 
               )
        {

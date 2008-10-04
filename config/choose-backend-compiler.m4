@@ -38,16 +38,44 @@ dnl build using ROSE)
       echo "default back-end C compiler for generated translators to use: $BACKEND_C_COMPILER"
     ])
 
+# DQ (10/3/2008): Added option to specify backend fortran compiler
+  AC_ARG_WITH(alternate_backend_fortran_compiler,
+    [  --with-alternate_backend_fortran_compiler=<compiler name>
+                                Specify an alternative fortran back-end compiler],
+    [
+    # Use a different compiler for the backend than for the compilation of ROSE source code
+      BACKEND_FORTRAN_COMPILER=$with_alternate_backend_fortran_compiler
+      echo "alternative back-end fortran compiler specified for generated translators to use: $BACKEND_FORTRAN_COMPILER"
+    ] ,
+    [ 
+    # Alternatively use the specified fortran compiler
+	 # BACKEND_FORTRAN_COMPILER="$FC"
+	   BACKEND_FORTRAN_COMPILER="gfortran"
+      echo "default back-end fortran compiler for generated translators to use: $BACKEND_FORTRAN_COMPILER"
+    ])
+
 # DQ (8/29/2005): Added support for version numbering of backend compiler
   BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f1`
   BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
 # echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
-  echo "     back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
-  echo "     back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
+  echo "     C++ back-end compiler major version number = $BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"
+  echo "     C++ back-end compiler minor version number = $BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"
 
-# echo "Exiting after test of backend version number support ..."
-# exit 1
+# Use this to get the major and minor version numbers for gfortran (which maps --version to -dumpversion, unlike gcc and g++)
+# gfortran --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2
+# Or Jeremiah suggests the alternative:
+# gfortran --version | sed -n '1s/.*) //;1p'
+  echo "BACKEND_FORTRAN_COMPILER = $BACKEND_FORTRAN_COMPILER"
+  BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f1`
+  BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_FORTRAN_COMPILER --version | head -1 | cut -f2 -d\) | tr -d \  | cut -d\. -f2`
+
+# echo "back-end compiler for generated translators to use will be: $BACKEND_CXX_COMPILER"
+  echo "     Fortran back-end compiler major version number = $BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER"
+  echo "     Fortran back-end compiler minor version number = $BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER"
+
+#echo "Exiting after test of backend version number support ..."
+#exit 1
 
 # We use the name of the backend C++ compiler to generate a compiler name that will be used
 # elsewhere (CXX_ID might be a better name to use, instead we use basename to strip the path).
@@ -94,6 +122,10 @@ dnl build using ROSE)
   export BACKEND_C_COMPILER
   AC_DEFINE_UNQUOTED([BACKEND_C_COMPILER_NAME_WITH_PATH],"$BACKEND_C_COMPILER",[Name of backend C compiler including path (may or may not explicit include path; used to call backend).])
 
+# This will be called to execute the backend compiler (for C)
+  export BACKEND_FORTRAN_COMPILER
+  AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH],"$BACKEND_FORTRAN_COMPILER",[Name of backend Fortran compiler including path (may or may not explicit include path; used to call backend).])
+
 # These are useful in handling differences between different versions of the backend compiler
 # we assume that the C and C++ compiler version number match and only record version information 
 # for the backend C++ compiler. (for example, this helps us generated different code for 
@@ -102,5 +134,10 @@ dnl build using ROSE)
   AC_DEFINE_UNQUOTED([BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER],$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,[Major version number of backend C++ compiler.])
   export BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
   AC_DEFINE_UNQUOTED([BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER],$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER,[Minor version number of backend C++ compiler.])
+
+  export BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER
+  AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER,[Major version number of backend Fortran compiler.])
+  export BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER
+  AC_DEFINE_UNQUOTED([BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER],$BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER,[Minor version number of backend Fortran compiler.])
 ])
 
