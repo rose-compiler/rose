@@ -1155,6 +1155,51 @@ struct X86InstructionSemantics {
         }
         break;
       }
+
+      case x86_bts: {
+        ROSE_ASSERT (operands.size() == 2);
+        // All flags except CF are undefined
+        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) { // Special case allowing multi-word offsets into memory
+          Word(32) addr = readEffectiveAddress(operands[0]);
+          int numBytes = numBytesInAsmType(operands[1]->get_type());
+          Word(32) bitnum = numBytes == 2 ? policy.template signExtend<16, 32>(read<16>(operands[1])) : read<32>(operands[1]);
+          Word(32) adjustedAddr = policy.add(addr, policy.template signExtend<29, 32>(policy.template extract<3, 32>(bitnum)));
+          Word(8) val = readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(operands[0])), adjustedAddr, policy.true_());
+          Word(1) bitval = policy.template extract<0, 1>(rotateRight<8, 3>(val, policy.template extract<0, 3>(bitnum)));
+          Word(8) result = policy.or_(val, policy.rotateLeft(policy.template number<8>(1), policy.template extract<0, 3>(bitnum)));
+          policy.writeFlag(x86_flag_cf, bitval);
+          writeMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(operands[0])), adjustedAddr, result, policy.true_());
+        } else { // Simple case
+          switch (numBytesInAsmType(operands[0]->get_type())) {
+            case 2: {
+              Word(16) op0 = read<16>(operands[0]);
+              Word(4) bitnum = policy.template extract<0, 4>(read<16>(operands[1]));
+              Word(1) bitval = policy.template extract<0, 1>(rotateRight<16, 4>(op0, bitnum));
+              Word(16) result = policy.or_(op0, policy.rotateLeft(policy.template number<16>(1), bitnum));
+              policy.writeFlag(x86_flag_cf, bitval);
+              write16(operands[0], result);
+              break;
+            }
+            case 4: {
+              Word(32) op0 = read<32>(operands[0]);
+              Word(5) bitnum = policy.template extract<0, 5>(read<32>(operands[1]));
+              Word(1) bitval = policy.template extract<0, 1>(rotateRight<32, 5>(op0, bitnum));
+              Word(32) result = policy.or_(op0, policy.rotateLeft(policy.template number<32>(1), bitnum));
+              policy.writeFlag(x86_flag_cf, bitval);
+              write32(operands[0], result);
+              break;
+            }
+            default: ROSE_ASSERT (!"Bad size");
+          }
+        }
+        break;
+      }
+
       case x86_imul: {
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
@@ -1424,6 +1469,22 @@ struct X86InstructionSemantics {
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
+      case x86_pushad: {
+        ROSE_ASSERT (operands.size() == 0);
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        Word(32) oldSp = policy.readGPR(x86_gpr_sp);
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(-32));
+        writeMemory<32>(x86_segreg_ss, newSp, policy.readGPR(x86_gpr_di), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(4)), policy.readGPR(x86_gpr_si), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(8)), policy.readGPR(x86_gpr_bp), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(12)), oldSp, policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(16)), policy.readGPR(x86_gpr_bx), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(20)), policy.readGPR(x86_gpr_dx), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(24)), policy.readGPR(x86_gpr_cx), policy.true_());
+        writeMemory<32>(x86_segreg_ss, policy.add(newSp, policy.template number<32>(28)), policy.readGPR(x86_gpr_ax), policy.true_());
+        policy.writeGPR(x86_gpr_sp, newSp);
+        break;
+      }
       case x86_pop: {
         ROSE_ASSERT (operands.size() == 1);
         ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
@@ -1431,6 +1492,22 @@ struct X86InstructionSemantics {
         Word(32) oldSp = policy.readGPR(x86_gpr_sp);
         Word(32) newSp = policy.add(oldSp, policy.template number<32>(4));
         write32(operands[0], readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
+        policy.writeGPR(x86_gpr_sp, newSp);
+        break;
+      }
+      case x86_popad: {
+        ROSE_ASSERT (operands.size() == 0);
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        Word(32) oldSp = policy.readGPR(x86_gpr_sp);
+        Word(32) newSp = policy.add(oldSp, policy.template number<32>(32));
+        policy.writeGPR(x86_gpr_di, readMemory<32>(x86_segreg_ss, oldSp, policy.true_()));
+        policy.writeGPR(x86_gpr_si, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(4)), policy.true_()));
+        policy.writeGPR(x86_gpr_bp, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(8)), policy.true_()));
+        policy.writeGPR(x86_gpr_bx, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(16)), policy.true_()));
+        policy.writeGPR(x86_gpr_dx, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(20)), policy.true_()));
+        policy.writeGPR(x86_gpr_cx, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(24)), policy.true_()));
+        policy.writeGPR(x86_gpr_ax, readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(28)), policy.true_()));
+        readMemory<32>(x86_segreg_ss, policy.add(oldSp, policy.template number<32>(12)), policy.true_()); // Read and ignore old SP
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
@@ -1467,6 +1544,41 @@ struct X86InstructionSemantics {
         policy.writeGPR(x86_gpr_sp, newSp);
         break;
       }
+
+      case x86_loop: {
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
+        ROSE_ASSERT (operands.size() == 1);
+        Word(32) oldCx = policy.readGPR(x86_gpr_cx);
+        Word(32) newCx = policy.add(policy.template number<32>(-1), oldCx);
+        policy.writeGPR(x86_gpr_cx, newCx);
+        Word(1) doLoop = policy.invert(policy.equalToZero(newCx));
+        policy.writeIP(policy.ite(doLoop, read<32>(operands[0]), policy.readIP()));
+        break;
+      }
+      case x86_loopz: {
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
+        ROSE_ASSERT (operands.size() == 1);
+        Word(32) oldCx = policy.readGPR(x86_gpr_cx);
+        Word(32) newCx = policy.add(policy.template number<32>(-1), oldCx);
+        policy.writeGPR(x86_gpr_cx, newCx);
+        Word(1) doLoop = policy.and_(policy.invert(policy.equalToZero(newCx)), policy.readFlag(x86_flag_zf));
+        policy.writeIP(policy.ite(doLoop, read<32>(operands[0]), policy.readIP()));
+        break;
+      }
+      case x86_loopnz: {
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32);
+        ROSE_ASSERT (insn->get_operandSize() == x86_insnsize_32);
+        ROSE_ASSERT (operands.size() == 1);
+        Word(32) oldCx = policy.readGPR(x86_gpr_cx);
+        Word(32) newCx = policy.add(policy.template number<32>(-1), oldCx);
+        policy.writeGPR(x86_gpr_cx, newCx);
+        Word(1) doLoop = policy.and_(policy.invert(policy.equalToZero(newCx)), policy.invert(policy.readFlag(x86_flag_zf)));
+        policy.writeIP(policy.ite(doLoop, read<32>(operands[0]), policy.readIP()));
+        break;
+      }
+
       case x86_jmp: {
         ROSE_ASSERT (operands.size() == 1);
         policy.writeIP(read<32>(operands[0]));
@@ -1618,6 +1730,18 @@ struct X86InstructionSemantics {
       REP_SCAS(w, 2, e, STRINGOP_LOOP_E)
       REP_SCAS(d, 4, e, STRINGOP_LOOP_E)
 #undef REP_SCAS
+#define SCAS(suffix, len) \
+      case x86_scas##suffix: { \
+        ROSE_ASSERT (operands.size() == 0); \
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
+        doAddOperation<(len * 8)>(policy.template extract<0, (len * 8)>(policy.readGPR(x86_gpr_ax)), policy.invert(STRINGOP_LOAD_DI(len, policy.true_())), true, policy.false_(), policy.true_()); \
+        STRINGOP_UPDATE_REG(x86_gpr_di, (len)) \
+        break; \
+      }
+      SCAS(b, 1)
+      SCAS(w, 2)
+      SCAS(d, 4)
+#undef SCAS
 #define REP_CMPS(suffix, len, repsuffix, loopmacro) \
       case x86_rep##repsuffix##_cmps##suffix: { \
         ROSE_ASSERT (operands.size() == 0); \
@@ -1636,6 +1760,19 @@ struct X86InstructionSemantics {
       REP_CMPS(w, 2, e, STRINGOP_LOOP_E)
       REP_CMPS(d, 4, e, STRINGOP_LOOP_E)
 #undef REP_CMPS
+#define CMPS(suffix, len) \
+      case x86_cmps##suffix: { \
+        ROSE_ASSERT (operands.size() == 0); \
+        ROSE_ASSERT (insn->get_addressSize() == x86_insnsize_32); \
+        doAddOperation<(len * 8)>(STRINGOP_LOAD_SI(len, policy.true_()), policy.invert(STRINGOP_LOAD_DI(len, policy.true_())), true, policy.false_(), policy.true_()); \
+        STRINGOP_UPDATE_REG(x86_gpr_si, (len)); \
+        STRINGOP_UPDATE_REG(x86_gpr_di, (len)); \
+        break; \
+      }
+      CMPS(b, 1)
+      CMPS(w, 2)
+      CMPS(d, 4)
+#undef CMPS
 #define MOVS(suffix, len) \
       case x86_movs##suffix: { \
         ROSE_ASSERT (operands.size() == 0); \
