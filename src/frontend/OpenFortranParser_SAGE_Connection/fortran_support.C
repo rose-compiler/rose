@@ -1433,7 +1433,8 @@ setStatementNumericLabelUsingStack(SgStatement* statement)
   // Set the label using the stack 
      if (astLabelSymbolStack.empty() == false)
         {
-          printf ("There is a label on the stack \n");
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("There is a label on the stack \n");
 
        // Get the label info from the astLabelSymbolStack
           SgLabelSymbol* labelSymbol = astLabelSymbolStack.front();
@@ -1647,7 +1648,7 @@ trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName
   // This function traces back through the parent scopes to search for the named module symbol in an outer scope
   // It returns NULL if it is not found in any scope.  It also chases all modules included via SgUseStatements.
 
-     if ( SgProject::get_verbose() > 0 )
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("In trace_back_through_parent_scopes_searching_for_module(): moduleName = %s currentScope = %p \n",moduleName.str(),currentScope);
 
      SgScopeStatement* tempScope = currentScope;
@@ -1657,7 +1658,7 @@ trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName
         {
        // Note that modules are represented at classes.
           moduleSymbol = tempScope->lookup_class_symbol(moduleName);
-#if 1
+#if 0
           printf ("In trace_back_through_parent_scopes_searching_for_module(): tempScope = %p = %s moduleSymbol = %p \n",
                tempScope,tempScope->class_name().c_str(),moduleSymbol);
 #endif
@@ -1667,7 +1668,7 @@ trace_back_through_parent_scopes_searching_for_module (const SgName & moduleName
         }
 
   // This function could have returned a NULL pointer if there was no symbol found ???
-     if ( SgProject::get_verbose() > 0 )
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
           printf ("Leaving trace_back_through_parent_scopes_searching_for_module(): moduleSymbol = %p \n",moduleSymbol);
    }
 
@@ -1758,7 +1759,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
   // if ( (variableSymbol == NULL) || ((functionSymbol == NULL) && (matchAgainstIntrinsicFunctionList(variableName.str()) == false)) )
      if ( (variableSymbol == NULL) && functionSymbol == NULL && classSymbol == NULL && (matchAgainstIntrinsicFunctionList(variableName.str()) == false) )
         {
-          if ( SgProject::get_verbose() > -1 )
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified type %s in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
        // printf ("astNameStack.front() = %p = %s = %s \n",astNameStack.front(),astNameStack.front()->class_name().c_str(),SageInterface::get_name(astNameStack.front()).c_str());
 
@@ -1774,7 +1775,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
           token.type = 0;
           token.text = strdup(variableName.str());
 
-       // Check if this is a scope using implicit none rules, however for now ieven if we know it is function we first build it as a variable and later convert it to either an array or a function (or a derived type)
+       // Check if this is a scope using implicit none rules, however for now even if we know it is function we first build it as a variable and later convert it to either an array or a function (or a derived type)
           bool isAnImplicitScope = isImplicitNoneScope();
           if (isAnImplicitScope == true)
              {
@@ -1889,7 +1890,8 @@ trace_back_through_parent_scopes_lookup_derived_type_symbol(const SgName & deriv
   // DQ (4/30/2008): I think it is not a problem to return a NULL pointer if no derived type was found (commented out assertion).
      if (derivedTypeSymbol == NULL)
         {
-          printf ("Warning: trace_back_through_parent_scopes_lookup_derived_type_symbol(): could not locate the specified type %s in any outer symbol table \n",derivedTypeName.str());
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Warning: trace_back_through_parent_scopes_lookup_derived_type_symbol(): could not locate the specified type %s in any outer symbol table \n",derivedTypeName.str());
        // ROSE_ASSERT(false);
         }
 
@@ -1908,7 +1910,8 @@ trace_back_through_parent_scopes_lookup_function_symbol(const SgName & functionN
 
      if (functionSymbol != NULL)
         {
-          printf ("Found a function for functionName = %s functionSymbol = %p \n",functionName.str(),functionSymbol);
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Found a function for functionName = %s functionSymbol = %p \n",functionName.str(),functionSymbol);
         }
 
      return functionSymbol;
@@ -2129,7 +2132,10 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      if (buildingImplicitVariable == true)
         {
           bool isAnImplicitScope = isImplicitNoneScope();
-          printf ("In buildVariableDeclaration(): isAnImplicitScope = %s \n",(isAnImplicitScope == true) ? "true" : "false");
+
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("In buildVariableDeclaration(): isAnImplicitScope = %s \n",(isAnImplicitScope == true) ? "true" : "false");
+
           if (isAnImplicitScope == true)
              {
                outputState("Warning: isAnImplicitScope == true buildVariableDeclaration()");
@@ -3030,7 +3036,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
   // (see test2007_147.f, the original Fortran I code from the IBM 704 Fortran Manual).
   // build_implicit_program_statement_if_required();
 
-     printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
+  // printf ("In buildAttributeSpecificationStatement(): kind = %d label = %s \n",kind,label != NULL ? label->text : "NULL");
 
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
@@ -3039,7 +3045,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      attributeSpecificationStatement->set_attribute_kind(kind);
 
-     printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
+  // printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
 
      if (kind == SgAttributeSpecificationStatement::e_bindStatement)
         {
@@ -3471,7 +3477,9 @@ void
 convertVariableSymbolToFunctionCallExp( SgVariableSymbol* variableSymbol, Token_t* nameToken )
    {
      SgName name = variableSymbol->get_name();
-     printf ("Converting a SgVarRefExp to a SgFunctionCallExp \n");
+
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Converting a SgVarRefExp to a SgFunctionCallExp \n");
 
      SgExprListExp* expressionList = new SgExprListExp();
      ROSE_ASSERT(expressionList != NULL);
@@ -3554,7 +3562,8 @@ convertTypeOnStackToArrayType( int count )
   // in the process of building the variable declaration or because an "allocatable statement" is seen after
   // the variable declaration).
 
-     printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("In convertTypeOnStackToArrayType(count = %d) \n",count);
 
 #if 0
   // Output debugging information about saved state (stack) information.
@@ -3686,7 +3695,8 @@ generateFunctionRefExp( Token_t* nameToken )
      ROSE_ASSERT(nameToken != NULL);
      std::string name = nameToken->text;
 
-     printf ("Generating a SgFunctionRefExp for name = %s \n",name.c_str());
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Generating a SgFunctionRefExp for name = %s \n",name.c_str());
 
      SgFunctionType* functionType = generateImplicitFunctionType(name);
      ROSE_ASSERT(functionType != NULL);
@@ -3719,7 +3729,8 @@ generateFunctionRefExp( Token_t* nameToken )
        // SgProgramHeaderStatement* functionDeclaration = new SgProgramHeaderStatement(name,functionType,functionDefinition);
           SgProcedureHeaderStatement* functionDeclaration = new SgProcedureHeaderStatement(name,functionType,functionDefinition);
 
-          printf ("Generated a SgProcedureHeaderStatement for name = %s functionDeclaration = %p \n",name.c_str(),functionDeclaration);
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Generated a SgProcedureHeaderStatement for name = %s functionDeclaration = %p \n",name.c_str(),functionDeclaration);
 
           functionDeclaration->set_firstNondefiningDeclaration(functionDeclaration);
           functionDeclaration->set_definingDeclaration(NULL);
@@ -3760,7 +3771,8 @@ generateFunctionCall( Token_t* nameToken )
    {
      ROSE_ASSERT(nameToken != NULL);
 
-     printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
+     if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+          printf ("Inside of generateFunctionCall(): nameToken = %s \n",nameToken->text);
 
   // The next element on the stack is the expression list of function arguments
      ROSE_ASSERT(astExpressionStack.empty() == false);
@@ -3796,7 +3808,8 @@ generateFunctionCall( Token_t* nameToken )
 
      if (variableSymbol != NULL)
         {
-          printf ("Found variableSymbol = %p nameToken = %s (erasing all traces of this variable so it can be supported as a function) \n",variableSymbol,nameToken->text);
+          if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
+               printf ("Found variableSymbol = %p nameToken = %s (erasing all traces of this variable so it can be supported as a function) \n",variableSymbol,nameToken->text);
        // ROSE_ASSERT(false);
 
           SgSymbolTable* symbolTable = isSgSymbolTable(variableSymbol->get_parent());
@@ -3953,7 +3966,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
           SgVariableSymbol* returnVariableSymbol = new SgVariableSymbol(returnVar);
           procedureDefinition->insert_symbol(returnVar->get_name(),returnVariableSymbol);
 
-          printf ("Processing the return var in a function \n");
+       // printf ("Processing the return var in a function \n");
        // ROSE_ASSERT(false);
         }
 
@@ -4277,7 +4290,7 @@ isPubliclyAccessible( SgSymbol* symbol )
      SgDeclarationStatement* declaration = isSgDeclarationStatement(symbol_basis);
      if (declaration != NULL)
         {
-          printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+       // printf ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 
        // Publically accessible is either declared explicitly as public, or not defined as anything (default in Fortran is public).
           if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
@@ -4286,7 +4299,7 @@ isPubliclyAccessible( SgSymbol* symbol )
                returnValue = true;
              }
 
-          declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
+       // declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
         }
        else
         {
@@ -4297,20 +4310,20 @@ isPubliclyAccessible( SgSymbol* symbol )
                SgDeclarationStatement* declaration = isSgDeclarationStatement(parent);
                if (declaration != NULL)
                   {
-                    printf ("declaration (from SgInitializedName) = %p = %s \n",declaration,declaration->class_name().c_str());
+                 // printf ("declaration (from SgInitializedName) = %p = %s \n",declaration,declaration->class_name().c_str());
                     if (declaration->get_declarationModifier().get_accessModifier().isPublic() == true ||
                         declaration->get_declarationModifier().get_accessModifier().isUndefined() == true)
                        {
                          returnValue = true;
                        }
 
-                    declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
+                 // declaration->get_declarationModifier().get_accessModifier().display("In isPubliclyAccessible()");
                   }
              }
             else
              {
             // This case is not handled yet
-               printf ("Uknown symbol_basis = %p = %s \n",symbol_basis,symbol_basis->class_name().c_str());
+               printf ("In isPubliclyAccessible(): Uknown symbol_basis = %p = %s \n",symbol_basis,symbol_basis->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }

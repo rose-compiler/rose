@@ -1200,7 +1200,7 @@ FortranCodeGeneration_locatedNode::unparseAttributeSpecificationStatement(SgStat
      SgStringList::const_iterator i = localList.begin();
      while (i != localList.end())
         {
-          printf ("Output name = %s \n",(*i).c_str());
+       // printf ("Output name = %s \n",(*i).c_str());
 
           curprint(*i);
 
@@ -1324,7 +1324,7 @@ FortranCodeGeneration_locatedNode::unparseWhereStmt(SgStatement* stmt, SgUnparse
           ROSE_ASSERT(statementList.size() == 1);
           SgStatement* statement = *(statementList.begin());
           ROSE_ASSERT(statement != NULL);
-          printf ("Output true (where) statement = %p = %s \n",statement,statement->class_name().c_str());
+       // printf ("Output true (where) statement = %p = %s \n",statement,statement->class_name().c_str());
           SgUnparse_Info info_without_formating(info);
           info_without_formating.set_SkipFormatting();
           unparseStatement(statement, info_without_formating);
@@ -1970,7 +1970,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
              {
                SgInitializedName* decl_item = *p;
 
-               printStorageModifier(vardecl, saved_ninfo);
+            // printStorageModifier(vardecl, saved_ninfo);
 
             // DQ (8/14/2007): This is a special function (a variation on unparseVarDeclStmt)
             // unparseVarDecl(vardecl, decl_item, ninfo);
@@ -2023,7 +2023,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         {
           SgInitializedName* decl_item = *p;
 
-          printStorageModifier(vardecl, saved_ninfo);
+       // printStorageModifier(vardecl, saved_ninfo);
 
        // DQ (8/14/2007): This is a special function (a variation on unparseVarDeclStmt)
        // unparseVarDecl(vardecl, decl_item, ninfo);
@@ -3848,7 +3848,7 @@ FortranCodeGeneration_locatedNode::printDeclModifier(SgDeclarationStatement* dec
   // DQ (10/3/2008): This should not be called for Fortran code!
   // printAccessModifier(decl_stmt, info);
 
-     printStorageModifier(decl_stmt, info);
+  // printStorageModifier(decl_stmt, info);
    }
 
 void
@@ -3940,7 +3940,7 @@ FortranCodeGeneration_locatedNode::printStorageModifier(SgDeclarationStatement* 
   // FIXME: this will look different for full-featured Fortran
 
      printf ("Access modifiers are handled differently for Fortran, this function printStorageModifier() should not be called! \n");
-  // ROSE_ASSERT(false);
+     ROSE_ASSERT(false);
 
   // printf ("printStorageModifier not implemented for Fortran \n");
    }
@@ -4898,7 +4898,7 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
      ROSE_ASSERT(classdefn_stmt->get_declaration() != NULL);
   // unparseClassDeclStmt( classdefn_stmt->get_declaration(), ninfo);
 
-     printf ("classdefn_stmt->get_declaration() = %p = %s \n",classdefn_stmt->get_declaration(),classdefn_stmt->get_declaration()->class_name().c_str());
+  // printf ("classdefn_stmt->get_declaration() = %p = %s \n",classdefn_stmt->get_declaration(),classdefn_stmt->get_declaration()->class_name().c_str());
      if (isSgModuleStatement(classdefn_stmt->get_declaration()) != NULL)
         {
           unparseClassDeclStmt_module( classdefn_stmt->get_declaration(), ninfo);
