@@ -2014,11 +2014,11 @@ Grammar::setUpStatements ()
      ModuleStatement.setFunctionPrototype ( "HEADER_MODULE_STATEMENT", "../Grammar/Statement.code" );
 #if 0
      ModuleStatement.setDataPrototype ( "SgName", "name", "= \"\"",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // ModuleStatement.setDataPrototype ( "SgBasicBlock*", "body"   , "= NULL",
-  //            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ModuleStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "members"   , "",
-					 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
   // ModuleStatement.setDataPrototype ( "int", "end_numeric_label", "= -1",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
@@ -2027,11 +2027,16 @@ Grammar::setUpStatements ()
 
      UseStatement.setFunctionPrototype ( "HEADER_USE_STATEMENT", "../Grammar/Statement.code" );
      UseStatement.setDataPrototype ( "SgName", "name", "= \"\"",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     UseStatement.setDataPrototype ( "SgExprListExp*", "rename_list", "= NULL",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     UseStatement.setDataPrototype ( "SgUseOnlyExpression*", "use_only"   , "= NULL",
-					 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UseStatement.setDataPrototype ( "bool", "only_option", "= false",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // UseStatement.setDataPrototype ( "SgExprListExp*", "rename_list", "= NULL",
+  //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UseStatement.setDataPrototype ( "SgRenamePairPtrList", "rename_list", "",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // UseStatement.setDataPrototype ( "SgUseOnlyExpression*", "use_only"   , "= NULL",
+  //      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (3/22/2007): Note that the FortranDo statement is not a scope and that I have changed
   // the Rice version to use SgExpressions where they had SgStatement (to conform to the grammar).

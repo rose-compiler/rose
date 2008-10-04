@@ -1557,6 +1557,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
           switch (support->variantT())
              {
             // These are the only SgSupport IR nodes that have a Sg_File_Info object pointer.
+               case V_SgRenamePair:
                case V_SgPragma:
                   {
                     if (support->get_file_info() == NULL)
@@ -1594,6 +1595,7 @@ ResetFileInfoParentPointersInMemoryPool::visit(SgNode* node)
                     ROSE_ASSERT(support->get_file_info()->get_parent() != NULL);
                     break;
                   }
+
 #if 0
             // It still might be that these will be set properly 
             // (so we can't set them here, set then in the resetParentPointersInMemoryPool (next))

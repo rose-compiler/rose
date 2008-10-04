@@ -3349,6 +3349,9 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
                     break;
                   }
 
+            // DQ (10/4/2008): Added this case
+               case V_SgRenamePair:
+
             // DQ (12/23/2007): Added this case
                case V_SgFormatItem:
                case V_SgFormatItemList:

@@ -137,6 +137,7 @@ void setSourcePosition  ( SgInitializedName* initializedName, const TokenListTyp
 
 void setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token );
 void setSourcePosition  ( SgInitializedName* initializedName, Token_t* token );
+void setSourcePosition  ( SgRenamePair* namePair, Token_t* token );
 
 void setOperatorSourcePosition  ( SgExpression* expr, Token_t* token );
 

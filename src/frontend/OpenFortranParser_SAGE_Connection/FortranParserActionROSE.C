@@ -1852,9 +1852,10 @@ void c_action_component_array_spec(ofp_bool isExplicit)
        // see test2008_18.f90.
           if (astAttributeSpecStack.empty() == false)
              {
+#if 0
                int attributeSpec = astAttributeSpecStack.front();
-            // printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
-
+               printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
+#endif
                SgPointerType* pointerType = new SgPointerType(arrayType);
 
             // Remove the base type and push the pointerType
@@ -3679,8 +3680,9 @@ void c_action_array_spec(int count)
           if (astAttributeSpecStack.empty() == false)
              {
                int attributeSpec = astAttributeSpecStack.front();
-            // printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
-
+#if 0
+               printf ("This is a valid attribute Spec on the stack: astAttributeSpecStack.size() = %zu attributeSpec = %d \n",astAttributeSpecStack.size(),attributeSpec);
+#endif
                if (attributeSpec == AttrSpec_POINTER)
                     {
                       SgPointerType* pointerType = new SgPointerType(arrayType);
@@ -13743,10 +13745,13 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
      ROSE_ASSERT(id != NULL);
      SgName name = id->text;
 
-     SgExprListExp* nameList                = NULL;
-     SgUseOnlyExpression* useOnlyExpression = NULL;
+  // SgExprListExp* nameList                = NULL;
+  // SgUseOnlyExpression* useOnlyExpression = NULL;
+  // SgUseStatement* useStatement = new SgUseStatement(name,nameList,useOnlyExpression);
 
-     SgUseStatement* useStatement = new SgUseStatement(name,nameList,useOnlyExpression);
+  // SgRenamePairPtrList nameList;
+  // SgUseStatement* useStatement = new SgUseStatement(name,hasOnly,nameList);
+     SgUseStatement* useStatement = new SgUseStatement(name,hasOnly);
 
      ROSE_ASSERT(useKeyword != NULL);
      setSourcePosition(useStatement,useKeyword);
@@ -13842,6 +13847,10 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                     SgRenamePair* renamePair = isSgRenamePair(astNodeStack.front());
                     astNodeStack.pop_front();
 
+                    ROSE_ASSERT(renamePair != NULL);
+                    useStatement->get_rename_list().push_back(renamePair);
+                    renamePair->set_parent(useStatement);
+
                     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                          printf ("renamePair->get_local_name() = %s renamePair->get_use_name() = %s \n",renamePair->get_local_name().str(),renamePair->get_use_name().str());
 
@@ -13921,6 +13930,8 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                astNodeStack.pop_front();
 
                ROSE_ASSERT(renamePair != NULL);
+               useStatement->get_rename_list().push_back(renamePair);
+               renamePair->set_parent(useStatement);
 
                if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                     printf ("renamePair->get_local_name() = %s renamePair->get_use_name() = %s \n",renamePair->get_local_name().str(),renamePair->get_use_name().str());
@@ -13974,28 +13985,6 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 #endif
         }
 
-  // DQ (10/1/2008): There is still more work to do to fill in the SgUseStatement fields.
-     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("Note that we still have to build the rename list or the use only list \n");
-
-#if 0
-          SgStringList localList;
-          ROSE_ASSERT(astNameStack.size() == (size_t)(count + 1));
-          for (int i=0; i < count; i++)
-             {
-               string variableName = astNameStack.front()->text;
-               localList.push_back(variableName);
-            // nameGroup->get_name_list().push_back(variableName);
-               astNameStack.pop_front();
-             }
-
-       // Now reverse list to put list into ROSE in the reverse order.
-          for (int i=count-1; i >= 0; i--)
-             {
-               nameGroup->get_name_list().push_back(localList[i]);
-             }
-#endif
-
   // astScopeStack.front()->print_symboltable("Output from R1109 c_action_use_stmt()");
 
 #if 1
@@ -14044,6 +14033,12 @@ void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, 
 
   // Construct the name pair used
      SgRenamePair* renamePair = new SgRenamePair(id1->text,id2->text);
+
+  // Since there is more than one token used to define a rename, the source position is not accurately set using just "id1".
+     setSourcePosition(renamePair,id1);
+
+     ROSE_ASSERT(renamePair->get_file_info() != NULL);
+
      astNodeStack.push_front(renamePair);
 
   // Note that any variable reference to the name id1->text will use the alias symbol that will be built in later steps (R1109)
@@ -14126,13 +14121,19 @@ void c_action_only_list(int count)
             // Construct the name pair for the case of the "only" clause, where there is no renaming.
                ROSE_ASSERT(astNameStack.empty() == false);
                SgName name = astNameStack.front()->text;
-               astNameStack.pop_front();
 
             // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
 
             // Use the rename pir IR node to provide a uniform interface to the construction of the SgUseStatement, but set the local-name to be "".
             // SgRenamePair* renamePair = new SgRenamePair("",name);
                SgRenamePair* renamePair = new SgRenamePair(name,name);
+
+               setSourcePosition(renamePair,astNameStack.front());
+
+               ROSE_ASSERT(renamePair->get_file_info() != NULL);
+
+               astNameStack.pop_front();
+
                astNodeStack.push_front(renamePair);
              }
         }

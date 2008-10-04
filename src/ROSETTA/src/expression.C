@@ -156,8 +156,10 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (ColonShapeExp,          "ColonShapeExp",          "TEMP_ColonShapeExp" );
      NEW_TERMINAL_MACRO (AsteriskShapeExp,       "AsteriskShapeExp",       "TEMP_AsteriskShapeExp" );
 
-     NEW_TERMINAL_MACRO (UseOnlyExpression,      "UseOnlyExpression",      "USE_ONLY_EXPR" );
-     NEW_TERMINAL_MACRO (UseRenameExpression,    "UseRenameExpression",    "USE_RENAME_EXPR" );
+  // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
+  // NEW_TERMINAL_MACRO (UseOnlyExpression,      "UseOnlyExpression",      "USE_ONLY_EXPR" );
+  // NEW_TERMINAL_MACRO (UseRenameExpression,    "UseRenameExpression",    "USE_RENAME_EXPR" );
+
      NEW_TERMINAL_MACRO (IOItemExpression,       "IOItemExpression",       "IO_ITEM_EXPR" );
   // NEW_TERMINAL_MACRO (IOImpliedDo,            "IOImpliedDo",            "IO_IMPLIED_DO" );
      NEW_TERMINAL_MACRO (ImpliedDo,              "ImpliedDo",              "IMPLIED_DO" );
@@ -210,8 +212,8 @@ Grammar::setUpExpressions ()
           TypeIdOp            | ConditionalExp          | NewExp              | DeleteExp           | ThisExp                  |
           RefExp              | Initializer             | VarArgStartOp       | VarArgOp            | VarArgEndOp              |
           VarArgCopyOp        | VarArgStartOneOperandOp | NullExpression      | VariantExpression   | SubscriptExpression      |
-          ColonShapeExp       | AsteriskShapeExp        | UseOnlyExpression   | ImpliedDo           | IOItemExpression         |
-          UseRenameExpression | StatementExpression     | AsmOp               | LabelRefExp         | ActualArgumentExpression |
+          ColonShapeExp       | AsteriskShapeExp        | /*UseOnlyExpression |*/ ImpliedDo         | IOItemExpression         |
+       /* UseRenameExpression | */ StatementExpression  | AsmOp               | LabelRefExp         | ActualArgumentExpression |
           UnknownArrayOrFunctionReference,
           "Expression","ExpressionTag", false);
 
@@ -610,8 +612,10 @@ Grammar::setUpExpressions ()
   // SubscriptAsterisk.editSubstitute   ( "PRECEDENCE_VALUE", " 2" );
      AsteriskShapeExp.editSubstitute    ( "PRECEDENCE_VALUE", " 2" );
 
-     UseOnlyExpression.editSubstitute   ( "PRECEDENCE_VALUE", " 2" );
-     UseRenameExpression.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+  // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
+  // UseOnlyExpression.editSubstitute   ( "PRECEDENCE_VALUE", " 2" );
+  // UseRenameExpression.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+
      IOItemExpression.editSubstitute    ( "PRECEDENCE_VALUE", " 2" );
      ImpliedDo.editSubstitute           ( "PRECEDENCE_VALUE", " 2" );
      ExponentiationOp.editSubstitute    ( "PRECEDENCE_VALUE", " 2" );
@@ -1278,6 +1282,8 @@ Grammar::setUpExpressions ()
   // SubscriptAsterisk.setDataPrototype ( "SgExpression*", "stride", "= NULL",
   //                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
      UseOnlyExpression.setFunctionPrototype ( "HEADER_USE_ONLY_EXPR", "../Grammar/Expression.code" );
      UseOnlyExpression.setDataPrototype ( "SgExprListExp*", "access_list", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1287,6 +1293,7 @@ Grammar::setUpExpressions ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UseRenameExpression.setDataPrototype ( "SgExpression*", "newname", "= NULL",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
 
      IOItemExpression.setFunctionPrototype ( "HEADER_IO_ITEM_EXPR", "../Grammar/Expression.code" );
      IOItemExpression.setDataPrototype ( "SgName", "name", "= \"\"",
@@ -1506,11 +1513,14 @@ Grammar::setUpExpressions ()
      AsteriskShapeExp.setFunctionSource ( "SOURCE_ASTERISK_SHAPE_EXPRESSION", "../Grammar/Expression.code" );
   // SubscriptAsterisk.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
+#if 0
+  // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
      UseOnlyExpression.setFunctionSource ( "SOURCE_USE_ONLY_EXPR", "../Grammar/Expression.code" );
   // UseOnlyExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
 
      UseRenameExpression.setFunctionSource ( "SOURCE_USE_RENAME_EXPR", "../Grammar/Expression.code" );
   // UseRenameExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );
+#endif
 
      IOItemExpression.setFunctionSource ( "SOURCE_IO_ITEM_EXPR", "../Grammar/Expression.code" );
   // IOItemExpression.setFunctionSource ( "SOURCE_EMPTY_SET_TYPE_FUNCTION", "../Grammar/Expression.code" );

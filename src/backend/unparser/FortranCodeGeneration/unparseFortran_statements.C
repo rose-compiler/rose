@@ -2068,11 +2068,13 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
      SgUseStatement* useStmt = isSgUseStatement(stmt);
      ROSE_ASSERT (useStmt != NULL);
 
+     curprint("USE ");
+     curprint(useStmt->get_name().str());
+
+#if 0
      SgExprListExp*       u_rename = useStmt->get_rename_list();
      SgUseOnlyExpression* u_only   = useStmt->get_use_only();
   
-     curprint("USE ");
-     curprint(useStmt->get_name().str());
      if (u_rename)
         {
           curprint(",");
@@ -2085,6 +2087,41 @@ FortranCodeGeneration_locatedNode::unparseUseStmt(SgStatement* stmt, SgUnparse_I
                unparseUseOnly(u_only, info);
              }
         }
+#else
+     curprint(", ");
+     if (useStmt->get_only_option() == true)
+        {
+          curprint("ONLY : ");
+
+       // printf ("Need to output use-only name/rename list \n");
+        }
+
+     int listSize = useStmt->get_rename_list().size();
+     for (int i=0; i < listSize; i++)
+        {
+          SgRenamePair* renamePair = useStmt->get_rename_list()[i];
+          ROSE_ASSERT(renamePair != NULL);
+
+          if (renamePair->isRename() == true)
+             {
+               SgName local_name = renamePair->get_local_name();
+               SgName use_name   = renamePair->get_use_name();
+               curprint(local_name);
+               curprint(" => ");
+               curprint(use_name);
+             }
+            else
+             {
+               SgName use_name   = renamePair->get_use_name();
+               curprint(use_name);
+             }
+
+          if (i < listSize-1)
+               curprint(" , ");
+        }
+
+  // curprint(" ! name/rename list ");
+#endif
 
      unp->cur.insert_newline(1);
    }

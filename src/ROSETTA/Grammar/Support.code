@@ -4665,6 +4665,13 @@ HEADER_TEMPLATE_ARGUMENT_LIST_START
 HEADER_TEMPLATE_ARGUMENT_LIST_END
 
 HEADER_RENAME_PAIR_START
+
+       // DQ (10/4/2008): use this to return the startOfConstruct source position.
+          virtual Sg_File_Info* get_file_info(void) const;
+          virtual void set_file_info(Sg_File_Info* X);
+
+          bool isRename() const;
+
 HEADER_RENAME_PAIR_END
 
 
@@ -12677,5 +12684,29 @@ SgFormatItemList::set_format_item_list ( const SgFormatItemPtrList & formatItemL
 SOURCE_FORMAT_ITEM_LIST_END
 
 SOURCE_RENAME_PAIR_START
+
+Sg_File_Info*
+SgRenamePair::get_file_info() const
+   {
+  // This redefines get_file_info() as it is implemented for a SgLocatedNode 
+  // to use the "get_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
+     return get_startOfConstruct();
+   }
+
+void
+SgRenamePair::set_file_info(Sg_File_Info* X)
+   {
+  // This redefines set_file_info() as it is implemented for a SgLocatedNode 
+  // to use the "set_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
+     return set_startOfConstruct(X);
+   }
+
+bool
+SgRenamePair::isRename() const
+   {
+  // This a treated as a valid renaming if the names are different.
+     return (p_local_name != p_use_name);
+   }
+
 SOURCE_RENAME_PAIR_END
 

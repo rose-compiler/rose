@@ -359,6 +359,35 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
    }
 
+// DQ (10/4/2008): Added support to marking the source position of Use statement names/rename IR nodes.
+void
+setSourcePosition  ( SgRenamePair* namePair, Token_t* token )
+   {
+     if ( SgProject::get_verbose() > 0 )
+          printf ("In setSourcePosition namePair = %p = %s token = %p line = %d \n",namePair,namePair->get_local_name().str(),token,token != NULL ? token->line : -1);
+
+  // The SgRenamePair has both a startOfConstruct and endOfConstruct source position.
+     ROSE_ASSERT(namePair != NULL);
+
+     ROSE_ASSERT(token != NULL);
+
+     ROSE_ASSERT(token->line > 0);
+
+#if 1
+     string filename = getCurrentFilename();
+#else
+     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
+     string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
+#endif
+     printf ("In setSourcePosition(SgRenamePair %p = %s) line = %d column = %d filename = %s \n",namePair,namePair->get_local_name().str(),token->line,token->col,filename.c_str());
+     ROSE_ASSERT(filename.empty() == false);
+
+  // Set these based on the source position information from the tokens
+     namePair->set_startOfConstruct (new Sg_File_Info(filename,token->line,token->col));
+
+     namePair->get_startOfConstruct()->set_parent(namePair);
+   }
+
 void
 setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & tokenList )
    {
