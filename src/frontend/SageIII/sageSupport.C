@@ -4113,16 +4113,20 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if 1
        // Some security checking here could be helpful!!!
-       // int errorCode = systemFromVector(OFPCommandLine);
-       // system ("printenv");
-       // int errorCode = system (CommandlineProcessing::generateStringFromArgList(OFPCommandLine,false,false).c_str());
-
+       // Run OFP with the --dump option so that we can get the parset actions (used only for internal debugging support).
           int errorCode = systemFromVector(OFPCommandLine);
 
           if (errorCode != 0)
              {
                printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
+#if 0
+            // DQ (10/4/2008): Need to work with Liao to see why this passes for me but fails for him (and others).
+            // for now we can comment out the error checking on the running of OFP as part of getting the 
+            // output_parser_actions option (used for debugging).
                ROSE_ASSERT(false);
+#else
+               printf ("Skipping enforcement of exit after running OFP ONLY as (part of output_parser_actions option) \n");
+#endif
              }
 #else
        // This fails, I think because we can't call the openFortranParser_main twice.
