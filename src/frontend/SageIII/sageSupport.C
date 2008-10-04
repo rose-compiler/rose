@@ -4216,7 +4216,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
         }
 
-     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
+  // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
      if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
         {
        // Add the source directory to the include list so that we reproduce the semantics of gfortran

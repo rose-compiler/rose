@@ -4,4 +4,5 @@ end program main
 
 ! This function is implicitly typed
 function foo(i)
+   foo = 0
 end function

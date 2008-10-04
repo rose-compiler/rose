@@ -10,7 +10,6 @@ include 'test2007_46_b.h'
 
 subroutine foobar()
    common /globals/ x
-
    integer :: y
 end subroutine foobar
 
