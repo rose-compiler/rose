@@ -199,8 +199,10 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
        // virtual void unparseSubAsterick              (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseAsteriskShapeExp         (SgExpression* expr, SgUnparse_Info& info);
 
-          virtual void unparseUseRename                (SgExpression* expr, SgUnparse_Info& info);
-          virtual void unparseUseOnly                  (SgExpression* expr, SgUnparse_Info& info);
+       // DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
+       // virtual void unparseUseRename                (SgExpression* expr, SgUnparse_Info& info);
+       // virtual void unparseUseOnly                  (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseIOItemExpr               (SgExpression* expr, SgUnparse_Info& info);
           virtual void unparseImpliedDo                (SgExpression* expr, SgUnparse_Info& info);
 

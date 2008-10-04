@@ -1643,6 +1643,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      RenamePair.setDataPrototype     ( "SgName", "use_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     RenamePair.setDataPrototype     ( "Sg_File_Info*", "startOfConstruct", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
   // ***********************************************************************
   // ***********************************************************************

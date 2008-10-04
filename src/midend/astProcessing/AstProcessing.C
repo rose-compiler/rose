@@ -31,6 +31,9 @@ SgTreeTraversal_inFileToTraverse(SgNode* node, bool traversalConstraint, SgFile*
        //      printf ("What node is this: node = %p = %s \n",node,node->class_name().c_str()); // SageInterface::get_name(node).c_str());
        // ROSE_ASSERT(isSgProject(node) != NULL);
 
+          if (isSgProject(node) == NULL && isSgAsmNode(node) == NULL)
+               printf ("Error: SgTreeTraversal_inFileToTraverse() --- node->get_file_info() == NULL: node = %p = %s \n",node,node->class_name().c_str());
+
           ROSE_ASSERT(isSgProject(node) != NULL || isSgAsmNode(node) != NULL);
           return true;
         }

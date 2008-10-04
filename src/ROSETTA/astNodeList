@@ -364,8 +364,6 @@ SgUnsignedLongLongIntVal
 SgUnsignedLongVal
 SgUnsignedShortVal
 SgUPC_AccessModifier
-SgUseOnlyExpression
-SgUseRenameExpression
 SgUseStatement
 SgUsingDeclarationStatement
 SgUsingDirectiveStatement

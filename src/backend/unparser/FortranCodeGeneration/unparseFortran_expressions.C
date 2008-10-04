@@ -104,7 +104,7 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
        // case V_SgSubscriptAsterisk:   unparseSubAsterick(expr, info); break;
           case V_SgColonShapeExp:       unparseColonShapeExp(expr, info); break;
           case V_SgAsteriskShapeExp:    unparseAsteriskShapeExp(expr, info); break;
-      
+
        // initializers
        // case V_SgInitializer:            unparseExprInit(expr, info); break;
           case V_SgAggregateInitializer:   unparseAggrInit(expr, info); break;
@@ -112,9 +112,9 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
           case V_SgAssignInitializer:      unparseAssnInit(expr, info); break;
 
        // rename/only lists
-          case V_SgUseRenameExpression:   unparseUseRename(expr, info); break;
-          case V_SgUseOnlyExpression:     unparseUseOnly(expr, info); break;
-      
+       // case V_SgUseRenameExpression:   unparseUseRename(expr, info); break;
+       // case V_SgUseOnlyExpression:     unparseUseOnly(expr, info); break;
+
        // IO
           case V_SgIOItemExpression:      unparseIOItemExpr(expr, info); break;
           case V_SgImpliedDo:             unparseImpliedDo(expr, info); break;
@@ -1013,6 +1013,9 @@ FortranCodeGeneration_locatedNode::unparseAssnInit(SgExpression* expr, SgUnparse
 #endif
    }
 
+#if 0
+// DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
+
 //----------------------------------------------------------------------------
 //  FortranCodeGeneration_locatedNode::<rename/only lists>
 //----------------------------------------------------------------------------
@@ -1031,6 +1034,10 @@ FortranCodeGeneration_locatedNode::unparseUseRename(SgExpression* expr, SgUnpars
   curprint(" => ");
   unparseExpression(oldnm, info);
 }
+#endif
+
+#if 0
+// DQ (10/4/2008): I no longer agree that these are expressions, they are just parts of the SgUseStatment.
 
 void 
 FortranCodeGeneration_locatedNode::unparseUseOnly(SgExpression* expr, SgUnparse_Info& info)
@@ -1044,7 +1051,7 @@ FortranCodeGeneration_locatedNode::unparseUseOnly(SgExpression* expr, SgUnparse_
   // unparseExprList(lst, info, false /*paren*/);
      unparseExprList(lst, info, false /*paren*/);
    }
-
+#endif
 
 //----------------------------------------------------------------------------
 //  FortranCodeGeneration_locatedNode::<IO>
