@@ -3252,21 +3252,68 @@ void c_action_entity_decl(Token_t * id)
   // ROSE_ASSERT(variableSymbol == NULL);
 
      if (functionSymbol != NULL)
-          printf ("Warning: found functionSymbol != NULL (avoid resetting the type): name = %s \n",name.str());
+        {
+       // printf ("Warning: found functionSymbol != NULL (avoid resetting the type): name = %s \n",name.str());
+          printf ("Warning: found functionSymbol != NULL (now reset the type): function name = %s \n",name.str());
+
+#if 0
+       // Output debugging information about saved state (stack) information.
+          outputState("In case of functionSymbol != NULL in R504 c_action_entity_decl()");
+#endif
+       // printf ("initializer = %p \n",initializer);
+          ROSE_ASSERT(initializer == NULL);
+
+          SgFunctionType* functionType = isSgFunctionType(functionSymbol->get_type());
+          ROSE_ASSERT(functionType != NULL);
+
+          ROSE_ASSERT(astTypeStack.empty() == false);
+
+       // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+          functionType->set_return_type(astTypeStack.front());
+       // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+
+       // printf ("Exiting at base of case to reset the function type! \n");
+       // ROSE_ASSERT(false);
+        }
   // ROSE_ASSERT(functionSymbol == NULL);
 
-     ROSE_ASSERT(classSymbol    == NULL);
+     ROSE_ASSERT(classSymbol == NULL);
 
      SgInitializedName* initializedName = NULL;
      if (variableSymbol != NULL)
         {
-          initializedName = variableSymbol->get_declaration();
+          ROSE_ASSERT(type != NULL);
 
+          initializedName = variableSymbol->get_declaration();
           ROSE_ASSERT(initializedName != NULL);
+
+       // printf ("Found variableSymbol != NULL (check if this is the return value which was set with implicit type rules): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+       // printf ("initializedName type = %p = %s \n",type,type->class_name().c_str());
 
        // Reset the type since this is the variable declaration, even if it was previously declared in the common block (where it was not assigned a type)
           initializedName->set_type(type);
           ROSE_ASSERT(initializedName->get_scope() != NULL);
+
+          SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(initializedName->get_scope());
+          if (functionDefinition != NULL)
+             {
+            // This is is a variable that is in the function scope (not the scope of the function body, so it 
+            // might be a variable from the return specfication of the function). If so, then it specifies the 
+            // return type of the function.
+
+               SgProcedureHeaderStatement* functionDeclaration = isSgProcedureHeaderStatement(functionDefinition->get_parent());
+               ROSE_ASSERT(functionDeclaration != NULL);
+
+               if (functionDeclaration->get_result_name() == initializedName)
+                  {
+                    SgFunctionType* functionType = isSgFunctionType(functionDeclaration->get_type());
+                    ROSE_ASSERT(functionType != NULL);
+
+                 // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+                    functionType->set_return_type(type);
+                 // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
+                  }
+             }
         }
        else
         {
@@ -15055,7 +15102,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1224 c_action_function_stmt()");
 #endif
@@ -15084,10 +15131,15 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
         }
        else
         {
+       // Note that this type might have to be replaced if the older stype syntax is seen that defines the function type (in the next line)
           returnType = generateImplicitType(tempName.str());
         }
 
      ROSE_ASSERT(returnType != NULL);
+
+  // Note that since each function builds a new function type, we will have to in a post processing step coalesce 
+  // the function types used in the program.  The advantage of not sharing function types is that the return type 
+  // is each to change as we parse the function specification statement section (before the executable statment section).
      SgFunctionType* functionType = new SgFunctionType(returnType,false);
 
   // Note that a ProcedureHeaderStatement is derived from a SgFunctionDeclaration (and is Fortran specific).
@@ -15220,6 +15272,11 @@ void c_action_result_name()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_result_name() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of Unknown rule c_action_result_name()");
+#endif
 
   // Capture the function return parameter.
      ROSE_ASSERT(astNameStack.empty() == false);

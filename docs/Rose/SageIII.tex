@@ -12,7 +12,8 @@ developed as SAGE++ by Dennis Gannon and others at University
 of Indiana, and then SAGE II by Dennis at IU and Carl Kesselman at ISI,
 and others.  Because SAGE III is a reimplementation of the similar
 object-oriented IR API, their work gave us a significant head 
-start in the development of ROSE.
+start in the development of ROSE (and an understanding of 
+object-oriented IRs).
 
 \subsection{Differences Between SAGE++ and SAGE II}
      SAGE++ was the first version of SAGE and it provided
@@ -30,9 +31,14 @@ details were addressed in the work on SAGE II as part of its
 preparation for use within ROSE.  We are very thankful to the 
 initial developers of SAGE II for all their work.  Sage III
 hopefully fulfills on a number of the goals behind their work.
+SAGE III continues to use the EDG frontend and has updated
+the versions of EDG in use (over SAGE II) and separated
+out the EDG work so that the connection of SAGE III to EDG
+is easier to maintain and update in the future with new versions 
+of EDG.
 
 \subsection{Differences Between SAGE III and ROSE}
-   ROSE uses SAGE III and adds numerous, more sophisticated mechanisms to SAGE III.
+   ROSE uses SAGE III internally and adds numerous, more sophisticated mechanisms.
 For example, ROSE adds:
 \begin{itemize}
     \item Attribute mechanisms for use within traversals (ideas borrowed 
@@ -48,10 +54,12 @@ For example, ROSE adds:
     \item Fast binary AST File I\/O.
     \item An AST merge mechanism for supporting whole program analysis
           (across hundreds of files).
-    \item Complete language support for C, C++, C99, and UPC.
+    \item Complete language support for C, C99, UPC, C++, Fortran 66, Fortran 77, 
+          Fortran 90/95, and Fortran 2003.
     \item AST visualizations (program visualization for debugging).
     \item ROSE User Manual and ROSE Tutorial Documentation.
     \item Full IR documentation via Doxygen (web pages).
+    \item Web site with software and svn repository access.
     \item And lots more, ...
 \end{itemize}
 
@@ -67,7 +75,6 @@ Internally, the comments annotate the AST (tree decoration) so that AST queries 
 the comments at will.
 
 \section {C Preprocessor ({\tt cpp}) Directive Handling}
-
     The C Preprocessor ({\tt cpp}) directives ({\em not} \#pragma) are handled internally using the same mechanism as
 comments.  Although they are fully expanded at compile time they are reinserted back
 into the unparsed source code as it is being unparsed.  Internally, the directives annotate the AST
@@ -79,8 +86,7 @@ placed around {\tt \#include} directives and other identified blocks of declarat
 Internally such declarations are explicitly marked as having extern C linkage.
 
 \section {Pragma Handling}
-
-The {\tt \#pragma} is special and is not really a C Preprocessor ({\tt cpp}) directive.
+   The {\tt \#pragma} is special and is not really a C Preprocessor ({\tt cpp}) directive.
 It is formally part of the C and C++ language grammar, and thus we are justified in putting it 
 into the AST with the rest of the language constructs (comments and directives are open for 
 a degree of interpretation as to where they can be attached within the AST). Details of
@@ -103,7 +109,7 @@ from other pragmas and are handled as a stack-based embedded language.
 
 
 % \section{Deep and Shallow Coping of the AST}
-\section { Copying SAGE Nodes and Subtrees}
+\section { Copying IR Nodes and Subtrees}
 
     Support is provided for a policy-based copying of the AST and subtrees
 of the AST.  Flexibility and control is provided through an independent

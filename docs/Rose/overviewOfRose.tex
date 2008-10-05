@@ -2,8 +2,9 @@
 
 \label{overviewOfRose:overviewOfRose}
 
-\fixme{This chapter is incomplete and will be filled in by Rich.}
+% \fixme{This chapter is incomplete and will be filled in by Rich.}
 
+\commentout{
 This chapter includes many details about how to
 use ROSE. This is a chapter that I think Rich would like to write
 (or at least start and contribute to it).  It will cover:
@@ -27,21 +28,62 @@ use ROSE. This is a chapter that I think Rich would like to write
       \item How modifiers are handled
    \end{itemize}
 \end{itemize}
-
+}
 
 \section{Introduction}
      This chapter was requested by several people who wanted to understand 
-how ROSE was designed and implemented.
+how ROSE was designed and implemented.  ROSE supports a number of different 
+languages and used different parsers and or frontends to address each on.
+For C, C99, UPC, and C++; we use the EDG frontend.  While for Fortran we
+use the Open Fortran Parser as a parser and build the fronend end required.
+ROSE contains a midend, where analysis support is made available and and backend 
+which does the code generation from the IR.
+
+   The goal of the design of the IR is to not loose any source code information.
+Thus ROSE is especially well suited to source-to-source translation. However
+then means that the IR for ROSE is quite large and this has advantages and
+disadvantages.  The IR forms the base for an abstract syntax tree, so clearly
+some syntatic details are lost in the IR, but these are regenerated in the 
+back-end (which has language specific support).
+
+   More languages could be added to ROSE, ROSE is designed to be langauge
+neutral, but it is implemented in C++. PHP has for example been added to 
+ROSE, but it represnted initial work and an experiment with the general subject of
+run-time typed scripting language support.
 
 \section{Design}
-     This section will cover the design goals etc. of ROSE.
+
+Fundamentally, ROSE has three parts:
+\begin{enumerate}
+   \item frontend, which addresses language specific parsers/frontend issues (and the
+         binary disassembly for the case of the binary support in ROSE);
+   \item midend, which addresses analysis and transformation issues; 
+   \item backend which addresses code generation issues.
+\end{enumerate}
+
+   The frontend constructs an AST which saves as much as possible about the structure of
+the original source code (or binary for the case of the ROSE binary supposrt).
+
+   This section will cover the design goals etc. of ROSE.
+
 \section{Directory Structure}
-This section presents the directory structure of the ROSE project.
+
+   The top level of the ROSE directory tree has a simple design.
+All the source code is in {\tt src}, all the tests are in {\tt tests},
+all the documentation is in {\tt docs}.  ROSE uses {\bf autoconf} and {\bf automake}
+so there is an autoconf generated {\em configure} script included.  The
+{\tt conf} directory contains all the {\em autconf macros} used in ROSE.
+The {\tt projects} directory contains a collection of ongoing and past
+projects in ROSE that are either not large enough or mature enough to stand
+along as sperate projects.  We use this location to incubate developing tools
+or technologies built on ROSE, as they are developed some are moved
+into the ROSE {\tt src} directory proper.  The README file contains
+information on how to install ROSE, and information about where information
+on ROSEis located.
 
 \fixme{Add more detail about each directory.}
 
-
-% the directory figure is too hug to be useful, also as more stuff being
+% the directory figure is too huge to be useful, also as more stuff being
 % added in, LaTex complains Dimension too large quite often. Liao
 \begin{comment}
 \begin{latexonly}
@@ -67,19 +109,47 @@ This section presents the directory structure of the ROSE project.
 
 %\centerline{\psfig{file=roseDirectoryMap.pdf,height=1.5\linewidth,width=4.0\linewidth}}
 \includegraphics[scale=0.25,angle=270]{roseDirectoryMap}
-\caption{Directory structure of ROSE project.}
+\caption{Directory structure of ROSE project.  This figure is formed from a Perl script
+    ({\tt ROSE/scripts/lsvis}) which generates the graph when the documentation is built.}
 \label{designAndImplementation:directoryStructure}
 \end{figure}
 \end{htmlonly}
 
-   This figure is formed from a Perl script ({\tt ROSE/scripts/lsvis}) which generates
-the graph when the documentation is built.
-
 \end{comment}
 
 \section{Implementation of ROSE}
+   ROSE is implemented in C++.  It supports source-to-source
+analysis and transformations on source code in a language neutral
+way (or alternativeively in a collection of langauge specific ways).
+
      This section will be added to in the future.
      
-\section{Implementation of ROSETTA}
+\subsection{Implementation of ROSETTA}
+
+    ROSETTA is a tools built internally to generate code for ROSE
+so that ROSE follows simple and consistant design rules.  ROSE
+relies heavily on code generatation as a way to automate as much
+as possible and permits ROSE to be maintained by as easily as possible.
+ROSETTA is thus used so that we can avoid spending all our time 
+doing mainainance.  ROSETTA is however not very ROSE specific and
+might be more generally useful, we have not pursued this line of work.
+We are happy to have ROSETTA be only used in ROSE, it is however
+separated out in the {\tt src/ROSETTA/src} and {\tt src/ROSETTA/Grammar}
+directories.
+
      This section will be added to in the future.
 
+
+
+\subsection{Implementation of Fortran support}
+
+    All fortran support in ROSE used the Open Fortran Parser (OFP)
+developed at Los Alamos and part of a community effort to
+define an open fortran parser that tracks the Fortran language
+(supports Fortran 2003 and the anticipated Fortran 2008).
+ROSE uses the OFP and builds from the parser the implementations
+of the parser actions required to construct a proper Fortran frontend.
+That the Fortran frontendin ROSE uses the ROSE IR means that the
+analysis in the midend can be used (or has been fixed up for use with Fortran).
+A backend is also defined in ROSE so that source-to-source support for 
+Fortran is provide.  

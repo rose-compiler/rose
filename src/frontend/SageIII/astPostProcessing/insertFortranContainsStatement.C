@@ -42,9 +42,6 @@ InsertFortranContainsStatement::visit ( SgNode* node )
 
      SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(node);
 
-  // The use of CONTAINS in modules appears to be handled by OFP, so no fixup is required.
-     SgClassDefinition* classDefinition = isSgClassDefinition(node);
-
   // This is for handling where CONTAINS is required in a function
      if (functionDefinition != NULL)
         {
@@ -86,6 +83,12 @@ InsertFortranContainsStatement::visit ( SgNode* node )
              }
         }
 
+#if 0
+  // OFP now has better support for the CONTAINS statement so this code is not longer required.
+
+  // The use of CONTAINS in modules appears to be handled by OFP, so no fixup is required.
+     SgClassDefinition* classDefinition = isSgClassDefinition(node);
+
   // This is for handling where CONTAINS is required in a module
      if (classDefinition != NULL)
         {
@@ -94,8 +97,6 @@ InsertFortranContainsStatement::visit ( SgNode* node )
 
           bool firstFunctionDeclaration = false;
           bool functionDeclarationSeen  = false;
-#if 0
-       // OFP now has better support for the CONTAINS statement so this code is not longer required.
 
           while (i != statementList.end() && firstFunctionDeclaration == false)
              {
@@ -124,6 +125,6 @@ InsertFortranContainsStatement::visit ( SgNode* node )
 
                i++;
              }
-#endif
         }
+#endif
    }
