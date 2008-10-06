@@ -126,6 +126,8 @@ buildstatus=0
 #------------------------------------------------------
 # rebuild the Makefile in the source tree
 # should not run this for external repository or released packages
+# JJW (10/5/2008) note: on OS X, we need this for Java to work with the
+# external repository
 if [ $SKIP_BUILD_SOURCE ]; then
   echo "Skipping ./build in the source tree..."
 else  
