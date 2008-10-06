@@ -1,4 +1,7 @@
 #include "rose.h"
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#include <stdint.h>
 
 using namespace std;
 
@@ -275,7 +278,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
                     printf ("DOS section DOS_header->get_e_total_pages()    = %d \n",DOS_header->get_e_total_pages());
                     printf ("DOS section DOS_header->get_e_last_page_size() = %d \n",DOS_header->get_e_last_page_size());
-                    printf ("DOS section mapped size                        = %p (hex) = %zu (decimal) \n",(void*)sections[i]->get_mapped_size(),sections[i]->get_mapped_size());
+                    printf ("DOS section mapped size                        = %p (hex) = %"PRIu64" (decimal) \n",(void*)sections[i]->get_mapped_size(),sections[i]->get_mapped_size());
                   }
              }
 
