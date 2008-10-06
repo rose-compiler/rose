@@ -519,7 +519,7 @@ generateString(
             // We have to keep track of any open #if #endif pairings and make sure 
             // that they match of the the remaining #if gts closed off with an #endif
             // But we only want ot count directives that are NOT skipped
-#ifndef USE_ROSE_BOOST_WAVE_SUPPORT
+//#ifndef USE_ROSE_BOOST_WAVE_SUPPORT2
                if ((*j)->getRelativePosition() == PreprocessingInfo::before || (skipTrailingDirectives == false))
                   {
                     switch ( (*j)->getTypeOfDirective() )
@@ -543,7 +543,7 @@ generateString(
                               break;
                        }
                   }
-#endif
+//#endif
 
                // AS Since Wave is a full preprocessor all the PreprocessorInfo with directive type
                // PreprocessingInfo::CpreprocessorIncludeDeclaration is actually the include files
@@ -555,7 +555,7 @@ generateString(
 
             // Only use the CPP directive in certain cases (ignore comments, etc.)
                if ( (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIncludeDeclaration 
-#ifndef USE_ROSE_BOOST_WAVE_SUPPORT
+//#ifndef USE_ROSE_BOOST_WAVE_SUPPORT2
                  || (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorDefineDeclaration  ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorUndefDeclaration   ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorIfdefDeclaration   ||
@@ -566,10 +566,10 @@ generateString(
                     (*j)->getTypeOfDirective() == PreprocessingInfo::CpreprocessorEndifDeclaration   ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationStart      ||
                     (*j)->getTypeOfDirective() == PreprocessingInfo::ClinkageSpecificationEnd 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+//#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
                     || (*j)->getTypeOfDirective() == PreprocessingInfo::CSkippedToken
-#endif
-#endif
+//#endif
+//#endif
                     )
                   {
                     if ((*j)->getRelativePosition() == PreprocessingInfo::before)
