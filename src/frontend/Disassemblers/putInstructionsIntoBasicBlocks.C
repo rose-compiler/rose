@@ -55,13 +55,14 @@ namespace PutInstructionsIntoBasicBlocks {
     return mainBlock;
   }
 
-  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* blk, const set<uint64_t>& functionStarts) {
+  SgAsmBlock* putInstructionsIntoFunctions(SgAsmBlock* blk, const map<uint64_t, std::string>& functionStarts) {
     map<uint64_t, SgAsmFunctionDeclaration*> funcs;
     SgAsmBlock* newBlk = new SgAsmBlock();
-    for (set<uint64_t>::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
+    for (map<uint64_t,std::string>::const_iterator i = functionStarts.begin(); i != functionStarts.end(); ++i) {
       SgAsmFunctionDeclaration* f = new SgAsmFunctionDeclaration();
-      f->set_address(*i);
-      funcs.insert(make_pair(*i, f));
+      f->set_address(i->first);
+      f->set_name(i->second);
+      funcs.insert(make_pair(i->first, f));
       newBlk->get_statementList().push_back(f);
       f->set_parent(newBlk);
     }

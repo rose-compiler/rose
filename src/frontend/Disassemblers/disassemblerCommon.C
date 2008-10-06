@@ -5,6 +5,80 @@
 
 using namespace std;
 
+
+class MapGlobalVariables: public AstSimpleProcessing
+   {
+     public:
+          std::map<SgAsmGenericSymbol::addr_t,SgAsmGenericSymbol*> globalFunctionMap;
+
+       // Store the current statement as we traverse so that we can use it to call nextAsmStatement().
+       // We need the address of the next statement to evaluate references to global variables.
+          SgAsmStatement*   currentAsmStatement;
+          SgAsmInstruction* currentAsmInstruction;
+          SgAsmGenericSectionList* asmSectionList;
+
+          MapGlobalVariables();
+          void visit(SgNode* n);
+
+   };
+
+
+MapGlobalVariables::MapGlobalVariables()
+// : stringTablePointer(NULL)
+   {
+     currentAsmStatement   = NULL;
+     currentAsmInstruction = NULL;
+     asmSectionList        = NULL;
+   }
+
+void
+MapGlobalVariables::visit(SgNode* n)
+   {
+#if 0
+     printf ("node = %p = %s \n",n,n->class_name().c_str());
+#endif
+
+     SgAsmStatement* asmStatement = isSgAsmStatement(n);
+     if (asmStatement != NULL)
+          currentAsmStatement = asmStatement;
+
+     SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
+     if (asmInstruction != NULL)
+          currentAsmInstruction = asmInstruction;
+
+     SgAsmGenericSectionList* temp_asmSectionList = isSgAsmGenericSectionList(n);
+     if (temp_asmSectionList != NULL)
+          asmSectionList = temp_asmSectionList;
+  // ROSE_ASSERT(asmSectionList == NULL);
+
+
+  // Build the list of symbols representing global variables and functions.
+     SgAsmGenericSymbol* symbol = isSgAsmGenericSymbol(n);
+     if (symbol != NULL)
+        {
+          SgAsmGenericSymbol::addr_t address = symbol->get_value();
+
+          if (symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC)
+             {
+               printf ("Adding entry to globalFunctionMap: address = %p symbol = %p = %s \n",(void*)address,symbol,symbol->get_name().c_str());
+
+            // Check and see if this address is already present in the map
+               if (globalFunctionMap.find(address) == globalFunctionMap.end())
+                  {
+                    globalFunctionMap[address] = symbol;
+                  }
+                 else
+                  {
+                 // This happens for __libc_start_main and __libc_start_main@@GLIBC_2.2.5 which appear to share the 0x00000000 address.
+                    printf ("Duplicate function used to represent same address \n");
+                 // ROSE_ASSERT(false);
+                  }
+             }
+        }
+   }
+
+
+
 // DQ (8/21/2008): No longer used (using new IR nodes now)
 // using namespace Exec;
 
@@ -124,12 +198,16 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   }
 }
 
-void DisassemblerCommon::AsmFileWithData::disassembleRecursively(uint64_t addr, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
+void DisassemblerCommon::AsmFileWithData::disassembleRecursively(uint64_t addr, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, 
+								 map<uint64_t,std::string>& functionStarts,
+								 bool heuristicFunctionDetection) const {
   vector<uint64_t> worklist(1, addr);
-  disassembleRecursively(worklist, insns, basicBlockStarts, functionStarts);
+  disassembleRecursively(worklist, insns, basicBlockStarts, functionStarts, heuristicFunctionDetection);
 }
 
-void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& worklist, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, set<uint64_t>& functionStarts) const {
+void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t>& worklist, map<uint64_t, SgAsmInstruction*>& insns, map<uint64_t, bool>& basicBlockStarts, 
+								 map<uint64_t,std::string>& functionStarts, 
+								 bool heuristicFunctionDetection) const {
   while (!worklist.empty()) {
     uint64_t addr = worklist.back();
     worklist.pop_back();
@@ -176,7 +254,10 @@ void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t
         // something pushes the address of the next instruction
         if ((x86insn && (x86insn->get_kind() == x86_call || x86insn->get_kind() == x86_farcall)) ||
             (arminsn && (arminsn->get_kind() == arm_bl || arminsn->get_kind() == arm_blx))) {
-          functionStarts.insert(constant);
+	  // tps (6/Oct/2008) : added that this is a heuristic and not from the symbol table
+	  if (heuristicFunctionDetection) {
+	    functionStarts.insert(make_pair(constant,""));
+	  }
         }
         basicBlockStarts[constant] = true;
         if (insns.find(constant) == insns.end()) {
@@ -189,6 +270,7 @@ void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t
 
 // DQ (8/26/2008): Added initialization for default mode of disassembler
 bool Disassembler::aggressive_mode = false;
+bool Disassembler::heuristicFunctionDetection = false;
 
 void Disassembler::disassembleFile(SgAsmFile* f) {
   const SgAsmInterpretationPtrList& interps = f->get_interpretations();
@@ -209,7 +291,8 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
      DisassemblerCommon::AsmFileWithData file(interp);
      map<uint64_t, SgAsmInstruction*> insns;
      map<uint64_t, bool> basicBlockStarts;
-     set<uint64_t> functionStarts;
+     map<uint64_t, std::string> functionStarts;
+
 
      SgAsmGenericHeader* header = interp->get_header();
      ROSE_ASSERT (header);
@@ -289,8 +372,11 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
   // printf ("In Disassembler::disassembleInterpretation(): entryPoint = %p \n",(void*)entryPoint);
 
      basicBlockStarts[entryPoint] = true;
-     functionStarts.insert(entryPoint);
-     file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts);
+     // tps (6/Oct/08): commented out since it affects the function detection
+     if (heuristicFunctionDetection) {
+       functionStarts.insert(make_pair(entryPoint,""));
+     }
+     file.disassembleRecursively(entryPoint, insns, basicBlockStarts, functionStarts, heuristicFunctionDetection);
 
 #if 0
      printf ("Disassembler::disassembleFile(): Looking for pointers that reference executable code (valid sections) \n");
@@ -341,7 +427,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
 
           printf ("Disassembler::disassembleFile(): SgAsmGenericSection list[%zu]: addr = %p \n",i,(void*)addr);
 
-          file.disassembleRecursively(addr, insns, basicBlockStarts, functionStarts);
+          file.disassembleRecursively(addr, insns, basicBlockStarts, functionStarts,  heuristicFunctionDetection);
         }
       }
     }
@@ -359,6 +445,13 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     b->set_externallyVisible(i->second);
     basicBlocks[addr] = b;
   }
+
+
+  MapGlobalVariables t;
+  t.traverse(interp, preorder);
+  printf ("Number of global functions = %zu \n",t.globalFunctionMap.size());
+  std::string funcName="none";
+
   SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
   // Find the signatures that indicate the beginnings of functions -- they
   // are only considered if they are at the start of a basic block
@@ -372,9 +465,24 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
     SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
     bool isFunctionStart = false;
     if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-      isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
+      if (!heuristicFunctionDetection) {
+	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+	  isFunctionStart = true;
+	  funcName = t.globalFunctionMap[bb->get_address()]->get_name();
+	} else
+	  isFunctionStart = false;
+      }
+      else
+	isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
     } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-      isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+      if (!heuristicFunctionDetection) {
+	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
+	  isFunctionStart = true; 
+	  funcName = t.globalFunctionMap[bb->get_address()]->get_name();
+	} else
+	  isFunctionStart = false; 
+      } else
+	isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
     } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       isFunctionStart = false; // FIXME
     } else if (isSgAsmDOSFileHeader(header)) {
@@ -384,11 +492,12 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
       abort();
     }
     if (isFunctionStart) {
-      functionStarts.insert(bb->get_address());
+      functionStarts.insert(make_pair(bb->get_address(),funcName));
     }
   }
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
-   blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
+  cerr << ">> Number of FunctionStarts: " << functionStarts.size() << endl;
+  blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
   interp->set_global_block(blk);
   blk->set_parent(interp);
   blk->set_externallyVisible(true);

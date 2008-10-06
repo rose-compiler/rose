@@ -382,7 +382,7 @@ RoseBin_FlowAnalysis::process_jumps() {
 	    b_b = isSgAsmNode(target->get_parent());
 	  ROSE_ASSERT(b_b);
 	  SgAsmFunctionDeclaration* b_func = isSgAsmFunctionDeclaration(b_b->get_parent()); 
-          ROSE_ASSERT (b_func);
+
 	  if (b_func) {
 	    // (16/Oct/07) tps: this is tricky, it appears that sometimes the target can
 	    // be just a jmp to a new location, so we should forward this information to the correct
@@ -411,6 +411,8 @@ RoseBin_FlowAnalysis::process_jumps() {
                 b_func->append_dest(isSgAsmStatement(inst_after));
               }
 	    }
+	  } else {
+	    cerr << " NO FUNCTION DETECTED ABOVE BLOCK . " << endl;
 	  }
 	  
 	} else {

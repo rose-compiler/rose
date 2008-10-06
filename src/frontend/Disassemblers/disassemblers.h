@@ -77,8 +77,10 @@ namespace DisassemblerCommon {
     // parameter, or just a constant jump target or fallthrough (when true, it
     // states that an indirect jump may be pointing there)
 
-    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, std::set<uint64_t>& functionStarts) const;
-    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, std::set<uint64_t>& functionStarts) const;
+    void disassembleRecursively(uint64_t addr, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, 
+				std::map<uint64_t,std::string>& functionStarts, bool heuristicFunctionDetection) const;
+    void disassembleRecursively(std::vector<uint64_t>& worklist, std::map<uint64_t, SgAsmInstruction*>& insns, std::map<uint64_t, bool>& basicBlockStarts, 
+				std::map<uint64_t,std::string>& functionStarts,  bool heuristicFunctionDetection) const;
   };
 
 }
@@ -87,6 +89,7 @@ namespace Disassembler
    {
   // DQ (8/26/2008): Added initialization for default mode of disassembler
      extern bool aggressive_mode;
+     extern bool heuristicFunctionDetection;
 
      void disassembleFile(SgAsmFile* f);
      void disassembleInterpretation(SgAsmInterpretation* interp);
