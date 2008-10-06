@@ -1,1 +1,0 @@
-objdump -g -l -d example2 | grep '^/'

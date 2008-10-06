@@ -1,1 +1,0 @@
-g++ example2.C  -lm -g -debug -fverbose-asm -o example2 -O3

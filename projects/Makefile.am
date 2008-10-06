@@ -24,7 +24,6 @@ SUBDIRS = \
      palette \
      reverseComputation \
      DistributedMemoryAnalysisCompass \
-     BinaryContextLookup \
      runtimeErrorCheck \
      assemblyToSourceAst \
      bugSeeding \
