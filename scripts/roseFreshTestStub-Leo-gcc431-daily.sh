@@ -15,7 +15,7 @@ export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 #source /usr/apps/gcc/4.3.1/setup.sh
 #source /usr/apps/gcc/4.0.2/setup.sh
 # GCC 3.4.6
-export PATH="/usr/apps/gcc/3.4.6/bin:$PATH"
+export PATH="/usr/apps/gcc/3.4.6/bin:$JAVA_HOME/bin:$PATH"
 export LD_LIBRARY_PATH="/usr/apps/gcc/3.4.6/lib:$LD_LIBRARY_PATH"
 
 export PATH="/usr/apps/automake/1.9.6/bin:$PATH"

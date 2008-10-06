@@ -13,7 +13,7 @@ export LD_LIBRARY_PATH="${JAVA_HOME}/lib:${JAVA_HOME}/jre/lib/i386/server:$LD_LI
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
 source /usr/apps/gcc/4.2.2/setup.sh
-export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
+export PATH="/usr/apps/automake/1.9.6/bin:$JAVA_HOME/bin:$PATH"
 
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
