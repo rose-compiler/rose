@@ -3306,6 +3306,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
   // DQ (1/6/2008): Added another test for a rose option that takes a filename
      if ( argument == "-o" ||                               // Used to specify output file to compiler
           argument == "-opt" ||                             // Used in loopProcessor
+          argument == "--include" ||                        // Used for preinclude list (to include some header files before all others, common requirement for compiler)
           argument == "-rose:output" ||                     // Used to specify output file to ROSE
           argument == "-rose:o" ||                          // Used to specify output file to ROSE (alternative to -rose:output)
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
@@ -4132,7 +4133,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           if (errorCode != 0)
              {
                printf ("Running OFP ONLY causes an error (errorCode = %d) \n",errorCode);
-#if 0
+#if 1
             // DQ (10/4/2008): Need to work with Liao to see why this passes for me but fails for him (and others).
             // for now we can comment out the error checking on the running of OFP as part of getting the 
             // output_parser_actions option (used for debugging).
