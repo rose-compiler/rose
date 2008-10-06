@@ -154,6 +154,7 @@ struct X86InstructionSemantics {
 
   Word(32) readRegHelper(const Word(32)& rawValue, X86PositionInRegister pos, NumberTag<32>) {
     switch (pos) {
+      case x86_regpos_word: return rawValue; // High bytes are always zero, this is used for push of seg regs
       case x86_regpos_dword: return rawValue;
       case x86_regpos_all: return rawValue;
       default: ROSE_ASSERT (!"Bad position in register");
@@ -176,7 +177,7 @@ struct X86InstructionSemantics {
             Word(16) value = policy.readSegreg(sr);
             return readRegHelper(policy.concat(value, policy.template number<16>(0)), x86_regpos_word, NumberTag<Len>());
           }
-          default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
+          default: fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class())); abort();
         }
         break;
       }
@@ -241,7 +242,7 @@ struct X86InstructionSemantics {
             }
             break;
           }
-          default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
+          default: fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class())); abort();
         }
         break;
       }
@@ -271,7 +272,7 @@ struct X86InstructionSemantics {
             policy.writeSegreg(sr, value);
             break;
           }
-          default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
+          default: fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class())); abort();
         }
         break;
       }
@@ -300,7 +301,12 @@ struct X86InstructionSemantics {
             policy.writeGPR(reg, value);
             break;
           }
-          default: fprintf(stderr, "Bad register class %u\n", rre->get_register_class()); abort();
+          case x86_regclass_segment: { // Used for pop of segment registers
+            X86SegmentRegister sr = (X86SegmentRegister)(rre->get_register_number());
+            policy.writeSegreg(sr, policy.template extract<0, 16>(value));
+            break;
+          }
+          default: fprintf(stderr, "Bad register class %s\n", regclassToString(rre->get_register_class())); abort();
         }
         break;
       }
@@ -1688,6 +1694,21 @@ struct X86InstructionSemantics {
       case x86_std: {
         ROSE_ASSERT (operands.size() == 0);
         policy.writeFlag(x86_flag_df, policy.true_());
+        break;
+      }
+      case x86_clc: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.writeFlag(x86_flag_cf, policy.false_());
+        break;
+      }
+      case x86_stc: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.writeFlag(x86_flag_cf, policy.true_());
+        break;
+      }
+      case x86_cmc: {
+        ROSE_ASSERT (operands.size() == 0);
+        policy.writeFlag(x86_flag_cf, policy.invert(policy.readFlag(x86_flag_cf)));
         break;
       }
       case x86_nop: break;
