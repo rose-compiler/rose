@@ -17,7 +17,7 @@ separator::separator(int bp, int ep, std::vector<separator> ss ){
 	sub_separators = ss;
 } 
 
-void separator::printValues(PreprocessingInfo::token_container& tokenStream, int counter ){
+void separator::outputValues(token_container& tokenStream, int counter ){
 	string prefix = "";
 	for(int i = 0; i < counter; i++){
 		prefix += " ";
@@ -30,12 +30,12 @@ void separator::printValues(PreprocessingInfo::token_container& tokenStream, int
 
 	for(std::vector<separator>::iterator sub_it= sub_separators.begin(); 
 			sub_it != sub_separators.end(); ++sub_it  ){
-		sub_it->printValues(tokenStream,counter+1);
+		sub_it->outputValues(tokenStream,counter+1);
 	}
 
 }
 
-void separator::printValues(std::vector<SgNode*>& linearizedAST, int counter ){
+void separator::outputValues(std::vector<SgNode*>& linearizedAST, int counter ){
 	string prefix = "";
 	for(int i = 0; i < counter; i++){
 		prefix += " ";
@@ -51,7 +51,7 @@ void separator::printValues(std::vector<SgNode*>& linearizedAST, int counter ){
     cout << " is compiler generated" << std::endl;
 	for(std::vector<separator>::iterator sub_it= sub_separators.begin(); 
 			sub_it != sub_separators.end(); ++sub_it  ){
-		sub_it->printValues(linearizedAST,counter+1);
+		sub_it->outputValues(linearizedAST,counter+1);
 	}
 
 }
@@ -76,7 +76,7 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
     std::vector<SgNode*> ignoreScopes;
 
 
-	for(int i = 0; i < linearizedAST.size(); i++){
+	for(unsigned int i = 0; i < linearizedAST.size(); i++){
 
 		if( ( isSgScopeStatement(linearizedAST[i]) != NULL ) &&
           ( isSgFunctionDefinition(linearizedAST[i]) == NULL ) &&
@@ -143,7 +143,7 @@ separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST){
 
 
 
-separator* mapSeparatorsTokenStream(PreprocessingInfo::token_container& tokenStream){
+separator* mapSeparatorsTokenStream(token_container& tokenStream){
 
         separator* globalScope = new separator(0,0);
 
@@ -160,7 +160,7 @@ separator* mapSeparatorsTokenStream(PreprocessingInfo::token_container& tokenStr
 	std::vector<std::vector<separator> > tmp_stackOfSeparators;
 	tmp_stackOfSeparators.push_back( vector<separator>() );
 
-	for(int i=0; i < tokenStream.size() ; i++)
+	for(unsigned int i=0; i < tokenStream.size() ; i++)
 	{
 		if( (boost::wave::token_id(tokenStream[i]) == boost::wave::T_LEFTBRACE)
 		  ){

@@ -2,7 +2,7 @@
 #include <algorithm>
 using namespace std;
 
-createMap::createMap(std::vector<SgNode*>& linAST, PreprocessingInfo::token_container& tokStream)
+createMap::createMap(std::vector<SgNode*>& linAST, token_container& tokStream)
 : linearizedAST(linAST), tokenStream(tokStream)
 { 
    buildMaps();
@@ -14,8 +14,8 @@ createMap::buildMaps(){
     separator* astScopes         = mapSeparatorsAST(linearizedAST);
 	separator* curlyBraceScopes  = mapSeparatorsTokenStream(tokenStream);
 
-    astScopes->printValues(linearizedAST);
-    curlyBraceScopes->printValues(tokenStream);
+    astScopes->outputValues(linearizedAST);
+    curlyBraceScopes->outputValues(tokenStream);
     internalMatchBetweenASTandTokenStreamSeparator(astScopes,curlyBraceScopes);
     
        
@@ -140,7 +140,7 @@ createMap::internalMatchBetweenASTandTokenStreamSeparator(separator*
 
 
 //get the token stream provided in the constructor
-PreprocessingInfo::token_container& createMap::get_tokenStream()
+token_container& createMap::get_tokenStream()
 {
     return tokenStream;
 };
@@ -168,8 +168,8 @@ createMap::printNodeToTokenMap(){
     for(map<SgNode*,std::pair<int,int> >::iterator map_it = nodeToTokenMap.begin();
         map_it != nodeToTokenMap.end(); ++map_it   ){
         Sg_File_Info* fileInfo = map_it->first->get_file_info();
-        PreprocessingInfo::token_type currentBeginToken = tokenStream[map_it->second.first];
-        PreprocessingInfo::token_type currentEndToken   = tokenStream[map_it->second.second];
+        token_type currentBeginToken = tokenStream[map_it->second.first];
+        token_type currentEndToken   = tokenStream[map_it->second.second];
 
         string nodeFilename  = fileInfo->get_filenameString();
         int nodeLine   = fileInfo->get_line();

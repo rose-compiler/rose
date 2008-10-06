@@ -48,7 +48,7 @@ AC_DEFUN([AX_BOOST_WAVE],
         	ax_boost_user_wave_lib="$withval"
 		fi
         ],
-        [want_boost="no"]
+        [want_boost="yes"]
 	)
     AM_CONDITIONAL(ROSE_USE_BOOST_WAVE, test "x$want_boost" = "xyes"  )
 

@@ -16,15 +16,15 @@ struct separator{
 
 	separator(int bp, int ep, std::vector<separator> ss );
  	separator(int bp, int ep);
+        void outputValues(token_container& tokenStream, int counter = 0);
 
-	void printValues(PreprocessingInfo::token_container& tokenStream, int counter = 0);
+        void outputValues(std::vector<SgNode*>& linearizedAST, int counter = 0 );
 
-	void printValues(std::vector<SgNode*>& linearizedAST, int counter = 0 );
-};
+	};
 
 
 separator* mapSeparatorsAST(std::vector<SgNode*>& linearizedAST);
 
-separator* mapSeparatorsTokenStream(PreprocessingInfo::token_container& tokenStream);
+separator* mapSeparatorsTokenStream(token_container& tokenStream);
 
 #endif

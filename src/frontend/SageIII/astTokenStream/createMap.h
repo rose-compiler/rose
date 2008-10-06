@@ -6,8 +6,8 @@
 class createMap{
      private:
           std::vector<SgNode*>& linearizedAST;
-      //PreprocessingInfo::token_container is a std::vector<PreprocessingInfo::token_type>
-          PreprocessingInfo::token_container& tokenStream;
+      //token_container is a std::vector<token_type>
+          token_container& tokenStream;
 
       // The map is of a SgScopeStatment in the AST to a pair<int,int>.
       //The pairs' int values is relative to the tokenStream which you can
@@ -28,10 +28,10 @@ class createMap{
 
 	public:
 
-		createMap(std::vector<SgNode*>& linAST, PreprocessingInfo::token_container& tokStream);
+		createMap(std::vector<SgNode*>& linAST, token_container& tokStream);
 
                 //get the token stream provided in the constructor
-		PreprocessingInfo::token_container& get_tokenStream();
+		token_container& get_tokenStream();
                 //get the linearized AST provided in the constructor
 		std::vector<SgNode*>&               get_linearizedAST();
 

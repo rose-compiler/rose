@@ -949,6 +949,14 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "strict_language_handling", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     // AS (9/29/2008): Added support for wave on command line
+
+     File.setDataPrototype         ( "bool", "wave", "= false",
+         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
+     
   // DQ (10/31/2006): Support for embedded color codes in the generated code from ROSE.
   // Different values trigger embedded codes for different types of internal data 
   // (missing information, compiler generated code, etc.).
@@ -1269,6 +1277,12 @@ Grammar::setUpSupport ()
   // DQ (2/12/2004): Added to support -c on compiler command line
      Project.setDataPrototype("bool","compileOnly", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // AS (9/29/2008): Added support for wave on command line
+     Project.setDataPrototype("bool","wave", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  
   // Project.setDataPrototype("bool","linkOnly", "= false",
   //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
