@@ -23,10 +23,13 @@ done
 # DQ (12/22/2005): remove the autoconf caches
 rm -rf autom4te.cache
 
-if test -f ./config/ltmain.sh; then
-  :
-elif test -x /usr/bin/glibtoolize; then
+# JJW (10/5/2008): force glibtoolize on Mac, even for external releases where
+# it wouldn't otherwise be needed (the files are there, they just don't work
+# when linking in Java)
+if test -x /usr/bin/glibtoolize; then
   /usr/bin/glibtoolize --force
+elif test -f ./config/ltmain.sh; then
+  :
 else
   libtoolize
 fi
