@@ -9786,6 +9786,9 @@ X aggressive
 
   // DQ (9/24/2006): Permit optional enforcement of ANSI standards
      p_strict_language_handling = false;
+     
+  // AS (9/29/2008): Use Wave 
+     p_wave = false;
 
   // DQ (10/31/2006): Output information that can be used to colorize properties of generated code (useful for debugging).
      p_embedColorCodesInGeneratedCode = 0;
@@ -10286,6 +10289,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_markGeneratedFiles                   = %s \n",(p_markGeneratedFiles == true) ? "true" : "false");
      printf ("     p_negative_test                        = %s \n",(p_negative_test == true) ? "true" : "false");
      printf ("     p_strict_language_handling             = %s \n",(p_strict_language_handling == true) ? "true" : "false");
+     printf ("     p_wave             = %s \n",(p_wave == true) ? "true" : "false");
      printf ("     p_embedColorCodesInGeneratedCode       = %s \n",(p_embedColorCodesInGeneratedCode == true) ? "true" : "false");
      printf ("     p_generateSourcePositionCodes          = %s \n",(p_generateSourcePositionCodes == true) ? "true" : "false");
      printf ("     p_sourceFileUsesCppFileExtension       = %s \n",(p_sourceFileUsesCppFileExtension == true) ? "true" : "false");

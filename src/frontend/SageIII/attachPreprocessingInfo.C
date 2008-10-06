@@ -73,6 +73,11 @@ found in the directory ROSE/TESTS/KnownBugs/AttachPreprocessingInfo.
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
+typedef boost::wave::cpplexer::lex_token<> token_type;
+typedef std::vector<token_type>            token_container;
+typedef std::list<token_type>              token_list_container;
+typedef std::vector<std::list<token_type> >       token_container_container;
+
 
 // Debug flag
 #define DEBUG_ATTACH_PREPROCESSING_INFO 0
@@ -978,7 +983,13 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
    {
      ROSE_ASSERT(sageFilePtr != NULL);
 
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
+//#ifdef USE_ROSE_BOOST_WAVE_SUPPORT2
+
+     //std::cerr << "Checking to see if Wave is used " << std::endl;
+     if(sageFilePtr->get_wave() == true )
+     {
+     std::cerr << "Using WAVE" << std::endl;
+
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment and CPP Directive Processing (using Wave, outer part):");
 
@@ -1074,7 +1085,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 	     std::cout << "Source file name: \"" << sourceFileName << "\"" << std::endl;
 	     std::cout << "Source file name: \"" << sageFilePtr->getFileName()<< "\"" <<  std::endl;
      }
-       sourceFileName=string(CurrentPath)+"/"+sourceFileName;
+      // sourceFileName=string(CurrentPath)+"/"+sourceFileName;
      std::ifstream instream(sourceFileName.c_str());
      std::string instring;
 
@@ -1089,12 +1100,11 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
          std::istreambuf_iterator<char>());
 
   // The template boost::wave::cpplexer::lex_token<> is the token type to be used by the Wave library.
-     typedef PreprocessingInfo::token_type token_type;
-     PreprocessingInfo::token_type x;
+     ::token_type x;
 
   // The template boost::wave::cpplexer::lex_iterator<> is the lexer type to
   // be used by the Wave library.
-     typedef boost::wave::cpplexer::lex_iterator<PreprocessingInfo::token_type> lex_iterator_type;
+     typedef boost::wave::cpplexer::lex_iterator< ::token_type> lex_iterator_type;
 
   // This is the resulting context type to use. The first template parameter
   // should match the iterator type to be used during construction of the
@@ -1108,6 +1118,9 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
   //
   // The preprocessing of the input stream is done on the fly behind the 
   // scenes during iteration over the context_type::iterator_type stream.
+    
+     ROSE_ASSERT(sourceFileName.size()>0);
+     ROSE_ASSERT(instring.begin() != instring.end());
      context_type ctx (instring.begin(), instring.end(), sourceFileName.c_str());
   //     std::cout << "Current file name: " << get_current_filename()
 
@@ -1227,6 +1240,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
      accessFunctionsList = NodeQuery::querySubTree (sageFilePtr,&queryFloatDoubleValExp);
 
 
+     std::cerr << "For some reason we have " << std::endl;
   //Locate all value expression with Wave and set the string value of the
   //corresponding value expressions within the ROSE AST to the string value found
   //by Wave.
@@ -1238,7 +1252,7 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
          printf ("Adding the preinclude file \n");
 
      ROSE_ASSERT(preincludeList.size() == 1);
-     for (vector<string>::reverse_iterator i = preincludeList.rbegin(); i != preincludeList.rend(); i++)
+     for (vector<string>::reverse_iterator i = preincludeList.rbegin(); i != preincludeList.rend(); ++i)
         {
           vector<string>::reverse_iterator copyOf_i = i;
           copyOf_i++;
@@ -1247,11 +1261,13 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
                printf ("Adding preinclude file = %s \n",i->c_str());
 
        // DQ (4/7/2006): This currently fails
-          first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
-
+          //first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
+//          first.force_include( i->c_str(), false);
+          
           if(SgProject::get_verbose() >= 1)
                printf ("DONE: Adding preinclude file = %s \n",i->c_str());
         }
+#if 0
 
                                  
      if(SgProject::get_verbose() >= 1)
@@ -1379,7 +1395,12 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 #endif
 
   // else for conditional use of Boost-Wave
-#else
+#endif
+     }else
+     
+//#endif
+     {
+//#else
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST Comment and CPP Directive Processing (not using Wave):");
 
@@ -1446,8 +1467,9 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
 #endif
         }
 
+     }
   // endif for USE_ROSE_BOOST_WAVE_SUPPORT
-#endif
+//#endif
    }
 
 

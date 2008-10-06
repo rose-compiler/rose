@@ -44,15 +44,15 @@ test:
 check-local:
 #	chmod +w $(srcdir)
 if ROSE_USE_BOOST_WAVE
-	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
-	cp $(srcdir)/rose_lufac.C.wave-save $(srcdir)/rose_lufac.C.save
-	cp $(srcdir)/rose_lufac_split.C.wave-save $(srcdir)/rose_lufac_split.C.save
-	cp $(srcdir)/rose_tridvpk.C.wave-save $(srcdir)/rose_tridvpk.C.save
-	cp $(srcdir)/rose_rmatmult3.C.wave-save $(srcdir)/rose_rmatmult3.C.save
-	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
-	cp $(srcdir)/rose_mm_cp0.C.wave-save $(srcdir)/rose_mm_cp0.C.save
-	cp $(srcdir)/rose_lufac_cp0.C.wave-save $(srcdir)/rose_lufac_cp0.C.save
-	cp $(srcdir)/rose_mm_cp2_bk3.C.wave-save $(srcdir)/rose_mm_cp2_bk3.C.save
+#	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
+#	cp $(srcdir)/rose_lufac.C.wave-save $(srcdir)/rose_lufac.C.save
+#	cp $(srcdir)/rose_lufac_split.C.wave-save $(srcdir)/rose_lufac_split.C.save
+#	cp $(srcdir)/rose_tridvpk.C.wave-save $(srcdir)/rose_tridvpk.C.save
+#	cp $(srcdir)/rose_rmatmult3.C.wave-save $(srcdir)/rose_rmatmult3.C.save
+#	cp $(srcdir)/rose_mm.C.wave-save $(srcdir)/rose_mm.C.save
+#	cp $(srcdir)/rose_mm_cp0.C.wave-save $(srcdir)/rose_mm_cp0.C.save
+#	cp $(srcdir)/rose_lufac_cp0.C.wave-save $(srcdir)/rose_lufac_cp0.C.save
+#	cp $(srcdir)/rose_mm_cp2_bk3.C.wave-save $(srcdir)/rose_mm_cp2_bk3.C.save
 else
 #	DQ (1/3/2008): Commented out for now. The distcheck directory is readonly and this is a problem!
 #	cp $(srcdir)/rose_mm.C.withoutwave-save $(srcdir)/rose_mm.C.save

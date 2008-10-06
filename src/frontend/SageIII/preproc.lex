@@ -957,7 +957,6 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 
      if ( fileName.empty() == false )
         {
-#ifdef USE_ROSE_BOOST_WAVE_SUPPORT
 	  std::map<std::string,std::vector<PreprocessingInfo*>* >::iterator iItr= 
 		  mapFilenameToAttributes.find(fileName);
 	  //std::cout << "Trying to find fileName " << fileName << std::endl;
@@ -972,43 +971,36 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 	       }
 
              }
+          else{
+            fp = fopen( fileName.c_str(), "r");
+            if (fp)
+            {
+              yyin = fp;
+              yylex();
+
+              // Writes all gathered information to stdout
+              // preprocessorList.display("TEST Collection of Comments and CPP Directives");
+
+              // bugfix (9/29/2001)
+              // The semantics required here is to move the elements accumulated into the
+              // preprocessorList into the preprocessorInfoList and delete them from the
+              // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
+              // when the next file is processed).  We have to be able to process several files using
+              // this getPreprocessorDirectives() function.
+              preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
+
+              // The accumulator list should now be empty
+              assert (preprocessorList.getLength() == 0);
+              fclose(fp);  
+            }
             else
-             {
-            // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
-               printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
-            // ROSE_ASSERT(false);
-             }
-#else
+            {
+              // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
+              printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
+              // ROSE_ASSERT(false);
+            }
+          }
 
-          fp = fopen( fileName.c_str(), "r");
-          if (fp)
-             {
-               yyin = fp;
-               yylex();
-
-            // Writes all gathered information to stdout
-            // preprocessorList.display("TEST Collection of Comments and CPP Directives");
-
-            // bugfix (9/29/2001)
-            // The semantics required here is to move the elements accumulated into the
-            // preprocessorList into the preprocessorInfoList and delete them from the
-            // preprocessorList (which will be used again to accumulate PreprocessingInfo objects
-            // when the next file is processed).  We have to be able to process several files using
-            // this getPreprocessorDirectives() function.
-               preprocessorInfoList->moveElements( preprocessorList ); // create a copy that we can pass on
-
-            // The accumulator list should now be empty
-               assert (preprocessorList.getLength() == 0);
-               fclose(fp);  
-             }
-            else
-             {
-            // DQ (5/14/2006): Added error checking for collection of comments and CPP directives.
-               printf ("Error: can't find the requested file (%s) \n",fileName.c_str());
-            // ROSE_ASSERT(false);
-             }
-
-#endif
         }
 
   // printf ("In getPreprocessorDirectives(fileName = %s): preprocessorInfoList->size() = %d \n",fileName.c_str(),(int)preprocessorInfoList->size());

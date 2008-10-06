@@ -337,6 +337,13 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           set_compileOnly(true);
         }
 
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","wave",false) == true )
+        {
+       // printf ("Option -c found (compile only)! \n");
+          set_wave(true);
+        }
+
+     
   //
   // prelink option
   //
@@ -2550,6 +2557,12 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         {
        // printf ("In build_EDG_CommandLine(): Option -c not found (compile AND link) set autoInstantiation = true ... \n");
           autoInstantiation = true;
+        }
+
+     if ( CommandlineProcessing::isOption(argv,"-rose:","wave",false) == true )
+        {
+       // printf ("Option -c found (compile only)! \n");
+          set_wave(true);
         }
 
      if (isPrelinkPhase() == true)
