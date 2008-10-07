@@ -32,7 +32,7 @@ class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<
       return NULL;
     }
 };
-
+#if 0
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
 {
   public:
@@ -41,7 +41,7 @@ class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<
       return NULL;
     }
 };
-
+#endif
 
 
 static string htmlEscape(const string& s) {
