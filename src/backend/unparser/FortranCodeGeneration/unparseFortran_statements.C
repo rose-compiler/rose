@@ -1724,7 +1724,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
 #else
      for (size_t i = 0; i < interfaceStatement->get_interface_body_list().size(); i++)
         {
-#if 1
+#if 0
           printf ("interfaceStatement->get_interface_body_list()[i] = %p = %s \n",
                interfaceStatement->get_interface_body_list()[i],
                interfaceStatement->get_interface_body_list()[i]->class_name().c_str());
