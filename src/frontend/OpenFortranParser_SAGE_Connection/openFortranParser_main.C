@@ -26,6 +26,7 @@
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
+#include "rose_config.h"
 
 /* This is defined if ROSE is configured to use the Java Open Fortran Parser */
 #ifndef USE_ROSE_JAVA_SUPPORT
@@ -122,21 +123,6 @@ int openFortranParser_main(int argc, char **argv)
 
 	 return status;
   }
-
-#else
-
-int main(int argc, char **argv)
-  {
-	 int retval;
-	 
-	 /* Call the function that will start a JVM and call the OFP.  */
-	 retval = runOFP(argc, argv);
-	 
-	 return retval;
-  }
-#endif
-
-#ifdef USE_ROSE_JAVA_SUPPORT
 
 string getenvString(const string& key, const string& def = "") {
   const char* val = getenv(key.c_str());
@@ -302,5 +288,3 @@ int runOFP(int argc, char **argv)
 	 /* Exit since the exception should mean we can't recover.  */
 	 exit(1);
   }
-
-#endif // USE_ROSE_JAVA_SUPPORT
