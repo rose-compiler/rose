@@ -1,8 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+SUBDIRS =  gui
+
+
 if ROSE_USE_QROSE
 
-bin_PROGRAMS = astEquivalence runIDA
+bin_PROGRAMS = astEquivalence compilerFlagsGui runIDA
 
 astEquivalence_SOURCES = \
 	astEquivalenceGui.C \
@@ -10,6 +13,16 @@ astEquivalence_SOURCES = \
 
       
 astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+
+compilerFlagsGui_SOURCES = \
+	compilerFlagsGui.C \
+        compilerFlagsMainGui.C
+
+      
+compilerFlagsGui_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+
+
+
 
 copyFiles:
 	cp $(srcdir)/split-into-tables.tcl $(top_builddir)/projects/AstEquivalence/.

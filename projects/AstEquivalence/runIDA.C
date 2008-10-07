@@ -24,23 +24,26 @@ main(int argc, char** argv)
 	 }
 
      std::vector<char*> newArgs;
+//     newArgs.push_back(strdup("-rose:read_executable_file_format_only"));
 
      for(int i =0; i < argc ; ++i)
        newArgs.push_back(strdup(argv[i]));
-     newArgs.push_back(strdup("-rose:read_executable_file_format_only"));
-
+ 
      SgProject* project = frontend( newArgs.size(), &newArgs[0] );
 
      ROSE_ASSERT (project != NULL);
+	 std::cout << "A" << std::endl;
 
      //Files will only exist for executables
          for(int i =0; i < project->numberOfFiles(); ++i)
          {
            SgFile* file = (*project)[i];
+           std::cout << "B" << std::endl;
 
            if( isSgBinaryFile(file) ){
              std::string filename = file->getFileName(); 
 
+             std::cout << "B " << filename << std::endl;
              boost::filesystem::path path(filename);
              path = boost::filesystem::system_complete(path);
              std::string directory      = path.directory_string();
