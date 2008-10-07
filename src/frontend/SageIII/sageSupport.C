@@ -4096,7 +4096,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " --dump " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
-          OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
           OFPCommandLine.push_back("--dump");
@@ -4165,7 +4165,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // DQ (1/19/2008): New version of OFP requires different calling syntax.
        // string OFPCommandLineString = std::string("java parser.java.FortranMain") + " " + get_sourceFileNameWithPath();
           vector<string> OFPCommandLine;
-          OFPCommandLine.push_back("java");
+          OFPCommandLine.push_back(JAVA_JVM_PATH);
           OFPCommandLine.push_back(classpath);
           OFPCommandLine.push_back("fortran.ofp.FrontEnd");
 
