@@ -1107,9 +1107,10 @@ Grammar::buildConstructorParameterList ( Terminal & node, vector<GrammarString *
 
      for( gIt = includeList.begin(); gIt != includeList.end(); gIt++)
         {
-       // BP : 10/26/2001, tried running with Sun CC and gave the correct results ie generated source correctly
+       // BP : 10/26/2001, tried running with Sun CC and gave the correct results (i.e. generated source correctly)
           GrammarString *memberFunctionCopy= *gIt;
           ROSE_ASSERT (memberFunctionCopy != NULL);
+
        // DQ (11/7/2006): Rewritten to remove wrap logic (overly complex)
        // if (memberFunctionCopy->getIsInConstructorParameterList() == true)
           if (memberFunctionCopy->getIsInConstructorParameterList() == CONSTRUCTOR_PARAMETER)
@@ -1220,7 +1221,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
      if (node.generateDestructor() == true)
          dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(destructorPrototype, "" /* "<destructor>" */, 1));
 
-     // Now build the constructor and put in the constructorParameterString
+  // Now build the constructor and put in the constructorParameterString
      if (node.generateConstructor() == true)
         {
           bool complete = false;
@@ -1248,6 +1249,8 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
 
                string constructorParameterString_1 = buildConstructorParameterListString(node,withInitializers,withTypes, cur, &complete);
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString_1 + "); \n";
+
+            // Reset "withInitializers" to false and generate a new string for the constructor parameters.
                withInitializers = false;
 
             // DQ (11/7/2006): Mark it temporarily as NOT a constructor parameter.
@@ -1259,7 +1262,6 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
             // DQ (11/7/2006): Turn it back on as a constructor parameter (and reset the defaultInitializerString)
                returnValue->isInConstructorParameterList = CONSTRUCTOR_PARAMETER;
                returnValue->defaultInitializerString = defaultInitializer;
-
              }
             else
              {
@@ -1268,6 +1270,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
                constructorPrototype = constructorPrototype + "         " + string(className) + "(" + constructorParameterString + "); \n";
                withInitializers = false;
              }
+
           dataAccessFunctionPrototypeString.push_back(StringUtility::StringWithLineNumber(constructorPrototype, "" /* "<constructor>" */, 1));
         }
 

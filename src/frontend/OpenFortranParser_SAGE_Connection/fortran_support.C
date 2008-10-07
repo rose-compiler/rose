@@ -359,12 +359,16 @@ setSourcePosition  ( SgLocatedNode* locatedNode, Token_t* token )
      locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
    }
 
+#if 0
+// DQ (10/6/2008): the need for this is eliminated by moving some nodes that have source 
+// position from SgSupport to teh new SgLocatedNodeSupport subtree of SgLocatedNode.
+
 // DQ (10/4/2008): Added support to marking the source position of Use statement names/rename IR nodes.
 void
-setSourcePosition  ( SgRenamePair* namePair, Token_t* token )
+setSourcePosition  ( SgSupport* namePair, Token_t* token )
    {
-     if ( SgProject::get_verbose() > 0 )
-          printf ("In setSourcePosition namePair = %p = %s token = %p line = %d \n",namePair,namePair->get_local_name().str(),token,token != NULL ? token->line : -1);
+  // if ( SgProject::get_verbose() > 0 )
+  //      printf ("In setSourcePosition namePair = %p = %s token = %p line = %d \n",namePair,namePair->get_local_name().str(),token,token != NULL ? token->line : -1);
 
   // The SgRenamePair has both a startOfConstruct and endOfConstruct source position.
      ROSE_ASSERT(namePair != NULL);
@@ -373,20 +377,18 @@ setSourcePosition  ( SgRenamePair* namePair, Token_t* token )
 
      ROSE_ASSERT(token->line > 0);
 
-#if 1
      string filename = getCurrentFilename();
-#else
-     ROSE_ASSERT(OpenFortranParser_globalFilePointer != NULL);
-     string filename = OpenFortranParser_globalFilePointer->get_sourceFileNameWithPath();
-#endif
-     printf ("In setSourcePosition(SgRenamePair %p = %s) line = %d column = %d filename = %s \n",namePair,namePair->get_local_name().str(),token->line,token->col,filename.c_str());
+  // printf ("In setSourcePosition(SgRenamePair %p = %s) line = %d column = %d filename = %s \n",namePair,namePair->get_local_name().str(),token->line,token->col,filename.c_str());
      ROSE_ASSERT(filename.empty() == false);
 
   // Set these based on the source position information from the tokens
      namePair->set_startOfConstruct (new Sg_File_Info(filename,token->line,token->col));
+  // namePair->set_file_info(new Sg_File_Info(filename,token->line,token->col));
 
      namePair->get_startOfConstruct()->set_parent(namePair);
+  // namePair->get_file_info()->set_parent(namePair);
    }
+#endif
 
 void
 setSourcePosition  ( SgInitializedName* initializedName, const TokenListType & tokenList )
@@ -3069,6 +3071,10 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      SgAttributeSpecificationStatement *attributeSpecificationStatement = new SgAttributeSpecificationStatement();
 
+  // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
+     attributeSpecificationStatement->set_definingDeclaration(attributeSpecificationStatement);
+     attributeSpecificationStatement->set_firstNondefiningDeclaration(attributeSpecificationStatement);
+
      ROSE_ASSERT(sourcePositionToken != NULL);
      setSourcePosition(attributeSpecificationStatement,sourcePositionToken);
 
@@ -3927,6 +3933,7 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
      if (astInterfaceStack.empty() == false)
         {
           SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
+#if 0
           interfaceStatement->get_interface_procedure_declarations().push_back(procedureDeclaration);
           procedureDeclaration->set_parent(interfaceStatement);
 
@@ -3935,6 +3942,17 @@ buildProcedureSupport(SgProcedureHeaderStatement* procedureDeclaration, bool has
        // interface_procedure_declarations in R1106 (c_action_end_module_stmt()).
           SgName procedureName = procedureDeclaration->get_name();
           interfaceStatement->get_interface_procedure_names().push_back(procedureName);
+#else
+       // DQ (10/6/2008): The use of the SgInterfaceBody IR nodes allows the details of if 
+       // it was a procedure name or a procedure declaration to be abstracted away and saves 
+       // this detail of how it was structured in the source code in the AST (for the unparser).
+          SgName name = procedureDeclaration->get_name();
+          SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,procedureDeclaration,/*use_function_name*/ false);
+          procedureDeclaration->set_parent(interfaceStatement);
+          interfaceStatement->get_interface_body_list().push_back(interfaceBody);
+          interfaceBody->set_parent(interfaceStatement);
+          setSourcePosition(interfaceBody);
+#endif
         }
        else
         {

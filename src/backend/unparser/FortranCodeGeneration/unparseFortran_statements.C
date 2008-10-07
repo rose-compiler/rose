@@ -1608,7 +1608,7 @@ FortranCodeGeneration_locatedNode::unparseProgHdrStmt(SgStatement* stmt, SgUnpar
                   }
 
             // Output 2 new lines to better separate functions visually in the output
-               unp->cur.insert_newline(2);
+               unp->cur.insert_newline(1);
              }
             else
              {
@@ -1680,6 +1680,7 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
 
      unp->cur.insert_newline(1); 
 
+#if 0
   // ROSE_ASSERT(interfaceStatement->get_body() != NULL);
   // unparseStatement(interfaceStatement->get_body(), info);
 #if 0
@@ -1718,6 +1719,36 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
              }
 
           unp->cur.insert_newline(1); 
+        }
+#endif
+#else
+     for (size_t i = 0; i < interfaceStatement->get_interface_body_list().size(); i++)
+        {
+#if 1
+          printf ("interfaceStatement->get_interface_body_list()[i] = %p = %s \n",
+               interfaceStatement->get_interface_body_list()[i],
+               interfaceStatement->get_interface_body_list()[i]->class_name().c_str());
+#endif
+          bool outputFunctionName = interfaceStatement->get_interface_body_list()[i]->get_use_function_name();
+          SgName functionName = interfaceStatement->get_interface_body_list()[i]->get_function_name();
+          SgFunctionDeclaration* functionDeclaration = interfaceStatement->get_interface_body_list()[i]->get_functionDeclaration();
+
+#if 0
+          printf ("outputFunctionName = %s \n",outputFunctionName ? "true" : "false");
+          printf ("functionName = %s \n",functionName.str());
+          if (functionDeclaration != NULL)
+               printf ("functionDeclaration = %p = %s \n",functionDeclaration,functionDeclaration->class_name().c_str());
+#endif
+          if (outputFunctionName == true)
+             {
+               curprint("MODULE PROCEDURE ");
+               curprint(functionName.str());
+               unp->cur.insert_newline(1);
+             }
+            else
+             {
+               unparseStatement(functionDeclaration, info);
+             }
         }
 #endif
 
@@ -2041,6 +2072,7 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
         }
 #endif
   // After a variable declaration insert a new line
+  // curprint(" ! After a variable declaration ");
      unp->cur.insert_newline(1);
    }
 
@@ -2138,10 +2170,15 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
 
      SgBasicBlock* basic_stmt = isSgBasicBlock(stmt);
      ROSE_ASSERT(basic_stmt != NULL);
-  
+
+#if 1
+  // DQ (10/6/2008): Adding space here is required to get "else if" blocks formatted correctly (at least).
      unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-     unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-  
+
+  // Not required for correct unparsing
+  // unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
+#endif
+
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      for ( ; p != basic_stmt->get_statements().end(); ++p)
         { 
@@ -2150,8 +2187,11 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
           unparseStatement((*p), info);
         }
 
+#if 0
+  // DQ (10/6/2008): This does not appear to be required (passes all tests).
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
      unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+#endif
    }
 
 
@@ -4030,6 +4070,8 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
        // unparseStatement(proghdr->get_definition(), ninfo);
           unparseFuncDefnStmt(procedureHeader->get_definition(), ninfo);
 
+          unp->cur.insert_newline(1);
+
        // DQ (8/19/2007): The "END" has just been output by the unparsing of the SgFunctionDefinition 
        // so we just want to finish it off with "PROGRAM <name>".
 
@@ -4043,7 +4085,7 @@ FortranCodeGeneration_locatedNode::unparseProcHdrStmt(SgStatement* stmt, SgUnpar
              }
 
        // Output 2 new lines to better separate functions visually in the output
-          unp->cur.insert_newline(2);
+          unp->cur.insert_newline(1);
         }
        else
         {
@@ -4800,6 +4842,7 @@ FortranCodeGeneration_locatedNode::unparseClassDeclStmt_derivedType(SgStatement*
 
        // printf ("Calling unparseStatement(classdecl_stmt->get_definition(), ninfox); for %s \n",classdecl_stmt->get_name().str());
           unparseStatement(classdecl_stmt->get_definition(), ninfox);
+       // curprint("! Comment in unparseClassDeclStmt_derivedType() ");
 
           unparseStatementNumbersSupport(classdecl_stmt->get_end_numeric_label(),info);
           curprint("END TYPE ");
@@ -5016,6 +5059,7 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
           while ( pp != classdefn_stmt->get_members().end() )
              {
                unparseStatement((*pp), ninfo);
+            // curprint("! Comment in unparseClassDefnStmt() (after each member declaration) \n");
                pp++;
              }
 
@@ -5029,6 +5073,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
 #endif
           unparseAttachedPreprocessingInfo(classdefn_stmt, info, PreprocessingInfo::inside);
 
+#if 0
+       // DQ (10/6/2008): This adds blank lines to the unparsed output (and is not required for Fortran support).
+          curprint("! Comment in unparseClassDefnStmt() (before packing pragma) ");
           unp->cur.format(classdefn_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
        // curprint ( string("}"));
 
@@ -5039,7 +5086,9 @@ FortranCodeGeneration_locatedNode::unparseClassDefnStmt(SgStatement* stmt, SgUnp
                curprint ( string("\n#pragma pack()"));
              }
 
+          curprint("! Comment in unparseClassDefnStmt() (after packing pragma) ");
           unp->cur.format(classdefn_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
+#endif
         }
 
   // DQ (6/13/2007): Set to null before resetting to non-null value 

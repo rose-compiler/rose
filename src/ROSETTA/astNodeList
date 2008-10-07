@@ -492,3 +492,5 @@ SgAsmElfStringStorage
 SgAsmElfStrtab
 SgAliasSymbol
 SgRenamePair
+SgInterfaceBody
+SgLocatedNodeSupport

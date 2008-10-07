@@ -155,6 +155,8 @@ CxxGrammarMetaProgram_SOURCES = \
    buildConstructorsWithoutSourcePositionInformation.C \
    outputClassesAndFields.C
 
+# buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
+
 CxxGrammarMetaProgram_LDADD = $(top_builddir)/src/util/libroseutil.la
 
 # DQ (9/11/2008):
@@ -163,7 +165,8 @@ CxxGrammarMetaProgram_LDADD = $(top_builddir)/src/util/libroseutil.la
 # if this can be make a little more tolerable for those without larger
 # computers working on ROSE (e.g. students).
 # CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_LDADD)
-CxxGrammarMetaProgram_DEPENDENCIES = 
+# CxxGrammarMetaProgram_DEPENDENCIES = 
+# CxxGrammarMetaProgram_DEPENDENCIES = $(CxxGrammarMetaProgram_SOURCES)
 
 
 # DQ (7/8/2005): Avoid building Sage III when util changes!

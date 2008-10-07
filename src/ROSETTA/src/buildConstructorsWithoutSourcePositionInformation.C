@@ -95,14 +95,26 @@ Grammar::getNamedNode ( Terminal & node, const string & name )
 
   // We only want to output non-source-position dependent constructors for SgLocatedNodes. Test for this.
      Terminal* parentNode = node.getBaseClass();
-     while ( parentNode != NULL && string(parentNode->getName()) != name )
-        {
-       // printf ("node %s parent node: %s \n",name.c_str(),parentNode->getName());
-          parentNode = parentNode->getBaseClass();
-        }
+#if 0
+     string parentNodeName;
      if (parentNode != NULL)
         {
-       // printf ("Found node %s parent node: %s \n",name.c_str(),parentNode->getName());
+          parentNodeName = parentNode->getName();
+       // printf ("parentNodeName = %s \n",parentNodeName.c_str());
+        }
+  // printf ("In Grammar::getNamedNode(): name = %s \n",name.c_str());
+#endif
+
+     while ( parentNode != NULL && string(parentNode->getName()) != name )
+  // while ( (parentNode != NULL) && (parentNodeName != name) )
+        {
+       // printf ("node %s parent node: %s \n",name.c_str(),parentNode->getName().c_str());
+          parentNode = parentNode->getBaseClass();
+        }
+
+     if (parentNode != NULL)
+        {
+       // printf ("Found node %s parent node: %s \n",name.c_str(),parentNode->getName().c_str());
         }
 
      return parentNode;

@@ -1790,6 +1790,7 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
 
        // Ignore these SgSupport cases since we don't permit them to be shared
           case V_SgRenamePair:
+          case V_SgInterfaceBody:
           case V_Sg_File_Info:
           case V_SgProject:
        // case V_SgFile:

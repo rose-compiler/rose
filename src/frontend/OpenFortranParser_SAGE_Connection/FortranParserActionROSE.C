@@ -201,7 +201,6 @@ void c_action_declaration_construct()
           printf ("WARNING: clearing the astAttributeSpecStack (depth = %zu) \n",astAttributeSpecStack.size());
           while (astAttributeSpecStack.empty() == false)
              {
-
                SgAttributeSpecificationStatement::attribute_spec_enum kind = (SgAttributeSpecificationStatement::attribute_spec_enum) astAttributeSpecStack.front();
                printf (" %d ",astAttributeSpecStack.front());
 
@@ -3270,6 +3269,7 @@ void c_action_entity_decl(Token_t * id)
 
        // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
           functionType->set_return_type(astTypeStack.front());
+          functionType->set_orig_return_type(type);
        // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
 
        // printf ("Exiting at base of case to reset the function type! \n");
@@ -3311,6 +3311,7 @@ void c_action_entity_decl(Token_t * id)
 
                  // printf ("Before resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                     functionType->set_return_type(type);
+                    functionType->set_orig_return_type(type);
                  // printf ("After resetting: functionType->get_return_type() = %p = %s \n",functionType->get_return_type(),functionType->get_return_type()->class_name().c_str());
                   }
              }
@@ -13646,6 +13647,9 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 
   // moduleDefinition->print_symboltable ("In c_action_end_module_stmt()");
 
+#if 0
+  // DQ (10/6/2008): We now implement interface bodies so we don't have to process this detail here.
+
      for (size_t i = 0; i < interfaceList.size(); i++)
         {
           SgInterfaceStatement* interfaceStatement = interfaceList[i];
@@ -13653,7 +13657,6 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 
        // SgSymbol * 	lookup_symbol (const SgName &n) const
        // SgFunctionSymbol * 	lookup_function_symbol (const SgName &n) const
-
           for (size_t j = 0; j < interfaceStatement->get_interface_procedure_names().size(); j++)
              {
                SgName procedureName = interfaceStatement->get_interface_procedure_names()[j];
@@ -13681,6 +13684,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                        }
                   }
              }
+
           if (interfaceStatement->get_interface_procedure_declarations().size() != interfaceStatement->get_interface_procedure_names().size())
              {
                printf ("interfaceStatement->get_interface_procedure_names().size()        = %zu \n",interfaceStatement->get_interface_procedure_names().size());
@@ -13689,6 +13693,7 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
              }
           ROSE_ASSERT(interfaceStatement->get_interface_procedure_declarations().size() == interfaceStatement->get_interface_procedure_names().size());
         }
+#endif
    }
 
 /**
@@ -14476,6 +14481,9 @@ void c_action_end_interface_stmt(Token_t *label, Token_t *kw1, Token_t *kw2, Tok
         }
      ROSE_ASSERT(astNameStack.empty() == true);
 
+#if 0
+  // DQ (10/6/2008): We now implement interface bodies so we don't have to process this detail here.
+
   // Check if we have to fixup the interface with references to any declarations that were built outside of the interface.
      SgInterfaceStatement* interfaceStatement = astInterfaceStack.front();
      int numberOfInterfaceNames        = interfaceStatement->get_interface_procedure_names().size();
@@ -14487,6 +14495,7 @@ void c_action_end_interface_stmt(Token_t *label, Token_t *kw1, Token_t *kw2, Tok
                printf ("WARNING: interface IR nodes will need to be fixed up (in R1106 c_action_end_module_stmt()) \n");
        // ROSE_ASSERT(false);
         }
+#endif
 
   // DQ (10/2/2008): Pop the interface stack
      ROSE_ASSERT(astInterfaceStack.empty() == false);
@@ -14556,11 +14565,18 @@ void c_action_procedure_stmt(Token_t *label, Token_t *module, Token_t *procedure
           ROSE_ASSERT(astNameStack.empty() == false);
           string procedure_name = astNameStack.front()->text;
           printf ("procedure_name = %s \n",procedure_name.c_str());
-
+#if 0
        // Save these names for later when the functions are built and then use them to 
        // build the interfaceStatement->get_interface_procedure_declarations() list.
           interfaceStatement->get_interface_procedure_names().push_back(procedure_name);
-
+#else
+          SgName name = procedure_name;
+          SgFunctionDeclaration* nullFunctionDeclaration = NULL;
+          SgInterfaceBody* interfaceBody = new SgInterfaceBody(name,nullFunctionDeclaration,/*use_function_name*/ true);
+          interfaceStatement->get_interface_body_list().push_back(interfaceBody);
+          interfaceBody->set_parent(interfaceStatement);
+          setSourcePosition(interfaceBody);
+#endif
           astNameStack.pop_front();
         }
 #endif
@@ -14669,6 +14685,10 @@ void c_action_import_stmt(Token_t *label, Token_t *importKeyword, Token_t *eos, 
           printf ("In c_action_import_stmt(): importKeyword = %p = %s hasGenericNameList = %s \n",importKeyword,importKeyword != NULL ? importKeyword->text : "NULL",hasGenericNameList ? "true" : "false");
 
      SgImportStatement* importStatement = new SgImportStatement();
+
+  // DQ (10/6/2008): It seems that we all of a sudden need thes to be set!
+     importStatement->set_definingDeclaration(importStatement);
+     importStatement->set_firstNondefiningDeclaration(importStatement);
 
      ROSE_ASSERT(importKeyword != NULL);
      setSourcePosition(importStatement,importKeyword);

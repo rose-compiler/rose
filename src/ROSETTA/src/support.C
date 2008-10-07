@@ -203,8 +203,13 @@ Grammar::setUpSupport ()
   // DQ (12/23/2007): Added a list version (required for repeat_sepcification support
      NEW_TERMINAL_MACRO (FormatItemList, "FormatItemList", "TEMP_FormatItemList" );
 
-  // DQ (11/19/2007): Support for the Fortran "USE" statement and its rename list option.
-     NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+  // DQ (10/3/2008): Support for the Fortran "USE" statement and its rename list option.
+  // NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
+
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+  // DQ (10/6/2008): Support for the Fortran "USE" statement and its rename list option.
+  // NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
 #endif
 
   // tps (08/08/07): Added the graph, graph nodes and graph edges 
@@ -214,7 +219,7 @@ Grammar::setUpSupport ()
           Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
           TemplateParameter     | TemplateArgument          | Directory           | FileList             | 
           DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
-          TemplateParameterList | RenamePair                |
+          TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
           Graph                 | GraphNode                 | GraphEdge           | 
 
 #if !OLD_GRAPH_NODES
@@ -1652,6 +1657,8 @@ Specifiers that can have only one value (implemented with a protected enum varia
      FormatItemList.setDataPrototype     ( "SgFormatItemPtrList", "format_item_list", "",
                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+#if 0
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/Support.code");
      RenamePair.setDataPrototype     ( "SgName", "local_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1659,6 +1666,27 @@ Specifiers that can have only one value (implemented with a protected enum varia
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      RenamePair.setDataPrototype     ( "Sg_File_Info*", "startOfConstruct", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information 
+  // used to specify function declaration ro function names in interface statements.
+     InterfaceBody.setFunctionPrototype ( "HEADER_INTERFACE_BODY", "../Grammar/Support.code");
+
+  // Record whether the function declaration or the function name was used in the interface body (F90 permits either one).
+     InterfaceBody.setDataPrototype     ( "SgName", "function_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // We can't traverse this since it may be the same as a declaration in a contains statement. 
+  // However, if we can properly support the defining vs. non defining declaration then maybe 
+  // we can.  Work on this later.
+     InterfaceBody.setDataPrototype     ( "SgFunctionDeclaration*", "functionDeclaration", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InterfaceBody.setDataPrototype     ( "bool", "use_function_name", "= false",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "startOfConstruct", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+     InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "endOfConstruct", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+#endif
 
   // ***********************************************************************
   // ***********************************************************************
@@ -1819,7 +1847,13 @@ Specifiers that can have only one value (implemented with a protected enum varia
      FormatItem.setFunctionSource ( "SOURCE_FORMAT_ITEM", "../Grammar/Support.code");
      FormatItemList.setFunctionSource ( "SOURCE_FORMAT_ITEM_LIST", "../Grammar/Support.code");
 
+#if 0
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
      RenamePair.setFunctionSource ( "SOURCE_RENAME_PAIR", "../Grammar/Support.code");
+
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+     InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/Support.code");
+#endif
    }
 
 

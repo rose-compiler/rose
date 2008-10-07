@@ -377,7 +377,7 @@ Grammar::setUpStatements ()
 				NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 #endif
-     // MK: the following two function calls could be wrapped into a single one:
+  // MK: the following two function calls could be wrapped into a single one:
      Statement.setFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code");
      Statement.setSubTreeFunctionPrototype("HEADER_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Statement.code" );
 
@@ -1949,6 +1949,7 @@ Grammar::setUpStatements ()
   // DQ (10/2/2008): Added support for specification of interface types
      InterfaceStatement.setDataPrototype ( "SgInterfaceStatement::generic_spec_enum", "generic_spec", "= SgInterfaceStatement::e_default_interface_type",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#if 0
   // InterfaceStatement.setDataPrototype ( "SgFunctionDeclaration*", "function", "= NULL",
   //              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      InterfaceStatement.setDataPrototype ( "SgDeclarationStatementPtrList", "interface_procedure_declarations", "",
@@ -1960,6 +1961,9 @@ Grammar::setUpStatements ()
   // the module (I hope that earlier than that will not be required).
      InterfaceStatement.setDataPrototype ( "SgStringList", "interface_procedure_names", "",
 				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+     InterfaceStatement.setDataPrototype ( "SgInterfaceBodyPtrList", "interface_body_list", "",
+				      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 #if 0
      InterfaceStatement.setDataPrototype ( "SgBasicBlock*", "body"   , "= NULL",
