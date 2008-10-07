@@ -312,7 +312,12 @@ if test "x$JAVA_HOME" = "x"; then
   else
     while test `readlink "$JAVA"` ; do 
       JAVA=`readlink "$JAVA"` ; 
-    done
+   done
+
+   if test $JAVA = "gcj"; then 
+      AC_MSG_ERROR( "Error: gcj not supported. Please configure sun java as javac" );
+   fi
+
   fi
   JAVA_HOME="`dirname $JAVA`/.."
 fi
