@@ -27,6 +27,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* This is defined if ROSE is configured to use the Java Open Fortran Parser */
+#ifndef USE_ROSE_JAVA_SUPPORT
+#error "openFortranParser_main.C should not be compiled when Java support is disabled"
+#endif
+
 #include "jni.h"
 
 using namespace std;
@@ -58,9 +63,6 @@ using namespace std;
 
 /* Include the paths to the source tree and build tree for ROSE */
 #include "rose_config.h"
-
-/* This is defined if ROSE is configured to use the Java Open Fortran Parser */
-#ifdef USE_ROSE_JAVA_SUPPORT
 
 #include "rose_paths.h"
 #include "commandline_processing.h"
