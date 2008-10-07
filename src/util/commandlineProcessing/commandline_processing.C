@@ -17,6 +17,10 @@
 using namespace std;
 
 #if 0
+// DQ (10/6/2008): (comment added) This function is replaced by:
+// "bool CommandlineProcessing::isOptionTakingSecondParameter( string argument )"
+// defined in sageSupport.C.
+
 bool
 CommandlineProcessing::isOptionTakingFileName( string argument )
    {

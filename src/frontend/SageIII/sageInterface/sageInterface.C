@@ -1235,6 +1235,43 @@ SageInterface::get_name ( const SgExpression* expr )
    }
 
 string
+SageInterface::get_name ( const SgLocatedNodeSupport* node )
+   {
+  // This function is useful for debugging
+  // This is the most general case of a function to return a name for an IR node.
+     ROSE_ASSERT(node != NULL);
+
+     string returnName;
+
+     switch(node->variantT())
+        {
+          case V_SgRenamePair:
+             {
+               const SgRenamePair* n = isSgRenamePair(node);
+               returnName = "rename_pair_";
+               returnName += n->get_local_name().str();
+               returnName += "_from_";
+               returnName += n->get_use_name().str();
+               break;
+             }
+#if 0
+          case V_SgInterfaceBody:
+             {
+               const SgInterfaceBody* n = isSgInterfaceBody(node);
+               returnName = "interface_body";
+               break;
+             }
+#endif
+          default:
+             {
+               returnName = node->class_name();
+             }
+        }
+
+     return returnName;
+   }
+
+string
 SageInterface::get_name ( const SgNode* node )
    {
   // This function is useful fro debugging
@@ -1256,8 +1293,31 @@ SageInterface::get_name ( const SgNode* node )
             else
              {
                const SgExpression* expression = isSgExpression(node);
-               ROSE_ASSERT(expression != NULL);
-               name = get_name(expression);
+               if (expression != NULL)
+                  {
+                    name = get_name(expression);
+                  }
+                 else
+                  {
+                    const SgLocatedNodeSupport* locatedNodeSupport = isSgLocatedNodeSupport(node);
+                    if (locatedNodeSupport != NULL)
+                       {
+                         name = get_name(locatedNodeSupport);
+                       }
+                      else
+                       {
+                         const SgToken* token = isSgToken(node);
+                         if (token != NULL)
+                            {
+                              name = get_name(token);
+                            }
+                           else
+                            {
+                              printf ("Unknown SgLocatedNode = %p = %s \n",node,node->class_name().c_str());
+                              ROSE_ASSERT(false);
+                            }
+                       }
+                  }
              }
         }
        else

@@ -470,7 +470,26 @@ enum ROSE_Fortran_Additional_Info
 HEADER_TOKEN_END
 
 
+HEADER_LOCATED_NODE_SUPPORT_START
+HEADER_LOCATED_NODE_SUPPORT_END
 
+HEADER_RENAME_PAIR_START
+
+          bool isRename() const;
+
+HEADER_RENAME_PAIR_END
+
+HEADER_INTERFACE_BODY_START
+
+HEADER_INTERFACE_BODY_END
+
+
+
+// *************************************************
+// *************************************************
+//                  Source Code
+// *************************************************
+// *************************************************
 
 SOURCE_START
 
@@ -1053,4 +1072,22 @@ const SgToken::token_element SgToken::ROSE_Fortran_keyword_map[127] =
 
 
 SOURCE_TOKEN_END
+
+SOURCE_LOCATED_NODE_SUPPORT_START
+SOURCE_LOCATED_NODE_SUPPORT_END
+
+SOURCE_RENAME_PAIR_START
+
+bool
+SgRenamePair::isRename() const
+   {
+  // This a treated as a valid renaming if the names are different.
+     return (p_local_name != p_use_name);
+   }
+
+SOURCE_RENAME_PAIR_END
+
+SOURCE_INTERFACE_BODY_START
+
+SOURCE_INTERFACE_BODY_END
 

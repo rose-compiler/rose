@@ -189,6 +189,11 @@ extern int gensym_counter;
    */
     std::string get_name (const SgSupport * node);
 
+
+  /*! \brief Generate a useful name to describe the SgLocatedNodeSupport IR node
+   */
+    std::string get_name (const SgLocatedNodeSupport * node);
+
 //@}
 
 //------------------------------------------------------------------------

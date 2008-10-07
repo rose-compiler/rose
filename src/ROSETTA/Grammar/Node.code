@@ -349,6 +349,10 @@ typedef SgModuleStatementPtrList*              SgModuleStatementPtrListPtr;
 typedef Rose_STL_Container<SgRenamePair*> SgRenamePairPtrList;
 typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
 
+// DQ (10/6/2008): Added improved support for F90 interfaces using interface bodies.
+typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
+typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
+
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:

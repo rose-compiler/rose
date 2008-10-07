@@ -12,26 +12,6 @@ Grammar::setUpNodes ()
   // C++ grammar, but this will be modified to permit all grammars to contain elements of the
   // C++ grammar.  Modified grammars will add and subtract elements from this default C++ grammar.
 
-#if 0
-  // We have to build these on the heap so that they will not go out of scope!
-
-  // The order of the use of the terminals and non-terminals determins the 
-  // order of their representation within the header files!
-
-  // NonTerminal LocatedNode = Statement  | Expression;
-     NonTerminal LocatedNode = Expression | Statement;
-     addGrammarElement( LocatedNode );
-     LocatedNode.setName( "LocatedNode" );
-     printf ("LocatedNode ---> "); LocatedNode.show(); printf ("\n\n");
-
-  // Include the GrammarSupport sub-grammar (Attributes, Pragmas, 
-  // misc supporting terminals and non-terminals etc.)
-     NonTerminal Node = Type | Symbol | LocatedNode | GrammarSupport;
-     addGrammarElement(Node);
-     Node.setName("Node");
-     printf ("Node ---> "); Node.show(); printf ("\n\n");
-#endif
-
   // print out all the available nonterminals (error checking/debugging)
   // terminalList.display("Called from Grammar::setUpNodes()");
   // nonTerminalList.display("Called from Grammar::setUpNodes()");
@@ -41,11 +21,26 @@ Grammar::setUpNodes ()
      Terminal & Expression = *lookupTerminal(terminalList, "Expression");
      Terminal & Statement  = *lookupTerminal(terminalList, "Statement");
 
+
+  // DQ (10/3/2008): Support for the Fortran "USE" statement and its rename list option.
+     NEW_TERMINAL_MACRO (RenamePair,     "RenamePair",     "TEMP_Rename_Pair" );
+
+  // DQ (10/6/2008): Support for the Fortran "USE" statement and its rename list option.
+     NEW_TERMINAL_MACRO (InterfaceBody,  "InterfaceBody",  "TEMP_Interface_Body" );
+
+  // DQ (10/6/2008): Migrate some of the SgSupport derived IR nodes, that truely have a position in the 
+  // source code, to SgLocatedNode.  Start with some of the newer IR nodes which are traversed and thus 
+  // are forced to have an interface for the source position interface information (already present in 
+  // the SgLocatedNode base class).  Eventually a number of the IR nodes currently derived from SgSupport
+  // should be moved to be here (e.g. SgInitializedName, SgTemplateArgument, SgTemplateParameter, and 
+  // a number of the new Fortran specific IRnodes, etc.).
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, InterfaceBody | RenamePair, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
   // NEW_NONTERMINAL_MACRO (LocatedNode, Expression | Statement, "LocatedNode", "LocatedNodeTag" );
      NEW_TERMINAL_MACRO (Token, "Token", "TOKEN" );
-     NEW_NONTERMINAL_MACRO (LocatedNode, Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNode, Statement | Expression | LocatedNodeSupport | Token, "LocatedNode", "LocatedNodeTag", false );
 
      Terminal & Type    = *lookupTerminal(terminalList, "Type");
      Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
@@ -228,6 +223,42 @@ Grammar::setUpNodes ()
      Token.setDataPrototype ( "unsigned int", "classification_code", "= 0",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+     LocatedNodeSupport.setFunctionPrototype ( "HEADER_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
+
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+     RenamePair.setFunctionPrototype ( "HEADER_RENAME_PAIR", "../Grammar/LocatedNode.code");
+     RenamePair.setDataPrototype     ( "SgName", "local_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     RenamePair.setDataPrototype     ( "SgName", "use_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/6/2008): This interferes with the specification in SgLocatedNode
+  // RenamePair.setDataPrototype     ( "Sg_File_Info*", "startOfConstruct", "= NULL",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+
+  // DQ (10/6/2008): Moved to SgLocatedNodeSupport.
+  // DQ (10/6/2008): Added support for interface bodies so that we could capture the information 
+  // used to specify function declaration ro function names in interface statements.
+     InterfaceBody.setFunctionPrototype ( "HEADER_INTERFACE_BODY", "../Grammar/LocatedNode.code");
+
+  // Record whether the function declaration or the function name was used in the interface body (F90 permits either one).
+     InterfaceBody.setDataPrototype     ( "SgName", "function_name", "= \"\"",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // We can't traverse this since it may be the same as a declaration in a contains statement. 
+  // However, if we can properly support the defining vs. non defining declaration then maybe 
+  // we can.  Work on this later.
+     InterfaceBody.setDataPrototype     ( "SgFunctionDeclaration*", "functionDeclaration", "= NULL",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     InterfaceBody.setDataPrototype     ( "bool", "use_function_name", "= false",
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (10/6/2008): This interferes with the specification in SgLocatedNode
+  // InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "startOfConstruct", "= NULL",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+  // InterfaceBody.setDataPrototype     ( "Sg_File_Info*", "endOfConstruct", "= NULL",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
+
+
   // ***********************************************************************
   // ***********************************************************************
   //                       Source Code Definition
@@ -260,6 +291,14 @@ Grammar::setUpNodes ()
 
   // DQ (3/24/2007): Added support for tokens in the IR.
      Token.setFunctionSource ( "SOURCE_TOKEN", "../Grammar/LocatedNode.code");
+
+     LocatedNodeSupport.setFunctionSource ( "SOURCE_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
+
+  // DQ (10/6/2008): Moved from SgSupport.
+     RenamePair.setFunctionSource ( "SOURCE_RENAME_PAIR", "../Grammar/LocatedNode.code");
+
+  // DQ (10/6/2008): Moved from SgSupport.
+     InterfaceBody.setFunctionSource ( "SOURCE_INTERFACE_BODY", "../Grammar/LocatedNode.code");
    }
 
 
