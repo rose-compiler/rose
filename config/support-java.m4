@@ -86,6 +86,7 @@ if test "x$USE_JAVA" = x1; then
 fi
 
 AC_DEFINE([USE_ROSE_JAVA_SUPPORT],[$USE_JAVA],[Controls use of ROSE support for Java.])
+AC_DEFINE_UNQUOTED([JAVA_JVM_PATH],["$JAVA"],[Path to JVM executable])
 
 AC_SUBST(JAVA_PATH)
 AC_SUBST(JAVA_JVM_LINK)
