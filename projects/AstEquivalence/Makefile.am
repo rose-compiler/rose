@@ -5,7 +5,7 @@ SUBDIRS =  gui
 
 if ROSE_USE_QROSE
 
-bin_PROGRAMS = astEquivalence compilerFlagsGui runIDA
+bin_PROGRAMS = astEquivalence runIDA
 
 astEquivalence_SOURCES = \
 	astEquivalenceGui.C \
@@ -13,13 +13,6 @@ astEquivalence_SOURCES = \
 
       
 astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
-
-compilerFlagsGui_SOURCES = \
-	compilerFlagsGui.C \
-        compilerFlagsMainGui.C
-
-      
-compilerFlagsGui_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 
 
