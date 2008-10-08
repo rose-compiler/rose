@@ -175,7 +175,7 @@ fi
     make $MAKEFLAGS distcheck || exit 1
     echo "############ make distcheck done"
     # Build a binary version of EDG and put it into the source tree
-    SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | sed s/-redhat-/-pc-/`
+    SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | sed s/-redhat-/-pc-/ | sed s/-unknown-/-pc-/`
     echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
     if [ $ENABLE_BUILD_BINARY_EDG ]; then
       cd ${ROSE_TOP}/build

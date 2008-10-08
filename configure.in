@@ -715,7 +715,7 @@ fi
 AM_CONDITIONAL(BINARY_EDG_TARBALL_ENABLED, [test "x$binary_edg_tarball_enabled" = "xyes"])
 
 release_binary_compatibility_signature="RELEASE_BINARY_COMPATIBILITY_SIGNATURE" # This variable will be substituted in binary-EDG release copies of configure.in
-build_triplet_without_redhat=`echo $build | sed s/-redhat-/-pc-/`
+build_triplet_without_redhat=`echo $build | sed s/-redhat-/-pc-/ | sed s/-unknown-/-pc-/`
 expected_binary_edg_dirname="roseBinaryEDG-${build_triplet_without_redhat}-${release_binary_compatibility_signature}"
 expected_binary_edg_tarball="${expected_binary_edg_dirname}.tar.gz"
 full_expected_binary_edg_tarball="${srcdir}/src/frontend/CxxFrontend/${expected_binary_edg_tarball}"
