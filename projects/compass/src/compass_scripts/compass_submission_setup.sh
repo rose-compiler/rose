@@ -155,7 +155,7 @@ fi
 ################################################################################
 
 echo "Sorting ${COMPASS_LIST}..."
-sort ${COMPASS_LIST} -o ${COMPASS_LIST}
+env LC_ALL=C sort ${COMPASS_LIST} -o ${COMPASS_LIST}
 
 for checker in `cat ${COMPASS_LIST}`
 do
@@ -171,7 +171,7 @@ do
 done
 
 echo "Sorting ${COMPASS_PROJECT}/RULE_SELECTION"
-sort ${COMPASS_PROJECT}/RULE_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION 
+env LC_ALL=C sort ${COMPASS_PROJECT}/RULE_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION 
 
 extraDist
 

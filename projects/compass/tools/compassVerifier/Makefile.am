@@ -43,7 +43,7 @@ CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C ch
 ################################################################################
 
 TOOLBUILD=../compass/
-FIND_ALL_CHECKERS=find $(compass_checker_dir) -type d -mindepth 1 -maxdepth 1 -exec basename {} \; | grep -v ".svn" | sort | uniq
+FIND_ALL_CHECKERS=find $(compass_checker_dir) -type d -mindepth 1 -maxdepth 1 -exec basename {} \; | grep -v ".svn" | env LC_ALL=C sort | uniq
 
  include verify.inc
 
