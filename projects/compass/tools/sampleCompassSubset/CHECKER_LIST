@@ -16,9 +16,9 @@ functionDefinitionPrototype
 mallocReturnValueUsedInIfStmt
 noAsmStmtsOps
 noExitInMpiCode
-nonAssociativeRelationalOperators
 noRand
 noVfork
+nonAssociativeRelationalOperators
 oneLinePerDeclaration
 protectVirtualMethods
 singleParameterConstructorExplicitModifier

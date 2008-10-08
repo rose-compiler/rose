@@ -16,9 +16,9 @@
 +:MallocReturnValueUsedInIfStmt
 +:NoAsmStmtsOps
 +:NoExitInMpiCode
-+:NonAssociativeRelationalOperators
 +:NoRand
 +:NoVfork
++:NonAssociativeRelationalOperators
 +:OneLinePerDeclaration
 +:ProtectVirtualMethods
 +:SingleParameterConstructorExplicitModifier
