@@ -1225,7 +1225,7 @@ Grammar::buildMemberAccessFunctionPrototypesAndConstuctorPrototype ( Terminal & 
      if (node.generateConstructor() == true)
         {
           bool complete = false;
-          ConstructParamEnum cur = INDIRECT_CONSTRUCTOR_PARAMETER;
+          ConstructParamEnum cur = CONSTRUCTOR_PARAMETER;
           string constructorPrototype = "\n     public: \n"; 
 #if 1
           bool withInitializers = true;
@@ -1366,24 +1366,16 @@ Grammar::buildConstructor ( Terminal & node )
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = readFileWithPos (constructorTemplateFileName);
 
           bool complete  = false;
-          ConstructParamEnum config = INDIRECT_CONSTRUCTOR_PARAMETER; // 1
-          int i = 1;
+          ConstructParamEnum config = CONSTRUCTOR_PARAMETER;
           if  (node.getBuildDefaultConstructor())
              {
-               config = NO_CONSTRUCTOR_PARAMETER; // 0
-               i = 0;
+               config = NO_CONSTRUCTOR_PARAMETER;
              }
 
-       // DQ (5/22/2006): Why do we have such a complex for loop?
-       // JJW 4-2-2008 Simplified loop
           if (config == NO_CONSTRUCTOR_PARAMETER) {
             constructorLoopBody(NO_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          }
-          if (!complete) {
-            constructorLoopBody(INDIRECT_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
-          }
-          if (!complete) {
-            constructorLoopBody(WRAP_CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
+          } else {
+            constructorLoopBody(CONSTRUCTOR_PARAMETER, complete, constructorSourceCodeTemplate, node, returnString);
           }
         }
 
@@ -2676,68 +2668,6 @@ Grammar::buildCode ()
   // DQ (12/31/2005): Insert "using namespace std;" into the source file (but never into the header files!)
      rtiFile << "\n// Simplify code by using std namespace (never put into header files since it effects users) \nusing namespace std;\n\n";
 
-  // turn this into a code pattern
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgName& n) {\n "
-       << "  return os << \"\\\"\" << n.str() << \"\\\"\";\n}\n";
-
-#if 1
-  // DQ (9/0/2006): Added output function for Sgxxx objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgAsmStmt::AsmRegisterNameList & bv) \n   {\n "
-       << "     for (unsigned int i=0; i < bv.size(); i++) os << ((long)(bv[i]));\n"
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/20/2007): Added output function for SgDataStatementObject objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgDataStatementObjectPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/20/2007): Added output function for SgDataStatementValue objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgDataStatementValuePtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/21/2007): Added output function for SgCommonBlockObject objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgCommonBlockObjectPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/21/2007): Added output function for SgDimensionObject objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgDimensionObjectPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/21/2007): Added output function for SgLabelSymbol objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgLabelSymbolPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-#if 1
-  // DQ (11/21/2007): Added output function for SgFormatItem objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgFormatItemPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-
-// DQ (8/13/2008): Turn this off to remove older binary file format IR nodes!
-#if 0
-  // DQ (11/21/2007): Added output function for SgAsmSectionHeader objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgAsmSectionHeaderPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-  // DQ (11/21/2007): Added output function for SgAsmProgramHeader objects
-     rtiFile 
-       << "std::ostream& operator<<(std::ostream& os, SgAsmProgramHeaderPtrList& bv) \n   {\n "
-       << "     return os;\n   }\n";
-#endif
-
-
      buildRTIFile(rootNode, rtiFile);
      cout << "DONE: buildRTIFile" << endl;
      Grammar::writeFile(rtiFile, ".", getGrammarName() + "RTI", ".C");
@@ -2886,7 +2816,7 @@ void Grammar::buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumber
   result += "// generated file\n";
   result += "#include \"rtiHelpers.h\"\n";
   // container in file scope to avoid multiple (200) template instantiation
-  result += "static " + RTIreturnType + " " + RTIContainerName + ";\n\n";
+  // result += "static " + RTIreturnType + " " + RTIContainerName + ";\n\n";
   result += a.text; // synthesized attribute
   rtiFile.push_back(StringUtility::StringWithLineNumber(result, "", 1));
 }
@@ -2899,19 +2829,17 @@ Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesi
   // MS: 2002
   // simply traverse includeList and generate the same code as for traversalSuccessorContainer
   // start: generate roseRTI() method
+     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
      ostringstream ss;
      ss << RTIreturnType << endl
         << grammarnode->getName() << "::roseRTI() {" << endl;
+     ss << RTIreturnType << " " << RTIContainerName << "(" << includeList.size() << ");\n\n";
      // << RTIreturnType << " " << RTIContainerName << ";" << endl
-     ss << RTIContainerName << ".clear();" << endl;
+  // ss << RTIContainerName << ".clear();" << endl;
   // if(grammarnode->isNonTerminal()) {
   // (traversed) data member information for current grammar node
-     vector<GrammarString*> includeList=classMemberIncludeList(*grammarnode);
      for(vector<GrammarString*>::iterator stringListIterator = includeList.begin(); stringListIterator != includeList.end(); stringListIterator++)
         {
-       // QY 11/9/04 skip indirect members
-          if ((*stringListIterator)->automaticGenerationOfDataAccessFunctions == BUILD_INDIRECT_ACCESS_FUNCTIONS)
-               continue; 
        // do it for all data members
           string type = (*stringListIterator)->getTypeNameString();
           type=GrammarString::copyEdit (type,"$GRAMMAR_PREFIX_",getGrammarPrefixName());
@@ -2919,7 +2847,7 @@ Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesi
        // s += string(grammarnode->getName())+" -> "+type
        //   +" [label="+(*stringListIterator)->getVariableNameString()+"];\n";
 #if COMPLETERTI
-          ss << generateRTICode(*stringListIterator, RTIContainerName, grammarnode->getName());
+          ss << generateRTICode(*stringListIterator, RTIContainerName, grammarnode->getName(), stringListIterator - includeList.begin());
 #endif
         }
 
@@ -2941,7 +2869,7 @@ Grammar::generateRTIImplementation(Terminal* grammarnode, vector<GrammarSynthesi
 
 // MS: 2002: generate source for adding RTI information to node (more detailed than C++ RTI info!)
 // this info is used in PDF and dot output
-string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerName, string className) {
+string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerName, string className, size_t index) {
   string memberVariableName=gs->getVariableNameString();
   string typeString=string(gs->getTypeNameString());
   {
@@ -2950,6 +2878,8 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   }
   ostringstream ss;
   
+  ss << "doRTI(\"" << memberVariableName << "\", (void*)(&p_" << memberVariableName << "), sizeof(p_" << memberVariableName << "), (void*)this, \"" << className << "\", \"" << typeString << "\", \"p_" << memberVariableName << "\", toStringForRTI(p_" << memberVariableName << "), " << dataMemberContainerName << "[" << index << "]);\n";
+#if 0
   ss << "#if ROSE_USE_VALGRIND\n";
   ss << "doUninitializedFieldCheck(\"" << memberVariableName << "\", (void*)(&p_" << memberVariableName << "), sizeof(p_" << memberVariableName << "), (void*)this, \"" << className << "\");\n";
   ss << "#endif\n";
@@ -2958,6 +2888,7 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
   << "\"p_" << memberVariableName << "\"" << ", "
   << "toStringForRTI(p_" << memberVariableName << ")"
   << "));" << endl;
+#endif
   return ss.str();
 }
 

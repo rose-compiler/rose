@@ -15,6 +15,7 @@ class SubclassListBuilder {
 
   public:
   SubclassListBuilder() {}
+#if 0
   SubclassListBuilder(const Terminal& t)
       : children(1, const_cast<Terminal*>(&t)) {
     ROSE_ASSERT (&t);
@@ -29,17 +30,20 @@ class SubclassListBuilder {
     result |= t;
     return result;
   }
-
-  const std::vector<Terminal*>& getList() const {
-    return children;
-  }
+#endif
+  // Yes, this is a mutating operation; the symbol was used for that before and
+  // so we need to keep it
+  SubclassListBuilder& operator|(const Terminal& t);
+  const std::vector<Terminal*>& getList() const;
 };
 
+#if 0
 inline SubclassListBuilder operator|(const Terminal& t1, const Terminal& t2) {
   ROSE_ASSERT (&t1);
   ROSE_ASSERT (&t2);
   return SubclassListBuilder(t1) | t2;
 }
+#endif
 
 class Terminal
 {

@@ -13,6 +13,16 @@ using namespace std;
 // #                 NonTerminal Member Functions                 #
 // ################################################################
 
+SubclassListBuilder& SubclassListBuilder::operator|(const Terminal& t) {
+  ROSE_ASSERT (&t);
+  children.push_back(const_cast<Terminal*>(&t));
+  return *this;
+}
+
+const std::vector<Terminal*>& SubclassListBuilder::getList() const {
+  return children;
+}
+
 Terminal::~Terminal()
    {
    }
@@ -191,28 +201,6 @@ Terminal::buildConstructorBody ( bool withInitializers, ConstructParamEnum confi
 
                case TAG_CONSTRUCTOR_PARAMETER:
                     returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
-                    break;
-               case TAG_INDIRECT_CONSTRUCTOR_PARAMETER:
-                    prevParam = variableNameString;
-                    break;
-               case TAG_WRAP_CONSTRUCTOR_PARAMETER:
-                    assert(prevParam != "");
-                    if (config == INDIRECT_CONSTRUCTOR_PARAMETER)
-                       {
-                         returnString = returnString + "     if(" + prevParam + " == NULL) \n"
-                                                     + "        p_" + variableNameString + " = 0; \n"
-                                                     + "     else \n";
-                         string t = (*stringListIterator)->getTypeNameString();
-                         if (t[t.size()-1] == '*')
-                              t = string(t, 0,t.size()-1);
-
-                      // DQ (6/5/2006): Avoid sharing the Sg_File_Info objects
-                      // returnString = returnString + "       p_" + variableNameString + " = new " + t + "(" + prevParam + "->get_file_info()," + prevParam + ");\n";
-                         returnString = returnString + "       p_" + variableNameString + " = new " + t + "(New_File_Info(" + prevParam + ")," + prevParam + ");\n";
-                       }
-                      else 
-                         returnString = returnString + "     p_" + variableNameString+ " = " + variableNameString + ";\n";
-                    prevParam = "";
                     break;
                default:
                     assert(false);     
@@ -740,18 +728,6 @@ Terminal::setDataPrototype ( const GrammarString & inputMemberData)
   sourceCodeString->setVirtual(pureVirtual);
 
   vector<GrammarString*>& l = getMemberFunctionSourceList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
-  if ( inputMemberData.automaticGenerationOfDataAccessFunctions == BUILD_WRAP_ACCESS_FUNCTIONS) {
-     GrammarString* cur = l.back();
-     string functionString = cur->functionNameString;
-     string typeName     = inputMemberData.getTypeNameString();
-     string t = string(typeName,0,typeName.size()-1);
-     functionString = GrammarString::copyEdit (functionString,"$WRAP_TYPE", t);
-     string variableName = inputMemberData.getVariableNameString();
-     functionString = GrammarString::copyEdit (functionString,"$WRAP", variableName);
-     functionString = GrammarString::copyEdit (functionString,"$WDATA",
-                                 inputMemberData.getDefaultInitializerString());
-     cur->functionNameString = functionString; 
-  } 
   // Data access "functions" should be placed into the LOCAL_LIST since
   // they are accessable though the base classes by definition (of C++)
   Terminal::addElementToList ( l, *sourceCodeString );
@@ -775,14 +751,10 @@ Terminal::buildDataAccessFunctions ( const GrammarString & inputMemberData)
      switch (config.getValue())
         {
           case TAG_BUILD_ACCESS_FUNCTIONS:
-          case TAG_BUILD_WRAP_ACCESS_FUNCTIONS:
                filename = "../Grammar/dataMemberAccessFunctions.macro";
                break;
           case TAG_BUILD_LIST_ACCESS_FUNCTIONS:
                filename = "../Grammar/listMemberAccessFunctions.macro";
-               break;
-          case TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS:
-               filename = "../Grammar/dataWrapAccessFunctions.macro";
                break;
           default:
                assert(false);
@@ -1315,30 +1287,27 @@ Terminal::buildPointerInMemoryPoolCheck ()
                     bool typeIsStarPointer = ( varTypeString.find("*") != std::string::npos) ;
                     if ( (varTypeString == "$CLASSNAME *" ) || ( ( ( varTypeString.substr(0,15) == "$GRAMMAR_PREFIX" ) || ( varTypeString.substr(0,2) == "Sg" ) ) && typeIsStarPointer ) )
                        {
-                         if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS)
-                            {
-                              s += "          if ( p_" + varNameString + " != NULL )\n" ;
-                              s += "             { \n" ;
-                              s += "                 if ( p_" + varNameString + "->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )\n" ;
-                              s += "                    { \n" ;
-                           // s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
-                              s += "                       if ( p_" + varNameString + "->isInMemoryPool() == false ) \n" ;
-                              s += "                         { \n" ;
-                           // s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
-                              s += "                             std::cout << \"" + classNameString + " :: \";\n";
-                              s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \"; \n";
-                              s += "                             std::cout <<    p_" + varNameString + "->class_name() << std::endl;\n" ;
-                              s += "                         } \n" ;
-                              s += "                    } \n" ;
-                              s += "                  else \n" ;
-                              s += "                    { \n" ;
-                              s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
-                              s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
-                              s += "                       std::cout << \" not valid \" << std::endl;\n" ;
-                              s += "                    } \n" ;
-                              s += "             } \n" ;
-                              s += "\n" ;
-                            }
+                         s += "          if ( p_" + varNameString + " != NULL )\n" ;
+                         s += "             { \n" ;
+                         s += "                 if ( p_" + varNameString + "->get_freepointer() == AST_FileIO::IS_VALID_POINTER() )\n" ;
+                         s += "                    { \n" ;
+                         // s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
+                         s += "                       if ( p_" + varNameString + "->isInMemoryPool() == false ) \n" ;
+                         s += "                         { \n" ;
+                         // s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \" << p_" + varNameString + "->class_name() << std::endl;\n" ;
+                         s += "                             std::cout << \"" + classNameString + " :: \";\n";
+                         s += "                             std::cout << \" p_" + varNameString + " is not in memory pool of \"; \n";
+                         s += "                             std::cout <<    p_" + varNameString + "->class_name() << std::endl;\n" ;
+                         s += "                         } \n" ;
+                         s += "                    } \n" ;
+                         s += "                  else \n" ;
+                         s += "                    { \n" ;
+                         s += "                       std::cout << \"" + classNameString + " :: \" << std::flush;\n" ;
+                         s += "                       std::cout << \"" + varTypeString + " p_" + varNameString + " --> \" << std::flush;\n" ;
+                         s += "                       std::cout << \" not valid \" << std::endl;\n" ;
+                         s += "                    } \n" ;
+                         s += "             } \n" ;
+                         s += "\n" ;
                        }
 #if 1
                     if (  7 < length && varTypeString.substr( length-7, length) == "PtrList" )
@@ -1685,11 +1654,7 @@ Terminal::buildReturnDataMemberPointers ()
                        {
                          //AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                          //is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS)
-                            {
-                              
-                              s += "          returnVector.push_back(pair<SgNode*,std::string>( p_" + varNameString + ",\""+varNameString+"\"));\n";
-                            }
+                         s += "          returnVector.push_back(pair<SgNode*,std::string>( p_" + varNameString + ",\""+varNameString+"\"));\n";
                     
                        }
                       else
@@ -1913,10 +1878,7 @@ Terminal::buildReturnDataMemberReferenceToPointers ()
                        {
                       // AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                       // is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS)
-                            {
-                              s += "          returnVector.push_back(pair<SgNode**,std::string>( (SgNode**)(&(p_" + varNameString + ")),\""+varNameString+"\"));\n";
-                            }
+                         s += "          returnVector.push_back(pair<SgNode**,std::string>( (SgNode**)(&(p_" + varNameString + ")),\""+varNameString+"\"));\n";
                        }
                       else
                        {
@@ -2139,11 +2101,8 @@ Terminal::buildChildIndex()
                        {
                          //AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                          //is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS)
-                            {
-                           // s += "     if ( p_" + varNameString + " == childNode ) { returnValue = indexCounter; } indexCounter++;\n";
-                              s += "     if ( p_" + varNameString + " == childNode ) { return indexCounter; } indexCounter++;\n";
-                            }
+                         // s += "     if ( p_" + varNameString + " == childNode ) { returnValue = indexCounter; } indexCounter++;\n";
+                         s += "     if ( p_" + varNameString + " == childNode ) { return indexCounter; } indexCounter++;\n";
                        }
                       else
                        {

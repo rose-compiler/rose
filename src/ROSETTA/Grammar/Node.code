@@ -668,6 +668,8 @@ class RTIMemberData
           const char* name;
           std::string value;
 
+          RTIMemberData(): type(NULL), name(NULL), value() {}
+
           RTIMemberData(const char* type0, const char* name0, const std::string& value0)
              : type(type0), name(name0), value(value0)
              {}
@@ -1830,43 +1832,6 @@ bool SgTreeCopy :: clone_node( const SgNode *n ) const
    }
 #endif
 
-
-
-unsigned int
-$CLASSNAME::cfgIndexForEnd() const {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return 0;
-}
-
-bool
-$CLASSNAME::cfgIsIndexInteresting(unsigned int) const {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return false;
-}
-
-unsigned int
-$CLASSNAME::cfgFindChildIndex(SgNode*) {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return 0;
-}
-
-unsigned int
-$CLASSNAME::cfgFindNextChildIndex(SgNode*) {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgOutEdges(unsigned int) {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return std::vector<VirtualCFG::CFGEdge>();
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgInEdges(unsigned int) {
-  ROSE_ASSERT (!"CFG functions only work on SgExpression, SgStatement, and SgInitializedName");
-  return std::vector<VirtualCFG::CFGEdge>();
-}
 
 // DQ (8/10/2008): Added to support binary file format.
 std::ostream & 

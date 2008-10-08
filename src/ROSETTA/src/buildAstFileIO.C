@@ -75,10 +75,7 @@ std::string Terminal::buildStaticDataMemberListDeleteStaticData()
                          case CHAR_POINTER:
                          case CONST_CHAR_POINTER:
                          case SGCLASS_POINTER:
-                           if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS )
-                              {
-                                s += "     " + classNameString + "::p_" + varNameString + " = NULL ;\n" ;
-                              }
+                           s += "     " + classNameString + "::p_" + varNameString + " = NULL ;\n" ;
                            break;
                          case SGCLASS_POINTER_LIST_POINTER:
                            s += "     " + classNameString + "::p_" + varNameString + "->clear();\n" ;

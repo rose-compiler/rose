@@ -3298,47 +3298,6 @@ SgStatement::get_scope(void) const
      return returnScope;
    }
 
-unsigned int
-SgStatement::cfgIndexForEnd() const {
-    std::cerr << "Bad statement case " << this->class_name() << " in cfgIndexForEnd()" << std::endl;
-    ROSE_ASSERT (false);
-    return 0;
-  }
-
-bool
-SgStatement::cfgIsIndexInteresting(unsigned int idx) const {
-    // Default -- overridden in some cases
-    return idx == this->cfgIndexForEnd();
-  }
-
-unsigned int
-SgStatement::cfgFindChildIndex(SgNode* n) {
-    // Default -- overridden in some cases
-    size_t idx = this->getChildIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
-    return idx;
-  }
-
-unsigned int
-SgStatement::cfgFindNextChildIndex(SgNode* n) {
-    // Default -- overridden in some cases
-    return this->cfgFindChildIndex(n) + 1;
-  }
-
-std::vector<VirtualCFG::CFGEdge>
-SgStatement::cfgOutEdges(unsigned int) {
-    std::cerr << "Bad statement case " << this->class_name() << " in cfgOutEdges()" << std::endl;
-    ROSE_ASSERT (false);
-    return std::vector<VirtualCFG::CFGEdge>();
-  }
-
-std::vector<VirtualCFG::CFGEdge>
-SgStatement::cfgInEdges(unsigned int) {
-    std::cerr << "Bad statement case " << this->class_name() << " in cfgInEdges()" << std::endl;
-    ROSE_ASSERT (false);
-    return std::vector<VirtualCFG::CFGEdge>();
-  }
-
 // DQ (12/16/2007): Added virtual function so that we could set the end_numeric_label on all relevant Fortran constructs
 // void SgStatement::set_end_numeric_label(SgLabelSymbol* end_numeric_label)
 void
@@ -5211,14 +5170,6 @@ std::ostream & operator<< ( std::ostream & os, std::map<SgNode*,std::string> & x
      return os;
    }
 
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  return std::vector<VirtualCFG::CFGEdge>();
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  return std::vector<VirtualCFG::CFGEdge>();
-}
-
 SOURCE_GLOBAL_STATEMENT_END
 
 SOURCE_GLOBAL_STATEMENT_PARSER_START
@@ -6757,36 +6708,6 @@ SOURCE_TEMPLATE_SPECIALIZATION_SUPPORT_END
 
 SOURCE_BASIC_BLOCK_STATEMENT_START
 
-unsigned int
-SgBasicBlock::cfgIndexForEnd() const {
-  return this->get_statements().size();
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return false;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (idx == this->get_statements().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  } else if (idx < this->get_statements().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_statements()[idx]->cfgForBeginning(), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (idx == 0) {
-    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  } else if (idx <= this->get_statements().size()) {
-    makeEdge(this->get_statements()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
 SgBasicBlock::SgBasicBlock(Sg_File_Info* info, SgStatement* stmt)
 :$BASECLASS(info)
    {
@@ -6935,79 +6856,6 @@ SOURCE_BASIC_BLOCK_STATEMENT_END
 
 
 SOURCE_IF_STATEMENT_START
-unsigned int
-SgIfStmt::cfgIndexForEnd() const
-   {
-     return 2;
-   }
-
-bool
-SgIfStmt::cfgIsIndexInteresting(unsigned int idx) const
-   {
-     return idx == 1;
-   }
-
-unsigned int
-SgIfStmt::cfgFindChildIndex(SgNode* n)
-   {
-  // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the false body
-  // ROSE_ASSERT (n == this->get_conditional() || n == this->get_true_body() || n == this->get_false_body() );
-  // return (n == this->get_conditional()) ? 0 : 1;
-
-     if (n == this->get_conditional())
-        {
-          return 0;
-        }
-       else
-          if (n != NULL && (n == this->get_true_body() || n == this->get_false_body()))
-             {
-               return 1;
-             } 
-            else
-               ROSE_ASSERT (!"Bad child in if statement");
-
-  // DQ (8/24/2006): Added return to avoid compiler warning.
-     return 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgIfStmt::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_conditional()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_true_body()->cfgForBeginning(), result);
-	    if (this->get_false_body()) {
-	      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_false_body()->cfgForBeginning(), result);
-	    } else {
-	      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result);
-	    }
-	    break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgIfStmt::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_conditional()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: makeEdge(this->get_true_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-	    if (this->get_false_body()) {
-	      makeEdge(this->get_false_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-	    } else {
-	      makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
-	    }
-	    break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgIfStmt::post_construction_initialization()
    {
@@ -7061,34 +6909,6 @@ SOURCE_IF_STATEMENT_END
 
 SOURCE_FOR_INIT_STATEMENT_START
 
-unsigned int
-SgForInitStatement::cfgIndexForEnd() const {
-  return this->get_init_stmt().size();
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgForInitStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (idx == this->get_init_stmt().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  } else if (idx < this->get_init_stmt().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_init_stmt()[idx]->cfgForBeginning(), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgForInitStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (idx == 0) {
-    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  } else if (idx <= this->get_init_stmt().size()) {
-    makeEdge(this->get_init_stmt()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
 void
 SgForInitStatement::post_construction_initialization()
    {
@@ -7139,118 +6959,6 @@ SOURCE_FOR_INIT_STATEMENT_END
 
 
 SOURCE_FOR_STATEMENT_START
-
-unsigned int
-SgForStatement::cfgIndexForEnd() const {
-  return 4;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 2;
-}
-
-unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
-   {
-  // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the false body
-  // ROSE_ASSERT (n == this->get_for_init_stmt() || n == this->get_test() || n == this->get_loop_body() || n == this->get_increment_expr_root() );
-  // return (n == this->get_conditional()) ? 0 : ((n == this->get_test()) ? 1 : ((n == this->get_loop_body()) ? 2 : 3) );
-
-     if (n == this->get_for_init_stmt())
-        {
-          return 0;
-        }
-       else
-        {
-          if (n == this->get_test())
-             {
-               return 1;
-             }
-            else
-             {
-               if (n == this->get_loop_body())
-                  {
-                    return 2;
-                  }
-                 else
-                  {
-                 // if (n == this->get_increment_expr_root())
-                    if (n == this->get_increment())
-                       {
-                         return 3;
-                       }
-                      else
-                       {
-                         ROSE_ASSERT (!"Bad child in for statement");
-                       }
-                  }
-             }
-        }
-
-  // DQ (8/24/2006): Added to avoid compiler warning
-     return 0;
-   }
-
-unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
-   {
-     unsigned int parentIndex = this->cfgFindChildIndex(n);
-
-  // DQ (8/24/2006): Modified function to avoid compiler warning about no return value
-     unsigned int returnValue;
-  // if (parentIndex == 3) return 1; else return parentIndex + 1;
-     if (parentIndex == 3) 
-          returnValue = 1;
-       else
-          returnValue = parentIndex + 1;
-
-     return returnValue;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_for_init_stmt()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_test()->cfgForBeginning(), result); break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_loop_body()->cfgForBeginning(), result);
-	    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 4), result); break;
- // case 3: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_increment_expr_root()->cfgForBeginning(), result); break;
-    case 3: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
-    case 4: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_for_init_stmt()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-    // makeEdge(this->get_increment_expr_root()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-       makeEdge(this->get_increment()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-	    break;
-    case 2: makeEdge(this->get_test()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 3: {
-      makeEdge(this->get_loop_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), "");
-      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    case 4: {
-      makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
 
 void
 SgForStatement::post_construction_initialization()
@@ -7593,36 +7301,6 @@ SOURCE_FOR_STATEMENT_END
 
 SOURCE_FORALL_STATEMENT_START
 
-unsigned int SgForAllStatement::cfgIndexForEnd() const
-   {
-     return VirtualCFG::doForallCfgIndexForEnd(this);
-   }
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const 
-   {
-     return VirtualCFG::doForallCfgIsIndexInteresting(this, idx);
-   }
-
-unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
-   {
-     return VirtualCFG::doForallCfgFindChildIndex(this, n);
-   }
-
-unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
-   {
-     return VirtualCFG::doForallCfgFindNextChildIndex(this, n);
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
-   {
-     return VirtualCFG::doForallCfgOutEdges(this, idx);
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
-   {
-     return VirtualCFG::doForallCfgInEdges(this, idx);
-   }
-
 void
 SgForAllStatement::post_construction_initialization()
    {
@@ -7631,60 +7309,6 @@ SgForAllStatement::post_construction_initialization()
 SOURCE_FORALL_STATEMENT_END
 
 SOURCE_UPC_FORALL_STATEMENT_START
-
-unsigned int SgUpcForAllStatement::cfgIndexForEnd() const
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
-  // return VirtualCFG::doForallCfgIndexForEnd(this);
-   }
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const 
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return false;
-  // return VirtualCFG::doForallCfgIsIndexInteresting(this, idx);
-   }
-
-unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
-  // return VirtualCFG::doForallCfgFindChildIndex(this, n);
-   }
-
-unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return 0;
-  // return VirtualCFG::doForallCfgFindNextChildIndex(this, n);
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return std::vector<VirtualCFG::CFGEdge>();
-  // return VirtualCFG::doForallCfgOutEdges(this, idx);
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
-   {
-     printf ("Sorry not implemented, need CFG support for UPC forall IR node \n");
-     ROSE_ASSERT(false);
-
-     return std::vector<VirtualCFG::CFGEdge>();
-  // return VirtualCFG::doForallCfgInEdges(this, idx);
-   }
 
 // Liao, we have to duplicate most code from SgForStatement since 
 // SgUpcForAllStatement and SgForStatement are not related 
@@ -7904,26 +7528,6 @@ SOURCE_UPC_FENCE_STATEMENT_END
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_START
-
-unsigned int
-SgFunctionDeclaration::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgFunctionDeclaration::post_construction_initialization()
@@ -8549,59 +8153,6 @@ SOURCE_FUNCTION_DECLARATION_STATEMENT_END
 
 SOURCE_FUNCTION_PARAMETER_LIST_START
 
-unsigned int
-SgFunctionParameterList::cfgIndexForEnd() const
-   {
-     return this->get_args().size();
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgFunctionParameterList::cfgOutEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-     if (idx == this->get_args().size())
-        {
-          makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-        }
-       else
-        {
-          if (idx < this->get_args().size())
-             {
-               makeEdge(VirtualCFG::CFGNode(this, idx), this->get_args()[idx]->cfgForBeginning(), result);
-             }
-            else
-             {
-               ROSE_ASSERT (!"Bad index for $CLASSNAME");
-             }
-        }
-
-     return result;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgFunctionParameterList::cfgInEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-     VirtualCFG::addIncomingFortranGotos(this, idx, result);
-     if (idx == 0)
-        {
-          makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-        }
-       else
-        {
-          if (idx <= this->get_args().size())
-             {
-               makeEdge(this->get_args()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-             }
-            else
-             {
-               ROSE_ASSERT (!"Bad index for $CLASSNAME");
-             }
-        }
-
-     return result;
-   }
-
 void
 SgFunctionParameterList::post_construction_initialization()
    {
@@ -8820,71 +8371,6 @@ SOURCE_FUNCTION_DEFINTION_STATEMENT_START
 
 // DQ (10/4/2006): Support for static map of SgBasicBlock IR nodes to integers.
 // std::map<SgBasicBlockPtr, int> SgFunctionDefinition::p_block_number_map;
-
-unsigned int
-SgFunctionDefinition::cfgIndexForEnd() const {
-  return 2;
-}
-
-bool
-SgFunctionDefinition::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0 || idx == 2;
-}
-
-unsigned int 
-SgFunctionDefinition::cfgFindChildIndex(SgNode* n)
-   {
-  // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the false body
-  // ROSE_ASSERT (n == this->get_declaration()->get_parameterList() || n == this->get_body() );
-  // return (n == this->get_declaration()->get_parameterList()) ? 0 : 1;
-
-     if (n == this->get_declaration()->get_parameterList())
-        {
-          return 0;
-        }
-       else 
-          if (n == this->get_body())
-             {
-               return 1;
-             }
-            else
-               ROSE_ASSERT (!"Bad child in function definition");
-
-  // DQ (8/24/2006): Added return to avoid compiler warning.
-     return 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge> 
-SgFunctionDefinition::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_declaration()->get_parameterList()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2: /* No out edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: /* No in edges */ break;
-    case 1: makeEdge(this->get_declaration()->get_parameterList()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: {
-      makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgReturnStmt*> returnStmts = SageInterface::findReturnStmts(this);
-      for (unsigned int i = 0; i < returnStmts.size(); ++i) {
-	makeEdge(returnStmts[i]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
 
 void
 SgFunctionDefinition::post_construction_initialization()
@@ -9431,29 +8917,6 @@ SgMemberFunctionDeclaration::get_symbol_from_symbol_table() const
      return symbol;
    }
 
-unsigned int
-SgMemberFunctionDeclaration::cfgIndexForEnd() const {
-  return 0;
-}
-
-// FIXME: these both assume that a function declaration is outside any
-// function, which may not actually be the case.
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  // makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  // makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 SOURCE_MEMBER_FUNCTION_DECLARATION_STATEMENT_END
 
 
@@ -9524,40 +8987,6 @@ SOURCE_CTOR_INITIALIZER_LIST_END
 
 
 SOURCE_VARIABLE_DECLARATION_STATEMENT_START
-
-unsigned int
-SgVariableDeclaration::cfgIndexForEnd() const {
-  return this->get_variables().size();
-}
-
-unsigned int
-$CLASSNAME::cfgFindChildIndex(SgNode* n) {
-    size_t idx = this->get_childIndex(n);
-    ROSE_ASSERT (idx != (size_t)(-1)); // Not found
-    ROSE_ASSERT (idx != 0); // Not found
-    return idx - 1;
-  }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (idx == this->get_variables().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  } else if (idx < this->get_variables().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_variables()[idx]->cfgForBeginning(), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (idx == 0) {
-    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  } else if (idx <= this->get_variables().size()) {
-    makeEdge(this->get_variables()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
 
 SgVariableDeclaration::SgVariableDeclaration(Sg_File_Info *info, const SgName& var_name, SgType *type, SgInitializer *initializer)
    : SgDeclarationStatement(info)
@@ -10381,26 +9810,6 @@ SOURCE_VARIABLE_DEFINITION_STATEMENT_END
 
 SOURCE_CLASS_DECLARATION_STATEMENT_START
 
-unsigned int
-SgClassDeclaration::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgClassDeclaration::post_construction_initialization()
    {
@@ -11154,26 +10563,6 @@ SOURCE_CLASS_DEFINITION_STATEMENT_END
 
 SOURCE_ENUM_DECLARATION_STATEMENT_START
 
-unsigned int
-SgEnumDeclaration::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgEnumDeclaration::post_construction_initialization()
    {
@@ -11425,34 +10814,6 @@ SOURCE_ENUM_DECLARATION_STATEMENT_END
 
 
 SOURCE_EXPRESSION_STATEMENT_START
-unsigned int
-SgExprStatement::cfgIndexForEnd() const {
-  return 1;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
- // case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_expression_root()->cfgForBeginning(), result); break;
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_expression()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
- // case 1: makeEdge(this->get_expression_root()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_expression()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 // QY: 9/30/2004   removed the expr_i pointer in exprStatement. Use exprRoot directly as constructor parameter
 void
 SgExprStatement::post_construction_initialization() 
@@ -11505,48 +10866,6 @@ SgLabelStatement::hasExplicitScope() const
      return true;
    }
 
-unsigned int
-SgLabelStatement::cfgIndexForEnd() const
-   {
-     return 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-     switch (idx)
-        {
-          case 0: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-        }
-
-     return result;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-     VirtualCFG::addIncomingFortranGotos(this, idx, result);
-     switch (idx)
-        {
-          case 0:
-             {
-               makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-            // Find all gotos to this label, functionwide
-               SgFunctionDefinition* thisFunction = SageInterface::getEnclosingProcedure(this);
-               std::vector<SgGotoStatement*> gotos = SageInterface::findGotoStmts(thisFunction, this);
-               for (unsigned int i = 0; i < gotos.size(); ++i)
-                  {
-                    makeEdge(VirtualCFG::CFGNode(gotos[i], 0), VirtualCFG::CFGNode(this, idx), result);
-                  }
-               break;
-            }
-
-          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-        }
-     return result;
-   }
-
 void
 SgLabelStatement::post_construction_initialization()
    {
@@ -11591,68 +10910,6 @@ SOURCE_LABEL_STATEMENT_END
 
 
 SOURCE_WHILE_STATEMENT_START
-bool SgWhileStmt::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 1;
-}
-
-unsigned int
-SgWhileStmt::cfgIndexForEnd() const {
-  return 2;
-}
-
-unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
-   {
-     unsigned int parentIndex = this->cfgFindChildIndex(n);
-  // DQ (8/24/2006): Modified function to avoid compiler warning about no return value
-     unsigned int returnValue;
-  // if (parentIndex == 1) return 0; else return parentIndex + 1;
-     if (parentIndex == 1)
-          returnValue = 0;
-       else
-          returnValue = parentIndex + 1;
-
-     return returnValue;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result);
-	    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result); break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), this->get_string_label());
-      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    case 1: makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: {
-      makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
-      std::vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), this->get_string_label());
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgWhileStmt::post_construction_initialization()
    {
@@ -11701,59 +10958,6 @@ SOURCE_WHILE_STATEMENT_END
 
 
 SOURCE_DO_WHILE_STATEMENT_START
-unsigned int
-SgDoWhileStmt::cfgIndexForEnd() const {
-  return 3;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 2;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 0), result);
-	    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 3), result); break;
-    case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-	    makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: {
-      makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), "");
-      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    case 2: {
-      makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 3: {
-      makeEdge(VirtualCFG::CFGNode(this, 2), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgDoWhileStmt::post_construction_initialization()
    {
@@ -11783,69 +10987,6 @@ SOURCE_DO_WHILE_STATEMENT_END
 
 
 SOURCE_SWITCH_STATEMENT_START
-unsigned int
-SgSwitchStatement::cfgIndexForEnd() const {
-  return 2;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 1;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_item_selector()->cfgForBeginning(), result); break;
-    case 1: {
-      vector<SgStatement*> cases = SageInterface::getSwitchCases(this); // Also includes default statements
-      bool hasDefault = false;
-      for (unsigned int i = 0; i < cases.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(this, idx), cases[i]->cfgForBeginning(), result);
-	if (isSgDefaultOptionStmt(cases[i])) {
-          hasDefault = true;
-        }
-      }
-      if (!hasDefault) {
-        makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result);
-      }
-      break;
-    }
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_item_selector()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: {
-      makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), "");
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-	makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      vector<SgStatement*> cases = SageInterface::getSwitchCases(this); // Also includes default statements
-      bool hasDefault = false;
-      for (unsigned int i = 0; i < cases.size(); ++i) {
-	if (isSgDefaultOptionStmt(cases[i])) {
-          hasDefault = true;
-          break;
-        }
-      }
-      if (!hasDefault) {
-        makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgSwitchStatement::post_construction_initialization()
    {
@@ -11965,47 +11106,6 @@ SOURCE_SWITCH_STATEMENT_END
 
 SOURCE_CASE_OPTION_STATEMENT_START
 
-unsigned int
-SgCaseOptionStmt::cfgIndexForEnd() const {
-  return 1;
-}
-
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0;
-}
-
-unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n) {
-  ROSE_ASSERT (n == this->get_body());
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      SgSwitchStatement* mySwitch = SageInterface::findEnclosingSwitch(this);
-      makeEdge(VirtualCFG::CFGNode(mySwitch, 1), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgCaseOptionStmt::post_construction_initialization() 
    {
@@ -12024,36 +11124,6 @@ SOURCE_CASE_OPTION_STATEMENT_END
 
 
 SOURCE_TRY_STATEMENT_START
-
-unsigned int
-SgTryStmt::cfgIndexForEnd() const {
-  return 1;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return true;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
 
 void
 SgTryStmt::post_construction_initialization()
@@ -12166,38 +11236,6 @@ SOURCE_TRY_STATEMENT_END
 
 SOURCE_CATCH_STATEMENT_SEQ_START
 
-unsigned int
-SgCatchStatementSeq::cfgIndexForEnd() const {
-  return this->get_catch_statement_seq().size();
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return false;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  // FIXME
-  if (idx == this->get_catch_statement_seq().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  } else if (idx < this->get_catch_statement_seq().size()) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), this->get_catch_statement_seq()[idx]->cfgForBeginning(), result);
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  // FIXME
-  if (idx == 0) {
-    makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  } else if (idx <= this->get_catch_statement_seq().size()) {
-    makeEdge(this->get_catch_statement_seq()[idx - 1]->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-  } else ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  return result;
-}
-
 // MS: C++98: handler (catch_statement in SAGE)
 void
 SgCatchStatementSeq::post_construction_initialization() {
@@ -12243,34 +11281,6 @@ SOURCE_CATCH_STATEMENT_SEQ_END
 
 
 SOURCE_CATCH_OPTION_STATEMENT_START
-
-unsigned int
-SgCatchOptionStmt::cfgIndexForEnd() const {
-  return 2;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
 
 void
 SgCatchOptionStmt::post_construction_initialization()
@@ -12332,41 +11342,6 @@ SOURCE_CATCH_OPTION_STATEMENT_END
 
 SOURCE_DEFAULT_OPTION_STATEMENT_START
 
-unsigned int
-SgDefaultOptionStmt::cfgIndexForEnd() const {
-  return 1;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      SgSwitchStatement* mySwitch = SageInterface::findEnclosingSwitch(this);
-      makeEdge(VirtualCFG::CFGNode(mySwitch, 1), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgDefaultOptionStmt::post_construction_initialization()
    {
@@ -12402,50 +11377,6 @@ SOURCE_DEFAULT_OPTION_STATEMENT_END
 
 
 SOURCE_BREAK_STATEMENT_START
-unsigned int
-SgBreakStmt::cfgIndexForEnd() const {
-  return 1; // So the end of this construct will be an unreachable node
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: {
-      SgStatement* enc = SageInterface::findEnclosingLoop(this, this->get_do_string_label(), true); // May also find a switch statement in C or C++
-      ROSE_ASSERT (enc);
-      unsigned int newIndex;
-      switch (enc->variantT()) {
-	case V_SgDoWhileStmt: newIndex = 3; break;
-	case V_SgForStatement: newIndex = 4; break;
-	case V_SgWhileStmt: newIndex = 2; break;
-	case V_SgSwitchStatement: newIndex = 2; break;
-        case V_SgFortranDo: newIndex = 6; break;
-	default: ROSE_ASSERT (false);
-      }
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(enc, newIndex), result);
-      break;
-    }
-    case 1: /* No out edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: /* No in edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgBreakStmt::post_construction_initialization()
    {
@@ -12456,49 +11387,6 @@ SOURCE_BREAK_STATEMENT_END
 
 SOURCE_CONTINUE_STATEMENT_START
 
-unsigned int
-SgContinueStmt::cfgIndexForEnd() const {
-  return 1; // So the end of this construct will be an unreachable node
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: {
-      SgStatement* loop = SageInterface::findEnclosingLoop(this, this->get_do_string_label(), false);
-      ROSE_ASSERT (loop);
-      unsigned int newIndex;
-      switch (loop->variantT()) {
-	case V_SgDoWhileStmt: newIndex = 1; break;
-	case V_SgForStatement: newIndex = 3; break;
-	case V_SgWhileStmt: newIndex = 0; break;
-        case V_SgFortranDo: newIndex = 5; break;
-	default: ROSE_ASSERT (false);
-      }
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(loop, newIndex), result);
-      break;
-    }
-    case 1: /* No out edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: /* No in edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgContinueStmt::post_construction_initialization()
    {
@@ -12508,47 +11396,6 @@ SOURCE_CONTINUE_STATEMENT_END
 
 
 SOURCE_RETURN_STATEMENT_START
-
-unsigned int
-SgReturnStmt::cfgIndexForEnd() const
-   {
-  // return this->get_expression_root() ? 1 : 0;
-     return this->get_expression() ? 1 : 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgOutEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-  // bool hasReturnValue = this->get_expression_root();
-     bool hasReturnValue = this->get_expression();
-     bool exitingFunctionNow = idx == 1 || (idx == 0 && !hasReturnValue);
-     if (exitingFunctionNow)
-        {
-          SgFunctionDefinition* enclosingFunc = SageInterface::getEnclosingProcedure(this);
-          makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(enclosingFunc, 2), result);
-        }
-       else
-        {
-          makeEdge(VirtualCFG::CFGNode(this, idx), this->get_expression()->cfgForBeginning(), result);
-        }
-     return result;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgInEdges(unsigned int idx)
-   {
-     std::vector<VirtualCFG::CFGEdge> result;
-     VirtualCFG::addIncomingFortranGotos(this, idx, result);
-     switch (idx)
-        {
-          case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-          case 1: ROSE_ASSERT (this->get_expression());
-	            makeEdge(this->get_expression()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-          default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-        }
-     return result;
-   }
 
 void
 SgReturnStmt::post_construction_initialization()
@@ -12588,43 +11435,6 @@ SOURCE_RETURN_STATEMENT_END
 
 SOURCE_GOTO_STATEMENT_START
 
-unsigned int
-SgGotoStatement::cfgIndexForEnd() const {
-  return 1; // So the end of this construct will be an unreachable node
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: {
-      if (this->get_label_expression()) { // A Fortran goto
-        makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getCFGTargetOfFortranLabelRef(this->get_label_expression()), result);
-      } else { // A C/C++ goto
-	makeEdge(VirtualCFG::CFGNode(this, idx), this->get_label()->cfgForBeginning(), result);
-      }
-      break;
-    }
-    case 1: /* No out edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: /* No in edges */ break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgGotoStatement::post_construction_initialization()
    {
@@ -12646,33 +11456,6 @@ SOURCE_GOTO_STATEMENT_END
 
 
 SOURCE_ASM_STATEMENT_START
-
-unsigned int
-SgAsmStmt::cfgIndexForEnd() const {
-  return 0;
-}
-
-// Work around the fact that this node has children that we don't use in the
-// CFG, but might still be reached (using outEdges()) from
-unsigned int
-SgAsmStmt::cfgFindChildIndex(SgNode* n) {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgAsmStmt::post_construction_initialization()
@@ -12769,26 +11552,6 @@ SOURCE_SPAWN_STATEMENT_END
 
 SOURCE_NULL_STATEMENT_START
 
-unsigned int
-SgNullStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgNullStatement::post_construction_initialization()
    {}
@@ -12806,31 +11569,6 @@ SOURCE_VARIANT_STATEMENT_END
 
 
 SOURCE_TYPEDEF_DECLARATION_STATEMENT_START
-
-unsigned int
-SgTypedefDeclaration::cfgIndexForEnd() const
-   {
-     return 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgTypedefDeclaration::cfgOutEdges(unsigned int idx)
-   {
-     ROSE_ASSERT (idx == 0);
-     std::vector<VirtualCFG::CFGEdge> result;
-     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-     return result;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgTypedefDeclaration::cfgInEdges(unsigned int idx)
-   {
-     ROSE_ASSERT (idx == 0);
-     std::vector<VirtualCFG::CFGEdge> result;
-     VirtualCFG::addIncomingFortranGotos(this, idx, result);
-     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-     return result;
-   }
 
 void
 SgTypedefDeclaration::post_construction_initialization()
@@ -13122,26 +11860,6 @@ SOURCE_TEMPLATE_DECLARATION_STATEMENT_END
 
 
 SOURCE_PRAGMA_STATEMENT_START
-unsigned int
-SgPragmaDeclaration::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgPragmaDeclaration::post_construction_initialization()
    {
@@ -13386,26 +12104,6 @@ SOURCE_NAMESPACE_DEFINITION_STATEMENT_END
 
 SOURCE_USING_DIRECTIVE_STATEMENT_START
 
-unsigned int
-SgUsingDirectiveStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
 SgName
 SgUsingDirectiveStatement::get_mangled_name(void) const
@@ -13427,26 +12125,6 @@ SgUsingDirectiveStatement::get_mangled_name(void) const
 SOURCE_USING_DIRECTIVE_STATEMENT_END
 
 SOURCE_USING_DECLARATION_STATEMENT_START
-
-unsigned int
-SgUsingDeclarationStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 // DQ (2/18/2006): Added general name mangling for all declarations (and some other IR nodes).
 SgName
@@ -14075,26 +12753,6 @@ SOURCE_NAMESPACE_DEFINITION_STATEMENT_END
 
 SOURCE_COMMON_BLOCK_STATEMENT_START
 
-unsigned int
-$CLASSNAME::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgCommonBlock::post_construction_initialization()
    {
@@ -14122,26 +12780,6 @@ SgCommonBlock::get_block_list()
 SOURCE_COMMON_BLOCK_STATEMENT_END
 
 SOURCE_MODULE_STATEMENT_START
-
-unsigned int
-$CLASSNAME::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgModuleStatement::post_construction_initialization()
@@ -14211,26 +12849,6 @@ SOURCE_MODULE_STATEMENT_END
 
 SOURCE_CONTAINS_STATEMENT_START
 
-unsigned int
-SgContainsStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgContainsStatement::post_construction_initialization()
    {
@@ -14247,26 +12865,6 @@ SOURCE_CONTAINS_STATEMENT_END
 
 SOURCE_USE_STATEMENT_START
 
-unsigned int
-SgUseStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgUseStatement::post_construction_initialization()
    {}
@@ -14281,28 +12879,6 @@ SgUseStatement::get_mangled_name() const
 SOURCE_USE_STATEMENT_END
 
 SOURCE_STOP_OR_PAUSE_STATEMENT_START
-
-unsigned int
-SgStopOrPauseStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (this->get_stop_or_pause() == SgStopOrPauseStatement::e_pause) {
-    makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgStopOrPauseStatement::post_construction_initialization()
@@ -14326,42 +12902,6 @@ SOURCE_IO_STATEMENT_END
 
 
 SOURCE_PRINT_STATEMENT_START
-unsigned int
-SgPrintStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 1;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgPrintStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 1, result)) return result;
-  switch (idx) {
-    case 0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 1: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgPrintStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgPrintStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 1, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgPrintStatement");
-  }
-  return result;
-}
-
 
 void
 SgPrintStatement::post_construction_initialization()
@@ -14372,56 +12912,6 @@ SOURCE_PRINT_STATEMENT_END
 
 SOURCE_READ_STATEMENT_START
 
-unsigned int
-SgReadStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 8;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgReadStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 8, result)) return result;
-  switch (idx) {
-    case 0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 1: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 2: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
-    case 3: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 4: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 5: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 6: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
-    case 7: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 8: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgReadStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgReadStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 8, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 2: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 3: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_end(), result); break;
-    case 4: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 5: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 6: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 7: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_eor(), result); break;
-    case 8: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgReadStatement");
-  }
-  return result;
-}
-
 void
 SgReadStatement::post_construction_initialization()
    {}
@@ -14430,50 +12920,6 @@ SOURCE_READ_STATEMENT_END
 
 
 SOURCE_WRITE_STATEMENT_START
-
-unsigned int
-SgWriteStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 5;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgWriteStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 5, result)) return result;
-  switch (idx) {
-    case 0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 1: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 2: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 3: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 4: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 5: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgWriteStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgWriteStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 5, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_format(), result); break;
-    case 2: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_rec(), result); break;
-    case 3: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_namelist(), result); break;
-    case 4: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_advance(), result); break;
-    case 5: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgWriteStatement");
-  }
-  return result;
-}
 
 void
 SgWriteStatement::post_construction_initialization()
@@ -14484,66 +12930,6 @@ SOURCE_WRITE_STATEMENT_END
 
 SOURCE_OPEN_STATEMENT_START
 
-unsigned int
-SgOpenStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 13;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgOpenStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 13, result)) return result;
-  switch (idx) {
-    case 0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_file(), result); break;
-    case 1: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_status(), result); break;
-    case 2: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_access(), result); break;
-    case 3: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_form(), result); break;
-    case 4: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_recl(), result); break;
-    case 5: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
-    case 6: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_position(), result); break;
-    case 7: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_action(), result); break;
-    case 8: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
-    case 9: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
-    case 10: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
-    case 11: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
-    case 12: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 13: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgOpenStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgOpenStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 13, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_file(), result); break;
-    case 2: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_status(), result); break;
-    case 3: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_access(), result); break;
-    case 4: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_form(), result); break;
-    case 5: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_recl(), result); break;
-    case 6: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
-    case 7: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_position(), result); break;
-    case 8: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_action(), result); break;
-    case 9: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
-    case 10: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
-    case 11: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_round(), result); break;
-    case 12: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_sign(), result); break;
-    case 13: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgOpenStatement");
-  }
-  return result;
-}
-
 void
 SgOpenStatement::post_construction_initialization()
    {}
@@ -14552,42 +12938,6 @@ SOURCE_OPEN_STATEMENT_END
 
 
 SOURCE_CLOSE_STATEMENT_START
-
-unsigned int
-SgCloseStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 1;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgCloseStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 1, result)) return result;
-  switch (idx) {
-    case 0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_status(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 1: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgCloseStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgCloseStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 1, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case 1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_status(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgCloseStatement");
-  }
-  return result;
-}
 
 void
 SgCloseStatement::post_construction_initialization()
@@ -14598,94 +12948,6 @@ SOURCE_CLOSE_STATEMENT_END
 
 SOURCE_INQUIRE_STATEMENT_START
 
-unsigned int
-SgInquireStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 27;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgInquireStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 27, result)) return result;
-  switch (idx) {
-    case  0: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_file(), result); break;
-    case  1: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_access(), result); break;
-    case  2: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_form(), result); break;
-    case  3: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_recl(), result); break;
-    case  4: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
-    case  5: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_exist(), result); break;
-    case  6: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_opened(), result); break;
-    case  7: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_number(), result); break;
-    case  8: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_named(), result); break;
-    case  9: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_name(), result); break;
-    case 10: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_sequential(), result); break;
-    case 11: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_direct(), result); break;
-    case 12: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_formatted(), result); break;
-    case 13: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_unformatted(), result); break;
-    case 14: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_nextrec(), result); break;
-    case 15: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_position(), result); break;
-    case 16: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_action(), result); break;
-    case 17: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_read(), result); break;
-    case 18: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_write(), result); break;
-    case 19: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_readwrite(), result); break;
-    case 20: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
-    case 21: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
-    case 22: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case 23: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
-    case 24: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_stream(), result); break;
-    case 25: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 26: VirtualCFG::addOutEdgeOrBypassForExpressionChild(this, idx, this->get_pending(), result); break;
-    case VirtualCFG::numberOfFortranIOCommonEdges + 27: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgInquireStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgInquireStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 27, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    case  1: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_file(), result); break;
-    case  2: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_access(), result); break;
-    case  3: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_form(), result); break;
-    case  4: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_recl(), result); break;
-    case  5: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_blank(), result); break;
-    case  6: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_exist(), result); break;
-    case  7: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_opened(), result); break;
-    case  8: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_number(), result); break;
-    case  9: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_named(), result); break;
-    case 10: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_name(), result); break;
-    case 11: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_sequential(), result); break;
-    case 12: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_direct(), result); break;
-    case 13: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_formatted(), result); break;
-    case 14: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_unformatted(), result); break;
-    case 15: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_nextrec(), result); break;
-    case 16: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_position(), result); break;
-    case 17: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_action(), result); break;
-    case 18: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_read(), result); break;
-    case 19: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_write(), result); break;
-    case 20: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_readwrite(), result); break;
-    case 21: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_delim(), result); break;
-    case 22: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_pad(), result); break;
-    case 23: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_asynchronous(), result); break;
-    case 24: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_decimal(), result); break;
-    case 25: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_stream(), result); break;
-    case 26: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_size(), result); break;
-    case 27: VirtualCFG::addInEdgeOrBypassForExpressionChild(this, idx, this->get_pending(), result); break;
-    default: ROSE_ASSERT (!"Invalid index for SgInquireStatement");
-  }
-  return result;
-}
-
 void
 SgInquireStatement::post_construction_initialization()
    {}
@@ -14694,40 +12956,6 @@ SOURCE_INQUIRE_STATEMENT_END
 
 
 SOURCE_FLUSH_STATEMENT_START
-
-unsigned int
-SgFlushStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgFlushStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case VirtualCFG::numberOfFortranIOCommonEdges + 0: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgFlushStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgFlushStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgFlushStatement");
-  }
-  return result;
-}
 
 void
 SgFlushStatement::post_construction_initialization()
@@ -14738,40 +12966,6 @@ SOURCE_FLUSH_STATEMENT_END
 
 SOURCE_REWIND_STATEMENT_START
 
-unsigned int
-SgRewindStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgRewindStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case VirtualCFG::numberOfFortranIOCommonEdges + 0: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgRewindStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgRewindStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgRewindStatement");
-  }
-  return result;
-}
-
 void
 SgRewindStatement::post_construction_initialization()
    {}
@@ -14780,40 +12974,6 @@ SOURCE_REWIND_STATEMENT_END
 
 
 SOURCE_BACKSPACE_STATEMENT_START
-
-unsigned int
-SgBackspaceStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgBackspaceStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case VirtualCFG::numberOfFortranIOCommonEdges + 0: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgBackspaceStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgBackspaceStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgBackspaceStatement");
-  }
-  return result;
-}
 
 void
 SgBackspaceStatement::post_construction_initialization()
@@ -14824,40 +12984,6 @@ SOURCE_BACKSPACE_STATEMENT_END
 
 SOURCE_ENDFILE_STATEMENT_START
 
-unsigned int
-SgEndfileStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgEndfileStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case VirtualCFG::numberOfFortranIOCommonEdges + 0: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgEndfileStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgEndfileStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgEndfileStatement");
-  }
-  return result;
-}
-
 void
 SgEndfileStatement::post_construction_initialization()
    {}
@@ -14867,40 +12993,6 @@ SOURCE_ENDFILE_STATEMENT_END
 
 SOURCE_WAIT_STATEMENT_START
 
-unsigned int
-SgWaitStatement::cfgIndexForEnd() const {
-  return VirtualCFG::numberOfFortranIOCommonEdges + 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgWaitStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  if (VirtualCFG::handleFortranIOCommonOutEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case VirtualCFG::numberOfFortranIOCommonEdges + 0: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgWaitStatement");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgWaitStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  if (VirtualCFG::handleFortranIOCommonInEdges(this, idx, 0, result)) return result;
-  switch (idx) {
-    case 0: {
-      makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Invalid index for SgWaitStatement");
-  }
-  return result;
-}
-
 void
 SgWaitStatement::post_construction_initialization()
    {}
@@ -14909,90 +13001,6 @@ SOURCE_WAIT_STATEMENT_END
 
 
 SOURCE_FORTRAN_DO_STATEMENT_START
-unsigned int SgFortranDo::cfgIndexForEnd() const {
-  return 6;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 3 || idx == 5;
-}
-
-unsigned int $CLASSNAME::cfgFindChildIndex(SgNode* n)
-   {
-  // DQ (8/24/2006): Could be rewritten as:
-  // Make sure that this is either the conditional, true body, or the false body
-  // ROSE_ASSERT (n == this->get_for_init_stmt() || n == this->get_test() || n == this->get_loop_body() || n == this->get_increment_expr_root() );
-  // return (n == this->get_conditional()) ? 0 : ((n == this->get_test()) ? 1 : ((n == this->get_loop_body()) ? 2 : 3) );
-
-     if (n == this->get_initialization()) {
-       return 0;
-     } else if (n == this->get_increment()) {
-       return 1;
-     } else if (n == this->get_bound()) {
-       return 2;
-     } else if (n == this->get_body()) {
-       return 4;
-     } else {
-       ROSE_ASSERT (!"Bad child in for statement");
-     }
-
-  // DQ (8/24/2006): Added to avoid compiler warning
-     return 0;
-   }
-
-unsigned int $CLASSNAME::cfgFindNextChildIndex(SgNode* n)
-   {
-     unsigned int parentIndex = this->cfgFindChildIndex(n);
-     return parentIndex + 1;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_initialization()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_increment()->cfgForBeginning(), result); break;
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_bound()->cfgForBeginning(), result); break;
-    case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 4), result);
-            makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 6), result); break;
-    case 4: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 5: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 3), result); break;
-    case 6: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_initialization()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: makeEdge(this->get_increment()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 3: makeEdge(this->get_bound()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-            makeEdge(VirtualCFG::CFGNode(this, 5), VirtualCFG::CFGNode(this, idx), result); break;
-    case 4: makeEdge(VirtualCFG::CFGNode(this, 3), VirtualCFG::CFGNode(this, idx), result); break;
-    case 5: {
-      makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgContinueStmt*> continueStmts = SageInterface::findContinueStmts(this->get_body(), this->get_string_label());
-      for (unsigned int i = 0; i < continueStmts.size(); ++i) {
-        makeEdge(VirtualCFG::CFGNode(continueStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    case 6: {
-      makeEdge(VirtualCFG::CFGNode(this, 3), VirtualCFG::CFGNode(this, idx), result);
-      vector<SgBreakStmt*> breakStmts = SageInterface::findBreakStmts(this->get_body(), this->get_string_label());
-      for (unsigned int i = 0; i < breakStmts.size(); ++i) {
-        makeEdge(VirtualCFG::CFGNode(breakStmts[i], 0), VirtualCFG::CFGNode(this, idx), result);
-      }
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgFortranDo::post_construction_initialization()
    {
@@ -15011,29 +13019,6 @@ SOURCE_FORTRAN_NONBLOCKED_DO_STATEMENT_END
 
 
 SOURCE_INTERFACE_STATEMENT_START
-unsigned int
-SgInterfaceStatement::cfgIndexForEnd() const
-   {
-     return 0;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx)
-   {
-     ROSE_ASSERT (idx == 0);
-     std::vector<VirtualCFG::CFGEdge> result;
-     makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-     return result;
-   }
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx)
-   {
-     ROSE_ASSERT (idx == 0);
-     std::vector<VirtualCFG::CFGEdge> result;
-     VirtualCFG::addIncomingFortranGotos(this, idx, result);
-     makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-     return result;
-   }
-
 void
 SgInterfaceStatement::post_construction_initialization()
    {
@@ -15072,26 +13057,6 @@ SOURCE_BLOCK_DATA_STATEMENT_END
 
 
 SOURCE_IMPLICIT_STATEMENT_START
-unsigned int
-SgImplicitStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgImplicitStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgImplicitStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgImplicitStatement::post_construction_initialization()
    {}
@@ -15120,56 +13085,6 @@ SOURCE_STATEMENT_FUNCTION_STATEMENT_END
 
 
 SOURCE_WHERE_STATEMENT_START
-unsigned int
-SgWhereStatement::cfgIndexForEnd() const {
-  return 3;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0:
-    if (this->get_condition()) {
-      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, idx + 1), result); break;
-    }
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2:
-    if (this->get_elsewhere()) {
-      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_elsewhere()->cfgForBeginning(), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, idx + 1), result); break;
-    }
-    case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1:
-    if (this->get_condition()) {
-      makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx - 1), VirtualCFG::CFGNode(this, idx), result); break;
-    }
-    case 2: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 3:
-    if (this->get_elsewhere()) {
-      makeEdge(this->get_elsewhere()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx - 1), VirtualCFG::CFGNode(this, idx), result); break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgWhereStatement::post_construction_initialization()
    {}
@@ -15177,56 +13092,6 @@ SOURCE_WHERE_STATEMENT_END
 
 
 SOURCE_ELSE_WHERE_STATEMENT_START
-unsigned int
-SgElseWhereStatement::cfgIndexForEnd() const {
-  return 3;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0:
-    if (this->get_condition()) {
-      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_condition()->cfgForBeginning(), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, idx + 1), result); break;
-    }
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2:
-    if (this->get_elsewhere()) {
-      makeEdge(VirtualCFG::CFGNode(this, idx), this->get_elsewhere()->cfgForBeginning(), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, idx + 1), result); break;
-    }
-    case 3: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1:
-    if (this->get_condition()) {
-      makeEdge(this->get_condition()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx - 1), VirtualCFG::CFGNode(this, idx), result); break;
-    }
-    case 2: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 3:
-    if (this->get_elsewhere()) {
-      makeEdge(this->get_elsewhere()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    } else {
-      makeEdge(VirtualCFG::CFGNode(this, idx - 1), VirtualCFG::CFGNode(this, idx), result); break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgElseWhereStatement::post_construction_initialization()
    {}
@@ -15241,26 +13106,6 @@ SOURCE_NULLIFY_STATEMENT_END
 
 
 SOURCE_EQUIVALENCE_STATEMENT_START
-
-unsigned int
-$CLASSNAME::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-$CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgEquivalenceStatement::post_construction_initialization()
@@ -15289,26 +13134,6 @@ SOURCE_DERIVED_TYPE_STATEMENT_END
 
 
 SOURCE_ATTRIBUTE_SPECIFICATION_STATEMENT_START
-unsigned int
-SgAttributeSpecificationStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgAttributeSpecificationStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgAttributeSpecificationStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgAttributeSpecificationStatement::post_construction_initialization()
    {}
@@ -15427,40 +13252,6 @@ SOURCE_SEQUENCE_STATEMENT_END
 
 
 SOURCE_ARITHMETIC_IF_STATEMENT_START
-unsigned int
-SgArithmeticIfStatement::cfgIndexForEnd() const
-   {
-     return 1;
-   }
-
-std::vector<VirtualCFG::CFGEdge>
-SgArithmeticIfStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_conditional()->cfgForBeginning(), result); break;
-    case 1: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getCFGTargetOfFortranLabelRef(this->get_less_label()), result);
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getCFGTargetOfFortranLabelRef(this->get_equal_label()), result);
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getCFGTargetOfFortranLabelRef(this->get_greater_label()), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgArithmeticIfStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_conditional()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgArithmeticIfStatement::post_construction_initialization()
    {}
@@ -15475,66 +13266,6 @@ SOURCE_ASSIGN_STATEMENT_END
 
 
 SOURCE_COMPUTED_GOTO_STATEMENT_START
-
-unsigned int
-SgComputedGotoStatement::cfgIndexForEnd() const {
-  return 2;
-}
-
-bool $CLASSNAME::cfgIsIndexInteresting(unsigned int idx) const {
-  return idx == 1;
-}
-
-// Someone got the order of the fields of SgComputedGotoStatement backwards so
-// the switch condition is not the first field (like it is in
-// SgSwitchStatement), so we need to change the order for CFG purposes
-unsigned int
-SgComputedGotoStatement::cfgFindChildIndex(SgNode* n) {
-  if (n == this->get_label_index()) {
-    return 0;
-  } else if (n == this->get_labelList()) {
-    ROSE_ASSERT (!"Should not be doing SgComputedGotoStatement::cfgFindChildIndex() on the label list");
-    return 1;
-  } else {
-    ROSE_ASSERT (!"Bad child in SgComputedGotoStatement::cfgFindChildIndex()");
-    return 0;
-  }
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_label_index()->cfgForBeginning(), result); break;
-    case 1: {
-      SgExprListExp* labels = this->get_labelList();
-      const vector<SgExpression*>& cases = labels->get_expressions();
-      for (unsigned int i = 0; i < cases.size(); ++i) {
-        SgLabelRefExp* lRef = isSgLabelRefExp(cases[i]);
-        makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getCFGTargetOfFortranLabelRef(lRef), result);
-      }
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::CFGNode(this, 2), result); // For default
-      break;
-    }
-    case 2: makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_label_index()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: {
-      makeEdge(VirtualCFG::CFGNode(this, 1), VirtualCFG::CFGNode(this, idx), result); // For default
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
 
 void
 SgComputedGotoStatement::post_construction_initialization()
@@ -15573,26 +13304,6 @@ SOURCE_ASSIGNED_GOTO_STATEMENT_END
 
 
 SOURCE_NAMELIST_STATEMENT_START
-unsigned int
-SgNamelistStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgNamelistStatement::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge>
-SgNamelistStatement::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgNamelistStatement::post_construction_initialization()
    {}
@@ -15621,26 +13332,6 @@ SOURCE_NAMELIST_STATEMENT_END
 
 
 SOURCE_IMPORT_STATEMENT_START
-unsigned int
-SgImportStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
-
 void
 SgImportStatement::post_construction_initialization()
    {}
@@ -15667,37 +13358,6 @@ SgImportStatement::get_import_list()
 SOURCE_IMPORT_STATEMENT_END
 
 SOURCE_ASSOCIATE_STATEMENT_START
-unsigned int
-SgAssociateStatement::cfgIndexForEnd() const {
-  return 2;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_variable_declaration()->cfgForBeginning(), result); break;
-    case 1: makeEdge(VirtualCFG::CFGNode(this, idx), this->get_body()->cfgForBeginning(), result); break;
-    case 2: {
-      makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-      break;
-    }
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  switch (idx) {
-    case 0: makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result); break;
-    case 1: makeEdge(this->get_variable_declaration()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    case 2: makeEdge(this->get_body()->cfgForEnd(), VirtualCFG::CFGNode(this, idx), result); break;
-    default: ROSE_ASSERT (!"Bad index for $CLASSNAME");
-  }
-  return result;
-}
-
 void
 SgAssociateStatement::post_construction_initialization()
    {}
@@ -15712,26 +13372,6 @@ SOURCE_ASSOCIATE_STATEMENT_END
 
 
 SOURCE_FORMAT_STATEMENT_START
-
-unsigned int
-SgFormatStatement::cfgIndexForEnd() const {
-  return 0;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgOutEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  makeEdge(VirtualCFG::CFGNode(this, idx), VirtualCFG::getNodeJustAfterInContainer(this), result);
-  return result;
-}
-
-std::vector<VirtualCFG::CFGEdge> $CLASSNAME::cfgInEdges(unsigned int idx) {
-  ROSE_ASSERT (idx == 0);
-  std::vector<VirtualCFG::CFGEdge> result;
-  VirtualCFG::addIncomingFortranGotos(this, idx, result);
-  makeEdge(VirtualCFG::getNodeJustBeforeInContainer(this), VirtualCFG::CFGNode(this, idx), result);
-  return result;
-}
 
 void
 SgFormatStatement::post_construction_initialization()

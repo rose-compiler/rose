@@ -847,10 +847,7 @@ std::string Terminal::buildStorageClassHeader ()
                switch (evaluateType(varTypeString) )
                   {
                     case SGCLASS_POINTER:
-                      if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS )
-                         {
-                            s += "     unsigned long " + varStorageNameString +";\n";
-                         }
+                      s += "     unsigned long " + varStorageNameString +";\n";
                       break;
                     case ASTATTRIBUTEMECHANISM:
                     case ATTACHEDPREPROCESSINGINFOTYPE:
@@ -943,11 +940,8 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                     switch (evaluateType(varTypeString) )
                        {
                         case SGCLASS_POINTER:
-                           if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS )
-                              {
-                                s += "     " + varStorageNameString + " = "\
-                                     "AST_FILE_IO::getGlobalIndexFromSgClassPointer ( source->p_" + varNameString + " );\n" ;
-                              }
+                           s += "     " + varStorageNameString + " = "\
+                                "AST_FILE_IO::getGlobalIndexFromSgClassPointer ( source->p_" + varNameString + " );\n" ;
                            break;
 
                          case ROSE_HASH_MULTIMAP:
@@ -1307,11 +1301,8 @@ string Terminal::buildSourceForIRNodeStorageClassConstructor ()
                switch (evaluateType(varTypeString) )
                   {
                    case SGCLASS_POINTER:
-                      if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS)
-                         {
-                           s += "     p_" + varNameString+" =  (" + varTypeString +
-                                ")( AST_FILE_IO::getSgClassPointerFromGlobalIndex ( storageSource."+varStorageNameString+") );\n" ;
-                         }
+                      s += "     p_" + varNameString+" =  (" + varTypeString +
+                           ")( AST_FILE_IO::getSgClassPointerFromGlobalIndex ( storageSource."+varStorageNameString+") );\n" ;
                       break;
                     case CHAR_POINTER:
                     case CONST_CHAR_POINTER:
@@ -1768,10 +1759,7 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
                     switch (evaluateType(varTypeString) )
                        {
                          case SGCLASS_POINTER:
-                           if ( (*stringListIterator)->generateDataAccessFunctions() != BUILD_INDIRECT_ACCESS_FUNCTIONS )
-                              {
-                                 s += "     unsigned long " + varStorageNameString +";\n";
-                              }
+                           s += "     unsigned long " + varStorageNameString +";\n";
                            break;
                          case ASTATTRIBUTEMECHANISM:
                          case ATTACHEDPREPROCESSINGINFOTYPE:

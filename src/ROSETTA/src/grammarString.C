@@ -667,8 +667,6 @@ GrammarString::getDataPrototypeString () const
    {
   // This function returns the data prototype (without the initializer, e.g. the " = 0" part)
   // The string returned by this functions includes the ";" and the newline
-     if (automaticGenerationOfDataAccessFunctions == BUILD_INDIRECT_ACCESS_FUNCTIONS)
-          return "";
      string returnString = typeNameString + " p_" + variableNameString + ";\n          ";
      return returnString;
    }
@@ -695,8 +693,6 @@ GrammarString::getDataAccessFunctionPrototypeString () const
      case TAG_NO_ACCESS_FUNCTIONS:
            break;
      case TAG_BUILD_ACCESS_FUNCTIONS:
-     case TAG_BUILD_WRAP_ACCESS_FUNCTIONS:
-     case TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS:
 	  returnString = "     public: \n         " + typeNameStringTmp + " get_" +
 	                 variableNameStringTmp + "() const;\n         void set_"  
                          + variableNameStringTmp + "(" + typeNameStringTmp + " " + 
@@ -1089,19 +1085,6 @@ GrammarString::buildDestructorSource()
      ROSE_ASSERT (variableName.empty() == false);
 
   // printf ("In GrammarString::buildDestructorSource(): type = %s variable = %s \n",typeName.c_str(),variableName.c_str());
-
-     if ( getIsInConstructorParameterList() == INDIRECT_CONSTRUCTOR_PARAMETER)
-        {
-       // printf ("Handle case of getIsInConstructorParameterList() == INDIRECT_CONSTRUCTOR_PARAMETER \n");
-       // return string("/* WARNING INDIRECT_CONSTRUCTOR_PARAMETER ") + variableName + string(" */\n");
-          return string("\n");
-        }
-
-     if ( getIsInConstructorParameterList() == WRAP_CONSTRUCTOR_PARAMETER)
-        {
-       // printf ("Handle case of getIsInConstructorParameterList() == WRAP_CONSTRUCTOR_PARAMETER \n");
-          initializerString = "= NULL";
-        }
 
   // Check if the type name is "char*"
      bool typeIsCharString = typeName.find("char*") != string::npos && typeName.find("char**") == string::npos;
