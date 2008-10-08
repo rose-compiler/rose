@@ -3882,7 +3882,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
        // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
        // gfortran to call cpp.
-          fortran_C_preprocessor_commandLine.push_back("gfortran");
+          fortran_C_preprocessor_commandLine.push_back(BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
 
        // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
