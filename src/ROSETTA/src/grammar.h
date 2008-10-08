@@ -303,7 +303,7 @@ class Grammar
 							     std::string successorContainerAccessOperator);
 	  std::string generateTraverseSuccessorNames(GrammarString* gs, std::string successorContainerName);
 
-	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className);
+	  std::string generateRTICode(GrammarString* gs, std::string successorContainerName, std::string className, size_t index);
 	  void buildRTIFile(Terminal* rootNode, StringUtility::FileWithLineNumbers& rttiFile);
 	  StringUtility::FileWithLineNumbers buildVariants ();
 	  StringUtility::FileWithLineNumbers buildForwardDeclarations ();
@@ -609,7 +609,7 @@ class Grammar
 
 // A new nonterminal should not be born a parent of any child
 #define NEW_NONTERMINAL_MACRO(NONTERMINAL_NAME, NONTERMINAL_EXPRESSION, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, NONTERMINAL_CAN_HAVE_INSTANCES) \
-     Terminal & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_NAME_STRING, *this, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, (SubclassListBuilder)(NONTERMINAL_EXPRESSION), NONTERMINAL_CAN_HAVE_INSTANCES ); \
+     Terminal & NONTERMINAL_NAME = nonTerminalConstructor ( NONTERMINAL_NAME_STRING, *this, NONTERMINAL_NAME_STRING, NONTERMINAL_TAG_STRING, (SubclassListBuilder() | NONTERMINAL_EXPRESSION), NONTERMINAL_CAN_HAVE_INSTANCES ); \
      ROSE_ASSERT (NONTERMINAL_NAME.associatedGrammar != NULL);
      // /*printf ("%s ---> ",NONTERMINAL_NAME_STRING);*/ NONTERMINAL_NAME.show(); //printf ("\n"); //MS
 

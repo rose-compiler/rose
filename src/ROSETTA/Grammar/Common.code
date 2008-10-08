@@ -88,7 +88,7 @@ HEADER_START
       /*! returns old style Sage II enum values */
           virtual int variant() const ROSE_DEPRECATED_FUNCTION;
       /*! returns old style Sage II enum values */
-          virtual int getVariant() const ROSE_DEPRECATED_FUNCTION;
+       // virtual int getVariant() const ROSE_DEPRECATED_FUNCTION;
       /* */
 
 
@@ -333,6 +333,7 @@ HEADER_END
 SOURCE_START
 // *** COMMON CODE SECTION BEGINS HERE ***
 
+#if 0
 int
 $CLASSNAME::getVariant() const
    {
@@ -340,6 +341,7 @@ $CLASSNAME::getVariant() const
      assert(this != NULL);
      return variant();
    }
+#endif
 
 // This function is used in ROSE in treeTraversal code
 // eventually replaces getVariant() and variant()

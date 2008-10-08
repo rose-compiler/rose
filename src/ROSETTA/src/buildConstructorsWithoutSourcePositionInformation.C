@@ -161,55 +161,49 @@ Grammar::buildConstructorWithoutSourcePositionInformation ( Terminal & node )
 	  StringUtility::FileWithLineNumbers constructorSourceCodeTemplate = Grammar::readFileWithPos (constructorTemplateFileName);
 
           bool complete  = false;
-          ConstructParamEnum config = INDIRECT_CONSTRUCTOR_PARAMETER;
-          int i = 1;
+          ConstructParamEnum config = CONSTRUCTOR_PARAMETER;
           if  (node.getBuildDefaultConstructor())
              {
                config = NO_CONSTRUCTOR_PARAMETER;
-               i = 0;
              }
 
-       // DQ (5/22/2006): Why do we have such a complex for loop?
-          for ( ; !complete && config.getValue() < CONSTRUCTOR_PARAMETER.getValue(); config = (ConstructParamEnum)(ConstructParamEnumX)(1 << i++))
+	  StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
+          if (node.getBaseClass() != NULL)
              {
-	       StringUtility::FileWithLineNumbers constructorSource = constructorSourceCodeTemplate;
-               if (node.getBaseClass() != NULL)
-                  {
-                    string parentClassName = node.getBaseClass()->getName();
-                 // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
-                 // printf ("Calling base class default constructor (should call paramtererized version) \n");
+               string parentClassName = node.getBaseClass()->getName();
+            // printf ("In Grammar::buildConstructor(): parentClassName = %s \n",parentClassName);
+            // printf ("Calling base class default constructor (should call paramtererized version) \n");
 
-                    string baseClassParameterString = "";
-                    bool withInitializers = false;
-                    bool withTypes        = false;
-                    baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
-                    string preInitializationString = ": " + parentClassName + "($BASECLASS_PARAMETERS)";
-                    preInitializationString = StringUtility::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
-                    constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
-                  }
-                 else
-                  {
-                    constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
-                  }
-
-               bool withInitializers         = false;
-               bool withTypes                = true;
-               string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
-               constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
-               constructorSource = StringUtility::copyEdit (constructorSource,"$CLASSNAME",className);
-
-               if (config == NO_CONSTRUCTOR_PARAMETER)
-                  {
-                    constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
-                  }
-                 else
-                  {
-                    string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
-                    constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
-                  }
-
-               returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
+               string baseClassParameterString = "";
+               bool withInitializers = false;
+               bool withTypes        = false;
+               baseClassParameterString = buildConstructorParameterListString (*node.getBaseClass(),withInitializers,withTypes, config);
+               string preInitializationString = ": " + parentClassName + "($BASECLASS_PARAMETERS)";
+               preInitializationString = StringUtility::copyEdit (preInitializationString,"$BASECLASS_PARAMETERS",baseClassParameterString);
+               constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST",preInitializationString);
              }
+            else
+             {
+               constructorSource = StringUtility::copyEdit (constructorSource,"$PRE_INITIALIZATION_LIST","");
+             }
+
+          bool withInitializers         = false;
+          bool withTypes                = true;
+          string constructorParameterString = buildConstructorParameterListString (node,withInitializers,withTypes,config,&complete);
+          constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_PARAMETER_LIST",constructorParameterString);
+          constructorSource = StringUtility::copyEdit (constructorSource,"$CLASSNAME",className);
+
+          if (config == NO_CONSTRUCTOR_PARAMETER)
+             {
+               constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY","");
+             }
+            else
+             {
+               string constructorFunctionBody = node.buildConstructorBody(withInitializers, config);
+               constructorSource = StringUtility::copyEdit (constructorSource,"$CONSTRUCTOR_BODY",constructorFunctionBody);
+             }
+
+          returnString.insert(returnString.end(), constructorSource.begin(), constructorSource.end());
         }
 
      returnString = StringUtility::copyEdit(returnString,"$GRAMMAR_PREFIX_","Sg");

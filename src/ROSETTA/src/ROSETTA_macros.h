@@ -13,10 +13,8 @@
 
 //QY 11/9/04 added capabilities for building multiple constructors for statements including
 //ExpressionRoot (and others) as data members
-typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER       = 0, 
-               TAG_INDIRECT_CONSTRUCTOR_PARAMETER = 1,  // member wrapped inside ExpressionRoot
-               TAG_WRAP_CONSTRUCTOR_PARAMETER     = 2,  // the wrapper member with type SgExpressionRoot
-               TAG_CONSTRUCTOR_PARAMETER          = 3} 
+typedef enum { TAG_NO_CONSTRUCTOR_PARAMETER       , 
+               TAG_CONSTRUCTOR_PARAMETER          } 
 ConstructParamEnumX;
 
 class ConstructParamEnum { // Wrapper for extra argument type checking
@@ -30,9 +28,7 @@ class ConstructParamEnum { // Wrapper for extra argument type checking
 
 typedef enum { TAG_NO_ACCESS_FUNCTIONS,
                TAG_BUILD_ACCESS_FUNCTIONS,
-               TAG_BUILD_LIST_ACCESS_FUNCTIONS,
-               TAG_BUILD_INDIRECT_ACCESS_FUNCTIONS,
-               TAG_BUILD_WRAP_ACCESS_FUNCTIONS}
+               TAG_BUILD_LIST_ACCESS_FUNCTIONS}
  BuildAccessEnumX;
 
 class BuildAccessEnum { // Wrapper for extra argument type checking
@@ -145,15 +141,11 @@ class DeleteFlag { // Wrapper for extra argument type checking
 // using namespace std;
 
 extern const ConstructParamEnum NO_CONSTRUCTOR_PARAMETER;
-extern const ConstructParamEnum INDIRECT_CONSTRUCTOR_PARAMETER;
-extern const ConstructParamEnum WRAP_CONSTRUCTOR_PARAMETER;
 extern const ConstructParamEnum CONSTRUCTOR_PARAMETER;
 
 extern const BuildAccessEnum NO_ACCESS_FUNCTIONS;
 extern const BuildAccessEnum BUILD_ACCESS_FUNCTIONS;
 extern const BuildAccessEnum BUILD_LIST_ACCESS_FUNCTIONS;
-extern const BuildAccessEnum BUILD_INDIRECT_ACCESS_FUNCTIONS;
-extern const BuildAccessEnum BUILD_WRAP_ACCESS_FUNCTIONS;
 
 extern const CopyConfigEnum NO_COPY_DATA;
 extern const CopyConfigEnum COPY_DATA;

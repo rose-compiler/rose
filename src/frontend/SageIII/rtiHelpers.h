@@ -210,4 +210,6 @@ static std::string toStringForRTI(const SgSymbolTable&) {return "<no output oper
 static std::string toStringForRTI(const SgSymbolHashBase::iterator&) {return "<no output operator defined for this type>";}
 #endif
 
+void doRTI(const char* fieldNameBase, void* fieldPtr, size_t fieldSize, void* thisPtr, const char* className, const char* typeString, const char* fieldName, const std::string& fieldContents, RTIMemberData& memberData);
+
 #endif // ROSE_RTIHELPERS_H

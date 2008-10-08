@@ -374,7 +374,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
 
      for(SgSymbolTable::hash_iterator it = pair_it.first; it != pair_it.second; ++it)
         {
-          switch(parent_declaration->getVariant())
+          switch(parent_declaration->variantT())
              {
                case V_SgVariableDeclaration:
                   {
