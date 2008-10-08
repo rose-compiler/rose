@@ -306,6 +306,7 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
      string fortranCompilerName = BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
      string includeFileName = includeLine->get_filename();
 
+#if USE_GFORTRAN_IN_ROSE
      if (fortranCompilerName == "gfortran")
         {
           if ( (BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER == 3) || 
@@ -326,6 +327,7 @@ FortranCodeGeneration_locatedNode::unparseFortranIncludeLine (SgStatement* stmt,
           printf ("Default compiler behavior ... in code generation (Fortran include uses absolute paths) \n");
        // ROSE_ASSERT(false);
         }
+#endif
 
   // printf ("Unparsing Fortran include using includeFileName = %s \n",includeFileName.c_str());
 
