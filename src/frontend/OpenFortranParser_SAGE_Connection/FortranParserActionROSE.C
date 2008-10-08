@@ -83,7 +83,7 @@ void c_action_generic_name_list__begin()
    {
   // Nothing to do here since we keep a stack and handle items pushed on the the stack later.
   // ROSE_ASSERT(astNameListStack.empty() == true);
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R102 c_action_generic_name_list__begin()");
 #endif
@@ -414,9 +414,23 @@ void c_action_defined_operator(Token_t * definedOp, ofp_bool isExtendedIntrinsic
           printf ("In c_action_defined_operator(): definedOp = %p = %s isExtendedIntrinsicOp = %s \n",definedOp,definedOp != NULL ? definedOp->text : "NULL",isExtendedIntrinsicOp ? "true" : "false");
 
      ROSE_ASSERT(definedOp != NULL);
-     astNameStack.push_front(definedOp);
 
-#if 1
+     if (astNameStack.empty() == false)
+        {
+          printf ("astNameStack is non-empty (skip pushing another copy on the stack: astNameStack.front() = %s \n",astNameStack.front()->text);
+        }
+
+  // DQ (10/8/2008): this rule causes the token to sometime appear on the stack a 2nd time.
+     printf ("Should we push the token on the stack? (YES) \n");
+
+#if 0
+     if (isExtendedIntrinsicOp == true)
+          astNameStack.push_front(definedOp);
+#else
+     astNameStack.push_front(definedOp);
+#endif
+
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R311 c_action_defined_operator()");
 #endif
@@ -432,7 +446,7 @@ void c_action_extended_intrinsic_op()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_extended_intrinsic_op() \n");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R312 c_action_extended_intrinsic_op()");
 #endif
@@ -1986,8 +2000,10 @@ void c_action_private_components_stmt(Token_t *label, Token_t *privateKeyword, T
      ROSE_ASSERT(classDefinition != NULL);
      classDefinition->set_isPrivate(true);
 
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R447 c_action_private_components_stmt()");
+#endif
    }
 
 /** R448
@@ -2716,10 +2732,10 @@ void c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t 
                printf ("WARNING, astTypeStack not empty: astTypeStack.front() = %p = %s (CLEARING astTypeStack) \n",astTypeStack.front(),astTypeStack.front()->class_name().c_str());
 
           astTypeStack.clear();
-
+#if 0
           if (astTypeStack.empty() == false)
                outputState("Error: astTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
-
+#endif
           ROSE_ASSERT(astTypeStack.empty() == true);
         }
 
@@ -2729,10 +2745,10 @@ void c_action_type_declaration_stmt(Token_t * label, int numAttributes, Token_t 
                printf ("WARNING, astBaseTypeStack not empty: astBaseTypeStack.front() = %p = %s (CLEARING astBaseTypeStack) \n",astBaseTypeStack.front(),astBaseTypeStack.front()->class_name().c_str());
 
           astBaseTypeStack.clear();
-
+#if 0
           if (astBaseTypeStack.empty() == false)
                outputState("Error: astBaseTypeStack.empty() == false in R502 c_action_declaration_type_spec()");
-
+#endif
           ROSE_ASSERT(astBaseTypeStack.empty() == true);
         }
 
@@ -3153,7 +3169,7 @@ void c_action_entity_decl(Token_t * id)
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In R504 c_action_entity_decl(): save variableName = %s \n",id->text);
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R504 c_action_entity_decl()");
 #endif
@@ -3457,7 +3473,7 @@ void c_action_initialization(ofp_bool hasExpr, ofp_bool hasNullInit)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_initialization(): hasExpr = %s hasNullInit = %s \n",hasExpr ? "true" : "false",hasNullInit ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R506 c_action_initialization()");
 #endif
@@ -3954,7 +3970,7 @@ void c_action_access_stmt(Token_t * label, Token_t * eos, ofp_bool hasList)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_access_stmt(): hasList = %s \n",hasList ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R518 c_action_access_stmt()");
 #endif
@@ -7636,7 +7652,7 @@ void c_action_level_3_expr(Token_t * relOp)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_3_expr(): relOp = %p = %s \n",relOp,relOp != NULL ? relOp->text : "NULL");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R710 c_action_level_3_expr()");
 #endif
@@ -7672,7 +7688,7 @@ void c_action_level_3_expr(Token_t * relOp)
         }
 #endif
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R710 c_action_level_3_expr()");
 #endif
@@ -7712,7 +7728,7 @@ void c_action_rel_op(Token_t * relOp)
      ROSE_ASSERT(relOp != NULL);
      astNameStack.push_front(relOp);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R713 c_action_rel_op()");
 #endif
@@ -7939,7 +7955,7 @@ void c_action_level_5_expr(int numDefinedBinaryOps)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr(): numDefinedBinaryOps = %d \n",numDefinedBinaryOps);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R717 c_action_level_5_expr()");
 #endif
@@ -7950,7 +7966,7 @@ void c_action_level_5_expr__defined_binary_op(Token_t * definedBinaryOp)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr__defined_binary_op(): definedBinaryOp = %p = %s \n",definedBinaryOp,definedBinaryOp != NULL ? definedBinaryOp->text : "NULL");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R717 c_action_level_5_expr__defined_binary_op()");
 #endif
@@ -7970,7 +7986,7 @@ void c_action_not_op(Token_t *notOp)
      ROSE_ASSERT(notOp != NULL);
      astNameStack.push_front(notOp);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R718 c_action_not_op()");
 #endif
@@ -8048,7 +8064,7 @@ void c_action_expr()
   // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
   // build_implicit_program_statement_if_required();
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R722 c_action_expr()");
 #endif
@@ -8079,7 +8095,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_assignment_stmt(): label = %p = %s \n",label,label ? label->text : "NULL");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R734 c_action_assignment_stmt()");
 #endif
@@ -8141,7 +8157,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
   // This is needed for test2007_67.f90
      astNodeStack.push_front(expressionStatement);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R734 c_action_assignment_stmt()");
 #endif
@@ -13676,6 +13692,88 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
         }
      astNameStack.clear();
 
+     SgClassDefinition* moduleDefinition = moduleStatement->get_definition();
+     ROSE_ASSERT(moduleDefinition != NULL);
+
+#if 1
+     std::vector<SgInterfaceStatement*> interfaceList = moduleStatement->get_interfaces();
+     for (size_t i = 0; i < interfaceList.size(); i++)
+        {
+          SgInterfaceStatement* interfaceStatement = interfaceList[i];
+
+          SgName interfaceName = interfaceStatement->get_name();
+
+          std::vector<SgInterfaceBody*> interfaceBodyList = interfaceStatement->get_interface_body_list();
+          for (size_t j = 0; j < interfaceBodyList.size(); j++)
+             {
+               SgInterfaceBody* interfaceBody = interfaceBodyList[j];
+               if (interfaceBody->get_functionDeclaration() == NULL)
+                  {
+                 // Fixup the functionDeclaration in the interface body
+                    SgName functionName = interfaceBody->get_function_name();
+
+                    printf ("Fixup functionName = %s in interfaceName = %s \n",functionName.str(),interfaceName.str());
+
+                    SgScopeStatement* currentScope = interfaceStatement->get_scope();
+                    ROSE_ASSERT(currentScope != NULL);
+
+                 // DQ (9/29/2008): inject all symbols from the module's symbol table into symbol table at current scope.
+                    SgSymbol* symbol = moduleDefinition->first_any_symbol();
+                    while(symbol != NULL)
+                       {
+                         SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
+
+                      // I don't think that the mapped function in the interface has to be public.
+                      // if (isPubliclyAccessible(symbol) == true)
+
+                         if (functionSymbol != NULL)
+                            {
+                           // By definition we assume that the interface name is different from the function name
+                           // bool isRenamed = true;
+
+                              ROSE_ASSERT(interfaceName != functionName);
+                              ROSE_ASSERT(interfaceName != "");
+
+                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionSymbol->get_declaration());
+                              ROSE_ASSERT(functionDeclaration != NULL);
+
+                              printf ("Found symbol for function = %s in interfaceName = %s \n",functionDeclaration->get_name().str(),interfaceName.str());
+
+                              if (functionDeclaration->get_name() == functionName)
+                                 {
+                                // Set the previously NULL function declaration stored in the SgInterfaceBody
+                                   interfaceBody->set_functionDeclaration(functionDeclaration);
+
+                                // DQ (10/8/2008): Build a symbol to map the function name to the name defined by the interface.
+                                // We might want to have a different sort of symbol for this purpose since the functionSymbol
+                                // and the aliasSymbol are in the same scope (where as previously the SgAliasSymbol has been 
+                                // used to map symbols between scopes).
+                                   SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
+
+                                   if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+                                        printf ("Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
+
+                                   currentScope->insert_symbol(interfaceName,aliasSymbol);
+                                 }
+                            }
+
+                      // Look at the next symbol in the module's symbol table
+                         symbol = moduleDefinition->next_any_symbol();
+                       }
+#if 0
+                    printf ("Exiting at the base of the fixup of SgInterfaceBody \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+        }
+
+#endif
+
+
+#if 0
+  // moduleDefinition->print_symboltable ("In c_action_end_module_stmt()");
+
   // DQ (10/3/2008): At the end of the module all interface functions should be defined, so we can 
   // fixup any interface blocks that referenced functions before they were defined (before the 
   // prototypes existed (this is mostly an issue for interfaces for assignment operators where the 
@@ -13689,12 +13787,6 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
   // ROSE_ASSERT(definingModuleStatement != NULL);
   // SgClassDefinition* moduleDefinition = definingModuleStatement->get_definition();
 
-     SgClassDefinition* moduleDefinition = moduleStatement->get_definition();
-     ROSE_ASSERT(moduleDefinition != NULL);
-
-  // moduleDefinition->print_symboltable ("In c_action_end_module_stmt()");
-
-#if 0
   // DQ (10/6/2008): We now implement interface bodies so we don't have to process this detail here.
 
      for (size_t i = 0; i < interfaceList.size(); i++)
@@ -13979,8 +14071,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                       // Look at the next symbol in the module's symbol table
                          symbol = classDefinition->next_any_symbol();
                        }
-
+#if 0
                     outputState("In R1109 c_action_use_stmt(): hasOnly == true");
+#endif
                   }
 
             // New add the non-renamed symbols from the module's symbol table, retraverse the module's symbol table to do this.
@@ -14016,9 +14109,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
           SgClassDefinition* classDefinition = moduleStatement->get_definition();
           ROSE_ASSERT(classDefinition != NULL);
-
+#if 0
           outputState("In R1109 c_action_use_stmt(): hasOnly == true");
-
+#endif
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                printf ("Case hasOnly == true: astNodeStack.size() = %zu \n",astNodeStack.size());
 
@@ -14075,8 +14168,9 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                  // Increment to the next symbol in the module's symbol table
                     symbol = classDefinition->next_any_symbol();
                   }
-
+#if 0
                outputState("In R1109 c_action_use_stmt(): hasOnly == true");
+#endif
              }
 #if 0
           printf ("Error: hasOnly == true case not implemented! (need to check symbol table for any existing symbols from a previous use statement and readd restricted set) \n");
@@ -14255,7 +14349,16 @@ void c_action_only_list(int count)
                ROSE_ASSERT(astNameStack.empty() == false);
                SgName name = astNameStack.front()->text;
 
-            // printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
+               printf ("In c_action_only_list(): Building SgRenamePair for name = %s (not renamed) \n",name.str());
+               if (matchingName(name,"OPERATOR") == true)
+                  {
+                 // Then get the next token and append it to the name.
+                    astNameStack.pop_front();
+                    SgName operatorName = astNameStack.front()->text;
+                    name = name + "(" + operatorName + ")";
+
+                    printf ("In c_action_only_list() this is an operator: name = %s \n",name.str());
+                  }
 
             // Use the rename pir IR node to provide a uniform interface to the construction of the SgUseStatement, but set the local-name to be "".
             // SgRenamePair* renamePair = new SgRenamePair("",name);
@@ -14434,7 +14537,7 @@ void c_action_interface_stmt__begin()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_interface_stmt__begin() \n");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1203 c_action_interface_stmt__begin()");
 #endif
@@ -14460,7 +14563,7 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
                abstractToken,abstractToken != NULL ? abstractToken->text : "NULL",
                keyword,keyword != NULL ? keyword->text : "NULL",hasGenericSpec ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1203 c_action_interface_stmt()");
 #endif
@@ -14531,7 +14634,17 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
 
   // astScopeStack.push_front(body);
 
-#if 1
+  // DQ (10/8/2008): Fixup astNameStack to clear any remaining entries (see test2008_55.f90)
+     if (astNameStack.empty() == false)
+        {
+          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+               printf ("WARNING: astNameStack not empty in c_action_end_interface_stmt() \n");
+
+          astNameStack.clear();
+        }
+     ROSE_ASSERT(astNameStack.empty() == true);
+
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1203 c_action_interface_stmt()");
 #endif
@@ -14668,7 +14781,7 @@ void c_action_procedure_stmt(Token_t *label, Token_t *module, Token_t *procedure
 #endif
 
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1206 c_action_procedure_stmt()");
 #endif
@@ -14732,7 +14845,7 @@ void c_action_generic_spec(Token_t *keyword, Token_t *name, int type)
   // ROSE_ASSERT(name != NULL);
   // astNameStack.push_front(name);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1207 c_action_generic_spec()");
 #endif
@@ -15208,7 +15321,7 @@ void c_action_function_stmt(Token_t * label, Token_t * keyword, Token_t * name, 
           printf ("In c_action_function_stmt(): label = %p (function name) name = %s hasGenericNameList = %s hasSuffix = %s \n",
                label,name ? name->text : "NULL",hasGenericNameList ? "true" : "false",hasSuffix ? "true" : "false");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R1224 c_action_function_stmt()");
 #endif
@@ -15379,7 +15492,7 @@ void c_action_result_name()
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_result_name() \n");
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of Unknown rule c_action_result_name()");
 #endif
@@ -15822,7 +15935,6 @@ void c_action_entry_stmt(Token_t * label, Token_t * keyword, Token_t * id, Token
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1235 c_action_entry_stmt()");
 #endif
-
    }
 
 /** R1236

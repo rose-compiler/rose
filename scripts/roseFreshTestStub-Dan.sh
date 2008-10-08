@@ -24,8 +24,7 @@ export PATH="/usr/apps/automake/1.9.6/bin:$PATH"
 export BOOST_ROOT="/home/dquinlan/local/boost_1_35_0_installTree-gxx-4.2.2"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
 
-# DQ (7/19/2008): Permissions were not reset after my 3rd striped disk was added! So use another directory for now.
-# ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
+# Use this directory for the location of all tests of ROSE.
 ROSE_TOP="/home/dquinlan/ROSE/svn-test-rose/$$/"
 
 # CONFIGURE_FLAGS=(--with-edg_source_code=true --with-boost=${BOOST_ROOT} --enable-dq-developer-tests --with-ROSE_LONG_MAKE_CHECK_RULE=yes --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --prefix=${ROSE_TOP}/install "$@")
@@ -39,7 +38,11 @@ MAILADDRS="dquinlan@llnl.gov"
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=checkout
 
+# Run in parallel (using gmake option).
 MAKEFLAGS="-j16"
+
+# Controls generation and contribution of binary for EDG support to distribution.
+ENABLE_BUILD_BINARY_EDG=1
 
 # TP (31Jul2008) make sure that the mpi deamon runs in the background
 export mpdvar=$(ps ax | grep mpd | wc -l )
