@@ -20,6 +20,12 @@ AC_CONFIG_AUX_DIR([config])
 # AM_INIT_AUTOMAKE(ROSE, 0.8.11a)
 AM_INIT_AUTOMAKE([foreign tar-pax 1.9.5])
 
+# JJW (10/8/2008): Make default CFLAGS, CXXFLAGS, and FFLAGS empty (from
+# <URL:http://osdir.com/ml/sysutils.autoconf.general/2003-11/msg00124.html>)
+true ${CFLAGS:=}
+true ${CXXFLAGS:=}
+true ${FFLAGS:=}
+
 # DQ (6/5/2007): Try to make package name use upper case for ROSE (this does not work)
 # AC_PACKAGE_TARNAME([ROSE])
 
