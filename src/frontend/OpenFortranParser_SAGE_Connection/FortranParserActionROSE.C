@@ -415,6 +415,11 @@ void c_action_defined_operator(Token_t * definedOp, ofp_bool isExtendedIntrinsic
 
      ROSE_ASSERT(definedOp != NULL);
      astNameStack.push_front(definedOp);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R311 c_action_defined_operator()");
+#endif
    }
 
 /**
@@ -426,6 +431,11 @@ void c_action_extended_intrinsic_op()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_extended_intrinsic_op() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R312 c_action_extended_intrinsic_op()");
+#endif
    }
 
 
@@ -7624,7 +7634,12 @@ void c_action_level_3_expr(Token_t * relOp)
   // printf ("relOp = %s \n",relOp->text);
 
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_level_3_expr(): relOp = %p \n",relOp);
+          printf ("In c_action_level_3_expr(): relOp = %p = %s \n",relOp,relOp != NULL ? relOp->text : "NULL");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R710 c_action_level_3_expr()");
+#endif
 
 #if !SKIP_C_ACTION_IMPLEMENTATION
      if (relOp != NULL)
@@ -7650,7 +7665,16 @@ void c_action_level_3_expr(Token_t * relOp)
           setSourcePosition(result,relOp);
 
           astExpressionStack.push_front(result);
+
+       // DQ (10/7/2008): There should uniformally be a toke on the stack for the ".<operator>." name.
+          ROSE_ASSERT(astNameStack.empty() == false);
+          astNameStack.pop_front();
         }
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R710 c_action_level_3_expr()");
 #endif
    }
 
@@ -7683,6 +7707,15 @@ void c_action_rel_op(Token_t * relOp)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_rel_op(): relOp = %s \n",relOp != NULL ? relOp->text : "NULL");
+
+  // DQ (10/7/2008): Added support for relational operators to be handled symetricly with other operators.
+     ROSE_ASSERT(relOp != NULL);
+     astNameStack.push_front(relOp);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R713 c_action_rel_op()");
+#endif
    }
 
 
@@ -7905,12 +7938,22 @@ void c_action_level_5_expr(int numDefinedBinaryOps)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr(): numDefinedBinaryOps = %d \n",numDefinedBinaryOps);
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R717 c_action_level_5_expr()");
+#endif
    }
 
 void c_action_level_5_expr__defined_binary_op(Token_t * definedBinaryOp)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-          printf ("In c_action_level_5_expr__defined_binary_op(): definedBinaryOp = %p \n",definedBinaryOp);
+          printf ("In c_action_level_5_expr__defined_binary_op(): definedBinaryOp = %p = %s \n",definedBinaryOp,definedBinaryOp != NULL ? definedBinaryOp->text : "NULL");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R717 c_action_level_5_expr__defined_binary_op()");
+#endif
    }
 
 /**
@@ -7926,7 +7969,8 @@ void c_action_not_op(Token_t *notOp)
 
      ROSE_ASSERT(notOp != NULL);
      astNameStack.push_front(notOp);
-#if 0
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R718 c_action_not_op()");
 #endif
@@ -7945,6 +7989,7 @@ void c_action_and_op(Token_t *andOp)
 
      ROSE_ASSERT(andOp != NULL);
      astNameStack.push_front(andOp);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R719 c_action_and_op()");
@@ -7964,6 +8009,7 @@ void c_action_or_op(Token_t *orOp)
 
      ROSE_ASSERT(orOp != NULL);
      astNameStack.push_front(orOp);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R720 c_action_or_op()");
@@ -7983,6 +8029,7 @@ void c_action_equiv_op(Token_t *equivOp)
 
      ROSE_ASSERT(equivOp != NULL);
      astNameStack.push_front(equivOp);
+
 #if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R721 c_action_equiv_op()");
@@ -8001,7 +8048,7 @@ void c_action_expr()
   // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
   // build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R722 c_action_expr()");
 #endif
@@ -8032,7 +8079,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_assignment_stmt(): label = %p = %s \n",label,label ? label->text : "NULL");
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of R734 c_action_assignment_stmt()");
 #endif
@@ -8094,7 +8141,7 @@ void c_action_assignment_stmt(Token_t *label, Token_t *eos)
   // This is needed for test2007_67.f90
      astNodeStack.push_front(expressionStatement);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R734 c_action_assignment_stmt()");
 #endif
@@ -14084,10 +14131,44 @@ void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, 
                defOp2,defOp2 != NULL ? defOp2->text : "NULL");
 
   // Construct the name pair used
-     SgRenamePair* renamePair = new SgRenamePair(id1->text,id2->text);
+  // SgRenamePair* renamePair = new SgRenamePair(id1->text,id2->text);
+     SgRenamePair* renamePair = NULL;
+     if (id1 != NULL && id2 != NULL)
+        {
+       // This is a simple variable or type renaming
+          renamePair = new SgRenamePair(id1->text,id2->text);
 
-  // Since there is more than one token used to define a rename, the source position is not accurately set using just "id1".
-     setSourcePosition(renamePair,id1);
+       // Since there is more than one token used to define a rename, the source position is not accurately set using just "id1".
+          setSourcePosition(renamePair,id1);
+        }
+       else
+        {
+       // This is the case of an operator renaming, note that op1 and op2 will contain the token "operator" if this 
+       // is an operator renaming.  These should maybe be folded into the names that are input into the SgRenamePair.
+          ROSE_ASSERT(defOp1 != NULL && defOp2 != NULL);
+          ROSE_ASSERT(op1 != NULL && op2 != NULL);
+
+          ROSE_ASSERT(id1 == NULL && id2 == NULL);
+
+          string local_name = defOp1->text;
+          string use_name   = defOp2->text;
+          if (op1 != NULL && op2 != NULL)
+             {
+               local_name = string(op1->text) + "(" + local_name + ")";
+               use_name   = string(op2->text) + "(" + use_name + ")";
+             }
+            else
+             {
+            // If they are not both valid pointers, make sure that they are both NULL, else we may have missed 
+            // some corner case that I don't have a test code for yet.
+               ROSE_ASSERT(op1 == NULL && op2 == NULL);
+             }
+
+          renamePair = new SgRenamePair(local_name,use_name);
+
+       // Since there is more than one token used to define a rename, the source position is not accurately set using just "id1".
+          setSourcePosition(renamePair,defOp1);
+        }
 
      ROSE_ASSERT(renamePair->get_file_info() != NULL);
 
@@ -14352,6 +14433,11 @@ void c_action_interface_stmt__begin()
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_interface_stmt__begin() \n");
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At TOP of R1203 c_action_interface_stmt__begin()");
+#endif
    }
 
 /** R1203
@@ -14445,7 +14531,7 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
 
   // astScopeStack.push_front(body);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R1203 c_action_interface_stmt()");
 #endif

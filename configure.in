@@ -342,6 +342,7 @@ if test "x$USE_JAVA" = x1; then
     AC_DEFINE([USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT], [1], [Always enable Fortran support whenever Java and gfortran are present])
     ofp_enabled=yes
     AC_MSG_RESULT([yes])
+    AC_DEFINE([USE_GFORTRAN_IN_ROSE], [1], [Mark that GFORTRAN is available])
   else
     AC_MSG_RESULT([no ... gfortran cannot be found (try --with-gfortran)])
   fi

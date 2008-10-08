@@ -3879,12 +3879,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
         {
           vector<string> fortran_C_preprocessor_commandLine;
 
-                      // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
-                      // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
-                      // gfortran to call cpp.
+       // Note: The `-traditional' and `-undef' flags are supplied to cpp by default [when used with cpp is used by gfortran], 
+       // to help avoid unpleasant surprises.  So to simplify use of cpp and make it more consistant with gfortran we use 
+       // gfortran to call cpp.
           fortran_C_preprocessor_commandLine.push_back("gfortran");
 
-                      // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
+       // DQ (5/19/2008): Added support for include paths as required for relatively new Fortran specific include mechanism in OFP.
           const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
           for (size_t i = 0; i < includeList.size(); i++)
              {
@@ -3905,9 +3905,11 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
           printf ("cpp command line = %s \n",CommandlineProcessing::generateStringFromArgList(fortran_C_preprocessor_commandLine,false,false).c_str());
 
-                      // Some security checking here could be helpful!!!
-          int errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
-
+          int errorCode = 0;
+#if USE_GFORTRAN_IN_ROSE
+       // Some security checking here could be helpful!!!
+          errorCode = systemFromVector (fortran_C_preprocessor_commandLine);
+#endif
        // DQ (10/1/2008): Added error checking on return value from CPP.
           if (errorCode != 0)
              {
@@ -4069,7 +4071,12 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                printf ("Checking syntax of input program using gfortran: syntaxCheckingCommandline = %s \n",CommandlineProcessing::generateStringFromArgList(fortranCommandLine,false,false).c_str());
              }
 
-          int returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
+          int returnValueForSyntaxCheckUsingBackendCompiler = 0;
+#if USE_GFORTRAN_IN_ROSE
+          returnValueForSyntaxCheckUsingBackendCompiler = systemFromVector (fortranCommandLine);
+#else
+          printf ("backend fortran compiler (gfortran) unavailable ... (not an error) \n");
+#endif
 
        // Check that there are no errors, I think that warnings are ignored!
           if (returnValueForSyntaxCheckUsingBackendCompiler != 0)
@@ -4900,8 +4907,12 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
                printf("End of command line for backend compiler\n");
              }
 
+#if USE_GFORTRAN_IN_ROSE
        // Call the backend compiler
           returnValueForCompiler = systemFromVector (compilerNameString);
+#else
+          printf ("Skipping call to backend compiler (backend compiler (gfortran) is unavailable). \n");
+#endif
         }
        else
         {
