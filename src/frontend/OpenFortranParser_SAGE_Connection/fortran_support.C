@@ -2152,7 +2152,7 @@ isImplicitNoneScope()
 SgVariableDeclaration* 
 buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
    {
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At TOP of buildVariableDeclaration()");
 #endif
@@ -2166,12 +2166,12 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
                printf ("In buildVariableDeclaration(): isAnImplicitScope = %s \n",(isAnImplicitScope == true) ? "true" : "false");
-
+#if 0
           if (isAnImplicitScope == true)
              {
                outputState("Warning: isAnImplicitScope == true buildVariableDeclaration()");
              }
-
+#endif
        // First we build it as a variable then we build it as a function (a few rules later)
        // So although we know at this point that this is going to be a function, we have to
        // build it as a varialbe so that it can be evaluated for converstion from a variable 
@@ -3227,7 +3227,6 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
   // Collect the data groups (data-sets) off of the astNodeStack.
      if (kind == SgAttributeSpecificationStatement::e_externalStatement)
         {
-
        // Output debugging information about saved state (stack) information.
           outputState("At BASE of buildAttributeSpecificationStatement() for external statement");
 
