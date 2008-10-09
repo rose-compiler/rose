@@ -1082,8 +1082,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
     if (offset > get_size() || offset+size > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, size);
     if (!p_congealed && size > 0)
-        p_referenced.insert(std::make_pair(offset, offset+size));
-
+        insert_extent(p_extents, offset, size);
     return &(p_data[offset]);
 }
 
@@ -1101,11 +1100,11 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
         memcpy(buf, &(p_data[offset]), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
         if (!p_congealed)
-            p_referenced.insert(std::make_pair(offset, offset+nbytes));
+	    insert_extent(p_extents, offset, nbytes);
     } else {
         memcpy(buf, &(p_data[offset]), size);
         if (!p_congealed)
-            p_referenced.insert(std::make_pair(offset, offset+size));
+	    insert_extent(p_extents, offset, size);
     }
 }
 
@@ -1122,7 +1121,7 @@ SgAsmGenericSection::content_str(addr_t offset)
     if (offset+nchars > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
     if (!p_congealed)
-        p_referenced.insert(std::make_pair(offset, offset+nchars));
+        insert_extent(p_extents, offset, nchars);
 
     return ret;
 }
@@ -1214,51 +1213,27 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
  * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
-const SgAsmGenericSection::ExtentVector &
+const SgAsmGenericSection::ExtentMap &
 SgAsmGenericSection::congeal()
 {
     if (!p_congealed) {
-        p_holes.clear();
-        addr_t old_end = 0;
-        for (RefMap::iterator it = p_referenced.begin(); it != p_referenced.end(); ++it) {
-            ExtentPair value = *it;
-            ROSE_ASSERT(value.first <= value.second);
-            if (value.first > old_end)
-                p_holes.push_back(std::make_pair(old_end, value.first));
-            if (value.second > old_end)
-                old_end = value.second;
-        }
-        if (get_size() > old_end)
-            p_holes.push_back(std::make_pair(old_end, get_size()));
-        p_referenced.clear();
-        p_congealed = true;
+      	ExtentMap holes = subtract_extents(p_extents, 0, get_size()); /*complement*/
+      	p_extents = holes;
+      	p_congealed = true;
     }
-
-    return p_holes;
+    return p_extents;
 }
 
-/* Uncongeal the holes */
-const SgAsmGenericSection::RefMap &
+/* Uncongeal the holes, turning them into referenced extents instead. */
+const SgAsmGenericSection::ExtentMap &
 SgAsmGenericSection::uncongeal()
 {
     if (p_congealed) {
-        p_referenced.clear();
-        addr_t old_end = 0;
-        for (ExtentVector::iterator it = p_holes.begin(); it != p_holes.end(); it++) {
-            ExtentPair value = *it;
-            ROSE_ASSERT(value.first >= old_end);
-            ROSE_ASSERT(value.first <= value.second);
-            if (value.first > old_end)
-                p_referenced.insert(std::make_pair(old_end, value.first));
-            if (value.second > old_end)
-                old_end = value.second;
-        }
-        if (get_size() > old_end)
-            p_referenced.insert(std::make_pair(old_end, get_size()));
-        p_congealed = false;
-        p_holes.clear();
+      	ExtentMap refs = subtract_extents(p_extents, 0, get_size()); /*complement*/
+      	p_extents = refs;
+      	p_congealed = false;
     }
-    return p_referenced;
+    return p_extents;
 }
 
 /* Extend a section by some number of bytes during the parsing phase. This is function is considered to be part of the parsing
@@ -1320,16 +1295,12 @@ SgAsmGenericSection::unparse(FILE *f)
 
 /* Write just the specified regions back to the file */
 void
-SgAsmGenericSection::unparse(FILE *f, const ExtentVector &ev)
+SgAsmGenericSection::unparse(FILE *f, const ExtentMap &map)
 {
-    for (size_t i = 0; i < ev.size(); i++) {
-        ExtentPair p = ev[i];
-        ROSE_ASSERT(p.first <= p.second);
-        ROSE_ASSERT(p.second <= get_size());
-        addr_t extent_offset = p.first;
-        addr_t extent_size   = p.second - p.first;
-        const unsigned char *extent_data = content(extent_offset, extent_size);
-        write(f, extent_offset, extent_size, extent_data);
+    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
+        ROSE_ASSERT((*i).first+(*i).second <= get_size());
+        const unsigned char *extent_data = content((*i).first, (*i).second);
+        write(f, (*i).first, (*i).second, extent_data);
     }
 }
 
@@ -1408,24 +1379,19 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 
     /* Show holes based on what's been referenced so far */
-    fprintf(f, "%s%-*s = %s\n", p, w, "congealed", p_congealed?"true":"false");
-    bool was_congealed = p_congealed;
-    const ExtentVector & holes = congeal();
-    fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
-    for (size_t i = 0; i < holes.size(); i++) {
-        ExtentPair extent = holes[i];
-        addr_t hole_size = extent.second - extent.first;
-        char label[64];
-        sprintf(label, "hole[%zu]", i);
-        if (extent.first==0 && hole_size==get_size()) {
-            fprintf(f, "%s%-*s = entire section\n", p, w, label);
-        } else {
-            fprintf(f, "%s%-*s = %"PRIu64" bytes at rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")\n", 
-                    p, w, label, hole_size, extent.first, extent.first, get_offset()+extent.first, get_offset()+extent.first);
-        }
+    {
+      fprintf(f, "%s%-*s = %s\n", p, w, "congealed", p_congealed?"true":"false");
+      bool was_congealed = p_congealed;
+      ExtentMap holes = congeal();
+      if (!was_congealed)
+	uncongeal();
+      fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
+      if (1==holes.size() && holes[0].first==0 && holes[0].second==get_size()) {
+	fprintf(f, "%s%-*s = entire section\n", p, w, "hole[0]");
+      } else {
+	dump_extents(holes, f, p, "hole");
+      }
     }
-    if (!was_congealed)
-        uncongeal();
 
     // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
     // better implementation if the hexdump function was a virtual member function).

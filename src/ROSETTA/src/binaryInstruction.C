@@ -1464,9 +1464,7 @@ Grammar::setUpBinaryInstructions ()
   // bool                rperm;                          /* Mapped by loader into memory having read permission */
   // bool                wperm;                          /* Mapped by loader into memory having write permission */
   // bool                eperm;                          /* Mapped by loader into memory having execute permission */
-  // RefMap              referenced;                     /* Begin/end offsets for areas referenced by extent() and extent_str() */
   // bool                congealed;                      /* Is "holes" up to date w.r.t. referenced? */
-  // ExtentVector        holes;                          /* Unreferenced area (bigin/end offsets) */
      AsmGenericSection.setFunctionPrototype ( "HEADER_GENERIC_SECTION", "../Grammar/BinaryInstruction.code");
 
   // Later we will want to turn this back on so that this IR node is consistant with the others (if appropriate).
@@ -1519,11 +1517,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("SgAsmGenericSection::RefMap","referenced","",
+     AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","extents","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentVector","holes","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
   // DQ (8/2/2008): This was removed from the design by Robb.

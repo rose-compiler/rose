@@ -766,38 +766,14 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
         uncongeal();
         content(0, get_size());
     }
-    
-    /* Get list of referenced extents (i.e., complement of holes). */
-    const RefMap &refs = uncongeal();
 
-    /* Prime the freelist_extent to point to the first freeable byte */
-    ExtentPair free_extent(0, 0); /*begin, end addresses (NOT SIZE!)*/
-    if (p_empty_string) {
-        /* Do not free empty_string at offset zero */
-        ROSE_ASSERT(p_empty_string->get_offset()==0);
-        ROSE_ASSERT(p_empty_string->get_string()=="");
-        free_extent = ExtentPair(1, 1);
-    }
-    
-    /* Recompute free list to include entire section sans holes. */
-    p_freelist.clear();
-    for (RefMap::const_iterator i=refs.begin(); i!=refs.end(); ++i) {
-        ExtentPair ref_extent = *i;
-        ROSE_ASSERT(ref_extent.first <= ref_extent.second);
-        ROSE_ASSERT(ref_extent.first >= free_extent.first || free_extent.first==1);
+    /* Compute the free list as the inverse of the holes. */
+    const ExtentMap &holes = congeal();
+    p_freelist = subtract_extents(holes, 0, get_size());
 
-        if (ref_extent.first > free_extent.second) {
-            /* Save old free area, start new free area. */
-            if (free_extent.first<free_extent.second)
-                p_freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
-            free_extent = ref_extent;
-        } else if (ref_extent.second > free_extent.second) {
-            /* Referenced extent extends free extent */
-            free_extent.second = ref_extent.second;
-        }
-    }
-    if (free_extent.first<free_extent.second)
-        p_freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
+    /* Remove the empty string from the free list */
+    if (p_empty_string)
+	erase_extent(p_freelist, p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
     
     /* Restore state */
     if (was_congealed)

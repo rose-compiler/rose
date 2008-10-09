@@ -1407,64 +1407,13 @@ SgAsmCoffStrtab::free(addr_t offset, addr_t size)
   }
 }
 
-/* FIXME: Is this identical to SgAsmElfStrtab::free_all_strings? */
 /* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
  * blow_way_holes is true then any areas that are unreferenced in the string table will be marked as referenced and added to
  * the free list. */
 void
 SgAsmCoffStrtab::free_all_strings(bool blow_away_holes)
 {
-    bool was_congealed = get_congealed();
-
-    /* Mark all storage objects as being unallocated. Never free the empty_string at offset zero. */
-    for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        if (p_referenced_storage[i]->get_offset()!=SgAsmCoffString::unallocated && p_referenced_storage[i]!=p_empty_string) {
-            p_num_freed++;
-            p_referenced_storage[i]->set_offset(SgAsmCoffString::unallocated);
-        }
-    }
-
-    /* Mark holes as referenced */
-    if (blow_away_holes) {
-        uncongeal();
-        content(0, get_size());
-    }
-    
-    /* Get list of referenced extents (i.e., complement of holes). */
-    const RefMap &refs = uncongeal();
-
-    /* Prime the freelist_extent to point to the first freeable byte */
-    ExtentPair free_extent(0, 0); /*begin, end addresses (NOT SIZE!)*/
-    if (p_empty_string) {
-        /* Do not free empty_string at offset zero */
-        ROSE_ASSERT(p_empty_string->get_offset()==0);
-        ROSE_ASSERT(p_empty_string->get_string()=="");
-        free_extent = ExtentPair(1, 1);
-    }
-    
-    /* Recompute free list to include entire section sans holes. */
-    p_freelist.clear();
-    for (RefMap::const_iterator i=refs.begin(); i!=refs.end(); ++i) {
-        ExtentPair ref_extent = *i;
-        ROSE_ASSERT(ref_extent.first <= ref_extent.second);
-        ROSE_ASSERT(ref_extent.first >= free_extent.first || free_extent.first==1);
-
-        if (ref_extent.first > free_extent.second) {
-            /* Save old free area, start new free area. */
-            if (free_extent.first<free_extent.second)
-                p_freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
-            free_extent = ref_extent;
-        } else if (ref_extent.second > free_extent.second) {
-            /* Referenced extent extends free extent */
-            free_extent.second = ref_extent.second;
-        }
-    }
-    if (free_extent.first<free_extent.second)
-        p_freelist.insert(freelist_t::value_type(free_extent.first, free_extent.second-free_extent.first));
-    
-    /* Restore state */
-    if (was_congealed)
-        congeal();
+    /* FIXME: Is this identical to SgAsmElfStrtab::free_all_strings? */
 }
 
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
