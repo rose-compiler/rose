@@ -189,7 +189,7 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n",        p, w, "rm_section");
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -555,7 +555,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -631,7 +631,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1445,7 +1445,7 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
     
 
@@ -1782,7 +1782,7 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
         p_entries->get_entries()[i]->dump(f, p, i);
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2045,7 +2045,7 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
         p_other_entries->get_entries()[i]->dump(f, p, i);
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2310,7 +2310,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

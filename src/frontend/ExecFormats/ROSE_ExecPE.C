@@ -87,7 +87,7 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
     fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -601,7 +601,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -689,7 +689,7 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 /* Constructor */
@@ -781,7 +781,7 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1123,7 +1123,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     
     SgAsmPESection::dump(f, p, -1);
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1498,7 +1498,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }
 
-    hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+    hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

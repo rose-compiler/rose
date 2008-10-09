@@ -1387,10 +1387,10 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     if (!was_congealed)
         uncongeal();
 
- // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
- // better implementation if the hexdump function was a virtual member function).
+    // DQ (8/31/2008): Output the contents if this not derived from (there is likely a 
+    // better implementation if the hexdump function was a virtual member function).
     if (variantT() == V_SgAsmGenericSection) {
-        hexdump(f, get_offset(), std::string(p)+"data at ", p_data);
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
     }
 }
 
@@ -1836,11 +1836,10 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 // functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Works like hexdump -C to display N bytes of DATA */
+/* Works like hexdump -C to display N bytes of DATA. The "prefix" can be used for whitespace to intent the output. */
 void
 SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const char *prefix, const unsigned char *data, size_t n)
 {
- // The "prefix" can be used for whitespace to intent the output.
 
     for (size_t i=0; i<n; i+=16) {
         fprintf(f, "%s0x%08"PRIx64": ", prefix, base_addr+i);
