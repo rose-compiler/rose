@@ -497,7 +497,7 @@ SgAsmElfString::ctor(SgAsmElfStrtab *strtab, const std::string &s)
 }
     
 void
-SgAsmElfString::ctor(SgAsmElfStringStorage *storage)
+SgAsmElfString::ctor(SgAsmStringStorage *storage)
 {
     p_storage = storage;
 }
@@ -505,7 +505,7 @@ SgAsmElfString::ctor(SgAsmElfStringStorage *storage)
 void
 SgAsmElfString::ctor(const std::string &s)
 {
-    p_storage = new SgAsmElfStringStorage(NULL, s, unallocated);
+    p_storage = new SgAsmStringStorage(NULL, s, unallocated);
 }
 
 #if 0
@@ -548,7 +548,7 @@ void
 SgAsmElfString::set_string(const std::string &s)
 {
     if (get_string()==s) return; /* no change in value */
-    SgAsmElfStringStorage *storage = get_storage();
+    SgAsmStringStorage *storage = get_storage();
     ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
     storage->get_strtab()->free(storage);
     storage->set_string(s);
@@ -573,13 +573,13 @@ SgAsmElfString::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Print some debugging info */
 void
-SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfStringStorage[%zd].", prefix, idx);
+        sprintf(p, "%sStringStorage[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sElfStringStorage.", prefix);
+        sprintf(p, "%sStringStorage.", prefix);
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -615,7 +615,7 @@ SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
 SgAsmElfStrtab::~SgAsmElfStrtab()
 {
     for (referenced_t::iterator i = p_referenced_storage.begin(); i != p_referenced_storage.end(); ++i) {
-        SgAsmElfStringStorage *storage = *i;
+        SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
         storage->set_offset(SgAsmElfString::unallocated);
     }
@@ -626,7 +626,7 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
 /* Creates the storage item for the string at the specified offset. If 'shared' is true then attempt to re-use a previous
  * storage object, otherwise always create a new one. Each storage object is considered a separate string, therefore when two
  * strings share the same storage object, changing one string changes the other. */
-SgAsmElfStringStorage *
+SgAsmStringStorage *
 SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 {
     ROSE_ASSERT(offset!=SgAsmElfString::unallocated);
@@ -643,7 +643,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 
     /* Create a new storage object at this offset. */
     const char *s = content_str(offset);
-    SgAsmElfStringStorage *storage = new SgAsmElfStringStorage(this, s, offset);
+    SgAsmStringStorage *storage = new SgAsmStringStorage(this, s, offset);
 
     /* It's a bad idea to free (e.g., modify) strings before we've identified all the strings in the table. Consider
      * the case where offset 1 is "domain" and offset 3 is "main" (i.e., they overlap). If we modify "main" before knowing
@@ -669,14 +669,14 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 SgAsmElfString *
 SgAsmElfStrtab::create_string(addr_t offset, bool shared)
 {
-    SgAsmElfStringStorage *storage = create_storage(offset, shared);
+    SgAsmStringStorage *storage = create_storage(offset, shared);
     return new SgAsmElfString(storage);
 }
 
 /* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
  * version of free() when possible. */
 void
-SgAsmElfStrtab::free(SgAsmElfStringStorage *storage)
+SgAsmElfStrtab::free(SgAsmStringStorage *storage)
 {
     ROSE_ASSERT(storage!=NULL);
     ROSE_ASSERT(storage!=p_empty_string);
@@ -765,7 +765,7 @@ SgAsmElfStrtab::reallocate()
     /* Get list of strings that need to be allocated and sort by descending size. */
     std::vector<size_t> map;
     for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        SgAsmElfStringStorage *storage = p_referenced_storage[i];
+        SgAsmStringStorage *storage = p_referenced_storage[i];
         if (storage->get_offset()==SgAsmElfString::unallocated) {
             map.push_back(i);
         }
@@ -782,7 +782,7 @@ SgAsmElfStrtab::reallocate()
 
     /* Allocate from largest to smallest so we have the best chance of finding overlaps */
     for (size_t i=0; i<map.size(); i++) {
-        SgAsmElfStringStorage *storage = p_referenced_storage[map[i]];
+        SgAsmStringStorage *storage = p_referenced_storage[map[i]];
         ROSE_ASSERT(storage->get_offset()==SgAsmElfString::unallocated);
 
         /* Empty strings should point to the first byte of the file (without sharing empty_string) according to ELF spec. */
@@ -796,7 +796,7 @@ SgAsmElfStrtab::reallocate()
         /* Is there an existing string that we can use? */
         if (storage->get_offset()==SgAsmElfString::unallocated) {
             for (size_t j=0; j<p_referenced_storage.size(); j++) {
-                SgAsmElfStringStorage *previous = p_referenced_storage[j];
+                SgAsmStringStorage *previous = p_referenced_storage[j];
                 size_t need = storage->get_string().size();
                 size_t have = previous->get_string().size();
                 if (previous->get_offset()!=SgAsmElfString::unallocated &&
@@ -867,7 +867,7 @@ SgAsmElfStrtab::unparse(FILE *f)
     
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        SgAsmElfStringStorage *storage = p_referenced_storage[i];
+        SgAsmStringStorage *storage = p_referenced_storage[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmElfString::unallocated);
         addr_t at = write(f, storage->get_offset(), storage->get_string());
         write(f, at, '\0');

@@ -1110,9 +1110,9 @@ HEADER_GENERIC_STRING_START
 
 HEADER_GENERIC_STRING_END
 
-HEADER_ELF_STRING_STORAGE_START
+HEADER_STRING_STORAGE_START
      public:
-          SgAsmElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
+          SgAsmStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
              : p_strtab(strtab), p_string(string), p_offset(offset) {}
           void dump(FILE *s, const char *prefix, ssize_t idx);
 
@@ -1147,10 +1147,10 @@ HEADER_ELF_STRING_STORAGE_START
           void set_offset(rose_addr_t offset) {
                p_offset = offset;
              }
-          SgAsmElfStringStorage() {abort();}                  /*no default constructor; cf. SgAsmElfString::create_storage()*/
+          SgAsmStringStorage() {abort();}                    /*no default constructor; cf. SgAsmElfString::create_storage()*/
 #endif
 
-HEADER_ELF_STRING_STORAGE_END
+HEADER_STRING_STORAGE_END
 
 
 
@@ -1358,7 +1358,7 @@ HEADER_ELF_STRING_START
         {ctor(strtab, offset, false);}
     SgAsmElfString(class SgAsmElfStrtab *strtab, const std::string &s)  /*new string in string table*/
         {ctor(strtab, s);}
-    explicit SgAsmElfString(class SgAsmElfStringStorage *storage)       /*string shares other storage*/
+    explicit SgAsmElfString(class SgAsmStringStorage *storage)          /*string shares other storage*/
         {ctor(storage);}
     explicit SgAsmElfString(const char *s)                              /*non-storage constructor*/
         {ctor(std::string(s));}
@@ -1378,7 +1378,7 @@ HEADER_ELF_STRING_START
  // virtual const std::string& get_string() const;                      /*no non-const version; use only set_string() to modify!*/
  // virtual void set_string(const std::string&);                        /*assignment calls this*/
  // rose_addr_t get_offset() const;                                     /*offset is read-only--no set_offset(); triggers realloc*/
- // class SgAsmElfStringStorage* get_storage() const {                  /*read only; managed by constructor/destructor*/
+ // class SgAsmStringStorage* get_storage() const {                     /*read only; managed by constructor/destructor*/
  //     return p_storage;
  // }
 
@@ -1388,7 +1388,7 @@ HEADER_ELF_STRING_START
  // SgAsmElfString() {abort();}
     void ctor(class SgAsmElfStrtab*, rose_addr_t offset, bool shared);
     void ctor(class SgAsmElfStrtab*, const std::string&);
-    void ctor(class SgAsmElfStringStorage*);
+    void ctor(class SgAsmStringStorage*);
     void ctor(const std::string &s);
 
 HEADER_ELF_STRING_END
@@ -1405,13 +1405,13 @@ HEADER_ELF_STRING_TABLE_START
 
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          class SgAsmElfStringStorage *create_storage(addr_t offset, bool shared);
+          class SgAsmStringStorage *create_storage(addr_t offset, bool shared);
           SgAsmElfString *create_string(addr_t offset, bool shared);
-          void free(class SgAsmElfStringStorage*);
+          void free(class SgAsmStringStorage*);
           void free_all_strings(bool blow_away_holes=false);
           void reallocate(); /*allocate storage for all unallocated strings*/
           virtual void set_size(addr_t newsize);
-          typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
+          typedef std::vector<class SgAsmStringStorage*> referenced_t;
 
      private:
           void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
@@ -4439,8 +4439,8 @@ SgAsmGenericString::dump(FILE*, const char *prefix, ssize_t idx)
 
 SOURCE_GENERIC_STRING_END
 
-SOURCE_ELF_STRING_STORAGE_START
-SOURCE_ELF_STRING_STORAGE_END
+SOURCE_STRING_STORAGE_START
+SOURCE_STRING_STORAGE_END
 
 SOURCE_ELF_STRING_START
 SOURCE_ELF_STRING_END

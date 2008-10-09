@@ -488,7 +488,7 @@ SgAsmInterpretation
 SgAsmGenericString
 SgAsmBasicString
 SgAsmElfString
-SgAsmElfStringStorage
+SgAsmStringStorage
 SgAsmElfStrtab
 SgAliasSymbol
 SgRenamePair

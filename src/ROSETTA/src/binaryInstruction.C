@@ -256,7 +256,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmElfString,          "AsmElfString",          "AsmElfStringTag"          );
      NEW_NONTERMINAL_MACRO ( AsmGenericString, AsmBasicString | AsmElfString, "AsmGenericString", "AsmGenericStringTag", false /* canHaveInstances = false */ );
 
-     NEW_TERMINAL_MACRO ( AsmElfStringStorage,   "AsmElfStringStorage",   "AsmElfStringStorageTag"   );
+     NEW_TERMINAL_MACRO ( AsmStringStorage,   "AsmStringStorage",   "AsmStringStorageTag"   );
 #endif
 
 
@@ -267,7 +267,7 @@ Grammar::setUpBinaryInstructions ()
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | 
                AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | 
-               AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmElfStringStorage |
+               AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry      | 
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmPEDLLList | AsmPEImportHintNameList |
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      |
@@ -407,18 +407,18 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmElfString.setFunctionPrototype ( "HEADER_ELF_STRING", "../Grammar/BinaryInstruction.code");
-     AsmElfString.setDataPrototype("SgAsmElfStringStorage*","storage","= NULL",
+     AsmElfString.setDataPrototype("SgAsmStringStorage*","storage","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // SgAsmElfStrtab *p_strtab;
   // std::string p_string;
   // rose_addr_t p_offset;
-     AsmElfStringStorage.setFunctionPrototype ( "HEADER_ELF_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
-     AsmElfStringStorage.setDataPrototype("SgAsmElfStrtab*","strtab","= NULL",
+     AsmStringStorage.setFunctionPrototype ( "HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
+     AsmStringStorage.setDataPrototype("SgAsmElfStrtab*","strtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStringStorage.setDataPrototype("std::string","string","= \"\"",
+     AsmStringStorage.setDataPrototype("std::string","string","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStringStorage.setDataPrototype("rose_addr_t","offset","= 0",
+     AsmStringStorage.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // These are the native-format versions of the same members described in Elf*FileHeader_disk
@@ -500,12 +500,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-  // typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
+  // typedef std::vector<class SgAsmStringStorage*> referenced_t;
   // referenced_t referenced;
   // typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
   // freelist_t freelist;
   // size_t num_freed;
-  // class SgAsmElfStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
+  // class SgAsmStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
      AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
@@ -514,7 +514,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStrtab.setDataPrototype("SgAsmElfStringStorage*","empty_string","= NULL",
+     AsmElfStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1850,7 +1850,7 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSymbolList.setFunctionSource ( "SOURCE_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbol.setFunctionSource ( "SOURCE_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
      AsmElfString.setFunctionSource ( "SOURCE_ELF_STRING", "../Grammar/BinaryInstruction.code");
-     AsmElfStringStorage.setFunctionSource ( "SOURCE_ELF_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
+     AsmStringStorage.setFunctionSource ( "SOURCE_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
 
      AsmPERVASizePair.setFunctionSource ( "SOURCE_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
      AsmPEFileHeader.setFunctionSource ( "SOURCE_PE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
