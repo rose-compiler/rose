@@ -1444,7 +1444,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
                     additionalNodeOptions = "shape=circle,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=yellow,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = "\\n  " + genericSymbol->get_name() + 
+                    labelWithSourceCode = "\\n  " + genericSymbol->get_name()->get_string() + 
                                           "\\n  " +  StringUtility::numberToString(genericSymbol) + "  ";
                     break;
                   }

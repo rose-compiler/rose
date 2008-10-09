@@ -687,9 +687,6 @@ Grammar::setUpBinaryInstructions ()
   // unsigned            st_shndx;
   // addr_t              st_size; // original size for unparsing; superclass holds adjusted size
      AsmElfSymbol.setFunctionPrototype      ( "HEADER_ELF_SYMBOL",       "../Grammar/BinaryInstruction.code");
-  // DQ (8/3/2008): This is now in the base class
-  // AsmElfSymbol.setDataPrototype("std::string","name","= \"\"",
-  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (8/28/2008): Check against the specification
      AsmElfSymbol.setDataPrototype("rose_addr_t","st_name","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1676,8 +1673,8 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSymbol.setDataPrototype("SgAsmGenericSection*","bound","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSymbol.setDataPrototype("std::string","name","= \"\"",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericSymbol.setDataPrototype("SgAsmGenericString*","name","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
