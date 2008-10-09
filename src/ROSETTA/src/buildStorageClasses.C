@@ -812,8 +812,7 @@ Terminal::evaluateType(std::string& varTypeString)
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
                  ( varTypeString == "SgGraphNodeDirectedGraphEdgeMultimapPtrList" ) ||
               // DQ (9/9/2008): Added support for string table transformations.
-                 ( varTypeString == "SgAsmElfStrtab::referenced_t" ) ||
-                 ( varTypeString == "SgAsmCoffStrtab::referenced_t" ) ||
+                 ( varTypeString == "SgAsmGenericStrtab::referenced_t" ) ||
                  false
               )
        {

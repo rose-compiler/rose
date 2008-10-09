@@ -170,7 +170,7 @@ Grammar::setUpBinaryInstructions ()
   // DQ (9/9/2008): Added support for String Table (part of Robb's work)
      NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
      NEW_TERMINAL_MACRO ( AsmCoffStrtab,         "AsmCoffStrtab",         "AsmCoffStrtabTag"         );
-     NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab|AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
+     NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab | AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
 
      NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStringSection, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
@@ -507,13 +507,6 @@ Grammar::setUpBinaryInstructions ()
 
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
-     AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     /*optional storage for empty string at offset zero if present*/
-     AsmElfStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmPEStringSection.setFunctionPrototype("HEADER_PE_STRING_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPEStringSection.setAutomaticGenerationOfDestructor(false);
@@ -522,13 +515,6 @@ Grammar::setUpBinaryInstructions ()
 
      AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
-     AsmCoffStrtab.setDataPrototype("SgAsmCoffStrtab::referenced_t","referenced_storage","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmCoffStrtab.setDataPrototype("size_t","num_freed","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     /*ptr to storage for empty string at offset zero if present*/
-     AsmCoffStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
@@ -1677,6 +1663,12 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericStrtab.setFunctionPrototype("HEADER_GENERIC_STRTAB", "../Grammar/BinaryInstruction.code");
      AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericSection*", "container", "= NULL", 
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t","referenced_storage","",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*","dont_free","= NULL",
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericStrtab.setDataPrototype("size_t","num_freed","= 0",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 // *****************************************************
