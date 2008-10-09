@@ -136,6 +136,7 @@ class SgAsmElfStrtab : public SgAsmElfSection {
     void free(class SgAsmElfStringStorage*);
     void free_all_strings(bool blow_away_holes=false);
     void reallocate(); /*allocate storage for all unallocated strings*/
+    virtual void set_size(addr_t);
   private:
     void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
     void free(addr_t offset, addr_t size); /*mark part of table as free*/
@@ -1076,10 +1077,24 @@ SgAsmElfStrtab::reallocate()
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = true;
-        get_file()->resize(this, extend_size);
+        get_file()->resize(this, get_size()+extend_size);
         reallocate();
         recursive = false;
     }
+}
+
+/* Augments superclass to make sure free list and such are adjusted properly */
+void
+SgAsmElfStrtab::set_size(addr_t newsize)
+{
+    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
+    addr_t orig_size = get_size();
+    addr_t adjustment = newsize - orig_size;
+
+    SgAsmElfSection::set_size(newsize);
+
+    if (adjustment>0)
+        freelist.insert(freelist_t::value_type(orig_size, adjustment));
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
@@ -2326,7 +2341,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
-#if 1
+#if 1 /* Temporary tests */
     /* Some tests for string allocation functions. Some of these assume that the string table complies with the ELF
      * specification, which guarantees that the first byte of the string table is NUL. The parser can handle non-compliant
      * string tables. */
@@ -2343,6 +2358,12 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
     }
     ROSE_ASSERT(test!=NULL);
 
+#if 1
+    /* What happens if the dynamic string table needs to grow? */
+    test->set_string("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+#endif
+
+#if 0 /*First batch of tests*/
     /* Test 1: Create another reference to the empty string and then try to modify it. This should create a new string rather
      *         than modifying the empty string. The ELF specification reserves offset zero to hold a NUL to represent the
      *         empty string and we must leave the NUL there even if nothing references it. */
@@ -2412,6 +2433,8 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
     fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
     s2 = new SgAsmElfString(dynstr, test->get_offset());
 #endif
+#endif
+
 #endif
 
     return fhdr;

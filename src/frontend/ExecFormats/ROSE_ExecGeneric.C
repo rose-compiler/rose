@@ -629,6 +629,8 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
     
     /* Adjust this section */
     section->set_size(newsize);
+    if (section->is_mapped())
+        section->set_mapped(section->get_mapped_rva(), section->get_mapped_size()+adjustment);
 }
 
 /* Print basic info about the sections of a file */
@@ -1665,15 +1667,17 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fputs("\"\n", f);
     
     /* Base virtual address and entry addresses */
-    char also[1024];
-    sprintf(also, "\n%*s also", (int)strlen(p)+w+12, "");
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, "base_va",   p_base_va);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
     fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
-        fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64, p, w, "entry_rva", i, p_entry_rvas[i]);
+        char label[64];
+        sprintf(label, "entry_rva[%zu]", i);
+        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_entry_rvas[i], p_entry_rvas[i]);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections_by_rva(p_entry_rvas[i]);
         for (size_t j = 0; j < sections.size(); j++) {
-            fprintf(f, "%s in section [%d] \"%s\"", j?also:"",  sections[j]->get_id(), sections[j]->get_name().c_str());
+            addr_t mapped_offset = p_entry_rvas[i] - sections[j]->get_mapped_rva();
+            fprintf(f, "%s%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n", 
+                    p, w, label, mapped_offset, mapped_offset, sections[j]->get_id(), sections[j]->get_name().c_str());
         }
         fputc('\n', f);
     }
