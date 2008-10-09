@@ -8,6 +8,7 @@
 #include <inttypes.h>
 
 #include <algorithm>
+#include <boost/math/common_factor.hpp>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -634,7 +635,20 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
     ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
+
+    const bool debug = true;
+    static size_t ncalls=0;
+    char p[256];
+
+    if (debug) {
+        sprintf(p, "SgAsmGenericFile::shift_extend[%zu]: ", ncalls++);
+        fprintf(stderr, "%s    -- START --\n", p);
+        fprintf(stderr, "%s    S = [%d] \"%s\"\n", p, s->get_id(), s->get_name()->c_str());
+        fprintf(stderr, "%s    %s Sa=0x%08"PRIx64" (%"PRIu64"), Sn=0x%08"PRIx64" (%"PRIu64")\n",
+                p, filespace ? "file" : "memory", sa, sa, sn, sn);
+    }
     
+    addr_t align=1, aligned_sa, aligned_sasn;
     SgAsmGenericSectionPtrList all = get_sections();
     SgAsmGenericSectionPtrList neighbors, villagers;
     SgAsmGenericSection::ExtentMap amap; /* address mappings for all extents */
@@ -642,6 +656,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     SgAsmGenericSection::ExtentPair sp;
 
     for (size_t pass=0; pass<2; pass++) {
+        if (debug) fprintf(stderr, "%s    -- PASS %zu --\n", p, pass);
+
         /* S offset and size in file or memory address space */
         if (filespace) {
             sp = s->get_file_extent();
@@ -685,11 +701,58 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
                 villagers.push_back(a);
                 break;
               default:
-                neighbors.push_back(a);
+                if ('L'!=SgAsmGenericSection::ExtentMap::category(ap, sp)) /*ignore sections left of S*/
+                    neighbors.push_back(a);
                 break;
             }
         }
-
+        if (debug) {
+            fprintf(stderr, "%s    Neighbors:\n", p);
+            for (size_t i=0; i<neighbors.size(); i++) {
+                SgAsmGenericSection *a = neighbors[i];
+                SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                char cat = SgAsmGenericSection::ExtentMap::category(ap, sp);
+                fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                        p, cat, 0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
+                if (strchr("RICE", cat)) {
+                    fprintf(stderr, " align=0x%08"PRIx64, align);
+                } else {
+                    fputs("                 ", stderr);
+                }
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+            }
+            if (villagers.size()>0) fprintf(stderr, "%s    Villagers:\n", p);
+            for (size_t i=0; i<villagers.size(); i++) {
+                SgAsmGenericSection *a = villagers[i];
+                SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                        p, SgAsmGenericSection::ExtentMap::category(ap, sp), /*cat should always be R*/
+                        0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
+                fputs("                 ", stderr);
+                fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+            }
+        }
+        
+        /* Adjust Sa to satisfy all alignment constraints in neighborhood(S) for sections that will move (cats R, I, C, and E). */
+        align = 1;
+        for (size_t i=0; i<neighbors.size(); i++) {
+            SgAsmGenericSection *a = neighbors[i];
+            SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            if (strchr("RICE", SgAsmGenericSection::ExtentMap::category(ap, sp))) {
+                addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+                align = boost::math::lcm(align, x?x:1);
+            }
+        }
+        aligned_sa = (sa/align + (sa%align?1:0))*align;
+        aligned_sasn = ((sa+sn)/align + ((sa+sn)%align?1:0))*align;
+        if (debug) {
+            fprintf(stderr, "%s    Alignment LCM = 0x%08"PRIx64" (%"PRIu64")\n", p, align, align);
+            fprintf(stderr, "%s    Aligned Sa    = 0x%08"PRIx64" (%"PRIu64")\n", p, aligned_sa, aligned_sa);
+            fprintf(stderr, "%s    Aligned Sa+Sn = 0x%08"PRIx64" (%"PRIu64")\n", p, aligned_sasn, aligned_sasn);
+        }
+        
         /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
          * that to define the size of the hole right of neighborhood(S). */
         if (0==villagers.size()) break;
@@ -706,15 +769,27 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         ROSE_ASSERT(after_hole);
         ROSE_ASSERT(hp.first > nhs.first+nhs.second);
         addr_t hole_size = hp.first - (nhs.first+nhs.second);
-        if (hole_size >= sa+sn) break;
+        if (debug) {
+            fprintf(stderr, "%s    hole size = 0x%08"PRIx64" (%"PRIu64"); need 0x%08"PRIx64" (%"PRIu64"); %s\n",
+                    p, hole_size, hole_size, aligned_sasn, aligned_sasn,
+                    hole_size>=aligned_sasn ? "large enough" : "not large enough");
+        }
+        if (hole_size >= aligned_sasn) break;
+        addr_t need_more = aligned_sasn - hole_size;
 
         /* Hole is not large enough. We need to recursively move things that are right of our neighborhood, then recompute the
          * all-sections address map and neighborhood(S). */
         ROSE_ASSERT(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
-        shift_extend(after_hole, sa+sn - hole_size, 0, filespace);
+        if (debug) {
+            fprintf(stderr, "%s    Calling recursively to increase hole size by 0x%08"PRIx64" (%"PRIu64") bytes\n",
+                    p, need_more, need_more);
+        }
+        shift_extend(after_hole, need_more, 0, filespace);
+        if (debug) fprintf(stderr, "%s    Returned from recursive call\n", p);
     }
 
     /* Consider sections that are in the same neighborhood as S */
+    if (debug) fprintf(stderr, "%s    -- ADJUSTING --\n", p);
     bool resized_mem = false;
     for (size_t i=0; i<neighbors.size(); i++) {
         SgAsmGenericSection *a = neighbors[i];
@@ -724,41 +799,41 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             break;
           case 'R':
             if (filespace) {
-                a->set_offset(a->get_offset()+sa+sn);
+                a->set_offset(a->get_offset()+aligned_sasn);
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+sa+sn);
+                a->set_mapped_rva(a->get_mapped_rva()+aligned_sasn);
             }
             break;
           case 'C': /*including S itself*/
           case 'E':
             if (filespace) {
-                a->set_offset(a->get_offset()+sa);
+                a->set_offset(a->get_offset()+aligned_sa);
                 a->set_size(a->get_size()+sn);
                 if (!resized_mem && a->is_mapped()) {
                     shift_extend(a, 0, sn, false);
                     resized_mem = true;
                 }
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+sa);
+                a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
                 a->set_mapped_size(a->get_mapped_size()+sn);
             }
             break;
           case 'O':
             if (filespace) {
-                a->set_size(a->get_size()+sa+sn);
+                a->set_size(a->get_size()+aligned_sasn);
                 if (!resized_mem && a->is_mapped()) {
-                    shift_extend(a, 0, sa+sn, false);
+                    shift_extend(a, 0, aligned_sasn, false);
                     resized_mem = true;
                 }
             } else {
-                a->set_mapped_size(a->get_mapped_size()+sa+sn);
+                a->set_mapped_size(a->get_mapped_size()+aligned_sasn);
             }
             break;
           case 'I':
             if (filespace) {
-                a->set_offset(a->get_offset()+sa);
+                a->set_offset(a->get_offset()+aligned_sa);
             } else {
-                a->set_mapped_rva(a->get_mapped_rva()+sa);
+                a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
             }
             break;
           case 'B':
@@ -776,7 +851,17 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             ROSE_ASSERT(!"invalid extent category");
             break;
         }
+        if (debug) {
+            addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
+            fprintf(stderr, "%s   %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    p, 0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
+            SgAsmGenericSection::ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
+            fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
+        }
     }
+    if (debug) fprintf(stderr, "%s    -- END --\n", p);
 }
 
 /* Print basic info about the sections of a file */
