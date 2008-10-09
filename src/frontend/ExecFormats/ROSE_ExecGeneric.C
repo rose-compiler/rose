@@ -811,6 +811,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     p_offset = offset;
     p_data = ef->content(offset, size);
     p_file = ef;
+    p_size = p_data.size();
 
     /* Add this section to the header's section list */
     set_header(hdr);
@@ -835,11 +836,12 @@ SgAsmGenericSection::~SgAsmGenericSection()
 
 }
 
-/* Returns the file size of the section in bytes */
+/* Returns the current file size of the section in bytes. The original size of the section is available through the size of
+ * the original data: p_data.size() */
 rose_addr_t
 SgAsmGenericSection::get_size() const
 {
-    return p_data.size();
+    return p_size;
 }
 
 /* Returns starting byte offset in the file */
@@ -939,10 +941,6 @@ SgAsmGenericSection::content_str(addr_t offset)
 {
     const char *ret = (const char*)&(p_data[offset]);
     size_t nchars=0;
-
-#if 0 /*DEBUGGING*/
-    printf ("SgAsmGenericSection::content_str(offset): p_data = %p offset = %zu p_size = %zu \n",p_data,offset,p_size);
-#endif
 
     while (offset+nchars < get_size() && ret[nchars]) nchars++;
     nchars++; /*NUL*/
@@ -1089,24 +1087,30 @@ SgAsmGenericSection::uncongeal()
     return p_referenced;
 }
 
-/* Extend a section by some number of bytes. */
+/* Extend a section by some number of bytes during the parsing phase. This is function is considered to be part of the parsing
+ * and construction of a section--it changes the part of the file that's considered the "original size" of the section. */
 void
 SgAsmGenericSection::extend(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
+    ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
+    p_size = new_size;
     if (p_offset + new_size > get_file()->get_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
     p_data.resize(new_size);
 }
 
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
- * file then it is extended to the end of the file and no exception is thrown. */
+ * file then its data is extended to the end of the file and no exception is thrown. The section size (p_size) is not limited
+ * by the file size. */
 void
 SgAsmGenericSection::extend_up_to(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
+    ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
+    p_size = new_size; /*before limiting by file size*/
     if (p_offset + new_size > get_file()->get_size()) {
         ROSE_ASSERT(p_offset <= get_file()->get_size());
         new_size = get_file()->get_size() - p_offset;
