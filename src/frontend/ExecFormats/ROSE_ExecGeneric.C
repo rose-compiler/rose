@@ -794,17 +794,17 @@ void
 SgAsmGenericFile::fill_holes()
 {
     /* Get the list of file extents referenced by all file sections */
-    ExtentMap refs;
-    SgAsmSectionPtrList sections = get_sections();
-    for (SgAsmSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
-        refs.insert((*i)->get_offset(), (*i)->get_size());
+    SgAsmGenericSection::ExtentMap refs;
+    SgAsmGenericSectionPtrList sections = get_sections();
+    for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
+        refs.insert(SgAsmGenericSection::ExtentMap::value_type((*i)->get_offset(), (*i)->get_size()));
     }
 
     /* The hole extents are everything other than the sections */
-    ExtentMap holes = subtract_extents(refs, 0, get_size());
+    SgAsmGenericSection::ExtentMap holes = SgAsmGenericSection::subtract_extents(refs, 0, get_size());
 
     /* Create the sections representing the holes */
-    for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
+    for (SgAsmGenericSection::ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
       	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, (*i).first, (*i).second);
       	hole->set_synthesized(true);
       	hole->set_name(new SgAsmBasicString("hole"));
@@ -1365,7 +1365,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
       if (!was_congealed)
 	uncongeal();
       fprintf(f, "%s%-*s = %zu hole%s\n", p, w, "num_holes", holes.size(), 1==holes.size()?"":"s");
-      if (1==holes.size() && holes[0].first==0 && holes[0].second==get_size()) {
+      if (1==holes.size() && holes.begin()->first==0 && holes.begin()->second==get_size()) {
 	fprintf(f, "%s%-*s = entire section\n", p, w, "hole[0]");
       } else {
 	dump_extents(holes, f, p, "hole");
@@ -1383,152 +1383,154 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // SgAsmGenericSection class methods for manipulating extents and extent maps (e.g., referenced lists, free lists, etc).
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Given an extent, subtract bytes that are listed in the extent map and return the result map. */
-ExtentMap
+/* Given a subtrahend extent (offset,size), subtract bytes that are listed in the minuend extent map and return the result map. */
+SgAsmGenericSection::ExtentMap
 SgAsmGenericSection::subtract_extents(const ExtentMap &map, addr_t offset, addr_t size)
 {
-  ExtentMap result;
-  for (ExtentMap::const_iterator i=map.begin(); i!=map.end() && offset+size>(*i).first; ++i) {
-    ROSE_ASSERT((*i).second > 0);
-    if (0==size) {
-      /* We've added everything to the result */
-      return;
-    } else if ((*i).first >= offset+size) {
-      /* Subtrahend extent is to the right of offset,size */
-      break;
-    } else if ((*i).first+(*i).second <= offset) {
-      /* Subtrahend extent is to the left of offset,size */
-    } else if ((*i).first+(*i).second >= offset+size) {
-      if ((*i).first <= offset) {
-	/* Subtrahend extent contains all of offset,size */
-	return;
-      } else {
-	/* Subtrahend extent starts inside offset,size and ends to the right of offset,size. Add left part of offset,size. */
-	size = (*i).first - offset;
-	break;
-      }
-    } else if ((*i).first > offset) {
-      /* Subtrahend extent is inside offset,size. Add left part, save right part for another pass through the loop. */
-      result.insert(ExtentMap::value_type(offset, (*i).first - offset));
-      size -= (*i).first + (*i).second - offset;
-      offset = (*i).first + (*i).second;
-    } else {
-      /* Subtrahend extent starts left of offset,size and ends inside offset,size. Discard the left part of offset,size. */
-      size -= (*i).first + (*i).second - offset;
-      offset = (*i).first + (*i).second;
+    ExtentMap result;
+    for (ExtentMap::const_iterator i=map.begin(); i!=map.end() && offset+size>(*i).first; ++i) {
+        ROSE_ASSERT((*i).second > 0);
+        if (0==size) {
+            /* We've added everything to the result */
+            return result;
+        } else if ((*i).first >= offset+size) {
+            /* Subtrahend extent is to the right of offset,size */
+            break;
+        } else if ((*i).first+(*i).second <= offset) {
+            /* Subtrahend extent is to the left of offset,size */
+        } else if ((*i).first+(*i).second >= offset+size) {
+            if ((*i).first <= offset) {
+                /* Subtrahend extent contains all of offset,size */
+                return result;
+            } else {
+                /* Subtrahend extent starts inside offset,size and ends to the right of offset,size. Add left part of offset,
+                 * size. */
+                size = (*i).first - offset;
+                break;
+            }
+        } else if ((*i).first > offset) {
+            /* Subtrahend extent is inside offset,size. Add left part, save right part for another pass through the loop. */
+            result.insert(ExtentMap::value_type(offset, (*i).first - offset));
+            size -= (*i).first + (*i).second - offset;
+            offset = (*i).first + (*i).second;
+        } else {
+            /* Subtrahend extent starts left of offset,size and ends inside offset,size. Discard the left part of offset,size. */
+            size -= (*i).first + (*i).second - offset;
+            offset = (*i).first + (*i).second;
+        }
     }
-  }
-  if (size>0)
-    result.insert(offset,size);
-  return result;
+    if (size>0)
+        result.insert(ExtentMap::value_type(offset,size));
+    return result;
 }
 
 /* Adds the specified extent to the map of extents. Coalesce adjacent entries in the map. */
 void
 SgAsmGenericSection::insert_extent(ExtentMap &map, addr_t offset, addr_t size)
 {
-  ExtentMap to_add = subtract_extents(map, offset, size);
-  for (ExtentMap::iterator i=to_add.begin(); i!=to_add.end(); ++i) {
-    ExtentMap::iterator right = map.find((*i).first+(*i).second);
-    if (right!=map.end()) {
-      (*i).second += (*right).second;
-      map.erase(right);
-    }
+    ExtentMap to_add = subtract_extents(map, offset, size);
+    for (ExtentMap::iterator i=to_add.begin(); i!=to_add.end(); ++i) {
+        ExtentMap::iterator right = map.find((*i).first+(*i).second);
+        if (right!=map.end()) {
+            (*i).second += (*right).second;
+            map.erase(right);
+        }
 
-    ExtentMap::iterator inserted = map.insert((*i).first, (*i).second);
-    if (inserted!=map.begin()) {
-      ExtentMap::iterator left = inserted-1;
-      if ((*left).first+(*left).right == (*i).first) {
-	(*left).second += (*i).second;
-	map.erase(inserted);
-      }
+        ExtentMap::iterator inserted = map.insert(map.begin(), *i);
+        if (inserted!=map.begin()) {
+            ExtentMap::iterator left = inserted;
+            --left;
+            if ((*left).first+(*left).second == (*i).first) {
+                (*left).second += (*i).second;
+                map.erase(inserted);
+            }
+        }
     }
-  }
 }
 
 /* Returns the extents that overlap with the specified area */
-ExtentMap
+SgAsmGenericSection::ExtentMap
 SgAsmGenericSection::overlap_extents(const ExtentMap &map, addr_t offset, addr_t size)
 {
-  ExtentMap result;
-  for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
-    if ((*i).first < offset+size && (*i).first+(*i).second > offset)
-      result.insert((*i).first, (*i).second);
-  }
-  return result;
+    ExtentMap result;
+    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
+        if ((*i).first < offset+size && (*i).first+(*i).second > offset)
+            result.insert(ExtentMap::value_type((*i).first, (*i).second));
+    }
+    return result;
 }
 
 /* Removes the specified extent from the map of extents. */
 void
 SgAsmGenericSection::erase_extent(ExtentMap &map, addr_t offset, addr_t size)
 {
-  ExtentMap candidates = overlap_sections(map, offset, size);
-  for (ExtentMap::iterator i=candidates.begin(); i!=candidates.end(); ++i) {
-    ExtentMap::iterator candidate = map.find((*i).first);
-    ROSE_ASSERT(found!=map.end());
-    if (offset <= (*candidate).first) {
-      if (offset+size >= (*i).first + (*i).second) {
-	/* Erase entire candidate */
-	map.erase(candidate);
-      } else {
-	/* Erase left part of candidate */
-	map.erase(candidate);
-	map.insert(offset+size, (*i).size+(*i).first - (offset+size));
-      }
-    } else if (offset+size >= (*i).first + (*i).second) {
-      /* Erase right part of candidate */
-      (*candidate).second = offset - (*i).first;
-    } else {
-      /* Erase middle of candidate */
-      (*candidate).second = offset - (*i).first;
-      map.insert(offset+size, (*i).size+(*i).first - (offset+size));
+    ExtentMap candidates = overlap_extents(map, offset, size);
+    for (ExtentMap::iterator i=candidates.begin(); i!=candidates.end(); ++i) {
+        ExtentMap::iterator candidate = map.find((*i).first);
+        ROSE_ASSERT(candidate!=map.end());
+        if (offset <= (*candidate).first) {
+            if (offset+size >= (*i).first + (*i).second) {
+                /* Erase entire candidate */
+                map.erase(candidate);
+            } else {
+                /* Erase left part of candidate */
+                map.erase(candidate);
+                map.insert(ExtentMap::value_type(offset+size, (*i).first+(*i).second - (offset+size)));
+            }
+        } else if (offset+size >= (*i).first + (*i).second) {
+            /* Erase right part of candidate */
+            (*candidate).second = offset - (*i).first;
+        } else {
+            /* Erase middle of candidate */
+            (*candidate).second = offset - (*i).first;
+            map.insert(ExtentMap::value_type(offset+size, (*i).first+(*i).second - (offset+size)));
+        }
     }
-  }
 }
 
 /* Return the extent that's the closest match in size without removing it from the map. If two extents tie for the best fit then
  * return the one with the lower offset. Returns map.end() on failure. */
-ExtentMap::const_iterator
-SgAsmGenericSection::best_fit_extent(const ExtentMap &map, addr_t size)
+SgAsmGenericSection::ExtentMap::iterator
+SgAsmGenericSection::best_fit_extent(ExtentMap &map, addr_t size)
 {
-  ExtentMap::const_iterator best = map.end();
-  for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
-    if ((*i).second==size)
-      return i;
-    if ((*i).second > size && (best==map.end() || (*i).second < (*best).second))
-      best = i;
-  }
-  return best;
+    ExtentMap::iterator best = map.end();
+    for (ExtentMap::iterator i=map.begin(); i!=map.end(); ++i) {
+        if ((*i).second==size)
+            return i;
+        if ((*i).second > size && (best==map.end() || (*i).second < (*best).second))
+            best = i;
+    }
+    return best;
 }
 
 /* Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
-ExtentPair
+SgAsmGenericSection::ExtentPair
 SgAsmGenericSection::allocate_best_extent(ExtentMap &map, addr_t size)
 {
-  ExtentMap::const_iterator best_fit = best_fit_extent(size);
-  if (best_fit==map.end())
-    throw NoSpace();
-  ExtentPair saved = *best_fit;
-  map.erase(best_fit);
-  if (saved.second>size)
-    map.insert(saved.first+size, saved.size-size);
-  return ExtentPair(saved.first, size);
+    ExtentMap::iterator best_fit = best_fit_extent(map, size);
+    if (best_fit==map.end())
+        throw std::bad_alloc();
+    ExtentPair saved = *best_fit;
+    map.erase(best_fit);
+    if (saved.second>size)
+        map.insert(ExtentMap::value_type(saved.first+size, saved.second-size));
+    return ExtentPair(saved.first, size);
 }
 
 /* Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
-ExtentPair
+SgAsmGenericSection::ExtentPair
 SgAsmGenericSection::allocate_first_extent(ExtentMap &map, addr_t size)
 {
-  for (ExtentMap::iterator i=map.begin(); i!=map.end(); ++i) {
-    if ((*i).second >= size) {
-      ExtentPair saved = *i;
-      map.erase(i);
-      if (saved.second > size)
-	map.insert(saved.first+size, saved.size-size);
-      return ExtentPair(saved.first, size);
+    for (ExtentMap::iterator i=map.begin(); i!=map.end(); ++i) {
+        if ((*i).second >= size) {
+            ExtentPair saved = *i;
+            map.erase(i);
+            if (saved.second > size)
+                map.insert(ExtentMap::value_type(saved.first+size, saved.second-size));
+            return ExtentPair(saved.first, size);
+        }
     }
-  }
-  throw NoSpace();
+    throw std::bad_alloc();
 }
 
 /* Print info about an extent map */
@@ -1536,12 +1538,13 @@ void
 SgAsmGenericSection::dump_extents(const ExtentMap &map, FILE *f, const char *prefix, const char *label)
 {
     char p[4096];
-    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
-      if (!label) label = "Extent";
-      sprintf(p, "%s%s[%zd]", prefix, label, idx);
-      int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-      fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"), for 0x%08"PRIx64" (%"PRIu64") byte%s\n",
-	      p, w, "", (*i).first, (*i).first, (*i).second, (*i).second, 1==(*i).second?"":"s");
+    size_t idx=0;
+    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i, ++idx) {
+        if (!label) label = "Extent";
+        sprintf(p, "%s%s[%zd]", prefix, label, idx);
+        int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+        fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"), for 0x%08"PRIx64" (%"PRIu64") byte%s\n",
+                p, w, "", (*i).first, (*i).first, (*i).second, (*i).second, 1==(*i).second?"":"s");
     }
 }
 

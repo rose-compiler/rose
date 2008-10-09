@@ -835,7 +835,7 @@ HEADER_GENERIC_SECTION_START
           static void erase_extent(ExtentMap &map, const ExtentPair &extent)
             {erase_extent(map, extent.first, extent.second);}
           static void erase_extent(ExtentMap &map, addr_t offset, addr_t size);
-          static ExtentMap::const_iterator best_fit_extent(const ExtentMap &map, addr_t size);
+          static ExtentMap::iterator best_fit_extent(ExtentMap &map, addr_t size);
           static ExtentPair allocate_best_extent(ExtentMap &map, addr_t size);
           static ExtentPair allocate_first_extent(ExtentMap &map, addr_t size);
           static void dump_extents(const ExtentMap&, FILE*, const char *prefix, const char *label);
