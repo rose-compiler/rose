@@ -839,7 +839,7 @@ SgAsmElfStrtab::reallocate()
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = true;
-        get_file()->shift_extend(this, 0, extend_size);
+        get_file()->shift_extend(this, 0, extend_size, true);
         reallocate();
         recursive = false;
     }

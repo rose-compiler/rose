@@ -623,25 +623,40 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  *     Cat B:  Not shifted, but enlarged Sn
  *     Cat E:  Shifted Sa and enlarged Sn
  *
+ * If 'filespace' is set then offsets and sizes are file offsets and sizes, otherwise they are memory offsets and sizes.
+ *
  * NOTE: To change the address and/or size of S without regard to other sections in the same file, use set_offset() and
  *       set_size() (for file address space) or set_mapped_rva() and set_mapped_size() (for memory address space).
  */
 void
-SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn)
+SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, bool filespace)
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
     ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
-
+    
     SgAsmGenericSectionPtrList all = get_sections();
     SgAsmGenericSection::ExtentMap amap; /* address mappings for all extents */
-    SgAsmGenericSection::ExtentPair sp(s->get_offset(), s->get_size());
     SgAsmGenericSection::ExtentPair nhs; /* neighborhood of S */
+    SgAsmGenericSection::ExtentPair sp;
 
     for (size_t pass=0; pass<2; pass++) {
+        /* S offset and size in file or memory address space */
+        if (filespace) {
+            sp = SgAsmGenericSection::ExtentPair(s->get_offset(), s->get_size());
+        } else if (!s->is_mapped()) {
+            return; /*nothing to do*/
+        } else {
+            sp = SgAsmGenericSection::ExtentPair(s->get_mapped_rva(), s->get_mapped_size());
+        }
+    
         /* Build address map */
         for (size_t i=0; i<all.size(); i++) {
-            amap.insert(all[i]->get_offset(), all[i]->get_size());
+            if (filespace) {
+                amap.insert(all[i]->get_offset(), all[i]->get_size());
+            } else if (all[i]->is_mapped()) {
+                amap.insert(all[i]->get_mapped_rva(), all[i]->get_mapped_size());
+            }
         }
 
         /* Neighborhood (nhs) of S is a single extent */
@@ -651,53 +666,90 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn)
 
         /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
          * that to define the size of the hole right of neighborhood(S). */
-        SgAsmGenericSection *after_hole = NULL; /*section with lowest address after hole*/
+        SgAsmGenericSection *after_hole = NULL;
+        SgAsmGenericSection::ExtentPair hp(0, 0);
         for (size_t i=0; i<all.size(); i++) {
             SgAsmGenericSection *a = all[i];
-            SgAsmGenericSection::ExtentPair ap(a->get_offset(), a->get_size());
+            SgAsmGenericSection::ExtentPair ap;
+            if (filespace) {
+                ap = SgAsmGenericSection::ExtentPair(a->get_offset(), a->get_size());
+            } else if (!a->is_mapped()) {
+                continue;
+            } else {
+                ap = SgAsmGenericSection::ExtentPair(a->get_mapped_rva(), a->get_mapped_size());
+            }
             if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') {
-                if (!after_hole || a->get_offset()<after_hole->get_offset()) {
+                if (!after_hole || ap.first<hp.first) {
                     after_hole = a;
+                    hp = ap;
                 }
             }
         }
 
         /* Do we even need to worry about neighborhoods to the right? */
         if (!after_hole) break;
-        ROSE_ASSERT(after_hole->get_offset() > nhs.first+nhs.second);
-        addr_t hole_size = after_hole->get_offset() - (nhs.first+nhs.second);
+        ROSE_ASSERT(hp.first > nhs.first+nhs.second);
+        addr_t hole_size = hp.first - (nhs.first+nhs.second);
         if (hole_size >= sa+sn) break;
 
         /* Hole is not large enough. We need to recursively move things that are right of our neighborhood, then recompute the
          * all-sections address map and neighborhood(S). */
         ROSE_ASSERT(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
-        shift_extend(after_hole, sa+sn - hole_size, 0);
+        shift_extend(after_hole, sa+sn - hole_size, 0, filespace);
     }
 
     /* Consider sections that are in the same neighborhood as S */
     for (size_t i=0; i<all.size(); i++) {
         SgAsmGenericSection *a = all[i];
-        SgAsmGenericSection::ExtentPair ap(a->get_offset(), a->get_size());
+        SgAsmGenericSection::ExtentPair ap;
+        if (filespace) {
+            ap = SgAsmGenericSection::ExtentPair(a->get_offset(), a->get_size());
+        } else if (!a->is_mapped()) {
+            continue;
+        } else {
+            ap = SgAsmGenericSection::ExtentPair(a->get_mapped_rva(), a->get_mapped_size());
+        }
         if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') continue; /*A is right of neighborhood(S)*/
         switch (SgAsmGenericSection::ExtentMap::category(ap, sp)) {
           case 'L':
             break;
           case 'R':
-            a->set_offset(a->get_offset()+sa+sn);
+            if (filespace) {
+                a->set_offset(a->get_offset()+sa+sn);
+            } else {
+                a->set_mapped_rva(a->get_mapped_rva()+sa+sn);
+            }
             break;
           case 'C': /*including S itself*/
           case 'E':
-            a->set_offset(a->get_offset()+sa);
-            a->set_size(a->get_size()+sn);
+            if (filespace) {
+                a->set_offset(a->get_offset()+sa);
+                a->set_size(a->get_size()+sn);
+            } else {
+                a->set_mapped_rva(a->get_mapped_rva()+sa);
+                a->set_mapped_size(a->get_mapped_size()+sn);
+            }
             break;
           case 'O':
-            a->set_size(a->get_size()+sa+sn);
+            if (filespace) {
+                a->set_size(a->get_size()+sa+sn);
+            } else {
+                a->set_mapped_size(a->get_mapped_size()+sa+sn);
+            }
             break;
           case 'I':
-            a->set_offset(a->get_offset()+sa);
+            if (filespace) {
+                a->set_offset(a->get_offset()+sa);
+            } else {
+                a->set_mapped_rva(a->get_mapped_rva()+sa);
+            }
             break;
           case 'B':
-            a->set_size(a->get_size()+sn);
+            if (filespace) {
+                a->set_size(a->get_size()+sn);
+            } else {
+                a->set_mapped_size(a->get_size()+sn);
+            }
             break;
           default:
             ROSE_ASSERT(!"invalid extent category");
