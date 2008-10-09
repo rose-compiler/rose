@@ -1147,7 +1147,6 @@ SgAsmPEStringSection::unparse(FILE *f)
 }
 
 /* Augments superclass to make sure free list and such are adjusted properly */
-/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
 void
 SgAsmPEStringSection::set_size(addr_t newsize)
 {
