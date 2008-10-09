@@ -2420,105 +2420,107 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
-#if 0 /* Temporary tests */
-    /* Some tests for string allocation functions. Some of these assume that the string table complies with the ELF
-     * specification, which guarantees that the first byte of the string table is NUL. The parser can handle non-compliant
-     * string tables. */
-    SgAsmElfSymbolSection *dynsym = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".dynsym"));
-    ROSE_ASSERT(dynsym!=NULL);
-    SgAsmElfStrtab *dynstr = dynamic_cast<SgAsmElfStrtab*>(dynsym->get_linked_section());
-    ROSE_ASSERT(dynstr!=NULL);
-    const SgAsmElfSymbolPtrList &symbols = dynsym->get_symbols()->get_symbols();
-    SgAsmElfString *test = NULL;
-    for (size_t i=0; i<symbols.size(); i++) {
-        if (symbols[i]->get_name()=="memset") {
-            test = new SgAsmElfString(dynstr, symbols[i]->get_st_name());
+    /* Temporary tests */
+    if (access("x-do-tests", F_OK)>=0) {
+        fprintf(stderr, "ROBB: running string tests...\n");
+        /* Some tests for string allocation functions. Some of these assume that the string table complies with the ELF
+         * specification, which guarantees that the first byte of the string table is NUL. The parser can handle non-compliant
+         * string tables. */
+        SgAsmElfSymbolSection *dynsym = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".dynsym"));
+        ROSE_ASSERT(dynsym!=NULL);
+        SgAsmElfStrtab *dynstr = dynamic_cast<SgAsmElfStrtab*>(dynsym->get_linked_section());
+        ROSE_ASSERT(dynstr!=NULL);
+        const SgAsmElfSymbolPtrList &symbols = dynsym->get_symbols()->get_symbols();
+        SgAsmElfString *test = NULL;
+        for (size_t i=0; i<symbols.size(); i++) {
+            if (symbols[i]->get_name()=="memset") {
+                test = new SgAsmElfString(dynstr, symbols[i]->get_st_name());
+            }
         }
-    }
-    ROSE_ASSERT(test!=NULL);
+        ROSE_ASSERT(test!=NULL);
 
 #if 1
-    /* What happens if the dynamic string table needs to grow? */
-    test->set_string("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-    /*next three lines are temporary until the FIXME in SgAsmElfSectionTable::unparse() is fixed*/
-    dynstr->congeal();
-    dynstr->reallocate();
-    dynstr->uncongeal();
+        /* What happens if the dynamic string table needs to grow? */
+        test->set_string("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        /*next three lines are temporary until the FIXME in SgAsmElfSectionTable::unparse() is fixed*/
+        //dynstr->congeal();
+        //dynstr->reallocate();
+        //dynstr->uncongeal();
 #endif
 
 #if 0 /*First batch of tests*/
-    /* Test 1: Create another reference to the empty string and then try to modify it. This should create a new string rather
-     *         than modifying the empty string. The ELF specification reserves offset zero to hold a NUL to represent the
-     *         empty string and we must leave the NUL there even if nothing references it. */
-    SgAsmElfString *s1 = new SgAsmElfString(dynstr, 0);
-    ROSE_ASSERT(s1->get_string()==""); /*must comply with spec!*/
-    s1->set_string("fprintf");
-    ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
-    ROSE_ASSERT(s1->get_offset()!=0);
-    
-    /* Test 2: Create a new string that happens to have the same initial value as something already in the string table. When
-     *         allocated the new string will share the same space as the existing string. */
-    s1 = new SgAsmElfString(dynstr, test->get_offset());
-    ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
-    ROSE_ASSERT(s1->get_offset()==test->get_offset());
+        /* Test 1: Create another reference to the empty string and then try to modify it. This should create a new string rather
+         *         than modifying the empty string. The ELF specification reserves offset zero to hold a NUL to represent the
+         *         empty string and we must leave the NUL there even if nothing references it. */
+        SgAsmElfString *s1 = new SgAsmElfString(dynstr, 0);
+        ROSE_ASSERT(s1->get_string()==""); /*must comply with spec!*/
+        s1->set_string("fprintf");
+        ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
+        ROSE_ASSERT(s1->get_offset()!=0);
 
-    /* Test 3: Change one of two strings that share the same offset by removing the first character. The new offset should be
-     *         incremented by one. */
-    s1->set_string(&(s1->get_string()[1]));
-    ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
-    ROSE_ASSERT(s1->get_offset()==test->get_offset()+1);
-    
-    /* Test 4: Change one of two strings that share memory and see if it gets allocated elsewhere. */
-    s1->set_string("intf"); /*probably to the end of "fprintf"*/
-    ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
-    ROSE_ASSERT(s1->get_offset()+s1->get_string().size()+1 <= test->get_offset() ||  /*left of test*/
-                s1->get_offset() >= test->get_offset()+test->get_string().size()+1);       /*right of test*/
+        /* Test 2: Create a new string that happens to have the same initial value as something already in the string table. When
+         *         allocated the new string will share the same space as the existing string. */
+        s1 = new SgAsmElfString(dynstr, test->get_offset());
+        ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
+        ROSE_ASSERT(s1->get_offset()==test->get_offset());
 
-    /* Test 5: Copy a string and change the copy. Both strings should change. */
-    SgAsmElfString copy = *s1;
-    copy.set_string(test->get_string());
-    ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
-    ROSE_ASSERT(s1->get_offset()==copy.get_offset());
-    ROSE_ASSERT(s1->get_string()==copy.get_string());
+        /* Test 3: Change one of two strings that share the same offset by removing the first character. The new offset should be
+         *         incremented by one. */
+        s1->set_string(&(s1->get_string()[1]));
+        ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
+        ROSE_ASSERT(s1->get_offset()==test->get_offset()+1);
 
-    /* Test 6: Effectively delete a string by setting it to the empty string. Its offset should revert to zero along with all
-     *         copies of the string. */
-    s1->set_string("");
-    ROSE_ASSERT(s1->get_offset()==0);
-    ROSE_ASSERT(copy.get_offset()==0);
-    ROSE_ASSERT(copy.get_string()=="");
+        /* Test 4: Change one of two strings that share memory and see if it gets allocated elsewhere. */
+        s1->set_string("intf"); /*probably to the end of "fprintf"*/
+        ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
+        ROSE_ASSERT(s1->get_offset()+s1->get_string().size()+1 <= test->get_offset() ||  /*left of test*/
+                    s1->get_offset() >= test->get_offset()+test->get_string().size()+1);       /*right of test*/
 
-    /* Test 7: Deleting one copy should not cause problems for the other copy. */
-    delete s1;
-    s1 = NULL;
-    ROSE_ASSERT(copy.get_offset()==0);
-    ROSE_ASSERT(copy.get_string()=="");
+        /* Test 5: Copy a string and change the copy. Both strings should change. */
+        SgAsmElfString copy = *s1;
+        copy.set_string(test->get_string());
+        ROSE_ASSERT(s1->get_offset()!=SgAsmElfString::unallocated);
+        ROSE_ASSERT(s1->get_offset()==copy.get_offset());
+        ROSE_ASSERT(s1->get_string()==copy.get_string());
 
-    /* Test 8: Reallocate the entire string table, leaving holes (unparsed areas) at their original offsets. Ideally the table
-     *         size should not increase even though the compiler/linker may have agressively shared string storage. */
-    addr_t orig_size = dynstr->get_size();
-    dynstr->free_all_strings();
-    dynstr->reallocate();
-    ROSE_ASSERT(orig_size==dynstr->get_size());
+        /* Test 6: Effectively delete a string by setting it to the empty string. Its offset should revert to zero along with all
+         *         copies of the string. */
+        s1->set_string("");
+        ROSE_ASSERT(s1->get_offset()==0);
+        ROSE_ASSERT(copy.get_offset()==0);
+        ROSE_ASSERT(copy.get_string()=="");
 
-    /* Test 9: Reallocate the *entire* string table, blowing away holes in the process. */
-    dynstr->free_all_strings(true);
-    dynstr->reallocate();
-    ROSE_ASSERT(orig_size==dynstr->get_size());
+        /* Test 7: Deleting one copy should not cause problems for the other copy. */
+        delete s1;
+        s1 = NULL;
+        ROSE_ASSERT(copy.get_offset()==0);
+        ROSE_ASSERT(copy.get_string()=="");
 
-    /* Test 10: After reallocating an entire table, the empty string should remain at offset zero. */
-    SgAsmElfString *s2 = new SgAsmElfString(dynstr, 0);
-    ROSE_ASSERT(s2->get_offset()==0);
-    ROSE_ASSERT(s2->get_string()=="");
+        /* Test 8: Reallocate the entire string table, leaving holes (unparsed areas) at their original offsets. Ideally the table
+         *         size should not increase even though the compiler/linker may have agressively shared string storage. */
+        addr_t orig_size = dynstr->get_size();
+        dynstr->free_all_strings();
+        dynstr->reallocate();
+        ROSE_ASSERT(orig_size==dynstr->get_size());
+
+        /* Test 9: Reallocate the *entire* string table, blowing away holes in the process. */
+        dynstr->free_all_strings(true);
+        dynstr->reallocate();
+        ROSE_ASSERT(orig_size==dynstr->get_size());
+
+        /* Test 10: After reallocating an entire table, the empty string should remain at offset zero. */
+        SgAsmElfString *s2 = new SgAsmElfString(dynstr, 0);
+        ROSE_ASSERT(s2->get_offset()==0);
+        ROSE_ASSERT(s2->get_string()=="");
 
 #if 0
-    /* Test 11: It's not legal to (re)parse a new region of the string table after we've made modifications. */
-    fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
-    s2 = new SgAsmElfString(dynstr, test->get_offset());
+        /* Test 11: It's not legal to (re)parse a new region of the string table after we've made modifications. */
+        fprintf(stderr, "TESTING: an error message and abort should follow this line.\n");
+        s2 = new SgAsmElfString(dynstr, test->get_offset());
 #endif
 #endif
-
-#endif
+    }
+    
 
     return fhdr;
 }
