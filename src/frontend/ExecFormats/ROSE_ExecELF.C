@@ -1557,7 +1557,7 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk)
     addr_t v = p_d_val;
     if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val, &v);
+    host_to_disk(sex, v,       &(disk->d_val));
     return disk;
 }
 void *
@@ -1566,7 +1566,7 @@ SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk)
     addr_t v = p_d_val;
     if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val, &v);
+    host_to_disk(sex, v,       &(disk->d_val));
     return disk;
 }
 
