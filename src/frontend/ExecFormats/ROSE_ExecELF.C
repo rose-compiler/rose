@@ -781,8 +781,7 @@ SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     if (!strtab || get_offset()==SgAsmElfString::unallocated) {
         fputs(", not allocated", f);
     } else {
-        fprintf(f, ", byte rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")",
-                get_offset(), get_offset(), strtab->get_offset()+get_offset(), strtab->get_offset()+get_offset());
+        fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
     }
     fprintf(f, ", \"%s\"\n", get_string().c_str());
 }
