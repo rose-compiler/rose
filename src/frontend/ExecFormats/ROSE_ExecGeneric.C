@@ -716,7 +716,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     ROSE_ASSERT(s->get_file()==this);
     ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
 
-    const bool debug = true;
+    const bool debug = false;
     static size_t ncalls=0;
     char p[256];
 
