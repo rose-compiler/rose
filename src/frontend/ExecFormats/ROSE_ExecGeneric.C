@@ -797,8 +797,7 @@ SgAsmGenericFile::fill_holes()
     SgAsmGenericSection::ExtentMap refs;
     SgAsmGenericSectionPtrList sections = get_sections();
     for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
-        if ((*i)->get_size()>0)
-            refs.insert(SgAsmGenericSection::ExtentMap::value_type((*i)->get_offset(), (*i)->get_size()));
+        SgAsmGenericSection::insert_extent(refs, (*i)->get_offset(), (*i)->get_size());
     }
 
     /* The hole extents are everything other than the sections */
@@ -1433,6 +1432,7 @@ SgAsmGenericSection::subtract_extents(const ExtentMap &map, addr_t offset, addr_
 void
 SgAsmGenericSection::insert_extent(ExtentMap &map, addr_t offset, addr_t size)
 {
+    if (0==size) return;
     ExtentMap to_add = subtract_extents(map, offset, size);
     for (ExtentMap::iterator i=to_add.begin(); i!=to_add.end(); ++i) {
         ExtentMap::iterator right = map.find((*i).first+(*i).second);
