@@ -1626,7 +1626,7 @@ SgAsmElfDynamicSection::unparse(FILE *f)
     calculate_sizes(&entry_size, &struct_size, &extra_size);
     size_t nentries = p_entries->get_entries().size();
 
-    /* Adjust section size. FIXME: this should be moved to the reallocate() function. */
+    /* Adjust section size. FIXME: this should be moved to the reallocate() function. (RPM 2008-10-07) */
     if (nentries*entry_size < get_size()) {
         /* Make the section smaller without affecting other sections. This is allowed during unparsing. */
         if (is_mapped()) {
@@ -1647,25 +1647,22 @@ SgAsmElfDynamicSection::unparse(FILE *f)
         SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk32;
         SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk64;
         void *disk  = NULL;
-        size_t size = 0;
 
         SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
 
         if (4==fhdr->get_word_size()) {
             disk = entry->encode(sex, &disk32);
-            size = sizeof disk32;
         } else if (8==fhdr->get_word_size()) {
             disk = entry->encode(sex, &disk64);
-            size = sizeof disk64;
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
 
         addr_t spos = i * entry_size;
-        spos = write(f, spos, size, disk);
+        spos = write(f, spos, struct_size, disk);
         if (entry->get_extra().size()>0) {
             ROSE_ASSERT(entry->get_extra().size()<=extra_size);
-            spos = write(f, spos, entry->get_extra());
+            write(f, spos, entry->get_extra());
         }
     }
 
@@ -1981,24 +1978,49 @@ SgAsmElfSymbolSection::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
-    addr_t spos=0; /*output position in section*/
 
+    size_t entry_size, struct_size, extra_size;
+    calculate_sizes(&entry_size, &struct_size, &extra_size);
+    size_t nentries = p_symbols->get_symbols().size();
+    
+    /* Adjust section size. FIXME: this should be moved to the reallocate() function. (RPM 2008-10-07) */
+    if (nentries*entry_size < get_size()) {
+        /* Make the section smaller without affecting other sections. This is allowed during unparsing. */
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(nentries*entry_size);
+        }
+        set_size(nentries*entry_size);
+    } else if (nentries*entry_size > get_size()) {
+        /* We should have detected this before unparsing! */
+        ROSE_ASSERT(!"can't expand symbol section while unparsing!");
+    }
+
+    /* Adjust the entry size stored in the ELF Section Table */
+    get_section_entry()->set_sh_entsize(entry_size);
+
+    /* Write each entry's required part followed by the optional part */
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol::Elf32SymbolEntry_disk disk32;
         SgAsmElfSymbol::Elf64SymbolEntry_disk disk64;
         void *disk=NULL;
-        size_t size = 0;
+
+        SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
         
         if (4==fhdr->get_word_size()) {
-            disk = p_symbols->get_symbols()[i]->encode(sex, &disk32);
-            size = sizeof disk32;
+            disk = entry->encode(sex, &disk32);
         } else if (8==fhdr->get_word_size()) {
-            disk = p_symbols->get_symbols()[i]->encode(sex, &disk64);
-            size = sizeof disk64;
+            disk = entry->encode(sex, &disk64);
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
-        spos = write(f, spos, size, disk);
+
+        addr_t spos = i * entry_size;
+        spos = write(f, spos, struct_size, disk);
+        if (entry->get_extra().size()>0) {
+            ROSE_ASSERT(entry->get_extra().size()<=extra_size);
+            write(f, spos, entry->get_extra());
+        }
     }
 
     unparse_holes(f);
