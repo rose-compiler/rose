@@ -1,6 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-INCLUDES = $(ROSE_INCLUDES) -I$(srcdir)/analyses -I$(srcdir)/graph #-I$(srcdir)/mysql_include
+INCLUDES = $(ROSE_INCLUDES)  #-I$(srcdir)/graph #-I$(srcdir)/analyses -I$(srcdir)/mysql_include
 
 # binarylibdir = $(libdir)
 
@@ -24,15 +24,6 @@ endif
 libbinaryFrontend_la_DEPENDENCIES =
 libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      instructionDispatch.cpp \
-     analyses/RoseBin_CompareAnalysis.cpp analyses/RoseBin_ControlFlowAnalysis.cpp \
-     analyses/RoseBin_printInstructions.cpp analyses/RoseBin_DataFlowAnalysis.cpp \
-     graph/RoseBin_DotGraph.cpp graph/RoseBin_Graph.cpp graph/RoseBin_GmlGraph.cpp \
-     analyses/RoseBin_CallGraphAnalysis.cpp analyses/RoseBin_FlowAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_DefUseAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_VariableAnalysis.cpp \
-     analyses/dataflowanalyses/InterruptAnalysis.cpp \
-     analyses/dataflowanalyses/RoseBin_Emulate.cpp \
-     analyses/dataflowanalyses/RoseBin_DataFlowAbstract.cpp \
      x86InstructionEnum.h x86InstructionProperties.h \
      x86InstructionProperties.C x86InstructionEnumPrinter.C \
      armInstructionEnum.h armInstructionEnumPrinter.C \
@@ -64,14 +55,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin.h  RoseBin_IDAPRO_branchGraph.h  RoseBin_IDAPRO_buildTree.h \
    RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
    RoseBin_support.h  MyAstAttribute.h \
-   analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
-   analyses/RoseBin_DataFlowAnalysis.h graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
-   graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
-   analyses/dataflowanalyses/InterruptAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
+   AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
    x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h \
@@ -82,14 +66,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    RoseBin_IDAPRO_branchGraph.h RoseBin_buildTree.h RoseBin_IDAPRO_buildTree.h \
    RoseBin_IDAPRO_callGraph.h  RoseBin_IDAPRO_exprTree.h  RoseBin_IDAPRO_substTree.h \
    RoseBin_support.h  MyAstAttribute.h \
-   analyses/RoseBin_CompareAnalysis.h analyses/RoseBin_ControlFlowAnalysis.h analyses/RoseBin_printInstructions.h \
-   analyses/RoseBin_DataFlowAnalysis.h graph/RoseBin_DotGraph.h graph/RoseBin_Graph.h \
-   graph/RoseBin_GmlGraph.h analyses/RoseBin_FlowAnalysis.h analyses/RoseBin_CallGraphAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_DefUseAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_VariableAnalysis.h \
-   analyses/dataflowanalyses/InterruptAnalysis.h \
-   analyses/dataflowanalyses/RoseBin_Emulate.h \
-   analyses/dataflowanalyses/RoseBin_DataFlowAbstract.h AST_BIN_Traversal.h \
+   AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
    x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h \

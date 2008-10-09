@@ -136,9 +136,6 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/frontend/OpenFortranParser_SAGE_Connection \
      -I$(top_srcdir)/src/frontend/PHPFrontend \
      -I$(top_srcdir)/src/frontend/BinaryDisassembly \
-     -I$(top_srcdir)/src/frontend/BinaryDisassembly/graph \
-     -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses \
-     -I$(top_srcdir)/src/frontend/BinaryDisassembly/analyses/dataflowanalyses \
      -I$(top_srcdir)/src/frontend/Disassemblers \
      -I$(top_srcdir)/src/frontend/ExecFormats \
      -I$(top_srcdir)/src/backend/unparser \
@@ -153,6 +150,9 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/graphs  \
      -I$(top_srcdir)/src/util/stringSupport \
      -I$(top_srcdir)/src/util/commandlineProcessing \
+     -I$(top_srcdir)/src/midend/binaryAnalyses \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/graph \
+     -I$(top_srcdir)/src/midend/binaryAnalyses/dataflowanalyses \
      -I$(top_srcdir)/src/midend/astUtil/astSupport \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      -I$(top_srcdir)/src/midend/astUtil/symbolicVal \

@@ -12,7 +12,7 @@
 using namespace std;
 using namespace VirtualBinCFG;
 
-#include "../analyses/RoseBin_FlowAnalysis.h"
+#include "../RoseBin_FlowAnalysis.h"
 
 void 
 RoseBin_DotGraph::printProlog(  std::ofstream& myfile, string& fileType) {
