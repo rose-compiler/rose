@@ -1108,27 +1108,26 @@ SgAsmGenericSection::extend(addr_t size)
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
-    p_size = new_size;
     if (p_offset + new_size > get_file()->get_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
     p_data.resize(new_size);
+    p_size = new_size;
 }
 
 /* Like extend() but is more relaxed at the end of the file: if extending the section would cause it to go past the end of the
- * file then its data is extended to the end of the file and no exception is thrown. The section size (p_size) is not limited
- * by the file size. */
+ * file then its data is extended to the end of the file and no exception is thrown. */
 void
 SgAsmGenericSection::extend_up_to(addr_t size)
 {
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
-    p_size = new_size; /*before limiting by file size*/
     if (p_offset + new_size > get_file()->get_size()) {
         ROSE_ASSERT(p_offset <= get_file()->get_size());
         new_size = get_file()->get_size() - p_offset;
     }
     p_data.resize(new_size);
+    p_size = new_size;
 }
 
 /* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
