@@ -1313,8 +1313,6 @@ HEADER_ELF_SECTION_START
 	  virtual void set_mapped_rva(addr_t);
 
        /* Accessors for protected/private data members */
-       // ElfSection *get_linked_section() {return linked_section;}
-       // virtual void set_linked_section(ElfSection *sec) {linked_section=sec;}
        // ElfSectionTableEntry *get_st_entry() {return st_entry;}
        // void set_st_entry(ElfSectionTableEntry *e) {st_entry=e;}
 
@@ -1324,7 +1322,7 @@ HEADER_ELF_SECTION_START
 
        // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
           SgAsmElfSection* get_linked_section () const;
-          virtual void set_linked_section ( SgAsmElfSection* linked_section );
+          virtual void set_linked_section(SgAsmElfSection*);
 
      private:
           void ctor(SgAsmElfSectionTableEntry*);
@@ -1409,7 +1407,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
              {ctor(fhdr, shdr);}
        // virtual ~SgAsmElfDynamicSection() {}
 
-          virtual void set_linked_section(SgAsmElfStrtab*);   /* Parsing happens here rather than in constructor */
+          virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1542,7 +1540,7 @@ HEADER_ELF_SYMBOL_SECTION_START
           SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
        // virtual ~SgAsmElfSymbolSection() {}
 
-          virtual void set_linked_section(SgAsmElfStrtab*);
+          virtual void set_linked_section(SgAsmElfSection*);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 

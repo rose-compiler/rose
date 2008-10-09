@@ -1681,8 +1681,11 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 
 /* Set linked section (the string table) and finish parsing this section. */
 void
-SgAsmElfDynamicSection::set_linked_section(SgAsmElfStrtab *strtab) 
+SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab) 
 {
+    SgAsmElfStrtab *strtab = dynamic_cast<SgAsmElfStrtab*>(_strtab);
+    ROSE_ASSERT(strtab!=NULL);
+    
     SgAsmElfSection::set_linked_section(strtab);
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL && fhdr == strtab->get_elf_header());
@@ -2053,8 +2056,11 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
  *   0xfff1        symbol has absolute value not affected by relocation
  *   0xfff2        symbol is fortran common or unallocated C extern */
 void
-SgAsmElfSymbolSection::set_linked_section(SgAsmElfStrtab *strtab)
+SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strtab)
 {
+    SgAsmElfStrtab *strtab = dynamic_cast<SgAsmElfStrtab*>(_strtab);
+    ROSE_ASSERT(strtab!=NULL);
+
     SgAsmElfSection::set_linked_section(strtab);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
