@@ -463,6 +463,8 @@ SgAsmPEFileHeader::create_table_sections()
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
+        tabsec->set_file_alignment(get_e_file_align());
+        tabsec->set_mapped_alignment(get_e_section_align());
         tabsec->set_mapped_rva(pair->get_e_rva());
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
@@ -721,12 +723,11 @@ SgAsmPESectionTable::ctor()
         section->set_name(new SgAsmBasicString(entry->get_name()));
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
-
-     // DQ (8/18/2008): I think we need to set the parent explicit here, but I am not certain what to set it to be (using "this" is a default).
-        section->set_parent(this);
+        section->set_file_alignment(fhdr->get_e_file_align());
 
         section->set_mapped_rva(entry->get_rva());
         section->set_mapped_size(entry->get_virtual_size());
+        section->set_mapped_alignment(fhdr->get_e_section_align());
         section->set_st_entry(entry);
         section->set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
                                   == SgAsmPESectionTableEntry::OF_READABLE);
