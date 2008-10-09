@@ -209,7 +209,8 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Target architecture */
     /*FIXME*/
 
-    /* Entry point */
+    /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmElfFileHeader::parse) so that if
+     * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     p_base_va = 0;
     add_entry_rva(p_e_entry);
 }
@@ -228,6 +229,17 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
+/* Update header fields with info from the SgAsmGenericHeader */
+void
+SgAsmElfFileHeader::update_from_header()
+{
+    if (p_entry_rvas.size()>=1) {
+        p_e_entry = p_entry_rvas[0].get_rva();
+    } else {
+        p_e_entry = 0;
+    }
+}
+    
 /* Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
@@ -322,6 +334,7 @@ SgAsmElfFileHeader::unparse(FILE *f)
     Elf64FileHeader_disk disk64;
     void *disk = NULL;
     size_t struct_size = 0;
+    update_from_header();
     if (4 == get_word_size()) {
         disk = encode(get_sex(), &disk32);
         struct_size = sizeof(disk32);
@@ -2123,6 +2136,13 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
         fhdr->set_section_table( new SgAsmElfSectionTable(fhdr) );
     if (fhdr->get_e_phnum())
         fhdr->set_segment_table( new SgAsmElfSegmentTable(fhdr) );
+
+    /* Associate the entry point with a particular section. */
+    ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
+    addr_t entry_va = fhdr->get_entry_rvas()[0].get_rva() + fhdr->get_base_va();
+    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(entry_va);
+    fhdr->get_entry_rvas()[0].set_section(secbind);
+    ROSE_ASSERT(fhdr->get_entry_rvas()[0].get_section()==secbind);
 
     /* Use symbols from either ".symtab" or ".dynsym" */
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".symtab"));
