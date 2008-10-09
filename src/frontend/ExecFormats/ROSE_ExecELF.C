@@ -1179,7 +1179,14 @@ SgAsmElfSectionTable::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
-    /* Write the entries */
+    /* Write the sections first */
+    for (size_t i=0; i<sections.size(); i++) {
+        if (sections[i]->get_id() >= 0) {
+            sections[i]->unparse(f);
+        }
+    }
+
+    /* Write the section table entries */
     for (size_t i = 0; i < sections.size(); ++i) {
         if (sections[i]->get_id() >= 0) {
             SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
@@ -1206,9 +1213,6 @@ SgAsmElfSectionTable::unparse(FILE *f)
             addr_t extra_offset = write(f, section->get_id() * fhdr->get_e_shentsize(), size, disk);
             if (shdr->get_nextra() > 0)
                 write(f, extra_offset, shdr->get_extra());
-
-            /* The section itself */
-            sections[i]->unparse(f);
         }
     }
 
@@ -1479,8 +1483,16 @@ SgAsmElfSegmentTable::unparse(FILE *f)
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+
+    /* Write the segments first */
+    for (size_t i=0; i<sections.size(); i++) {
+        SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        if (section && section->get_segment_entry()) {
+            section->unparse(f);
+        }
+    }
     
-    /* Write the entries */
+    /* Write the segment table entries */
     for (size_t i=0; i < sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
         if (section && section->get_segment_entry()) {
@@ -1506,9 +1518,6 @@ SgAsmElfSegmentTable::unparse(FILE *f)
             addr_t extra_offset = write(f, shdr->get_index() * fhdr->get_e_phentsize(), size, disk);
             if (shdr->get_extra().size() > 0)
                 write(f, extra_offset, shdr->get_extra());
-
-            /* The section itself */
-            section->unparse(f);
         }
     }
 
