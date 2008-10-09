@@ -510,7 +510,7 @@ Grammar::setUpBinaryInstructions ()
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
      AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::freelist_t","freelist","",
+     AsmElfStrtab.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
