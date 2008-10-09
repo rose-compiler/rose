@@ -7,7 +7,7 @@ if ROSE_USE_QROSE
 
 bin_PROGRAMS = BinQ 
 
-astEquivalence_SOURCES = \
+BinQ_SOURCES = \
 	BinQMain.C \
         BinQGui.C
 

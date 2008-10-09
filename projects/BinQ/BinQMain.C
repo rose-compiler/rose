@@ -4,7 +4,7 @@
 
 #include <vector>
 #include <qrose.h>
-#include "astEquivalenceGui.h"
+#include "BinQGui.h"
 #include <boost/program_options.hpp>
 #include <iostream>
 

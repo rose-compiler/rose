@@ -1,5 +1,5 @@
 #include <boost/algorithm/string.hpp>
-#include "astEquivalenceGui.h"
+#include "BinQGui.h"
 #include <ext/hash_map>
 
 
