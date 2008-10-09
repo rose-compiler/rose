@@ -124,11 +124,12 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :
 
   QRPanel &tiledPanel = *window << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
   {
-    QRPanel &lowerInnerTiledPanel = tiledPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
+        QRPanel &lowerInnerTiledPanel = tiledPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
     {
       tableWidget = lowerInnerTiledPanel << new QRTable( 2, "function","# instructions" );
       QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), &tableCellActivated, this);
-      QRPanel &parameters = lowerInnerTiledPanel << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
+          QRPanel &parameters = lowerInnerTiledPanel << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
+      //QRPanel &parameters = tiledPanel << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
       QGroupBox *selectGroup =  parameters <<  new QGroupBox(("Data Selection Parameters"));
       {
         QGridLayout *echoLayout =  new QGridLayout;
@@ -166,18 +167,9 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :
       echoLayout->addWidget(comboBox, 0, 1);
 
 
-      QLabel *lockBarsLabel = new QLabel("Lock ScrollBars:");
-      checkBoxLockBars = new QComboBox;
-      checkBoxLockBars->addItem(("No"));
-      checkBoxLockBars->addItem(("Yes"));
-
-      echoLayout->addWidget(lockBarsLabel,1,0);
-      echoLayout->addWidget(checkBoxLockBars,1,1);
       echoGroup->setLayout(echoLayout);
 
-      QROSE::link(checkBoxLockBars, SIGNAL(activated(int)), &selectLockOrUnlockBars, this);
       QROSE::link(comboBox, SIGNAL(activated(int)), &viewBoxActivated, this);
-
     }
       
     QRPanel &upperInnerTiledPanel = tiledPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
@@ -187,7 +179,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :
       codeWidget2 = upperInnerTiledPanel << new QTextEdit;//new QREdit(QREdit::Box);
       codeWidget2->setReadOnly(true);
     } //tiledPanel
-    tiledPanel.setTileSize(40,60);
+    tiledPanel.setTileSize(10,60);
   } //window 
 
   window->setGeometry(0,0,1280,800);
@@ -214,9 +206,11 @@ BinQGUI::run( ) {
   //Fill in table
   // unlink activation callback, which otherwise would trigger each
   // time we add a row in the table.
+#if 1
   QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
 
   while(tableWidget->rowCount()) tableWidget->removeRow(0);
+#endif
   vector<SgAsmFunctionDeclaration*> funcs;
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcs ));
@@ -233,18 +227,24 @@ BinQGUI::run( ) {
     AstQueryNamespace::querySubTree(funcs[row], std::bind2nd( vis, &insns ));
     cur_elem.size = insns.size();
     vectorOfClones[row] = cur_elem;
+#if 1
     tableWidget->addRows(1);
     tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.function_name_A), 0, row);
     tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.size), 1, row);
     tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
+#endif
   }
+#if 1
   QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), 
 	      &tableCellActivated, this);
+#endif
 }
 
 
   
 void BinQGUI::highlightRow(int row) {
+      showClone(row);
+#if 0
   activeRow = -1;
   if(row >= 0)
     {         
@@ -258,9 +258,11 @@ void BinQGUI::highlightRow(int row) {
     } //if(row >= 0)
 
   return;
+#endif 
 } //CompassGui::highlightRow(int row)
 
 void BinQGUI::unhighlightRow(int row) {
+#if 0
   if (row >= 0) 
     {
       QFont f = tableWidget->getFont(0, row);
@@ -269,6 +271,7 @@ void BinQGUI::unhighlightRow(int row) {
     } //if (row >= 0)
 
   return;
+#endif
 } //CompassGui::unhighlightRow(int row)
 
 

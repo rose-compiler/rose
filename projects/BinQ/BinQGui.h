@@ -79,7 +79,7 @@ class BinQGUI
 
   protected:
     qrs::QRWindow *window;
-    qrs::QRTable *tableWidget;
+        qrs::QRTable *tableWidget;
     QTextEdit *codeWidget;
     QTextEdit *codeWidget2;
     QComboBox *comboBox;
@@ -88,7 +88,7 @@ class BinQGUI
     QTextBrowser *codeBrowser;
     QLineEdit *smallerThanRestriction;
     QLineEdit *largerThanRestriction;
-    QComboBox *checkBoxLockBars;
+    //    QComboBox *checkBoxLockBars;
   private:
 
     BinQSupport* binqsupport;
