@@ -14,6 +14,7 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdint.h>
+#include "BinQSupport.h"
 
 template <typename T>
 class scoped_array_with_size {
@@ -56,25 +57,24 @@ struct Element {
 };
 
 
-class BinaryCloneGui
+class BinQGUI
 {
   public:
-    BinaryCloneGui(std::string, std::string );
-    ~BinaryCloneGui();
+    BinQGUI(std::string, std::string );
+    ~BinQGUI();
     void run( ) ;
     void open();
     void highlightRow(int);
     void unhighlightRow(int);
 
     void showClone(int row);
-    SgNode* disassembleFile(std::string tsv_directory);
-    std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-    std::vector<SgAsmx86Instruction*>::iterator end);
+    //SgNode* disassembleFile(std::string tsv_directory);
+    //std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
+    //std::vector<SgAsmx86Instruction*>::iterator end);
 
-    std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
+    //std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
 
     void selectView(int selection);
-
     void lockBars(int selection);
 
   protected:
@@ -91,6 +91,8 @@ class BinaryCloneGui
     QComboBox *checkBoxLockBars;
   private:
 
+    BinQSupport* binqsupport;
+    
     std::string fileNameA,fileNameB;
     SgNode* fileA;
     SgNode* fileB;
@@ -98,17 +100,14 @@ class BinaryCloneGui
     double similarity;
     int stride;
     int windowSize;
-    
     int activeRow;
 
-    std::string relativePathPrefix;
+
     scoped_array_with_size<Element > vectorOfClones;
-
-
     std::pair<std::string,std::string> normalizedView;
     std::pair<std::string,std::string> unparsedView;
     std::pair<std::string,std::string> allInsnsUnparsedView;
    
-}; //class BinaryCloneGui
+}; //class BinQGUI
 
 #endif

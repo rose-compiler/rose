@@ -60,9 +60,9 @@ int main( int argc, char **argv )
 
 
   
-  BinaryCloneGui binaryCloneGui(fileA,fileB);
+  BinQGUI binGui(fileA,fileB);
 
-  binaryCloneGui.run();
+  binGui.run();
   
   return QROSE::exec();
 }

@@ -8,7 +8,8 @@ bin_PROGRAMS = BinQ
 
 BinQ_SOURCES = \
 	BinQMain.C \
-        BinQGui.C
+        BinQGui.C \
+	BinQSupport.C
 
       
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
