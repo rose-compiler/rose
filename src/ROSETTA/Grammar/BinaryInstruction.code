@@ -763,7 +763,28 @@ HEADER_GENERIC_SECTION_START
              };
 
 	  typedef std::pair<addr_t,addr_t> ExtentPair; 		  /* Describes a part of a file (offset, size) */
-          typedef std::map<addr_t,addr_t> ExtentMap;              /* Multiple non-overlapping, parts of a file */
+	  class ExtentMap : public std::map<addr_t,addr_t> {      /* Multiple non-overlapping, parts of a file */
+	    public:
+	      ExtentMap()
+	          {}
+              ExtentMap subtract_extents(const ExtentPair &extent) const
+                  {return subtract_extents(extent.first, extent.second);}
+              ExtentMap subtract_extents(addr_t offset, addr_t size) const;
+              void insert_extent(const ExtentPair &extent)
+                  {insert_extent(extent.first, extent.second);}
+              void insert_extent(addr_t offset, addr_t size);
+              ExtentMap overlap_extents(const ExtentPair &extent) const
+                  {return overlap_extents(extent.first, extent.second);}
+              ExtentMap overlap_extents(addr_t offset, addr_t size) const;
+              void erase_extent(const ExtentPair &extent)
+                  {erase_extent(extent.first, extent.second);}
+              void erase_extent(addr_t offset, addr_t size);
+              ExtentMap::iterator best_fit_extent(addr_t size);
+              ExtentPair allocate_best_extent(addr_t size);
+              ExtentPair allocate_first_extent(addr_t size);
+              void dump_extents(FILE*, const char *prefix, const char *label) const;
+          };
+
 
           SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 
@@ -821,24 +842,6 @@ HEADER_GENERIC_SECTION_START
        // void                set_purpose(SectionPurpose p) {purpose=p;}
        // void                set_synthesized(bool b) {synthesized=b;}
        // bool                get_synthesized() {return synthesized;}
-
-       /* Static functions for manipulating extent maps */
-          static ExtentMap subtract_extents(const ExtentMap &map, const ExtentPair &extent)
-            {return subtract_extents(map, extent.first, extent.second);}
-          static ExtentMap subtract_extents(const ExtentMap &map, addr_t offset, addr_t size);
-          static void insert_extent(ExtentMap &map, const ExtentPair &extent)
-            {insert_extent(map, extent.first, extent.second);}
-          static void insert_extent(ExtentMap &map, addr_t offset, addr_t size);
-          static ExtentMap overlap_extents(const ExtentMap &map, const ExtentPair &extent)
-            {return overlap_extents(map, extent.first, extent.second);}
-          static ExtentMap overlap_extents(const ExtentMap &map, addr_t offset, addr_t size);
-          static void erase_extent(ExtentMap &map, const ExtentPair &extent)
-            {erase_extent(map, extent.first, extent.second);}
-          static void erase_extent(ExtentMap &map, addr_t offset, addr_t size);
-          static ExtentMap::iterator best_fit_extent(ExtentMap &map, addr_t size);
-          static ExtentPair allocate_best_extent(ExtentMap &map, addr_t size);
-          static ExtentPair allocate_first_extent(ExtentMap &map, addr_t size);
-          static void dump_extents(const ExtentMap&, FILE*, const char *prefix, const char *label);
 
      protected:
           void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);

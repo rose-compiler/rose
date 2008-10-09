@@ -806,7 +806,7 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_empty_string)
-	erase_extent(p_freelist, p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
+	p_freelist.erase_extent(p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
     
     /* Restore state */
     if (was_congealed)
