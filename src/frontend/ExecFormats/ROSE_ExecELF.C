@@ -2344,7 +2344,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
-#if 1 /* Temporary tests */
+#if 0 /* Temporary tests */
     /* Some tests for string allocation functions. Some of these assume that the string table complies with the ELF
      * specification, which guarantees that the first byte of the string table is NUL. The parser can handle non-compliant
      * string tables. */

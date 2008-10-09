@@ -578,12 +578,12 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
     return found;
 }
 
-/* Resizes the specified section after parsing, adjusting the sizes and/or positions and/or memory mappings of other sections. */
+/* Resizes the specified section after parsing, adjusting the sizes and/or positions of other sections. */
 void
 SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
 {
     ROSE_ASSERT(section!=NULL);
-    ROSE_ASSERT(section->get_congealed()==true); /*done parsing*/
+    ROSE_ASSERT(section->get_congealed()==true); /*must be done parsing*/
 
     /* Get adjustment carefully */
     int64_t adjustment;
@@ -600,21 +600,51 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
     /* Adjust other sections */
     SgAsmGenericSectionPtrList all = get_sections();
     for (size_t i=0; i<all.size(); i++) {
-        if (all[i]==section)
-            continue;
-            
-        /* File adjustments */
-        if (all[i]->get_offset() >= section->get_end_offset()) {
-            /* Move sections that follow the adjusted section */
-            all[i]->set_offset(all[i]->get_offset()+adjustment);
-        } else if (all[i]->get_offset()<section->get_end_offset() &&
-                   all[i]->get_end_offset()>=section->get_end_offset()) {
-            /* Resize sections that begin before the end of this section but end at or after. */
-            all[i]->set_size(all[i]->get_size()+adjustment);
+        if (all[i]!=section) {
+            if (all[i]->get_offset() >= section->get_end_offset()) {
+                /* Move sections that follow the adjusted section */
+                all[i]->set_offset(all[i]->get_offset()+adjustment);
+            } else if (all[i]->get_offset()<section->get_end_offset() &&
+                       all[i]->get_end_offset()>=section->get_end_offset()) {
+                /* Resize sections that begin before the end of this section but end at or after. */
+                all[i]->set_size(all[i]->get_size()+adjustment);
+            }
         }
-        
-        /* Memory adjustments */
-        if (all[i]->is_mapped() && section->is_mapped()) {
+    }
+
+    /* Adjust this section */
+    section->set_size(newsize);
+
+    /* This is here for now because in every case when we resize a section in the file we'll also want to resize its mapped
+     * area. */
+    if (section->is_mapped())
+        mapped_resize(section, section->get_mapped_rva()+adjustment);
+}
+
+/* Similar to resize() except operates on memory mappings. */
+void
+SgAsmGenericFile::mapped_resize(SgAsmGenericSection *section, addr_t newsize)
+{
+    ROSE_ASSERT(section!=NULL);
+    ROSE_ASSERT(section->get_congealed()==true); /*must be done parsing*/
+    ROSE_ASSERT(section->is_mapped());
+
+    /* Get adjustment carefully */
+    int64_t adjustment;
+    if (newsize>section->get_size()) {
+        ROSE_ASSERT(newsize - section->get_size() < 0x7fffffffffffffffllu);
+        adjustment = newsize - section->get_size();
+    } else if (newsize<section->get_size()) {
+        ROSE_ASSERT(section->get_size() - newsize < 0x7fffffffffffffffllu);
+        adjustment = -(section->get_size() - newsize);
+    } else {
+        return; /*no change*/
+    }
+
+    /* Adjust other sections */
+    SgAsmGenericSectionPtrList all = get_sections();
+    for (size_t i=0; i<all.size(); i++) {
+        if (all[i]!=section && all[i]->is_mapped()) {
             addr_t section_end = section->get_mapped_va() + section->get_mapped_size();
             addr_t other_end = all[i]->get_mapped_va() + all[i]->get_mapped_size();
             if (all[i]->get_mapped_va() >= section_end) {
@@ -628,9 +658,7 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
     }
     
     /* Adjust this section */
-    section->set_size(newsize);
-    if (section->is_mapped())
-        section->set_mapped_size(section->get_mapped_size()+adjustment);
+    section->set_mapped_size(newsize);
 }
 
 /* Print basic info about the sections of a file */

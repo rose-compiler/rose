@@ -938,6 +938,7 @@ HEADER_GENERIC_FILE_START
 
 	/* Section modification functions */
 	  void resize(SgAsmGenericSection*, addr_t newsize);  /* Change size of an existing section, adjusting others as needed */
+	  void mapped_resize(SgAsmGenericSection*,addr_t);    /* Change mapped size of existing sect., adjusting others */
 
        /* Holes (unreferenced regions in the file) */	
 	  void congeal();                                     /* Identify and freeze all unreferenced regions after parsing */
