@@ -579,12 +579,8 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","sh_entsize","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ (6/14/2008): I think we can let this be considered an offset into the start of the mapped file (double check on this).
      AsmElfSectionTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  // DQ: Note that this is the size of the "SgUnsignedCharList extra" array, so this may be redundant because we use an STL vector for "extra".
-     AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","nextra","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   /* An AsmElfSegmentTable is a synthesized section representing the ELF Segment Table. The segment table entry info parsed
    * from the file is stored with its corresponding AsmElfSection rather than in the AsmElfSegmentTable. We can reconstruct the
@@ -617,10 +613,6 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","align","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-    /* The ELF header can define a segment table entry to be larger than the Elf*SegmentTableEntry_disk struct, so any
-     * extra data gets stuffed into this member, which is a pointer directly into the mapped file and is null if there
-     * is no extra data. */
-  // DQ (6/14/2008): I think we can let this be considered an offset into the start of the mapped file (double check on this).
      AsmElfSegmentTableEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
