@@ -803,7 +803,7 @@ HEADER_GENERIC_SECTION_START
        // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
           virtual ~SgAsmGenericSection();
 
-          static void dump_containing_sections(FILE *f, const std::string &prefix, addr_t rva, const SgAsmGenericSectionPtrList&);
+          static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva, const SgAsmGenericSectionPtrList&);
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
           virtual void        unparse(FILE*);
           void                unparse(FILE*, const ExtentMap&);
@@ -884,9 +884,8 @@ HEADER_GENERIC_HEADER_START
        // SgAsmGenericFormat & get_exec_format() {return p_exec_format;}
           std::vector<unsigned char>& get_magic() {return p_magic;}
        // addr_t get_base_va() const {return p_base_va;}
-          addr_t get_entry_rva() const {return p_entry_rvas[0];}
-       // const std::vector<addr_t>& get_entry_rvas() const {return p_entry_rvas;}
-          void add_entry_rva(addr_t rva) { p_entry_rvas.push_back(rva);}
+          addr_t get_entry_rva() const;
+          void add_entry_rva(const rose_rva_t &rva) { p_entry_rvas.push_back(rva);}
 
        /* Convenience functions */
        // SgAsmGenericFormat::ByteOrder get_sex() const { return p_exec_format.p_sex; }
@@ -1339,7 +1338,6 @@ HEADER_ELF_SECTION_START
        // virtual ~ElfSection() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-	  virtual void set_mapped_rva(addr_t);
 
        /* Convenience functions */
           SgAsmElfFileHeader *get_elf_header();
@@ -1522,10 +1520,10 @@ HEADER_ELF_DYNAMIC_ENTRY_START
              } __attribute__((packed));
 
           SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk)
-	      : p_d_tag(DT_NULL), p_d_val(0), p_relative(NULL)
+	      : p_d_tag(DT_NULL)
               {ctor(sex, disk);}
           SgAsmElfDynamicEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk)
-	      : p_d_tag(DT_NULL), p_d_val(0), p_relative(NULL)
+	      : p_d_tag(DT_NULL)
               {ctor(sex, disk);}
        // virtual ~SgAsmElfDynamicEntry() {}
 

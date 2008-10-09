@@ -437,23 +437,6 @@ SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
     set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
 }
 
-/* If the mapped address of a section changes make sure that the ELF header's entry point is updated also if it happens to
- * fall within this section. */
-void
-SgAsmElfSection::set_mapped_rva(addr_t new_rva)
-{
-    SgAsmGenericHeader *fhdr = get_header();
-    if (fhdr) {
-        for (SgAddressList::iterator i=fhdr->get_entry_rvas().begin(); i!=fhdr->get_entry_rvas().end(); ++i) {
-            if (*i >= get_mapped_rva() && *i < get_mapped_rva()+get_mapped_size()) {
-                *i = new_rva;
-            }
-        }
-    }
-    
-    SgAsmGenericSection::set_mapped_rva(new_rva);
-}
-
 /* Print some debugging info */
 void
 SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1563,19 +1546,15 @@ SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk)
 {
-    addr_t v = p_d_val;
-    if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, v,       &(disk->d_val));
+    host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk)
 {
-    addr_t v = p_d_val;
-    if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, v,       &(disk->d_val));
+    host_to_disk(sex, p_d_val.get_rva(), &(disk->d_val));
     return disk;
 }
 
@@ -1674,12 +1653,7 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     strcpy(label, stringify_tag(p_d_tag));
     for (char *s=label; *s; s++) *s = tolower(*s);
 
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")", p, w, label, p_d_val, p_d_val);
-    if (p_relative) {
-        fprintf(f, " wrt [%d] \"%s\"\n", p_relative->get_id(), p_relative->get_name()->c_str());
-    } else {
-        fputc('\n', f);
-    }
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_d_val.get_rva(), p_d_val.get_rva());
 }
 
 /* Constructor */
@@ -1731,7 +1705,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
         switch (ent->get_d_tag()) {
           case SgAsmElfDynamicEntry::DT_NEEDED: {
               /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-              SgAsmElfString *name = new SgAsmElfString(strtab, ent->get_d_val());
+              ROSE_ASSERT(ent->get_d_val().get_section()==NULL);
+              SgAsmElfString *name = new SgAsmElfString(strtab, ent->get_d_val().get_rva());
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
@@ -1766,11 +1741,12 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
           case SgAsmElfDynamicEntry::DT_FILTER:
           {
               /* d_val is relative to a section */
-              SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(ent->get_d_val());
+              ROSE_ASSERT(ent->get_d_val().get_section()==NULL);
+              SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(ent->get_d_val().get_rva());
               SgAsmGenericSection *best = NULL;
               for (SgAsmGenericSectionPtrList::iterator i=containers.begin(); i!=containers.end(); ++i) {
                   if ((*i)->is_mapped()) {
-                      if ((*i)->get_mapped_rva()==ent->get_d_val()) {
+                      if ((*i)->get_mapped_rva()==ent->get_d_val().get_rva()) {
                           best = *i;
                           break;
                       } else if (!best) {
@@ -1780,10 +1756,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
                       }
                   }
               }
-              if (best) {
-                  ent->set_relative(best);
-                  ent->set_d_val(ent->get_d_val() - best->get_mapped_rva());
-              }
+              if (best)
+                  ent->set_d_val(rose_rva_t(ent->get_d_val().get_rva(), best));
               break;
           }
           default:
@@ -1838,9 +1812,7 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry *ent = p_entries->get_entries()[i];
         ent->dump(f, p, i);
-        if (ent->get_relative())
-            dump_containing_sections(f, std::string(p)+"...", ent->get_d_val()+ent->get_relative()->get_mapped_rva(),
-                                     get_header()->get_sections()->get_sections());
+        dump_containing_sections(f, std::string(p)+"...", ent->get_d_val(), get_header()->get_sections()->get_sections());
     }
 
     hexdump(f, 0, std::string(p)+"data at ", p_data);

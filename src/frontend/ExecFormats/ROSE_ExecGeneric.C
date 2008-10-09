@@ -15,6 +15,72 @@
 #include <sys/wait.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Relative Virtual Addresses (RVA)
+// An RVA is always relative to the base virtual address (base_va) defined in an executable file header.
+// A rose_rva_t is optionally tied to an SgAsmGenericSection so that if the mapped address of the section is modified then
+// the RVA stored in the rose_rva_t object is also adjusted.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+rose_addr_t
+rose_rva_t::get_rva() const 
+{
+    rose_addr_t rva = addr;
+    if (section) rva += section->get_mapped_rva();
+    return rva;
+}
+
+void
+rose_rva_t::set_rva(rose_addr_t rva)
+{
+    addr = rva;
+    if (section) {
+        ROSE_ASSERT(addr >= section->get_mapped_rva());
+        addr -= section->get_mapped_rva();
+    }
+}
+
+SgAsmGenericSection *
+rose_rva_t::get_section() const
+{
+    return section;
+}
+
+void
+rose_rva_t::set_section(SgAsmGenericSection *new_section)
+{
+    if (section) {
+        addr += section->get_mapped_rva();
+        section = NULL;
+    }
+    if (new_section) {
+        ROSE_ASSERT(addr >= new_section->get_mapped_rva());
+        addr -= new_section->get_mapped_rva();
+    }
+    section = new_section;
+}
+
+std::ostream &
+operator<<(std::ostream &os, const rose_rva_t &rva)
+{
+    os << rva.get_rva();
+    return os;
+}
+
+/* Arithmetic */
+rose_addr_t operator+(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() + a2.get_rva();}
+rose_addr_t operator-(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() - a2.get_rva();}
+
+/* Comparisons */
+bool operator< (const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() <  a2.get_rva();}
+bool operator<=(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() <= a2.get_rva();}
+bool operator> (const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() >  a2.get_rva();}
+bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() >= a2.get_rva();}
+bool operator==(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() == a2.get_rva();}
+bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2) {return a1.get_rva() != a2.get_rva();}
+
+    
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Strings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1541,7 +1607,8 @@ SgAsmGenericSection::get_va_offset(addr_t va)
 
 /* Class method that prints info about offsets into known sections */
 void
-SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix, addr_t rva, const SgAsmGenericSectionPtrList &slist)
+SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva,
+                                              const SgAsmGenericSectionPtrList &slist)
 {
     for (size_t i=0; i<slist.size(); i++) {
         SgAsmGenericSection *s = slist[i];
@@ -1909,6 +1976,14 @@ SgAsmGenericHeader::unparse(FILE *f)
         (*i)->unparse(f);
 }
 
+/* Returns the RVA (relative to the header's base virtual address) of the first entry point. */
+rose_addr_t
+SgAsmGenericHeader::get_entry_rva() const
+{
+    ROSE_ASSERT(p_entry_rvas.size()>0);
+    return p_entry_rvas[0].get_rva();
+}
+
 /* Adds a new section to the header. This is called implicitly by the section constructor. */
 void
 SgAsmGenericHeader::add_section(SgAsmGenericSection *section)
@@ -2159,9 +2234,10 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
         sprintf(label, "entry_rva[%zu]", i);
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_entry_rvas[i], p_entry_rvas[i]);
+        addr_t entry_rva = p_entry_rvas[i].get_rva();
+        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
-        dump_containing_sections(f, std::string(p)+label, p_entry_rvas[i], sections);
+        dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
     }
 
     fprintf(f, "%s%-*s = %zu sections\n", p, w, "section", p_sections->get_sections().size());

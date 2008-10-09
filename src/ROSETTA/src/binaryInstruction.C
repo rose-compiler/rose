@@ -547,11 +547,8 @@ Grammar::setUpBinaryInstructions ()
   // DQ (8/28/2008): Check against the specification
      AsmElfDynamicEntry.setDataPrototype("SgAsmElfDynamicEntry::EntryType","d_tag","= SgAsmElfDynamicEntry::DT_NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicEntry.setDataPrototype("rose_addr_t","d_val","= 0",
+     AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicEntry.setDataPrototype("SgAsmGenericSection*", "relative", "= NULL", 
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // AsmElfDynamicEntryList.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicEntryList.setDataPrototype("SgAsmElfDynamicEntryPtrList","entries","",
@@ -1527,7 +1524,6 @@ Grammar::setUpBinaryInstructions ()
   // std::vector<unsigned char> magic;                   /* Optional magic number in file byte order */
   // Architecture        target                          /* Machine for which this header and its sections, etc. was compiled */
   // addr_t              base_va;                        /* Base virtual address used by all "relative virtual addresses" (RVA) */
-  // std::vector<addr_t> entry_rvas;                     /* Code entry points wrt base_va */
   // std::vector<ExecDLL*> dlls;                         /* List of dynamic libraries needed by this executable */
   // std::vector<ExecSymbol*> symbols;                   /* All symbols defined for this header */
      AsmGenericHeader.setFunctionPrototype ( "HEADER_GENERIC_HEADER", "../Grammar/BinaryInstruction.code");
@@ -1548,7 +1544,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericHeader.setDataPrototype("rose_addr_t","base_va","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Code entry point wrt base_va */
-     AsmGenericHeader.setDataPrototype("SgAddressList","entry_rvas","",
+     AsmGenericHeader.setDataPrototype("SgRVAList","entry_rvas","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericHeader.setDataPrototype("SgAsmGenericDLLList*","dlls","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
