@@ -1224,7 +1224,7 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
   SgExprStatement *n = isSgExprStatement(s);
   SgExpression *exp = (n != 0)? n->get_expression() : isSgExpression(s);
   if (exp != 0) {
-    switch (exp->variant()) {
+    switch (exp->variantT()) {
     case V_SgPlusAssignOp:
     case V_SgMinusAssignOp:
     case V_SgAndAssignOp:
@@ -1245,7 +1245,7 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
 	  *rhs = AstNodePtrImpl(init);
 	}
         if (readlhs != 0)
-           *readlhs = (exp->variant() != V_SgAssignOp);
+           *readlhs = (exp->variantT() != V_SgAssignOp);
 	return true;
       }
     }
