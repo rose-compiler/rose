@@ -759,6 +759,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
+    bool was_congealed = get_congealed();
     congeal();
     addr_t at=0;
     for (size_t i=0; at<get_size(); i++) {
@@ -768,7 +769,8 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%zu] (offset %"PRIu64", %zu bytes) \"%s\"\n", p, w, "string", i, at, s.size(), s.c_str());
         at += 1 + s.size();
     }
-    uncongeal();
+    if (!was_congealed)
+      uncongeal();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -767,9 +767,8 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
         content(0, get_size());
     }
 
-    /* Compute the free list as the inverse of the holes. */
-    const ExtentMap &holes = congeal();
-    p_freelist = subtract_extents(holes, 0, get_size());
+    /* The free list is everything that's been referenced. */
+    p_freelist = uncongeal();
 
     /* Remove the empty string from the free list */
     if (p_empty_string)

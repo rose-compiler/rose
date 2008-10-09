@@ -809,7 +809,6 @@ SgAsmGenericFile::fill_holes()
       	hole->set_synthesized(true);
       	hole->set_name(new SgAsmBasicString("hole"));
       	hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
-      	hole->congeal();
       	add_hole(hole);
     }
 }
@@ -1061,7 +1060,7 @@ SgAsmGenericSection::content(addr_t offset, addr_t size)
 {
     if (offset > get_size() || offset+size > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, size);
-    if (!p_congealed && size > 0)
+    if (!get_congealed() && size > 0)
         insert_extent(p_extents, offset, size);
     return &(p_data[offset]);
 }
@@ -1079,11 +1078,11 @@ SgAsmGenericSection::content(addr_t offset, addr_t size, void *buf)
         addr_t nbytes = get_size() - offset;
         memcpy(buf, &(p_data[offset]), nbytes);
         memset((char*)buf+nbytes, 0, size-nbytes);
-        if (!p_congealed)
+        if (!get_congealed())
 	    insert_extent(p_extents, offset, nbytes);
     } else {
         memcpy(buf, &(p_data[offset]), size);
-        if (!p_congealed)
+        if (!get_congealed())
 	    insert_extent(p_extents, offset, size);
     }
 }
@@ -1100,7 +1099,7 @@ SgAsmGenericSection::content_str(addr_t offset)
 
     if (offset+nchars > get_size())
         throw SgAsmGenericFile::ShortRead(this, offset, nchars);
-    if (!p_congealed)
+    if (!get_congealed())
         insert_extent(p_extents, offset, nchars);
 
     return ret;
@@ -1196,10 +1195,10 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
 const SgAsmGenericSection::ExtentMap &
 SgAsmGenericSection::congeal()
 {
-    if (!p_congealed) {
+    if (!get_congealed()) {
       	ExtentMap holes = subtract_extents(p_extents, 0, get_size()); /*complement*/
       	p_extents = holes;
-      	p_congealed = true;
+      	set_congealed(true);
     }
     return p_extents;
 }
@@ -1208,10 +1207,10 @@ SgAsmGenericSection::congeal()
 const SgAsmGenericSection::ExtentMap &
 SgAsmGenericSection::uncongeal()
 {
-    if (p_congealed) {
+    if (get_congealed()) {
       	ExtentMap refs = subtract_extents(p_extents, 0, get_size()); /*complement*/
       	p_extents = refs;
-      	p_congealed = false;
+      	set_congealed(false);
     }
     return p_extents;
 }
@@ -1288,7 +1287,7 @@ SgAsmGenericSection::unparse(FILE *f, const ExtentMap &map)
 void
 SgAsmGenericSection::unparse_holes(FILE *f)
 {
-    bool was_congealed = p_congealed;
+    bool was_congealed = get_congealed();
     unparse(f, congeal());
     if (!was_congealed)
         uncongeal();
@@ -1360,8 +1359,8 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     /* Show holes based on what's been referenced so far */
     {
-      fprintf(f, "%s%-*s = %s\n", p, w, "congealed", p_congealed?"true":"false");
-      bool was_congealed = p_congealed;
+      fprintf(f, "%s%-*s = %s\n", p, w, "congealed", get_congealed()?"true":"false");
+      bool was_congealed = get_congealed();
       ExtentMap holes = congeal();
       if (!was_congealed)
 	uncongeal();

@@ -1517,10 +1517,13 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  /* Tracks either referenced or unreferenced parts of the section, depending on value of p_congealed */
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","extents","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  /* Determines what p_extents tracks: referenced extents if false; unreferenced extents (holes) if true */
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      
   // DQ (8/2/2008): This was removed from the design by Robb.
   /* All segments belonging within this section */
