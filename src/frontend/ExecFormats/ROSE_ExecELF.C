@@ -1034,6 +1034,11 @@ SgAsmElfSectionTable::ctor()
             strtab = new SgAsmElfStrtab(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
+            strtab->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
+            strtab->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
+            strtab->set_file_alignment(shdr->get_sh_addralign());
+            strtab->set_mapped_alignment(shdr->get_sh_addralign());
+            shdr->set_parent(strtab);
         }
 
         /* Read all other sections */
@@ -1069,7 +1074,8 @@ SgAsmElfSectionTable::ctor()
                 section->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
             section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
             section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
-
+            section->set_file_alignment(shdr->get_sh_addralign());
+            section->set_mapped_alignment(shdr->get_sh_addralign());
             shdr->set_parent(section);
         }
 
@@ -1449,6 +1455,8 @@ SgAsmElfSegmentTable::ctor()
                 if (!s->is_mapped()) {
                     s->set_mapped_rva(shdr->get_vaddr());
                     s->set_mapped_size(shdr->get_memsz());
+                    s->set_file_alignment(shdr->get_align());
+                    s->set_mapped_alignment(shdr->get_align());
                     s->set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
                     s->set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
                     s->set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
