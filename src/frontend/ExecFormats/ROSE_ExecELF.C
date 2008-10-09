@@ -624,9 +624,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
     if (p_linked_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\" @%" PRIu64 ", %" PRIu64 " bytes\n", p, w, "linked_to",
-                p_linked_section->get_id(), p_linked_section->get_name().c_str(),
-                p_linked_section->get_offset(), p_linked_section->get_size());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to", p_linked_section->get_id(), p_linked_section->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
@@ -1964,17 +1962,11 @@ void
 SgAsmElfDynamicSection::dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, SgAsmGenericFile *ef)
 {
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, name, addr);
-    std::vector<SgAsmGenericSection*> sections = ef->get_sections_by_rva(addr);
+    SgAsmGenericSectionPtrList sections = ef->get_sections_by_rva(addr);
     for (size_t i=0; i<sections.size(); i++) {
-        fprintf(f, "%s%-*s     [%d] \"%s\"", p, w, "...", sections[i]->get_id(), sections[i]->get_name().c_str());
         addr_t offset = addr - sections[i]->get_mapped_rva();
-        if (offset>0) {
-            addr_t nbytes = sections[i]->get_size() - offset;
-            fprintf(f, " @(0x%08"PRIx64"+%"PRIu64") %"PRIu64" bytes", sections[i]->get_mapped_rva(), offset, nbytes);
-        } else {
-            fprintf(f, " @0x%08"PRIx64" %"PRIu64" bytes" , sections[i]->get_mapped_rva(), sections[i]->get_size());
-        }
-        fprintf(f, "\n");
+        fprintf(f, "%s%-*s     0x%08"PRIx64" (%"PRIu64") bytes into [%d] \"%s\"\n",
+                p, w, "...", offset, offset, sections[i]->get_id(), sections[i]->get_name().c_str());
     }
 }
 
@@ -2186,8 +2178,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     fprintf(f, "%s%-*s = %"PRIu64"\n",  p, w, "st_size", p_st_size);
 
     if (section && section->get_id() == (int)p_st_shndx) {
-        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "st_shndx",
-                section->get_id(), section->get_name().c_str(), section->get_offset(), section->get_size());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "st_shndx", section->get_id(), section->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = %u\n",         p, w, "st_shndx", p_st_shndx);        
     }
