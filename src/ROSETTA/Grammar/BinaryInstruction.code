@@ -844,9 +844,6 @@ HEADER_GENERIC_SECTION_START
           addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 	  addr_t	      get_rva_offset(addr_t rva);     /* Return file offset for specified relative virtual address */
 
-       /* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
-	  ExtentMap&	      get_freelist();
-
        /* Accessors for private members */
           SgAsmGenericString *get_name() const;		      /* Same as standard ROSETTA accessor */
 	  void set_name(SgAsmGenericString *s);		      /* Like std accessor but sets parent of 's' */
@@ -1165,6 +1162,9 @@ HEADER_GENERIC_STRTAB_START
 		SgAsmStoredString *create_string(addr_t offset, bool shared);
 		void free_all_strings(bool blow_away_holes=false);
 		void reallocate(); /*allocate storage for all unallocated strings*/
+
+		/* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
+		SgAsmGenericSection::ExtentMap& get_freelist();
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}

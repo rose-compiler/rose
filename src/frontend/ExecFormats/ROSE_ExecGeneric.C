@@ -261,10 +261,10 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
     bool was_congealed = container->get_congealed();
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
-    for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        if (p_referenced_storage[i]->get_offset()!=SgAsmStoredString::unallocated && p_referenced_storage[i]!=p_dont_free) {
+    for (size_t i=0; i<p_storage_list.size(); i++) {
+        if (p_storage_list[i]->get_offset()!=SgAsmStoredString::unallocated && p_storage_list[i]!=p_dont_free) {
             p_num_freed++;
-            p_referenced_storage[i]->set_offset(SgAsmStoredString::unallocated);
+            p_storage_list[i]->set_offset(SgAsmStoredString::unallocated);
         }
     }
 
@@ -275,11 +275,11 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
     }
 
     /* The free list is everything that's been referenced. */
-    container->get_freelist() = container->uncongeal();
+    get_freelist() = container->uncongeal();
 
     /* Remove the empty string from the free list */
     if (p_dont_free)
-	container->get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
+	get_freelist().erase(p_dont_free->get_offset(), p_dont_free->get_string().size()+1);
     
     /* Restore state */
     if (was_congealed)
@@ -296,15 +296,15 @@ SgAsmGenericStrtab::reallocate()
 
     /* Get list of strings that need to be allocated and sort by descending size. */
     std::vector<size_t> map;
-    for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        SgAsmStringStorage *storage = p_referenced_storage[i];
+    for (size_t i=0; i<p_storage_list.size(); i++) {
+        SgAsmStringStorage *storage = p_storage_list[i];
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
             map.push_back(i);
         }
     }
     for (size_t i=1; i<map.size(); i++) {
         for (size_t j=0; j<i; j++) {
-            if (p_referenced_storage[map[j]]->get_string().size() < p_referenced_storage[map[i]]->get_string().size()) {
+            if (p_storage_list[map[j]]->get_string().size() < p_storage_list[map[i]]->get_string().size()) {
                 size_t x = map[i];
                 map[i] = map[j];
                 map[j] = x;
@@ -314,7 +314,7 @@ SgAsmGenericStrtab::reallocate()
 
     /* Allocate from largest to smallest so we have the best chance of finding overlaps */
     for (size_t i=0; i<map.size(); i++) {
-        SgAsmStringStorage *storage = p_referenced_storage[map[i]];
+        SgAsmStringStorage *storage = p_storage_list[map[i]];
         ROSE_ASSERT(storage->get_offset()==SgAsmStoredString::unallocated);
 
         /* We point empty strings at the dont_free storage if possible. */
@@ -326,8 +326,8 @@ SgAsmGenericStrtab::reallocate()
 #if 1 /*safe to comment this out to avoid sharing*/
         /* Is there an existing string that we can use? */
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
-            for (size_t j=0; j<p_referenced_storage.size(); j++) {
-                SgAsmStringStorage *previous = p_referenced_storage[j];
+            for (size_t j=0; j<p_storage_list.size(); j++) {
+                SgAsmStringStorage *previous = p_storage_list[j];
                 size_t need = storage->get_string().size();
                 size_t have = previous->get_string().size();
                 if (previous->get_offset()!=SgAsmStoredString::unallocated &&
@@ -343,7 +343,7 @@ SgAsmGenericStrtab::reallocate()
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
             SgAsmGenericSection::ExtentPair e(0, 0);
             try {
-                e = container->get_freelist().allocate_best_fit(storage->get_string().size()+1);
+                e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
                 addr_t new_offset = e.first;
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
@@ -373,6 +373,14 @@ SgAsmGenericStrtab::reallocate()
     }
 }
 
+/* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
+ * free list. */
+SgAsmGenericSection::ExtentMap&
+SgAsmGenericStrtab::get_freelist()
+{
+    return p_freelist;
+}
+
 /* Print some debugging info */
 void
 SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -387,27 +395,26 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    if (get_container()) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container", get_container()->get_id(), get_container()->get_name()->c_str());
+    if (container) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container", container->get_id(), container->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = <null>\n", p, w, "container");
     }
 
     fprintf(f, "%s%-*s =", p, w, "dont_free");
-    for (size_t i=0; i<p_referenced_storage.size(); ++i) {
-        if (p_referenced_storage[i] == p_dont_free)
-            fprintf(f, " p_referenced_storage[%zu]", i);
+    for (size_t i=0; i<p_storage_list.size(); ++i) {
+        if (p_storage_list[i] == p_dont_free)
+            fprintf(f, " p_storage_list[%zu]", i);
     }
     fputc('\n', f);
     
-    fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", p_referenced_storage.size());
-    for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        p_referenced_storage[i]->dump(f, p, i);
+    fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", p_storage_list.size());
+    for (size_t i=0; i<p_storage_list.size(); i++) {
+        p_storage_list[i]->dump(f, p, i);
     }
 
-    /*FIXME: The free list is stored in SgAsmGenericSection, so move this to that location*/
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", container->get_freelist().size());
-    container->get_freelist().dump_extents(f, p, "freelist");
+    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", get_freelist().size());
+    get_freelist().dump_extents(f, p, "freelist");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1931,14 +1938,6 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
                     DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
         }
     }
-}
-
-/* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
- * free list. */
-SgAsmGenericSection::ExtentMap&
-SgAsmGenericSection::get_freelist()
-{
-    return p_freelist;
 }
 
 /* Print some debugging info */
