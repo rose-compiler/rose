@@ -590,9 +590,9 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
      * the case where offset 1 is "domain" and offset 3 is "main" (i.e., they overlap). If we modify "main" before knowing
      * about "domain" then we'll end up freeing the last part of "domain" (and possibly replacing it with something else)!
      *
-     * The only time we can guarantee this is OK is when the new storage points to the same file location as "empty_string"
+     * The only time we can guarantee this is OK is when the new storage points to the same file location as "dont_free"
      * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
-     * string (see SgAsmStoredString(SgAsmElfStrtab,const std::string&)). */
+     * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
     if (p_num_freed>0 && (!p_dont_free || offset!=p_dont_free->get_offset())) {
         fprintf(stderr,
                 "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
@@ -607,52 +607,11 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     return storage;
 }
 
-/* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
- * version of free() when possible. */
-void
-SgAsmElfStrtab::free(SgAsmStringStorage *storage)
-{
-    ROSE_ASSERT(storage!=NULL);
-    ROSE_ASSERT(storage!=p_dont_free);
-    addr_t old_offset = storage->get_offset();
-    if (old_offset!=SgAsmStoredString::unallocated) {
-        storage->set_offset(SgAsmStoredString::unallocated);
-        free(old_offset, storage->get_string().size()+1);
-    }
-}
-
-/* Add a range of bytes to the free list. Coalesce adjacent free areas.  An ELF string table can have a pointer to the
- * beginning of a string, but may also have pointers into the middle of strings. For instance, a string table that stores
- * "bar" and "foobar" can be optimized to store them as "foobar\0" with "bar" at offset 3 and "foobar" at offset 0. So we have
- * to be careful when freeing one string so we don't inadvertently mark the other string as being free. We do that by scanning
- * the "referenced" list and not freeing anything that's still referenced. */
-void
-SgAsmElfStrtab::free(addr_t offset, addr_t size)
-{
-    ROSE_ASSERT(offset+size <= get_container()->get_size());
-    
-    /* Make sure area is not already in free list. */
-    ROSE_ASSERT(get_freelist().overlap_with(offset, size).size()==0);
-
-    /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::no_id to the "offset"
-     * member of the string storage to indicate that it's memory in the string table is no longer in use. */
-    for (size_t i=0; i<p_storage_list.size() && size>0; i++) {
-        if (p_storage_list[i]->get_offset()==SgAsmStoredString::unallocated) continue;
-        if (p_storage_list[i]->get_offset() <= offset &&
-            p_storage_list[i]->get_offset()+p_storage_list[i]->get_string().size()+1 > offset) {
-            /* We are freeing "bar" but something references the overlapping "foobar" (or even just "bar"). Do not free
-             * anything. */
-            ROSE_ASSERT(offset+size == p_storage_list[i]->get_offset()+p_storage_list[i]->get_string().size()+1);
-            size = 0;
-        }
-        if (p_storage_list[i]->get_offset() > offset && p_storage_list[i]->get_offset() < offset+size) {
-            /* We are freeing "foobar" but something references overlapping "bar". Free only up to "bar" */
-            size = p_storage_list[i]->get_offset() - offset;
-        }
-    }
-
-    /* Mark region as free */
-    get_freelist().insert(offset, size);
+/* Returns the number of bytes required to store the string in the string table. This is the length of the string plus
+ * one for the NUL terminator. */
+rose_addr_t
+SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
+    return storage->get_string().size() + 1;
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */

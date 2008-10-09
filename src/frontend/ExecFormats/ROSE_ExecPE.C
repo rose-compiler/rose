@@ -4,9 +4,6 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
-// namespace Exec {
-// namespace PE {
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Extended DOS File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1192,7 +1189,6 @@ SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
  * may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
  * objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
  * properly and their destructors (~SgAsmStoredString) will free their storage. */
-/* FIXME: Identical to ~SgAsmElfStrtab */
 SgAsmCoffStrtab::~SgAsmCoffStrtab()
 {
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
@@ -1240,10 +1236,9 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
      * the case where two strings have the same value and point to the same offset (i.e., they share storage). If we modify one
      * before we know about the other then (at best) we modify the other one also.
      * 
-     * FIXME: how do we allocate a new string? Here's the comment from the ELF version:
-     *        The only time we can guarantee this is OK is when the new storage points to the same file location as "empty_string"
-     *        since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
-     *   string (see SgAsmElfString(SgAsmElfStrtab,const std::string&)). */
+     * The only time we can guarantee this is OK is when the new storage points to the same file location as "dont_free"
+     * since the latter is guaranteed to never be freed or shared. This exception is used when creating a new, unallocated
+     * string (see SgAsmStoredString(SgAsmGenericStrtab,const std::string&)). */
     if (p_num_freed>0 && (!p_dont_free || offset!=p_dont_free->get_offset())) {
         fprintf(stderr,
                 "SgAsmCoffStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
@@ -1258,47 +1253,11 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
     return storage;
 }
 
-/* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
- * version of free() when possible. */
-void
-SgAsmCoffStrtab::free(SgAsmStringStorage *storage)
-{
-    ROSE_ASSERT(storage!=NULL);
-    ROSE_ASSERT(storage!=p_dont_free);
-    addr_t old_offset = storage->get_offset();
-    if (old_offset!=SgAsmStoredString::unallocated) {
-        storage->set_offset(SgAsmStoredString::unallocated);
-        free(old_offset, 1+storage->get_string().size());
-    }
-}
-
-/* Add a range of bytes to the free list, coalescing adjacent free areas. COFF strings are not allowed to overlap unless
- * they are identical. */
-void
-SgAsmCoffStrtab::free(addr_t offset, addr_t size)
-{
-    SgAsmGenericSection *container = get_container();
-    ROSE_ASSERT(offset+size <= container->get_size());
-
-    /* Make sure area is not already in free list. */
-    ROSE_ASSERT(get_freelist().overlap_with(offset, size).size()==0);
-
-    /* Preserve anything that's still referenced. The caller should have assigned SgAsmGenericString::unallocated to the
-     * "offset" member of the string storage to indicate that it's memory in the string table is no longer in use. */
-    for (size_t i=0; i<p_storage_list.size() && size>0; i++) {
-        if (p_storage_list[i]->get_offset()==SgAsmStoredString::unallocated) continue;
-        if (p_storage_list[i]->get_offset()==offset) {
-            /* Two storage objects share same region of string table. Don't add region to free list. */
-            size = 0;
-        } else {
-            /* Logic error if to-free region overlaps with an existing string */
-            ROSE_ASSERT(p_storage_list[i]->get_offset() >= offset+size ||
-                        p_storage_list[i]->get_offset()+p_storage_list[i]->get_string().size() <= offset);
-        }
-    }
-
-    /* Mark region as free */
-    get_freelist().insert(offset, size);
+/* Returns the number of bytes required to store the string in the string table. This is one (the length byte) plus the
+ * length of the string. */
+rose_addr_t
+SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *storage) {
+    return 1 + storage->get_string().size();
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
@@ -1777,6 +1736,3 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     
     return pe_header;
 }
-
-// }; //namespace PE
-// }; //namespace Exec

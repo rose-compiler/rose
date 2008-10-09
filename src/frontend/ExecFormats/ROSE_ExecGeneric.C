@@ -251,6 +251,44 @@ SgAsmGenericStrtab::create_string(addr_t offset, bool shared)
     return new SgAsmStoredString(storage);
 }
 
+/* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
+ * version of free() when possible. */
+void
+SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
+{
+    ROSE_ASSERT(storage!=NULL);
+    ROSE_ASSERT(storage!=p_dont_free);
+    addr_t old_offset = storage->get_offset();
+    if (old_offset!=SgAsmStoredString::unallocated) {
+        storage->set_offset(SgAsmStoredString::unallocated);
+        free(old_offset, storage->get_string().size()+1);
+    }
+}
+
+/* Add a range of bytes to the free list after subtracting areas that are referenced by other strings. For instance, an ELF
+ * string table can have "main" and "domain" sharing storage. If we free the "domain" string then only "do" should be added
+ * to the free list. */
+void
+SgAsmGenericStrtab::free(addr_t offset, addr_t size)
+{
+    ROSE_ASSERT(offset+size <= get_container()->get_size());
+    
+    /* Make sure area is not already in free list.  The freelist.insert() handles this gracefully, but if we're freeing
+     * something that's already in the list then we have a logic error somewhere. */
+    ROSE_ASSERT(get_freelist().overlap_with(offset, size).size()==0);
+
+    /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
+     * member of the string storage to indicate that it's memory in the string table is no longer in use. */
+    SgAsmGenericSection::ExtentMap s_extents;
+    for (size_t i=0; i<p_storage_list.size(); i++) {
+      s_extents.insert(p_storage_list[i]->get_offset(), get_storage_size(p_storage_list[i]));
+    }
+    SgAsmGenericSection::ExtentMap to_free = s_extents.subtract_from(offset, size);
+
+    /* Add un-refrened extents to free list. */
+    get_freelist().insert(to_free);
+}
+
 /* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
  * blow_way_holes is true then any areas that are unreferenced in the string table will be marked as referenced and added to
  * the free list. */
@@ -2116,6 +2154,15 @@ SgAsmGenericSection::ExtentMap::insert(addr_t offset, addr_t size)
                 super::erase(inserted);
             }
         }
+    }
+}
+
+/* Inserts contents of one extent map into another */
+void
+SgAsmGenericSection::ExtentMap::insert(const ExtentMap &map)
+{
+    for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
+        insert(*i);
     }
 }
 

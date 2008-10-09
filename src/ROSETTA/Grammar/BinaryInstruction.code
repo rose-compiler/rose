@@ -772,6 +772,7 @@ HEADER_GENERIC_SECTION_START
 	      ExtentMap() {}
 
 	      /* Modifying methods */
+              void insert(const ExtentMap&);
               void insert(const ExtentPair &extent)
                   {insert(extent.first, extent.second);}
               void insert(addr_t offset, addr_t size);
@@ -1160,6 +1161,8 @@ HEADER_GENERIC_STRTAB_START
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		SgAsmStoredString *create_string(addr_t offset, bool shared);
+		void free(class SgAsmStringStorage*);
+		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 		void free_all_strings(bool blow_away_holes=false);
 		void reallocate(); /*allocate storage for all unallocated strings*/
 
@@ -1168,6 +1171,7 @@ HEADER_GENERIC_STRTAB_START
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
+		virtual addr_t get_storage_size(const SgAsmStringStorage*) {abort();}
 		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void ctor();
@@ -1411,10 +1415,9 @@ HEADER_ELF_STRING_TABLE_START
 		virtual ~SgAsmElfStrtab();
 		virtual void unparse(FILE*);
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		void free(class SgAsmStringStorage*);
+		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 	private:
 		void ctor();
-		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 HEADER_ELF_STRING_TABLE_END
 
 HEADER_ELF_STRING_SECTION_START
@@ -2209,9 +2212,7 @@ HEADER_COFF_STRING_TABLE_START
 		virtual ~SgAsmCoffStrtab();
 		virtual void unparse(FILE*);
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		void free(class SgAsmStringStorage*);
-	private:
-		void free(addr_t offset, addr_t size); /*mark part of table as free*/
+		virtual addr_t get_storage_size(const SgAsmStringStorage*);
 HEADER_COFF_STRING_TABLE_END
 
 HEADER_PE_STRING_SECTION_START
