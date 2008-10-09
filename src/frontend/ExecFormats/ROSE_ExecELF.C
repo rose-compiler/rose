@@ -232,6 +232,17 @@ SgAsmElfFileHeader::update_from_header()
         p_e_ident_data_encoding = 1;
     } else if (get_sex()==ORDER_MSB) {
         p_e_ident_data_encoding = 2;
+    } else {
+        ROSE_ASSERT(!"unsupported byte order");
+    }
+
+    /* Update word size */
+    if (get_word_size()==4) {
+        p_ident_file_class = 1;
+    } else if (get_word_size()==8) {
+        p_ident_file_class = 2;
+    } else {
+        ROSE_ASSERT(!"unsupported word size");
     }
 
     /* Update entry point with first address */
