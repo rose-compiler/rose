@@ -1465,15 +1465,17 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 
     /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
     for (size_t i=0; i<nentries; i++) {
-        SgAsmElfDynamicEntry *entry;
+        SgAsmElfDynamicEntry *entry=0;
         if (4==fhdr->get_word_size()) {
             const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk =
                 (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(i*entry_size, struct_size);
             entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
-        } else {
+        } else if (8==fhdr->get_word_size()) {
             const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
                 (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(i*entry_size, struct_size);
             entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
+        } else {
+            throw FormatError("unsupported ELF word size");
         }
         if (extra_size>0)
             entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
@@ -1839,32 +1841,96 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     } else {
         fprintf(f, "%s%-*s = %u\n",         p, w, "st_shndx", p_st_shndx);        
     }
+
+    if (p_extra.size()>0) {
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+    }
 }
 
 /* Constructor */
 void
 SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
 {
+    p_symbols = new SgAsmElfSymbolList;
+    p_symbols->set_parent(this);
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
-    p_symbols = new SgAsmElfSymbolList;
+    size_t entry_size, struct_size, extra_size;
+    size_t nentries = calculate_sizes(&entry_size, &struct_size, &extra_size);
+    ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
+    
+    /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
+    for (size_t i=0; i<nentries; i++) {
+        SgAsmElfSymbol *entry=0;
+        if (4==fhdr->get_word_size()) {
+            const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =
+                (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfSymbol(fhdr->get_sex(), disk);
+        } else if (8==fhdr->get_word_size()) {
+            const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk =
+                (const SgAsmElfSymbol::Elf64SymbolEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfSymbol(fhdr->get_sex(), disk);
+        } else {
+            throw FormatError("unsupported ELF word size");
+        }
+        if (extra_size>0)
+            entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
+        p_symbols->get_symbols().push_back(entry);
+        ROSE_ASSERT(p_symbols->get_symbols().size()>0);
+    }
+}
 
+/* Returns info about the size of the entries. Each entry has a required part and an optional part. The return value is the
+ * number of entries in the table. The size of the parts are returned through arguments. */
+size_t
+SgAsmElfSymbolSection::calculate_sizes(size_t *total, size_t *required, size_t *optional)
+{
+    size_t struct_size = 0;
+    size_t extra_size = 0;
+    size_t entry_size = 0;
+    size_t nentries = 0;
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+
+    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
+    ROSE_ASSERT(get_section_entry());
+    entry_size = get_section_entry()->get_sh_entsize();
+
+    /* Size of required part of each entry */
     if (4==fhdr->get_word_size()) {
-        const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk =
-            (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(0, get_size());
-        size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
+        struct_size = sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
+    } else if (8==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk);
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
+     * Section Table Entry has a zero-valued sh_entsize */
+    entry_size = std::max(entry_size, struct_size);
+
+    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
+     * the ELF Section Table is correct. */
+    if ((nentries=p_symbols->get_symbols().size())>0) {
         for (size_t i=0; i<nentries; i++) {
-            p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
+            SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
+            extra_size = std::max(extra_size, entry->get_extra().size());
         }
     } else {
-        const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk =
-            (const SgAsmElfSymbol::Elf64SymbolEntry_disk*)content(0, get_size());
-        size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk);
-        for (size_t i=0; i<nentries; i++) {
-            p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
-        }
+        extra_size = entry_size - struct_size;
+        nentries = get_size() / entry_size;
     }
+    
+    /* Return values */
+    if (total)
+        *total = entry_size;
+    if (required)
+        *required = struct_size;
+    if (optional)
+        *optional = extra_size;
+    return nentries;
 }
 
 /* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated.

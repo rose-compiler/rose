@@ -1664,20 +1664,15 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 HEADER_ELF_SYMBOL_SECTION_START
-     public:
-          SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
-       // virtual ~SgAsmElfSymbolSection() {}
-
-          virtual void set_linked_section(SgAsmElfSection*);
-          virtual void unparse(FILE*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-       /* Accessors for protected/private data members */
-       // std::vector<ElfSymbol*>& get_symbols() {return symbols;}
-    
-     private:
-          void ctor(SgAsmElfSectionTableEntry*);
-
+	public:
+		SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
+		// virtual ~SgAsmElfSymbolSection() {}
+		size_t calculate_sizes(size_t *total, size_t *required, size_t *optional);
+		virtual void set_linked_section(SgAsmElfSection*);
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmElfSectionTableEntry*);
 HEADER_ELF_SYMBOL_SECTION_END
 
 HEADER_ELF_SYMBOL_LIST_START
