@@ -28,5 +28,5 @@ ${SVN} ls ${checkoutDir} | grep -x 'roseBinaryEDG-.*-.*\.tar\.gz' | grep -vx 'ro
 cp ${binaryEdgTarball} ${checkoutDir}/${binaryEdgTarball}
 ${SVN} add ${checkoutDir}/${binaryEdgTarball}
 ${SVN} status ${checkoutDir}
-${SVN} commit -m"Automatic updates of binary EDG tarballs (adding or updating ${binaryEdgTarball}, and removing obsolete versions) for platform ${buildTriplet} and signature ${signature}" ${checkoutDir}
+${SVN} commit -m"Automatic updates of binary EDG tarballs." ${checkoutDir}
 rm -rf ${checkoutDir}
