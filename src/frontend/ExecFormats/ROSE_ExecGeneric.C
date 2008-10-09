@@ -156,8 +156,22 @@ SgAsmStoredString::get_offset() const
     if (NULL==get_storage())
         return unallocated;
     if (get_storage()->get_offset() == unallocated) {
-        ROSE_ASSERT(get_storage()->get_strtab()!=NULL);
-        get_storage()->get_strtab()->reallocate();
+        SgAsmGenericSection *strtab = get_storage()->get_strtab();
+        ROSE_ASSERT(strtab!=NULL);
+#if 1
+        /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
+        SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(strtab);
+        //SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(strtab);
+        if (elf_strtab) {
+            elf_strtab->reallocate();
+        } else {
+            abort();
+            //ROSE_ASSERT(coff_strtab);
+            //coff_strtab->reallocate();
+        }
+#else
+        strtab->rallocate();
+#endif
         ROSE_ASSERT(get_storage()->get_offset() != unallocated);
     }
     return get_storage()->get_offset();
@@ -170,7 +184,20 @@ SgAsmStoredString::set_string(const std::string &s)
     if (get_string()==s) return; /* no change in value */
     SgAsmStringStorage *storage = get_storage();
     ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+#if 1
+    /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
+    SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(storage->get_strtab());
+    //SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(storage->get_strtab());
+    if (elf_strtab) {
+        elf_strtab->free(storage);
+    } else {
+        abort();
+        //ROSE_ASSERT(coff_strtab);
+        //coff_strtab->free(storage);
+    }
+#else
     storage->get_strtab()->free(storage);
+#endif
     storage->set_string(s);
 }
 
@@ -204,7 +231,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
-    SgAsmElfStrtab *strtab = get_strtab();
+    SgAsmGenericSection *strtab = get_strtab();
     if (strtab) {
         fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name()->c_str());
     } else {

@@ -492,7 +492,7 @@ SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
         p_empty_string = create_storage(0, false);
 }
 
-/* Free ElfStrStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
+/* Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
  * may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
  * objects as no longer being associated with a string table. This allows the SgAsmStoredString objects to still function
  * properly and their destructors (~SgAsmStoredString) will free their storage. */
@@ -608,6 +608,7 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
 /* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
  * blow_way_holes is true then any areas that are unreferenced in the string table will be marked as referenced and added to
  * the free list. */
+/* FIXME: This identical to SgAsmCoffStrtab::free_all_strings -- move to the shared base class */
 void
 SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 {

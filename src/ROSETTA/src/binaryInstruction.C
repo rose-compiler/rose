@@ -414,7 +414,7 @@ Grammar::setUpBinaryInstructions ()
   // std::string p_string;
   // rose_addr_t p_offset;
      AsmStringStorage.setFunctionPrototype ( "HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
-     AsmStringStorage.setDataPrototype("SgAsmElfStrtab*","strtab","= NULL",
+     AsmStringStorage.setDataPrototype("SgAsmGenericSection*","strtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmStringStorage.setDataPrototype("std::string","string","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -509,8 +509,6 @@ Grammar::setUpBinaryInstructions ()
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
      AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfStrtab.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1490,6 +1488,10 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Determines what p_extents tracks: referenced extents if false; unreferenced extents (holes) if true */
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  /* FIXME: This should eventually be moved into SgAsmGenericStrtab (RPM 2008-10-02) */
+  /* List of areas in the section from which we can allocate new strings. */
+     AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      

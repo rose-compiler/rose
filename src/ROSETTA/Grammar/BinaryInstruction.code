@@ -1112,7 +1112,7 @@ HEADER_GENERIC_STRING_END
 
 HEADER_STRING_STORAGE_START
      public:
-          SgAsmStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
+          SgAsmStringStorage(SgAsmGenericSection *strtab, const std::string &string, rose_addr_t offset)
              : p_strtab(strtab), p_string(string), p_offset(offset) {}
           void dump(FILE *s, const char *prefix, ssize_t idx);
 
