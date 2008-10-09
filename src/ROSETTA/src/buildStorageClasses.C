@@ -752,6 +752,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmGenericSymbol::SymbolType" ) ||
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentType" ) ||
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentFlags" ) ||
+                 ( varTypeString == "SgAsmElfDynamicEntry::EntryType") ||
                  ( varTypeString == "SgAsmNEEntryPoint::NEEntryFlags" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocSrcType" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocModifiers" ) ||

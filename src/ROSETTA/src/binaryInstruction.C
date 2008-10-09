@@ -538,55 +538,18 @@ Grammar::setUpBinaryInstructions ()
   // std::vector<ElfDynamicEntry*> other_entries;        /* Other values not specifically parsed out */
   // std::vector<ElfDynamicEntry*> all_entries;          /* All parsed entries in order of appearance */
      AsmElfDynamicSection.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
-
-  // DQ (8/28/2008): Check against the specification
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_pltrelsz","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_pltgot","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_hash","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_strtab","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_symtab","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_rela","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_relasz","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_relaent","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_strsz","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_symentsz","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_init","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_fini","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_pltrel","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_jmprel","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("unsigned","dt_verneednum","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_verneed","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("rose_addr_t","dt_versym","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","other_entries","= NULL",
+     AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","entries","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","all_entries","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
 
   // unsigned            d_tag;
   // addr_t              d_val;
      AsmElfDynamicEntry.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
   // DQ (8/28/2008): Check against the specification
-     AsmElfDynamicEntry.setDataPrototype("unsigned","d_tag","= 0",
+     AsmElfDynamicEntry.setDataPrototype("SgAsmElfDynamicEntry::EntryType","d_tag","= SgAsmElfDynamicEntry::DT_NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("rose_addr_t","d_val","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfDynamicEntry.setDataPrototype("SgAsmGenericSection*", "relative", "= NULL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

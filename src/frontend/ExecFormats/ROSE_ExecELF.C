@@ -1538,14 +1538,14 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf32DynamicEntry_disk *disk)
 {
-    p_d_tag = disk_to_host(sex, disk->d_tag);
+    p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
     p_d_val = disk_to_host(sex, disk->d_val);
 }
 
 void
 SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
 {
-    p_d_tag = disk_to_host(sex, disk->d_tag);
+    p_d_tag = (EntryType)disk_to_host(sex, disk->d_tag);
     p_d_val = disk_to_host(sex, disk->d_val);
 }
 
@@ -1553,16 +1553,99 @@ SgAsmElfDynamicEntry::ctor(ByteOrder sex, const Elf64DynamicEntry_disk *disk)
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf32DynamicEntry_disk *disk)
 {
+    addr_t v = p_d_val;
+    if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val, &(disk->d_val));
+    host_to_disk(sex, p_d_val, &v);
     return disk;
 }
 void *
 SgAsmElfDynamicEntry::encode(ByteOrder sex, Elf64DynamicEntry_disk *disk)
 {
+    addr_t v = p_d_val;
+    if (p_relative) v += p_relative->get_mapped_rva();
     host_to_disk(sex, p_d_tag, &(disk->d_tag));
-    host_to_disk(sex, p_d_val, &(disk->d_val));
+    host_to_disk(sex, p_d_val, &v);
     return disk;
+}
+
+/* Convert Dynamic Entry Tag to a string */
+const char *
+SgAsmElfDynamicEntry::stringify_tag(EntryType t)
+{
+    switch (t) {
+      case DT_NULL:             return "DT_NULL";
+      case DT_NEEDED:           return "DT_NEEDED";
+      case DT_PLTRELSZ:         return "DT_PLTRELSZ";
+      case DT_PLTGOT:           return "DT_PLTGOT";
+      case DT_HASH:             return "DT_HASH";
+      case DT_STRTAB:           return "DT_STRTAB";
+      case DT_SYMTAB:           return "DT_SYMTAB";
+      case DT_RELA:             return "DT_RELA";
+      case DT_RELASZ:           return "DT_RELASZ";
+      case DT_RELAENT:          return "DT_RELAENT";
+      case DT_STRSZ:            return "DT_STRSZ";
+      case DT_SYMENT:           return "DT_SYMENT";
+      case DT_INIT:             return "DT_INIT";
+      case DT_FINI:             return "DT_FINI";
+      case DT_SONAME:           return "DT_SONAME";
+      case DT_RPATH:            return "DT_RPATH";
+      case DT_SYMBOLIC:         return "DT_SYMBOLIC";
+      case DT_REL:              return "DT_REL";
+      case DT_RELSZ:            return "DT_RELSZ";
+      case DT_RELENT:           return "DT_RELENT";
+      case DT_PLTREL:           return "DT_PLTREL";
+      case DT_DEBUG:            return "DT_DEBUG";
+      case DT_TEXTREL:          return "DT_TEXTREL";
+      case DT_JMPREL:           return "DT_JMPREL";
+      case DT_BIND_NOW:         return "DT_BIND_NOW";
+      case DT_INIT_ARRAY:       return "DT_INIT_ARRAY";
+      case DT_FINI_ARRAY:       return "DT_FINI_ARRAY";
+      case DT_INIT_ARRAYSZ:     return "DT_INIT_ARRAYSZ";
+      case DT_FINI_ARRAYSZ:     return "DT_FINI_ARRAYSZ";
+      case DT_RUNPATH:          return "DT_RUNPATH";
+      case DT_FLAGS:            return "DT_FLAGS";
+      case DT_PREINIT_ARRAY:    return "DT_PREINIT_ARRAY";
+      case DT_PREINIT_ARRAYSZ:  return "DT_PREINIT_ARRAYSZ";
+      case DT_NUM:              return "DT_NUM";
+      case DT_GNU_PRELINKED:    return "DT_GNU_PRELINKED";
+      case DT_GNU_CONFLICTSZ:   return "DT_GNU_CONFLICTSZ";
+      case DT_GNU_LIBLISTSZ:    return "DT_GNU_LIBLISTSZ";
+      case DT_CHECKSUM:         return "DT_CHECKSUM";
+      case DT_PLTPADSZ:         return "DT_PLTPADSZ";
+      case DT_MOVEENT:          return "DT_MOVEENT";
+      case DT_MOVESZ:           return "DT_MOVESZ";
+      case DT_FEATURE_1:        return "DT_FEATURE_1";
+      case DT_POSFLAG_1:        return "DT_POSFLAG_1";
+      case DT_SYMINSZ:          return "DT_SYMINSZ";
+      case DT_SYMINENT:         return "DT_SYMINENT";
+      case DT_GNU_HASH:         return "DT_GNU_HASH";
+      case DT_TLSDESC_PLT:      return "DT_TLSDESC_PLT";
+      case DT_TLSDESC_GOT:      return "DT_TLSDESC_GOT";
+      case DT_GNU_CONFLICT:     return "DT_GNU_CONFLICT";
+      case DT_GNU_LIBLIST:      return "DT_GNU_LIBLIST";
+      case DT_CONFIG:           return "DT_CONFIG";
+      case DT_DEPAUDIT:         return "DT_DEPAUDIT";
+      case DT_AUDIT:            return "DT_AUDIT";
+      case DT_PLTPAD:           return "DT_PLTPAD";
+      case DT_MOVETAB:          return "DT_MOVETAB";
+      case DT_SYMINFO:          return "DT_SYMINFO";
+      case DT_VERSYM:           return "DT_VERSYM";
+      case DT_RELACOUNT:        return "DT_RELACOUNT";
+      case DT_RELCOUNT:         return "DT_RELCOUNT";
+      case DT_FLAGS_1:          return "DT_FLAGS_1";
+      case DT_VERDEF:           return "DT_VERDEF";
+      case DT_VERDEFNUM:        return "DT_VERDEFNUM";
+      case DT_VERNEED:          return "DT_VERNEED";
+      case DT_VERNEEDNUM:       return "DT_VERNEEDNUM";
+      case DT_AUXILIARY:        return "DT_AUXILIARY";
+      case DT_FILTER:           return "DT_FILTER";
+
+      default:
+        static char s[64];
+        sprintf(s, "0x%08lx", (unsigned long)t);
+        return s;
+    }
 }
 
 /* Print some debugging info */
@@ -1576,24 +1659,25 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sElfDynamicEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    if (p_d_tag>=34) {
-        fprintf(f, "%s%-*s = 0x%08u\n",          p, w, "d_tag",      p_d_tag);
+
+    char label[256];
+    strcpy(label, stringify_tag(p_d_tag));
+    for (char *s=label; *s; s++) *s = tolower(*s);
+
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")", p, w, label, p_d_val, p_d_val);
+    if (p_relative) {
+        fprintf(f, " wrt [%d] \"%s\"\n", p_relative->get_id(), p_relative->get_name()->c_str());
     } else {
-        fprintf(f, "%s%-*s = %u\n",              p, w, "d_tag",      p_d_tag);
+        fputc('\n', f);
     }
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",     p, w, "d_val_addr", p_d_val);
 }
 
 /* Constructor */
 void
 SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
 {
-    p_other_entries = new SgAsmElfDynamicEntryList;
-    p_all_entries   = new SgAsmElfDynamicEntryList;
-
-    p_other_entries->set_parent(this);
-    p_all_entries->set_parent(this);
+    p_entries = new SgAsmElfDynamicEntryList;
+    p_entries->set_parent(this);
 }
 
 /* Set linked section (the string table) and finish parsing this section. */
@@ -1617,7 +1701,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
         entry_size = sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i = 0; i < nentries; i++) {
-            p_all_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
+            p_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else if (8==fhdr->get_word_size()) {
         const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
@@ -1625,76 +1709,74 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
         entry_size = sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk);
         nentries = section_size / entry_size;
         for (size_t i = 0; i < nentries; i++) {
-            p_all_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
+            p_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
         }
     } else {
         throw FormatError("bad ELF word size");
     }
 
-    for (size_t i=0; i < nentries; i++) {
-        switch (p_all_entries->get_entries()[i]->get_d_tag()) {
-          case 0:
-            /* DT_NULL: unused entry */
-            break;
-          case 1: {
-              /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-              SgAsmElfString *name = new SgAsmElfString(strtab, p_all_entries->get_entries()[i]->get_d_val());
+    /* Special processing for some sections */
+    for (size_t i=0; i<p_entries->get_entries().size(); i++) {
+        SgAsmElfDynamicEntry *ent = p_entries->get_entries()[i];
+        switch (ent->get_d_tag()) {
+          case SgAsmElfDynamicEntry::DT_NEEDED: {
+              /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
+              SgAsmElfString *name = new SgAsmElfString(strtab, ent->get_d_val());
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
-          case 2:
-            p_dt_pltrelsz = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 3:
-            p_dt_pltgot = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 4:
-            p_dt_hash = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 5:
-            p_dt_strtab = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 6:
-            p_dt_symtab = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 7:
-            p_dt_rela = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 8:
-            p_dt_relasz = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 9:
-            p_dt_relaent = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 10:
-            p_dt_strsz = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 11:
-            p_dt_symentsz = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 12:
-            p_dt_init = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 13:
-            p_dt_fini = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 20:
-            p_dt_pltrel = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 23:
-            p_dt_jmprel = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 0x6fffffff:
-            p_dt_verneednum = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 0x6ffffffe:
-            p_dt_verneed = p_all_entries->get_entries()[i]->get_d_val();
-            break;
-          case 0x6ffffff0:
-            p_dt_versym = p_all_entries->get_entries()[i]->get_d_val();
-            break;
+          case SgAsmElfDynamicEntry::DT_PLTGOT:
+          case SgAsmElfDynamicEntry::DT_HASH:
+          case SgAsmElfDynamicEntry::DT_STRTAB:
+          case SgAsmElfDynamicEntry::DT_SYMTAB:
+          case SgAsmElfDynamicEntry::DT_RELA:
+          case SgAsmElfDynamicEntry::DT_INIT:
+          case SgAsmElfDynamicEntry::DT_FINI:
+          case SgAsmElfDynamicEntry::DT_REL:
+          case SgAsmElfDynamicEntry::DT_DEBUG:
+          case SgAsmElfDynamicEntry::DT_JMPREL:
+          case SgAsmElfDynamicEntry::DT_INIT_ARRAY:
+          case SgAsmElfDynamicEntry::DT_FINI_ARRAY:
+          case SgAsmElfDynamicEntry::DT_PREINIT_ARRAY:
+          case SgAsmElfDynamicEntry::DT_GNU_HASH:
+          case SgAsmElfDynamicEntry::DT_TLSDESC_PLT:
+          case SgAsmElfDynamicEntry::DT_TLSDESC_GOT:
+          case SgAsmElfDynamicEntry::DT_GNU_CONFLICT:
+          case SgAsmElfDynamicEntry::DT_GNU_LIBLIST:
+          case SgAsmElfDynamicEntry::DT_CONFIG:
+          case SgAsmElfDynamicEntry::DT_DEPAUDIT:
+          case SgAsmElfDynamicEntry::DT_AUDIT:
+          case SgAsmElfDynamicEntry::DT_PLTPAD:
+          case SgAsmElfDynamicEntry::DT_MOVETAB:
+          case SgAsmElfDynamicEntry::DT_SYMINFO:
+          case SgAsmElfDynamicEntry::DT_VERSYM:
+          case SgAsmElfDynamicEntry::DT_VERDEF:
+          case SgAsmElfDynamicEntry::DT_VERNEED:
+          case SgAsmElfDynamicEntry::DT_AUXILIARY:
+          case SgAsmElfDynamicEntry::DT_FILTER:
+          {
+              /* d_val is relative to a section */
+              SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(ent->get_d_val());
+              SgAsmGenericSection *best = NULL;
+              for (SgAsmGenericSectionPtrList::iterator i=containers.begin(); i!=containers.end(); ++i) {
+                  if ((*i)->is_mapped()) {
+                      if ((*i)->get_mapped_rva()==ent->get_d_val()) {
+                          best = *i;
+                          break;
+                      } else if (!best) {
+                          best = *i;
+                      } else if ((*i)->get_mapped_size() < best->get_mapped_size()) {
+                          best = *i;
+                      }
+                  }
+              }
+              if (best) {
+                  ent->set_relative(best);
+                  ent->set_d_val(ent->get_d_val() - best->get_mapped_rva());
+              }
+              break;
+          }
           default:
-            p_other_entries->get_entries().push_back(p_all_entries->get_entries()[i]);
             break;
         }
     }
@@ -1709,17 +1791,17 @@ SgAsmElfDynamicSection::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     addr_t spos = 0; /*output position in section*/
 
-    for (size_t i = 0; i < p_all_entries->get_entries().size(); i++) {
+    for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk32;
         SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk64;
         void *disk  = NULL;
         size_t size = 0;
         
         if (4==fhdr->get_word_size()) {
-            disk = p_all_entries->get_entries()[i]->encode(sex, &disk32);
+            disk = p_entries->get_entries()[i]->encode(sex, &disk32);
             size = sizeof disk32;
         } else if (8==fhdr->get_word_size()) {
-            disk = p_all_entries->get_entries()[i]->encode(sex, &disk64);
+            disk = p_entries->get_entries()[i]->encode(sex, &disk64);
             size = sizeof disk64;
         } else {
             ROSE_ASSERT(!"unsupported word size");
@@ -1740,30 +1822,15 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sDynamicSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    SgAsmGenericFile *ef = get_file();
 
     SgAsmElfSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "pltrelsz",   p_dt_pltrelsz);
-    dump_section_rva(f, p, w, "pltgot",  p_dt_pltgot, ef);
-    dump_section_rva(f, p, w, "hash",    p_dt_hash,   ef);
-    dump_section_rva(f, p, w, "strtab",  p_dt_strtab, ef);
-    dump_section_rva(f, p, w, "symtab",  p_dt_symtab, ef);
-    dump_section_rva(f, p, w, "rela",    p_dt_rela,   ef);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "relasz",     p_dt_relasz);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "relaent",    p_dt_relaent);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "strsz",      p_dt_strsz);
-    fprintf(f, "%s%-*s = %u bytes\n",        p, w, "symentsz",   p_dt_symentsz);
-    dump_section_rva(f, p, w, "init",    p_dt_init,   ef);
-    dump_section_rva(f, p, w, "fini",    p_dt_fini,   ef);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "pltrel",     p_dt_pltrel);
-    dump_section_rva(f, p, w, "jmprel",  p_dt_jmprel, ef);
-    fprintf(f, "%s%-*s = %u\n",              p, w, "verneednum", p_dt_verneednum);
-    dump_section_rva(f, p, w, "verneed", p_dt_verneed, ef);
-    dump_section_rva(f, p, w, "versym",  p_dt_versym,  ef);
 
-    for (size_t i = 0; i < p_other_entries->get_entries().size(); i++) {
-        p_other_entries->get_entries()[i]->dump(f, p, i);
+    for (size_t i=0; i<p_entries->get_entries().size(); i++) {
+        SgAsmElfDynamicEntry *ent = p_entries->get_entries()[i];
+        ent->dump(f, p, i);
+        if (ent->get_relative())
+            dump_containing_sections(f, std::string(p)+"...", ent->get_d_val()+ent->get_relative()->get_mapped_rva(),
+                                     get_header()->get_sections()->get_sections());
     }
 
     hexdump(f, 0, std::string(p)+"data at ", p_data);
