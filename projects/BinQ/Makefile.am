@@ -5,14 +5,14 @@ SUBDIRS =  gui
 
 if ROSE_USE_QROSE
 
-bin_PROGRAMS = astEquivalence 
+bin_PROGRAMS = BinQ 
 
 astEquivalence_SOURCES = \
-	astEquivalenceGui.C \
-        astEquivalenceMainGui.C
+	BinQMain.C \
+        BinQGui.C
 
       
-astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
