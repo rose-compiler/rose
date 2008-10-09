@@ -60,7 +60,7 @@ MapGlobalVariables::visit(SgNode* n)
 
           if (symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC)
              {
-               printf ("Adding entry to globalFunctionMap: address = %p symbol = %p = %s \n",(void*)address,symbol,symbol->get_name().c_str());
+               printf ("Adding entry to globalFunctionMap: address = %p symbol = %p = %s \n",(void*)address,symbol,symbol->get_name()->c_str());
 
             // Check and see if this address is already present in the map
                if (globalFunctionMap.find(address) == globalFunctionMap.end())
@@ -469,7 +469,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
       if (!heuristicFunctionDetection) {
 	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
 	  isFunctionStart = true;
-	  funcName = t.globalFunctionMap[bb->get_address()]->get_name();
+	  funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
 	} else
 	  isFunctionStart = false;
       }
@@ -479,7 +479,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
       if (!heuristicFunctionDetection) {
 	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
 	  isFunctionStart = true; 
-	  funcName = t.globalFunctionMap[bb->get_address()]->get_name();
+	  funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
 	} else
 	  isFunctionStart = false; 
       } else
