@@ -1248,6 +1248,10 @@ HEADER_ELF_HEADER_START
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
+	// Override what ROSETTA would generate because we can't have users modifying these in the AST!
+	  addr_t get_e_shoff() const {return p_e_shoff;}
+	  addr_t get_e_phoff() const {return p_e_phoff;}
+
      private:
           void ctor(SgAsmGenericFile *f, addr_t offset);
 
