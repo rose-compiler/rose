@@ -643,19 +643,19 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     for (size_t pass=0; pass<2; pass++) {
         /* S offset and size in file or memory address space */
         if (filespace) {
-            sp = SgAsmGenericSection::ExtentPair(s->get_offset(), s->get_size());
+            sp = s->get_file_extent();
         } else if (!s->is_mapped()) {
             return; /*nothing to do*/
         } else {
-            sp = SgAsmGenericSection::ExtentPair(s->get_mapped_rva(), s->get_mapped_size());
+            sp = s->get_mapped_extent();
         }
     
         /* Build address map */
         for (size_t i=0; i<all.size(); i++) {
             if (filespace) {
-                amap.insert(all[i]->get_offset(), all[i]->get_size());
+                amap.insert(all[i]->get_file_extent());
             } else if (all[i]->is_mapped()) {
-                amap.insert(all[i]->get_mapped_rva(), all[i]->get_mapped_size());
+                amap.insert(all[i]->get_mapped_extent());
             }
         }
 
@@ -672,11 +672,11 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             SgAsmGenericSection *a = all[i];
             SgAsmGenericSection::ExtentPair ap;
             if (filespace) {
-                ap = SgAsmGenericSection::ExtentPair(a->get_offset(), a->get_size());
+                ap = a->get_file_extent();
             } else if (!a->is_mapped()) {
                 continue;
             } else {
-                ap = SgAsmGenericSection::ExtentPair(a->get_mapped_rva(), a->get_mapped_size());
+                ap = a->get_mapped_extent();
             }
             if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') {
                 if (!after_hole || ap.first<hp.first) {
@@ -704,11 +704,11 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         SgAsmGenericSection *a = all[i];
         SgAsmGenericSection::ExtentPair ap;
         if (filespace) {
-            ap = SgAsmGenericSection::ExtentPair(a->get_offset(), a->get_size());
+            ap = a->get_file_extent();
         } else if (!a->is_mapped()) {
             continue;
         } else {
-            ap = SgAsmGenericSection::ExtentPair(a->get_mapped_rva(), a->get_mapped_size());
+            ap = a->get_mapped_extent();
         }
         if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') continue; /*A is right of neighborhood(S)*/
         switch (SgAsmGenericSection::ExtentMap::category(ap, sp)) {
@@ -1045,7 +1045,9 @@ SgAsmGenericSection::get_size() const
 }
 
 /* Adjust the current size of a section. This is virtual because some sections may need to do something special. This function
- * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that). */
+ * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that).
+ * Changing the size does not affect p_extents: if the section is congealed then the new data is considered to be referenced,
+ * otherwise the new data is considered to be not referenced. */
 void
 SgAsmGenericSection::set_size(addr_t size)
 {
@@ -1072,6 +1074,13 @@ rose_addr_t
 SgAsmGenericSection::get_end_offset()
 {
     return get_offset() + get_size();
+}
+
+/* Returns the file extent for the section */
+SgAsmGenericSection::ExtentPair
+SgAsmGenericSection::get_file_extent() const 
+{
+    return ExtentPair(get_offset(), get_size());
 }
 
 /* Returns whether section desires to be mapped to memory */
@@ -1137,6 +1146,13 @@ SgAsmGenericSection::get_base_va() const
 {
     SgAsmGenericHeader *hdr = get_header();
     return hdr ? hdr->get_base_va() : 0;
+}
+
+/* Returns the memory extent for a mapped section. If the section is not mapped then offset and size will be zero */
+SgAsmGenericSection::ExtentPair
+SgAsmGenericSection::get_mapped_extent() const
+{
+    return ExtentPair(get_mapped_rva(), get_mapped_size());
 }
 
 /* Returns ptr to content at specified offset after ensuring that the required amount of data is available. One can think of

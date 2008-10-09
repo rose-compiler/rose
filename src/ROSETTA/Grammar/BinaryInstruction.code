@@ -842,18 +842,13 @@ HEADER_GENERIC_SECTION_START
           addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 	  addr_t	      get_rva_offset(addr_t rva);     /* Return file offset for specified relative virtual address */
 
-       // DQ (8/15/2008): This is now automatically generated (and is a const function)!
-       // SgAsmGenericHeader *get_header();
-
        /* Accessors for private members */
           SgAsmGenericString *get_name() const;		      /* Same as standard ROSETTA accessor */
 	  void set_name(SgAsmGenericString *s);		      /* Like std accessor but sets parent of 's' */
 
-       // Use the automatically generated access functions
-       // Exec::SectionPurpose      get_purpose() {return purpose;}
-       // void                set_purpose(SectionPurpose p) {purpose=p;}
-       // void                set_synthesized(bool b) {synthesized=b;}
-       // bool                get_synthesized() {return synthesized;}
+       /* Convenience functions */
+	  ExtentPair get_file_extent() const;		      /* Returns get_offset() and get_size() */
+	  ExtentPair get_mapped_extent() const;	              /* Returns get_mapped_rva() and get_mapped_size() */
 
      protected:
           void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
