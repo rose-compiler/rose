@@ -963,8 +963,7 @@ HEADER_GENERIC_FILE_START
 	  static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va);
 
 	/* Section modification functions */
-	  void resize(SgAsmGenericSection*, addr_t newsize);  /* Change size of an existing section, adjusting others as needed */
-	  void mapped_resize(SgAsmGenericSection*,addr_t);    /* Change mapped size of existing sect., adjusting others */
+	  void shift_extend(SgAsmGenericSection*, addr_t sa, addr_t sn); /*change address and/or size of section*/
 
        /* Holes (unreferenced regions in the file) */	
 	  void congeal();                                     /* Identify and freeze all unreferenced regions after parsing */

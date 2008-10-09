@@ -603,87 +603,107 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
     return found;
 }
 
-/* Resizes the specified section after parsing, adjusting the sizes and/or positions of other sections. */
+/* Shifts (to a higher offset) and/or enlarges the specified section, S, taking all other sections into account.
+ *
+ * The neighborhood(S) is S itself and the set of all sections that overlap or are adjacent to the neighborhood of S,
+ * recursively.
+ *
+ * A "hole" is an area of the address space that is not occupied by any section (including sections named "hole"
+ * that are synthesized to occupy otherwise unreferenced file extents).  In general, making a modification to S will affect
+ * sections not entirely to the left of S. However, if there's a hole to the right of neighborhood(S) then we utilize the
+ * hole's address space in order to limit the effect of sections right of the hole.
+ *
+ * When section S is shifted by 'Sa' bytes and/or enlarged by 'Sn' bytes, other sections are affected as follows:
+ *     Cat L:  Not affected
+ *     Cat R:  Shifted by Sa+Sn if they are in neighborhood(S). Otherwise the amount of shifting depends on the size of the
+ *             hole right of neighborhood(S).
+ *     Cat C:  Shifted Sa and enlarged Sn.
+ *     Cat O:  Englarged Sa+Sn
+ *     Cat I:  Shifted Sa, not enlarged
+ *     Cat B:  Not shifted, but enlarged Sn
+ *     Cat E:  Shifted Sa and enlarged Sn
+ *
+ * NOTE: To change the address and/or size of S without regard to other sections in the same file, use set_offset() and
+ *       set_size() (for file address space) or set_mapped_rva() and set_mapped_size() (for memory address space).
+ */
 void
-SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
+SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn)
 {
-    ROSE_ASSERT(section!=NULL);
-    ROSE_ASSERT(section->get_congealed()==true); /*must be done parsing*/
+    ROSE_ASSERT(s!=NULL);
+    ROSE_ASSERT(s->get_file()==this);
+    ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
 
-    /* Get adjustment carefully */
-    int64_t adjustment;
-    if (newsize>section->get_size()) {
-        ROSE_ASSERT(newsize - section->get_size() < 0x7fffffffffffffffllu);
-        adjustment = newsize - section->get_size();
-    } else if (newsize<section->get_size()) {
-        ROSE_ASSERT(section->get_size() - newsize < 0x7fffffffffffffffllu);
-        adjustment = -(section->get_size() - newsize);
-    } else {
-        return; /*no change*/
-    }
-
-    /* Adjust other sections */
     SgAsmGenericSectionPtrList all = get_sections();
-    for (size_t i=0; i<all.size(); i++) {
-        if (all[i]!=section) {
-            if (all[i]->get_offset() >= section->get_end_offset()) {
-                /* Move sections that follow the adjusted section */
-                all[i]->set_offset(all[i]->get_offset()+adjustment);
-            } else if (all[i]->get_offset()<section->get_end_offset() &&
-                       all[i]->get_end_offset()>=section->get_end_offset()) {
-                /* Resize sections that begin before the end of this section but end at or after. */
-                all[i]->set_size(all[i]->get_size()+adjustment);
+    SgAsmGenericSection::ExtentMap amap; /* address mappings for all extents */
+    SgAsmGenericSection::ExtentPair sp(s->get_offset(), s->get_size());
+    SgAsmGenericSection::ExtentPair nhs; /* neighborhood of S */
+
+    for (size_t pass=0; pass<2; pass++) {
+        /* Build address map */
+        for (size_t i=0; i<all.size(); i++) {
+            amap.insert(all[i]->get_offset(), all[i]->get_size());
+        }
+
+        /* Neighborhood (nhs) of S is a single extent */
+        SgAsmGenericSection::ExtentMap nhs_map = amap.overlap_with(sp);
+        ROSE_ASSERT(nhs_map.size()==1);
+        nhs = *(nhs_map.begin());
+
+        /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
+         * that to define the size of the hole right of neighborhood(S). */
+        SgAsmGenericSection *after_hole = NULL; /*section with lowest address after hole*/
+        for (size_t i=0; i<all.size(); i++) {
+            SgAsmGenericSection *a = all[i];
+            SgAsmGenericSection::ExtentPair ap(a->get_offset(), a->get_size());
+            if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') {
+                if (!after_hole || a->get_offset()<after_hole->get_offset()) {
+                    after_hole = a;
+                }
             }
         }
+
+        /* Do we even need to worry about neighborhoods to the right? */
+        if (!after_hole) break;
+        ROSE_ASSERT(after_hole->get_offset() > nhs.first+nhs.second);
+        addr_t hole_size = after_hole->get_offset() - (nhs.first+nhs.second);
+        if (hole_size >= sa+sn) break;
+
+        /* Hole is not large enough. We need to recursively move things that are right of our neighborhood, then recompute the
+         * all-sections address map and neighborhood(S). */
+        ROSE_ASSERT(0==pass); /*logic problem since the recursive call should have enlarged the hole enough*/
+        shift_extend(after_hole, sa+sn - hole_size, 0);
     }
 
-    /* Adjust this section */
-    section->set_size(newsize);
-
-    /* This is here for now because in every case when we resize a section in the file we'll also want to resize its mapped
-     * area. */
-    if (section->is_mapped())
-        mapped_resize(section, section->get_mapped_size()+adjustment);
-}
-
-/* Similar to resize() except operates on memory mappings. */
-void
-SgAsmGenericFile::mapped_resize(SgAsmGenericSection *section, addr_t newsize)
-{
-    ROSE_ASSERT(section!=NULL);
-    ROSE_ASSERT(section->get_congealed()==true); /*must be done parsing*/
-    ROSE_ASSERT(section->is_mapped());
-
-    /* Get adjustment carefully */
-    int64_t adjustment;
-    if (newsize>section->get_size()) {
-        ROSE_ASSERT(newsize - section->get_size() < 0x7fffffffffffffffllu);
-        adjustment = newsize - section->get_size();
-    } else if (newsize<section->get_size()) {
-        ROSE_ASSERT(section->get_size() - newsize < 0x7fffffffffffffffllu);
-        adjustment = -(section->get_size() - newsize);
-    } else {
-        return; /*no change*/
-    }
-
-    /* Adjust other sections */
-    SgAsmGenericSectionPtrList all = get_sections();
+    /* Consider sections that are in the same neighborhood as S */
     for (size_t i=0; i<all.size(); i++) {
-        if (all[i]!=section && all[i]->is_mapped()) {
-            addr_t section_end = section->get_mapped_va() + section->get_mapped_size();
-            addr_t other_end = all[i]->get_mapped_va() + all[i]->get_mapped_size();
-            if (all[i]->get_mapped_va() >= section_end) {
-                /* Move mapping for sections that follow the mapping of the adjusted section */
-                all[i]->set_mapped_rva(all[i]->get_mapped_rva()+adjustment);
-            } else if (all[i]->get_mapped_va() < section_end && other_end >= section_end) {
-                /* Resize mapping for sections that begin before and end after the adjusted section mapping */
-                all[i]->set_mapped_size(all[i]->get_mapped_size()+adjustment);
-            }
+        SgAsmGenericSection *a = all[i];
+        SgAsmGenericSection::ExtentPair ap(a->get_offset(), a->get_size());
+        if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') continue; /*A is right of neighborhood(S)*/
+        switch (SgAsmGenericSection::ExtentMap::category(ap, sp)) {
+          case 'L':
+            break;
+          case 'R':
+            a->set_offset(a->get_offset()+sa+sn);
+            break;
+          case 'C': /*including S itself*/
+          case 'E':
+            a->set_offset(a->get_offset()+sa);
+            a->set_size(a->get_size()+sn);
+            break;
+          case 'O':
+            a->set_size(a->get_size()+sa+sn);
+            break;
+          case 'I':
+            a->set_offset(a->get_offset()+sa);
+            break;
+          case 'B':
+            a->set_size(a->get_size()+sn);
+            break;
+          default:
+            ROSE_ASSERT(!"invalid extent category");
+            break;
         }
     }
-    
-    /* Adjust this section */
-    section->set_mapped_size(newsize);
 }
 
 /* Print basic info about the sections of a file */
