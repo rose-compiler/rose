@@ -1446,6 +1446,10 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     for (char *s=label; *s; s++) *s = tolower(*s);
 
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_d_val.get_rva(), p_d_val.get_rva());
+    if (p_extra.size()>0) {
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+    }
 }
 
 /* Constructor */
@@ -1454,51 +1458,100 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 {
     p_entries = new SgAsmElfDynamicEntryList;
     p_entries->set_parent(this);
+
+    size_t entry_size, struct_size, extra_size;
+    size_t nentries = calculate_sizes(&entry_size, &struct_size, &extra_size);
+    ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
+
+    /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
+    for (size_t i=0; i<nentries; i++) {
+        SgAsmElfDynamicEntry *entry;
+        if (4==fhdr->get_word_size()) {
+            const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk =
+                (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
+        } else {
+            const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
+                (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfDynamicEntry(fhdr->get_sex(), disk);
+        }
+        if (extra_size>0)
+            entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
+        p_entries->get_entries().push_back(entry);
+        ROSE_ASSERT(p_entries->get_entries().size()>0);
+    }
 }
 
-/* Set linked section (the string table) and finish parsing this section. */
+/* Returns info about the size of the entries. Each entry has a required part and an optional part. The return value is the
+ * number of entries in the table. The size of the parts are returned through arguments. */
+size_t
+SgAsmElfDynamicSection::calculate_sizes(size_t *total, size_t *required, size_t *optional)
+{
+    size_t struct_size = 0;
+    size_t extra_size = 0;
+    size_t entry_size = 0;
+    size_t nentries = 0;
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+
+    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
+    ROSE_ASSERT(get_section_entry());
+    entry_size = get_section_entry()->get_sh_entsize();
+
+    /* Size of required part of each entry */
+    if (4==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk);
+    } else if (8==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk);
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
+     * Section Table Entry has a zero-valued sh_entsize */
+    entry_size = std::max(entry_size, struct_size);
+
+    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
+     * the ELF Section Table is correct. */
+    if ((nentries=p_entries->get_entries().size())>0) {
+        for (size_t i=0; i<nentries; i++) {
+            SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
+            extra_size = std::max(extra_size, entry->get_extra().size());
+        }
+    } else {
+        extra_size = entry_size - struct_size;
+        nentries = get_size() / entry_size;
+    }
+    
+    /* Return values */
+    if (total)
+        *total = entry_size;
+    if (required)
+        *required = struct_size;
+    if (optional)
+        *optional = extra_size;
+    return nentries;
+}
+    
+/* Set linked section (the string table) and finish initializing the section entries. */
 void
 SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec) 
 {
     SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(_strsec);
     ROSE_ASSERT(strsec!=NULL);
-    
-    SgAsmElfSection::set_linked_section(strsec);
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL && fhdr == strsec->get_elf_header());
 
-    ROSE_ASSERT(strsec != NULL);
-    ROSE_ASSERT(strsec->get_name()->get_string() == ".dynstr");
+    /* This method augments the super class */
+    SgAsmElfSection::set_linked_section(strsec);
 
-    size_t section_size = get_size(), entry_size = 0, nentries = 0;
-    if (4==fhdr->get_word_size()) {
-        const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk *disk =
-            (const SgAsmElfDynamicEntry::Elf32DynamicEntry_disk*)content(0, section_size);
-        entry_size = sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk);
-        nentries = section_size / entry_size;
-        for (size_t i = 0; i < nentries; i++) {
-            p_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
-        }
-    } else if (8==fhdr->get_word_size()) {
-        const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk *disk =
-            (const SgAsmElfDynamicEntry::Elf64DynamicEntry_disk*)content(0, section_size);
-        entry_size = sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk);
-        nentries = section_size / entry_size;
-        for (size_t i = 0; i < nentries; i++) {
-            p_entries->get_entries().push_back(new SgAsmElfDynamicEntry(fhdr->get_sex(), disk+i));
-        }
-    } else {
-        throw FormatError("bad ELF word size");
-    }
-
-    /* Special processing for some sections */
+    /* Finalize each entry */
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
-        SgAsmElfDynamicEntry *ent = p_entries->get_entries()[i];
-        switch (ent->get_d_tag()) {
+        SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
+        switch (entry->get_d_tag()) {
           case SgAsmElfDynamicEntry::DT_NEEDED: {
               /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-              ROSE_ASSERT(ent->get_d_val().get_section()==NULL);
-              SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), ent->get_d_val().get_rva());
+              ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
+              SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), entry->get_d_val().get_rva());
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
@@ -1530,15 +1583,16 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
           case SgAsmElfDynamicEntry::DT_VERDEF:
           case SgAsmElfDynamicEntry::DT_VERNEED:
           case SgAsmElfDynamicEntry::DT_AUXILIARY:
-          case SgAsmElfDynamicEntry::DT_FILTER:
-          {
-              /* d_val is relative to a section */
-              ROSE_ASSERT(ent->get_d_val().get_section()==NULL);
-              SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(ent->get_d_val().get_rva());
+          case SgAsmElfDynamicEntry::DT_FILTER: {
+              /* d_val is relative to a section. Even though this doesn't depend on _strsec we perform this action in this
+               * function because we know that all ELF Sections (but perhaps not the ELF Segments) have been created by this
+               * time. */
+              ROSE_ASSERT(entry->get_d_val().get_section()==NULL);
+              SgAsmGenericSectionPtrList containers = fhdr->get_sections_by_rva(entry->get_d_val().get_rva());
               SgAsmGenericSection *best = NULL;
               for (SgAsmGenericSectionPtrList::iterator i=containers.begin(); i!=containers.end(); ++i) {
                   if ((*i)->is_mapped()) {
-                      if ((*i)->get_mapped_rva()==ent->get_d_val().get_rva()) {
+                      if ((*i)->get_mapped_rva()==entry->get_d_val().get_rva()) {
                           best = *i;
                           break;
                       } else if (!best) {
@@ -1549,7 +1603,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
                   }
               }
               if (best)
-                  ent->set_d_val(rose_rva_t(ent->get_d_val().get_rva(), best));
+                  entry->set_d_val(rose_rva_t(entry->get_d_val().get_rva(), best));
               break;
           }
           default:
@@ -1565,24 +1619,52 @@ SgAsmElfDynamicSection::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
-    addr_t spos = 0; /*output position in section*/
 
+    size_t entry_size, struct_size, extra_size;
+    calculate_sizes(&entry_size, &struct_size, &extra_size);
+    size_t nentries = p_entries->get_entries().size();
+
+    /* Adjust section size. FIXME: this should be moved to the reallocate() function. */
+    if (nentries*entry_size < get_size()) {
+        /* Make the section smaller without affecting other sections. This is allowed during unparsing. */
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(nentries*entry_size);
+        }
+        set_size(nentries*entry_size);
+    } else if (nentries*entry_size > get_size()) {
+        /* We should have detected this before unparsing! */
+        ROSE_ASSERT(!"can't expand dynamic section while unparsing!");
+    }
+    
+    /* Adjust the entry size stored in the ELF Section Table */
+    get_section_entry()->set_sh_entsize(entry_size);
+
+    /* Write each entry's required part followed by the optional part */
     for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
         SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk32;
         SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk64;
         void *disk  = NULL;
         size_t size = 0;
-        
+
+        SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
+
         if (4==fhdr->get_word_size()) {
-            disk = p_entries->get_entries()[i]->encode(sex, &disk32);
+            disk = entry->encode(sex, &disk32);
             size = sizeof disk32;
         } else if (8==fhdr->get_word_size()) {
-            disk = p_entries->get_entries()[i]->encode(sex, &disk64);
+            disk = entry->encode(sex, &disk64);
             size = sizeof disk64;
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }
+
+        addr_t spos = i * entry_size;
         spos = write(f, spos, size, disk);
+        if (entry->get_extra().size()>0) {
+            ROSE_ASSERT(entry->get_extra().size()<=extra_size);
+            spos = write(f, spos, entry->get_extra());
+        }
     }
 
     unparse_holes(f);

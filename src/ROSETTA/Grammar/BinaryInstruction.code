@@ -1443,6 +1443,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
              {ctor(fhdr, shdr);}
        // virtual ~SgAsmElfDynamicSection() {}
 
+	  size_t calculate_sizes(size_t *total, size_t *required, size_t *optional);
           virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
