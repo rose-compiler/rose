@@ -1142,16 +1142,16 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     if (disk.st_zero == 0) {
         p_st_name_offset = le_to_host(disk.st_offset);
         if (p_st_name_offset < 4) throw FormatError("name collides with size field");
-        set_name(strtab->content_str(p_st_name_offset));
+        set_name(new SgAsmBasicString(strtab->content_str(p_st_name_offset)));
     } else {
         char temp[9];
         memcpy(temp, disk.st_name, 8);
         temp[8] = '\0';
-        set_name(temp);
+        set_name(new SgAsmBasicString(temp));
         p_st_name_offset = 0;
     }
 
-    p_st_name            = get_name();
+    p_st_name            = get_name()->get_string();
     p_st_section_num     = le_to_host(disk.st_section_num);
     p_st_type            = le_to_host(disk.st_type);
     p_st_storage_class   = le_to_host(disk.st_storage_class);
@@ -1252,18 +1252,18 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
             if (0 == d->st_zero) {
                 addr_t fname_offset = le_to_host(d->st_offset);
                 if (fname_offset < 4) throw FormatError("name collides with size field");
-                set_name(strtab->content_str(fname_offset));
+                set_name(new SgAsmBasicString(strtab->content_str(fname_offset)));
                 if (debug)
-                    fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n", fname_offset, get_name().c_str());
+                    fprintf(stderr, "COFF aux file: offset=%"PRIu64", name=\"%s\"\n", fname_offset, get_name()->c_str());
             } else {
                 /* Aux data contains a NUL-padded name; the NULs (if any) are not part of the name. */
                 ROSE_ASSERT(p_st_num_aux_entries == 1);
                 char fname[COFFSymbol_disk_size+1];
                 memcpy(fname, &(p_aux_data[0]), COFFSymbol_disk_size);
                 fname[COFFSymbol_disk_size] = '\0';
-                set_name(fname);
+                set_name(new SgAsmBasicString(fname));
                 if (debug)
-                    fprintf(stderr, "COFF aux file: inline-name=\"%s\"\n", get_name().c_str());
+                    fprintf(stderr, "COFF aux file: inline-name=\"%s\"\n", get_name()->c_str());
             }
             set_type(SYM_FILE);
 

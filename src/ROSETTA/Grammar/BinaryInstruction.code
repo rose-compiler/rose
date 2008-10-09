@@ -1031,9 +1031,16 @@ HEADER_GENERIC_SYMBOL_START
               SYM_WEAK
           };
 
-       // Use the automatically generated constructor and destructors
-       // SgAsmGenericSymbol() : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0), p_bound(NULL) {}
-       // virtual ~ExecSymbol() {}
+	  // Rosetta-generated version doesn't set the name
+          //SgAsmGenericSymbol()
+	  //    : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
+          //      p_bound(NULL), p_name(NULL)
+	  //    {set_name(new SgAsmBasicString(""));}
+          SgAsmGenericSymbol(SgAsmGenericString *name)
+	      : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
+	        p_bound(NULL), p_name(NULL)
+	        {set_name(name);}
+          //virtual ~SgAsmGenericSymbol() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1041,19 +1048,9 @@ HEADER_GENERIC_SYMBOL_START
           std::string stringifyType() const;
           std::string stringifyBinding() const;
 
-       // Use the automatically generated access functions
-       // const std::string& get_name() {return name;}
-       // void set_name(std::string &s) {name=s;}
-       // void set_name(const std::string &s) {name=s;}
-       // void set_name(const char *s) {name=s;}
-       // addr_t get_value() {return value;}
-       // void set_value(addr_t v) {value=v;}
-       // addr_t get_size() {return size;}
-       // void set_size(addr_t sz) {size=sz;}
-       // SymbolType get_type() {return type;}
-       // void set_type(SymbolType t) {type=t;}
-       // SgAsmGenericSection *get_bound() {return bound;}
-       // void set_bound(SgAsmGenericSection *s) {bound=s;}
+       // Accessors
+          SgAsmGenericString *get_name() const; // same as ROSETTA-generated version
+          void set_name(SgAsmGenericString *s); // also sets s.parent
 
 HEADER_GENERIC_SYMBOL_END
 

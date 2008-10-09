@@ -1871,6 +1871,8 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 {
+    set_name(new SgAsmBasicString("")); /*ROSETTA-generated constructor doesn't do this! (RPM 2008-09-12)*/
+
     p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -1884,6 +1886,8 @@ SgAsmElfSymbol::ctor(ByteOrder sex, const Elf32SymbolEntry_disk *disk)
 void
 SgAsmElfSymbol::ctor(ByteOrder sex, const Elf64SymbolEntry_disk *disk)
 {
+    set_name(new SgAsmBasicString("")); /*ROSETTA-generated constructor doesn't do this! (RPM 2008-09-12)*/
+
     p_st_name  = disk_to_host(sex, disk->st_name);
     p_st_info  = disk_to_host(sex, disk->st_info);
     p_st_res1  = disk_to_host(sex, disk->st_res1);
@@ -2056,12 +2060,8 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfStrtab *strtab)
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
         /* Get symbol name */
-#ifdef USE_ELF_STRING
         SgAsmElfString *name = new SgAsmElfString(strtab, symbol->get_st_name());
-        symbol->set_name(name->get_string());
-#else
-        symbol->set_name(strtab->content_str(symbol->get_st_name()));
-#endif
+        symbol->set_name(name);
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
@@ -2072,8 +2072,8 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfStrtab *strtab)
 
         /* Section symbols may need names and sizes */
         if (symbol->get_type() == SgAsmElfSymbol::SYM_SECTION && symbol->get_bound()) {
-            if (symbol->get_name().size() == 0)
-                symbol->set_name(symbol->get_bound()->get_name()->c_str());
+            if (symbol->get_name()->get_string().size() == 0)
+                symbol->set_name(symbol->get_bound()->get_name());
             if (symbol->get_size() == 0)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
@@ -2194,7 +2194,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
         const SgAsmElfSymbolPtrList &symbols = dynsym->get_symbols()->get_symbols();
         SgAsmElfString *test = NULL;
         for (size_t i=0; i<symbols.size(); i++) {
-            if (symbols[i]->get_name()=="memset") {
+            if (symbols[i]->get_name()->get_string()=="memset") {
                 test = new SgAsmElfString(dynstr, symbols[i]->get_st_name());
             }
         }

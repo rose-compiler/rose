@@ -1827,6 +1827,20 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx)
 // Symbols and symbol tables
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* Like ROSETTA-generated accessors, but also sets parent */
+SgAsmGenericString *
+SgAsmGenericSymbol::get_name() const
+{
+    return p_name;
+}
+void
+SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
+{
+    if (s)
+        s->set_parent(this);
+    p_name = s;
+}
+
 /* Print some debugging info */
 void
 SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) 
@@ -1839,7 +1853,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name.c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->c_str());
 
     const char *s_def_state = NULL;
     switch (p_def_state) {
