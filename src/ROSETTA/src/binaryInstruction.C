@@ -424,7 +424,7 @@ Grammar::setUpBinaryInstructions ()
 
   // These are the native-format versions of the same members described in Elf*FileHeader_disk
   // unsigned char       e_ident_file_class, e_ident_data_encoding, e_ident_file_version, e_ident_padding[9];
-  // unsigned            e_type, e_machine, e_version;
+  // unsigned            e_type, e_machine;
   // addr_t              e_entry, e_phoff, e_shoff;
   // unsigned            e_flags, e_ehsize, e_phentsize, e_phnum, e_shentsize, e_shnum, e_shstrndx;
   // Additional members not trivially present in the file header but logically part of an Elf header
@@ -445,8 +445,6 @@ Grammar::setUpBinaryInstructions ()
      AsmElfFileHeader.setDataPrototype("unsigned long","e_type","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("unsigned long","e_machine","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfFileHeader.setDataPrototype("unsigned long","e_version","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfFileHeader.setDataPrototype("rose_addr_t","e_entry","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
