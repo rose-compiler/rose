@@ -1484,8 +1484,22 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
               PT_NOTE             = 4,                    /* auxiliary information */
               PT_SHLIB            = 5,                    /* Reserved w/unspecified semantics; presence causes file to be nonconforming */
               PT_PHDR             = 6,                    /* Segment contains the segment table itself (program header array) */
+
+	      /* OS- and Processor-specific ranges */
+	      PT_LOOS		  = 0x60000000,		  /* Values reserved for OS-specific semantics */
+	      PT_HIOS             = 0x6fffffff,
               PT_LOPROC           = 0x70000000,           /* Values reserved for processor-specific semantics */
-              PT_HIPROC           = 0x7fffffff
+              PT_HIPROC           = 0x7fffffff,
+
+	      /* OS-specific values for GNU/Linux */
+              PT_GNU_EH_FRAME     = 0x6474e550,           /* GCC .eh_frame_hdr segment */
+              PT_GNU_STACK        = 0x6474e551,           /* Indicates stack executability */
+              PT_GNU_RELRO        = 0x6474e552,           /* Read-only after relocation */
+              PT_PAX_FLAGS        = 0x65041580,           /* Indicates PaX flag markings */
+
+	      /* OS-specific values for Sun */
+              PT_SUNWBSS          = 0x6ffffffa,           /* Sun Specific segment */
+              PT_SUNWSTACK        = 0x6ffffffb            /* Stack segment */
           };
 
        /* Segment bit flags */

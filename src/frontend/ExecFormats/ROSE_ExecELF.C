@@ -409,28 +409,21 @@ SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
     
     char name[128];
     switch (shdr->get_type()) {
-      case SgAsmElfSegmentTableEntry::PT_LOAD:
-        sprintf(name, "ELF load (segment %zu)", shdr->get_index());
-        break;
-      case SgAsmElfSegmentTableEntry::PT_DYNAMIC:
-        sprintf(name, "ELF dynamic (segment %zu)", shdr->get_index());
-        break;
-      case SgAsmElfSegmentTableEntry::PT_INTERP:
-        sprintf(name, "ELF interpreter (segment %zu)", shdr->get_index());
-        break;
-      case SgAsmElfSegmentTableEntry::PT_NOTE:
-        sprintf(name, "ELF note (segment %zu)", shdr->get_index());
-        break;
-      case SgAsmElfSegmentTableEntry::PT_SHLIB:
-        sprintf(name, "ELF shlib (segment %zu)", shdr->get_index());
-        break;
-      case SgAsmElfSegmentTableEntry::PT_PHDR:
-        sprintf(name, "ELF segment table (segment %zu)", shdr->get_index());
-        break;
-      default:
-        sprintf(name, "ELF segment 0x%08x (segment %zu)", shdr->get_type(), shdr->get_index());
-        break;
+      case SgAsmElfSegmentTableEntry::PT_LOAD:         strcpy(name, "ELF Load");          break;
+      case SgAsmElfSegmentTableEntry::PT_DYNAMIC:      strcpy(name, "ELF Dynamic");       break;
+      case SgAsmElfSegmentTableEntry::PT_INTERP:       strcpy(name, "ELF Interpreter");   break;
+      case SgAsmElfSegmentTableEntry::PT_NOTE:         strcpy(name, "ELF Note");          break;
+      case SgAsmElfSegmentTableEntry::PT_SHLIB:        strcpy(name, "ELF Shlib");         break;
+      case SgAsmElfSegmentTableEntry::PT_PHDR:         strcpy(name, "ELF Segment Table"); break;
+      case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: strcpy(name, "GNU EH Frame");      break;
+      case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    strcpy(name, "GNU Stack");         break;
+      case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    strcpy(name, "GNU Reloc RO");      break;
+      case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    strcpy(name, "PAX Flags");         break;
+      case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      strcpy(name, "Sun WBSS");          break;
+      case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "Sun WStack");        break;
+      default:                                         sprintf(name, "ELF type 0x%08x", shdr->get_type()); break;
     }
+    sprintf(name+strlen(name), " (segment %zu)", shdr->get_index());
     set_name(new SgAsmBasicString(name));
     set_purpose(SP_HEADER);
 
