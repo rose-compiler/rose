@@ -1250,6 +1250,8 @@ HEADER_ELF_HEADER_START
 	// Override what ROSETTA would generate because we can't have users modifying these in the AST!
 	  addr_t get_e_shoff() const {return p_e_shoff;}
 	  addr_t get_e_phoff() const {return p_e_phoff;}
+	  void set_e_shoff(addr_t);
+	  void set_e_phoff(addr_t);
           unsigned long get_e_shnum() const {return p_e_shnum;}
 	  unsigned long get_e_phnum() const {return p_e_phnum;}
 
@@ -1559,6 +1561,7 @@ HEADER_ELF_SEGMENT_TABLE_START
           SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr);
        // virtual ~ElfSegmentTable() {}
 
+	  virtual void set_offset(addr_t newaddr);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -4495,7 +4498,7 @@ SOURCE_ELF_HEADER_END
 
 SOURCE_ELF_SECTION_TABLE_START
 SgAsmElfSectionTable::SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_shoff(), fhdr->get_e_shnum() * fhdr->get_e_shentsize())
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_shoff(), 0)
    {
      ctor();
    }
@@ -4504,13 +4507,11 @@ SOURCE_ELF_SECTION_TABLE_END
 
 SOURCE_ELF_SECTION_TABLE_ENTRY_START
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk)
-   : p_nextra(0)
    {
      ctor(sex, disk);
    }
 
 SgAsmElfSectionTableEntry::SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk)
-   : p_nextra(0)
    {
      ctor(sex, disk);
    }
@@ -4594,7 +4595,7 @@ SOURCE_ELF_DYNAMIC_ENTRY_END
 
 SOURCE_ELF_SEGMENT_TABLE_START
 SgAsmElfSegmentTable::SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr)
-   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_phoff(), fhdr->get_e_phnum() * fhdr->get_e_phentsize())
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, fhdr->get_e_phoff(), 0)
    {
      ctor();
    }

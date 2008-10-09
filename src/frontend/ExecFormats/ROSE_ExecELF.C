@@ -76,7 +76,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_exec_format->set_word_size(4);
 
 	ROSE_ASSERT(0==p_e_ident_padding.size());
-        for (int i = 0; i < sizeof(disk32.e_ident_padding); i++)
+        for (size_t i=0; i<sizeof(disk32.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
 
         p_e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
@@ -91,11 +91,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_ehsize              = disk_to_host(sex, disk32.e_ehsize);
 
 	p_phextrasz             = disk_to_host(sex, disk32.e_phentsize);
-	ROSE_ASSERT(phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+	ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk);
 
 	p_shextrasz             = disk_to_host(sex, disk32.e_shentsize);
-	ROSE_ASSERT(shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk));
+	ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk));
         p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
 
         p_e_phnum               = disk_to_host(sex, disk32.e_phnum);
@@ -109,7 +109,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         content(0, sizeof disk64, &disk64);
 
 	ROSE_ASSERT(0==p_e_ident_padding.size());
-        for (int i = 0; i < sizeof(disk64.e_ident_padding); i++)
+        for (size_t i=0; i<sizeof(disk64.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
 
         p_e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
@@ -124,11 +124,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_ehsize              = disk_to_host(sex, disk64.e_ehsize);
 
 	p_phextrasz             = disk_to_host(sex, disk64.e_phentsize);
-	ROSE_ASSERT(phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
-	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
+	ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
+	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
 
 	p_shextrasz             = disk_to_host(sex, disk64.e_shentsize);
-	ROSE_ASSERT(shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk));
+	ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk));
         p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
 
         p_e_phnum               = disk_to_host(sex, disk64.e_phnum);
@@ -231,6 +231,21 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
+/* Override ROSETTA version of accessors so the set_* functions check that we're still parsing. It should not be possible to
+ * modify these values after parsing. */
+void
+SgAsmElfFileHeader::set_e_shoff(addr_t addr)
+{
+    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
+    p_e_shoff = addr;
+}
+void
+SgAsmElfFileHeader::set_e_phoff(addr_t addr)
+{
+    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
+    p_e_phoff = addr;
+}
+
 /* Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
@@ -263,8 +278,8 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
-    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
-    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
+    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff)); // updated by SgAsmElfSegmentTable::set_offset
+    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff)); // updated by SgAsmElfSectionTable::set_offset
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
     host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
     host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk), &(disk->e_phentsize));
@@ -745,6 +760,10 @@ SgAsmElfSectionTable::ctor()
                                                           sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
 	addr_t entsize = struct_size + fhdr->get_shextrasz();
 
+        /* Change the section size to include all the entries */
+        ROSE_ASSERT(0==get_size());
+        extend(fhdr->get_e_shnum() * entsize);
+
         /* Read all the section headers. We can't just cast this to an array like with other structs because
          * the ELF header specifies the size of each entry. */
         std::vector<SgAsmElfSectionTableEntry*> entries;
@@ -753,11 +772,11 @@ SgAsmElfSectionTable::ctor()
             SgAsmElfSectionTableEntry *shdr = NULL;
             if (4 == fhdr->get_word_size()) {
                 const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk =
-                    (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
+                    (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, entsize);
                 shdr = new SgAsmElfSectionTableEntry(sex, disk);
             } else {
                 const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk =
-                    (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
+                    (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, entsize);
                 shdr = new SgAsmElfSectionTableEntry(sex, disk);
             }
 
@@ -831,18 +850,6 @@ SgAsmElfSectionTable::ctor()
     }
 }
 
-/* Augments superclass.
- * If the offset of the section table is changed then we need to update the ELF file header's section table offset (e_shoff) */
-void
-SgAsmElfSectionTable::set_offset(addr_t newaddr)
-{
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    fhdr->set_e_shoff(newaddr);
-    
-    SgAsmGenericSection::set_offset(newaddr);
-}
-
 /* Update this section table entry with newer information from the section */
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
@@ -904,8 +911,22 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_size",        p_sh_size, p_sh_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_addralign",   p_sh_addralign, p_sh_addralign);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_entsize",     p_sh_entsize, p_sh_entsize);
-    if (p_nextra > 0)
-        fprintf(f, "%s%-*s = %s\n",                        p, w, "extra",          "<FIXME>");
+    if (p_extra.size()>0) {
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+    }
+}
+
+/* Augments superclass.
+ * If the offset of the section table is changed then we need to update the ELF file header's section table offset (e_shoff) */
+void
+SgAsmElfSectionTable::set_offset(addr_t newaddr)
+{
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    fhdr->set_e_shoff(newaddr);
+    
+    SgAsmGenericSection::set_offset(newaddr);
 }
 
 /* Write the section table section back to disk */
@@ -1141,8 +1162,12 @@ SgAsmElfSegmentTable::ctor()
         size_t struct_size = 4 == fhdr->get_word_size() ? 
                             sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk) : 
                             sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
-
 	addr_t entsize = struct_size + fhdr->get_phextrasz();
+
+        /* Extend section to hold entire table */
+        ROSE_ASSERT(0==get_size());
+        extend(fhdr->get_e_phnum() * entsize);
+
         addr_t offset=0;                                /* w.r.t. the beginning of this section */
         for (size_t i=0; i<fhdr->get_e_phnum(); i++, offset += entsize) {
             /* Read/decode the segment header */
@@ -1210,6 +1235,18 @@ SgAsmElfSegmentTable::ctor()
                 s = new SgAsmElfSection(fhdr, shdr);
         }
     }
+}
+
+/* Augments superclass.
+ * If the offset of the segment table is changed then we need to update the ELF file header's segment table offset (e_phoff) */
+void
+SgAsmElfSegmentTable::set_offset(addr_t newaddr)
+{
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    fhdr->set_e_phoff(newaddr);
+    
+    SgAsmGenericSection::set_offset(newaddr);
 }
 
 /* Write the segment table to disk. */
