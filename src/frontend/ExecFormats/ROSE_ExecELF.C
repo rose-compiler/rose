@@ -67,10 +67,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         /* Ambiguous order */
         throw FormatError("invalid ELF header byte order");
     }
-
     ROSE_ASSERT(p_exec_format != NULL);
+    p_exec_format->set_sex(sex);
 
     /* Decode header to native format */
+    addr_t entry_rva;
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
@@ -84,7 +85,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_type                = disk_to_host(sex, disk32.e_type);
         p_e_machine             = disk_to_host(sex, disk32.e_machine);
 	p_exec_format->set_version(disk_to_host(sex, disk32.e_version));
-        p_e_entry               = disk_to_host(sex, disk32.e_entry);
+        entry_rva               = disk_to_host(sex, disk32.e_entry);
         p_e_phoff               = disk_to_host(sex, disk32.e_phoff);
         p_e_shoff               = disk_to_host(sex, disk32.e_shoff);
         p_e_flags               = disk_to_host(sex, disk32.e_flags);
@@ -111,7 +112,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_type                = disk_to_host(sex, disk64.e_type);
         p_e_machine             = disk_to_host(sex, disk64.e_machine);
 	p_exec_format->set_version(disk_to_host(sex, disk64.e_version));
-        p_e_entry               = disk_to_host(sex, disk64.e_entry);
+        entry_rva               = disk_to_host(sex, disk64.e_entry);
         p_e_phoff               = disk_to_host(sex, disk64.e_phoff);
         p_e_shoff               = disk_to_host(sex, disk64.e_shoff);
         p_e_flags               = disk_to_host(sex, disk64.e_flags);
@@ -153,11 +154,9 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         }
         break;
     }
-    p_exec_format->set_sex(sex);
     p_exec_format->set_is_current_version(1 == p_exec_format->get_version());
     p_exec_format->set_abi(ABI_UNSPECIFIED);                 /* ELF specifies a target architecture rather than an ABI */
     p_exec_format->set_abi_version(0);
-    //exec_format.word_size = ...; /*set above*/
 
     /* Target architecture */
     switch (p_e_machine) {                                /* These come from the Portable Formats Specification v1.1 */
@@ -203,7 +202,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmElfFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     p_base_va = 0;
-    add_entry_rva(p_e_entry);
+    add_entry_rva(entry_rva);
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
@@ -241,13 +240,6 @@ SgAsmElfFileHeader::update_from_header()
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-
-    /* Update entry point with first address */
-    if (p_entry_rvas.size()>=1) {
-        p_e_entry = p_entry_rvas[0].get_rva();
-    } else {
-        p_e_entry = 0;
-    }
 }
     
 /* Encode Elf header disk structure */
@@ -266,7 +258,7 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     host_to_disk(sex, p_e_type,                &(disk->e_type));
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
-    host_to_disk(sex, p_e_entry,               &(disk->e_entry));
+    host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
     host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
@@ -294,7 +286,7 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     host_to_disk(sex, p_e_type,                &(disk->e_type));
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
-    host_to_disk(sex, p_e_entry,               &(disk->e_entry));
+    host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
     host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
     host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
@@ -377,7 +369,6 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_type",                 p_e_type);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "e_entry",                p_e_entry);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_phoff",     p_e_phoff, p_e_phoff);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_shoff",     p_e_shoff, p_e_shoff);
     fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);
