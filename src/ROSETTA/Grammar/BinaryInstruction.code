@@ -1389,10 +1389,6 @@ HEADER_STORED_STRING_START
 			{ctor(strtab, s);}
 		explicit SgAsmStoredString(class SgAsmStringStorage *storage)          /*string shares other storage*/
 			{ctor(storage);}
-		explicit SgAsmStoredString(const char *s)                              /*non-storage constructor*/
-			{ctor(std::string(s));}
-		explicit SgAsmStoredString(const std::string &s)                       /*non-storage constructor*/
-			{ctor(s);}
 		// virtual ~SgAsmStoredString();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		static const rose_addr_t unallocated = ~(rose_addr_t)0;

@@ -120,12 +120,6 @@ SgAsmStoredString::ctor(SgAsmStringStorage *storage)
 {
     p_storage = storage;
 }
-/*FIXME: Use SgAsmBasicString for strings not attached to a string table. */
-void
-SgAsmStoredString::ctor(const std::string &s)
-{
-    p_storage = new SgAsmStringStorage(NULL, s, unallocated);
-}
 #if 0
 // DQ (9/9/2008): Use the destructor built automatically by ROSETTA.
 SgAsmStoredString::~SgAsmStoredString()
