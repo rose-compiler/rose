@@ -104,6 +104,119 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string().c_str());
 }
+    
+/* Stored String constructors/destructor */
+void
+SgAsmStoredString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset, bool shared)
+{
+    p_storage = strtab->create_storage(offset, shared);
+}
+void
+SgAsmStoredString::ctor(SgAsmElfStrtab *strtab, const std::string &s)
+{
+    p_storage = strtab->create_storage(0, false);
+    set_string(s);
+}
+void
+SgAsmStoredString::ctor(SgAsmStringStorage *storage)
+{
+    p_storage = storage;
+}
+/*FIXME: Use SgAsmBasicString for strings not attached to a string table. */
+void
+SgAsmStoredString::ctor(const std::string &s)
+{
+    p_storage = new SgAsmStringStorage(NULL, s, unallocated);
+}
+#if 0
+// DQ (9/9/2008): Use the destructor built automatically by ROSETTA.
+SgAsmStoredString::~SgAsmStoredString()
+{
+#if 0 /* FIXME: Strings may share storage, so we can't free it. (RPM 2008-09-03) */
+    /* Free storage if it isn't associated with a string table. */
+    if (p_storage && NULL==p_storage->strtab)
+        delete p_storage;
+#endif
+    p_storage = NULL;
+}
+#endif
+
+/* Returns the std::string associated with the SgAsmStoredString. */
+std::string
+SgAsmStoredString::get_string() const 
+{
+    return get_storage()->get_string();
+}
+
+/* Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
+ * triggers a reallocation. */
+rose_addr_t
+SgAsmStoredString::get_offset() const
+{
+    if (NULL==get_storage())
+        return unallocated;
+    if (get_storage()->get_offset() == unallocated) {
+        ROSE_ASSERT(get_storage()->get_strtab()!=NULL);
+        get_storage()->get_strtab()->reallocate();
+        ROSE_ASSERT(get_storage()->get_offset() != unallocated);
+    }
+    return get_storage()->get_offset();
+}
+
+/* Give the string a new value */
+void
+SgAsmStoredString::set_string(const std::string &s)
+{
+    if (get_string()==s) return; /* no change in value */
+    SgAsmStringStorage *storage = get_storage();
+    ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
+    storage->get_strtab()->free(storage);
+    storage->set_string(s);
+}
+
+/* Print some debugging info */
+void
+SgAsmStoredString::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sStoredString[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sStoredString.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = 0x%08lx\n", p, w, "storage", (unsigned long)get_storage());
+    if (get_storage())
+        get_storage()->dump(f, p, -1);
+}
+
+/* Print some debugging info */
+void
+SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sStringStorage[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sStringStorage.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
+    SgAsmElfStrtab *strtab = get_strtab();
+    if (strtab) {
+        fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name()->c_str());
+    } else {
+        fputs(" no section", f);
+    }
+    if (!strtab || get_offset()==SgAsmStoredString::unallocated) {
+        fputs(", not allocated", f);
+    } else {
+        fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
+    }
+    fprintf(f, ", \"%s\"\n", get_string().c_str());
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecFormat
