@@ -1792,6 +1792,20 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 // Dynamically linked libraries
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* Accessors for "name" like ROSETTA's except setting name reparents the SgAsmGenericString. */
+SgAsmGenericString *
+SgAsmGenericDLL::get_name() const 
+{
+    return p_name;
+}
+void
+SgAsmGenericDLL::set_name(SgAsmGenericString *s)
+{
+    if (s)
+        s->set_parent(this);
+    p_name = s;
+}
+
 /* Print some debugging info */
 void
 SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1804,7 +1818,7 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name.c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->c_str());
     for (size_t i = 0; i < p_funcs.size(); i++)
         fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "func", i, p_funcs[i].c_str());
 }

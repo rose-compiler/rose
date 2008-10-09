@@ -1688,8 +1688,10 @@ Grammar::setUpBinaryInstructions ()
   // AsmGenericDLL.setAutomaticGenerationOfConstructor(false);
   // AsmGenericDLL.setAutomaticGenerationOfDestructor(false);
 
-     AsmGenericDLL.setDataPrototype  ("std::string","name","= \"\"",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     AsmGenericDLL.setDataPrototype  ("SgStringList","funcs","",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmGenericDLL.setDataPrototype("SgAsmGenericString*","name","= 0",
+                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     AsmGenericDLL.setDataPrototype("SgStringList","funcs","",
+                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 
 

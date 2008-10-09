@@ -1718,14 +1718,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfStrtab *strtab)
             break;
           case 1: {
               /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
-#ifdef USE_ELF_STRING
-              /*FIXME: Testing out some new stuff. Eventually the SgAsmGenericDLL will contain an SgAsmGenericString*/
-              SgAsmElfString name(strtab, p_all_entries->get_entries()[i]->get_d_val());
-              fhdr->add_dll(new SgAsmGenericDLL(name.get_string()));
-#else
-              const char *name = (const char*)strtab->content_str(p_all_entries->get_entries()[i]->get_d_val());
+              SgAsmElfString *name = new SgAsmElfString(strtab, p_all_entries->get_entries()[i]->get_d_val());
               fhdr->add_dll(new SgAsmGenericDLL(name));
-#endif
               break;
           }
           case 2:

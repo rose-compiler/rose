@@ -882,7 +882,7 @@ SgAsmPEImportHintName::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmPEDLL::ctor(const std::string&) 
+SgAsmPEDLL::ctor() 
 {
     p_hintnames = new SgAsmPEImportHintNameList;
     p_hintnames->set_parent(this);
@@ -936,7 +936,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         std::string dll_name = content_str(dll_name_offset);
 
         /* Create the DLL objects */
-        SgAsmPEDLL *dll = new SgAsmPEDLL(dll_name);
+        SgAsmPEDLL *dll = new SgAsmPEDLL(new SgAsmBasicString(dll_name));
         dll->set_idir(idir);
 
         idir->set_parent(dll);
@@ -1042,8 +1042,8 @@ SgAsmPEImportSection::unparse(FILE *f)
         /* Library name */
         ROSE_ASSERT(idir->get_dll_name_rva() >= p_mapped_rva);
         addr_t dll_name_offset = idir->get_dll_name_rva() - p_mapped_rva;
-        ROSE_ASSERT(dll_name_offset + dll->get_name().size() + 1 < get_size());
-        addr_t spos = write(f, dll_name_offset, dll->get_name());
+        ROSE_ASSERT(dll_name_offset + dll->get_name()->get_string().size() + 1 < get_size());
+        addr_t spos = write(f, dll_name_offset, dll->get_name()->get_string());
         write(f, spos, '\0');
 
         /* Write the hint/name pairs and the array entries that point to them. */

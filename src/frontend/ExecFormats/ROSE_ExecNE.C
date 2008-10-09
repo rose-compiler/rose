@@ -677,7 +677,7 @@ SgAsmNEModuleTable::ctor()
 
     /* Add libraries to file header */
     for (size_t i = 0; i < p_names.size(); i++) {
-        fhdr->add_dll(new SgAsmGenericDLL(p_names[i]));
+        fhdr->add_dll(new SgAsmGenericDLL(new SgAsmBasicString(p_names[i])));
     }
 }
 
