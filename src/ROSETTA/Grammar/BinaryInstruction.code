@@ -1328,6 +1328,7 @@ HEADER_ELF_SECTION_START
        // virtual ~ElfSection() {}
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	  virtual void set_mapped_rva(addr_t);
 
        /* Accessors for protected/private data members */
        // ElfSection *get_linked_section() {return linked_section;}

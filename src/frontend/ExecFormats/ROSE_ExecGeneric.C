@@ -618,7 +618,7 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
     /* This is here for now because in every case when we resize a section in the file we'll also want to resize its mapped
      * area. */
     if (section->is_mapped())
-        mapped_resize(section, section->get_mapped_rva()+adjustment);
+        mapped_resize(section, section->get_mapped_size()+adjustment);
 }
 
 /* Similar to resize() except operates on memory mappings. */
@@ -1817,8 +1817,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
     if (p_bound) {
-        fprintf(f, "%s%-*s = [%d] \"%s\" @%"PRIu64", %"PRIu64" bytes\n", p, w, "bound",
-                p_bound->get_id(), p_bound->get_name().c_str(), p_bound->get_offset(), p_bound->get_size());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "bound", p_bound->get_id(), p_bound->get_name().c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "bound");
     }

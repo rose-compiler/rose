@@ -592,6 +592,23 @@ SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
     }
 }
 
+/* If the mapped address of a section changes make sure that the ELF header's entry point is updated also if it happens to
+ * fall within this section. */
+void
+SgAsmElfSection::set_mapped_rva(addr_t new_rva)
+{
+    SgAsmGenericHeader *fhdr = get_header();
+    if (fhdr) {
+        for (SgAddressList::iterator i=fhdr->get_entry_rvas().begin(); i!=fhdr->get_entry_rvas().end(); ++i) {
+            if (*i >= get_mapped_rva() && *i < get_mapped_rva()+get_mapped_size()) {
+                *i = new_rva;
+            }
+        }
+    }
+    
+    SgAsmGenericSection::set_mapped_rva(new_rva);
+}
+
 /* Print some debugging info */
 void
 SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
