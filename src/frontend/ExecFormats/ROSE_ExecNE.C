@@ -1286,7 +1286,6 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* All NE files are also DOS files, so parse the DOS part first */
     SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
-    ef->unfill_holes(); /*they probably contain NE information*/
 
     /* NE files extend the DOS header with some additional info */
     SgAsmNEExtendedDOSHeader *dos2_header = new SgAsmNEExtendedDOSHeader(ef, dos_header->get_size());
@@ -1345,9 +1344,6 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     if (SgAsmNEEntryTable *enttab = ne_header->get_entry_table())
         enttab->populate_entries();
     
-    /* Identify parts of the file that we haven't encountered during parsing */
-    ef->fill_holes();
-
     return ne_header;
 }
 

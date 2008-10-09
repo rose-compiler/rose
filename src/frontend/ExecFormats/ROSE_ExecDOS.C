@@ -233,9 +233,6 @@ SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
     if (define_rm_section == true)
         fhdr->add_rm_section();
     
-    /* Identify parts of the file that we haven't encountered during parsing */
-    ef->fill_holes();
-
     return fhdr;
 }
 

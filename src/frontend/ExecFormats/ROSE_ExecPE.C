@@ -1538,7 +1538,6 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* All PE files are also DOS files, so parse the DOS part first */
     SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
-    ef->unfill_holes(); /*they probably contain PE information*/
 
     /* PE files extend the DOS header with some additional info */
     SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(ef, dos_header->get_size());
@@ -1577,9 +1576,6 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     pe_header->create_table_sections();
     
-    /* Identify parts of the file that we haven't encountered during parsing */
-    ef->fill_holes();
-
     return pe_header;
 }
 

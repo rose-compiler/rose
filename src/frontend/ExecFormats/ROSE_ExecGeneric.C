@@ -791,6 +791,16 @@ SgAsmGenericFile::get_header(SgAsmGenericFormat::ExecFamily efam)
     return retval;
 }
 
+/* "Congeals" a file after parsing by identifying all unreferenced parts of the file. */
+void
+SgAsmGenericFile::congeal()
+{
+    fill_holes();
+    SgAsmGenericSectionPtrList sections = get_sections();
+    for (size_t i=0; i<sections.size(); i++)
+        sections[i]->congeal();
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1863,6 +1873,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const std::string & name, SgAsmFile
             }
        }
 
+     ef->congeal();
      ROSE_ASSERT(executableHeader != NULL);
 
      ROSE_ASSERT(ef->get_parent() == executableHeader);
@@ -1935,6 +1946,7 @@ SgAsmExecutableFileFormat::parse(const char *name)
             throw FormatError("unrecognized file format");
         }
     }
+    ef->congeal();
     return ef;
 }
 #endif

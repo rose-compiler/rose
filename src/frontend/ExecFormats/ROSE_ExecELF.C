@@ -2417,8 +2417,6 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
-    /* Identify parts of the file that we haven't encountered during parsing */
-    ef->fill_holes();
     return fhdr;
 }
     

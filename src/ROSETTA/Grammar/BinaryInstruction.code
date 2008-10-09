@@ -947,6 +947,7 @@ HEADER_GENERIC_FILE_START
 	  static SgAsmGenericSection *best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va);
 
        /* Holes (unreferenced regions in the file) */	
+	  void congeal();                                     /* Identify and freeze all unreferenced regions after parsing */
           addr_t get_next_section_offset(addr_t offset);      /* Find file offset for next section */
 	  void add_hole(SgAsmGenericSection*);		      /* Add section to list of holes */
 	  void remove_hole(SgAsmGenericSection*);             /* Remove section from list of holes */

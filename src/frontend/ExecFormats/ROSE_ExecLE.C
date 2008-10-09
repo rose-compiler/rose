@@ -955,7 +955,6 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* All LE files are also DOS files, so parse the DOS part first */
     SgAsmDOSFileHeader *dos_header = SgAsmDOSFileHeader::parse(ef, false);
-    ef->unfill_holes(); /*they probably contain NE information*/
 
     /* LE files extend the DOS header with some additional info */
     SgAsmLEExtendedDOSHeader *dos2_header = new SgAsmLEExtendedDOSHeader(ef, dos_header->get_size());
@@ -1061,9 +1060,6 @@ SgAsmLEFileHeader::parse(SgAsmGenericFile *ef)
 //        end_rfo = le_header->e_fmtdirtab_rfo;
 //    }
     
-    /* Identify parts of the file that we haven't encountered during parsing */
-    ef->fill_holes();
-
     return le_header;
 }
 
