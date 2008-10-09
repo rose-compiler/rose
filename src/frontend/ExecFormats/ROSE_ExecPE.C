@@ -1258,14 +1258,6 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
     return storage;
 }
 
-/* Constructs an SgAsmStoredString from an offset into this string table. */
-SgAsmStoredString *
-SgAsmCoffStrtab::create_string(addr_t offset, bool shared)
-{
-    SgAsmStringStorage *storage = create_storage(offset, shared);
-    return new SgAsmStoredString(storage);
-}
-
 /* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
  * version of free() when possible. */
 void
@@ -1309,25 +1301,6 @@ SgAsmCoffStrtab::free(addr_t offset, addr_t size)
     get_container()->get_freelist().insert(offset, size);
 }
 
-/* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
- * blow_way_holes is true then any areas that are unreferenced in the string table will be marked as referenced and added to
- * the free list. */
-/* FIXME: This is identical to SgAsmElfStrtab::free_all_strings. */
-void
-SgAsmCoffStrtab::free_all_strings(bool blow_away_holes)
-{
-    abort();
-}
-
-/* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
- * space. Any that are left will cause the string table to be extended. */
-/* FIXME: This is identical to SgAsmElfStrtab::reallocate() */
-void
-SgAsmCoffStrtab::reallocate()
-{
-    abort();
-}
-
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmCoffStrtab::unparse(FILE *f)
@@ -1354,40 +1327,6 @@ SgAsmCoffStrtab::unparse(FILE *f)
         container->write(f, i->first, std::string(i->second, '\0'));
     }
 }
-
-/* Print some debugging info */
-void
-SgAsmCoffStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    SgAsmGenericSection *container = get_container();
-
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sCoffStrtab[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sCoffStrtab.", prefix);
-    }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    SgAsmGenericStrtab::dump(f, p, -1);
-    
-    fprintf(f, "%s%-*s =", p, w, "empty_string");
-    for (size_t i=0; i<p_referenced_storage.size(); ++i) {
-        if (p_referenced_storage[i] == p_empty_string)
-            fprintf(f, " p_referenced_storage[%zu]", i);
-    }
-    fputc('\n', f);
-    
-    fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", p_referenced_storage.size());
-    for (size_t i=0; i<p_referenced_storage.size(); i++) {
-        p_referenced_storage[i]->dump(f, p, i);
-    }
-
-    /*FIXME: The free list is stored in SgAsmGenericSection or SgAsmGenericStrtab */
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", container->get_freelist().size());
-    container->get_freelist().dump_extents(f, p, "freelist");
-}
-
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // COFF Symbol Table

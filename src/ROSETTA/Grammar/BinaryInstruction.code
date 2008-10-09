@@ -1162,9 +1162,13 @@ HEADER_GENERIC_STRTAB_START
 		virtual ~SgAsmGenericStrtab() {}
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		SgAsmStoredString *create_string(addr_t offset, bool shared);
+		void free_all_strings(bool blow_away_holes=false);
+		void reallocate(); /*allocate storage for all unallocated strings*/
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
+		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void ctor();
 HEADER_GENERIC_STRTAB_END
@@ -1406,13 +1410,8 @@ HEADER_ELF_STRING_TABLE_START
 			{ctor();}
 		virtual ~SgAsmElfStrtab();
 		virtual void unparse(FILE*);
-		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		SgAsmStoredString *create_string(addr_t offset, bool shared);
 		void free(class SgAsmStringStorage*);
-		void free_all_strings(bool blow_away_holes=false);
-		void reallocate(); /*allocate storage for all unallocated strings*/
-		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void ctor();
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
@@ -2209,13 +2208,8 @@ HEADER_COFF_STRING_TABLE_START
 			{}
 		virtual ~SgAsmCoffStrtab();
 		virtual void unparse(FILE*);
-		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-		SgAsmStoredString *create_string(addr_t offset, bool shared);
 		void free(class SgAsmStringStorage*);
-		void free_all_strings(bool blow_away_holes=false);
-		void reallocate(); /*allocate storage for all unallocated strings*/
-		typedef std::vector<class SgAsmStringStorage*> referenced_t;
 	private:
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 HEADER_COFF_STRING_TABLE_END
