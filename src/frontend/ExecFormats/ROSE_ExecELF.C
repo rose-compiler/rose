@@ -1,208 +1,15 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-/* This is for temporary debugging only; will be removed shortly! (RPM 2008-09-04) */
-
-// DQ (9/9/2008): Robb, I had to comment this out to make thinks work.
-// I am unclear if that was expected or not.  We can discuss this
-// in the morning (or anytime you want me to call you).
-// #define USE_ELF_STRING
+/* FIXME: temporary debugging (RPM 2008-09-11) */
+#define USE_ELF_STRING
 
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-
-#if 0 /* FIXME: Move these IR nodes into ROSETTA. They're here only to expedite development. (RPM 2008-08-25) */
-
-/* An SgAsmGenericString represents a string as stored in some section/segment/object/part of the executable file. Using this
- * class for such strings (as opposed to just storing the std::string), allows us to modify the string value and thereby cause
- * the unparser to output the new value.
- *
- * In general, making even a very minor one-letter change to a string can cascade into lots of changes in the unparsed
- * executable. For instance, changing the symbol "main" to "pain", even though it's a single letter, could cause the string to
- * be reallocated in the string table (e.g., if the string "domain" shares the same storage), which could cause the string
- * table to grow, which could rearrange other file sections, which could change the way the loader needs to map segments,
- * which changes the section and segment tables, etc....
- * 
- * This class is intended to help make those changes more transparent. There are versions specialized for Elf (strings are
- * NUL-teraminted), PE (strings are run length encoded), etc.
- * 
- * Example usage in ELF:
- * An ELF symbol table points to an Elf String Table. Symbol entries contain offsets into the string table for their names. A
- * new string is constructed like this:
- * 
- *     symbol_entry[0].name = SgAsmElfString(string_table, offset);    // "domain"
- *     symbol_table[1].name = SgAsmElfString(string_table, offset+2);  // "main", overlaps with "domain"
- *     symbol_table[2].name = SgAsmElfString(string_table, offset);    // another symbol named "domain"
- *
- * When the SgAsmElfString constructor is called more than once with the same offset (as in entries 0 and 2 above) then the
- * two strings returned are independent of each other: freeing or modifying one string does not affect the other. On the other
- * hand, copying one string object to another (SgAsmElfString second=symbol_entry[0].name) will cause both to reference the
- * same storage so that changing one changes the other.
- *
- * The name is available with the "get_string" method. The offset within the string table is also available for ELF strings.
- * 
- *     cerr <<symbol_entry[0].name.to_string();
- *     printf("offset=%"PRIu64", name=\"%s\"\n", symbol_entry[0].name.get_offset(), symbol_entry[0].name.get_string().c_str());
- *
- * To change "main" to "pain" one just makes an assignment:
- *
- *     symbol_table[1].name = "pain";
- *     symbol_table[1].name.set_string("pain"); // an alternative method of assignment
- *
- * Name objects should not be modified or freed from a particular string table until all strings in that table have been
- * parsed (the code will detect when a string is parsed after the table is modified). Also, names will not be reallocated in
- * the symbol table until get_offset() is called for one of the table's modified strings.  This usually results in more
- * efficient repacking of the string table.
- * 
- * Regions of the string table that are never referenced are maintained as "holes" available through the usual
- * SgAsmGenericSection interface. The reallocation algorithm keeps all holes at their original offsets relative to the
- * beginning of the string table.
- *
- * The SgAsmBasicString is derived from SgAsmGenericString to be able to act almost like a plain old std::string for the case
- * when there is no underlying string table.
- */
-class SgAsmGenericString {
-  public:
-    virtual ~SgAsmGenericString() {};
-    virtual const std::string& get_string() const = 0;                  /*no non-const version; use only set_string() to modify!*/
-    virtual void set_string(const std::string &s) = 0;                  /*assignment calls this*/
-    virtual void dump(FILE*, const char *prefix, ssize_t idx) = 0;
-
-    /* Assignment (plus the default assignment) */
-    SgAsmGenericString& operator=(const std::string &s);                /*short for set_string()*/
-    SgAsmGenericString& operator=(const char *s);                       /*short for set_string()*/
-};
-
-
-class SgAsmBasicString : public SgAsmGenericString {
-  public:
-    SgAsmBasicString() {}
-    virtual ~SgAsmBasicString() {}
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-    /* Accessors */
-    virtual const std::string& get_string() const                       /*no non-const version; use only set_string() to modify!*/
-        {return p_string;}
-    virtual void set_string(const std::string &s)
-        {p_string = s;}
-
-  private:
-    std::string p_string;
-};
-
-class SgAsmElfString : public SgAsmGenericString {
-  public:
-    SgAsmElfString(class SgAsmElfStrtab *strtab, rose_addr_t offset)    /*string in string table*/
-        {ctor(strtab, offset, false);}
-    SgAsmElfString(class SgAsmElfStrtab *strtab, const std::string &s)  /*new string in string table*/
-        {ctor(strtab, s);}
-    explicit SgAsmElfString(class SgAsmElfStringStorage *storage)       /*string shares other storage*/
-        {ctor(storage);}
-    explicit SgAsmElfString(const char *s)                              /*non-storage constructor*/
-        {ctor(std::string(s));}
-    explicit SgAsmElfString(const std::string &s)                       /*non-storage constructor*/
-        {ctor(s);}
-    virtual ~SgAsmElfString();
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    static const rose_addr_t unallocated = ~(rose_addr_t)0;
-
-    /* Accessors */
-    virtual const std::string& get_string() const;                      /*no non-const version; use only set_string() to modify!*/
-    virtual void set_string(const std::string&);                        /*assignment calls this*/
-    rose_addr_t get_offset() const;                                     /*offset is read-only--no set_offset(); triggers realloc*/
-    class SgAsmElfStringStorage* get_storage() const {                  /*read only; managed by constructor/destructor*/
-        return p_storage;
-    }
-
-  private:
-    SgAsmElfString() {abort();}
-    void ctor(class SgAsmElfStrtab*, rose_addr_t offset, bool shared);
-    void ctor(class SgAsmElfStrtab*, const std::string&);
-    void ctor(class SgAsmElfStringStorage*);
-    void ctor(const std::string &s);
-    class SgAsmElfStringStorage *p_storage;                             /*child of the string table in the AST*/
-};
-
-class SgAsmElfStrtab : public SgAsmElfSection {
-  public:
-    SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-        : SgAsmElfSection(fhdr, shdr), num_freed(0), empty_string(0)
-        {ctor(fhdr, shdr);}
-    virtual ~SgAsmElfStrtab();
-    virtual void unparse(FILE*);
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    class SgAsmElfStringStorage *create_storage(addr_t offset, bool shared);
-    SgAsmElfString *create_string(addr_t offset, bool shared);
-    void free(class SgAsmElfStringStorage*);
-    void free_all_strings(bool blow_away_holes=false);
-    void reallocate(); /*allocate storage for all unallocated strings*/
-    virtual void set_size(addr_t);
-  private:
-    void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
-    void free(addr_t offset, addr_t size); /*mark part of table as free*/
-    rose_addr_t best_fit(addr_t need); /*allocate from free list*/
-    typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
-    referenced_t referenced;
-
-    /* The following items are implementation details and probably not useful in the AST */
-    typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
-    freelist_t freelist;
-    size_t num_freed;
-    class SgAsmElfStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
-};
-
-/* String storage class for SgAsmElfString.  The SgAsmElfString objects point to SgAsmElfStringStorage objects which are in turn
- * stored in the SgAsmElfSection. We do it this way so that all copies of the string (by assignment) still point to their
- * original location in the string table and we can reallocate all of them when necessary. */
-class SgAsmElfStringStorage {
-  public:
-    SgAsmElfStringStorage(SgAsmElfStrtab *strtab, const std::string &string, rose_addr_t offset)
-        : p_strtab(strtab), p_string(string), p_offset(offset) {}
-    void dump(FILE *s, const char *prefix, ssize_t idx);
-
-    /* Accessors. The set_* accessors are private because we don't want anyone messing with them. These data members are used
-     * to control string allocation in ELF string tables and must only be modified by allocators in closely related classes.
-     * For instance, to change the value of the string one should call SgAsmGenericString::set_string() instead. */
-  public:
-    SgAsmElfStrtab* get_strtab() const {
-        return p_strtab;
-    }
-    const std::string& get_string() const {             /*read-only; set string with SgAsmGenericString::set_string()*/
-        return p_string;
-    }
-    const rose_addr_t get_offset() const {              /*read-only; set only by the string table allocator*/
-        return p_offset;                                /*does not trigger reallocation; cf. SgAsmElfString::get_offset()*/
-    }
-  private:
-    friend class SgAsmElfString;                        /*allowed to set private data members*/
-    friend class SgAsmElfStrtab;                        /*allowed to set private data members*/
-    void set_string(const std::string &s) {
-        p_string = s;
-    }
-    void set_strtab(SgAsmElfStrtab *strtab) {
-        p_strtab = strtab;
-    }
-    void set_offset(rose_addr_t offset) {
-        p_offset = offset;
-    }
     
-  private:
-    SgAsmElfStringStorage() {abort();}                  /*no default constructor; cf. SgAsmElfString::create_storage()*/
-    SgAsmElfStrtab *p_strtab;
-    std::string p_string;
-    rose_addr_t p_offset;
-};
-#endif /*END OF STUFF TO MOVE INTO ROSETTA*/
-    
-
 /* Truncate an address, ADDR, to be a multiple of the alignment, ALMNT, where ALMNT is a power of two and of the same
  * unsigned datatype as the address. */
 #define ALIGN(ADDR,ALMNT) ((ADDR) & ~((ALMNT)-1))
-
-
-
-// namespace Exec {
-// namespace ELF {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // File headers
@@ -723,7 +530,7 @@ SgAsmElfString::~SgAsmElfString()
 std::string
 SgAsmElfString::get_string() const 
 {
-    get_storage()->get_string();
+    return get_storage()->get_string();
 }
 
 /* Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
@@ -2300,7 +2107,13 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
         /* Get symbol name */
+#ifdef USE_ELF_STRING
+        SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
+        SgAsmElfString *name = new SgAsmElfString(xxx, symbol->get_st_name());
+        symbol->set_name(name->get_string());
+#else
         symbol->set_name(strtab->content_str(symbol->get_st_name()));
+#endif
 
         /* Get bound section ptr */
         if (symbol->get_st_shndx() > 0 && symbol->get_st_shndx() < 0xff00) {
@@ -2523,7 +2336,3 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 
     return fhdr;
 }
-    
-    
-// }; //namespace ELF
-// }; //namespace Exec
