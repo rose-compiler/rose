@@ -545,13 +545,13 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_machine",              p_e_machine);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_version",              p_e_version);
     fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                p, w, "e_entry",                p_e_entry);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",    p, w, "e_phoff",                p_e_phoff);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",    p, w, "e_shoff",                p_e_shoff);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_phoff",     p_e_phoff, p_e_phoff);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "e_shoff",     p_e_shoff, p_e_shoff);
     fprintf(f, "%s%-*s = 0x%08lx\n",                        p, w, "e_flags",                p_e_flags);
-    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_ehsize",               p_e_ehsize);
-    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_phentsize",            p_e_phentsize);
+    fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "e_ehsize",               p_e_ehsize, p_e_ehsize);
+    fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "e_phentsize",            p_e_phentsize, p_e_phentsize);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_phnum",                p_e_phnum);
-    fprintf(f, "%s%-*s = %lu bytes\n",                      p, w, "e_shentsize",            p_e_shentsize);
+    fprintf(f, "%s%-*s = 0x%08lx (%lu) bytes\n",            p, w, "e_shentsize",            p_e_shentsize, p_e_shentsize);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
 
