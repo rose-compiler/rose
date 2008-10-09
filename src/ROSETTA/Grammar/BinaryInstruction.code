@@ -1242,7 +1242,6 @@ HEADER_ELF_HEADER_START
           uint64_t max_page_size();
           virtual void unparse(FILE*);
 
-	  void update_from_header();
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf32FileHeader_disk*);
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfFileHeader::Elf64FileHeader_disk*);
 

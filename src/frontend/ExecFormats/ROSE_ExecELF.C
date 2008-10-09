@@ -231,20 +231,6 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
-/* Update header fields with info from the SgAsmGenericHeader */
-void
-SgAsmElfFileHeader::update_from_header()
-{
-    /* Update word size */
-    if (get_word_size()==4) {
-        p_ident_file_class = 1;
-    } else if (get_word_size()==8) {
-        p_ident_file_class = 2;
-    } else {
-        ROSE_ASSERT(!"unsupported word size");
-    }
-}
-    
 /* Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
@@ -252,7 +238,21 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-    host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
+
+    unsigned ident_file_class=1;
+    switch(get_word_size()) {
+    case 4:
+      ident_file_class = 1;
+      break;
+    case 8:
+      ident_file_class = 2;
+      break;
+    default:
+      ROSE_ASSERT(!"invalid word size");
+      break;
+    }
+    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
+
     unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
     host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
@@ -281,7 +281,21 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     ROSE_ASSERT(p_magic.size() == NELMTS(disk->e_ident_magic));
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
-    host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
+
+    unsigned ident_file_class=1;
+    switch(get_word_size()) {
+    case 4:
+      ident_file_class = 1;
+      break;
+    case 8:
+      ident_file_class = 2;
+      break;
+    default:
+      ROSE_ASSERT(!"invalid word size");
+      break;
+    }
+    host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
+
     unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
     host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
@@ -341,7 +355,6 @@ SgAsmElfFileHeader::unparse(FILE *f)
     Elf64FileHeader_disk disk64;
     void *disk = NULL;
     size_t struct_size = 0;
-    update_from_header();
     if (4 == get_word_size()) {
         disk = encode(get_sex(), &disk32);
         struct_size = sizeof(disk32);
