@@ -698,7 +698,10 @@ SgAsmGenericFile::fill_holes()
             if (tmp>end_offset)
                 end_offset = tmp;
         }
-        ROSE_ASSERT(end_offset <= get_size());
+
+        /* Sections may extend beyond EOF, but don't create holes past EOF. */
+        if (end_offset > get_size())
+            end_offset = get_size();
         
         /* Is there a hole here? */
         if (end_offset<=offset) {
