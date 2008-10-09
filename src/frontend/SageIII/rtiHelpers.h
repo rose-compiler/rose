@@ -50,11 +50,11 @@ static std::string toStringForRTI(const std::vector<std::pair<T,T> >& x) {
   return ss.str();
 }
 
-static std::string toStringForRTI(const SgAsmGenericSection::ExtentMap &x) 
+static std::string toStringForRTI(const ExtentMap &x)
 {
     std::ostringstream ss;
     ss << "[";
-    for (SgAsmGenericSection::ExtentMap::const_iterator i=x.begin(); i!=x.end(); ++i) {
+    for (ExtentMap::const_iterator i=x.begin(); i!=x.end(); ++i) {
         if (i!=x.begin())
             ss << ", ";
         ss << i->first << "->" << i->second;

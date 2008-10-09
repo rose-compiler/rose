@@ -1286,7 +1286,7 @@ SgAsmCoffStrtab::unparse(FILE *f)
     }
     
     /* Fill free areas with zero */
-    for (SgAsmGenericSection::ExtentMap::const_iterator i=get_freelist().begin(); i!=get_freelist().end(); ++i) {
+    for (ExtentMap::const_iterator i=get_freelist().begin(); i!=get_freelist().end(); ++i) {
         container->write(f, i->first, std::string(i->second, '\0'));
     }
 }

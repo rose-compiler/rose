@@ -762,43 +762,6 @@ HEADER_GENERIC_SECTION_START
               SP_OTHER                                            /* File-specified purpose other than any given in this enum */
              };
 
-	  typedef std::pair<addr_t,addr_t> ExtentPair; 		  /* Describes a part of a file (offset, size) */
-
-	  /* An ExtentMap keeps track of contiguous regions of address space. Entries in the ExtentMap are sorted by
-	   * starting offset. No two entries overlap or adjoin. */
-	  class ExtentMap : public std::map<addr_t,addr_t> {
-	    public:
-	      typedef std::map<addr_t,addr_t> super;
-	      ExtentMap() {}
-
-	      /* Modifying methods */
-              void insert(const ExtentMap&);
-              void insert(const ExtentPair &extent)
-                  {insert(extent.first, extent.second);}
-              void insert(addr_t offset, addr_t size);
-              void erase(const ExtentPair &extent)
-                  {erase(extent.first, extent.second);}
-              void erase(addr_t offset, addr_t size);
-
-	      /* Operator-like non-modifying methods */
-              ExtentMap subtract_from(const ExtentPair &extent) const
-                  {return subtract_from(extent.first, extent.second);}
-              ExtentMap subtract_from(addr_t offset, addr_t size) const;
-              ExtentMap overlap_with(const ExtentPair &extent) const
-                  {return overlap_with(extent.first, extent.second);}
-              ExtentMap overlap_with(addr_t offset, addr_t size) const;
-
-	      /* Allocation-like methods */
-              iterator best_fit(addr_t size);
-              ExtentPair allocate_best_fit(addr_t size);
-              ExtentPair allocate_first_fit(addr_t size);
-              void dump_extents(FILE*, const char *prefix, const char *label) const;
-
-	      /* Class methods */
-	      static char category(const ExtentPair &a, const ExtentPair &b);
-          };
-
-
           SgAsmGenericSection(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
 
        // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
@@ -1168,7 +1131,7 @@ HEADER_GENERIC_STRTAB_START
 		bool reallocate(); /*allocate storage for all unallocated strings*/
 
 		/* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
-		SgAsmGenericSection::ExtentMap& get_freelist();
+		ExtentMap& get_freelist();
 
 		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}

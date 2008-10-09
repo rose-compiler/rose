@@ -271,11 +271,11 @@ SgAsmGenericStrtab::free(addr_t offset, addr_t size)
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::unalloced to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
-    SgAsmGenericSection::ExtentMap s_extents;
+    ExtentMap s_extents;
     for (size_t i=0; i<p_storage_list.size(); i++) {
       s_extents.insert(p_storage_list[i]->get_offset(), get_storage_size(p_storage_list[i]));
     }
-    SgAsmGenericSection::ExtentMap to_free = s_extents.subtract_from(offset, size);
+    ExtentMap to_free = s_extents.subtract_from(offset, size);
 
     /* Add un-refrened extents to free list. */
     get_freelist().insert(to_free);
@@ -373,7 +373,7 @@ SgAsmGenericStrtab::reallocate()
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
-            SgAsmGenericSection::ExtentPair e(0, 0);
+            ExtentPair e(0, 0);
             try {
                 e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
                 addr_t new_offset = e.first;
@@ -408,7 +408,7 @@ SgAsmGenericStrtab::reallocate()
 
 /* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
  * free list. */
-SgAsmGenericSection::ExtentMap&
+ExtentMap&
 SgAsmGenericStrtab::get_freelist()
 {
     return p_freelist;
@@ -1076,9 +1076,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     addr_t align=1, aligned_sa, aligned_sasn;
     SgAsmGenericSectionPtrList all = get_sections();
     SgAsmGenericSectionPtrList neighbors, villagers;
-    SgAsmGenericSection::ExtentMap amap; /* address mappings for all extents */
-    SgAsmGenericSection::ExtentPair nhs; /* neighborhood of S */
-    SgAsmGenericSection::ExtentPair sp;
+    ExtentMap amap; /* address mappings for all extents */
+    ExtentPair nhs; /* neighborhood of S */
+    ExtentPair sp;
 
     for (size_t pass=0; pass<2; pass++) {
         if (debug) fprintf(stderr, "%s    -- PASS %zu --\n", p, pass);
@@ -1102,7 +1102,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         }
 
         /* Neighborhood (nhs) of S is a single extent */
-        SgAsmGenericSection::ExtentMap nhs_map = amap.overlap_with(sp);
+        ExtentMap nhs_map = amap.overlap_with(sp);
         ROSE_ASSERT(nhs_map.size()==1);
         nhs = *(nhs_map.begin());
 
@@ -1111,7 +1111,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         villagers.clear(); /*sections right of neighborhood*/
         for (size_t i=0; i<all.size(); i++) {
             SgAsmGenericSection *a = all[i];
-            SgAsmGenericSection::ExtentPair ap;
+            ExtentPair ap;
             if (filespace) {
                 ap = a->get_file_extent();
             } else if (!a->is_mapped()) {
@@ -1119,7 +1119,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             } else {
                 ap = a->get_mapped_extent();
             }
-            switch (SgAsmGenericSection::ExtentMap::category(ap, nhs)) {
+            switch (ExtentMap::category(ap, nhs)) {
               case 'L':
                 break;
               case 'R':
@@ -1128,12 +1128,12 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
                  * partitioning of sections is the only thing we use 'nhs' for anyway. */
                 if (elastic_holes) {
                     villagers.push_back(a);
-                } else if ('L'!=SgAsmGenericSection::ExtentMap::category(ap, sp)) { /*ignore sections left of S*/
+                } else if ('L'!=ExtentMap::category(ap, sp)) { /*ignore sections left of S*/
                     neighbors.push_back(a);
                 }
                 break;
               default:
-                if ('L'!=SgAsmGenericSection::ExtentMap::category(ap, sp)) /*ignore sections left of S*/
+                if ('L'!=ExtentMap::category(ap, sp)) /*ignore sections left of S*/
                     neighbors.push_back(a);
                 break;
             }
@@ -1142,9 +1142,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             fprintf(stderr, "%s    Neighbors:\n", p);
             for (size_t i=0; i<neighbors.size(); i++) {
                 SgAsmGenericSection *a = neighbors[i];
-                SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
                 addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
-                char cat = SgAsmGenericSection::ExtentMap::category(ap, sp);
+                char cat = ExtentMap::category(ap, sp);
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                         p, cat, 0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
                 if (strchr("RICE", cat)) {
@@ -1157,10 +1157,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             if (villagers.size()>0) fprintf(stderr, "%s    Villagers:\n", p);
             for (size_t i=0; i<villagers.size(); i++) {
                 SgAsmGenericSection *a = villagers[i];
-                SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+                ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
                 addr_t align = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 fprintf(stderr, "%s        %c %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
-                        p, SgAsmGenericSection::ExtentMap::category(ap, sp), /*cat should always be R*/
+                        p, ExtentMap::category(ap, sp), /*cat should always be R*/
                         0==ap.first % (align?align:1) ? ' ' : '!', ap.first, ap.second, ap.first+ap.second);
                 fputs("                 ", stderr);
                 fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
@@ -1171,8 +1171,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         align = 1;
         for (size_t i=0; i<neighbors.size(); i++) {
             SgAsmGenericSection *a = neighbors[i];
-            SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
-            if (strchr("RICE", SgAsmGenericSection::ExtentMap::category(ap, sp))) {
+            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            if (strchr("RICE", ExtentMap::category(ap, sp))) {
                 addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
                 align = boost::math::lcm(align, x?x:1);
             }
@@ -1189,10 +1189,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
          * that to define the size of the hole right of neighborhood(S). */
         if (0==villagers.size()) break;
         SgAsmGenericSection *after_hole = NULL;
-        SgAsmGenericSection::ExtentPair hp(0, 0);
+        ExtentPair hp(0, 0);
         for (size_t i=0; i<villagers.size(); i++) {
             SgAsmGenericSection *a = villagers[i];
-            SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
             if (!after_hole || ap.first<hp.first) {
                 after_hole = a;
                 hp = ap;
@@ -1225,8 +1225,8 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     bool resized_mem = false;
     for (size_t i=0; i<neighbors.size(); i++) {
         SgAsmGenericSection *a = neighbors[i];
-        SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
-        switch (SgAsmGenericSection::ExtentMap::category(ap, sp)) {
+        ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+        switch (ExtentMap::category(ap, sp)) {
           case 'L':
             break;
           case 'R':
@@ -1297,7 +1297,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             addr_t x = filespace ? a->get_file_alignment() : a->get_mapped_alignment();
             fprintf(stderr, "%s   %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     p, 0==ap.first%(x?x:1)?' ':'!', ap.first, ap.second, ap.first+ap.second);
-            SgAsmGenericSection::ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            ExtentPair newap = filespace ? a->get_file_extent() : a->get_mapped_extent();
             fprintf(stderr, " -> %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
                     0==newap.first%(x?x:1)?' ':'!', newap.first, newap.second, newap.first+newap.second);
             fprintf(stderr, " [%2d] \"%s\"\n", a->get_id(), a->get_name()->c_str());
@@ -1421,17 +1421,17 @@ void
 SgAsmGenericFile::fill_holes()
 {
     /* Get the list of file extents referenced by all file sections */
-    SgAsmGenericSection::ExtentMap refs;
+    ExtentMap refs;
     SgAsmGenericSectionPtrList sections = get_sections();
     for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
         refs.insert((*i)->get_offset(), (*i)->get_size());
     }
 
     /* The hole extents are everything other than the sections */
-    SgAsmGenericSection::ExtentMap holes = refs.subtract_from(0, p_data.size());
+    ExtentMap holes = refs.subtract_from(0, p_data.size());
 
     /* Create the sections representing the holes */
-    for (SgAsmGenericSection::ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
+    for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
       	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, (*i).first, (*i).second);
       	hole->set_synthesized(true);
       	hole->set_name(new SgAsmBasicString("hole"));
@@ -1619,7 +1619,7 @@ SgAsmGenericSection::get_end_offset()
 }
 
 /* Returns the file extent for the section */
-SgAsmGenericSection::ExtentPair
+ExtentPair
 SgAsmGenericSection::get_file_extent() const 
 {
     return ExtentPair(get_offset(), get_size());
@@ -1691,7 +1691,7 @@ SgAsmGenericSection::get_base_va() const
 }
 
 /* Returns the memory extent for a mapped section. If the section is not mapped then offset and size will be zero */
-SgAsmGenericSection::ExtentPair
+ExtentPair
 SgAsmGenericSection::get_mapped_extent() const
 {
     return ExtentPair(get_mapped_rva(), get_mapped_size());
@@ -1839,7 +1839,7 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
 /* Congeal the references to find the unreferenced areas. Once the references are congealed calling content(), content_ucl(),
  * content_str(), etc. will not affect references. This allows us to read the unreferenced areas without turning them into
  * referenced areas. */
-const SgAsmGenericSection::ExtentMap &
+const ExtentMap &
 SgAsmGenericSection::congeal()
 {
     if (!get_congealed()) {
@@ -1851,7 +1851,7 @@ SgAsmGenericSection::congeal()
 }
 
 /* Uncongeal the holes, turning them into referenced extents instead. */
-const SgAsmGenericSection::ExtentMap &
+const ExtentMap &
 SgAsmGenericSection::uncongeal()
 {
     if (get_congealed()) {
@@ -2069,7 +2069,7 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
  *     B (beginning):  A overlaps with the beginning of B but does not contain B
  *     E (ending):     A overlaps with the end of B but does not contain B */
 char
-SgAsmGenericSection::ExtentMap::category(const ExtentPair &a, const ExtentPair &b)
+ExtentMap::category(const ExtentPair &a, const ExtentPair &b)
 {
     if (a.first==b.first && a.second==b.second)
         return 'C';
@@ -2087,8 +2087,8 @@ SgAsmGenericSection::ExtentMap::category(const ExtentPair &a, const ExtentPair &
 }
 
 /* Return an extent map which contains all extents in (offset,size) that are not in "this" extent map. */
-SgAsmGenericSection::ExtentMap
-SgAsmGenericSection::ExtentMap::subtract_from(addr_t offset, addr_t size) const
+ExtentMap
+ExtentMap::subtract_from(rose_addr_t offset, rose_addr_t size) const
 {
     ExtentMap result;
     for (ExtentMap::const_iterator i=begin(); i!=end() && offset+size>(*i).first; ++i) {
@@ -2129,7 +2129,7 @@ SgAsmGenericSection::ExtentMap::subtract_from(addr_t offset, addr_t size) const
 
 /* Adds the specified extent to the map of extents. Coalesce adjacent entries in the map. */
 void
-SgAsmGenericSection::ExtentMap::insert(addr_t offset, addr_t size)
+ExtentMap::insert(rose_addr_t offset, rose_addr_t size)
 {
     if (0==size) return;
     ExtentMap to_add = subtract_from(offset, size);
@@ -2154,7 +2154,7 @@ SgAsmGenericSection::ExtentMap::insert(addr_t offset, addr_t size)
 
 /* Inserts contents of one extent map into another */
 void
-SgAsmGenericSection::ExtentMap::insert(const ExtentMap &map)
+ExtentMap::insert(const ExtentMap &map)
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         insert(*i);
@@ -2162,8 +2162,8 @@ SgAsmGenericSection::ExtentMap::insert(const ExtentMap &map)
 }
 
 /* Returns all extents that (partially) overlap with the specified area */
-SgAsmGenericSection::ExtentMap
-SgAsmGenericSection::ExtentMap::overlap_with(addr_t offset, addr_t size) const
+ExtentMap
+ExtentMap::overlap_with(rose_addr_t offset, rose_addr_t size) const
 {
     ExtentMap result;
     for (const_iterator i=begin(); i!=end(); ++i) {
@@ -2175,7 +2175,7 @@ SgAsmGenericSection::ExtentMap::overlap_with(addr_t offset, addr_t size) const
 
 /* Removes the specified extent from the map of extents. */
 void
-SgAsmGenericSection::ExtentMap::erase(addr_t offset, addr_t size)
+ExtentMap::erase(rose_addr_t offset, rose_addr_t size)
 {
     ExtentMap candidates = overlap_with(offset, size);
     for (iterator i=candidates.begin(); i!=candidates.end(); ++i) {
@@ -2203,8 +2203,8 @@ SgAsmGenericSection::ExtentMap::erase(addr_t offset, addr_t size)
 
 /* Return the extent that's the closest match in size without removing it from the map. If two extents tie for the best fit then
  * return the one with the lower offset. Returns map.end() on failure. */
-SgAsmGenericSection::ExtentMap::iterator
-SgAsmGenericSection::ExtentMap::best_fit(addr_t size)
+ExtentMap::iterator
+ExtentMap::best_fit(rose_addr_t size)
 {
     iterator best = end();
     for (iterator i=begin(); i!=end(); ++i) {
@@ -2217,8 +2217,8 @@ SgAsmGenericSection::ExtentMap::best_fit(addr_t size)
 }
 
 /* Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
-SgAsmGenericSection::ExtentPair
-SgAsmGenericSection::ExtentMap::allocate_best_fit(addr_t size)
+ExtentPair
+ExtentMap::allocate_best_fit(rose_addr_t size)
 {
     iterator bfi = best_fit(size);
     if (bfi==end())
@@ -2231,8 +2231,8 @@ SgAsmGenericSection::ExtentMap::allocate_best_fit(addr_t size)
 }
 
 /* Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
-SgAsmGenericSection::ExtentPair
-SgAsmGenericSection::ExtentMap::allocate_first_fit(addr_t size)
+ExtentPair
+ExtentMap::allocate_first_fit(rose_addr_t size)
 {
     for (iterator i=begin(); i!=end(); ++i) {
         if ((*i).second >= size) {
@@ -2248,7 +2248,7 @@ SgAsmGenericSection::ExtentMap::allocate_first_fit(addr_t size)
 
 /* Print info about an extent map */
 void
-SgAsmGenericSection::ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
+ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
 {
     char p[4096];
     size_t idx=0;
