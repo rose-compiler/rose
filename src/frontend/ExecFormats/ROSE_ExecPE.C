@@ -463,10 +463,11 @@ SgAsmPEFileHeader::create_table_sections()
         if (tabname) tabsec->set_name(tabname);
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
-        tabsec->set_mapped(pair->get_e_rva(), pair->get_e_size());
-        tabsec->set_rperm(true);
-        tabsec->set_wperm(false);
-        tabsec->set_eperm(false);
+        tabsec->set_mapped_rva(pair->get_e_rva());
+        tabsec->set_mapped_size(pair->get_e_size());
+        tabsec->set_mapped_rperm(true);
+        tabsec->set_mapped_wperm(false);
+        tabsec->set_mapped_xperm(false);
         pair->set_section(tabsec);
     }
 }
@@ -724,14 +725,15 @@ SgAsmPESectionTable::ctor()
      // DQ (8/18/2008): I think we need to set the parent explicit here, but I am not certain what to set it to be (using "this" is a default).
         section->set_parent(this);
 
-        section->set_mapped(entry->get_rva(), entry->get_virtual_size());
+        section->set_mapped_rva(entry->get_rva());
+        section->set_mapped_size(entry->get_virtual_size());
         section->set_st_entry(entry);
-        section->set_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE) ==
-                           SgAsmPESectionTableEntry::OF_READABLE);
-        section->set_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE) ==
-                           SgAsmPESectionTableEntry::OF_WRITABLE);
-        section->set_eperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE) ==
-                           SgAsmPESectionTableEntry::OF_EXECUTABLE);
+        section->set_mapped_rperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_READABLE)
+                                  == SgAsmPESectionTableEntry::OF_READABLE);
+        section->set_mapped_wperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_WRITABLE)
+                                  == SgAsmPESectionTableEntry::OF_WRITABLE);
+        section->set_mapped_xperm((entry->get_flags() & SgAsmPESectionTableEntry::OF_EXECUTABLE)
+                                  == SgAsmPESectionTableEntry::OF_EXECUTABLE);
         
         if (entry->get_flags() & (SgAsmPESectionTableEntry::OF_CODE|
                                   SgAsmPESectionTableEntry::OF_IDATA|

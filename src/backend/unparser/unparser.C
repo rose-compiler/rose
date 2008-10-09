@@ -392,7 +392,7 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                fprintf(dumpFile, "Section [%zd]:\n", i);
                sections[i]->dump(dumpFile, "  ", -1);
 
-               bool outputInstruction = (sections[i]->get_mapped() == true);
+               bool outputInstruction = (sections[i]->is_mapped() == true);
 
 #if 0
             // Handle special case of Extended DOS Header (initial part of PE files)
@@ -438,7 +438,7 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                     for (size_t j = 0; j < sections.size(); j++)
                        {
                       // exclude all the other sections
-                         if ( (j != i) && (sections[j]->get_mapped() == true) )
+                         if ( (j != i) && (sections[j]->is_mapped() == true) )
                             {
                               SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
                               SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);

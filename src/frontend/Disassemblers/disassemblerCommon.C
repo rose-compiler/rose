@@ -126,7 +126,7 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
      for (size_t i = 0; i < sections.size(); ++i) {
        SgAsmGenericSection* section = sections[i];
        ROSE_ASSERT(section->get_header() == header);
-       if (!section->get_mapped() && !isSgAsmDOSFileHeader(header)) continue; // Workaround for bug FIXME
+       if (!section->is_mapped() && !isSgAsmDOSFileHeader(header)) continue; // Workaround for bug FIXME
        if (rva < section->get_mapped_rva()) continue;
        if (rva >= section->get_mapped_rva() + section->get_mapped_size())
          continue;
@@ -146,7 +146,7 @@ DisassemblerCommon::AsmFileWithData::getSectionOfAddress(uint64_t addr) const
 bool DisassemblerCommon::AsmFileWithData::inCodeSegment(uint64_t addr) const {
   SgAsmGenericSection* sectionOfThisPtr = getSectionOfAddress(addr);
   if (sectionOfThisPtr != NULL &&
-      sectionOfThisPtr->get_eperm()) {
+      sectionOfThisPtr->get_mapped_xperm()) {
     return true;
   }
   return false;
@@ -157,7 +157,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   if (!section) return 0;
 
 // Check if this is marked as executable
-  if (!section->get_eperm()) {
+  if (!section->get_mapped_xperm()) {
     return 0;
   }
 
@@ -309,11 +309,12 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
              {
                if (sections[i]->get_header() == DOS_header)
                   {
-                    printf ("DOS section DOS_header->get_mapped()           = %s (will be reset to true) \n",DOS_header->get_mapped() ? "true" : "false");
+                    printf ("DOS section DOS_header->is_mapped()           = %s (will be reset to true) \n",DOS_header->is_mapped() ? "true" : "false");
                     printf ("DOS section DOS_header->get_mapped_size()      = %p (will be reset) \n",(void*)DOS_header->get_mapped_size());
 
                  // DQ (8/31/2008): I think this is temporary code: Don't we want the disassemble to avoid having side-effects on the binary file format?
-                    sections[i]->set_mapped(true);
+                 // RPM (9/8/2008): is_mapped() is read-only, depending on mapped address and size being non-zero */
+                 // sections[i]->is_mapped(true);
 
                  // This details of this formulation appear to be different from different sources 
                  // (web pages), the one that special cases last_page_size == 0 is the best.

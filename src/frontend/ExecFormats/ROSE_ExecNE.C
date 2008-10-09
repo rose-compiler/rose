@@ -489,25 +489,26 @@ SgAsmNESectionTable::ctor()
 
         /* All NE sections are mapped. There desired address is apparently based on their file offset. */
         addr_t mapped_rva = section_offset - fhdr->get_offset();
-        section->set_mapped(mapped_rva, entry->get_virtual_size());
+        section->set_mapped_rva(mapped_rva);
+        section->set_mapped_size(entry->get_virtual_size());
 
         unsigned section_type = entry->get_flags() & SgAsmNESectionTableEntry::SF_TYPE_MASK;
         if (0 == section_offset) {
             section->set_name(".bss");
-            section->set_rperm(true);
-            section->set_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
-            section->set_eperm(false);
+            section->set_mapped_rperm(true);
+            section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
+            section->set_mapped_xperm(false);
         } else if (0 == section_type) {
             section->set_name(".text");
-            section->set_rperm(true);
-            section->set_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
-            section->set_eperm(true);
+            section->set_mapped_rperm(true);
+            section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
+            section->set_mapped_xperm(true);
         } else if (section_type & SgAsmNESectionTableEntry::SF_DATA) {
             section->set_name(".data");
-            section->set_rperm(true);
-            section->set_wperm(entry->get_flags() & (SgAsmNESectionTableEntry::SF_PRELOAD |
-                                                     SgAsmNESectionTableEntry::SF_NOT_WRITABLE) ? false : true);
-            section->set_eperm(false);
+            section->set_mapped_rperm(true);
+            section->set_mapped_wperm(entry->get_flags() & (SgAsmNESectionTableEntry::SF_PRELOAD |
+                                                            SgAsmNESectionTableEntry::SF_NOT_WRITABLE) ? false : true);
+            section->set_mapped_xperm(false);
         }
 
         if (entry->get_flags() & SgAsmNESectionTableEntry::SF_RELOCINFO) {

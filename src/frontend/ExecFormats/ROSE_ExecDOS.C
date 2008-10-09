@@ -141,10 +141,11 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
     p_rm_section->set_name("DOS real-mode text/data");
     p_rm_section->set_synthesized(true);
     p_rm_section->set_purpose(SP_PROGRAM);
-    p_rm_section->set_mapped(0, rm_size);
-    p_rm_section->set_rperm(true);
-    p_rm_section->set_wperm(true);
-    p_rm_section->set_eperm(true);
+    p_rm_section->set_mapped_rva(0);
+    p_rm_section->set_mapped_size(rm_size);
+    p_rm_section->set_mapped_rperm(true);
+    p_rm_section->set_mapped_wperm(true);
+    p_rm_section->set_mapped_xperm(true);
     return p_rm_section;
 }
     

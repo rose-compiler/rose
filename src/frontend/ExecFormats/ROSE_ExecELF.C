@@ -586,8 +586,10 @@ SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
     }
 
     /* Section mapping */
-    if (shdr->get_sh_addr() > 0)
-        set_mapped(shdr->get_sh_addr(), shdr->get_sh_size());
+    if (shdr->get_sh_addr() > 0) {
+        set_mapped_rva(shdr->get_sh_addr());
+        set_mapped_size(shdr->get_sh_size());
+    }
 }
 
 /* Print some debugging info */
@@ -1326,8 +1328,8 @@ SgAsmElfSectionTable::ctor()
                 section->set_name(strtab->content_str(shdr->get_sh_name()));
 #endif
             }
-            section->set_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
-            section->set_eperm((shdr->get_sh_flags() & 0x04) == 0x04);
+            section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
+            section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
 
             shdr->set_parent(section);
         }
@@ -1513,7 +1515,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "p_flags",        p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
     fputc(p_flags & PF_WPERM ? 'w' : '-', f);
-    fputc(p_flags & PF_EPERM ? 'x' : '-', f);
+    fputc(p_flags & PF_XPERM ? 'x' : '-', f);
     if (p_flags & PF_PROC_MASK) fputs(" proc", f);
     if (p_flags & PF_RESERVED) fputs(" *", f);
     fputc('\n', f);
@@ -1651,12 +1653,12 @@ SgAsmElfSegmentTable::ctor()
                 if (possible[j]->is_mapped()) {
                     if (possible[j]->get_mapped_rva() != shdr->get_vaddr() || possible[j]->get_mapped_size() != shdr->get_memsz())
                         continue; /*different mapped*/
-                    unsigned section_perms = (possible[j]->get_rperm() ? 0x01 : 0x00) |
-                                             (possible[j]->get_wperm() ? 0x02 : 0x00) |
-                                             (possible[j]->get_eperm() ? 0x04 : 0x00);
+                    unsigned section_perms = (possible[j]->get_mapped_rperm() ? 0x01 : 0x00) |
+                                             (possible[j]->get_mapped_wperm() ? 0x02 : 0x00) |
+                                             (possible[j]->get_mapped_xperm() ? 0x04 : 0x00);
                     unsigned segment_perms = (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? 0x01 : 0x00) |
                                              (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? 0x02 : 0x00) |
-                                             (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_EPERM ? 0x04 : 0x00);
+                                             (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? 0x04 : 0x00);
                     if (section_perms != segment_perms)
                         continue;
                 }
@@ -1701,10 +1703,11 @@ SgAsmElfSegmentTable::ctor()
 
             /* Make sure the section is mapped. */
             if (!s->is_mapped()) {
-                s->set_mapped(shdr->get_vaddr(), shdr->get_memsz());
-                s->set_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
-                s->set_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
-                s->set_eperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_EPERM ? true : false);
+                s->set_mapped_rva(shdr->get_vaddr());
+                s->set_mapped_size(shdr->get_memsz());
+                s->set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
+                s->set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
+                s->set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
             }
         }
     }

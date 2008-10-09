@@ -579,7 +579,8 @@ SgAsmLESectionTable::ctor()
         } else {
             ROSE_ASSERT(FAMILY_LX==fhdr->get_exec_format()->get_family());
             section_offset = fhdr->get_e_data_pages_offset() + (pageno-1) << fhdr->get_e_page_offset_shift();
-            section_size = std::min(entry->get_mapped_size(), (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
+            section_size = std::min(entry->get_mapped_size(),
+                                    (addr_t)(entry->get_pagemap_nentries() * (1<<fhdr->get_e_page_offset_shift())));
         }
 
         SgAsmLESection *section = new SgAsmLESection(fhdr, section_offset, section_size);
@@ -589,10 +590,14 @@ SgAsmLESectionTable::ctor()
         section->set_st_entry(entry);
 
         /* Section permissions */
-        section->set_mapped(entry->get_base_addr(), entry->get_mapped_size());
-        section->set_rperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_READABLE) == SgAsmLESectionTableEntry::SF_READABLE);
-        section->set_wperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_WRITABLE) == SgAsmLESectionTableEntry::SF_WRITABLE);
-        section->set_eperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_EXECUTABLE) == SgAsmLESectionTableEntry::SF_EXECUTABLE);
+        section->set_mapped_rva(entry->get_base_addr());
+        section->set_mapped_size(entry->get_mapped_size());
+        section->set_mapped_rperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_READABLE)
+                                  == SgAsmLESectionTableEntry::SF_READABLE);
+        section->set_mapped_wperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_WRITABLE)
+                                  == SgAsmLESectionTableEntry::SF_WRITABLE);
+        section->set_mapped_xperm((entry->get_flags() & SgAsmLESectionTableEntry::SF_EXECUTABLE)
+                                  == SgAsmLESectionTableEntry::SF_EXECUTABLE);
 
         unsigned section_type = entry->get_flags() & SgAsmLESectionTableEntry::SF_TYPE_MASK;
         if (SgAsmLESectionTableEntry::SF_TYPE_ZERO==section_type) {

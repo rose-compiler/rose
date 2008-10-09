@@ -619,10 +619,10 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
             addr_t other_end = all[i]->get_mapped_va() + all[i]->get_mapped_size();
             if (all[i]->get_mapped_va() >= section_end) {
                 /* Move mapping for sections that follow the mapping of the adjusted section */
-                all[i]->set_mapped(all[i]->get_mapped_va()+adjustment, all[i]->get_mapped_size());
+                all[i]->set_mapped_rva(all[i]->get_mapped_rva()+adjustment);
             } else if (all[i]->get_mapped_va() < section_end && other_end >= section_end) {
                 /* Resize mapping for sections that begin before and end after the adjusted section mapping */
-                all[i]->set_mapped(all[i]->get_mapped_va(), all[i]->get_mapped_size()+adjustment);
+                all[i]->set_mapped_size(all[i]->get_mapped_size()+adjustment);
             }
         }
     }
@@ -630,7 +630,7 @@ SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
     /* Adjust this section */
     section->set_size(newsize);
     if (section->is_mapped())
-        section->set_mapped(section->get_mapped_rva(), section->get_mapped_size()+adjustment);
+        section->set_mapped_size(section->get_mapped_size()+adjustment);
 }
 
 /* Print basic info about the sections of a file */
@@ -710,9 +710,9 @@ SgAsmGenericFile::dump(FILE *f)
         /* Permissions */
         if (section->is_mapped()) {
             fprintf(f, " %c%c%c ",
-                    section->get_rperm()?'r':'-',
-                    section->get_wperm()?'w':'-', 
-                    section->get_eperm()?'x':'-');
+                    section->get_mapped_rperm()?'r':'-',
+                    section->get_mapped_wperm()?'w':'-', 
+                    section->get_mapped_xperm()?'x':'-');
         } else {
             fputs("     ", f);
         }
@@ -946,31 +946,15 @@ SgAsmGenericSection::get_end_offset()
 bool
 SgAsmGenericSection::is_mapped()
 {
-    return p_mapped;
-}
-
-/* Causes section to be mapped to memory */
-void
-SgAsmGenericSection::set_mapped(addr_t rva, addr_t size)
-{
-    p_mapped = true;
-    p_mapped_rva = rva;
-    p_mapped_size = size;
+    return get_mapped_rva()!=0 || get_mapped_size()!=0;
 }
 
 /* Causes section to not be mapped to memory. */
 void
 SgAsmGenericSection::clear_mapped()
 {
-    p_mapped = false;
-    p_mapped_rva = p_mapped_size = 0;
-}
-
-// DQ (8/8/2008): This is not standard semantics for an access function
-rose_addr_t
-SgAsmGenericSection::get_mapped_rva()
-{
-    return is_mapped() ? p_mapped_rva  : 0;
+    set_mapped_size(0);
+    set_mapped_rva(0);
 }
 
 /* Returns (non-relative) virtual address if mapped, zero otherwise. */
@@ -980,13 +964,6 @@ SgAsmGenericSection::get_mapped_va()
     if (is_mapped())
         return get_base_va() + get_mapped_rva();
     return 0;
-}
-
-/* Returns mapped size of section if mapped; zero otherwise */
-rose_addr_t
-SgAsmGenericSection::get_mapped_size()
-{
-    return is_mapped() ? p_mapped_size : 0;
 }
 
 /* Returns base virtual address for a section, or zero if the section is not associated with a header. */
@@ -1325,10 +1302,10 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "purpose", s);
 
-    if (p_mapped) {
+    if (is_mapped()) {
         fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
         fprintf(f, "%s%-*s = %c%c%c\n", p, w, "permissions",
-                p_rperm?'r':'-', p_wperm?'w':'-', p_eperm?'x':'-');
+                get_mapped_rperm()?'r':'-', get_mapped_wperm()?'w':'-', get_mapped_xperm()?'x':'-');
     } else {
         fprintf(f, "%s%-*s = <not mapped>\n",    p, w, "mapped");
     }

@@ -799,23 +799,10 @@ HEADER_GENERIC_SECTION_START
           const RefMap&       uncongeal();                    /* uncongeal holes back into references */
 
        /* Functions related to mapping of sections into executable memory */
-          bool  is_mapped();
-          void  set_mapped(addr_t rva, addr_t size);
-          void  clear_mapped();
-	  addr_t get_base_va() const;
-
-       // DQ (8/8/2008): This is not standard semantics for an access function
-          addr_t        get_mapped_rva();
-	  addr_t        get_mapped_va();
-          addr_t        get_mapped_size();
-
-       // bool                get_eperm() {return eperm;}
-       // void                set_eperm(bool b) {eperm=b;}
-       // bool                get_wperm() {return wperm;}
-       // void                set_wperm(bool b) {wperm=b;}
-       // bool                get_rperm() {return rperm;}
-       // void                set_rperm(bool b) {rperm=b;}
-
+          bool   	      is_mapped();                    /* True iff non-zero mapped address and size */
+          void   	      clear_mapped();                 /* Set mapped address and size to zero (unmapped)*/
+	  addr_t 	      get_base_va() const;            /* Convenience to get header's base VA */
+	  addr_t 	      get_mapped_va();		      /* Like get_mapped_rva() except returns VA */
           addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 	  addr_t	      get_rva_offset(addr_t rva);     /* Return file offset for specified relative virtual address */
 
@@ -1503,7 +1490,7 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
        /* Segment bit flags */
           enum SegmentFlags {
               PF_RESERVED         = 0x0ffffff8,           /* Reserved bits */
-              PF_EPERM            = 0x00000001,           /* Execute permission */
+              PF_XPERM            = 0x00000001,           /* Execute permission */
               PF_WPERM            = 0x00000002,           /* Write permission */
               PF_RPERM            = 0x00000004,           /* Read permission */
               PF_PROC_MASK        = 0xf0000000            /* Processor-specific bits */
@@ -4111,7 +4098,7 @@ SOURCE_GENERIC_SECTION_START
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
    : 
 p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
-p_id(-1), p_mapped(false), p_mapped_rva(0), p_rperm(true), p_wperm(true), p_eperm(false), p_congealed(false)
+p_id(-1), p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(true), p_mapped_wperm(true), p_mapped_xperm(false), p_congealed(false)
    {
      ctor(f, fhdr, offset, size);
    }
