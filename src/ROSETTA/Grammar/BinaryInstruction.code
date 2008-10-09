@@ -1239,6 +1239,7 @@ HEADER_ELF_SECTION_TABLE_START
           SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
        // virtual ~SgAsmElfSectionTable() {}
 
+	  virtual void set_offset(addr_t newaddr);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1274,30 +1275,30 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
         * directly from "Executable and Linkable Format (ELF)", Portable Formats Specification, Version 1.1, Tool Interface
         * Standards (TIS) and not from any header file. The 64-bit structure is gleaned from the Linux elf(5) man page. */
           struct Elf32SectionTableEntry_disk {
-              uint32_t            sh_name;                /* Section name; index into section header string table */
-              uint32_t            sh_type;                /* Section contents and semantics (see SectionType enum) */
-              uint32_t            sh_flags;               /* Bit flags */
-              uint32_t            sh_addr;                /* Desired mapped address */
-              uint32_t            sh_offset;              /* Section location in file unless sh_type==SHT_NOBITS */
-              uint32_t            sh_size;                /* Section size in bytes */
-              uint32_t            sh_link;                /* Section ID of another section; meaning depends on section type */
-              uint32_t            sh_info;                /* Extra info depending on section type */
-              uint32_t            sh_addralign;           /* Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned */
-              uint32_t            sh_entsize;             /* If non-zero, size in bytes of each array member in the section */
-          } __attribute__((packed));
+              uint32_t            sh_name;                /* 0x00 Section name; index into section header string table */
+              uint32_t            sh_type;                /* 0x04 Section contents and semantics (see SectionType enum) */
+              uint32_t            sh_flags;               /* 0x08 Bit flags */
+              uint32_t            sh_addr;                /* 0x0c Desired mapped address */
+              uint32_t            sh_offset;              /* 0x10 Section location in file unless sh_type==SHT_NOBITS */
+              uint32_t            sh_size;                /* 0x14 Section size in bytes */
+              uint32_t            sh_link;                /* 0x18 Section ID of another section; meaning depends on section type */
+              uint32_t            sh_info;                /* 0x1c Extra info depending on section type */
+              uint32_t            sh_addralign;           /* 0x20 Mapped alignment (0 and 1=>byte aligned); sh_addr must be aligned */
+              uint32_t            sh_entsize;             /* 0x24 If non-zero, size in bytes of each array member in the section */
+          } __attribute__((packed));                      /* 0x28 */
 
           struct Elf64SectionTableEntry_disk {
-              uint32_t            sh_name;
-              uint32_t            sh_type;
-              uint64_t            sh_flags;
-              uint64_t            sh_addr;
-              uint64_t            sh_offset;
-              uint64_t            sh_size;
-              uint32_t            sh_link;
-              uint32_t            sh_info;
-              uint64_t            sh_addralign;
-              uint64_t            sh_entsize;
-          } __attribute__((packed));
+              uint32_t            sh_name;		  /* 0x00 see Elf32SectionTableEntry_disk */
+              uint32_t            sh_type;		  /* 0x04 */
+              uint64_t            sh_flags;		  /* 0x08 */
+              uint64_t            sh_addr;		  /* 0x10 */
+              uint64_t            sh_offset;		  /* 0x18 */
+              uint64_t            sh_size;		  /* 0x20 */
+              uint32_t            sh_link;		  /* 0x28 */
+              uint32_t            sh_info;		  /* 0x2c */
+              uint64_t            sh_addralign;		  /* 0x30 */
+              uint64_t            sh_entsize;		  /* 0x38 */
+          } __attribute__((packed));			  /* 0x40 */
 
 
           SgAsmElfSectionTableEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
@@ -1308,6 +1309,7 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk);
           void *encode(SgAsmExecutableFileFormat::ByteOrder sex, SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk);
 
+	  void update_from_section(SgAsmElfSection*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
      private:

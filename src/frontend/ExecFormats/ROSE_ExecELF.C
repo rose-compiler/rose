@@ -1360,6 +1360,58 @@ SgAsmElfSectionTable::ctor()
     }
 }
 
+/* Augments superclass.
+ * If the offset of the section table is changed then we need to update the ELF file header's section table offset (e_shoff) */
+void
+SgAsmElfSectionTable::set_offset(addr_t newaddr)
+{
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr);
+    fhdr->set_e_shoff(newaddr);
+    
+    SgAsmGenericSection::set_offset(newaddr);
+}
+
+/* Update this section table entry with newer information from the section */
+void
+SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
+{
+#ifdef USE_ELF_STRING /*FIXME*/
+    //p_sh_name = section->name->get_offset();
+#endif
+    p_sh_offset = section->get_offset();
+    if (p_sh_type==SHT_NOBITS && section->is_mapped()) {
+        p_sh_size = section->get_mapped_size();
+    } else {
+        p_sh_size = section->get_size();
+    }
+
+    if (section->is_mapped()) {
+        p_sh_addr = section->get_mapped_rva();
+        if (section->get_mapped_wperm()) {
+            p_sh_flags |= 0x01;
+        } else {
+            p_sh_flags &= ~0x01;
+        }
+        if (section->get_mapped_xperm()) {
+            p_sh_flags |= 0x04;
+        } else {
+            p_sh_flags &= ~0x04;
+        }
+    } else {
+        p_sh_addr = 0;
+        p_sh_flags &= ~0x05; /*clear write & execute bits*/
+    }
+    
+    SgAsmElfSection *linked_to = section->get_linked_section();
+    if (linked_to) {
+        ROSE_ASSERT(linked_to->get_id()>0);
+        p_sh_link = linked_to->get_id();
+    } else {
+        p_sh_link = 0;
+    }
+}
+
 /* Print some debugging info */
 void
 SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1396,11 +1448,17 @@ SgAsmElfSectionTable::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
+    /* Make sure all strings are allocated in the string table before we start writing sections. More generally, make sure all
+     * sections are set to the sizes, offsets, etc that we want in the section table. */
+    //FIXME
+
     /* Write the remaining entries */
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id() >= 0) {
             SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
             SgAsmElfSectionTableEntry *shdr = section->get_st_entry();
+            shdr->update_from_section(section);
+
             SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk32;
             SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk64;
             void *disk  = NULL;
@@ -2371,6 +2429,10 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 #if 1
     /* What happens if the dynamic string table needs to grow? */
     test->set_string("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    /*next three lines are temporary until the FIXME in SgAsmElfSectionTable::unparse() is fixed*/
+    dynstr->congeal();
+    dynstr->reallocate();
+    dynstr->uncongeal();
 #endif
 
 #if 0 /*First batch of tests*/
