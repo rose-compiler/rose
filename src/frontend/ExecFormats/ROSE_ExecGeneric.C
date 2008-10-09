@@ -699,6 +699,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     }
 
     /* Consider sections that are in the same neighborhood as S */
+    bool resized_mem = false;
     for (size_t i=0; i<all.size(); i++) {
         SgAsmGenericSection *a = all[i];
         SgAsmGenericSection::ExtentPair ap;
@@ -725,6 +726,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             if (filespace) {
                 a->set_offset(a->get_offset()+sa);
                 a->set_size(a->get_size()+sn);
+                if (!resized_mem && a->is_mapped()) {
+                    shift_extend(a, 0, sn, false);
+                    resized_mem = true;
+                }
             } else {
                 a->set_mapped_rva(a->get_mapped_rva()+sa);
                 a->set_mapped_size(a->get_mapped_size()+sn);
@@ -733,6 +738,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
           case 'O':
             if (filespace) {
                 a->set_size(a->get_size()+sa+sn);
+                if (!resized_mem && a->is_mapped()) {
+                    shift_extend(a, 0, sa+sn, false);
+                    resized_mem = true;
+                }
             } else {
                 a->set_mapped_size(a->get_mapped_size()+sa+sn);
             }
@@ -747,6 +756,10 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
           case 'B':
             if (filespace) {
                 a->set_size(a->get_size()+sn);
+                if (!resized_mem && a->is_mapped()) {
+                    shift_extend(a, 0, sn, false);
+                    resized_mem = true;
+                }
             } else {
                 a->set_mapped_size(a->get_size()+sn);
             }
