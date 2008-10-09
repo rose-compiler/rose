@@ -85,7 +85,7 @@ LitList(Len1 + Len2) concat(const LitList(Len1)& a, const LitList(Len2)& b) {
 }
 
 template <size_t NumBits>
-LitList(NumBits) number(unsigned int n) {
+LitList(NumBits) number(unsigned long long n) {
   LitList(NumBits) result;
   for (size_t i = 0; i < NumBits; ++i) {
     result[i] = (n % 2 == 1) ? TRUE : FALSE;
@@ -94,13 +94,23 @@ LitList(NumBits) number(unsigned int n) {
   return result;
 }
 
-static inline bool absLess(Lit a, Lit b) {
+template <size_t NumBits>
+unsigned long long fromNumber(const LitList(NumBits)& n) {
+  unsigned long long val = 0;
+  for (size_t i = 0; i < NumBits; ++i) {
+    assert (n[i] == TRUE || n[i] == FALSE);
+    if (n[i] == TRUE) val |= (1ULL << i);
+  }
+  return val;
+}
+
+inline bool absLess(Lit a, Lit b) {
   if (abs(a) < abs(b)) return true;
   if (abs(a) > abs(b)) return false;
   return a < b;
 }
 
-static inline bool clauseLess(const Clause& a, const Clause& b) {
+inline bool clauseLess(const Clause& a, const Clause& b) {
   for (size_t i = 0; i < a.size() && i < b.size(); ++i) {
     if (abs(a[i]) < abs(b[i])) return true;
     if (abs(a[i]) > abs(b[i])) return false;
@@ -109,12 +119,20 @@ static inline bool clauseLess(const Clause& a, const Clause& b) {
 }
 
 template <size_t Len>
-static std::vector<Lit> toVector(const LitList(Len)& lits) {
+inline std::vector<Lit> toVector(const LitList(Len)& lits) {
   return std::vector<Lit>(lits.begin(), lits.end());
 }
 
-static std::vector<Lit> toVector(Lit l) {
+inline std::vector<Lit> toVector(Lit l) {
   return std::vector<Lit>(1, l);
+}
+
+template <size_t Len>
+inline LitList(Len) fromVector(const std::vector<Lit>& lits) {
+  assert (Len == lits.size());
+  LitList(Len) result;
+  std::copy(lits.begin(), lits.end(), result.begin());
+  return result;
 }
 
 struct UnsatisfiableException {};
@@ -583,5 +601,22 @@ struct SatProblem {
   }
 
 };
+
+inline Lit biasLiteral(Lit a, size_t bias) {
+  if (a == -a) {
+    return a;
+  } else if (a > 0) {
+    return a + bias;
+  } else {
+    return a - bias;
+  }
+}
+
+inline std::vector<Lit> biasLiterals(std::vector<Lit> v, size_t bias) {
+  for (size_t i = 0; i < v.size(); ++i) {
+    v[i] = biasLiteral(v[i], bias);
+  }
+  return v;
+}
 
 #endif // ROSE_SATPROBLEM_H

@@ -1,4 +1,5 @@
 #include "satProblem.h"
+#include "x86AssemblyToNetlist.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -6,44 +7,6 @@
 #include <cassert>
 
 using namespace std;
-
-inline Lit biasLiteral(Lit a, size_t bias) {
-  if (a == -a) {
-    return a;
-  } else if (a > 0) {
-    return a + bias;
-  } else {
-    return a - bias;
-  }
-}
-
-vector<Lit> biasLiterals(vector<Lit> v, size_t bias) {
-  for (size_t i = 0; i < v.size(); ++i) {
-    v[i] = biasLiteral(v[i], bias);
-  }
-  return v;
-}
-
-struct MemoryAccess {
-  Lit cond;
-  LitList(32) addr;
-  LitList(8) data;
-  MemoryAccess(const vector<Lit>& x) {
-    assert (x.size() == 41);
-    cond = x[0];
-    for (size_t i = 0; i < 32; ++i) addr[i] = x[i + 1];
-    for (size_t i = 0; i < 8; ++i) data[i] = x[i + 33];
-  }
-  vector<Lit> vec() const {
-    vector<Lit> v;
-    v.push_back(cond);
-    v.insert(v.end(), addr.begin(), addr.end());
-    v.insert(v.end(), data.begin(), data.end());
-    return v;
-  }
-};
-
-// FIXME: link up memory reads and writes between steps
 
 int main(int, char**) {
   SatProblem cnf;

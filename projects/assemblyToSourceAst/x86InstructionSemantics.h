@@ -1863,6 +1863,7 @@ struct X86InstructionSemantics {
       case x86_hlt: {
         ROSE_ASSERT (operands.size() == 0);
         policy.hlt();
+        policy.writeIP(policy.template number<32>((uint32_t)(insn->get_address()))); // Infinite loop (for use in model checking)
         break;
       }
       case x86_rdtsc: {

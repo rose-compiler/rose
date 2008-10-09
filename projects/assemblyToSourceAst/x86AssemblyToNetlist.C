@@ -2,16 +2,10 @@
 #include <cassert>
 #include <cstdio>
 #include "satProblem.h"
+#include "x86AssemblyToNetlist.h"
 
 using namespace std;
 using boost::array;
-
-struct MemoryAccess {
-  LitList(32) addr;
-  LitList(8) data;
-  Lit cond;
-  MemoryAccess(LitList(32) addr, LitList(8) data, Lit cond): addr(addr), data(data), cond(cond) {}
-};
 
 template <size_t Len, size_t Offset, typename NLTranslator>
 struct WriteMemoryHelper {
@@ -26,13 +20,6 @@ struct WriteMemoryHelper<Len, Len, NLTranslator> {
   static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, Lit cond, NLTranslator& trans) {}
 };
 
-struct RegisterInfo {
-  LitList(32) gprs[8];
-  LitList(32) ip;
-  Lit flags[16];
-  Lit errorFlag;
-};
-
 struct NetlistTranslationPolicy {
   template <size_t Len>
   struct wordType {typedef LitList(Len) type;};
@@ -43,6 +30,7 @@ struct NetlistTranslationPolicy {
   vector<vector<MemoryAccess> > memoryWrites; // Outer vector is sequence of writes, inner vector is the set of mutually exclusive writes at that position
   vector<vector<MemoryAccess> > memoryReads; // Outer vector is sequence of reads, inner vector is the set of mutually exclusive reads at that position
   Lit isThisIp;
+  Lit isValidIp;
   size_t currentMemoryIndex;
   SatProblem problem;
 
@@ -55,29 +43,23 @@ struct NetlistTranslationPolicy {
     LitList(32) ipReg = problem.newVars<32>();
     problem.addInterface(prefix + "_ip", toVector(ipReg));
     rm.ip = ipReg;
-    LitList(7) flagsReg = problem.newVars<7>();
+    LitList(16) flagsReg = problem.newVars<16>();
     problem.addInterface(prefix + "_flags", toVector(flagsReg));
-    rm.flags[x86_flag_cf] = flagsReg[0];
-    rm.flags[x86_flag_pf] = flagsReg[1];
-    rm.flags[x86_flag_af] = flagsReg[2];
-    rm.flags[x86_flag_zf] = flagsReg[3];
-    rm.flags[x86_flag_sf] = flagsReg[4];
-    rm.flags[x86_flag_df] = flagsReg[5];
-    rm.flags[x86_flag_of] = flagsReg[6];
-    rm.flags[x86_flag_1] = TRUE;
-    rm.flags[x86_flag_3] = FALSE;
-    rm.flags[x86_flag_5] = FALSE;
-    rm.flags[x86_flag_tf] = FALSE;
-    rm.flags[x86_flag_if] = TRUE;
-    rm.flags[x86_flag_iopl0] = FALSE;
-    rm.flags[x86_flag_iopl1] = FALSE;
-    rm.flags[x86_flag_nt] = FALSE;
-    rm.flags[x86_flag_15] = FALSE;
-    rm.errorFlag = problem.newVar();
+    problem.identify(flagsReg[x86_flag_1], TRUE);
+    problem.identify(flagsReg[x86_flag_3], FALSE);
+    problem.identify(flagsReg[x86_flag_5], FALSE);
+    problem.identify(flagsReg[x86_flag_tf], FALSE);
+    problem.identify(flagsReg[x86_flag_if], TRUE);
+    problem.identify(flagsReg[x86_flag_iopl0], FALSE);
+    problem.identify(flagsReg[x86_flag_iopl1], FALSE);
+    problem.identify(flagsReg[x86_flag_nt], FALSE);
+    problem.identify(flagsReg[x86_flag_15], FALSE);
+    rm.flags = flagsReg;
+    rm.errorFlag = problem.newVars<numBmcErrors>();
     problem.addInterface(prefix + "_error", toVector(rm.errorFlag));
   }
 
-  NetlistTranslationPolicy(): isThisIp(FALSE), currentMemoryIndex(0), problem() {
+  NetlistTranslationPolicy(): isThisIp(FALSE), isValidIp(FALSE), currentMemoryIndex(0), problem() {
     makeRegMaps(newRegisterMap, "out");
   }
 
@@ -299,7 +281,7 @@ struct NetlistTranslationPolicy {
     WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, cond[0], *this);
   }
 
-  void hlt() {registerMap.errorFlag = TRUE;} // FIXME
+  void hlt() {registerMap.errorFlag[bmc_error_program_failure] = TRUE;} // FIXME
   void interrupt(uint8_t num) {} // FIXME
   LitList(64) rdtsc() {return problem.newVars<64>();}
 
@@ -309,15 +291,14 @@ struct NetlistTranslationPolicy {
       problem.condEquivalenceWords(isThisIp, registerMap.gprs[i], newRegisterMap.gprs[i]);
     }
     problem.condEquivalenceWords(isThisIp, registerMap.ip, newRegisterMap.ip);
-    for (size_t i = 0; i < 16; ++i) {
-      problem.condEquivalence(isThisIp, registerMap.flags[i], newRegisterMap.flags[i]);
-    }
-    problem.condEquivalence(isThisIp, registerMap.errorFlag, newRegisterMap.errorFlag);
+    problem.condEquivalenceWords(isThisIp, registerMap.flags, newRegisterMap.flags);
+    problem.condEquivalence(isThisIp, registerMap.errorFlag[bmc_error_program_failure], newRegisterMap.errorFlag[bmc_error_program_failure]); // bmc_error_bogus_ip will be handled separately
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
   }
 
   void startBlock(uint64_t addr) {
     isThisIp = problem.equal(origRegisterMap.ip, ::number<32>(addr));
+    isValidIp = problem.orGate(isValidIp, isThisIp);
     registerMap = origRegisterMap;
     currentMemoryIndex = 0;
     fprintf(stderr, "Block 0x%08X, isThisIp = %d\n", (unsigned int)addr, isThisIp);
@@ -346,6 +327,20 @@ int main(int argc, char** argv) {
     ROSE_ASSERT (b);
     t.processBlock(b);
   }
+  // Add "bogus IP" error
+  policy.problem.identify(
+    policy.newRegisterMap.errorFlag[bmc_error_bogus_ip],
+    policy.problem.orGate(
+      policy.origRegisterMap.errorFlag[bmc_error_bogus_ip],
+      invert(policy.isValidIp)));
+  // Ensure "program failure" error only happens with a valid IP
+  { // Semantics are "if the outgoing program failure flag is on and the incoming one was off, isValidIp must be true"
+    LitList(3) cl;
+    cl[0] = invert(policy.newRegisterMap.errorFlag[bmc_error_program_failure]);
+    cl[1] = policy.origRegisterMap.errorFlag[bmc_error_program_failure];
+    cl[2] = policy.isValidIp;
+    policy.problem.addClause(cl);
+  }
   size_t memoryUseCount = policy.memoryWrites.size();
   if (memoryUseCount < policy.memoryReads.size()) {
     memoryUseCount = policy.memoryReads.size();
@@ -364,9 +359,10 @@ int main(int argc, char** argv) {
       policy.problem.condEquivalenceWords(thisCond, policy.memoryWrites[i][j].data, totalData);
       totalCond = policy.problem.orGate(totalCond, thisCond);
     }
-    totalWrites.push_back(MemoryAccess(totalAddress, totalData, totalCond));
+    MemoryAccess totalMa(totalAddress, totalData, totalCond);
+    totalWrites.push_back(totalMa);
     if (totalCond == FALSE) continue; // We need to keep cond=0 writes in totalWrites because indices in there must match up with those in memoryReads
-    policy.problem.addInterface("memoryWrite_" + boost::lexical_cast<string>(actualMemoryWriteCount++), toVector(concat(single(totalCond), concat(totalAddress, totalData))));
+    policy.problem.addInterface("memoryWrite_" + boost::lexical_cast<string>(actualMemoryWriteCount++), totalMa.vec());
   }
   for (size_t i = 0; i < memoryUseCount; ++i) {
     LitList(32) totalAddress = policy.problem.newVars<32>();
@@ -393,7 +389,8 @@ int main(int argc, char** argv) {
     for (size_t j = 0; j < 8; ++j) {
       policy.problem.identify(matchedData[j], totalData[j]);
     }
-    policy.problem.addInterface("memoryRead_" + boost::lexical_cast<string>(actualMemoryReadCount++), toVector(concat(single(totalCond), concat(totalAddress, origMatchedData)))); // Use the original value as this interface should only cover writes before the current BB (i.e., all reads in the interface are from the initial memory at the start of the BB)
+    MemoryAccess totalMa(totalAddress, totalData, totalCond);
+    policy.problem.addInterface("memoryRead_" + boost::lexical_cast<string>(actualMemoryReadCount++), totalMa.vec()); // Use the original value as this interface should only cover writes before the current BB (i.e., all reads in the interface are from the initial memory at the start of the BB)
   }
   policy.problem.unparse(f);
   fclose(f);
