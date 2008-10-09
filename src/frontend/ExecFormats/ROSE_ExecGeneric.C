@@ -833,12 +833,14 @@ SgAsmGenericFile::dump(FILE *f)
         fprintf(f, "  %3s", overlap);
 
         /* File addresses */
-        fprintf(f, " 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64, 
+        fprintf(f, "%c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                section->get_file_alignment()==0 || section->get_offset()%section->get_file_alignment()==0?' ':'!',
                 section->get_offset(), section->get_size(), section->get_offset()+section->get_size());
 
         /* Mapped addresses */
         if (section->is_mapped()) {
-            fprintf(f, "  0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+            fprintf(f, " %c0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64,
+                    section->get_mapped_alignment()==0 || section->get_mapped_rva()%section->get_mapped_alignment()==0?' ':'!',
                     section->get_base_va(), section->get_mapped_rva(), section->get_mapped_size(),
                     section->get_mapped_rva()+section->get_mapped_size());
         } else {
@@ -1434,6 +1436,13 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "size", get_size(), get_size());
+    if (0==get_file_alignment()) {
+        fprintf(f, "%s%-*s = not specified\n", p, w, "file_alignment");
+    } else {
+        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") %s\n", p, w, "file_alignment", 
+                get_file_alignment(), get_file_alignment(),
+                0==get_offset()%get_file_alignment()?"satisfied":"NOT SATISFIED");
+    }
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", p_synthesized?"yes":"no");
     if (p_header) {
         fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name()->c_str());
@@ -1456,6 +1465,13 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     if (is_mapped()) {
         fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
+        if (0==get_mapped_alignment()) {
+            fprintf(f, "%s%-*s = not specified\n", p, w, "mapped_alignment");
+        } else {
+            fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") %s\n", p, w, "mapped_alignment", 
+                    get_mapped_alignment(), get_mapped_alignment(),
+                    0==get_mapped_rva()%get_mapped_alignment()?"satisfied":"NOT SATISFIED");
+        }
         fprintf(f, "%s%-*s = %c%c%c\n", p, w, "permissions",
                 get_mapped_rperm()?'r':'-', get_mapped_wperm()?'w':'-', get_mapped_xperm()?'x':'-');
     } else {
