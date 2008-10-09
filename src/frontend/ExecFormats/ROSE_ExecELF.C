@@ -233,6 +233,14 @@ SgAsmElfFileHeader::max_page_size()
 void
 SgAsmElfFileHeader::update_from_header()
 {
+    /* Update data encoding. */
+    if (get_sex()==ORDER_LSB) {
+        p_e_ident_data_encoding = 1;
+    } else if (get_sex()==ORDER_MSB) {
+        p_e_ident_data_encoding = 2;
+    }
+
+    /* Update entry point with first address */
     if (p_entry_rvas.size()>=1) {
         p_e_entry = p_entry_rvas[0].get_rva();
     } else {
