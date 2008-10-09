@@ -763,25 +763,34 @@ HEADER_GENERIC_SECTION_START
              };
 
 	  typedef std::pair<addr_t,addr_t> ExtentPair; 		  /* Describes a part of a file (offset, size) */
-	  class ExtentMap : public std::map<addr_t,addr_t> {      /* Multiple non-overlapping, parts of a file */
+
+	  /* An ExtentMap keeps track of contiguous regions of address space. Entries in the ExtentMap are sorted by
+	   * starting offset. No two entries overlap or adjoin. */
+	  class ExtentMap : public std::map<addr_t,addr_t> {
 	    public:
-	      ExtentMap()
-	          {}
-              ExtentMap subtract_extents(const ExtentPair &extent) const
-                  {return subtract_extents(extent.first, extent.second);}
-              ExtentMap subtract_extents(addr_t offset, addr_t size) const;
-              void insert_extent(const ExtentPair &extent)
-                  {insert_extent(extent.first, extent.second);}
-              void insert_extent(addr_t offset, addr_t size);
-              ExtentMap overlap_extents(const ExtentPair &extent) const
-                  {return overlap_extents(extent.first, extent.second);}
-              ExtentMap overlap_extents(addr_t offset, addr_t size) const;
-              void erase_extent(const ExtentPair &extent)
-                  {erase_extent(extent.first, extent.second);}
-              void erase_extent(addr_t offset, addr_t size);
-              ExtentMap::iterator best_fit_extent(addr_t size);
-              ExtentPair allocate_best_extent(addr_t size);
-              ExtentPair allocate_first_extent(addr_t size);
+	      typedef std::map<addr_t,addr_t> super;
+	      ExtentMap() {}
+
+	      /* Modifying methods */
+              void insert(const ExtentPair &extent)
+                  {insert(extent.first, extent.second);}
+              void insert(addr_t offset, addr_t size);
+              void erase(const ExtentPair &extent)
+                  {erase(extent.first, extent.second);}
+              void erase(addr_t offset, addr_t size);
+
+	      /* Operator-like non-modifying methods */
+              ExtentMap subtract_from(const ExtentPair &extent) const
+                  {return subtract_from(extent.first, extent.second);}
+              ExtentMap subtract_from(addr_t offset, addr_t size) const;
+              ExtentMap overlap_with(const ExtentPair &extent) const
+                  {return overlap_with(extent.first, extent.second);}
+              ExtentMap overlap_with(addr_t offset, addr_t size) const;
+
+	      /* Allocation-like methods */
+              iterator best_fit(addr_t size);
+              ExtentPair allocate_best_fit(addr_t size);
+              ExtentPair allocate_first_fit(addr_t size);
               void dump_extents(FILE*, const char *prefix, const char *label) const;
           };
 
