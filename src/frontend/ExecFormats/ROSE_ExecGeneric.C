@@ -636,6 +636,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
     ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
     
     SgAsmGenericSectionPtrList all = get_sections();
+    SgAsmGenericSectionPtrList neighbors, villagers;
     SgAsmGenericSection::ExtentMap amap; /* address mappings for all extents */
     SgAsmGenericSection::ExtentPair nhs; /* neighborhood of S */
     SgAsmGenericSection::ExtentPair sp;
@@ -664,10 +665,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
         ROSE_ASSERT(nhs_map.size()==1);
         nhs = *(nhs_map.begin());
 
-        /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
-         * that to define the size of the hole right of neighborhood(S). */
-        SgAsmGenericSection *after_hole = NULL;
-        SgAsmGenericSection::ExtentPair hp(0, 0);
+        /* What sections are in the neighborhood (including S), and right of the neighborhood? */
+        neighbors.clear(); /*sections in neighborhood*/
+        villagers.clear(); /*sections right of neighborhood*/
         for (size_t i=0; i<all.size(); i++) {
             SgAsmGenericSection *a = all[i];
             SgAsmGenericSection::ExtentPair ap;
@@ -678,16 +678,32 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             } else {
                 ap = a->get_mapped_extent();
             }
-            if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') {
-                if (!after_hole || ap.first<hp.first) {
-                    after_hole = a;
-                    hp = ap;
-                }
+            switch (SgAsmGenericSection::ExtentMap::category(ap, nhs)) {
+              case 'L':
+                break;
+              case 'R':
+                villagers.push_back(a);
+                break;
+              default:
+                neighbors.push_back(a);
+                break;
             }
         }
 
-        /* Do we even need to worry about neighborhoods to the right? */
-        if (!after_hole) break;
+        /* Are there any sections to the right of neighborhood(S)? If so, find the one with the lowest start address and use
+         * that to define the size of the hole right of neighborhood(S). */
+        if (0==villagers.size()) break;
+        SgAsmGenericSection *after_hole = NULL;
+        SgAsmGenericSection::ExtentPair hp(0, 0);
+        for (size_t i=0; i<villagers.size(); i++) {
+            SgAsmGenericSection *a = villagers[i];
+            SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
+            if (!after_hole || ap.first<hp.first) {
+                after_hole = a;
+                hp = ap;
+            }
+        }
+        ROSE_ASSERT(after_hole);
         ROSE_ASSERT(hp.first > nhs.first+nhs.second);
         addr_t hole_size = hp.first - (nhs.first+nhs.second);
         if (hole_size >= sa+sn) break;
@@ -700,17 +716,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
 
     /* Consider sections that are in the same neighborhood as S */
     bool resized_mem = false;
-    for (size_t i=0; i<all.size(); i++) {
-        SgAsmGenericSection *a = all[i];
-        SgAsmGenericSection::ExtentPair ap;
-        if (filespace) {
-            ap = a->get_file_extent();
-        } else if (!a->is_mapped()) {
-            continue;
-        } else {
-            ap = a->get_mapped_extent();
-        }
-        if (SgAsmGenericSection::ExtentMap::category(ap, nhs)=='R') continue; /*A is right of neighborhood(S)*/
+    for (size_t i=0; i<neighbors.size(); i++) {
+        SgAsmGenericSection *a = neighbors[i];
+        SgAsmGenericSection::ExtentPair ap = filespace ? a->get_file_extent() : a->get_mapped_extent();
         switch (SgAsmGenericSection::ExtentMap::category(ap, sp)) {
           case 'L':
             break;
