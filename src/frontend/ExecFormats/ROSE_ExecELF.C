@@ -1,8 +1,5 @@
 /* Copyright 2008 Lawrence Livermore National Security, LLC */
 
-/* FIXME: temporary debugging (RPM 2008-09-11) */
-#define USE_ELF_STRING
-
 #include "rose.h"
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -305,10 +302,8 @@ SgAsmElfFileHeader::unparse(FILE *f)
         /* FIXME: all sections should implement reallocate() */
         SgAsmElfStrtab *strtab = NULL;
         strtab = dynamic_cast<SgAsmElfStrtab*>(sections[i]);
-        if (strtab) {
-            fprintf(stderr, "ROBB: reallocating [%d] \"%s\"\n", strtab->get_id(), strtab->get_name()->c_str());
+        if (strtab)
             strtab->reallocate();
-        }
     }
     
     /* Encode ELF file header */
@@ -2029,10 +2024,6 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
             (const SgAsmElfSymbol::Elf32SymbolEntry_disk*)content(0, get_size());
         size_t nentries = get_size() / sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
         for (size_t i=0; i<nentries; i++) {
-#if 0
-            fprintf(stderr, "ROBB: SgAsmElfSymbolSection::ctor():\n");
-            fprintf(stderr, "           p_symbols=0x%08lx\n", (unsigned long)p_symbols);
-#endif
             p_symbols->get_symbols().push_back(new SgAsmElfSymbol(fhdr->get_sex(), disk+i));
         }
     } else {
@@ -2186,7 +2177,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
-#ifdef USE_ELF_STRING
+#if 0
     /* Temporary tests */
     if (access("x-do-tests", F_OK)>=0) {
         fprintf(stderr, "ROBB: running string tests...\n");
@@ -2209,10 +2200,6 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 #if 1
         /* What happens if the dynamic string table needs to grow? */
         test->set_string("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        /*next three lines are temporary until the FIXME in SgAsmElfSectionTable::unparse() is fixed*/
-        //dynstr->congeal();
-        //dynstr->reallocate();
-        //dynstr->uncongeal();
 #endif
 
 #if 0 /*First batch of tests*/
