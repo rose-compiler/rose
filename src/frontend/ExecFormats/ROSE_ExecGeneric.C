@@ -689,8 +689,8 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  *
  * A "hole" is an area of the address space that is not occupied by any section (including sections named "hole"
  * that are synthesized to occupy otherwise unreferenced file extents).  In general, making a modification to S will affect
- * sections not entirely to the left of S. However, if there's a hole to the right of neighborhood(S) then we utilize the
- * hole's address space in order to limit the effect of sections right of the hole.
+ * sections not entirely to the left of S. However, if there's a hole to the right of neighborhood(S) and the "elastic"
+ * argument is true then we utilize the hole's address space in order to limit the effect of sections right of the hole.
  *
  * When section S is shifted by 'Sa' bytes and/or enlarged by 'Sn' bytes, other sections are affected as follows:
  *     Cat L:  Not affected
@@ -704,18 +704,19 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  *     Cat E:  Shifted Sa and enlarged Sn
  *
  * If 'filespace' is set then offsets and sizes are file offsets and sizes, otherwise they are memory offsets and sizes.
+ * Modifying file space also modifies the memory space.
  *
  * NOTE: To change the address and/or size of S without regard to other sections in the same file, use set_offset() and
  *       set_size() (for file address space) or set_mapped_rva() and set_mapped_size() (for memory address space).
  */
 void
-SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, bool filespace)
+SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, bool filespace, bool elastic_holes)
 {
     ROSE_ASSERT(s!=NULL);
     ROSE_ASSERT(s->get_file()==this);
     ROSE_ASSERT(s->get_congealed()==true); /* must be done parsing */
 
-    const bool debug = false;
+    const bool debug = true;
     static size_t ncalls=0;
     char p[256];
 
@@ -777,7 +778,14 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
               case 'L':
                 break;
               case 'R':
-                villagers.push_back(a);
+                /* If holes are elastic then treat things right of the hole as being part of the right village; otherwise
+                 * add those sections to the neighborhood of S even though they fall outside 'nhs' (it's OK because this
+                 * partitioning of sections is the only thing we use 'nhs' for anyway. */
+                if (elastic_holes) {
+                    villagers.push_back(a);
+                } else if ('L'!=SgAsmGenericSection::ExtentMap::category(ap, sp)) { /*ignore sections left of S*/
+                    neighbors.push_back(a);
+                }
                 break;
               default:
                 if ('L'!=SgAsmGenericSection::ExtentMap::category(ap, sp)) /*ignore sections left of S*/
@@ -863,7 +871,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             fprintf(stderr, "%s    Calling recursively to increase hole size by 0x%08"PRIx64" (%"PRIu64") bytes\n",
                     p, need_more, need_more);
         }
-        shift_extend(after_hole, need_more, 0, filespace);
+        shift_extend(after_hole, need_more, 0, filespace, elastic_holes);
         if (debug) fprintf(stderr, "%s    Returned from recursive call\n", p);
     }
 
@@ -889,7 +897,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
                 a->set_offset(a->get_offset()+aligned_sa);
                 a->set_size(a->get_size()+sn);
                 if (!resized_mem && a->is_mapped()) {
-                    shift_extend(a, 0, sn, false);
+                    shift_extend(a, 0, sn, false, elastic_holes);
                     resized_mem = true;
                 }
             } else {
@@ -910,7 +918,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
                 if (filespace) {
                     a->set_size(a->get_size()+aligned_sasn);
                     if (!resized_mem && a->is_mapped()) {
-                        shift_extend(a, 0, aligned_sasn, false);
+                        shift_extend(a, 0, aligned_sasn, false, elastic_holes);
                         resized_mem = true;
                     }
                 } else {
@@ -929,7 +937,7 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             if (filespace) {
                 a->set_size(a->get_size()+sn);
                 if (!resized_mem && a->is_mapped()) {
-                    shift_extend(a, 0, sn, false);
+                    shift_extend(a, 0, sn, false, elastic_holes);
                     resized_mem = true;
                 }
             } else {
