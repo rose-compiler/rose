@@ -1410,12 +1410,11 @@ HEADER_ELF_STRING_TABLE_START
           void free_all_strings(bool blow_away_holes=false);
           void reallocate(); /*allocate storage for all unallocated strings*/
           virtual void set_size(addr_t newsize);
+          typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
 
      private:
           void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
           void free(addr_t offset, addr_t size); /*mark part of table as free*/
-
-          typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
 
 HEADER_ELF_STRING_TABLE_END
 
