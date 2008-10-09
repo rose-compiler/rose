@@ -18,7 +18,8 @@
 // Relative Virtual Addresses (RVA)
 // An RVA is always relative to the base virtual address (base_va) defined in an executable file header.
 // A rose_rva_t is optionally tied to an SgAsmGenericSection so that if the mapped address of the section is modified then
-// the RVA stored in the rose_rva_t object is also adjusted.
+// the RVA stored in the rose_rva_t object is also adjusted.  The section-relative offset is always treated as an unsigned
+// quantity, but negative offsets can be accommodated via integer overflow.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 rose_addr_t
@@ -33,10 +34,8 @@ void
 rose_rva_t::set_rva(rose_addr_t rva)
 {
     addr = rva;
-    if (section) {
-        ROSE_ASSERT(addr >= section->get_mapped_rva());
+    if (section)
         addr -= section->get_mapped_rva();
-    }
 }
 
 SgAsmGenericSection *
@@ -53,7 +52,6 @@ rose_rva_t::set_section(SgAsmGenericSection *new_section)
         section = NULL;
     }
     if (new_section) {
-        ROSE_ASSERT(addr >= new_section->get_mapped_rva());
         addr -= new_section->get_mapped_rva();
     }
     section = new_section;
