@@ -1128,9 +1128,10 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// String Table
-// A string table for COFF symbols contains length-coded strings. A string represented by an offset into the table where a
-// one-byte size is stored. The string data is the next N bytes.
+// String Table Sections
+//
+//    SgAsmPEStringTable is derived from SgAsmPESection, which is derived in turn from SgAsmGenericSection. A PE String Table
+//    Section points to a COFF String Table (SgAsmCoffStrtab) that is contained in the section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
@@ -1139,6 +1140,53 @@ SgAsmPEStringSection::ctor()
 {
     p_strtab = new SgAsmCoffStrtab(this);
 }
+
+/* Unparse an ElfStringSection by unparsing the ElfStrtab */
+void
+SgAsmPEStringSection::unparse(FILE *f)
+{
+    get_strtab()->unparse(f);
+    unparse_holes(f);
+}
+
+/* Augments superclass to make sure free list and such are adjusted properly */
+/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
+void
+SgAsmPEStringSection::set_size(addr_t newsize)
+{
+    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
+    addr_t orig_size = get_size();
+    addr_t adjustment = newsize - orig_size;
+
+    SgAsmPESection::set_size(newsize);
+
+    if (adjustment>0)
+        get_freelist().insert(orig_size, adjustment);
+}
+
+/* Print some debugging info */
+void
+SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPEStringSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEStringSection.", prefix);
+    }
+    
+    SgAsmPESection::dump(f, p, -1);
+
+    ROSE_ASSERT(get_strtab()!=NULL);
+    get_strtab()->dump(f, p, -1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// String Tables
+//
+//    An SgAsmCoffStrtab is a COFF String Table, inheriting from SgAsmGenericStrtab. String tables point to the
+//    SgAsmGenericSection that contains them.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Free StringStorage objects associated with this string table. It may not be safe to blow them away yet since other objects
  * may still have SgAsmStoredStrings pointing to these storage objects. So instead, we will mark all this strtab's storage
@@ -1280,21 +1328,6 @@ SgAsmCoffStrtab::reallocate()
     abort();
 }
 
-/* Augments superclass to make sure free list and such are adjusted properly */
-/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
-void
-SgAsmPEStringSection::set_size(addr_t newsize)
-{
-    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
-    addr_t orig_size = get_size();
-    addr_t adjustment = newsize - orig_size;
-
-    SgAsmPESection::set_size(newsize);
-
-    if (adjustment>0)
-        get_freelist().insert(orig_size, adjustment);
-}
-
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmCoffStrtab::unparse(FILE *f)
@@ -1355,30 +1388,6 @@ SgAsmCoffStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     container->get_freelist().dump_extents(f, p, "freelist");
 }
 
-/* Print some debugging info */
-void
-SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sPEStringSection[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sPEStringSection.", prefix);
-    }
-    
-    SgAsmPESection::dump(f, p, -1);
-
-    ROSE_ASSERT(get_strtab()!=NULL);
-    get_strtab()->dump(f, p, -1);
-}
-
-/* Unparse an ElfStringSection by unparsing the ElfStrtab */
-void
-SgAsmPEStringSection::unparse(FILE *f)
-{
-    get_strtab()->unparse(f);
-    unparse_holes(f);
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // COFF Symbol Table

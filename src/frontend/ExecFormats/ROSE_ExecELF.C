@@ -479,10 +479,10 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// String tables and strings
+// String Table Sections
 //
-//    SgAsmElfStringSection inherits from SgAsmElfSection in order to point to a string table.
-//    SgAsmElfStrtab inherits from SgAsmGenericStrtab and is the string table itself, and points to its section.
+//    SgAsmElfStringSection is derived from SgAsmElfSection, which is derived in turn from SgAsmGenericSection. An ELF String
+//    Table Section points to the ELF String Table (SgAsmElfStrtab) that is contained in the section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
@@ -491,6 +491,53 @@ SgAsmElfStringSection::ctor()
 {
     p_strtab = new SgAsmElfStrtab(this);
 }
+
+/* Unparse an ElfStringSection by unparsing the ElfStrtab */
+void
+SgAsmElfStringSection::unparse(FILE *f)
+{
+    get_strtab()->unparse(f);
+    unparse_holes(f);
+}
+
+/* Augments superclass to make sure free list and such are adjusted properly */
+/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
+void
+SgAsmElfStringSection::set_size(addr_t newsize)
+{
+    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
+    addr_t orig_size = get_size();
+    addr_t adjustment = newsize - orig_size;
+
+    SgAsmElfSection::set_size(newsize);
+
+    if (adjustment>0)
+        get_freelist().insert(orig_size, adjustment);
+}
+
+/* Print some debugging info */
+void
+SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfStringSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfStringSection.", prefix);
+    }
+    
+    SgAsmElfSection::dump(f, p, -1);
+
+    ROSE_ASSERT(get_strtab()!=NULL);
+    get_strtab()->dump(f, p, -1);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// String Tables
+//
+//    An SgAsmElfStrtab is an ELF String Table, inheriting from SgAsmGenericStrtab. String tables point to the
+//    SgAsmGenericSection that contains them. In the case of SgAsmElfStrtab it points to an SgAsmElfStringSection.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
 void
@@ -800,45 +847,6 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     container->get_freelist().dump_extents(f, p, "freelist");
 }
 
-/* Print some debugging info */
-void
-SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sElfStringSection[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sElfStringSection.", prefix);
-    }
-    
-    SgAsmElfSection::dump(f, p, -1);
-
-    ROSE_ASSERT(get_strtab()!=NULL);
-    get_strtab()->dump(f, p, -1);
-}
-
-/* Augments superclass to make sure free list and such are adjusted properly */
-/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
-void
-SgAsmElfStringSection::set_size(addr_t newsize)
-{
-    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
-    addr_t orig_size = get_size();
-    addr_t adjustment = newsize - orig_size;
-
-    SgAsmElfSection::set_size(newsize);
-
-    if (adjustment>0)
-        get_freelist().insert(orig_size, adjustment);
-}
-
-/* Unparse an ElfStringSection by unparsing the ElfStrtab */
-void
-SgAsmElfStringSection::unparse(FILE *f)
-{
-    get_strtab()->unparse(f);
-    unparse_holes(f);
-}
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
