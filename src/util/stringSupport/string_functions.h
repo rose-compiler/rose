@@ -333,6 +333,11 @@ namespace StringUtility
             int directoryDistance(const std::string& left,
                                   const std::string& right);
 
+
+	    /* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
+	    std::string htmlEscape(const std::string& s);
+
+
    };
 
 

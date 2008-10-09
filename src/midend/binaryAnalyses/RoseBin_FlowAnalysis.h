@@ -20,6 +20,18 @@
 
 #include <cstdlib>
 
+
+
+// **************** AS DEFINED BY ANDREAS *****************************************
+class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
+{
+  public:
+    void* operator()(first_argument_type node, std::vector<SgAsmFunctionDeclaration*>* insns ) const{
+      if (isSgAsmFunctionDeclaration(node)) insns->push_back(isSgAsmFunctionDeclaration(node));
+      return NULL;
+    }
+};
+
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmInstruction *>* , void* >
 {
  public:
@@ -37,6 +49,9 @@ class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vect
     return NULL;
   }
 };
+// ************************************************************************************
+
+
 
 
 class RoseBin_FlowAnalysis : public AstSimpleProcessing {

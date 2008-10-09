@@ -26,6 +26,21 @@
 using namespace std;
 
 
+/* Added htmlEscape necessary for QROSE work to this utility library - tps (9Oct2008) */
+std::string 
+StringUtility::htmlEscape(const std::string& s) {
+  std::string s2;
+  for (size_t i = 0; i < s.size(); ++i) {
+    switch (s[i]) {
+    case '<': s2 += "&lt;"; break;
+    case '>': s2 += "&gt;"; break;
+    case '&': s2 += "&amp;"; break;
+    default: s2 += s[i]; break;
+    }
+  }
+	      return s2;
+}
+
 
 std::list<std::string> 
 StringUtility::findfile(std::string patternString, std::string pathString)

@@ -24,6 +24,9 @@ using namespace boost::filesystem;
 using namespace std;
 using namespace boost;
 using namespace __gnu_cxx;
+
+#if 0
+// tps (9Oct08) : Moved to RoseBin_FlowAnalysis.h
 class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
 {
   public:
@@ -32,7 +35,6 @@ class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<
       return NULL;
     }
 };
-#if 0
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
 {
   public:
@@ -43,7 +45,8 @@ class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<
 };
 #endif
 
-
+#if 0
+// tps: moved this into StringUtility
 static string htmlEscape(const string& s) {
   string s2;
   for (size_t i = 0; i < s.size(); ++i) {
@@ -56,6 +59,8 @@ static string htmlEscape(const string& s) {
   }
   return s2;
 }
+#endif
+
 class DeleteAST : public SgSimpleProcessing
    {
      public:
@@ -521,7 +526,7 @@ std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Inst
       SgAsmx86Instruction* insn = *beg;
       string mne = insn->get_mnemonic();
       boost::to_lower(mne);
-      mne = "<font color=\"red\">" + htmlEscape(mne)+"</font>";
+      mne = "<font color=\"red\">" + StringUtility::htmlEscape(mne)+"</font>";
 
       normalizedUnparsedInstructions += mne;
       const SgAsmExpressionPtrList& operands = getOperands(insn);
@@ -550,8 +555,8 @@ std::string BinaryCloneGui::normalizeInstructionsToHTML(std::vector<SgAsmx86Inst
 
 string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   if (insn == NULL) return "BOGUS:NULL";
-  string result = "<font color=\"green\">" + htmlEscape(StringUtility::intToHex(insn->get_address())) + "</font>:";
-  result += "<font color=\"red\">" + htmlEscape(insn->get_mnemonic());
+  string result = "<font color=\"green\">" + StringUtility::htmlEscape(StringUtility::intToHex(insn->get_address())) + "</font>:";
+  result += "<font color=\"red\">" + StringUtility::htmlEscape(insn->get_mnemonic());
   switch (insn->get_branchPrediction()) {
     case x86_branch_prediction_none: break;
     case x86_branch_prediction_taken: result += ",pt"; break;
@@ -564,7 +569,7 @@ string unparseX86InstructionToHTMLWithAddress(SgAsmx86Instruction* insn) {
   const SgAsmExpressionPtrList& operands = opList->get_operands();
   for (size_t i = 0; i < operands.size(); ++i) {
     if (i != 0) result += ", ";
-    result += "<font color=\"blue\">" + htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
+    result += "<font color=\"blue\">" + StringUtility::htmlEscape(unparseX86Expression(operands[i], (insn->get_kind() == x86_lea))) + "</font>";
   }
   return result;
 }
