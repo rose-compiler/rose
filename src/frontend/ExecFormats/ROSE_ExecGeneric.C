@@ -920,6 +920,21 @@ SgAsmGenericSection::set_size(addr_t size)
     p_size = size;
 }
 
+/* Returns current file offset of section in bytes. */
+rose_addr_t
+SgAsmGenericSection::get_offset() const
+{
+    return p_offset;
+}
+
+/* Adjust the current offset of a section. This is virtual because some sections may need to do something special. This
+ * function should not adjust the offset of other sections, or the mapping of any section. */
+void
+SgAsmGenericSection::set_offset(addr_t offset)
+{
+    p_offset = offset;
+}
+
 /* Returns starting byte offset in the file */
 rose_addr_t
 SgAsmGenericSection::get_end_offset()

@@ -779,7 +779,8 @@ HEADER_GENERIC_SECTION_START
        /* Functions for section extent within the file */
           addr_t        get_size() const;
 	  virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
-       // addr_t        get_offset() {return offset;}   /* read-only */
+	  addr_t        get_offset() const;
+	  virtual void  set_offset(addr_t);             /* Move a section w/o regard to otehr sections or mapping */
           addr_t        get_end_offset(); /* file offset for end of section */
           void          extend(addr_t nbytes);         /* make section larger by extending the end */
           void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
