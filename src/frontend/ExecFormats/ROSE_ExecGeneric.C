@@ -994,7 +994,8 @@ SgAsmGenericSection::get_end_offset()
 bool
 SgAsmGenericSection::is_mapped()
 {
-    return get_mapped_rva()!=0 || get_mapped_size()!=0;
+    return (get_mapped_rva()!=0 || get_mapped_size()!=0 ||
+            get_mapped_rperm() || get_mapped_wperm() || get_mapped_xperm());
 }
 
 /* Causes section to not be mapped to memory. */
@@ -1003,6 +1004,9 @@ SgAsmGenericSection::clear_mapped()
 {
     set_mapped_size(0);
     set_mapped_rva(0);
+    set_mapped_rperm(false);
+    set_mapped_wperm(false);
+    set_mapped_xperm(false);
 }
 
 /* Returns mapped size of section. */

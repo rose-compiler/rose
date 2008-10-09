@@ -1320,6 +1320,7 @@ HEADER_ELF_SECTION_START
      public:
        /* Constructor for size based on section table entry (normal sections) */
           SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
+	  SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
 
        /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
           SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size);
@@ -1343,6 +1344,7 @@ HEADER_ELF_SECTION_START
 
      private:
           void ctor(SgAsmElfSectionTableEntry*);
+	  void ctor(SgAsmElfSegmentTableEntry*);
 
 HEADER_ELF_SECTION_END
 
@@ -1537,6 +1539,7 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_START
 
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk*);
           void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*);
+	  void update_from_section(SgAsmElfSection*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
        // DQ (8/26/2008): Added support for clearer output in dump function
@@ -4098,9 +4101,9 @@ SOURCE_EXECUTABLE_FILE_FORMAT_END
 SOURCE_GENERIC_SECTION_START
 
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
-   : 
-p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
-p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(true), p_mapped_wperm(true), p_mapped_xperm(false), p_congealed(false)
+   : p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false), p_id(-1), p_name(0),
+     p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(false), p_mapped_wperm(false), p_mapped_xperm(false),
+     p_congealed(false)
    {
      ctor(f, fhdr, offset, size);
    }
@@ -4392,9 +4395,19 @@ SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_START
 SOURCE_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 
 SOURCE_ELF_SECTION_START
+
+/* Constructor for sections defined in the ELF Section Table */
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
    : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), shdr->get_sh_size()),
-     p_linked_section(NULL), p_st_entry(NULL)
+     p_linked_section(NULL), p_section_entry(shdr), p_segment_entry(NULL)
+   {
+     ctor(shdr);
+   }
+
+/* Constructor for sections defined in the ELF Segment Table */
+SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr)
+   : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz()),
+     p_linked_section(NULL), p_section_entry(NULL), p_segment_entry(shdr)
    {
      ctor(shdr);
    }
@@ -4402,7 +4415,7 @@ SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableE
 /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
 SgAsmElfSection::SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size)
    : SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_sh_offset(), file_size),
-     p_linked_section(NULL), p_st_entry(NULL)
+     p_linked_section(NULL), p_section_entry(shdr), p_segment_entry(NULL)
    {
      ctor(shdr);
    }

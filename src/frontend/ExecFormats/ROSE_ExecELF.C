@@ -211,12 +211,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Entry point */
     p_base_va = 0;
-
- // printf ("p_e_entry = %zu \n",p_e_entry);
-
     add_entry_rva(p_e_entry);
-
- // printf ("Leaving SgAsmElfFileHeader::ctor() \n");
 }
 
 /* Maximum page size according to the ABI. This is used by the loader when calculating the program base address. Since parts
@@ -329,7 +324,6 @@ SgAsmElfFileHeader::unparse(FILE *f)
         ROSE_ASSERT(p_section_table->get_header()==this);
         p_section_table->unparse(f);
     }
-
     if (p_segment_table) {
         ROSE_ASSERT(p_segment_table->get_header()==this);
         p_segment_table->unparse(f);
@@ -377,7 +371,7 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 // Sections
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/* Constructor */
+/* Constructor for sections defined in the ELF Section Table */
 void
 SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
 {
@@ -405,6 +399,46 @@ SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
         set_mapped_rva(shdr->get_sh_addr());
         set_mapped_size(shdr->get_sh_size());
     }
+}
+
+/* Constructor for sections defined in the ELF Segment Table */
+void
+SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
+{
+    set_synthesized(false);
+    
+    char name[128];
+    switch (shdr->get_type()) {
+      case SgAsmElfSegmentTableEntry::PT_LOAD:
+        sprintf(name, "ELF load (segment %zu)", shdr->get_index());
+        break;
+      case SgAsmElfSegmentTableEntry::PT_DYNAMIC:
+        sprintf(name, "ELF dynamic (segment %zu)", shdr->get_index());
+        break;
+      case SgAsmElfSegmentTableEntry::PT_INTERP:
+        sprintf(name, "ELF interpreter (segment %zu)", shdr->get_index());
+        break;
+      case SgAsmElfSegmentTableEntry::PT_NOTE:
+        sprintf(name, "ELF note (segment %zu)", shdr->get_index());
+        break;
+      case SgAsmElfSegmentTableEntry::PT_SHLIB:
+        sprintf(name, "ELF shlib (segment %zu)", shdr->get_index());
+        break;
+      case SgAsmElfSegmentTableEntry::PT_PHDR:
+        sprintf(name, "ELF segment table (segment %zu)", shdr->get_index());
+        break;
+      default:
+        sprintf(name, "ELF segment 0x%08x (segment %zu)", shdr->get_type(), shdr->get_index());
+        break;
+    }
+    set_name(new SgAsmBasicString(name));
+    set_purpose(SP_HEADER);
+
+    set_mapped_rva(shdr->get_vaddr());
+    set_mapped_size(shdr->get_memsz());
+    set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
+    set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
+    set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
 }
 
 /* If the mapped address of a section changes make sure that the ELF header's entry point is updated also if it happens to
@@ -437,7 +471,12 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     SgAsmGenericSection::dump(f, p, -1);
-    p_st_entry->dump(f, p, -1);
+    
+    if (get_section_entry())
+        get_section_entry()->dump(f, p, -1);
+    if (get_segment_entry())
+        get_segment_entry()->dump(f, p, -1);
+
     if (p_linked_section) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to", p_linked_section->get_id(), p_linked_section->get_name()->c_str());
     } else {
@@ -1030,8 +1069,6 @@ SgAsmElfSectionTable::ctor()
          * the ELF header specifies the size of each entry. */
         std::vector<SgAsmElfSectionTableEntry*> entries;
         addr_t offset = 0;
-
-     // This is an abby normally complex loop increment expression
         for (size_t i = 0; i < fhdr->get_e_shnum(); i++, offset += fhdr->get_e_shentsize()) {
             SgAsmElfSectionTableEntry *shdr = NULL;
             if (4 == fhdr->get_word_size()) {
@@ -1055,7 +1092,6 @@ SgAsmElfSectionTable::ctor()
             SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
             strtab = new SgAsmElfStrtab(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
-            strtab->set_st_entry(shdr);
             strtab->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
         }
 
@@ -1088,7 +1124,6 @@ SgAsmElfSectionTable::ctor()
                 break;
             }
             section->set_id(i);
-            section->set_st_entry(shdr);
             if (strtab)
                 section->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
             section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
@@ -1197,10 +1232,11 @@ SgAsmElfSectionTable::unparse(FILE *f)
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
     /* Write the entries */
-    for (size_t i = 0; i < sections.size(); i++) {
+    for (size_t i = 0; i < sections.size(); ++i) {
         if (sections[i]->get_id() >= 0) {
             SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
-            SgAsmElfSectionTableEntry *shdr = section->get_st_entry();
+            SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
+            ROSE_ASSERT(shdr!=NULL);
             shdr->update_from_section(section);
 
             SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk32;
@@ -1308,6 +1344,31 @@ SgAsmElfSegmentTableEntry::encode(ByteOrder sex, Elf64SegmentTableEntry_disk *di
     return disk;
 }
 
+/* Update this segment table entry with newer information from the section */
+void
+SgAsmElfSegmentTableEntry::update_from_section(SgAsmElfSection *section)
+{
+    set_offset(section->get_offset());
+    set_filesz(section->get_size());
+
+    set_vaddr(section->get_mapped_va());
+    set_memsz(section->get_mapped_size());
+    if (section->get_mapped_rperm()) {
+        p_flags = (SegmentFlags)(p_flags | PF_RPERM);
+    } else {
+        p_flags = (SegmentFlags)(p_flags & ~PF_RPERM);
+    }
+    if (section->get_mapped_wperm()) {
+        p_flags = (SegmentFlags)(p_flags | PF_WPERM);
+    } else {
+        p_flags = (SegmentFlags)(p_flags & ~PF_WPERM);
+    }
+    if (section->get_mapped_xperm()) {
+        p_flags = (SegmentFlags)(p_flags | PF_XPERM);
+    } else {
+        p_flags = (SegmentFlags)(p_flags & ~PF_XPERM);
+    }
+}
 
 /* Print some debugging info */
 void
@@ -1321,26 +1382,21 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
- // DQ (8/25/2008): Output type in hex because some enum values are set to hex values.
-#if 0
- // fprintf(f, "%s%-*s = %u\n",                              p, w, "p_type",         p_type);
-    fprintf(f, "%s%-*s = 0x%08x\n",                          p, w, "p_type",         p_type);
-#else
-    fprintf(f, "%s%-*s = 0x%08x = %s\n", p, w, "p_type",  p_type,  stringifyType(p_type).c_str());
-#endif
-    fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "p_flags",        p_flags);
+    fprintf(f, "%s%-*s = %zu\n",                             p, w, "index",  p_index);
+    fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  stringifyType(p_type).c_str());
+    fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "flags",  p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
     fputc(p_flags & PF_WPERM ? 'w' : '-', f);
     fputc(p_flags & PF_XPERM ? 'x' : '-', f);
     if (p_flags & PF_PROC_MASK) fputs(" proc", f);
     if (p_flags & PF_RESERVED) fputs(" *", f);
     fputc('\n', f);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 " bytes into file\n", p, w, "p_offset",       p_offset);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_vaddr",        p_vaddr);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "p_paddr",        p_paddr);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_filesz",       p_filesz);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "p_memsz",        p_memsz);
-    fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "p_align",        p_align);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 " bytes into file\n", p, w, "offset", p_offset);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "vaddr",  p_vaddr);
+    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "paddr",  p_paddr);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "filesz", p_filesz);
+    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "memsz",  p_memsz);
+    fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "align",  p_align);
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
@@ -1349,60 +1405,31 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 
 // DQ (26/2008): Support output of named enum values
 std::string
-SgAsmElfSegmentTableEntry::stringifyType ( SgAsmElfSegmentTableEntry::SegmentType kind ) const
-   {
-     std::string s;
+SgAsmElfSegmentTableEntry::stringifyType(SegmentType kind) const
+{
+    std::string s;
 
-     switch (kind)
-        {
-          case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break;
-          case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break;
-          case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break;
-          case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break;
-          case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break;
-          case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break;
-          case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break;
-          case SgAsmElfSegmentTableEntry::PT_LOPROC:  s = "PT_LOPROC";  break;
-          case SgAsmElfSegmentTableEntry::PT_HIPROC:  s = "PT_HIPROC";  break;
+    switch (kind) {
+      case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break;
+      case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break;
+      case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break;
+      case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break;
+      case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break;
+      case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break;
+      case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break;
+      case SgAsmElfSegmentTableEntry::PT_LOPROC:  s = "PT_LOPROC";  break;
+      case SgAsmElfSegmentTableEntry::PT_HIPROC:  s = "PT_HIPROC";  break;
 
-          default:
-             {
-               s = "error";
+      default:
+      {
+          s = "error";
 
-            // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
-               printf ("Warning: default reached for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
-             }
-        }
-
-     return s;
-   }
-
-#if 0
-// In retrospect I don't think we need this...
-// DQ (26/2008): Support output of named enum values 
-std::string
-SgAsmElfSegmentTableEntry::stringifyFlags ( SgAsmElfSegmentTableEntry::SegmentFlags kind ) const
-   {
-     std::string s;
-
-     switch (kind)
-        {
-          case SgAsmElfSegmentTableEntry::PF_RESERVED:  s = "PF_RESERVED"; break;
-          case SgAsmElfSegmentTableEntry::PF_EPERM:     s = "PF_EPERM"; break;
-          case SgAsmElfSegmentTableEntry::PF_WPERM:     s = "PF_WPERM"; break;
-          case SgAsmElfSegmentTableEntry::PF_RPERM:     s = "PF_RPERM"; break;
-          case SgAsmElfSegmentTableEntry::PF_PROC_MASK: s = "PF_PROC_MASK"; break;
-
-          default:
-             {
-               s = "error";
-               printf ("Error: default reached for SgAsmElfSegmentTableEntry::stringifyFlags = %d \n",kind);
-             }
-        }
-
-     return s;
-   }
-#endif
+          // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
+          printf ("Warning: default reached for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
+      }
+    }
+    return s;
+}
 
 /* Constructor reads the Elf Segment (Program Header) Table */
 void
@@ -1412,9 +1439,6 @@ SgAsmElfSegmentTable::ctor()
     set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
 
-    p_entries = new SgAsmElfSegmentTableEntryList;
-    p_entries->set_parent(this);
-    
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1443,9 +1467,7 @@ SgAsmElfSegmentTable::ctor()
                     (const SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk*)content(offset, struct_size);
                 shdr = new SgAsmElfSegmentTableEntry(sex, disk);
             }
-            p_entries->get_entries().push_back(shdr);
-
-            p_entries->get_entries().back()->set_parent(p_entries);
+            shdr->set_index(i);
 
             /* Save extra bytes */
             addr_t nextra = fhdr->get_e_phentsize() - struct_size;
@@ -1456,19 +1478,17 @@ SgAsmElfSegmentTable::ctor()
             if (SgAsmElfSegmentTableEntry::PT_NULL == shdr->get_type())
                 continue;
 
-            /* Create sections. ELF files can have a section table and a segment table. The former is used for linking and the
-             * latter for loading. At this point we've already read the section table and created sections, and now we'll
-             * create more sections from the segment table -- but only if the segment table describes a section we haven't
-             * already seen. */
-            std::vector<SgAsmGenericSection*> possible =
-                fhdr->get_file()->get_sections_by_offset(shdr->get_offset(), shdr->get_filesz());
-            std::vector<SgAsmGenericSection*> matching;
-            for (size_t j = 0; j < possible.size(); j++) {
+            /* Create SgAsmElfSection objects for each ELF Segment. However, if the ELF Segment Table describes a segment
+             * that's the same offset and size as a section from the Elf Section Table (and the memory mappings are
+             * consistent) then use the preexisting section instead of creating a new one. */
+            SgAsmElfSection *s = NULL;
+            SgAsmGenericSectionPtrList possible = fhdr->get_file()->get_sections_by_offset(shdr->get_offset(), shdr->get_filesz());
+            for (size_t j = 0; !s && j < possible.size(); j++) {
                 if (possible[j]->get_offset()!=shdr->get_offset() || possible[j]->get_size()!=shdr->get_filesz())
                     continue; /*different file extent*/
                 if (possible[j]->is_mapped()) {
                     if (possible[j]->get_mapped_rva() != shdr->get_vaddr() || possible[j]->get_mapped_size() != shdr->get_memsz())
-                        continue; /*different mapped*/
+                        continue; /*different mapped address or size*/
                     unsigned section_perms = (possible[j]->get_mapped_rperm() ? 0x01 : 0x00) |
                                              (possible[j]->get_mapped_wperm() ? 0x02 : 0x00) |
                                              (possible[j]->get_mapped_xperm() ? 0x04 : 0x00);
@@ -1476,55 +1496,27 @@ SgAsmElfSegmentTable::ctor()
                                              (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? 0x02 : 0x00) |
                                              (shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? 0x04 : 0x00);
                     if (section_perms != segment_perms)
-                        continue;
+                        continue; /*different mapped permissions*/
                 }
-                matching.push_back(possible[j]);
+
+                /* Found a match. Set memory mapping params. */
+                s = dynamic_cast<SgAsmElfSection*>(possible[j]);
+                if (!s) continue; /*potential match was not from the ELF Section or Segment table*/
+                if (s->get_segment_entry()) continue; /*potential match is assigned to some other segment table entry*/
+
+                s->set_segment_entry(shdr);
+                if (!s->is_mapped()) {
+                    s->set_mapped_rva(shdr->get_vaddr());
+                    s->set_mapped_size(shdr->get_memsz());
+                    s->set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
+                    s->set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
+                    s->set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
+                }
             }
 
-            SgAsmGenericSection *s = NULL;
-            if (0 == matching.size()) {
-                /* No matching section; create a new one */
-                char name[128];
-                switch (shdr->get_type()) {
-                  case SgAsmElfSegmentTableEntry::PT_LOAD:
-                    sprintf(name, "ELF load (segment %zu)", i);
-                    break;
-                  case SgAsmElfSegmentTableEntry::PT_DYNAMIC:
-                    sprintf(name, "ELF dynamic (segment %zu)", i);
-                    break;
-                  case SgAsmElfSegmentTableEntry::PT_INTERP:
-                    sprintf(name, "ELF interpreter (segment %zu)", i);
-                    break;
-                  case SgAsmElfSegmentTableEntry::PT_NOTE:
-                    sprintf(name, "ELF note (segment %zu)", i);
-                    break;
-                  case SgAsmElfSegmentTableEntry::PT_SHLIB:
-                    sprintf(name, "ELF shlib (segment %zu)", i);
-                    break;
-                  case SgAsmElfSegmentTableEntry::PT_PHDR:
-                    sprintf(name, "ELF segment table (segment %zu)", i);
-                    break;
-                  default:
-                    sprintf(name, "ELF segment 0x%08x (segment %zu)", shdr->get_type(), i);
-                    break;
-                }
-                s = new SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz());
-                s->set_synthesized(true);
-                s->set_name(new SgAsmBasicString(name));
-                s->set_purpose(SP_HEADER);
-            } else if (1 == matching.size()) {
-                /* Use the single matching section. */
-                s = matching[0];
-            }
-
-            /* Make sure the section is mapped. */
-            if (!s->is_mapped()) {
-                s->set_mapped_rva(shdr->get_vaddr());
-                s->set_mapped_size(shdr->get_memsz());
-                s->set_mapped_rperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_RPERM ? true : false);
-                s->set_mapped_wperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_WPERM ? true : false);
-                s->set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
-            }
+            /* Create a new segment if no matching section was found. */
+            if (!s)
+                s = new SgAsmElfSection(fhdr, shdr);
         }
     }
 }
@@ -1536,28 +1528,39 @@ SgAsmElfSegmentTable::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
+    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+    
+    /* Write the entries */
+    for (size_t i=0; i < sections.size(); ++i) {
+        SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        if (section && section->get_segment_entry()) {
+            SgAsmElfSegmentTableEntry *shdr = section->get_segment_entry();
+            shdr->update_from_section(section);
+            
+            SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk32;
+            SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
+            void *disk = NULL;
+            size_t size = 0;
+        
+            if (4==fhdr->get_word_size()) {
+                disk = shdr->encode(sex, &disk32);
+                size = sizeof disk32;
+            } else if (8==fhdr->get_word_size()) {
+                disk = shdr->encode(sex, &disk64);
+                size = sizeof disk64;
+            } else {
+                ROSE_ASSERT(!"invalid word size");
+            }
+        
+            /* The disk struct */
+            addr_t extra_offset = write(f, shdr->get_index() * fhdr->get_e_phentsize(), size, disk);
+            if (shdr->get_extra().size() > 0)
+                write(f, extra_offset, shdr->get_extra());
 
-    for (size_t i=0; i < p_entries->get_entries().size(); i++) {
-        SgAsmElfSegmentTableEntry *shdr = p_entries->get_entries()[i];
-        SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk32;
-        SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
-        void *disk = NULL;
-        size_t size = 0;
-        
-        if (4==fhdr->get_word_size()) {
-            disk = shdr->encode(sex, &disk32);
-            size = sizeof disk32;
-        } else if (8==fhdr->get_word_size()) {
-            disk = shdr->encode(sex, &disk64);
-            size = sizeof disk64;
-        } else {
-            ROSE_ASSERT(!"invalid word size");
+            /* The section itself (unless we already unparsed it as a member of the ELF Section Table */
+            if (!section->get_section_entry())
+                section->unparse(f);
         }
-        
-        /* The disk struct */
-        addr_t extra_offset = write(f, i * fhdr->get_e_phentsize(), size, disk);
-        if (shdr->get_extra().size() > 0)
-            write(f, extra_offset, shdr->get_extra());
     }
 
     unparse_holes(f);
@@ -1573,13 +1576,8 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sSegmentTable.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zd entries\n", p, w, "size", p_entries->get_entries().size());
-    for (size_t i=0; i < p_entries->get_entries().size(); i++) {
-        p_entries->get_entries()[i]->dump(f, p, i);
-    }
 
     hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
