@@ -793,44 +793,24 @@ SgAsmGenericFile::dump(FILE *f)
 void
 SgAsmGenericFile::fill_holes()
 {
-    /* Find the holes and store their extent info */
-    SgAsmGenericSection::ExtentVector extents;
-    addr_t offset = 0;
-    while (offset < get_size()) {
-        SgAsmGenericSectionPtrList sections = get_sections_by_offset(offset, 1); /*all sections at this file offset*/
-        
-        /* Find the maximum ending offset */
-        addr_t end_offset = 0;
-        for (size_t i=0; i<sections.size(); i++) {
-            addr_t tmp = sections[i]->get_offset() + sections[i]->get_size();
-            if (tmp>end_offset)
-                end_offset = tmp;
-        }
-
-        /* Sections may extend beyond EOF, but don't create holes past EOF. */
-        if (end_offset > get_size())
-            end_offset = get_size();
-        
-        /* Is there a hole here? */
-        if (end_offset<=offset) {
-            end_offset = get_next_section_offset(offset+1);
-            if (end_offset==(addr_t)-1)
-                end_offset = get_size();
-            extents.push_back(SgAsmGenericSection::ExtentPair(offset, end_offset-offset));
-        }
-        
-        /* Advance */
-        offset = end_offset;
+    /* Get the list of file extents referenced by all file sections */
+    ExtentMap refs;
+    SgAsmSectionPtrList sections = get_sections();
+    for (SgAsmSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
+        refs.insert((*i)->get_offset(), (*i)->get_size());
     }
 
+    /* The hole extents are everything other than the sections */
+    ExtentMap holes = subtract_extents(refs, 0, get_size());
+
     /* Create the sections representing the holes */
-    for (size_t i=0; i<extents.size(); i++) {
-        SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, extents[i].first, extents[i].second);
-        hole->set_synthesized(true);
-        hole->set_name(new SgAsmBasicString("hole"));
-        hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
-        hole->congeal();
-        add_hole(hole);
+    for (ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
+      	SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, (*i).first, (*i).second);
+      	hole->set_synthesized(true);
+      	hole->set_name(new SgAsmBasicString("hole"));
+      	hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
+      	hole->congeal();
+      	add_hole(hole);
     }
 }
 
