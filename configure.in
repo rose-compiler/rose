@@ -822,7 +822,7 @@ AC_PATH_QT_MOC
 AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
 
 AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
-AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" != xno])
+AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
 
 AC_CONFIG_SUBDIRS([src/3rdPartyLibraries/libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
