@@ -1417,10 +1417,8 @@ HEADER_ELF_STRING_TABLE_START
      private:
           void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
           void free(addr_t offset, addr_t size); /*mark part of table as free*/
-          rose_addr_t best_fit(addr_t need); /*allocate from free list*/
 
           typedef std::vector<class SgAsmElfStringStorage*> referenced_t;
-          typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
 
 HEADER_ELF_STRING_TABLE_END
 

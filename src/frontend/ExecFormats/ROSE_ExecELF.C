@@ -676,37 +676,6 @@ SgAsmElfStrtab::create_string(addr_t offset, bool shared)
     return new SgAsmElfString(storage);
 }
 
-/* Allocates storage for NEED bytes from the free list using best-fit; returns no_id when unable. */
-rose_addr_t
-SgAsmElfStrtab::best_fit(addr_t need)
-{
-    /* Find best entry in the free list */
-    freelist_t::iterator best = p_freelist.end();
-    for (freelist_t::iterator i=p_freelist.begin(); i!=p_freelist.end(); ++i) {
-        if (need==(*i).second) {
-            /* Best possible!  */
-            addr_t retval = i->first;
-            p_freelist.erase(i);
-            return retval;
-        } else if (need <= i->second &&
-                   (best==p_freelist.end() || i->second<best->second)) {
-            best = i;
-        }
-    }
-
-    /* Can we rearrange free space to make enough? We do this after the loop above because it's less intrusive. */
-    if (best==p_freelist.end())
-        return SgAsmElfString::unallocated; /*FIXME: not implemented yet*/
-    
-    /* Adjust free list */
-    ROSE_ASSERT(best != p_freelist.end());
-    ROSE_ASSERT(need < best->second);
-    addr_t retval = best->first;
-    p_freelist.insert(freelist_t::value_type(best->first+need, best->second-need));
-    p_freelist.erase(best);
-    return retval;
-}
-
 /* Free area of this string table that corresponds to the string currently stored. Use this in preference to the offset/size
  * version of free() when possible. */
 void
@@ -732,16 +701,14 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
     ROSE_ASSERT(offset+size <= get_size());
     
     /* Make sure area is not already in free list. */
-    for (freelist_t::const_iterator i=p_freelist.begin(); i!=p_freelist.end(); ++i) {
-        ROSE_ASSERT(offset+size <= i->first ||       /*to-free area is entirely left of existing free item or*/
-                    offset >= i->first + i->second); /*to-free area is entirely right of existing free item*/
-    }
+    ROSE_ASSERT(p_freelist.overlap_with(offset, size).size()==0);
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmElfString::no_id to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     for (size_t i=0; i<p_referenced_storage.size() && size>0; i++) {
         if (p_referenced_storage[i]->get_offset()==SgAsmElfString::unallocated) continue;
-        if (p_referenced_storage[i]->get_offset() <= offset && p_referenced_storage[i]->get_offset()+p_referenced_storage[i]->get_string().size()+1 > offset) {
+        if (p_referenced_storage[i]->get_offset() <= offset &&
+            p_referenced_storage[i]->get_offset()+p_referenced_storage[i]->get_string().size()+1 > offset) {
             /* We are freeing "bar" but something references the overlapping "foobar" (or even just "bar"). Do not free
              * anything. */
             ROSE_ASSERT(offset+size == p_referenced_storage[i]->get_offset()+p_referenced_storage[i]->get_string().size()+1);
@@ -753,30 +720,8 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
         }
     }
 
-    /* Nothing to free! */
-    if (0==size) return;
-    p_num_freed++;
-
-    /* Coalesce with neighbors */
-    freelist_t::iterator right = p_freelist.end();
-    freelist_t::iterator left  = p_freelist.end();
-    for (freelist_t::iterator i=p_freelist.begin(); i!=p_freelist.end() && (right!=p_freelist.end() || left!=p_freelist.end()); ++i) {
-        if (offset + size == i->first)
-            right = i;
-        if (offset == i->first + i->second)
-            left = i;
-    }
-    if (left!=p_freelist.end() && right!=p_freelist.end()) {
-        left->second += size + right->second;
-        p_freelist.erase(right);
-    } else if (left!=p_freelist.end()) {
-        left->second += size;
-    } else if (right!=p_freelist.end()) {
-        p_freelist.insert(freelist_t::value_type(offset, right->second+size));
-        p_freelist.erase(right);
-    } else {
-        p_freelist.insert(freelist_t::value_type(offset, size));
-    }
+    /* Mark region as free */
+    p_freelist.insert(offset, size);
 }
 
 /* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
@@ -806,7 +751,7 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 
     /* Remove the empty string from the free list */
     if (p_empty_string)
-	p_freelist.erase_extent(p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
+	p_freelist.erase(p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
     
     /* Restore state */
     if (was_congealed)
@@ -868,8 +813,14 @@ SgAsmElfStrtab::reallocate()
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmElfString::unallocated) {
-            addr_t new_offset = best_fit(storage->get_string().size()+1);    /* +1 for NUL terminator */
-            storage->set_offset(new_offset);
+            ExtentPair e(0, 0);
+            try {
+                e = p_freelist.allocate_best_fit(storage->get_string().size()+1);
+                addr_t new_offset = e.first;
+                storage->set_offset(new_offset);
+            } catch(std::bad_alloc &x) {
+                /* nothing large enough on the free list */
+            }
         }
 
         /* If no free space area large enough then prepare to extend the section. */
@@ -877,7 +828,10 @@ SgAsmElfStrtab::reallocate()
             extend_size += storage->get_string().size() + 1;
         }
     }
-    
+
+    /* FIXME: If we were unable to allocate everything and there's still free space then it may be possible to reallocate all
+     *        strings in order to repack the table and avoid internal fragmentation. (RPM 2008-09-25) */
+
     /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
     if (extend_size>0) {
         fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
@@ -902,7 +856,7 @@ SgAsmElfStrtab::set_size(addr_t newsize)
     SgAsmElfSection::set_size(newsize);
 
     if (adjustment>0)
-        p_freelist.insert(freelist_t::value_type(orig_size, adjustment));
+        p_freelist.insert(orig_size, adjustment);
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
@@ -923,7 +877,7 @@ SgAsmElfStrtab::unparse(FILE *f)
     }
     
     /* Fill free areas with zero */
-    for (freelist_t::const_iterator i=p_freelist.begin(); i!=p_freelist.end(); ++i) {
+    for (SgAsmGenericSection::ExtentMap::const_iterator i=p_freelist.begin(); i!=p_freelist.end(); ++i) {
         write(f, i->first, std::string(i->second, '\0'));
     }
     
@@ -958,15 +912,7 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 
     fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", p_freelist.size());
-    freelist_t::iterator flit = p_freelist.begin();
-    for (size_t i=0; i<p_freelist.size(); ++i, ++flit) {
-        addr_t offset = flit->first;
-        addr_t size = flit->second;
-        char label[64];
-        sprintf(label, "freelist[%zu]", i);
-        fprintf(f, "%s%-*s = %"PRIu64" bytes at offset rel 0x%08"PRIx64" (%"PRIu64"), abs 0x%08"PRIx64" (%"PRIu64")\n", 
-                p, w, label, size, offset, offset, get_offset()+offset, get_offset()+offset);
-    }
+    p_freelist.dump_extents(f, p, "freelist");
 }   
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
