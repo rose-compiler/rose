@@ -792,6 +792,9 @@ HEADER_GENERIC_SECTION_START
               ExtentPair allocate_best_fit(addr_t size);
               ExtentPair allocate_first_fit(addr_t size);
               void dump_extents(FILE*, const char *prefix, const char *label) const;
+
+	      /* Class methods */
+	      static char category(const ExtentPair &a, const ExtentPair &b);
           };
 
 

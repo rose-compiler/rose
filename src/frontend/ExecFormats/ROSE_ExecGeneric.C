@@ -1387,6 +1387,33 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // SgAsmGenericSection class methods for manipulating extents and extent maps (e.g., referenced lists, free lists, etc).
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/* Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
+ * to extent B:
+ *     C (congruent):  A and B are congruent
+ *     L (left):       A is left of B
+ *     R (right):      A is right of B
+ *     O (outer):      A contains B, but A and B are not congruent
+ *     I (inner):      A is contained by B, but A and B are not congruent
+ *     B (beginning):  A overlaps with the beginning of B but does not contain B
+ *     E (ending):     A overlaps with the end of B but does not contain B */
+char
+SgAsmGenericSection::ExtentMap::category(const ExtentPair &a, const ExtentPair &b)
+{
+    if (a.first==b.first && a.second==b.second)
+        return 'C';
+    if (a.first+a.second <= b.first)
+        return 'L';
+    if (a.first >= b.first+b.second)
+        return 'R';
+    if (a.first <= b.first && a.first+a.second >= b.first+b.second)
+        return 'O';
+    if (a.first >= b.first && a.first+a.second <= b.first+b.second)
+        return 'I';
+    if (a.first <= b.first) /*already know a.first+a.second > b.first*/
+        return 'B';
+    return 'E';
+}
+
 /* Return an extent map which contains all extents in (offset,size) that are not in "this" extent map. */
 SgAsmGenericSection::ExtentMap
 SgAsmGenericSection::ExtentMap::subtract_from(addr_t offset, addr_t size) const
