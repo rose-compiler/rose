@@ -1490,10 +1490,6 @@ Grammar::setUpBinaryInstructions ()
   /* Determines what p_extents tracks: referenced extents if false; unreferenced extents (holes) if true */
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* FIXME: This should eventually be moved into SgAsmGenericStrtab (RPM 2008-10-02) */
-  /* List of areas in the section from which we can allocate new strings. */
-     AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","",
-                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      
   // DQ (8/2/2008): This was removed from the design by Robb.
@@ -1664,11 +1660,13 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericSection*", "container", "= NULL", 
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t","referenced_storage","",
+     AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t","storage_list","",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*","dont_free","= NULL",
+     AsmGenericStrtab.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","", /*space avail. for new strings*/
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*","dont_free","= NULL", /*never free this storage*/
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("size_t","num_freed","= 0",
+     AsmGenericStrtab.setDataPrototype("size_t","num_freed","= 0", /*number of strings freed thus far*/
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 // *****************************************************
