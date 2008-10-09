@@ -1154,16 +1154,16 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = %u bytes into strtab\n",          p, w, "sh_name",        p_sh_name);
-    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_type",        p_sh_type);
-    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_link",        p_sh_link);
-    fprintf(f, "%s%-*s = %lu\n",                           p, w, "sh_info",        p_sh_info);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_flags",       p_sh_flags);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",               p, w, "sh_addr",        p_sh_addr);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes into file\n",   p, w, "sh_offset",      p_sh_offset);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "sh_size",        p_sh_size);
-    fprintf(f, "%s%-*s = %" PRIu64 "\n",                   p, w, "sh_addralign",   p_sh_addralign);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "sh_entsize",     p_sh_entsize);
+    fprintf(f, "%s%-*s = %u bytes into strtab\n",                      p, w, "sh_name",        p_sh_name);
+    fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_type",        p_sh_type);
+    fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_link",        p_sh_link);
+    fprintf(f, "%s%-*s = %lu\n",                                       p, w, "sh_info",        p_sh_info);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n",                             p, w, "sh_flags",       p_sh_flags);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",                 p, w, "sh_addr",        p_sh_addr, p_sh_addr);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "sh_offset",      p_sh_offset, p_sh_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_size",        p_sh_size, p_sh_size);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_addralign",   p_sh_addralign, p_sh_addralign);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_entsize",     p_sh_entsize, p_sh_entsize);
     fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "nextra",         p_nextra);
     if (p_nextra > 0)
         fprintf(f, "%s%-*s = %s\n",                        p, w, "extra",          "<FIXME>");
@@ -1338,12 +1338,12 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     if (p_flags & PF_PROC_MASK) fputs(" proc", f);
     if (p_flags & PF_RESERVED) fputs(" *", f);
     fputc('\n', f);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 " bytes into file\n", p, w, "offset", p_offset);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "vaddr",  p_vaddr);
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",                 p, w, "paddr",  p_paddr);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "filesz", p_filesz);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",               p, w, "memsz",  p_memsz);
-    fprintf(f, "%s%-*s = %" PRIu64 " byte boundary\n",       p, w, "align",  p_align);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",                 p, w, "vaddr",  p_vaddr, p_vaddr);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",                 p, w, "paddr",  p_paddr, p_paddr);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "filesz", p_filesz, p_filesz);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "memsz",  p_memsz, p_memsz);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "align",  p_align, p_align);
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
