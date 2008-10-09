@@ -1248,6 +1248,7 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
            *readlhs = (exp->variantT() != V_SgAssignOp);
 	return true;
       }
+    default: return false;
     }
   }
   return false;
