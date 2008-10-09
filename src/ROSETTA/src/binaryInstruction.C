@@ -1464,7 +1464,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Tracks either referenced or unreferenced parts of the section, depending on value of p_congealed */
-     AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","extents","",
+     AsmGenericSection.setDataPrototype("ExtentMap","extents","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   /* Determines what p_extents tracks: referenced extents if false; unreferenced extents (holes) if true */
      AsmGenericSection.setDataPrototype("bool","congealed","= false",
@@ -1641,7 +1641,7 @@ Grammar::setUpBinaryInstructions ()
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t","storage_list","",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","", /*space avail. for new strings*/
+     AsmGenericStrtab.setDataPrototype("ExtentMap","freelist","", /*space avail. for new strings*/
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*","dont_free","= NULL", /*never free this storage*/
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

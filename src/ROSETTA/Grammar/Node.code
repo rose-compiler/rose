@@ -46,6 +46,43 @@ bool operator>=(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator==(const rose_rva_t &a1, const rose_rva_t &a2);
 bool operator!=(const rose_rva_t &a1, const rose_rva_t &a2);
 
+// ExtentPair and ExtentMap are used for free lists and internal holes in binary executables (RPM 2008-10-09)
+typedef std::pair<rose_addr_t,rose_addr_t> ExtentPair; 		  /* Describes a part of a file (offset, size) */
+
+// An ExtentMap keeps track of contiguous regions of address space. Entries in the ExtentMap are sorted by
+// starting offset. No two entries overlap or adjoin.
+class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
+	public:
+		typedef std::map<rose_addr_t,rose_addr_t> super;
+		ExtentMap() {}
+
+		/* Modifying methods */
+		void insert(const ExtentMap&);
+		void insert(const ExtentPair &extent)
+			{insert(extent.first, extent.second);}
+		void insert(rose_addr_t offset, rose_addr_t size);
+		void erase(const ExtentPair &extent)
+			{erase(extent.first, extent.second);}
+		void erase(rose_addr_t offset, rose_addr_t size);
+
+		/* Operator-like non-modifying methods */
+		ExtentMap subtract_from(const ExtentPair &extent) const
+			{return subtract_from(extent.first, extent.second);}
+		ExtentMap subtract_from(rose_addr_t offset, rose_addr_t size) const;
+		ExtentMap overlap_with(const ExtentPair &extent) const
+			{return overlap_with(extent.first, extent.second);}
+		ExtentMap overlap_with(rose_addr_t offset, rose_addr_t size) const;
+
+		/* Allocation-like methods */
+		std::map<rose_addr_t,rose_addr_t>::iterator best_fit(rose_addr_t size);
+		ExtentPair allocate_best_fit(rose_addr_t size);
+		ExtentPair allocate_first_fit(rose_addr_t size);
+		void dump_extents(FILE*, const char *prefix, const char *label) const;
+
+		/* Class methods */
+		static char category(const ExtentPair &a, const ExtentPair &b);
+};
+
 // DQ (8/21/2008): these are from the GenericExec.h (from before we used Robb's work in the new IR nodes).
 #define NELMTS(X)       (sizeof(X)/sizeof((X)[0]))      /* number of elements in a static-sized array */
 #define DUMP_FIELD_WIDTH        64                      /* min columns to use for member names in dump() functions */

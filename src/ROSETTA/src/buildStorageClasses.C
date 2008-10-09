@@ -804,7 +804,7 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmNERelocEntry::iname_type" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::osfixup_type" ) ||
               // DQ (8/8/2008): This is a typedef to a std::multimap<addr_t,addr_t>, this should likely be supported elsewhere.
-                 ( varTypeString == "SgAsmGenericSection::ExtentMap" ) ||
+                 ( varTypeString == "ExtentMap" ) ||
               // DQ (8/8/2008): This is a typedef to a std::vector<ExtentPair>, this should likely be supported elsewhere.
                  ( varTypeString == "SgAsmGenericSection::ExtentVector" ) ||
               // DQ (8/8/2008): Added typedef for primative types (used in binary format)
