@@ -294,8 +294,8 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     host_to_disk(sex, p_e_machine,             &(disk->e_machine));
     host_to_disk(sex, p_exec_format->get_version(), &(disk->e_version));
     host_to_disk(sex, get_entry_rva(),         &(disk->e_entry));
-    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff)); // updated by SgAsmElfSegmentTable::set_offset
-    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff)); // updated by SgAsmElfSectionTable::set_offset
+    host_to_disk(sex, p_e_phoff,               &(disk->e_phoff));
+    host_to_disk(sex, p_e_shoff,               &(disk->e_shoff));
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
     host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
 
