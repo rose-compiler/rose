@@ -14,6 +14,7 @@
 using namespace std;
 
 static const size_t maxVariableCountToSimplify = 64;
+static const bool doPrint = true;
 
 typedef bitset<maxVariableCountToSimplify> SimplificationClauseSetEntry;
 
@@ -256,12 +257,8 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, const vect
     }
   }
 
-#if 0
-  if (doPrint) {
-    fprintf(stderr, "%*sv\n", (int)(find(variables.begin(), variables.end(), 131) - variables.begin()), "");
-    fprintf(stderr, "In:\n");
-    printSignMatrix(temp);
-  }
+#if 1
+  vector<SimplificationClauseSet> oldTemp = temp;
 #endif
 
   vector<unsigned int> variablesToProjectOutInGroup(variablesToProjectOut.size());
@@ -270,8 +267,10 @@ void minimizeCnf(const vector<Clause>& input, vector<Clause>& output, const vect
   }
   doAllMinimizations(temp, variablesToProjectOutInGroup);
 
-#if 0
-  if (doPrint) {
+#if 1
+  if (doPrint && temp != oldTemp) {
+    fprintf(stderr, "In:\n");
+    printSignMatrix(oldTemp);
     fprintf(stderr, "Out:\n");
     printSignMatrix(temp);
   }
@@ -415,7 +414,9 @@ int main(int argc, char** argv) {
       }
     }
 
-    cnf.clauses.insert(cnf.clauses.end(), newClauses.begin(), newClauses.end());
+    for (size_t i = 0; i < newClauses.size(); ++i) {
+      cnf.addClause(newClauses[i]);
+    }
     liveClauses.resize(cnf.clauses.size(), true);
 
     fprintf(stderr, "Removing %zu clause(s), adding %zu, failed to remove %zu\n", numRemoved, newClauses.size(), numRemovalFailed);

@@ -12,6 +12,7 @@ using namespace __gnu_cxx;
 
 hash_map<Lit, vector<Lit> > implications;
 hash_map<Lit, Lit> equivalences;
+hash_set<Lit> done;
 
 Lit normalize(Lit a) {
   while (true) {
@@ -52,9 +53,12 @@ void explore(Lit l, vector<Lit>& stack) {
     addEquivalence(normalize(l), TRUE);
     addEquivalence(normalize(invert(l)), FALSE);
     // cerr << "Found known true literal " << l << endl;
+  } else if (done.find(l) != done.end()) {
+    // Nothing
   } else if (implications.find(l) == implications.end()) {
     // cerr << "Found pure literal " << l << endl;
   } else {
+    done.insert(l);
     stack.push_back(l);
     for (size_t i = 0; i < implications[l].size(); ++i) {
       explore(implications[l][i], stack);
@@ -88,6 +92,7 @@ int main(int argc, char** argv) {
       }
     }
 
+    done.clear();
     for (hash_map<Lit, vector<Lit> >::const_iterator i = implications.begin();
          i != implications.end(); ++i) {
       vector<Lit> stack;
