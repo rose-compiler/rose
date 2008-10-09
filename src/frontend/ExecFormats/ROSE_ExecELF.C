@@ -300,8 +300,24 @@ SgAsmElfFileHeader::unparse(FILE *f)
         if (strtab)
             strtab->reallocate();
     }
+
+    /* Write unreferenced areas back to the file before anything else. */
+    unparse_holes(f);
+
+    /* Write the ELF segment table and segments first since they generally overlap with more specific things which may have
+     * been modified when walking the AST. (We generally don't modify segments, just the more specific sections.) */
+    if (p_segment_table) {
+        ROSE_ASSERT(p_segment_table->get_header()==this);
+        p_segment_table->unparse(f);
+    }
+
+    /* Write the ELF section table and, indirectly, the sections themselves. */
+    if (p_section_table) {
+        ROSE_ASSERT(p_section_table->get_header()==this);
+        p_section_table->unparse(f);
+    }
     
-    /* Encode ELF file header */
+    /* Encode and write the ELF file header */
     Elf32FileHeader_disk disk32;
     Elf64FileHeader_disk disk64;
     void *disk = NULL;
@@ -315,22 +331,7 @@ SgAsmElfFileHeader::unparse(FILE *f)
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-
-    /* Make sure there's room in the file. If not, anything beyond the file section should be zero. */
     write(f, p_offset, struct_size, disk);
-
-    /* Write the ELF section and segment tables and, indirectly, the sections themselves. We write the segments first
-     * because they tend to overlap with sections and the sections are things that we might have modified in the AST. */
-    if (p_segment_table) {
-        ROSE_ASSERT(p_segment_table->get_header()==this);
-        p_segment_table->unparse(f);
-    }
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_header()==this);
-        p_section_table->unparse(f);
-    }
-
-    unparse_holes(f);
 }
 
 /* Print some debugging info */
