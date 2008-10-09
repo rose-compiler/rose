@@ -187,11 +187,23 @@ SgAsmGenericFile::~SgAsmGenericFile()
     p_holes = NULL;
 }
 
-/* Returns size of file */
+/* Returns original size of file, based on file system */
 rose_addr_t
-SgAsmGenericFile::get_size() const
+SgAsmGenericFile::get_orig_size() const
 {
     return p_data.size();
+}
+
+/* Returns current size of file based on section with highest ending address. */
+rose_addr_t
+SgAsmGenericFile::get_current_size()
+{
+    addr_t retval=0;
+    SgAsmGenericSectionPtrList sections = get_sections();
+    for (SgAsmGenericSectionPtrList::iterator i=sections.begin(); i!=sections.end(); ++i) {
+        retval = std::max(retval, (*i)->get_end_offset());
+    }
+    return retval;
 }
 
 /* Returns a vector that points to part of the file content without actually ever referencing the file content until the
@@ -971,16 +983,21 @@ SgAsmGenericFile::dump(FILE *f)
     }
 
     char overlap[4] = "   ";
-    if (high_water < get_size()) {
+    if (high_water < get_current_size()) {
         overlap[2] = 'H';
-    } else if (sections.back()->get_offset() + sections.back()->get_size() < get_size()) {
+    } else if (sections.back()->get_offset() + sections.back()->get_size() < get_current_size()) {
         overlap[2] = 'h';
     }
-    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF\n", overlap, get_size(), 76, "");
+    fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF", overlap, get_current_size(), 76, "");
+    if (get_current_size()!=p_data.size())
+        fprintf(f, " (original EOF was 0x%08"PRIx64, p_data.size());
+    fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 }
 
-/* Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. */
+/* Synthesizes "hole" sections to describe the parts of the file that are not yet referenced by other sections. Note that holes
+ * are used to represent parts of the original file data, before sections were modified by walking the AST (at this time it is
+ * not possible to create a hole outside the original file content). */
 void
 SgAsmGenericFile::fill_holes()
 {
@@ -992,7 +1009,7 @@ SgAsmGenericFile::fill_holes()
     }
 
     /* The hole extents are everything other than the sections */
-    SgAsmGenericSection::ExtentMap holes = refs.subtract_from(0, get_size());
+    SgAsmGenericSection::ExtentMap holes = refs.subtract_from(0, p_data.size());
 
     /* Create the sections representing the holes */
     for (SgAsmGenericSection::ExtentMap::iterator i=holes.begin(); i!=holes.end(); ++i) {
@@ -1095,7 +1112,7 @@ void
 SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t offset, addr_t size)
 {
     ROSE_ASSERT(ef != NULL);
-    if (offset > ef->get_size() || offset+size > ef->get_size())
+    if (offset > ef->get_orig_size() || offset+size > ef->get_orig_size())
         throw SgAsmGenericFile::ShortRead(NULL, offset, size);
 
     /* Initialize data members */
@@ -1435,7 +1452,7 @@ SgAsmGenericSection::extend(addr_t size)
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
-    if (p_offset + new_size > get_file()->get_size())
+    if (p_offset + new_size > get_file()->get_orig_size())
         throw SgAsmGenericFile::ShortRead(this, p_offset+get_size(), size);
     p_data.resize(new_size);
     p_size = new_size;
@@ -1449,9 +1466,9 @@ SgAsmGenericSection::extend_up_to(addr_t size)
     ROSE_ASSERT(get_file() != NULL);
     ROSE_ASSERT(!get_congealed());              /*can only be called during the parsing phase*/
     addr_t new_size = get_size() + size;
-    if (p_offset + new_size > get_file()->get_size()) {
-        ROSE_ASSERT(p_offset <= get_file()->get_size());
-        new_size = get_file()->get_size() - p_offset;
+    if (p_offset + new_size > get_file()->get_orig_size()) {
+        ROSE_ASSERT(p_offset <= get_file()->get_orig_size());
+        new_size = get_file()->get_orig_size() - p_offset;
     }
     p_data.resize(new_size);
     p_size = new_size;

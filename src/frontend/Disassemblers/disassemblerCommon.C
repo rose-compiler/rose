@@ -168,22 +168,22 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   SgAsmGenericFile* file = isSgAsmGenericFile(header->get_parent()->get_parent());
   ROSE_ASSERT (file);
   size_t fileOffset = rva - section->get_mapped_rva() + section->get_offset();
-  ROSE_ASSERT (fileOffset < file->get_size());
+  ROSE_ASSERT (fileOffset < file->get_orig_size());
   SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
   SgAsmInstruction* insn = NULL;
   try {
     if (isSgAsmDOSFileHeader(header)) { // FIXME
       X86Disassembler::Parameters params(addr, x86_insnsize_16);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_32);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
       X86Disassembler::Parameters params(addr, x86_insnsize_64);
-      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
+      insn = X86Disassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
       ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_size(), fileOffset, &knownSuccessors);
+      insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else {
       cerr << "Bad architecture to disassemble" << endl;
       abort();
