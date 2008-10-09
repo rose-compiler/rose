@@ -124,6 +124,7 @@ struct SatProblem {
   std::vector<Clause> clauses;
   __gnu_cxx::hash_map<std::vector<Lit>, Lit> andGateCSE;
   __gnu_cxx::hash_map<LitList(3), Lit> muxCSE; // Fields are sel, ifTrue, ifFalse
+  __gnu_cxx::hash_map<LitList(2), Lit> condEquivCSE; // Fields are the two lits being identified
   InterfaceVariableList interfaceVariables;
 
   public:
@@ -151,7 +152,7 @@ struct SatProblem {
     if (newCl.empty()) {throw UnsatisfiableException();}
     std::sort(newCl.begin(), newCl.end(), absLess);
     newCl.erase(std::unique(newCl.begin(), newCl.end()), newCl.end());
-    for (size_t i = 0; i < cl.size(); ++i) {
+    for (size_t i = 0; i < newCl.size(); ++i) {
       for (size_t j = 0; j < i; ++j) {
         if (newCl[i] == -newCl[j]) {
           return;
@@ -236,15 +237,61 @@ struct SatProblem {
     }
   }
 
+  void identify(Lit a, Lit b) {
+    if (absLess(b, a)) std::swap(a, b);
+    LitList(2) key;
+    key[0] = a;
+    key[1] = b;
+    __gnu_cxx::hash_map<LitList(2), Lit>::const_iterator it = condEquivCSE.find(key);
+    if (it != condEquivCSE.end()) {
+      // Add a unit clause for the existing condition
+      addClause(single(it->second));
+    } else {
+      LitList(2) cl;
+      cl[0] = invert(a);
+      cl[1] = b;
+      addClause(cl);
+      cl[0] = a;
+      cl[1] = invert(b);
+      addClause(cl);
+      condEquivCSE[key] = TRUE; // In case there is a conditional equivalence added later, ignore it
+    }
+  }
+
   void condEquivalence(Lit sel, Lit a, Lit b) {
-    LitList(3) cl;
-    cl[0] = invert(sel);
-    cl[1] = invert(a);
-    cl[2] = b;
-    addClause(cl);
-    cl[1] = a;
-    cl[2] = invert(b);
-    addClause(cl);
+    if (absLess(b, a)) std::swap(a, b);
+    LitList(2) key;
+    key[0] = a;
+    key[1] = b;
+    __gnu_cxx::hash_map<LitList(2), Lit>::const_iterator it = condEquivCSE.find(key);
+    if (it != condEquivCSE.end()) {
+      LitList(2) cl;
+      cl[0] = invert(sel);
+      cl[1] = it->second;
+      addClause(cl); // Add implication from new sel to the existing condition
+    } else {
+      Lit totalSel = newVar();
+      condEquivCSE[key] = totalSel;
+      LitList(2) cl1;
+      cl1[0] = invert(sel);
+      cl1[1] = totalSel;
+      addClause(cl1);
+      LitList(3) cl;
+      cl[0] = invert(totalSel);
+      cl[1] = invert(a);
+      cl[2] = b;
+      addClause(cl);
+      cl[1] = a;
+      cl[2] = invert(b);
+      addClause(cl);
+    }
+  }
+
+  template <size_t Len>
+  void condEquivalenceWords(Lit sel, const LitList(Len)& a, const LitList(Len)& b) {
+    for (size_t i = 0; i < Len; ++i) {
+      condEquivalence(sel, a[i], b[i]);
+    }
   }
 
   Lit mux(Lit sel, Lit ifTrue, Lit ifFalse) {

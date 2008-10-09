@@ -26,88 +26,64 @@ struct WriteMemoryHelper<Len, Len, NLTranslator> {
   static void go(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(Len)& data, Lit cond, NLTranslator& trans) {}
 };
 
+struct RegisterInfo {
+  LitList(32) gprs[8];
+  LitList(32) ip;
+  Lit flags[16];
+};
+
 struct NetlistTranslationPolicy {
   template <size_t Len>
   struct wordType {typedef LitList(Len) type;};
 
-  typedef pair<X86RegisterClass, int> FullReg;
-  typedef map<FullReg, LitList(32)> RegMap;
-  typedef map<X86Flag, Lit> FlagMap;
-  typedef vector<MemoryAccess> MemoryAccessList;
-  RegMap registerMap;
-  RegMap newRegisterMap;
-  RegMap origRegisterMap;
-  FlagMap flagMap;
-  FlagMap newFlagMap;
-  FlagMap origFlagMap;
-  size_t memoryWriteCountBase;
-  size_t memoryReadCountBase;
-  MemoryAccessList memoryWrites;
-  MemoryAccessList initialMemoryReads;
+  RegisterInfo registerMap;
+  RegisterInfo newRegisterMap;
+  RegisterInfo origRegisterMap;
+  vector<vector<MemoryAccess> > memoryWrites; // Outer vector is sequence of writes, inner vector is the set of mutually exclusive writes at that position
+  vector<vector<MemoryAccess> > memoryReads; // Outer vector is sequence of reads, inner vector is the set of mutually exclusive reads at that position
+  Lit isThisIp;
+  size_t currentMemoryIndex;
   SatProblem problem;
 
-  static FullReg gpr(X86GeneralPurposeRegister reg) {
-    return make_pair(x86_regclass_gpr, reg);
-  }
-
-  static FullReg ip() {
-    return make_pair(x86_regclass_ip, 0);
-  }
-
-  const LitList(32)& vars(FullReg r) const {
-    RegMap::const_iterator i = registerMap.find(r);
-    ROSE_ASSERT (i != registerMap.end());
-    return i->second;
-  }
-
-  LitList(32)& vars(FullReg r) {
-    RegMap::iterator i = registerMap.find(r);
-    ROSE_ASSERT (i != registerMap.end());
-    return i->second;
-  }
-
-  Lit flag(X86Flag f) const {
-    FlagMap::const_iterator i = flagMap.find(f);
-    ROSE_ASSERT (i != flagMap.end());
-    return i->second;
-  }
-
-  Lit& flag(X86Flag f) {
-    FlagMap::iterator i = flagMap.find(f);
-    ROSE_ASSERT (i != flagMap.end());
-    return i->second;
-  }
-
-  void makeRegMaps(RegMap& rm, FlagMap& fm, const std::string& prefix) {
+  void makeRegMaps(RegisterInfo& rm, const std::string& prefix) {
     for (int r = 0; r < 8; ++r) {
       LitList(32) thisReg = problem.newVars<32>();
       problem.addInterface(prefix + "_gpr" + boost::lexical_cast<std::string>(r), toVector(thisReg));
-      rm.insert(make_pair(gpr((X86GeneralPurposeRegister)r), thisReg));
+      rm.gprs[r] = thisReg;
     }
     LitList(32) ipReg = problem.newVars<32>();
     problem.addInterface(prefix + "_ip", toVector(ipReg));
-    rm.insert(make_pair(ip(), ipReg));
+    rm.ip = ipReg;
     LitList(7) flagsReg = problem.newVars<7>();
     problem.addInterface(prefix + "_flags", toVector(flagsReg));
-    fm.insert(make_pair(x86_flag_cf, flagsReg[0]));
-    fm.insert(make_pair(x86_flag_pf, flagsReg[1]));
-    fm.insert(make_pair(x86_flag_af, flagsReg[2]));
-    fm.insert(make_pair(x86_flag_zf, flagsReg[3]));
-    fm.insert(make_pair(x86_flag_sf, flagsReg[4]));
-    fm.insert(make_pair(x86_flag_df, flagsReg[5]));
-    fm.insert(make_pair(x86_flag_of, flagsReg[6]));
+    rm.flags[x86_flag_cf] = flagsReg[0];
+    rm.flags[x86_flag_pf] = flagsReg[1];
+    rm.flags[x86_flag_af] = flagsReg[2];
+    rm.flags[x86_flag_zf] = flagsReg[3];
+    rm.flags[x86_flag_sf] = flagsReg[4];
+    rm.flags[x86_flag_df] = flagsReg[5];
+    rm.flags[x86_flag_of] = flagsReg[6];
+    rm.flags[x86_flag_1] = TRUE;
+    rm.flags[x86_flag_3] = FALSE;
+    rm.flags[x86_flag_5] = FALSE;
+    rm.flags[x86_flag_tf] = FALSE;
+    rm.flags[x86_flag_if] = TRUE;
+    rm.flags[x86_flag_iopl0] = FALSE;
+    rm.flags[x86_flag_iopl1] = FALSE;
+    rm.flags[x86_flag_nt] = FALSE;
+    rm.flags[x86_flag_15] = FALSE;
   }
 
-  NetlistTranslationPolicy(): memoryWriteCountBase(0), memoryReadCountBase(0), problem() {
-    makeRegMaps(newRegisterMap, newFlagMap, "out");
+  NetlistTranslationPolicy(): isThisIp(FALSE), currentMemoryIndex(0), problem() {
+    makeRegMaps(newRegisterMap, "out");
   }
 
   LitList(32) readGPR(X86GeneralPurposeRegister r) {
-    return vars(gpr(r));
+    return registerMap.gprs[r];
   }
 
   void writeGPR(X86GeneralPurposeRegister r, const LitList(32)& value) {
-    vars(gpr(r)) = value;
+    registerMap.gprs[r] = value;
   }
 
   LitList(16) readSegreg(X86SegmentRegister sr) {
@@ -119,19 +95,19 @@ struct NetlistTranslationPolicy {
   }
 
   LitList(32) readIP() {
-    return vars(ip());
+    return registerMap.ip;
   }
 
   void writeIP(const LitList(32)& newIp) {
-    vars(ip()) = newIp;
+    registerMap.ip = newIp;
   }
 
   LitList(1) readFlag(X86Flag f) {
-    return single(flag(f));
+    return single(registerMap.flags[f]);
   }
 
   void writeFlag(X86Flag f, const LitList(1)& value) {
-    flag(f) = value[0];
+    registerMap.flags[f] = value[0];
   }
 
   template <size_t Len>
@@ -270,6 +246,7 @@ struct NetlistTranslationPolicy {
   }
 
   LitList(8) readMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, Lit cond) {
+#if 0
     // The priority order for reads goes from bottom to top.  First, we check
     // for any writes that have the same address, and use the most recent of
     // those that match.  Next, we look at those previous reads that did not
@@ -292,10 +269,26 @@ struct NetlistTranslationPolicy {
     problem.addInterface("memoryRead_" + boost::lexical_cast<std::string>(memoryReadCountBase), toVector(concat(addr, result)));
     ++memoryReadCountBase;
     return result;
+#endif
+    // fprintf(stderr, "read(memory%zu, addr, cond)\n", currentMemoryIndex);
+    LitList(8) data = problem.newVars<8>();
+    MemoryAccess ma(addr, data, problem.andGate(cond, isThisIp));
+    if (memoryReads.size() <= currentMemoryIndex) {
+      memoryReads.resize(currentMemoryIndex + 1);
+    }
+    memoryReads[currentMemoryIndex].push_back(ma);
+    ++currentMemoryIndex;
+    return data;
   }
 
   void writeMemoryByte(X86SegmentRegister segreg, const LitList(32)& addr, const LitList(8)& data, Lit cond) {
-    memoryWrites.push_back(MemoryAccess(addr, data, cond));
+    // fprintf(stderr, "memory%zu = write(memory%zu, addr, data, cond)\n", memoryIndexCounter, currentMemoryIndex);
+    MemoryAccess ma(addr, data, problem.andGate(cond, isThisIp));
+    if (memoryWrites.size() <= currentMemoryIndex) {
+      memoryWrites.resize(currentMemoryIndex + 1);
+    }
+    memoryWrites[currentMemoryIndex].push_back(ma);
+    ++currentMemoryIndex;
   }
 
   template <size_t Len>
@@ -307,34 +300,28 @@ struct NetlistTranslationPolicy {
   void interrupt(uint8_t num) {} // FIXME
   LitList(64) rdtsc() {return number<64>(0);} // FIXME
 
-  void writeBack(Lit isThisIp) {
+  void writeBack() {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
-    for (RegMap::const_iterator i = registerMap.begin(); i != registerMap.end(); ++i) {
-      for (size_t j = 0; j < 32; ++j) {
-        // fprintf(stderr, "Adding register output equivalence %d -> %d == %d\n", isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
-        problem.condEquivalence(isThisIp, (i->second)[j], newRegisterMap[i->first][j]);
-      }
+    for (size_t i = 0; i < 8; ++i) {
+      problem.condEquivalenceWords(isThisIp, registerMap.gprs[i], newRegisterMap.gprs[i]);
     }
-    for (FlagMap::const_iterator i = flagMap.begin(); i != flagMap.end(); ++i) {
-      problem.condEquivalence(isThisIp, i->second, newFlagMap[i->first]);
-    }
-    for (MemoryAccessList::const_iterator i = memoryWrites.begin(); i != memoryWrites.end(); ++i) {
-      problem.addInterface("memoryWrite_" + boost::lexical_cast<std::string>(memoryWriteCountBase), toVector(concat(single(problem.andGate(i->cond, isThisIp)), concat(i->addr, i->data))));
-      ++memoryWriteCountBase;
+    problem.condEquivalenceWords(isThisIp, registerMap.ip, newRegisterMap.ip);
+    for (size_t i = 0; i < 16; ++i) {
+      problem.condEquivalence(isThisIp, registerMap.flags[i], newRegisterMap.flags[i]);
     }
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
   }
 
   void startBlock(uint64_t addr) {
+    isThisIp = problem.equal(origRegisterMap.ip, ::number<32>(addr));
     registerMap = origRegisterMap;
-    flagMap = origFlagMap;
-    memoryWrites.clear();
-    initialMemoryReads.clear();
-    fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
+    currentMemoryIndex = 0;
+    fprintf(stderr, "Block 0x%08X, isThisIp = %d\n", (unsigned int)addr, isThisIp);
   }
 
   void finishBlock(uint64_t addr) {
-    writeBack(problem.equal(origRegisterMap[ip()], ::number<32>(addr)));
+    writeBack();
+    isThisIp = FALSE;
   }
 
   void startInstruction(SgAsmInstruction*) {}
@@ -348,12 +335,61 @@ int main(int argc, char** argv) {
   assert (f);
   NetlistTranslationPolicy policy;
   X86InstructionSemantics<NetlistTranslationPolicy> t(policy);
-  policy.makeRegMaps(policy.origRegisterMap, policy.origFlagMap, "in");
+  policy.makeRegMaps(policy.origRegisterMap, "in");
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);
     ROSE_ASSERT (b);
     t.processBlock(b);
+  }
+  size_t memoryUseCount = policy.memoryWrites.size();
+  if (memoryUseCount < policy.memoryReads.size()) {
+    memoryUseCount = policy.memoryReads.size();
+  }
+  policy.memoryReads.resize(memoryUseCount);
+  policy.memoryWrites.resize(memoryUseCount);
+  vector<MemoryAccess> totalWrites;
+  size_t actualMemoryWriteCount = 0, actualMemoryReadCount = 0;
+  for (size_t i = 0; i < memoryUseCount; ++i) {
+    LitList(32) totalAddress = policy.problem.newVars<32>();
+    LitList(8) totalData = policy.problem.newVars<8>();
+    Lit totalCond = FALSE;
+    for (size_t j = 0; j < policy.memoryWrites[i].size(); ++j) {
+      Lit thisCond = policy.memoryWrites[i][j].cond;
+      policy.problem.condEquivalenceWords(thisCond, policy.memoryWrites[i][j].addr, totalAddress);
+      policy.problem.condEquivalenceWords(thisCond, policy.memoryWrites[i][j].data, totalData);
+      totalCond = policy.problem.orGate(totalCond, thisCond);
+    }
+    totalWrites.push_back(MemoryAccess(totalAddress, totalData, totalCond));
+    if (totalCond == FALSE) continue; // We need to keep cond=0 writes in totalWrites because indices in there must match up with those in memoryReads
+    policy.problem.addInterface("memoryWrite_" + boost::lexical_cast<string>(actualMemoryWriteCount++), toVector(concat(single(totalCond), concat(totalAddress, totalData))));
+  }
+  for (size_t i = 0; i < memoryUseCount; ++i) {
+    LitList(32) totalAddress = policy.problem.newVars<32>();
+    LitList(8) totalData = policy.problem.newVars<8>();
+    Lit totalCond = FALSE;
+    for (size_t j = 0; j < policy.memoryReads[i].size(); ++j) {
+      Lit thisCond = policy.memoryReads[i][j].cond;
+      Lit newTotalCond = policy.problem.orGate(totalCond, thisCond);
+      // fprintf(stderr, "%d | %d -> %d\n", totalCond, thisCond, newTotalCond);
+      policy.problem.condEquivalenceWords(thisCond, policy.memoryReads[i][j].addr, totalAddress);
+      policy.problem.condEquivalenceWords(thisCond, policy.memoryReads[i][j].data, totalData);
+      totalCond = newTotalCond;
+    }
+    // Try to match with earlier writes
+    // Note that the loop is from earlier to later so that later writes will be
+    // preferred
+    if (totalCond == FALSE) continue;
+    LitList(8) matchedData = policy.problem.newVars<8>();
+    LitList(8) origMatchedData = matchedData;
+    for (size_t j = 0; j < i; ++j) {
+      Lit match = policy.problem.andGate(policy.problem.andGate(totalCond, totalWrites[j].cond), policy.problem.equal(totalAddress, totalWrites[j].addr));
+      matchedData = policy.problem.ite(match, totalWrites[j].data, matchedData);
+    }
+    for (size_t j = 0; j < 8; ++j) {
+      policy.problem.identify(matchedData[j], totalData[j]);
+    }
+    policy.problem.addInterface("memoryRead_" + boost::lexical_cast<string>(actualMemoryReadCount++), toVector(concat(single(totalCond), concat(totalAddress, origMatchedData)))); // Use the original value as this interface should only cover writes before the current BB (i.e., all reads in the interface are from the initial memory at the start of the BB)
   }
   policy.problem.unparse(f);
   fclose(f);
