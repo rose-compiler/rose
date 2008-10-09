@@ -1330,12 +1330,7 @@ HEADER_ELF_SECTION_START
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	  virtual void set_mapped_rva(addr_t);
 
-       /* Accessors for protected/private data members */
-       // ElfSectionTableEntry *get_st_entry() {return st_entry;}
-       // void set_st_entry(ElfSectionTableEntry *e) {st_entry=e;}
-
        /* Convenience functions */
-       // SgAsmElfFileHeader *get_elf_header() { return dynamic_cast<SgAsmElfFileHeader*>(get_header()); }
           SgAsmElfFileHeader *get_elf_header();
 
        // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
