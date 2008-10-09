@@ -90,16 +90,24 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_flags               = disk_to_host(sex, disk32.e_flags);
         p_e_ehsize              = disk_to_host(sex, disk32.e_ehsize);
 
-	p_phextrasz             = disk_to_host(sex, disk32.e_phentsize);
-	ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk);
-
-	p_shextrasz             = disk_to_host(sex, disk32.e_shentsize);
-	ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk));
-        p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
-
         p_e_phnum               = disk_to_host(sex, disk32.e_phnum);
+        if (p_e_phnum>0) {
+            p_phextrasz         = disk_to_host(sex, disk32.e_phentsize);
+            ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+            p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk);
+        } else {
+            p_phextrasz = 0;
+        }
+
         p_e_shnum               = disk_to_host(sex, disk32.e_shnum);
+        if (p_e_shnum>0) {
+            p_shextrasz         = disk_to_host(sex, disk32.e_shentsize);
+            ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk));
+            p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
+        } else {
+            p_shextrasz = 0;
+        }
+
         p_e_shstrndx            = disk_to_host(sex, disk32.e_shstrndx);
     } else if (2 == disk32.e_ident_file_class) {
         /* We guessed wrong. This is a 64-bit header, not 32-bit. */
@@ -123,16 +131,24 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_flags               = disk_to_host(sex, disk64.e_flags);
         p_e_ehsize              = disk_to_host(sex, disk64.e_ehsize);
 
-	p_phextrasz             = disk_to_host(sex, disk64.e_phentsize);
-	ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
-	p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
-
-	p_shextrasz             = disk_to_host(sex, disk64.e_shentsize);
-	ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk));
-        p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
-
         p_e_phnum               = disk_to_host(sex, disk64.e_phnum);
+        if (p_e_phnum>0) {
+            p_phextrasz         = disk_to_host(sex, disk64.e_phentsize);
+            ROSE_ASSERT(p_phextrasz>=sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk));
+            p_phextrasz -= sizeof(SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk);
+        } else {
+            p_phextrasz = 0;
+        }
+
         p_e_shnum               = disk_to_host(sex, disk64.e_shnum);
+        if (p_e_shnum>0) {
+            p_shextrasz         = disk_to_host(sex, disk64.e_shentsize);
+            ROSE_ASSERT(p_shextrasz>=sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk));
+            p_shextrasz -= sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
+        } else {
+            p_shextrasz = 0;
+        }
+
         p_e_shstrndx            = disk_to_host(sex, disk64.e_shstrndx);
     } else {
         throw FormatError("invalid ELF header file class");
@@ -282,9 +298,18 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     host_to_disk(sex, p_e_shoff,               &(disk->e_shoff)); // updated by SgAsmElfSectionTable::set_offset
     host_to_disk(sex, p_e_flags,               &(disk->e_flags));
     host_to_disk(sex, p_e_ehsize,              &(disk->e_ehsize));
-    host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk), &(disk->e_phentsize));
+
+    if (p_e_phnum>0) {
+        host_to_disk(sex, p_phextrasz+sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk), &(disk->e_phentsize));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_phentsize));
+    }
+    if (p_e_shnum>0) {
+        host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk), &(disk->e_shentsize));
+    } else {
+        host_to_disk(sex, 0, &(disk->e_shentsize));
+    }
     host_to_disk(sex, p_e_phnum,               &(disk->e_phnum));
-    host_to_disk(sex, p_shextrasz+sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk), &(disk->e_shentsize));
     host_to_disk(sex, p_e_shnum,               &(disk->e_shnum));
     host_to_disk(sex, p_e_shstrndx,            &(disk->e_shstrndx));
 
