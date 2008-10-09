@@ -958,6 +958,20 @@ SgAsmGenericSection::~SgAsmGenericSection()
 
 }
 
+/* Accessors for section name. Setting the section name makes the SgAsmGenericString node a child of the section. */
+SgAsmGenericString *
+SgAsmGenericSection::get_name() const 
+{
+    return p_name;
+}
+void
+SgAsmGenericSection::set_name(SgAsmGenericString *s)
+{
+    if (s)
+        s->set_parent(this);
+    p_name = s;
+}
+
 /* Returns the current file size of the section in bytes. The original size of the section is available through the size of
  * the original data: p_data.size() */
 rose_addr_t

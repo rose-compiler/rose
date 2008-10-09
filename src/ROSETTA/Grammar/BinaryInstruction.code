@@ -814,18 +814,8 @@ HEADER_GENERIC_SECTION_START
        // SgAsmGenericHeader *get_header();
 
        /* Accessors for private members */
-       // SgAsmGenericHeader          *get_header() {return header;}
-       // void                set_header(SgAsmGenericExecHeader *hdr) {header=hdr;}
-       // int                 get_id() {return id;}
-       // void                set_id(int i) {id=i;}
-
-       // DQ (8/8/2008): This is not standard semantics for an access function, I think that since 
-       // this is returning by "const &" we can use the automatically generated access function.
-       // const std::string & get_name() { return p_name; }
-
-       // void                set_name(const char *s) {name=s;}
-       // void                set_name(const unsigned char *s) {name=(const char*)s;}
-       // void                set_name(std::string &s) {name=s;}
+          SgAsmGenericString *get_name() const;		      /* Same as standard ROSETTA accessor */
+	  void set_name(SgAsmGenericString *s);		      /* Like std accessor but sets parent of 's' */
 
        // Use the automatically generated access functions
        // Exec::SectionPurpose      get_purpose() {return purpose;}
