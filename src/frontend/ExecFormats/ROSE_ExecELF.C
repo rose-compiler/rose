@@ -470,6 +470,7 @@ SgAsmElfString::ctor(SgAsmElfStringStorage *storage)
 {
     p_storage = storage;
 }
+/*FIXME: Use SgAsmBasicString for strings not attached to a string table. */
 void
 SgAsmElfString::ctor(const std::string &s)
 {
@@ -702,7 +703,7 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
                     offset >= i->first + i->second); /*to-free area is entirely right of existing free item*/
     }
 
-    /* Preserve anything that's still referenced. The caller should have assigned SgAsmGenericString::no_id to the "offset"
+    /* Preserve anything that's still referenced. The caller should have assigned SgAsmElfString::no_id to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
     for (size_t i=0; i<p_referenced_storage.size() && size>0; i++) {
         if (p_referenced_storage[i]->get_offset()==SgAsmElfString::unallocated) continue;
