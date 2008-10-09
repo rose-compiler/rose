@@ -319,14 +319,15 @@ SgAsmElfFileHeader::unparse(FILE *f)
     /* Make sure there's room in the file. If not, anything beyond the file section should be zero. */
     write(f, p_offset, struct_size, disk);
 
-    /* Write the ELF section and segment tables and, indirectly, the sections themselves. */
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_header()==this);
-        p_section_table->unparse(f);
-    }
+    /* Write the ELF section and segment tables and, indirectly, the sections themselves. We write the segments first
+     * because they tend to overlap with sections and the sections are things that we might have modified in the AST. */
     if (p_segment_table) {
         ROSE_ASSERT(p_segment_table->get_header()==this);
         p_segment_table->unparse(f);
+    }
+    if (p_section_table) {
+        ROSE_ASSERT(p_section_table->get_header()==this);
+        p_section_table->unparse(f);
     }
 
     unparse_holes(f);
@@ -398,6 +399,7 @@ SgAsmElfSection::ctor(SgAsmElfSectionTableEntry *shdr)
     if (shdr->get_sh_addr() > 0) {
         set_mapped_rva(shdr->get_sh_addr());
         set_mapped_size(shdr->get_sh_size());
+        set_mapped_rperm(true);
     }
 }
 
@@ -1550,9 +1552,8 @@ SgAsmElfSegmentTable::unparse(FILE *f)
             if (shdr->get_extra().size() > 0)
                 write(f, extra_offset, shdr->get_extra());
 
-            /* The section itself (unless we already unparsed it as a member of the ELF Section Table */
-            if (!section->get_section_entry())
-                section->unparse(f);
+            /* The section itself */
+            section->unparse(f);
         }
     }
 
