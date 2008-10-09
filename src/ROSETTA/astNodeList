@@ -487,7 +487,7 @@ SgGraphEdgeList
 SgAsmInterpretation
 SgAsmGenericString
 SgAsmBasicString
-SgAsmElfString
+SgAsmStoredString
 SgAsmStringStorage
 SgAsmElfStrtab
 SgAliasSymbol

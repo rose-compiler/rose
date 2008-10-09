@@ -253,8 +253,8 @@ Grammar::setUpBinaryInstructions ()
 #if 1
   // New IR nodes to support string table transformations in Binary
      NEW_TERMINAL_MACRO ( AsmBasicString,        "AsmBasicString",        "AsmBasicStringTag"        );
-     NEW_TERMINAL_MACRO ( AsmElfString,          "AsmElfString",          "AsmElfStringTag"          );
-     NEW_NONTERMINAL_MACRO ( AsmGenericString, AsmBasicString | AsmElfString, "AsmGenericString", "AsmGenericStringTag", false /* canHaveInstances = false */ );
+     NEW_TERMINAL_MACRO ( AsmStoredString,       "AsmStoredString",       "AsmStoredStringTag"       );
+     NEW_NONTERMINAL_MACRO ( AsmGenericString, AsmBasicString | AsmStoredString, "AsmGenericString", "AsmGenericStringTag", false /* canHaveInstances = false */ );
 
      NEW_TERMINAL_MACRO ( AsmStringStorage,   "AsmStringStorage",   "AsmStringStorageTag"   );
 #endif
@@ -406,8 +406,8 @@ Grammar::setUpBinaryInstructions ()
      AsmBasicString.setDataPrototype("std::string","string","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AsmElfString.setFunctionPrototype ( "HEADER_ELF_STRING", "../Grammar/BinaryInstruction.code");
-     AsmElfString.setDataPrototype("SgAsmStringStorage*","storage","= NULL",
+     AsmStoredString.setFunctionPrototype ( "HEADER_STORED_STRING", "../Grammar/BinaryInstruction.code");
+     AsmStoredString.setDataPrototype("SgAsmStringStorage*","storage","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // SgAsmElfStrtab *p_strtab;
@@ -1849,7 +1849,7 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSymbolSection.setFunctionSource ( "SOURCE_ELF_SYMBOL_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfSymbolList.setFunctionSource ( "SOURCE_ELF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfSymbol.setFunctionSource ( "SOURCE_ELF_SYMBOL", "../Grammar/BinaryInstruction.code");
-     AsmElfString.setFunctionSource ( "SOURCE_ELF_STRING", "../Grammar/BinaryInstruction.code");
+     AsmStoredString.setFunctionSource ( "SOURCE_STORED_STRING", "../Grammar/BinaryInstruction.code");
      AsmStringStorage.setFunctionSource ( "SOURCE_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
 
      AsmPERVASizePair.setFunctionSource ( "SOURCE_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
