@@ -80,7 +80,6 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
 
         p_e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
-        p_e_ident_data_encoding = disk_to_host(sex, disk32.e_ident_data_encoding);
         p_e_ident_file_version  = disk_to_host(sex, disk32.e_ident_file_version);
         p_e_type                = disk_to_host(sex, disk32.e_type);
         p_e_machine             = disk_to_host(sex, disk32.e_machine);
@@ -114,7 +113,6 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
 
         p_e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
-        p_e_ident_data_encoding = disk_to_host(sex, disk64.e_ident_data_encoding);
         p_e_ident_file_version  = disk_to_host(sex, disk64.e_ident_file_version);
         p_e_type                = disk_to_host(sex, disk64.e_type);
         p_e_machine             = disk_to_host(sex, disk64.e_machine);
@@ -237,15 +235,6 @@ SgAsmElfFileHeader::max_page_size()
 void
 SgAsmElfFileHeader::update_from_header()
 {
-    /* Update data encoding. */
-    if (get_sex()==ORDER_LSB) {
-        p_e_ident_data_encoding = 1;
-    } else if (get_sex()==ORDER_MSB) {
-        p_e_ident_data_encoding = 2;
-    } else {
-        ROSE_ASSERT(!"unsupported byte order");
-    }
-
     /* Update word size */
     if (get_word_size()==4) {
         p_ident_file_class = 1;
@@ -264,7 +253,8 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     for (size_t i=0; i<NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
-    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
@@ -292,7 +282,8 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     for (size_t i=0; i < NELMTS(disk->e_ident_magic); i++)
         disk->e_ident_magic[i] = p_magic[i];
     host_to_disk(sex, p_e_ident_file_class,    &(disk->e_ident_file_class));
-    host_to_disk(sex, p_e_ident_data_encoding, &(disk->e_ident_data_encoding));
+    unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
@@ -377,7 +368,6 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericHeader::dump(f, p, -1);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_class",     p_e_ident_file_class);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_data_encoding",  p_e_ident_data_encoding);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_version",   p_e_ident_file_version);
     for (size_t i=0; i < p_e_ident_padding.size(); i++)
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
