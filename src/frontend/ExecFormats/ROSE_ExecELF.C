@@ -899,7 +899,7 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     
     SgAsmElfSection::dump(f, p, -1);
 
-    fprintf(f, "%s%-*s = 0x%08lx", p, w, "empty_string", (unsigned long)p_empty_string);
+    fprintf(f, "%s%-*s =", p, w, "empty_string");
     for (size_t i=0; i<p_referenced_storage.size(); ++i) {
         if (p_referenced_storage[i] == p_empty_string)
             fprintf(f, " p_referenced_storage[%zu]", i);
