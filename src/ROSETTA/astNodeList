@@ -491,6 +491,7 @@ SgAsmStoredString
 SgAsmStringStorage
 SgAsmElfStrtab
 SgAliasSymbol
+SgAsmCoffStrtab
 SgRenamePair
 SgInterfaceBody
 SgLocatedNodeSupport

@@ -1133,34 +1133,6 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // one-byte size is stored. The string data is the next N bytes.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*FIXME: Needs to be moved into ROSETTA */
-class SgAsmCoffStrtab : public SgAsmGenericSection {
-  public:
-    SgAsmCoffStrtab(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
-        : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size),
-          p_num_freed(0), p_empty_string(NULL)
-        {ctor();}
-    virtual ~SgAsmCoffStrtab();
-
-    virtual void unparse(FILE*);
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-    SgAsmStoredString *create_string(addr_t offset, bool shared);
-    void free(class SgAsmStringStorage*);
-    void free_all_strings(bool blow_away_holes=false);
-    void reallocate(); /*allocate storage for all unallocated strings*/
-    virtual void set_size(addr_t newsize);
-
-  private:
-    void ctor();
-    void free(addr_t offset, addr_t size); /*mark part of table as free*/
-    rose_addr_t best_fit(addr_t need); /*allocate from free list*/
-    typedef std::vector<class SgAsmStringStorage*> referenced_t;
-    referenced_t p_referenced_storage;
-    size_t p_num_freed;
-    SgAsmStringStorage *p_empty_string;
-};
-
 /* Constructor */
 void
 SgAsmCoffStrtab::ctor()

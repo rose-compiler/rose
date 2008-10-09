@@ -168,6 +168,7 @@ Grammar::setUpBinaryInstructions ()
 
   // DQ (9/9/2008): Added support for String Table (part of Robb's work)
      NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
+     NEW_TERMINAL_MACRO ( AsmCoffStrtab,         "AsmCoffStrtab",         "AsmCoffStrtabTag"         );
 
      NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStrtab, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
@@ -200,7 +201,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmGenericSection, 
             AsmGenericHeader | 
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
-            AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  |
+            AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  | AsmCoffStrtab    |
             AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", true /* canHaveInstances = true */ );
@@ -410,9 +411,6 @@ Grammar::setUpBinaryInstructions ()
      AsmStoredString.setDataPrototype("SgAsmStringStorage*","storage","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // SgAsmElfStrtab *p_strtab;
-  // std::string p_string;
-  // rose_addr_t p_offset;
      AsmStringStorage.setFunctionPrototype ( "HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
      AsmStringStorage.setDataPrototype("SgAsmGenericSection*","strtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -500,19 +498,25 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-  // typedef std::vector<class SgAsmStringStorage*> referenced_t;
-  // referenced_t referenced;
-  // typedef std::map<addr_t, addr_t> freelist_t; /*key is offset; value is size*/
-  // freelist_t freelist;
-  // size_t num_freed;
-  // class SgAsmStringStorage *empty_string; /*ptr to storage for empty string at offset zero if present*/
+
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
      AsmElfStrtab.setDataPrototype("SgAsmElfStrtab::referenced_t","referenced_storage","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     /*ptr to storage for empty string at offset zero if present*/
      AsmElfStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
+     AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
+     AsmCoffStrtab.setDataPrototype("SgAsmCoffStrtab::referenced_t","referenced_storage","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmCoffStrtab.setDataPrototype("size_t","num_freed","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     /*ptr to storage for empty string at offset zero if present*/
+     AsmCoffStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
@@ -1867,6 +1871,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEDLL.setFunctionSource ( "SOURCE_PE_DLL", "../Grammar/BinaryInstruction.code");
   // AsmCoffSymbolList.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL_LIST", "../Grammar/BinaryInstruction.code");
      AsmCoffSymbol.setFunctionSource ( "SOURCE_PE_COFF_SYMBOL", "../Grammar/BinaryInstruction.code");
+     AsmCoffStrtab.setFunctionSource("SOURCE_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
 
      AsmNEFileHeader.setFunctionSource ( "SOURCE_NE_FILE_HEADER", "../Grammar/BinaryInstruction.code");
      AsmNESection.setFunctionSource ( "SOURCE_NE_SECTION", "../Grammar/BinaryInstruction.code");

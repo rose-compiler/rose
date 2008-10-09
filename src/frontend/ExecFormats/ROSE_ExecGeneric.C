@@ -161,13 +161,12 @@ SgAsmStoredString::get_offset() const
 #if 1
         /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
         SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(strtab);
-        //SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(strtab);
+        SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(strtab);
         if (elf_strtab) {
             elf_strtab->reallocate();
         } else {
-            abort();
-            //ROSE_ASSERT(coff_strtab);
-            //coff_strtab->reallocate();
+            ROSE_ASSERT(coff_strtab);
+            coff_strtab->reallocate();
         }
 #else
         strtab->rallocate();
@@ -187,13 +186,12 @@ SgAsmStoredString::set_string(const std::string &s)
 #if 1
     /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
     SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(storage->get_strtab());
-    //SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(storage->get_strtab());
+    SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(storage->get_strtab());
     if (elf_strtab) {
         elf_strtab->free(storage);
     } else {
-        abort();
-        //ROSE_ASSERT(coff_strtab);
-        //coff_strtab->free(storage);
+        ROSE_ASSERT(coff_strtab);
+        coff_strtab->free(storage);
     }
 #else
     storage->get_strtab()->free(storage);

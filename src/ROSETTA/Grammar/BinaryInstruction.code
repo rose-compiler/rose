@@ -2190,6 +2190,30 @@ HEADER_PE_COFF_SYMBOL_START
 
 HEADER_PE_COFF_SYMBOL_END
 
+HEADER_COFF_STRING_TABLE_START
+  public:
+    SgAsmCoffStrtab(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
+        : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size),
+          p_num_freed(0), p_empty_string(NULL)
+        {ctor();}
+
+    // Supressed ROSETTA-generated destructor.
+    virtual ~SgAsmCoffStrtab();
+
+    virtual void unparse(FILE*);
+    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+    class SgAsmStringStorage *create_storage(addr_t offset, bool shared);
+    SgAsmStoredString *create_string(addr_t offset, bool shared);
+    void free(class SgAsmStringStorage*);
+    void free_all_strings(bool blow_away_holes=false);
+    void reallocate(); /*allocate storage for all unallocated strings*/
+    virtual void set_size(addr_t newsize);
+    typedef std::vector<class SgAsmStringStorage*> referenced_t;
+
+  private:
+    void ctor();
+    void free(addr_t offset, addr_t size); /*mark part of table as free*/
+HEADER_COFF_STRING_TABLE_END
 
 
 // ***********************************************
@@ -4808,6 +4832,8 @@ SgAsmPEDLL::add_binding(addr_t a)
 
 SOURCE_PE_DLL_END
 
+SOURCE_COFF_STRING_TABLE_START
+SOURCE_COFF_STRING_TABLE_END
 
 SOURCE_NE_FILE_HEADER_START
 
