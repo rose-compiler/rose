@@ -757,9 +757,10 @@ SgAsmElfSectionTable::ctor()
                     (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, fhdr->get_e_shentsize());
                 shdr = new SgAsmElfSectionTableEntry(sex, disk);
             }
-            shdr->set_nextra(fhdr->get_shextrasz());
-            if (shdr->get_nextra() > 0)
-                shdr->get_extra() = content_ucl(offset+struct_size, shdr->get_nextra());
+
+	    addr_t nextra = fhdr->get_shextrasz();
+            if (nextra>0)
+                shdr->get_extra() = content_ucl(offset+struct_size, nextra);
             entries.push_back(shdr);
         }
 
@@ -900,7 +901,6 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_size",        p_sh_size, p_sh_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_addralign",   p_sh_addralign, p_sh_addralign);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "sh_entsize",     p_sh_entsize, p_sh_entsize);
-    fprintf(f, "%s%-*s = %" PRIu64 " bytes\n",             p, w, "nextra",         p_nextra);
     if (p_nextra > 0)
         fprintf(f, "%s%-*s = %s\n",                        p, w, "extra",          "<FIXME>");
 }
@@ -947,7 +947,7 @@ SgAsmElfSectionTable::unparse(FILE *f)
             /* The disk struct */
 	    addr_t entsize = size + fhdr->get_shextrasz();
             addr_t extra_offset = write(f, section->get_id()*entsize, size, disk);
-            if (shdr->get_nextra() > 0)
+            if (shdr->get_extra().size() > 0)
                 write(f, extra_offset, shdr->get_extra());
         }
     }
@@ -1156,7 +1156,7 @@ SgAsmElfSegmentTable::ctor()
             shdr->set_index(i);
 
             /* Save extra bytes */
-            addr_t nextra = fhdr->get_e_phentsize() - struct_size;
+            addr_t nextra = fhdr->get_phextrasz();
             if (nextra>0)
                 shdr->get_extra() = content_ucl(offset+struct_size, nextra);
 
@@ -1249,7 +1249,8 @@ SgAsmElfSegmentTable::unparse(FILE *f)
             }
         
             /* The disk struct */
-            addr_t extra_offset = write(f, shdr->get_index() * fhdr->get_e_phentsize(), size, disk);
+	    addr_t entsize = size + fhdr->get_phextrasz();
+            addr_t extra_offset = write(f, shdr->get_index() * entsize, size, disk);
             if (shdr->get_extra().size() > 0)
                 write(f, extra_offset, shdr->get_extra());
         }
