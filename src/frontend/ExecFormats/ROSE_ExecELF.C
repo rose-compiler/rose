@@ -491,6 +491,19 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
 void
 SgAsmElfFileHeader::unparse(FILE *f)
 {
+    /* FIXME: This should be in SgAsmGenericHeader */
+    /* Give every section a chance to resize itself based on modified information in the AST */
+    SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
+    for (size_t i=0; i<sections.size(); i++) {
+        /* FIXME: all sections should implement reallocate() */
+        SgAsmElfStrtab *strtab = NULL;
+        strtab = dynamic_cast<SgAsmElfStrtab*>(sections[i]);
+        if (strtab) {
+            fprintf(stderr, "ROBB: reallocating [%d] \"%s\"\n", strtab->get_id(), strtab->get_name().c_str());
+            strtab->reallocate();
+        }
+    }
+    
     /* Encode ELF file header */
     Elf32FileHeader_disk disk32;
     Elf64FileHeader_disk disk64;
@@ -1118,7 +1131,9 @@ void
 SgAsmElfStrtab::unparse(FILE *f)
 {
     /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
+    addr_t orig_size = get_size();
     reallocate();
+    ROSE_ASSERT(orig_size==get_size());
     
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_referenced_storage.size(); i++) {
@@ -1448,11 +1463,7 @@ SgAsmElfSectionTable::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
 
-    /* Make sure all strings are allocated in the string table before we start writing sections. More generally, make sure all
-     * sections are set to the sizes, offsets, etc that we want in the section table. */
-    //FIXME
-
-    /* Write the remaining entries */
+    /* Write the entries */
     for (size_t i = 0; i < sections.size(); i++) {
         if (sections[i]->get_id() >= 0) {
             SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
