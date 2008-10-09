@@ -821,6 +821,9 @@ AC_PATH_QT_MOC
 
 AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
 
+AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
+AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" != xno])
+
 AC_CONFIG_SUBDIRS([src/3rdPartyLibraries/libltdl src/3rdPartyLibraries/libharu-2.1.0])
 
 # RV 9/14/2005: Removed src/3rdPartyLibraries/PDFLibrary/Makefile
@@ -1014,6 +1017,7 @@ projects/javaport/Makefile
 projects/palette/Makefile
 projects/reverseComputation/Makefile
 projects/assemblyToSourceAst/Makefile
+projects/assemblyToSourceAst/tests/Makefile
 projects/bugSeeding/Makefile
 projects/bugSeeding/bugSeeding.tex
 projects/UpcTranslation/Makefile

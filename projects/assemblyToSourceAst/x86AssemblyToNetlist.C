@@ -30,6 +30,7 @@ struct RegisterInfo {
   LitList(32) gprs[8];
   LitList(32) ip;
   Lit flags[16];
+  Lit errorFlag;
 };
 
 struct NetlistTranslationPolicy {
@@ -72,6 +73,8 @@ struct NetlistTranslationPolicy {
     rm.flags[x86_flag_iopl1] = FALSE;
     rm.flags[x86_flag_nt] = FALSE;
     rm.flags[x86_flag_15] = FALSE;
+    rm.errorFlag = problem.newVar();
+    problem.addInterface(prefix + "_error", toVector(rm.errorFlag));
   }
 
   NetlistTranslationPolicy(): isThisIp(FALSE), currentMemoryIndex(0), problem() {
@@ -296,9 +299,9 @@ struct NetlistTranslationPolicy {
     WriteMemoryHelper<Len, 0, NetlistTranslationPolicy>::go(segreg, addr, data, cond[0], *this);
   }
 
-  void hlt() {} // FIXME
+  void hlt() {registerMap.errorFlag = TRUE;} // FIXME
   void interrupt(uint8_t num) {} // FIXME
-  LitList(64) rdtsc() {return number<64>(0);} // FIXME
+  LitList(64) rdtsc() {return problem.newVars<64>();}
 
   void writeBack() {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
@@ -309,6 +312,7 @@ struct NetlistTranslationPolicy {
     for (size_t i = 0; i < 16; ++i) {
       problem.condEquivalence(isThisIp, registerMap.flags[i], newRegisterMap.flags[i]);
     }
+    problem.condEquivalence(isThisIp, registerMap.errorFlag, newRegisterMap.errorFlag);
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
   }
 

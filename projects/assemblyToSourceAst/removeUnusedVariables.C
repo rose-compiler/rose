@@ -80,22 +80,22 @@ int main(int, char**) {
     }
   }
 
-  vector<Clause> newClauses;
-  for (size_t i = 0; i < cnf.clauses.size(); ++i) {
+  vector<Clause> oldClauses = cnf.clauses;
+  cnf.clauses.clear();
+  for (size_t i = 0; i < oldClauses.size(); ++i) {
     Clause cl;
-    for (size_t j = 0; j < cnf.clauses[i].size(); ++j) {
-      Lit oldLit = cnf.clauses[i][j];
+    for (size_t j = 0; j < oldClauses[i].size(); ++j) {
+      Lit oldLit = oldClauses[i][j];
       Lit newLit = (oldLit < 0 ? invert(varMap[-oldLit]) : varMap[oldLit]);
       // These two lines do pure literal elimination
       if (newLit == FALSE) continue;
       if (newLit == TRUE) goto skipClause;
       cl.push_back(newLit);
     }
-    newClauses.push_back(cl);
+    cnf.addClause(cl);
     skipClause: ;
   }
 
-  cnf.clauses = newClauses;
   cnf.numVariables = c;
   cnf.unparse(stdout);
   return 0;
