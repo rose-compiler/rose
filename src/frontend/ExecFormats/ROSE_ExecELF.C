@@ -719,12 +719,11 @@ SgAsmElfString::~SgAsmElfString()
 }
 #endif
 
-/* Returns the std::string associated with the SgAsmElfString */
-const std::string&
+/* Returns the std::string associated with the SgAsmElfString. */
+std::string
 SgAsmElfString::get_string() const 
 {
-    static const std::string empty;
-    return get_storage() ? get_storage()->get_string() : empty;
+    get_storage()->get_string();
 }
 
 /* Returns the offset into the string table where the string is allocated. If the string is not allocated then this call
@@ -1123,7 +1122,7 @@ SgAsmElfStrtab::set_size(addr_t newsize)
     SgAsmElfSection::set_size(newsize);
 
     if (adjustment>0)
-        freelist.insert(freelist_t::value_type(orig_size, adjustment));
+        p_freelist.insert(freelist_t::value_type(orig_size, adjustment));
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
