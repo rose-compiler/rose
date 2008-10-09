@@ -952,6 +952,8 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
+projects/BinQ/Makefile
+projects/BinQ/gui/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
 projects/compass/src/compassSupport/Makefile
