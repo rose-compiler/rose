@@ -16,7 +16,7 @@ SgAsmDOSFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
     const DOSFileHeader_disk *disk = (const DOSFileHeader_disk*)content(0, sizeof(DOSFileHeader_disk));
 
-    set_name("DOS File Header");
+    set_name(new SgAsmBasicString("DOS File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -138,7 +138,7 @@ SgAsmDOSFileHeader::add_rm_section(addr_t max_offset)
         return NULL;
     }
     
-    p_rm_section->set_name("DOS real-mode text/data");
+    p_rm_section->set_name(new SgAsmBasicString("DOS real-mode text/data"));
     p_rm_section->set_synthesized(true);
     p_rm_section->set_purpose(SP_PROGRAM);
     p_rm_section->set_mapped_rva(0);
@@ -179,12 +179,12 @@ SgAsmDOSFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%zd] %u\n",          p, w, "e_res1",               i, p_e_res1[i]);
     }
     if (p_relocs) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "relocs", p_relocs->get_id(), p_relocs->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "relocs", p_relocs->get_id(), p_relocs->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",        p, w, "relocs");
     }
     if (p_rm_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section", p_rm_section->get_id(), p_rm_section->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "rm_section", p_rm_section->get_id(), p_rm_section->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",        p, w, "rm_section");
     }
@@ -224,7 +224,7 @@ SgAsmDOSFileHeader::parse(SgAsmGenericFile *ef, bool define_rm_section)
     if (fhdr->p_e_nrelocs > 0) {
         SgAsmGenericSection *relocs = new SgAsmGenericSection(ef, fhdr, fhdr->p_e_relocs_offset,
                                                               fhdr->p_e_nrelocs * sizeof(DOSRelocEntry_disk));
-        relocs->set_name("DOS relocation table");
+        relocs->set_name(new SgAsmBasicString("DOS relocation table"));
         relocs->set_synthesized(true);
         relocs->set_purpose(SP_HEADER);
         fhdr->set_relocs(relocs);

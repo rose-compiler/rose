@@ -1075,6 +1075,10 @@ HEADER_GENERIC_SYMBOL_LIST_END
 HEADER_BASIC_STRING_START
      public:
        // SgAsmBasicString() {}
+          explicit SgAsmBasicString(const std::string &s)
+	      : p_string(s) {}
+	  explicit SgAsmBasicString(const char *s)
+	      : p_string(s) {}
        // virtual ~SgAsmBasicString() {}
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1087,6 +1091,7 @@ HEADER_GENERIC_STRING_START
        // These aren't the ROSETTA-generated versions because they hook into string table allocation functions
           virtual std::string get_string() const;
           virtual void set_string(const std::string &s);
+          const char *c_str() const;
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1418,7 +1423,7 @@ HEADER_ELF_DYNAMIC_SECTION_START
              {ctor(fhdr, shdr);}
        // virtual ~SgAsmElfDynamicSection() {}
 
-          virtual void set_linked_section(SgAsmElfSection *sec);   /* Parsing happens here rather than in constructor */
+          virtual void set_linked_section(SgAsmElfStrtab*);   /* Parsing happens here rather than in constructor */
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1551,7 +1556,7 @@ HEADER_ELF_SYMBOL_SECTION_START
           SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
        // virtual ~SgAsmElfSymbolSection() {}
 
-          virtual void set_linked_section(SgAsmElfSection *strtab);
+          virtual void set_linked_section(SgAsmElfStrtab*);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -4096,7 +4101,7 @@ SOURCE_GENERIC_SECTION_START
 SgAsmGenericSection::SgAsmGenericSection(SgAsmGenericFile *f, SgAsmGenericHeader *fhdr, addr_t offset, addr_t size)
    : 
 p_header(NULL), p_offset(0), p_purpose(SP_UNSPECIFIED), p_synthesized(false),
-p_id(-1), p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(true), p_mapped_wperm(true), p_mapped_xperm(false), p_congealed(false)
+p_id(-1), p_name(0), p_mapped_rva(0), p_mapped_size(0), p_mapped_rperm(true), p_mapped_wperm(true), p_mapped_xperm(false), p_congealed(false)
    {
      ctor(f, fhdr, offset, size);
    }

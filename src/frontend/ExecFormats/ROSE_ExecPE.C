@@ -14,7 +14,7 @@
 void
 SgAsmPEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
-    set_name("Extended DOS Header");
+    set_name(new SgAsmBasicString("Extended DOS Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -98,7 +98,7 @@ void
 SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
 
-    set_name("PE File Header");
+    set_name(new SgAsmBasicString("PE File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -460,7 +460,7 @@ SgAsmPEFileHeader::create_table_sections()
         
 
         SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
-        if (tabname) tabsec->set_name(tabname);
+        if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
         tabsec->set_mapped_rva(pair->get_e_rva());
@@ -546,7 +546,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_coff_symtab",       p_e_coff_symtab);
     fprintf(f, "%s%-*s = %u\n",            p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "coff_symtab", p_coff_symtab->get_id(), p_coff_symtab->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "coff_symtab", p_coff_symtab->get_id(), p_coff_symtab->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n",      p, w, "coff_symtab");
     }
@@ -590,13 +590,13 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "e_size", p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }
     if (p_dos2_header) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", p_dos2_header->get_id(), p_dos2_header->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name().c_str());
+                p_section_table->get_id(), p_section_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
@@ -697,7 +697,7 @@ void
 SgAsmPESectionTable::ctor()
 {
     set_synthesized(true);
-    set_name("PE Section Table");
+    set_name(new SgAsmBasicString("PE Section Table"));
     set_purpose(SP_HEADER);
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
@@ -718,7 +718,7 @@ SgAsmPESectionTable::ctor()
             section = new SgAsmPESection(fhdr, entry->get_physical_offset(), entry->get_physical_size());
         }
         section->set_synthesized(false);
-        section->set_name(entry->get_name());
+        section->set_name(new SgAsmBasicString(entry->get_name()));
         section->set_id(i+1); /*numbered starting at 1, not zero*/
         section->set_purpose(SP_PROGRAM);
 
@@ -1432,7 +1432,7 @@ void
 SgAsmCoffSymbolTable::ctor()
 {
     set_synthesized(true);
-    set_name("COFF Symbols");
+    set_name(new SgAsmBasicString("COFF Symbols"));
     set_purpose(SP_SYMTAB);
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
@@ -1446,7 +1446,7 @@ SgAsmCoffSymbolTable::ctor()
     addr_t strtab_offset = get_offset() + fhdr->get_e_coff_nsyms() * SgAsmCoffSymbol::COFFSymbol_disk_size;
     p_strtab = new SgAsmGenericSection(fhdr->get_file(), fhdr, strtab_offset, sizeof(uint32_t));
     p_strtab->set_synthesized(true);
-    p_strtab->set_name("COFF Symbol Strtab");
+    p_strtab->set_name(new SgAsmBasicString("COFF Symbol Strtab"));
     p_strtab->set_purpose(SP_HEADER);
 
     uint32_t word;

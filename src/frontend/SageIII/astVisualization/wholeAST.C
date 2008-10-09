@@ -1403,7 +1403,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=5,peripheries=1,color=\"Blue\",fillcolor=RoyalBlue,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = string("\\n  ") + genericSection->get_name() +
+                    labelWithSourceCode = string("\\n  ") + genericSection->get_name()->get_string() +
                                           "\\n  " +  StringUtility::numberToString(genericSection) + "  ";
                  // printf ("########## genericSection->get_name() = %s \n",genericSection->get_name().c_str());
                     break;
@@ -1417,7 +1417,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   {
                     SgAsmGenericHeader* genericHeader = isSgAsmGenericHeader(node);
                     additionalNodeOptions = "shape=polygon,regular=0,URL=\"\\N\",tooltip=\"more info at \\N\",sides=8,peripheries=2,color=\"Blue\",fillcolor=green,fontname=\"7x13bold\",fontcolor=black,style=filled";
-                    labelWithSourceCode = "\\n  " + genericHeader->get_name() + 
+                    labelWithSourceCode = "\\n  " + genericHeader->get_name()->get_string() + 
                                           "\\n  " +  StringUtility::numberToString(genericHeader) + "  ";
                     break;
                   }

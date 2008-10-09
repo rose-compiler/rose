@@ -71,7 +71,7 @@ SgAsmNERelocEntry::osfixup_type::osfixup_type()
 void
 SgAsmNEExtendedDOSHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
-    set_name("Extended DOS Header");
+    set_name(new SgAsmBasicString("Extended DOS Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -129,7 +129,7 @@ SgAsmNEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
-    set_name("NE File Header");
+    set_name(new SgAsmBasicString("NE File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -327,37 +327,37 @@ SgAsmNEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 
     if (p_dos2_header) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header",
-                p_dos2_header->get_id(), p_dos2_header->get_name().c_str());
+                p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "dos2_header");
     }
     if (p_section_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "section_table",
-                p_section_table->get_id(), p_section_table->get_name().c_str());
+                p_section_table->get_id(), p_section_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
     if (p_resname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "resname_table",
-                p_resname_table->get_id(), p_resname_table->get_name().c_str());
+                p_resname_table->get_id(), p_resname_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "resname_table");
     }
     if (p_nonresname_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "nonresname_table",
-                p_nonresname_table->get_id(), p_nonresname_table->get_name().c_str());
+                p_nonresname_table->get_id(), p_nonresname_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "nonresname_table");
     }
     if (p_module_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "module_table",
-                p_module_table->get_id(), p_module_table->get_name().c_str());
+                p_module_table->get_id(), p_module_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "module_table");
     }
     if (p_entry_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "entry_table",
-                p_entry_table->get_id(), p_entry_table->get_name().c_str());
+                p_entry_table->get_id(), p_entry_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "entry_table");
     }
@@ -454,7 +454,7 @@ SgAsmNESection::dump(FILE *f, const char *prefix, ssize_t idx)
     p_st_entry->dump(f, p, -1, fhdr);
     if (p_reloc_table) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "reloc_table",
-                p_reloc_table->get_id(), p_reloc_table->get_name().c_str());
+                p_reloc_table->get_id(), p_reloc_table->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "reloc_table");
     }
@@ -465,7 +465,7 @@ void
 SgAsmNESectionTable::ctor()
 {
     set_synthesized(true);
-    set_name("NE Section Table");
+    set_name(new SgAsmBasicString("NE Section Table"));
     set_purpose(SP_HEADER);
 
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
@@ -494,17 +494,17 @@ SgAsmNESectionTable::ctor()
 
         unsigned section_type = entry->get_flags() & SgAsmNESectionTableEntry::SF_TYPE_MASK;
         if (0 == section_offset) {
-            section->set_name(".bss");
+            section->set_name(new SgAsmBasicString(".bss"));
             section->set_mapped_rperm(true);
             section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
             section->set_mapped_xperm(false);
         } else if (0 == section_type) {
-            section->set_name(".text");
+            section->set_name(new SgAsmBasicString(".text"));
             section->set_mapped_rperm(true);
             section->set_mapped_wperm(entry->get_flags() & SgAsmNESectionTableEntry::SF_NOT_WRITABLE ? false : true);
             section->set_mapped_xperm(true);
         } else if (section_type & SgAsmNESectionTableEntry::SF_DATA) {
-            section->set_name(".data");
+            section->set_name(new SgAsmBasicString(".data"));
             section->set_mapped_rperm(true);
             section->set_mapped_wperm(entry->get_flags() & (SgAsmNESectionTableEntry::SF_PRELOAD |
                                                             SgAsmNESectionTableEntry::SF_NOT_WRITABLE) ? false : true);
@@ -568,7 +568,7 @@ void
 SgAsmNENameTable::ctor()
 {
     set_synthesized(true);
-    set_name("NE Name Table");
+    set_name(new SgAsmBasicString("NE Name Table"));
     set_purpose(SP_HEADER);
 
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
@@ -661,7 +661,7 @@ void
 SgAsmNEModuleTable::ctor()
 {
     set_synthesized(true);
-    set_name("NE Module Reference Table");
+    set_name(new SgAsmBasicString("NE Module Reference Table"));
     set_purpose(SP_HEADER);
 
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
@@ -710,7 +710,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx)
     SgAsmGenericSection::dump(f, p, -1);
 
     if (p_strtab) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", p_strtab->get_id(), p_strtab->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "strtab", p_strtab->get_id(), p_strtab->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "strtab");
     }
@@ -731,7 +731,7 @@ void
 SgAsmNEStringTable::ctor()
 {
     set_synthesized(true);
-    set_name("NE String Table");
+    set_name(new SgAsmBasicString("NE String Table"));
     set_purpose(SP_HEADER);
 }
     
@@ -811,7 +811,7 @@ void
 SgAsmNEEntryTable::ctor()
 {
     set_synthesized(true);
-    set_name("NE Entry Table");
+    set_name(new SgAsmBasicString("NE Entry Table"));
     set_purpose(SP_HEADER);
 
     addr_t at = 0;
@@ -1203,7 +1203,7 @@ SgAsmNERelocTable::ctor()
     char name[64];
     sprintf(name, "NE Relocation Table %"PRIu64, p_offset);
     set_synthesized(true);
-    set_name(name);
+    set_name(new SgAsmBasicString(name));
     set_purpose(SP_HEADER);
 
     ROSE_ASSERT(0 == get_size());
@@ -1307,7 +1307,7 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     if (ne_header->get_e_resnametab_rfo() > 0) {
         addr_t resnames_offset = ne_header->get_offset() + ne_header->get_e_resnametab_rfo();
         SgAsmNENameTable *resnames = new SgAsmNENameTable(ne_header, resnames_offset);
-        resnames->set_name("NE Resident Name Table");
+        resnames->set_name(new SgAsmBasicString("NE Resident Name Table"));
         ne_header->set_resname_table(resnames);
     }
     if (ne_header->get_e_modreftab_rfo() > 0 && ne_header->get_e_importnametab_rfo() > ne_header->get_e_modreftab_rfo()) {
@@ -1333,7 +1333,7 @@ SgAsmNEFileHeader::parse(SgAsmGenericFile *ef)
     }
     if (ne_header->get_e_nonresnametab_offset() > 0) {
         SgAsmNENameTable *nonres = new SgAsmNENameTable(ne_header, ne_header->get_e_nonresnametab_offset());
-        nonres->set_name("NE Non-Resident Name Table");
+        nonres->set_name(new SgAsmBasicString("NE Non-Resident Name Table"));
         ne_header->set_nonresname_table(nonres);
     }
 

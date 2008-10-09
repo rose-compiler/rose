@@ -14,6 +14,31 @@
 #include <sys/wait.h>
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Strings
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Like get_string() except it returns a C NUL-terminated string */
+const char *
+SgAsmGenericString::c_str() const 
+{
+    return get_string().c_str();
+}
+
+/* Print some debugging info */
+void
+SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sBasicString[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sBasicString.", prefix);
+    }
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string().c_str());
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ExecFormat
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -301,7 +326,7 @@ SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/)
 
     /* Holes */
     for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
-        std::string secname = (*i)->get_name();
+        std::string secname = (*i)->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
@@ -313,7 +338,7 @@ SgAsmGenericFile::get_sections_by_name(std::string name, char sep/*or NUL*/)
 
     /* Headers and their sections */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
-        std::string secname = (*i)->get_name();
+        std::string secname = (*i)->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
@@ -477,7 +502,7 @@ SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections,
             return NULL; /* all sections sections must map the VA to the same file offset */
         if (best->get_mapped_size() > sections[i]->get_mapped_size()) {
             best = sections[i]; /*prefer sections with a smaller mapped size*/
-        } else if (best->get_name().size()==0 && sections[i]->get_name().size()>0) {
+        } else if (best->get_name()->get_string().size()==0 && sections[i]->get_name()->get_string().size()>0) {
             best = sections[i]; /*prefer sections having a name*/
         } else {
             /*prefer section defined earlier*/
@@ -542,7 +567,7 @@ SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
                     best = possible[i]; /*prefer sections with a smaller mapped size*/
                   }
                  else
-                    if (best->get_name().size()==0 && possible[i]->get_name().size()>0)
+                     if (best->get_name()->get_string().size()==0 && possible[i]->get_name()->get_string().size()>0)
                        {
                          best = possible[i]; /*prefer sections having a name*/
                        }
@@ -556,7 +581,7 @@ SgAsmGenericFile::get_best_possible_section_by_va(addr_t va)
      ROSE_ASSERT(best != NULL);
 
   // Add a few things that we just don't want to disassemble
-     if (best->get_name() == "ELF Segment Table")
+     if (best->get_name()->get_string() == "ELF Segment Table")
           return NULL;
 
   // printf ("   best: va = %p id = %d name = %s \n",(void*)va,best->get_id(),best->get_name().c_str());
@@ -751,7 +776,7 @@ SgAsmGenericFile::dump(FILE *f)
         } else {
             fputs("    ", f);
         }
-        fprintf(f, " %s\n", section->get_name().c_str());
+        fprintf(f, " %s\n", section->get_name()->c_str());
     }
 
     char overlap[4] = "   ";
@@ -802,7 +827,7 @@ SgAsmGenericFile::fill_holes()
     for (size_t i=0; i<extents.size(); i++) {
         SgAsmGenericSection *hole = new SgAsmGenericSection(this, NULL, extents[i].first, extents[i].second);
         hole->set_synthesized(true);
-        hole->set_name("hole");
+        hole->set_name(new SgAsmBasicString("hole"));
         hole->set_purpose(SgAsmGenericSection::SP_UNSPECIFIED);
         hole->congeal();
         add_hole(hole);
@@ -908,6 +933,7 @@ SgAsmGenericSection::ctor(SgAsmGenericFile *ef, SgAsmGenericHeader *hdr, addr_t 
     p_data = ef->content(offset, size);
     p_file = ef;
     p_size = p_data.size();
+    p_name = new SgAsmBasicString("");
 
     /* Add this section to the header's section list */
     set_header(hdr);
@@ -1335,13 +1361,13 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name.c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n",                      p, w, "name",        p_name->c_str());
     fprintf(f, "%s%-*s = %d\n",                          p, w, "id",          p_id);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes into file\n", p, w, "offset", p_offset, p_offset);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "size", get_size(), get_size());
     fprintf(f, "%s%-*s = %s\n",                          p, w, "synthesized", p_synthesized?"yes":"no");
     if (p_header) {
-        fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name().c_str());
+        fprintf(f, "%s%-*s = \"%s\"\n",                  p, w, "header",      p_header->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = not associated\n",          p, w, "header");
     }
@@ -1580,7 +1606,7 @@ SgAsmGenericHeader::get_sections_by_name(std::string name, char sep/*or NUL*/)
 
     SgAsmGenericSectionPtrList retval;
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
-        std::string secname = (*i)->get_name();
+        std::string secname = (*i)->get_name()->get_string();
         if (sep) {
             size_t pos = secname.find(sep);
             if (pos!=secname.npos)
@@ -1726,7 +1752,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         for (size_t j = 0; j < sections.size(); j++) {
             addr_t mapped_offset = p_entry_rvas[i] - sections[j]->get_mapped_rva();
             fprintf(f, "%s%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n", 
-                    p, w, label, mapped_offset, mapped_offset, sections[j]->get_id(), sections[j]->get_name().c_str());
+                    p, w, label, mapped_offset, mapped_offset, sections[j]->get_id(), sections[j]->get_name()->c_str());
         }
         fputc('\n', f);
     }
@@ -1736,7 +1762,7 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         SgAsmGenericSection *section = p_sections->get_sections()[i];
         char label[1024];
         sprintf(label, "section[%zu]", i);
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->c_str());
     }
     
     fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecDLL.size", p_dlls->get_dlls().size());
@@ -1817,7 +1843,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
     if (p_bound) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "bound", p_bound->get_id(), p_bound->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "bound", p_bound->get_id(), p_bound->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = none\n", p, w, "bound");
     }

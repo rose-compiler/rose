@@ -21,7 +21,7 @@
 void
 SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 {
-    set_name("ELF File Header");
+    set_name(new SgAsmBasicString("ELF File Header"));
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
@@ -306,7 +306,7 @@ SgAsmElfFileHeader::unparse(FILE *f)
         SgAsmElfStrtab *strtab = NULL;
         strtab = dynamic_cast<SgAsmElfStrtab*>(sections[i]);
         if (strtab) {
-            fprintf(stderr, "ROBB: reallocating [%d] \"%s\"\n", strtab->get_id(), strtab->get_name().c_str());
+            fprintf(stderr, "ROBB: reallocating [%d] \"%s\"\n", strtab->get_id(), strtab->get_name()->c_str());
             strtab->reallocate();
         }
     }
@@ -444,7 +444,7 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
     if (p_linked_section) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to", p_linked_section->get_id(), p_linked_section->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "linked_to", p_linked_section->get_id(), p_linked_section->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
@@ -456,38 +456,6 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 // String tables and strings
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#if 0
-/*FIXME: move to ROSE_ExecGeneric.C */
-SgAsmGenericString&
-SgAsmGenericString::operator=(const std::string &s)
-{
-    set_string(s);
-    return *this;
-}
-/*FIXME: move to ROSE_ExecGeneric.C */
-SgAsmGenericString&
-SgAsmGenericString::operator=(const char *s)
-{
-    set_string(s);
-    return *this;
-}
-#endif
-
-
-/*FIXME: move to ROSE_ExecGeneric.C */
-/* Print some debugging info */
-void
-SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sBasicString[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sBasicString.", prefix);
-    }
-    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "value", get_string().c_str());
-}
     
 /* String constructors */
 void
@@ -591,7 +559,7 @@ SgAsmElfStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
     SgAsmElfStrtab *strtab = get_strtab();
     if (strtab) {
-        fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name().c_str());
+        fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name()->c_str());
     } else {
         fputs(" no section", f);
     }
@@ -661,7 +629,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
         fprintf(stderr,
                 "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
                 " %s been modified and/or reallocated!\n",
-                offset, p_num_freed, 1==p_num_freed?"":"s", p_referenced_storage.size(), get_id(), get_name().c_str(),
+                offset, p_num_freed, 1==p_num_freed?"":"s", p_referenced_storage.size(), get_id(), get_name()->c_str(),
                 1==p_num_freed?"has":"have");
         ROSE_ASSERT(0==p_num_freed);
     }
@@ -908,7 +876,7 @@ SgAsmElfStrtab::reallocate()
     /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
     if (extend_size>0) {
         fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
-                get_id(), get_name().c_str(), extend_size, 1==extend_size?"":"s");
+                get_id(), get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = true;
@@ -1071,7 +1039,7 @@ void
 SgAsmElfSectionTable::ctor()
 {
     set_synthesized(true);                              /* the section table isn't really a section itself */
-    set_name("ELF section table");
+    set_name(new SgAsmBasicString("ELF section table"));
     set_purpose(SP_HEADER);
 
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
@@ -1117,12 +1085,7 @@ SgAsmElfSectionTable::ctor()
             strtab = new SgAsmElfStrtab(fhdr, shdr);
             strtab->set_id(fhdr->get_e_shstrndx());
             strtab->set_st_entry(shdr);
-#ifdef USE_ELF_STRING /*FIXME*/
-            SgAsmElfString name(strtab, shdr->get_sh_name());
-            strtab->set_name(name.get_string());
-#else
-            strtab->set_name(strtab->content_str(shdr->get_sh_name()));
-#endif
+            strtab->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
         }
 
         /* Read all other sections */
@@ -1155,14 +1118,8 @@ SgAsmElfSectionTable::ctor()
             }
             section->set_id(i);
             section->set_st_entry(shdr);
-            if (strtab) {
-#ifdef USE_ELF_STRING /*FIXME*/
-                SgAsmElfString name(strtab, shdr->get_sh_name());
-                section->set_name(name.get_string());
-#else
-                section->set_name(strtab->content_str(shdr->get_sh_name()));
-#endif
-            }
+            if (strtab)
+                section->set_name(new SgAsmElfString(strtab, shdr->get_sh_name()));
             section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
             section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
 
@@ -1197,9 +1154,8 @@ SgAsmElfSectionTable::set_offset(addr_t newaddr)
 void
 SgAsmElfSectionTableEntry::update_from_section(SgAsmElfSection *section)
 {
-#ifdef USE_ELF_STRING /*FIXME*/
-    //p_sh_name = section->name->get_offset();
-#endif
+    p_sh_name = dynamic_cast<SgAsmElfString*>(section->get_name())->get_offset();
+
     p_sh_offset = section->get_offset();
     if (p_sh_type==SHT_NOBITS && section->is_mapped()) {
         p_sh_size = section->get_mapped_size();
@@ -1482,7 +1438,7 @@ void
 SgAsmElfSegmentTable::ctor()
 {
     set_synthesized(true);                              /* the segment table isn't part of any explicit section */
-    set_name("ELF Segment Table");
+    set_name(new SgAsmBasicString("ELF Segment Table"));
     set_purpose(SP_HEADER);
 
     p_entries = new SgAsmElfSegmentTableEntryList;
@@ -1583,7 +1539,7 @@ SgAsmElfSegmentTable::ctor()
                 }
                 s = new SgAsmGenericSection(fhdr->get_file(), fhdr, shdr->get_offset(), shdr->get_filesz());
                 s->set_synthesized(true);
-                s->set_name(name);
+                s->set_name(new SgAsmBasicString(name));
                 s->set_purpose(SP_HEADER);
             } else if (1 == matching.size()) {
                 /* Use the single matching section. */
@@ -1725,14 +1681,14 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 
 /* Set linked section (the string table) and finish parsing this section. */
 void
-SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab) 
+SgAsmElfDynamicSection::set_linked_section(SgAsmElfStrtab *strtab) 
 {
     SgAsmElfSection::set_linked_section(strtab);
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL && fhdr == strtab->get_elf_header());
 
     ROSE_ASSERT(strtab != NULL);
-    ROSE_ASSERT(strtab->get_name() == ".dynstr");
+    ROSE_ASSERT(strtab->get_name()->get_string() == ".dynstr");
 
     size_t section_size = get_size(), entry_size = 0, nentries = 0;
     if (4==fhdr->get_word_size()) {
@@ -1764,8 +1720,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *strtab)
               /* DT_NEEDED: offset to NUL-terminated library name in the linked-to (".dynstr") section. */
 #ifdef USE_ELF_STRING
               /*FIXME: Testing out some new stuff. Eventually the SgAsmGenericDLL will contain an SgAsmGenericString*/
-              SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
-              SgAsmElfString name(xxx, p_all_entries->get_entries()[i]->get_d_val());
+              SgAsmElfString name(strtab, p_all_entries->get_entries()[i]->get_d_val());
               fhdr->add_dll(new SgAsmGenericDLL(name.get_string()));
 #else
               const char *name = (const char*)strtab->content_str(p_all_entries->get_entries()[i]->get_d_val());
@@ -1841,7 +1796,7 @@ SgAsmElfDynamicSection::dump_section_rva(FILE *f, const char *p, int w, const ch
     for (size_t i=0; i<sections.size(); i++) {
         addr_t offset = addr - sections[i]->get_mapped_rva();
         fprintf(f, "%s%-*s     0x%08"PRIx64" (%"PRIu64") bytes into [%d] \"%s\"\n",
-                p, w, "...", offset, offset, sections[i]->get_id(), sections[i]->get_name().c_str());
+                p, w, "...", offset, offset, sections[i]->get_id(), sections[i]->get_name()->c_str());
     }
 }
 
@@ -2053,7 +2008,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     fprintf(f, "%s%-*s = %"PRIu64"\n",  p, w, "st_size", p_st_size);
 
     if (section && section->get_id() == (int)p_st_shndx) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "st_shndx", section->get_id(), section->get_name().c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "st_shndx", section->get_id(), section->get_name()->c_str());
     } else {
         fprintf(f, "%s%-*s = %u\n",         p, w, "st_shndx", p_st_shndx);        
     }
@@ -2100,7 +2055,7 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
  *   0xfff1        symbol has absolute value not affected by relocation
  *   0xfff2        symbol is fortran common or unallocated C extern */
 void
-SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
+SgAsmElfSymbolSection::set_linked_section(SgAsmElfStrtab *strtab)
 {
     SgAsmElfSection::set_linked_section(strtab);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
@@ -2108,8 +2063,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
 
         /* Get symbol name */
 #ifdef USE_ELF_STRING
-        SgAsmElfStrtab *xxx = dynamic_cast<SgAsmElfStrtab*>(strtab);
-        SgAsmElfString *name = new SgAsmElfString(xxx, symbol->get_st_name());
+        SgAsmElfString *name = new SgAsmElfString(strtab, symbol->get_st_name());
         symbol->set_name(name->get_string());
 #else
         symbol->set_name(strtab->content_str(symbol->get_st_name()));
@@ -2125,7 +2079,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *strtab)
         /* Section symbols may need names and sizes */
         if (symbol->get_type() == SgAsmElfSymbol::SYM_SECTION && symbol->get_bound()) {
             if (symbol->get_name().size() == 0)
-                symbol->set_name(symbol->get_bound()->get_name());
+                symbol->set_name(symbol->get_bound()->get_name()->c_str());
             if (symbol->get_size() == 0)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
@@ -2232,6 +2186,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
             fhdr->add_symbol(symbols[i]);
     }
 
+#ifdef USE_ELF_STRING
     /* Temporary tests */
     if (access("x-do-tests", F_OK)>=0) {
         fprintf(stderr, "ROBB: running string tests...\n");
@@ -2332,7 +2287,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 #endif
 #endif
     }
-    
+#endif
 
     return fhdr;
 }
