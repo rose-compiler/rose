@@ -1,7 +1,6 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
-SUBDIRS =  gui
-
+#SUBDIRS =  gui
 
 if ROSE_USE_QROSE
 
@@ -26,5 +25,7 @@ CLEANFILES =
 
 EXTRA_DIST = 
 
+clean:
+	rm -f *.o BinQ
 
 endif
