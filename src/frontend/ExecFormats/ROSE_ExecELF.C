@@ -1700,20 +1700,6 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
     }
 }
 
-/* Helper for ElfDynamicSection::dump */
-// static 
-void
-SgAsmElfDynamicSection::dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, SgAsmGenericFile *ef)
-{
-    fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n", p, w, name, addr);
-    SgAsmGenericSectionPtrList sections = ef->get_sections_by_rva(addr);
-    for (size_t i=0; i<sections.size(); i++) {
-        addr_t offset = addr - sections[i]->get_mapped_rva();
-        fprintf(f, "%s%-*s     0x%08"PRIx64" (%"PRIu64") bytes into [%d] \"%s\"\n",
-                p, w, "...", offset, offset, sections[i]->get_id(), sections[i]->get_name()->c_str());
-    }
-}
-
 /* Write the dynamic section back to disk */
 void
 SgAsmElfDynamicSection::unparse(FILE *f)

@@ -1539,6 +1539,20 @@ SgAsmGenericSection::get_va_offset(addr_t va)
     return get_offset() + (rva - get_mapped_rva());
 }
 
+/* Class method that prints info about offsets into known sections */
+void
+SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix, addr_t rva, const SgAsmGenericSectionPtrList &slist)
+{
+    for (size_t i=0; i<slist.size(); i++) {
+        SgAsmGenericSection *s = slist[i];
+        if (s->is_mapped() && rva>=s->get_mapped_rva() && rva<s->get_mapped_rva()+s->get_mapped_size()) {
+            addr_t offset = rva - s->get_mapped_rva();
+            fprintf(f, "%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n",
+                    DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
+        }
+    }
+}
+
 /* Print some debugging info */
 void
 SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -2146,13 +2160,8 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         char label[64];
         sprintf(label, "entry_rva[%zu]", i);
         fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_entry_rvas[i], p_entry_rvas[i]);
-        SgAsmGenericSectionPtrList sections = get_file()->get_sections_by_rva(p_entry_rvas[i]);
-        for (size_t j = 0; j < sections.size(); j++) {
-            addr_t mapped_offset = p_entry_rvas[i] - sections[j]->get_mapped_rva();
-            fprintf(f, "%s%-*s   is 0x%08"PRIx64" (%"PRIu64") bytes into section [%d] \"%s\"\n", 
-                    p, w, label, mapped_offset, mapped_offset, sections[j]->get_id(), sections[j]->get_name()->c_str());
-        }
-        fputc('\n', f);
+        SgAsmGenericSectionPtrList sections = get_file()->get_sections();
+        dump_containing_sections(f, std::string(p)+label, p_entry_rvas[i], sections);
     }
 
     fprintf(f, "%s%-*s = %zu sections\n", p, w, "section", p_sections->get_sections().size());

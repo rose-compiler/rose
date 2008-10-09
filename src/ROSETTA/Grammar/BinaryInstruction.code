@@ -803,6 +803,7 @@ HEADER_GENERIC_SECTION_START
        // This destructor modifies the SgAsmGenericFile data to remove its section from the section list!
           virtual ~SgAsmGenericSection();
 
+          static void dump_containing_sections(FILE *f, const std::string &prefix, addr_t rva, const SgAsmGenericSectionPtrList&);
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
           virtual void        unparse(FILE*);
           void                unparse(FILE*, const ExtentMap&);
@@ -1431,9 +1432,6 @@ HEADER_ELF_DYNAMIC_SECTION_START
           virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-       // Moved from global scope
-          static void dump_section_rva(FILE *f, const char *p, int w, const char *name, addr_t addr, SgAsmGenericFile *ef);
 
      private:
 	  void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
