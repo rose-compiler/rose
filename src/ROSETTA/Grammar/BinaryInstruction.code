@@ -822,6 +822,24 @@ HEADER_GENERIC_SECTION_START
        // void                set_synthesized(bool b) {synthesized=b;}
        // bool                get_synthesized() {return synthesized;}
 
+       /* Static functions for manipulating extent maps */
+          static ExtentMap subtract_extents(const ExtentMap &map, const ExtentPair &extent)
+            {subtract_extents(map, extent.first, extent.second);}
+          static ExtentMap subtract_extents(const ExtentMap &map, addr_t offset, addr_t size);
+          static void insert_extent(ExtentMap &map, const ExtentPair &extent)
+            {insert_extent(map, extent.first, extent.second);}
+          static void insert_extent(ExtentMap &map, addr_t offset, addr_t size);
+          static ExtentMap overlap_extents(const ExtentMap &map, const ExtentPair &extent)
+            {overlap_extents(map, extent.first, extent.second);}
+          static ExtentMap overlap_extents(const ExtentMap &map, addr_t offset, addr_t size);
+          static void erase_extent(ExtentMap &map, const ExtentPair &extent)
+            {erase_extent(map, extent.first, extent.second);}
+          static void erase_extent(ExtentMap &map, addr_t offset, addr_t size);
+          static ExtentMap::const_iterator best_fit_extent(const ExtentMap &map, addr_t size);
+          static ExtentPair allocate_best_extent(ExtentMap &map, addr_t size);
+          static ExtentPair allocate_first_extent(ExtentMap &map, addr_t size);
+          static void dump_extents(const ExtentMap&, FILE*, const char *prefix, const char *label);
+
      protected:
           void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
           void unparse_holes(FILE*);
