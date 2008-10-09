@@ -985,6 +985,35 @@ SgAsmGenericSection::clear_mapped()
     set_mapped_rva(0);
 }
 
+/* Returns mapped size of section. */
+rose_addr_t
+SgAsmGenericSection::get_mapped_size() const
+{
+    return p_mapped_size;
+}
+
+/* Resizes a mapped section without consideration of other sections that might be mapped. See also
+ * SgAsmGenericFile::mapped_resize(). */
+void
+SgAsmGenericSection::set_mapped_size(addr_t size)
+{
+    p_mapped_size = size;
+}
+
+/* Returns relative virtual address w.r.t., base address of header */
+rose_addr_t
+SgAsmGenericSection::get_mapped_rva() const
+{
+    return p_mapped_rva;
+}
+
+/* Moves a mapped section without consideration of other sections that might be mapped. */
+void
+SgAsmGenericSection::set_mapped_rva(addr_t a)
+{
+    p_mapped_rva = a;
+}
+
 /* Returns (non-relative) virtual address if mapped, zero otherwise. */
 rose_addr_t
 SgAsmGenericSection::get_mapped_va()

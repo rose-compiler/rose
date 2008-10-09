@@ -780,7 +780,7 @@ HEADER_GENERIC_SECTION_START
           addr_t        get_size() const;
 	  virtual void  set_size(addr_t);		/* Resize a section w/o regard to other sections or mapping */
 	  addr_t        get_offset() const;
-	  virtual void  set_offset(addr_t);             /* Move a section w/o regard to otehr sections or mapping */
+	  virtual void  set_offset(addr_t);             /* Move a section w/o regard to other sections or mapping */
           addr_t        get_end_offset(); /* file offset for end of section */
           void          extend(addr_t nbytes);         /* make section larger by extending the end */
           void          extend_up_to(addr_t nbytes);      /* like extend() but more relaxed at EOF */
@@ -801,6 +801,10 @@ HEADER_GENERIC_SECTION_START
        /* Functions related to mapping of sections into executable memory */
           bool   	      is_mapped();                    /* True iff non-zero mapped address and size */
           void   	      clear_mapped();                 /* Set mapped address and size to zero (unmapped)*/
+	  addr_t              get_mapped_size() const;
+          virtual void        set_mapped_size(addr_t);	      /* Set mapped size w/o regard to other section mappings */
+	  addr_t	      get_mapped_rva() const;
+	  virtual void        set_mapped_rva(addr_t);         /* Move a section w/o regard to other section mappings */
 	  addr_t 	      get_base_va() const;            /* Convenience to get header's base VA */
 	  addr_t 	      get_mapped_va();		      /* Like get_mapped_rva() except returns VA */
           addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
