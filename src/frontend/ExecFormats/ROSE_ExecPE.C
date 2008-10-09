@@ -684,7 +684,6 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPESection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
     p_st_entry->dump(f, p, -1);
@@ -777,7 +776,6 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPESectionTable.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
 
@@ -1120,7 +1118,6 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         sprintf(p, "%sPEImportSection.", prefix);
     }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     SgAsmPESection::dump(f, p, -1);
 
