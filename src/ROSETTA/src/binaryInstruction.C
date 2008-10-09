@@ -480,10 +480,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
-  /* The section table is just a synthesized file section containing an array of section table entries (i.e., array of section
-   * headers). The section table entry info parsed from the file is stored with its corresponding section rather than here. We
-   * can reconstruct the section table since sections have unique ID numbers that are their original indices in the section table
-   * entry array. Derived from SgAsmGenericSection. */
+  /* An AsmElfSectionTable is a synthesized section representing the ELF Section Table. The section table entry info parsed
+   * from the file is stored with its corresponding section rather than in the AsmElfSectionTable. We can reconstruct the
+   * section table since sections have unique ID numbers that are their original indices in the ELF Section Table. */
      AsmElfSectionTable.setFunctionPrototype ( "HEADER_ELF_SECTION_TABLE", "../Grammar/BinaryInstruction.code");
 
 
@@ -495,7 +494,9 @@ Grammar::setUpBinaryInstructions ()
   // This is over written by AsmElfSymbolSection AsmElfDynamicSection (so we need the access functions to be virtual)
      AsmElfSection.setDataPrototype("SgAsmElfSection*","linked_section","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","st_entry","= NULL",
+     AsmElfSection.setDataPrototype("SgAsmElfSectionTableEntry*","section_entry","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmElfSection.setDataPrototype("SgAsmElfSegmentTableEntry*","segment_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -630,10 +631,10 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSectionTableEntry.setDataPrototype("rose_addr_t","nextra","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // std::vector<ElfSegmentTableEntry*> entries;
+  /* An AsmElfSegmentTable is a synthesized section representing the ELF Segment Table. The segment table entry info parsed
+   * from the file is stored with its corresponding AsmElfSection rather than in the AsmElfSegmentTable. We can reconstruct the
+   * segment table since the segment table entries store their table index. */
      AsmElfSegmentTable.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmElfSegmentTable.setDataPrototype("SgAsmElfSegmentTableEntryList*","entries","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // SegmentType         p_type;
   // SegmentFlags        p_flags;
@@ -641,11 +642,13 @@ Grammar::setUpBinaryInstructions ()
   // const unsigned char *extra;
   // addr_t              nextra;
      AsmElfSegmentTableEntry.setFunctionPrototype ( "HEADER_ELF_SEGMENT_TABLE_ENTRY", "../Grammar/BinaryInstruction.code");
-
-  // DQ (6/14/2008): Need to rename these data members because ROSETTA will generate "p_p_type" etc. which is unmanageable.
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType","type","= SgAsmElfSegmentTableEntry::PT_NULL",
+     AsmElfSegmentTableEntry.setDataPrototype("size_t", "index", "= 0", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags","flags","= SgAsmElfSegmentTableEntry::PF_RESERVED",
+     AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentType","type",
+                                              "= SgAsmElfSegmentTableEntry::PT_NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfSegmentTableEntry.setDataPrototype("SgAsmElfSegmentTableEntry::SegmentFlags","flags",
+                                              "= SgAsmElfSegmentTableEntry::PF_RESERVED",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfSegmentTableEntry.setDataPrototype("rose_addr_t","offset","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
