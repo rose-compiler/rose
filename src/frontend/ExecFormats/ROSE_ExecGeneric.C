@@ -107,12 +107,12 @@ SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
     
 /* Stored String constructors/destructor */
 void
-SgAsmStoredString::ctor(SgAsmElfStrtab *strtab, rose_addr_t offset, bool shared)
+SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, rose_addr_t offset, bool shared)
 {
     p_storage = strtab->create_storage(offset, shared);
 }
 void
-SgAsmStoredString::ctor(SgAsmElfStrtab *strtab, const std::string &s)
+SgAsmStoredString::ctor(SgAsmGenericStrtab *strtab, const std::string &s)
 {
     p_storage = strtab->create_storage(0, false);
     set_string(s);
@@ -156,7 +156,7 @@ SgAsmStoredString::get_offset() const
     if (NULL==get_storage())
         return unallocated;
     if (get_storage()->get_offset() == unallocated) {
-        SgAsmGenericSection *strtab = get_storage()->get_strtab();
+        SgAsmGenericStrtab *strtab = get_storage()->get_strtab();
         ROSE_ASSERT(strtab!=NULL);
 #if 1
         /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
@@ -229,9 +229,9 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s =", p, w, "sec,offset,val");
-    SgAsmGenericSection *strtab = get_strtab();
+    SgAsmGenericStrtab *strtab = get_strtab();
     if (strtab) {
-        fprintf(f, " section [%d] \"%s\"", strtab->get_id(), strtab->get_name()->c_str());
+        fprintf(f, " section [%d] \"%s\"", strtab->get_container()->get_id(), strtab->get_container()->get_name()->c_str());
     } else {
         fputs(" no section", f);
     }
@@ -241,6 +241,25 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
     }
     fprintf(f, ", \"%s\"\n", get_string().c_str());
+}
+
+/* Print some debugging info */
+void
+SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sStrtab[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sStrtab.", prefix);
+    }
+    
+    int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    if (get_container()) {
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "container", get_container()->get_id(), get_container()->get_name()->c_str());
+    } else {
+        fprintf(f, "%s%-*s = <null>\n", p, w, "container");
+    }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1764,6 +1783,14 @@ SgAsmGenericSection::dump_containing_sections(FILE *f, const std::string &prefix
                     DUMP_FIELD_WIDTH, prefix.c_str(), offset, offset, s->get_id(), s->get_name()->c_str());
         }
     }
+}
+
+/* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
+ * free list. */
+SgAsmGenericSection::ExtentMap&
+SgAsmGenericSection::get_freelist()
+{
+    return p_freelist;
 }
 
 /* Print some debugging info */

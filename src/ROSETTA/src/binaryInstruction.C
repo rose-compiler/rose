@@ -165,18 +165,21 @@ Grammar::setUpBinaryInstructions ()
   // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
      NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
      NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
+     NEW_TERMINAL_MACRO    ( AsmElfStringSection, "AsmElfStringSection", "AsmElfStringSectionTag" );
 
   // DQ (9/9/2008): Added support for String Table (part of Robb's work)
      NEW_TERMINAL_MACRO ( AsmElfStrtab,          "AsmElfStrtab",          "AsmElfStrtabTag"          );
      NEW_TERMINAL_MACRO ( AsmCoffStrtab,         "AsmCoffStrtab",         "AsmCoffStrtabTag"         );
+     NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab|AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
 
-     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStrtab, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
+     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStringSection, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTable,  "AsmElfSegmentTable",  "AsmElfSegmentTableTag"  );
 
      NEW_TERMINAL_MACRO    ( AsmPEImportSection, "AsmPEImportSection", "AsmPEImportSectionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmPESection, AsmPEImportSection, "AsmPESection",       "AsmPESectionTag", true /* canHaveInstances = true */ );
+     NEW_TERMINAL_MACRO    ( AsmPEStringSection, "AsmPEStringSection", "AsmPEStringSectionTag");
+     NEW_NONTERMINAL_MACRO ( AsmPESection, AsmPEImportSection | AsmPEStringSection, "AsmPESection",       "AsmPESectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmPESectionTable,  "AsmPESectionTable",  "AsmPESectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmCoffSymbolTable, "AsmCoffSymbolTable", "AsmCoffSymbolTableTag" );
@@ -201,7 +204,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmGenericSection, 
             AsmGenericHeader | 
             AsmElfSection    | AsmElfSectionTable | AsmElfSegmentTable     |
-            AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  | AsmCoffStrtab    |
+            AsmPESection     | AsmPESectionTable  | AsmPEExtendedDOSHeader | AsmCoffSymbolTable  |
             AsmNESection     | AsmNESectionTable  | AsmNEExtendedDOSHeader | AsmNENameTable      | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
             AsmLESection     | AsmLESectionTable  | AsmLENameTable         | AsmLEPageTable      | AsmLEEntryTable  | AsmLERelocTable,
            "AsmGenericSection",    "AsmGenericSectionTag", true /* canHaveInstances = true */ );
@@ -265,9 +268,9 @@ Grammar::setUpBinaryInstructions ()
   // Root of class hierarchy for binary file support
      NEW_NONTERMINAL_MACRO ( AsmExecutableFileFormat,
                AsmGenericDLL           | AsmGenericFormat        | AsmGenericDLLList           |
-               AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | 
+               AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | AsmGenericStrtab | 
                AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString |
-               AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            | 
+               AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry      | 
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmPEDLLList | AsmPEImportHintNameList |
@@ -412,7 +415,7 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmStringStorage.setFunctionPrototype ( "HEADER_STRING_STORAGE", "../Grammar/BinaryInstruction.code");
-     AsmStringStorage.setDataPrototype("SgAsmGenericSection*","strtab","= NULL",
+     AsmStringStorage.setDataPrototype("SgAsmGenericStrtab*","strtab","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmStringStorage.setDataPrototype("std::string","string","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -497,7 +500,10 @@ Grammar::setUpBinaryInstructions ()
      AsmElfSection.setDataPrototype("SgAsmElfSegmentTableEntry*","segment_entry","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-
+     AsmElfStringSection.setFunctionPrototype("HEADER_ELF_STRING_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfStringSection.setAutomaticGenerationOfDestructor(false);
+     AsmElfStringSection.setDataPrototype("SgAsmElfStrtab*", "strtab", "= NULL", 
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmElfStrtab.setFunctionPrototype      ( "HEADER_ELF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmElfStrtab.setAutomaticGenerationOfDestructor(false);
@@ -505,9 +511,14 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfStrtab.setDataPrototype("size_t","num_freed","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     /*ptr to storage for empty string at offset zero if present*/
+     /*optional storage for empty string at offset zero if present*/
      AsmElfStrtab.setDataPrototype("SgAsmStringStorage*","empty_string","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmPEStringSection.setFunctionPrototype("HEADER_PE_STRING_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmPEStringSection.setAutomaticGenerationOfDestructor(false);
+     AsmPEStringSection.setDataPrototype("SgAsmCoffStrtab*", "strtab", "= NULL", 
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
@@ -1496,7 +1507,7 @@ Grammar::setUpBinaryInstructions ()
   /* FIXME: This should eventually be moved into SgAsmGenericStrtab (RPM 2008-10-02) */
   /* List of areas in the section from which we can allocate new strings. */
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::ExtentMap","freelist","",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      
   // DQ (8/2/2008): This was removed from the design by Robb.
@@ -1663,9 +1674,10 @@ Grammar::setUpBinaryInstructions ()
                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 
-
-
-
+     AsmGenericStrtab.setFunctionPrototype("HEADER_GENERIC_STRTAB", "../Grammar/BinaryInstruction.code");
+     AsmGenericStrtab.setAutomaticGenerationOfDestructor(false);
+     AsmGenericStrtab.setDataPrototype("SgAsmGenericSection*", "container", "= NULL", 
+                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 // *****************************************************
 //           END OF BINARY FILE FORMAT IR NODES

@@ -495,3 +495,6 @@ SgAsmCoffStrtab
 SgRenamePair
 SgInterfaceBody
 SgLocatedNodeSupport
+SgAsmElfStringSection
+SgAsmGenericStrtab
+SgAsmPEStringSection

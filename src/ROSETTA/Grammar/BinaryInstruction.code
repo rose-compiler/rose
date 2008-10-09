@@ -807,6 +807,7 @@ HEADER_GENERIC_SECTION_START
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
           virtual void        unparse(FILE*);
           void                unparse(FILE*, const ExtentMap&);
+          void 	     	      unparse_holes(FILE*);
           SgAsmGenericHeader *is_file_header();              /* true if section represents a top level file header */
 
        /* Functions for section extent within the file */
@@ -843,6 +844,9 @@ HEADER_GENERIC_SECTION_START
           addr_t              get_va_offset(addr_t va);       /* Return file offset for specified virtual address */
 	  addr_t	      get_rva_offset(addr_t rva);     /* Return file offset for specified relative virtual address */
 
+       /* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
+	  ExtentMap&	      get_freelist();
+
        /* Accessors for private members */
           SgAsmGenericString *get_name() const;		      /* Same as standard ROSETTA accessor */
 	  void set_name(SgAsmGenericString *s);		      /* Like std accessor but sets parent of 's' */
@@ -853,7 +857,6 @@ HEADER_GENERIC_SECTION_START
 
      protected:
           void ctor(SgAsmGenericFile*, SgAsmGenericHeader*, addr_t offset, addr_t size);
-          void unparse_holes(FILE*);
 
 HEADER_GENERIC_SECTION_END
 
@@ -1112,7 +1115,7 @@ HEADER_GENERIC_STRING_END
 
 HEADER_STRING_STORAGE_START
      public:
-          SgAsmStringStorage(SgAsmGenericSection *strtab, const std::string &string, rose_addr_t offset)
+          SgAsmStringStorage(SgAsmGenericStrtab *strtab, const std::string &string, rose_addr_t offset)
              : p_strtab(strtab), p_string(string), p_offset(offset) {}
           void dump(FILE *s, const char *prefix, ssize_t idx);
 
@@ -1152,7 +1155,19 @@ HEADER_STRING_STORAGE_START
 
 HEADER_STRING_STORAGE_END
 
+HEADER_GENERIC_STRTAB_START
+	public:
+		SgAsmGenericStrtab(SgAsmGenericSection *container)
+			: p_container(container) {}
+		virtual ~SgAsmGenericStrtab() {}
 
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+
+		//These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
+		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared) {abort();}
+	private:
+		void ctor();
+HEADER_GENERIC_STRTAB_END
 
 // ***********************************************
 //          ELF Binary File Format Support
@@ -1354,70 +1369,67 @@ HEADER_ELF_SECTION_START
 HEADER_ELF_SECTION_END
 
 HEADER_STORED_STRING_START
-    SgAsmStoredString(class SgAsmElfStrtab *strtab, rose_addr_t offset)    /*string in string table*/
-        {ctor(strtab, offset, false);}
-    SgAsmStoredString(class SgAsmElfStrtab *strtab, const std::string &s)  /*new string in string table*/
-        {ctor(strtab, s);}
-    explicit SgAsmStoredString(class SgAsmStringStorage *storage)          /*string shares other storage*/
-        {ctor(storage);}
-    explicit SgAsmStoredString(const char *s)                              /*non-storage constructor*/
-        {ctor(std::string(s));}
-    explicit SgAsmStoredString(const std::string &s)                       /*non-storage constructor*/
-        {ctor(s);}
- // virtual ~SgAsmStoredString();
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	public:
+		SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset)    /*string in string table*/
+			{ctor(strtab, offset, false);}
+		SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s)  /*new string in string table*/
+			{ctor(strtab, s);}
+		explicit SgAsmStoredString(class SgAsmStringStorage *storage)          /*string shares other storage*/
+			{ctor(storage);}
+		explicit SgAsmStoredString(const char *s)                              /*non-storage constructor*/
+			{ctor(std::string(s));}
+		explicit SgAsmStoredString(const std::string &s)                       /*non-storage constructor*/
+			{ctor(s);}
+		// virtual ~SgAsmStoredString();
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		static const rose_addr_t unallocated = ~(rose_addr_t)0;
 
-    static const rose_addr_t unallocated = ~(rose_addr_t)0;
-
- // This is not an access function
-    virtual std::string get_string() const;
-    virtual void set_string(const std::string&);
-    rose_addr_t get_offset() const;                                     /*offset is read-only--no set_offset(); triggers realloc*/
-
-    /* Accessors */
- // virtual const std::string& get_string() const;                      /*no non-const version; use only set_string() to modify!*/
- // virtual void set_string(const std::string&);                        /*assignment calls this*/
- // rose_addr_t get_offset() const;                                     /*offset is read-only--no set_offset(); triggers realloc*/
- // class SgAsmStringStorage* get_storage() const {                     /*read only; managed by constructor/destructor*/
- //     return p_storage;
- // }
-
-  private:
-
- // Maybe we need to supressed ROSETTA generated constructor!
- // SgAsmStoredString() {abort();}
-    void ctor(class SgAsmElfStrtab*, rose_addr_t offset, bool shared);
-    void ctor(class SgAsmElfStrtab*, const std::string&);
-    void ctor(class SgAsmStringStorage*);
-    void ctor(const std::string &s);
+		// These are not access functions -- they do more than just getting or setting the value!
+		virtual std::string get_string() const;
+		virtual void set_string(const std::string&);				/*also deallocates previous value*/
+		rose_addr_t get_offset() const;                                     	/*also triggers realloc*/
+	private:
+		// Maybe we need to supressed ROSETTA generated constructor!
+		// SgAsmStoredString() {abort();}
+		void ctor(class SgAsmGenericStrtab*, rose_addr_t offset, bool shared);
+		void ctor(class SgAsmGenericStrtab*, const std::string&);
+		void ctor(class SgAsmStringStorage*);
+		void ctor(const std::string &s);
 
 HEADER_STORED_STRING_END
 
 
 HEADER_ELF_STRING_TABLE_START
-     public:
-          SgAsmElfStrtab(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-             : SgAsmElfSection(fhdr, shdr), p_num_freed(0), p_empty_string(0)
-             {ctor(fhdr, shdr);}
-
-       // Supressed ROSETTA generated destructor.
-          virtual ~SgAsmElfStrtab();
-
-          virtual void unparse(FILE*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          class SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-          SgAsmStoredString *create_string(addr_t offset, bool shared);
-          void free(class SgAsmStringStorage*);
-          void free_all_strings(bool blow_away_holes=false);
-          void reallocate(); /*allocate storage for all unallocated strings*/
-          virtual void set_size(addr_t newsize);
-          typedef std::vector<class SgAsmStringStorage*> referenced_t;
-
-     private:
-          void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
-          void free(addr_t offset, addr_t size); /*mark part of table as free*/
-
+	public:
+		SgAsmElfStrtab(class SgAsmElfSection *containing_section)
+			: SgAsmGenericStrtab(containing_section)
+			{ctor();}
+		virtual ~SgAsmElfStrtab();
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
+		SgAsmStoredString *create_string(addr_t offset, bool shared);
+		void free(class SgAsmStringStorage*);
+		void free_all_strings(bool blow_away_holes=false);
+		void reallocate(); /*allocate storage for all unallocated strings*/
+		typedef std::vector<class SgAsmStringStorage*> referenced_t;
+	private:
+		void ctor();
+		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 HEADER_ELF_STRING_TABLE_END
+
+HEADER_ELF_STRING_SECTION_START
+	public:
+		SgAsmElfStringSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+			: SgAsmElfSection(fhdr, shdr), p_strtab(NULL)
+			{ctor();}
+		virtual ~SgAsmElfStringSection() {}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual void set_size(addr_t newsize);
+		virtual void unparse(FILE*);
+	private:
+		void ctor();
+HEADER_ELF_STRING_SECTION_END
 
 HEADER_ELF_DYNAMIC_SECTION_START
      public:
@@ -2191,30 +2203,35 @@ HEADER_PE_COFF_SYMBOL_START
 HEADER_PE_COFF_SYMBOL_END
 
 HEADER_COFF_STRING_TABLE_START
-  public:
-    SgAsmCoffStrtab(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
-        : SgAsmGenericSection(fhdr->get_file(), fhdr, offset, size),
-          p_num_freed(0), p_empty_string(NULL)
-        {ctor();}
-
-    // Supressed ROSETTA-generated destructor.
-    virtual ~SgAsmCoffStrtab();
-
-    virtual void unparse(FILE*);
-    virtual void dump(FILE*, const char *prefix, ssize_t idx);
-    class SgAsmStringStorage *create_storage(addr_t offset, bool shared);
-    SgAsmStoredString *create_string(addr_t offset, bool shared);
-    void free(class SgAsmStringStorage*);
-    void free_all_strings(bool blow_away_holes=false);
-    void reallocate(); /*allocate storage for all unallocated strings*/
-    virtual void set_size(addr_t newsize);
-    typedef std::vector<class SgAsmStringStorage*> referenced_t;
-
-  private:
-    void ctor();
-    void free(addr_t offset, addr_t size); /*mark part of table as free*/
+	public:
+		SgAsmCoffStrtab(class SgAsmPESection *containing_section)
+			: SgAsmGenericStrtab(containing_section)
+			{}
+		virtual ~SgAsmCoffStrtab();
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
+		SgAsmStoredString *create_string(addr_t offset, bool shared);
+		void free(class SgAsmStringStorage*);
+		void free_all_strings(bool blow_away_holes=false);
+		void reallocate(); /*allocate storage for all unallocated strings*/
+		typedef std::vector<class SgAsmStringStorage*> referenced_t;
+	private:
+		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 HEADER_COFF_STRING_TABLE_END
 
+HEADER_PE_STRING_SECTION_START
+	public:
+		SgAsmPEStringSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size)
+			: SgAsmPESection(fhdr, offset, size), p_strtab(NULL)
+			{ctor();}
+		virtual ~SgAsmPEStringSection() {}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		virtual void set_size(addr_t newsize);
+	        virtual void unparse(FILE*);
+	private:
+		void ctor();
+HEADER_PE_STRING_SECTION_END
 
 // ***********************************************
 //          NE Binary File Format Support

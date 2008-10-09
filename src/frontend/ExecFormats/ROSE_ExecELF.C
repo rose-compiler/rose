@@ -480,15 +480,25 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // String tables and strings
+//
+//    SgAsmElfStringSection inherits from SgAsmElfSection in order to point to a string table.
+//    SgAsmElfStrtab inherits from SgAsmGenericStrtab and is the string table itself, and points to its section.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor */
 void
-SgAsmElfStrtab::ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*)
+SgAsmElfStringSection::ctor()
+{
+    p_strtab = new SgAsmElfStrtab(this);
+}
+
+/* Constructor */
+void
+SgAsmElfStrtab::ctor()
 {
     /* The first byte of an ELF String Table should always be NUL. We don't want the allocation functions to ever free this
      * byte, so we'll create a special storage item for it. */
-    if (content(0, 1)[0]=='\0')
+    if (get_container()->content(0, 1)[0]=='\0')
         p_empty_string = create_storage(0, false);
 }
 
@@ -526,7 +536,7 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
     }
 
     /* Create a new storage object at this offset. */
-    const char *s = content_str(offset);
+    const char *s = get_container()->content_str(offset);
     SgAsmStringStorage *storage = new SgAsmStringStorage(this, s, offset);
 
     /* It's a bad idea to free (e.g., modify) strings before we've identified all the strings in the table. Consider
@@ -540,7 +550,8 @@ SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
         fprintf(stderr,
                 "SgAsmElfStrtab::create_storage(%"PRIu64"): %zu other string%s (of %zu created) in [%d] \"%s\""
                 " %s been modified and/or reallocated!\n",
-                offset, p_num_freed, 1==p_num_freed?"":"s", p_referenced_storage.size(), get_id(), get_name()->c_str(),
+                offset, p_num_freed, 1==p_num_freed?"":"s", p_referenced_storage.size(),
+                get_container()->get_id(), get_container()->get_name()->c_str(),
                 1==p_num_freed?"has":"have");
         ROSE_ASSERT(0==p_num_freed);
     }
@@ -579,10 +590,10 @@ SgAsmElfStrtab::free(SgAsmStringStorage *storage)
 void
 SgAsmElfStrtab::free(addr_t offset, addr_t size)
 {
-    ROSE_ASSERT(offset+size <= get_size());
+    ROSE_ASSERT(offset+size <= get_container()->get_size());
     
     /* Make sure area is not already in free list. */
-    ROSE_ASSERT(p_freelist.overlap_with(offset, size).size()==0);
+    ROSE_ASSERT(get_container()->get_freelist().overlap_with(offset, size).size()==0);
 
     /* Preserve anything that's still referenced. The caller should have assigned SgAsmStoredString::no_id to the "offset"
      * member of the string storage to indicate that it's memory in the string table is no longer in use. */
@@ -602,7 +613,7 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
     }
 
     /* Mark region as free */
-    p_freelist.insert(offset, size);
+    get_container()->get_freelist().insert(offset, size);
 }
 
 /* Free all strings so they will be reallocated later. This is more efficient than calling free() for each storage object. If
@@ -612,7 +623,8 @@ SgAsmElfStrtab::free(addr_t offset, addr_t size)
 void
 SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 {
-    bool was_congealed = get_congealed();
+    SgAsmGenericSection *container = get_container();
+    bool was_congealed = container->get_congealed();
 
     /* Mark all storage objects as being unallocated. Never free the empty_string at offset zero. */
     for (size_t i=0; i<p_referenced_storage.size(); i++) {
@@ -624,20 +636,20 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 
     /* Mark holes as referenced */
     if (blow_away_holes) {
-        uncongeal();
-        content(0, get_size());
+        container->uncongeal();
+        container->content(0, container->get_size());
     }
 
     /* The free list is everything that's been referenced. */
-    p_freelist = uncongeal();
+    container->get_freelist() = container->uncongeal();
 
     /* Remove the empty string from the free list */
     if (p_empty_string)
-	p_freelist.erase(p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
+	container->get_freelist().erase(p_empty_string->get_offset(), p_empty_string->get_string().size()+1);
     
     /* Restore state */
     if (was_congealed)
-        congeal();
+        container->congeal();
 }
 
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
@@ -645,6 +657,7 @@ SgAsmElfStrtab::free_all_strings(bool blow_away_holes)
 void
 SgAsmElfStrtab::reallocate()
 {
+    SgAsmGenericSection *container = get_container();
     addr_t extend_size = 0;                                     /* amount by which to extend string table */
 
     /* Get list of strings that need to be allocated and sort by descending size. */
@@ -695,9 +708,9 @@ SgAsmElfStrtab::reallocate()
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
-            ExtentPair e(0, 0);
+            SgAsmGenericSection::ExtentPair e(0, 0);
             try {
-                e = p_freelist.allocate_best_fit(storage->get_string().size()+1);
+                e = container->get_freelist().allocate_best_fit(storage->get_string().size()+1);
                 addr_t new_offset = e.first;
                 storage->set_offset(new_offset);
             } catch(std::bad_alloc &x) {
@@ -717,60 +730,49 @@ SgAsmElfStrtab::reallocate()
     /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
     if (extend_size>0) {
         fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
-                get_id(), get_name()->c_str(), extend_size, 1==extend_size?"":"s");
+                container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = true;
-        get_file()->shift_extend(this, 0, extend_size, true, true);
+        container->get_file()->shift_extend(container, 0, extend_size, true, true);
         reallocate();
         recursive = false;
     }
-}
-
-/* Augments superclass to make sure free list and such are adjusted properly */
-void
-SgAsmElfStrtab::set_size(addr_t newsize)
-{
-    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
-    addr_t orig_size = get_size();
-    addr_t adjustment = newsize - orig_size;
-
-    SgAsmElfSection::set_size(newsize);
-
-    if (adjustment>0)
-        p_freelist.insert(orig_size, adjustment);
 }
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmElfStrtab::unparse(FILE *f)
 {
+    SgAsmGenericSection *container = get_container();
+
     /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
-    addr_t orig_size = get_size();
+    addr_t orig_size = container->get_size();
     reallocate();
-    ROSE_ASSERT(orig_size==get_size());
+    ROSE_ASSERT(orig_size==container->get_size());
     
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_referenced_storage.size(); i++) {
         SgAsmStringStorage *storage = p_referenced_storage[i];
         ROSE_ASSERT(storage->get_offset()!=SgAsmStoredString::unallocated);
-        addr_t at = write(f, storage->get_offset(), storage->get_string());
-        write(f, at, '\0');
+        addr_t at = container->write(f, storage->get_offset(), storage->get_string());
+        container->write(f, at, '\0');
     }
     
     /* Fill free areas with zero */
-    for (SgAsmGenericSection::ExtentMap::const_iterator i=p_freelist.begin(); i!=p_freelist.end(); ++i) {
-        write(f, i->first, std::string(i->second, '\0'));
+    for (SgAsmGenericSection::ExtentMap::const_iterator i=container->get_freelist().begin();
+         i!=container->get_freelist().end();
+         ++i) {
+        container->write(f, i->first, std::string(i->second, '\0'));
     }
-    
-    /* Write original data from holes */
-    unparse_holes(f);
 }
 
 /* Print some debugging info */
 void
 SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
 {
+    SgAsmGenericSection *container = get_container();
+
     char p[4096];
     if (idx>=0) {
         sprintf(p, "%sElfStrtab[%zd].", prefix, idx);
@@ -779,7 +781,7 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    SgAsmElfSection::dump(f, p, -1);
+    SgAsmGenericStrtab::dump(f, p, -1);
 
     fprintf(f, "%s%-*s =", p, w, "empty_string");
     for (size_t i=0; i<p_referenced_storage.size(); ++i) {
@@ -793,9 +795,51 @@ SgAsmElfStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
         p_referenced_storage[i]->dump(f, p, i);
     }
 
-    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", p_freelist.size());
-    p_freelist.dump_extents(f, p, "freelist");
-}   
+    /*FIXME: The free list is stored in SgAsmGenericSection, so move this to that location*/
+    fprintf(f, "%s%-*s = %zu free regions\n", p, w, "freelist", container->get_freelist().size());
+    container->get_freelist().dump_extents(f, p, "freelist");
+}
+
+/* Print some debugging info */
+void
+SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfStringSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfStringSection.", prefix);
+    }
+    
+    SgAsmElfSection::dump(f, p, -1);
+
+    ROSE_ASSERT(get_strtab()!=NULL);
+    get_strtab()->dump(f, p, -1);
+}
+
+/* Augments superclass to make sure free list and such are adjusted properly */
+/* FIXME: Freelist should be maintained by SgAsmGenericSection or SgAsmGenericStrtab */
+void
+SgAsmElfStringSection::set_size(addr_t newsize)
+{
+    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
+    addr_t orig_size = get_size();
+    addr_t adjustment = newsize - orig_size;
+
+    SgAsmElfSection::set_size(newsize);
+
+    if (adjustment>0)
+        get_freelist().insert(orig_size, adjustment);
+}
+
+/* Unparse an ElfStringSection by unparsing the ElfStrtab */
+void
+SgAsmElfStringSection::unparse(FILE *f)
+{
+    get_strtab()->unparse(f);
+    unparse_holes(f);
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Section tables
@@ -910,17 +954,17 @@ SgAsmElfSectionTable::ctor()
         }
 
         /* Read the string table section first because we'll need this to initialize section names. */
-        SgAsmElfStrtab *strtab = NULL;
+        SgAsmElfStringSection *strsec = NULL;
         if (fhdr->get_e_shstrndx() > 0) {
             SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
-            strtab = new SgAsmElfStrtab(fhdr, shdr);
-            strtab->set_id(fhdr->get_e_shstrndx());
-            strtab->set_name(new SgAsmStoredString(strtab, shdr->get_sh_name()));
-            strtab->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
-            strtab->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
-            strtab->set_file_alignment(shdr->get_sh_addralign());
-            strtab->set_mapped_alignment(shdr->get_sh_addralign());
-            shdr->set_parent(strtab);
+            strsec = new SgAsmElfStringSection(fhdr, shdr);
+            strsec->set_id(fhdr->get_e_shstrndx());
+            strsec->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
+            strsec->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
+            strsec->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
+            strsec->set_file_alignment(shdr->get_sh_addralign());
+            strsec->set_mapped_alignment(shdr->get_sh_addralign());
+            shdr->set_parent(strsec);
         }
 
         /* Read all other sections */
@@ -945,15 +989,15 @@ SgAsmElfSectionTable::ctor()
                 section = new SgAsmElfSymbolSection(fhdr, shdr);
                 break;
               case SgAsmElfSectionTableEntry::SHT_STRTAB:
-                section = new SgAsmElfStrtab(fhdr, shdr);
+                section = new SgAsmElfStringSection(fhdr, shdr);
                 break;
               default:
                 section = new SgAsmElfSection(fhdr, shdr);
                 break;
             }
             section->set_id(i);
-            if (strtab)
-                section->set_name(new SgAsmStoredString(strtab, shdr->get_sh_name()));
+            if (strsec)
+                section->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
             section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
             section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
             section->set_file_alignment(shdr->get_sh_addralign());
@@ -1564,17 +1608,17 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
 
 /* Set linked section (the string table) and finish parsing this section. */
 void
-SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab) 
+SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec) 
 {
-    SgAsmElfStrtab *strtab = dynamic_cast<SgAsmElfStrtab*>(_strtab);
-    ROSE_ASSERT(strtab!=NULL);
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(_strsec);
+    ROSE_ASSERT(strsec!=NULL);
     
-    SgAsmElfSection::set_linked_section(strtab);
+    SgAsmElfSection::set_linked_section(strsec);
     SgAsmElfFileHeader *fhdr = get_elf_header();
-    ROSE_ASSERT(fhdr!=NULL && fhdr == strtab->get_elf_header());
+    ROSE_ASSERT(fhdr!=NULL && fhdr == strsec->get_elf_header());
 
-    ROSE_ASSERT(strtab != NULL);
-    ROSE_ASSERT(strtab->get_name()->get_string() == ".dynstr");
+    ROSE_ASSERT(strsec != NULL);
+    ROSE_ASSERT(strsec->get_name()->get_string() == ".dynstr");
 
     size_t section_size = get_size(), entry_size = 0, nentries = 0;
     if (4==fhdr->get_word_size()) {
@@ -1604,7 +1648,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strtab)
           case SgAsmElfDynamicEntry::DT_NEEDED: {
               /* Offset to NUL-terminated library name in the linked-to (".dynstr") section. */
               ROSE_ASSERT(ent->get_d_val().get_section()==NULL);
-              SgAsmStoredString *name = new SgAsmStoredString(strtab, ent->get_d_val().get_rva());
+              SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), ent->get_d_val().get_rva());
               fhdr->add_dll(new SgAsmGenericDLL(name));
               break;
           }
@@ -1902,17 +1946,17 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
  *   0xfff1        symbol has absolute value not affected by relocation
  *   0xfff2        symbol is fortran common or unallocated C extern */
 void
-SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strtab)
+SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
 {
-    SgAsmElfStrtab *strtab = dynamic_cast<SgAsmElfStrtab*>(_strtab);
-    ROSE_ASSERT(strtab!=NULL);
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(_strsec);
+    ROSE_ASSERT(strsec!=NULL);
 
-    SgAsmElfSection::set_linked_section(strtab);
+    SgAsmElfSection::set_linked_section(strsec);
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmElfSymbol *symbol = p_symbols->get_symbols()[i];
 
         /* Get symbol name */
-        SgAsmStoredString *name = new SgAsmStoredString(strtab, symbol->get_st_name());
+        SgAsmStoredString *name = new SgAsmStoredString(strsec->get_strtab(), symbol->get_st_name());
         symbol->set_name(name);
 
         /* Get bound section ptr */
