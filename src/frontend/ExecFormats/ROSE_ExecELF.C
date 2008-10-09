@@ -1073,7 +1073,12 @@ SgAsmElfStrtab::reallocate()
     if (extend_size>0) {
         fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
                 get_id(), get_name().c_str(), extend_size, 1==extend_size?"":"s");
-        ROSE_ASSERT(extend_size==0); /* not implemented yet */
+        static bool recursive=false;
+        ROSE_ASSERT(!recursive);
+        recursive = true;
+        get_file()->resize(this, extend_size);
+        reallocate();
+        recursive = false;
     }
 }
 

@@ -578,6 +578,59 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
     return found;
 }
 
+/* Resizes the specified section after parsing, adjusting the sizes and/or positions and/or memory mappings of other sections. */
+void
+SgAsmGenericFile::resize(SgAsmGenericSection *section, addr_t newsize)
+{
+    ROSE_ASSERT(section!=NULL);
+    ROSE_ASSERT(section->get_congealed()==true); /*done parsing*/
+
+    /* Get adjustment carefully */
+    int64_t adjustment;
+    if (newsize>section->get_size()) {
+        ROSE_ASSERT(newsize - section->get_size() < 0x7fffffffffffffffllu);
+        adjustment = newsize - section->get_size();
+    } else if (newsize<section->get_size()) {
+        ROSE_ASSERT(section->get_size() - newsize < 0x7fffffffffffffffllu);
+        adjustment = -(section->get_size() - newsize);
+    } else {
+        return; /*no change*/
+    }
+
+    /* Adjust other sections */
+    SgAsmGenericSectionPtrList all = get_sections();
+    for (size_t i=0; i<all.size(); i++) {
+        if (all[i]==section)
+            continue;
+            
+        /* File adjustments */
+        if (all[i]->get_offset() >= section->get_end_offset()) {
+            /* Move sections that follow the adjusted section */
+            all[i]->set_offset(all[i]->get_offset()+adjustment);
+        } else if (all[i]->get_offset()<section->get_end_offset() &&
+                   all[i]->get_end_offset()>=section->get_end_offset()) {
+            /* Resize sections that begin before the end of this section but end at or after. */
+            all[i]->set_size(all[i]->get_size()+adjustment);
+        }
+        
+        /* Memory adjustments */
+        if (all[i]->is_mapped() && section->is_mapped()) {
+            addr_t section_end = section->get_mapped_va() + section->get_mapped_size();
+            addr_t other_end = all[i]->get_mapped_va() + all[i]->get_mapped_size();
+            if (all[i]->get_mapped_va() >= section_end) {
+                /* Move mapping for sections that follow the mapping of the adjusted section */
+                all[i]->set_mapped(all[i]->get_mapped_va()+adjustment, all[i]->get_mapped_size());
+            } else if (all[i]->get_mapped_va() < section_end && other_end >= section_end) {
+                /* Resize mapping for sections that begin before and end after the adjusted section mapping */
+                all[i]->set_mapped(all[i]->get_mapped_va(), all[i]->get_mapped_size()+adjustment);
+            }
+        }
+    }
+    
+    /* Adjust this section */
+    section->set_size(newsize);
+}
+
 /* Print basic info about the sections of a file */
 void
 SgAsmGenericFile::dump(FILE *f)
@@ -857,9 +910,17 @@ SgAsmGenericSection::get_size() const
     return p_size;
 }
 
+/* Adjust the current size of a section. This is virtual because some sections may need to do something special. This function
+ * should not adjust the size of other sections, or the mapping of any section (see SgAsmGenericFile::resize() for that). */
+void
+SgAsmGenericSection::set_size(addr_t size)
+{
+    p_size = size;
+}
+
 /* Returns starting byte offset in the file */
 rose_addr_t
-SgAsmGenericSection::end_offset()
+SgAsmGenericSection::get_end_offset()
 {
     return get_offset() + get_size();
 }
@@ -892,14 +953,23 @@ SgAsmGenericSection::clear_mapped()
 rose_addr_t
 SgAsmGenericSection::get_mapped_rva()
 {
-    return p_mapped ? p_mapped_rva  : 0;
+    return is_mapped() ? p_mapped_rva  : 0;
+}
+
+/* Returns (non-relative) virtual address if mapped, zero otherwise. */
+rose_addr_t
+SgAsmGenericSection::get_mapped_va()
+{
+    if (is_mapped())
+        return get_base_va() + get_mapped_rva();
+    return 0;
 }
 
 /* Returns mapped size of section if mapped; zero otherwise */
 rose_addr_t
 SgAsmGenericSection::get_mapped_size()
 {
-    return p_mapped ? p_mapped_size : 0;
+    return is_mapped() ? p_mapped_size : 0;
 }
 
 /* Returns base virtual address for a section, or zero if the section is not associated with a header. */
@@ -1101,7 +1171,8 @@ SgAsmGenericSection::uncongeal()
 }
 
 /* Extend a section by some number of bytes during the parsing phase. This is function is considered to be part of the parsing
- * and construction of a section--it changes the part of the file that's considered the "original size" of the section. */
+ * and construction of a section--it changes the part of the file that's considered the "original size" of the section. To
+ * adjust the size of a section after the executable file is parsed, see SgAsmGenericFile::resize(). */
 void
 SgAsmGenericSection::extend(addr_t size)
 {
