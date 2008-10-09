@@ -1512,19 +1512,15 @@ Grammar::setUpBinaryInstructions ()
   /* Optional, non-unique name of section */
      AsmGenericSection.setDataPrototype("std::string","name","= \"\"",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* True if section should be mapped to program's address space */
-     AsmGenericSection.setDataPrototype("bool","mapped","= false",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-  /* Intended relative virtual address if `mapped' is true */
      AsmGenericSection.setDataPrototype("rose_addr_t","mapped_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("rose_addr_t","mapped_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("bool","rperm","= false",
+     AsmGenericSection.setDataPrototype("bool","mapped_rperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("bool","wperm","= false",
+     AsmGenericSection.setDataPrototype("bool","mapped_wperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericSection.setDataPrototype("bool","eperm","= false",
+     AsmGenericSection.setDataPrototype("bool","mapped_xperm","= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericSection.setDataPrototype("SgAsmGenericSection::RefMap","referenced","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
