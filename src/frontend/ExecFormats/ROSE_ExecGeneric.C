@@ -619,7 +619,8 @@ SgAsmGenericFile::get_next_section_offset(addr_t offset)
  *     Cat R:  Shifted by Sa+Sn if they are in neighborhood(S). Otherwise the amount of shifting depends on the size of the
  *             hole right of neighborhood(S).
  *     Cat C:  Shifted Sa and enlarged Sn.
- *     Cat O:  Englarged Sa+Sn
+ *     Cat O:  If starting address are the same: Shifted Sa
+ *             If starting address not equal:    Englarged Sa+Sn
  *     Cat I:  Shifted Sa, not enlarged
  *     Cat B:  Not shifted, but enlarged Sn
  *     Cat E:  Shifted Sa and enlarged Sn
@@ -819,14 +820,24 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, boo
             }
             break;
           case 'O':
-            if (filespace) {
-                a->set_size(a->get_size()+aligned_sasn);
-                if (!resized_mem && a->is_mapped()) {
-                    shift_extend(a, 0, aligned_sasn, false);
-                    resized_mem = true;
+            if (ap.first==sp.first) {
+                if (filespace) {
+                    a->set_offset(a->get_offset()+aligned_sa);
+                    a->set_size(a->get_size()+sn);
+                } else {
+                    a->set_mapped_rva(a->get_mapped_rva()+aligned_sa);
+                    a->set_mapped_size(a->get_mapped_size()+sn);
                 }
             } else {
-                a->set_mapped_size(a->get_mapped_size()+aligned_sasn);
+                if (filespace) {
+                    a->set_size(a->get_size()+aligned_sasn);
+                    if (!resized_mem && a->is_mapped()) {
+                        shift_extend(a, 0, aligned_sasn, false);
+                        resized_mem = true;
+                    }
+                } else {
+                    a->set_mapped_size(a->get_mapped_size()+aligned_sasn);
+                }
             }
             break;
           case 'I':
