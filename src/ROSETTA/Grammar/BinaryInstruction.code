@@ -824,13 +824,13 @@ HEADER_GENERIC_SECTION_START
 
        /* Static functions for manipulating extent maps */
           static ExtentMap subtract_extents(const ExtentMap &map, const ExtentPair &extent)
-            {subtract_extents(map, extent.first, extent.second);}
+            {return subtract_extents(map, extent.first, extent.second);}
           static ExtentMap subtract_extents(const ExtentMap &map, addr_t offset, addr_t size);
           static void insert_extent(ExtentMap &map, const ExtentPair &extent)
             {insert_extent(map, extent.first, extent.second);}
           static void insert_extent(ExtentMap &map, addr_t offset, addr_t size);
           static ExtentMap overlap_extents(const ExtentMap &map, const ExtentPair &extent)
-            {overlap_extents(map, extent.first, extent.second);}
+            {return overlap_extents(map, extent.first, extent.second);}
           static ExtentMap overlap_extents(const ExtentMap &map, addr_t offset, addr_t size);
           static void erase_extent(ExtentMap &map, const ExtentPair &extent)
             {erase_extent(map, extent.first, extent.second);}
