@@ -72,20 +72,13 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     ROSE_ASSERT(p_exec_format != NULL);
 
- // printf ("disk32.e_ident_file_class = %u \n",disk32.e_ident_file_class);
-
     /* Decode header to native format */
     if (1 == disk32.e_ident_file_class) {
         p_exec_format->set_word_size(4);
 
-     // printf ("p_e_ident_padding.size()       = %zu \n",p_e_ident_padding.size());
-     // printf ("sizeof(disk32.e_ident_padding) = %zu \n",sizeof(disk32.e_ident_padding));
-
-     // ROSE_ASSERT(sizeof(p_e_ident_padding) == sizeof(disk32.e_ident_padding));
-     // memcpy(p_e_ident_padding, disk32.e_ident_padding, sizeof(p_e_ident_padding));
-        for (int i = 0; i < 9; i++)
+	ROSE_ASSERT(0==p_e_ident_padding.size());
+        for (int i = 0; i < sizeof(disk32.e_ident_padding; i++)
              p_e_ident_padding.push_back(disk32.e_ident_padding[i]);
-        ROSE_ASSERT(p_e_ident_padding.size() == sizeof(disk32.e_ident_padding));
 
         p_e_ident_file_class    = disk_to_host(sex, disk32.e_ident_file_class);
         p_e_ident_data_encoding = disk_to_host(sex, disk32.e_ident_data_encoding);
@@ -109,9 +102,10 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         Elf64FileHeader_disk disk64;
         extend_up_to(sizeof(Elf64FileHeader_disk)-sizeof(Elf32FileHeader_disk));
         content(0, sizeof disk64, &disk64);
-        for (int i = 0; i < 9; i++)
+
+	ROSE_ASSERT(0==p_e_ident_padding.size());
+        for (int i = 0; i < sizeof(disk64.e_ident_padding); i++)
              p_e_ident_padding.push_back(disk64.e_ident_padding[i]);
-        ROSE_ASSERT(p_e_ident_padding.size() == sizeof(disk64.e_ident_padding));
 
         p_e_ident_file_class    = disk_to_host(sex, disk64.e_ident_file_class);
         p_e_ident_data_encoding = disk_to_host(sex, disk64.e_ident_data_encoding);
