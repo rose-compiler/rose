@@ -338,16 +338,8 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
 void
 SgAsmElfFileHeader::unparse(FILE *f)
 {
-    /* FIXME: This should be in SgAsmGenericHeader */
-    /* Give every section a chance to resize itself based on modified information in the AST */
-    SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
-    for (size_t i=0; i<sections.size(); i++) {
-        /* FIXME: all sections should implement reallocate() */
-        SgAsmElfStrtab *strtab = NULL;
-        strtab = dynamic_cast<SgAsmElfStrtab*>(sections[i]);
-        if (strtab)
-            strtab->reallocate();
-    }
+    /* Allow sections to reallocate themselves until things settle */
+    while (reallocate()) /*void*/;
 
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
@@ -357,12 +349,14 @@ SgAsmElfFileHeader::unparse(FILE *f)
     if (p_segment_table) {
         ROSE_ASSERT(p_segment_table->get_header()==this);
         p_segment_table->unparse(f);
+        p_e_phoff = p_segment_table->get_offset();
     }
 
     /* Write the ELF section table and, indirectly, the sections themselves. */
     if (p_section_table) {
         ROSE_ASSERT(p_section_table->get_header()==this);
         p_section_table->unparse(f);
+        p_e_shoff = p_section_table->get_offset();
     }
     
     /* Encode and write the ELF file header */
@@ -522,6 +516,13 @@ void
 SgAsmElfStringSection::ctor()
 {
     p_strtab = new SgAsmElfStrtab(this);
+}
+
+/* Reallocate space for the string section if necessary */
+bool
+SgAsmElfStringSection::reallocate()
+{
+    return get_strtab()->reallocate();
 }
 
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
@@ -917,18 +918,6 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 }
 
-/* Augments superclass.
- * If the offset of the section table is changed then we need to update the ELF file header's section table offset (e_shoff) */
-void
-SgAsmElfSectionTable::set_offset(addr_t newaddr)
-{
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    fhdr->set_e_shoff(newaddr);
-    
-    SgAsmGenericSection::set_offset(newaddr);
-}
-
 /* Write the section table section back to disk */
 void
 SgAsmElfSectionTable::unparse(FILE *f)
@@ -1235,18 +1224,6 @@ SgAsmElfSegmentTable::ctor()
                 s = new SgAsmElfSection(fhdr, shdr);
         }
     }
-}
-
-/* Augments superclass.
- * If the offset of the segment table is changed then we need to update the ELF file header's segment table offset (e_phoff) */
-void
-SgAsmElfSegmentTable::set_offset(addr_t newaddr)
-{
-    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr);
-    fhdr->set_e_phoff(newaddr);
-    
-    SgAsmGenericSection::set_offset(newaddr);
 }
 
 /* Write the segment table to disk. */

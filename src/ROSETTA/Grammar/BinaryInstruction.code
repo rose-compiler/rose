@@ -806,6 +806,7 @@ HEADER_GENERIC_SECTION_START
 
           static void dump_containing_sections(FILE *f, const std::string &prefix, rose_rva_t rva, const SgAsmGenericSectionPtrList&);
           virtual void        dump(FILE*, const char *prefix, ssize_t idx);
+	  virtual bool	      reallocate() {return false;}
           virtual void        unparse(FILE*);
           void                unparse(FILE*, const ExtentMap&);
           void 	     	      unparse_holes(FILE*);
@@ -862,8 +863,8 @@ HEADER_GENERIC_HEADER_START
 
      public:
           SgAsmGenericHeader(SgAsmGenericFile *ef, addr_t offset, addr_t size);
-
           virtual ~SgAsmGenericHeader();
+	  virtual bool reallocate();
 	  virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1164,7 +1165,7 @@ HEADER_GENERIC_STRTAB_START
 		void free(class SgAsmStringStorage*);
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 		void free_all_strings(bool blow_away_holes=false);
-		void reallocate(); /*allocate storage for all unallocated strings*/
+		bool reallocate(); /*allocate storage for all unallocated strings*/
 
 		/* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
 		SgAsmGenericSection::ExtentMap& get_freelist();
@@ -1277,7 +1278,6 @@ HEADER_ELF_SECTION_TABLE_START
           SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
        // virtual ~SgAsmElfSectionTable() {}
 
-	  virtual void set_offset(addr_t newaddr);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -1431,6 +1431,7 @@ HEADER_ELF_STRING_SECTION_START
 		virtual ~SgAsmElfStringSection() {}
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual void set_size(addr_t newsize);
+		virtual bool reallocate();
 		virtual void unparse(FILE*);
 	private:
 		void ctor();
@@ -1562,7 +1563,6 @@ HEADER_ELF_SEGMENT_TABLE_START
           SgAsmElfSegmentTable(SgAsmElfFileHeader *fhdr);
        // virtual ~ElfSegmentTable() {}
 
-	  virtual void set_offset(addr_t newaddr);
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
@@ -2221,6 +2221,7 @@ HEADER_PE_STRING_SECTION_START
 			: SgAsmPESection(fhdr, offset, size), p_strtab(NULL)
 			{ctor();}
 		virtual ~SgAsmPEStringSection() {}
+		virtual bool reallocate();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		virtual void set_size(addr_t newsize);
 	        virtual void unparse(FILE*);

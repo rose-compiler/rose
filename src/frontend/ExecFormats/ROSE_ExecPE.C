@@ -1138,6 +1138,13 @@ SgAsmPEStringSection::ctor()
     p_strtab = new SgAsmCoffStrtab(this);
 }
 
+/* Reallocate space for the string table if necessary */
+bool
+SgAsmPEStringSection::reallocate()
+{
+    return get_strtab()->reallocate();
+}
+
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
 void
 SgAsmPEStringSection::unparse(FILE *f)

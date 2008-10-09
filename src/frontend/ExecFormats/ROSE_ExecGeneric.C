@@ -317,10 +317,12 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 }
 
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
- * space. Any that are left will cause the string table to be extended. */
-void
+ * space. Any that are left will cause the string table to be extended. Returns true if the reallocation would potentially
+ * affect some other section. */
+bool
 SgAsmGenericStrtab::reallocate()
 {
+    bool reallocated = false;
     SgAsmGenericSection *container = get_container();
     addr_t extend_size = 0;                                     /* amount by which to extend string table */
 
@@ -396,11 +398,12 @@ SgAsmGenericStrtab::reallocate()
                 container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
-        recursive = true;
+        recursive = reallocated = true;
         container->get_file()->shift_extend(container, 0, extend_size, true, true);
         reallocate();
         recursive = false;
     }
+    return reallocated;
 }
 
 /* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
@@ -2326,11 +2329,28 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     p_sections = NULL;
 }
 
+/* Allow all sections to reallocate themselves */
+bool
+SgAsmGenericHeader::reallocate()
+{
+    bool reallocated = false;
+    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+        if ((*i)->reallocate())
+            reallocated = true;
+    }
+    return reallocated;
+}
+    
 /* Unparse headers and all they point to */
 void
 SgAsmGenericHeader::unparse(FILE *f)
 {
+    /* Allow all sections to reallocate themselves until things settle */
+    while (reallocate()) /*void*/;
+
     SgAsmGenericSection::unparse(f);
+
+    /* Unparse each section */
     for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i)
         (*i)->unparse(f);
 }
