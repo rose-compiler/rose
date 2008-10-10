@@ -15,6 +15,8 @@ noinst_HEADERS = \
 
 #varSubstCopy , disabled this one Liao, and sorted the list
 noinst_PROGRAMS = \
+   abstractHandle1 \
+   abstractHandle2 \
    accumulatorAttributeTraversal \
    addAssignmentStmt \
    addComments \
@@ -159,6 +161,10 @@ templateParameter_SOURCES = templateParameter.C
 instrumentEndOfFunction_SOURCES = instrumentEndOfFunction.C
 
 instrumentationExample_SOURCES = instrumentationExample.C
+
+abstractHandle1_SOURCES = abstractHandle1.cpp
+
+abstractHandle2_SOURCES = abstractHandle2.cpp
 
 addVariableDeclaration_SOURCES = addVariableDeclaration.C
 
@@ -357,6 +363,12 @@ testAddFunctionDeclaration3: addFunctionDeclaration3
 
 testAddAssignmentStmt: addAssignmentStmt
 	./addAssignmentStmt --edg:no_warnings -c $(srcdir)/inputCode_AddAssignmentStmt.C
+
+testAbstractHandle1:abstractHandle1
+	./abstractHandle1  --edg:no_warnings -c $(srcdir)/inputCode_AbstractHandle1.cpp 
+
+testAbstractHandle2:abstractHandle2
+	./abstractHandle2  --edg:no_warnings -c $(srcdir)/inputCode_AbstractHandle2.cpp 
 
 testAddExpression: addExpression
 	./addExpression --edg:no_warnings -c $(srcdir)/inputCode_AddExpression.C
@@ -625,6 +637,10 @@ generatedCodeExamples = \
    rose_inputCode_AddFunctionDeclaration3.C \
    rose_inputCode_AddVariableDeclaration.C \
    rose_inputCode_AddAssignmentStmt.C \
+   rose_inputCode_AbstractHandle1.cpp \
+   rose_inputCode_AbstractHandle2.cpp \
+   abstractHandle1.out \
+   abstractHandle2.out \
    rose_inputCode_AddExpression.C \
    rose_inputCode_AddFunctionCalls.C \
    rose_inputCode_InstrumentationTranslator.C \
@@ -836,6 +852,14 @@ rose_inputCode_AddVariableDeclaration.C: addVariableDeclaration
 rose_inputCode_AddVariableDeclaration2.C: addVariableDeclaration2
 	@echo "Generate executable from compilation of input code (addVariableDeclaration2) ..."
 	./addVariableDeclaration2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddVariableDeclaration2.C
+
+rose_inputCode_AbstractHandle1.cpp: abstractHandle1
+	@echo "Generate executable from compilation of input code (abstractHandle1) ..."
+	./abstractHandle1 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle1.cpp | fold > abstractHandle1.out
+
+rose_inputCode_AbstractHandle2.cpp: abstractHandle2
+	@echo "Generate executable from compilation of input code (abstractHandle2) ..."
+	./abstractHandle2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle2.cpp | fold > abstractHandle2.out
 
 rose_inputCode_AddAssignmentStmt.C: addAssignmentStmt
 	@echo "Generate executable from compilation of input code (addAssignmentStmt) ..."
@@ -1119,6 +1143,8 @@ EXTRA_DIST = \
    inputCode_AddFunctionDeclaration3.C \
    inputCode_AddExpression.C \
    inputCode_AddAssignmentStmt.C \
+   inputCode_AbstractHandle1.cpp \
+   inputCode_AbstractHandle2.cpp \
    inputCode_AddFunctionCalls.C \
    inputCode_ExampleDebugging.C \
    inputCode_LoopOptimization.C \
@@ -1216,7 +1242,7 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C
+	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C
 
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new *.s bin_example_2 *.dump

@@ -270,6 +270,10 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 #include "sageBuilder.h"
 #include "sageBuilderAsm.h"
 
+//Liao, 10/9/2008, support for abstract handles for language constructs
+#include "abstract_handle.h"
+#include "roseAdapter.h"
+
 // DQ (5/27/2007): Removed all entries in this file (only had AST Merge API and 
 // these were moved to merge.h).  One less header file make everything a little simpler!
 // DQ (7/7/2005): This is now a file where temporary functions may be
