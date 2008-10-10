@@ -150,7 +150,7 @@ SgAsmStoredString::get_offset() const
     if (get_storage()->get_offset() == unallocated) {
         SgAsmGenericStrtab *strtab = get_storage()->get_strtab();
         ROSE_ASSERT(strtab!=NULL);
-        strtab->reallocate();
+        strtab->reallocate(false);
         ROSE_ASSERT(get_storage()->get_offset() != unallocated);
     }
     return get_storage()->get_offset();
@@ -294,9 +294,9 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
 /* Allocates storage for strings that have been modified but not allocated. We first try to fit unallocated strings into free
  * space. Any that are left will cause the string table to be extended. Returns true if the reallocation would potentially
- * affect some other section. */
+ * affect some other section. If "shrink" is true then release address space that's no longer needed at the end of the table. */
 bool
-SgAsmGenericStrtab::reallocate()
+SgAsmGenericStrtab::reallocate(bool shrink)
 {
     bool reallocated = false;
     SgAsmGenericSection *container = get_container();
@@ -365,20 +365,31 @@ SgAsmGenericStrtab::reallocate()
         }
     }
 
-    /* FIXME: If we were unable to allocate everything and there's still free space then it may be possible to reallocate all
-     *        strings in order to repack the table and avoid internal fragmentation. (RPM 2008-09-25) */
+    /* If we were unable to allocate everything and there's still free space then it may be possible to reallocate all
+     * strings in order to repack the table and avoid internal fragmentation. */
+    //FIXME (RPM 2008-09-25)
 
-    /* Extend the string table if necessary and reallocate things that didn't get allocated in the previous loop. */
+    /* Change string table size as necessary. */
     if (extend_size>0) {
+        /* The string table isn't large enough, so make it larger by extending the section that contains the table. The
+         * containing section's "set_size" method should add the new space to the string table's free list. If our recursion
+         * level is more than two calls deep then something went horribly wrong! */
         fprintf(stderr, "SgAsmElfStrtab::reallocate(): need to extend [%d] \"%s\" by %zu byte%s\n", 
                 container->get_id(), container->get_name()->c_str(), extend_size, 1==extend_size?"":"s");
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = reallocated = true;
         container->get_file()->shift_extend(container, 0, extend_size, true, true);
-        reallocate();
+        reallocate(false);
         recursive = false;
+    } else if (shrink && get_freelist().size()>0) {
+        /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
+         * method will adjust the free list by removing some bytes from it. */
+        ExtentPair hi = *(get_freelist().highest_offset());
+        if (hi.first + hi.second == container->get_size())
+            container->set_size(hi.first);
     }
+    
     return reallocated;
 }
 
@@ -2190,6 +2201,15 @@ ExtentMap::best_fit(rose_addr_t size)
             best = i;
     }
     return best;
+}
+
+/* Return the extent with the highest offset. */
+ExtentMap::iterator
+ExtentMap::highest_offset()
+{
+    ExtentMap::iterator ret = end();
+    if (size()>0) --ret;
+    return ret;
 }
 
 /* Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */

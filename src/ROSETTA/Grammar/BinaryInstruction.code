@@ -1128,7 +1128,7 @@ HEADER_GENERIC_STRTAB_START
 		void free(class SgAsmStringStorage*);
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 		void free_all_strings(bool blow_away_holes=false);
-		bool reallocate(); /*allocate storage for all unallocated strings*/
+		bool reallocate(bool shrink); /*allocate storage for all unallocated strings*/
 
 		/* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
 		ExtentMap& get_freelist();

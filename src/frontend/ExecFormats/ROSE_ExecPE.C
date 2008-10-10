@@ -1138,11 +1138,14 @@ SgAsmPEStringSection::ctor()
     p_strtab = new SgAsmCoffStrtab(this);
 }
 
-/* Reallocate space for the string table if necessary */
+/* Reallocate space for the string table if necessary. Note that reallocation is lazy here -- we don't shrink the section,
+ * we only enlarge it (if you want the section to shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value
+ * rather than calling this function. SgAsmPEStringSection::reallocate is called in response to unparsing a file and gives
+ * the string table a chance to extend its container section if it needs to allocate more space for strings. */
 bool
 SgAsmPEStringSection::reallocate()
 {
-    return get_strtab()->reallocate();
+    return get_strtab()->reallocate(false);
 }
 
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
@@ -1157,14 +1160,19 @@ SgAsmPEStringSection::unparse(FILE *f)
 void
 SgAsmPEStringSection::set_size(addr_t newsize)
 {
-    ROSE_ASSERT(newsize>=get_size()); /*can only enlarge for now*/
     addr_t orig_size = get_size();
-    addr_t adjustment = newsize - orig_size;
-
     SgAsmPESection::set_size(newsize);
+    SgAsmGenericStrtab *strtab = get_strtab();
 
-    if (adjustment>0)
-        get_strtab()->get_freelist().insert(orig_size, adjustment);
+    if (get_size() > orig_size) {
+        /* Add new address space to string table free list */
+        addr_t n = get_size() - orig_size;
+        strtab->get_freelist().insert(orig_size, n);
+    } else if (get_size() < orig_size) {
+        /* Remove deleted address space from string table free list */
+        addr_t n = orig_size - get_size();
+        strtab->get_freelist().erase(get_size(), n);
+    }
 }
 
 /* Print some debugging info */
@@ -1274,7 +1282,7 @@ SgAsmCoffStrtab::unparse(FILE *f)
 
     /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
     addr_t orig_size = container->get_size();
-    reallocate();
+    reallocate(false);
     ROSE_ASSERT(orig_size==container->get_size());
     
     /* Write length coded strings. Shared strings will be written more than once, but that's OK. */
