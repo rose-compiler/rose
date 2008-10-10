@@ -150,19 +150,7 @@ SgAsmStoredString::get_offset() const
     if (get_storage()->get_offset() == unallocated) {
         SgAsmGenericStrtab *strtab = get_storage()->get_strtab();
         ROSE_ASSERT(strtab!=NULL);
-#if 1
-        /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
-        SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(strtab);
-        SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(strtab);
-        if (elf_strtab) {
-            elf_strtab->reallocate();
-        } else {
-            ROSE_ASSERT(coff_strtab);
-            coff_strtab->reallocate();
-        }
-#else
-        strtab->rallocate();
-#endif
+        strtab->reallocate();
         ROSE_ASSERT(get_storage()->get_offset() != unallocated);
     }
     return get_storage()->get_offset();
@@ -175,19 +163,7 @@ SgAsmStoredString::set_string(const std::string &s)
     if (get_string()==s) return; /* no change in value */
     SgAsmStringStorage *storage = get_storage();
     ROSE_ASSERT(storage!=NULL); /* we don't even know which string table! */
-#if 1
-    /*FIXME: use shared base class when implemented (RPM 2008-10-02)*/
-    SgAsmElfStrtab *elf_strtab = dynamic_cast<SgAsmElfStrtab*>(storage->get_strtab());
-    SgAsmCoffStrtab *coff_strtab = dynamic_cast<SgAsmCoffStrtab*>(storage->get_strtab());
-    if (elf_strtab) {
-        elf_strtab->free(storage);
-    } else {
-        ROSE_ASSERT(coff_strtab);
-        coff_strtab->free(storage);
-    }
-#else
     storage->get_strtab()->free(storage);
-#endif
     storage->set_string(s);
 }
 
