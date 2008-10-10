@@ -3463,6 +3463,18 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                  fprintf(stderr, "Parent %p of child %p (a %s) has been deleted.\n", parent, node, node->class_name().c_str());
                }
 #endif
+
+#if 0
+               /* DEBUGGING (RPM 2008-10-10)
+                * If the call to parent->returnDataMemberPointers() fails it could be due to the fact that the parent has been
+                * deleted without deleting its children. This can happen if the parent's definition in one of the *.C files
+                * in src/ROSETTA/src (such as binaryInstruction.C) has a call to setAutomaticGenerationOfDestructor with false
+                * to turn off the ROSETTA-generated destructor and the explicitly coded destructor does not destroy child
+                * nodes. */
+               printf ("DEBUG: node: %p = %s = %s parent: %p = %s \n",
+                       node, node->class_name().c_str(), SageInterface::get_name(node).c_str(),
+                       parent, parent->class_name().c_str());
+#endif
                vector<pair<SgNode*,string> > v = parent->returnDataMemberPointers();
 #if 0
                if (isSgTypedefSeq(node) != NULL)
