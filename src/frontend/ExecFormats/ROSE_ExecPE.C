@@ -49,6 +49,8 @@ SgAsmPEExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk)
 void
 SgAsmPEExtendedDOSHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     ExtendedDOSHeader_disk disk;
     encode(&disk);
     write(f, 0, sizeof disk, &disk);
@@ -475,6 +477,8 @@ SgAsmPEFileHeader::create_table_sections()
 void
 SgAsmPEFileHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     /* The fixed length part of the header */
     PEFileHeader_disk fh;
     encode(&fh);
@@ -744,6 +748,8 @@ SgAsmPESectionTable::ctor()
 void
 SgAsmPESectionTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr != NULL);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
@@ -1022,6 +1028,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 void
 SgAsmPEImportSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmGenericHeader *fhdr = get_header();
 
  // This is the same as accessing p_dlls and used to be redundant with "dlls" before being use with RISE IR nodes.
@@ -1152,6 +1159,7 @@ SgAsmPEStringSection::reallocate()
 void
 SgAsmPEStringSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     get_strtab()->unparse(f);
     unparse_holes(f);
 }
@@ -1278,13 +1286,9 @@ SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *storage) {
 void
 SgAsmCoffStrtab::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate(false)); /*should have been called well before any unparsing started*/
     SgAsmGenericSection *container = get_container();
 
-    /*FIXME: What happens if the reallocation causes the string table to be resized at this point? (RPM 2008-09-03)*/
-    addr_t orig_size = container->get_size();
-    reallocate(false);
-    ROSE_ASSERT(orig_size==container->get_size());
-    
     /* Write length coded strings. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
@@ -1640,6 +1644,7 @@ SgAsmCoffSymbolTable::ctor()
 void
 SgAsmCoffSymbolTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos = 0; /*section offset*/
     
     for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {

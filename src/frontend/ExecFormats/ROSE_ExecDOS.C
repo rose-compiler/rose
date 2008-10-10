@@ -95,6 +95,7 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk)
 void
 SgAsmDOSFileHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     DOSFileHeader_disk disk;
     encode(&disk);
     write(f, 0, sizeof(disk), &disk);

@@ -583,6 +583,7 @@ SgAsmElfStringSection::reallocate()
 void
 SgAsmElfStringSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     get_strtab()->unparse(f);
     unparse_holes(f);
 }
@@ -977,6 +978,8 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmElfSectionTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1285,6 +1288,8 @@ SgAsmElfSegmentTable::ctor()
 void
 SgAsmElfSegmentTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
@@ -1650,6 +1655,8 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
 void
 SgAsmElfDynamicSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
@@ -2007,6 +2014,8 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
 void
 SgAsmElfSymbolSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();

@@ -1897,6 +1897,8 @@ SgAsmGenericSection::is_file_header()
 void
 SgAsmGenericSection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
 #if 0
     /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
      *        have subclasses that override this method. */

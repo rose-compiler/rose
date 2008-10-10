@@ -192,6 +192,7 @@ SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk)
 void
 SgAsmLEFileHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     LEFileHeader_disk fh;
     encode(get_sex(), &fh);
     write(f, 0, sizeof fh, &fh);
@@ -423,6 +424,7 @@ SgAsmLEPageTable::get_page(size_t idx)
 void
 SgAsmLEPageTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     for (size_t i=0; i < p_entries.size(); i++) {
         SgAsmLEPageTableEntry::LEPageTableEntry_disk disk;
@@ -612,6 +614,7 @@ SgAsmLESectionTable::ctor()
 void
 SgAsmLESectionTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
@@ -686,6 +689,7 @@ SgAsmLENameTable::ctor()
 void
 SgAsmLENameTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
     for (size_t i = 0; i < p_names.size(); i++) {
@@ -839,6 +843,7 @@ SgAsmLEEntryTable::ctor()
 void
 SgAsmLEEntryTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_entries.size()<=0xff);
     uint8_t byte = p_entries.size();
@@ -903,7 +908,9 @@ SgAsmLERelocTable::ctor()
 /* Write relocation table back to disk */
 void
 SgAsmLERelocTable::unparse(FILE *f)
-{}
+{
+    ROSE_ASSERT(0==reallocate(false)); /*should have been called well before any unparsing started*/
+}
 #endif
     
 /* Print some debugging info */

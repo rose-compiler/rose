@@ -99,6 +99,7 @@ SgAsmNEExtendedDOSHeader::encode(SgAsmNEExtendedDOSHeader::ExtendedDOSHeader_dis
 void
 SgAsmNEExtendedDOSHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     ExtendedDOSHeader_disk disk;
     encode(&disk);
     write(f, 0, sizeof disk, &disk);
@@ -253,6 +254,7 @@ SgAsmNEFileHeader::encode(SgAsmNEFileHeader::NEFileHeader_disk *disk)
 void
 SgAsmNEFileHeader::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     NEFileHeader_disk fh;
     encode(&fh);
     write(f, 0, sizeof fh, &fh);
@@ -432,6 +434,7 @@ SgAsmNESectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmNE
 void
 SgAsmNESection::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmGenericSection::unparse(f);
     if (p_reloc_table)
         p_reloc_table->unparse(f);
@@ -522,6 +525,7 @@ SgAsmNESectionTable::ctor()
 void
 SgAsmNESectionTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
@@ -596,6 +600,7 @@ SgAsmNENameTable::ctor()
 void
 SgAsmNENameTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     ROSE_ASSERT(p_names.size() == p_ordinals.size());
 
@@ -685,6 +690,7 @@ SgAsmNEModuleTable::ctor()
 void
 SgAsmNEModuleTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos = 0; /*section offset*/
     p_strtab->unparse(f);
 
@@ -885,6 +891,7 @@ SgAsmNEEntryTable::populate_entries()
 void
 SgAsmNEEntryTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
 
     for (size_t bi=0, ei=0; bi < p_bundle_sizes.size(); ei += p_bundle_sizes[bi++]) {
@@ -1225,6 +1232,7 @@ SgAsmNERelocTable::ctor()
 void
 SgAsmNERelocTable::unparse(FILE *f)
 {
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
     uint16_t size_le;
     host_to_le(p_entries.size(), &size_le);
