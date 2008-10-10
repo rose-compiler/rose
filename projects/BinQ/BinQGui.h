@@ -64,10 +64,13 @@ class BinQGUI
     ~BinQGUI();
     void run( ) ;
     void open();
-    void highlightRow(int);
-    void unhighlightRow(int);
+    void reset();
+    void highlightFunctionRow(int);
+    void unhighlightFunctionRow(int);
+    void highlightInstructionRow(int);
+    void unhighlightInstructionRow(int);
 
-    void showClone(int row);
+    void showFileA(int row);
     //SgNode* disassembleFile(std::string tsv_directory);
     //std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
     //std::vector<SgAsmx86Instruction*>::iterator end);
@@ -75,12 +78,12 @@ class BinQGUI
     //std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
 
     void selectView(int selection);
-    void lockBars(int selection);
 
   protected:
     qrs::QRWindow *window;
-        qrs::QRTable *tableWidget;
-    QTextEdit *codeWidget;
+    qrs::QRTable *tableWidget;
+    qrs::QRTable *codeTableWidget;
+    //QTextEdit *codeWidget;
     QTextEdit *codeWidget2;
     QComboBox *comboBox;
     QComboBox *wholeFunction;
@@ -91,6 +94,10 @@ class BinQGUI
     //    QComboBox *checkBoxLockBars;
   private:
 
+    std::vector<SgAsmFunctionDeclaration*> funcs;
+    //    std::vector<SgAsmx86Instruction*> insns;
+    std::vector<SgAsmStatement*> stmts;
+
     BinQSupport* binqsupport;
     
     std::string fileNameA,fileNameB;
@@ -100,7 +107,8 @@ class BinQGUI
     double similarity;
     int stride;
     int windowSize;
-    int activeRow;
+    int activeFunctionRow;
+    int activeInstructionRow;
 
 
     scoped_array_with_size<Element > vectorOfClones;
