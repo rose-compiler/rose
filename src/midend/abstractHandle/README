@@ -1,0 +1,77 @@
+Support for abstract handles for arbitrary language constructs.
+By Liao, 10/9/2008
+
+A handle has the following syntax
+---------------syntax --------------------------------
+
+/* a handle is a link of handle items, separated by :: */
+
+handle ::= handle_item | handle '::' handle_item
+
+handle_item ::= construct_type specifier | compiler_generated_handle
+
+/* Free style internal handles for compiler/tools, 
+could be mangled names, memory pool addresses, etc
+*/
+compiler_generated_handle::= string_lit| int_lit
+
+
+/* 
+construct types are implementation dependent.
+For rose, they are class_name for each node types. 
+*/
+construct_type ::= SgProject | SgFile | 
+                SgForStmt|SgVariableDeclaration | ...
+
+/* A specifier is used to locate a particular construct
+  e.g: <name, "foo">
+*/
+
+specifier::= '<' specifier_type ',' specifier_value '>'                
+
+/* tokens for specifier types: name, position,numbering, label, 
+
+specifier type is necessary to avoid ambiguity for specifier values, 
+because a same value could be interpreted in different specifier types otherwise
+*/
+
+specifier_type::= name | position | numbering | label 
+
+/* the possible values for a specifier */
+specifier_value::= string_lit|int_lit|position_value| label_value
+
+label_value::= int_lit | string_lit
+
+/* e.g.: 13.5-55.4,  13,  13.5 , 13.5-55 */
+position_value:: = line_number[ '.' column_number][ '-' line_number[ '.' column_number]]
+
+/* one or more digits */
+int_lit ::= [0-9]+
+
+/*  start with a letter, followed by zero or more letters or digits */
+string_lit ::= [a-z][a-z0-9]*
+
+---------example handles --------------------------
+* a project handle
+  SgProject<name,"project1">
+
+* a file handle
+  SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">
+
+* a function handle using a name
+ SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<name,"foo">
+
+* a function handle using source position
+ SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<position,"12.1-30.1">
+
+* a function handle using numbering
+
+  SgProject<name,"project1">::SgFile<name,/home/PERI/test111.f">::SgFunctionDefiningDeclaration<numbering,1>
+
+* a return statement using source position
+
+  SgProject<name,"project1">::SgFile<name,/home/PERI/test222.c>::SgReturnStatement<position,"100">
+
+* a loop using numbering information
+
+  SgProject<name,"project1">::SgFile<name,"/home/PERI/test222.c">::SgFunctionDefiningDeclaration<name,"main">::SgForStatement<numbering,2>

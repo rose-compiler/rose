@@ -6,7 +6,7 @@ PDFLATEX = env TEXINPUTS=$(srcdir):$(srcdir)/..:$(top_srcdir)/tests:.: pdflatex 
 # I have been unable to have the links be built unless I build them all the file.
 latexFiles = \
    introduction.tex ASTGraphGenerator.tex AST_PDF_Generator.tex \
-   identityTranslator.tex queryLibraryExample.tex \
+   identityTranslator.tex queryLibraryExample.tex abstractHandle.tex \
    traversal.tex loopRecognition.tex typeInfoFromFunctionParameters.tex resolveOverloadedFunction.tex \
    templateParameter.tex instrumentationExample.tex addVariableDeclaration.tex \
    addAssignmentStmt.tex addExpression.tex\

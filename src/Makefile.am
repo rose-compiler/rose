@@ -46,6 +46,7 @@ libroseLibraries = \
    $(libroseEDGlibraries) \
    $(libroseBinaryLibraries) \
    $(libroseRuntimeTransformation) \
+   $(top_builddir)/src/midend/abstractHandle/libabstractHandle.la \
    $(top_builddir)/src/midend/astInlining/libastinlining.la \
    $(top_builddir)/src/midend/astOutlining/libastOutliner.la \
    $(top_builddir)/src/midend/astUtil/astInterface/libastInterface.la \

@@ -873,6 +873,7 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/Disassemblers/Makefile
 src/frontend/ExecFormats/Makefile
 src/midend/Makefile
+src/midend/abstractHandle/Makefile
 src/midend/astInlining/Makefile
 src/midend/astOutlining/Makefile
 src/midend/astUtil/Makefile

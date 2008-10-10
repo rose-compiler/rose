@@ -1,0 +1,283 @@
+\chapter{Abstract Handles to Language Constructs}
+This chapter describes a reference design and its corresponding implementation for supporting abstract handles to language constructs in source code and optimization phases. 
+It can be used to facilitate the interoperability between compilers and tools. 
+
+The idea is to define unique identifiers for statements, loops, functions, 
+and other language constructs in source code. Given the diverse user
+requirements, an ideal specification should include multiple forms to specify a language construct. 
+Current, we are interested in the following forms for specifying language constructs:
+\begin{itemize}
+\item Source file position information including path, filename, line and column number etc. 
+GNU standard source position from
+\url{http://www.gnu.org/prep/standards/html\_node/Errors.html} presents
+some examples.  
+\item Global or local numbering of specified language construct in source file
+  (e.g. 2nd "do" loop in a global scope).  The file is itself specified using an abstract
+          handle (typically generated from the file name). 
+\item Global or local names of constructs. Some language constructs, such
+as files, function definitions and namespace, have names which can be
+used as their handle within a context.
+\item Language-specific label mechanisms. They include named constructs in Fortran, numbered labels in Fortran, and statement labels in C and C++ and so on. 
+\end{itemize}
+In addition to human-readable forms, compilers and tools can generate
+internal IDs for language constructs. It is up to compiler/tool developers
+to provide a way to convert their internal representations into human-readable formats. 
+
+We define an abstract handle as a unique representation for a language construct. It can have any of the human-readable or machine-generated forms. 
+A handle can be used alone or combined with other handles to specify a language construct. 
+A handle can also be converted from one form to another.
+Abstract handles can have different lifetimes depending on their use and implementation. 
+An abstract handle might be required to be persistent if it is used to reference a language construct that would be optimized over  multiple executions of one or more different tools. 
+Where as an abstract-handle might be internally generated only for purposes of
+           optimizations used in a single execution (e.g. optimization within a compiler). 
+
+\section{Syntax}
+A possible specification of language handles can have the following syntax:
+
+\begin{verbatim}
+/* a handle is a single handle item or a link of them separated by ::, or
+other delimiters */
+handle ::= handle_item | handle '::' handle_item
+
+/* Each handle item consists of construct_type and a specifier. 
+Or it can be a compiler generated id of any forms. */
+
+handle_item ::= construct_type specifier | compiler_generated_handle
+
+/* 
+Construct types are implementation dependent.
+An implementation can support a subset of legal constructs or all of them.
+For ROSE, they are the type names of IR nodes.  
+*/
+construct_type ::= SgProject | SgFile | SgForStmt|SgVariableDeclaration | ...
+
+/* A specifier is used to locate a particular construct
+  e.g: <name, "foo">
+*/
+
+specifier::= '<' specifier_type ',' specifier_value '>'                
+
+/* tokens for specifier types could be name, position,numbering, label, etc. 
+specifier type is necessary to avoid ambiguity for specifier values, 
+because a same value could be interpreted in different specifier types otherwise
+*/
+
+specifier_type::= name | position | numbering | label 
+
+/* Possible values for a specifier */
+
+specifier_value::= string_lit|int_lit|position_value| label_value
+
+/*A label could be either integer or string */
+label_value::= int_lit | string_lit
+
+/* Start and end source line and column information 
+e.g.: 13.5-55.4,  13,  13.5 , 13.5-55 */
+position_value:: = line_number[ '.' column_number][ '-' line_number[ '.' column_number]]
+
+/* Integer value: one or more digits */
+int_lit ::= [0-9]+
+
+/* String value: start with a letter, followed by zero or more letters or digits */
+string_lit ::= [a-z][a-z0-9]*
+
+\end{verbatim}
+
+\section{Examples}
+We give some examples of language handles using the syntax mentioned above. 
+ROSE AST's node type names are used as the construct type names. 
+Other implementations can use their own construct type names.
+
+\begin{itemize}
+\item A file handle consisting of only one handle item: 
+\begin{verbatim}
+SgFile<name,"/home/PERI/test111.f">
+\end{verbatim}
+
+\item A function handle using a named handle item, combined with a parent handle using a name also: 
+
+\begin{verbatim}
+SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<name,"foo">
+\end{verbatim}
+
+\item A function handle using source position(A function starting at line 12, column 1 till line 30, column 1 within a file): 
+
+\begin{verbatim}
+SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<position,"12.1-30.1">
+
+\end{verbatim}
+\item A function handle using numbering(The first function definition in a file): 
+\begin{verbatim}
+SgFile<name,/home/PERI/test111.f">::SgFunctionDefiningDeclaration<numbering,1>
+\end{verbatim}
+\item A return statement using source position (A return statement at line 100):
+\begin{verbatim}
+SgFile<name,/home/PERI/test222.c>::SgReturnStatement<position,"100">
+
+\end{verbatim}
+\item A loop using numbering information (The second loop in function
+main()): 
+\begin{verbatim}
+SgFile<name,"/home/PERI/test222.c">::SgFunctionDefiningDeclaration<name,"main">::
+SgForStatement<numbering,2>
+\end{verbatim}
+\end{itemize}
+
+\section{Reference Implementation}
+We provide a reference implementation of the abstract handle concept using ROSE. 
+The source files are located in \textit{src/midend/abstractHandle}.
+A generic interface (abstract\_handle.h and abstract\_handle.cpp) provides
+data structures and operations for manipulating abstract handles using source file positions, numbering, or names. 
+A ROSE adapter (roseAdapter.h and roseAdapter.cpp) using the interface is provided as a concrete implementation. 
+Other compilers and tools can have their own implementations using the same interface.  
+
+Figure~\ref{Tutorial:abstractHandle1} shows the code to generate abstract
+handles for loops in an input source file (as in
+Figure~\ref{Tutorial:abstractHandle1input}). 
+Abstract handle constructors generate handles from abstract nodes, which are implemented using ROSE AST nodes. 
+Source position is used by default to generate a handle item. 
+Names or numbering are used instead when source position information is not available. 
+The Constructor can also be used to generate a handle item using a
+specified handle type (numbering handles in the example).
+Figure~\ref{Tutorial:abstractHandle1out} is the output showing the generated handles for the loops.
+%---------------------example 1. ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/abstractHandle1.cpp}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/abstractHandle1.cpp}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Generated handles for loops: using constructors with or without a specified handle type}
+\label{Tutorial:abstractHandle1}
+\end{figure}
+%------------------ input------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/inputCode_AbstractHandle1.cpp}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AbstractHandle1.cpp}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Source code with some loops}
+\label{Tutorial:abstractHandle1input}
+\end{figure}
+
+
+%---------------------example 1's output ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleBuildDirectory/abstractHandle1.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/abstractHandle1.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Handles generated for loops}
+\label{Tutorial:abstractHandle1out}
+\end{figure}
+
+Another example (shown in Figure~\ref{Tutorial:abstractHandle2})
+demonstrates how to create handles using user-specified strings
+representing handle items for language constructs within a source file
+(shown in Figure~\ref{Tutorial:abstractHandle2input}). 
+This is particularly useful to grab internal language constructs from handles provided by external software tools. 
+The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
+
+%---------------------example 2. ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/abstractHandle2.cpp}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/abstractHandle2.cpp}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Generated handles from strings representing handle items}
+\label{Tutorial:abstractHandle2}
+\end{figure}
+
+%------------------ input------------------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/inputCode_AbstractHandle2.cpp}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_AbstractHandle2.cpp}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Source code with some language constructs}
+\label{Tutorial:abstractHandle2input}
+\end{figure}
+
+
+%---------------------example 2's output ----------------------
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleBuildDirectory/abstractHandle2.out}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleBuildDirectory/abstractHandle2.out}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Handles generated from string and their language constructs}
+\label{Tutorial:abstractHandle2out}
+\end{figure}
+
+

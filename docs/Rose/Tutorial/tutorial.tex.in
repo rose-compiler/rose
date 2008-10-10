@@ -364,6 +364,8 @@ our own use on large scale applications.}
 
 \input{parallelChecker}
 
+\input{abstractHandle}
+
 \input{howToContribute}
 
 \backmatter
