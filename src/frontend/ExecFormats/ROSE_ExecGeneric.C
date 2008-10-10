@@ -89,6 +89,17 @@ SgAsmGenericString::c_str() const
     return get_string().c_str();
 }
 
+/* Constructor */
+void
+SgAsmBasicString::ctor()
+{
+#if 0
+    fprintf(stderr, "SgAsmBasicString::ctor this=0x%08lx\n", (unsigned long)this);
+    if (this==(void*)0x685998)
+        abort(); /*DEBUGGING (rpm 2008-10-10)*/
+#endif
+}
+
 /* Print some debugging info */
 void
 SgAsmBasicString::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1549,6 +1560,9 @@ SgAsmGenericSection::~SgAsmGenericSection()
      *        header/section bidirectional links (RPM 2008-09-02) */
     ef->remove_hole(this);
 
+    /* Delete children */
+    /*not a child*/;     p_file   = NULL;
+    delete p_name;       p_name   = NULL;
 }
 
 /* Accessors for section name. Setting the section name makes the SgAsmGenericString node a child of the section. */
@@ -2314,17 +2328,11 @@ SgAsmGenericHeader::~SgAsmGenericHeader()
     get_file()->remove_header(this);
     //set_file(NULL);   -- the file pointer was moved into the superclass in order to be easily available to all sections
 
-    delete p_symbols;
-    p_symbols = NULL;
-
-    delete p_dlls;
-    p_dlls = NULL;
-
-    delete p_exec_format;
-    p_exec_format = NULL;
-
-    delete p_sections;
-    p_sections = NULL;
+    /* Delete children */
+    delete p_symbols;     p_symbols     = NULL;
+    delete p_dlls;        p_dlls        = NULL;
+    delete p_exec_format; p_exec_format = NULL;
+    delete p_sections;    p_sections    = NULL;
 }
 
 /* Allow all sections to reallocate themselves */

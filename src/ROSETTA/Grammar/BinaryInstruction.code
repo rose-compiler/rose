@@ -1051,15 +1051,16 @@ HEADER_GENERIC_SYMBOL_LIST_END
 
 
 HEADER_BASIC_STRING_START
-     public:
-       // SgAsmBasicString() {}
-          explicit SgAsmBasicString(const std::string &s)
-	      : p_string(s) {}
-	  explicit SgAsmBasicString(const char *s)
-	      : p_string(s) {}
-       // virtual ~SgAsmBasicString() {}
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
+	public:
+		//SgAsmBasicString() {ctor();}
+		explicit SgAsmBasicString(const std::string &s)
+			: p_string(s) {ctor();}
+		explicit SgAsmBasicString(const char *s)
+			: p_string(s) {ctor();}
+		// virtual ~SgAsmBasicString() {}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor();
 HEADER_BASIC_STRING_END
 
 HEADER_GENERIC_STRING_START
