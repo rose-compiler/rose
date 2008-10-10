@@ -359,6 +359,32 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     return disk;
 }
 
+/* Change size of ELF header based on word size */
+bool
+SgAsmElfFileHeader::reallocate()
+{
+    bool reallocated = SgAsmGenericHeader::reallocate();
+
+    addr_t newsize;
+    if (4==get_word_size()) {
+        newsize = sizeof(Elf32FileHeader_disk);
+    } else if (8==get_word_size()) {
+        newsize = sizeof(Elf64FileHeader_disk);
+    } else {
+        throw FormatError("unsupported ELF word size");
+    }
+
+    if (newsize > get_size()) {
+        ROSE_ASSERT(!"increasing ELF header size not supported yet"); /*FIXME*/
+        reallocated = true;
+    } else if (newsize < get_size()) {
+        set_size(newsize);
+        reallocated = true;
+    }
+
+    return reallocated;
+}
+
 /* Write ELF contents back to a file. */
 void
 SgAsmElfFileHeader::unparse(FILE *f)
