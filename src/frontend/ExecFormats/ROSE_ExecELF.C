@@ -1496,8 +1496,8 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
     p_entries = new SgAsmElfDynamicEntryList;
     p_entries->set_parent(this);
 
-    size_t entry_size, struct_size, extra_size;
-    size_t nentries = calculate_sizes(&entry_size, &struct_size, &extra_size);
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
 
     /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
@@ -1521,10 +1521,24 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
     }
 }
 
-/* Returns info about the size of the entries. Each entry has a required part and an optional part. The return value is the
- * number of entries in the table. The size of the parts are returned through arguments. */
-size_t
-SgAsmElfDynamicSection::calculate_sizes(size_t *total, size_t *required, size_t *optional)
+/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ * pointers if the caller is not interested in the value. Return values are:
+ *
+ *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
+ *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
+ *              entry (see "required").
+ *
+ *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
+ *
+ *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
+ *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
+ *              difference between the "entsize" and the "required" sizes.
+ *   
+ *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
+ *              parsed entries, otherwise its the section size divided by the "entsize".
+ */
+void
+SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
     size_t struct_size = 0;
     size_t extra_size = 0;
@@ -1562,13 +1576,14 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *total, size_t *required, size_t 
     }
     
     /* Return values */
-    if (total)
-        *total = entry_size;
+    if (entsize)
+        *entsize = entry_size;
     if (required)
         *required = struct_size;
     if (optional)
         *optional = extra_size;
-    return nentries;
+    if (entcount)
+        *entcount = nentries;
 }
     
 /* Set linked section (the string table) and finish initializing the section entries. */
@@ -1662,7 +1677,7 @@ SgAsmElfDynamicSection::unparse(FILE *f)
     ByteOrder sex = fhdr->get_sex();
 
     size_t entry_size, struct_size, extra_size;
-    calculate_sizes(&entry_size, &struct_size, &extra_size);
+    calculate_sizes(&entry_size, &struct_size, &extra_size, NULL);
     size_t nentries = p_entries->get_entries().size();
 
     /* Adjust section size. FIXME: this should be moved to the reallocate() function. (RPM 2008-10-07) */
