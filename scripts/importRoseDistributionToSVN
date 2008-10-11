@@ -65,6 +65,16 @@ find . -name .svn | xargs rm -rf
 find . -name Makefile.in~ | xargs rm -rf
 find . -name autom4te.cache | xargs rm -rf
 
+# remove configure and Makefile.in
+rm ${ROSE_DIST_DIR}/configure
+find . -name Makefile.in | xargs rm -rf
+
+# restore a few third party Makefile.in which cannot yet been automatically built
+#cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/Makefile.in 
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/src/Makefile.in
+cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/include/Makefile.in
+
 # Make sure no EDG copyrighted files exist
 #----------------------------------------------------
 
