@@ -5,9 +5,9 @@
 
 \section{Introduction}
 
-   ROSE supports the disassemble and analysis of binary executables for x86 and AMR
+   ROSE supports the disassembly and analysis of binary executables for x86 and AMR
 instruction sets.  ROSE implements this support as part of general research work
-to support combining analysis for source code and analysis for binaries.  
+to support combining analysis for source code and analysis for binaries.
 
 \section{The Binary AST}
 
@@ -44,17 +44,346 @@ instructions and the executable file format.
 
 \section{Compass as a Binary Analysis Tool}
 
-   Compass is a tool framework for building software analysis tools using rules; Compass
+   Compass is a tool framework for building software analysis tools using rules (on source
+code and alternatively directly on binary executables). Compass
 reports violations of the rules in the evaluation of the software.  Compass is a
 reletively simple application built on top of ROSE.  Most of the complexity and code 
 within Compass is that it includes a large collection to rules, each rule has its
 own implementation of an arbitrary test over the source code or the binary.  Rules
 (checkers) may be defined over the AST or any other graph built within ROSE to store 
 program analysis information. See the Compass manual for more details on supported
-binary analysis.
+binary analysis.  The ability to perform analysis of binary executables using Compass 
+makes no assumptions that it is compiled with any specific options or that it contains
+debug information, symbols, etc.
+
+
+\section{Static Binary Rewriting}
+   As part of general research on transformations of binaries (separate from analysis)
+a number of techniques have been developed to support classes of transformations.
+This static rewritting of the binary permits the development of performance tools 
+that could support the analysis and rewritting of binaries for support of High 
+Performance Computing (HPC). As principal focus in on IBM BGL and Cray XT support 
+(DOE Office of Science supercomputers).
+
+\subsection{Generic Section/Segment Modifications}
+%===============================================================================================================================
+%Generic Section/Segment Modifications
+%===============================================================================================================================
+
+\subsubsection{1a. Section/Segment file address shifting (low-level)}
+
+   The low-level movement of an ELF Section or Segment within the file address space is performed with
+   SgAsmGenericSection::set\_offset.  It changes the location of the section in the file and updates all relative virtual
+   addresses (RVAs) that were primarily associated with the moved section.
+
+   The main problems with this function are that it doesn't take into account the file locations of other sections, the file
+   alignment constraints of the moved section, or the memory mapping. Specifically, after calling this function to move ".text"
+   one byte later in the file:
+\begin{itemize}
+   \item ".text" might not satisfy its file aligment constraint.
+
+   \item The end of ".text" might overlap with the following section. The ELF unparser has undefined behavior when two sections
+     overlap without storing identical bytes at the overlapping regions.
+
+   \item ".text", if memory mapped (which it surely is), might not be consistent with the mapping of other adjacent or overlapping
+     sections. For instance, ".text" is contained in "ELF Load Segment 2" both in the file address space and in the mapped
+     memory space. The offset from ELF Load Segment 2 to .text must be identical in both file and memory.
+
+   \item RVAs that point to instructions in ".text" can be associated with the ".text" section or with ELF Load Segment 2,
+     depending on how they were parsed. Normally it doesn't matter which since the relationship between file address space and
+     memory address space is consistent. But if you change the file addresses without changing memory addresses then the byte
+     to which the RVA points could be ambiguous.
+\end{itemize}
+
+   Changes to ELF Section or Segment file addresses are reflected in the ELF Section Table and/or ELF Segment Table. If the
+   particular SgAsmGenericSection is present in both tables then modifying its file address will result in updates to both
+   tables.
+
+   NOTE: Do not modify section offsets and sizes by modifying the section table entries. Changes to these values will be
+   overwritten with actual, current section offsets and sizes when the section table is unparsed:
+\begin{itemize}
+	\item SgAsmElfSectionTableEntry::set\_sh\_offset
+	\item SgAsmElfSectionTableEntry::set\_sh\_size
+	\item SgAsmElfSectionTableEntry::set\_sh\_addr
+\end{itemize}
+
+   NOTE: Do not modify segment offsets and sizes by modifying the segment table entries. Changes to these values will be
+   overwritten with actual, current segment offsets and sizes when the segment table is unparsed:
+\begin{itemize}
+   \item SgAsmElfSegmentTableEntry::set\_offset
+   \item SgAsmElfSegmentTableEntry::set\_filesz
+   \item SgAsmElfSegmentTableEntry::set\_vaddr
+   \item SgAsmElfSegmentTableEntry::set\_memsz
+\end{itemize}
+
+\subsubsection{1b. Section/Segment file address shifting (high-level)}
+   
+   The SgAsmGenericFile::shift\_extend method is the preferred way to make minor offset and/or size adjustments to an ELF
+   Section or Segment. It is able to shift a section to a high file and/or memory address and/or extend the segment:
+\begin{itemize}
+   \item It takes into account all sections in the file, adjusting their offsets and/or sizes accordingly.
+
+   \item Sections to the right of the the section in question (Sq) are shifted upward to make room and prevent overlaps.
+
+   \item Sections overlapping with Sq are extended to contain all of what they previously contained.
+
+   \item The shift amounts are adjusted to satisfy alignment constraints of all affected sections.
+
+   \item Unreferenced areas of the file can optionally be utilized as unused address space.
+
+   \item Adjusting file address spaces also adjusts the memory address spaces in a compatible manner.
+\end{itemize}
+
+   NOTE: Do not modify section offsets and sizes by modifying the section table entries. Changes to these values will be
+   overwritten with actual, current section offsets and sizes when the section table is unparsed:
+\begin{itemize}
+	\item SgAsmElfSectionTableEntry::set\_sh\_offset
+	\item SgAsmElfSectionTableEntry::set\_sh\_size
+	\item SgAsmElfSectionTableEntry::set\_sh\_addr
+\end{itemize}
+
+   NOTE: Do not modify segment offsets and sizes by modifying the segment table entries. Changes to these values will be
+   overwritten with actual, current segment offsets and sizes when the segment table is unparsed:
+\begin{itemize}
+   \item SgAsmElfSegmentTableEntry::set\_offset
+   \item SgAsmElfSegmentTableEntry::set\_filesz
+   \item SgAsmElfSegmentTableEntry::set\_vaddr
+   \item SgAsmElfSegmentTableEntry::set\_memsz
+\end{itemize}
+
+\subsubsection{2a. Section/Segment resizing (low-level)}
+
+   The size of an ELF Section or Segment can be modified by calling SgAsmGenericSection::set\_size (for file size) and
+   set\_mapped\_size (for mapped memory). However, this is a low-level interface that doesn't take into account other sections in
+   the same file.  The preferred way to resize a section is with SgAsmGenericFile::shift\_extend.
+
+   NOTE: For many kinds of sections, making the section larger will create an unreferenced area ("internal hole") at the end of
+   the section. Other sections will automatically do something with the new address space (e.g., SgAsmElfStringSection will
+   add the new address space to its free list).
+
+\subsubsection{2b. Section/Segment resizing (high-level)}
+
+   The preferred way to extend a section is to call SgAsmGenericFile::shift\_extend, which extends sections that contain the
+   resized-section and shifts sections that are right (higher address) of the resized-section.  This function also takes into
+   account alignment constraints, memory address space, and (optionally) holes in the address space.
+
+\subsection{Modifications to the ELF File Header}
+%===============================================================================================================================
+%Modifications to the ELF File Header
+%===============================================================================================================================
+
+\subsubsection{1. Entry Point RVA}
+
+   The entry RVA stored in the ELF File Header is adjusted whenever the section into which it points is moved in memory. It is
+   also possible to adjust this address explicitly by modifying the first (and only) entry in SgAsmGenericHeader::entry\_rvas.
+
+   NOTE: An RVA (rose\_rva\_t) is an offset with respect to the beginning of some section. If the section starting memory address
+   changes then the RVA implicitly changes (RVA's are virtual addresses relative to some format-wide base address). Multiple
+   sections can be mapped to the same memory (e.g., ".text" and "ELF Load Segment 2" are typically overlap in memory), but
+   since an RVA is associated with only one section, modifying the other section(s) has no effect on the RVA even if the RVA
+   happens to be inside the other sections as well.
+
+   NOTE: The binding between an RVA and a section can be modified with rose\_rva\_t::set\_section. In fact, the link can be
+   completely broken by passing a null section pointer, in which case the RVA is not relative to any section.
+
+\subsubsection{2. File Format Byte order}
+
+   File byte order can be changed by modifying the SgAsmGenericFormat object pointed to by the file header:
+
+      SgAsmFileHeader *fhdr = ....;
+      fhdr->get\_exec\_format()->set\_sex(ORDER\_MSB);
+
+   NOTE: Modifying the byte order affects only those sections that are actually parsed. If the ELF file contains a section
+   whose purpose we don't recognize then the original section data is written to the new file.
+
+   FIXME: If the byte order is not specified in the ELF header (e\_ident\_data\_encoding other than 1 or 2) then the parser will
+   make an educated guess and assign a byte order.  The unparsed file will differ from the original in this case at the sixth
+   byte of the file.
+
+\subsubsection{3. ELF Word Size}
+
+   File word size can be changed between 4 bytes and 8 bytes by modifying the SgAsmGenericFormat object pointed to by the file
+   header:
+
+      SgAsmFileHeader *fhdr = ....;
+      fhdr->get\_exec\_format()->set\_word\_size(4);
+
+   When changing word sizes, any fields that have values too large to represent in the new word size will cause the unparser
+   to abort.
+
+   NOTE: Modifying the word size affects only those sections that are actually parsed. If the ELF file contains a section whose
+   purpose we don't recognize then the original section data is written to the new file.
+
+   FIXME: Increasing word size probably requires allocating more space for many of the sections. Vice versa for decreasing the
+   word size.
+      
+\subsubsection{4. ELF Header Magic Number}
+
+   An ELF header has a four-byte magic number, usually 0x7f, 'E', 'L', 'F'.  The magic number can be modified by changing the
+   string from SgAsmFileHeader::get\_magic.  It must be exactly four characters in length.
+
+\subsubsection{5. ELF File Purpose (lib, executable, core, etc.)}
+
+   The file purpose should be modified by setting two fields, using
+
+\begin{enumerate}
+      \item SgAsmElfFileHeader::set\_p\_e\_type
+      \item SgAsmGenericFormat::set\_purpose
+\end{enumerate}
+
+   Both members should be set to compatible values. The former is the value from the ELF specification and the latter is a
+   constant: PURPOSE\_UNSPECIFIED, PURPOSE\_LIBRARY, PURPOSE\_EXECUTABLE, PURPOSE\_CORE\_DUMP, PURPOSE\_PROC\_SPECIFIC, PURPOSE\_OTHER.
+
+   FIXME: set\_p\_e\_type should probably call set\_purpose, but we can't go the other direction because the mapping is N:1.
+
+\subsubsection{6. ELF Version}
+
+   To change the ELF version assign a new value by calling set\_version on the object returned by
+   SgAsmGenericHeader::get\_exec\_format.  This doesn't have any effect on the code generated by the unparser since the parser
+   only knows about ELF format 1.
+   
+\subsubsection{7. ELF Target Architecture}
+
+   Modify the target architecture by calling two functions:
+
+       SgAsmElfHeader::set\_e\_machine -- sets the ELF specific value
+       SgAsmGenericHeader::set\_isa   -- sets the generic value
+
+   You should call both with consistent values.
+
+\subsubsection{8. ELF Section or Segment Table location}
+
+   The SgAsmElfFileHeader::set\_e\_shoff and set\_e\_phoff methods have been removed since calling them had no lasting effect
+   anyway. Instead, if you want to change one of these values for unparsing, then modify the actual SgAsmGenericSection that
+   holds the table (e.g., calling SgAsmGenericFile::shift\_extend).
+
+\subsubsection{9. ELF Section or Segment Table size}
+
+   The number of entries in the section or segment table cannot be modified by calling set\_e\_shnum or set\_e\_phnum on the
+   SgAsmElfFileHeader (FIXME: Remove these function). Rather, the sizes are obtained by looking at what sections and segments
+   are currently defined and writing an entry to the file for each one.
+
+\subsubsection{10. ELF Section Names}
+
+   Elf section names can be modified. Doing so may cause extensive changes to the executable due to reallocation of the section
+   holding the string table.
+
+   Do not call SgAsmElfSectionTableEntry::set\_sh\_name since that value will be overwritten based on the actual, current
+   location of the name in the associated string table.
+
+\subsubsection{11. ELF Segment Names}
+
+   ELF segment names are often parser-generated based on constants in the ELF Segment Table. However, if the segment
+   corresponds to an actual ELF Section defined in the ELF Section Table then the segment and section share the same
+   SgAsmGenericSection object and changing the name causes the ELF Section name to change with no effect on the segment table.
+
+\subsubsection{12. ELF Section Name Table}
+
+   The section that holds the section names is identified in the ELF File Header (get\_e\_shstrndx). Although it is possible to
+   change this value, doing so will have no effect on the currently-defined sections: they will continue to use the original
+   string table for their names.
+
+\subsection{Modifications to ELF String Tables and their Containing Sections}
+%===============================================================================================================================
+%Modifications to ELF String Tables and their Containing Sections
+%===============================================================================================================================
+
+\subsubsection{1. Move/Extend}
+
+   See SgGenericFile::shift\_extend.  When a string table is extended the new address space is added to the table's free list.
+
+\subsubsection{2. New String}
+
+   A new string can be created by calling the SgAsmStoredString allocator and passing a string table (something derived from
+   SgAsmGenericStrtab) and the initial string value.  The string is not actually allocated space in the file until the new file
+   is unparsed or until someone calls SgAsmStoredString::get\_offset.
+
+\subsubsection{3. Value modification}
+
+   A string can be modified by assigning a new value via SgAsmStoredString::set\_string. Storage is not allocated for the new
+   value until the AST is unparsed or someone calls SgAsmStoredString::get\_offset.  The previous value is freed.
+
+\subsubsection{4. Shared strings}
+
+   Three forms of sharing are supported:
+
+\begin{enumerate}
+   \item Two objects (section names, symbol names, etc) share the same string and changing one string causes the other to change
+      as well. This kind of sharing is not typically encountered in ELF although the underlying string table classes support
+      it.
+
+   \item Two objects have independent strings that happen to have the same value and point to the same offset in the string
+      table. In this case, changing one string doesn't change the other. This kind of sharing is often encountered in ELF.
+
+   \item Two objects have independent strings and one is an ending substring of another (e.g., "main" and "domain"). Changing one
+      string does not affect the other. This kind of sharing is also common in ELF.
+\end{enumerate}
+
+\subsubsection{5. String table internal holes}
+
+   If a sequence of bytes in a string table is not referenced by anything known to the parser, then those bytes are marked as
+   internal holes and are prevented from moving with respect to the beginning of the string table. Internal holes are not
+   placed on the string table free list (because something we didn't parse might be pointing to them).  The internal holes are
+   available with SgAsmGenericSection::congeal.
+
+\subsubsection{6. Reallocation of all strings}
+
+   A string table can be repacked by freeing all it's strings and then reallocating.  We can reallocate around the internal
+   holes or through the internal holes.
+
+       strtab.free\_all\_strings();   /* free\_all\_strings(true) blows away internal holes */
+       strtab.reallocate();
+
+   The ELF allocator will do its best to overlap storage (e.g., "domain" overlaps with "main").
+
+\subsubsection{7. Deletion of a string}
+
+   A string is deleted by changing its value to the empty string.
+
+\subsubsection{8. Stored strings vs. non-stored strings.}
+
+   If a string value has storage space in a file (such as an ELF Section name), then it's an instance of
+   SgAsmStoredString. Otherwise the string is either an std::string or SgAsmBasicString. SgAsmBasicString and SgAsmStoredString
+   both derive from SgAsmGenericString.  Changing the value of an SgAsmBasicString has no effect on the unparsed file.
+
+\subsection{Modifications ELF Section Table Entries}
+%===============================================================================================================================
+%Modifications ELF Section Table Entries
+%===============================================================================================================================
+
+Every ELF Section defined by the ELF Section Table is parsed as an SgAsmElfSection, which is derived from SgAsmGenericSection.
+The SgAsmElfSection::get\_section\_entry returns a pointer to the ELF Section Table Entry (SgAsmElfSectionTableEntry). Some
+members of these objects can be modified and some can't.
+
+\subsubsection{1. These functions should not be called since their values are overwritten during the unparse phase:}
+
+\begin{itemize}
+   \item SgAsmElfSectionTableEntry::set\_sh\_name   -- see SgAsmGenericSection::set\_name
+   \item SgAsmElfSectionTableEntry::set\_sh\_addr   -- see SgAsmGenericFile::shift\_extend
+   \item SgAsmElfSectionTableEntry::set\_sh\_offset -- see SgAsmGenericFile::shift\_extend
+   \item SgAsmElfSectionTableEntry::set\_sh\_size   -- see SgAsmGenericFile::shift\_extend
+   \item SgAsmElfSectionTableEntry::set\_sh\_link   -- don't call (no alternative yet)
+\end{itemize}
+   
+\subsubsection{2. Can modify}
+
+\fixme{What text should go here?}
+
+\begin{itemize}
+   \item SgAsmElfSectionTableEntry::set\_sh\_type
+   \item SgAsmElfSectionTableEntry::set\_sh\_flags, although the Write and Execute bits are ignored
+   \item SgAsmElfSectionTableEntry::set\_sh\_info   ???
+   \item SgAsmElfSectionTableEntry::set\_sh\_addralign ???
+   \item SgAsmElfSectionTableEntry::set\_sh\_entsize ???
+\end{itemize}
+
+
+
+
+
 
 \section{Usage}
-     See the ROSE Tutorial for an example.
+     See the ROSE Tutorial for examples.
 
 
 

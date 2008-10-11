@@ -173,6 +173,9 @@ Grammar::setUpExpressions ()
   // DQ (12/31/2007): This expression represents constructions such as "DIM=N" which binds 
   // a function parameter name with a function argument as in: "sum(array,DIM=1)".
      NEW_TERMINAL_MACRO (ActualArgumentExpression, "ActualArgumentExpression", "ACTUAL_ARGUMENT_EXPRESSION");
+
+  // User defined operator for Fortran named operators.
+     NEW_TERMINAL_MACRO (UserDefinedBinaryOp,   "UserDefinedBinaryOp",   "USER_DEFINED_BINARY_OP" );
 #endif
 
   // An expression with a designator, used for designated initialization in
@@ -183,9 +186,13 @@ Grammar::setUpExpressions ()
                             AggregateInitializer | ConstructorInitializer | AssignInitializer | DesignatedInitializer,
                             "Initializer","EXPR_INIT", false);
 
+  // User defined operator for Fortran named operators.
+     NEW_TERMINAL_MACRO (UserDefinedUnaryOp,    "UserDefinedUnaryOp",    "USER_DEFINED_UNARY_OP" );
+
      NEW_NONTERMINAL_MACRO (UnaryOp,
-                            ExpressionRoot | MinusOp      | UnaryAddOp | NotOp           | PointerDerefExp | 
-                            AddressOfOp    | MinusMinusOp | PlusPlusOp | BitComplementOp | CastExp | ThrowOp,
+                            ExpressionRoot | MinusOp            | UnaryAddOp | NotOp           | PointerDerefExp | 
+                            AddressOfOp    | MinusMinusOp       | PlusPlusOp | BitComplementOp | CastExp         |
+                            ThrowOp        | UserDefinedUnaryOp,
                             "UnaryOp","UNARY_EXPRESSION", false);
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
@@ -196,7 +203,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp        | PlusAssignOp     | MinusAssignOp | AndAssignOp    |
           IorAssignOp    | MultAssignOp     | DivAssignOp     | ModAssignOp      | XorAssignOp   | LshiftAssignOp |
-          RshiftAssignOp | ExponentiationOp | ConcatenationOp,"BinaryOp","BINARY_EXPRESSION", false);
+          RshiftAssignOp | ExponentiationOp | ConcatenationOp | UserDefinedBinaryOp,"BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
           BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
@@ -505,6 +512,9 @@ Grammar::setUpExpressions ()
      UpcThreads.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      UpcMythread.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+     UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     UserDefinedBinaryOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
   // DQ (2/27/2005): We want to post_construction_initialization to call set_type so we don't want 
   // and empty function here plus I have added a set_type function for DotStarOp.
   // Bugfix (2/27/2001) Generate this empty function instead of one with a call to an empty setType() function
@@ -624,6 +634,9 @@ Grammar::setUpExpressions ()
      UnknownArrayOrFunctionReference.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
 
      ActualArgumentExpression.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
+
+     UserDefinedUnaryOp.editSubstitute  ( "PRECEDENCE_VALUE", " 2" );
+     UserDefinedBinaryOp.editSubstitute ( "PRECEDENCE_VALUE", " 2" );
 
 #if 0
   // Extra required Fortran IR nodes
@@ -1338,6 +1351,19 @@ Grammar::setUpExpressions ()
 				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      ActualArgumentExpression.setDataPrototype     ( "SgExpression*", "expression", "= NULL",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     UserDefinedUnaryOp.setFunctionPrototype ( "HEADER_USER_DEFINED_UNARY_EXPRESSION", "../Grammar/Expression.code" );
+     UserDefinedUnaryOp.setDataPrototype     ( "SgName", "operator_name", "= \"\"",
+				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UserDefinedUnaryOp.setDataPrototype ( "SgFunctionSymbol*", "symbol"     , "= NULL",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     UserDefinedBinaryOp.setFunctionPrototype ( "HEADER_USER_DEFINED_BINARY_EXPRESSION", "../Grammar/Expression.code" );
+     UserDefinedBinaryOp.setDataPrototype     ( "SgName", "operator_name", "= \"\"",
+				      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UserDefinedBinaryOp.setDataPrototype ( "SgFunctionSymbol*", "symbol"     , "= NULL",
+				       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #endif
 
      DesignatedInitializer.setFunctionPrototype ( "HEADER_DESIGNATED_INITIALIZER", "../Grammar/Expression.code" );
@@ -1540,9 +1566,12 @@ Grammar::setUpExpressions ()
      UpcElemsizeofExpression.setFunctionSource  ( "SOURCE_UPC_ELEM_SIZEOF_EXPRESSION",  "../Grammar/Expression.code" );
 #endif
 
-     // ***************************************
-     //      get_type() member function
-     // ***************************************
+     UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_USER_DEFINED_UNARY_EXPRESSION",  "../Grammar/Expression.code" );
+     UserDefinedBinaryOp.setFunctionSource ( "SOURCE_USER_DEFINED_BINARY_EXPRESSION", "../Grammar/Expression.code" );
+
+  // ***************************************
+  //      get_type() member function
+  // ***************************************
 
      ExprListExp.setFunctionSource            ( "SOURCE_DEFAULT_GET_TYPE","../Grammar/Expression.code" );
      VarRefExp.setFunctionSource              ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
@@ -1663,4 +1692,7 @@ Grammar::setUpExpressions ()
 
      AsmOp.setFunctionSource             ( "SOURCE_ASM_OP", "../Grammar/Expression.code" );
 
+  // DQ (10/8/2008): Unclear if this is how we should hancle this!
+  // UserDefinedUnaryOp.setFunctionSource  ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
+  // UserDefinedBinaryOp.setFunctionSource ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
    }

@@ -2388,12 +2388,14 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(classSymbol->get_declaration() != NULL);
                          break;
                        }
+
                     case V_SgDefaultSymbol:
                        {
                          printf ("The SgDefaultSymbol should not be present in the AST \n");
                          ROSE_ASSERT(false);
                          break;
                        }
+
                     case V_SgEnumFieldSymbol:
                        {
                       // Note that the type returned by get_declaration is SgInitializedName and not any sort of SgDeclaration
@@ -2402,6 +2404,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(enumFieldSymbol->get_declaration() != NULL);
                          break;
                        }
+
                     case V_SgEnumSymbol:
                        {
                          SgEnumSymbol* enumSymbol = isSgEnumSymbol(symbol);
@@ -2419,6 +2422,23 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(functionSymbol->get_declaration() != NULL);
                          break;
                        }
+
+                 // DQ (10/11/2008): Added to support renaming of functions using the Fortran 90 interface statement.
+                 // Note that the SgRenameSymbol is derived from the SgFunctionSymbol. Unclear if any other symbols 
+                 // should have a similar renamed version (e.g. SgMemberFunctionSymbol).  If this technique is uesd
+                 // for C++ then the target of C++ aliases might be supported.  It is not clear if this technique will
+                 // be used outside of the Fortran support.
+                    case V_SgRenameSymbol:
+                       {
+                      // This is an alias for a symbol injected from another scope as part of a Fortran "use" statement
+                      // (or perhaps eventually a C++ using declaration or using directive).
+                         SgRenameSymbol* renameSymbol = isSgRenameSymbol(symbol);
+                         ROSE_ASSERT(renameSymbol != NULL);
+                         ROSE_ASSERT(renameSymbol->get_original_symbol() != NULL);
+                         ROSE_ASSERT(renameSymbol->get_declaration() != NULL);
+                         break;
+                       }
+
                     case V_SgFunctionTypeSymbol:
                        {
                       // Note that we check the get_type() function here and not get_declaration()
@@ -2427,6 +2447,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(functionTypeSymbol->get_type() != NULL);
                          break;
                        }
+
                     case V_SgLabelSymbol:
                        {
                          SgLabelSymbol* labelSymbol = isSgLabelSymbol(symbol);
@@ -2440,6 +2461,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                             }
                          break;
                        }
+
                     case V_SgNamespaceSymbol:
                        {
                          SgNamespaceSymbol* namespaceSymbol = isSgNamespaceSymbol(symbol);
@@ -2447,6 +2469,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(namespaceSymbol->get_declaration() != NULL);
                          break;
                        }
+
                     case V_SgTemplateSymbol:
                        {
                          SgTemplateSymbol* templateSymbol = isSgTemplateSymbol(symbol);
@@ -2454,6 +2477,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(templateSymbol->get_declaration() != NULL);
                          break;
                        }
+
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
@@ -2461,6 +2485,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(typedefSymbol->get_declaration() != NULL);
                          break;
                        }
+
                     case V_SgVariableSymbol:
                        {
                       // Note that the type returned by get_declaration is SgInitializedName and not any sort of SgDeclaration
@@ -2480,6 +2505,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                          ROSE_ASSERT(aliasSymbol->get_alias() != NULL);
                          break;
                        }
+
                     default:
                        {
                          printf ("Error: default reached in switch (AstFixes.C) symbol = %s \n",symbol->class_name().c_str());

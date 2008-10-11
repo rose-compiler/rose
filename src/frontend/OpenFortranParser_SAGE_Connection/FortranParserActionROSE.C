@@ -423,14 +423,10 @@ void c_action_defined_operator(Token_t * definedOp, ofp_bool isExtendedIntrinsic
   // DQ (10/8/2008): this rule causes the token to sometime appear on the stack a 2nd time.
      printf ("Should we push the token on the stack? (YES) \n");
 
-#if 0
-     if (isExtendedIntrinsicOp == true)
-          astNameStack.push_front(definedOp);
-#else
+  // DQ (10/9/2008): To be uniform in the handling of operators (used defined and intrinsic, we ALWAYS push the token onto the stack!
      astNameStack.push_front(definedOp);
-#endif
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R311 c_action_defined_operator()");
 #endif
@@ -7276,7 +7272,78 @@ void c_action_level_1_expr(Token_t * definedUnaryOp)
    {
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_1_expr(): definedUnaryOp = %p = %s \n",definedUnaryOp,definedUnaryOp != NULL ? definedUnaryOp->text : "NULL");
+
+     if (definedUnaryOp != NULL)
+        {
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("At TOP of R702 c_action_level_1_expr()");
+#endif
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* tmp = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          SgExpression* result = createUnaryOperator(tmp,definedUnaryOp->text, /* is_user_defined_operator */ true);
+          setSourcePosition(result,definedUnaryOp);
+
+          astExpressionStack.push_front(result);
+
+       // printf ("Exiting after building user defined unary operator... \n");
+       // ROSE_ASSERT(false);
+        }
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R702 c_action_level_1_expr()");
+#endif
    }
+
+/**
+ * R703
+ * defined_unary_op
+ *
+ * @param definedOp T_DEFINED_OP token.
+ */
+void c_action_defined_unary_op(Token_t * definedOp)
+   {
+  // This action is called with the parser sees the unary operator, but the operand for 
+  // the unary operator has not been processed yet (will be done in R702).  So this is
+  // too early a point to process the unary operator!
+
+     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
+          printf ("In c_action_defined_unary_op(): definedOp = %p \n",definedOp);
+
+#if 0
+  // DQ (10/10/2008): This has been moved to R702 (after the operand has been pushed)
+
+     if (definedOp != NULL)
+        {
+#if 1
+       // Output debugging information about saved state (stack) information.
+          outputState("At TOP of R703 c_action_defined_unary_op()");
+#endif
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* tmp = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          SgExpression* result = createUnaryOperator(tmp,definedOp->text, /* is_user_defined_operator */ true);
+          setSourcePosition(result,definedOp);
+
+          astExpressionStack.push_front(result);
+
+       // printf ("Exiting after building user defined unary operator... \n");
+       // ROSE_ASSERT(false);
+        }
+#endif
+
+#if 1
+  // Output debugging information about saved state (stack) information.
+     outputState("At BOTTOM of R703 c_action_defined_unary_op()");
+#endif
+   }
+
 
 /** R704: note, inserted as R704 functionality
  * power_operand
@@ -7551,7 +7618,7 @@ void c_action_level_2_expr(int numConcatOps)
 
           ROSE_ASSERT(relOp != NULL);
 
-          result = createBinaryOperator(lhs,rhs,relOp->text);
+          result = createBinaryOperator(lhs,rhs,relOp->text, /* is_user_defined_operator */ false);
 
           ROSE_ASSERT(result != NULL);
           setSourcePosition(result,relOp);
@@ -7568,7 +7635,7 @@ void c_action_level_2_expr(int numConcatOps)
                astNameStack.pop_front();
                ROSE_ASSERT(relOp != NULL);
 
-               result = createBinaryOperator(lhs,accumulator_rhs,relOp->text);
+               result = createBinaryOperator(lhs,accumulator_rhs,relOp->text, /* is_user_defined_operator */ false);
                setSourcePosition(result,relOp);
              }
 
@@ -7675,7 +7742,7 @@ void c_action_level_3_expr(Token_t * relOp)
 
           ROSE_ASSERT(relOp != NULL);
 
-          result = createBinaryOperator(lhs,rhs,relOp->text);
+          result = createBinaryOperator(lhs,rhs,relOp->text, /* is_user_defined_operator */ false);
 
           ROSE_ASSERT(result != NULL);
           setSourcePosition(result,relOp);
@@ -7793,14 +7860,14 @@ void c_action_and_operand(ofp_bool hasNotOp, int numAndOps)
                     Token_t* local_relOp  = astNameStack.front();
                  // printf ("local_relOp->text = %s (should be .NOT.)\n",local_relOp->text);
                     ROSE_ASSERT(local_relOp != NULL);
-                    lhs = createUnaryOperator(lhs,local_relOp->text);
+                    lhs = createUnaryOperator(lhs,local_relOp->text, /* is_user_defined_operator */ false);
                     setSourcePosition(lhs,local_relOp);
 
                     astNameStack.pop_front();
                   }
 
                ROSE_ASSERT(relOp != NULL);
-               result = createBinaryOperator(lhs,tempExpression,relOp->text);
+               result = createBinaryOperator(lhs,tempExpression,relOp->text, /* is_user_defined_operator */ false);
                setSourcePosition(result,relOp);
 
 
@@ -7813,7 +7880,7 @@ void c_action_and_operand(ofp_bool hasNotOp, int numAndOps)
             // Then this is a UNARY operator (.NOT.)
                ROSE_ASSERT(relOp != NULL);
             // printf ("relOp->text = %s (should be .NOT.)\n",relOp->text);
-               result = createUnaryOperator(rhs,relOp->text);
+               result = createUnaryOperator(rhs,relOp->text, /* is_user_defined_operator */ false);
                setSourcePosition(result,relOp);
 
                astNameStack.pop_front();
@@ -7848,7 +7915,7 @@ void c_action_and_operand__not_op(ofp_bool hasNotOp)
           SgExpression* tmp = astExpressionStack.front();
           astExpressionStack.pop_front();
 
-          SgExpression* result = createUnaryOperator(tmp,local_relOp->text);
+          SgExpression* result = createUnaryOperator(tmp,local_relOp->text, /* is_user_defined_operator */ false);
           setSourcePosition(result,local_relOp);
 
           astExpressionStack.push_front(result);
@@ -7901,7 +7968,7 @@ void c_action_or_operand(int numOrOps)
                astExpressionStack.pop_front();
 
                ROSE_ASSERT(relOp != NULL);
-               result = createBinaryOperator(lhs,tempExpression,relOp->text);
+               result = createBinaryOperator(lhs,tempExpression,relOp->text, /* is_user_defined_operator */ false);
                setSourcePosition(result,relOp);
 
                astNameStack.pop_front();
@@ -7955,7 +8022,7 @@ void c_action_level_5_expr(int numDefinedBinaryOps)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr(): numDefinedBinaryOps = %d \n",numDefinedBinaryOps);
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R717 c_action_level_5_expr()");
 #endif
@@ -7966,7 +8033,41 @@ void c_action_level_5_expr__defined_binary_op(Token_t * definedBinaryOp)
      if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
           printf ("In c_action_level_5_expr__defined_binary_op(): definedBinaryOp = %p = %s \n",definedBinaryOp,definedBinaryOp != NULL ? definedBinaryOp->text : "NULL");
 
-#if 0
+#if !SKIP_C_ACTION_IMPLEMENTATION
+     if (definedBinaryOp != NULL)
+        {
+          ROSE_ASSERT(definedBinaryOp->text != NULL);
+       // printf ("In c_action_level_3_expr(): relOp->text = %s \n",relOp->text);
+
+          SgExpression* result = NULL;
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* rhs = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          ROSE_ASSERT(astExpressionStack.empty() == false);
+          SgExpression* lhs = astExpressionStack.front();
+          astExpressionStack.pop_front();
+
+          result = createBinaryOperator(lhs,rhs,definedBinaryOp->text, /* is_user_defined_operator */ true);
+
+          ROSE_ASSERT(result != NULL);
+          setSourcePosition(result,definedBinaryOp);
+
+          astExpressionStack.push_front(result);
+
+       // DQ (10/7/2008): There should uniformally be a token on the stack for the ".<operator>." name.
+       // ROSE_ASSERT(astNameStack.empty() == false);
+       // astNameStack.pop_front();
+
+          outputState("Before EXIT of R717 c_action_level_5_expr__defined_binary_op()");
+
+       // printf ("Exiting after building the user-defined binary operator... \n");
+       // ROSE_ASSERT(false);
+        }
+#endif
+
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R717 c_action_level_5_expr__defined_binary_op()");
 #endif
@@ -8064,7 +8165,7 @@ void c_action_expr()
   // DQ (12/14/2007): This should have been set by now! See test2007_114.f03
   // build_implicit_program_statement_if_required();
 
-#if 0
+#if 1
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R722 c_action_expr()");
 #endif
@@ -13696,14 +13797,26 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      ROSE_ASSERT(moduleDefinition != NULL);
 
 #if 1
+  // Note that there can be many interface statements in a module.
      std::vector<SgInterfaceStatement*> interfaceList = moduleStatement->get_interfaces();
      for (size_t i = 0; i < interfaceList.size(); i++)
         {
           SgInterfaceStatement* interfaceStatement = interfaceList[i];
 
+          SgScopeStatement* currentScope = interfaceStatement->get_scope();
+          ROSE_ASSERT(currentScope != NULL);
+
+       // I think that this is true, enforce it!
+          ROSE_ASSERT(currentScope == moduleDefinition);
+
           SgName interfaceName = interfaceStatement->get_name();
 
+       // Note that there can be many function declarations (interface bodies) in each interface statement in a module.
           std::vector<SgInterfaceBody*> interfaceBodyList = interfaceStatement->get_interface_body_list();
+
+       // Accumulate the new SgRenameSymbol nodes into a list and then add them after we are finished traversing the symbols in the current scope!
+          std::vector<SgRenameSymbol*> renameSymbolList;
+
           for (size_t j = 0; j < interfaceBodyList.size(); j++)
              {
                SgInterfaceBody* interfaceBody = interfaceBodyList[j];
@@ -13713,9 +13826,6 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                     SgName functionName = interfaceBody->get_function_name();
 
                     printf ("Fixup functionName = %s in interfaceName = %s \n",functionName.str(),interfaceName.str());
-
-                    SgScopeStatement* currentScope = interfaceStatement->get_scope();
-                    ROSE_ASSERT(currentScope != NULL);
 
                  // DQ (9/29/2008): inject all symbols from the module's symbol table into symbol table at current scope.
                     SgSymbol* symbol = moduleDefinition->first_any_symbol();
@@ -13748,12 +13858,17 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
                                 // We might want to have a different sort of symbol for this purpose since the functionSymbol
                                 // and the aliasSymbol are in the same scope (where as previously the SgAliasSymbol has been 
                                 // used to map symbols between scopes).
-                                   SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
+                                // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(functionSymbol,/* isRenamed = true */ true,interfaceName);
+                                // SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol,interfaceName);
+                                   SgRenameSymbol* renameSymbol = new SgRenameSymbol(functionSymbol->get_declaration(),functionSymbol,interfaceName);
 
                                    if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
                                         printf ("Insert aliased symbol name = %s (renamed from functionName = %s )\n",interfaceName.str(),functionName.str());
 
-                                   currentScope->insert_symbol(interfaceName,aliasSymbol);
+                                // Accumulate the list of required SgRenameSymbol IR nodes, and add them after we finish the traversal over the current scops symbols
+                                // currentScope->insert_symbol(interfaceName,aliasSymbol);
+                                // currentScope->insert_symbol(interfaceName,renameSymbol);
+                                   renameSymbolList.push_back(renameSymbol);
                                  }
                             }
 
@@ -13766,10 +13881,20 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 #endif
                   }
              }
-        }
 
+       // Insert the list of accumulated symbols into the current scope
+       // printf ("renameSymbolList.size() = %zu \n",renameSymbolList.size());
+          for (size_t i = 0; i < renameSymbolList.size(); i++)
+             {
+               currentScope->insert_symbol(interfaceName,renameSymbolList[i]);
+             }
+        }
 #endif
 
+#if 0
+     printf ("Exiting at the base of the fixup of SgInterfaceBody \n");
+     ROSE_ASSERT(false);
+#endif
 
 #if 0
   // moduleDefinition->print_symboltable ("In c_action_end_module_stmt()");
@@ -14109,7 +14234,7 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
           SgClassDefinition* classDefinition = moduleStatement->get_definition();
           ROSE_ASSERT(classDefinition != NULL);
-#if 0
+#if 1
           outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
           if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
@@ -14135,21 +14260,20 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                  // Assume for now that there is no renaming of declarations
                     bool isRenamed = ( renamePair->get_use_name() != renamePair->get_local_name() );
 
-                    SgName useName = renamePair->get_use_name();
+                    SgName local_name = renamePair->get_local_name();
+                    SgName use_name    = renamePair->get_use_name();
                  // SgName declarationName = symbol->get_name();
                     SgName symbolName = symbol->get_name();
 
                     if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                         printf ("Test useName = %s symbol name = %s \n",useName.str(),symbolName.str());
+                         printf ("Test: local_name = %s use_name = %s symbol = %p = %s symbol name = %s \n",local_name.str(),use_name.str(),symbol,symbol->class_name().c_str(),symbolName.str());
 
-                    if (useName == symbol->get_name())
+                    if (use_name == symbol->get_name())
                        {
                       // This should be a public sysmbol, but check to make sure!
                          ROSE_ASSERT(isPubliclyAccessible(symbol) == true);
 
                          SgAliasSymbol* aliasSymbol = NULL;
-                         SgName declarationName = renamePair->get_local_name();
-
                          if (isRenamed == true)
                             {
                               aliasSymbol = new SgAliasSymbol(symbol,isRenamed,renamePair->get_local_name());
@@ -14160,15 +14284,15 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
                             }
 
                          if ( SgProject::get_verbose() > DEBUG_RULE_COMMENT_LEVEL )
-                              printf ("Insert aliased symbol name = %s \n",declarationName.str());
+                              printf ("Insert aliased symbol name = %s isRenamed = %s \n",local_name.str(),isRenamed ? "true" : "false");
 
-                         currentScope->insert_symbol(declarationName,aliasSymbol);
+                         currentScope->insert_symbol(local_name,aliasSymbol);
                        }
 
                  // Increment to the next symbol in the module's symbol table
                     symbol = classDefinition->next_any_symbol();
                   }
-#if 0
+#if 1
                outputState("In R1109 c_action_use_stmt(): hasOnly == true");
 #endif
              }
@@ -14229,7 +14353,7 @@ void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, 
      SgRenamePair* renamePair = NULL;
      if (id1 != NULL && id2 != NULL)
         {
-       // This is a simple variable or type renaming
+       // This is a simple variable or defined type renaming
           renamePair = new SgRenamePair(id1->text,id2->text);
 
        // Since there is more than one token used to define a rename, the source position is not accurately set using just "id1".
@@ -14254,7 +14378,7 @@ void c_action_rename(Token_t *id1, Token_t *id2, Token_t *op1, Token_t *defOp1, 
             else
              {
             // If they are not both valid pointers, make sure that they are both NULL, else we may have missed 
-            // some corner case that I don't have a test code for yet.
+            // some corner case for which I don't have a test code yet.
                ROSE_ASSERT(op1 == NULL && op2 == NULL);
              }
 
@@ -14355,7 +14479,11 @@ void c_action_only_list(int count)
                  // Then get the next token and append it to the name.
                     astNameStack.pop_front();
                     SgName operatorName = astNameStack.front()->text;
+#if 0
                     name = name + "(" + operatorName + ")";
+#else
+                    name = operatorName;
+#endif
 
                     printf ("In c_action_only_list() this is an operator: name = %s \n",name.str());
                   }
@@ -14591,7 +14719,17 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
        // If this is an operator, then we have to get the name of the operator
           ROSE_ASSERT(astNameStack.empty() == false);
           string interfaceOperatorNameString = astNameStack.front()->text;
+
+#if 0
           interfaceNameString += "(" + interfaceOperatorNameString + ")";
+#else
+       // DQ (10/10/2008): We want to use the actual operator name if it is a .xxx. form
+          interfaceNameString = interfaceOperatorNameString;
+
+          printf ("interfaceNameString = %s \n",interfaceNameString.c_str());
+       // ROSE_ASSERT(interfaceNameString.size() > 1);
+#endif
+
           astNameStack.pop_front();
 
           generic_spec_kind = SgInterfaceStatement::e_operator_interface_type;
@@ -14601,9 +14739,9 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
        // Use case insensitive string compare
           if (matchingName(interfaceNameString,"ASSIGNMENT") == true)
              {
-            // If this is an assignment operator, then the "=" is not on the stack.
+            // If this is an assignment operator, then the "=" is not on the stack (inconsistant handling in OFP).
                ROSE_ASSERT(astNameStack.empty() == true);
-               interfaceNameString += "(=)";
+               interfaceNameString = "=";
             // astNameStack.pop_front();
 
                generic_spec_kind = SgInterfaceStatement::e_assignment_interface_type;

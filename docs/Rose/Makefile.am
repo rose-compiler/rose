@@ -82,7 +82,7 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
              tridvpk.tex appendix.tex glossary.tex bibliography.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
-             developersAppendix.tex astMerge.tex installRose.tex
+             developersAppendix.tex astMerge.tex installRose.tex binaryAnalysis.tex
 
 roseDirectoryMap.pdf: Makefile
 	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;

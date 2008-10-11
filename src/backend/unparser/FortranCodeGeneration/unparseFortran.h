@@ -213,6 +213,10 @@ class FortranCodeGeneration_locatedNode : public UnparseLanguageIndependentConst
 
           virtual bool isSubroutineCall                (SgFunctionCallExp* fcall);
 
+       // DQ (10/10/2008): Added support for unser defined unary and binary operators.
+          virtual void unparseUserDefinedUnaryOp       (SgExpression* expr, SgUnparse_Info& info);
+          virtual void unparseUserDefinedBinaryOp      (SgExpression* expr, SgUnparse_Info& info);
+
           virtual void unparseModuleStmt               (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProgHdrStmt              (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseProcHdrStmt              (SgStatement* stmt, SgUnparse_Info& info);

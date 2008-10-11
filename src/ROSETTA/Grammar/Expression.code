@@ -955,6 +955,13 @@ HEADER_UPC_BLOCK_SIZEOF_EXPRESSION_END
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_START
 HEADER_UPC_ELEM_SIZEOF_EXPRESSION_END
 
+HEADER_USER_DEFINED_UNARY_EXPRESSION_START
+          SgType* get_type() const;
+HEADER_USER_DEFINED_UNARY_EXPRESSION_END
+
+HEADER_USER_DEFINED_BINARY_EXPRESSION_START
+          SgType* get_type() const;
+HEADER_USER_DEFINED_BINARY_EXPRESSION_END
 
 
 // #########################################################
@@ -4942,4 +4949,31 @@ $CLASSNAME::get_type() const
    }
 
 SOURCE_UPC_ELEM_SIZEOF_EXPRESSION_END
+
+
+SOURCE_USER_DEFINED_UNARY_EXPRESSION_START
+SgType*
+SgUserDefinedUnaryOp::get_type() const
+   {
+  // DQ (10/8/2008): Unclear how this should be implemented right now!
+     ROSE_ASSERT(get_symbol() != NULL);
+     SgType* returnType = get_symbol()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_USER_DEFINED_UNARY_EXPRESSION_END
+
+SOURCE_USER_DEFINED_BINARY_EXPRESSION_START
+SgType*
+SgUserDefinedBinaryOp::get_type() const
+   {
+  // DQ (10/8/2008): Unclear how this should be implemented right now!
+     ROSE_ASSERT(get_symbol() != NULL);
+     SgType* returnType = get_symbol()->get_type();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+SOURCE_USER_DEFINED_BINARY_EXPRESSION_END
 

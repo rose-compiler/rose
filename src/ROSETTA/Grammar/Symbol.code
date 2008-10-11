@@ -68,7 +68,19 @@ HEADER_ALIAS_SYMBOL_START
        // SgName  get_name() const;
        // SgType* get_type() const;
        // SgNode* get_symbol_basis() const;
+
+      //! For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
+          SgSymbol* get_base() const;
+
 HEADER_ALIAS_SYMBOL_END
+
+HEADER_RENAME_SYMBOL_START
+
+      //! For a chain of aliased symbols the last link may be a SgRenameSymbol, this 
+      //! function returns the declaration in the last (non-aliased and not renamed) symbol.
+          SgSymbol* get_base() const;
+
+HEADER_RENAME_SYMBOL_END
 
 
 // #########################################################
@@ -557,7 +569,120 @@ SgAliasSymbol::get_type() const
      ROSE_ASSERT(p_alias != NULL);
      return get_alias()->get_type();
    }
+
+SgSymbol*
+SgAliasSymbol::get_base() const
+   {
+  // DQ (10/9/2008): For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
+     SgSymbol* nonAliasedSymbol = get_alias();
+     ROSE_ASSERT(nonAliasedSymbol != NULL);
+
+     SgAliasSymbol* aliasSymbol = isSgAliasSymbol(get_alias());
+     while (aliasSymbol != NULL)
+        {
+       // This may be any symbol (even a SgAliasSymbol)
+          nonAliasedSymbol = aliasSymbol->get_alias();
+
+       // Advance in the chain to the next SgAliasSymbol symbol
+          aliasSymbol = isSgAliasSymbol(aliasSymbol->get_alias());
+        }
+
+  // Every chain of aliased symbols should have a non-aliased symbol at the end!
+     ROSE_ASSERT(nonAliasedSymbol != NULL);
+     return nonAliasedSymbol;
+   }
+
 SOURCE_ALIAS_SYMBOL_END
+
+SOURCE_RENAME_SYMBOL_START
+SgName
+SgRenameSymbol::get_name() const
+   {
+     ROSE_ASSERT(p_original_symbol != NULL);
+
+#if 0
+     ROSE_ASSERT(get_isRenamed() == true);
+
+     SgName name;
+     if (get_isRenamed() == true)
+        {
+          name = get_new_name();
+        }
+       else
+        {
+          name = get_original_symbol()->get_name();
+        }
+#else
+  // This is a difference between SgAliasSymbol and SgRenameSymbol
+     SgName name = get_new_name();
+#endif
+
+     return name;
+   }
+
+SgNode*
+SgRenameSymbol::get_symbol_basis() const
+   {
+     ROSE_ASSERT(p_original_symbol != NULL);
+     return get_original_symbol()->get_symbol_basis();
+   }
+
+SgType*
+SgRenameSymbol::get_type() const 
+   {
+     ROSE_ASSERT(p_original_symbol != NULL);
+     return get_original_symbol()->get_type();
+   }
+
+#if 0
+// DQ (10/11/2008): This is derived from SgFunctionSymbol and so we don't require this member function?
+
+SgSymbol*
+SgRenameSymbol::get_base() const
+   {
+  // DQ (10/9/2008): For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
+     SgSymbol* nonAliasedSymbol = get_alias();
+     ROSE_ASSERT(nonAliasedSymbol != NULL);
+
+XXXXX
+
+This is not FINISHED!!!
+
+XXXXX
+
+     SgAliasSymbol*  aliasSymbol  = isSgAliasSymbol (get_alias());
+     SgRenameSymbol* renameSymbol = isSgRenameSymbol(get_alias());
+     while (aliasSymbol != NULL || renameSymbol != NULL)
+        {
+       // This may be any symbol (even a SgAliasSymbol)
+          if (aliasSymbol != NULL)
+             {
+               nonAliasedSymbol = aliasSymbol->get_alias();
+             }
+            else
+             {
+               if (renameSymbol != NULL)
+                  {
+                    nonAliasedSymbol = renameSymbol->get_alias();
+                  }
+                 else
+                  {
+                    printf ("Error: aliasSymbol == NULL and renameSymbol == NULL \n");
+                    ROSE_ASSERT(false);
+                  }
+             }
+
+       // Advance in the chain to the next SgAliasSymbol symbol
+          aliasSymbol = isSgAliasSymbol(aliasSymbol->get_alias());
+        }
+
+  // Every chain of aliased symbols should have a non-aliased symbol at the end!
+     ROSE_ASSERT(nonAliasedSymbol != NULL);
+     return nonAliasedSymbol;
+   }
+#endif
+
+SOURCE_RENAME_SYMBOL_END
 
 
 

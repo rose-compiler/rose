@@ -92,6 +92,22 @@ MarkLhsValues::visit(SgNode* node)
                          break;
                        }
 
+                 // DQ (10/9/2008): For the Fortran user defined operator, the lhs is not an L-value.
+                 // This represents my understanding, because assignment is explicitly handled separately.
+                    case V_SgUserDefinedBinaryOp:
+                       {
+                         SgExpression* lhs = binaryOperator->get_lhs_operand();
+                         ROSE_ASSERT(lhs != NULL);
+                         SgExpression* rhs = binaryOperator->get_rhs_operand();
+                         ROSE_ASSERT(rhs != NULL);
+
+                      // This is a value that I know has to be set, the AST generation in EDG/Sage and OFP/Sage
+                      // sets this properly, but some transformations of the AST do not, so we fix it up here.
+                         lhs->set_lvalue(false);
+                         rhs->set_lvalue(false);
+                         break;
+                       }
+
                     default:
                        {
                       // Make sure that the lhs is not an L-value
@@ -173,6 +189,16 @@ MarkLhsValues::visit(SgNode* node)
                          break;
                        }
 
+                 // DQ (10/9/2008): For the Fortran user defined operator, the operand is not an L-value.
+                 // This represents my understanding, because assignment is explicitly handled separately.
+                    case V_SgUserDefinedUnaryOp:
+                       {
+                         SgExpression* operand = unaryOperator->get_operand();
+                         ROSE_ASSERT(operand != NULL);
+
+                         operand->set_lvalue(false);
+                       }
+
                  // Added to address problem on Qing's machine using g++ 4.0.2
                     case V_SgNotOp:
 
@@ -212,6 +238,7 @@ MarkLhsValues::visit(SgNode* node)
                             }
 #endif
 
+                      // DQ (10/9/2008): What is the date and author for this comment?  Is it fixed now? Was it made into a test code?
                       // Note that this fails for line 206 of file: include/g++_HEADERS/hdrs1/ext/mt_allocator.h
                          ROSE_ASSERT(operand->get_lvalue() == false);
                        }          

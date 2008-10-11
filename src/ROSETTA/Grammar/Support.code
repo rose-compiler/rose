@@ -5861,7 +5861,9 @@ SgSymbolTable::find_variable(const SgName &nm)
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
-               SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_alias());
+               SgVariableSymbol* variableSymbol = isSgVariableSymbol(aliasedSymbol->get_base());
                if ( variableSymbol != NULL )
                   {
                     p_name    = nm;
@@ -5914,7 +5916,9 @@ SgSymbolTable::find_class(const SgName &nm)
           SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
           if (aliasedSymbol != NULL)
              {
-               SgClassSymbol* classSymbol = isSgClassSymbol(aliasedSymbol->get_alias());
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgClassSymbol* classSymbol = isSgClassSymbol(aliasedSymbol->get_alias());
+               SgClassSymbol* classSymbol = isSgClassSymbol(aliasedSymbol->get_base());
                if ( classSymbol != NULL )
                   {
                     p_name    = nm;
@@ -6046,20 +6050,76 @@ SgFunctionSymbol*
 SgSymbolTable::find_function(const SgName &nm)
    {
      ROSE_ASSERT(p_table != NULL);
-     if(p_table)
+
+  // First look through only the local (non-aliased) symbols.
+
+     p_iterator = p_table->find(nm);
+
+     hash_iterator save_original_iterator = p_iterator;
+
+     while(p_iterator != p_table->end())
         {
-          p_iterator =p_table->find(nm);
-          while(p_iterator != p_table->end())
+          if ( p_iterator->second->variantT() == V_SgFunctionSymbol)
              {
-            // if(isSgFunctionSymbol((*p_iterator).second))
-               if ( p_iterator->second->variantT() == V_SgFunctionSymbol)
+               p_name    = nm;
+               p_no_name = false;
+               return (SgFunctionSymbol *) p_iterator->second;
+             }
+            else
+             {
+            // DQ (10/11/2008): Added support to find renamed functions (common in Fortran 90)
+            // F90 permits interface statements to effectively rename functions is scope, 
+            // SgRenameSymbol IR nodes are used to represent the renamed functions.  This
+            // renaming using an interface is different from the aliasing and combined renaming 
+            // that is possible within the "use" statement.
+               if ( p_iterator->second->variantT() == V_SgRenameSymbol)
                   {
+                 // printf ("Found a SgRenameSymbol: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+
                     p_name    = nm;
                     p_no_name = false;
-                    return (SgFunctionSymbol *) p_iterator->second;
+                    SgRenameSymbol* renameSymbol = isSgRenameSymbol(p_iterator->second);
+                    ROSE_ASSERT(renameSymbol != NULL);
+
+                 // DQ (10/11/2008): Moved SgRenameSymbol to be derived from SgFunctionSymbol.
+                 // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol->get_original_symbol());
+                    SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(renameSymbol);
+                    ROSE_ASSERT(functionSymbol != NULL);
+                    return functionSymbol;
                   }
-               p_iterator++;
              }
+
+          p_iterator++;
+        }
+
+  // DQ (9/30/2008): If we have not found a symbol from the current scope, search for symbols 
+  // injected from other scopes using the Fortran "use" statment (or in a future implementation 
+  // the C++ "using" directive or "using" declaration).
+     p_iterator = save_original_iterator;
+     while(p_iterator != p_table->end() && (*p_iterator).first==nm)
+        {
+       // printf ("Looking for aliased symbols: p_iterator->second->class_name() = %s p_iterator->second->get_name() = %s \n",p_iterator->second->class_name().c_str(),p_iterator->second->get_name().str());
+          SgAliasSymbol* aliasedSymbol = isSgAliasSymbol(p_iterator->second);
+          if (aliasedSymbol != NULL)
+             {
+            // DQ (10/9/2008): Resolve the last link in any chain of alias symbols
+            // SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(aliasedSymbol->get_alias());
+               SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(aliasedSymbol->get_base());
+            // printf ("Looking for functionSymbol = %p \n",functionSymbol);
+
+            // DQ (10/10/2008): The current problem is that this is NULL when the base of an aliased symbol is a SgRenameSymbol.
+            // ROSE_ASSERT(functionSymbol != NULL);
+
+               if ( functionSymbol != NULL )
+                  {
+                 // printf ("Found a valid functionSymbol = %p = %s \n",functionSymbol,functionSymbol->get_name().str());
+                    p_name    = nm;
+                    p_no_name = false;
+                    return functionSymbol;
+                  }
+             }
+
+          p_iterator++;
         }
 
      return NULL;
@@ -6071,7 +6131,7 @@ SgSymbolTable::find_template(const SgName &nm)
      ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
-          p_iterator =p_table->find(nm);
+          p_iterator = p_table->find(nm);
           while(p_iterator != p_table->end())
              {
             // if(isSgTemplateSymbol((*p_iterator).second))

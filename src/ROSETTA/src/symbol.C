@@ -54,7 +54,14 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( CommonSymbol,         "CommonSymbol",         "COMMON_SYMBOL" );
 #endif
 
-     NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol,"FunctionSymbol","FUNCTION_NAME", true);
+  // DQ (10/11/2008): Move SgRenameSymbol to be derived from SgFunctionSymbol
+  // DQ (10/10/2008): Added to support renamed representations of constructs that have non-SgAliasSymbols.
+  // This is used in fortran interfaces where functions are renamed to interface names, this was
+  // where we used to use the SgAliasSymbol, but we needed a different symbol so that chains of 
+  // SgAliasSymbol IR nodes could be properly evaluated.
+     NEW_TERMINAL_MACRO ( RenameSymbol,        "RenameSymbol",        "RENAME_SYMBOL");
+
+     NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
 
 #if ADD_ALIAS_SYMBOL
   // DQ (9/26/2008): Added support for references to symbols to support: "use" declaration in F90, "using" declaration in C++, and "namespace aliasing" in C++.
@@ -65,7 +72,7 @@ Grammar::setUpSymbols ()
           ClassSymbol      | TemplateSymbol | EnumSymbol     | EnumFieldSymbol    | 
           TypedefSymbol    | LabelSymbol    | DefaultSymbol  | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol   |InterfaceSymbol | CommonSymbol       | 
-          AliasSymbol,
+          AliasSymbol   /* | RenameSymbol*/,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -222,12 +229,21 @@ Grammar::setUpSymbols ()
 #if ADD_ALIAS_SYMBOL
      AliasSymbol.setFunctionPrototype   ( "HEADER_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
      AliasSymbol.setDataPrototype       ( "SgSymbol*", "alias", "= NULL",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // Note that the "use" statment can rename symbols referenced across scopes and this is different from the
+  // renaming of symbols (constructs that have symbols) within a single scope (use a SgRenameSymbol for that case).
      AliasSymbol.setDataPrototype       ( "bool", "isRenamed", "= false",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AliasSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
-					    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+     RenameSymbol.setFunctionPrototype   ( "HEADER_RENAME_SYMBOL", "../Grammar/Symbol.code" );
+     RenameSymbol.setDataPrototype       ( "SgSymbol*", "original_symbol", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     RenameSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -317,5 +333,7 @@ Grammar::setUpSymbols ()
 #if ADD_ALIAS_SYMBOL
      AliasSymbol.setFunctionSource          ( "SOURCE_ALIAS_SYMBOL", "../Grammar/Symbol.code" );
 #endif
+
+     RenameSymbol.setFunctionSource         ( "SOURCE_RENAME_SYMBOL", "../Grammar/Symbol.code" );
    }
 

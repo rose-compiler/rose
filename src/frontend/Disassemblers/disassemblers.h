@@ -61,6 +61,21 @@ namespace ArmDisassembler {
 
 }
 
+// DQ (10/11/2008): Initial start at support for PowerPC (for BGL, Cray XT series, etc.)
+namespace PowerPC_Disassembler {
+
+  struct Parameters {
+    uint32_t ip;
+    bool decodeUnconditionalInstructions;
+    Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true): ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions) {}
+  };
+
+  SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
+  SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
+  void disassembleFile(SgAsmFile* f);
+
+}
+
 namespace DisassemblerCommon {
 
   struct AsmFileWithData {
