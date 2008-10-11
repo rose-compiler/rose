@@ -44,6 +44,7 @@ CLEANFILES = *.out *.ti *.pdf test_runtime*
 check-local: runtimeCheck $(TESTCODES)
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES) -run -o test_bin
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES) -pdf -o test_bin
+if ROSE_USE_OPEN_FORTRAN_PARSER
 	./test_bin 
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES2) -run -o test_bin2
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES2) -pdf -o test_bin2
@@ -57,6 +58,7 @@ check-local: runtimeCheck $(TESTCODES)
 	./runtimeCheck -DCAN_NOT_COMPILE_WITH_ROSE=true $(TESTCODES3) -run -c -o test_bin3.o $(INCLUDES2)
 	$(LIBTOOL) --mode=link $(CXX) -o test_bin3 test_bin3.o $(LDADD)
 	./test_bin3 $(srcdir)/example.C -run
+endif
 #	@echo "*********************************************************************************************************************"
 #	@echo "*** ROSE/tests/roseTests/programAnalysisTests/defUseAnalysisTests: make check rule complete (terminated normally) ***"
 #	@echo "*********************************************************************************************************************"
