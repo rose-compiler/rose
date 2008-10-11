@@ -18,27 +18,29 @@ Grammar::setUpBinaryInstructions ()
 
 
      NEW_TERMINAL_MACRO ( AsmArmInstruction, "AsmArmInstruction", "AsmArmInstructionTag" );
-     // AsmArmInstruction.setFunctionPrototype           ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     AsmArmInstruction.setDataPrototype                    ("ArmInstructionKind","kind","= arm_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmArmInstruction.setDataPrototype                    ("ArmInstructionCondition","condition","= arm_cond_unknown",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     AsmArmInstruction.setDataPrototype                    ("int","positionOfConditionInMnemonic","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+  // AsmArmInstruction.setFunctionPrototype        ( "HEADER_BINARY_ARM_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     AsmArmInstruction.setDataPrototype            ("ArmInstructionKind","kind","= arm_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype            ("ArmInstructionCondition","condition","= arm_cond_unknown",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmArmInstruction.setDataPrototype            ("int","positionOfConditionInMnemonic","= -1",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      AsmArmInstruction.setPredeclarationString     ("HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
      NEW_TERMINAL_MACRO ( Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag" );
-     Asmx86Instruction.setFunctionPrototype           ( "HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-     Asmx86Instruction.setDataPrototype                    ("X86InstructionKind","kind","= x86_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","baseSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","operandSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("X86InstructionSize","addressSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("bool","lockPrefix","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("X86BranchPrediction","branchPrediction","= x86_branch_prediction_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-     Asmx86Instruction.setDataPrototype                    ("X86SegmentRegister","segmentOverride","= x86_segreg_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setFunctionPrototype        ( "HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+     Asmx86Instruction.setDataPrototype            ("X86InstructionKind","kind","= x86_unknown_instruction",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","baseSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","operandSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("X86InstructionSize","addressSize","= x86_insnsize_none",CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("bool","lockPrefix","= false",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("X86BranchPrediction","branchPrediction","= x86_branch_prediction_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     Asmx86Instruction.setDataPrototype            ("X86SegmentRegister","segmentOverride","= x86_segreg_none",NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
      Asmx86Instruction.setPredeclarationString     ("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
+     NEW_TERMINAL_MACRO ( AsmPowerpcInstruction, "AsmPowerpcInstruction", "AsmPowerpcInstructionTag" );
+     AsmPowerpcInstruction.setDataPrototype        ("PowerpcInstructionKind","kind","= powerpc_unknown_instruction", CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
+     AsmPowerpcInstruction.setPredeclarationString ("HEADER_BINARY_POWERPC_INSTRUCTION_PREDECLARATION" , "../Grammar/BinaryInstruction.code");
 
   // This is currently a AsmFunctionCall plus other unspecified uses of Asmx86Instruction, it may be refied later.
-     NEW_NONTERMINAL_MACRO ( AsmInstruction, Asmx86Instruction | AsmArmInstruction
-			     , "AsmInstruction", "AsmInstructionTag", true );
+     NEW_NONTERMINAL_MACRO ( AsmInstruction, Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction, "AsmInstruction", "AsmInstructionTag", true );
 
 
      NEW_TERMINAL_MACRO ( AsmDataStructureDeclaration , "AsmDataStructureDeclaration", "AsmDataStructureDeclarationTag" );
@@ -86,9 +88,10 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmCommonSubExpression         , "AsmCommonSubExpression",         "AsmCommonSubExpressionTag" );
      NEW_TERMINAL_MACRO ( Asmx86RegisterReferenceExpression , "Asmx86RegisterReferenceExpression", "Asmx86RegisterReferenceExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmArmRegisterReferenceExpression , "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag" );
-     NEW_NONTERMINAL_MACRO ( AsmRegisterReferenceExpression , Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression, "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
-
-  // NEW_TERMINAL_MACRO ( AsmArmRegisterReferenceExpression , "AsmArmRegisterReferenceExpression", "AsmArmRegisterReferenceExpressionTag" );
+     NEW_TERMINAL_MACRO ( AsmPowerpcRegisterReferenceExpression , "AsmPowerpcRegisterReferenceExpression", "AsmPowerpcRegisterReferenceExpressionTag" );
+     NEW_NONTERMINAL_MACRO ( AsmRegisterReferenceExpression , 
+                             Asmx86RegisterReferenceExpression | AsmArmRegisterReferenceExpression | AsmPowerpcRegisterReferenceExpression,
+                            "AsmRegisterReferenceExpression", "AsmRegisterReferenceExpressionTag" , false);
 
      NEW_TERMINAL_MACRO ( AsmByteValueExpression        , "AsmByteValueExpression",        "AsmByteValueExpressionTag" );
      NEW_TERMINAL_MACRO ( AsmWordValueExpression        , "AsmWordValueExpression",        "AsmWordValueExpressionTag" );
@@ -110,9 +113,7 @@ Grammar::setUpBinaryInstructions ()
 
      NEW_NONTERMINAL_MACRO ( AsmExpression, AsmValueExpression | AsmBinaryExpression | AsmUnaryExpression | 
                              AsmMemoryReferenceExpression | AsmRegisterReferenceExpression | AsmControlFlagsExpression | 
-                             AsmCommonSubExpression | AsmExprListExp
-			     //| AsmArmRegisterReferenceExpression
-			     , "AsmExpression", "AsmExpressionTag", false );
+                             AsmCommonSubExpression | AsmExprListExp, "AsmExpression", "AsmExpressionTag", false );
 
   // These are attached to the SgAsmNode object (the root for the IR used for binaries)
      NEW_TERMINAL_MACRO ( AsmTypeByte        , "AsmTypeByte",        "AsmTypeByteTag" );
@@ -1738,6 +1739,7 @@ Grammar::setUpBinaryInstructions ()
      AsmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      Asmx86RegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_X86_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmArmRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmPowerpcRegisterReferenceExpression.setFunctionPrototype ( "HEADER_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
      Asmx86RegisterReferenceExpression.setDataPrototype("X86RegisterClass","register_class","= x86_regclass_unknown",
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1747,6 +1749,8 @@ Grammar::setUpBinaryInstructions ()
                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
      AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
+                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPowerpcRegisterReferenceExpression.setDataPrototype("SgAsmPowerpcRegisterReferenceExpression::powerpc_register_enum","powerpc_register_code","= SgAsmPowerpcRegisterReferenceExpression::undefined_powerpc_register",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
   // added by tps on 3Apr07 and removed on 16Jan08
@@ -1909,6 +1913,7 @@ Grammar::setUpBinaryInstructions ()
      AsmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      Asmx86RegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_X86_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmArmRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_ARM_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
+     AsmPowerpcRegisterReferenceExpression.setFunctionSource ( "SOURCE_BINARY_POWERPC_REGISTER_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
      AsmMemoryReferenceExpression.setFunctionSource ( "SOURCE_BINARY_MEMORY_REFERENCE_EXPRESSION", "../Grammar/BinaryInstruction.code");
 
      AsmByteValueExpression.setFunctionSource( "SOURCE_BINARY_BYTE_VALUE_EXPRESSION", "../Grammar/BinaryInstruction.code");

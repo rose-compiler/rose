@@ -126,12 +126,14 @@
                              \textcolor{blue}{Draft User Manual} \\
                                \textcolor{green}{(version @VERSION@)} } }
 
-\author{ {\bf Daniel Quinlan, Markus Schordan, Rich Vuduc and Qing Yi} \\
+\author{ {\bf Daniel Quinlan, Chunhua Liao, Thomas Panas, Robb Matzke,} \\
+         {\bf Markus Schordan, Rich Vuduc, and Qing Yi} \\
          Lawrence Livermore National Laboratory \\ 
          Livermore, CA  94550 \\
          925-423-2668 (office)  925-422-6278 (fax) \\
-         dquinlan@llnl.gov, richie@cc.gatech.edu, \\
-         markus@complang.tuwien.ac.at, qingyi@cs.utsa.edu \\
+         dquinlan@llnl.gov, liao6@llnl.gov, panas2@llnl.gov, matzke1@llnl.gov, \\ 
+         markus@complang.tuwien.ac.at, richie@cc.gatech.edu, \\
+         qingyi@cs.utsa.edu \\
          Project Web Page: www.rosecompiler.org \\
          UCRL Number for ROSE User Manual: UCRL-SM-210137-DRAFT \\
          UCRL Number for ROSE Tutorial: UCRL-SM-210032-DRAFT \\

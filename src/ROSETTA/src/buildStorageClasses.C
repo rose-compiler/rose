@@ -740,6 +740,9 @@ Terminal::evaluateType(std::string& varTypeString)
                  ( varTypeString == "ArmInstructionKind" ) ||
                  ( varTypeString == "ArmInstructionCondition" ) ||
                  ( varTypeString == "SgAsmArmRegisterReferenceExpression::arm_register_enum" ) ||
+                 ( varTypeString == "PowerpcInstructionKind" ) ||
+              // ( varTypeString == "PowerpcInstructionCondition" ) ||
+                 ( varTypeString == "SgAsmPowerpcRegisterReferenceExpression::powerpc_register_enum" ) ||
               // Note that these enum names do not conform to the naming scheme used in ROSE.
                  ( varTypeString == "SgAsmGenericSection::SectionPurpose" ) ||
                  ( varTypeString == "SgAsmGenericFormat::InsSetArchitecture" ) ||

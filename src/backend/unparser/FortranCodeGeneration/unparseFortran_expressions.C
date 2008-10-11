@@ -138,6 +138,10 @@ FortranCodeGeneration_locatedNode::unparseLanguageSpecificExpression(SgExpressio
 
           case V_SgActualArgumentExpression:  unparseActualArgumentExpression(expr, info); break;
 
+       // DQ (10/10/2008): Added support for unser defined unary and binary operators.
+          case V_SgUserDefinedUnaryOp:        unparseUserDefinedUnaryOp (expr, info); break;
+          case V_SgUserDefinedBinaryOp:       unparseUserDefinedBinaryOp(expr, info); break;
+
 #if 0
        // DQ (8/15/2007): These are handled in the base class
        // constants
@@ -2105,5 +2109,22 @@ FortranCodeGeneration_locatedNode::unparseUnknownArrayOrFunctionReference(SgExpr
 
   // Output 1 new line so that new statements will appear on their own line after the SgProgramHeaderStatement declaration.
      unp->cur.insert_newline(1);
+   }
+
+void
+FortranCodeGeneration_locatedNode::unparseUserDefinedUnaryOp  (SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgUserDefinedUnaryOp* userDefinedUnaryOp = isSgUserDefinedUnaryOp(expr);
+
+     unparseUnaryOperator(expr, userDefinedUnaryOp->get_operator_name().str(), info);
+   }
+
+
+void
+FortranCodeGeneration_locatedNode::unparseUserDefinedBinaryOp (SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgUserDefinedBinaryOp* userDefinedBinaryOp = isSgUserDefinedBinaryOp(expr);
+
+     unparseBinaryOperator(expr, userDefinedBinaryOp->get_operator_name().str(), info);
    }
 

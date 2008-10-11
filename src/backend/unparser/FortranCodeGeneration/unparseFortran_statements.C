@@ -1678,7 +1678,44 @@ FortranCodeGeneration_locatedNode::unparseInterfaceStmt(SgStatement* stmt, SgUnp
 #else
      string nm = interfaceStatement->get_name().str();
      curprint("INTERFACE ");
-     curprint(nm);
+
+  // curprint(nm);
+     switch (interfaceStatement->get_generic_spec())
+        {
+          case SgInterfaceStatement::e_named_interface_type:
+             {
+               curprint(nm);
+               break;
+             }
+
+          case SgInterfaceStatement::e_operator_interface_type:
+             {
+               curprint("operator(");
+               curprint(nm);
+               curprint(")");
+               break;
+             }
+
+          case SgInterfaceStatement::e_assignment_interface_type:
+             {
+               curprint("assignment(");
+               curprint(nm);
+               curprint(")");
+               break;
+             }
+
+          case SgInterfaceStatement::e_unnamed_interface_type:
+             {
+            // Nothing to do for this case!
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: value of interfaceStatement->get_generic_spec() = %d \n",interfaceStatement->get_generic_spec());
+               ROSE_ASSERT(false);
+             }
+        }
 
      unp->cur.insert_newline(1); 
 

@@ -588,10 +588,33 @@ createType(int typeCode)
 
 
 SgExpression*
-createUnaryOperator ( SgExpression* exp, string name )
+createUnaryOperator ( SgExpression* exp, string name, bool is_user_defined_operator )
    {
      ROSE_ASSERT(exp != NULL);
      SgExpression* result = NULL;
+
+  // DQ (10/9/2008): Added support for user defined operators
+     if (is_user_defined_operator == true)
+        {
+       // Get the function symbol for the function defined by "name"
+          SgScopeStatement* currentScope = astScopeStack.front();
+
+       // The name in the symbol table uses the form:
+          name = "operator(" + name + ")";
+
+          printf ("name = %s \n",name.c_str());
+          printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+
+          currentScope->print_symboltable ("In createBinaryOperator()");
+
+          SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
+          ROSE_ASSERT(functionSymbol != NULL);
+
+          result = new SgUserDefinedUnaryOp(exp,NULL,name,functionSymbol);
+
+          ROSE_ASSERT(result != NULL);
+          return result;
+        }
 
      int stringLength = name.length();
      if (stringLength == 1)
@@ -658,11 +681,35 @@ createUnaryOperator ( SgExpression* exp, string name )
    }
 
 SgExpression*
-createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name )
+createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name, bool is_user_defined_operator )
    {
      ROSE_ASSERT(lhs != NULL);
      ROSE_ASSERT(rhs != NULL);
      SgExpression* result = NULL;
+
+  // DQ (10/9/2008): Added support for user defined operators
+     if (is_user_defined_operator == true)
+        {
+       // Get the function symbol for the function defined by "name"
+          SgScopeStatement* currentScope = astScopeStack.front();
+#if 0
+       // We want to use the ".xxx." form in the symbol table for names instead of the "operator(.xxx.)".
+       // The name in the symbol table uses the form:
+          name = "operator(" + name + ")";
+#endif
+          printf ("name = %s \n",name.c_str());
+          printf ("currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
+
+          currentScope->print_symboltable ("In createBinaryOperator()");
+
+          SgFunctionSymbol* functionSymbol = trace_back_through_parent_scopes_lookup_function_symbol(name,currentScope);
+          ROSE_ASSERT(functionSymbol != NULL);
+
+          result = new SgUserDefinedBinaryOp(lhs,rhs,NULL,name,functionSymbol);
+
+          ROSE_ASSERT(result != NULL);
+          return result;
+        }
 
      int stringLength = name.length();
      if (stringLength == 1)
@@ -839,7 +886,6 @@ createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, string name )
                  // ROSE_ASSERT(false);
                   }
              }
-
         }
 
      ROSE_ASSERT(result != NULL);

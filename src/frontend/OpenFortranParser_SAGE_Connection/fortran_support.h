@@ -162,8 +162,8 @@ SgScopeStatement* getTopOfScopeStack();
 // bool matchAgainstImplicitFunctionList( std::string s );
 bool matchAgainstIntrinsicFunctionList( std::string s );
 
-SgExpression* createUnaryOperator  ( SgExpression* exp, std::string name );
-SgExpression* createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, std::string name );
+SgExpression* createUnaryOperator  ( SgExpression* exp, std::string name, bool is_user_defined_operator );
+SgExpression* createBinaryOperator ( SgExpression* lhs, SgExpression* rhs, std::string name, bool is_user_defined_operator );
 
 void build_implicit_program_statement_if_required();
 
