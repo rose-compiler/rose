@@ -78,7 +78,7 @@ HEADER_RENAME_SYMBOL_START
 
       //! For a chain of aliased symbols the last link may be a SgRenameSymbol, this 
       //! function returns the declaration in the last (non-aliased and not renamed) symbol.
-          SgSymbol* get_base() const;
+      //  SgSymbol* get_base() const;
 
 HEADER_RENAME_SYMBOL_END
 
