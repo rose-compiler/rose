@@ -1334,7 +1334,17 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      if ( CommandlineProcessing::isOption(argv,"-rose:","(aggressive)",true) == true )
         {
           printf ("option -rose:aggressive found (not handled internally) \n");
+
+       // DQ (10/12/2008): This was previously commented out, I think it need 
+       // to be available even if exactly what it means may still be in flux.
        // set_aggressive(true);
+          SgBinaryFile* binaryFile = isSgBinaryFile(this);
+          if (binaryFile != NULL)
+             {
+               binaryFile->set_aggressive(true);
+             }
+
+       // DQ (10/12/2008): I am less clear if we want to have more than one mechanism in place!
        // Disassembler::aggressive_mode = true;
         }
 
@@ -3787,7 +3797,7 @@ SgFile::callFrontEnd()
 
      if (get_binary_only() == true)
         {
-       // This is now done above so that we can know the machine specific details
+       // What used to be done here is now done above so that we can know the machine specific details
        // of the executable as early as possible before disassembly.
         }
        else

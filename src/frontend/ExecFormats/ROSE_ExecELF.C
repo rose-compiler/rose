@@ -212,6 +212,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
       case 8:
         set_isa(ISA_MIPS_Family);
         break;
+      case 20:
+     // Note that PowerPC has: p_e_machine = 20 = 0x14, using both gcc on BGL and xlc on BGL.
+     // However, these don't seem like correct values for PowerPC.
+        set_isa(ISA_PowerPC);
+        break;
       case 40:
         set_isa(ISA_ARM_Family);
         break;
@@ -220,6 +225,11 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
+
+     // DQ (10/12/2008): Need more information to address PowerPC support.
+        printf ("Warning: p_e_machine = %zu = 0x%x \n",p_e_machine,p_e_machine);
+
+
         set_isa(ISA_OTHER);
         break;
     }
