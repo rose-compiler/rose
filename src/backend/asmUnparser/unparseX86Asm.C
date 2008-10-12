@@ -10,51 +10,6 @@
 
 using namespace std;
 
-static string getNameForPartialRegister(const string& fullRegName, X86PositionInRegister pos) {
-  ROSE_ASSERT (fullRegName.size() >= 2 && fullRegName[0] == 'r');
-  enum RegisterClass {numbered, sidibpspip, axbxcxdx};
-  RegisterClass regClass;
-  if (isdigit(fullRegName[1])) {
-    regClass = numbered;
-  } else if (fullRegName[fullRegName.size() - 1] != 'x') { // Includes rflags
-    regClass = sidibpspip;
-  } else {
-    regClass = axbxcxdx;
-  }
-  switch (pos) {
-    case x86_regpos_low_byte: {
-      switch (regClass) {
-        case numbered: return fullRegName + "b";
-        case sidibpspip: ROSE_ASSERT (fullRegName != "rip"); return fullRegName.substr(1, 2) + "l";
-        case axbxcxdx: return fullRegName.substr(1, 1) + "l";
-      }
-    }
-    case x86_regpos_high_byte: {
-      ROSE_ASSERT (regClass == axbxcxdx);
-      return fullRegName.substr(1, 1) + "h";
-    }
-    case x86_regpos_word: {
-      switch (regClass) {
-        case numbered: return fullRegName + "w";
-        case sidibpspip: case axbxcxdx: return fullRegName.substr(1, 2);
-      }
-    }
-    case x86_regpos_dword: {
-      switch (regClass) {
-        case numbered: return fullRegName + "d";
-        case sidibpspip: case axbxcxdx: return "e" + fullRegName.substr(1, 2);
-      }
-    }
-    case x86_regpos_qword:
-    case x86_regpos_unknown:
-    case x86_regpos_all: {
-      return fullRegName;
-    }
-    default: ROSE_ASSERT (!"Bad position in register");
-  }
-}
-
-
 /****************************************************
  * resolve expression
  ****************************************************/
@@ -64,9 +19,22 @@ string unparseX86Register(
          X86PositionInRegister pos) {
   switch (cl) {
     case x86_regclass_gpr: {
-      static const char* regnames[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
+      static const char* regnames8l[16] = {"al", "cl", "dl", "bl", "spl", "bpl", "sil", "dil", "r8b", "r9b", "r10b", "r11b", "r12b", "r13b", "r14b", "r15b"};
+      static const char* regnames8h[16] = {"ah", "ch", "dh", "bh", "", "", "", "", "", "", "", "", "", "", "", ""};
+      static const char* regnames16[16] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di", "r8w", "r9w", "r10w", "r11w", "r12w", "r13w", "r14w", "r15w"};
+      static const char* regnames32[16] = {"eax", "ecx", "edx", "ebx", "esp", "ebp", "esi", "edi", "r8d", "r9d", "r10d", "r11d", "r12d", "r13d", "r14d", "r15d"};
+      static const char* regnames64[16] = {"rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi", "r8", "r9", "r10", "r11", "r12", "r13", "r14", "r15"};
       ROSE_ASSERT (reg >= 0 && reg <= 15);
-      return getNameForPartialRegister(regnames[reg], pos);
+      switch (pos) {
+        case x86_regpos_low_byte: return regnames8l[reg];
+        case x86_regpos_high_byte: ROSE_ASSERT (reg <= 3); return regnames8h[reg];
+        case x86_regpos_word: return regnames16[reg];
+        case x86_regpos_dword: return regnames32[reg];
+        case x86_regpos_qword: return regnames64[reg];
+        case x86_regpos_unknown: return regnames64[reg];
+        case x86_regpos_all: return regnames64[reg];
+        default: ROSE_ASSERT (!"Bad position in register");
+      }
     }
     case x86_regclass_segment: {
       ROSE_ASSERT (reg >= 0 && reg <= 5);
@@ -80,13 +48,20 @@ string unparseX86Register(
       return "st(" + StringUtility::numberToString(reg) + ")";
     }
     case x86_regclass_ip: {
-      return getNameForPartialRegister("rip", pos);
+      switch (pos) {
+        case x86_regpos_word: return "ip";
+        case x86_regpos_dword: return "eip";
+        case x86_regpos_qword: return "rip";
+        case x86_regpos_unknown: return "rip";
+        case x86_regpos_all: return "rip";
+        default: ROSE_ASSERT (!"Bad position in register");
+      }
     } 
     case x86_regclass_mm: {
-      return "mm(" + StringUtility::numberToString(reg) + ")";
+      return "mm" + StringUtility::numberToString(reg);
     }
     case x86_regclass_xmm: {
-      return "xmm(" + StringUtility::numberToString(reg) + ")";
+      return "xmm" + StringUtility::numberToString(reg);
     }
     case x86_regclass_cr: {
       return "cr" + StringUtility::numberToString(reg);
@@ -95,13 +70,20 @@ string unparseX86Register(
       return "dr" + StringUtility::numberToString(reg);
     }
     case x86_regclass_flags: {
-      return getNameForPartialRegister("rflags", pos);
+      switch (pos) {
+        case x86_regpos_word: return "flags";
+        case x86_regpos_dword: return "eflags";
+        case x86_regpos_qword: return "rflags";
+        case x86_regpos_unknown: return "rflags";
+        case x86_regpos_all: return "rflags";
+        default: ROSE_ASSERT (!"Bad position in register");
+      }
     }
     case x86_regclass_unknown: {
       return "unknown";
     }
     default:
-      std::cerr << " Undefined Register - class=" << cl << " number=" << reg << std::endl;
+      std::cerr << " Undefined Register - class=" << regclassToString(cl) << " number=" << reg << std::endl;
       abort();
       break;
   }
