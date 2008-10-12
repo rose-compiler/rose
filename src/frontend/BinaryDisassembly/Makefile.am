@@ -59,7 +59,6 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
    x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
-   freebsd_elf_combined.h \
    RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
@@ -70,7 +69,6 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
    x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
-   freebsd_elf_combined.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseObj.h
 endif

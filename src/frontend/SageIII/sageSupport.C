@@ -4881,7 +4881,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
-          printf ("Now call the backend (vendor's) compiler for file = %s \n",get_unparse_output_filename().c_str());
+          printf ("Now call the backend (vendor's) compiler compilerNameOrig = %s for file = %s \n",compilerNameOrig.c_str(),get_unparse_output_filename().c_str());
 
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerNameString = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
@@ -4907,12 +4907,8 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
                printf("End of command line for backend compiler\n");
              }
 
-#if USE_GFORTRAN_IN_ROSE
-       // Call the backend compiler
+       // Call the backend compiler. For Fortran inputs, if ROSE is configured with Java this can cause the backend fortran compiler to be called.
           returnValueForCompiler = systemFromVector (compilerNameString);
-#else
-          printf ("Skipping call to backend compiler (backend compiler (gfortran) is unavailable). \n");
-#endif
         }
        else
         {
