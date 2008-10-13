@@ -66,15 +66,15 @@ find . -name Makefile.in~ | xargs rm -rf
 find . -name autom4te.cache | xargs rm -rf
 
 # remove configure and Makefile.in
-rm -rf ${ROSE_DIST_DIR}/configure
-rm -rf ${ROSE_DIST_DIR}/aclocal.m4
-rm -rf ${ROSE_DIST_DIR}/rose_config.h.in
-rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
-rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
+rm  ${ROSE_DIST_DIR}/configure
+rm  ${ROSE_DIST_DIR}/aclocal.m4
+rm  ${ROSE_DIST_DIR}/rose_config.h.in
+rm  ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
+rm  ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
 find . -name Makefile.in | xargs rm -rf
-rm -rf ${ROSE_DIST_DIR}/ompparser.cc
-rm -rf ${ROSE_DIST_DIR}/ompparser.h
-rm -rf ${ROSE_DIST_DIR}/omplexer.cc
+rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.cc
+rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.h
+rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/omplexer.cc
 
 # restore a few third party Makefile.in which cannot yet been automatically built
 #cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
