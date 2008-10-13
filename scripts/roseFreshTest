@@ -69,7 +69,7 @@ svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^
 
 (
 if [ $TIMESTAMP ]; then
-  echo "Subject: Starting ROSE test $TIMESTAMP on `hostname`" > mailtext1
+  echo "Subject: ROSE test $TIMESTAMP on `hostname` 1. start" > mailtext1
 else
   echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
 fi  
@@ -194,7 +194,7 @@ fi
  mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
   if [ $TIMESTAMP ]; then
-    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (pass)" > $mailtext
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
   else
     echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
   fi
@@ -273,7 +273,7 @@ if [ $buildstatus == 0 ]; then
   fi
 else
   if [ $TIMESTAMP ]; then
-    echo "Subject: ROSE test $TIMESTAMP on `hostname` results (fail)" > $mailtext
+    echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (fail)" > $mailtext
   else
     echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
   fi  
