@@ -6,6 +6,8 @@
 using namespace SageBuilder;
 using namespace SageInterface;
 
+namespace SeedBugsArrayIndexing {
+
 class InheritedAttribute
    {
      public:
@@ -80,6 +82,7 @@ BugSeeding::evaluateInheritedAttribute (
 
      return inheritedAttribute;
    }
+}
 
 int
 main (int argc, char *argv[])
@@ -87,8 +90,8 @@ main (int argc, char *argv[])
      SgProject *project = frontend (argc, argv);
      ROSE_ASSERT (project != NULL);
 
-     BugSeeding treeTraversal;
-     InheritedAttribute inheritedAttribute;
+     SeedBugsArrayIndexing::BugSeeding treeTraversal;
+     SeedBugsArrayIndexing::InheritedAttribute inheritedAttribute;
 
      treeTraversal.traverseInputFiles (project,inheritedAttribute);
 
