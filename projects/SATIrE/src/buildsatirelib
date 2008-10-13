@@ -6,6 +6,7 @@
 	ar -x ../analyzer/commandlineinterface/libCommandLineInterface.a
 	ar -x ../analyzer/astaccess/libAstAccess.a
 	ar -x ../analyzer/astnumbering/libAstNumbering.a
+    ar -x ../analyzer/support/libAnalysisSupport.a
 	cd ..
 	ar -csr libsatire.a tmp/*
 	rm -rf tmp

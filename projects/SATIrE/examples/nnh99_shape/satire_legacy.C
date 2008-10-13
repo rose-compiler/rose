@@ -79,11 +79,12 @@ DFI_STORE perform_pag_analysis(ANALYSIS)(SgProject *root,AnalyzerOptions* opt)
     if (verbose) std::cout << "done" << std::endl;
 
     if (verbose) std::cout << "generating cfg ... " << std::flush;
-    CFGTraversal t(s, opt);
+    CFGTraversal t(s);
     if (!opt->numberExpressions()) {
       t.numberExpressions(false);
     }
     t.traverse(root, preorder);
+    t.getCFG()->analyzerOptions = opt;
     delete nestedTimer;
     if (verbose) std::cout << "done" << std::endl;
 

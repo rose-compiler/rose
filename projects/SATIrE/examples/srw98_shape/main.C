@@ -435,4 +435,6 @@ void my_o_Node_print_fp(FILE * fp, o_Node node) {
 	fprintf(fp,"}");
 }
 
+#include "satire_legacy.C"
+
 // vim: ts=4 sts=2:

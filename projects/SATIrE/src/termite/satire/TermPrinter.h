@@ -18,7 +18,9 @@
 #include "PrologList.h"
 #ifdef PAG_VERSION
 #  include <config.h>
-   template<typename DFI_STORE_TYPE> class PagDfiTextPrinter;
+// GB (2008-10-03): The declaration (and definition) of PagDfiTextPrinter is
+// now provided in a special header.
+#  include <PagDfiTextPrinter.h>
 #endif
 
 /* See main.C-template and toProlog.C for examples how to use this */

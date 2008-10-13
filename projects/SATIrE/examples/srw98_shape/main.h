@@ -2,6 +2,12 @@
  * use this file for additional declarations
  * necessary for your analysis. */
 
+#include <satire.h>
+#include "iterate.h"
+
+#define ANALYSIS srw98_shape
+#include "satire_legacy.h"
+
 extern "C" void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx);
 extern "C" void my_o_Node_print_fp(FILE * fp, o_Node node);
 extern "C" int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg);

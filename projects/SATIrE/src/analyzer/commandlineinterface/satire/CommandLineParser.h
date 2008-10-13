@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CommandLineParser.h,v 1.6 2008-08-23 13:46:52 gergo Exp $
+// $Id: CommandLineParser.h,v 1.7 2008-10-13 13:50:27 gergo Exp $
 
 #ifndef COMMANDLINEPARSER_H
 #define COMMANDLINEPARSER_H
@@ -22,7 +22,6 @@ protected:
   bool optionMatch(const char* s1, const char* s2);
   bool optionMatchPrefix(const char* s, const char* prefix);
   void exitError(std::string message = "");
-private:
   int prefixLength;
 };
 

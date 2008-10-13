@@ -122,6 +122,7 @@ src/analyzer/astnumbering/Makefile
 src/analyzer/commandlineinterface/Makefile
 src/analyzer/icfgbuilder/Makefile
 src/analyzer/skeletons/Makefile
+src/analyzer/support/Makefile
 src/analyzer/Makefile
 src/grato/Makefile
 src/pig/Makefile

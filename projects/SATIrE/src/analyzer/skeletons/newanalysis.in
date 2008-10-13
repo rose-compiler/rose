@@ -61,67 +61,111 @@ cp $SATIRE_DATA/main-support.h-template $ANALYSIS_DIR/main-support.h
 cp $SATIRE_DATA/main-support.C-template $ANALYSIS_DIR/main-support.C
 echo
 
-# generate runOtherAnalyses function
+# generate dependency declarations for other analyses
 for analysis in $OTHERANALYSES
 do
-    echo "extern \"C\" void *${analysis}_doit(void *);" >> $ANALYSIS_DIR/main-support.C
-    echo "extern \"C\" void ${analysis}_persistent(void);" >> $ANALYSIS_DIR/main-support.C
+    echo "#include \"${analysis}_implementation.h\"" >> $ANALYSIS_DIR/main-support.C
 done
 if [ "x$OTHERANALYSES" != x ]
 then
   # add a blank line for prettiness
     echo "" >> $ANALYSIS_DIR/main-support.C
 fi
-echo "void runOtherAnalyses(void *cfg)" >> $ANALYSIS_DIR/main-support.C
-echo "{" >> $ANALYSIS_DIR/main-support.C
-if [ "x$OTHERANALYSES" != x ]
-then
-    echo "    TimingPerformance others(\"Other data-flow analyses:\");" >> $ANALYSIS_DIR/main-support.C
-    echo "    TimingPerformance *timer;" >> $ANALYSIS_DIR/main-support.C
-fi
+cat >> $ANALYSIS_DIR/main-support.C <<mainsupport_C_end
+#include <satire.h>
+
+void addDependencies(SATIrE::Analysis *analysis)
+{
+mainsupport_C_end
 for analysis in $OTHERANALYSES
 do
-    echo "" >> $ANALYSIS_DIR/main-support.C
-    echo "    timer = new TimingPerformance(\"Data-flow analysis $analysis:\");" >> $ANALYSIS_DIR/main-support.C
-    echo "    ${analysis}_doit(cfg);" >> $ANALYSIS_DIR/main-support.C
-    echo "    ${analysis}_persistent();" >> $ANALYSIS_DIR/main-support.C
-    echo "    delete timer;" >> $ANALYSIS_DIR/main-support.C
+    echo "analysis->addDependency(${analysis});" >> $ANALYSIS_DIR/main-support.C
 done
 echo "}" >> $ANALYSIS_DIR/main-support.C
 
+# update or create main and implementation files
+function create_implementation_h
+{
+    cat >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h <<analysisimplementation_h_end
+#ifndef H_SATIRE_DATAFLOW_ANALYSIS_IMPLEMENTATION_${ANALYSIS_NAME}
+#define H_SATIRE_DATAFLOW_ANALYSIS_IMPLEMENTATION_${ANALYSIS_NAME}
+#define ANALYSIS ${ANALYSIS_NAME}
+analysisimplementation_h_end
+    cat $SATIRE_DATA/satire_dataflow_analysis_implementation.h-template >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h
+}
+
+function create_implementation_C
+{
+    cat >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C <<analysisimplementation_C_end
+#include "${ANALYSIS_NAME}_implementation.h"
+#define ANALYSIS ${ANALYSIS_NAME}
+
+analysisimplementation_C_end
+    cat $SATIRE_DATA/satire_dataflow_analysis_implementation.C-template >> $ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C
+}
+
+function create_main_C
+{
+    echo "#define MAIN_ANALYSIS ${ANALYSIS_NAME}" >> $ANALYSIS_DIR/main.C
+    cat $SATIRE_DATA/main.C-template >> $ANALYSIS_DIR/main.C
+}
+
+function create_main_h
+{
+    echo "#include \"${ANALYSIS_NAME}_implementation.h\"" >> $ANALYSIS_DIR/main.h
+    cat $SATIRE_DATA/main.h-template >> $ANALYSIS_DIR/main.h
+}
+
+function create_runtests
+{
+    cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
+    chmod u+x $ANALYSIS_DIR/runtests
+}
+
 if [ x$UPDATE = xT ]
 then
+  # check for existence of each file, do not change existing files
+    if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h" ]
+    then
+        echo "$ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.h exists and remains in $ANALYSIS_DIR."
+    else
+        create_implementation_h
+    fi
+
+    if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C" ]
+    then
+        echo "$ANALYSIS_DIR/${ANALYSIS_NAME}_implementation.C exists and remains in $ANALYSIS_DIR."
+    else
+        create_implementation_C
+    fi
+
     if [ -e "$ANALYSIS_DIR/main.C" ]
     then
         echo "$ANALYSIS_DIR/main.C exists and remains in $ANALYSIS_DIR."
     else
-        cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
+        create_main_C
     fi
+
     if [ -e "$ANALYSIS_DIR/main.h" ]
     then
         echo "$ANALYSIS_DIR/main.h exists and remains in $ANALYSIS_DIR."
     else
-        cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
+        create_main_h
     fi
+
     if [ -e "$ANALYSIS_DIR/runtests" ]
     then
         echo "$ANALYSIS_DIR/runtests exists and remains in $ANALYSIS_DIR."
     else
-        cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
-        chmod u+x $ANALYSIS_DIR/runtests
+        create_runtests
     fi
 else
-    cp $SATIRE_DATA/main.C-template $ANALYSIS_DIR/main.C
-    cp $SATIRE_DATA/main.h-template $ANALYSIS_DIR/main.h
-    cp $SATIRE_DATA/runtests-template $ANALYSIS_DIR/runtests
-    chmod u+x $ANALYSIS_DIR/runtests
-fi
-
-if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
-then
-    echo "$ANALYSIS_DIR/$ANALYSIS_NAME.set exists and remains in $ANALYSIS_DIR."
-else
-    echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.set before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
+  # unconditional creation
+    create_implementation_h
+    create_implementation_C
+    create_main_C
+    create_main_h
+    create_runtests
 fi
 
 if [ -e "$ANALYSIS_DIR/$ANALYSIS_NAME.optla" ]
@@ -153,5 +197,19 @@ then
 else
     echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.optla before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
 fi
+
+if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
+then
+    echo "$ANALYSIS_DIR/$ANALYSIS_NAME.set exists and remains in $ANALYSIS_DIR."
+else
+    egrep -q "ENDDOMAIN" $ANALYSIS_DIR/$ANALYSIS_NAME.optla
+    if [ $? -eq 0 ]
+    then
+        echo "$ANALYSIS_DIR/$ANALYSIS_NAME.optla contains type definitions, creating empty $ANALYSIS_DIR/$ANALYSIS_NAME.set file."
+    else
+        echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.set, or add type definitions to $ANALYSIS_DIR/$ANALYSIS_NAME.optla, before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
+    fi
+fi
+
 echo
 echo "All done, have fun."

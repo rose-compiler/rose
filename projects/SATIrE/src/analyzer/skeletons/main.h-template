@@ -1,4 +1,13 @@
 /* -*- C++ -*-
+ * vim: syntax=cpp
  * use this file for additional declarations
  * necessary for your analysis. */
 
+#ifndef H_MAIN
+#define H_MAIN
+
+#include <satire.h>
+
+void addDependencies(SATIrE::Analysis *analysis);
+
+#endif

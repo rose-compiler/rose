@@ -11,7 +11,7 @@ libsatire_a_SOURCES =
 
 lib_LIBRARIES = libsatire.a
 
-libsatire.a: analyzer/icfgbuilder/libIcfgBuilder.a  analyzer/commandlineinterface/libCommandLineInterface.a  analyzer/astaccess/libAstAccess.a  analyzer/astnumbering/libAstNumbering.a
+libsatire.a: analyzer/icfgbuilder/libIcfgBuilder.a  analyzer/commandlineinterface/libCommandLineInterface.a  analyzer/astaccess/libAstAccess.a  analyzer/astnumbering/libAstNumbering.a  analyzer/support/libAnalysisSupport.a
 	sh $(top_srcdir)/src/buildsatirelib
 
 EXTRA_DIST = buildsatirelib

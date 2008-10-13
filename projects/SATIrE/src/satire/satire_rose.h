@@ -24,6 +24,11 @@
 
 // Include ROSE's definitions.
 #include <rose.h>
+// A header included by <rose.h> #defines TRUE and FALSE macros; these are
+// unnecessary, and they also conflict with macros defined by PAG. Undefine
+// them here to avoid redefinition warnings.
+#undef TRUE
+#undef FALSE
 
 // GB (2008-08-21): We will undefine ROSE's definitions below. However,
 // rather than throwing them away, let's keep copies around, because they

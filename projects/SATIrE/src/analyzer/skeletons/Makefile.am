@@ -1,7 +1,11 @@
-EXTRA_DIST = main.C-template  main.h-template  main-support.C-template  main-support.h-template  \
-             Makefile-template.in newanalysis.in undonewanalysis runtests-template newcombinedanalysis.in
+EXTRA_DIST = main.C-template main.h-template \
+			 main-support.C-template main-support.h-template \
+			 satire_dataflow_analysis_implementation.h-template \
+			 satire_dataflow_analysis_implementation.C-template \
+             Makefile-template.in newanalysis.in newcombinedanalysis.in \
+			 undonewanalysis runtests-template
 
-dist_pkgdata_DATA = main.C-template  main.h-template  main-support.C-template  main-support.h-template  Makefile-template runtests-template prefixed_support_funcs.h-template
+dist_pkgdata_DATA = main.C-template main.h-template main-support.C-template main-support.h-template Makefile-template runtests-template prefixed_support_funcs.h-template satire_dataflow_analysis_implementation.h-template satire_dataflow_analysis_implementation.C-template
 
 bin_SCRIPTS= newanalysis  undonewanalysis newcombinedanalysis
 CLEANFILES = newanalysis Makefile-template newcombinedanalysis

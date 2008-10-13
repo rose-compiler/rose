@@ -1,3 +1,11 @@
+V0.8.5 ??? GB
+
+* Changes in PAG analyzer architecture
+  - still in progress!
+  - analyzers are encapsulated as C++ objects, and it will soon be possible
+    to mix and match/distribute analyzers as a library with a simple header
+    file
+
 V0.8.4 2008-09-26 GB,AP
 
 * Tested with:

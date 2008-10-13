@@ -37,6 +37,7 @@ EXTRA_DIST= \
 	nnh99_shape/main.C               nnh99_shape/main.h \
 	nnh99_shape/Makefile.custom \
 	nnh99_shape/GraphStats.h \
+	nnh99_shape/satire_legacy.h      nnh99_shape/satire_legacy.C \
 	nnh99_shape/tests/nnh_xsely.C \
 	nnh99_shape/tests/srw98_listreverse.C \
 	nnh99_shape/tests/nnh_xysel3.C \
@@ -52,6 +53,7 @@ EXTRA_DIST= \
 	srw98_shape/main.C                        srw98_shape/main.h \
 	srw98_shape/Makefile.custom \
 	srw98_shape/GraphStats.h \
+	srw98_shape/satire_legacy.h      srw98_shape/satire_legacy.C \
 	srw98_shape/tests/nnh_xsely.C \
 	srw98_shape/tests/srw98_listreverse.C \
 	srw98_shape/tests/nnh_xysel3.C \

@@ -2,6 +2,12 @@
  * use this file for additional declarations
  * necessary for your analysis. */
 
+#include <satire.h>
+#include "iterate.h"
+
+#define ANALYSIS nnh99_shape
+#include "satire_legacy.h"
+
 extern "C" void dfi_write_(FILE * fp, KFG g, char *name, char *attrib, o_dfi info,int id,int insnum,int ctx);
 extern "C" void my_o_Node_print_fp(FILE * fp, o_Node node);
 extern "C" int gdl_write_shapegraph_fp(FILE *fp, char *name, int n_graphs,  char *attrib, o_ShapeGraph sg);
@@ -87,7 +93,7 @@ public:
       } else if (optionMatch(argv[i], "--foldgraphs")) {
         scl->gdlFoldGraphsOn();
 	  } else if (optionMatchPrefix(argv[i],"--output-graph-statistics=")) {
-	    scl->setGraphStatisticsFile(strdup(argv[i]+26)); // FIXME prefixlength should be protected to remove constant 26
+	    scl->setGraphStatisticsFile(strdup(argv[i]+prefixLength));
       } else {
         return CommandLineParser::handleOption(cl,i,argc,argv);
       }
