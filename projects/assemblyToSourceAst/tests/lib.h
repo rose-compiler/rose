@@ -37,7 +37,7 @@ int main(int argc, char** argv);
 
 void _start() {
   int argc;
-  const char** argv;
+  char** argv;
   asm volatile ("mov 4(%%ebp), %0" : "=r" (argc));
   asm volatile ("lea 8(%%ebp), %0" : "=r" (argv));
   exit (main(argc, argv));

@@ -39,9 +39,10 @@ struct BtorTranslationPolicy {
   BTRegisterInfo newRegisterMap;
   BTRegisterInfo origRegisterMap;
   Comp isValidIp;
+  Comp notResetState;
   BtorProblem problem;
 
-  void makeRegMap(BTRegisterInfo& rm, const string& prefix) const {
+  void makeRegMap(BTRegisterInfo& rm, const string& prefix) {
     for (size_t i = 0; i < 8; ++i) {
       rm.gprs[i] = BtorComputation::var(32, prefix + "_gpr" + boost::lexical_cast<string>(i));
     }
@@ -50,7 +51,7 @@ struct BtorTranslationPolicy {
       rm.flags[i] = BtorComputation::var(1, prefix + "_flag" + boost::lexical_cast<string>(i));
     }
     for (size_t i = 0; i < numBmcErrors; ++i) {
-      rm.errorFlag[i] = BtorComputation::var(1, prefix + "_errorFlag" + boost::lexical_cast<string>(i));
+      rm.errorFlag[i] = false_();
     }
     rm.memory = BtorComputation::array(8, 32);
   }
@@ -71,16 +72,28 @@ struct BtorTranslationPolicy {
     for (size_t i = 0; i < 16; ++i) {
       addNext(origRegisterMap.flags[i], newRegisterMap.flags[i]);
     }
-    for (size_t i = 0; i < numBmcErrors; ++i) {
-      addNext(origRegisterMap.errorFlag[i], newRegisterMap.errorFlag[i]);
-      problem.computations.push_back(Comp(new BtorComputation(btor_op_root, origRegisterMap.errorFlag[i])));
-    }
     addAnext(origRegisterMap.memory, newRegisterMap.memory);
   }
 
-  BtorTranslationPolicy(): isValidIp(false_()), problem() {
+  void setInitialState() {
+    registerMap = origRegisterMap;
+    writeGPR(x86_gpr_ax, zero(32));
+    writeGPR(x86_gpr_cx, zero(32));
+    writeGPR(x86_gpr_dx, zero(32));
+    writeGPR(x86_gpr_bx, zero(32));
+    writeGPR(x86_gpr_sp, number<32>(0xBFFF0000U));
+    writeGPR(x86_gpr_bp, zero(32));
+    writeGPR(x86_gpr_si, zero(32));
+    writeGPR(x86_gpr_di, zero(32));
+    writeIP(number<32>(0x8048140));
+    writeBackReset();
+  }
+
+  BtorTranslationPolicy(): isValidIp(false_()), notResetState(BtorComputation::var(1, "notFirstStep")), problem() {
     makeRegMap(origRegisterMap, "in");
     makeRegMap(newRegisterMap, "bogus");
+    addNext(notResetState, true_());
+    setInitialState();
   }
 
   Comp readGPR(X86GeneralPurposeRegister r) {
@@ -336,21 +349,31 @@ struct BtorTranslationPolicy {
   void interrupt(uint8_t num) {} // FIXME
   Comp rdtsc() {return BtorComputation::var(64);}
 
-  void writeBack(uint64_t addr) {
-    Comp isThisIp = Comp(new BtorComputation(btor_op_eq, origRegisterMap.ip, number<32>(addr)));
+  void writeBackCond(Comp cond) {
     for (size_t i = 0; i < 8; ++i) {
-      newRegisterMap.gprs[i] = ite(isThisIp, registerMap.gprs[i], newRegisterMap.gprs[i]);
+      newRegisterMap.gprs[i] = ite(cond, registerMap.gprs[i], newRegisterMap.gprs[i]);
     }
-    newRegisterMap.ip = ite(isThisIp, registerMap.ip, newRegisterMap.ip);
+    newRegisterMap.ip = ite(cond, registerMap.ip, newRegisterMap.ip);
     for (size_t i = 0; i < 16; ++i) {
-      newRegisterMap.flags[i] = ite(isThisIp, registerMap.flags[i], newRegisterMap.flags[i]);
+      newRegisterMap.flags[i] = ite(cond, registerMap.flags[i], newRegisterMap.flags[i]);
     }
     for (size_t i = 0; i < numBmcErrors; ++i) {
       if (i == bmc_error_bogus_ip) continue; // Handled separately
-      newRegisterMap.errorFlag[i] = ite(isThisIp, registerMap.errorFlag[i], newRegisterMap.errorFlag[i]);
+      newRegisterMap.errorFlag[i] = ite(cond, registerMap.errorFlag[i], newRegisterMap.errorFlag[i]);
     }
+    newRegisterMap.memory = Comp(new BtorComputation(btor_op_acond, cond, registerMap.memory, newRegisterMap.memory));
+  }
+
+  void writeBack(uint64_t addr) {
+    Comp isThisIp = and_(Comp(new BtorComputation(btor_op_eq, origRegisterMap.ip, number<32>(addr))), notResetState);
     isValidIp = or_(isValidIp, isThisIp);
-    newRegisterMap.memory = Comp(new BtorComputation(btor_op_acond, isThisIp, registerMap.memory, newRegisterMap.memory));
+    writeBackCond(isThisIp);
+  }
+
+  void writeBackReset() {
+    Comp cond = invert(notResetState);
+    isValidIp = or_(isValidIp, cond);
+    writeBackCond(cond);
   }
 
   void startBlock(uint64_t addr) {
@@ -381,10 +404,11 @@ int main(int argc, char** argv) {
   }
   // Add "bogus IP" error
   policy.newRegisterMap.errorFlag[bmc_error_bogus_ip] =
-    policy.or_(
-      policy.origRegisterMap.errorFlag[bmc_error_bogus_ip],
-      policy.invert(policy.isValidIp));
+    policy.invert(policy.isValidIp);
   policy.addNexts();
+  for (size_t i = 0; i < numBmcErrors; ++i) {
+    policy.problem.computations.push_back(Comp(new BtorComputation(btor_op_root, policy.newRegisterMap.errorFlag[i])));
+  }
   string s = policy.problem.unparse();
   fprintf(f, "%s", s.c_str());
   fclose(f);
