@@ -123,6 +123,8 @@ void OmpAttribute::addVariable(omp_construct_enum targetConstruct, const std::st
 void OmpAttribute::addExpression(omp_construct_enum targetConstruct, const std::string& expString, SgExpression* sgexp/* =NULL */)
 {
   expressions[targetConstruct]=make_pair(expString,sgexp);
+  if (sgexp!=NULL)
+    sgexp->set_parent(pragma); // a little hack here, we not yet extend the SgPragmaDeclaration to have expression children.
 }
 
 std::pair<std::string, SgExpression*>
@@ -410,8 +412,13 @@ std::string OmpAttribute::toOpenMPString(omp_construct_enum omp_type)
        (omp_type == e_collapse)
       )
     {
-      // TODO Cheat here, since we don't parse expression yet
-       string expString= getExpression(omp_type).first;
+       string expString;
+      // We store real SgExpression* in .second now, 
+      // No need to save the original string format in .first 
+       if (getExpression(omp_type).first.size()>0) 
+         expString   = getExpression(omp_type).first;
+       else if (getExpression(omp_type).second!=NULL)
+         expString = getExpression(omp_type).second->unparseToString();
        result+=" (" + expString+ ")"; 
     } 
     // optional variable lists
@@ -440,8 +447,14 @@ std::string OmpAttribute::toOpenMPString(omp_construct_enum omp_type)
     else if (omp_type == e_schedule)
     {
       result +=" ("+ OmpSupport::toString(getScheduleKind());
-      // TODO Cheat here, since we don't parse expression yet
-      string expString= getExpression(omp_type).first;
+      string expString;
+      // We store real SgExpression* in .second now, 
+      // No need to save the original string format in .first
+      if (getExpression(omp_type).first.size()>0)
+        expString = getExpression(omp_type).first;
+      else  if (getExpression(omp_type).second !=  NULL)
+        expString =  getExpression(omp_type).second->unparseToString();
+
       if (expString.size()>0)
         result += "," + expString;
       result += ")";

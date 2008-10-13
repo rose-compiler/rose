@@ -12,6 +12,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	critical_orphaned.c \
 	dynamicChunk.c \
 	empty.c \
+	expressions.c \
 	falsesharing.c \
 	firstlastprivate.c \
 	flush.c \
@@ -32,6 +33,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	ordered2.c \
 	ordered.c \
 	orphaned-directives.c \
+	parallel.c \
 	parallelfor.c \
 	private.c \
 	privatej.c \

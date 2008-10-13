@@ -66,11 +66,26 @@
      AUTO = 292,
      LOGAND = 293,
      LOGOR = 294,
-     EXPRESSION = 295,
-     ID_EXPRESSION = 296,
-     IDENTIFIER = 297,
-     NEWLINE = 298,
-     LEXICALERROR = 299
+     LE_OP2 = 295,
+     GE_OP2 = 296,
+     EQ_OP2 = 297,
+     NE_OP2 = 298,
+     RIGHT_ASSIGN2 = 299,
+     LEFT_ASSIGN2 = 300,
+     ADD_ASSIGN2 = 301,
+     SUB_ASSIGN2 = 302,
+     MUL_ASSIGN2 = 303,
+     DIV_ASSIGN2 = 304,
+     MOD_ASSIGN2 = 305,
+     AND_ASSIGN2 = 306,
+     XOR_ASSIGN2 = 307,
+     OR_ASSIGN2 = 308,
+     NEWLINE = 309,
+     LEXICALERROR = 310,
+     IDENTIFIER = 311,
+     EXPRESSION = 312,
+     ID_EXPRESSION = 313,
+     ICONSTANT = 314
    };
 #endif
 #define OMP 258
@@ -110,17 +125,39 @@
 #define AUTO 292
 #define LOGAND 293
 #define LOGOR 294
-#define EXPRESSION 295
-#define ID_EXPRESSION 296
-#define IDENTIFIER 297
-#define NEWLINE 298
-#define LEXICALERROR 299
+#define LE_OP2 295
+#define GE_OP2 296
+#define EQ_OP2 297
+#define NE_OP2 298
+#define RIGHT_ASSIGN2 299
+#define LEFT_ASSIGN2 300
+#define ADD_ASSIGN2 301
+#define SUB_ASSIGN2 302
+#define MUL_ASSIGN2 303
+#define DIV_ASSIGN2 304
+#define MOD_ASSIGN2 305
+#define AND_ASSIGN2 306
+#define XOR_ASSIGN2 307
+#define OR_ASSIGN2 308
+#define NEWLINE 309
+#define LEXICALERROR 310
+#define IDENTIFIER 311
+#define EXPRESSION 312
+#define ID_EXPRESSION 313
+#define ICONSTANT 314
 
 
 
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-typedef int YYSTYPE;
+#line 65 "ompparser.yy"
+typedef union YYSTYPE {  int itype;
+          double ftype;
+          const char* stype;
+          void* ptype; /* For expressions */
+        } YYSTYPE;
+/* Line 1275 of yacc.c.  */
+#line 161 "ompparser.hh"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1

@@ -31,11 +31,12 @@ static std::string gExpressionString;
 
 blank		[ ]
 newline         [\n]
+digit           [0-9]
 
 id              [a-zA-Z_][a-zA-Z0-9_]*
 
 %%
-
+{digit}{digit}* { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
 omp             { return ( OMP); }
 parallel        { return ( PARALLEL); }
 task		{ return ( TASK ); }
@@ -71,6 +72,8 @@ default         { return ( DEFAULT ); }
 none            { return ( NONE ); }
 reduction       { return ( REDUCTION ); }
 copyin          { return ( COPYIN ); }
+
+"="             { return('='); }
 "("		{ return ('('); }
 ")"		{ return (')'); }
 ","		{ return (','); }
@@ -83,6 +86,25 @@ copyin          { return ( COPYIN ); }
 "|"		{ return ('|'); }
 "&&"		{ return (LOGAND); }
 "||"		{ return (LOGOR); }
+
+">>="            {return(RIGHT_ASSIGN2); }
+"<<="            {return(LEFT_ASSIGN2); }
+"+="             {return(ADD_ASSIGN2); }
+"-="             {return(SUB_ASSIGN2); }
+"*="             {return(MUL_ASSIGN2); }
+"/="             {return(DIV_ASSIGN2); }
+"%="             {return(MOD_ASSIGN2); }
+"&="             {return(AND_ASSIGN2); }
+"^="             {return(XOR_ASSIGN2); }
+"|="             {return(OR_ASSIGN2); }
+
+"<"		{ return ('<'); }
+">"		{ return ('>'); }
+"<="		{ return (LE_OP2);}
+">="		{ return (GE_OP2);}
+"=="		{ return (EQ_OP2);}
+"!="		{ return (NE_OP2);}
+
 {newline}       { return (NEWLINE); }
 
 <EXPR>.         { int c = yytext[0];
@@ -94,8 +116,7 @@ copyin          { return ( COPYIN ); }
 				--parenCount;
 			if (parenCount == 0) {
 				unput(')');
-				omp_lval =
-					(long)strdup(gExpressionString.c_str()); 
+				omp_lval.stype =strdup(gExpressionString.c_str()); 
 				gExpressionString = "";
 				BEGIN(INITIAL);
 				return EXPRESSION;
@@ -109,8 +130,9 @@ copyin          { return ( COPYIN ); }
 		}
 
 expr		{ return (EXPRESSION); }
-identifier      { return (IDENTIFIER); }
-{id}		{ omp_lval = (long)strdup(yytext); return (ID_EXPRESSION); }
+identifier      { return (IDENTIFIER); /*not in use for now*/ }
+{id}		{ omp_lval.stype = strdup(yytext); 
+                  return (ID_EXPRESSION); }
 
 {blank}*	;
 .		{ return (LEXICALERROR);}

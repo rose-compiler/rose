@@ -8,9 +8,9 @@
 %{
 #include <stdio.h>
 #include <assert.h>
-
+#include <iostream>
+#include "rose.h" // Sage Interface and Builders
 #include "OmpAttribute.h"
-
 using namespace OmpSupport;
 
 /* Parser - BISON */
@@ -58,15 +58,35 @@ static omp_construct_enum omptype = e_unknown;
 //Liao
 static SgNode* gNode;
 
+// The current expression node being generated 
+static SgExpression* current_exp = NULL;
 %}
 
+%union {  int itype;
+          double ftype;
+          const char* stype;
+          void* ptype; /* For expressions */
+        }
+
+/*Some operators have a suffix 2 to avoid name conficts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH 
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
 	TASK TASKWAIT UNTIED COLLAPSE AUTO
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR
-        EXPRESSION ID_EXPRESSION IDENTIFIER
-        NEWLINE LEXICALERROR
+        LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
+        SUB_ASSIGN2 MUL_ASSIGN2 DIV_ASSIGN2 MOD_ASSIGN2 AND_ASSIGN2 
+        XOR_ASSIGN2 OR_ASSIGN2
+        NEWLINE LEXICALERROR IDENTIFIER EXPRESSION ID_EXPRESSION
+
+%token <itype> ICONSTANT   
+%token <stype> EXPRESSION ID_EXPRESSION 
+
+/* nonterminals names, types for semantic values
+ */
+%type <ptype> expression assignment_expr equality_expr unary_expr 
+              relational_expr  
+%type <itype> schedule_kind
 
 %start openmp_directive
 
@@ -76,7 +96,6 @@ static SgNode* gNode;
  * to first call omp_parse_expr, because we parse up to the terminating
  * paren.
  */
-expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
 
 openmp_directive
 		: parallel_directive 
@@ -129,11 +148,13 @@ unique_parallel_clause
                         ompattribute->addClause(e_if);
                         omptype = e_if;
 		     } '(' expression ')'
+                         { addExpression("");}
 		| NUM_THREADS 
                   { 
                     ompattribute->addClause(e_num_threads);       
 		    omptype = e_num_threads;
 		   } '(' expression ')'
+                         { addExpression("");}
 		| COPYIN
 		  { ompattribute->addClause(e_copyin);
 		    omptype = e_copyin;
@@ -184,12 +205,14 @@ unique_for_clause
 		    ompattribute->setScheduleKind(static_cast<omp_construct_enum>($3));
 		    omptype = e_schedule;
 		  } expression ')'
+                         { addExpression("");}
 		| COLLAPSE 
 		  {
 		    ompattribute->addClause(e_collapse);
 		    omptype = e_collapse;
 		  }
 		  '(' expression ')'
+                         { addExpression("");}
 		;
 
 schedule_kind	: STATIC  { $$ = e_schedule_static; }
@@ -278,9 +301,10 @@ task_clause	: unique_task_clause
 		;
 
 unique_task_clause : IF 
-		  { ompattribute = buildOmpAttribute(e_if, gNode);
+		  { ompattribute->addClause(e_if);
 		    omptype = e_if; }
 		    '(' expression ')'
+                         { addExpression("");}
 		| UNTIED 
                   {
 		   ompattribute->addClause(e_untied);
@@ -456,6 +480,158 @@ reduction_operator
 		| LOGOR /* || */ { ompattribute->setReductionOperator(e_reduction_logor); }
 		;
 
+/* parsing real expressions here, Liao, 10/12/2008
+   */       
+/* expression: { omp_parse_expr(); } EXPRESSION { if (!addExpression((const char*)$2)) YYABORT; }
+*/
+expression: assignment_expr
+
+/* TODO conditional_expr */
+assignment_expr
+	: equality_expr 
+	| unary_expr '=' assignment_expr 
+	{
+          current_exp = SageBuilder::buildAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr RIGHT_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildRshiftAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr LEFT_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildLshiftAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr ADD_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildPlusAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr SUB_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildMinusAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr MUL_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildMultAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+
+	| unary_expr DIV_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildDivAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr MOD_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildModAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr AND_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildAndAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+
+	| unary_expr XOR_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildXorAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	| unary_expr OR_ASSIGN2 assignment_expr 
+	{
+          current_exp = SageBuilder::buildIorAssignOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+	;
+
+equality_expr
+        : relational_expr
+        | equality_expr EQ_OP2 relational_expr
+	{
+          current_exp = SageBuilder::buildEqualityOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+        | equality_expr NE_OP2 relational_expr
+	{
+          current_exp = SageBuilder::buildNotEqualOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+          $$ = current_exp;
+	}
+        ;
+              
+relational_expr
+		: unary_expr
+                | relational_expr '<' unary_expr 
+                  { 
+                    current_exp = SageBuilder::buildLessThanOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                  //  std::cout<<"debug: buildLessThanOp():\n"<<current_exp->unparseToString()<<std::endl;
+                  }
+                | relational_expr '>' unary_expr
+		{
+                    current_exp = SageBuilder::buildGreaterThanOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | relational_expr LE_OP2 unary_expr
+		{
+                    current_exp = SageBuilder::buildLessOrEqualOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+                | relational_expr GE_OP2 unary_expr
+		{
+                    current_exp = SageBuilder::buildGreaterOrEqualOp(
+                      (SgExpression*)($1),
+                      (SgExpression*)($3)); 
+                    $$ = current_exp; 
+                }
+		;
+
+/* simplified unary expression, simplest integer constant here */
+unary_expr
+		: ICONSTANT 
+                  {current_exp = SageBuilder::buildIntVal($1); 
+                    $$ = current_exp; }
+		| ID_EXPRESSION 
+                  { current_exp = SageBuilder::buildVarRefExp(
+                      (const char*)($1),SageInterface::getScope(gNode)); 
+                    $$ = current_exp; }
+		;
+/* ----------------------end for parsing expressions ------------------*/
 /*  in C
     variable-list: identifier
                  | variable-list , identifier 
@@ -504,10 +680,11 @@ static bool addVar(const char* var) {
 }
 
 // The ROSE's string-based AST construction is not stable,
-// pass expression as string for now, Liao
+// pass real expressions as SgExpression, Liao
 static bool addExpression(const char* expr) {
-  //TODO parse the expression into Sage AST subtree
-        ompattribute->addExpression(omptype,std::string(expr),NULL);
+        //ompattribute->addExpression(omptype,std::string(expr),NULL);
+//  std::cout<<"debug: current expression is:"<<current_exp->unparseToString()<<std::endl;
+      ompattribute->addExpression(omptype,std::string(expr),current_exp);
 	return true;
 }
 
