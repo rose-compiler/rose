@@ -27,6 +27,7 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      x86InstructionEnum.h x86InstructionProperties.h \
      x86InstructionProperties.C x86InstructionEnumPrinter.C \
      armInstructionEnum.h armInstructionEnumPrinter.C \
+     powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
      readTicl.C RoseBin_file.cpp RoseFile.cpp \
      RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
      AST_BIN_Traversal.C
@@ -47,6 +48,12 @@ armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h
 	echo '#include <string>' >> armInstructionEnumPrinter.C
 	sed -n '/arm_unknown_instruction/,/arm_last_instruction/p' < $(srcdir)/armInstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* armInstructionStrings[] = {'; cat; echo '""};') >> armInstructionEnumPrinter.C
 	echo 'std::string toString(ArmInstructionKind k) {static const int s = sizeof(armInstructionStrings) / sizeof(*armInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return armInstructionStrings[(int)k];}' >> armInstructionEnumPrinter.C
+
+powerpcInstructionEnumPrinter.C: $(srcdir)/powerpcInstructionEnum.h
+	echo '#include "powerpcInstructionEnum.h"' > powerpcInstructionEnumPrinter.C
+	echo '#include <string>' >> powerpcInstructionEnumPrinter.C
+	sed -n '/powerpc_unknown_instruction/,/powerpc_last_instruction/p' < $(srcdir)/powerpcInstructionEnum.h | sed 's/ = 0//' | sed 's, *//.*,,' | tr -d , | sed 's,^ *,",' | sed 's/_record/./' | sed 's@$$@",@' | (echo 'static const char* powerpcInstructionStrings[] = {'; cat; echo '""};') >> powerpcInstructionEnumPrinter.C
+	echo 'std::string toString(PowerpcInstructionKind k) {static const int s = sizeof(powerpcInstructionStrings) / sizeof(*powerpcInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return powerpcInstructionStrings[(int)k];}' >> powerpcInstructionEnumPrinter.C
 
 # Make sure these SAGE specific header files are placed into a distribution
 if ROSE_USE_BINARY_SQL

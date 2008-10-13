@@ -23,6 +23,14 @@ std::string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnpa
 std::string unparseArmInstruction(SgAsmArmInstruction* insn);
 std::string unparseArmInstructionWithAddress(SgAsmArmInstruction* insn);
 
+std::string unparsePowerpcRegister(
+         PowerpcRegisterClass cl,
+         int num,
+         PowerpcConditionRegisterAccessGranularity gr);
+std::string unparsePowerpcExpression(SgAsmExpression* expr);
+std::string unparsePowerpcInstruction(SgAsmPowerpcInstruction* insn);
+std::string unparsePowerpcInstructionWithAddress(SgAsmPowerpcInstruction* insn);
+
 std::string unparseInstruction(SgAsmInstruction* insn);
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn);
 

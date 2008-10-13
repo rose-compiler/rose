@@ -6,7 +6,7 @@ INCLUDES = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = libroseAsmUnparser.la
 
 libroseAsmUnparser_la_DEPENDENCIES =
-libroseAsmUnparser_la_SOURCES = unparseX86Asm.C unparseArmAsm.C unparseAsm.C
+libroseAsmUnparser_la_SOURCES = unparseX86Asm.C unparseArmAsm.C unparsePowerpcAsm.C unparseAsm.C
 
 dist_include_HEADERS = unparseAsm.h
 

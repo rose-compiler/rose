@@ -1750,7 +1750,11 @@ Grammar::setUpBinaryInstructions ()
      
      AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPowerpcRegisterReferenceExpression.setDataPrototype("SgAsmPowerpcRegisterReferenceExpression::powerpc_register_enum","powerpc_register_code","= SgAsmPowerpcRegisterReferenceExpression::undefined_powerpc_register",
+     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcRegisterClass","register_class","= powerpc_regclass_unknown",
+                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPowerpcRegisterReferenceExpression.setDataPrototype("int","register_number","= 0",
+                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE); // GPR, FPR, SPR, TBR, etc. number, or condition register field or bit number
+     AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcConditionRegisterAccessGranularity","conditionRegisterGranularity","= powerpc_condreggranularity_whole",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      
   // added by tps on 3Apr07 and removed on 16Jan08

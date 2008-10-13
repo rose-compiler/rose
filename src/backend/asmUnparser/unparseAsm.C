@@ -9,6 +9,7 @@ string unparseInstruction(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return unparseX86Instruction(isSgAsmx86Instruction(insn));
     case V_SgAsmArmInstruction: return unparseArmInstruction(isSgAsmArmInstruction(insn));
+    case V_SgAsmPowerpcInstruction: return unparseX86Instruction(isSgAsmx86Instruction(insn));
     default: cerr << "Unhandled variant " << insn->class_name() << " in unparseInstruction" << endl; abort();
   }
 }
@@ -17,6 +18,7 @@ string unparseInstructionWithAddress(SgAsmInstruction* insn) {
   switch (insn->variantT()) {
     case V_SgAsmx86Instruction: return unparseX86InstructionWithAddress(isSgAsmx86Instruction(insn));
     case V_SgAsmArmInstruction: return unparseArmInstructionWithAddress(isSgAsmArmInstruction(insn));
+    case V_SgAsmPowerpcInstruction: return unparsePowerpcInstructionWithAddress(isSgAsmPowerpcInstruction(insn));
     default: cerr << "Unhandled variant " << insn->class_name() << " in unparseInstructionWithAddress" << endl; abort();
   }
 }
@@ -174,13 +176,10 @@ unparseAsmStatement(SgAsmStatement* stmt)
      switch (stmt->variantT())
         {
           case V_SgAsmx86Instruction:
-             {
-               return result + unparseX86InstructionWithAddress(isSgAsmx86Instruction(stmt)) + '\n';
-             }
-
           case V_SgAsmArmInstruction:
+          case V_SgAsmPowerpcInstruction:
              {
-               return result + unparseArmInstructionWithAddress(isSgAsmArmInstruction(stmt)) + '\n';
+               return result + unparseInstructionWithAddress(isSgAsmInstruction(stmt)) + '\n';
              }
 
           case V_SgAsmBlock:
