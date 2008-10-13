@@ -10,19 +10,6 @@ using boost::array;
 
 typedef BtorComputationPtr Comp;
 
-template <size_t Len, size_t Offset, typename NLTranslator>
-struct WriteMemoryHelper {
-  static void go(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond, NLTranslator& trans) {
-    trans.writeMemoryByte(segreg, (Offset == 0 ? addr : Comp(new BtorComputation(btor_op_add, addr, BtorComputation::constant(32, Offset / 8)))), trans.template extract<Offset, Offset + 8>(data), cond);
-    WriteMemoryHelper<Len, Offset + 8, NLTranslator>::go(segreg, addr, data, cond, trans);
-  }
-};
-
-template <size_t Len, typename NLTranslator>
-struct WriteMemoryHelper<Len, Len, NLTranslator> {
-  static void go(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond, NLTranslator& trans) {}
-};
-
 struct BTRegisterInfo {
   Comp gprs[8];
   Comp ip;
@@ -44,24 +31,24 @@ struct BtorTranslationPolicy {
 
   void makeRegMap(BTRegisterInfo& rm, const string& prefix) {
     for (size_t i = 0; i < 8; ++i) {
-      rm.gprs[i] = BtorComputation::var(32, prefix + "_gpr" + boost::lexical_cast<string>(i));
+      rm.gprs[i] = problem.build_var(32, prefix + "_gpr" + boost::lexical_cast<string>(i));
     }
-    rm.ip = BtorComputation::var(32, prefix + "_ip");
+    rm.ip = problem.build_var(32, prefix + "_ip");
     for (size_t i = 0; i < 16; ++i) {
-      rm.flags[i] = BtorComputation::var(1, prefix + "_flag" + boost::lexical_cast<string>(i));
+      rm.flags[i] = problem.build_var(1, prefix + "_flag" + boost::lexical_cast<string>(i));
     }
     for (size_t i = 0; i < numBmcErrors; ++i) {
       rm.errorFlag[i] = false_();
     }
-    rm.memory = BtorComputation::array(8, 32);
+    rm.memory = problem.build_array(8, 32);
   }
 
   void addNext(Comp cur, Comp next) {
-    problem.computations.push_back(Comp(new BtorComputation(btor_op_next, cur, next)));
+    problem.computations.push_back(problem.build_op_next(cur, next));
   }
 
   void addAnext(Comp cur, Comp next) {
-    problem.computations.push_back(Comp(new BtorComputation(btor_op_anext, cur, next)));
+    problem.computations.push_back(problem.build_op_anext(cur, next));
   }
 
   void addNexts() {
@@ -75,7 +62,7 @@ struct BtorTranslationPolicy {
     addAnext(origRegisterMap.memory, newRegisterMap.memory);
   }
 
-  void setInitialState() {
+  void setInitialState(uint32_t entryPoint) {
     registerMap = origRegisterMap;
     writeGPR(x86_gpr_ax, zero(32));
     writeGPR(x86_gpr_cx, zero(32));
@@ -85,15 +72,17 @@ struct BtorTranslationPolicy {
     writeGPR(x86_gpr_bp, zero(32));
     writeGPR(x86_gpr_si, zero(32));
     writeGPR(x86_gpr_di, zero(32));
-    writeIP(number<32>(0x8048140));
+    writeIP(number<32>(entryPoint));
     writeBackReset();
   }
 
-  BtorTranslationPolicy(): isValidIp(false_()), notResetState(BtorComputation::var(1, "notFirstStep")), problem() {
+  BtorTranslationPolicy(uint32_t entryPoint): problem() {
     makeRegMap(origRegisterMap, "in");
     makeRegMap(newRegisterMap, "bogus");
+    isValidIp = false_();
+    notResetState = problem.build_var(1, "notFirstStep");
     addNext(notResetState, true_());
-    setInitialState();
+    setInitialState(entryPoint);
   }
 
   Comp readGPR(X86GeneralPurposeRegister r) {
@@ -105,7 +94,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp readSegreg(X86SegmentRegister sr) {
-    return BtorComputation::constant(16, 0x2B); // FIXME
+    return problem.build_constant(16, 0x2B); // FIXME
   }
 
   void writeSegreg(X86SegmentRegister sr, Comp val) {
@@ -130,47 +119,41 @@ struct BtorTranslationPolicy {
 
   template <size_t Len>
   Comp number(uint64_t n) {
-    return BtorComputation::constant(Len, (n & (SHL1<Len>::value - 1)));
+    return problem.build_constant(Len, (n & (SHL1<Len>::value - 1)));
   }
 
   Comp concat(const Comp& a, const Comp& b) {
-    return Comp(new BtorComputation(btor_op_concat, a, b));
+    return problem.build_op_concat(a, b);
   }
 
   template <size_t From, size_t To>
   Comp extract(const Comp& a) {
     BOOST_STATIC_ASSERT(From < To);
-    vector<uintmax_t> imms(2);
-    imms[0] = To - 1;
-    imms[1] = From;
-    return Comp(new BtorComputation(btor_op_slice, vector<Comp>(1, a), imms));
+    return problem.build_op_slice(a, From, To - 1);
   }
 
   Comp extractVar(const Comp& a, size_t from, size_t to) {
     assert (from < to);
-    vector<uintmax_t> imms(2);
-    imms[0] = to - 1;
-    imms[1] = from;
-    return Comp(new BtorComputation(btor_op_slice, vector<Comp>(1, a), imms));
+    return problem.build_op_slice(a, from, to - 1);
   }
 
   Comp false_() {return zero(1);}
   Comp true_() {return ones(1);}
 
   Comp invert(const Comp& a) {
-    return Comp(new BtorComputation(btor_op_not, a));
+    return problem.build_op_not(a);
   }
 
   Comp and_(const Comp& a, const Comp& b) {
-    return Comp(new BtorComputation(btor_op_and, a, b));
+    return problem.build_op_and(a, b);
   }
 
   Comp or_(const Comp& a, const Comp& b) {
-    return Comp(new BtorComputation(btor_op_or, a, b));
+    return problem.build_op_or(a, b);
   }
 
   Comp xor_(const Comp& a, const Comp& b) {
-    return Comp(new BtorComputation(btor_op_xor, a, b));
+    return problem.build_op_xor(a, b);
   }
 
   template <size_t From, size_t To>
@@ -202,34 +185,33 @@ struct BtorTranslationPolicy {
   }
 
   Comp ite(const Comp& sel, const Comp& ifTrue, const Comp& ifFalse) {
-    return Comp(new BtorComputation(btor_op_cond, sel, ifTrue, ifFalse));
+    return problem.build_op_cond(sel, ifTrue, ifFalse);
   }
 
   Comp equalToZero(const Comp& a) {
-    return Comp(new BtorComputation(btor_op_not,
-             Comp(new BtorComputation(btor_op_redor, a))));
+    return problem.build_op_not(problem.build_op_redor(a));
   }
 
   template <size_t Len>
   Comp generateMask(Comp w) {
     uint fullLen = 1ULL << (w->type.bitWidth);
     assert (Len <= fullLen);
-    Comp w2 = ite(Comp(new BtorComputation(btor_op_ugt, w, BtorComputation::constant(w->type.bitWidth, Len - 1))), BtorComputation::constant(w->type.bitWidth, Len - 1), w);
-    return extractVar(invert(Comp(new BtorComputation(btor_op_sll, ones(fullLen), w2))), 0, Len);
+    Comp w2 = ite(problem.build_op_ugt(w, problem.build_constant(w->type.bitWidth, Len - 1)), problem.build_constant(w->type.bitWidth, Len - 1), w);
+    return extractVar(invert(problem.build_op_sll(ones(fullLen), w2)), 0, Len);
   }
 
   Comp zero(uint width) {
     assert (width != 0);
-    return Comp(new BtorComputation(width, btor_op_zero, vector<Comp>()));
+    return problem.build_op_zero(width);
   }
 
   Comp ones(uint width) {
     assert (width != 0);
-    return Comp(new BtorComputation(width, btor_op_ones, vector<Comp>()));
+    return problem.build_op_ones(width);
   }
 
   Comp add(const Comp& a, const Comp& b) { // Simple case
-    return Comp(new BtorComputation(btor_op_add, a, b));
+    return problem.build_op_add(a, b);
   }
 
   Comp addWithCarries(const Comp& a, const Comp& b, const Comp& carryIn, Comp& carries) { // Full case
@@ -252,7 +234,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp rotateLeft(const Comp& a, const Comp& cnt) {
-    return Comp(new BtorComputation(btor_op_ror, a, extractVar(cnt, 0, log2(a->type.bitWidth)))); // Flipped because words are LSB first
+    return problem.build_op_ror(a, extractVar(cnt, 0, log2(a->type.bitWidth))); // Flipped because words are LSB first
   }
 
   // Expanding multiplies
@@ -260,47 +242,47 @@ struct BtorTranslationPolicy {
     uint len = a->type.bitWidth + b->type.bitWidth;
     Comp aFull = signExtendVar(a, len);
     Comp bFull = signExtendVar(b, len);
-    return Comp(new BtorComputation(btor_op_mul, aFull, bFull));
+    return problem.build_op_mul(aFull, bFull);
   }
 
   Comp unsignedMultiply(const Comp& a, const Comp& b) {
     uint len = a->type.bitWidth + b->type.bitWidth;
     Comp aFull = zeroExtendVar(a, len);
     Comp bFull = zeroExtendVar(b, len);
-    return Comp(new BtorComputation(btor_op_mul, aFull, bFull));
+    return problem.build_op_mul(aFull, bFull);
   }
 
   Comp signedDivide(const Comp& a, const Comp& b) {
     assert (a->type.bitWidth >= b->type.bitWidth);
     Comp bFull = signExtendVar(b, a->type.bitWidth);
-    return Comp(new BtorComputation(btor_op_sdiv, a, bFull));
+    return problem.build_op_sdiv(a, bFull);
   }
 
   Comp signedModulo(const Comp& a, const Comp& b) {
     assert (a->type.bitWidth >= b->type.bitWidth);
     Comp bFull = signExtendVar(b, a->type.bitWidth);
-    return extractVar(Comp(new BtorComputation(btor_op_smod, a, bFull)), 0, b->type.bitWidth);
+    return extractVar(problem.build_op_smod(a, bFull), 0, b->type.bitWidth);
   }
 
   Comp unsignedDivide(const Comp& a, const Comp& b) {
     assert (a->type.bitWidth >= b->type.bitWidth);
     Comp bFull = zeroExtendVar(b, a->type.bitWidth);
-    return Comp(new BtorComputation(btor_op_udiv, a, bFull));
+    return problem.build_op_udiv(a, bFull);
   }
 
   Comp unsignedModulo(const Comp& a, const Comp& b) {
     assert (a->type.bitWidth >= b->type.bitWidth);
     Comp bFull = zeroExtendVar(b, a->type.bitWidth);
-    return extractVar(Comp(new BtorComputation(btor_op_urem, a, bFull)), 0, b->type.bitWidth);
+    return extractVar(problem.build_op_urem(a, bFull), 0, b->type.bitWidth);
   }
 
   Comp leastSignificantSetBit(const Comp& in, uint origWidth = 0, uint base = 0) {
     uint width = in->type.bitWidth;
     if (origWidth == 0) origWidth = width;
-    if (width == 0) return BtorComputation::constant(origWidth, base);
-    if (width == 1) return ite(in, BtorComputation::constant(origWidth, base), BtorComputation::constant(origWidth, 0));
+    if (width == 0) return problem.build_constant(origWidth, base);
+    if (width == 1) return ite(in, problem.build_constant(origWidth, base), zero(origWidth));
     return ite(extractVar(in, 0, 1),
-               BtorComputation::constant(origWidth, base),
+               problem.build_constant(origWidth, base),
                leastSignificantSetBit(extractVar(in, 1, width), origWidth, base + 1));
   }
 
@@ -310,8 +292,8 @@ struct BtorTranslationPolicy {
     if (width == 0) return zero(width);
     if (width == 1) return zero(width); // Return 0 for not found
     return ite(extractVar(in, width - 1, width),
-               BtorComputation::constant(origWidth, width - 1),
-               leastSignificantSetBit(extractVar(in, 0, width - 1), origWidth));
+               problem.build_constant(origWidth, width - 1),
+               mostSignificantSetBit(extractVar(in, 0, width - 1), origWidth));
   }
 
   template <size_t Len> // In bits
@@ -333,21 +315,24 @@ struct BtorTranslationPolicy {
   }
 
   Comp readMemoryByte(X86SegmentRegister segreg, const Comp& addr, Comp cond) {
-    return Comp(new BtorComputation(btor_op_read, registerMap.memory, addr));
+    return problem.build_op_read(registerMap.memory, addr);
   }
 
   void writeMemoryByte(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond) {
-    registerMap.memory = Comp(new BtorComputation(btor_op_acond, cond, Comp(new BtorComputation(btor_op_write, registerMap.memory, addr, data)), registerMap.memory));
+    registerMap.memory = problem.build_op_acond(cond, problem.build_op_write(registerMap.memory, addr, data), registerMap.memory);
   }
 
   template <size_t Len>
   void writeMemory(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond) {
-    WriteMemoryHelper<Len, 0, BtorTranslationPolicy>::go(segreg, addr, data, cond, *this);
+    BOOST_STATIC_ASSERT (Len % 8 == 0);
+    for (size_t i = 0; i < Len / 8; ++i) {
+      writeMemoryByte(segreg, (i == 0 ? addr : problem.build_op_add(addr, problem.build_constant(32, i))), problem.build_op_slice(data, i * 8, i * 8 + 7), cond);
+    }
   }
 
   void hlt() {registerMap.errorFlag[bmc_error_program_failure] = true_();} // FIXME
   void interrupt(uint8_t num) {} // FIXME
-  Comp rdtsc() {return BtorComputation::var(64);}
+  Comp rdtsc() {return problem.build_var(64, "timestamp");}
 
   void writeBackCond(Comp cond) {
     for (size_t i = 0; i < 8; ++i) {
@@ -361,11 +346,11 @@ struct BtorTranslationPolicy {
       if (i == bmc_error_bogus_ip) continue; // Handled separately
       newRegisterMap.errorFlag[i] = ite(cond, registerMap.errorFlag[i], newRegisterMap.errorFlag[i]);
     }
-    newRegisterMap.memory = Comp(new BtorComputation(btor_op_acond, cond, registerMap.memory, newRegisterMap.memory));
+    newRegisterMap.memory = problem.build_op_acond(cond, registerMap.memory, newRegisterMap.memory);
   }
 
   void writeBack(uint64_t addr) {
-    Comp isThisIp = and_(Comp(new BtorComputation(btor_op_eq, origRegisterMap.ip, number<32>(addr))), notResetState);
+    Comp isThisIp = and_(problem.build_op_eq(origRegisterMap.ip, number<32>(addr)), notResetState);
     isValidIp = or_(isValidIp, isThisIp);
     writeBackCond(isThisIp);
   }
@@ -394,7 +379,11 @@ int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   FILE* f = fopen("foo.btor", "w");
   assert (f);
-  BtorTranslationPolicy policy;
+  vector<SgNode*> headers = NodeQuery::querySubTree(proj, V_SgAsmGenericHeader);
+  ROSE_ASSERT (headers.size() == 1);
+  SgAsmGenericHeader* header = isSgAsmGenericHeader(headers[0]);
+  rose_addr_t entryPoint = header->get_entry_rva() + header->get_base_va();
+  BtorTranslationPolicy policy((uint32_t)entryPoint);
   X86InstructionSemantics<BtorTranslationPolicy> t(policy);
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
@@ -407,7 +396,7 @@ int main(int argc, char** argv) {
     policy.invert(policy.isValidIp);
   policy.addNexts();
   for (size_t i = 0; i < numBmcErrors; ++i) {
-    policy.problem.computations.push_back(Comp(new BtorComputation(btor_op_root, policy.newRegisterMap.errorFlag[i])));
+    policy.problem.computations.push_back(policy.problem.build_op_root(policy.newRegisterMap.errorFlag[i]));
   }
   string s = policy.problem.unparse();
   fprintf(f, "%s", s.c_str());

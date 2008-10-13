@@ -128,34 +128,6 @@ struct BtorComputation {
     }
   }
 
-  BtorComputation(BtorOperator op, BtorComputationPtr op0 = BtorComputationPtr(), BtorComputationPtr op1 = BtorComputationPtr(), BtorComputationPtr op2 = BtorComputationPtr()): op(op), immediates(), operands() {
-    if (op0) operands.push_back(op0);
-    if (op1) operands.push_back(op1);
-    if (op2) operands.push_back(op2);
-    type = getType();
-  }
-
-  static BtorComputationPtr var(uint size, const std::string& name = "") {
-    BtorComputationPtr c(new BtorComputation(btor_op_var, std::vector<BtorComputationPtr>()));
-    c->variableName = name;
-    c->type.bitWidth = size;
-    return c;
-  }
-
-  static BtorComputationPtr array(uint bw, uint sz) {
-    BtorComputationPtr c(new BtorComputation(btor_op_array, std::vector<BtorComputationPtr>()));
-    c->type.bitWidth = bw;
-    c->type.arraySize = sz;
-    return c;
-  }
-
-  static BtorComputationPtr constant(uintmax_t size, uintmax_t value) {
-    BtorComputationPtr c(new BtorComputation(btor_op_const, std::vector<BtorComputationPtr>(), std::vector<uintmax_t>(1, value)));
-    c->type.bitWidth = size;
-    assert ((1ULL << size) == 0 || (1ULL << size) > value);
-    return c;
-  }
-
   BtorType getType() const; // Also checks operand and immediate counts
 };
 
@@ -165,6 +137,99 @@ struct BtorProblem {
   BtorProblem(): computations() {}
 
   std::string unparse() const;
+
+  BtorComputationPtr build_var(uint size, const std::string& name = "") {
+    BtorComputationPtr c(new BtorComputation(btor_op_var, std::vector<BtorComputationPtr>()));
+    c->variableName = name;
+    c->type.bitWidth = size;
+    return c;
+  }
+
+  BtorComputationPtr build_array(uint bw, uint sz) {
+    BtorComputationPtr c(new BtorComputation(btor_op_array, std::vector<BtorComputationPtr>()));
+    c->type.bitWidth = bw;
+    c->type.arraySize = sz;
+    return c;
+  }
+
+  BtorComputationPtr build_constant(uintmax_t size, uintmax_t value) {
+    BtorComputationPtr c(new BtorComputation(btor_op_const, std::vector<BtorComputationPtr>(), std::vector<uintmax_t>(1, value)));
+    c->type.bitWidth = size;
+    assert ((1ULL << size) == 0 || (1ULL << size) > value);
+    return c;
+  }
+
+#define BUILDER1(op) BtorComputationPtr build_##op(BtorComputationPtr arg0) {return BtorComputationPtr(new BtorComputation(btor_##op, std::vector<BtorComputationPtr>(1, arg0)));}
+#define BUILDER2(op) BtorComputationPtr build_##op(BtorComputationPtr arg0, BtorComputationPtr arg1) {std::vector<BtorComputationPtr> args; args.push_back(arg0); args.push_back(arg1); return BtorComputationPtr(new BtorComputation(btor_##op, args));}
+#define BUILDER3(op) BtorComputationPtr build_##op(BtorComputationPtr arg0, BtorComputationPtr arg1, BtorComputationPtr arg2) {std::vector<BtorComputationPtr> args; args.push_back(arg0); args.push_back(arg1); args.push_back(arg2); return BtorComputationPtr(new BtorComputation(btor_##op, args));}
+#define BUILDERSIZE(op) BtorComputationPtr build_##op(uintmax_t size) {return BtorComputationPtr(new BtorComputation(size, btor_##op, std::vector<BtorComputationPtr>()));}
+  BUILDER1(op_not)
+  BUILDER1(op_neg)
+  BUILDER1(op_redand)
+  BUILDER1(op_redor)
+  BUILDER1(op_redxor)
+  BUILDER1(op_inc)
+  BUILDER1(op_dec)
+  BUILDER2(op_and)
+  BUILDER2(op_or)
+  BUILDER2(op_xor)
+  BUILDER2(op_nand)
+  BUILDER2(op_nor)
+  BUILDER2(op_xnor)
+  BUILDER2(op_implies)
+  BUILDER2(op_iff)
+  BUILDER2(op_add)
+  BUILDER2(op_sub)
+  BUILDER2(op_mul)
+  BUILDER2(op_urem)
+  BUILDER2(op_srem)
+  BUILDER2(op_udiv)
+  BUILDER2(op_sdiv)
+  BUILDER2(op_smod)
+  BUILDER2(op_eq)
+  BUILDER2(op_ne)
+  BUILDER2(op_ult)
+  BUILDER2(op_slt)
+  BUILDER2(op_ulte)
+  BUILDER2(op_slte)
+  BUILDER2(op_ugt)
+  BUILDER2(op_sgt)
+  BUILDER2(op_ugte)
+  BUILDER2(op_sgte)
+  BUILDER2(op_sll)
+  BUILDER2(op_srl)
+  BUILDER2(op_sra)
+  BUILDER2(op_ror)
+  BUILDER2(op_rol)
+  BUILDER2(op_uaddo)
+  BUILDER2(op_saddo)
+  BUILDER2(op_usubo)
+  BUILDER2(op_ssubo)
+  BUILDER2(op_umulo)
+  BUILDER2(op_smulo)
+  BUILDER2(op_sdivo)
+  BUILDER2(op_concat)
+  BUILDER3(op_cond)
+  BtorComputationPtr build_op_slice(BtorComputationPtr arg, uintmax_t from, uintmax_t to) {
+    std::vector<uintmax_t> imms(2);
+    imms[0] = to;
+    imms[1] = from;
+    return BtorComputationPtr(new BtorComputation(btor_op_slice, std::vector<BtorComputationPtr>(1, arg), imms));
+  }
+  BUILDER2(op_read)
+  BUILDER3(op_write)
+  BUILDER3(op_acond)
+  BUILDER2(op_array_eq)
+  BUILDERSIZE(op_one)
+  BUILDERSIZE(op_ones)
+  BUILDERSIZE(op_zero)
+  BUILDER2(op_next)
+  BUILDER2(op_anext)
+  BUILDER1(op_root)
+#undef BUILDER1
+#undef BUILDER2
+#undef BUILDER3
+#undef BUILDERSIZE
 };
 
 #endif // ROSE_BTORPROBLEM_H
