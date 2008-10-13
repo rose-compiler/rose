@@ -537,12 +537,12 @@ static char *yy_last_accepting_cpos;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "omplexer.ll"
+#line 1 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 #define INITIAL 0
 #define YY_STACK_USED 1
 #define EXPR 1
 
-#line 7 "omplexer.ll"
+#line 7 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 
 /* lex requires me to use extern "C" here */
 extern "C" int omp_wrap() { return 1; }
@@ -717,7 +717,7 @@ YY_DECL
 	register char *yy_cp = NULL, *yy_bp = NULL;
 	register int yy_act;
 
-#line 38 "omplexer.ll"
+#line 38 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 
 #line 723 "omplexer.cc"
 
@@ -804,337 +804,337 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 39 "omplexer.ll"
+#line 39 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { omp_lval.itype = atoi(strdup(yytext)); return (ICONSTANT); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 40 "omplexer.ll"
+#line 40 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( OMP); }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 41 "omplexer.ll"
+#line 41 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( PARALLEL); }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 42 "omplexer.ll"
+#line 42 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( TASK ); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 43 "omplexer.ll"
+#line 43 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( TASKWAIT ); }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 44 "omplexer.ll"
+#line 44 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( UNTIED );}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 45 "omplexer.ll"
+#line 45 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( IF); }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 46 "omplexer.ll"
+#line 46 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( NUM_THREADS); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 47 "omplexer.ll"
+#line 47 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( ORDERED  ); }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 48 "omplexer.ll"
+#line 48 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( SCHEDULE ); }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 49 "omplexer.ll"
+#line 49 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( STATIC ); }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 50 "omplexer.ll"
+#line 50 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( DYNAMIC ); }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 51 "omplexer.ll"
+#line 51 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( GUIDED ); }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 52 "omplexer.ll"
+#line 52 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( RUNTIME ); }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 53 "omplexer.ll"
+#line 53 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( AUTO ); }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 54 "omplexer.ll"
+#line 54 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( SECTIONS ); }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 55 "omplexer.ll"
+#line 55 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( SECTION ); }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 56 "omplexer.ll"
+#line 56 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( SINGLE ); }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 57 "omplexer.ll"
+#line 57 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( NOWAIT); }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 58 "omplexer.ll"
+#line 58 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( FOR ); }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 59 "omplexer.ll"
+#line 59 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( COLLAPSE ); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 60 "omplexer.ll"
+#line 60 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( MASTER ); }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 61 "omplexer.ll"
+#line 61 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( CRITICAL ); }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 62 "omplexer.ll"
+#line 62 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( BARRIER ); }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 63 "omplexer.ll"
+#line 63 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( ATOMIC ); }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 64 "omplexer.ll"
+#line 64 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( FLUSH ); }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 65 "omplexer.ll"
+#line 65 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( THREADPRIVATE ); }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 66 "omplexer.ll"
+#line 66 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( PRIVATE ); }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 67 "omplexer.ll"
+#line 67 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( COPYPRIVATE ); }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 68 "omplexer.ll"
+#line 68 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( FIRSTPRIVATE ); }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 69 "omplexer.ll"
+#line 69 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( LASTPRIVATE ); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 70 "omplexer.ll"
+#line 70 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( SHARED ); }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 71 "omplexer.ll"
+#line 71 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( DEFAULT ); }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 72 "omplexer.ll"
+#line 72 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( NONE ); }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 73 "omplexer.ll"
+#line 73 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( REDUCTION ); }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 74 "omplexer.ll"
+#line 74 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ( COPYIN ); }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 76 "omplexer.ll"
+#line 76 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return('='); }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 77 "omplexer.ll"
+#line 77 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('('); }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 78 "omplexer.ll"
+#line 78 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (')'); }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 79 "omplexer.ll"
+#line 79 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (','); }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 80 "omplexer.ll"
+#line 80 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (':'); }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 81 "omplexer.ll"
+#line 81 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('+'); }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 82 "omplexer.ll"
+#line 82 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('*'); }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 83 "omplexer.ll"
+#line 83 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('-'); }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 84 "omplexer.ll"
+#line 84 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('&'); }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 85 "omplexer.ll"
+#line 85 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('^'); }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 86 "omplexer.ll"
+#line 86 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('|'); }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 87 "omplexer.ll"
+#line 87 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (LOGAND); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 88 "omplexer.ll"
+#line 88 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (LOGOR); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 90 "omplexer.ll"
+#line 90 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(RIGHT_ASSIGN2); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 91 "omplexer.ll"
+#line 91 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(LEFT_ASSIGN2); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 92 "omplexer.ll"
+#line 92 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(ADD_ASSIGN2); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 93 "omplexer.ll"
+#line 93 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(SUB_ASSIGN2); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 94 "omplexer.ll"
+#line 94 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(MUL_ASSIGN2); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 95 "omplexer.ll"
+#line 95 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(DIV_ASSIGN2); }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 96 "omplexer.ll"
+#line 96 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(MOD_ASSIGN2); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 97 "omplexer.ll"
+#line 97 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(AND_ASSIGN2); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 98 "omplexer.ll"
+#line 98 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(XOR_ASSIGN2); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 99 "omplexer.ll"
+#line 99 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 {return(OR_ASSIGN2); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 101 "omplexer.ll"
+#line 101 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('<'); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 102 "omplexer.ll"
+#line 102 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return ('>'); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 103 "omplexer.ll"
+#line 103 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (LE_OP2);}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 104 "omplexer.ll"
+#line 104 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (GE_OP2);}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 105 "omplexer.ll"
+#line 105 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (EQ_OP2);}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 106 "omplexer.ll"
+#line 106 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (NE_OP2);}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 108 "omplexer.ll"
+#line 108 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (NEWLINE); }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 110 "omplexer.ll"
+#line 110 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { int c = yytext[0];
 		  int parenCount = 1;
 		  for (;;) {
@@ -1159,33 +1159,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 132 "omplexer.ll"
+#line 132 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (EXPRESSION); }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 133 "omplexer.ll"
+#line 133 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (IDENTIFIER); /*not in use for now*/ }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 134 "omplexer.ll"
+#line 134 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { omp_lval.stype = strdup(yytext); 
                   return (ID_EXPRESSION); }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 137 "omplexer.ll"
+#line 137 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 ;
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 138 "omplexer.ll"
+#line 138 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 { return (LEXICALERROR);}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 140 "omplexer.ll"
+#line 140 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 ECHO;
 	YY_BREAK
 #line 1192 "omplexer.cc"
@@ -2071,7 +2071,7 @@ int main()
 	return 0;
 	}
 #endif
-#line 140 "omplexer.ll"
+#line 140 "../../../to-build/projects/OpenMP_Parser/omplexer.ll"
 
 
 

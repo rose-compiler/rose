@@ -226,6 +226,10 @@ AM_CONDITIONAL(USE_BINARY_ANALYSIS_TESTS, test "x$binary_analysis_tests" = "xyes
 # flex works better than lex (this gives a preference to flex (flex is gnu))
 AM_PROG_LEX
 AC_SUBST(LEX)
+AC_PROG_YACC
+AC_SUBST(YACC)
+
+
 
 # echo "After test for LEX: CC (CC = $CC)"
 

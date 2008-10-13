@@ -1,5 +1,5 @@
 %option prefix="omp_"
-%option outfile="omplexer.cc"
+%option outfile="lex.yy.c"
 %option stack
 %x EXPR
 

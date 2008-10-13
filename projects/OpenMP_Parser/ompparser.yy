@@ -5,6 +5,9 @@
    2008 
 */
 
+%name-prefix="omp_"
+%defines
+
 %{
 #include <stdio.h>
 #include <assert.h>
