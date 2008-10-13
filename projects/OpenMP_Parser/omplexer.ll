@@ -13,7 +13,7 @@ extern int omp_lex();
 #include <stdio.h>
 #include <string>
 #include <string.h>
-#include "ompparser.hh"
+#include "ompparser.h"
 
 static const char* ompparserinput = NULL;
 static std::string gExpressionString;

@@ -6,7 +6,7 @@ This is a project to
 File List:
 * OpenMP persistent attributes:  OmpAttribute.C and OmpAttribute.h
 * Flex scanner:   omplexer.ll (omplexer.cc )
-* Bison parser:   ompparser.yy (ompparser.cc, ompparser.hh)
+* Bison parser:   ompparser.yy (ompparser.cc, ompparser.h)
 * test parser:    parseOmp.C
 
 ompparser.cc and omplexer.cc are put into distribution to eliminate

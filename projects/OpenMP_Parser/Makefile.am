@@ -6,13 +6,10 @@ SUBDIRS = . tests
 INCLUDES = $(ROSE_INCLUDES) 
 
 # Bison flags
-AM_YFLAGS =
+AM_YFLAGS = -d
 # Flex flags
 AM_LFLAGS =
 
-# ompparser.cc and omplexer.cc are put into distribution to eliminate
-# the dependence on bison and flex for end-users.
-# Maintainers should update them whenever .yy or .ll are changed!!
 
 # avoid unused Flex functions which are automatically generated		  
 CXXFLAGS+= -DYY_NO_TOP_STATE -DYY_NO_POP_STATE
@@ -27,9 +24,19 @@ parseOmp_SOURCES = parseOmp.C \
                   omplexer.ll \
                   ompparser.yy
 
-EXTRA_DIST = README OmpAttribute.h omplexer.ll ompparser.yy ompparser.hh omplexer.cc ompparser.h ompparser.cc
+# omplexer.cc needs a header generaetd from ompparser.yy
+omplexer.o: ompparser.h omplexer.cc
+
+BUILT_SOURCES = ompparser.cc ompparser.h omplexer.cc
+
+ompparser.h: ompparser.cc
+
+# ompparser.cc and omplexer.cc are put into distribution to eliminate
+# the dependence on bison and flex for end-users.
+# Maintainers should make sure they are up-to-date
+EXTRA_DIST = README OmpAttribute.h omplexer.ll ompparser.yy omplexer.cc ompparser.h ompparser.cc
 
 clean-local:
-	rm -rf parseOmp rose_* *.dot 
+	rm -rf rose_* *.dot 
 
-
+CLEANFILES = ompparser.cc ompparser.h omplexer.cc
