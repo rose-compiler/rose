@@ -66,7 +66,11 @@ find . -name Makefile.in~ | xargs rm -rf
 find . -name autom4te.cache | xargs rm -rf
 
 # remove configure and Makefile.in
-rm ${ROSE_DIST_DIR}/configure
+rm -rf ${ROSE_DIST_DIR}/configure
+rm -rf ${ROSE_DIST_DIR}/aclocal.m4
+rm -rf ${ROSE_DIST_DIR}/rose_config.h.in
+rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
+rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
 find . -name Makefile.in | xargs rm -rf
 
 # restore a few third party Makefile.in which cannot yet been automatically built
@@ -102,6 +106,7 @@ else
   echo Fatal Error: No EDG binaries for i686-pc-linux are available. 
   exit 3
 fi
+
 EDG_BINARIES2=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-x86_64-pc-linux-gnu*.tar.gz))
 if [ ${EDG_BINARIES2[0]} ]; then
    echo Found the EDG binaries for x86_64-pc-linux-gnu as expected. It is ${EDG_BINARIES2[@]}. 
