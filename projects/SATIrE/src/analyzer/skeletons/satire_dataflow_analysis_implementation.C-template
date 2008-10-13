@@ -79,7 +79,6 @@
     #define persistent prefixed_persistent(ANALYSIS)
 #endif
 
-using namespace std;
 
 // Variables defined by PAG.
 extern int debug_stat;
@@ -247,7 +246,7 @@ Implementation::outputAnnotatedProgram(Program *program)
     if (program->options->outputTerm())
     {
         TimingPerformance timer("Output Prolog term:");
-        TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo, program->icfg);
+        TermPrinter<DFI_STORE> tp((DFI_STORE) analysisInfo);
 
         if (program->options->analysisWholeProgram())
             tp.traverse(program->astRoot);
