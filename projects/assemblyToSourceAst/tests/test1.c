@@ -5,11 +5,16 @@ int main(int argc, char** argv) {
   int i;
   for (i = 0; i < 5; ++i) {}
 #endif
-#if 0
+#if 1
   volatile int z;
-  // This program takes 4 basic blocks to fail by default.  Each of these lines
-  // adds 1 more block to the run time (number of clock cycles that needs to be
-  // tested by the BMC).
+  // This program takes 4 basic blocks (5 with btorUnroll) to fail by default.
+  // Each of these lines adds 1 more block to the run time (number of clock
+  // cycles that needs to be tested by the BMC).
+  if (z == 0) {++z;}
+  if (z == 0) {++z;}
+  if (z == 0) {++z;}
+  if (z == 0) {++z;}
+  if (z == 0) {++z;}
   if (z == 0) {++z;}
   if (z == 0) {++z;}
   if (z == 0) {++z;}

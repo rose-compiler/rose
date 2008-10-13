@@ -170,6 +170,15 @@ inline BtorTypeKind BtorComputationPtr::kind() const {return type().kind;}
 inline uint BtorComputationPtr::bitWidth() const {return type().bitWidth;}
 inline uint BtorComputationPtr::arraySize() const {return type().arraySize;}
 
+inline bool operator==(const BtorComputationPtr& p1, const BtorComputationPtr& p2) {
+  return p1.inverted == p2.inverted && p1.p == p2.p;
+}
+
+inline bool operator<(const BtorComputationPtr& p1, const BtorComputationPtr& p2) {
+  if (p1.inverted != p2.inverted) return p1.inverted < p2.inverted;
+  return p1.p < p2.p;
+}
+
 struct BtorProblem {
   std::vector<BtorComputationPtr> computations; // Every computation must be either in here or reachable from here
 

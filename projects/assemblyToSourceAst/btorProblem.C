@@ -177,6 +177,7 @@ BtorType BtorComputation::getType() const { // Also checks operand and immediate
 
 static string btorOpToString(BtorOperator op) {
   assert ((size_t)op < sizeof(btorOperators) / sizeof(*btorOperators));
+  assert (btorOperators[(size_t)op].op == op);
   return btorOperators[(size_t)op].name;
 }
 
@@ -197,7 +198,7 @@ static string btorUnparseHelper(string& nameIdea, BtorComputationPtr comp, map<B
     nameIdea = "-" + uninvertedName;
     return result;
   }
-  assert (comp.inverted == false); // Can only use this for 
+  assert (comp.inverted == false);
   string result;
   vector<string> opNames;
   for (size_t i = 0; i < comp.p->operands.size(); ++i) {
@@ -286,7 +287,7 @@ BtorProblem BtorProblem::parse(const std::string& s) {
     if (op == "const") {
       op = "constd";
       constantBase = cb_binary;
-    } else if (op == "hex") {
+    } else if (op == "consth") {
       op = "constd";
       constantBase = cb_hex;
     } else {
