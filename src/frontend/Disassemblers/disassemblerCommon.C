@@ -188,9 +188,8 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
 
    // DQ (10/12/2008): Currently using the WRONG disassemble, so this is a clear error!
    // But I wanted to first get the ELF instruction family identification in place!
-      ArmDisassembler::Parameters params(addr, true);
-      insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
-
+      PowerpcDisassembler::Parameters params(addr, true);
+      insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else {
 
    // DQ (10/12/2008): Output a bit more information when we fail!

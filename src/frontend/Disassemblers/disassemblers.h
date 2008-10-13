@@ -57,24 +57,28 @@ namespace ArmDisassembler {
 
   SgAsmArmRegisterReferenceExpression* makeRegister(uint8_t reg);
   SgAsmArmInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
-  void disassembleFile(SgAsmFile* f);
+
+// DQ (10/13/2008): Is this used?
+// void disassembleFile(SgAsmFile* f);
 
 }
 
 // DQ (10/11/2008): Initial start at support for PowerPC (for BGL, Cray XT series, etc.)
-namespace PowerPC_Disassembler {
+namespace PowerpcDisassembler
+   {
+     struct Parameters
+        {
+          uint32_t ip;
+          bool decodeUnconditionalInstructions;
+          Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true): ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions) {}
+        };
 
-  struct Parameters {
-    uint32_t ip;
-    bool decodeUnconditionalInstructions;
-    Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true): ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions) {}
-  };
+     SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
+     SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
 
-  SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
-  SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
-  void disassembleFile(SgAsmFile* f);
-
-}
+  // This is not used for ARM, so I don't think we need it!
+  // void disassembleFile(SgAsmFile* f);
+   }
 
 namespace DisassemblerCommon {
 
