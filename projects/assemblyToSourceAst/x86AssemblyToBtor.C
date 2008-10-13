@@ -141,7 +141,7 @@ struct BtorTranslationPolicy {
   Comp true_() {return ones(1);}
 
   Comp invert(const Comp& a) {
-    return problem.build_op_not(a);
+    return a.invert();
   }
 
   Comp and_(const Comp& a, const Comp& b) {
@@ -167,7 +167,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp signExtendVar(const Comp& a, size_t to) {
-    size_t from = a->type.bitWidth;
+    size_t from = a.bitWidth();
     if (from == to) return a;
     return concat(
              a,
@@ -177,7 +177,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp zeroExtendVar(const Comp& a, size_t to) {
-    size_t from = a->type.bitWidth;
+    size_t from = a.bitWidth();
     if (from == to) return a;
     return concat(
              a,
@@ -189,14 +189,14 @@ struct BtorTranslationPolicy {
   }
 
   Comp equalToZero(const Comp& a) {
-    return problem.build_op_not(problem.build_op_redor(a));
+    return invert(problem.build_op_redor(a));
   }
 
   template <size_t Len>
   Comp generateMask(Comp w) {
-    uint fullLen = 1ULL << (w->type.bitWidth);
+    uint fullLen = shl1(w.bitWidth());
     assert (Len <= fullLen);
-    Comp w2 = ite(problem.build_op_ugt(w, problem.build_constant(w->type.bitWidth, Len - 1)), problem.build_constant(w->type.bitWidth, Len - 1), w);
+    Comp w2 = ite(problem.build_op_ugt(w, problem.build_constant(w.bitWidth(), Len - 1)), problem.build_constant(w.bitWidth(), Len - 1), w);
     return extractVar(invert(problem.build_op_sll(ones(fullLen), w2)), 0, Len);
   }
 
@@ -215,14 +215,14 @@ struct BtorTranslationPolicy {
   }
 
   Comp addWithCarries(const Comp& a, const Comp& b, const Comp& carryIn, Comp& carries) { // Full case
-    uint len = a->type.bitWidth + 1;
+    uint len = a.bitWidth() + 1;
     Comp aFull = zeroExtendVar(a, len);
     Comp bFull = zeroExtendVar(b, len);
     Comp carryInFull = zeroExtendVar(carryIn, len);
     Comp sumFull = add(add(aFull, bFull), carryInFull);
-    Comp sum = extractVar(sumFull, 0, a->type.bitWidth);
+    Comp sum = extractVar(sumFull, 0, a.bitWidth());
     Comp carriesFull = xor_(xor_(sumFull, aFull), bFull);
-    carries = extractVar(carriesFull, 1, carriesFull->type.bitWidth);
+    carries = extractVar(carriesFull, 1, carriesFull.bitWidth());
     return sum;
   }
 
@@ -234,50 +234,50 @@ struct BtorTranslationPolicy {
   }
 
   Comp rotateLeft(const Comp& a, const Comp& cnt) {
-    return problem.build_op_ror(a, extractVar(cnt, 0, log2(a->type.bitWidth))); // Flipped because words are LSB first
+    return problem.build_op_ror(a, extractVar(cnt, 0, log2(a.bitWidth()))); // Flipped because words are LSB first
   }
 
   // Expanding multiplies
   Comp signedMultiply(const Comp& a, const Comp& b) {
-    uint len = a->type.bitWidth + b->type.bitWidth;
+    uint len = a.bitWidth() + b.bitWidth();
     Comp aFull = signExtendVar(a, len);
     Comp bFull = signExtendVar(b, len);
     return problem.build_op_mul(aFull, bFull);
   }
 
   Comp unsignedMultiply(const Comp& a, const Comp& b) {
-    uint len = a->type.bitWidth + b->type.bitWidth;
+    uint len = a.bitWidth() + b.bitWidth();
     Comp aFull = zeroExtendVar(a, len);
     Comp bFull = zeroExtendVar(b, len);
     return problem.build_op_mul(aFull, bFull);
   }
 
   Comp signedDivide(const Comp& a, const Comp& b) {
-    assert (a->type.bitWidth >= b->type.bitWidth);
-    Comp bFull = signExtendVar(b, a->type.bitWidth);
+    assert (a.bitWidth() >= b.bitWidth());
+    Comp bFull = signExtendVar(b, a.bitWidth());
     return problem.build_op_sdiv(a, bFull);
   }
 
   Comp signedModulo(const Comp& a, const Comp& b) {
-    assert (a->type.bitWidth >= b->type.bitWidth);
-    Comp bFull = signExtendVar(b, a->type.bitWidth);
-    return extractVar(problem.build_op_smod(a, bFull), 0, b->type.bitWidth);
+    assert (a.bitWidth() >= b.bitWidth());
+    Comp bFull = signExtendVar(b, a.bitWidth());
+    return extractVar(problem.build_op_smod(a, bFull), 0, b.bitWidth());
   }
 
   Comp unsignedDivide(const Comp& a, const Comp& b) {
-    assert (a->type.bitWidth >= b->type.bitWidth);
-    Comp bFull = zeroExtendVar(b, a->type.bitWidth);
+    assert (a.bitWidth() >= b.bitWidth());
+    Comp bFull = zeroExtendVar(b, a.bitWidth());
     return problem.build_op_udiv(a, bFull);
   }
 
   Comp unsignedModulo(const Comp& a, const Comp& b) {
-    assert (a->type.bitWidth >= b->type.bitWidth);
-    Comp bFull = zeroExtendVar(b, a->type.bitWidth);
-    return extractVar(problem.build_op_urem(a, bFull), 0, b->type.bitWidth);
+    assert (a.bitWidth() >= b.bitWidth());
+    Comp bFull = zeroExtendVar(b, a.bitWidth());
+    return extractVar(problem.build_op_urem(a, bFull), 0, b.bitWidth());
   }
 
   Comp leastSignificantSetBit(const Comp& in, uint origWidth = 0, uint base = 0) {
-    uint width = in->type.bitWidth;
+    uint width = in.bitWidth();
     if (origWidth == 0) origWidth = width;
     if (width == 0) return problem.build_constant(origWidth, base);
     if (width == 1) return ite(in, problem.build_constant(origWidth, base), zero(origWidth));
@@ -287,7 +287,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp mostSignificantSetBit(const Comp& in, uint origWidth = 0) {
-    uint width = in->type.bitWidth;
+    uint width = in.bitWidth();
     if (origWidth == 0) origWidth = width;
     if (width == 0) return zero(width);
     if (width == 1) return zero(width); // Return 0 for not found

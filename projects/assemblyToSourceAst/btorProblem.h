@@ -3,7 +3,11 @@
 
 // Limitations:
 //   No constants larger than uintmax_t
-//   No implicit negation (must use not operator)
+//
+// Extensions:
+//   Tags can be strings, not just numbers (but we only generate numbers so
+//     Boolector will work)
+//   array and root can have labels at the end (BTOR only allows that on var)
 
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
@@ -74,7 +78,8 @@ enum BtorOperator {
   btor_op_zero,
   btor_op_next,
   btor_op_anext,
-  btor_op_root
+  btor_op_root,
+  btor_NUM_OPERATORS
 };
 
 enum BtorTypeKind {btor_type_bitvector, btor_type_array};
@@ -105,8 +110,37 @@ struct BtorType {
   }
 };
 
+struct BtorOperatorInfo {
+  BtorOperator op;
+  const char* name;
+  uint numOperands;
+  uint numImmediates;
+  bool returnsArray;
+  bool acceptsFinalString;
+};
+
+extern BtorOperatorInfo btorOperators[btor_NUM_OPERATORS];
+
 struct BtorComputation;
-typedef boost::shared_ptr<BtorComputation> BtorComputationPtr;
+
+struct BtorComputationPtr {
+  boost::shared_ptr<BtorComputation> p;
+  bool inverted;
+
+  BtorComputationPtr(BtorComputation* c): p(boost::shared_ptr<BtorComputation>(c)), inverted(false) {}
+  BtorComputationPtr(): p(boost::shared_ptr<BtorComputation>()), inverted(false) {}
+  BtorComputationPtr invert() const {
+    BtorComputationPtr x;
+    x.p = p;
+    x.inverted = !inverted;
+    return x;
+  }
+
+  BtorType type() const;
+  BtorTypeKind kind() const;
+  uint bitWidth() const;
+  uint arraySize() const;
+};
 
 struct BtorComputation {
   BtorType type;
@@ -131,30 +165,37 @@ struct BtorComputation {
   BtorType getType() const; // Also checks operand and immediate counts
 };
 
+inline BtorType BtorComputationPtr::type() const {return p->type;}
+inline BtorTypeKind BtorComputationPtr::kind() const {return type().kind;}
+inline uint BtorComputationPtr::bitWidth() const {return type().bitWidth;}
+inline uint BtorComputationPtr::arraySize() const {return type().arraySize;}
+
 struct BtorProblem {
   std::vector<BtorComputationPtr> computations; // Every computation must be either in here or reachable from here
 
   BtorProblem(): computations() {}
 
   std::string unparse() const;
+  static BtorProblem parse(const std::string& s);
+  static BtorProblem parse(FILE* f);
 
   BtorComputationPtr build_var(uint size, const std::string& name = "") {
     BtorComputationPtr c(new BtorComputation(btor_op_var, std::vector<BtorComputationPtr>()));
-    c->variableName = name;
-    c->type.bitWidth = size;
+    c.p->variableName = name;
+    c.p->type.bitWidth = size;
     return c;
   }
 
   BtorComputationPtr build_array(uint bw, uint sz) {
     BtorComputationPtr c(new BtorComputation(btor_op_array, std::vector<BtorComputationPtr>()));
-    c->type.bitWidth = bw;
-    c->type.arraySize = sz;
+    c.p->type.bitWidth = bw;
+    c.p->type.arraySize = sz;
     return c;
   }
 
   BtorComputationPtr build_constant(uintmax_t size, uintmax_t value) {
     BtorComputationPtr c(new BtorComputation(btor_op_const, std::vector<BtorComputationPtr>(), std::vector<uintmax_t>(1, value)));
-    c->type.bitWidth = size;
+    c.p->type.bitWidth = size;
     assert ((1ULL << size) == 0 || (1ULL << size) > value);
     return c;
   }

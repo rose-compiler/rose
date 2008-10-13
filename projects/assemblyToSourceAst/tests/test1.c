@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
   int i;
   for (i = 0; i < 5; ++i) {}
 #endif
-#if 1
+#if 0
   volatile int z;
   // This program takes 4 basic blocks to fail by default.  Each of these lines
   // adds 1 more block to the run time (number of clock cycles that needs to be
