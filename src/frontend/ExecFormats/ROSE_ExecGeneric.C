@@ -1407,7 +1407,7 @@ SgAsmGenericFile::dump(FILE *f)
     }
     fprintf(f, "  %3s 0x%08"PRIx64"%*s EOF", overlap, get_current_size(), 76, "");
     if (get_current_size()!=p_data.size())
-        fprintf(f, " (original EOF was 0x%08"PRIx64")", p_data.size());
+        fprintf(f, " (original EOF was 0x%08zu)", p_data.size());
     fputc('\n', f);
     fprintf(f, "  --- ---------- ---------- ----------  ---------- ---------- ---------- ---------- ---- --- -----------------\n");
 }
