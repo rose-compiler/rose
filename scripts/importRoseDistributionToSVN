@@ -66,15 +66,15 @@ find . -name Makefile.in~ | xargs rm -rf
 find . -name autom4te.cache | xargs rm -rf
 
 # remove configure and Makefile.in
-rm  ${ROSE_DIST_DIR}/configure
-rm  ${ROSE_DIST_DIR}/aclocal.m4
-rm  ${ROSE_DIST_DIR}/rose_config.h.in
-rm  ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
-rm  ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
+rm -rf ${ROSE_DIST_DIR}/configure
+rm -rf ${ROSE_DIST_DIR}/aclocal.m4
+rm -rf ${ROSE_DIST_DIR}/rose_config.h.in
+rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
+rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
 find . -name Makefile.in | xargs rm -rf
-rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.cc
-rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.h
-rm  ${ROSE_DIST_DIR}/projects/OpenMP_Parser/omplexer.cc
+rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.cc
+rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.h
+rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/omplexer.cc
 
 # restore a few third party Makefile.in which cannot yet been automatically built
 #cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
@@ -101,7 +101,8 @@ if [ ${EDG_COPYRIGHT_STRINGS[0]} ]; then
   exit 2
 fi
 
-# Make sure all binary EDG versions for three platforms exist: i686-apple, i686-redhat, and x86_64-redhat, using a bash array (index starting from 0) to test it.
+# Make sure all binary EDG versions for three platforms exist:i686-apple, i686-redhat, 
+# and x86_64-redhat, using a bash array (index starting from 0) to test it.
 EDG_BINARIES1=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-pc-linux-gnu*.tar.gz))
 if [ ${EDG_BINARIES1[0]} ]; then
    echo Found the EDG binaries for i686-pc-linux as expected. It is ${EDG_BINARIES1[@]}. 
