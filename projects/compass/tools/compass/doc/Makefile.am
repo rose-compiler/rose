@@ -11,6 +11,7 @@ compassCheckerDocs.tex: ../CHECKER_LIST_WITHOUT_COMMENTS $(compass_scripts_dir)/
 
 docs: compass.tex compassCheckerDocs.tex
 	test -f fixme.sty || ln -s $(top_srcdir)/docs/Rose/fixme.sty fixme.sty
+	test -f html.sty || ln -s $(top_srcdir)/docs/Rose/html.sty html.sty
 	sh -c '\
 	for file in `ls $(srcdir)` ;\
 	do \
