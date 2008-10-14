@@ -47,6 +47,8 @@ pdf-local: $(TUTORIAL_NAME)
 make-web-pages: $(TUTORIAL_NAME)
 	mkdir -p ../ROSE_WebPages/ROSE_Tutorial
 	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/
+# a copy without version number as a permanent URL used for external references, Liao	
+	cp -fp $(TUTORIAL_NAME) ../ROSE_WebPages/ROSE_Tutorial/ROSE-Tutorial.pdf
 
 $(TUTORIAL_NAME): tutorial.tex gettingStarted.tex $(latexFiles)
 	cd $(top_builddir)/tutorial; $(MAKE) docs
