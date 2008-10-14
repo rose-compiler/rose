@@ -161,6 +161,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
     return 0;
   }
 
+// Compute the location of the first instruction in the data saved from the AST binary file format IR.
   ROSE_ASSERT (section->get_header() == interp->get_header());
   SgAsmGenericHeader* header = interp->get_header();
   ROSE_ASSERT (header);
@@ -171,6 +172,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
   ROSE_ASSERT (fileOffset < file->get_orig_size());
   SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
   SgAsmInstruction* insn = NULL;
+
   try {
     if (isSgAsmDOSFileHeader(header)) { // FIXME
       X86Disassembler::Parameters params(addr, x86_insnsize_16);
@@ -189,7 +191,14 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
    // DQ (10/12/2008): Currently using the WRONG disassemble, so this is a clear error!
    // But I wanted to first get the ELF instruction family identification in place!
       PowerpcDisassembler::Parameters params(addr, true);
+
+      printf ("File starting address = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
+
       insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
+#if 0
+      printf ("Exit after disassembling the first instruction! \n");
+      ROSE_ASSERT(false);
+#endif
     } else {
 
    // DQ (10/12/2008): Output a bit more information when we fail!
@@ -198,7 +207,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
       cerr << "Bad architecture to disassemble (disassembleOneAtAddress)" << endl;
       abort();
     }
-    ROSE_ASSERT (insn);
+    ROSE_ASSERT (insn != NULL);
     return insn;
   } catch (BadInstruction) {
     knownSuccessors.clear();

@@ -1750,6 +1750,7 @@ Grammar::setUpBinaryInstructions ()
      
      AsmArmRegisterReferenceExpression.setDataPrototype("SgAsmArmRegisterReferenceExpression::arm_register_enum","arm_register_code","= SgAsmArmRegisterReferenceExpression::undefined_arm_register",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("PowerpcRegisterClass","register_class","= powerpc_regclass_unknown",
                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPowerpcRegisterReferenceExpression.setDataPrototype("int","register_number","= 0",

@@ -73,7 +73,9 @@ namespace PowerpcDisassembler
           Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true): ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions) {}
         };
 
-     SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
+  // SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
+     SgAsmPowerpcRegisterReferenceExpression* makeRegister(PowerpcRegisterClass reg_class, int reg_number, PowerpcConditionRegisterAccessGranularity reg_grainularity);
+
      SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, std::set<uint64_t>* knownSuccessorsReturn = 0);
 
   // This is not used for ARM, so I don't think we need it!
