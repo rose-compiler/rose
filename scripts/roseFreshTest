@@ -251,9 +251,10 @@ if [ $buildstatus == 0 ]; then
 
  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
   if [ $ENABLE_UPLOAD_SVN ] ; then
-
-     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog
-    if [ $? -ne 0 ]; then
+ # bypass set -e by using own flag, so the child script can return to its parent    
+     failed=no 
+     ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog || failed=yes
+    if [ $failed = yes ]; then
       echo "Error: importRoseDistributionToSVN finishes abnormally!" >>$mailtext
     else
       echo "importRoseDistributionToSVN finishes normally.">>$mailtext
