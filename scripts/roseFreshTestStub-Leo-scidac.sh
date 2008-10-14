@@ -47,7 +47,7 @@ NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 # skip make dist, make distcheck, 
 #SKIP_DIST_TEST=yes
 # end-users are not supposed to run ./build in source tree
-SKIP_BUILD_SOURCE=yes
+#SKIP_BUILD_SOURCE=yes
 #make source_with_binary_edg_dist etc
 #ENABLE_BUILD_BINARY_EDG=1
 set -e
