@@ -43,6 +43,20 @@ struct BtorTranslationPolicy {
     rm.memory = problem.build_array(8, 32);
   }
 
+  void makeRegMapZero(BTRegisterInfo& rm) {
+    for (size_t i = 0; i < 8; ++i) {
+      rm.gprs[i] = problem.build_op_zero(32);
+    }
+    rm.ip = problem.build_op_zero(32);
+    for (size_t i = 0; i < 16; ++i) {
+      rm.flags[i] = problem.build_op_zero(1);
+    }
+    for (size_t i = 0; i < numBmcErrors; ++i) {
+      rm.errorFlag[i] = false_();
+    }
+    rm.memory = problem.build_array(8, 32);
+  }
+
   void addNext(Comp cur, Comp next) {
     problem.computations.push_back(problem.build_op_next(cur, next));
   }
@@ -78,7 +92,7 @@ struct BtorTranslationPolicy {
 
   BtorTranslationPolicy(uint32_t entryPoint): problem() {
     makeRegMap(origRegisterMap, "in");
-    makeRegMap(newRegisterMap, "bogus");
+    makeRegMapZero(newRegisterMap);
     isValidIp = false_();
     notResetState = problem.build_var(1, "notFirstStep");
     addNext(notResetState, true_());
@@ -289,8 +303,8 @@ struct BtorTranslationPolicy {
   Comp mostSignificantSetBit(const Comp& in, uint origWidth = 0) {
     uint width = in.bitWidth();
     if (origWidth == 0) origWidth = width;
-    if (width == 0) return zero(width);
-    if (width == 1) return zero(width); // Return 0 for not found
+    if (width == 0) return zero(origWidth);
+    if (width == 1) return zero(origWidth); // Return 0 for not found
     return ite(extractVar(in, width - 1, width),
                problem.build_constant(origWidth, width - 1),
                mostSignificantSetBit(extractVar(in, 0, width - 1), origWidth));
