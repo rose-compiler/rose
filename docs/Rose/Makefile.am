@@ -164,6 +164,9 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 	mkdir -p ROSE_WebPages/ROSE_UserManual
 	cp -f $(srcdir)/WEB_DOCS_README ROSE_WebPages
 	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_WebPages/ROSE_UserManual/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
+# add a copy without version number as a permanent URL for external reference by 
+# https://outreach.scidac.gov/docman/index.php?group_id=24&selected_doc_group_id=29&language_id=1
+	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_WebPages/ROSE_UserManual/ROSE-UserManual.pdf
 
 # Upload web pages to the LBL server 
 copyWebPages: make-web-pages
