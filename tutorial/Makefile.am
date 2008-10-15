@@ -620,6 +620,8 @@ traversalOutput = \
 
 
    #rose_inputCode_varSubstCopy.C , temporary disabled this test, don't go into patch!,Liao
+# .out suffix may cause conflicts with a temporary file used by makefile/libtool
+# using a different name is highly recommended!! Liao, 10/15/2008
 generatedCodeExamples = \
    rose_inputCode_inlineTransformations.C \
    rose_inputCode_partialRedundancyElimination.C \
@@ -639,8 +641,8 @@ generatedCodeExamples = \
    rose_inputCode_AddAssignmentStmt.C \
    rose_inputCode_AbstractHandle1.cpp \
    rose_inputCode_AbstractHandle2.cpp \
-   abstractHandle1.out \
-   abstractHandle2.out \
+   abstractHandle1.outx \
+   abstractHandle2.outx \
    rose_inputCode_AddExpression.C \
    rose_inputCode_AddFunctionCalls.C \
    rose_inputCode_InstrumentationTranslator.C \
@@ -855,11 +857,11 @@ rose_inputCode_AddVariableDeclaration2.C: addVariableDeclaration2
 
 rose_inputCode_AbstractHandle1.cpp: abstractHandle1
 	@echo "Generate executable from compilation of input code (abstractHandle1) ..."
-	./abstractHandle1 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle1.cpp | fold > abstractHandle1.out
+	./abstractHandle1 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle1.cpp | fold > abstractHandle1.outx
 
 rose_inputCode_AbstractHandle2.cpp: abstractHandle2
 	@echo "Generate executable from compilation of input code (abstractHandle2) ..."
-	./abstractHandle2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle2.cpp | fold > abstractHandle2.out
+	./abstractHandle2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle2.cpp | fold > abstractHandle2.outx
 
 rose_inputCode_AddAssignmentStmt.C: addAssignmentStmt
 	@echo "Generate executable from compilation of input code (addAssignmentStmt) ..."
@@ -1028,7 +1030,7 @@ rose_inputCode_templateExample2.C: identityTranslator $(srcdir)/inputCode_templa
 
 dataBaseExample1.out: dataBaseUsage
 	@echo "Generate data base from compilation of input code (data base example #1) ..."
- # Build smaller versions of these files (so that they fit onto two separate pages (within the tutorial))
+# Build smaller versions of these files (so that they fit onto two separate pages (within the tutorial))
 	split -64 $(srcdir)/dataBaseUsage.C dataBaseUsage.
 	./dataBaseUsage $(ROSE_FLAGS) -c $(srcdir)/inputCode_dataBaseExample1.C > dataBaseExample1.out
 
