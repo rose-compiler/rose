@@ -1247,6 +1247,7 @@ cleanDocs:
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new *.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
+	rm -rf $(generatedCodeExamples)
 #	rm -f exampleTranslator exampleTranslatorMultiLib
 #	rm -f inputCode_ExampleCodeCoverage
 
