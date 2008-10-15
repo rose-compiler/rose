@@ -1,6 +1,6 @@
 # DQ (5/30/2007): Move to new modern automake macros (previous versions have been depricated)
 # AC_INIT
-AC_INIT(ROSE, 0.9.3a)
+AC_INIT(ROSE, 0.9.4a)
 
 # DQ (5/30/2007): Move to newer version of autoconf (I think this is required to get the new macros).
 # This is reported as bad style at http://sources.redhat.com/automake/automake.html#Extending-aclocal

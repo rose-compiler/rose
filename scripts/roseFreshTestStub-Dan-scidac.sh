@@ -21,7 +21,8 @@ CONFIGURE_FLAGS=(--with-edg_source_code=true --with-boost=${BOOST_ROOT} --enable
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/trunk
-MAILADDRS="liaoch@llnl.gov willcock2@llnl.gov"
+# MAILADDRS="liaoch@llnl.gov willcock2@llnl.gov"
+MAILADDRS="dquinlan@llnl.gov"
 
 # the right version of subversion is essential!!
 SVN=/nfs/apps/subversion/1.5.1/bin/svn
@@ -34,7 +35,7 @@ SVNOP=checkout
 #SVNVERSIONOPTION=1303
 
 # bddbddb needs python 
-source /home/liao6/opt/python-2.4.5/setup.sh
+# source /home/liao6/opt/python-2.4.5/setup.sh
 
 # How many processes for make
 MAKEFLAGS="-j16"

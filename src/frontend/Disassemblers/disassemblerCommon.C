@@ -60,8 +60,9 @@ MapGlobalVariables::visit(SgNode* n)
 
           if (symbol->get_type() == SgAsmGenericSymbol::SYM_FUNC)
              {
+#if 0
                printf ("Adding entry to globalFunctionMap: address = %p symbol = %p = %s \n",(void*)address,symbol,symbol->get_name()->c_str());
-
+#endif
             // Check and see if this address is already present in the map
                if (globalFunctionMap.find(address) == globalFunctionMap.end())
                   {
@@ -70,7 +71,9 @@ MapGlobalVariables::visit(SgNode* n)
                  else
                   {
                  // This happens for __libc_start_main and __libc_start_main@@GLIBC_2.2.5 which appear to share the 0x00000000 address.
+#if 0
                     printf ("Duplicate function used to represent same address \n");
+#endif
                  // ROSE_ASSERT(false);
                   }
              }
@@ -188,11 +191,10 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
       insn = ArmDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
     } else if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
 
-   // DQ (10/12/2008): Currently using the WRONG disassemble, so this is a clear error!
-   // But I wanted to first get the ELF instruction family identification in place!
+   // DQ (10/12/2008): Added support for PowerPC.
       PowerpcDisassembler::Parameters params(addr, true);
 
-      printf ("File starting address = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
+      printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
 
       insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
 #if 0
@@ -274,7 +276,7 @@ void DisassemblerCommon::AsmFileWithData::disassembleRecursively(vector<uint64_t
         if ((x86insn && (x86insn->get_kind() == x86_call || x86insn->get_kind() == x86_farcall)) ||
             (arminsn && (arminsn->get_kind() == arm_bl || arminsn->get_kind() == arm_blx))) {
 	  // tps (6/Oct/2008) : added that this is a heuristic and not from the symbol table
-	  if (heuristicFunctionDetection) {
+	  if (heuristicFunctionDetection == true) {
 	    functionStarts.insert(make_pair(constant,""));
 	  }
         }
@@ -409,7 +411,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
      basicBlockStarts[entryPoint] = true;
 
   // tps (6/Oct/08): commented out since it affects the function detection
-     if (heuristicFunctionDetection)
+     if (heuristicFunctionDetection == true)
         {
        // DQ (10/12/2008): The entry point for the program is not a function, so it has no function name?
        // However, if we treat it as a function then perhaps we should give it a name, e.g. "program_entry_point".
@@ -477,70 +479,142 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
   // printf ("Warning (conservative disassembly): Skipping search for pointers that reference executable code (valid sections) \n");
 #endif
 
-// DQ (10/12/2008): I think that the code below interprets the instructions just generated to distinguish (and build) functions from blocks.
-  map<uint64_t, SgAsmBlock*> basicBlocks;
-  for (map<uint64_t, bool>::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i) {
-    uint64_t addr = i->first;
-    SgAsmBlock* b = new SgAsmBlock();
-    b->set_address(addr);
-    b->set_id(addr);
-    b->set_externallyVisible(i->second);
-    basicBlocks[addr] = b;
-  }
+  // DQ (10/12/2008): I think that the code below interprets the instructions just generated to distinguish (and build) functions from blocks.
+     map<uint64_t, SgAsmBlock*> basicBlocks;
+     for (map<uint64_t, bool>::const_iterator i = basicBlockStarts.begin(); i != basicBlockStarts.end(); ++i)
+        {
+          uint64_t addr = i->first;
+          SgAsmBlock* b = new SgAsmBlock();
+          b->set_address(addr);
+          b->set_id(addr);
+          b->set_externallyVisible(i->second);
+          basicBlocks[addr] = b;
+        }
 
+     MapGlobalVariables t;
+     t.traverse(interp, preorder);
+     printf ("Number of global functions = %zu \n",t.globalFunctionMap.size());
+     std::string funcName="none";
 
-  MapGlobalVariables t;
-  t.traverse(interp, preorder);
-  printf ("Number of global functions = %zu \n",t.globalFunctionMap.size());
-  std::string funcName="none";
-
-  SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
+     SgAsmBlock* blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoBasicBlocks(basicBlocks, insns);
   // Find the signatures that indicate the beginnings of functions -- they
   // are only considered if they are at the start of a basic block
-  const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
-  for (size_t i = 0; i < computedBasicBlocks.size(); ++i) {
-    SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
-    if (!bb) continue;
-    SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
-    if (!section) continue;
-    ROSE_ASSERT (section->get_header() == header);
-    SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
-    bool isFunctionStart = false;
-    if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family) {
-      if (!heuristicFunctionDetection) {
-	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-	  isFunctionStart = true;
-	  funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-	} else
-	  isFunctionStart = false;
-      }
-      else
-	isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
-    } else if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family) {
-      if (!heuristicFunctionDetection) {
-	if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end()) {
-	  isFunctionStart = true; 
-	  funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
-	} else
-	  isFunctionStart = false; 
-      } else
-	isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
-    } else if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family) {
-      isFunctionStart = false; // FIXME
-    } else if (isSgAsmDOSFileHeader(header)) {
-      isFunctionStart = false; // FIXME
-    } else {
-      cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
-      abort();
-    }
-    if (isFunctionStart) {
-      functionStarts.insert(make_pair(bb->get_address(),funcName));
-    }
-  }
+     const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
+     for (size_t i = 0; i < computedBasicBlocks.size(); ++i)
+        {
+       // DQ (10/14/2008): Is this the sort of coding style that we want to have in a for loop?
+
+          SgAsmBlock* bb = isSgAsmBlock(computedBasicBlocks[i]);
+          if (!bb) continue;
+
+          SgAsmGenericSection* section = file.getSectionOfAddress(bb->get_address());
+          if (!section) continue;
+
+       // These conditionals are all loop invariant
+          ROSE_ASSERT (section->get_header() == header);
+          SgAsmExecutableFileFormat::InsSetArchitecture isa = header->get_isa();
+          bool isFunctionStart = false;
+
+          if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_IA32_Family)
+             {
+            // if (!heuristicFunctionDetection)
+               if (heuristicFunctionDetection == false)
+                  {
+                    if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
+                       {
+                         isFunctionStart = true;
+                         funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+                       }
+                      else
+                         isFunctionStart = false;
+                  }
+                 else
+                    isFunctionStart = X86Disassembler::doesBBStartFunction(bb, false);
+             }
+            else
+             {
+               if ((isa & SgAsmExecutableFileFormat::ISA_FAMILY_MASK) == SgAsmExecutableFileFormat::ISA_X8664_Family)
+                  {
+                 // if (!heuristicFunctionDetection)
+                    if (heuristicFunctionDetection == false)
+                       {
+                         if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
+                            {
+                              isFunctionStart = true;
+                              funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+                            }
+                           else
+                            {
+                              isFunctionStart = false;
+                            }
+                       }
+                      else
+                       {
+                         isFunctionStart = X86Disassembler::doesBBStartFunction(bb, true);
+                       }
+                  }
+                 else
+                  {
+                   if (isa == SgAsmExecutableFileFormat::ISA_ARM_Family)
+                      {
+                        isFunctionStart = false; // FIXME
+                      }
+                     else
+                      {
+                        if (isSgAsmDOSFileHeader(header))
+                           {
+                             isFunctionStart = false; // FIXME
+                           }
+                          else
+                           {
+                             if (isa == SgAsmExecutableFileFormat::ISA_PowerPC)
+                                {
+                               // DQ (10/14/2008): Added support for PowerPC in location after addition of function symbols.
+
+                                  if (heuristicFunctionDetection == false)
+                                     {
+                                       if (t.globalFunctionMap.find(bb->get_address()) != t.globalFunctionMap.end())
+                                          {
+                                            isFunctionStart = true; 
+                                            funcName = t.globalFunctionMap[bb->get_address()]->get_name()->get_string();
+                                          }
+                                         else
+                                          {
+                                            isFunctionStart = false;
+                                          }
+                                     }
+                                    else
+                                     {
+                                       isFunctionStart = PowerpcDisassembler::doesBBStartFunction(bb, true);
+                                     }
+
+#if 0
+                                  printf ("Exit after disassembling the first instruction after reading function symbols! \n");
+                                  ROSE_ASSERT(false);
+#endif
+                                }
+                               else
+                                {
+                                  cerr << "Bad architecture to disassemble (interpreting functions)" << endl;
+                                  abort();
+                                }
+                           }
+                      }
+                  }
+             }
+
+          if (isFunctionStart)
+             {
+               functionStarts.insert(make_pair(bb->get_address(),funcName));
+             }
+
+          printf ("Processed a block! computedBasicBlocks[%d] = %p \n",i,computedBasicBlocks[i]);
+        }
+
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
-  cerr << ">> Number of FunctionStarts: " << functionStarts.size() << endl;
-  blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
-  interp->set_global_block(blk);
-  blk->set_parent(interp);
-  blk->set_externallyVisible(true);
-}
+     cerr << ">> Number of FunctionStarts: " << functionStarts.size() << endl;
+     blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
+     interp->set_global_block(blk);
+     blk->set_parent(interp);
+     blk->set_externallyVisible(true);
+   }

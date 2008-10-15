@@ -28,10 +28,10 @@ namespace PowerpcDisassembler
 
           SingleInstructionDisassembler(const Parameters& p, uint32_t insn, std::set<uint64_t>* knownSuccessorsReturn): p(p), insn(insn), knownSuccessorsReturn(knownSuccessorsReturn) {}
 
-          SgAsmPowerpcInstruction* disassemble();
+          SgAsmPowerpcInstruction* disassemble(const uint8_t* const instructionList, size_t positionInVector);
 
        // There are 15 different forms of PowerPC instructions, but all are 32-bit (fixed length instruction set).
-          SgAsmPowerpcInstruction* decode_I_formInstruction();
+          SgAsmPowerpcInstruction* decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector);
           SgAsmPowerpcInstruction* decode_B_formInstruction();
           SgAsmPowerpcInstruction* decode_SC_formInstruction();
           SgAsmPowerpcInstruction* decode_D_formInstruction();
@@ -46,6 +46,8 @@ namespace PowerpcDisassembler
           SgAsmPowerpcInstruction* decode_M_formInstruction();
           SgAsmPowerpcInstruction* decode_MD_formInstruction();
           SgAsmPowerpcInstruction* decode_MDS_formInstruction();
+
+          SgAsmDoubleWordValueExpression* makeBranchTarget( uint32_t targetAddr ) const;
         };
 
      SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn);
@@ -56,7 +58,7 @@ namespace PowerpcDisassembler
   // SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn);
   // SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint32_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn);
   // SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint32_t insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn);
-     SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn);
+     SgAsmPowerpcInstruction* disassemble(const Parameters& p, const uint8_t* const instructionList, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn);
 
 // end of namespace: PowerpcDisassembler
    }
@@ -66,6 +68,49 @@ namespace PowerpcDisassembler
 #define MAKE_INSN2(Mne, Op1, Op2) (appendOperand(MAKE_INSN1(Mne, Op1), (Op2)))
 #define MAKE_INSN3(Mne, Op1, Op2, Op3) (appendOperand(MAKE_INSN2(Mne, Op1, Op2), (Op3)))
 #define MAKE_INSN4(Mne, Op1, Op2, Op3, Op4) (appendOperand(MAKE_INSN3(Mne, Op1, Op2, Op3), (Op4)))
+#define MAKE_INSN5(Mne, Op1, Op2, Op3, Op4, Op5) (appendOperand(MAKE_INSN4(Mne, Op1, Op2, Op3, Op4), (Op5)))
+
+#if 0
+SgAsmDoubleWordValueExpression*
+PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget(uint32_t LI) const
+   {
+  // int32_t val = insn & 0xFFFFFF;
+  // val <<= 8;
+  // val >>= 6; // Arithmetic shift to copy highest bit of immediate
+
+     uint32_t val_temp = (LI >= (1U << 23)) ? LI - (1U << 24) : LI;
+     val_temp <<= 2;
+
+     uint32_t targetAddr = p.ip + val_temp;
+
+     if (knownSuccessorsReturn) knownSuccessorsReturn->insert(targetAddr);
+     return makeDWordValue(targetAddr);
+   }
+#endif
+
+SgAsmDoubleWordValueExpression*
+PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget ( uint32_t targetAddr ) const
+   {
+  // int32_t val = insn & 0xFFFFFF;
+  // val <<= 8;
+  // val >>= 6; // Arithmetic shift to copy highest bit of immediate
+#if 0
+     uint32_t val_temp = (LI >= (1U << 23)) ? LI - (1U << 24) : LI;
+     val_temp <<= 2;
+
+     uint32_t targetAddr = p.ip + val_temp;
+#endif
+
+     if (knownSuccessorsReturn) knownSuccessorsReturn->insert(targetAddr);
+     return makeDWordValue(targetAddr);
+   }
+
+bool
+PowerpcDisassembler::doesBBStartFunction(SgAsmBlock* bb, bool use64bit)
+   {
+  // DQ (10/14/2008): Provide a default implementation for now!
+     return false;
+   }
 
 SgAsmPowerpcInstruction*
 PowerpcDisassembler::makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn)
@@ -113,9 +158,11 @@ PowerpcDisassembler::makeRegister(PowerpcRegisterClass reg_class, int reg_number
   }
 
 SgAsmPowerpcInstruction*
-PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const insn, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn)
+PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const instructionList, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn)
    {
-     printf ("Inside of PowerpcDisassembler::disassemble(): insn = %p insnSize = %zu positionInVector = %zu \n",insn,insnSize,positionInVector);
+     printf ("Inside of PowerpcDisassembler::disassemble(): instructionList = %p insnSize = %zu positionInVector = %zu \n",instructionList,insnSize,positionInVector);
+
+     ROSE_ASSERT(knownSuccessorsReturn != NULL);
 
   // This is the way it is to deal with overflows
      if (positionInVector >= insnSize || positionInVector + 4 > insnSize)
@@ -123,225 +170,328 @@ PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const insn,
           abort();
         }
 
-  // Note that PowerPC is big-endian...but that is can support both big and little endian processor modes (with much weirdness).
-     uint32_t c = insn[positionInVector + 0];
-     c = (c << 8) | insn[positionInVector + 1];
-     c = (c << 8) | insn[positionInVector + 2];
-     c = (c << 8) | insn[positionInVector + 3];
+  // Note that PowerPC is big-endian...but PowerPC can support both big and little 
+  // endian processor modes (with much weirdness; e.g. PDP endian like propoerties).
+     uint32_t c = instructionList[positionInVector + 0];
+     c = (c << 8) | instructionList[positionInVector + 1];
+     c = (c << 8) | instructionList[positionInVector + 2];
+     c = (c << 8) | instructionList[positionInVector + 3];
 
      printf ("Single instruction opcode = 0x%x (calling disassembler) \n",c);
 
      SingleInstructionDisassembler sid(p, c, knownSuccessorsReturn);
-     return sid.disassemble();
+     return sid.disassemble(instructionList,positionInVector);
    }
 
 SgAsmPowerpcInstruction*
-PowerpcDisassembler::SingleInstructionDisassembler::disassemble()
-    {
-   // The Primary Opcode Field is bits 0-5, 6-bits wide, so there are max 64 primary opcode values
-      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* const instructionList, size_t positionInVector)
+   {
+  // The Primary Opcode Field is bits 0-5, 6-bits wide, so there are max 64 primary opcode values
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
 
-      printf ("instruction opcode = 0x%x primaryOpcode = 0x%x \n",insn,primaryOpcode);
+     printf ("instruction opcode = 0x%x primaryOpcode = 0x%x \n",insn,primaryOpcode);
 
-   // This should clear the upper two bits of the byte (so we only evaluate the Primary Opcode Field)
-   // getByte(opcode);
+  // This should clear the upper two bits of the byte (so we only evaluate the Primary Opcode Field)
+  // getByte(opcode);
 
-      SgAsmPowerpcInstruction* instruction = NULL;
+     SgAsmPowerpcInstruction* instruction = NULL;
 
-      if (knownSuccessorsReturn != NULL)
-         {
-        // Test for unconditional branch
-           if (primaryOpcode != 18)
-              {
-             // This is NOT an unconditional branch
-                knownSuccessorsReturn->insert(p.ip + 4);
-              }
-         }
+     ROSE_ASSERT(knownSuccessorsReturn != NULL);
+
+  // Test for unconditional branch
+     if (primaryOpcode != 18)
+        {
+       // This is NOT an unconditional branch
+          knownSuccessorsReturn->insert(p.ip + 4);
+        }
 
    // Handle all the different legal Primary Opcode values
-      switch (primaryOpcode)
-         {
-           case 0x00: 
-           case 0x01: { /* illegal instruction */ ROSE_ASSERT(false); break; }
+     switch (primaryOpcode)
+        {
+          case 0x00: 
+          case 0x01: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
-           case 0x02: { instruction = decode_D_formInstruction(); break; }
-           case 0x03: { instruction = decode_D_formInstruction(); break; }
+          case 0x02: { instruction = decode_D_formInstruction(); break; }
+          case 0x03: { instruction = decode_D_formInstruction(); break; }
 
-           case 0x04: 
-           case 0x05: 
-           case 0x06: { /* illegal instruction */ ROSE_ASSERT(false); break; }
+          case 0x04: 
+          case 0x05: 
+          case 0x06: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
-           case 0x07: { instruction = decode_D_formInstruction(); break; }
-           case 0x08: { instruction = decode_D_formInstruction(); break; }
+          case 0x07: { instruction = decode_D_formInstruction(); break; }
+          case 0x08: { instruction = decode_D_formInstruction(); break; }
 
-           case 0x09: { /* illegal instruction */ ROSE_ASSERT(false); break; }
+          case 0x09: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
-           case 0x0A: { instruction = decode_D_formInstruction(); break; }
-           case 0x0B: { instruction = decode_D_formInstruction(); break; }
-           case 0x0C: { instruction = decode_D_formInstruction(); break; }
-           case 0x0D: { instruction = decode_D_formInstruction(); break; }
-           case 0x0E: { instruction = decode_D_formInstruction(); break; }
-           case 0x0F: { instruction = decode_D_formInstruction(); break; }
+          case 0x0A: { instruction = decode_D_formInstruction(); break; }
+          case 0x0B: { instruction = decode_D_formInstruction(); break; }
+          case 0x0C: { instruction = decode_D_formInstruction(); break; }
+          case 0x0D: { instruction = decode_D_formInstruction(); break; }
+          case 0x0E: { instruction = decode_D_formInstruction(); break; }
+          case 0x0F: { instruction = decode_D_formInstruction(); break; }
 
-        // Branch instruction
-           case 0x10: { instruction = decode_B_formInstruction(); break; }
+       // Branch instruction
+          case 0x10: { instruction = decode_B_formInstruction(); break; }
 
-           case 0x11: { instruction = decode_SC_formInstruction(); break; }
+          case 0x11: { instruction = decode_SC_formInstruction(); break; }
 
-        // Conditional branch
-           case 0x12: { instruction = decode_I_formInstruction(); break; }
+       // Conditional branch
+          case 0x12: { instruction = decode_I_formInstruction(instructionList,positionInVector); break; }
 
-           case 0x13: { instruction = decode_XL_formInstruction(); break; }
+          case 0x13: { instruction = decode_XL_formInstruction(); break; }
 
-        // 20
-           case 0x14: { instruction = decode_M_formInstruction(); break; }
-           case 0x15: { instruction = decode_M_formInstruction(); break; }
+       // 20
+          case 0x14: { instruction = decode_M_formInstruction(); break; }
+          case 0x15: { instruction = decode_M_formInstruction(); break; }
 
-           case 0x16: { /* illegal instruction */ ROSE_ASSERT(false); break; }
+          case 0x16: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
-           case 0x17: { instruction = decode_M_formInstruction(); break; }
+          case 0x17: { instruction = decode_M_formInstruction(); break; }
 
-        // 24
-           case 0x18: { instruction = decode_D_formInstruction(); break; }
-           case 0x19: { instruction = decode_D_formInstruction(); break; }
-           case 0x1A: { instruction = decode_D_formInstruction(); break; }
-           case 0x1B: { instruction = decode_D_formInstruction(); break; }
-           case 0x1C: { instruction = decode_D_formInstruction(); break; }
-           case 0x1D: { instruction = decode_D_formInstruction(); break; }
+       // 24
+          case 0x18: { instruction = decode_D_formInstruction(); break; }
+          case 0x19: { instruction = decode_D_formInstruction(); break; }
+          case 0x1A: { instruction = decode_D_formInstruction(); break; }
+          case 0x1B: { instruction = decode_D_formInstruction(); break; }
+          case 0x1C: { instruction = decode_D_formInstruction(); break; }
+          case 0x1D: { instruction = decode_D_formInstruction(); break; }
 
-        // 30
-           case 0x1E: { instruction = decode_MD_formInstruction(); break; }
+       // 30
+          case 0x1E: { instruction = decode_MD_formInstruction(); break; }
 
-        // 31: includes X form, XO form, XFX form, and XS form
-           case 0x1F: { instruction = decode_X_formInstruction(); break; }
+       // 31: includes X form, XO form, XFX form, and XS form
+          case 0x1F: { instruction = decode_X_formInstruction(); break; }
 
-        // 32 load store instructions
-           case 0x20: { instruction = decode_D_formInstruction(); break; }
-           case 0x21: { instruction = decode_D_formInstruction(); break; }
-           case 0x22: { instruction = decode_D_formInstruction(); break; }
-           case 0x23: { instruction = decode_D_formInstruction(); break; }
-           case 0x24: { instruction = decode_D_formInstruction(); break; }
-           case 0x25: { instruction = decode_D_formInstruction(); break; }
-           case 0x26: { instruction = decode_D_formInstruction(); break; }
-           case 0x27: { instruction = decode_D_formInstruction(); break; }
-           case 0x28: { instruction = decode_D_formInstruction(); break; }
-           case 0x29: { instruction = decode_D_formInstruction(); break; }
-           case 0x2A: { instruction = decode_D_formInstruction(); break; }
-           case 0x2B: { instruction = decode_D_formInstruction(); break; }
-           case 0x2C: { instruction = decode_D_formInstruction(); break; }
-           case 0x2D: { instruction = decode_D_formInstruction(); break; }
-           case 0x2E: { instruction = decode_D_formInstruction(); break; }
-           case 0x2F: { instruction = decode_D_formInstruction(); break; }
-           case 0x30: { instruction = decode_D_formInstruction(); break; }
-           case 0x31: { instruction = decode_D_formInstruction(); break; }
-           case 0x32: { instruction = decode_D_formInstruction(); break; }
-           case 0x33: { instruction = decode_D_formInstruction(); break; }
-           case 0x34: { instruction = decode_D_formInstruction(); break; }
-           case 0x35: { instruction = decode_D_formInstruction(); break; }
-           case 0x36: { instruction = decode_D_formInstruction(); break; }
-           case 0x37: { instruction = decode_D_formInstruction(); break; }
+       // 32 load store instructions
+          case 0x20: { instruction = decode_D_formInstruction(); break; }
+          case 0x21: { instruction = decode_D_formInstruction(); break; }
+          case 0x22: { instruction = decode_D_formInstruction(); break; }
+          case 0x23: { instruction = decode_D_formInstruction(); break; }
+          case 0x24: { instruction = decode_D_formInstruction(); break; }
+          case 0x25: { instruction = decode_D_formInstruction(); break; }
+          case 0x26: { instruction = decode_D_formInstruction(); break; }
+          case 0x27: { instruction = decode_D_formInstruction(); break; }
+          case 0x28: { instruction = decode_D_formInstruction(); break; }
+          case 0x29: { instruction = decode_D_formInstruction(); break; }
+          case 0x2A: { instruction = decode_D_formInstruction(); break; }
+          case 0x2B: { instruction = decode_D_formInstruction(); break; }
+          case 0x2C: { instruction = decode_D_formInstruction(); break; }
+          case 0x2D: { instruction = decode_D_formInstruction(); break; }
+          case 0x2E: { instruction = decode_D_formInstruction(); break; }
+          case 0x2F: { instruction = decode_D_formInstruction(); break; }
+          case 0x30: { instruction = decode_D_formInstruction(); break; }
+          case 0x31: { instruction = decode_D_formInstruction(); break; }
+          case 0x32: { instruction = decode_D_formInstruction(); break; }
+          case 0x33: { instruction = decode_D_formInstruction(); break; }
+          case 0x34: { instruction = decode_D_formInstruction(); break; }
+          case 0x35: { instruction = decode_D_formInstruction(); break; }
+          case 0x36: { instruction = decode_D_formInstruction(); break; }
+          case 0x37: { instruction = decode_D_formInstruction(); break; }
 
-        // 56
-           case 0x38: 
-           case 0x39: { /* illegal instruction */ ROSE_ASSERT(false); break; }
+       // 56
+          case 0x38: 
+          case 0x39: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
-        // 58
-           case 0x3A: { instruction = decode_DS_formInstruction(); break; }
+       // 58
+          case 0x3A: { instruction = decode_DS_formInstruction(); break; }
 
-           case 0x3B: { instruction = decode_A_formInstruction(); break; }
+          case 0x3B: { instruction = decode_A_formInstruction(); break; }
 
-        // 60
-           case 0x3C: 
-           case 0x3D: { /* illeagal instruction */ ROSE_ASSERT(false); break; }
+       // 60
+          case 0x3C: 
+          case 0x3D: { /* illeagal instruction */ ROSE_ASSERT(false); break; }
 
-        // 62
-           case 0x3E: { instruction = decode_DS_formInstruction(); break; }
+       // 62
+          case 0x3E: { instruction = decode_DS_formInstruction(); break; }
 
-        // 63: includes A form, X form, and XFL form instructions
-           case 0x3F:
-              {
-             // Depending on if this is A form or X form, the extended opCode maps to different bit ranges, so this code is incorrect!
-                uint8_t secodaryOpcode = (insn >> 21) & 0x1F;
-                switch (secodaryOpcode)
-                   {
-                  // Computed from bits 21-30
-                  // Values: 0, 12, 14, 15
-                     case 0x00:
-                     case 0x0C:
-                     case 0x0E:
-                     case 0x0F: { instruction = decode_X_formInstruction(); break; }
+       // 63: includes A form, X form, and XFL form instructions
+          case 0x3F:
+             {
+            // Depending on if this is A form or X form, the extended opCode maps to different bit ranges, so this code is incorrect!
 
-                  // Computed from bits 26-30
-                  // Values: 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
-                     case 0x12:
-                     case 0x14:
-                     case 0x15:
-                     case 0x16:
-                     case 0x17:
-                     case 0x18:
-                     case 0x19:
-                     case 0x1A:
-                     case 0x1B:
-                     case 0x1C:
-                     case 0x1D:
-                     case 0x1E:
-                     case 0x1F: { instruction = decode_A_formInstruction(); break; }
+               printf ("Extended Opcode must be taken from different parts of the Opcode to distinguish different instuction forms \n");
 
-                  // Computed from bits 21-30
-                  // 32
-                     case 0x20:
-                     case 0x21:
-                     case 0x22:
+               printf ("Not handled yet! \n");
+               ROSE_ASSERT(false);
 
-                  // 38
-                     case 38:
-                     case 40:
-                     case 64:
-                     case 70:
-                     case 72:
-                     case 134:
-                     case 136:
-                     case 264:
-                     case 583: { instruction = decode_X_formInstruction(); break; }
+               uint8_t secodaryOpcode = (insn >> 21) & 0x1F;
+               switch (secodaryOpcode)
+                  {
+                 // Computed from bits 21-30
+                 // Values: 0, 12, 14, 15
+                    case 0x00:
+                    case 0x0C:
+                    case 0x0E:
+                    case 0x0F: { instruction = decode_X_formInstruction(); break; }
 
-                  // Computed from bits 21-30
-                     case 711: { instruction = decode_XFL_formInstruction(); break; }
+                 // Computed from bits 26-30
+                 // Values: 18, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31
+                    case 0x12:
+                    case 0x14:
+                    case 0x15:
+                    case 0x16:
+                    case 0x17:
+                    case 0x18:
+                    case 0x19:
+                    case 0x1A:
+                    case 0x1B:
+                    case 0x1C:
+                    case 0x1D:
+                    case 0x1E:
+                    case 0x1F: { instruction = decode_A_formInstruction(); break; }
 
-                     case 814:
-                     case 815:
+                 // Computed from bits 21-30
+                 // 32
+                    case 0x20:
+                    case 0x21:
+                    case 0x22:
 
-                  // This is 1101100000 (a 10-bit value)
-                     case 864: { instruction = decode_A_formInstruction(); break; }
+                 // 38
+                    case 38:
+                    case 40:
+                    case 64:
+                    case 70:
+                    case 72:
+                    case 134:
+                    case 136:
+                    case 264:
+                    case 583: { instruction = decode_X_formInstruction(); break; }
 
-                     default:
-                        {
-                          printf ("Secondary opcode not handled yet (or illegal instruction): secodaryOpcode = %d \n",secodaryOpcode);
-                          ROSE_ASSERT(false);
-                        }
-                   }
+                 // Computed from bits 21-30
+                    case 711: { instruction = decode_XFL_formInstruction(); break; }
 
-                instruction = decode_X_formInstruction();
-                break;
-              }
+                    case 814:
+                    case 815:
 
-        // And so on until we handle all 64 opcodes (the legal instructions only)!
+                 // This is 1101100000 (a 10-bit value)
+                    case 864: { instruction = decode_A_formInstruction(); break; }
 
-           default:
-              {
-                printf ("Primary opcode not handled yet: primaryOpcode = %d \n",primaryOpcode);
-                ROSE_ASSERT(false);
-              }
-         }
+                    default:
+                       {
+                         printf ("Secondary opcode not handled yet (or illegal instruction): secodaryOpcode = %d \n",secodaryOpcode);
+                         ROSE_ASSERT(false);
+                       }
+                  }
 
-    return instruction;
-  }
+               instruction = decode_X_formInstruction();
+               break;
+             }
+
+       // And so on until we handle all 64 opcodes (the legal instructions only)!
+
+          default:
+             {
+               printf ("Primary opcode not handled yet: primaryOpcode = %d \n",primaryOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(instruction != NULL);
+
+     return instruction;
+   }
 
 
    
 SgAsmPowerpcInstruction*
-PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction()
+PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector)
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+
+  // Get bits 6-8, 3 bits as the BF opcode
+     uint32_t liOpcode = (insn >> 2) & 0x1FFFFFF;
+
+  // Get bit 30, 1 bit as the reserved flag
+     uint8_t aaOpcode = (insn >> 1) & 0x1;
+
+  // Get bit 31, 1 bit as the reserved flag
+     uint8_t lkOpcode = (insn >> 0) & 0x1;
+
+     printf ("I-Form instruction opcode = 0x%x liOpcode = 0x%x aaOpcode = 0x%x lkOpcode = 0x%x \n",insn,liOpcode,aaOpcode,lkOpcode);
+
+  // SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
+     switch(primaryOpcode)
+        {
+          case 0x12:
+             {
+            // The address should be computed for the knownSuccessorsReturn set, but not computed for use 
+            // in the instuction (else we would be mixing the semantic analysis into the disassembly).
+               SgAsmExpression* targetAddress = new SgAsmDoubleWordValueExpression(liOpcode);
+
+               uint32_t nextInstruction = 0;
+               if (aaOpcode == 0)
+                  {
+                    if (lkOpcode == 0)
+                       {
+                         instruction = MAKE_INSN1(b,targetAddress);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN1(ba,targetAddress);
+                       }
+
+                    nextInstruction = (liOpcode + p.ip) & 0xFFFFFFFF;
+                  }
+                 else
+                  {
+                    if (lkOpcode == 0)
+                       {
+                         instruction = MAKE_INSN1(bl,targetAddress);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN1(bla,targetAddress);
+                       }
+
+                    nextInstruction = liOpcode & 0xFFFFFFFF;
+                  }
+
+            // Check the link flag
+               if (lkOpcode == 1)
+                  {
+                 // The addess of the next instruction should be computed and placed into the knownSuccessorsReturn set (as in function call return).
+                    printf ("The addess of the next instruction should be placed into the knownSuccessorsReturn set. nextInstruction = 0x%x \n",nextInstruction);
+                 // ROSE_ASSERT(false);
+#if 0
+                    uint32_t nextInstructionPosition = positionInVector + 4;
+                    uint32_t jumpAddress = instructionList[nextInstructionPosition + 0];
+                    jumpAddress = (jumpAddress << 8) | instructionList[nextInstructionPosition + 1];
+                    jumpAddress = (jumpAddress << 8) | instructionList[nextInstructionPosition + 2];
+                    jumpAddress = (jumpAddress << 8) | instructionList[nextInstructionPosition + 3];
+                    printf ("Computation of jumpAddress = 0x%x = %d (next location for disassemble) \n",jumpAddress,jumpAddress);
+#endif
+#if 1
+                    printf ("knownSuccessorsReturn->size() = %zu \n",knownSuccessorsReturn->size());
+
+                    uint32_t val_temp = (liOpcode >= (1U << 23)) ? liOpcode - (1U << 24) : liOpcode;
+                    val_temp <<= 2;
+
+                    uint32_t targetAddr = p.ip + val_temp;
+
+                    SgAsmDoubleWordValueExpression* targetAddress = makeBranchTarget(targetAddr);
+                    ROSE_ASSERT(knownSuccessorsReturn->empty() == false);
+
+                    printf ("Computation of targetAddress = %u \n",targetAddress->get_value());
+#else
+                 // Move on the the next instruction ignoring the unconditional branch (so I can focus on instruction decoding...).
+                    printf ("Skipping computation of jumpAddress = 0x%x = %d (next location for disassemble) \n",jumpAddress,jumpAddress);
+                    knownSuccessorsReturn->insert(p.ip + 4);
+#endif
+                  }
+
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: I-Form primaryOpcode = %d not handled! \n",primaryOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
+
+     ROSE_ASSERT(instruction != NULL);
      return instruction;
    }
 
@@ -379,6 +529,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
                SgAsmExpression* BI = new SgAsmByteValueExpression(biOpcode);
 
             // SgAsmExpression* SI = new SgAsmDoubleWordValueExpression(bdOpcode);
+#if 1
+            // The address should be computed for the knownSuccessorsReturn set, but not computed for use 
+            // in the instuction (else we would be mixing the semantic analysis into the disassembly).
+               SgAsmExpression* targetAddress = new SgAsmDoubleWordValueExpression(bdOpcode);
+#else
                SgAsmExpression* targetAddress = NULL;
                if (aaOpcode == 0)
                   {
@@ -392,11 +547,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
                  // This should be the BD || 0x0b00 sign extended
                     targetAddress = new SgAsmDoubleWordValueExpression(bdOpcode);
                   }
-
+#endif
             // Check the link flag
                if (lkOpcode == 1)
                   {
-                 // The addess of the next instruction should be placed into the knownSuccessorsReturn set (as in function call return).
+                 // The addess of the next instruction should be computed and placed into the knownSuccessorsReturn set (as in function call return).
                     printf ("The addess of the next instruction should be placed into the knownSuccessorsReturn set. \n");
                     ROSE_ASSERT(false);
                   }
@@ -421,6 +576,23 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_SC_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+  // The primaryOpcode 
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+     ROSE_ASSERT(primaryOpcode == 0x11);
+
+  // Get the bits 6-10, next 5 bits, as the secondary opcode: RT, RS, TO, FRT, FRS
+     uint8_t levOpcode = (insn >> 5) & 0x7F;
+
+  // Get bit 30, 1 bit as the reserved flag
+     uint8_t constantOneOpcode = (insn >> 1) & 0x1;
+     ROSE_ASSERT(constantOneOpcode == 1);
+
+     printf ("SC-Form instruction opcode = 0x%x levOpcode = 0x%x constantOneOpcode = 0x%x \n",insn,levOpcode,constantOneOpcode);
+
+     SgAsmExpression* LEV = new SgAsmWordValueExpression(levOpcode);
+     instruction = MAKE_INSN1(sc,LEV);
+
      return instruction;
    }
 
@@ -477,6 +649,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
                break;
              }
 
+       // 15
+          case 0x0F:
+             {
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
+               instruction = MAKE_INSN3(addis,RT,RA,SI);
+               break;
+             }
+
        // 32
           case 0x20:
              {
@@ -484,6 +666,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(lwz,RT,RA,D);
+               break;
+             }
+
+       // 36
+          case 0x24:
+             {
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
+               instruction = MAKE_INSN3(stw,RS,RA,D);
                break;
              }
 
@@ -519,6 +711,71 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+  // The primaryOpcode 
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+     ROSE_ASSERT(primaryOpcode == 0x1F);
+
+  // Get the bits 6-10, next 5 bits
+     uint8_t rtOpcode  = (insn >> 21) & 0x1F;
+     uint8_t rsOpcode  = rtOpcode;
+     uint8_t toOpcode  = rtOpcode;
+     uint8_t frtOpcode = rtOpcode;
+     uint8_t frsOpcode = rtOpcode;
+     uint8_t btOpcode  = rtOpcode;
+     uint8_t boOpcode  = rtOpcode;
+
+  // Get the bits 11-15, next 5 bits
+     uint8_t raOpcode  = (insn >> 16) & 0x1F;
+     uint8_t fraOpcode = raOpcode;
+
+  // Get the bits 16-20, next 5 bits, as the secondary opcode: RT, RS, TO, FRT, FRS
+     uint8_t rbOpcode  = (insn >> 11) & 0x1F;
+     uint8_t nbOpcode  = rbOpcode;
+     uint8_t shOpcode  = rbOpcode;
+     uint8_t frbOpcode = rbOpcode;
+
+  // Get the bits 21-30, next 10 bits
+     uint8_t xoOpcode = (insn >> 1) & 0x3FF;
+
+  // Get bit 31, 1 bit as the link bit
+     uint8_t rcOpcode = (insn >> 0) & 0x1;
+
+     printf ("X-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+
+     switch(xoOpcode)
+        {
+       // 83
+          case 0x53:
+             {
+            // This is a privileged instruction (documented in Book III)!
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               instruction = MAKE_INSN1(mfmsr,RT);
+               break;
+             }
+
+       // 188
+          case 0xBC: // 188
+          case 0xD3: // 211
+             {
+            // This is a illegal instruction which I will translate to NOP (in PowerPC: nop -> ori for now!
+
+               printf ("Processing an illegal instruction (generating a NOP)! \n");
+
+               SgAsmExpression* R0a = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* R0b = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* zero = new SgAsmByteValueExpression(0);
+               instruction = MAKE_INSN3(ori,R0a,R0b,zero);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: X-Form xoOpcode = %d not handled! \n",xoOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
+
      return instruction;
    }
 
@@ -526,6 +783,65 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_XL_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+  // The primaryOpcode 
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+     ROSE_ASSERT(primaryOpcode == 0x13);
+
+  // Get the bits 6-10, next 5 bits
+     uint8_t btOpcode = (insn >> 21) & 0x1F;
+     uint8_t boOpcode = btOpcode;
+
+  // Get the bits 11-15, next 5 bits
+     uint8_t baOpcode = (insn >> 16) & 0x1F;
+     uint8_t biOpcode = baOpcode;
+
+  // Get the bits 16-20, next 5 bits, as the secondary opcode: RT, RS, TO, FRT, FRS
+     uint8_t bbOpcode = (insn >> 11) & 0x1F;
+
+  // Get the bits 19-20, next 2 bits
+     uint8_t bhOpcode = (insn >> 11) & 0x3;
+
+  // Get the bits 21-30, next 10 bits
+     uint8_t xoOpcode = (insn >> 1) & 0x3FF;
+
+  // Get bit 31, 1 bit as the link bit
+     uint8_t lkOpcode = (insn >> 0) & 0x1;
+
+     printf ("XL-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+
+     switch(xoOpcode)
+        {
+       // 0
+          case 0x10:
+             {
+               SgAsmExpression* BO = new SgAsmByteValueExpression(boOpcode);
+               SgAsmExpression* BA = new SgAsmByteValueExpression(baOpcode);
+               SgAsmExpression* BH = new SgAsmByteValueExpression(bhOpcode);
+               if (lkOpcode == 0)
+                    instruction = MAKE_INSN3(bclr,BO,BA,BH);
+                 else
+                    instruction = MAKE_INSN3(bclrl,BO,BA,BH);
+               break;
+             }
+
+       // 193
+          case 0xC1:
+             {
+               SgAsmExpression* BT = new SgAsmByteValueExpression(btOpcode);
+               SgAsmExpression* BA = new SgAsmByteValueExpression(baOpcode);
+               SgAsmExpression* BB = new SgAsmByteValueExpression(bbOpcode);
+               instruction = MAKE_INSN3(crxor,BT,BA,BB);
+               break;
+             }
+
+          default:
+             {
+               printf ("Error: XL-Form xoOpcode = %d not handled! \n",xoOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
+
      return instruction;
    }
 
@@ -568,6 +884,63 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_M_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+  // The primaryOpcode
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+
+  // Get the bits 6-10, next 5 bits
+     uint8_t rsOpcode  = (insn >> 21) & 0x1F;
+
+  // Get the bits 11-15, next 5 bits
+     uint8_t raOpcode  = (insn >> 16) & 0x1F;
+
+  // Get the bits 16-20, next 5 bits
+     uint8_t rbOpcode  = (insn >> 11) & 0x1F;
+     uint8_t shOpcode  = rbOpcode;
+
+  // Get the bits 21-25, next 5 bits
+     uint8_t mbOpcode  = (insn >> 6) & 0x1F;
+
+  // Get the bits 26-30, next 5 bits
+     uint8_t meOpcode  = (insn >> 1) & 0x1F;
+
+  // Get bit 31, 1 bit as the record bit
+     uint8_t rcOpcode = (insn >> 0) & 0x1;
+
+     printf ("M-Form instruction opcode = 0x%x rsOpcode = 0x%x raOpcode = 0x%x rbOpcode = 0x%x mbOpcode = 0x%x meOpcode = 0x%x rcOpcode = 0x%x \n",insn,rsOpcode,raOpcode,rbOpcode,mbOpcode,meOpcode,rcOpcode);
+
+     switch(primaryOpcode)
+        {
+       // 21
+          case 0x15:
+             {
+            // This is a privileged instruction (documented in Book III)!
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* SH = makeRegister(powerpc_regclass_gpr,shOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* MB = makeRegister(powerpc_regclass_gpr,mbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* ME = makeRegister(powerpc_regclass_gpr,meOpcode,powerpc_condreggranularity_field);
+               instruction = MAKE_INSN5(rlwinm,RA,RS,SH,MB,ME);
+               break;
+             }
+
+       // 20 and 23
+          case 0x14:
+          case 0x17:
+             {
+               printf ("Instruction disassembly not implemented yet! primaryOpcode = %d (legal instruction) \n",primaryOpcode);
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          default:
+             {
+            // There are only 3 legal M-form instructions, so everything else is an illegal instruction!
+               printf ("Error: M-Form primaryOpcode = %d (illegal instruction) \n",primaryOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
+
      return instruction;
    }
 

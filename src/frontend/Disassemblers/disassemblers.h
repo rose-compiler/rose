@@ -80,6 +80,9 @@ namespace PowerpcDisassembler
 
   // This is not used for ARM, so I don't think we need it!
   // void disassembleFile(SgAsmFile* f);
+
+  // DQ (10/14/2008): Provide a default implementation for now!
+     bool doesBBStartFunction(SgAsmBlock* bb, bool use64bit);
    }
 
 namespace DisassemblerCommon {
