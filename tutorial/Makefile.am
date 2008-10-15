@@ -639,8 +639,6 @@ generatedCodeExamples = \
    rose_inputCode_AddFunctionDeclaration3.C \
    rose_inputCode_AddVariableDeclaration.C \
    rose_inputCode_AddAssignmentStmt.C \
-   rose_inputCode_AbstractHandle1.cpp \
-   rose_inputCode_AbstractHandle2.cpp \
    abstractHandle1.outx \
    abstractHandle2.outx \
    rose_inputCode_AddExpression.C \
@@ -855,11 +853,11 @@ rose_inputCode_AddVariableDeclaration2.C: addVariableDeclaration2
 	@echo "Generate executable from compilation of input code (addVariableDeclaration2) ..."
 	./addVariableDeclaration2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AddVariableDeclaration2.C
 
-rose_inputCode_AbstractHandle1.cpp: abstractHandle1
+abstractHandle1.outx: abstractHandle1
 	@echo "Generate executable from compilation of input code (abstractHandle1) ..."
 	./abstractHandle1 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle1.cpp | fold > abstractHandle1.outx
 
-rose_inputCode_AbstractHandle2.cpp: abstractHandle2
+abstractHandle2.outx: abstractHandle2
 	@echo "Generate executable from compilation of input code (abstractHandle2) ..."
 	./abstractHandle2 $(ROSE_FLAGS) -c $(srcdir)/inputCode_AbstractHandle2.cpp | fold > abstractHandle2.outx
 
