@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.19 2008-07-01 09:45:25 gergo Exp $
+// $Id: ProcTraversal.C,v 1.20 2008-10-15 10:01:26 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -363,14 +363,14 @@ ProcTraversal::visit(SgNode *node) {
       if (mdecl) {
         SgMemberFunctionDeclaration* cmdecl
           = isSgMemberFunctionDeclaration(mdecl->get_firstNondefiningDeclaration());
-        if (cmdecl && cmdecl->get_specialFunctionModifier().isConstructor()) {
+     // if (cmdecl && cmdecl->get_specialFunctionModifier().isConstructor()) {
           proc->this_assignment
             = new BasicBlock(node_id++, INNER, proc->procnum);
           ReturnAssignment* returnAssignment 
             = Ir::createReturnAssignment(this_temp_var, this_var);
           proc->this_assignment->statements.push_back(returnAssignment);
           add_link(proc->this_assignment, proc->exit, NORMAL_EDGE);
-        }
+     // }
       }
       std::stringstream varname;
    // varname << "$" << proc->name << "$return";
