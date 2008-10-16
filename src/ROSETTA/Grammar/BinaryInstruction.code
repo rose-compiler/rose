@@ -1327,29 +1327,32 @@ HEADER_ELF_SECTION_TABLE_ENTRY_START
 HEADER_ELF_SECTION_TABLE_ENTRY_END
 
 HEADER_ELF_SECTION_START
-     public:
-       /* Constructor for size based on section table entry (normal sections) */
-          SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
-	  SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
+	public:
+		/* Constructor for size based on section table entry (normal sections) */
+		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
+		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSegmentTableEntry *shdr);
 
-       /* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
-          SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size);
+		/* Constructor for explicit size (e.g., BSS sections where file size is always zero) */
+		SgAsmElfSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr, addr_t file_size);
 
-       // virtual ~ElfSection() {}
+		//virtual ~ElfSection() {}
 
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		rose_addr_t calculate_sizes(size_t r32size, size_t r64size, const std::vector<size_t> &optsizes,
+					    size_t *entsize, size_t *required, size_t *optional, size_t *entcount);
+		virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount);
+		virtual bool reallocate();
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
-       /* Convenience functions */
-          SgAsmElfFileHeader *get_elf_header();
+		/* Convenience functions */
+		SgAsmElfFileHeader *get_elf_header();
 
-       // DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
-          SgAsmElfSection* get_linked_section () const;
-          virtual void set_linked_section(SgAsmElfSection*);
+		// DQ (8/22/2008): These are not automatically generated since one of them must be virtual.
+		SgAsmElfSection* get_linked_section () const;
+		virtual void set_linked_section(SgAsmElfSection*);
 
-     private:
-          void ctor(SgAsmElfSectionTableEntry*);
-	  void ctor(SgAsmElfSegmentTableEntry*);
-
+	private:
+		void ctor(SgAsmElfSectionTableEntry*);
+		void ctor(SgAsmElfSegmentTableEntry*);
 HEADER_ELF_SECTION_END
 
 HEADER_STORED_STRING_START
@@ -1412,8 +1415,8 @@ HEADER_ELF_RELA_SECTION_START
 			: SgAsmElfSection(fhdr, shdr)
 			{ctor(fhdr, shdr);}
 		//virtual ~SgAsmElfRelaSection() {}
-		rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
-		virtual bool reallocate();
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
 		virtual void unparse(FILE*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
@@ -1455,9 +1458,9 @@ HEADER_ELF_DYNAMIC_SECTION_START
 			: SgAsmElfSection(fhdr, shdr)
 			{ctor(fhdr, shdr);}
 		//virtual ~SgAsmElfDynamicSection() {}
-		rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
 		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
-		virtual bool reallocate();
 		virtual void unparse(FILE*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
@@ -1676,10 +1679,10 @@ HEADER_ELF_SEGMENT_TABLE_ENTRY_LIST_END
 HEADER_ELF_SYMBOL_SECTION_START
 	public:
 		SgAsmElfSymbolSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr);
-		// virtual ~SgAsmElfSymbolSection() {}
-		rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries);
+		//virtual ~SgAsmElfSymbolSection() {}
+		using SgAsmElfSection::calculate_sizes;
+		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries);
 		virtual void set_linked_section(SgAsmElfSection*);
-		virtual bool reallocate();
 		virtual void unparse(FILE*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:

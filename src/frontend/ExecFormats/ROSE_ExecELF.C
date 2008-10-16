@@ -540,6 +540,120 @@ SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
     set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
 }
 
+/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ * pointers if the caller is not interested in the value. Return values are:
+ *
+ *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
+ *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
+ *              entry (see "required").
+ *
+ *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
+ *
+ *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
+ *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
+ *              difference between the "entsize" and the "required" sizes.
+ *   
+ *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
+ *              parsed entries, otherwise its the section size divided by the "entsize".
+ *
+ * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
+ */
+rose_addr_t
+SgAsmElfSection::calculate_sizes(size_t r32size, size_t r64size,       /*size of required parts*/
+                                 const std::vector<size_t> &optsizes,  /*size of optional parts and number of parts parsed*/
+                                 size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+{
+    size_t struct_size = 0;
+    size_t extra_size = 0;
+    size_t entry_size = 0;
+    size_t nentries = 0;
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+
+    /* Assume ELF Section Table Entry is correct for now for the size of each entry in the table. */
+    ROSE_ASSERT(get_section_entry()!=NULL);
+    entry_size = get_section_entry()->get_sh_entsize();
+
+    /* Size of required part of each entry */
+    if (0==r32size && 0==r64size) {
+        /* Probably called by four-argument SgAsmElfSection::calculate_sizes and we don't know the sizes of the required parts
+         * because there isn't a parser for this type of section, or the section doesn't contain a table. In the latter case
+         * the ELF Section Table has a zero sh_entsize and we'll treat the section as if it were a table with one huge entry.
+         * Otherwise we'll assume that the struct size is the same as the sh_entsize and there's no optional data. */
+        struct_size = entry_size>0 ? entry_size : get_size();
+    } else if (4==fhdr->get_word_size()) {
+        struct_size = r32size;
+    } else if (8==fhdr->get_word_size()) {
+        struct_size = r64size;
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
+     * Section Table Entry has a zero-valued sh_entsize */
+    entry_size = std::max(entry_size, struct_size);
+
+    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
+     * the ELF Section Table is correct. */
+    nentries = optsizes.size();
+    if (nentries>0) {
+        for (size_t i=0; i<nentries; i++) {
+            extra_size = std::max(extra_size, optsizes[i]);
+        }
+        entry_size = std::min(entry_size, struct_size+extra_size);
+    } else {
+        extra_size = entry_size - struct_size;
+        nentries = entry_size>0 ? get_size() / entry_size : 0;
+    }
+
+    /* Return values */
+    if (entsize)
+        *entsize = entry_size;
+    if (required)
+        *required = struct_size;
+    if (optional)
+        *optional = extra_size;
+    if (entcount)
+        *entcount = nentries;
+    return entry_size * nentries;
+}
+
+/* Most subclasses will override this virtual function in order to return more useful values. This implementation returns the
+ * following values:
+ *   entsize  -- size stored in the ELF Section Table's sh_entsize member, or size of entire section if not a table.
+ *   required -- same as entsize
+ *   optional -- zero
+ *   entcount -- number of entries, each of size entsize, that can fit in the section.
+ * The return size is entsize*entcount, which, if this section is a table (nonzero sh_entsize), could be smaller than the
+ * total size of the section. */
+rose_addr_t
+SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+{
+    return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
+}
+
+/* Resize the section based on ELF word size. This is a no-op unless the section was defined in the ELF Section Table. */
+bool
+SgAsmElfSection::reallocate()
+{
+    if (get_section_entry()==NULL)
+        return false;
+
+    bool reallocated = false;
+    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+
+    } else if (need > get_size()) {
+        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+    }
+    return reallocated;
+}
+
 /* Print some debugging info */
 void
 SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1059,7 +1173,7 @@ SgAsmElfSectionTable::reallocate()
     }
     return reallocated;
 }
-    
+
 /* Write the section table section back to disk */
 void
 SgAsmElfSectionTable::unparse(FILE *f)
@@ -1604,94 +1718,13 @@ SgAsmElfRelaSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *s
     }
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. Return values are:
- *
- *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
- *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
- *              entry (see "required").
- *
- *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
- *
- *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
- *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
- *              difference between the "entsize" and the "required" sizes.
- *   
- *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
- *              parsed entries, otherwise its the section size divided by the "entsize".
- *
- * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
- */
+/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
-    size_t struct_size = 0;
-    size_t extra_size = 0;
-    size_t entry_size = 0;
-    size_t nentries = 0;
-    SgAsmElfFileHeader *fhdr = get_elf_header();
-
-    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
-    ROSE_ASSERT(get_section_entry());
-    entry_size = get_section_entry()->get_sh_entsize();
-
-    /* Size of required part of each entry */
-    if (4==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfRelaEntry::Elf32RelaEntry_disk);
-    } else if (8==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfRelaEntry::Elf64RelaEntry_disk);
-    } else {
-        throw FormatError("bad ELF word size");
-    }
-
-    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
-     * Section Table Entry has a zero-valued sh_entsize */
-    entry_size = std::max(entry_size, struct_size);
-
-    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
-     * the ELF Section Table is correct. */
-    if ((nentries=p_entries->get_entries().size())>0) {
-        //FIXME: We don't currently support the case where the struct is smaller than the entry (i.e., padded) (RPM 2008-10-13)
-        //for (size_t i=0; i<nentries; i++) {
-        //    SgAsmElfRelaEntry *entry = p_entries->get_entries()[i];
-        //    extra_size = std::max(extra_size, entry->get_extra().size());
-        //}
-        entry_size = std::min(entry_size, struct_size+extra_size);
-    } else {
-        extra_size = entry_size - struct_size;
-        nentries = get_size() / entry_size;
-    }
-    
-    /* Return values */
-    if (entsize)
-        *entsize = entry_size;
-    if (required)
-        *required = struct_size;
-    if (optional)
-        *optional = extra_size;
-    if (entcount)
-        *entcount = nentries;
-    return entry_size * nentries;
-}
-
-/* Resize the section based on ELF word size */
-bool
-SgAsmElfRelaSection::reallocate()
-{
-    bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
-    if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
-        }
-        set_size(need);
-        reallocated = true;
-        
-    } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
-    }
-    return reallocated;
+    std::vector<size_t> extra_sizes(p_entries->get_entries().size(), 0); /*no extra data for Rela*/
+    return calculate_sizes(sizeof(SgAsmElfRelaEntry::Elf32RelaEntry_disk), sizeof(SgAsmElfRelaEntry::Elf64RelaEntry_disk),
+                           extra_sizes, entsize, required, optional, entcount);
 }
 
 /* Write section back to disk */
@@ -1930,73 +1963,17 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
     }
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. Return values are:
- *
- *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
- *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
- *              entry (see "required").
- *
- *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
- *
- *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
- *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
- *              difference between the "entsize" and the "required" sizes.
- *   
- *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
- *              parsed entries, otherwise its the section size divided by the "entsize".
- *
- * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
- */
+/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
-    size_t struct_size = 0;
-    size_t extra_size = 0;
-    size_t entry_size = 0;
-    size_t nentries = 0;
-    SgAsmElfFileHeader *fhdr = get_elf_header();
-
-    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
-    ROSE_ASSERT(get_section_entry());
-    entry_size = get_section_entry()->get_sh_entsize();
-
-    /* Size of required part of each entry */
-    if (4==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk);
-    } else if (8==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk);
-    } else {
-        throw FormatError("bad ELF word size");
-    }
-
-    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
-     * Section Table Entry has a zero-valued sh_entsize */
-    entry_size = std::max(entry_size, struct_size);
-
-    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
-     * the ELF Section Table is correct. */
-    if ((nentries=p_entries->get_entries().size())>0) {
-        for (size_t i=0; i<nentries; i++) {
-            SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
-            extra_size = std::max(extra_size, entry->get_extra().size());
-        }
-        entry_size = std::min(entry_size, struct_size+extra_size);
-    } else {
-        extra_size = entry_size - struct_size;
-        nentries = get_size() / entry_size;
-    }
-    
-    /* Return values */
-    if (entsize)
-        *entsize = entry_size;
-    if (required)
-        *required = struct_size;
-    if (optional)
-        *optional = extra_size;
-    if (entcount)
-        *entcount = nentries;
-    return entry_size * nentries;
+    std::vector<size_t> extra_sizes;
+    for (size_t i=0; i<p_entries->get_entries().size(); i++)
+        extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
+    return calculate_sizes(sizeof(SgAsmElfDynamicEntry::Elf32DynamicEntry_disk),
+                           sizeof(SgAsmElfDynamicEntry::Elf64DynamicEntry_disk),
+                           extra_sizes,
+                           entsize, required, optional, entcount);
 }
     
 /* Set linked section (the string table) and finish initializing the section entries. */
@@ -2077,26 +2054,6 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
             break;
         }
     }
-}
-
-/* Resize the dynamic section based on ELF word size */
-bool
-SgAsmElfDynamicSection::reallocate()
-{
-    bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
-    if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
-        }
-        set_size(need);
-        reallocated = true;
-        
-    } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
-    }
-    return reallocated;
 }
 
 /* Write the dynamic section back to disk */
@@ -2354,75 +2311,17 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     }
 }
 
-/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
- * pointers if the caller is not interested in the value. Return values are:
- *
- *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
- *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
- *              entry (see "required").
- *
- *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
- *
- *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
- *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
- *              difference between the "entsize" and the "required" sizes.
- *   
- *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
- *              parsed entries, otherwise its the section size divided by the "entsize".
- *
- * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
- * 
- * FIXME: Almost cut and pasted from SgAsmDynamicSection::calculate_sizes.
- */
+/* Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
 rose_addr_t
 SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
-    size_t struct_size = 0;
-    size_t extra_size = 0;
-    size_t entry_size = 0;
-    size_t nentries = 0;
-    SgAsmElfFileHeader *fhdr = get_elf_header();
-
-    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
-    ROSE_ASSERT(get_section_entry());
-    entry_size = get_section_entry()->get_sh_entsize();
-
-    /* Size of required part of each entry */
-    if (4==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk);
-    } else if (8==fhdr->get_word_size()) {
-        struct_size = sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk);
-    } else {
-        throw FormatError("bad ELF word size");
-    }
-
-    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
-     * Section Table Entry has a zero-valued sh_entsize */
-    entry_size = std::max(entry_size, struct_size);
-
-    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
-     * the ELF Section Table is correct. */
-    if ((nentries=p_symbols->get_symbols().size())>0) {
-        for (size_t i=0; i<nentries; i++) {
-            SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
-            extra_size = std::max(extra_size, entry->get_extra().size());
-        }
-        entry_size = std::min(entry_size, struct_size+extra_size);
-    } else {
-        extra_size = entry_size - struct_size;
-        nentries = get_size() / entry_size;
-    }
-    
-    /* Return values */
-    if (entsize)
-        *entsize = entry_size;
-    if (required)
-        *required = struct_size;
-    if (optional)
-        *optional = extra_size;
-    if (entcount)
-        *entcount = nentries;
-    return entry_size * nentries;
+    std::vector<size_t> extra_sizes;
+    for (size_t i=0; i<p_symbols->get_symbols().size(); i++)
+        extra_sizes.push_back(p_symbols->get_symbols()[i]->get_extra().size());
+    return calculate_sizes(sizeof(SgAsmElfSymbol::Elf32SymbolEntry_disk),
+                           sizeof(SgAsmElfSymbol::Elf64SymbolEntry_disk),
+                           extra_sizes,
+                           entsize, required, optional, entcount);
 }
 
 /* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated.
@@ -2464,26 +2363,6 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
     }
-}
-
-/* Resize the dynamic section based on ELF word size */
-bool
-SgAsmElfSymbolSection::reallocate()
-{
-    bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
-    if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
-        }
-        set_size(need);
-        reallocated = true;
-        
-    } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
-    }
-    return reallocated;
 }
 
 /* Write symbol table sections back to disk */
