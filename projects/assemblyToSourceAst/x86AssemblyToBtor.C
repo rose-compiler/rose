@@ -31,30 +31,30 @@ struct BtorTranslationPolicy {
 
   void makeRegMap(BTRegisterInfo& rm, const string& prefix) {
     for (size_t i = 0; i < 8; ++i) {
-      rm.gprs[i] = problem.build_var(32, prefix + "_gpr" + boost::lexical_cast<string>(i));
+      rm.gprs[i] = problem.build_var(32, prefix + "e" + gprToString((X86GeneralPurposeRegister)i));
     }
-    rm.ip = problem.build_var(32, prefix + "_ip");
+    rm.ip = problem.build_var(32, prefix + "eip");
     for (size_t i = 0; i < 16; ++i) {
-      rm.flags[i] = problem.build_var(1, prefix + "_flag" + boost::lexical_cast<string>(i));
+      rm.flags[i] = problem.build_var(1, prefix + flagToString((X86Flag)i));
     }
     for (size_t i = 0; i < numBmcErrors; ++i) {
       rm.errorFlag[i] = false_();
     }
-    rm.memory = problem.build_array(8, 32);
+    rm.memory = problem.build_array(8, 32, prefix + "memory");
   }
 
   void makeRegMapZero(BTRegisterInfo& rm) {
     for (size_t i = 0; i < 8; ++i) {
-      rm.gprs[i] = problem.build_op_zero(32);
+      rm.gprs[i] = number<32>(0xBEEF0000 + i);
     }
-    rm.ip = problem.build_op_zero(32);
+    rm.ip = number<32>(0xBEEF1111);
     for (size_t i = 0; i < 16; ++i) {
       rm.flags[i] = problem.build_op_zero(1);
     }
     for (size_t i = 0; i < numBmcErrors; ++i) {
       rm.errorFlag[i] = false_();
     }
-    rm.memory = problem.build_array(8, 32);
+    rm.memory = problem.build_array(8, 32, "zeroMemory");
   }
 
   void addNext(Comp cur, Comp next) {
@@ -87,11 +87,27 @@ struct BtorTranslationPolicy {
     writeGPR(x86_gpr_si, zero(32));
     writeGPR(x86_gpr_di, zero(32));
     writeIP(number<32>(entryPoint));
+    writeFlag(x86_flag_cf, false_());
+    writeFlag(x86_flag_1, true_());
+    writeFlag(x86_flag_pf, false_());
+    writeFlag(x86_flag_3, false_());
+    writeFlag(x86_flag_af, false_());
+    writeFlag(x86_flag_5, false_());
+    writeFlag(x86_flag_zf, false_());
+    writeFlag(x86_flag_sf, false_());
+    writeFlag(x86_flag_tf, false_());
+    writeFlag(x86_flag_if, true_());
+    writeFlag(x86_flag_df, false_());
+    writeFlag(x86_flag_of, false_());
+    writeFlag(x86_flag_iopl0, false_());
+    writeFlag(x86_flag_iopl1, false_());
+    writeFlag(x86_flag_nt, false_());
+    writeFlag(x86_flag_15, false_());
     writeBackReset();
   }
 
   BtorTranslationPolicy(uint32_t entryPoint): problem() {
-    makeRegMap(origRegisterMap, "in");
+    makeRegMap(origRegisterMap, "");
     makeRegMapZero(newRegisterMap);
     isValidIp = false_();
     notResetState = problem.build_var(1, "notFirstStep");
@@ -137,25 +153,28 @@ struct BtorTranslationPolicy {
   }
 
   Comp concat(const Comp& a, const Comp& b) {
-    return problem.build_op_concat(a, b);
+    return problem.build_op_concat(b, a); // Our concat puts a on the LSB side of b, while BTOR does the opposite
   }
 
   template <size_t From, size_t To>
   Comp extract(const Comp& a) {
     BOOST_STATIC_ASSERT(From < To);
-    return problem.build_op_slice(a, From, To - 1);
+    return extractVar(a, From, To);
   }
 
   Comp extractVar(const Comp& a, size_t from, size_t to) {
     assert (from < to);
-    return problem.build_op_slice(a, from, to - 1);
+    assert (from <= a.bitWidth());
+    assert (to <= a.bitWidth());
+    return problem.build_op_slice(a, a.bitWidth() - to, a.bitWidth() - from - 1); // BTOR counts from the MSB, while we count from the LSB of the word
   }
 
   Comp false_() {return zero(1);}
   Comp true_() {return ones(1);}
 
   Comp invert(const Comp& a) {
-    return a.invert();
+    // return a.invert();
+    return problem.build_op_not(a);
   }
 
   Comp and_(const Comp& a, const Comp& b) {
@@ -229,6 +248,8 @@ struct BtorTranslationPolicy {
   }
 
   Comp addWithCarries(const Comp& a, const Comp& b, const Comp& carryIn, Comp& carries) { // Full case
+    assert (a.bitWidth() == b.bitWidth());
+    assert (carryIn.bitWidth() == 1);
     uint len = a.bitWidth() + 1;
     Comp aFull = zeroExtendVar(a, len);
     Comp bFull = zeroExtendVar(b, len);
@@ -248,7 +269,7 @@ struct BtorTranslationPolicy {
   }
 
   Comp rotateLeft(const Comp& a, const Comp& cnt) {
-    return problem.build_op_ror(a, extractVar(cnt, 0, log2(a.bitWidth()))); // Flipped because words are LSB first
+    return problem.build_op_rol(a, extractVar(cnt, 0, log2(a.bitWidth()))); // // Flipped because words are LSB first
   }
 
   // Expanding multiplies
@@ -333,6 +354,8 @@ struct BtorTranslationPolicy {
   }
 
   void writeMemoryByte(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond) {
+    assert (addr.bitWidth() == 32);
+    assert (data.bitWidth() == 8);
     registerMap.memory = problem.build_op_acond(cond, problem.build_op_write(registerMap.memory, addr, data), registerMap.memory);
   }
 
@@ -340,11 +363,13 @@ struct BtorTranslationPolicy {
   void writeMemory(X86SegmentRegister segreg, const Comp& addr, const Comp& data, Comp cond) {
     BOOST_STATIC_ASSERT (Len % 8 == 0);
     for (size_t i = 0; i < Len / 8; ++i) {
-      writeMemoryByte(segreg, (i == 0 ? addr : problem.build_op_add(addr, problem.build_constant(32, i))), problem.build_op_slice(data, i * 8, i * 8 + 7), cond);
+      writeMemoryByte(segreg, (i == 0 ? addr : problem.build_op_add(addr, problem.build_constant(32, i))), extractVar(data, i * 8, i * 8 + 8), cond);
     }
   }
 
-  void hlt() {registerMap.errorFlag[bmc_error_program_failure] = true_();} // FIXME
+  void hlt() {
+    registerMap.errorFlag[bmc_error_program_failure] = problem.build_op_redor(readGPR(x86_gpr_bx));
+  } // FIXME
   void interrupt(uint8_t num) {} // FIXME
   Comp rdtsc() {return problem.build_var(64, "timestamp");}
 
@@ -377,6 +402,7 @@ struct BtorTranslationPolicy {
 
   void startBlock(uint64_t addr) {
     registerMap = origRegisterMap;
+    registerMap.ip = number<32>(0xDEADBEEF);
     fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
   }
 
@@ -408,10 +434,10 @@ int main(int argc, char** argv) {
   // Add "bogus IP" error
   policy.newRegisterMap.errorFlag[bmc_error_bogus_ip] =
     policy.invert(policy.isValidIp);
-  policy.addNexts();
   for (size_t i = 0; i < numBmcErrors; ++i) {
     policy.problem.computations.push_back(policy.problem.build_op_root(policy.newRegisterMap.errorFlag[i]));
   }
+  policy.addNexts();
   string s = policy.problem.unparse();
   fprintf(f, "%s", s.c_str());
   fclose(f);

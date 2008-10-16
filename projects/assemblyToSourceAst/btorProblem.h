@@ -195,8 +195,9 @@ struct BtorProblem {
     return c;
   }
 
-  BtorComputationPtr build_array(uint bw, uint sz) {
+  BtorComputationPtr build_array(uint bw, uint sz, const std::string& name = "") {
     BtorComputationPtr c(new BtorComputation(btor_op_array, std::vector<BtorComputationPtr>()));
+    c.p->variableName = name;
     c.p->type.bitWidth = bw;
     c.p->type.arraySize = sz;
     return c;

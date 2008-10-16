@@ -625,12 +625,17 @@ Grammar::buildStringForVariantFunctionSource         ( Terminal & node )
   // Every node in the grammar has a function that identifies it with a numerical value 
   // (e.g. SCOPE_STMT).
 
+  // JJW (10/16/2008): Remove this (variant() is now a single function in
+  // Node.code)
+#if 0
      string variantFunctionTemplateFileName   = "../Grammar/grammarVariantFunctionDefinitionMacros.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (variantFunctionTemplateFileName);
 
      returnString = GrammarString::copyEdit (returnString,"$MARKER",node.getTagName());
 
      return returnString;
+#endif
+     return StringUtility::FileWithLineNumbers();
    }
 
 StringUtility::FileWithLineNumbers
@@ -1515,7 +1520,7 @@ void
 Grammar::buildHeaderFiles( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
      string marker   = "MEMBER_FUNCTION_DECLARATIONS";
-     string fileName = "../Grammar/grammarClassDeclatationMacros.macro";
+     string fileName = "../Grammar/grammarClassDeclarationMacros.macro";
 
      StringUtility::FileWithLineNumbers headerBeforeInsertion = buildHeaderStringBeforeMarker(marker,fileName);
      StringUtility::FileWithLineNumbers headerAfterInsertion  = buildHeaderStringAfterMarker (marker,fileName);

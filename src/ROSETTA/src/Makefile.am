@@ -43,7 +43,7 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/grammarMainClassParseFunctionSourceCode.macro \
      ../Grammar/Node.code \
      ../Grammar/BinaryInstruction.code \
-     ../Grammar/grammarClassDeclatationMacros.macro \
+     ../Grammar/grammarClassDeclarationMacros.macro \
      ../Grammar/grammarMainClassSourceCodeMacros.macro \
      ../Grammar/grammarNewDeleteOperatorMacros.macro \
      ../Grammar/grammarTraverseMemoryPool.macro \

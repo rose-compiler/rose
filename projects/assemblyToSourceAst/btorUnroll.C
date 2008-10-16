@@ -9,8 +9,31 @@ typedef map<BtorComputation*, Comp> LatchMap;
 
 enum RootHandling {rh_assume_false, rh_disjoin};
 
-// Possible bug in Boolector: multiple roots are not allowed in combinational
-// circuits, but are in sequential ones
+static string formatNumber(uint i) {
+  char buffer[4];
+  if (i >= 1000) {
+    return boost::lexical_cast<string>(i);
+  } else {
+    sprintf(buffer, "%03u", i);
+    return buffer;
+  }
+}
+
+static Comp nameValue(Comp c, string newName, BtorProblem& p) {
+  switch (c.kind()) {
+    case btor_type_bitvector: {
+      Comp var = p.build_var(c.bitWidth(), newName);
+      p.computations.push_back(p.build_op_root(p.build_op_eq(c, var)));
+      return var;
+    }
+    case btor_type_array: {
+      Comp var = p.build_array(c.bitWidth(), c.arraySize(), newName);
+      p.computations.push_back(p.build_op_root(p.build_op_array_eq(c, var)));
+      return var;
+    }
+    default: assert (false);
+  }
+}
 
 static Comp translate(BtorProblem& p, Comp c, const LatchMap& latchMap, map<BtorComputation*, Comp>& variableMap, map<Comp, Comp>& translateMap, const string& tag) {
   BtorComputation* comp = c.p.get();
@@ -30,12 +53,14 @@ static Comp translate(BtorProblem& p, Comp c, const LatchMap& latchMap, map<Btor
     return c2;
   }
   if (comp->op == btor_op_var) { // New variable
-    Comp newVar = p.build_var(comp->type.bitWidth, comp->variableName + tag);
+    // fprintf(stderr, "Replicating var %s\n", comp->variableName.c_str());
+    Comp newVar = p.build_var(comp->type.bitWidth, tag + comp->variableName);
     variableMap.insert(make_pair(comp, newVar));
     translateMap[c] = newVar;
     return newVar;
   } else if (comp->op == btor_op_array) { // New array
-    Comp newVar = p.build_array(comp->type.bitWidth, comp->type.arraySize);
+    // fprintf(stderr, "Replicating array %s for %s\n", comp->variableName.c_str(), tag.c_str());
+    Comp newVar = p.build_array(comp->type.bitWidth, comp->type.arraySize, tag + comp->variableName);
     variableMap.insert(make_pair(comp, newVar));
     translateMap[c] = newVar;
     return newVar;
@@ -51,6 +76,26 @@ static Comp translate(BtorProblem& p, Comp c, const LatchMap& latchMap, map<Btor
   return newC;
 }
 
+static void processRoots(BtorProblem& p, const vector<Comp>& computations, const vector<pair<Comp, Comp> >& latches, const LatchMap& oldLatchMap, RootHandling rootHandling, Comp& rootsSoFar, map<BtorComputation*, Comp>& variableMap, map<Comp, Comp>& translateMap, const string& tag) {
+  for (size_t i = 0; i < computations.size(); ++i) {
+    Comp comp = computations[i];
+    if (comp.p->op == btor_op_root) {
+      switch (rootHandling) {
+        case rh_disjoin: {
+          Comp thisRoot = nameValue(translate(p, comp.p->operands[0], oldLatchMap, variableMap, translateMap, tag), tag + "root" + formatNumber(i), p);
+          rootsSoFar = p.build_op_or(rootsSoFar, thisRoot);
+          break;
+        }
+        case rh_assume_false: {
+          p.computations.push_back(p.build_op_root(translate(p, comp.p->operands[0], oldLatchMap, variableMap, translateMap, tag).invert()));
+          break;
+        }
+        default: assert (false);
+      }
+    }
+  }
+}
+
 // Unroll one pass through the netlist
 // Replicate var and array (done in translate()), and root constructs
 // Change all references to latches using the oldLatchMap
@@ -61,23 +106,11 @@ static LatchMap unrollOneIteration(BtorProblem& p, const vector<Comp>& computati
   map<Comp, Comp> translateMap;
   for (size_t i = 0; i < latches.size(); ++i) {
     assert (oldLatchMap.find(latches[i].first.p.get()) != oldLatchMap.end());
-    newLatchMap[latches[i].first.p.get()] = translate(p, latches[i].second, oldLatchMap, variableMap, translateMap, tag);
+    string latchName = tag + latches[i].first.p->variableName;
+    Comp newLatch = translate(p, latches[i].second, oldLatchMap, variableMap, translateMap, tag);
+    newLatchMap[latches[i].first.p.get()] = nameValue(newLatch, latchName, p);
   }
-  for (size_t i = 0; i < computations.size(); ++i) {
-    Comp comp = computations[i];
-    if (comp.p->op == btor_op_root) {
-      switch (rootHandling) {
-        case rh_disjoin: {
-          rootsSoFar = p.build_op_or(rootsSoFar, translate(p, comp.p->operands[0], oldLatchMap, variableMap, translateMap, tag));
-          break;
-        }
-        case rh_assume_false: { // How do I do this (assume something is false)?
-          assert (!"rh_assume_false not supported");
-        }
-        default: assert (false);
-      }
-    }
-  }
+  processRoots(p, computations, latches, oldLatchMap, rootHandling, rootsSoFar, variableMap, translateMap, tag);
   return newLatchMap;
 }
 
@@ -101,20 +134,24 @@ int main(int argc, char** argv) {
   map<BtorComputation*, Comp> latchMap;
   if (initialConditionTag == "clear") {
     for (size_t i = 0; i < latches.size(); ++i) {
+      string newName = "iter" + formatNumber(0) + "_" + latches[i].first.p->variableName;
       if (latches[i].first.kind() == btor_type_bitvector) {
-        latchMap[latches[i].first.p.get()] = p2.build_op_zero(latches[i].first.bitWidth());
+        Comp zero = p2.build_op_zero(latches[i].first.bitWidth());
+        nameValue(zero, newName, p2);
+        latchMap[latches[i].first.p.get()] = zero;
       } else if (latches[i].first.kind() == btor_type_array) {
-        latchMap[latches[i].first.p.get()] = p2.build_array(latches[i].first.bitWidth(), latches[i].first.arraySize());
+        latchMap[latches[i].first.p.get()] = p2.build_array(latches[i].first.bitWidth(), latches[i].first.arraySize(), newName);
       } else {
         assert (false);
       }
     }
   } else if (initialConditionTag == "arbitrary" || initialConditionTag == "induction") {
     for (size_t i = 0; i < latches.size(); ++i) {
+      string newName = "iter" + formatNumber(0) + "_" + latches[i].first.p->variableName;
       if (latches[i].first.kind() == btor_type_bitvector) {
-        latchMap[latches[i].first.p.get()] = p2.build_var(latches[i].first.bitWidth(), "latch_" + boost::lexical_cast<string>(i));
+        latchMap[latches[i].first.p.get()] = p2.build_var(latches[i].first.bitWidth(), newName);
       } else if (latches[i].first.kind() == btor_type_array) {
-        latchMap[latches[i].first.p.get()] = p2.build_array(latches[i].first.bitWidth(), latches[i].first.arraySize());
+        latchMap[latches[i].first.p.get()] = p2.build_array(latches[i].first.bitWidth(), latches[i].first.arraySize(), newName);
       } else {
         assert (false);
       }
@@ -124,12 +161,17 @@ int main(int argc, char** argv) {
     abort();
   }
   Comp root = p2.build_op_zero(1);
+  {
+    map<BtorComputation*, Comp> variableMap;
+    map<Comp, Comp> translateMap;
+    // processRoots(p2, p.computations, latches, latchMap, (initialConditionTag == "induction" ? rh_assume_false : rh_disjoin), root, variableMap, translateMap, "iter" + formatNumber(0) + "_");
+  }
   for (size_t i = 0; i < unrollCount; ++i) {
     RootHandling rootHandling = rh_disjoin;
     if (initialConditionTag == "induction" && i + 1 < unrollCount) {
       rootHandling = rh_assume_false;
     }
-    latchMap = unrollOneIteration(p2, p.computations, latches, latchMap, rootHandling, root, "_iter" + boost::lexical_cast<string>(i));
+    latchMap = unrollOneIteration(p2, p.computations, latches, latchMap, rootHandling, root, "iter" + formatNumber(i + 1) + "_");
   }
   p2.computations.push_back(p2.build_op_root(root));
   fprintf(stdout, "%s", p2.unparse().c_str());
