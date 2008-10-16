@@ -659,6 +659,9 @@ template<class T>void swap(SgSharedVector<T> &x, SgSharedVector<T> &y);
 typedef SgSharedVector<unsigned char>             SgFileContentList;
 typedef SgFileContentList*                        SgFileContentListPtr;
 
+typedef Rose_STL_Container<SgAsmElfRelaEntry*>    SgAsmElfRelaEntryPtrList;
+typedef SgAsmElfRelaEntryPtrList*                 SgAsmElfRelaEntryPtrListPtr;
+
 typedef Rose_STL_Container<SgAsmElfDynamicEntry*> SgAsmElfDynamicEntryPtrList;
 typedef SgAsmElfDynamicEntryPtrList*              SgAsmElfDynamicEntryPtrListPtr;
 
