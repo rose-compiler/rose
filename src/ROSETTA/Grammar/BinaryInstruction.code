@@ -1130,9 +1130,10 @@ HEADER_GENERIC_STRTAB_START
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		SgAsmStoredString *create_string(addr_t offset, bool shared);
-		void free(class SgAsmStringStorage*);
+		void free(SgAsmStringStorage*);
 		void free(addr_t offset, addr_t size); /*mark part of table as free*/
 		void free_all_strings(bool blow_away_holes=false);
+		virtual void allocate_overlap(SgAsmStringStorage*) {};
 		bool reallocate(bool shrink); /*allocate storage for all unallocated strings*/
 
 		/* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
@@ -1391,6 +1392,7 @@ HEADER_ELF_STRING_TABLE_START
 		virtual void unparse(FILE*);
 		virtual SgAsmStringStorage *create_storage(addr_t offset, bool shared);
 		virtual addr_t get_storage_size(const SgAsmStringStorage*);
+		virtual void allocate_overlap(SgAsmStringStorage*);
 	private:
 		void ctor();
 HEADER_ELF_STRING_TABLE_END

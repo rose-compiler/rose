@@ -342,21 +342,22 @@ SgAsmGenericStrtab::reallocate(bool shrink)
             storage->set_offset(0);
         }
 
-#if 1 /*safe to comment this out to avoid sharing*/
-        /* Is there an existing string that we can use? */
+        /* If there's already a string with the same value then they can share space in the string table. They're still
+         * considered two separate strings, so changing one doesn't affect the other. */
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
             for (size_t j=0; j<p_storage_list.size(); j++) {
                 SgAsmStringStorage *previous = p_storage_list[j];
-                size_t need = storage->get_string().size();
-                size_t have = previous->get_string().size();
-                if (previous->get_offset()!=SgAsmStoredString::unallocated &&
-                    need <= have && 0==previous->get_string().compare(have-need, need, storage->get_string())) {
-                    storage->set_offset(previous->get_offset()+(have-need));
+                if (previous->get_offset()!=SgAsmStoredString::unallocated && previous->get_string()==storage->get_string()) {
+                    storage->set_offset(previous->get_offset());
                     break;
                 }
             }
         }
-#endif
+
+        /* Some string tables may be able to overlap strings. For instance, ELF can overlap "domain" and "main" since it
+         * encodes strings with NUL termination. */
+        if (storage->get_offset()==SgAsmStoredString::unallocated)
+            allocate_overlap(storage);
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
         if (storage->get_offset()==SgAsmStoredString::unallocated) {
@@ -2256,6 +2257,14 @@ ExtentMap::allocate_first_fit(rose_addr_t size)
         }
     }
     throw std::bad_alloc();
+}
+
+/* Allocate the specified extent, which must be in the free list. */
+void
+ExtentMap::allocate_at(const ExtentPair &request)
+{
+    ROSE_ASSERT(subtract_from(request).size()==0); /*entire request should be on free list*/
+    erase(request);
 }
 
 /* Print info about an extent map */

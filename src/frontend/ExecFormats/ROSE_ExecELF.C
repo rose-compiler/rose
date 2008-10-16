@@ -837,6 +837,39 @@ SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
     return storage->get_string().size() + 1;
 }
 
+/* Tries to find a suitable offset for a string such that it overlaps with some other string already allocated. If the new
+ * string is the same as the end of some other string (new="main", existing="domain") then we just use an offset into that
+ * string since the space is already allocated for the existing string. If the new string ends with an existing string
+ * (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then
+ * we allocate some of that free space and use a suitable offset. In any case, upon return storage->get_offset() will return
+ * the allocated offset if successful, or SgAsmStoredString::unallocated if we couldn't find an overlap. */
+void
+SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
+{
+    ROSE_ASSERT(storage->get_offset()==SgAsmStoredString::unallocated);
+    size_t need = storage->get_string().size();
+    for (size_t i=0; i<p_storage_list.size(); i++) {
+        SgAsmStringStorage *existing = p_storage_list[i];
+        if (existing->get_offset()!=SgAsmStoredString::unallocated) {
+            size_t have = existing->get_string().size();
+            if (need<=have && 0==existing->get_string().compare(have-need, need, storage->get_string())) {
+                /* An existing string ends with the new string. */
+                storage->set_offset(existing->get_offset() + (have-need));
+                return;
+            } else if (need>have && existing->get_offset()>=need-have &&
+                       0==storage->get_string().compare(need-have, have, existing->get_string())) {
+                /* New string ends with an existing string. Check for, and allocate, free space. */
+                addr_t offset = existing->get_offset() - (need-have); /* positive diffs checked above */
+                if (get_freelist().subtract_from(offset, need-have).size()==0) {
+                    get_freelist().allocate_at(offset, need-have);
+                    storage->set_offset(offset);
+                    return;
+                }
+            }
+        }
+    }
+}
+
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
 SgAsmElfStrtab::unparse(FILE *f)

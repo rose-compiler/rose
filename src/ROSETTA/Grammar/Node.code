@@ -78,6 +78,9 @@ class ExtentMap : public std::map<rose_addr_t,rose_addr_t> {
 		std::map<rose_addr_t,rose_addr_t>::iterator highest_offset();
 		ExtentPair allocate_best_fit(rose_addr_t size);
 		ExtentPair allocate_first_fit(rose_addr_t size);
+	        void allocate_at(rose_addr_t offset, rose_addr_t size)
+			{allocate_at(ExtentPair(offset, size));}
+		void allocate_at(const ExtentPair&);
 		void dump_extents(FILE*, const char *prefix, const char *label) const;
 
 		/* Class methods */
