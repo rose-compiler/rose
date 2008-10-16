@@ -398,9 +398,14 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         static bool recursive=false;
         ROSE_ASSERT(!recursive);
         recursive = reallocated = true;
-        container->get_file()->shift_extend(container, 0, extend_size, true, true);
-        reallocate(false);
-        recursive = false;
+        try {
+            container->get_file()->shift_extend(container, 0, extend_size, true, true);
+            reallocate(false);
+            recursive = false;
+        } catch (...) {
+            recursive = false;
+            throw;
+        }
     } else if (shrink && get_freelist().size()>0) {
         /* See if we can release any address space and shrink the containing section. The containing section's "set_size"
          * method will adjust the free list by removing some bytes from it. */
