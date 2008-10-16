@@ -85,10 +85,14 @@ HEADER_START
       /*! returns a C style string (char*) representing the class name */
           virtual const char* sage_class_name() const ROSE_DEPRECATED_FUNCTION;
 
+      // JJW (10/16/2008): Changed to a single function in Node.code, and put
+      // getVariant() in #if 0 block to prevent confusing Doxygen
+#if 0
       /*! returns old style Sage II enum values */
           virtual int variant() const ROSE_DEPRECATED_FUNCTION;
       /*! returns old style Sage II enum values */
        // virtual int getVariant() const ROSE_DEPRECATED_FUNCTION;
+#endif
       /* */
 
 

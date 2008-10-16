@@ -1073,6 +1073,10 @@ HEADER_START
        */
           static std::vector<std::string> buildCommandLineToSubstituteTransformationFile( const std::vector<std::string>& argv, std::string newFileName );
 
+       // JJW (10/16/2008): Replace variant() by variantT() and a cast (the
+       // numbers are the same, but the enumerator names are different)
+          int variant() const ROSE_DEPRECATED_FUNCTION {return (int)this->variantT();}
+
        // AS (10/22/2007): build function to return class hierachy subtree of a VariantT		  
           static std::vector<VariantT> getClassHierarchySubTreeFunction( VariantT v);
           static void getClassHierarchySubTreeFunction( VariantT v, std::vector<VariantT>&);
