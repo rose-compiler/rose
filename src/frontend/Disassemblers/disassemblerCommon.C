@@ -608,7 +608,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                functionStarts.insert(make_pair(bb->get_address(),funcName));
              }
 
-          printf ("Processed a block! computedBasicBlocks[%d] = %p \n",i,computedBasicBlocks[i]);
+          printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
         }
 
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
