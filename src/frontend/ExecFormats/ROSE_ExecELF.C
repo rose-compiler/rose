@@ -1546,8 +1546,10 @@ SgAsmElfDynamicSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry
  *   
  *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
  *              parsed entries, otherwise its the section size divided by the "entsize".
+ *
+ * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
  */
-void
+rose_addr_t
 SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
     size_t struct_size = 0;
@@ -1580,6 +1582,7 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
             SgAsmElfDynamicEntry *entry = p_entries->get_entries()[i];
             extra_size = std::max(extra_size, entry->get_extra().size());
         }
+        entry_size = std::min(entry_size, struct_size+extra_size);
     } else {
         extra_size = entry_size - struct_size;
         nentries = get_size() / entry_size;
@@ -1594,6 +1597,7 @@ SgAsmElfDynamicSection::calculate_sizes(size_t *entsize, size_t *required, size_
         *optional = extra_size;
     if (entcount)
         *entcount = nentries;
+    return entry_size * nentries;
 }
     
 /* Set linked section (the string table) and finish initializing the section entries. */
@@ -1676,6 +1680,26 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
     }
 }
 
+/* Resize the dynamic section based on ELF word size */
+bool
+SgAsmElfDynamicSection::reallocate()
+{
+    bool reallocated = false;
+    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+        
+    } else if (need > get_size()) {
+        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+    }
+    return reallocated;
+}
+
 /* Write the dynamic section back to disk */
 void
 SgAsmElfDynamicSection::unparse(FILE *f)
@@ -1686,28 +1710,14 @@ SgAsmElfDynamicSection::unparse(FILE *f)
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
 
-    size_t entry_size, struct_size, extra_size;
-    calculate_sizes(&entry_size, &struct_size, &extra_size, NULL);
-    size_t nentries = p_entries->get_entries().size();
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
 
-    /* Adjust section size. FIXME: this should be moved to the reallocate() function. (RPM 2008-10-07) */
-    if (nentries*entry_size < get_size()) {
-        /* Make the section smaller without affecting other sections. This is allowed during unparsing. */
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(nentries*entry_size);
-        }
-        set_size(nentries*entry_size);
-    } else if (nentries*entry_size > get_size()) {
-        /* We should have detected this before unparsing! */
-        ROSE_ASSERT(!"can't expand dynamic section while unparsing!");
-    }
-    
     /* Adjust the entry size stored in the ELF Section Table */
     get_section_entry()->set_sh_entsize(entry_size);
 
     /* Write each entry's required part followed by the optional part */
-    for (size_t i = 0; i < p_entries->get_entries().size(); i++) {
+    for (size_t i=0; i<nentries; i++) {
         SgAsmElfDynamicEntry::Elf32DynamicEntry_disk disk32;
         SgAsmElfDynamicEntry::Elf64DynamicEntry_disk disk64;
         void *disk  = NULL;
@@ -1919,8 +1929,8 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
 
-    size_t entry_size, struct_size, extra_size;
-    size_t nentries = calculate_sizes(&entry_size, &struct_size, &extra_size);
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
     
     /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
@@ -1944,10 +1954,28 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     }
 }
 
-/* Returns info about the size of the entries. Each entry has a required part and an optional part. The return value is the
- * number of entries in the table. The size of the parts are returned through arguments. */
-size_t
-SgAsmElfSymbolSection::calculate_sizes(size_t *total, size_t *required, size_t *optional)
+/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ * pointers if the caller is not interested in the value. Return values are:
+ *
+ *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
+ *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
+ *              entry (see "required").
+ *
+ *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
+ *
+ *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
+ *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
+ *              difference between the "entsize" and the "required" sizes.
+ *   
+ *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
+ *              parsed entries, otherwise its the section size divided by the "entsize".
+ *
+ * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
+ * 
+ * FIXME: Almost cut and pasted from SgAsmDynamicSection::calculate_sizes.
+ */
+rose_addr_t
+SgAsmElfSymbolSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
     size_t struct_size = 0;
     size_t extra_size = 0;
@@ -1979,19 +2007,22 @@ SgAsmElfSymbolSection::calculate_sizes(size_t *total, size_t *required, size_t *
             SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
             extra_size = std::max(extra_size, entry->get_extra().size());
         }
+        entry_size = std::min(entry_size, struct_size+extra_size);
     } else {
         extra_size = entry_size - struct_size;
         nentries = get_size() / entry_size;
     }
     
     /* Return values */
-    if (total)
-        *total = entry_size;
+    if (entsize)
+        *entsize = entry_size;
     if (required)
         *required = struct_size;
     if (optional)
         *optional = extra_size;
-    return nentries;
+    if (entcount)
+        *entcount = nentries;
+    return entry_size * nentries;
 }
 
 /* Symbol table sections link to their string tables. Updating the string table should cause the symbol names to be updated.
@@ -2035,6 +2066,26 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
     }
 }
 
+/* Resize the dynamic section based on ELF word size */
+bool
+SgAsmElfSymbolSection::reallocate()
+{
+    bool reallocated = false;
+    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+        
+    } else if (need > get_size()) {
+        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+    }
+    return reallocated;
+}
+
 /* Write symbol table sections back to disk */
 void
 SgAsmElfSymbolSection::unparse(FILE *f)
@@ -2045,28 +2096,14 @@ SgAsmElfSymbolSection::unparse(FILE *f)
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
 
-    size_t entry_size, struct_size, extra_size;
-    calculate_sizes(&entry_size, &struct_size, &extra_size);
-    size_t nentries = p_symbols->get_symbols().size();
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     
-    /* Adjust section size. FIXME: this should be moved to the reallocate() function. (RPM 2008-10-07) */
-    if (nentries*entry_size < get_size()) {
-        /* Make the section smaller without affecting other sections. This is allowed during unparsing. */
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(nentries*entry_size);
-        }
-        set_size(nentries*entry_size);
-    } else if (nentries*entry_size > get_size()) {
-        /* We should have detected this before unparsing! */
-        ROSE_ASSERT(!"can't expand symbol section while unparsing!");
-    }
-
     /* Adjust the entry size stored in the ELF Section Table */
     get_section_entry()->set_sh_entsize(entry_size);
 
     /* Write each entry's required part followed by the optional part */
-    for (size_t i=0; i < p_symbols->get_symbols().size(); i++) {
+    for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol::Elf32SymbolEntry_disk disk32;
         SgAsmElfSymbol::Elf64SymbolEntry_disk disk64;
         void *disk=NULL;
