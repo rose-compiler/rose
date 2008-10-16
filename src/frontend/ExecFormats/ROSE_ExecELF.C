@@ -2248,8 +2248,15 @@ SgAsmElfSymbol::ctor_common()
 
 /* Encode a symbol into disk format */
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk)
+SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
 {
+    SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
+    if (s && s->get_strtab()==strtab) {
+        p_st_name = get_name()->get_offset();
+    } else {
+        p_st_name = 0;
+    }
+
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));
     host_to_disk(sex, p_st_res1,     &(disk->st_res1));
@@ -2259,8 +2266,15 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk)
     return disk;
 }
 void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk)
+SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
 {
+    SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
+    if (s && s->get_strtab()==strtab) {
+        p_st_name = get_name()->get_offset();
+    } else {
+        p_st_name = 0;
+    }
+
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));
     host_to_disk(sex, p_st_res1,     &(disk->st_res1));
@@ -2286,7 +2300,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
 
     SgAsmGenericSymbol::dump(f, p, -1);
 
-    fprintf(f, "%s%-*s = %"PRIu64" offset into strtab\n", p, w, "st_name",  p_st_name);
+    fprintf(f, "%s%-*s = %"PRIu64" (in linked string table)\n", p, w, "st_name",  p_st_name);
 
     fprintf(f, "%s%-*s = %u (",          p, w, "st_info",  p_st_info);
     switch (get_elf_binding()) {
@@ -2427,6 +2441,10 @@ SgAsmElfSymbolSection::unparse(FILE *f)
     ROSE_ASSERT(fhdr);
     ByteOrder sex = fhdr->get_sex();
 
+    /* We need to know what string table is associated with this symbol table. */
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+    SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
+
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     
@@ -2442,9 +2460,9 @@ SgAsmElfSymbolSection::unparse(FILE *f)
         SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
         
         if (4==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk32);
+            disk = entry->encode(sex, &disk32, strtab);
         } else if (8==fhdr->get_word_size()) {
-            disk = entry->encode(sex, &disk64);
+            disk = entry->encode(sex, &disk64, strtab);
         } else {
             ROSE_ASSERT(!"unsupported word size");
         }

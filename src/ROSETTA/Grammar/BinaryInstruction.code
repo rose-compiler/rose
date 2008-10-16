@@ -1699,58 +1699,54 @@ HEADER_ELF_SYMBOL_LIST_START
 HEADER_ELF_SYMBOL_LIST_END
 
 HEADER_ELF_SYMBOL_START
+	public:
+		enum ElfSymBinding {
+			STB_LOCAL=0,
+			STB_GLOBAL=1,
+			STB_WEAK=2
+		};
 
-     public:
-          enum ElfSymBinding {
-               STB_LOCAL=0,
-               STB_GLOBAL=1,
-               STB_WEAK=2
-             };
+		enum ElfSymType {
+			STT_NOTYPE  = 0,
+			STT_OBJECT  = 1,
+			STT_FUNC    = 2,
+			STT_SECTION = 3,
+			STT_FILE    = 4
+		};
 
-          enum ElfSymType {
-               STT_NOTYPE  = 0,
-               STT_OBJECT  = 1,
-               STT_FUNC    = 2,
-               STT_SECTION = 3,
-               STT_FILE    = 4
-             };
+		struct Elf32SymbolEntry_disk {
+			uint32_t      st_name;  /* Name offset into string table */
+			uint32_t      st_value; /* Value: absolute value, address, etc. depending on sym type */
+			uint32_t      st_size;  /* Symbol size in bytes */
+			unsigned char st_info;  /* Type and binding attributes */
+			unsigned char st_res1;  /* Reserved; always zero */
+			uint16_t      st_shndx; /* Section index or special meaning */
+		} __attribute__((packed));
 
-          struct Elf32SymbolEntry_disk {
-               uint32_t            st_name;   /* Name offset into string table */
-               uint32_t            st_value;  /* Value: absolute value, address, etc. depending on sym type */
-               uint32_t            st_size;   /* Symbol size in bytes */
-               unsigned char       st_info;   /* Type and binding attributes */
-               unsigned char       st_res1;   /* Reserved; always zero */
-               uint16_t            st_shndx;  /* Section index or special meaning */
-             } __attribute__((packed));
+		struct Elf64SymbolEntry_disk {
+			uint32_t      st_name;
+			unsigned char st_info;
+			unsigned char st_res1;
+			uint16_t      st_shndx;
+			uint64_t      st_value;
+			uint64_t      st_size;
+		} __attribute__((packed));
 
-          struct Elf64SymbolEntry_disk {
-               uint32_t            st_name;
-               unsigned char       st_info;
-               unsigned char       st_res1;
-               uint16_t            st_shndx;
-               uint64_t            st_value;
-               uint64_t            st_size;
-             } __attribute__((packed));
+		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
+		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
+		//virtual ~SgAsmElfSymbol() {};
 
-          SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf32SymbolEntry_disk *disk);
-          SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
-       // virtual ~SgAsmElfSymbol() {};
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, Elf32SymbolEntry_disk*, SgAsmGenericStrtab*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, Elf64SymbolEntry_disk*, SgAsmGenericStrtab*);
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
+		SgAsmElfSymbol::ElfSymBinding get_elf_binding();
+		SgAsmElfSymbol::ElfSymType get_elf_type();
 
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-          void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-          virtual void dump(FILE *f, const char *prefix, ssize_t idx);
-          void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
-          SgAsmElfSymbol::ElfSymBinding get_elf_binding();
-          SgAsmElfSymbol::ElfSymType get_elf_type();
-
-     private:
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
-          void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
-
-       /* Initialization common to all constructors */
-          void ctor_common();
-
+	private:
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf32SymbolEntry_disk*);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder, const SgAsmElfSymbol::Elf64SymbolEntry_disk*);
+		void ctor_common(); /* Initialization common to all constructors */
 HEADER_ELF_SYMBOL_END
 
 
