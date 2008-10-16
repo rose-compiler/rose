@@ -819,102 +819,148 @@ SgAsmElfSectionTable::ctor()
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
 
-    if (fhdr->get_e_shnum() > 0) {
+    size_t ent_size, struct_size, opt_size, nentries;
+    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    ROSE_ASSERT(opt_size==fhdr->get_shextrasz() && nentries==fhdr->get_e_shnum());
 
-        /* Check sizes */
-        ROSE_ASSERT(4 == fhdr->get_word_size() || 8 == fhdr->get_word_size());
-        size_t struct_size = 4 == fhdr->get_word_size() ? sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk) : 
-                                                          sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
-	addr_t entsize = struct_size + fhdr->get_shextrasz();
+    /* Change the section size to include all the entries */
+    ROSE_ASSERT(0==get_size());
+    extend(nentries * ent_size);
 
-        /* Change the section size to include all the entries */
-        ROSE_ASSERT(0==get_size());
-        extend(fhdr->get_e_shnum() * entsize);
-
-        /* Read all the section headers. We can't just cast this to an array like with other structs because
-         * the ELF header specifies the size of each entry. */
-        std::vector<SgAsmElfSectionTableEntry*> entries;
-        addr_t offset = 0;
-        for (size_t i = 0; i < fhdr->get_e_shnum(); i++, offset += entsize) {
-            SgAsmElfSectionTableEntry *shdr = NULL;
-            if (4 == fhdr->get_word_size()) {
-                const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk =
-                    (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, entsize);
-                shdr = new SgAsmElfSectionTableEntry(sex, disk);
-            } else {
-                const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk =
-                    (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, entsize);
-                shdr = new SgAsmElfSectionTableEntry(sex, disk);
-            }
-
-	    addr_t nextra = fhdr->get_shextrasz();
-            if (nextra>0)
-                shdr->get_extra() = content_ucl(offset+struct_size, nextra);
-            entries.push_back(shdr);
+    /* Read all the section headers. */
+    std::vector<SgAsmElfSectionTableEntry*> entries;
+    addr_t offset = 0;
+    for (size_t i=0; i<nentries; i++, offset+=ent_size) {
+        SgAsmElfSectionTableEntry *shdr = NULL;
+        if (4 == fhdr->get_word_size()) {
+            const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk *disk =
+                (const SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk*)content(offset, ent_size);
+            shdr = new SgAsmElfSectionTableEntry(sex, disk);
+        } else {
+            const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk *disk =
+                (const SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk*)content(offset, ent_size);
+            shdr = new SgAsmElfSectionTableEntry(sex, disk);
         }
+        if (opt_size>0)
+            shdr->get_extra() = content_ucl(offset+struct_size, opt_size);
+        entries.push_back(shdr);
+    }
 
-        /* Read the string table section first because we'll need this to initialize section names. */
-        SgAsmElfStringSection *strsec = NULL;
-        if (fhdr->get_e_shstrndx() > 0) {
-            SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
-            strsec = new SgAsmElfStringSection(fhdr, shdr);
-            strsec->set_id(fhdr->get_e_shstrndx());
-            strsec->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
-            strsec->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
-            strsec->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
-            strsec->set_file_alignment(shdr->get_sh_addralign());
-            strsec->set_mapped_alignment(shdr->get_sh_addralign());
-            shdr->set_parent(strsec);
+    /* Read the string table section first because we'll need this to initialize section names. */
+    SgAsmElfStringSection *strsec = NULL;
+    if (fhdr->get_e_shstrndx() > 0) {
+        SgAsmElfSectionTableEntry *shdr = entries[fhdr->get_e_shstrndx()];
+        strsec = new SgAsmElfStringSection(fhdr, shdr);
+        strsec->set_id(fhdr->get_e_shstrndx());
+        strsec->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
+        strsec->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
+        strsec->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
+        strsec->set_file_alignment(shdr->get_sh_addralign());
+        strsec->set_mapped_alignment(shdr->get_sh_addralign());
+        shdr->set_parent(strsec);
+    }
+
+    /* Read all other sections */
+    for (size_t i = 0; i<entries.size(); i++) {
+        SgAsmElfSectionTableEntry *shdr = entries[i];
+        SgAsmElfSection *section = NULL;
+        if (i == fhdr->get_e_shstrndx()) continue; /*we already read string table*/
+        switch (shdr->get_sh_type()) {
+          case SgAsmElfSectionTableEntry::SHT_NULL:
+            /* Null entry. We still create the section just to hold the section header. */
+            section = new SgAsmElfSection(fhdr, shdr, 0);
+            break;
+          case SgAsmElfSectionTableEntry::SHT_NOBITS:
+            /* These types of sections don't occupy any file space (e.g., BSS) */
+            section = new SgAsmElfSection(fhdr, shdr, 0);
+            break;
+          case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
+            section = new SgAsmElfDynamicSection(fhdr, shdr);
+            break;
+          case SgAsmElfSectionTableEntry::SHT_DYNSYM:
+          case SgAsmElfSectionTableEntry::SHT_SYMTAB:
+            section = new SgAsmElfSymbolSection(fhdr, shdr);
+            break;
+          case SgAsmElfSectionTableEntry::SHT_STRTAB:
+            section = new SgAsmElfStringSection(fhdr, shdr);
+            break;
+          default:
+            section = new SgAsmElfSection(fhdr, shdr);
+            break;
         }
+        section->set_id(i);
+        if (strsec)
+            section->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
+        section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
+        section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
+        section->set_file_alignment(shdr->get_sh_addralign());
+        section->set_mapped_alignment(shdr->get_sh_addralign());
+        shdr->set_parent(section);
+    }
 
-        /* Read all other sections */
-        for (size_t i = 0; i<entries.size(); i++) {
-            SgAsmElfSectionTableEntry *shdr = entries[i];
-            SgAsmElfSection *section = NULL;
-            if (i == fhdr->get_e_shstrndx()) continue; /*we already read string table*/
-            switch (shdr->get_sh_type()) {
-              case SgAsmElfSectionTableEntry::SHT_NULL:
-                /* Null entry. We still create the section just to hold the section header. */
-                section = new SgAsmElfSection(fhdr, shdr, 0);
-                break;
-              case SgAsmElfSectionTableEntry::SHT_NOBITS:
-                /* These types of sections don't occupy any file space (e.g., BSS) */
-                section = new SgAsmElfSection(fhdr, shdr, 0);
-                break;
-              case SgAsmElfSectionTableEntry::SHT_DYNAMIC:
-                section = new SgAsmElfDynamicSection(fhdr, shdr);
-                break;
-              case SgAsmElfSectionTableEntry::SHT_DYNSYM:
-              case SgAsmElfSectionTableEntry::SHT_SYMTAB:
-                section = new SgAsmElfSymbolSection(fhdr, shdr);
-                break;
-              case SgAsmElfSectionTableEntry::SHT_STRTAB:
-                section = new SgAsmElfStringSection(fhdr, shdr);
-                break;
-              default:
-                section = new SgAsmElfSection(fhdr, shdr);
-                break;
-            }
-            section->set_id(i);
-            if (strsec)
-                section->set_name(new SgAsmStoredString(strsec->get_strtab(), shdr->get_sh_name()));
-            section->set_mapped_wperm((shdr->get_sh_flags() & 0x01) == 0x01);
-            section->set_mapped_xperm((shdr->get_sh_flags() & 0x04) == 0x04);
-            section->set_file_alignment(shdr->get_sh_addralign());
-            section->set_mapped_alignment(shdr->get_sh_addralign());
-            shdr->set_parent(section);
-        }
-
-        /* Initialize links between sections */
-        for (size_t i = 0; i < entries.size(); i++) {
-            SgAsmElfSectionTableEntry *shdr = entries[i];
-            if (shdr->get_sh_link() > 0) {
-                SgAsmElfSection *source = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(i));
-                SgAsmElfSection *target = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(shdr->get_sh_link()));
-                source->set_linked_section(target);
-            }
+    /* Initialize links between sections */
+    for (size_t i = 0; i < entries.size(); i++) {
+        SgAsmElfSectionTableEntry *shdr = entries[i];
+        if (shdr->get_sh_link() > 0) {
+            SgAsmElfSection *source = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(i));
+            SgAsmElfSection *target = dynamic_cast<SgAsmElfSection*>(fhdr->get_file()->get_section_by_id(shdr->get_sh_link()));
+            source->set_linked_section(target);
         }
     }
+}
+
+/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ * pointers if the caller is not interested in the value. */
+rose_addr_t
+SgAsmElfSectionTable::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+{
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
+    size_t struct_size = 0;
+    size_t extra_size = fhdr->get_shextrasz();
+    size_t entry_size = 0;
+    size_t nentries = 0;
+
+    /* Size of required part of each entry */
+    if (4==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk);
+    } else if (8==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk);
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    /* Entire entry should be at least large enough for the required part. */
+    entry_size = struct_size;
+
+    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
+     * the ELF File Header is correct. */
+    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+    for (size_t i=0; i<sections.size(); i++) {
+        SgAsmElfSection *elfsec = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        if (elfsec && elfsec->get_section_entry()) {
+            nentries++;
+            extra_size = std::max(extra_size, elfsec->get_section_entry()->get_extra().size());
+        }
+    }
+
+    /* Total number of entries. Either we haven't parsed the section table yet (nor created the sections it defines) or we
+     * have. In the former case we use the setting from the ELF File Header, otherwise we just count the number of sections
+     * that have associated section table entry pointers. */
+    if (0==nentries)
+        nentries = fhdr->get_e_shnum();
+
+    /* Return values */
+    if (entsize)
+        *entsize = entry_size;
+    if (required)
+        *required = struct_size;
+    if (optional)
+        *optional = extra_size;
+    if (entcount)
+        *entcount = nentries;
+    return entry_size * nentries;
 }
 
 /* Update this section table entry with newer information from the section */
@@ -984,6 +1030,26 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 }
 
+/* Resize the section table based on ELF word size */
+bool
+SgAsmElfSectionTable::reallocate()
+{
+    bool reallocated = false;
+    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+        
+    } else if (need > get_size()) {
+        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+    }
+    return reallocated;
+}
+    
 /* Write the section table section back to disk */
 void
 SgAsmElfSectionTable::unparse(FILE *f)
@@ -1002,34 +1068,39 @@ SgAsmElfSectionTable::unparse(FILE *f)
         }
     }
 
+    /* Calculate sizes and update the ELF File Header */
+    size_t ent_size, struct_size, opt_size, nentries;
+    calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
+    fhdr->set_shextrasz(opt_size);
+    fhdr->set_e_shnum(nentries);
+    
     /* Write the section table entries */
-    for (size_t i = 0; i < sections.size(); ++i) {
-        if (sections[i]->get_id() >= 0) {
-            SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
-            SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
-            ROSE_ASSERT(shdr!=NULL);
+    for (size_t i=0; i<sections.size(); ++i) {
+        SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        SgAsmElfSectionTableEntry *shdr = section ? section->get_section_entry() : NULL;
+        if (shdr) {
             shdr->update_from_section(section);
+            int id = section->get_id();
+            ROSE_ASSERT(id>=0 && (size_t)id<nentries);
 
             SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk32;
             SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk64;
             void *disk  = NULL;
-            size_t size = 0;
 
             if (4==fhdr->get_word_size()) {
                 disk = shdr->encode(sex, &disk32);
-                size = sizeof disk32;
             } else if (8==fhdr->get_word_size()) {
                 disk = shdr->encode(sex, &disk64);
-                size = sizeof disk64;
             } else {
                 ROSE_ASSERT(!"invalid word size");
             }
 
             /* The disk struct */
-	    addr_t entsize = size + fhdr->get_shextrasz();
-            addr_t extra_offset = write(f, section->get_id()*entsize, size, disk);
-            if (shdr->get_extra().size() > 0)
-                write(f, extra_offset, shdr->get_extra());
+            addr_t spos = write(f, id*ent_size, struct_size, disk);
+            if (shdr->get_extra().size() > 0) {
+                ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
+                write(f, spos, shdr->get_extra());
+            }
         }
     }
 

@@ -1222,7 +1222,6 @@ HEADER_ELF_HEADER_START
 	  addr_t get_e_phoff() const {return p_e_phoff;}
 	  void set_e_shoff(addr_t);
 	  void set_e_phoff(addr_t);
-          unsigned long get_e_shnum() const {return p_e_shnum;}
 	  unsigned long get_e_phnum() const {return p_e_phnum;}
 
      private:
@@ -1247,6 +1246,8 @@ HEADER_ELF_SECTION_TABLE_START
           SgAsmElfSectionTable(SgAsmElfFileHeader *fhdr);
        // virtual ~SgAsmElfSectionTable() {}
 
+	  rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount);
+	  virtual bool reallocate();
           virtual void unparse(FILE*);
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
 
