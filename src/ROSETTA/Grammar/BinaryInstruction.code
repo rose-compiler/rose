@@ -1736,8 +1736,8 @@ HEADER_ELF_SYMBOL_START
 		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
 		//virtual ~SgAsmElfSymbol() {};
 
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, Elf32SymbolEntry_disk*, SgAsmGenericStrtab*);
-		void *encode(SgAsmExecutableFileFormat::ByteOrder, Elf64SymbolEntry_disk*, SgAsmGenericStrtab*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*, SgAsmGenericStrtab*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*, SgAsmGenericStrtab*);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 		void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*);
 		SgAsmElfSymbol::ElfSymBinding get_elf_binding();
