@@ -1406,22 +1406,62 @@ HEADER_ELF_STRING_SECTION_START
 		void ctor();
 HEADER_ELF_STRING_SECTION_END
 
+HEADER_ELF_RELA_SECTION_START
+	public:
+		SgAsmElfRelaSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+			: SgAsmElfSection(fhdr, shdr)
+			{ctor(fhdr, shdr);}
+		//virtual ~SgAsmElfRelaSection() {}
+		rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
+		virtual bool reallocate();
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
+HEADER_ELF_RELA_SECTION_END
+
+HEADER_ELF_RELA_ENTRY_START
+	public:
+		struct Elf32RelaEntry_disk {
+			uint32_t	r_offset;
+			uint32_t	r_info;
+			uint32_t	r_addend;
+		} __attribute__((packed));
+		struct Elf64RelaEntry_disk {
+			uint64_t	r_offset;
+			uint64_t	r_info;
+			uint64_t	r_addend;
+		} __attribute__((packed));
+
+		SgAsmElfRelaEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk)
+			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
+			{ctor(sex, disk);}
+		SgAsmElfRelaEntry(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk)
+			: p_r_offset(0), p_r_addend(0), p_sym(0), p_type(0)
+			{ctor(sex, disk);}
+		//virtual ~SgAsmElfDynamicEntry() {}
+
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf32RelaEntry_disk*);
+		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf64RelaEntry_disk*);
+	private:
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk);
+		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk);
+HEADER_ELF_RELA_ENTRY_END
+
 HEADER_ELF_DYNAMIC_SECTION_START
-     public:
-          SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
-             : SgAsmElfSection(fhdr, shdr)
-             {ctor(fhdr, shdr);}
-       // virtual ~SgAsmElfDynamicSection() {}
-
-	  rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
-          virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
-	  virtual bool reallocate();
-          virtual void unparse(FILE*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-     private:
-	  void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
-
+	public:
+		SgAsmElfDynamicSection(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+			: SgAsmElfSection(fhdr, shdr)
+			{ctor(fhdr, shdr);}
+		//virtual ~SgAsmElfDynamicSection() {}
+		rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount);
+		virtual void set_linked_section(SgAsmElfSection*);   /* Parsing happens here rather than in constructor */
+		virtual bool reallocate();
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmElfFileHeader*, SgAsmElfSectionTableEntry*);
 HEADER_ELF_DYNAMIC_SECTION_END
 
 HEADER_ELF_DYNAMIC_ENTRY_START

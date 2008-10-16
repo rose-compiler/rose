@@ -164,6 +164,7 @@ Grammar::setUpBinaryInstructions ()
      NEW_NONTERMINAL_MACRO ( AsmGenericHeader, AsmPEFileHeader  | AsmLEFileHeader |  AsmNEFileHeader | AsmDOSFileHeader |  AsmElfFileHeader, "AsmGenericHeader",    "AsmGenericHeaderTag", true /* canHaveInstances = true */ );
 
   // A lot of IR nodes are derived from the AsmGenericSection (segments were eliminated and became sections under Robb's recent changes).
+     NEW_TERMINAL_MACRO    ( AsmElfRelaSection,   "AsmElfRelaSection",   "AsmElfRelaSectionTag"   );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicSection,"AsmElfDynamicSection","AsmElfDynamicSectionTag");
      NEW_TERMINAL_MACRO    ( AsmElfSymbolSection, "AsmElfSymbolSection", "AsmElfSymbolSectionTag" );
      NEW_TERMINAL_MACRO    ( AsmElfStringSection, "AsmElfStringSection", "AsmElfStringSectionTag" );
@@ -173,7 +174,9 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmCoffStrtab,         "AsmCoffStrtab",         "AsmCoffStrtabTag"         );
      NEW_NONTERMINAL_MACRO( AsmGenericStrtab, AsmElfStrtab | AsmCoffStrtab, "AsmGenericStrtab", "AsmGenericStrtabTag", false);
 
-     NEW_NONTERMINAL_MACRO ( AsmElfSection, AsmElfSymbolSection | AsmElfDynamicSection | AsmElfStringSection, "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
+     NEW_NONTERMINAL_MACRO ( AsmElfSection,
+                             AsmElfSymbolSection | AsmElfRelaSection | AsmElfDynamicSection | AsmElfStringSection,
+                             "AsmElfSection", "AsmElfSectionTag", true /* canHaveInstances = true */ );
 
      NEW_TERMINAL_MACRO    ( AsmElfSectionTable,  "AsmElfSectionTable",  "AsmElfSectionTableTag"  );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTable,  "AsmElfSegmentTable",  "AsmElfSegmentTableTag"  );
@@ -219,6 +222,8 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO    ( AsmElfSectionTableEntry,     "AsmElfSectionTableEntry",     "AsmElfSectionTableEntryTag"     );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTableEntry,     "AsmElfSegmentTableEntry",     "AsmElfSegmentTableEntryTag"     );
      NEW_TERMINAL_MACRO    ( AsmElfSegmentTableEntryList, "AsmElfSegmentTableEntryList", "AsmElfSegmentTableEntryListTag" );
+     NEW_TERMINAL_MACRO    ( AsmElfRelaEntry,             "AsmElfRelaEntry",             "AsmElfRelaEntryTag"             );
+     NEW_TERMINAL_MACRO    ( AsmElfRelaEntryList,         "AsmElfRelaEntryList",         "AsmElfRelaEntryListTag"         );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntry,          "AsmElfDynamicEntry",          "AsmElfDynamicEntryTag"          );
      NEW_TERMINAL_MACRO    ( AsmElfDynamicEntryList,      "AsmElfDynamicEntryList",      "AsmElfDynamicEntryListTag"      );
 
@@ -272,6 +277,7 @@ Grammar::setUpBinaryInstructions ()
                AsmGenericFile          | AsmGenericSection       | AsmGenericSymbol            | AsmGenericStrtab | 
                AsmGenericSymbolList    | AsmGenericSectionList   | AsmGenericHeaderList        | AsmGenericString |
                AsmElfSectionTableEntry | AsmElfSegmentTableEntry | AsmElfSymbolList            |
+               AsmElfRelaEntry         | AsmElfRelaEntryList     |
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry      | 
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmPEDLLList | AsmPEImportHintNameList |
@@ -500,34 +506,28 @@ Grammar::setUpBinaryInstructions ()
      AsmCoffStrtab.setFunctionPrototype      ( "HEADER_COFF_STRING_TABLE", "../Grammar/BinaryInstruction.code");
      AsmCoffStrtab.setAutomaticGenerationOfDestructor(false);
 
+     AsmElfRelaSection.setFunctionPrototype("HEADER_ELF_RELA_SECTION", "../Grammar/BinaryInstruction.code");
+     AsmElfRelaSection.setDataPrototype("SgAsmElfRelaEntryList*", "entries", "= NULL", 
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // unsigned            dt_pltrelsz;                    /* Size in bytes of PLT relocations */
-  // addr_t              dt_pltgot;                      /* Address of global offset table */
-  // addr_t              dt_hash;                        /* Address of symbol hash table */
-  // addr_t              dt_strtab;                      /* Address of dynamic string table */
-  // addr_t              dt_symtab;                      /* Address of symbol table */
-  // addr_t              dt_rela;                        /* Address of Rela relocations */
-  // unsigned            dt_relasz;                      /* Total size in bytes of Rela relocations */
-  // unsigned            dt_relaent;                     /* Size of one Rela relocation */
-  // unsigned            dt_strsz;                       /* Size in bytes of string table */
-  // unsigned            dt_symentsz;                    /* Size in bytes of one symbol table entry */
-  // addr_t              dt_init;                        /* Address of initialization function */
-  // addr_t              dt_fini;                        /* Address of termination function */
-  // unsigned            dt_pltrel;                      /* Type of relocation in PLT */
-  // addr_t              dt_jmprel;                      /* Address of PLT relocations */
-  // unsigned            dt_verneednum;                  /* Number of entries in dt_verneed table */
-  // addr_t              dt_verneed;                     /* Address of table with needed versions */
-  // addr_t              dt_versym;                      /* GNU version symbol address */
-  // std::vector<ElfDynamicEntry*> other_entries;        /* Other values not specifically parsed out */
-  // std::vector<ElfDynamicEntry*> all_entries;          /* All parsed entries in order of appearance */
+     AsmElfRelaEntry.setFunctionPrototype("HEADER_ELF_RELA_ENTRY", "../Grammar/BinaryInstruction.code");
+     AsmElfRelaEntry.setDataPrototype("rose_addr_t", "r_offset", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfRelaEntry.setDataPrototype("rose_addr_t", "r_addend", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfRelaEntry.setDataPrototype("unsigned long", "sym", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmElfRelaEntry.setDataPrototype("rose_addr_t", "type", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmElfRelaEntryList.setDataPrototype("SgAsmElfRelaEntryPtrList","entries","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AsmElfDynamicSection.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_SECTION", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicSection.setDataPrototype("SgAsmElfDynamicEntryList*","entries","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
-  // unsigned            d_tag;
-  // addr_t              d_val;
      AsmElfDynamicEntry.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY", "../Grammar/BinaryInstruction.code");
-  // DQ (8/28/2008): Check against the specification
      AsmElfDynamicEntry.setDataPrototype("SgAsmElfDynamicEntry::EntryType","d_tag","= SgAsmElfDynamicEntry::DT_NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmElfDynamicEntry.setDataPrototype("rose_rva_t", "d_val", "", 
@@ -535,7 +535,6 @@ Grammar::setUpBinaryInstructions ()
      AsmElfDynamicEntry.setDataPrototype("SgUnsignedCharList","extra","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // AsmElfDynamicEntryList.setFunctionPrototype ( "HEADER_ELF_DYNAMIC_ENTRY_LIST", "../Grammar/BinaryInstruction.code");
      AsmElfDynamicEntryList.setDataPrototype("SgAsmElfDynamicEntryPtrList","entries","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

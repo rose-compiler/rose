@@ -450,7 +450,9 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericHeader::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_class",     p_e_ident_file_class);
+    const char *class_s = 1==p_e_ident_file_class ? " (32-bit)" :
+                          2==p_e_ident_file_class ? " (64-bit)" : "";
+    fprintf(f, "%s%-*s = %u%s\n",                           p, w, "e_ident_file_class",     p_e_ident_file_class, class_s);
     fprintf(f, "%s%-*s = %u\n",                             p, w, "e_ident_file_version",   p_e_ident_file_version);
     for (size_t i=0; i < p_e_ident_padding.size(); i++)
         fprintf(f, "%s%-*s = [%zu] %u\n",                   p, w, "e_ident_padding",     i, p_e_ident_padding[i]);
@@ -466,7 +468,8 @@ SgAsmElfFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shnum",                p_e_shnum);
     fprintf(f, "%s%-*s = %lu\n",                            p, w, "e_shstrndx",             p_e_shstrndx);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfFileHeader) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -562,7 +565,8 @@ SgAsmElfSection::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = NULL\n",    p, w, "linked_to");
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -632,6 +636,9 @@ SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     ROSE_ASSERT(get_strtab()!=NULL);
     get_strtab()->dump(f, p, -1);
+
+    if (variantT() == V_SgAsmElfStringSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -884,6 +891,9 @@ SgAsmElfSectionTable::ctor()
           case SgAsmElfSectionTableEntry::SHT_STRTAB:
             section = new SgAsmElfStringSection(fhdr, shdr);
             break;
+          case SgAsmElfSectionTableEntry::SHT_RELA:
+            section = new SgAsmElfRelaSection(fhdr, shdr);
+            break;
           default:
             section = new SgAsmElfSection(fhdr, shdr);
             break;
@@ -1120,7 +1130,8 @@ SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfSectionTable) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
     
 
@@ -1498,7 +1509,256 @@ SgAsmElfSegmentTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfSegmentTable) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Relocation
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructors */
+void
+SgAsmElfRelaEntry::ctor(ByteOrder sex, const Elf32RelaEntry_disk *disk)
+{
+    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_addend    = disk_to_host(sex, disk->r_addend);
+    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_sym = info >> 8;
+    p_type = info & 0xff;
+}
+void
+SgAsmElfRelaEntry::ctor(ByteOrder sex, const Elf64RelaEntry_disk *disk)
+{
+    p_r_offset    = disk_to_host(sex, disk->r_offset);
+    p_r_addend    = disk_to_host(sex, disk->r_addend);
+    uint64_t info = disk_to_host(sex, disk->r_info);
+    p_sym = info >> 32;
+    p_type = info & 0xffffffff;
+}
+
+/* Encode a native entry back into disk format */
+void *
+SgAsmElfRelaEntry::encode(ByteOrder sex, Elf32RelaEntry_disk *disk)
+{
+    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    host_to_disk(sex, p_r_addend, &(disk->r_addend));
+    uint64_t info = (p_sym<<8) | (p_type & 0xff);
+    host_to_disk(sex, info, &(disk->r_info));
+    return disk;
+}
+void *
+SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk)
+{
+    host_to_disk(sex, p_r_offset, &(disk->r_offset));
+    host_to_disk(sex, p_r_addend, &(disk->r_addend));
+    uint64_t info = (p_sym<<32) | (p_type & 0xffffffff);
+    host_to_disk(sex, info, &(disk->r_info));
+    return disk;
+}
+
+/* Print some debugging info */
+void
+SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sElfRelaEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sElfRelaEntry.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "offset", p_r_offset, p_r_offset);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIx64")\n", p, w, "addend", p_r_addend, p_r_addend);
+    fprintf(f, "%s%-*s = %lu\n", p, w, "sym", p_sym);
+    fprintf(f, "%s%-*s = %lu\n", p, w, "type", p_type);
+}
+
+/* Constructor */
+void
+SgAsmElfRelaSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *shdr)
+{
+    p_entries = new SgAsmElfRelaEntryList;
+    p_entries->set_parent(this);
+    
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+    ROSE_ASSERT(extra_size==0);
+    
+    /* Parse each entry */
+    for (size_t i=0; i<nentries; i++) {
+        SgAsmElfRelaEntry *entry = 0;
+        if (4==fhdr->get_word_size()) {
+            const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk =
+                (const SgAsmElfRelaEntry::Elf32RelaEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfRelaEntry(fhdr->get_sex(), disk);
+        } else if (8==fhdr->get_word_size()) {
+            const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk =
+                (const SgAsmElfRelaEntry::Elf64RelaEntry_disk*)content(i*entry_size, struct_size);
+            entry = new SgAsmElfRelaEntry(fhdr->get_sex(), disk);
+        } else {
+            throw FormatError("unsupported ELF word size");
+        }
+        p_entries->get_entries().push_back(entry);
+    }
+}
+
+/* Returns info about the size of the entries based on information already available. Any or all arguments may be null
+ * pointers if the caller is not interested in the value. Return values are:
+ *
+ *   entsize  - size of each entry, sum of required and optional parts. This comes from the sh_entsize member of this
+ *              section's ELF Section Table Entry, adjusted upward to be large enough to hold the required part of each
+ *              entry (see "required").
+ *
+ *   required - size of the required (leading) part of each entry. The size of the required part is based on the ELF word size.
+ *
+ *   optional - size of the optional (trailing) part of each entry. If the section has been parsed then the optional size will
+ *              be calculated from the entry with the largest "extra" (aka, optional) data. Otherwise this is calculated as the
+ *              difference between the "entsize" and the "required" sizes.
+ *   
+ *   entcount - total number of entries in this section. If the section has been parsed then this is the actual number of
+ *              parsed entries, otherwise its the section size divided by the "entsize".
+ *
+ * Return value is the total size needed for the section. In all cases, it is entsize*entcount.
+ */
+rose_addr_t
+SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
+{
+    size_t struct_size = 0;
+    size_t extra_size = 0;
+    size_t entry_size = 0;
+    size_t nentries = 0;
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+
+    /* Assume ELF Section Table Entry is correct (for now) for the size of each entry in the table. */
+    ROSE_ASSERT(get_section_entry());
+    entry_size = get_section_entry()->get_sh_entsize();
+
+    /* Size of required part of each entry */
+    if (4==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfRelaEntry::Elf32RelaEntry_disk);
+    } else if (8==fhdr->get_word_size()) {
+        struct_size = sizeof(SgAsmElfRelaEntry::Elf64RelaEntry_disk);
+    } else {
+        throw FormatError("bad ELF word size");
+    }
+
+    /* Entire entry should be at least large enough for the required part. This also takes care of the case when the ELF
+     * Section Table Entry has a zero-valued sh_entsize */
+    entry_size = std::max(entry_size, struct_size);
+
+    /* Size of optional parts. If we've parsed the table then use the largest optional part, otherwise assume the entry from
+     * the ELF Section Table is correct. */
+    if ((nentries=p_entries->get_entries().size())>0) {
+        //FIXME: We don't currently support the case where the struct is smaller than the entry (i.e., padded) (RPM 2008-10-13)
+        //for (size_t i=0; i<nentries; i++) {
+        //    SgAsmElfRelaEntry *entry = p_entries->get_entries()[i];
+        //    extra_size = std::max(extra_size, entry->get_extra().size());
+        //}
+        entry_size = std::min(entry_size, struct_size+extra_size);
+    } else {
+        extra_size = entry_size - struct_size;
+        nentries = get_size() / entry_size;
+    }
+    
+    /* Return values */
+    if (entsize)
+        *entsize = entry_size;
+    if (required)
+        *required = struct_size;
+    if (optional)
+        *optional = extra_size;
+    if (entcount)
+        *entcount = nentries;
+    return entry_size * nentries;
+}
+
+/* Resize the section based on ELF word size */
+bool
+SgAsmElfRelaSection::reallocate()
+{
+    bool reallocated = false;
+    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+        
+    } else if (need > get_size()) {
+        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+    }
+    return reallocated;
+}
+
+/* Write section back to disk */
+void
+SgAsmElfRelaSection::unparse(FILE *f)
+{
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+
+    SgAsmElfFileHeader *fhdr = get_elf_header();
+    ROSE_ASSERT(fhdr);
+    ByteOrder sex = fhdr->get_sex();
+
+    size_t entry_size, struct_size, extra_size, nentries;
+    calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
+
+    /* Adjust the entry size stored in the ELF Section Table */
+    get_section_entry()->set_sh_entsize(entry_size);
+
+    /* Write each entry's required part followed by the optional part */
+    for (size_t i=0; i<nentries; i++) {
+        SgAsmElfRelaEntry::Elf32RelaEntry_disk disk32;
+        SgAsmElfRelaEntry::Elf64RelaEntry_disk disk64;
+        void *disk  = NULL;
+
+        SgAsmElfRelaEntry *entry = p_entries->get_entries()[i];
+
+        if (4==fhdr->get_word_size()) {
+            disk = entry->encode(sex, &disk32);
+        } else if (8==fhdr->get_word_size()) {
+            disk = entry->encode(sex, &disk64);
+        } else {
+            ROSE_ASSERT(!"unsupported word size");
+        }
+
+        addr_t spos = i * entry_size;
+        spos = write(f, spos, struct_size, disk);
+#if 0 /*FIXME: padding not supported here yet (RPM 2008-10-13)*/
+        if (entry->get_extra().size()>0) {
+            ROSE_ASSERT(entry->get_extra().size()<=extra_size);
+            write(f, spos, entry->get_extra());
+        }
+#endif
+    }
+
+    unparse_holes(f);
+}
+
+/* Print some debugging info */
+void
+SgAsmElfRelaSection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sRelaSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sRelaSection.", prefix);
+    }
+
+    SgAsmElfSection::dump(f, p, -1);
+
+    for (size_t i=0; i<p_entries->get_entries().size(); i++) {
+        SgAsmElfRelaEntry *ent = p_entries->get_entries()[i];
+        ent->dump(f, p, i);
+    }
+
+    if (variantT() == V_SgAsmElfRelaSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1901,7 +2161,8 @@ SgAsmElfDynamicSection::dump(FILE *f, const char *prefix, ssize_t idx)
         dump_containing_sections(f, std::string(p)+"...", ent->get_d_val(), get_header()->get_sections()->get_sections());
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfDynamicSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2287,7 +2548,8 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i, section);
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmElfSymbolSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
