@@ -167,6 +167,13 @@ SgAsmStoredString::get_offset() const
     return get_storage()->get_offset();
 }
 
+/* Returns the string table that holds this string, even if the string value isn't currently allocated in the table. */
+SgAsmGenericStrtab *
+SgAsmStoredString::get_strtab() 
+{
+    return get_storage()->get_strtab();
+}
+
 /* Give the string a new value */
 void
 SgAsmStoredString::set_string(const std::string &s)
@@ -214,7 +221,7 @@ SgAsmStringStorage::dump(FILE *f, const char *prefix, ssize_t idx)
     } else {
         fputs(" no section", f);
     }
-    if (!strtab || get_offset()==SgAsmStoredString::unallocated) {
+    if (!strtab || get_offset()==SgAsmGenericString::unallocated) {
         fputs(", not allocated", f);
     } else {
         fprintf(f, ", offset 0x%08"PRIx64" (%"PRIu64")", get_offset(), get_offset());
@@ -238,8 +245,8 @@ SgAsmGenericStrtab::free(SgAsmStringStorage *storage)
     ROSE_ASSERT(storage!=NULL);
     ROSE_ASSERT(storage!=p_dont_free);
     addr_t old_offset = storage->get_offset();
-    if (old_offset!=SgAsmStoredString::unallocated) {
-        storage->set_offset(SgAsmStoredString::unallocated);
+    if (old_offset!=SgAsmGenericString::unallocated) {
+        storage->set_offset(SgAsmGenericString::unallocated);
         free(old_offset, storage->get_string().size()+1);
     }
 }
@@ -279,9 +286,9 @@ SgAsmGenericStrtab::free_all_strings(bool blow_away_holes)
 
     /* Mark all storage objects as being unallocated. Never free the dont_free storage (if any). */
     for (size_t i=0; i<p_storage_list.size(); i++) {
-        if (p_storage_list[i]->get_offset()!=SgAsmStoredString::unallocated && p_storage_list[i]!=p_dont_free) {
+        if (p_storage_list[i]->get_offset()!=SgAsmGenericString::unallocated && p_storage_list[i]!=p_dont_free) {
             p_num_freed++;
-            p_storage_list[i]->set_offset(SgAsmStoredString::unallocated);
+            p_storage_list[i]->set_offset(SgAsmGenericString::unallocated);
         }
     }
 
@@ -317,7 +324,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
     std::vector<size_t> map;
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
-        if (storage->get_offset()==SgAsmStoredString::unallocated) {
+        if (storage->get_offset()==SgAsmGenericString::unallocated) {
             map.push_back(i);
         }
     }
@@ -334,7 +341,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
     /* Allocate from largest to smallest so we have the best chance of finding overlaps */
     for (size_t i=0; i<map.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[map[i]];
-        ROSE_ASSERT(storage->get_offset()==SgAsmStoredString::unallocated);
+        ROSE_ASSERT(storage->get_offset()==SgAsmGenericString::unallocated);
 
         /* We point empty strings at the dont_free storage if possible. */
         if (storage->get_string()=="" && p_dont_free) {
@@ -344,10 +351,10 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
         /* If there's already a string with the same value then they can share space in the string table. They're still
          * considered two separate strings, so changing one doesn't affect the other. */
-        if (storage->get_offset()==SgAsmStoredString::unallocated) {
+        if (storage->get_offset()==SgAsmGenericString::unallocated) {
             for (size_t j=0; j<p_storage_list.size(); j++) {
                 SgAsmStringStorage *previous = p_storage_list[j];
-                if (previous->get_offset()!=SgAsmStoredString::unallocated && previous->get_string()==storage->get_string()) {
+                if (previous->get_offset()!=SgAsmGenericString::unallocated && previous->get_string()==storage->get_string()) {
                     storage->set_offset(previous->get_offset());
                     break;
                 }
@@ -356,11 +363,11 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
         /* Some string tables may be able to overlap strings. For instance, ELF can overlap "domain" and "main" since it
          * encodes strings with NUL termination. */
-        if (storage->get_offset()==SgAsmStoredString::unallocated)
+        if (storage->get_offset()==SgAsmGenericString::unallocated)
             allocate_overlap(storage);
         
         /* If we couldn't share another string then try to allocate from free space (avoiding holes) */
-        if (storage->get_offset()==SgAsmStoredString::unallocated) {
+        if (storage->get_offset()==SgAsmGenericString::unallocated) {
             ExtentPair e(0, 0);
             try {
                 e = get_freelist().allocate_best_fit(storage->get_string().size()+1);
@@ -372,7 +379,7 @@ SgAsmGenericStrtab::reallocate(bool shrink)
         }
 
         /* If no free space area large enough then prepare to extend the section. */
-        if (storage->get_offset()==SgAsmStoredString::unallocated) {
+        if (storage->get_offset()==SgAsmGenericString::unallocated) {
             extend_size += storage->get_string().size() + 1;
         }
     }

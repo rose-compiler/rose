@@ -1216,7 +1216,7 @@ SgAsmCoffStrtab::~SgAsmCoffStrtab()
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
-        storage->set_offset(SgAsmStoredString::unallocated);
+        storage->set_offset(SgAsmGenericString::unallocated);
     }
     p_storage_list.clear();
     p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
@@ -1228,7 +1228,7 @@ SgAsmCoffStrtab::~SgAsmCoffStrtab()
 SgAsmStringStorage *
 SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
 {
-    ROSE_ASSERT(offset!=SgAsmStoredString::unallocated);
+    ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
     SgAsmGenericSection *container = get_container();
 
     /* Has the string already been created? */
@@ -1245,7 +1245,7 @@ SgAsmCoffStrtab::create_storage(addr_t offset, bool shared)
     /* Make sure new storage isn't inside some other string. (We don't support nested strings in COFF where the length byte of
      * the nested string is one of the characters of the outer string.) */
     for (referenced_t::iterator i=p_storage_list.begin(); i!=p_storage_list.end(); ++i) {
-        ROSE_ASSERT((*i)->get_offset()==SgAsmStoredString::unallocated ||
+        ROSE_ASSERT((*i)->get_offset()==SgAsmGenericString::unallocated ||
                     offset + 1 + len <= (*i)->get_offset() ||
                     offset >= 1 + (*i)->get_string().size());
     }
@@ -1292,7 +1292,7 @@ SgAsmCoffStrtab::unparse(FILE *f)
     /* Write length coded strings. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
-        ROSE_ASSERT(storage->get_offset()!=SgAsmStoredString::unallocated);
+        ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
         addr_t at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
     }

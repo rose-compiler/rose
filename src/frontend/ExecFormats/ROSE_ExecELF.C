@@ -781,7 +781,7 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
     for (referenced_t::iterator i = p_storage_list.begin(); i != p_storage_list.end(); ++i) {
         SgAsmStringStorage *storage = *i;
         storage->set_strtab(NULL);
-        storage->set_offset(SgAsmStoredString::unallocated);
+        storage->set_offset(SgAsmGenericString::unallocated);
     }
     p_storage_list.clear();
     p_dont_free = NULL; /*FIXME: can't delete for same reason as in SgAsmStoredString destructor. (RPM 2008-09-05) */
@@ -793,7 +793,7 @@ SgAsmElfStrtab::~SgAsmElfStrtab()
 SgAsmStringStorage *
 SgAsmElfStrtab::create_storage(addr_t offset, bool shared)
 {
-    ROSE_ASSERT(offset!=SgAsmStoredString::unallocated);
+    ROSE_ASSERT(offset!=SgAsmGenericString::unallocated);
 
     /* Has this string already been created? If so, return previous storage object. However, never share the empty_string at
      * offset zero created when this string table was constructed because the ELF spec says it needs to stay there whether
@@ -842,15 +842,15 @@ SgAsmElfStrtab::get_storage_size(const SgAsmStringStorage *storage) {
  * string since the space is already allocated for the existing string. If the new string ends with an existing string
  * (new="domain", existing="main") and there's enough free space before the existing string (two bytes in this case) then
  * we allocate some of that free space and use a suitable offset. In any case, upon return storage->get_offset() will return
- * the allocated offset if successful, or SgAsmStoredString::unallocated if we couldn't find an overlap. */
+ * the allocated offset if successful, or SgAsmGenericString::unallocated if we couldn't find an overlap. */
 void
 SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
 {
-    ROSE_ASSERT(storage->get_offset()==SgAsmStoredString::unallocated);
+    ROSE_ASSERT(storage->get_offset()==SgAsmGenericString::unallocated);
     size_t need = storage->get_string().size();
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *existing = p_storage_list[i];
-        if (existing->get_offset()!=SgAsmStoredString::unallocated) {
+        if (existing->get_offset()!=SgAsmGenericString::unallocated) {
             size_t have = existing->get_string().size();
             if (need<=have && 0==existing->get_string().compare(have-need, need, storage->get_string())) {
                 /* An existing string ends with the new string. */
@@ -880,7 +880,7 @@ SgAsmElfStrtab::unparse(FILE *f)
     /* Write strings with NUL termination. Shared strings will be written more than once, but that's OK. */
     for (size_t i=0; i<p_storage_list.size(); i++) {
         SgAsmStringStorage *storage = p_storage_list[i];
-        ROSE_ASSERT(storage->get_offset()!=SgAsmStoredString::unallocated);
+        ROSE_ASSERT(storage->get_offset()!=SgAsmGenericString::unallocated);
         addr_t at = container->write(f, storage->get_offset(), storage->get_string());
         container->write(f, at, '\0');
     }

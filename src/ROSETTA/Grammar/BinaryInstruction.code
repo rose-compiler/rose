@@ -1068,16 +1068,17 @@ HEADER_BASIC_STRING_START
 HEADER_BASIC_STRING_END
 
 HEADER_GENERIC_STRING_START
-     public:
-       // virtual ~SgAsmGenericString() {};
+	public:
+		//virtual ~SgAsmGenericString() {};
+		static const rose_addr_t unallocated = ~(rose_addr_t)0;
 
-       // These aren't the ROSETTA-generated versions because they hook into string table allocation functions
-          virtual std::string get_string() const;
-          virtual void set_string(const std::string &s);
-          const char *c_str() const;
+		// These aren't the ROSETTA-generated versions because they hook into string table allocation functions
+		virtual std::string get_string() const;
+		virtual void set_string(const std::string &s);
+		virtual rose_addr_t get_offset() const {return unallocated;}
+		const char *c_str() const;
 
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 HEADER_GENERIC_STRING_END
 
 HEADER_STRING_STORAGE_START
@@ -1358,20 +1359,20 @@ HEADER_ELF_SECTION_END
 
 HEADER_STORED_STRING_START
 	public:
-		SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset)    /*string in string table*/
+		SgAsmStoredString(SgAsmGenericStrtab *strtab, rose_addr_t offset)	/*string in string table*/
 			{ctor(strtab, offset, false);}
-		SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s)  /*new string in string table*/
+		SgAsmStoredString(SgAsmGenericStrtab *strtab, const std::string &s)	/*new string in string table*/
 			{ctor(strtab, s);}
-		explicit SgAsmStoredString(class SgAsmStringStorage *storage)          /*string shares other storage*/
+		explicit SgAsmStoredString(class SgAsmStringStorage *storage)		/*string shares other storage*/
 			{ctor(storage);}
 		// virtual ~SgAsmStoredString();
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
-		static const rose_addr_t unallocated = ~(rose_addr_t)0;
+		SgAsmGenericStrtab *get_strtab();					/*table holding the string*/
 
 		// These are not access functions -- they do more than just getting or setting the value!
 		virtual std::string get_string() const;
 		virtual void set_string(const std::string&);				/*also deallocates previous value*/
-		rose_addr_t get_offset() const;                                     	/*also triggers realloc*/
+		virtual rose_addr_t get_offset() const;					/*also triggers realloc*/
 	private:
 		// Maybe we need to supressed ROSETTA generated constructor!
 		// SgAsmStoredString() {abort();}
