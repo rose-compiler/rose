@@ -1673,22 +1673,31 @@ SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk)
 
 /* Print some debugging info */
 void
-SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sElfRelaEntry[%zd].", prefix, idx);
+        sprintf(p, "%sElfRelaEntry[%zd]", prefix, idx);
     } else {
-        sprintf(p, "%sElfRelaEntry.", prefix);
+        sprintf(p, "%sElfRelaEntry", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "offset", p_r_offset, p_r_offset);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIx64")\n", p, w, "addend", p_r_addend, p_r_addend);
-    fprintf(f, "%s%-*s = %lu\n", p, w, "sym", p_sym);
-    fprintf(f, "%s%-*s = %lu\n", p, w, "type", p_type);
+    /* compact one-line-per-reloc format */
+    if (0==idx)
+        fprintf(f, "%s%-*s   %-10s %-4s %-10s %4s %-10s Name + Addend\n", p, w, "", "Offset", "Type", "Addend", "Sym", "Value");
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" 0x%02lx 0x%08"PRIx64" %4lu", p, w, "", p_r_offset, p_type, p_r_addend, p_sym);
+    if (!symtab) {
+        fprintf(f, " 0x%08x <no-symtab>", 0);
+    } else if (p_sym>=symtab->get_symbols()->get_symbols().size()) {
+        fprintf(f, " 0x%08x <range>", 0);
+    } else {
+        SgAsmGenericSymbol *sym = symtab->get_symbols()->get_symbols()[p_sym];
+        fprintf(f, " 0x%08"PRIx64" %s", sym->get_value(), sym->get_name()->c_str());
+    }
+    fprintf(f, " + %"PRIu64"\n", p_r_addend);
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, ".extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
@@ -1793,10 +1802,11 @@ SgAsmElfRelaSection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 
     SgAsmElfSection::dump(f, p, -1);
+    SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(get_linked_section());
 
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfRelaEntry *ent = p_entries->get_entries()[i];
-        ent->dump(f, p, i);
+        ent->dump(f, p, i, symtab);
     }
 
     if (variantT() == V_SgAsmElfRelaSection) //unless a base class

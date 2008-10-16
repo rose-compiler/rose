@@ -1444,9 +1444,12 @@ HEADER_ELF_RELA_ENTRY_START
 			{ctor(sex, disk);}
 		//virtual ~SgAsmElfDynamicEntry() {}
 
-		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf32RelaEntry_disk*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfRelaEntry::Elf64RelaEntry_disk*);
+
+		void dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbolSection *symtab);
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx)
+			{dump(f, prefix, idx, NULL);}
 	private:
 		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf32RelaEntry_disk *disk);
 		void ctor(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfRelaEntry::Elf64RelaEntry_disk *disk);
