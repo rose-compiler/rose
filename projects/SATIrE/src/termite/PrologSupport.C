@@ -298,8 +298,9 @@ PrologSupport::getClassTypeSpecific(SgType* mtype) {
 
 /**
  * class: SgTypedefType
- * term: typedef_type(name)
+ * term: typedef_type(name, base)
  * arg name: name of the new type
+ * arg base: basetype
  */
 PrologTerm*
 PrologSupport::getTypedefTypeSpecific(SgType* mtype) {
