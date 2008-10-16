@@ -1687,6 +1687,10 @@ SgAsmElfRelaEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIx64")\n", p, w, "addend", p_r_addend, p_r_addend);
     fprintf(f, "%s%-*s = %lu\n", p, w, "sym", p_sym);
     fprintf(f, "%s%-*s = %lu\n", p, w, "type", p_type);
+    if (p_extra.size()>0) {
+        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        hexdump(f, 0, std::string(p)+"extra at ", p_extra);
+    }
 }
 
 /* Constructor */
@@ -1714,7 +1718,10 @@ SgAsmElfRelaSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *s
         } else {
             throw FormatError("unsupported ELF word size");
         }
+        if (extra_size>0)
+            entry->get_extra() = content_ucl(i*entry_size+struct_size, extra_size);
         p_entries->get_entries().push_back(entry);
+        ROSE_ASSERT(p_entries->get_entries().size()>0);
     }
 }
 
@@ -1722,7 +1729,9 @@ SgAsmElfRelaSection::ctor(SgAsmElfFileHeader *fhdr, SgAsmElfSectionTableEntry *s
 rose_addr_t
 SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount)
 {
-    std::vector<size_t> extra_sizes(p_entries->get_entries().size(), 0); /*no extra data for Rela*/
+    std::vector<size_t> extra_sizes;
+    for (size_t i=0; i<p_entries->get_entries().size(); i++)
+        extra_sizes.push_back(p_entries->get_entries()[i]->get_extra().size());
     return calculate_sizes(sizeof(SgAsmElfRelaEntry::Elf32RelaEntry_disk), sizeof(SgAsmElfRelaEntry::Elf64RelaEntry_disk),
                            extra_sizes, entsize, required, optional, entcount);
 }
