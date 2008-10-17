@@ -14,6 +14,7 @@
    at this point. The splitting into several files is just to simplify and separate their contents! 
 */
 #include "AST_FILE_IO.h"
+#include "Cxx_GrammarMemoryPoolSupport.h"
 #include "StorageClasses.h"
 #include "StorageClassMemoryManagement.C"
 #include "SourcesOfIRNodesAstFileIOSupport.C"

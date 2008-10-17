@@ -1,5 +1,6 @@
 
 #include "sage3.h"
+#include "Cxx_GrammarMemoryPoolSupport.h"
 
 #include "AST_FILE_IO.h"
 #include "StorageClasses.h"

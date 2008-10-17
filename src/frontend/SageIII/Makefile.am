@@ -43,6 +43,7 @@ GENERATED_SOURCE = \
 	Cxx_Grammar.h \
 	Cxx_GrammarRTI.C \
 	Cxx_Grammar.C \
+	Cxx_GrammarMemoryPoolSupport.C \
 	AstQueryMemoryPool.h \
 	Cxx_GrammarReturnClassHierarchySubTree.C \
 	Cxx_GrammarTreeTraversalSuccessorContainer.C \
@@ -52,6 +53,7 @@ GENERATED_SOURCE = \
 	Cxx_GrammarCopyMemberFunctions.C \
 	Cxx_GrammarTraverseMemoryPool.C \
 	Cxx_GrammarCheckingIfDataMembersAreInMemoryPool.C \
+	Cxx_GrammarMemoryPoolSupport.h \
 	AST_FILE_IO.h \
 	AST_FILE_IO.C \
 	StorageClasses.h \
@@ -138,6 +140,7 @@ include_HEADERS = \
 
 nodist_include_HEADERS = \
    Cxx_Grammar.h \
+   Cxx_GrammarMemoryPoolSupport.h \
    Cxx_GrammarTreeTraversalAccessEnums.h \
    AST_FILE_IO.h StorageClasses.h \
    AstQueryMemoryPool.h \

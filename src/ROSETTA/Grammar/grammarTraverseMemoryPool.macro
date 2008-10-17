@@ -10,19 +10,19 @@ $CLASSNAME::traverseMemoryPoolNodes(ROSE_VisitTraversal & traversal)
   // Initialize array to the address of the first element of the STL vector
   // (which is guarenteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if (Memory_Block_List.empty() == false)
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over the memory pools
-          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -47,19 +47,19 @@ $CLASSNAME::traverseMemoryPoolVisitorPattern ( ROSE_VisitorPattern & visitor )
   // Initialize array to the address of the first element of the STL vector
   // (which is guarenteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if (Memory_Block_List.empty() == false)
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over the memory pools
-          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -91,10 +91,10 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
   // Initialize array to the address of the first element of the STL vector
   // (which is guarenteed to be contiguous storage).
   // $CLASSNAME objectArray [] = *(Memory_Block_List.begin());
-     if (Memory_Block_List.empty() == false)
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
@@ -104,11 +104,11 @@ $CLASSNAME::visitRepresentativeNode(ROSE_VisitTraversal & traversal)
           unsigned int i=0;
 
        // find the first valid IR node, call visit function, and then leave
-          while ( done == false && i < Memory_Block_List.size() )
+          while ( done == false && i < $CLASSNAME_Memory_Block_List.size() )
              {
             // objectArray[i] is a single memory pool
                int j=0;
-               while (done == false && j < CLASS_ALLOCATION_POOL_SIZE)
+               while (done == false && j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
@@ -136,19 +136,19 @@ $CLASSNAME::numberOfNodes ()
   // nodes type.
 
      int count = 0;
-     if (Memory_Block_List.empty() == false)
+     if ($CLASSNAME_Memory_Block_List.empty() == false)
         {
        // Generate an array of memory pools
-          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME::Memory_Block_List[0]);
+          $CLASSNAME** objectArray = ($CLASSNAME**) &($CLASSNAME_Memory_Block_List[0]);
 
        // Build a local variable for better performance
           const SgNode* IS_VALID_POINTER = AST_FileIO::IS_VALID_POINTER();
 
        // Iterate over the memory pools
-          for (unsigned int i=0; i < Memory_Block_List.size(); i++)
+          for (unsigned int i=0; i < $CLASSNAME_Memory_Block_List.size(); i++)
              {
             // objectArray[i] is a single memory pool
-               for (int j=0; j < CLASS_ALLOCATION_POOL_SIZE; j++)
+               for (int j=0; j < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; j++)
                   {
                     if (objectArray[i][j].p_freepointer == IS_VALID_POINTER)
                        {
