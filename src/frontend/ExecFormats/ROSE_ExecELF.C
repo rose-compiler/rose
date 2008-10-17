@@ -1699,7 +1699,7 @@ SgAsmElfRelaEntry::encode(ByteOrder sex, Elf64RelaEntry_disk *disk)
 {
     host_to_disk(sex, p_r_offset, &(disk->r_offset));
     host_to_disk(sex, p_r_addend, &(disk->r_addend));
-    uint64_t info = (p_sym<<32) | (p_type & 0xffffffff);
+    uint64_t info = ((uint64_t)p_sym<<32) | (p_type & 0xffffffff);
     host_to_disk(sex, info, &(disk->r_info));
     return disk;
 }
