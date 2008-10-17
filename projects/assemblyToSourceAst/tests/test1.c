@@ -5,7 +5,7 @@ int main(int argc, char** argv) {
   int i;
   for (i = 0; i < 5; ++i) {}
 #endif
-#if 0
+#if 1
   volatile int z;
   // This program takes 4 basic blocks (5 with btorUnroll) to fail by default.
   // Each of these lines adds 1 more block to the run time (number of clock
@@ -13,15 +13,13 @@ int main(int argc, char** argv) {
   int j;
   asm volatile (".l1: loop .l1" : "=c" (j) : "0" (10) : "cc");
   // for (z = 0; z < 10; ++z) {}
-#if 0
-  for (j = 0; j < 100; ++j) {
+#if 1
+  for (j = 0; j < 10; ++j) {
     if (z == 0) {++z;}
   }
 #endif
 #endif
   if (argc < 2) exit(1);
-#if 0
   print(argv[1]); print("\n");
   exit(0);
-#endif
 }

@@ -166,7 +166,7 @@ struct BtorTranslationPolicy {
     assert (from < to);
     assert (from <= a.bitWidth());
     assert (to <= a.bitWidth());
-    return problem.build_op_slice(a, a.bitWidth() - to, a.bitWidth() - from - 1); // BTOR counts from the MSB, while we count from the LSB of the word
+    return problem.build_op_slice(a, to - 1, from);
   }
 
   Comp false_() {return zero(1);}

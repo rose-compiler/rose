@@ -19,22 +19,6 @@ static string formatNumber(uint i) {
   }
 }
 
-static Comp nameValue(Comp c, string newName, BtorProblem& p) {
-  switch (c.kind()) {
-    case btor_type_bitvector: {
-      Comp var = p.build_var(c.bitWidth(), newName);
-      p.computations.push_back(p.build_op_root(p.build_op_eq(c, var)));
-      return var;
-    }
-    case btor_type_array: {
-      Comp var = p.build_array(c.bitWidth(), c.arraySize(), newName);
-      p.computations.push_back(p.build_op_root(p.build_op_array_eq(c, var)));
-      return var;
-    }
-    default: assert (false);
-  }
-}
-
 static Comp translate(BtorProblem& p, Comp c, const LatchMap& latchMap, map<BtorComputation*, Comp>& variableMap, map<Comp, Comp>& translateMap, const string& tag) {
   BtorComputation* comp = c.p.get();
   if (translateMap.find(c) != translateMap.end()) {
@@ -69,8 +53,7 @@ static Comp translate(BtorProblem& p, Comp c, const LatchMap& latchMap, map<Btor
   for (size_t i = 0; i < comp->operands.size(); ++i) {
     newOperands.push_back(translate(p, comp->operands[i], latchMap, variableMap, translateMap, tag));
   }
-  BtorComputation* newComp = new BtorComputation(comp->type.bitWidth, comp->op, newOperands, comp->immediates);
-  Comp newC = newComp;
+  Comp newC = p.buildComp(comp->type.bitWidth, comp->op, newOperands, comp->immediates, comp->variableName);
   if (c.inverted) newC = newC.invert();
   translateMap[c] = newC;
   return newC;
@@ -82,7 +65,7 @@ static void processRoots(BtorProblem& p, const vector<Comp>& computations, const
     if (comp.p->op == btor_op_root) {
       switch (rootHandling) {
         case rh_disjoin: {
-          Comp thisRoot = nameValue(translate(p, comp.p->operands[0], oldLatchMap, variableMap, translateMap, tag), tag + "root" + formatNumber(i), p);
+          Comp thisRoot = p.nameValue(translate(p, comp.p->operands[0], oldLatchMap, variableMap, translateMap, tag), tag + "root" + formatNumber(i));
           rootsSoFar = p.build_op_or(rootsSoFar, thisRoot);
           break;
         }
@@ -108,7 +91,7 @@ static LatchMap unrollOneIteration(BtorProblem& p, const vector<Comp>& computati
     assert (oldLatchMap.find(latches[i].first.p.get()) != oldLatchMap.end());
     string latchName = tag + latches[i].first.p->variableName;
     Comp newLatch = translate(p, latches[i].second, oldLatchMap, variableMap, translateMap, tag);
-    newLatchMap[latches[i].first.p.get()] = nameValue(newLatch, latchName, p);
+    newLatchMap[latches[i].first.p.get()] = p.nameValue(newLatch, latchName);
   }
   processRoots(p, computations, latches, oldLatchMap, rootHandling, rootsSoFar, variableMap, translateMap, tag);
   return newLatchMap;
@@ -137,7 +120,7 @@ int main(int argc, char** argv) {
       string newName = "iter" + formatNumber(0) + "_" + latches[i].first.p->variableName;
       if (latches[i].first.kind() == btor_type_bitvector) {
         Comp zero = p2.build_op_zero(latches[i].first.bitWidth());
-        nameValue(zero, newName, p2);
+        p2.nameValue(zero, newName);
         latchMap[latches[i].first.p.get()] = zero;
       } else if (latches[i].first.kind() == btor_type_array) {
         latchMap[latches[i].first.p.get()] = p2.build_array(latches[i].first.bitWidth(), latches[i].first.arraySize(), newName);

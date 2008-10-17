@@ -7,7 +7,7 @@ if ROSE_USE_ASSEMBLY_SEMANTICS
 INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll
+bin_PROGRAMS = x86AssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll btorCleanup
 
 # x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C x86InstructionSemantics.h
@@ -31,6 +31,7 @@ eliminateRedundantVariables_SOURCES = eliminateRedundantVariables.C satProblem.h
 binaryClauseSimplify_SOURCES = binaryClauseSimplify.C satProblem.h
 lookForErrors_SOURCES = lookForErrors.C satProblem.h x86AssemblyToNetlist.h
 btorUnroll_SOURCES = btorUnroll.C btorProblem.h btorProblem.C
+btorCleanup_SOURCES = btorCleanup.C btorProblem.h btorProblem.C
 
 include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h
 

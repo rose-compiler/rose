@@ -1,4 +1,5 @@
 #include "btorProblem.h"
+#include "x86AssemblyToNetlist.h"
 #include <cassert>
 #include <vector>
 #include <map>
@@ -175,6 +176,46 @@ BtorType BtorComputation::getType() const { // Also checks operand and immediate
 #undef OPS_HAVE_SAME_SIZE
 }
 
+static string btorOpToString(BtorOperator op);
+
+bool BtorComputation::isConstant() const {
+  if (op == btor_op_array || op == btor_op_var || op == btor_op_root) return false;
+  for (size_t i = 0; i < operands.size(); ++i) {
+    if (!operands[i].isConstant()) return false;
+  }
+  return true;
+}
+
+uintmax_t BtorComputation::constantValue() const {
+  assert (isConstant());
+  switch (op) {
+    case btor_op_const: return immediates[0];
+    case btor_op_zero: return 0;
+    case btor_op_one: return 1;
+    case btor_op_ones: return (~0ULL) & (shl1(type.bitWidth) - 1);
+    case btor_op_eq: return (((operands[0].constantValue() ^ operands[1].constantValue()) & (shl1(operands[0].bitWidth()) - 1)) == 0);
+    case btor_op_and: return operands[0].constantValue() & operands[1].constantValue();
+    case btor_op_or: return operands[0].constantValue() | operands[1].constantValue();
+    case btor_op_xor: return operands[0].constantValue() ^ operands[1].constantValue();
+    case btor_op_not: return operands[0].constantValue() ^ (shl1(type.bitWidth) - 1);
+    case btor_op_nand: return (operands[0].constantValue() & operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
+    case btor_op_nor: return (operands[0].constantValue() | operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
+    case btor_op_xnor: return (operands[0].constantValue() ^ operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
+    case btor_op_redand: return operands[0].constantValue() == shl1(operands[0].bitWidth() - 1);
+    case btor_op_redor: return operands[0].constantValue() != 0;
+    case btor_op_add: return (operands[0].constantValue() + operands[1].constantValue()) & (shl1(type.bitWidth) - 1);
+    case btor_op_cond: return operands[0].constantValue() ? operands[1].constantValue() : operands[2].constantValue();
+    case btor_op_slice: {
+      uintmax_t c = operands[0].constantValue();
+      c >>= immediates[1];
+      c &= shl1(type.bitWidth) - 1;
+      return c;
+    }
+    case btor_op_concat: return (operands[0].constantValue() << operands[1].bitWidth()) | operands[1].constantValue();
+    default: fprintf(stderr, "Bad op %s for constant\n", btorOpToString(op).c_str()); abort();
+  }
+}
+
 static string btorOpToString(BtorOperator op) {
   assert ((size_t)op < sizeof(btorOperators) / sizeof(*btorOperators));
   assert (btorOperators[(size_t)op].op == op);
@@ -337,8 +378,7 @@ BtorProblem BtorProblem::parse(const std::string& s) {
       imms.push_back(constant);
     }
     assert (j == line.size());
-    BtorComputationPtr result = new BtorComputation(expectedReturnType.bitWidth, realOp, operands, imms);
-    result.p->variableName = varStr;
+    BtorComputationPtr result = p.buildComp(expectedReturnType.bitWidth, realOp, operands, imms, varStr);
     if (result.kind() == btor_type_array) {
       if (result.arraySize() == 0) {
         result.p->type.arraySize = expectedReturnType.arraySize;
@@ -365,4 +405,47 @@ BtorProblem BtorProblem::parse(FILE* f) {
   }
   assert (!ferror(f));
   return BtorProblem::parse(s);
+}
+
+BtorComputationPtr BtorProblem::nameValue(BtorComputationPtr c, const string& newName) {
+#if 0
+  return c;
+#else
+  switch (c.kind()) {
+    case btor_type_bitvector: {
+      BtorComputationPtr var = build_var(c.bitWidth(), newName);
+      computations.push_back(build_op_root(build_op_eq(c, var)));
+      return c;
+    }
+    case btor_type_array: {
+      BtorComputationPtr var = build_array(c.bitWidth(), c.arraySize(), newName);
+      computations.push_back(build_op_root(build_op_array_eq(c, var)));
+      return c;
+    }
+    default: assert (false);
+  }
+#endif
+}
+
+BtorComputationPtr BtorProblem::buildComp(uint size, BtorOperator op, const std::vector<BtorComputationPtr>& operands, const std::vector<uintmax_t>& immediates, const std::string& name) {
+  BtorComputation rawComp(size, op, operands, immediates);
+  rawComp.variableName = name;
+  std::map<BtorComputation, boost::weak_ptr<BtorComputation> >::iterator cseTableIter = cseTable.find(rawComp);
+  if (cseTableIter != cseTable.end()) {
+    try {
+      return BtorComputationPtr(boost::shared_ptr<BtorComputation>(cseTableIter->second));
+    } catch (boost::bad_weak_ptr) {
+      // Otherwise unreferenced entry in cache, so delete and recreate it
+      cseTable.erase(cseTableIter);
+      goto notFound;
+    }
+  } else if ((op == btor_op_cond || op == btor_op_acond) && operands[0].isConstant()) {
+    return operands[0].constantValue() ? operands[1] : operands[2];
+  } else if (op != btor_op_const && rawComp.isConstant()) {
+    return buildComp(rawComp.type.bitWidth, btor_op_const, std::vector<BtorComputationPtr>(), std::vector<uintmax_t>(1, rawComp.constantValue()), name);
+  } else { notFound:
+    BtorComputationPtr comp(new BtorComputation(rawComp));
+    cseTable.insert(std::make_pair(rawComp, comp.p));
+    return comp;
+  }
 }
