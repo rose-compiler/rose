@@ -148,11 +148,6 @@ Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	echo '// vim: syn=cpp:' > Cxx_Grammar.i
 	cat ../../src/frontend/SageIII/Cxx_Grammar.h | \
 	sed '/StorageClass/d' | \
-	sed '/getPointerFrom/d' | \
-	sed '/CLASS_ALLOCATION_POOL_SIZE/d' | \
-	sed '/Current_Link/d' | \
-	sed '/allocation_mutex/d' | \
-	sed '/Memory_Block_List/d' | \
 	sed '/InMemoryPool/d' | \
 	sed '/static void traverseMemoryPool/d' | \
 	sed '/executeVisitorMemberFunction/d' | \
@@ -173,7 +168,6 @@ Cxx_Grammar.i: ../../src/frontend/SageIII/Cxx_Grammar.h
 	sed '/Cxx_GrammarTerminalNames/d' | \
 	sed '/isSg/d' | \
 	sed '/p_[_A-Za-z0-9]*;$$/d' | \
-	sed '/AST Memory Allocation Support Functions/,/getNumberOfLastValidPointer/d' | \
 	sed '/<semaphore.h>/,/};/d' | \
 	sed '/namespace AST_FileIO/,/}/d' | \
 	sed 's/ class / struct /g' | \
