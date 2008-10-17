@@ -2,6 +2,7 @@
 #define PALETTE_COMMON_H
 
 #include "rose.h"
+#include "Cxx_GrammarMemoryPoolSupport.h"
 #include "compass.h"
 #include <iostream>
 #include <sstream>
@@ -16,11 +17,11 @@
 
   // This is based on the ROSE memory pool traversal code, but changed to run the body inline
 #define PALETTE_ITERATE_THROUGH_MEMORY_POOL(type, elt_name) \
-        if (type::Memory_Block_List.empty() == false) \
-          for (unsigned int i=0; i < type::Memory_Block_List.size(); i++) \
-            for (int j=0; j < type::CLASS_ALLOCATION_POOL_SIZE; j++) \
-              if (((type**) (&(type::Memory_Block_List[0])))[i][j].get_freepointer() == AST_FileIO::IS_VALID_POINTER()) \
-                if (type* elt_name = &((type**) &(type::Memory_Block_List[0]))[i][j])
+        if (type##_Memory_Block_List.empty() == false) \
+          for (unsigned int i=0; i < type##_Memory_Block_List.size(); i++) \
+            for (int j=0; j < type##_CLASS_ALLOCATION_POOL_SIZE; j++) \
+              if (((type**) (&(type##_Memory_Block_List[0])))[i][j].get_freepointer() == AST_FileIO::IS_VALID_POINTER()) \
+                if (type* elt_name = &((type**) &(type##_Memory_Block_List[0]))[i][j])
 
 namespace Palette {
 

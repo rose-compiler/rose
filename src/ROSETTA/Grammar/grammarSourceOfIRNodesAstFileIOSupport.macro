@@ -17,7 +17,7 @@ CONSTRUCTOR_SOURCE
  * within the working AST. 
  */
 $CLASSNAME*
-$CLASSNAME::getPointerFromGlobalIndex ( unsigned long globalIndex )
+$CLASSNAME_getPointerFromGlobalIndex ( unsigned long globalIndex )
    {
      $CLASSNAME* returnPointer = NULL;
      if ( globalIndex != 0 )
@@ -29,15 +29,15 @@ $CLASSNAME::getPointerFromGlobalIndex ( unsigned long globalIndex )
 #endif
           unsigned long localIndex = globalIndex - AST_FILE_IO::getAccumulatedPoolSizeOfNewAst ( V_$CLASSNAME )  
                                                  + AST_FILE_IO::getSizeOfMemoryPool ( V_$CLASSNAME );
-          unsigned long positionInPool = localIndex % CLASS_ALLOCATION_POOL_SIZE ;
-          unsigned long memoryBlock = (localIndex - positionInPool) / CLASS_ALLOCATION_POOL_SIZE ;
+          unsigned long positionInPool = localIndex % $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE ;
+          unsigned long memoryBlock = (localIndex - positionInPool) / $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE ;
 
 #if FILE_IO_EXTRA_CHECK
           // assert ( 0 <= memoryBlock && memoryBlock < Memory_Block_List.size() ) ;
           // assert ( 0 <= positionInPool && positionInPool < (unsigned long)(CLASS_ALLOCATION_POOL_SIZE) );
 #endif
 
-          returnPointer = &( ( ($CLASSNAME*)(Memory_Block_List[memoryBlock]) ) [positionInPool]) ;
+          returnPointer = &( ( ($CLASSNAME*)($CLASSNAME_Memory_Block_List[memoryBlock]) ) [positionInPool]) ;
 
 #if FILE_IO_EXTRA_CHECK
           assert ( returnPointer != NULL ) ;
@@ -51,7 +51,7 @@ $CLASSNAME::getPointerFromGlobalIndex ( unsigned long globalIndex )
   for the AST with the index astIndex
 */
 $CLASSNAME*
-$CLASSNAME::getPointerFromGlobalIndex ( AstSpecificDataManagingClass *astInPool, unsigned long globalIndex )
+$CLASSNAME_getPointerFromGlobalIndex ( AstSpecificDataManagingClass *astInPool, unsigned long globalIndex )
    {
      $CLASSNAME* returnPointer = NULL;
      if ( globalIndex != 0 )
@@ -63,15 +63,15 @@ $CLASSNAME::getPointerFromGlobalIndex ( AstSpecificDataManagingClass *astInPool,
 #endif
           unsigned long localIndex = globalIndex - AST_FILE_IO::getAccumulatedPoolSizeOfAst ( astInPool, V_$CLASSNAME )
                                                  + AST_FILE_IO::getSizeOfMemoryPoolUpToAst ( astInPool, V_$CLASSNAME );
-          unsigned long positionInPool = localIndex % CLASS_ALLOCATION_POOL_SIZE ;
-          unsigned long memoryBlock = (localIndex - positionInPool) / CLASS_ALLOCATION_POOL_SIZE ;
+          unsigned long positionInPool = localIndex % $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE ;
+          unsigned long memoryBlock = (localIndex - positionInPool) / $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE ;
 
 #if FILE_IO_EXTRA_CHECK
           // assert ( 0 <= memoryBlock && memoryBlock < Memory_Block_List.size() ) ;
           // assert ( 0 <= positionInPool && positionInPool < (unsigned long)(CLASS_ALLOCATION_POOL_SIZE) );
 #endif
 
-          returnPointer = &( ( ($CLASSNAME*)(Memory_Block_List[memoryBlock]) ) [positionInPool]) ;
+          returnPointer = &( ( ($CLASSNAME*)($CLASSNAME_Memory_Block_List[memoryBlock]) ) [positionInPool]) ;
 
 #if FILE_IO_EXTRA_CHECK
           assert ( returnPointer != NULL ) ;
@@ -89,25 +89,25 @@ $CLASSNAME::getPointerFromGlobalIndex ( AstSpecificDataManagingClass *astInPool,
  * distinguish valid from invalid objects! 
  */
 unsigned long
-$CLASSNAME::getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long numberOfPreviousNodes )
+$CLASSNAME_getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long numberOfPreviousNodes )
    {
      assert ( AST_FILE_IO::areFreepointersContainingGlobalIndices() == false );
      $CLASSNAME* pointer = NULL;
      unsigned long globalIndex = numberOfPreviousNodes ;
      std::vector < unsigned char* > :: const_iterator block;
-     for ( block = Memory_Block_List.begin(); block != Memory_Block_List.end() ; ++block )
+     for ( block = $CLASSNAME_Memory_Block_List.begin(); block != $CLASSNAME_Memory_Block_List.end() ; ++block )
         {
           pointer = ($CLASSNAME*)(*block);
-          for (int i = 0; i < CLASS_ALLOCATION_POOL_SIZE; ++i )
+          for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; ++i )
              {
-               if ( pointer[i].p_freepointer == AST_FileIO::IS_VALID_POINTER() )
+               if ( pointer[i].get_freepointer() == AST_FileIO::IS_VALID_POINTER() )
                   {
-                    pointer[i].p_freepointer = ($CLASSNAME*)(globalIndex) ;
+                    pointer[i].set_freepointer(($CLASSNAME*)(globalIndex));
                     globalIndex++;
                   }
                else
                   {
-                    pointer[i].p_freepointer = NULL ;
+                    pointer[i].set_freepointer(NULL);
                   }
               }
         }
@@ -117,30 +117,30 @@ $CLASSNAME::getNumberOfValidNodesAndSetGlobalIndexInFreepointer( unsigned long n
 //############################################################################
 // JH (01/14/2006)
 void
-$CLASSNAME::resetValidFreepointers( )
+$CLASSNAME_resetValidFreepointers( )
    {
      assert ( AST_FILE_IO::areFreepointersContainingGlobalIndices() == true );
      $CLASSNAME* pointer = NULL;
      std::vector < unsigned char* > :: const_iterator block;
      $CLASSNAME* pointerOfLinkedList = NULL;
-     for ( block = Memory_Block_List.begin(); block != Memory_Block_List.end() ; ++block )
+     for ( block = $CLASSNAME_Memory_Block_List.begin(); block != $CLASSNAME_Memory_Block_List.end() ; ++block )
         {
           pointer = ($CLASSNAME*)(*block);
-          for (int i = 0; i < CLASS_ALLOCATION_POOL_SIZE; ++i )
+          for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; ++i )
              {
-               if ( pointer[i].p_freepointer != NULL )
+               if ( pointer[i].get_freepointer() != NULL )
                   {
-                    pointer[i].p_freepointer = AST_FileIO::IS_VALID_POINTER() ;
+                    pointer[i].set_freepointer(AST_FileIO::IS_VALID_POINTER()) ;
                   }
                else
                   {
                     if ( pointerOfLinkedList == NULL )
                        {
-                         Current_Link = &(pointer[i]);
+                         $CLASSNAME_Current_Link = &(pointer[i]);
                        }
                     else
                        {
-                         pointerOfLinkedList->p_freepointer = &(pointer[i]);
+                         pointerOfLinkedList->set_freepointer(&(pointer[i]));
                        }
                     pointerOfLinkedList = &(pointer[i]);
                   }
@@ -148,7 +148,7 @@ $CLASSNAME::resetValidFreepointers( )
         }
      if ( pointerOfLinkedList != NULL )
         {
-          pointerOfLinkedList->p_freepointer = NULL;
+          pointerOfLinkedList->set_freepointer(NULL);
         }
      return ;
    }
@@ -161,11 +161,11 @@ $CLASSNAME::resetValidFreepointers( )
  * but delete the valid objects.  
  */
 void
-$CLASSNAME::clearMemoryPool( )
+$CLASSNAME_clearMemoryPool( )
    {
      $CLASSNAME* pointer = NULL, *tempPointer = NULL;
      std::vector < unsigned char* > :: const_iterator block;
-     if ( Memory_Block_List.empty() == false )
+     if ( $CLASSNAME_Memory_Block_List.empty() == false )
         {
   // JH (08/08/2006) commented out, since this deletion of the 
   // memory pool contents caused the problems. We now delete the 
@@ -191,23 +191,23 @@ $CLASSNAME::clearMemoryPool( )
   // JH (08/08/2006) However, since the deletion may leave the memory pool
   // not in the the strict ordering we want it to be, we still reset the 
   // freepointers, in order to have a linked list, without any jumps
-          block = Memory_Block_List.begin() ;
-          Current_Link = ($CLASSNAME*) (*block); 
+          block = $CLASSNAME_Memory_Block_List.begin() ;
+          $CLASSNAME_Current_Link = ($CLASSNAME*) (*block); 
            
        // second, we reset the freepointers,in order to yield a valid linked list
-          while ( block != Memory_Block_List.end() )
+          while ( block != $CLASSNAME_Memory_Block_List.end() )
              {
                pointer = ($CLASSNAME*) (*block);
                if ( tempPointer != NULL )
                   {
-                    tempPointer->p_freepointer = pointer;
+                    tempPointer->set_freepointer(pointer);
                   }
-               for (int i = 0; i < CLASS_ALLOCATION_POOL_SIZE - 1; ++i)
+               for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1; ++i)
                   {
-                    pointer[i].p_freepointer = &(pointer[i+1]);
+                    pointer[i].set_freepointer(&(pointer[i+1]));
                   }
-                pointer[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
-                tempPointer = &(pointer[CLASS_ALLOCATION_POOL_SIZE-1]);
+                pointer[$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1].set_freepointer(NULL);
+                tempPointer = &(pointer[$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1]);
                 ++block;
              }
         }
@@ -253,30 +253,30 @@ $CLASSNAME::extendMemoryPoolForFileIO( )
 //############################################################################
 // JH (01/14/2006) Traversal for the MemoryPool, used for Ast file io
 void
-$CLASSNAME::extendMemoryPoolForFileIO( )
+$CLASSNAME_extendMemoryPoolForFileIO( )
   {
     $CLASSNAME* pointer = NULL;
-    int blockIndex = Memory_Block_List.size();
+    int blockIndex = $CLASSNAME_Memory_Block_List.size();
     unsigned long newPoolSize = AST_FILE_IO::getSizeOfMemoryPool(V_$CLASSNAME) +
                                 AST_FILE_IO::getPoolSizeOfNewAst(V_$CLASSNAME);
-    while ( (unsigned long) (blockIndex * CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
+    while ( (unsigned long) (blockIndex * $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE) < newPoolSize)
       {
-        pointer = ($CLASSNAME*) ROSE_MALLOC ( CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
+        pointer = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
         assert( pointer != NULL );
-        Memory_Block_List.push_back( (unsigned char*)(pointer) );
+        $CLASSNAME_Memory_Block_List.push_back( (unsigned char*)(pointer) );
         if ( 0 < blockIndex )
            {
-             (($CLASSNAME*)(Memory_Block_List[blockIndex-1]))[ CLASS_ALLOCATION_POOL_SIZE - 1 ].p_freepointer = pointer;
+             (($CLASSNAME*)($CLASSNAME_Memory_Block_List[blockIndex-1]))[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1 ].set_freepointer(pointer);
            }
-        if ( Current_Link == NULL )
+        if ( $CLASSNAME_Current_Link == NULL )
            {
-             Current_Link = pointer;
+             $CLASSNAME_Current_Link = pointer;
            }
-        for (int i = 0; i < CLASS_ALLOCATION_POOL_SIZE-1; ++i)
+        for (int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1; ++i)
            {
-             pointer [ i ].p_freepointer = &(pointer[i+1]);
+             pointer [ i ].set_freepointer(&(pointer[i+1]));
            }
-        pointer[ CLASS_ALLOCATION_POOL_SIZE -1 ].p_freepointer = NULL;
+        pointer[ $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE -1 ].set_freepointer(NULL);
         blockIndex++;
       }
   }
@@ -287,15 +287,15 @@ $CLASSNAME::extendMemoryPoolForFileIO( )
  * not compressed. However, that stuff is not yet implemented! 
  */
 unsigned long
-$CLASSNAME::getNumberOfLastValidPointer()
+$CLASSNAME_getNumberOfLastValidPointer()
    {
-      $CLASSNAME* testPointer = ($CLASSNAME*)(Memory_Block_List.back());
-      unsigned long localIndex = CLASS_ALLOCATION_POOL_SIZE - 1;
-      while (testPointer[localIndex].p_freepointer !=  AST_FileIO::IS_VALID_POINTER() )
+      $CLASSNAME* testPointer = ($CLASSNAME*)($CLASSNAME_Memory_Block_List.back());
+      unsigned long localIndex = $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE - 1;
+      while (testPointer[localIndex].get_freepointer() !=  AST_FileIO::IS_VALID_POINTER() )
          {
            localIndex--;
          }
-      return (localIndex + CLASS_ALLOCATION_POOL_SIZE * (Memory_Block_List.size()-1));
+      return (localIndex + $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * ($CLASSNAME_Memory_Block_List.size()-1));
    }
 
 //############################################################################
@@ -305,17 +305,17 @@ $CLASSNAME::getNumberOfLastValidPointer()
  * that the whole StorageClassArray is initialized!
  */
 unsigned long
-$CLASSNAME::initializeStorageClassArray( $CLASSNAMEStorageClass *storageArray )
+$CLASSNAME_initializeStorageClassArray( $CLASSNAMEStorageClass *storageArray )
    {
      unsigned long storageCounter = 0;
-     std::vector < unsigned char* > :: const_iterator block = Memory_Block_List.begin();
+     std::vector < unsigned char* > :: const_iterator block = $CLASSNAME_Memory_Block_List.begin();
      $CLASSNAME* pointer = NULL;
-     while ( block < Memory_Block_List.end() )
+     while ( block < $CLASSNAME_Memory_Block_List.end() )
         {
           pointer = ($CLASSNAME*) (*block);
-          for ( int i = 0; i < CLASS_ALLOCATION_POOL_SIZE; ++i )
+          for ( int i = 0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE; ++i )
              {
-               if ( pointer->p_freepointer != NULL )
+               if ( pointer->get_freepointer() != NULL )
                   {
                     storageArray->pickOutIRNodeData (pointer) ;
                     storageArray++;

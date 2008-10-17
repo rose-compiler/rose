@@ -254,7 +254,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
           nodeNameString = it->second;
           if (presentNames.find(nodeNameString) != presentNames.end()) {
             startUp +=  "     globalIndexCounter = " + nodeNameString + 
-                        " :: getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
+                        "_getNumberOfValidNodesAndSetGlobalIndexInFreepointer ( globalIndexCounter ) ; \n" ;
           }
        }
        startUp +=  "     listOfMemoryPoolSizes [ " +  StringUtility::numberToString ( i + 1) + " ] "\
@@ -298,7 +298,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
                compressAst += "          " + nodeNameString + "StorageArray = "\
                               "new " + nodeNameString + "StorageClass[sizeOfActualPool] ; \n" ;
                compressAst += "          unsigned long storageClassIndex = " + nodeNameString + 
-                              "::initializeStorageClassArray (" + nodeNameString + "StorageArray); ;\n" ;
+                              "_initializeStorageClassArray (" + nodeNameString + "StorageArray); ;\n" ;
                compressAst += "          assert ( storageClassIndex == sizeOfActualPool ); \n" ;
                compressAst += "        }  \n" ;
              }
@@ -352,7 +352,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
           nodeNameString = i->second  ;
           if (presentNames.find(nodeNameString) == presentNames.end()) continue;
-          resetValidAstAfterWriting += "     " + nodeNameString + "::resetValidFreepointers( );\n" ;
+          resetValidAstAfterWriting += "     " + nodeNameString + "_resetValidFreepointers( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_RESETVALIDASTAFTERWRITING",resetValidAstAfterWriting.c_str() );
 
@@ -402,7 +402,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
           nodeNameString = i->second  ;
           if (presentNames.find(nodeNameString) == presentNames.end()) continue;
           getSgClassPointerFromGlobalIndex += "             case V_" + nodeNameString + ": \n " ;
-          getSgClassPointerFromGlobalIndex += "                returnPointer =  " + nodeNameString + " :: getPointerFromGlobalIndex( globalIndex )  ;\n";
+          getSgClassPointerFromGlobalIndex += "                returnPointer =  " + nodeNameString + "_getPointerFromGlobalIndex( globalIndex )  ;\n";
           getSgClassPointerFromGlobalIndex += "                break ; \n" ;
         }
      getSgClassPointerFromGlobalIndex += "              default:\n";
@@ -423,7 +423,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
           nodeNameString = i->second  ;
           if (presentNames.find(nodeNameString) == presentNames.end()) continue;
-          clearMemoryPools += "     " + nodeNameString + "::clearMemoryPool( );\n" ;
+          clearMemoryPools += "     " + nodeNameString + "_clearMemoryPool( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_CLEARMEMORYPOOLS",clearMemoryPools.c_str() );
 
@@ -443,7 +443,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
      for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
           nodeNameString = i->second  ;
           if (presentNames.find(nodeNameString) == presentNames.end()) continue;
-          extendMemoryPoolsForRebuildingAST += "     " + nodeNameString + "::extendMemoryPoolForFileIO( );\n" ;
+          extendMemoryPoolsForRebuildingAST += "     " + nodeNameString + "_extendMemoryPoolForFileIO( );\n" ;
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_EXTENDMEMORYPOOLS",extendMemoryPoolsForRebuildingAST.c_str() );
 
@@ -462,7 +462,7 @@ Grammar::build_source_AST_FILE_IO_CLASS()
             // Initializing the StorageClasses 
                writeASTToFile += "          " + nodeNameString + "StorageClass* storageArray = "\
                                  "new " + nodeNameString + "StorageClass[sizeOfActualPool] ;\n" ;
-               writeASTToFile += "           storageClassIndex = " + nodeNameString + "::initializeStorageClassArray (storageArray); ;\n" ;
+               writeASTToFile += "           storageClassIndex = " + nodeNameString + "_initializeStorageClassArray (storageArray); ;\n" ;
                writeASTToFile += "           assert ( storageClassIndex == sizeOfActualPool ); \n" ;
              
             // Writing StorageClass array to disk

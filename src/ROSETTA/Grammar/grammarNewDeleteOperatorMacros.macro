@@ -4,9 +4,9 @@
 // by a new operator written for each class.
 
 // Static variables supporting memory pools
-int  $CLASSNAME::CLASS_ALLOCATION_POOL_SIZE = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
-$CLASSNAME* $CLASSNAME::Current_Link        = NULL;
-mutex $CLASSNAME::allocation_mutex;
+int  $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE = DEFAULT_CLASS_ALLOCATION_POOL_SIZE;
+$CLASSNAME* $CLASSNAME_Current_Link        = NULL;
+mutex $CLASSNAME_allocation_mutex;
 
 #if 0
 // DQ (12/15/2005): Removed in favor of Jochen's implementation using STL.
@@ -17,7 +17,7 @@ unsigned char *$CLASSNAME::Memory_Block_List [MAX_NUMBER_OF_MEMORY_BLOCKS];
 
 // JH (30/11/2005): Initializing the static STL vector, containing the pointers
 // to the memory block of a pool
-std::vector<unsigned char*> $CLASSNAME::Memory_Block_List;
+std::vector<unsigned char*> $CLASSNAME_Memory_Block_List;
 
 
 #define USE_CPP_NEW_DELETE_OPERATORS FALSE
@@ -38,7 +38,7 @@ std::vector<unsigned char*> $CLASSNAME::Memory_Block_List;
 */
 void *$CLASSNAME::operator new ( size_t Size )
    {
-  allocation_mutex.lock();
+  $CLASSNAME_allocation_mutex.lock();
 
   // printf ("Call $CLASSNAME::operator new! Memory_Block_Index = %zu \n", Memory_Block_List.size());
   // ROSE_ASSERT(false);
@@ -49,7 +49,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 #endif
 
 #if USE_CPP_NEW_DELETE_OPERATORS
-     allocation_mutex.unlock();
+     $CLASSNAME_allocation_mutex.unlock();
      return ROSE_MALLOC(Size);
 #else
   // Because of the way the size of the memory blocks doubles in size
@@ -78,14 +78,14 @@ void *$CLASSNAME::operator new ( size_t Size )
 
        // printf ("In $CLASSNAME::operator new: Calling ROSE_MALLOC because Size(%d) != sizeof($CLASSNAME)(%d) \n",Size,sizeof($CLASSNAME));
 
-          allocation_mutex.unlock();
+          $CLASSNAME_allocation_mutex.unlock();
           return ROSE_MALLOC(Size);
         }
        else
         {
        // printf ("In $CLASSNAME::operator new: Using the pool mechanism Size(%d) == sizeof($CLASSNAME)(%d) \n",Size,sizeof($CLASSNAME));
 
-          if (Current_Link == NULL)
+          if ($CLASSNAME_Current_Link == NULL)
              {
             // CLASS_ALLOCATION_POOL_SIZE *= 2;
 #if COMPILE_DEBUG_STATEMENTS
@@ -95,7 +95,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 
             // Use new operator instead of ROSE_MALLOC to avoid Purify FMM warning
             // Current_Link = ($CLASSNAME*) new char [ CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) ];
-               Current_Link = ($CLASSNAME*) ROSE_MALLOC ( CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
+               $CLASSNAME_Current_Link = ($CLASSNAME*) ROSE_MALLOC ( $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME) );
 #if ROSE_USE_VALGRIND
 	       // VALGRIND_FREELIKE_BLOCK(Current_Link, 0); // To trick Valgrind into not having overlapping heap blocks
                // VALGRIND_MAKE_NOACCESS(Current_Link, CLASS_ALLOCATION_POOL_SIZE * sizeof($CLASSNAME));
@@ -107,7 +107,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 #endif
 
 #if EXTRA_ERROR_CHECKING
-               if (Current_Link == NULL) 
+               if ($CLASSNAME_Current_Link == NULL) 
                   { 
                     printf ("ERROR: ROSE_MALLOC == NULL in $CLASSNAME::operator new! \n"); 
                     ROSE_ASSERT(false);
@@ -130,7 +130,7 @@ void *$CLASSNAME::operator new ( size_t Size )
             // The pointer to a new memory block has just to be pushed on the end of the list of the pointers
             // to the memory blocks
             // Memory_Block_List [Memory_Block_Index++] = (unsigned char *) Current_Link;
-               Memory_Block_List.push_back ( (unsigned char *) Current_Link );
+               $CLASSNAME_Memory_Block_List.push_back ( (unsigned char *) $CLASSNAME_Current_Link );
 
 #if 0
            // JH (30/11/2005): This is not necessary for STL vector based management of the pointers
@@ -147,33 +147,33 @@ void *$CLASSNAME::operator new ( size_t Size )
 #endif
 
             // Initialize the free list of pointers!
-               for (int i=0; i < CLASS_ALLOCATION_POOL_SIZE-1; i++)
+               for (int i=0; i < $CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1; i++)
                   {
 #if ROSE_USE_VALGRIND
                     // VALGRIND_MAKE_WRITABLE(&Current_Link[i].p_freepointer, sizeof(&Current_Link[i].p_freepointer));
 #endif
-                    Current_Link[i].p_freepointer = &(Current_Link[i+1]);
+                    $CLASSNAME_Current_Link[i].p_freepointer = &($CLASSNAME_Current_Link[i+1]);
                   }
 
             // Set the pointer of the last one to NULL!
 #if ROSE_USE_VALGRIND
                // VALGRIND_MAKE_WRITABLE(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer, sizeof(&Current_Link[CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer));
 #endif
-               Current_Link [CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
+               $CLASSNAME_Current_Link [$CLASSNAME_CLASS_ALLOCATION_POOL_SIZE-1].p_freepointer = NULL;
 
              }
 
        // DQ (6/24/2006): Added test to make sure that Current_Link is valid
-          ROSE_ASSERT(Current_Link != NULL);
+          ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
         }
 
   // DQ (6/24/2006): Added test to make sure that Current_Link is valid
-     ROSE_ASSERT(Current_Link != NULL);
+     ROSE_ASSERT($CLASSNAME_Current_Link != NULL);
 
   // Save the start of the list and remove the first link and return that
   // first link as the new object!
 
-     $CLASSNAME* Forward_Link = Current_Link;
+     $CLASSNAME* Forward_Link = $CLASSNAME_Current_Link;
 
   // DQ (10/21/2005): I would have liked to have used a dynamic_cast<>() here!
   // Current_Link = dynamic_cast<$CLASSNAME*>(Current_Link->p_freepointer);
@@ -183,7 +183,7 @@ void *$CLASSNAME::operator new ( size_t Size )
      // VALGRIND_MAKE_READABLE(&Current_Link->p_freepointer, sizeof(Current_Link->p_freepointer));
      // VALGRIND_PRINTF_BACKTRACE("Allocating block at %p size %u for $CLASSNAME\n", Forward_Link, sizeof($CLASSNAME));
 #endif
-     Current_Link = ($CLASSNAME*)(Current_Link->p_freepointer);
+     $CLASSNAME_Current_Link = ($CLASSNAME*)($CLASSNAME_Current_Link->p_freepointer);
 
   // DQ (10/21/2005): It seems that p_freepointer's value serves no purpose once the
   // Current_Link has been reset. Set the free pointer of the currently allocated 
@@ -195,7 +195,7 @@ void *$CLASSNAME::operator new ( size_t Size )
           printf ("Returning from $CLASSNAME::operator new! (with address of %p) \n",Forward_Link);
 #endif
 
-     allocation_mutex.unlock();
+     $CLASSNAME_allocation_mutex.unlock();
 
      return Forward_Link;
 
@@ -220,7 +220,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 */
 void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
    {
-     allocation_mutex.lock();
+     $CLASSNAME_allocation_mutex.lock();
 
 #if COMPILE_DEBUG_STATEMENTS
      if (ROSE_DEBUG > 1)
@@ -266,12 +266,12 @@ void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
              {
             // purify error checking
                ROSE_ASSERT ( (New_Link->p_freepointer != NULL) || (New_Link->p_freepointer == NULL) );
-               ROSE_ASSERT ( (Current_Link != NULL) || (Current_Link == NULL) );
+               ROSE_ASSERT ( ($CLASSNAME_Current_Link != NULL) || ($CLASSNAME_Current_Link == NULL) );
                ROSE_ASSERT ( (New_Link != NULL) || (New_Link == NULL) );
 
             // Put deleted object (New_Link) at front of linked list (Current_Link)!
-               New_Link->p_freepointer = Current_Link;
-               Current_Link = New_Link;
+               New_Link->p_freepointer = $CLASSNAME_Current_Link;
+               $CLASSNAME_Current_Link = New_Link;
 #if ROSE_USE_VALGRIND
                // VALGRIND_PRINTF_BACKTRACE("Deallocating block at %p size %u (for $CLASSNAME)\n", Current_Link, sizeof($CLASSNAME));
 	       // VALGRIND_FREELIKE_BLOCK(Current_Link, 0);
@@ -295,6 +295,6 @@ void $CLASSNAME::operator delete ( void *Pointer, size_t sizeOfObject )
 
   // case of USE_CPP_NEW_DELETE_OPERATORS FALSE
 #endif
-     allocation_mutex.unlock();
+     $CLASSNAME_allocation_mutex.unlock();
    }
 

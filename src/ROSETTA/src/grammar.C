@@ -2457,6 +2457,7 @@ Grammar::buildCode ()
      StringUtility::FileWithLineNumbers ROSE_NewAndDeleteOperatorSourceFile;
 
      ROSE_NewAndDeleteOperatorSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_NewAndDeleteOperatorSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
@@ -2479,6 +2480,7 @@ Grammar::buildCode ()
      StringUtility::FileWithLineNumbers ROSE_TraverseMemoryPoolSourceFile;
 
      ROSE_TraverseMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_TraverseMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
@@ -2498,6 +2500,7 @@ Grammar::buildCode ()
      StringUtility::FileWithLineNumbers ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile;
 
      ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_CheckingIfDataMembersAreInMemoryPoolSourceFile.push_back(StringUtility::StringWithLineNumber("#include \"Cxx_GrammarMemoryPoolSupport.h\"\n", "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
@@ -2698,6 +2701,7 @@ Grammar::buildCode ()
      StringUtility::FileWithLineNumbers ROSE_ConstructorTakingStorageClassSourceFile;
 
      ROSE_ConstructorTakingStorageClassSourceFile << includeHeaderString;
+     ROSE_ConstructorTakingStorageClassSourceFile << "#include \"Cxx_GrammarMemoryPoolSupport.h\"\n";
   // JH (01/18/2006) Adding additionally the header of StorageClasses
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
@@ -2708,6 +2712,26 @@ Grammar::buildCode ()
   // printf ("Exiting after building traverse memory pool functions \n");
   // ROSE_ASSERT(false);
      Grammar::writeFile(ROSE_ConstructorTakingStorageClassSourceFile, ".", "SourcesOfIRNodesAstFileIOSupport", ".C");
+#endif
+#if 1
+  // --------------------------------------------
+  // generate code for memory pool support header
+  // --------------------------------------------
+     StringUtility::FileWithLineNumbers ROSE_MemoryPoolSupportFile;
+     ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_ASSERT (rootNode != NULL);
+     buildStringForMemoryPoolSupport(rootNode,ROSE_MemoryPoolSupportFile);
+     cout << "DONE: buildStringForMemoryPoolSupport()" << endl;
+     Grammar::writeFile(ROSE_MemoryPoolSupportFile, ".", getGrammarName() + "MemoryPoolSupport", ".h");
+  // --------------------------------------------
+  // generate code for memory pool support source
+  // --------------------------------------------
+     ROSE_MemoryPoolSupportFile.clear();
+     ROSE_MemoryPoolSupportFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_ASSERT (rootNode != NULL);
+     buildStringForMemoryPoolSupportSource(rootNode,ROSE_MemoryPoolSupportFile);
+     cout << "DONE: buildStringForMemoryPoolSupportSource()" << endl;
+     Grammar::writeFile(ROSE_MemoryPoolSupportFile, ".", getGrammarName() + "MemoryPoolSupport", ".C");
 #endif
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -2896,6 +2920,56 @@ string Grammar::generateRTICode(GrammarString* gs, string dataMemberContainerNam
 #endif
   return ss.str();
 }
+
+
+/////////////////////////////////////////
+// MEMORY POOL SUPPORT CODE GENERATION //
+/////////////////////////////////////////
+// JJW 10/16/2008 -- This just plugs in each class name into a bunch of
+// function and data definitions
+void Grammar::buildStringForMemoryPoolSupport(Terminal* rootNode, StringUtility::FileWithLineNumbers& file) {
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::generateMemoryPoolSupportImplementation);
+  string result;
+  result += "// generated file\n";
+  result += a.text; // synthesized attribute
+  file.push_back(StringUtility::StringWithLineNumber(result, "", 1));
+}
+
+void Grammar::buildStringForMemoryPoolSupportSource(Terminal* rootNode, StringUtility::FileWithLineNumbers& file) {
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::generateMemoryPoolSupportImplementationSource);
+  string result;
+  result += "// generated file\n";
+  result += a.text; // synthesized attribute
+  file.push_back(StringUtility::StringWithLineNumber(result, "", 1));
+}
+
+Grammar::GrammarSynthesizedAttribute
+Grammar::generateMemoryPoolSupportImplementation(Terminal* grammarnode, vector<GrammarSynthesizedAttribute> v)
+   {
+     GrammarSynthesizedAttribute sa;
+     StringUtility::FileWithLineNumbers file = extractStringFromFile("HEADER_MEMORY_POOL_SUPPORT_START", "HEADER_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+     file = GrammarString::copyEdit (file,"$CLASSNAME",grammarnode->name);
+     string s = toString(file);
+  // union data of subtree nodes
+     for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {s+=(*viter).text;}
+     sa.grammarnode = grammarnode;
+     sa.text = s;
+     return sa;
+   }
+
+Grammar::GrammarSynthesizedAttribute
+Grammar::generateMemoryPoolSupportImplementationSource(Terminal* grammarnode, vector<GrammarSynthesizedAttribute> v)
+   {
+     GrammarSynthesizedAttribute sa;
+     StringUtility::FileWithLineNumbers file = extractStringFromFile("SOURCE_MEMORY_POOL_SUPPORT_START", "SOURCE_MEMORY_POOL_SUPPORT_END", "../Grammar/grammarMemoryPoolSupport.macro", "");
+     file = GrammarString::copyEdit (file,"$CLASSNAME",grammarnode->name);
+     string s = toString(file);
+  // union data of subtree nodes
+     for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {s+=(*viter).text;}
+     sa.grammarnode = grammarnode;
+     sa.text = s;
+     return sa;
+   }
 
 
 //======================================================================

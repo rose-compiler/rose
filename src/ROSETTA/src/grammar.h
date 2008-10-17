@@ -344,7 +344,6 @@ class Grammar
        // DQ (3/7/2007): support for getChildIndex member function
 	  StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( Terminal & node );
 
-
           bool buildConstructorParameterList ( Terminal & node, 
                                                std::vector<GrammarString *> & constructorParameterList,
                                                ConstructParamEnum config );
@@ -474,6 +473,12 @@ class Grammar
 	  // MS: generate source for implementation of the RTI interface
 	  GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
 								 std::vector<GrammarSynthesizedAttribute> v);
+
+          // JJW (10/16/2008): Factor this code into a separate header file
+          void buildStringForMemoryPoolSupport(Terminal* rootNode, StringUtility::FileWithLineNumbers& file);
+          void buildStringForMemoryPoolSupportSource(Terminal* rootNode, StringUtility::FileWithLineNumbers& file);
+          GrammarSynthesizedAttribute generateMemoryPoolSupportImplementation(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
+          GrammarSynthesizedAttribute generateMemoryPoolSupportImplementationSource(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
 
 	  // MS: auxiliary function
 	  std::string typeStringOfGrammarString(GrammarString* gs);
