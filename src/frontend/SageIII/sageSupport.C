@@ -34,7 +34,7 @@ outputTypeOfFileAndExit( const string & name )
 
   // printf ("In outputTypeOfFileAndExit(%s): Evaluate the file type \n",name.c_str());
 
-#if 0
+#if 1
   // I could not get this code to work for me, so I just used something internally built on the system command (that has some security checking).
 
   // Use file(1) to try to figure out the file type to report in the exception
@@ -44,34 +44,34 @@ outputTypeOfFileAndExit( const string & name )
 
      printf ("pid = %d \n",pid);
 
-     if (0 == pid)
-        {
-          close(0);
-          dup2(child_stdout[1], 1);
-          close(child_stdout[0]);
-          close(child_stdout[1]);
-          execlp("file", "file", "-b", name.c_str(), NULL);
-          exit(1);
-        }
-       else
-        {
-          if (pid > 0)
-             {
-               char buf[4096];
-               memset(buf, 0, sizeof buf);
-               read(child_stdout[0], buf, sizeof buf);
-               buf[sizeof(buf)-1] = '\0';
-               if (char *nl = strchr(buf, '\n')) *nl = '\0'; /*keep only first line w/o LF*/
-               waitpid(pid, NULL, 0);
-               char mesg[64+sizeof buf];
-               sprintf(mesg, "unrecognized file format: %s", buf);
-               throw SgAsmGenericFile::FormatError(mesg);
-             }
-            else
-             {
-               throw SgAsmGenericFile::FormatError("unrecognized file format");
-             }
-        }
+     if (pid == -1) { // Error
+        perror("fork: error in outputTypeOfFileAndExit ");
+        exit (1);
+     } if (0 == pid)
+     {
+       close(0);
+       dup2(child_stdout[1], 1);
+       close(child_stdout[0]);
+       close(child_stdout[1]);
+       execlp("/usr/bin/file", "/usr/bin/file", "-b", name.c_str(), NULL);
+       exit(1);
+     }
+     else
+       {
+         int status;
+         if (waitpid(pid, &status, 0) == -1) {
+           perror("waitpid");
+           abort();
+         }
+
+         char buf[4096];
+         memset(buf, 0, sizeof buf);
+         read(child_stdout[0], buf, sizeof buf);
+         std::string buffer(buf);
+         buffer =  name+ " unrecognized file format: " + buffer;
+
+         throw SgAsmGenericFile::FormatError(buffer.c_str());
+       }
 #else
   // Call the Unix "file" command, it would be great if this was an available 
   // system call (but Robb thinks it might not be available).

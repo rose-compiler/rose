@@ -10,8 +10,8 @@ using namespace std;
 
 int main( int argc, char * argv[] ) 
    {
-     CommandlineProcessing::addSourceFileSuffix(".docs");
-     CommandlineProcessing::addSourceFileSuffix(".h");
+     CommandlineProcessing::addCppSourceFileSuffix("docs");
+     CommandlineProcessing::addCppSourceFileSuffix("h");
 
   // Build the AST used by ROSE
      SgProject* sageProject = frontend(argc,argv);

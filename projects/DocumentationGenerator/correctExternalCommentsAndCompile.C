@@ -8,8 +8,8 @@ using namespace std;
 
 int main( int argc, char * argv[] ) 
    {
-     CommandlineProcessing::addSourceFileSuffix(".docs");
-     CommandlineProcessing::addSourceFileSuffix(".h");
+     CommandlineProcessing::addCppSourceFileSuffix("docs");
+     CommandlineProcessing::addCppSourceFileSuffix("h");
 
      char **newArgv = new char*[argc+2];
      newArgv[0] = argv[0];
