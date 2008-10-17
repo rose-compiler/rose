@@ -21,6 +21,8 @@ namespace CommandlineProcessing
        //! All matching inputprefix:option in argList are also removed.   
           Rose_STL_Container<std::string> generateOptionWithNameParameterList ( Rose_STL_Container<std::string> & argList, std::string inputPrefix );
 
+          extern Rose_STL_Container<std::string> extraCppSourceFileSuffixes;
+
        //! Search 'argv' for an option like optionPrefix:option, remove the option if 'removeOption' is true.
        /*! 
         The argument 'option' adds () to the actual option, and allows the |(OR) operations.For example: 
@@ -53,6 +55,8 @@ namespace CommandlineProcessing
        // DQ and PC (6/1/2006): Added Peter's suggested fixes to support auto-documentation.
       //! Add another valid source file suffix
           void addSourceFileSuffix ( const std::string &suffix );
+          void addCppSourceFileSuffix ( const std::string &suffix );
+
           bool isSourceFilename ( std::string name ); 
 
           bool isObjectFilename ( std::string name );
@@ -86,7 +90,7 @@ namespace CommandlineProcessing
 
           void initSourceFileSuffixList();
           static Rose_STL_Container<std::string> validSourceFileSuffixes;
-
+          
           void initObjectFileSuffixList();
           static Rose_STL_Container<std::string> validObjectFileSuffixes;
 

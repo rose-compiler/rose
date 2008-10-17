@@ -6,7 +6,7 @@
 
 #include "string_functions.h"
 #include <string.h>
-
+#include <iostream>
 #include "commandline_processing.h"
 
 // Use Brian Gunney's String List Assignent (SLA) library
@@ -15,6 +15,8 @@
 // DQ (12/31/2005): This is allowed in C files where it can not 
 // effect the users application (just not in header files).
 using namespace std;
+
+Rose_STL_Container<std::string> CommandlineProcessing::extraCppSourceFileSuffixes;
 
 #if 0
 // DQ (10/6/2008): (comment added) This function is replaced by:
@@ -581,6 +583,12 @@ CommandlineProcessing::addSourceFileSuffix ( const string &suffix )
      validSourceFileSuffixes.push_back(suffix);
    }
 
+void
+CommandlineProcessing::addCppSourceFileSuffix ( const string &suffix )
+   {
+     extraCppSourceFileSuffixes.push_back(suffix);
+   }
+
 
 //Rama 
 //Also refer to the code in functions isCppFileNameSuffix  Dan and I added in StringUtility
@@ -653,6 +661,12 @@ CommandlineProcessing::isCppFileNameSuffix ( const std::string & suffix )
 #endif
           returnValue = true;
 
+     if(find(extraCppSourceFileSuffixes.begin(), extraCppSourceFileSuffixes.end(),suffix) != extraCppSourceFileSuffixes.end())
+     {
+       returnValue = true;
+     } 
+
+     
      return returnValue;
    }
 
