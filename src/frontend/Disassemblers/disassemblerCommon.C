@@ -500,6 +500,8 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
   // Find the signatures that indicate the beginnings of functions -- they
   // are only considered if they are at the start of a basic block
      const SgAsmStatementPtrList& computedBasicBlocks = blk->get_statementList();
+
+     printf ("computedBasicBlocks.size() = %zu \n",computedBasicBlocks.size());
      for (size_t i = 0; i < computedBasicBlocks.size(); ++i)
         {
        // DQ (10/14/2008): Is this the sort of coding style that we want to have in a for loop?
@@ -611,8 +613,11 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
           printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
         }
 
+  // DQ (10/16/2008): This outputs a hexidecimal number at times!
   // (tps - 2Jun08) : commented out for now until we investigate this further... breaking the current function analysis
-     cerr << ">> Number of FunctionStarts: " << functionStarts.size() << endl;
+  // cerr << ">> Number of FunctionStarts: " << functionStarts.size() << endl;
+     printf ("Number of FunctionStarts: %zu \n",functionStarts.size());
+
      blk = PutInstructionsIntoBasicBlocks::putInstructionsIntoFunctions(blk, functionStarts);
      interp->set_global_block(blk);
      blk->set_parent(interp);
