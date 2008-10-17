@@ -27,6 +27,7 @@ void visitorTraversal::visit(SgNode* n)
 
   if (forloop)
   { 
+    cout<<"Creating handles for a loop construct..."<<endl;
     //Create an abstract node
     abstract_node* anode= new roseNode(forloop);
 
@@ -37,7 +38,7 @@ void visitorTraversal::visit(SgNode* n)
 
     // Create handles based on numbering specifiers within the file
     abstract_handle * bhandle = new abstract_handle(anode,e_numbering,file_handle);
-    cout<<bhandle->toString()<<endl;
+    cout<<bhandle->toString()<<endl<<endl;
   }  
 }
 
