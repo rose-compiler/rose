@@ -94,7 +94,7 @@ outputTypeOfFileAndExit( const string & name )
 
   // printf ("\n\nExiting: Unknown file Error \n\n");
   // ROSE_ASSERT(false);
-     exit(0);
+     abort();
 #endif
    }
 

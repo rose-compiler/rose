@@ -424,7 +424,7 @@ void RoseBin::unparse(char* fileName) {
     std::cerr << " no assembly language specified. " << endl;
     std::cerr << " use RoseBin_support::setAssemblyLanguage(string) " << endl;
     std::cerr << " options : arm, x86 " << endl;
-    exit(0);
+    abort();
   }
 
   ROSE_ASSERT(globalNode);

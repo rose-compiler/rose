@@ -67,7 +67,7 @@ SgAsmExpression* RoseBin_IDAPRO_buildTree::convertBinaryNode(exprTreeType* expt,
           //cout << " children are : " << child << " -- " << exprTree.symbol << endl;
         }
         
-        exit(0);
+        abort();
       }
       SgAsmExpression* child = *(children->begin());
       ROSE_ASSERT(RoseAssemblyLanguage==x86);

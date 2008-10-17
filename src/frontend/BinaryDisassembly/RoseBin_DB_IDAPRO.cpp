@@ -449,7 +449,7 @@ SgAsmInstruction* RoseBin_DB_IDAPRO::createInstruction(int address, SgAsmFunctio
     return createArmInstruction(address, mnemonic);
   } else {
     cerr << " no assembly language selected! " << endl;
-    exit(0); 
+    abort();
   }
 
   // *************************************************************

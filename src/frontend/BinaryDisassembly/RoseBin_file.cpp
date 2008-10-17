@@ -185,7 +185,7 @@ SgAsmInstruction* RoseBin_FILE::createInstruction(int address, SgAsmFunctionDecl
     return createArmInstruction(address, mnemonic);
   } else {
     cerr << " no assembly language selected! " << endl;
-    exit(0); 
+    abort(); 
   }
 
   // *************************************************************
@@ -339,7 +339,7 @@ void RoseBin_FILE::process_instruction_query( ) {
       } else {
 	if (i_func!=-1) {
 	  cerr << " ERROR :: could not append instruction to function : " << endl;
-	  //exit(0);
+	  //abort();
 	}
       }
       
