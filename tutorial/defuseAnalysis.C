@@ -45,7 +45,7 @@ void testOneFunction( std::string funcParamName,
     cout << "\n------------------------\nchecking for " << name << " -- " << funcName << " -- " << nodeNr << endl;
     if (maxNodes!=nrOfNodes) {
       cout << " Error: Test should have " << nrOfNodes << " nodes. found: " << maxNodes << endl;
-      exit(0);
+      abort();
     }
     cout << " Test has nodes:  " << nrOfNodes <<  endl;
 
