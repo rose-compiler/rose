@@ -984,6 +984,49 @@ Directions for using roseFreshTest to set up periodic regression tests:
    editor -- just suspending it prevents your changes from taking effect.
 \end{enumerate}
 
+\section{Updating The External Website and Repository}
+(For the LLNL internal developers only) We have several special top level
+makefile targets to update the rosecompiler.org and SciDAC Outreach
+subversion repository. They are controlled by the regression test scripts
+automatically. Here are some instructions if you really want to do it manually:
+
+\subsection{rosecompiler.org}
+Here are the commands to update the rosecompiler.org website:
+\begin{verbatim}
+
+# 1. enter your build tree for ROSE. You should have ran make docs already
+ cd build/docs/Rose
+
+# 2. change the scidac.outreach account to yours in the Makefile. e.g 
+  # in build/docs/Rose/Makefile
+  copyWebPages: logo
+       cd ROSE_WebPages?; rsync -avz *   yourAccount@web-dev.nersc.gov:/www/host/rosecompiler
+
+# 3. do the uploading, input your password when prompted. 
+    make copyWebPages  
+\end{verbatim}
+
+\subsection{The External Repository}
+To build the binary file of the EDG frontend and the corresponding
+\textit{EDG\_SAGE\_CONNECTION} code for the current platform:
+
+\begin{itemize}
+  \item  \textit{make binary\_edg\_tarball} 
+  \item  add the binary into the internal SVN repository, remove any stale
+  binaries for other platforms as well. \\
+  \textit{make copy\_binary\_edg\_tarball\_to\_source\_tree\_svn} 
+   \item make a source release package with EDG binaries. \\
+   \textit{make source\_with\_binary\_edg\_dist  DOT\_SVNREV=-svnversion} 
+\end{itemize}   
+
+Finally, a dedicated script will import the release package into the
+external ROSE svn repository hosted at the SciDAC Outreach Center. You must
+have an active account with https://outreach.scidac.gov to do this!\\
+
+\textit{rose/scripts/importRoseDistributionToSVN ROSE\_TOP\_TEST\_DIR}
+
+It conducts a set of sanity checks and postprocessing before the actual importing. e.g. No EDG copyrighted files in the package, remove .svn and other undesired directories or files, make sure all EDG binaries for supported platforms are available.
+
 \section{Enabling PHP Support}
 
 \begin{enumerate}
