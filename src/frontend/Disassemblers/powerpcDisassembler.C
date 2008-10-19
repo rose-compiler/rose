@@ -8,11 +8,9 @@
 using namespace std;
 using namespace SageBuilderAsm;
 
-// DQ (10/11/2008): This implementation follows the design of the disassemblers for the x86 and ARM instruction sets.
+#define DEBUG_OPCODES 0
+#define DEBUG_BRANCH_LOGIC 0
 
-// ***********************
-// THIS WORK IS UNFINISHED
-// ***********************
 
 namespace PowerpcDisassembler
    {
@@ -31,7 +29,8 @@ namespace PowerpcDisassembler
           SgAsmPowerpcInstruction* disassemble(const uint8_t* const instructionList, size_t positionInVector);
 
        // There are 15 different forms of PowerPC instructions, but all are 32-bit (fixed length instruction set).
-          SgAsmPowerpcInstruction* decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector);
+       // SgAsmPowerpcInstruction* decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector);
+          SgAsmPowerpcInstruction* decode_I_formInstruction();
           SgAsmPowerpcInstruction* decode_B_formInstruction();
           SgAsmPowerpcInstruction* decode_SC_formInstruction();
           SgAsmPowerpcInstruction* decode_D_formInstruction();
@@ -142,7 +141,7 @@ PowerpcDisassembler::makeRegister(PowerpcRegisterClass reg_class, int reg_number
 SgAsmPowerpcInstruction*
 PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const instructionList, const uint64_t insnSize, size_t positionInVector, set<uint64_t>* knownSuccessorsReturn)
    {
-     printf ("Inside of PowerpcDisassembler::disassemble(): instructionList = %p insnSize = %zu positionInVector = %zu \n",instructionList,insnSize,positionInVector);
+  // printf ("Inside of PowerpcDisassembler::disassemble(): instructionList = %p insnSize = %zu positionInVector = %zu \n",instructionList,insnSize,positionInVector);
 
      ROSE_ASSERT(knownSuccessorsReturn != NULL);
 
@@ -159,13 +158,14 @@ PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const instr
      c = (c << 8) | instructionList[positionInVector + 2];
      c = (c << 8) | instructionList[positionInVector + 3];
 
-     printf ("Single instruction opcode = 0x%x (calling disassembler) \n",c);
+  // printf ("Single instruction opcode = 0x%x (calling disassembler) \n",c);
 
   // Added this to get pass zero instruction (padding?)
      if (c == 0)
         {
+#if DEBUG_OPCODES
           printf ("####### In PowerpcDisassembler::disassemble(): Return NULL pointer for case of c == 0 ####### \n");
-       // return NULL;
+#endif
           throw BadInstruction();
         }
 
@@ -179,7 +179,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
   // The Primary Opcode Field is bits 0-5, 6-bits wide, so there are max 64 primary opcode values
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
 
-     printf ("instruction opcode = 0x%x primaryOpcode = 0x%x \n",insn,primaryOpcode);
+  // printf ("instruction opcode = 0x%x primaryOpcode = 0x%x \n",insn,primaryOpcode);
 
   // This should not happend on a PowerPC system
      ROSE_ASSERT(insn != 0);
@@ -201,9 +201,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
    // Handle all the different legal Primary Opcode values
      switch (primaryOpcode)
         {
+#if 0
           case 0x00:
           case 0x01: { /* illegal instruction */ ROSE_ASSERT(false); break; }
-
+#endif
           case 0x02: { instruction = decode_D_formInstruction(); break; }
           case 0x03: { instruction = decode_D_formInstruction(); break; }
 
@@ -229,7 +230,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
           case 0x11: { instruction = decode_SC_formInstruction(); break; }
 
        // Conditional branch
-          case 0x12: { instruction = decode_I_formInstruction(instructionList,positionInVector); break; }
+       // case 0x12: { instruction = decode_I_formInstruction(instructionList,positionInVector); break; }
+          case 0x12: { instruction = decode_I_formInstruction(); break; }
 
           case 0x13: { instruction = decode_XL_formInstruction(); break; }
 
@@ -265,7 +267,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
                uint16_t xs_Opcode  = (insn >> 2) & 0x1FF;
                uint16_t xo_Opcode  = (insn >> 1) & 0x1FF;
 
-               printf ("x_Opcode = 0x%x = %d xfx_Opcode = 0x%x = %d xs_Opcode = 0x%x = %d xo_Opcode = 0x%x = %d \n",x_Opcode,x_Opcode,xfx_Opcode,xfx_Opcode,xs_Opcode,xs_Opcode,xo_Opcode,xo_Opcode);
+            // printf ("x_Opcode = 0x%x = %d xfx_Opcode = 0x%x = %d xs_Opcode = 0x%x = %d xo_Opcode = 0x%x = %d \n",x_Opcode,x_Opcode,xfx_Opcode,xfx_Opcode,xs_Opcode,xs_Opcode,xo_Opcode,xo_Opcode);
 
             // Different parts of the instruction are used to identify what kind of instruction this is!
                if (  xfx_Opcode == 19 || xfx_Opcode == 144 || xfx_Opcode == 339 || xfx_Opcode == 371 || xfx_Opcode == 467 )
@@ -348,7 +350,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
                uint16_t xfl_Opcode = x_Opcode;
                uint8_t  a_Opcode   = (insn >> 1) & 0x1F;
 
-               printf ("x_Opcode = 0x%x = %d xfl_Opcode = 0x%x = %d a_Opcode = 0x%x = %d \n",x_Opcode,x_Opcode,xfl_Opcode,xfl_Opcode,a_Opcode,a_Opcode);
+            // printf ("x_Opcode = 0x%x = %d xfl_Opcode = 0x%x = %d a_Opcode = 0x%x = %d \n",x_Opcode,x_Opcode,xfl_Opcode,xfl_Opcode,a_Opcode,a_Opcode);
 
             // Different parts of the instruction are used to identify what kind of instruction this is!
                if (  a_Opcode == 18 || (a_Opcode >= 20 && a_Opcode <= 31) )
@@ -373,20 +375,23 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Primary opcode not handled yet: primaryOpcode = %d \n",primaryOpcode);
-               ROSE_ASSERT(false);
+            // ROSE_ASSERT(false);
+               throw BadInstruction();
              }
         }
 
      ROSE_ASSERT(instruction != NULL);
-
      return instruction;
    }
 
 
    
+// SgAsmPowerpcInstruction* PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector)
 SgAsmPowerpcInstruction*
-PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction(const uint8_t* const instructionList, size_t positionInVector)
+PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
 
@@ -401,9 +406,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction(con
   // Get bit 31, 1 bit as the reserved flag
      uint8_t lkOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("I-Form instruction opcode = 0x%x liOpcode = 0x%x aaOpcode = 0x%x lkOpcode = 0x%x \n",insn,liOpcode,aaOpcode,lkOpcode);
+#endif
 
-  // SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
      switch(primaryOpcode)
         {
           case 0x12:
@@ -452,14 +458,17 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction(con
                        }
                   }
 
-
+#if DEBUG_BRANCH_LOGIC
                printf ("Computation of targetAddressExpression = 0x%x \n",targetAddressExpression->get_value());
+#endif
                break;
              }
 
           default:
              {
-               printf ("Error: I-Form primaryOpcode = %d not handled! \n",primaryOpcode);
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
+               printf ("Error: I-Form primaryOpcode = %d (illegal instruction) \n",primaryOpcode);
                ROSE_ASSERT(false);
              }
         }
@@ -496,9 +505,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
   // Get bit 31, 1 bit as the reserved flag
      uint8_t lkOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("B-Form instruction opcode = 0x%x boOpcode = 0x%x biOpcode = 0x%x bdOpcode = 0x%x aaOpcode = 0x%x lkOpcode = 0x%x \n",insn,boOpcode,biOpcode,bdOpcode,aaOpcode,lkOpcode);
+#endif
 
-  // SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
      switch(primaryOpcode)
         {
           case 0x10:
@@ -551,6 +561,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: B-Form primaryOpcode = %d not handled! \n",primaryOpcode);
                ROSE_ASSERT(false);
              }
@@ -582,7 +594,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_SC_formInstruction()
      uint8_t constantOneOpcode = (insn >> 1) & 0x1;
      ROSE_ASSERT(constantOneOpcode == 1);
 
+#if DEBUG_OPCODES
      printf ("SC-Form instruction opcode = 0x%x levOpcode = 0x%x constantOneOpcode = 0x%x \n",insn,levOpcode,constantOneOpcode);
+#endif
 
      SgAsmExpression* LEV = new SgAsmWordValueExpression(levOpcode);
      instruction = MAKE_INSN1(sc,LEV);
@@ -612,7 +626,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
      uint8_t bfOpcode = (insn >> 21) & 0x8;
 
   // Get bit 9, 1 bit as the reserved flag
-     uint8_t reservedOpcode = (insn >> 24) & 0x1;
+  // uint8_t reservedOpcode = (insn >> 24) & 0x1;
 
   // Get bit 10, 1 bit as the length flag
      uint8_t lengthOpcode = (insn >> 25) & 0x1;
@@ -620,16 +634,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
   // Get the bits 16-31, next 16 bits, as the tertiary opcode
      uint8_t lastOpcode = (insn >> 0) & 0xFFFF;
 
-     printf ("D-Form instruction opcode = 0x%x secodaryOpcode = 0x%x bfOpcode = 0x%x reservedOpcode = 0x%x lengthOpcode = 0x%x raOpcode = 0x%x lastOpcode 0x%x \n",insn,secodaryOpcode,bfOpcode,reservedOpcode,lengthOpcode,raOpcode,lastOpcode);
+#if DEBUG_OPCODES
+  // printf ("D-Form instruction opcode = 0x%x secodaryOpcode = 0x%x bfOpcode = 0x%x reservedOpcode = 0x%x lengthOpcode = 0x%x raOpcode = 0x%x lastOpcode 0x%x \n",insn,secodaryOpcode,bfOpcode,reservedOpcode,lengthOpcode,raOpcode,lastOpcode);
+     printf ("D-Form instruction opcode = 0x%x secodaryOpcode = 0x%x bfOpcode = 0x%x lengthOpcode = 0x%x raOpcode = 0x%x lastOpcode 0x%x \n",insn,secodaryOpcode,bfOpcode,lengthOpcode,raOpcode,lastOpcode);
+#endif
 
-  // SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
      switch(primaryOpcode)
         {
        // 2
           case 0x2:
              {
-               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(tdi,TO,RA,SI);
                break;
@@ -638,8 +654,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 3
           case 0x3:
              {
-               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(twi,TO,RA,SI);
                break;
@@ -653,8 +669,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 7
           case 0x7:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(mulli,RT,RA,SI);
                break;
@@ -663,8 +679,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 8
           case 0x8:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(subfic,RT,RA,SI);
                break;
@@ -678,7 +694,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
              {
                SgAsmExpression* BF = new SgAsmByteValueExpression(bfOpcode);
                SgAsmExpression* L  = new SgAsmByteValueExpression(lengthOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN4(cmpl,BF,L,RA,UI);
                break;
@@ -689,7 +705,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
              {
                SgAsmExpression* BF = new SgAsmByteValueExpression(bfOpcode);
                SgAsmExpression* L  = new SgAsmByteValueExpression(lengthOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN4(cmpi,BF,L,RA,SI);
                break;
@@ -698,8 +714,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 12
           case 0x0C:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(addic,RT,RA,SI);
                break;
@@ -708,8 +724,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 13
           case 0x0D:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(addic_record,RT,RA,SI);
                break;
@@ -718,18 +734,20 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 14
           case 0x0E:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(addi,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(addi,RT,mr);
                break;
              }
 
        // 15
           case 0x0F:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(addis,RT,RA,SI);
                break;
@@ -738,8 +756,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 24
           case 0x18:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(ori,RS,RA,UI);
                break;
@@ -748,8 +766,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 25
           case 0x19:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(oris,RS,RA,UI);
                break;
@@ -758,8 +776,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 26
           case 0x1A:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(xori,RS,RA,UI);
                break;
@@ -768,8 +786,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 27
           case 0x1B:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(xoris,RS,RA,UI);
                break;
@@ -778,8 +796,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 28
           case 0x1C:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(andi_record,RS,RA,UI);
                break;
@@ -788,8 +806,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 29
           case 0x1D:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
                instruction = MAKE_INSN3(andis_record,RS,RA,UI);
                break;
@@ -799,10 +817,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x20:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lwz,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lwz,RT,mr);
                break;
              }
 
@@ -810,10 +830,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x21:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lwzu,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lwzu,RT,mr);
                break;
              }
 
@@ -821,10 +843,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x22:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lbz,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lbz,RT,mr);
                break;
              }
 
@@ -832,28 +856,32 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x23:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lbzu,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lbzu,RT,mr);
                break;
              }
 
        // 36
           case 0x24:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stw,RS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stw,RS,mr);
                break;
              }
 
        // 37
           case 0x25:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -864,20 +892,24 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 38
           case 0x26:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stb,RS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stb,RS,mr);
                break;
              }
 
        // 39
           case 0x27:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stbu,RS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stbu,RS,mr);
                break;
              }
 
@@ -885,10 +917,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x28:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lhz,RT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lhz,RT,mr);
                break;
              }
 
@@ -896,12 +930,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x29:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
-               instruction = MAKE_INSN3(lhzu,RT,RA,mr);
+               instruction = MAKE_INSN2(lhzu,RT,mr);
                break;
              }
 
@@ -909,20 +943,20 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x2A:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
-               instruction = MAKE_INSN3(lha,RT,RA,mr);
+               instruction = MAKE_INSN2(lha,RT,mr);
                break;
              }
 
        // 43
           case 0x2B:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -933,8 +967,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 44
           case 0x2C:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -945,8 +979,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 45
           case 0x2D:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -958,20 +992,20 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x2E:
              {
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
-               instruction = MAKE_INSN3(lmw,RT,RA,mr);
+               instruction = MAKE_INSN2(lmw,RT,mr);
                break;
              }
 
        // 47
           case 0x2F:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -982,8 +1016,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 48
           case 0x30:
              {
-               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -994,8 +1028,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 49
           case 0x31:
              {
-               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -1007,10 +1041,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x32:
              {
             // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(lfd,FRT,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lfd,FRT,mr);
                break;
              }
 
@@ -1018,10 +1054,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x34:
              {
             // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stfs,FRS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stfs,FRS,mr);
                break;
              }
 
@@ -1029,10 +1067,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x35:
              {
             // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stfsu,FRS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stfsu,FRS,mr);
                break;
              }
 
@@ -1040,10 +1080,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x36:
              {
             // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stfd,FRS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stfd,FRS,mr);
                break;
              }
 
@@ -1051,15 +1093,19 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x37:
              {
             // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
-               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN3(stfdu,FRS,RA,D);
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(stfdu,FRS,mr);
                break;
              }
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: D-Form primaryOpcode = %d not handled! \n",primaryOpcode);
                ROSE_ASSERT(false);
              }
@@ -1073,6 +1119,8 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_DS_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+     printf ("DS-Form instructions not implemented yet, I have no examples so far! \n");
 
      ROSE_ASSERT(instruction != NULL);
      return instruction;
@@ -1106,13 +1154,13 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
   // Values currently commented out are expected to be used later!
   // Get the bits 11-15, next 5 bits
      uint8_t raOpcode  = (insn >> 16) & 0x1F;
-  // uint8_t fraOpcode = raOpcode;
+     uint8_t fraOpcode = raOpcode;
 
   // Get the bits 16-20, next 5 bits, as the secondary opcode: RT, RS, TO, FRT, FRS
      uint8_t rbOpcode  = (insn >> 11) & 0x1F;
   // uint8_t nbOpcode  = rbOpcode;
      uint8_t shOpcode  = rbOpcode;
-  // uint8_t frbOpcode = rbOpcode;
+     uint8_t frbOpcode = rbOpcode;
 
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
@@ -1120,19 +1168,31 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
   // Get bit 31, 1 bit as the link bit
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("X-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+#endif
 
      switch(xoOpcode)
         {
        // 0
           case 0x0:
              {
-               ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
-               instruction = MAKE_INSN4(cmp,BF,L,RA,RB);
+               if (primaryOpcode == 0x1F)
+                  {
+                    SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode);
+                    SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
+                    SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+                    SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+                    instruction = MAKE_INSN4(cmp,BF,L,RA,RB);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(primaryOpcode == 0x3F);
+                    SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode,powerpc_condreggranularity_bit);
+                    SgAsmExpression* FRA = makeRegister(powerpc_regclass_fpr,fraOpcode);
+                    SgAsmExpression* FRB = makeRegister(powerpc_regclass_fpr,frbOpcode);
+                    instruction = MAKE_INSN3(fcmpu,BF,FRA,FRB);
+                  }
                break;
              }
 
@@ -1140,9 +1200,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x15:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(ldx,RT,RA,RB);
                break;
              }
@@ -1151,9 +1211,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x17:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwzx,RT,RA,RB);
                break;
              }
@@ -1162,9 +1222,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x18:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(slw,RA,RS,RB);
@@ -1180,8 +1240,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1A:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN2(cntlzw,RA,RS);
@@ -1197,9 +1257,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1B:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(sld,RA,RS,RB);
@@ -1215,9 +1275,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(and,RA,RS,RB);
@@ -1233,10 +1293,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x20:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode);
                SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN4(cmpl,BF,L,RA,RB);
                break;
              }
@@ -1261,9 +1321,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x35:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(ldux,RT,RA,RB);
                break;
              }
@@ -1272,9 +1332,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x37:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwzux,RT,RA,RB);
                break;
              }
@@ -1283,9 +1343,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x3C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(andc,RA,RS,RB);
@@ -1318,7 +1378,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
              {
             // This is a privileged instruction (documented in Book III)!
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
                instruction = MAKE_INSN1(mfmsr,RT);
                break;
              }
@@ -1327,9 +1387,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x57:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lbzx,RT,RA,RB);
                break;
              }
@@ -1338,9 +1398,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x77:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lbzux,RT,RA,RB);
                break;
              }
@@ -1349,9 +1409,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x7C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(nor,RA,RS,RB);
@@ -1367,9 +1427,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x95:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stdx,RS,RA,RB);
                break;
              }
@@ -1378,9 +1438,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x97:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stwx,RS,RA,RB);
                break;
              }
@@ -1389,9 +1449,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0xB5:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stdux,RS,RA,RB);
                break;
              }
@@ -1400,9 +1460,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0xB7:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stwux,RS,RA,RB);
                break;
              }
@@ -1416,8 +1476,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                printf ("Processing an illegal instruction (generating a NOP)! \n");
                ROSE_ASSERT(false);
 #if 0
-               SgAsmExpression* R0a = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* R0b = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* R0a = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* R0b = makeRegister(powerpc_regclass_gpr,rtOpcode);
                SgAsmExpression* zero = new SgAsmByteValueExpression(0);
                instruction = MAKE_INSN3(ori,R0a,R0b,zero);
 #endif
@@ -1428,9 +1488,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0xD7:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stbx,RS,RA,RB);
                break;
              }
@@ -1439,9 +1499,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0xF7:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stbux,RS,RA,RB);
                break;
              }
@@ -1451,8 +1511,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
              {
             // This is an instruction from Book II (data cache block touch)
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN2(dcbt,RA,RB);
                break;
              }
@@ -1461,9 +1521,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x117:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhzx,RT,RA,RB);
                break;
              }
@@ -1472,9 +1532,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x11C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(eqv,RA,RS,RB);
@@ -1490,9 +1550,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x137:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhzux,RT,RA,RB);
                break;
              }
@@ -1501,9 +1561,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x13C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(xor,RA,RS,RB);
@@ -1519,9 +1579,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x155:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwax,RT,RA,RB);
                break;
              }
@@ -1530,9 +1590,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x157:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhax,RT,RA,RB);
                break;
              }
@@ -1541,9 +1601,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x175:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwaux,RT,RA,RB);
                break;
              }
@@ -1552,9 +1612,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x177:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhaux,RT,RA,RB);
                break;
              }
@@ -1563,9 +1623,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x197:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(sthx,RS,RA,RB);
                break;
              }
@@ -1574,9 +1634,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x19C:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(orc,RA,RS,RB);
@@ -1592,9 +1652,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1B7:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(sthux,RS,RA,RB);
                break;
              }
@@ -1603,9 +1663,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1BC:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(or,RA,RS,RB);
@@ -1621,9 +1681,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x1DC:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(nand,RA,RS,RB);
@@ -1639,9 +1699,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x215:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lswx,RT,RA,RB);
                break;
              }
@@ -1650,9 +1710,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x216:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwbrx,RT,RA,RB);
                break;
              }
@@ -1661,9 +1721,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x218:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(srw,RA,RS,RB);
@@ -1679,9 +1739,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x21B:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(srd,RA,RS,RB);
@@ -1713,9 +1773,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x255:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lswx,RT,RA,RB);
                break;
              }
@@ -1724,9 +1784,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x295:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stswx,RS,RA,RB);
                break;
              }
@@ -1735,9 +1795,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x296:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stwbrx,RS,RA,RB);
                break;
              }
@@ -1746,9 +1806,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
            case 0x2D5:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stswi,RS,RA,RB);
                break;
              }
@@ -1757,10 +1817,46 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x316:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhbrx,RT,RA,RB);
+               break;
+             }
+
+       // 792
+          case 0x318:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN3(srad,RA,RS,SH);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN3(srad_record,RA,RS,SH);
+                  }
+               break;
+             }
+
+       // 794
+          case 0x31A:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN3(sraw,RA,RS,SH);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN3(sraw_record,RA,RS,SH);
+                  }
                break;
              }
 
@@ -1768,8 +1864,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x338:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
                SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
                if (rcOpcode == 0)
                   {
@@ -1795,17 +1891,39 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x396:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(sthbrx,RS,RA,RB);
+               break;
+             }
+
+       // BGL specific instructions
+          case 0x36: // 54
+          case 0x56: // 86
+          case 0x1CE: // 462
+          case 0x1EE: // 494
+          case 0x256: // 598
+          case 0x257: // 599
+          case 0x2D7: // 727
+          case 0x3BA: // 954
+          case 0x3BE: // 958
+          case 0x3CE: // 974
+          case 0x3EE: // 1006
+             {
+            // These appear to be BGL specific instructions (not a part of the public PowerPC instruction set documentation).
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               instruction = MAKE_INSN0(unknown_instruction);
                break;
              }
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: X-Form xoOpcode = %d not handled! \n",xoOpcode);
-               ROSE_ASSERT(false);
+               throw BadInstruction();
+            // ROSE_ASSERT(false);
              }
         }
 
@@ -1846,8 +1964,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XL_formInstruction()
   // Get bit 31, 1 bit as the link bit
      uint8_t lkOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("XL-Form instruction opcode = 0x%x xoOpcode = 0x%x = %d btOpcode = 0x%x = %d baOpcode = 0x%x = %d bbOpcode = 0x%x = %d bhOpcode = 0x%x = %d lkOpcode = 0x%x \n",
           insn,xoOpcode,xoOpcode,btOpcode,btOpcode,baOpcode,baOpcode,bbOpcode,bbOpcode,bhOpcode,bhOpcode,lkOpcode);
+#endif
 
      switch(xoOpcode)
         {
@@ -1877,8 +1997,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XL_formInstruction()
                     knownSuccessorsReturn->insert(p.ip + 4);
                   }
 
+#if DEBUG_BRANCH_LOGIC
                printf ("***** Need to compute branch address (but it is indirect, via link register) ***** \n");
             // ROSE_ASSERT(false);
+#endif
                break;
              }
 
@@ -1979,13 +2101,17 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XL_formInstruction()
                     knownSuccessorsReturn->insert(p.ip + 4);
                   }
 
+#if DEBUG_BRANCH_LOGIC
                printf ("***** Need to compute branch address (but it is indirect, via link register) ***** \n");
             // ROSE_ASSERT(false);
+#endif
                break;
              }
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: XL-Form xoOpcode = %d not handled! \n",xoOpcode);
                ROSE_ASSERT(false);
              }
@@ -2025,14 +2151,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
 
+#if DEBUG_OPCODES
      printf ("XFX-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+#endif
 
      switch(xoOpcode)
         {
        // 19
           case 0x13:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
                if (constantOpcode == 0)
                   {
                     instruction = MAKE_INSN1(mfcr,RT);
@@ -2053,7 +2181,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
           case 0x90:
              {
                SgAsmExpression* FXM = new SgAsmByteValueExpression(fxmOpcode);
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
                if (constantOpcode == 0)
                   {
                     instruction = MAKE_INSN2(mtcrf,FXM,RS);
@@ -2073,7 +2201,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
        // 339
           case 0x153:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
             // SgAsmExpression* SPR = new SgAsmWordValueExpression(sprOpcode);
                SgAsmExpression* SPR = makeRegister(powerpc_regclass_spr,sprOpcode,powerpc_condreggranularity_whole);
                instruction = MAKE_INSN2(mfspr,RT,SPR);
@@ -2083,7 +2211,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
        // 467
           case 0x1d3:
              {
-               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
                SgAsmExpression* SPR = makeRegister(powerpc_regclass_spr,sprOpcode,powerpc_condreggranularity_whole);
                instruction = MAKE_INSN2(mfspr,RS,SPR);
                break;
@@ -2091,6 +2219,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: XFX-Form xoOpcode = %d not handled! \n",xoOpcode);
                ROSE_ASSERT(false);
              }
@@ -2118,10 +2248,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFL_formInstruction()
   // Get the bit 31, 1 bit wide
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("XFL-Form instruction opcode = 0x%x flmOpcode = 0x%x = %d frbOpcode = 0x%x = %d \n",insn,flmOpcode,flmOpcode,frbOpcode,frbOpcode);
+#endif
 
      SgAsmExpression* FLM = new SgAsmWordValueExpression(flmOpcode);
-     SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode,powerpc_condreggranularity_field);
+     SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
      if (rcOpcode == 0)
         {
           instruction = MAKE_INSN2(mtfsf,FLM,FRB);
@@ -2139,6 +2271,8 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_XS_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+     printf ("XS-Form instructions not implemented yet, I have no examples so far! \n");
 
      ROSE_ASSERT(instruction != NULL);
      return instruction;
@@ -2171,16 +2305,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
   // Get the bit 31, 1 bit wide
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("XO-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+#endif
 
      switch(xoOpcode)
         {
        // 8
           case 0x8:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2209,9 +2345,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 9
           case 0x9:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(mulhdu,RT,RA,RB);
@@ -2226,9 +2362,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 10
           case 0xA:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2257,9 +2393,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 11
           case 0xB:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(mulhwu,RT,RA,RB);
@@ -2274,9 +2410,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 40
           case 0x28:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2305,9 +2441,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 73
           case 0x49:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(mulhd,RT,RA,RB);
@@ -2322,9 +2458,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 75
           case 0x4B:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (rcOpcode == 0)
                   {
                     instruction = MAKE_INSN3(mulhw,RT,RA,RB);
@@ -2339,8 +2475,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 104
           case 0x68:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2369,9 +2505,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 136
           case 0x88:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2400,9 +2536,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 138
           case 0x8A:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2431,8 +2567,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 200
           case 0xC8:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2461,8 +2597,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 202
           case 0xCA:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2491,8 +2627,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 232
           case 0xE8:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2521,8 +2657,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 234
           case 0xEA:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2551,9 +2687,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 235
           case 0xEB:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2582,9 +2718,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 266
           case 0x10A:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2613,9 +2749,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 457
           case 0x1C9:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2644,9 +2780,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 459
           case 0x1CB:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2675,9 +2811,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 489
           case 0x1E9:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2706,9 +2842,9 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
        // 491
           case 0x1EB:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                if (oeOpcode == 0)
                   {
                     if (rcOpcode == 0)
@@ -2736,6 +2872,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XO_formInstruction()
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
                printf ("Error: XO-Form xoOpcode = %d not handled! \n",xoOpcode);
                ROSE_ASSERT(false);
              }
@@ -2749,6 +2887,232 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+  // The primaryOpcode
+     uint8_t primaryOpcode = (insn >> 26) & 0x3F;
+
+  // Get the bits 6-10, next 5 bits
+     uint8_t frtOpcode  = (insn >> 21) & 0x1F;
+
+  // Get the bits 11-15, next 5 bits
+     uint8_t fraOpcode  = (insn >> 16) & 0x1F;
+
+  // Get the bits 16-20, next 5 bits
+     uint8_t frbOpcode  = (insn >> 11) & 0x1F;
+
+  // Get the bits 21-25, next 5 bits
+     uint8_t frcOpcode  = (insn >> 6) & 0x1F;
+
+  // Get the bits 26-30, next 5 bits
+     uint8_t xOpcode  = (insn >> 1) & 0x1F;
+
+  // Get bit 31, 1 bit as the record bit
+     uint8_t rcOpcode = (insn >> 0) & 0x1;
+
+#if DEBUG_OPCODES
+     printf ("A-Form instruction opcode = 0x%x frtOpcode = 0x%x fraOpcode = 0x%x frbOpcode = 0x%x frcOpcode = 0x%x xOpcode = 0x%x rcOpcode = 0x%x \n",insn,frtOpcode,fraOpcode,frbOpcode,frcOpcode,xOpcode,rcOpcode);
+#endif
+
+     SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+
+     switch(xOpcode)
+        {
+       // 18
+          case 0x12:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fdiv,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fdiv_record,FRT,FRA,FRB);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fdivs,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fdivs_record,FRT,FRA,FRB);
+                       }
+                  }
+               break;
+             }
+
+       // 20
+          case 0x14:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fsub,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fsub_record,FRT,FRA,FRB);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fsubs,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fsubs_record,FRT,FRA,FRB);
+                       }
+                  }
+               break;
+             }
+
+       // 21
+          case 0x15:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fadd,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fadd_record,FRT,FRA,FRB);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fadds,FRT,FRA,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fadds_record,FRT,FRA,FRB);
+                       }
+                  }
+               break;
+             }
+
+       // 25
+          case 0x19:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fmul,FRT,FRA,FRC);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fmul_record,FRT,FRA,FRC);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN3(fmuls,FRT,FRA,FRC);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN3(fmuls_record,FRT,FRA,FRC);
+                       }
+                  }
+               break;
+             }
+
+       // 28
+          case 0x1C:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN4(fmsub,FRT,FRA,FRC,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN4(fmsub_record,FRT,FRA,FRC,FRB);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN4(fmsubs,FRT,FRA,FRC,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN4(fmsubs_record,FRT,FRA,FRC,FRB);
+                       }
+                  }
+               break;
+             }
+
+       // 29
+          case 0x1D:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN4(fmadd,FRT,FRA,FRC,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN4(fmadd_record,FRT,FRA,FRC,FRB);
+                       }
+                  }
+                 else
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN4(fmadds,FRT,FRA,FRC,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN4(fmadds_record,FRT,FRA,FRC,FRB);
+                       }
+                  }
+               break;
+             }
+
+          default:
+             {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
+               printf ("Error: A-Form primaryOpcode = %d (illegal instruction) \n",xOpcode);
+               ROSE_ASSERT(false);
+             }
+        }
 
      ROSE_ASSERT(instruction != NULL);
      return instruction;
@@ -2781,10 +3145,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_M_formInstruction()
   // Get bit 31, 1 bit as the record bit
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
+#if DEBUG_OPCODES
      printf ("M-Form instruction opcode = 0x%x rsOpcode = 0x%x raOpcode = 0x%x rbOpcode = 0x%x mbOpcode = 0x%x meOpcode = 0x%x rcOpcode = 0x%x \n",insn,rsOpcode,raOpcode,rbOpcode,mbOpcode,meOpcode,rcOpcode);
+#endif
 
-     SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode,powerpc_condreggranularity_field);
-     SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode,powerpc_condreggranularity_field);
+     SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+     SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
 
   // There should be a build function for these!
      SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
@@ -2837,6 +3203,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_M_formInstruction()
 
           default:
              {
+            // The default case is now used for handling illegal instructions 
+            // (during development it was for those not yet implemented).
             // There are only 3 legal M-form instructions, so everything else is an illegal instruction!
                printf ("Error: M-Form primaryOpcode = %d (illegal instruction) \n",primaryOpcode);
                ROSE_ASSERT(false);
@@ -2852,6 +3220,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_MD_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
 
+     printf ("MD-Form instructions not implemented yet, I have no examples so far! \n");
+
      ROSE_ASSERT(instruction != NULL);
      return instruction;
    }
@@ -2860,6 +3230,8 @@ SgAsmPowerpcInstruction*
 PowerpcDisassembler::SingleInstructionDisassembler::decode_MDS_formInstruction()
    {
      SgAsmPowerpcInstruction* instruction = NULL;
+
+     printf ("MDS-Form instructions not implemented yet, I have no examples so far! \n");
 
      ROSE_ASSERT(instruction != NULL);
      return instruction;

@@ -194,7 +194,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
    // DQ (10/12/2008): Added support for PowerPC.
       PowerpcDisassembler::Parameters params(addr, true);
 
-      printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
+   // printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
 
       insn = PowerpcDisassembler::disassemble(params, &(file->content()[0]), file->get_orig_size(), fileOffset, &knownSuccessors);
 #if 0
@@ -610,7 +610,7 @@ void Disassembler::disassembleInterpretation(SgAsmInterpretation* interp) {
                functionStarts.insert(make_pair(bb->get_address(),funcName));
              }
 
-          printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
+       // printf ("Processed a block! computedBasicBlocks[%zu] = %p \n",i,computedBasicBlocks[i]);
         }
 
   // DQ (10/16/2008): This outputs a hexidecimal number at times!
