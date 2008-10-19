@@ -405,12 +405,14 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
 
             // If this section was mapped to memory then output the associated instructions 
             // that have been disassembled.
+            // printf ("Section [%zd]: outputInstruction = %s \n",i,outputInstruction ? "true" : "false"); 
                if (outputInstruction == true)
                   {
                  // Output the instructions
                     SgAsmGenericHeader* genericHeader = sections[i]->get_header();
                     ROSE_ASSERT(genericHeader != NULL);
-                 // printf ("header name = %s \n",genericHeader->get_name().c_str());
+
+                 // printf ("header name = %s \n",genericHeader->get_name()->c_str());
 
                     SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
                     rose_addr_t imageBase = 0ull;
@@ -419,14 +421,15 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                          imageBase = asmPEFileHeader->get_e_image_base();
                        }
  
-                 // printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name().c_str(),imageBase);
+                 // printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),imageBase);
 
                     rose_addr_t addressBase  =  imageBase + sections[i]->get_mapped_rva();
                     rose_addr_t addressBound =  addressBase + sections[i]->get_mapped_size();
 
+                 // This is an error to uncomment, but used to provide useful information for debugging.
                  // fprintf(f, "%s%-*s = rva=0x%08"PRIx64", size=%"PRIu64" bytes\n", p, w, "mapped",  p_mapped_rva, p_mapped_size);
 
-                 // printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name().c_str(),addressBase,addressBound);
+                 // printf ("section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),addressBase,addressBound);
 
                  // DQ (9/1/2008): This is part of code to include the disassembled
                  // instructions in a specific range relevant to a section (unfinished).
@@ -462,9 +465,26 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                             }
                                          
                        }
+#if 0
+                 // DQ (10/18/2008): I would like to unparse the instructions associated with 
+                 // the current section, but I am not sure how best to do that.
+                    fprintf(dumpFile, "\n\n");
+                    fprintf(dumpFile, "**************************************************\n");
+                    fprintf(dumpFile, "Output the disassembled instructions (by section):\n");
+                    fprintf(dumpFile, "**************************************************\n");
+                    fprintf(dumpFile, "\n");
+                    const SgAsmInterpretationPtrList & interps = asmFile->get_interpretations();
+                    printf ("interps.size() = %zu \n",interps.size());
+                    for (size_t i = 0; i < interps.size(); ++i)
+                       {
+                      // fprintf(dumpFile, "%s\n", unparseAsmInterpretation(interps[i]).c_str());
+                       }
+#endif
                   }
              }
 
+       // The instructions are mostly from the ".text" section, but some come from other 
+       // sections and it would be useful to distinguish this detail in the dump output.
           fprintf(dumpFile, "\n\n");
           fprintf(dumpFile, "*************************************\n");
           fprintf(dumpFile, "Output the disassembled instructions:\n");
