@@ -193,7 +193,6 @@ ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_Instal
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in
 $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf: manual.tex gettingStarted.tex $(latexFiles) $(latexDependences)
-	test -f html.sty || ln -s $(top_srcdir)/docs/Rose/html.sty html.sty
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \
 	$(PDFLATEX) manual.tex && \

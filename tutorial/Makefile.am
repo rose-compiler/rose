@@ -1245,7 +1245,7 @@ cleanDocs:
 	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C
 
 clean-local: cleanDocs
-	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new *.s bin_example_2 *.dump
+	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
 	find . -depth -name \*.dSYM -exec rm -rf {} \; # OS X object file debug info
 	rm -rf $(generatedCodeExamples)
 #	rm -f exampleTranslator exampleTranslatorMultiLib
