@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
-// Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.26 2008-07-01 09:45:25 gergo Exp $
+// Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
+// $Id: ExprTransformer.C,v 1.27 2008-10-20 10:32:24 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -31,7 +31,7 @@ ExprTransformer::ExprTransformer(int node_id, int procnum, int expnum,
 {
 }
 
-void
+SgExpression *
 ExprTransformer::labelAndTransformExpression(SgExpression *expr)
 {
     int original_node_id = node_id;
@@ -44,6 +44,23 @@ ExprTransformer::labelAndTransformExpression(SgExpression *expr)
         block_stmt_map[z] = stmt;
  // Set the new expnum computed by the ExprLabeler
     expnum = el.get_expnum();
+
+ // If root_var is set and arose from a call, we need to create a new var
+ // ref exp for it; otherwise, return the original expression pointer (which
+ // may point to a transformed expression). We check whether this came from
+ // a call by checking if the root_var has an attribute associated with it
+ // because there is no other good way to double-check whether this is a
+ // call-related expression (I think).
+    if (root_var != NULL && root_var->attributeExists("SATIrE: call target"))
+    {
+        expr = Ir::createVarRefExp(root_var);
+        CallAttribute *c
+            = (CallAttribute *) root_var->getAttribute("SATIrE: call target");
+        assert(c != NULL);
+        expr->addNewAttribute("SATIrE: call target",
+                              new CallAttribute(c->call_target));
+    }
+    return expr;
 }
 
 int 
@@ -99,6 +116,7 @@ void ExprTransformer::visit(SgNode *node)
     else if (isSgFunctionCallExp(node))
     {
         SgFunctionCallExp *call = isSgFunctionCallExp(node);
+        SgExpression *call_target_expr = call->get_function();
         std::string *name = find_func_name(call);
         const std::vector<CallBlock *> *entries = find_entries(call);
         SgExpressionPtrList elist;
@@ -196,6 +214,7 @@ void ExprTransformer::visit(SgNode *node)
             {
                 BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
                 cfg->nodes.push_back(b);
+                b->call_target = call_target_expr;
                 if (first_arg_block == NULL)
                     first_arg_block = b;
                 if (prev != NULL)
@@ -210,6 +229,7 @@ void ExprTransformer::visit(SgNode *node)
         {
             retval_block = new BasicBlock(node_id++, INNER, procnum);
             cfg->nodes.push_back(retval_block);
+            retval_block->call_target = call_target_expr;
         }
         else
             retval_block = NULL;
@@ -232,20 +252,19 @@ void ExprTransformer::visit(SgNode *node)
             cfg->returns.push_back(return_block);
             call_block->partner = return_block;
             return_block->partner = call_block;
+            call_block->call_target = call_target_expr;
+            return_block->call_target = call_target_expr;
 
             /* set links */
-            std::vector<CallBlock *> *exits = new std::vector<CallBlock *>();
             std::vector<CallBlock *>::const_iterator i;
-            for (i = entries->begin(); i != entries->end(); ++i)
-                exits->push_back((*i)->partner);
             if (last_arg_block != NULL)
                 add_link(last_arg_block, call_block, NORMAL_EDGE);
             for (i = entries->begin(); i != entries->end(); ++i)
+            {
                 add_link(call_block, *i, CALL_EDGE);
+                add_link((*i)->partner, return_block, RETURN_EDGE);
+            }
             add_link(call_block, return_block, LOCAL);
-            for (i = exits->begin(); i != exits->end(); ++i)
-                add_link(*i, return_block, RETURN_EDGE);
-            delete exits;
             if (retval_block != NULL)
             {
                 add_link(return_block, retval_block, NORMAL_EDGE);
@@ -269,6 +288,7 @@ void ExprTransformer::visit(SgNode *node)
                         /* add call stmt = */ false);
             cfg->nodes.push_back(ext_call_block);
             cfg->calls.push_back(ext_call_block);
+            ext_call_block->call_target = call_target_expr;
          // GB (2007-10-23): This now records the expression referring to
          // the called function and the parameter list. Because the
          // parameter list has not been computed yet, pass an empty dummy
@@ -286,6 +306,7 @@ void ExprTransformer::visit(SgNode *node)
                         /* add call stmt = */ false);
             cfg->nodes.push_back(ext_return_block);
             cfg->returns.push_back(ext_return_block);
+            ext_return_block->call_target = call_target_expr;
             external_return =
                     Ir::createExternalReturn(call->get_function(),
                                              new std::vector<SgVariableSymbol *>,
@@ -1348,22 +1369,43 @@ ExprTransformer::evaluate_arguments(std::string name,
   return params;
 }
 
-void ExprTransformer::assign_retval(std::string name, SgFunctionCallExp *call, BasicBlock *block) {
-//std::stringstream retname;
-//retname << "$" << name << "$return";
-  RetvalAttribute *varnameattr = (RetvalAttribute *) call->getAttribute("return variable");
-  // SgVariableSymbol *var = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
-  SgVariableSymbol *var = varnameattr->get_variable_symbol();
-// GB (2008-06-23): Toying around with using only one global retvar
-// everywhere. This should make it easier to kill.
-//SgVariableSymbol *retvar = Ir::createVariableSymbol(retname.str(),call->get_type());
-  SgVariableSymbol *retvar = cfg->global_return_variable_symbol;
-  block->statements.push_front(Ir::createReturnAssignment(var, retvar));
-  if (isSgExpression(call->get_parent())) {
-    satireReplaceChild(call->get_parent(), call, Ir::createVarRefExp(var));
-  } else if (root_var == NULL) {
-    root_var = var;
-  }
+void ExprTransformer::assign_retval(
+        std::string name, SgFunctionCallExp *call, BasicBlock *block)
+{
+ // std::stringstream retname;
+ // retname << "$" << name << "$return";
+    RetvalAttribute *varnameattr
+        = (RetvalAttribute *) call->getAttribute("return variable");
+ // SgVariableSymbol *var
+ //     = Ir::createVariableSymbol(varnameattr->get_str(),call->get_type());
+    SgVariableSymbol *var = varnameattr->get_variable_symbol();
+
+ // GB (2008-06-23): Toying around with using only one global retvar
+ // everywhere. This should make it easier to kill.
+ // SgVariableSymbol *retvar
+ //     = Ir::createVariableSymbol(retname.str(),call->get_type());
+    SgVariableSymbol *retvar = cfg->global_return_variable_symbol;
+
+ // GB (2008-10-16): Annotate the return variable and the replaced expression
+ // with the function call's target. This is needed for the points-to
+ // analysis, which needs to resolve which function's return value each
+ // occurrence of the retvar refers to.
+    SgExpression *call_target_expr = call->get_function();
+    var->addNewAttribute("SATIrE: call target",
+                         new CallAttribute(call_target_expr));
+
+    block->statements.push_front(Ir::createReturnAssignment(var, retvar));
+    if (isSgExpression(call->get_parent()))
+    {
+        SgVarRefExp *replacementExpression = Ir::createVarRefExp(var);
+        replacementExpression->addNewAttribute(
+                "SATIrE: call target", new CallAttribute(call_target_expr));
+        satireReplaceChild(call->get_parent(), call, replacementExpression);
+    }
+    else if (root_var == NULL)
+    {
+        root_var = var;
+    }
 }
 
 static 

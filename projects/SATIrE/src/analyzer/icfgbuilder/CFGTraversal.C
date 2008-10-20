@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.48 2008-09-29 12:33:35 gergo Exp $
+// $Id: CFGTraversal.C,v 1.49 2008-10-20 10:32:24 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -117,6 +117,7 @@ CFGTraversal::processProcedureArgBlocks()
           b = new BasicBlock(node_id++, INNER, (*i)->procnum);
           cfg->nodes.push_back(b);
           b->statements.push_back(*j);
+          b->call_target = (*i)->arg_block->call_target;
           if (first == NULL)
             first = b;
           if (prev != NULL)
@@ -188,17 +189,17 @@ CFGTraversal::atTraversalEnd() {
      // unreachable nodes.
      // kill_unreachable_nodes();
 
-     // GB (2008-04-08): Made numbering of expressions optional, but
-     // default.
-        if (flag_numberExpressions)
-            number_exprs();
-
      // GB (2008-05-30): NULL-terminate the CFG's node lists.
         cfg->nodes.push_back(NULL);
         cfg->entries.push_back(NULL);
         cfg->exits.push_back(NULL);
         cfg->calls.push_back(NULL);
         cfg->returns.push_back(NULL);
+
+     // GB (2008-04-08): Made numbering of expressions optional, but
+     // default.
+        if (flag_numberExpressions)
+            number_exprs();
     }
 }
 
@@ -1245,14 +1246,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, if_block,
                 block_stmt_map, current_statement);
-        et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
 
+#if 0
         if (et.get_root_var() != NULL) {
             new_expr = Ir::createVarRefExp(et.get_root_var());
         }
+#endif
 
         if_block->statements.push_front(
                 Ir::createIfStmt(Ir::createExprStatement(new_expr)));
@@ -1488,14 +1491,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
               ExprTransformer et(node_id, proc->procnum, expnum, cfg,
                       init_block, block_stmt_map, current_statement);
-              et.labelAndTransformExpression(new_expr);
+              new_expr = et.labelAndTransformExpression(new_expr);
 #endif
               node_id = et.get_node_id();
               expnum = et.get_expnum();
 
+#if 0
               if (et.get_root_var() != NULL) {
                   new_expr = Ir::createVarRefExp(et.get_root_var());
               }
+#endif
 
               SgVarRefExp *var = Ir::createVarRefExp(*it);
               SgExprStatement* exprStatement
@@ -1540,14 +1545,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, for_block,
                 block_stmt_map, current_statement);
-        et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr);
 #endif
         node_id = et.get_node_id();
         expnum = et.get_expnum();
 
+#if 0
         if (et.get_root_var() != NULL) {
           new_expr = Ir::createVarRefExp(et.get_root_var());
         }
+#endif
 
 #ifdef REPLACE_FOR_BY_WHILE
         SgWhileStmt* whileStmt
@@ -1581,14 +1588,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et_inc(node_id, proc->procnum, expnum, cfg, incr_block,
                 block_stmt_map, current_statement);
-        et_inc.labelAndTransformExpression(new_expr_inc);
+        new_expr_inc = et_inc.labelAndTransformExpression(new_expr_inc);
 #endif
         node_id = et_inc.get_node_id();
         expnum = et_inc.get_expnum();
 
+#if 0
         if (et_inc.get_root_var() != NULL) {
           new_expr_inc = Ir::createVarRefExp(et_inc.get_root_var());
         }
+#endif
         incr_block->statements.push_front(Ir::createExprStatement(new_expr_inc));
         BasicBlock *incr_block_after = et_inc.get_after();
         /* link everything together */
@@ -1657,13 +1666,15 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, while_block,
             block_stmt_map, current_statement);
-    et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
+#if 0
 	if (et.get_root_var() != NULL)
 	  new_expr = Ir::createVarRefExp(et.get_root_var());
+#endif
 	
 	SgWhileStmt* whileStatement=Ir::createWhileStmt(Ir::createExprStatement(new_expr));
 	while_block->statements.push_front(whileStatement);
@@ -1713,14 +1724,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, dowhile_block,
             block_stmt_map, current_statement);
-    et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
+#if 0
 	if (et.get_root_var() != NULL) {
 	  new_expr = Ir::createVarRefExp(et.get_root_var());
 	}
+#endif
                 
 	SgDoWhileStmt* doWhileStmt
 	  = Ir::createDoWhileStmt(Ir::createExprStatement(new_expr));
@@ -1828,14 +1841,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, switch_block,
             block_stmt_map, current_statement);
-    et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
+#if 0
 	if (et.get_root_var() != NULL) {
 	  new_expr = Ir::createVarRefExp(et.get_root_var());
 	}
+#endif
 	
 	SgSwitchStatement* switchStatement
 	  = Ir::createSwitchStatement(Ir::createExprStatement(new_expr));
@@ -2000,14 +2015,16 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
     ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
             block_stmt_map, current_statement);
-    et.labelAndTransformExpression(new_expr);
+    new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	node_id = et.get_node_id();
 	expnum = et.get_expnum();
 
+#if 0
 	if (et.get_root_var() != NULL) {
 	  new_expr = Ir::createVarRefExp(et.get_root_var());
 	}
+#endif
 
 	SgVarRefExp* varref1
    // GB (2008-06-23): Trying unique global return variable instead of the
@@ -2077,15 +2094,17 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
           ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
                   block_stmt_map, current_statement);
-          et.labelAndTransformExpression(new_expr);
+          new_expr = et.labelAndTransformExpression(new_expr);
 #endif
           node_id = et.get_node_id();
           expnum = et.get_expnum();
           after = et.get_after();
           stmt_start = new StatementAttribute(after, POS_PRE);
 
+#if 0
           if (et.get_root_var() != NULL)
               new_expr = Ir::createVarRefExp(et.get_root_var());
+#endif
           SgExprStatement *expstmt
               = Ir::createExprStatement(Ir::createAssignOp(
                           Ir::createVarRefExp(declared_var), new_expr));
@@ -2114,7 +2133,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
         ExprTransformer et(node_id, proc->procnum, expnum, cfg, after,
                 block_stmt_map, current_statement);
-        et.labelAndTransformExpression(new_expr);
+        new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	    node_id = et.get_node_id();
 	    expnum = et.get_expnum();
@@ -2255,7 +2274,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 #else
       ExprTransformer et(node_id, proc->procnum, expnum, cfg, new_block,
               block_stmt_map, current_statement);
-      et.labelAndTransformExpression(new_expr);
+      new_expr = et.labelAndTransformExpression(new_expr);
 #endif
 	  node_id = et.get_node_id();
 	  expnum = et.get_expnum();
@@ -2270,8 +2289,10 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  
 	  after = et.get_after();
 	  
+#if 0
 	  if (et.get_root_var() != NULL)
 	    new_expr = Ir::createVarRefExp(et.get_root_var());
+#endif
 	  //if (!isSgTypeVoid(new_expr->get_type()))
 	  {
 	    new_block->statements.push_front(Ir::createExprStatement(new_expr));
@@ -2638,6 +2659,13 @@ IcfgTraversal::traverse(CFG *cfg)
     std::deque<SgStatement *>::const_iterator stmt;
     for (block = cfg->nodes.begin(); block != cfg->nodes.end(); ++block)
     {
+        if (*block == NULL)
+        {
+         // GB (2008-10-17): The ICFG's node lists are NULL-terminated.
+         // Thus, it is normal and expected to find a NULL node in the list.
+            continue;
+        }
+
         node_id = (*block)->id;
         node_type = (*block)->node_type;
         node_procnum = (*block)->procnum;
@@ -2649,7 +2677,6 @@ IcfgTraversal::traverse(CFG *cfg)
             statement_index++;
         }
     }
-
  // We are not traversing statements anymore.
     icfg_statement = false;
  // Call end hook.

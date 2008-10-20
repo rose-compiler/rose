@@ -19,6 +19,7 @@ public:
   static SgVarRefExp* createVarRefExp(std::string name, SgType* type);
   static SgVarRefExp* createVarRefExp(SgVariableSymbol* variableSymbol);
   static SgVarRefExp* createVarRefExp(SgInitializedName* initializedName);
+  static SgFunctionRefExp* createFunctionRefExp(SgFunctionSymbol *functionSymbol);
   static SgVariableSymbol* createVariableSymbol(std::string name,SgType* type);
   static SgVariableSymbol* createVariableSymbol(SgInitializedName* initName);
   static SgName createName(std::string name);

@@ -81,6 +81,8 @@ std::string Ir::fragmentToString(const SgNode* node) {
 // very minor memory leak).
   SgGlobal* glob = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForTransformationNode());
   glob->set_parent(file);
+  // GB (2008-10-20): The set_root call appears necessary for ROSE
+  // 0.9.3a-1593, it's not necessary with ROSE 0.9.3a-2261.
   file->set_root(glob); // do we need this one?
 
   // store and restore original parent pointer of 'node'
@@ -264,6 +266,15 @@ SgVarRefExp* Ir::createVarRefExp(SgInitializedName* initializedName) {
   configLocatedNode(n,variableSymbol);
   assert(variableSymbol->get_parent()==n);
   return n;
+}
+
+SgFunctionRefExp* Ir::createFunctionRefExp(SgFunctionSymbol *functionSymbol) {
+    SgFunctionType *type = isSgFunctionType(functionSymbol->get_type());
+    assert(type != NULL);
+    SgFunctionRefExp* n = new SgFunctionRefExp(functionSymbol, type);
+    configLocatedNode(n, functionSymbol);
+    assert(functionSymbol->get_parent() == n);
+    return n;
 }
 
 // GB (2008-05-09): This function should only allocate a new variable symbol

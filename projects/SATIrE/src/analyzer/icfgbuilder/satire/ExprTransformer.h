@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.h,v 1.7 2008-05-19 12:38:26 gergo Exp $
+// $Id: ExprTransformer.h,v 1.8 2008-10-20 10:32:26 gergo Exp $
 
 #ifndef H_EXPRTRANSFORMER
 #define H_EXPRTRANSFORMER
@@ -30,7 +30,7 @@ public:
     ExprTransformer(int node_id, int procnum, int expnum, CFG *cfg,
             BasicBlock *after, std::map<int, SgStatement *> &block_stmt_map,
             SgStatement *stmt);
-    void labelAndTransformExpression(SgExpression *expr);
+    SgExpression *labelAndTransformExpression(SgExpression *expr);
 
 protected:
     void visit(SgNode *);

@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.27 2008-07-01 09:45:27 gergo Exp $
+// $Id: cfg_support.h,v 1.28 2008-10-20 10:32:26 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -159,8 +159,8 @@ class BasicBlock
 {
 public:
     BasicBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_)
-        : id(id_), node_type(type_), procnum(procnum_), reachable(true),
-          in_edge_mask(-1), out_edge_mask(-1)
+        : id(id_), node_type(type_), procnum(procnum_), call_target(NULL),
+          reachable(true), in_edge_mask(-1), out_edge_mask(-1)
     {
     }
 
@@ -170,6 +170,10 @@ public:
     std::deque<SgStatement *> statements;
     std::vector<Edge> successors;
     std::vector<Edge> predecessors;
+ // GB (2008-10-16): Recording which function call, if any, this block was
+ // created for. This is the expression that identifies the function being
+ // called (NULL if this block did not arise from a function call).
+    SgExpression *call_target;
  // GB (2008-05-30): Starting a move towards keeping successor/predecessor
  // blocks and the corresponding edges separated. This makes it easier to
  // iterate over block lists using pointers.
@@ -402,6 +406,16 @@ private:
     std::string str;
 #endif
     SgVariableSymbol *sym;
+};
+
+// GB (2008-10-17): Annotating statements and expressions in the ICFG that
+// were generated for function calls with an attribute that specifies the
+// call's target(s).
+class CallAttribute: public AstAttribute
+{
+public:
+    CallAttribute(SgExpression *call_target): call_target(call_target) { }
+    SgExpression *call_target;
 };
 
 // GB (2007-10-23): Added members for the expression that refers to the

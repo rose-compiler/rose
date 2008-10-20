@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.26 2008-07-01 09:45:25 gergo Exp $
+// $Id: cfg_support.C,v 1.27 2008-10-20 10:32:24 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -613,7 +613,21 @@ SgVariableSymbol * MyAssignment::get_rhs() const {
 MyAssignment::MyAssignment(SgVariableSymbol *l, SgVariableSymbol *r)
   : lhs(l), rhs(r),
     lhsVarRefExp(Ir::createVarRefExp(lhs)),
-    rhsVarRefExp(Ir::createVarRefExp(rhs)) {
+    rhsVarRefExp(Ir::createVarRefExp(rhs))
+{
+    lhsVarRefExp->set_parent(this);
+    if (l->attributeExists("SATIrE: call target"))
+    {
+        AstAttribute *a = l->getAttribute("SATIrE: call target");
+        lhsVarRefExp->addNewAttribute("SATIrE: call target", a);
+    }
+
+    rhsVarRefExp->set_parent(this);
+    if (r->attributeExists("SATIrE: call target"))
+    {
+        AstAttribute *a = r->getAttribute("SATIrE: call target");
+        rhsVarRefExp->addNewAttribute("SATIrE: call target", a);
+    }
 }
 
 SgVarRefExp *

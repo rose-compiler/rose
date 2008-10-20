@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.20 2008-10-15 10:01:26 gergo Exp $
+// $Id: ProcTraversal.C,v 1.21 2008-10-20 10:32:24 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -383,6 +383,43 @@ ProcTraversal::visit(SgNode *node) {
                         ? proc->memberf_name
                         : proc->name)
                   << " " /*<< proc->decl << std::endl*/;
+      }
+      if (proc->arg_block != NULL)
+      {
+          SgFunctionSymbol *sym
+              = isSgFunctionSymbol(decl->get_symbol_from_symbol_table());
+          if (sym == NULL)
+          {
+#if 0
+              std::cout
+                  << std::endl
+                  << "*** NULL function symbol for declaration "
+                    << decl->unparseToString()
+                  << std::endl
+                  << "symbol: "
+                    << (void *) decl->get_symbol_from_symbol_table()
+                    << (decl->get_symbol_from_symbol_table() != NULL ?
+                            decl->get_symbol_from_symbol_table()->class_name()
+                          : "")
+                  << std::endl
+                  << "first nondef decl: "
+                    << (void *) decl->get_firstNondefiningDeclaration()
+                    << " sym: "
+                    << (decl->get_firstNondefiningDeclaration() != NULL ?
+                            (void *) decl->get_firstNondefiningDeclaration()
+                                          ->get_symbol_from_symbol_table()
+                          : (void *) NULL)
+                  << std::endl;
+#endif
+              if (decl->get_firstNondefiningDeclaration() != NULL)
+              {
+                  sym = isSgFunctionSymbol(decl
+                          ->get_firstNondefiningDeclaration()
+                          ->get_symbol_from_symbol_table());
+              }
+          }
+          if (sym != NULL)
+              proc->arg_block->call_target = Ir::createFunctionRefExp(sym);
       }
    // delete arglist;
     }
