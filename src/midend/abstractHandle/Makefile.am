@@ -12,5 +12,8 @@ include_HEADERS = \
   
 clean-local:
 	rm -rf Templates.DB ii_files ti_files core
-
-EXTRA_DIST = README
+# This directory also contains a self-contained example 
+# using a simple loop data structure to demonstrate the usage.
+# It can be released separated from ROSE
+EXTRA_DIST = README testMyLoop.cpp myloop.h loopAdapter.h loopAdapter.cpp \
+            makefile-myloop

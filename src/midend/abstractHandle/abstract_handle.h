@@ -15,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <limits.h>
+#include <map>
 
 namespace AbstractHandle{
 
@@ -102,7 +103,7 @@ namespace AbstractHandle{
   virtual abstract_node* getParent() const =0;
 
   //Find a node from a string for a abstract handle's string format, starting from this node
-  // eg. find a file node from a string like SgSourceFile<name,/home/liao6/names.cpp>
+  // eg. find a file node from a string like SourceFile<name,/home/liao6/names.cpp>
   virtual abstract_node* findNode(std::string handle_str) const =0;  
 
   //Find a node of a given type, it also matches the specifier.
@@ -157,7 +158,7 @@ namespace AbstractHandle{
                abstract_handle* p_handle=NULL);
 
     //construct a handle from a handle string  within the scope of an existing handle
-    //e.g: <SgSourceFile<name,/home/liao6/names.cpp> will create a corresponding file handle 
+    //e.g: <SourceFile<name,/home/liao6/names.cpp> will create a corresponding file handle 
     abstract_handle(abstract_handle* phandle, const std::string& handle_string);
     
     virtual ~abstract_handle() { if (m_specifier !=NULL) delete m_specifier;}
@@ -200,6 +201,11 @@ namespace AbstractHandle{
     abstract_node* m_node; 
     specifier * m_specifier;
   };
+
+  // maintain a map between nodes and handles, 
+  // used for fast indexing and avoid redundant creation of handles for nodes
+  // Should update the map after each creation
+ extern std::map<abstract_node*, abstract_handle*> handle_map; 
 
 }// end namespace 
 
