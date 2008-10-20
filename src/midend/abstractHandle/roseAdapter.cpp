@@ -155,6 +155,7 @@ static VariantT getVariantT(string type_str)
      abstract_node* result = new roseNode(filenode);
      return result;
    }
+
    source_position roseNode::getStartPos() const
    {
      source_position pos; 
@@ -190,14 +191,6 @@ static VariantT getVariantT(string type_str)
      return pos;
    }
 
-   source_position_pair roseNode::getSourcePos() const
-   {
-     source_position_pair result;
-     result.first = getStartPos();
-     result.second= getEndPos();
-     return result;
-   }
-
   // return the numbering within a scope 
   size_t roseNode::getNumbering(const abstract_node * another_node) const
   {
@@ -221,25 +214,7 @@ static VariantT getVariantT(string type_str)
     }  
     return number;
   }
-  // A simplest implementation here, for now
-   bool roseNode::operator==(const abstract_node & x) const
-   {
-     SgNode* other_node =  (dynamic_cast<const roseNode&> (x)).getNode();
 
-     return (mNode ==other_node);
-   }
-
-  //TODO  
-  size_t roseNode::getIntLabel() const
-  {
-    return 0;
-  }
-  //TODO  
-  std::string roseNode::getStringLabel() const
-  {
-    string result;
-    return result;
-  }
 std::string roseNode::toString() const
 {
   std::string result;
@@ -249,23 +224,6 @@ std::string roseNode::toString() const
 
  //Find a node from a string for a abstract handle
 // eg. find a file node from a string like SgSourceFile<name,/home/liao6/names.cpp>
-abstract_node* roseNode::findNode(std::string input) const
-{
-   ROSE_ASSERT(input.size()>0);
-   istringstream buffer(input);
-   char type_str[256], specifier_str[PATH_MAX+512];
-   AbstractHandle::specifier mspecifier;
-
-   buffer.getline(type_str,256,'<');
-
-   buffer.unget(); // put back '<'
-   buffer.getline(specifier_str,PATH_MAX+512,'>');
-
-  fromString(mspecifier,specifier_str);
-
-  return findNode(type_str,mspecifier);
-}
-
 abstract_node* roseNode::findNode(std::string construct_type_str, specifier mspecifier) const  
 {
   abstract_node* result=NULL;
@@ -307,6 +265,14 @@ abstract_node* roseNode::findNode(std::string construct_type_str, specifier mspe
   }//end for
 
    return result;
+}
+
+// A simplest implementation here, for now
+bool roseNode::operator==(const abstract_node & x) const
+{
+ SgNode* other_node =  (dynamic_cast<const roseNode&> (x)).getNode();
+
+ return (mNode ==other_node);
 }
 
 

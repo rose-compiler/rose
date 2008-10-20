@@ -77,57 +77,58 @@ namespace AbstractHandle{
 
  //----------------Abstract AST/IR node---------------
  //Users  should provide a concrete node implementation
- //
+ // We try not to use pure virtual functions here to allow 
+ // users to reuse the default implementation as much as possible
  class abstract_node
  {
   public: 
   virtual ~abstract_node(){}
 
   // Get the construct' s type name, like function
-  virtual std::string getConstructTypeName() const =0;
+  virtual std::string getConstructTypeName() const;
 
   //If the node has meaningful line and column numbers associated with a file
-  virtual bool hasSourcePos() const = 0;
+  virtual bool hasSourcePos() const;
 
   //If the node has legal names defined by language standards
-  virtual bool hasName() const = 0;
+  virtual bool hasName() const;
 
   // Get the name of the construct if it is named, like function name
-  virtual std::string getName() const = 0;
+  virtual std::string getName() const;
 
   //Get the start source file position of the construct
   // Get the abstract node for file containing the current node.
-  virtual abstract_node* getFileNode() const =0;
+  virtual abstract_node* getFileNode() const;
 
   //Get parent node, used for generate parent handle automatically
-  virtual abstract_node* getParent() const =0;
+  virtual abstract_node* getParent() const;
 
   //Find a node from a string for a abstract handle's string format, starting from this node
   // eg. find a file node from a string like SourceFile<name,/home/liao6/names.cpp>
-  virtual abstract_node* findNode(std::string handle_str) const =0;  
+  virtual abstract_node* findNode(std::string handle_str) const;  
 
   //Find a node of a given type, it also matches the specifier.
-  virtual abstract_node* findNode(std::string construct_type_str, specifier mspecifier) const =0;  
+  virtual abstract_node* findNode(std::string construct_type_str, specifier mspecifier) const;  
 
-  virtual std::string getFileName() const =0;
+  virtual std::string getFileName() const;
 
-  virtual source_position_pair getSourcePos() const = 0;
-  virtual source_position getStartPos() const = 0;
-  virtual source_position getEndPos() const = 0;
+  virtual source_position_pair getSourcePos() const;
+  virtual source_position getStartPos() const;
+  virtual source_position getEndPos() const;
 
-  virtual std::string toString() const =0;
+  virtual std::string toString() const;
 
   //Get integer label
-  virtual size_t getIntLabel() const =0;
+  virtual size_t getIntLabel() const;
   //Get string label
-  virtual std::string getStringLabel() const =0;
+  virtual std::string getStringLabel() const;
 
   //Get the ordering of the construct relative to another construct in a higher scope
   // Numbering start from 1
   //e.g. a function construct may be the 2nd function relative to a file
-  virtual size_t getNumbering( const abstract_node*  another_node) const =0;
+  virtual size_t getNumbering( const abstract_node*  another_node) const;
 
-  virtual bool operator == (const abstract_node & x) const = 0;
+  virtual bool operator == (const abstract_node & x) const=0;
  }; // end class abstract_node
 
   //---------------- An abstract handle --------------------------
