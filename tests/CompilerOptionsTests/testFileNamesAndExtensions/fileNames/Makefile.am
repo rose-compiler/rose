@@ -17,10 +17,6 @@ FileNames = \
 
 genFileNames:
 	@echo -e "\nGenerating test files\n" && sh -c '\
-		for f in $(FileNames) ;\
-		do \
-			cp $(srcdir)/test_simple_file.C ./"$${f}" ;\
-		done ;\
 		for f in $(EmptyFileNames) ;\
 		do \
 			touch ./"$${f}" ;\
@@ -48,4 +44,4 @@ clean-local:
 	'
 	rm -f rose_* a*.out
 
-EXTRA_DIST = test_filenames_unix_meta_chars.pl test_simple_file.C
+EXTRA_DIST = test_filenames_unix_meta_chars.pl

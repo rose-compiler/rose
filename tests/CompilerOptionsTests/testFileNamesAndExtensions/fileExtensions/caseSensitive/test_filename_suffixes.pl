@@ -48,21 +48,27 @@ print("#########################################################################
 
 for($i = 0; $i < $length_of_command_line; $i++)
 { 
+    $file = $command_line_arguments[$i];
+    open (FILE, ">$file") or die ("Cannot open file $file");
+    print FILE "int main() {}\n";
+    close (FILE);
     #print color("red");
     print("\n\n");
-    print("$i.**************************RUNNING WITH FILENAME = $command_line_arguments[$i]\"*********************************\n");
+    print("$i.**************************RUNNING WITH FILENAME = $file\"*********************************\n");
     print("\n\n");
     #print color("reset");
 
     #first run with gcc,
-    print("##########################COMMAND LINE = \"$gcc_command_line $command_line_arguments[$i]\"#################################\n");
-    system("$gcc_command_line $command_line_arguments[$i]\n");
+    print("##########################COMMAND LINE = \"$gcc_command_line $file\"#################################\n");
+    system("$gcc_command_line $file\n");
 
     #then with g++
-    print("##########################COMMAND LINE = \"$g_plus_plus_command_line $command_line_arguments[$i]\"#################################\n");
-    system("$g_plus_plus_command_line $command_line_arguments[$i]\n");
+    print("##########################COMMAND LINE = \"$g_plus_plus_command_line $file\"#################################\n");
+    system("$g_plus_plus_command_line $file\n");
 
     #then with sweet old identityTranslator
-    print("##########################COMMAND LINE = \"$identity_translator $command_line_arguments[$i]\"#################################\n");
-    system("$identity_translator $command_line_arguments[$i]\n");
+    print("##########################COMMAND LINE = \"$identity_translator $file\"#################################\n");
+    system("$identity_translator $file\n");
+
+    unlink($file);
 }

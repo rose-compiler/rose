@@ -42,11 +42,15 @@ print("#########################################################################
 
 for($i = 0; $i < $length_of_command_line; $i++)
 { 
+    $file = $command_line_arguments[$i];
+    open (FILE, ">$file") or die ("Cannot open file $file");
+    print FILE "int main() {}\n";
+    close (FILE);
     print("\n\n");
-    print("$i.##########################COMMAND LINE = \"$identity_translator $command_line_arguments[$i]\"#################################\n");
-    system("$identity_translator $command_line_arguments[$i]\n");
-    print("$i.##########################COMMAND LINE = \"$gpp_command_line $command_line_arguments[$i]\"#################################\n");
-    system("$gpp_command_line $command_line_arguments[$i]\n");
+    print("$i.##########################COMMAND LINE = \"$identity_translator $file\"#################################\n");
+    system("$identity_translator", "$file");
+    print("$i.##########################COMMAND LINE = \"$gpp_command_line $file\"#################################\n");
+    system("$gpp_command_line", "$file");
 }
 
 #exit();
@@ -56,9 +60,12 @@ for($i = 0; $i < $length_of_command_line; $i++)
 $j = $i;
 for($i = 0; $i < $length_of_command_line; $i++)
 { 
+    $file = $command_line_arguments[$i];
     $j = $i + $length_of_command_line;
     print("\n\n");
     print("$j.##########################COMMAND LINE = \"$identity_translator $output_line $command_line_arguments[$i]\"#################################\n");
 #    system("$identity_translator $output_line $command_line_arguments[$i]\n");
-    system("$identity_translator -o a$i.out $command_line_arguments[$i]\n");
+    system("$identity_translator", "-o", "a$i.out", "$command_line_arguments[$i]");
+
+    unlink($file);
 }
