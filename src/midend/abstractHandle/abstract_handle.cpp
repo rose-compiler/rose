@@ -352,6 +352,115 @@ namespace AbstractHandle{
     //cout<<"debug inside..."<<result.toString()<<endl;
   }
 
+  //------------- abstract_node:default implementation --------------
+  
+  std::string abstract_node::getConstructTypeName() const
+  {
+    return "";
+  }
+  /*two abstract nodes are the same if both of them point to the same internal node*/
+
+  bool abstract_node::hasSourcePos() const
+  {
+    return false;
+  }
+
+  bool abstract_node::hasName() const
+  {
+    return false;
+  }
+
+  std::string abstract_node::getName() const
+  {
+    return "";
+  }
+
+  abstract_node* abstract_node::getFileNode() const
+  {
+    return NULL;
+  }
+
+  abstract_node* abstract_node::getParent() const
+  {
+    return NULL;
+  }
+
+  abstract_node* abstract_node::findNode(std::string input) const
+  {
+    assert(input.size()>0);
+
+    istringstream buffer(input);
+    char type_str[256], specifier_str[PATH_MAX+512];
+    AbstractHandle::specifier mspecifier;
+
+    buffer.getline(type_str,256,'<');
+    buffer.unget(); // put back '<'
+    buffer.getline(specifier_str,PATH_MAX+512,'>');
+    fromString(mspecifier,specifier_str);
+    return findNode(type_str,mspecifier);
+
+  }
+
+  //Delegate this to users unless we provide another interface to query subtree
+  abstract_node* abstract_node::findNode(std::string construct_type_str, specifier mspecifier) const
+  {
+    return NULL;
+  }
+
+  
+  std::string abstract_node::getFileName() const
+  {
+    abstract_node* file_node = getFileNode();
+    if (file_node)
+      return file_node->getName();
+    else
+      return "";
+  }
+
+  source_position_pair abstract_node::getSourcePos() const
+  {
+     source_position_pair result;
+     result.first = getStartPos();
+     result.second= getEndPos();
+     return result;
+  }
+
+  source_position abstract_node::getStartPos() const
+  {
+     source_position pos; 
+     pos.line=0;
+     pos.column=0;
+     return pos;
+  }
+  source_position abstract_node::getEndPos() const
+  {
+     source_position pos; 
+     pos.line=0;
+     pos.column=0;
+     return pos;
+  }
+  std::string abstract_node::toString() const
+  {
+    return "";
+  }
+
+   //Get integer label
+  size_t abstract_node::getIntLabel() const
+  {
+    return 0;
+  }
+  //Get string label
+  std::string abstract_node::getStringLabel() const
+  {
+    return "";
+  }
+
+  size_t abstract_node::getNumbering( const abstract_node*  another_node) const
+  {
+    return 0;
+  }
+
+  //----- abstract handle -------------------------
    //set internal data according a handle item constructName<specifier_type, specifier_value>
    void abstract_handle::fromStringSelf(abstract_handle* p_handle, const string& input)
    {
