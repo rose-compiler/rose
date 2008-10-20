@@ -15,16 +15,27 @@ using namespace SageInterface;
 static VariantT getVariantT(string type_str)
 {
   int i=0;
-   while (Cxx_GrammarTerminalNames[i].name!=type_str)
+  string temp;
+  //Assume the simplest conversion: adding 'Sg' is enough
+  temp = "Sg"+type_str;
+   while (Cxx_GrammarTerminalNames[i].name!=temp)
      i++;
    return (VariantT)i;  
 }
 
+   /* Remove 'Sg' prefix will get a construct type name for now.
+    * More serious implementation will have a conversion from 
+    * ROSE type names to the abstract handle construct type names.
+    * */
    string roseNode::getConstructTypeName() const
    {
+     char result[256];
      //ROSE_ASSERT(mNode!=NULL);
       if (mNode==NULL) return "";
-      return mNode->sage_class_name();
+      istringstream buffer(mNode->sage_class_name());
+      buffer.ignore (2);
+      buffer.getline(result,256);
+      return string(result);
    }
 
    //return name for various named constructs
