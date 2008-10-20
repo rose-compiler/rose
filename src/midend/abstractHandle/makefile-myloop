@@ -1,0 +1,12 @@
+testMyLoop:testMyLoop.o abstract_handle.o loopAdapter.o
+	g++ -o testMyLoop testMyLoop.o abstract_handle.o loopAdapter.o
+testMyLoop.o:testMyLoop.cpp myloop.h abstract_handle.h loopAdapter.h 
+	g++ -c testMyLoop.cpp
+abstract_handle.o:abstract_handle.cpp abstract_handle.h 
+	g++ -c abstract_handle.cpp
+loopAdapter.o:myloop.h loopAdapter.cpp loopAdapter.h 
+	g++ -c loopAdapter.cpp
+
+clean:
+	rm -rf *.o testMyLoop
+

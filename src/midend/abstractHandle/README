@@ -20,8 +20,8 @@ compiler_generated_handle::= string_lit| int_lit
 construct types are implementation dependent.
 For rose, they are class_name for each node types. 
 */
-construct_type ::= SgProject | SgFile | 
-                SgForStmt|SgVariableDeclaration | ...
+construct_type ::= Project | File | 
+                ForStmt|VariableDeclaration | ...
 
 /* A specifier is used to locate a particular construct
   e.g: <name, "foo">
@@ -53,25 +53,52 @@ string_lit ::= [a-z][a-z0-9]*
 
 ---------example handles --------------------------
 * a project handle
-  SgProject<name,"project1">
+  Project<name,"project1">
 
 * a file handle
-  SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">
+  Project<name,"project1">::File<name,"/home/PERI/test111.f">
 
 * a function handle using a name
- SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<name,"foo">
+ Project<name,"project1">::File<name,"/home/PERI/test111.f">::FunctionDeclaration<name,"foo">
 
 * a function handle using source position
- SgProject<name,"project1">::SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<position,"12.1-30.1">
+ Project<name,"project1">::File<name,"/home/PERI/test111.f">::FunctionDeclaration<position,"12.1-30.1">
 
 * a function handle using numbering
 
-  SgProject<name,"project1">::SgFile<name,/home/PERI/test111.f">::SgFunctionDefiningDeclaration<numbering,1>
+  Project<name,"project1">::File<name,/home/PERI/test111.f">::FunctionDeclaration<numbering,1>
 
 * a return statement using source position
 
-  SgProject<name,"project1">::SgFile<name,/home/PERI/test222.c>::SgReturnStatement<position,"100">
+  Project<name,"project1">::File<name,/home/PERI/test222.c>::ReturnStatement<position,"100">
 
 * a loop using numbering information
 
-  SgProject<name,"project1">::SgFile<name,"/home/PERI/test222.c">::SgFunctionDefiningDeclaration<name,"main">::SgForStatement<numbering,2>
+  Project<name,"project1">::File<name,"/home/PERI/test222.c">::FunctionDeclaration<name,"main">::ForStatement<numbering,2>
+
+-------------- Reference Implementation-----------
+README
+Interface of abstract handles:
+* abstract_handle.cpp
+* abstract_handle.h
+
+An example for a thin client using a flat list of 
+* myloop.h
+* loopAdapter.cpp
+* loopAdapter.h
+* testMyLoop.cpp
+* makefile-myloop
+
+To run it: just type
+  make -f makefile-myloop
+  ./testMyLoop
+
+Another example for a fat client using a compiler infrastructure(ROSE)
+
+* roseAdapter.cpp
+* roseAdapter.h
+* Makefile.am
+
+See Rose Tutorial Chapter 46. Abstract Handles to Language Constructs for
+executables, input and output.
+
