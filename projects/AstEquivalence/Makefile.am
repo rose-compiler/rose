@@ -39,7 +39,8 @@ check-local:
 
 CLEANFILES = 
 
-EXTRA_DIST = 
-
 
 endif
+
+EXTRA_DIST =  astEquivalenceGui.h disks.xpm folder.xpm icons.h split-into-tables.tcl 
+

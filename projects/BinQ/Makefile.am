@@ -24,9 +24,15 @@ check-local:
 
 CLEANFILES = 
 
-EXTRA_DIST = 
 
 clean:
 	rm -f *.o BinQ
 
 endif
+
+EXTRA_DIST = BinQGui.h \
+             BinQSupport.h \
+             disks.xpm  \
+             folder.xpm \
+             icons.h
+

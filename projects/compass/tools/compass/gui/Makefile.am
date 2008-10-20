@@ -41,6 +41,9 @@ check-local:
 
 CLEANFILES = compass_parameters
 
+endif
+
+
 EXTRA_DIST = \
         compassChecker.h \
         compassGui.h \
@@ -51,4 +54,4 @@ EXTRA_DIST = \
         timer.h \
 	disks.xpm 
 
-endif
+

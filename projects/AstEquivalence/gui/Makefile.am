@@ -25,8 +25,10 @@ check-local:
 
 CLEANFILES = 
 
-EXTRA_DIST = 
 
 endif
 
 endif
+
+EXTRA_DIST = compilerFlagsGui.h disks.xpm folder.xpm icons.h
+
