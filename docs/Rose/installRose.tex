@@ -259,16 +259,21 @@ refer to \htmladdnormallink{www.boost.org}{http://www.boost.org/}:
        Download BOOST at \htmladdnormallink{www.boost.org/users/download}{http://www.boost.org/users/download/}.
      \item Untar BOOST. \\
        Type {\tt tar -zxf BOOST-[VersionNumber].tar.gz} to untar the BOOST distribution.
-     \item Create a separate compile tree. \\
-           Type {\tt mkdir compileTree} to build a location for the object files and
-           documentation (use any name you like for this directory, e.g. BOOST\_BUILD).
+% DQ (10/20/2008): Removed as suggested by Andy stone, separate compile tree for boost is
+%                  more complex than required and can exhibit a bug in Boost.
+%     \item Create a separate compile tree. \\
+%           Type {\tt mkdir compileTree} to build a location for the object files and
+%           documentation (use any name you like for this directory, e.g. BOOST\_BUILD).
      \item Create a separate install tree. \\
            Type {\tt mkdir installTree} to create a location for the install filesto reside (e.g. BOOST\_INSTALL).
-     \item Change directory to the new compile tree directory. \\
-           Type {\tt cd compileTree; }. This changes the current directory to the newly
-           created directory.
+% DQ (10/20/2008): Removed as suggested by Andy stone, separate compile tree for boost is
+%                  more complex than required and can exhibit a bug in Boost.
+%     \item Change directory to the new compile tree directory. \\
+%           Type {\tt cd compileTree; }. This changes the current directory to the newly
+%           created directory.
      \item Run the {\tt configure} script. \\
-           Type {\tt \{AbsoluteOrRelativePathToSourceTree\}/configure --prefix=[installTree]} 
+%          Type {\tt \{AbsoluteOrRelativePathToSourceTree\}/configure --prefix=[installTree]} 
+           Type {\tt ./configure --prefix=[installTree]} 
            to run the BOOST {\tt configure} script.  The path to the configure script 
            may be either relative or absolute. The prefix option specifies the installation directory (e.g. BOOST\_INSTALL).
      \item Run {\tt make}. \\
