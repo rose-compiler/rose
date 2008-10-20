@@ -47,9 +47,10 @@ handle_item ::= construct_type specifier | compiler_generated_handle
 /* 
 Construct types are implementation dependent.
 An implementation can support a subset of legal constructs or all of them.
-For ROSE, they are the type names of IR nodes.  
+We define a minimum set of common construct type names here and 
+will grow this list as needed.
 */
-construct_type ::= SgProject | SgFile | SgForStmt|SgVariableDeclaration | ...
+construct_type ::= Project|SourceFile|FunctionDeclaration|ForStatement|...
 
 /* A specifier is used to locate a particular construct
   e.g: <name, "foo">
@@ -91,35 +92,35 @@ Other implementations can use their own construct type names.
 \begin{itemize}
 \item A file handle consisting of only one handle item: 
 \begin{verbatim}
-SgFile<name,"/home/PERI/test111.f">
+SourceFile<name,"/home/PERI/test111.f">
 \end{verbatim}
 
 \item A function handle using a named handle item, combined with a parent handle using a name also: 
 
 \begin{verbatim}
-SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<name,"foo">
+SourceFile<name,"/home/PERI/test111.f">::FunctionDeclaration<name,"foo">
 \end{verbatim}
 
 \item A function handle using source position(A function starting at line 12, column 1 till line 30, column 1 within a file): 
 
 \begin{verbatim}
-SgFile<name,"/home/PERI/test111.f">::SgFunctionDefiningDeclaration<position,"12.1-30.1">
+SourceFile<name,"/home/PERI/test111.f">::FunctionDeclaration<position,"12.1-30.1">
 
 \end{verbatim}
 \item A function handle using numbering(The first function definition in a file): 
 \begin{verbatim}
-SgFile<name,/home/PERI/test111.f">::SgFunctionDefiningDeclaration<numbering,1>
+SourceFile<name,/home/PERI/test111.f">::FunctionDeclaration<numbering,1>
 \end{verbatim}
 \item A return statement using source position (A return statement at line 100):
 \begin{verbatim}
-SgFile<name,/home/PERI/test222.c>::SgReturnStatement<position,"100">
+SourceFile<name,/home/PERI/test222.c>::ReturnStatement<position,"100">
 
 \end{verbatim}
 \item A loop using numbering information (The second loop in function
 main()): 
 \begin{verbatim}
-SgFile<name,"/home/PERI/test222.c">::SgFunctionDefiningDeclaration<name,"main">::
-SgForStatement<numbering,2>
+SourceFile<name,"/home/PERI/test222.c">::FunctionDeclaration<name,"main">::
+ForStatement<numbering,2>
 \end{verbatim}
 \end{itemize}
 
