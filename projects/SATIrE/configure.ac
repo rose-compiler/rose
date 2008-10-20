@@ -60,6 +60,12 @@ AC_ARG_WITH(boostdir,
            [BOOSTDIR="$withval"])
 AC_SUBST(BOOSTDIR)
 
+BOOST_INCLUDE_DIR="$BOOSTDIR/include"
+AC_ARG_WITH(boost_includedir,
+           [  --with-boost-includedir=DIR  Boost include path (default in /usr/include)],
+           [BOOST_INCLUDE_DIR="$withval"])
+AC_SUBST(BOOST_INCLUDE_DIR)
+
 BOOST_LIB_DIR="$BOOSTDIR/lib"
 AC_ARG_WITH(boost_libdir,
            [  --with-boost-libdir=DIR      Boost library path (default in /usr/lib)],
@@ -79,7 +85,7 @@ AC_CHECK_LIB([pag], [pag_version], [echo "Found PAG!"],
              [echo "Could not find '-lpag' in '-L${PAG_LIB_DIR}'."
               echo "Please consider using one of the --with-pag* options."
               exit -1 ],
-              [-L${PAG_LIB_DIR}])
+             [-L${PAG_LIB_DIR}])
 AC_CHECK_LIB([rose], [ROSE_DEBUG], [echo "Found ROSE!"], 
              [echo "Could not find '-lrose' in '-L${ROSE_LIB_DIR}'."
               echo "Please consider using one of the --with-rose* options."

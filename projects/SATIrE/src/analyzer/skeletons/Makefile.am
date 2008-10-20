@@ -18,6 +18,7 @@ do_subst= sed -e 's,[@]pkgdatadir[@],$(pkgdatadir),g' \
               -e 's,[@]pagdir[@],$(PAGDIR),g' \
               -e 's,[@]roseinclude[@],$(ROSE_INCLUDE_DIR),g' \
               -e 's,[@]roselib[@],$(ROSE_LIB_DIR),g' \
+              -e 's,[@]boostinclude[@],$(BOOST_INCLUDE_DIR),g' \
               -e 's,[@]boostlib[@],$(BOOST_LIB_DIR),g' \
               -e 's,[@]satireinclude[@],$(pkgincludedir),g' \
               -e 's,[@]satirelib[@],$(libdir),g' \
