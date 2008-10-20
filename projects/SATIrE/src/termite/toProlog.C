@@ -17,6 +17,18 @@ see LICENSE in the root folder of this project
 
 int main ( int argc, char ** argv ) {
   //frontend processing
+  // GB (2008-10-20): This used to call the frontend on the entire command
+  // line, including the output term file name. That's wrong, and ROSE
+  // 0.9.3a started complaining. Therefore, the argument vector is now
+  // filtered before we pass it to the frontend.
+  if (argc != 3) {
+    cerr << "Usage: " << argv[0] << " sourcefile.[cC] termfile.pl" << endl;
+    return 1;
+  }
+  char *outputFileName = argv[2];
+  argc = 2;
+  argv[argc] = NULL;
+
   SgProject * root = frontend(argc,argv);
 	
 
@@ -35,12 +47,7 @@ int main ( int argc, char ** argv ) {
   tp.traverseInputFiles(root);
   PrologTerm* genTerm = tp.getTerm();
 
-  if (argc != 3) {
-    cerr << "Usage: " << argv[0] << " sourcefile.[cC] termfile.pl" << endl;
-    return 1;
-  }
-
-  ofstream ofile(argv[2]);
+  ofstream ofile(outputFileName);
   ofile << genTerm->getRepresentation() << "." << endl;
   ofile.close();
 		

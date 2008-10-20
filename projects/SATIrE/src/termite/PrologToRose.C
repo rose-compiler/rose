@@ -1503,8 +1503,15 @@ PrologToRose::createGlobal(Sg_File_Info* fi,vector<SgNode*>* succs) {
   unparseInfo->set_SkipQualifiedNames(); // Adrian:  skip qualified names -> this would cause a call to the EDG otherwise
 
   /* We also need to construct an SgFile beforehand*/
+  // GB (2008-10-20): It looks like there is a new SgSourceFile class in
+  // ROSE 0.9.3a-2261, and that it is an instance of that class that we
+  // need.
   SgFile* file = new SgFile();
+  // SgFile* file = new SgSourceFile();
   file->set_file_info(fi);
+  // GB (2008-10-20): The set_root call seems to be necessary for ROSE
+  // 0.9.3a-1593, but not needed, and not even possible (at least on SgFile,
+  // maybe it's possible on SgSourceFile) with ROSE 0.9.3a-2261.
   file->set_root(glob);
   glob->set_parent(file);
 
