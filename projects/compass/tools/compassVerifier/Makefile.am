@@ -38,7 +38,7 @@ clean-local:
 	rm -f compass_parameters *.ti a.out *.lo *.la
 	rm -f *_tmp*.txt verify.makefile catChecker*
 
-CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow compassTestMain.C RULE_SELECTION
+CLEANFILES = CHECKER_LIST_WITHOUT_COMMENTS compass_parameters buildCheckers.C checkers.h verify.inc verify.makefile compass_makefile.inc functions.allow compassTestMain.C RULE_SELECTION.in
 
 ################################################################################
 
@@ -130,7 +130,7 @@ verify.makefile: verify.inc
  	'
 
 new_allow_list_setup:
-	cat $(srcdir)/RULE_SELECTION | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
+	cat $(srcdir)/RULE_SELECTION.in | sed -e 's@^+@-@g' | sed -e 's@-:AllowedFunctions@+:AllowedFunctions@g' > RULE_SELECTION
 	echo -e "Compass.RuleSelection=`pwd`/RULE_SELECTION\nAllowedFunctions.OutFile=`pwd`/functions.allow" > compass_parameters
 #	echo "AllowedFunctions.Library0=$(prefix)/include" >> compass_parameters
 	echo "AllowedFunctions.Library0=$(top_builddir)/include-staging" >> compass_parameters
@@ -144,14 +144,14 @@ new_allow_list_setup:
 		((count--)) ;\
 	done
 
-new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
+new_allow_list: compassVerifier $(srcdir)/RULE_SELECTION.in $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
 	$(MAKE) oneBigVerify && cp functions.allow compass_parameters
 	sed '$$d' functions.allow | sed -e '1d' > $(compass_checker_dir)/allowedFunctions/compass_parameters ; tail -1 functions.allow | awk -F= '{print $$1 "=-" $$2}' >> $(compass_checker_dir)/allowedFunctions/compass_parameters
 	rm -f compass_parameters RULE_SELECTION compassTestMain.*
 
-new_allow_list_long: compassVerifier $(srcdir)/RULE_SELECTION $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
+new_allow_list_long: compassVerifier $(srcdir)/RULE_SELECTION.in $(TOOLBUILD)/buildCheckers.C new_allow_list_setup
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(compass_support_dir)/compass.C && cp functions.allow compass_parameters
 	env COMPASS_PARAMETERS=./compass_parameters ./compassVerifier -I$(top_builddir) -I$(compass_srcdir) $(INCLUDES) $(TOOLBUILD)/buildCheckers.C && cp functions.allow compass_parameters
 	@sh -c '\

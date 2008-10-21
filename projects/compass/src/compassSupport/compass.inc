@@ -14,9 +14,9 @@ compass_makefile.inc: CHECKER_LIST_WITHOUT_COMMENTS $(compass_scripts_dir)/build
 
 
 
-compass_parameters: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/RULE_SELECTION
+compass_parameters: CHECKER_LIST_WITHOUT_COMMENTS $(srcdir)/RULE_SELECTION.in
 	echo "# this is an automatically generated file " > compass_parameters
-	echo "Compass.RuleSelection=`cd $(srcdir); pwd`/RULE_SELECTION" >> compass_parameters
+	echo "Compass.RuleSelection=`cd $(srcdir); pwd`/RULE_SELECTION.in" >> compass_parameters
 	echo '' >> compass_parameters
 	cat CHECKER_LIST_WITHOUT_COMMENTS | while read ch chupper; do if [ -f $(compass_checker_dir)/$$ch/compass_parameters ]; then grep -v "^#" $(compass_checker_dir)/$$ch/compass_parameters >> compass_parameters || touch compass_parameters; fi; done
 
@@ -36,14 +36,14 @@ checkers.h: CHECKER_LIST_WITHOUT_COMMENTS
 
 #$(srcdir)/RULE_SELECTION: CHECKER_LIST_WITHOUT_COMMENTS
 dothis:
-	test -f $(srcdir)/RULE_SELECTION || touch $(srcdir)/RULE_SELECTION
+	test -f $(srcdir)/RULE_SELECTION.in || touch $(srcdir)/RULE_SELECTION.in
 	sh -c '\
 	for checker in `cut -f 2 -d \ < CHECKER_LIST_WITHOUT_COMMENTS` ;\
 	do \
 		echo $${checker} ;\
-		if [[ `grep "$${checker}" $(srcdir)/RULE_SELECTION` == "" ]]; then\
-			echo "Updating $${checker} to $(srcdir)/RULE_SELECTION" ;\
-			echo "+:$${checker}" >> $(srcdir)/RULE_SELECTION ;\
+		if [[ `grep "$${checker}" $(srcdir)/RULE_SELECTION.in` == "" ]]; then\
+			echo "Updating $${checker} to $(srcdir)/RULE_SELECTION.in" ;\
+			echo "+:$${checker}" >> $(srcdir)/RULE_SELECTION.in ;\
 		fi ;\
 	done ;\
 	'
@@ -67,13 +67,13 @@ testNewChecker: $(compass_scripts_dir)/gen_checker.sh
 	 chmod -R u+w $(srcdir)
 	 cd $(compass_checker_dir) && ../../src/compass_scripts/gen_checker.sh blank test checker 
 	 cp $(srcdir)/CHECKER_LIST $(srcdir)/CHECKER_LIST.testNewChecker.bk
-	 cp $(srcdir)/RULE_SELECTION $(srcdir)/RULE_SELECTION.testNewChecker.bk
+	 cp $(srcdir)/RULE_SELECTION.in $(srcdir)/RULE_SELECTION.in.testNewChecker.bk
 	 echo "blankTestChecker" >> $(srcdir)/CHECKER_LIST
 	 $(MAKE) regenerate
 	 rm -f compass_makefile.inc; $(MAKE) compass_makefile.inc
 	 $(MAKE); $(MAKE) test
 	 mv $(srcdir)/CHECKER_LIST.testNewChecker.bk $(srcdir)/CHECKER_LIST
-	 mv $(srcdir)/RULE_SELECTION.testNewChecker.bk $(srcdir)/RULE_SELECTION
+	 mv $(srcdir)/RULE_SELECTION.in.testNewChecker.bk $(srcdir)/RULE_SELECTION.in
 	 rm -rf $(compass_checker_dir)/blankTestChecker blankTestChecker.lo
 	 $(MAKE) regenerate; $(MAKE)
 
