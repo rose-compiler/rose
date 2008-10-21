@@ -46,7 +46,7 @@ genFileNames:
 	@echo -e "\nGenerating test files\n" && sh -c '\
 		for f in $(FileNames) ;\
 		do \
-			 cp $(srcdir)/fileNames/test_simple_file.C ./"$${f}" ;\
+			 echo "int main() {}" > ./"$${f}" ;\
 		done ;\
 		for f in $(EmptyFileNames) ;\
 		do \
