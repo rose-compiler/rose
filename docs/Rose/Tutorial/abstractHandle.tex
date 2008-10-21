@@ -125,12 +125,15 @@ ForStatement<numbering,2>
 \end{itemize}
 
 \section{Reference Implementation}
-We provide a reference implementation of the abstract handle concept using ROSE. 
+We provide a reference implementation of the abstract handle concept. 
 The source files are located in \textit{src/midend/abstractHandle}.
 A generic interface (abstract\_handle.h and abstract\_handle.cpp) provides
 data structures and operations for manipulating abstract handles using source file positions, numbering, or names. 
-A ROSE adapter (roseAdapter.h and roseAdapter.cpp) using the interface is provided as a concrete implementation. 
-Other compilers and tools can have their own implementations using the same interface.  
+Any compilers and tools can have their own implementations using the same interface.  
+\subsection{Connecting to ROSE}
+A ROSE adapter (roseAdapter.h and roseAdapter.cpp) using the interface is
+provided as a concrete implementation for the maximum capability of the
+implementation.
 
 Figure~\ref{Tutorial:abstractHandle1} shows the code to generate abstract
 handles for loops in an input source file (as in
@@ -281,4 +284,92 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 \label{Tutorial:abstractHandle2out}
 \end{figure}
 
+\subsection{Connecting to External Tools}
+We give yet another example to demonstrate how to use the abstract interface
+with any other tools, which may have less features in terms of
+supported language constructs and their correlations compared to a compiler. 
+Assume a tool operating on some simple non-nesting for-loops
+within a source file. The data structure representing such loops is given
+in Figure~\ref{Tutorial:myloop}.
+
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/../src/midend/abstractHandle/myloop.h}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/../src/midend/abstractHandle/myloop.h}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{A simple data structure representing a loop}
+\label{Tutorial:myloop}
+\end{figure}
+
+
+An adapter (loopAdapter.h and loopAdapter.cpp) using the proposed abstract
+handle interface is given in \textit{src/midend/abstractHandle}.
+It provides a concrete implementation for the interface for the simple loops and adds a
+node to support file nodes (Compared to the full-featured ROSE IR, this
+additional file node is an additional work when using tools without internal nodes
+supporting files). 
+The test program is given in Figure ~\ref{Tutorial:testMyLoop}.
+Again, it creates a top level file handle first. Then a loop handle is
+created within the file handle. Another loop handle is created from its 
+string format. 
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+  \lstinputlisting{\TutorialExampleDirectory/../src/midend/abstractHandle/testMyLoop.cpp}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/../src/midend/abstractHandle/testMyLoop.cpp}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{A test program for simple loops' abstract handles}
+\label{Tutorial:testMyLoop}
+\end{figure}
+
+
+The output of the program is shown in Figure~\ref{Tutorial:testMyLoopOutput}
+%\begin{verbatim}
+\begin{figure}[!h]
+{\indent
+{\mySmallestFontSize
+\begin{latexonly}
+\begin{lstlisting} 
+bash-3.00$ ./testMyLoop
+Created a file handle:
+SourceFile<name,file1.c>
+Created a loop handle:
+SourceFile<name,file1.c>::ForStatement<position,7>
+Created a loop handle:
+SourceFile<name,file1.c>::ForStatement<position,12>
+\end{lstlisting}
+\end{latexonly}
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Output of the test program for simple loops' abstract handles}
+\label{Tutorial:testMyLoopOutput}
+\end{figure}
+
+
+%\end{verbatim}
 
