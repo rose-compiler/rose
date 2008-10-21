@@ -10,6 +10,6 @@ check-local:
 	@echo "********************************************************************************"
 
 clean-local:
-	rm -f test_* a*.out rose_test_*
+	rm -f test_simple_file* a*.out rose_test_*
 
 EXTRA_DIST = test_filename_suffixes.pl
