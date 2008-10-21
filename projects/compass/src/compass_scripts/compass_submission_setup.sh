@@ -167,11 +167,11 @@ done
 
 for checker in ${USUBDIRS[@]}
 do
-  updateRuleSelection $checker ${COMPASS_PROJECT}/RULE_SELECTION 
+  updateRuleSelection $checker ${COMPASS_PROJECT}/_SELECTION 
 done
 
-echo "Sorting ${COMPASS_PROJECT}/RULE_SELECTION"
-env LC_ALL=C sort ${COMPASS_PROJECT}/RULE_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION 
+echo "Sorting ${COMPASS_PROJECT}/_SELECTION"
+env LC_ALL=C sort ${COMPASS_PROJECT}/_SELECTION -o ${COMPASS_PROJECT}/RULE_SELECTION.in 
 
 extraDist
 
