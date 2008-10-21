@@ -4,8 +4,9 @@ SUBDIRS =  gui
 
 
 if ROSE_USE_QROSE
+if ROSE_USE_SQLITE_DATABASE
 
-bin_PROGRAMS = astEquivalence runIDA
+bin_PROGRAMS = astEquivalence evaluateAllBinaries runIDA
 
 astEquivalence_SOURCES = \
 	astEquivalenceGui.C \
@@ -14,7 +15,10 @@ astEquivalence_SOURCES = \
       
 astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
-
+evaluateAllBinaries_SOURCES = \
+	evaluateAllBinaries.C 
+      
+evaluateAllBinaries_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 
 copyFiles:
@@ -41,6 +45,7 @@ CLEANFILES =
 
 
 endif
+endif
 
-EXTRA_DIST =  astEquivalenceGui.h disks.xpm folder.xpm icons.h split-into-tables.tcl 
+EXTRA_DIST = disks.xpm folder.xpm icons.h split-into-tables.tcl  astEquivalenceGui.h
 

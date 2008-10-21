@@ -206,7 +206,7 @@ BinaryCloneGui::BinaryCloneGui(std::string databaseA, std::string databaseB ) :
 
       QRPanel &parameters = lowerInnerTiledPanel << *( new QRPanel(QROSE::TopDown, QROSE::UseSplitter) );
 
-      QGroupBox *selectGroup =  parameters <<  new QGroupBox(("Data Selection Parameters"));
+      QGroupBox *selectGroup =  parameters <<  new QGroupBox(("Data Selection Parameters (press run after changing) "));
       {
 
 
@@ -231,21 +231,13 @@ BinaryCloneGui::BinaryCloneGui(std::string databaseA, std::string databaseB ) :
 
        echoLayout->addWidget(wholeFunction, 2, 1 );
 
-       dbAorB = new QComboBox;
-       dbAorB->addItem((dbA.c_str()));
-       dbAorB->addItem((dbB.c_str()));
-
-       QLabel *dbAorBLabel = new QLabel("DB selection:");
-       echoLayout->addWidget(dbAorBLabel, 3, 0 );
-
-       echoLayout->addWidget(dbAorB, 3, 1 );
 
        displayResults = new QComboBox;
        displayResults->addItem("In both");
        displayResults->addItem(string( "only " + dbA).c_str() );
        displayResults->addItem(string( "only " + dbB).c_str() );
 
-       QLabel *displayResultsLabel = new QLabel("Display results:");
+       QLabel *displayResultsLabel = new QLabel("Clones in function in DB:");
        echoLayout->addWidget(displayResultsLabel, 3, 0 );
 
        echoLayout->addWidget(displayResults, 3, 1 );
@@ -258,7 +250,8 @@ BinaryCloneGui::BinaryCloneGui(std::string databaseA, std::string databaseB ) :
       comboBox->addItem(("Normalized"));
       comboBox->addItem(("Whole Function"));
 
-      
+
+
       QGroupBox *echoGroup =  parameters <<  new QGroupBox(("Selection Clone-View"));
       QGridLayout *echoLayout =  new QGridLayout;
       QLabel *echoLabel = new QLabel("Views:");
@@ -275,6 +268,13 @@ BinaryCloneGui::BinaryCloneGui(std::string databaseA, std::string databaseB ) :
       echoLayout->addWidget(checkBoxLockBars,1,1);
       echoGroup->setLayout(echoLayout);
       
+      dbAorB = new QComboBox;
+      dbAorB->addItem((dbA.c_str()));
+      dbAorB->addItem((dbB.c_str()));
+
+      QLabel *dbAorBLabel = new QLabel("DB selection:");
+      echoLayout->addWidget(dbAorBLabel, 2, 0 );
+      echoLayout->addWidget(dbAorB, 2, 1 );
 
       QROSE::link(checkBoxLockBars, SIGNAL(activated(int)), &selectLockOrUnlockBars, this);
      
@@ -303,7 +303,7 @@ BinaryCloneGui::BinaryCloneGui(std::string databaseA, std::string databaseB ) :
 
 
   window->setGeometry(0,0,1280,800);
-  window->setTitle("BinaryCloneMainGui");
+  window->setTitle("Comparing Binaries Gui");
 
 } //BinaryCloneGui::BinaryCloneGui()
 
@@ -468,7 +468,7 @@ BinaryCloneGui::run( )
     for(unsigned int i = 0 ; i < vectorOfClonesA.size() ; i++ )
     {
       int j=0;
-      for(j = 0 ; j != vectorOfClonesB.size() ; j++ )
+      for(j = 0 ; j != (int)vectorOfClonesB.size() ; j++ )
       {
         if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
             vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
@@ -481,7 +481,7 @@ BinaryCloneGui::run( )
           break;
         }
       }
-      if(j == vectorOfClonesB.size())
+      if(j == (int)vectorOfClonesB.size())
         mapAtoB[i]=-1;
 
     }
@@ -490,7 +490,7 @@ BinaryCloneGui::run( )
     for(unsigned int i = 0 ; i < vectorOfClonesB.size() ; i++ )
     {
       int j=0;
-      for(j = 0 ; j != vectorOfClonesA.size() ; j++ )
+      for(j = 0 ; j != (int)vectorOfClonesA.size() ; j++ )
       {
         if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
             vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
@@ -503,7 +503,7 @@ BinaryCloneGui::run( )
           break;
         }
       }
-      if(j == vectorOfClonesB.size())
+      if(j == (int)vectorOfClonesB.size())
         mapBtoA[i]=-1;
 
     }
@@ -514,7 +514,7 @@ BinaryCloneGui::run( )
 
     if(displayResults->currentIndex() == 0)
     {
-      for(int i = 0 ; i < vectorOfClonesA.size() ; i++ )
+      for(int i = 0 ; i < (int) vectorOfClonesA.size() ; i++ )
       {
         if(mapAtoB[i] != -1 )
         {
@@ -557,7 +557,6 @@ BinaryCloneGui::run( )
     }
 
     }
-    std::cout << "WALLIE" << std::endl;
 
     QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), 
         &tableCellActivated, this);
@@ -590,7 +589,6 @@ BinaryCloneGui::insert_into_table_row(int row, Element& cur_elem )
   tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.end_index_within_function_B), 7, row);
 
 
-  std::cout << " We have " << diffA << " " << diffB << std::endl;
   tableWidget->setText(boost::lexical_cast<std::string>(diffA/diffB ), 8, row);
 
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
@@ -696,6 +694,7 @@ std::pair<std::string,std::string> BinaryCloneGui::getAddressFromVectorsTable(ui
   return std::pair<std::string,std::string>(line,offset);
 }  ;
 
+#if 0
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
 {
   public:
@@ -704,7 +703,7 @@ class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<
       return NULL;
     }
 };
-
+#endif
 class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
 {
   public:

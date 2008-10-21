@@ -30,5 +30,5 @@ endif
 
 endif
 
-EXTRA_DIST = compilerFlagsGui.h disks.xpm folder.xpm icons.h
+EXTRA_DIST =  disks.xpm  folder.xpm compilerFlagsGui.h  icons.h
 

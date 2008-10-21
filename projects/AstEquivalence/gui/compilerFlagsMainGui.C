@@ -60,6 +60,6 @@ int main( int argc, char **argv )
 
 
   BinaryCloneGui binaryCloneGui(dbA, dbB);
-  binaryCloneGui.run();
+//  binaryCloneGui.run();
   return QROSE::exec();
 }
