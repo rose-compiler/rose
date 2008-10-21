@@ -204,6 +204,7 @@ uintmax_t BtorComputation::constantValue() const {
     case btor_op_redand: return operands[0].constantValue() == shl1(operands[0].bitWidth() - 1);
     case btor_op_redor: return operands[0].constantValue() != 0;
     case btor_op_add: return (operands[0].constantValue() + operands[1].constantValue()) & (shl1(type.bitWidth) - 1);
+    case btor_op_neg: return (-operands[0].constantValue()) & (shl1(type.bitWidth) - 1);
     case btor_op_cond: return operands[0].constantValue() ? operands[1].constantValue() : operands[2].constantValue();
     case btor_op_slice: {
       uintmax_t c = operands[0].constantValue();
