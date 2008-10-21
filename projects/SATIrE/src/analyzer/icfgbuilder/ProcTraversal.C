@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: ProcTraversal.C,v 1.21 2008-10-20 10:32:24 gergo Exp $
+// $Id: ProcTraversal.C,v 1.22 2008-10-21 13:40:40 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -70,6 +70,39 @@ ProcTraversal::visit(SgNode *node) {
       Procedure *proc = new Procedure();
       proc->procnum = procnum++;
       proc->decl = decl;
+      proc->funcsym
+          = isSgFunctionSymbol(decl->get_symbol_from_symbol_table());
+      if (proc->funcsym == NULL)
+      {
+#if 0
+          std::cout
+              << std::endl
+              << "*** NULL function symbol for declaration "
+                << decl->unparseToString()
+              << std::endl
+              << "symbol: "
+                << (void *) decl->get_symbol_from_symbol_table()
+                << (decl->get_symbol_from_symbol_table() != NULL ?
+                        decl->get_symbol_from_symbol_table()->class_name()
+                      : "")
+              << std::endl
+              << "first nondef decl: "
+                << (void *) decl->get_firstNondefiningDeclaration()
+                << " sym: "
+                << (decl->get_firstNondefiningDeclaration() != NULL ?
+                        (void *) decl->get_firstNondefiningDeclaration()
+                                      ->get_symbol_from_symbol_table()
+                      : (void *) NULL)
+              << std::endl;
+#endif
+          if (decl->get_firstNondefiningDeclaration() != NULL)
+          {
+              proc->funcsym = isSgFunctionSymbol(decl
+                      ->get_firstNondefiningDeclaration()
+                      ->get_symbol_from_symbol_table());
+          }
+      }
+      assert(proc->funcsym != NULL);
    // GB (2008-05-14): We need two parameter lists: One for the names of the
    // variables inside the function definition, which is
    // decl->get_parameterList(), and one that contains any default arguments
@@ -356,6 +389,8 @@ ProcTraversal::visit(SgNode *node) {
                                     : proc->name));
       proc->entry->partner = proc->exit;
       proc->exit->partner = proc->entry;
+      proc->entry->call_target = Ir::createFunctionRefExp(proc->funcsym);
+      proc->exit->call_target = Ir::createFunctionRefExp(proc->funcsym);
       /* In constructors, insert an assignment $A$this = this
        * at the end to make sure that the 'this' pointer can be
        * passed back to the calling function uncobbled. */
@@ -386,40 +421,8 @@ ProcTraversal::visit(SgNode *node) {
       }
       if (proc->arg_block != NULL)
       {
-          SgFunctionSymbol *sym
-              = isSgFunctionSymbol(decl->get_symbol_from_symbol_table());
-          if (sym == NULL)
-          {
-#if 0
-              std::cout
-                  << std::endl
-                  << "*** NULL function symbol for declaration "
-                    << decl->unparseToString()
-                  << std::endl
-                  << "symbol: "
-                    << (void *) decl->get_symbol_from_symbol_table()
-                    << (decl->get_symbol_from_symbol_table() != NULL ?
-                            decl->get_symbol_from_symbol_table()->class_name()
-                          : "")
-                  << std::endl
-                  << "first nondef decl: "
-                    << (void *) decl->get_firstNondefiningDeclaration()
-                    << " sym: "
-                    << (decl->get_firstNondefiningDeclaration() != NULL ?
-                            (void *) decl->get_firstNondefiningDeclaration()
-                                          ->get_symbol_from_symbol_table()
-                          : (void *) NULL)
-                  << std::endl;
-#endif
-              if (decl->get_firstNondefiningDeclaration() != NULL)
-              {
-                  sym = isSgFunctionSymbol(decl
-                          ->get_firstNondefiningDeclaration()
-                          ->get_symbol_from_symbol_table());
-              }
-          }
-          if (sym != NULL)
-              proc->arg_block->call_target = Ir::createFunctionRefExp(sym);
+          proc->arg_block->call_target
+              = Ir::createFunctionRefExp(proc->funcsym);
       }
    // delete arglist;
     }

@@ -1,6 +1,6 @@
 // -*- mode: c++; c-basic-offset: 4; -*-
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: ExprTransformer.C,v 1.27 2008-10-20 10:32:24 gergo Exp $
+// $Id: ExprTransformer.C,v 1.28 2008-10-21 13:40:40 gergo Exp $
 
 #include <satire_rose.h>
 #include <patternRewrite.h>
@@ -215,6 +215,7 @@ void ExprTransformer::visit(SgNode *node)
                 BasicBlock *b = new BasicBlock(node_id++, INNER, procnum);
                 cfg->nodes.push_back(b);
                 b->call_target = call_target_expr;
+                b->call_index = i;
                 if (first_arg_block == NULL)
                     first_arg_block = b;
                 if (prev != NULL)

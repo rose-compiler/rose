@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.28 2008-10-20 10:32:26 gergo Exp $
+// $Id: cfg_support.h,v 1.29 2008-10-21 13:40:42 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -160,7 +160,7 @@ class BasicBlock
 public:
     BasicBlock(KFG_NODE_ID id_, KFG_NODE_TYPE type_, int procnum_)
         : id(id_), node_type(type_), procnum(procnum_), call_target(NULL),
-          reachable(true), in_edge_mask(-1), out_edge_mask(-1)
+          call_index(0), reachable(true), in_edge_mask(-1), out_edge_mask(-1)
     {
     }
 
@@ -173,7 +173,11 @@ public:
  // GB (2008-10-16): Recording which function call, if any, this block was
  // created for. This is the expression that identifies the function being
  // called (NULL if this block did not arise from a function call).
+ // Additionally, for argument and param assignments (at least), the
+ // call_index numbers the nodes from 0 to n so we know which param is
+ // affected by each such statement.
     SgExpression *call_target;
+    int call_index;
  // GB (2008-05-30): Starting a move towards keeping successor/predecessor
  // blocks and the corresponding edges separated. This makes it easier to
  // iterate over block lists using pointers.
@@ -208,6 +212,32 @@ protected:
     std::vector<SgVariableSymbol *> *paramlist;
 };
 
+// GB (2008-10-21): Added this enumeration to allow us to switch on ICFG
+// statement types just as we can switch on ROSE AST node variants.
+enum SatireVariant
+{
+    V_IcfgStmt,
+    V_CallStmt,
+    V_FunctionCall,
+    V_FunctionReturn,
+    V_FunctionEntry,
+    V_DeclareStmt,
+    V_UndeclareStmt,
+    V_ExternalCall,
+    V_ExternalReturn,
+    V_ConstructorCall,
+    V_DestructorCall,
+    V_ArgumentAssignment,
+    V_MyAssignment,
+    V_ReturnAssignment,
+    V_ParamAssignment,
+    V_LogicalIf,
+    V_IfJoin,
+    V_WhileJoin,
+    V_FunctionExit,
+    V_SATIrE_max_variants
+};
+
 class IcfgStmt : public SgStatement
 {
 public:
@@ -223,6 +253,7 @@ public:
   friend IcfgStmt *isIcfgStmt(SgNode *);
   friend const IcfgStmt *isIcfgStmt(const SgNode *);
   std::string class_name() const;
+  virtual SatireVariant satireVariant() const;
 };
 
 IcfgStmt *isIcfgStmt(SgNode *);
@@ -250,6 +281,7 @@ public:
     friend CallStmt *isCallStmt(SgNode *);
     friend const CallStmt *isCallStmt(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 protected:
     std::string infolabel;
@@ -275,6 +307,7 @@ public:
     friend FunctionCall *isFunctionCall(SgNode *);
     friend const FunctionCall *isFunctionCall(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 FunctionCall *isFunctionCall(SgNode *);
@@ -294,6 +327,7 @@ public:
     friend FunctionReturn *isFunctionReturn(SgNode *);
     friend const FunctionReturn *isFunctionReturn(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 FunctionReturn *isFunctionReturn(SgNode *);
@@ -318,6 +352,7 @@ public:
     friend FunctionEntry *isFunctionEntry(SgNode *);
     friend const FunctionEntry *isFunctionEntry(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     std::string funcname;
@@ -347,6 +382,7 @@ public:
     friend DeclareStmt *isDeclareStmt(SgNode *);
     friend const DeclareStmt *isDeclareStmt(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 protected:
     SgVariableSymbol *var;
@@ -377,6 +413,7 @@ public:
     friend UndeclareStmt *isUndeclareStmt(SgNode *);
     friend const UndeclareStmt *isUndeclareStmt(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 protected:
     std::vector<SgVariableSymbol *> *vars;
@@ -444,6 +481,7 @@ public:
     friend ExternalCall *isExternalCall(SgNode *);
     friend const ExternalCall *isExternalCall(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     SgExpression *function; // TRAVERSED
@@ -477,6 +515,7 @@ public:
     friend ExternalReturn *isExternalReturn(SgNode *);
     friend const ExternalReturn *isExternalReturn(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     SgExpression *function; // TRAVERSED
@@ -507,6 +546,7 @@ public:
     friend ConstructorCall *isConstructorCall(SgNode *);
     friend const ConstructorCall *isConstructorCall(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     ConstructorCall();
@@ -537,6 +577,7 @@ public:
     friend DestructorCall *isDestructorCall(SgNode *);
     friend const DestructorCall *isDestructorCall(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     DestructorCall();
@@ -566,6 +607,7 @@ public:
     friend ArgumentAssignment *isArgumentAssignment(SgNode *);
     friend const ArgumentAssignment *isArgumentAssignment(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     void init(SgExpression *l, SgExpression *r);
@@ -594,6 +636,7 @@ public:
   friend MyAssignment *isMyAssignment(SgNode *);
   friend const MyAssignment *isMyAssignment(const SgNode *);
   std::string class_name() const;
+  virtual SatireVariant satireVariant() const;
   
 protected:
   SgVariableSymbol *lhs;
@@ -623,6 +666,7 @@ public:
     friend ReturnAssignment *isReturnAssignment(SgNode *);
     friend const ReturnAssignment *isReturnAssignment(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 ReturnAssignment *isReturnAssignment(SgNode *);
@@ -646,6 +690,7 @@ public:
     friend ParamAssignment *isParamAssignment(SgNode *);
     friend const ParamAssignment *isParamAssignment(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 ParamAssignment *isParamAssignment(SgNode *);
@@ -670,6 +715,7 @@ public:
     friend LogicalIf *isLogicalIf(SgNode *);
     friend const LogicalIf *isLogicalIf(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     SgExpression *expr; // TRAVERSED
@@ -693,6 +739,7 @@ public:
     friend IfJoin *isIfJoin(SgNode *);
     friend const IfJoin *isIfJoin(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 IfJoin *isIfJoin(SgNode *);
@@ -713,6 +760,7 @@ public:
     friend WhileJoin *isWhileJoin(SgNode *);
     friend const WhileJoin *isWhileJoin(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 };
 
 WhileJoin *isWhileJoin(SgNode *);
@@ -737,6 +785,7 @@ public:
     friend FunctionExit *isFunctionExit(SgNode *);
     friend const FunctionExit *isFunctionExit(const SgNode *);
     std::string class_name() const;
+    virtual SatireVariant satireVariant() const;
 
 private:
     std::string funcname;
@@ -761,6 +810,7 @@ public:
     std::multimap<std::string, BasicBlock *> goto_blocks;
     SgFunctionParameterList *params, *default_params;
     SgFunctionDeclaration *decl;
+    SgFunctionSymbol *funcsym;
  // GB (2008-05-26): Type, symbol and representative expression for the this
  // pointer.
     SgType *this_type;

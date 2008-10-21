@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.27 2008-10-20 10:32:24 gergo Exp $
+// $Id: cfg_support.C,v 1.28 2008-10-21 13:40:40 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
@@ -951,6 +951,12 @@ $CLASSNAME::class_name() const
 {
     return "$CLASSNAME";
 }
+
+SatireVariant
+$CLASSNAME::satireVariant() const
+{
+    return V_$CLASSNAME;
+}
 // END code for $CLASSNAME
 
  */
@@ -1014,6 +1020,12 @@ IcfgStmt::class_name() const
 {
     return "IcfgStmt";
 }
+
+SatireVariant
+IcfgStmt::satireVariant() const
+{
+    return V_IcfgStmt;
+}
 // END code for IcfgStmt
 
 // BEGIN code for CallStmt
@@ -1068,6 +1080,12 @@ std::string
 CallStmt::class_name() const
 {
     return "CallStmt";
+}
+
+SatireVariant
+CallStmt::satireVariant() const
+{
+    return V_CallStmt;
 }
 // END code for CallStmt
 
@@ -1124,6 +1142,12 @@ FunctionCall::class_name() const
 {
     return "FunctionCall";
 }
+
+SatireVariant
+FunctionCall::satireVariant() const
+{
+    return V_FunctionCall;
+}
 // END code for FunctionCall
 
 // BEGIN code for FunctionReturn
@@ -1178,6 +1202,12 @@ std::string
 FunctionReturn::class_name() const
 {
     return "FunctionReturn";
+}
+
+SatireVariant
+FunctionReturn::satireVariant() const
+{
+    return V_FunctionReturn;
 }
 // END code for FunctionReturn
 
@@ -1234,6 +1264,12 @@ FunctionEntry::class_name() const
 {
     return "FunctionEntry";
 }
+
+SatireVariant
+FunctionEntry::satireVariant() const
+{
+    return V_FunctionEntry;
+}
 // END code for FunctionEntry
 
 // BEGIN code for DeclareStmt
@@ -1289,6 +1325,12 @@ DeclareStmt::class_name() const
 {
     return "DeclareStmt";
 }
+
+SatireVariant
+DeclareStmt::satireVariant() const
+{
+    return V_DeclareStmt;
+}
 // END code for DeclareStmt
 
 // BEGIN code for UndeclareStmt
@@ -1343,6 +1385,12 @@ std::string
 UndeclareStmt::class_name() const
 {
     return "UndeclareStmt";
+}
+
+SatireVariant
+UndeclareStmt::satireVariant() const
+{
+    return V_UndeclareStmt;
 }
 // END code for UndeclareStmt
 
@@ -1407,6 +1455,12 @@ ExternalCall::class_name() const
 {
     return "ExternalCall";
 }
+
+SatireVariant
+ExternalCall::satireVariant() const
+{
+    return V_ExternalCall;
+}
 // END code for ExternalCall
 
 // BEGIN code for ExternalReturn
@@ -1470,6 +1524,12 @@ ExternalReturn::class_name() const
 {
     return "ExternalReturn";
 }
+
+SatireVariant
+ExternalReturn::satireVariant() const
+{
+    return V_ExternalReturn;
+}
 // END code for ExternalReturn
 
 // BEGIN code for ConstructorCall
@@ -1525,6 +1585,12 @@ ConstructorCall::class_name() const
 {
     return "ConstructorCall";
 }
+
+SatireVariant
+ConstructorCall::satireVariant() const
+{
+    return V_ConstructorCall;
+}
 // END code for ConstructorCall
 
 // BEGIN code for DestructorCall
@@ -1579,6 +1645,12 @@ std::string
 DestructorCall::class_name() const
 {
     return "DestructorCall";
+}
+
+SatireVariant
+DestructorCall::satireVariant() const
+{
+    return V_DestructorCall;
 }
 // END code for DestructorCall
 
@@ -1647,6 +1719,12 @@ ArgumentAssignment::class_name() const
 {
     return "ArgumentAssignment";
 }
+
+SatireVariant
+ArgumentAssignment::satireVariant() const
+{
+    return V_ArgumentAssignment;
+}
 // END code for ArgumentAssignment
 
 // BEGIN code for MyAssignment
@@ -1713,6 +1791,12 @@ std::string
 MyAssignment::class_name() const
 {
     return "MyAssignment";
+}
+
+SatireVariant
+MyAssignment::satireVariant() const
+{
+    return V_MyAssignment;
 }
 // END code for MyAssignment
 
@@ -1781,6 +1865,12 @@ ReturnAssignment::class_name() const
 {
     return "ReturnAssignment";
 }
+
+SatireVariant
+ReturnAssignment::satireVariant() const
+{
+    return V_ReturnAssignment;
+}
 // END code for ReturnAssignment
 
 // BEGIN code for ParamAssignment
@@ -1848,6 +1938,12 @@ ParamAssignment::class_name() const
 {
     return "ParamAssignment";
 }
+
+SatireVariant
+ParamAssignment::satireVariant() const
+{
+    return V_ParamAssignment;
+}
 // END code for ParamAssignment
 
 // BEGIN code for LogicalIf
@@ -1911,6 +2007,12 @@ LogicalIf::class_name() const
 {
     return "LogicalIf";
 }
+
+SatireVariant
+LogicalIf::satireVariant() const
+{
+    return V_LogicalIf;
+}
 // END code for LogicalIf
 
 // BEGIN code for IfJoin
@@ -1965,6 +2067,12 @@ std::string
 IfJoin::class_name() const
 {
     return "IfJoin";
+}
+
+SatireVariant
+IfJoin::satireVariant() const
+{
+    return V_IfJoin;
 }
 // END code for IfJoin
 
@@ -2021,6 +2129,12 @@ WhileJoin::class_name() const
 {
     return "WhileJoin";
 }
+
+SatireVariant
+WhileJoin::satireVariant() const
+{
+    return V_WhileJoin;
+}
 // END code for WhileJoin
 
 // BEGIN code for FunctionExit
@@ -2075,5 +2189,11 @@ std::string
 FunctionExit::class_name() const
 {
     return "FunctionExit";
+}
+
+SatireVariant
+FunctionExit::satireVariant() const
+{
+    return V_FunctionExit;
 }
 // END code for FunctionExit

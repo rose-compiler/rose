@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.49 2008-10-20 10:32:24 gergo Exp $
+// $Id: CFGTraversal.C,v 1.50 2008-10-21 13:40:40 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -51,6 +51,9 @@ CFGTraversal::processProcedureArgBlocks()
     if ((*i)->arg_block != NULL) {
       std::deque<SgStatement *>::const_iterator j;
       BasicBlock *b, *prev = NULL, *first = NULL;
+   // GB (2008-10-21): The call_index variable is used to number each
+   // function's param assignments from 0 to n.
+      int call_index = 0;
       for (j = (*i)->arg_block->statements.begin();
            j != (*i)->arg_block->statements.end(); ++j) {
         /* deal with constructor initializers */
@@ -113,11 +116,12 @@ CFGTraversal::processProcedureArgBlocks()
             }
           }
         } else {
-          /* empty block for argument assignments */
+          /* empty block for param assignments */
           b = new BasicBlock(node_id++, INNER, (*i)->procnum);
           cfg->nodes.push_back(b);
           b->statements.push_back(*j);
           b->call_target = (*i)->arg_block->call_target;
+          b->call_index = call_index++;
           if (first == NULL)
             first = b;
           if (prev != NULL)
@@ -1278,125 +1282,11 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
         /* outgoing analysis information is at the incoming
          * edge of the after block, where true and false
          * paths run together again */
-     // GB (2008-04-02): Outgoing analysis information is not necessarily at
-     // the current after block, because the after block might be an IfJoin
-     // that is never reached due to early returns. Thus we try to find a
-     // better after node if the after block does not have any predecessors.
-     // GB (2008-04-09): OK, so there might be cases where the IfJoin's
-     // predecessor list is not empty because it has an unreachable IfJoin
-     // as its predecessor... So, let's handle this more complicated case.
-     // This will probably still cause some interesting problem some day.
-     // GB (2008-04-23): I tried hard to be smart here, but failed. This
-     // unreachable stuff is difficult, and it looks like it's best if we
-     // simply allow unreachable nodes.
-#if 0
-        bool after_unreachable = false;
-        if (after->predecessors.empty())
-        {
-            after_unreachable = true;
-        }
-        else if (after->predecessors.size() == 1)
-        {
-            Edge pedge = after->predecessors.front();
-            BasicBlock *pred = pedge.first;
-         // We might have to deal with a chain of unreachable IfJoins, who
-         // knows?
-            while (pred->predecessors.size() == 1
-                && isIfJoin(pred->statements.front()))
-            {
-                pedge = pred->predecessors.front();
-                pred = pedge.first;
-            }
-            if (pred->predecessors.size() == 0
-                    && isIfJoin(pred->statements.front()))
-            {
-                after_unreachable = true;
-            }
-        }
-     // if (after->predecessors.empty())
-        if (after_unreachable)
-        {
-         // Loop while we are in the unreachable section of code; the first
-         // unreachable node has no predecessors, its unreachable successors
-         // have one each.
-            while (after->predecessors.size() <= 1)
-            {
-             // Wow, this is really complicated, partly due to gotos that
-             // can do almost anything. Anyway, even if the current block
-             // appears to be unreachable, we will accept it if it is a
-             // SgLabelStatement or a FunctionExit; there are probably some
-             // other interesting cases.
-                SgStatement *stmt = after->statements.front();
-                if (isSgLabelStatement(stmt)
-                        || dynamic_cast<FunctionExit *>(stmt))
-                    break;
-
-                if (after->successors.size() != 1)
-                {
-                 // This "can't happen", which means that it probably will
-                 // some day under some very weird circumstances.
-                    std::cerr << __FILE__ << ":" << __LINE__ << ": "
-                        << "ICFG builder: error: found unexpected number of "
-                        << "successors of unreachable IfJoin node"
-                        << std::endl;
-#if 0
-                    std::cout << "node: " << after->id << "/"
-                        << Ir::fragmentToString(after->statements.front())
-                        << std::endl;
-                    std::cout << "successors:";
-                    std::vector<Edge>::iterator e;
-                    for (e = after->successors.begin();
-                         e != after->successors.end(); ++e)
-                    {
-                        std::cout << " "
-                            << e->first->id << "/"
-                            << Ir::fragmentToString(
-                                    e->first->statements.front());
-                    }
-                    std::cout << std::endl;
-#endif
-                    std::exit(EXIT_FAILURE);
-                }
-                Edge succ = after->successors.front();
-                after = succ.first;
-            }
-#if 0
-            std::cout << "node " << after->id << " "
-                << Ir::fragmentToString(after->statements.front())
-                << " has " << after->predecessors.size() << " preds:";
-            std::vector<Edge>::iterator p;
-            for (p = after->predecessors.begin();
-                 p != after->predecessors.end(); ++p)
-            {
-                std::cout << " " << p->first->id << ":"
-                    << Ir::fragmentToString(p->first->statements.front());
-            }
-            std::cout << std::endl;
-#endif
-        }
-#if 0
-        else
-        {
-            std::cout << "after node " << after->id << " "
-                << Ir::fragmentToString(after->statements.front())
-                << " has " << after->predecessors.size() << " preds:";
-            std::vector<Edge>::iterator p;
-            for (p = after->predecessors.begin();
-                 p != after->predecessors.end(); ++p)
-            {
-                std::cout << " " << p->first->id << ":"
-                    << Ir::fragmentToString(p->first->statements.front());
-            }
-            std::cout << std::endl;
-        }
-        std::cout << "post info for "
-            << "if (" << Ir::fragmentToString(cond) << ") "
-            << " at the beginning of: "
-            << Ir::fragmentToString(after->statements.front())
-            << " (node " << after->id << ")"
-            << std::endl;
-#endif
-#endif
+     // GB (2008-10-20): Removed a big commented-out piece of code. It used
+     // to try (and fail) to remove unreachable nodes from the ICFG. We
+     // decided some time ago that unreachable nodes should be accepted,
+     // because they do no harm, but not having them causes lots of problems
+     // (most of which I would have to implement around).
         stmt_end = new StatementAttribute(after, POS_PRE);
 
         new_block = NULL;
