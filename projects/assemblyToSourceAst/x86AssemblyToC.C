@@ -22,7 +22,7 @@ struct WordWithExpression {
   WordWithExpression(SgExpression* expr) {
     std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
     ++WordWithExpression_nameCounter;
-    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex((Len == 64 ? 0 : (1ULL << Len)) - 1))), bb);
+    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(SHL1<Len>::value - 1))), bb);
     appendStatement(decl, bb);
     sym = getFirstVarSym(decl);
   }
@@ -123,7 +123,7 @@ struct CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
+    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<Len>::value - 1));
   }
 
   template <size_t Len>
@@ -159,7 +159,7 @@ struct CTranslationPolicy {
   WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
     return buildConditionalExp(
              buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
-             buildUnsignedLongLongIntValHex((1 << Len1) - 1),
+             buildUnsignedLongLongIntValHex(SHL1<Len1>::value - 1),
              buildSubtractOp(
                buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
                buildIntVal(1)));
@@ -200,7 +200,7 @@ struct CTranslationPolicy {
 
   template <size_t From, size_t To>
   WordWithExpression<To> signExtend(WordWithExpression<From> a) {
-    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(1ULL << (From - 1))), buildIntVal(0)), buildUnsignedLongLongIntValHex((To == 64 ? 0 : (1ULL << To)) - (1ULL << From)), buildIntVal(0)));
+    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<From - 1>::value)), buildIntVal(0)), buildUnsignedLongLongIntValHex(SHL1<To>::value - SHL1<From>::value), buildIntVal(0)));
   }
 
   template <size_t Len>
@@ -305,6 +305,7 @@ struct CTranslationPolicy {
   void finishInstruction(SgAsmInstruction* insn) {}
 };
 
+#if 0 // Unused
 static int sizeOfInsnSize(X86InstructionSize s) {
   switch (s) {
     case x86_insnsize_16: return 2;
@@ -313,6 +314,7 @@ static int sizeOfInsnSize(X86InstructionSize s) {
     default: ROSE_ASSERT (!"sizeOfInsnSize");
   }
 }
+#endif
 
 SgFunctionSymbol* CTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
   SgFunctionDeclaration* decl = buildNondefiningFunctionDeclaration(name, returnType, params, globalScope);

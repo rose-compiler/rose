@@ -26,9 +26,22 @@ static inline uint64_t shl1(unsigned int amount) { // 2**amount, safe for when a
   return 1ULL << amount;
 }
 
-template <uint64_t Amount>
+template <unsigned int Amount, bool AtLeast64>
+struct SHL1Helper {};
+
+template <unsigned int Amount>
+struct SHL1Helper<Amount, false> {
+  static const uint64_t value = (1ULL << Amount);
+};
+
+template <unsigned int Amount>
+struct SHL1Helper<Amount, true> {
+  static const uint64_t value = 0;
+};
+
+template <unsigned int Amount>
 struct SHL1 {
-  static const uint64_t value = (Amount >= 64) ? 0 : (1ULL << Amount);
+  static const uint64_t value = SHL1Helper<Amount, (Amount >= 64)>::value;
 };
 
 template <size_t> struct NumberTag {};
