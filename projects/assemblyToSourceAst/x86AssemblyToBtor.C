@@ -173,8 +173,12 @@ struct BtorTranslationPolicy {
   Comp true_() {return ones(1);}
 
   Comp invert(const Comp& a) {
-    // return a.invert();
-    return problem.build_op_not(a);
+    return a.invert();
+    // return problem.build_op_not(a);
+  }
+
+  Comp negate(const Comp& a) {
+    return problem.build_op_neg(a);
   }
 
   Comp and_(const Comp& a, const Comp& b) {
@@ -269,7 +273,23 @@ struct BtorTranslationPolicy {
   }
 
   Comp rotateLeft(const Comp& a, const Comp& cnt) {
-    return problem.build_op_rol(a, extractVar(cnt, 0, log2(a.bitWidth()))); // // Flipped because words are LSB first
+    return problem.build_op_rol(a, extractVar(cnt, 0, log2(a.bitWidth())));
+  }
+
+  Comp rotateRight(const Comp& a, const Comp& cnt) {
+    return problem.build_op_ror(a, extractVar(cnt, 0, log2(a.bitWidth())));
+  }
+
+  Comp shiftLeft(const Comp& a, const Comp& cnt) {
+    return problem.build_op_sll(a, extractVar(cnt, 0, log2(a.bitWidth())));
+  }
+
+  Comp shiftRight(const Comp& a, const Comp& cnt) {
+    return problem.build_op_srl(a, extractVar(cnt, 0, log2(a.bitWidth())));
+  }
+
+  Comp shiftRightArithmetic(const Comp& a, const Comp& cnt) {
+    return problem.build_op_sra(a, extractVar(cnt, 0, log2(a.bitWidth())));
   }
 
   // Expanding multiplies

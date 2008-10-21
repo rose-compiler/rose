@@ -118,6 +118,10 @@ struct ReadAndWriteSetPolicy {
     return W();
   }
 
+  W negate(const W& a) {
+    return W();
+  }
+
   W and_(const W& a, const W& b) {
     return W();
   }
@@ -161,6 +165,22 @@ struct ReadAndWriteSetPolicy {
   }
 
   W rotateLeft(const W& a, const W& cnt) {
+    return W();
+  }
+
+  W rotateRight(const W& a, const W& cnt) {
+    return W();
+  }
+
+  W shiftLeft(const W& a, const W& cnt) {
+    return W();
+  }
+
+  W shiftRight(const W& a, const W& cnt) {
+    return W();
+  }
+
+  W shiftRightArithmetic(const W& a, const W& cnt) {
     return W();
   }
 

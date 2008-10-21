@@ -10,7 +10,7 @@ using namespace SageBuilder;
 using X86Disassembler::sizeToType;
 using X86Disassembler::sizeToPos;
 
-SgBasicBlock* bb; // Global location to append new statements
+static SgBasicBlock* bb; // Global location to append new statements
 
 static size_t WordWithExpression_nameCounter = 0;
 
@@ -64,7 +64,6 @@ struct CTranslationPolicy {
   SgFunctionSymbol* bsrSym;
   SgFunctionSymbol* bsfSym;
   SgVariableSymbol* gprSym[16];
-  // SgVariableSymbol* gprLowByteSym[16];
   SgVariableSymbol* ipSym;
   SgVariableSymbol* flagsSym[16];
   SgVariableSymbol* sf_xor_ofSym;
@@ -127,6 +126,11 @@ struct CTranslationPolicy {
   }
 
   template <size_t Len>
+  WordWithExpression<Len> negate(WordWithExpression<Len> a) {
+    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<Len>::value - 1)), buildIntVal(1));
+  }
+
+  template <size_t Len>
   WordWithExpression<Len> ite(WordWithExpression<1> sel, WordWithExpression<Len> a, WordWithExpression<Len> b) {
     return buildConditionalExp(sel.expr(), a.expr(), b.expr());
   }
@@ -153,6 +157,31 @@ struct CTranslationPolicy {
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
     return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildLshiftOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildRshiftOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftRightArithmetic(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildBitOrOp(
+             buildRshiftOp(a.expr(), b.expr()),
+             buildConditionalExp(
+               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<Len1 - 1>::value)),
+               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(SHL1<Len1>::value - 1), b.expr())),
+               buildUnsignedLongLongIntValHex(0)));
   }
 
   template <size_t Len1, size_t Len2>
@@ -401,172 +430,6 @@ CTranslationPolicy::CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asm
   LOOKUP_FUNC(startingInstruction);
 #undef LOOKUP_FUNC
 }
-
-#if 0
-SgStatement* X86AssemblyToCWithVariables::makeGotoNextInstruction(uint64_t currentAddr, uint64_t nextIP) {
-#if 1
-  map<uint64_t, SgAsmBlock*>::const_iterator i = blocks.find(nextIP);
-  if (i != blocks.end()) { // Start of new block
-    return makeJump(buildUnsignedLongLongIntValHex(nextIP));
-  } else {
-    return buildBasicBlock(); // Fall through in switch statement
-  }
-#endif
-  // FIXME: What if we are falling off the end of the set of instructions disassembled
-  // return buildBasicBlock(); // Always fall through
-}
-
-SgStatement* X86AssemblyToCWithVariables::makeJump(SgExpression* newAddr) {
-  return makeDispatchSwitch(newAddr);
-}
-
-SgStatement* X86AssemblyToCWithVariables::makeConditionalJump(uint64_t currentAddr, SgExpression* cond, uint64_t newAddr, uint64_t nextIP) {
-  return buildIfStmt(
-           cond,
-           buildBasicBlock(makeJump(buildUnsignedLongLongIntValHex(newAddr))),
-           buildBasicBlock(makeJump(buildUnsignedLongLongIntValHex(nextIP))));
-}
-
-SgFunctionSymbol* X86AssemblyToCWithVariables::getHelperFunction(const string& name) {
-#define DO_NAME(n) do {if (name == #n) return n##Sym;} while (0)
-  DO_NAME(parity);
-  DO_NAME(mulhi16);
-  DO_NAME(mulhi32);
-  DO_NAME(mulhi64);
-  DO_NAME(imulhi16);
-  DO_NAME(imulhi32);
-  DO_NAME(imulhi64);
-  DO_NAME(div8);
-  DO_NAME(mod8);
-  DO_NAME(div16);
-  DO_NAME(mod16);
-  DO_NAME(div32);
-  DO_NAME(mod32);
-  DO_NAME(div64);
-  DO_NAME(mod64);
-  DO_NAME(idiv8);
-  DO_NAME(imod8);
-  DO_NAME(idiv16);
-  DO_NAME(imod16);
-  DO_NAME(idiv32);
-  DO_NAME(imod32);
-  DO_NAME(idiv64);
-  DO_NAME(imod64);
-  DO_NAME(bsr);
-  DO_NAME(bsf);
-  DO_NAME(abort);
-  DO_NAME(interrupt);
-  cerr << "Bad name " << name << endl;
-  abort();
-}
-
-SgStatement* X86AssemblyToCWithVariables::makeDispatchSwitch(SgExpression* ipExpr) {
-  if (isSgValueExp(ipExpr)) { // Special case for constants
-    uint64_t addr = getIntegerConstantValue(isSgValueExp(ipExpr));
-    map<uint64_t, SgLabelStatement*>::const_iterator it = labelsForBlocks.find(addr);
-    ROSE_ASSERT (it != labelsForBlocks.end());
-    SgLabelStatement* ls = it->second;
-    ROSE_ASSERT (ls);
-    return buildGotoStatement(ls);
-  }
-  SgBasicBlock* switchBody = buildBasicBlock();
-  SgSwitchStatement* sw = buildSwitchStatement(ipExpr, switchBody);
-  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(asmFile, V_SgAsmBlock);
-  for (size_t i = 0; i < asmBlocks.size(); ++i) {
-    SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
-    map<uint64_t, SgLabelStatement*>::const_iterator it = labelsForBlocks.find(bb->get_address());
-    ROSE_ASSERT (it != labelsForBlocks.end());
-    SgLabelStatement* ls = it->second;
-    ROSE_ASSERT (ls);
-    if (bb->get_externallyVisible()) {
-      appendStatement(
-        buildCaseOptionStmt(
-          buildUnsignedLongLongIntValHex(bb->get_address()),
-          buildBasicBlock(buildGotoStatement(ls))),
-        switchBody);
-    }
-  }
-  appendStatement(
-    buildDefaultOptionStmt(
-      buildBasicBlock(
-        buildExprStatement(
-          buildFunctionCallExp(
-            abortSym,
-            buildExprListExp())))),
-    switchBody);
-  return sw;
-}
-
-SgBasicBlock* X86AssemblyToCWithVariables::makeAllCode(SgBasicBlock* appendTo) {
-  SgBasicBlock* body = appendTo;
-  whileBody = body;
-#if 0
-  appendStatement(
-    buildWhileStmt(
-      buildBoolValExp(true),
-      whileBody),
-    body);
-  appendStatement(whileBody, body);
-#endif
-  vector<SgNode*> asmBlocks = NodeQuery::querySubTree(asmFile, V_SgAsmBlock);
-  for (size_t i = 0; i < asmBlocks.size(); ++i) {
-    SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
-    blocks.insert(std::make_pair(bb->get_address(), bb));
-    SgLabelStatement* ls = buildLabelStatement("label_" + StringUtility::intToHex(bb->get_address()), buildBasicBlock(), whileBody);
-    labelsForBlocks.insert(std::make_pair(bb->get_address(), ls));
-    appendStatement(ls, whileBody);
-    if (bb->get_externallyVisible()) {
-      externallyVisibleBlocks.insert(bb->get_address());
-    }
-  }
-
-  SgStatement* sw = makeDispatchSwitch(buildUnsignedLongLongIntValHex(asmFile->get_interpretations()[0]->get_header()->get_entry_rva()));
-
-  prependStatement(sw, whileBody);
-  prependStatement(
-    buildAssignStatement(
-      buildVarRefExp(flagsSym[x86flag_df]),
-      buildBoolValExp(false)),
-    body);
-#if 0
-  prependStatement(
-    buildExprStatement(
-      buildFunctionCallExp(
-        startingInstructionSym,
-        buildExprListExp())),
-    whileBody);
-#endif
-  for (size_t i = 0; i < asmBlocks.size(); ++i) {
-    SgAsmBlock* bb = isSgAsmBlock(asmBlocks[i]);
-    const SgAsmStatementPtrList& stmts = bb->get_statementList();
-    if (stmts.empty()) continue;
-    if (isSgAsmBlock(stmts.front())) continue; // This is an enclosing block that doesn't have any instructions
-    uint64_t addr = stmts.front()->get_address();
-    SgBasicBlock* caseBody = buildBasicBlock();
-    while (true) { // Keep processing basic blocks until there is a control transfer (i.e., append blocks that are only split because they can be entered from elsewhere)
-      const SgAsmStatementPtrList& stmts = bb->get_statementList();
-      ROSE_ASSERT (!stmts.empty());
-      for (size_t j = 0; j < stmts.size(); ++j) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(stmts[j]);
-        ROSE_ASSERT (insn);
-        appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), caseBody), caseBody);
-        appendStatement(convertInstruction(isSgAsmx86Instruction(stmts[j])), caseBody);
-      }
-      SgAsmx86Instruction* lastInsn = isSgAsmx86Instruction(stmts.back());
-      if (false /* !x86InstructionIsControlTransfer(lastInsn) */ ) {
-        map<uint64_t, SgAsmBlock*>::const_iterator it = blocks.find(lastInsn->get_address() + lastInsn->get_raw_bytes().size());
-        if (it == blocks.end()) break;
-        bb = it->second;
-      } else {
-        break;
-      }
-    }
-    // flattenBlocks(caseBody);
-    insertStatementAfter(labelsForBlocks[addr], caseBody);
-  }
-  return body;
-}
-#endif
 
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);

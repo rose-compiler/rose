@@ -119,6 +119,11 @@ struct NetlistTranslationPolicy {
   }
 
   template <size_t Len>
+  LitList(Len) negate(const LitList(Len)& a) {
+    return problem.adder(::invertWord(a), number<Len>(0), TRUE);
+  }
+
+  template <size_t Len>
   LitList(Len) and_(const LitList(Len)& a, const LitList(Len)& b) {
     return problem.andWords(a, b);
   }
@@ -176,6 +181,26 @@ struct NetlistTranslationPolicy {
   template <size_t Len, size_t SALen>
   LitList(Len) rotateLeft(const LitList(Len)& a, const LitList(SALen)& cnt) {
     return problem.rightRotater(a, cnt); // Flipped because words are LSB first
+  }
+
+  template <size_t Len, size_t SALen>
+  LitList(Len) rotateRight(const LitList(Len)& a, const LitList(SALen)& cnt) {
+    return problem.leftRotater(a, cnt); // Flipped because words are LSB first
+  }
+
+  template <size_t Len, size_t SALen>
+  LitList(Len) shiftLeft(const LitList(Len)& a, const LitList(SALen)& cnt) {
+    return problem.rightShifter(a, cnt); // Flipped because words are LSB first
+  }
+
+  template <size_t Len, size_t SALen>
+  LitList(Len) shiftRight(const LitList(Len)& a, const LitList(SALen)& cnt) {
+    return problem.leftShifter(a, cnt); // Flipped because words are LSB first
+  }
+
+  template <size_t Len, size_t SALen>
+  LitList(Len) shiftRightArithmetic(const LitList(Len)& a, const LitList(SALen)& cnt) {
+    return problem.arithmeticLeftShifter(a, cnt); // Flipped because words are LSB first
   }
 
   template <size_t Len1, size_t Len2>
