@@ -61,4 +61,4 @@ docs: pdf
 
 EXTRA_DIST = $(latexFiles)
 
-CLEANFILES = *.out *.log *.aux *.lof *.toc *.dvi *.sty *.ps *.pdf *.gz
+CLEANFILES = *.out *.log *.aux *.lof *.toc *.dvi *.ps *.pdf *.gz
