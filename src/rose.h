@@ -111,6 +111,9 @@ namespace ELF{
 
   #include "armInstructionEnum.h"
 
+  #include "powerpcInstructionEnum.h"
+  #include "powerpcInstructionProperties.h"
+
 // Files in src/frontend/Disassemblers
   #include "disassemblers.h"
 
