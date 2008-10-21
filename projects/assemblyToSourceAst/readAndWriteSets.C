@@ -111,8 +111,9 @@ struct ReadAndWriteSetPolicy {
     return W();
   }
 
-  W false_() {return W();}
   W true_() {return W();}
+  W false_() {return W();}
+  W undefined_() {return W();}
 
   W invert(const W& a) {
     return W();

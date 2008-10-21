@@ -37,9 +37,9 @@ struct X86InstructionSemantics {
   }
 
   template <size_t Len>
-  Word(1) greaterOrEqual(Word(Len) w, uint64_t n) {
+  Word(1) greaterOrEqualToTen(Word(Len) w) {
     Word(Len) carries = policy.template number<Len>(0);
-    policy.addWithCarries(w, policy.template number<Len>((~n) & ((SHL1<Len>::value) - 1)), policy.true_(), carries);
+    policy.addWithCarries(w, policy.template number<Len>(6), policy.false_(), carries);
     return policy.template extract<Len - 1, Len>(carries);
   }
 
@@ -498,7 +498,7 @@ struct X86InstructionSemantics {
           default: ROSE_ASSERT (!"Bad size"); break;
         }
         policy.writeFlag(x86_flag_of, policy.false_());
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_cf, policy.false_());
         break;
       }
@@ -526,7 +526,7 @@ struct X86InstructionSemantics {
           default: ROSE_ASSERT (!"Bad size"); break;
         }
         policy.writeFlag(x86_flag_of, policy.false_());
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_cf, policy.false_());
         break;
       }
@@ -551,7 +551,7 @@ struct X86InstructionSemantics {
           default: ROSE_ASSERT (!"Bad size"); break;
         }
         policy.writeFlag(x86_flag_of, policy.false_());
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_cf, policy.false_());
         break;
       }
@@ -579,7 +579,7 @@ struct X86InstructionSemantics {
           default: ROSE_ASSERT (!"Bad size"); break;
         }
         policy.writeFlag(x86_flag_of, policy.false_());
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_cf, policy.false_());
         break;
       }
@@ -812,7 +812,7 @@ struct X86InstructionSemantics {
       case x86_shl: {
         Word(5) shiftCount = policy.template extract<0, 5>(read8(operands[1]));
         Word(1) shiftCountZero = policy.equalToZero(shiftCount);
-        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.undefined_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read8(operands[0]);
@@ -851,7 +851,7 @@ struct X86InstructionSemantics {
       case x86_shr: {
         Word(5) shiftCount = policy.template extract<0, 5>(read8(operands[1]));
         Word(1) shiftCountZero = policy.equalToZero(shiftCount);
-        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.undefined_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read8(operands[0]);
@@ -891,7 +891,7 @@ struct X86InstructionSemantics {
         Word(5) shiftCount = policy.template extract<0, 5>(read8(operands[1]));
         Word(1) shiftCountZero = policy.equalToZero(shiftCount);
         Word(1) shiftCountNotZero = policy.invert(shiftCountZero);
-        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.false_())); // Undefined
+        policy.writeFlag(x86_flag_af, policy.ite(shiftCountZero, policy.readFlag(x86_flag_af), policy.undefined_())); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 1: {
             Word(8) op = read8(operands[0]);
@@ -1016,7 +1016,7 @@ struct X86InstructionSemantics {
             setFlagsForResult<16>(output);
             policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
                                                      policy.readFlag(x86_flag_af),
-                                                     policy.false_())); // Undefined
+                                                     policy.undefined_())); // Undefined
             break;
           }
           case 4: {
@@ -1040,7 +1040,7 @@ struct X86InstructionSemantics {
             setFlagsForResult<32>(output);
             policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
                                                      policy.readFlag(x86_flag_af),
-                                                     policy.false_())); // Undefined
+                                                     policy.undefined_())); // Undefined
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -1071,7 +1071,7 @@ struct X86InstructionSemantics {
             setFlagsForResult<16>(output);
             policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
                                                      policy.readFlag(x86_flag_af),
-                                                     policy.false_())); // Undefined
+                                                     policy.undefined_())); // Undefined
             break;
           }
           case 4: {
@@ -1095,7 +1095,7 @@ struct X86InstructionSemantics {
             setFlagsForResult<32>(output);
             policy.writeFlag(x86_flag_af, policy.ite(policy.equalToZero(shiftCount),
                                                      policy.readFlag(x86_flag_af),
-                                                     policy.false_())); // Undefined
+                                                     policy.undefined_())); // Undefined
             break;
           }
           default: ROSE_ASSERT (!"Bad size");
@@ -1103,11 +1103,11 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_bsf: {
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 2: {
             Word(16) op = read16(operands[1]);
@@ -1132,11 +1132,11 @@ struct X86InstructionSemantics {
         break;
       }
       case x86_bsr: {
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
         switch (numBytesInAsmType(operands[0]->get_type())) {
           case 2: {
             Word(16) op = read16(operands[1]);
@@ -1164,11 +1164,11 @@ struct X86InstructionSemantics {
       case x86_bts: {
         ROSE_ASSERT (operands.size() == 2);
         // All flags except CF are undefined
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
         if (isSgAsmMemoryReferenceExpression(operands[0]) && isSgAsmx86RegisterReferenceExpression(operands[1])) { // Special case allowing multi-word offsets into memory
           Word(32) addr = readEffectiveAddress(operands[0]);
           int numBytes = numBytesInAsmType(operands[1]->get_type());
@@ -1249,10 +1249,10 @@ struct X86InstructionSemantics {
           }
           default: ROSE_ASSERT (!"Bad size");
         }
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
         break;
       }
       case x86_mul: {
@@ -1291,10 +1291,10 @@ struct X86InstructionSemantics {
           }
           default: ROSE_ASSERT (!"Bad size");
         }
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
         break;
       }
       case x86_idiv: {
@@ -1333,12 +1333,12 @@ struct X86InstructionSemantics {
           }
           default: ROSE_ASSERT (!"Bad size");
         }
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
         break;
       }
       case x86_div: {
@@ -1377,19 +1377,19 @@ struct X86InstructionSemantics {
           }
           default: ROSE_ASSERT (!"Bad size");
         }
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
         break;
       }
 
       case x86_aaa: {
         ROSE_ASSERT (operands.size() == 0);
         Word(1) incAh = policy.or_(policy.readFlag(x86_flag_af),
-                                   greaterOrEqual<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), 10));
+                                   greaterOrEqualToTen<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax))));
         updateGPRLowWord(x86_gpr_ax,
           policy.concat(
             policy.add(policy.ite(incAh, policy.template number<4>(6), policy.template number<4>(0)),
@@ -1398,10 +1398,10 @@ struct X86InstructionSemantics {
               policy.template number<4>(0),
               policy.add(policy.ite(incAh, policy.template number<8>(1), policy.template number<8>(0)),
                          policy.template extract<8, 16>(policy.readGPR(x86_gpr_ax))))));
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_af, incAh);
         policy.writeFlag(x86_flag_cf, incAh);
         break;
@@ -1410,7 +1410,7 @@ struct X86InstructionSemantics {
       case x86_aas: {
         ROSE_ASSERT (operands.size() == 0);
         Word(1) decAh = policy.or_(policy.readFlag(x86_flag_af),
-                                   greaterOrEqual<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax)), 10));
+                                   greaterOrEqualToTen<4>(policy.template extract<0, 4>(policy.readGPR(x86_gpr_ax))));
         updateGPRLowWord(x86_gpr_ax,
           policy.concat(
             policy.add(policy.ite(decAh, policy.template number<4>(-6), policy.template number<4>(0)),
@@ -1419,10 +1419,10 @@ struct X86InstructionSemantics {
               policy.template number<4>(0),
               policy.add(policy.ite(decAh, policy.template number<8>(-1), policy.template number<8>(0)),
                          policy.template extract<8, 16>(policy.readGPR(x86_gpr_ax))))));
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_sf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_zf, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_pf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_sf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_zf, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_pf, policy.undefined_()); // Undefined
         policy.writeFlag(x86_flag_af, decAh);
         policy.writeFlag(x86_flag_cf, decAh);
         break;
@@ -1435,9 +1435,9 @@ struct X86InstructionSemantics {
         Word(8) newAh = policy.unsignedDivide(al, divisor);
         Word(8) newAl = policy.unsignedModulo(al, divisor);
         updateGPRLowWord(x86_gpr_ax, policy.concat(newAl, newAh));
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
         setFlagsForResult<8>(newAl);
         break;
       }
@@ -1449,9 +1449,9 @@ struct X86InstructionSemantics {
         Word(8) divisor = read8(operands[0]);
         Word(8) newAl = policy.add(al, policy.template extract<0, 8>(policy.unsignedMultiply(ah, divisor)));
         updateGPRLowWord(x86_gpr_ax, policy.concat(newAl, policy.template number<8>(0)));
-        policy.writeFlag(x86_flag_of, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_af, policy.false_()); // Undefined
-        policy.writeFlag(x86_flag_cf, policy.false_()); // Undefined
+        policy.writeFlag(x86_flag_of, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_af, policy.undefined_()); // Undefined
+        policy.writeFlag(x86_flag_cf, policy.undefined_()); // Undefined
         setFlagsForResult<8>(newAl);
         break;
       }

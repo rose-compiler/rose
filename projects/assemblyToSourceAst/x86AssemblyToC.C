@@ -104,6 +104,7 @@ struct CTranslationPolicy {
 
   WordWithExpression<1> true_() {return buildIntVal(1);}
   WordWithExpression<1> false_() {return buildIntVal(0);}
+  WordWithExpression<1> undefined_() {return buildIntVal(0);}
 
   template <size_t Len>
   WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {

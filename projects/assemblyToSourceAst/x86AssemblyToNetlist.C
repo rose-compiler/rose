@@ -110,8 +110,9 @@ struct NetlistTranslationPolicy {
     return ::extract<From, To>(a);
   }
 
-  LitList(1) false_() {return single(FALSE);}
   LitList(1) true_() {return single(TRUE);}
+  LitList(1) false_() {return single(FALSE);}
+  LitList(1) undefined_() {return problem.newVars<1>();}
 
   template <size_t Len>
   LitList(Len) invert(const LitList(Len)& a) {

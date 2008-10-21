@@ -169,8 +169,9 @@ struct BtorTranslationPolicy {
     return problem.build_op_slice(a, to - 1, from);
   }
 
-  Comp false_() {return zero(1);}
   Comp true_() {return ones(1);}
+  Comp false_() {return zero(1);}
+  Comp undefined_() {return problem.build_var(1);}
 
   Comp invert(const Comp& a) {
     return a.invert();
