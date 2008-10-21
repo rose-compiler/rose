@@ -28,6 +28,7 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      x86InstructionProperties.C x86InstructionEnumPrinter.C \
      armInstructionEnum.h armInstructionEnumPrinter.C \
      powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
+     powerpcInstructionProperties.h powerpcInstructionProperties.C \
      readTicl.C RoseBin_file.cpp RoseFile.cpp \
      RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
      AST_BIN_Traversal.C
@@ -65,7 +66,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   x86InstructionEnum.h x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
    RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
@@ -75,7 +76,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionEnum.h x86InstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   x86InstructionEnum.h x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseObj.h
 endif
