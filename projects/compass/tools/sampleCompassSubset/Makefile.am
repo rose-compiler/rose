@@ -34,7 +34,7 @@ check-local:
 	@echo "*** sampleCompassSubset: make check rule complete (terminated normally) ***"
 	@echo "*****************************************************************************" 
 
-EXTRA_DIST = CHECKER_LIST RULE_SELECTION.in
+EXTRA_DIST = CHECKER_LIST RULE_SELECTION
 
 clean-local:
 	rm -f compass_parameters *.ti *.lo *.la
