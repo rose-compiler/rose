@@ -78,10 +78,16 @@ RT_LIBS = @RT_LIBS@
 VALGRIND_BINARY = @VALGRIND_BINARY@
 
 # Conditional support for Gabriel's QRose GUI Library 
-if ROSE_USE_QROSE
-  ROSE_GUI_INCLUDE = -I${QROSE_PREFIX}/include
+if ROSE_USE_QT
+#  ROSE_GUI_INCLUDE =   -I${QROSE_PREFIX}/include
+  ROSE_GUI_INCLUDE =  -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets 
+
+
+  
 # ROSE_GUI_LIBS = -lqrose
-  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
+#  ROSE_GUI_LIBS_WITH_PATH = -L${QROSE_PREFIX}/lib -lqrose
+  ROSE_GUI_LIBS_WITH_PATH =  -L${top_builddir}/src/3rdPartyLibraries/qrose/QRoseLib/  -lqrose
+
 # ROSE_GUI_LIB_FILE = libqrose.a
 endif
 
@@ -195,6 +201,8 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/3rdPartyLibraries/libltdl \
      -I$(top_srcdir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/include \
+     -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework \
+     -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Widgets  \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
