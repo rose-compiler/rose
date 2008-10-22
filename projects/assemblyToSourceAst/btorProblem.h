@@ -15,6 +15,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "semanticsModule.h"
 
 typedef unsigned int uint;
 
@@ -203,7 +204,11 @@ inline BtorTypeKind BtorComputationPtr::kind() const {return type().kind;}
 inline uint BtorComputationPtr::bitWidth() const {return type().bitWidth;}
 inline uint BtorComputationPtr::arraySize() const {return type().arraySize;}
 inline bool BtorComputationPtr::isConstant() const {return p->isConstant();}
-inline uintmax_t BtorComputationPtr::constantValue() const {return p->constantValue();}
+inline uintmax_t BtorComputationPtr::constantValue() const {
+  uintmax_t val = p->constantValue();
+  if (inverted) val ^= (shl1(this->bitWidth()) - 1);
+  return val;
+}
 
 inline bool operator==(const BtorComputationPtr& p1, const BtorComputationPtr& p2) {
   return p1.inverted == p2.inverted && p1.p == p2.p;

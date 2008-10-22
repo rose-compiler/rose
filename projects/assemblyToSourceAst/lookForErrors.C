@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
   cnf.identify(interfaceVarMap["in_error"][bmc_error_bogus_ip], FALSE);
 
   // Set the initial conditions for testing
-  cnf.condEquivalenceWords(TRUE, fromVector<32>(interfaceVarMap["in_ip"]), number<32>(0x8048140));
+  cnf.condEquivalenceWords(TRUE, fromVector<32>(interfaceVarMap["in_ip"]), number<32>(0x8048130));
   cnf.condEquivalenceWords(TRUE, fromVector<32>(interfaceVarMap["in_gpr4"]), number<32>(0xBFFF0000));
   for (size_t i = 0; i < 8; ++i) {
     if (i == 4) continue;
@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
   cnf.identify(interfaceVarMap["in_flags"][x86_flag_of], FALSE);
 
   // Run Picosat
-  FILE* f = popen("/home/willcock2/picosat-632/picosat > picosat_output", "w");
+  FILE* f = popen("/home/willcock2/picosat-846/picosat > picosat_output", "w");
   if (!f) return 2;
   cnf.unparse(f);
   int result = pclose(f);

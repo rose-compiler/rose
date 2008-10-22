@@ -456,6 +456,7 @@ int main(int argc, char** argv) {
   policy.newRegisterMap.errorFlag[bmc_error_bogus_ip] =
     policy.invert(policy.isValidIp);
   for (size_t i = 0; i < numBmcErrors; ++i) {
+    if (i == bmc_error_bogus_ip) continue; // For testing
     policy.problem.computations.push_back(policy.problem.build_op_root(policy.newRegisterMap.errorFlag[i]));
   }
   policy.addNexts();

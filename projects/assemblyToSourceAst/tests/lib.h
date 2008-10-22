@@ -4,7 +4,8 @@
 #include <errno.h>
 
 static inline void exit(int x) {
-  asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x));
+  // asm volatile ("int $0x80; hlt" : : "a" (1), "b" (x));
+  asm volatile ("jmp 1f; 1: hlt" : : "b" (x));
 }
 
 static inline int raw_write(int fd, const char* buf, unsigned int count) {
@@ -28,18 +29,23 @@ static inline void print(const char* buf) {
 }
 
 static inline int strlen(const char* c) {
-  int x;
-  for (x = 0; *c; ++x, ++c) {}
-  return x;
+  unsigned int count = 0xFFFFFFFFU;
+  asm volatile ("repne scasb" : "+S" (c), "+c" (count) : "a" (0));
+  return -count;
+}
+
+static inline char* strcpy(char* dest, const char* src) {
+  char* oldDest = dest;
+  int len = strlen(src) + 1;
+  asm volatile ("rep movsb" : "+S" (src), "+D" (dest), "+c" (len));
+  return oldDest;
 }
 
 int main(int argc, char** argv);
 
-void _start() {
-  int argc;
-  char** argv;
-  asm volatile ("mov 4(%%ebp), %0" : "=r" (argc));
-  asm volatile ("lea 8(%%ebp), %0" : "=r" (argv));
+void _start(int foo) {
+  int argc = (&foo)[-1];
+  char** argv = (char**)(&foo);
   exit (main(argc, argv));
 }
 

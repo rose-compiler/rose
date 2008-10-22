@@ -11,10 +11,10 @@ int main(int argc, char** argv) {
   // Each of these lines adds 1 more block to the run time (number of clock
   // cycles that needs to be tested by the BMC).
   int j;
-  asm volatile (".l1: loop .l1" : "=c" (j) : "0" (10) : "cc");
+  asm volatile (".l1: loop .l1" : "=c" (j) : "0" (4) : "cc");
   // for (z = 0; z < 10; ++z) {}
-#if 1
-  for (j = 0; j < 10; ++j) {
+#if 0
+  for (j = 0; j < 2; ++j) {
     if (z == 0) {++z;}
   }
 #endif
