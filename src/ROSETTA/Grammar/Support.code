@@ -4314,6 +4314,9 @@ HEADER_UNPARSE_INFO_START
 
                b_SkipFormatting                = 42,/*!< Fortran code generation requires that we skip some formatting (e.g. column 7 formatting, even if fixed format output). */
 
+            // FMZ: Added for generate fortran xxx.rose_mod file
+               b_outputFortranModFile      = 43, /*!< Fortran mod file generation */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -4583,6 +4586,12 @@ HEADER_UNPARSE_INFO_START
        // DQ (1/31/2006): moved static bool forceDefaultConstructorToTriggerError to be built by ROSETTA
           static bool get_forceDefaultConstructorToTriggerError();
           static void set_forceDefaultConstructorToTriggerError( bool forceDefaultConstructorToTriggerError);
+
+       // FMZ (5/8/2008) Added to support to generate fortran XX.rose_mod file for a module
+       // the code will based on fortran unparser code
+          int outputFortranModFile() const;
+          void set_outputFortranModFile();
+          void unset_outputFortranModFile();
 
 HEADER_UNPARSE_INFO_END
 
@@ -11847,6 +11856,21 @@ SgUnparse_Info::set_array_index_list(SgExpression *e, SgUnparse_Info finfo )
 void
 SgUnparse_Info::unset_array_index_list()
    { p_array_index_list=0; }
+
+// FMZ : Added to support to generated XX.rose_mod file for a module
+//       (based on fortran unparser).
+int
+SgUnparse_Info::outputFortranModFile() const
+   { return checkBit(b_outputFortranModFile); }
+
+void
+SgUnparse_Info::set_outputFortranModFile()
+   { setBit(b_outputFortranModFile); }
+
+void
+SgUnparse_Info::unset_outputFortranModFile()
+   { unsetBit(b_outputFortranModFile); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const

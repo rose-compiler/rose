@@ -18,6 +18,10 @@
 #include "rose.h"
 #include "fortran_support.h"
 
+// FMZ
+#include "FortranModuleInfo.h"
+#include "FortranParserState.h"
+
 #define SKIP_C_ACTION_IMPLEMENTATION 0
 
 using namespace std;
@@ -13781,6 +13785,10 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
      SgModuleStatement* moduleStatement = isSgModuleStatement(astScopeStack.front()->get_parent());
      ROSE_ASSERT(moduleStatement != NULL);
 
+  // FMZ: 05/30/2008  add the subtree root to the map
+     string  fileName = moduleStatement->get_name();
+     FortranModuleInfo::addMapping(fileName,moduleStatement);
+
      setStatementNumericLabel(moduleStatement,label);
 
   // Pop the module's scope
@@ -14089,8 +14097,32 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
 
        // Once we find the module declaration to the module
 
+#if 0
           printf ("Error: module not found in current translation unit! (need contribution from Rice) \n");
           ROSE_ASSERT(false);
+#else 
+        // FMZ:(5/28/2008) importing the module declaration from modName.rmod file
+        // save the global variable
+        
+        // FMZ(10/22008) in the new version (rice branch) SgFile*=>SgSourceFile
+        // SgFile* savedFilePointer = OpenFortranParser_globalFilePointer;
+          SgSourceFile* savedFilePointer = OpenFortranParser_globalFilePointer;
+        
+          FortranModuleInfo rmodFile;
+        
+        //  need to check module/def/decl or read from .rmod file
+          string modName = useStatement->get_name();
+
+          moduleStatement = FortranModuleInfo::getModule(modName);
+      
+         if (moduleStatement == NULL) {
+            cout << "Error : cannot find the module : "<< modName << endl;
+         }
+    
+         ROSE_ASSERT (moduleStatement != NULL);
+         
+         OpenFortranParser_globalFilePointer = savedFilePointer;
+#endif
         }
        else
         {
