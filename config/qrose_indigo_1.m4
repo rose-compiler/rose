@@ -125,6 +125,9 @@ dnl if test "$with_QRose" != no && test "$qt_libdir" = NONE; then
 dnl  LIB_QT="-lQtCore -lQtGui"
   QT_LDFLAGS="-L$qt_libdir -lQtCore -lQtGui"
 dnl  AC_SUBST(LIB_QT)
+
+  AM_CONDITIONAL(ROSE_USE_QT,test "$with_qt" != no)
+
   AC_SUBST(QT_LDFLAGS)
   AC_MSG_RESULT([ headers $qt_incdir, libraries $qt_libdir ])
 ])

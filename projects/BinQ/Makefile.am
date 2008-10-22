@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 #SUBDIRS =  gui
 
-if ROSE_USE_QROSE
+if ROSE_USE_QT
 
 bin_PROGRAMS = BinQ 
 

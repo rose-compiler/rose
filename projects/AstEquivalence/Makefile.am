@@ -3,7 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS =  gui
 
 
-if ROSE_USE_QROSE
+if ROSE_USE_QT
 if ROSE_USE_SQLITE_DATABASE
 
 bin_PROGRAMS = astEquivalence evaluateAllBinaries runIDA

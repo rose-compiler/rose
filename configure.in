@@ -120,7 +120,7 @@ AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
 AX_BOOST_PROGRAM_OPTIONS
-AX_BOOST_SERIALIZATION
+#AX_BOOST_SERIALIZATION
 #AX_BOOST_ASIO
 #AX_BOOST_SIGNALS
 #AX_BOOST_TEST_EXEC_MONITOR
@@ -847,6 +847,10 @@ src/3rdPartyLibraries/Makefile
 src/3rdPartyLibraries/MSTL/Makefile
 src/3rdPartyLibraries/fortran-parser/Makefile
 src/3rdPartyLibraries/antlr-jars/Makefile
+src/3rdPartyLibraries/qrose/Makefile
+src/3rdPartyLibraries/qrose/Framework/Makefile
+src/3rdPartyLibraries/qrose/QRoseLib/Makefile
+src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
