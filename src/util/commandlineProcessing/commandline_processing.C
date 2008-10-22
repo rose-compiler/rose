@@ -693,6 +693,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "F95"
          || suffix == "F03"
          || suffix == "F08"
+         || suffix == "rmod" //FMZ 5/28/2008: for importing module declaration
              )
 #else//It is a case insensitive system
      if (   suffix == "f"
@@ -707,6 +708,7 @@ CommandlineProcessing::isFortranFileNameSuffix ( const std::string & suffix )
          || suffix == "F95"
          || suffix == "F03"
          || suffix == "F08"
+         || suffix == "rmod" //FMZ 5/28/2008: for importing module declaration
              )
 #endif
           returnValue = true;
@@ -731,6 +733,7 @@ CommandlineProcessing::isFortranFileNameSuffixRequiringCPP ( const std::string &
          || suffix == "f95"
          || suffix == "f03"
          || suffix == "f08"
+         || suffix == "rmod" //FMZ (10/15/2008)
              )
           returnValue = false;
 #else
@@ -783,9 +786,9 @@ CommandlineProcessing::isFortran90FileNameSuffix ( const std::string & suffix )
   // For now define CASE_SENSITIVE_SYSTEM to be true, as we are currently a UNIXish project.
 
 #if(CASE_SENSITIVE_SYSTEM == 1)
-     if ( suffix == "f90" || suffix == "F90" )
+     if ( suffix == "f90" || suffix == "F90" || suffix == "rmod")
 #else//It is a case insensitive system
-     if ( suffix == "f90" )
+     if ( suffix == "f90" || suffix == "rmod")
 #endif
         {
           returnValue = true;
@@ -943,6 +946,8 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+          validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
+
      // Liao (6/6/2008)  Support for UPC   
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
@@ -972,6 +977,7 @@ CommandlineProcessing::initSourceFileSuffixList ( )
           validSourceFileSuffixes.push_back(".F95");
           validSourceFileSuffixes.push_back(".F03");
           validSourceFileSuffixes.push_back(".F08");
+          validSourceFileSuffixes.push_back(".rmod"); //FMZ 5/28/2008
           validSourceFileSuffixes.push_back(".upc");
           validSourceFileSuffixes.push_back(".php");
 #endif

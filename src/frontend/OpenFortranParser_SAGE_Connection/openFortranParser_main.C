@@ -39,6 +39,7 @@ using namespace std;
 
 #define ERROR_CODE 4
 
+#if 0 //FMZ
 /* These should be defined in jni.h.  */  
 #ifndef JNI_VERSION_1_6
 #define JNI_VERSION_1_6 6
@@ -57,7 +58,10 @@ using namespace std;
   jclass getJavaStringClass(JNIEnv *env);
   void handleException(JavaVM *jvm, JNIEnv *env);
   void handleExceptionMaybe(JavaVM *jvm, JNIEnv *env);
-  int runOFP(int argc, char **argv);
+
+#endif
+
+int runOFP(int argc, char **argv);
 
 // Include rose.h so that we can reference SgSourceFile::build_classpath() 
 #include "rose.h"
@@ -97,9 +101,9 @@ int openFortranParser_main(int argc, char **argv)
  /* Save the old value */
     const char* old_value = getenv(LTDL_SHLIBPATH_VAR); // Might be null
 
-#if 0
+#if 1 
     printf ("Old value: LD_LIBRARY_PATH = %s \n",old_value);
-    printf ("New value: LD_LIBRARY_PATH = %s \n",new_value);
+    printf ("New value: LD_LIBRARY_PATH = %s \n",new_value.c_str());
  /* This value can be empty if the configuration was done using a relative path, as I recall! */
     printf ("ROSE_AUTOMAKE_TOP_BUILDDIR = %s \n",ROSE_AUTOMAKE_TOP_BUILDDIR);
     printf ("ROSE_COMPILE_TREE_PATH     = %s \n",ROSE_COMPILE_TREE_PATH);
@@ -129,9 +133,13 @@ string getenvString(const string& key, const string& def = "") {
   if (!val) return def;
   return val;
 }
+// FMZ (5/19/2008)
+#include "jserver.h"
+#include "ofp.h"
 
 int runOFP(int argc, char **argv)
   {
+#if 0 //FMZ (5/19/2008)
 	 JavaVM *jvm;   /* The Java VM.  */
 	 JNIEnv *env;   /* The environment for retrieving class objects, etc.  */
 	 JavaVMInitArgs jvm_args;  /* VM initialization args.  */
@@ -235,9 +243,17 @@ int runOFP(int argc, char **argv)
 	 jvm->DestroyJavaVM();
 
 	 return (retval == JNI_TRUE ? ERROR_CODE : 0);
-  }
 
+#else // FMZ (5/19/2008)
+        int retval= 0;
+        /* start/find the Java VM with ofp method loaded,run ofp on the args */
+        retval = jvm_ofp_processing(argc, argv);
   
+        return retval;
+  }
+#endif
+  
+#if 0  //FMZ (5/19/2008)
   jobjectArray getJavaStringArray(JNIEnv *env, int argc, char **argv)
   {
 	 jobjectArray argsStringArray = NULL;
@@ -288,3 +304,5 @@ int runOFP(int argc, char **argv)
 	 /* Exit since the exception should mean we can't recover.  */
 	 exit(1);
   }
+#endif
+

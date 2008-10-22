@@ -71,6 +71,11 @@ extern "C" {
 		if(token_list[i] != NULL)
 		  free_token(token_list[i]);
 
+         if (num_tokens > 0) {
+           free(token_list);
+           token_list = NULL;
+         }
+
 	 return;
   }
 

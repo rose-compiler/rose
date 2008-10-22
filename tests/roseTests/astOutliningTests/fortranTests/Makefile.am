@@ -161,6 +161,6 @@ EXTRA_DIST = $(ALL_F90_TESTCODES) \
 
 
 clean-local:
-	rm -f rose_* *.o *.dot *.out *.mod core* *.s *.dot *.pdf *.log *.ps *~
+	rm -f rose_* *.o *.dot *.out *.mod core* *.s *.dot *.pdf *.log *.ps *~ *.rmod
 	rm -rf QMTest
 

@@ -2,11 +2,15 @@
 
 #include "fortran_support.h"
 
+//FMZ 
+#include "FortranParserState.h"
+
 SgSourceFile* OpenFortranParser_globalFilePointer = NULL;
 
 using namespace std;
 
-#if 1
+#if 0 //FMZ: using decls/defs from "FortranParserState" 
+
 // Global stack of scopes
 std::list<SgScopeStatement*> astScopeStack;
 
@@ -77,7 +81,6 @@ AstNameListType astActualArgumentNameStack;
 // and function prototypes of function not defined in the interface we need attach 
 // declarations and names to the SgInterfaceStatement as they are seen.  Since this 
 // is nt always just the last statement, it is easier to support this using a stack.
-std::list<SgInterfaceStatement*> astInterfaceStack;
 
 // DQ (2/18/2008): This is the support for the Fortran include stack.
 // This is specific to the Fortran include mechanism, not the CPP include 
@@ -96,6 +99,8 @@ IO_Control_Spec* current_IO_Control_Spec = NULL;
 
 // SgFile* OpenFortranParser_globalFilePointer = NULL;
 #endif
+
+std::list<SgInterfaceStatement*> astInterfaceStack;
 
 #include "token.h"
 

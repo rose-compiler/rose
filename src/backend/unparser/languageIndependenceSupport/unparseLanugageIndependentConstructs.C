@@ -52,6 +52,15 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
      ROSE_ASSERT (stmt != NULL);
 
      bool statementInFile = false;
+
+  //FMZ
+    if (StringUtility::fileNameSuffix(sourceFilename)=="rmod") 
+        {
+        // If we are to unparse a module  into the .rmod file this this is ALWAYS true
+           return true;
+        }
+
+  
      if (unp->opt.get_unparse_includes_opt() == true)
         {
         // If we are to unparse all included files into the source file this this is ALWAYS true
@@ -380,11 +389,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
      ROSE_ASSERT(stmt->get_file_info() != NULL);
 
+#if 1 // FIXME cause conflict in "make check"?
+  // FMZ : we have ".rmod" file which will not satisfy this condition
   // JJW (6/23/2008): Move check for statement-within-file here rather than in individual procedures
      if (!statementFromFile(stmt, getFileName()))
         {
           return;
         }
+#endif
 
   // saveCompilerGeneratedStatements(stmt,info);
   // DQ (5/27/2005): fixup ordering of comments and any compiler generated code

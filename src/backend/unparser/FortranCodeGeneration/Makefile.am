@@ -2,8 +2,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-unparseFortranCodeGeneration_headers = unparseFortran.h unparseFortran_types.h
-unparseFortranCodeGeneration_sources = unparseFortran_expressions.C unparseFortran_statements.C unparseFortran_types.C
+unparseFortranCodeGeneration_headers = unparseFortran.h unparseFortran_types.h unparseFortran_modfile.h
+unparseFortranCodeGeneration_sources = unparseFortran_expressions.C unparseFortran_statements.C unparseFortran_types.C unparseFortran_modfile.C
 
 include_HEADERS = $(unparseFortranCodeGeneration_headers)
 

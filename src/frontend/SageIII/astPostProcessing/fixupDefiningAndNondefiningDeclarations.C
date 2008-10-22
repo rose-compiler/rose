@@ -59,12 +59,18 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           printf ("In FixupAstDefiningAndNondefiningDeclarations: node = %p = %s definingDeclaration = %p firstNondefiningDeclaration = %p \n",
                node,node->class_name().c_str(),definingDeclaration,firstNondefiningDeclaration);
 #endif
+
+
+#if 0 //FMZ (6/8/2008): caused core dump when read in a .rmod file
           if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)  
              {
                printf ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
                printf ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
              }
           ROSE_ASSERT(definingDeclaration != NULL || firstNondefiningDeclaration != NULL);
+#endif
+
+
 
 #if 0
           printf ("In FixupAstDefiningAndNondefiningDeclarations: declaration            = %p = %s get_name() = %s \n",declaration,declaration->class_name().c_str(),SageInterface::get_name(declaration).c_str());

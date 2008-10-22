@@ -58,7 +58,7 @@ libroseFortran_la_LIBADD =
 endif
 
 # libroseFortran_la_SOURCES    = FortranParserActionROSE.C fortran_support.C token.c $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain)
-libroseFortran_la_SOURCES      = fortran_support.C $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain)
+libroseFortran_la_SOURCES      = fortran_support.C $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain) jserver.C ofp.C FortranModuleInfo.C FortranParserState.C
 libroseFortran_la_DEPENDENCIES =
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -75,7 +75,7 @@ libfortran_ofp_parser_c_jni_FortranParserActionJNI_la_DEPENDENCIES =
 # all of the c_action() function implementations.  The name to match is: XXX libparser_java_FortranParserActionJNI.so
 # As of Feb 18 2008: the name is changed to libfortran_ofp_parser_c_jni_FortranParserActionJNI.so
 
-include_HEADERS = ActionEnums.h  FortranParserAction.h  token.h rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jni_token_funcs.h
+include_HEADERS = ActionEnums.h  FortranParserAction.h  token.h rose_fortran_token_maps.h  rose_token_defs.h fortran_support.h jni_token_funcs.h jserver.h ofp.h FortranModuleInfo.h FortranParserState.h
 
 openFortranParserMain: $(top_builddir)/rose_paths.h
 

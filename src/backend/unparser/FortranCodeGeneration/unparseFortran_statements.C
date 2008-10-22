@@ -1984,7 +1984,13 @@ FortranCodeGeneration_locatedNode::unparseVarDeclStmt(SgStatement* stmt, SgUnpar
                                         string previousArrayTypeDimensionListString = previousArrayTypeDimensionList->get_expressions()[i]->unparseToString(&info);
 
                                      // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
+                                     // FMZ (5/19/2008): since we are using unparser to generate ".rmod" file, we need to turn off this 
+#if 0
                                         SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
+#else
+                                        SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
+#endif
+
 
                                      // printf ("arrayTypeDimensionListString         = %s \n",arrayTypeDimensionListString.c_str());
                                      // printf ("previousArrayTypeDimensionListString = %s \n",previousArrayTypeDimensionListString.c_str());
@@ -2223,7 +2229,11 @@ FortranCodeGeneration_locatedNode::unparseBasicBlockStmt(SgStatement* stmt, SgUn
         { 
        // cout << "stmt: " << hex << (*p) << dec << endl;
           ROSE_ASSERT((*p) != NULL);
+         // FMZ: for module file, only output the variable declarations (not definitions)
+         if (!info.outputFortranModFile() ||
+                        (*p)->variantT()==V_SgVariableDeclaration) {
           unparseStatement((*p), info);
+        }
         }
 
 #if 0

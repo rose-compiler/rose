@@ -4,6 +4,12 @@
 #include <sys/wait.h>
 #include <libgen.h>
 
+//FMZ (5/19/2008): 
+#include "FortranModuleInfo.h"
+#include "FortranParserState.h"
+#include "unparseFortran_modfile.h"
+
+
 #ifdef HAVE_DLADDR
 #include <dlfcn.h>
 #endif
@@ -2693,6 +2699,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // display("at base of build_EDG_CommandLine()");
    }
 
+//FMZ(5/19/2008):
+extern void jserver_init();
+extern void jserver_finish();
+
 //! internal function to invoke the EDG frontend and generate the AST
 int
 SgProject::parse(const vector<string>& argv)
@@ -2766,7 +2776,20 @@ SgProject::parse(const vector<string>& argv)
                   {
                  // This is a compile line
                  // printf ("Calling parse() from SgProject::parse(const vector<string>& argv) \n");
+
+
+                  /*
+                   * FMZ (5/19/2008)
+                   *   "jserver_init()"   does nothing. The Java VM will be loaded at the first time
+                   *                      it needed (i.e for parsing the 1st fortran file).
+                   *   "jserver_finish()" will dostroy the Java VM if it is running.
+                   */
+
+                    jserver_init();
+
                     errorCode = parse();
+
+                    // FMZ deleteComm jserver_finish();
                   }
 
             // DQ (5/26/2007): This is meaningless, so remove it!
@@ -2823,6 +2846,9 @@ SgProject::parse()
      TimingPerformance timer ("AST (SgProject::parse()):");
 
   // ROSE_ASSERT (p_fileList != NULL);
+
+  // FMZ (5/29/2008)
+     FortranModuleInfo::setCurrentProject(this);
 
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
@@ -2963,6 +2989,11 @@ SgProject::parse()
 void
 SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
    {
+
+  // FMZ 6/10/2008 create new stacks for the SgFile
+     FortranParserState* currStks = new FortranParserState(); 
+
+
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
 
@@ -3161,8 +3192,10 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // DQ (8/21/2008): Added assertion.
   // ROSE_ASSERT (p_root->get_startOfConstruct() != NULL);
   // ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
-   }
 
+  // FMZ(5/19/2008)
+     delete  currStks ;
+   }
 
 #if 1
 #define CASE_SENSITIVE_SYSTEM 1
@@ -3775,7 +3808,23 @@ SgFile::callFrontEnd()
   // AST fixups are not so temporary so the name of the function might change at some point.
   // Notice that all AST fixup is done before attachment of the comments to the AST.
   // temporaryAstFixes(this);
+  //
+
+  // FMZ  
+#if 0
+     list<SgScopeStatement*> *stmp = &astScopeStack;
+
+     printf("FMZ :: before AstPostProcessing astScopeStack = %p \n",stmp);
+#endif
+ 
      AstPostProcessing(this);
+
+   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
+     if (get_Fortran_only() == true &&
+                 FortranModuleInfo::isRmodFile()==false) {
+               generateModFile(this);
+     }
+
 
 
   // **************************************************************************
