@@ -4,8 +4,8 @@
 # 9/30/2008
 
 #ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
-#ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/branches/rice
-ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/branches/LANL
+ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/branches/rice
+#ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/branches/LANL
 #ROSE_SVNROOT=https://outreach.scidac.gov/svn/rose/branches/ANL
 
 export JAVA_HOME=/usr/apps/java/jdk1.5.0_11
