@@ -10,9 +10,6 @@ procnum: snum #
 BLOCK
 label: snum #
 
-POSITION
-position: snum #
-
 
 // ---- dummy problem declaration ----
 PROBLEM SATIrE_dummy_analysis
@@ -63,14 +60,6 @@ extern noprefix   exprid_typeid            :: ExpressionId -> TypeId;
 extern noprefix   add_tmpvarid             :: TypeId -> VariableId;
 extern noprefix   stmt_asttext             :: Statement -> str;
 extern noprefix   expr_asttext             :: Expression -> str;
-extern noprefix   varid_has_location       :: VariableId -> bool;
-extern noprefix   varid_location           :: VariableId -> Location;
-extern noprefix   exprid_has_location      :: ExpressionId -> bool;
-extern noprefix   exprid_location          :: ExpressionId -> Location;
-extern noprefix   location_varsyms         :: Location -> *VariableSymbolNT;
-extern noprefix   may_be_aliased           :: Location -> bool;
-extern noprefix   is_ptr_location          :: Location -> bool;
-extern noprefix   dereference              :: Location -> Location;
 
 
 // ---- dummy combination and equality function declarations ----

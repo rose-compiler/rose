@@ -1,7 +1,9 @@
-$Id: satire_attributes_auxiliary_functions,v 1.13 2008-08-04 13:27:15 gergo Exp $
+$Id: satire_attributes_auxiliary_functions,v 1.14 2008-10-23 08:14:53 gergo Exp $
 
-This file lists all CFG attributes and auxiliary functions accessible from
-PAG analysis specifications when using the SATIrE system.
+This file lists all CFG attributes, types, and auxiliary functions
+accessible from PAG analysis specifications when using the SATIrE system.
+Declarations for all of these features are provided by SATIrE; the user need
+not repeat these declarations.
 
 
 CFG Attributes
@@ -72,19 +74,7 @@ TypeId
     the same basic/class type using exactly the same specifiers and
     modifiers (pointer, const, etc.).
 
-Any analysis specification that wishes to use one of these types must
-provide a dummy declaration for the type in the .set file. These dummy
-declarations are arbitrary, but must contain at least one type constructor.
-The following declarations usually work fine:
-    VariableId   = VariableId * VariableId
-    ExpressionId = ExpressionId * ExpressionId * ExpressionId
-    TypeId       = TypeId * TypeId * TypeId * TypeId
-
-Note that these type definitions do *not* mean that VariableIds or
-ExpressionIds are tuples; the type definitions are only needed to make PAG
-accept that the type on the left hand side really exists. When using them in
-analysis specifications, do not assume anything about the types' internal
-structure. Comparisons for equality and total ordering relations are
+Comparisons for equality and total ordering relations for these types are
 provided by SATIrE.
 
 
@@ -93,11 +83,8 @@ Auxiliary Functions
 Auxiliary functions are functions provided by the SATIrE library to support
 some common operations that would be impossible or very complicated to
 implement in FULA. The definitions for these functions are automatically
-linked against the generated analyzer. To use one of the functions, simply
-copy the declaration listed below into the SUPPORT section of your analysis
-specification. PAG will issue a warning that the function has an empty body;
-you can disregard the warning as the definitions for the functions are
-supplied elsewhere.
+linked against the generated analyzer. The declarations below are
+automatically included in any analyzer created with SATIrE.
 
 List of Auxiliary Functions
 ---------------------------

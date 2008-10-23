@@ -7,12 +7,6 @@ option_kill_normalisation_temps : bool#
 option_kill_empty_graph         : bool#
 option_kill_unreachable_nodes   : bool#
 
-GLOBAL
-globals   : *VariableSymbolNT#
-
-BLOCK
-label: snum#
-
 PROBLEM nnh
   direction : forward
   carrier   : dfi
@@ -91,25 +85,6 @@ print_graphs(label,gs) = {print_graph(label,g) !! g <-- gs} != {};
 
 print_graph::str,ShapeGraph->bool;
 print_graph(label,g) = print(label) print(g) print("\n") true;
-
-// Predefined SATIrE Support Functions
-expr_type::Expression->Type;
-expr_exprid::Expression->ExpressionId;
-exprid_expr::ExpressionId->Expression;
-exprid_str::ExpressionId->str;
-
-varsym_varid::VariableSymbolNT->VariableId;
-varref_varid::Expression->VariableId;
-varid_exprid::VariableId->ExpressionId;
-varid_str::VariableId->str;
-
-exprid_typeid::ExpressionId->TypeId;
-type_typeid::Type->TypeId;
-typeid_type::TypeId->Type;
-typeid_str::TypeId->str;
-
-is_tmpvarid::VariableId->bool;
-add_tmpvarid::TypeId->VariableId;
 
 // [ Normalisation
 // Author: Viktor Pavlu

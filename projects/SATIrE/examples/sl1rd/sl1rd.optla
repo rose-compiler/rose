@@ -12,9 +12,6 @@
 *                                                                                *
 \********************************************************************************/
 
-BLOCK
-label     : snum#
-
 PROBLEM Reaching_Definitions
     direction:  forward
     carrier:    VarLabPairSetLifted
@@ -211,8 +208,3 @@ kill_vars(s, [!]) =
   s;
 kill_vars(s, v::vars) = /* v is a VariableSymbol */
   kill_vars(rdkill(varsym_varid(v),s), vars);
-
-/* Predefined SATIrE Support Functions */
-varsym_varid :: VariableSymbolNT -> VariableId;
-varref_varid :: Expression -> VariableId;
-is_tmpvarid :: VariableId -> bool;

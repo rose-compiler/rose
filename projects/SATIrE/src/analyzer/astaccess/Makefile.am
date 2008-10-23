@@ -28,7 +28,8 @@ libpagdatatypes_a_SOURCES = o_ExpressionId.C o_TypeId.C o_VariableId.C
 
 # Does PAG expect those really to be in the same directory as the
 # the includes, our could we put them into $(prefix)/share/ ?
-nobase_include_HEADERS+= satire/edges satire/syn satire/pagoptions
+nobase_include_HEADERS+= satire/edges satire/syn satire/pagoptions \
+						 satire/pagoptions.set satire/pagoptions.optla
 #dist_pkgdata_DATA = edges syn pagoptions
 
 EXTRA_DIST = rose.pig #syn edges pagoptions

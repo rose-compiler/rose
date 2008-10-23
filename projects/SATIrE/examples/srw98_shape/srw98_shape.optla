@@ -5,12 +5,6 @@
 UNIVERSAL
 option_kill_normalisation_temps: bool#
 
-GLOBAL
-globals: *VariableSymbolNT#
-
-BLOCK
-label: snum#
-
 PROBLEM srw
   direction : forward
   carrier   : dfi
@@ -79,25 +73,6 @@ delete_var::dfi,VariableId->dfi;
 delete_var(top,_) = top;
 delete_var(bot,_) = bot;
 delete_var(  g,v) = lift(tassign_x_null(v,drop(g)));
-
-// Predefined SATIrE Support Functions
-expr_type::Expression->Type;
-expr_exprid::Expression->ExpressionId;
-exprid_expr::ExpressionId->Expression;
-exprid_str::ExpressionId->str;
-
-varsym_varid::VariableSymbolNT->VariableId;
-varref_varid::Expression->VariableId;
-varid_exprid::VariableId->ExpressionId;
-varid_str::VariableId->str;
-
-exprid_typeid::ExpressionId->TypeId;
-type_typeid::Type->TypeId;
-typeid_type::TypeId->Type;
-typeid_str::TypeId->str;
-
-is_tmpvarid::VariableId->bool;
-add_tmpvarid::TypeId->VariableId;
 
 // [ Normalisation
 // Author: Viktor Pavlu

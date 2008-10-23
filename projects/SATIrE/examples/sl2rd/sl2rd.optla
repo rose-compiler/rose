@@ -15,12 +15,6 @@
 *                                                                                *
 \********************************************************************************/
 
-GLOBAL
-globals   : *VariableSymbolNT#
-
-BLOCK
-label     : snum#
-
 PROBLEM Reaching_Definitions
     direction:  forward
     carrier:    VarLabPairSetLifted
@@ -351,8 +345,3 @@ rd_nonlocal_vars(varset) =
 
 myinit:: -> VarLabPairSetLifted;
 myinit() = lift({(v,-1)!! v <-- global_vars()});
-
-/* Predefined SATIrE Support Functions */
-varsym_varid :: VariableSymbolNT -> VariableId;
-varref_varid :: Expression -> VariableId;
-is_tmpvarid :: VariableId -> bool;

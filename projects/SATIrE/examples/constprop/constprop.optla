@@ -289,13 +289,6 @@ kill_vars(s, [!]) =
 kill_vars(s, v::vars) =
     kill_vars(s\[varsym_varid(v) -> top], vars);
 
-is_unary :: Expression -> bool;
-is_binary :: Expression -> bool;
-is_value :: Expression -> bool;
-unary_get_child :: Expression -> Expression;
-binary_get_left_child :: Expression -> Expression;
-binary_get_right_child :: Expression -> Expression;
-
 shiftleft :: snum, snum -> snum;
 shiftleft(a, 0) = a;
 shiftleft(a, b) = shiftleft(a*2, b-1);
@@ -307,13 +300,3 @@ shiftright(a, b) = shiftright(a/2, b-1);
 comb(a, b) = a lub b;
 wide(_, b) = b;
 eq(a, b)   = (a = b);
-
-// Mapping functions from VarRefExps (don't call this for other kinds of
-// expression!) and VariableSymbols to the new VariableId type.
-varref_varid :: Expression -> VariableId;
-varsym_varid :: VariableSymbolNT -> VariableId;
-
-expr_to_exprnum :: Expression -> unum;
-variable_varnum :: VariableSymbolNT -> unum;
-
-is_tmpvarid :: VariableId -> bool;
