@@ -1,10 +1,14 @@
 V0.8.5 ??? GB
 
 * Changes in PAG analyzer architecture
-  - still in progress!
   - analyzers are encapsulated as C++ objects, and it will soon be possible
     to mix and match/distribute analyzers as a library with a simple header
     file
+
+* Predefined SATIrE attribute, type, and auxiliary function declarations
+  - using new features provided by PAG 9.2.2.48, SATIrE's attributes, types,
+    and auxiliary functions are now declared automatically; user-defined
+    declarations are no longer necessary (or allowed)
 
 V0.8.4 2008-09-26 GB,AP
 
