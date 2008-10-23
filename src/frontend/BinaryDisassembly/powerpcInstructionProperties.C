@@ -11,7 +11,7 @@ const char* sprToString(PowerpcSpecialPurposeRegister n) {
     case powerpc_spr_xer: return "xer";
     case powerpc_spr_lr: return "lr";
     case powerpc_spr_ctr: return "ctr";
-    ROSE_ASSERT (!"Bad TBR number in sprToString");
+    default: return "unknown_spr";
   }
 }
 
@@ -19,6 +19,6 @@ const char* tbrToString(PowerpcTimeBaseRegister n) {
   switch (n) {
     case powerpc_tbr_tbl: return "tbl";
     case powerpc_tbr_tbu: return "tbu";
-    ROSE_ASSERT (!"Bad TBR number in tbrToString");
+    default: return "unknown_tbr";
   }
 }
