@@ -3396,19 +3396,19 @@ static const int AttrSpec_DEFERRED=AttrSpecBase+23;
           case AttrSpec_VOLATILE:     variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setVolatile(); break;
 
           case AttrSpec_PARAMETER:
-               printf ("Error: PARAMETER is an attribute that implies constant value ('const' in C/C++) \n");
+            // printf ("Error: PARAMETER is an attribute that implies constant value ('const' in C/C++) \n");
                variableDeclaration->get_declarationModifier().get_typeModifier().get_constVolatileModifier().setConst();
                break;
 
           case AttrSpec_POINTER:
-               printf ("Error: POINTER is an attribute specifier that effects the associated type (no flag is provided) \n");
+            // printf ("Error: POINTER is an attribute specifier that effects the associated type (no flag is provided) \n");
                break;
 
           case AttrSpec_PASS:
           case AttrSpec_NOPASS:
           case AttrSpec_NON_OVERRIDABLE:
           case AttrSpec_DEFERRED:
-               printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
+            // printf ("Error: Are these F08 attribute specs? astAttributeSpec = %d \n",astAttributeSpec);
                break;
 
 /*
