@@ -51,15 +51,17 @@ if ROSE_USE_OPEN_FORTRAN_PARSER
 openFortranParserMain = openFortranParser_main.C
 # libroseFortran_la_LIBADD = -L$(JAVA_JVM_PATH) -ljvm
 libroseFortran_la_LIBADD =
+libroseFortran_la_SOURCES      = fortran_support.C $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain) jserver.C ofp.C FortranModuleInfo.C FortranParserState.C
+libroseFortran_la_DEPENDENCIES =
 else
 # Compile using a function that represents the API of the Open Fortran Parser
 openFortranParserMain = dummy_openFortranParser_main.C
 libroseFortran_la_LIBADD =
+libroseFortran_la_SOURCES      =
+libroseFortran_la_DEPENDENCIES =
 endif
 
 # libroseFortran_la_SOURCES    = FortranParserActionROSE.C fortran_support.C token.c $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain)
-libroseFortran_la_SOURCES      = fortran_support.C $(FORTRAN_LEX_SCANNERS) $(openFortranParserMain) jserver.C ofp.C FortranModuleInfo.C FortranParserState.C
-libroseFortran_la_DEPENDENCIES =
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
 # This file (these c_action() function implementations) need to be in a dynamic 
