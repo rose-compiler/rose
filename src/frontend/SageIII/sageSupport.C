@@ -5,9 +5,11 @@
 #include <libgen.h>
 
 //FMZ (5/19/2008): 
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #include "FortranModuleInfo.h"
 #include "FortranParserState.h"
 #include "unparseFortran_modfile.h"
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
 
 #ifdef HAVE_DLADDR
@@ -2700,8 +2702,10 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
    }
 
 //FMZ(5/19/2008):
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 extern void jserver_init();
 extern void jserver_finish();
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
 //! internal function to invoke the EDG frontend and generate the AST
 int
@@ -2785,7 +2789,9 @@ SgProject::parse(const vector<string>& argv)
                    *   "jserver_finish()" will dostroy the Java VM if it is running.
                    */
 
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                     jserver_init();
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
                     errorCode = parse();
 
@@ -2848,7 +2854,9 @@ SgProject::parse()
   // ROSE_ASSERT (p_fileList != NULL);
 
   // FMZ (5/29/2008)
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      FortranModuleInfo::setCurrentProject(this);
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
   // Simplify multi-file handling so that a single file is just the trivial 
   // case and not a special separate case.
@@ -2990,12 +2998,13 @@ void
 SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
    {
 
-  // FMZ 6/10/2008 create new stacks for the SgFile
-     FortranParserState* currStks = new FortranParserState(); 
-
-
   // JJW 10-26-2007 ensure that this object is not on the stack
      preventConstructionOnStack(this);
+
+  // FMZ 6/10/2008 create new stacks for the SgFile
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+     FortranParserState* currStks = new FortranParserState(); 
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
      // printf ("Inside of SgFile::doSetupForConstructor() \n");
 
@@ -3194,7 +3203,9 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // ROSE_ASSERT (p_root->get_endOfConstruct()   != NULL);
 
   // FMZ(5/19/2008)
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      delete  currStks ;
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
    }
 
 #if 1
@@ -3820,10 +3831,12 @@ SgFile::callFrontEnd()
      AstPostProcessing(this);
 
    // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      if (get_Fortran_only() == true &&
                  FortranModuleInfo::isRmodFile()==false) {
                generateModFile(this);
      }
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
 
 
@@ -3906,6 +3919,7 @@ SgFile::callFrontEnd()
    }
 
 
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 // DQ (9/30/2008): Refactored the setup of the class path for Java and OFP.
 string
 SgSourceFile::build_classpath()
@@ -3921,7 +3935,7 @@ SgSourceFile::build_classpath()
 
      return classpath;
    }
- 
+
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
@@ -4351,6 +4365,18 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
      return frontendErrorLevel;
    }
+#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+string SgSourceFile::build_classpath() {
+  fprintf(stderr, "Fortran parser not supported\n");
+  abort();
+}
+
+int
+SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine ) {
+  fprintf(stderr, "Fortran parser not supported\n");
+  abort();
+}
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
  
 int
@@ -4476,7 +4502,12 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      int frontendErrorLevel = 0;
      if (get_Fortran_only() == true)
         {
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
+#else
+          fprintf(stderr, "Trying to parse a Fortran file when Fortran is not supported\n");
+          abort();
+#endif
         }
        else
         {
