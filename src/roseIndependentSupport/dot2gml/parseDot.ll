@@ -3,7 +3,7 @@
 %option yylineno
 %{
 #include "parse_header.h"
-#include "y.tab.h"
+#include "parseDotGrammar.h"
 int yyerror(const char *s);
 %}
 

@@ -21,6 +21,7 @@ Makefile.in
 /config/config.sub
 /config/install-sh
 /config/ltmain.sh
+/config/ylwrap
 /configure
 /rose_config.h.in
 /src/3rdPartyLibraries/libltdl/aclocal.m4

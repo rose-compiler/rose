@@ -8,7 +8,7 @@
 
 using std::string;
 
-static jmethodID jofp_get_method(int, char*, char*);
+static jmethodID jofp_get_method(int, const char*, const char*);
 static jmethodID jofp_get_main() ;
 static jmethodID jofp_get_error_method();
 static jmethodID jofp_get_cons_method();
@@ -84,7 +84,7 @@ jofp_invoke(int argc, char **argv)
 
 
 static jmethodID
-jofp_get_method(int static_method, char* name, char* arg) 
+jofp_get_method(int static_method, const char* name, const char* arg) 
 {
     jmethodID result = NULL;
 

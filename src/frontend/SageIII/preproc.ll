@@ -1,4 +1,6 @@
 %option noyywrap
+%option prefix="Rose_C_Cxx_"
+%option outfile="lex.yy.c"
 %{
 /* 
     preproc.lex: This lexer currently recognizes C style comments, C++ style 

@@ -1,4 +1,6 @@
 %option noyywrap
+%option prefix="Rose_Fortran_free_format_"
+%option outfile="lex.yy.c"
 %{
 /* 
 Version 0.2.1 of FORTRAN scanner.
@@ -37,8 +39,6 @@ The authors (Rama and Dan) recognize many of the limitations.
 They will be tabulated later.
 */
 
-
-
 /*
 There are three scanners in the ROSE frontend. One for C/C++, two for fixed and free 
 format FORTRAN languages. So that the flex generated C code and definitions (yylex, 
@@ -50,10 +50,11 @@ by using the -P<prefix options>
 Note: We could have done this in an arguably more elegant way by changing the individual uses of these 
 functions/variables.
 */
+#define yytext Rose_Fortran_free_format_text
+#define yylex Rose_Fortran_free_format_lex 
 
 
-#define yytext Rose_Fortran_fixed_format_text
-#define yylex Rose_Fortran_fixed_format_lex 
+
 
 
 #include <iostream>
@@ -66,7 +67,7 @@ functions/variables.
 
 using namespace std;
 
-// namespace Rose_Fortran_fixed_format_namespace {
+// namespace Rose_Fortran_free_format_namespace {
 
 #include "general_token_defs.h"
 #include "./rose_fortran_token_maps.h"
@@ -87,15 +88,16 @@ struct stream_element
 };
 #endif
 
+// DQ (1/21/2008): Modified this to be a pointer so it could be built and returned to ROSE.
+LexTokenStreamTypePointer ROSE_Fortran_free_format_token_stream_pointer = NULL;
 
-LexTokenStreamTypePointer ROSE_Fortran_fixed_format_token_stream_pointer = NULL;
 typedef LexTokenStreamType::iterator SE_ITR;
 
 static struct file_pos_info curr_beginning;
 
 //Operators
 //This includes the "new" as well as the "old" operators
-static token_element ROSE_Fortran_Operator_map[] = 
+token_element ROSE_Fortran_Operator_map[] = 
 {
       {"+",       SgToken::FORTRAN_INTRINSIC_PLUS},            /*   GFORTRAN/G95 equivalent is INTRINSIC_PLUS      */
       {"-",       SgToken::FORTRAN_INTRINSIC_MINUS},           /*   GFORTRAN/G95 equivalent is INTRINSIC_MINUS     */
@@ -139,15 +141,15 @@ static int identify_if_keyword(string str)
     string lowered_str;
     for(unsigned int i = 0; i < strlen(str.c_str()); i++)
     {
-        lowered_str += tolower(char((str.c_str())[i]));
+        lowered_str += (unsigned char)tolower(char((str.c_str())[i]));
     }
 
     //printf("got called with %s. Converted to %s\n", str.c_str(), lowered_str.c_str());
     for(int i = 0; i < NUM_KEYWORDS; i++)
     {
-        if(lowered_str == SgToken::ROSE_Fortran_keyword_map[i].token_lexeme)
+        if(lowered_str == ROSE_Fortran_keyword_map[i].token_lexeme)
         {
-            return (SgToken::ROSE_Fortran_keyword_map[i].token_id);
+            return (ROSE_Fortran_keyword_map[i].token_id);
         }
     }
     return -1;
@@ -192,7 +194,7 @@ static void process_operator(string op)
     column_no+=strlen(yytext); \
     p_se->ending_fpi.line_num = line_no; \
     p_se->ending_fpi.column_num = column_no-1; \
-    ROSE_Fortran_fixed_format_token_stream.push_back(p_se);  \
+    ROSE_Fortran_free_format_token_stream.push_back(p_se);  \
 } \
 
 */
@@ -213,18 +215,19 @@ static std::string globalFileName;
 #define FORTRAN_LEXICAL_SUPPORT 0
 
 //struct matching_construct
-// static int braces_no=0;
+static int braces_no=0;
 // static int brace_counting_on=0;
 
 // static int topbracestack();
-// static void pushbracestack(int);
+static void pushbracestack(int);
 // static int popbracestack();
 // static bool isemptystack();
 
-// static int num_of_newlines(char*);
-// static int adjust_new_line_counter();
+static int num_of_newlines(char*);
+static int adjust_new_line_counter();
 
 using namespace std;
+//#undef yywrap
 
 
 %}
@@ -238,40 +241,28 @@ macrokeyword                 "include"|"define"|"undef"|"line"|"error"|"warning"
 
 mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C++\"")){whitespacenl}*"{"
 
-%s NORMAL FORT_COMMENT STRING_LIT MACRO REST_OF_LINE
+%s NORMAL FORT_COMMENT STRING_LIT MACRO 
 %%
 
 %{
-#undef Rose_Fortran_Fixed_Format_wrap
+#undef Rose_Fortran_Free_Format_wrap
           int line_no = 1;
           int start_line_no = line_no;
           int column_no = 1;
           int start_column_no = column_no;
           BEGIN NORMAL;
 %}
-<NORMAL>^C.*\n    {
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
-                    curr_beginning.line_num = line_no;
-                    curr_beginning.column_num = column_no;
-                    column_no+=1; 
-                    currentBuffer = yytext; 
-                 // printf("The comment string is as follows: %s\n", yytext);
-                 // BEGIN FORT_COMMENT; 
-               }
-<NORMAL>[^C]....  {
-                    start_line_no=line_no; 
-                    start_column_no=column_no; 
-                    curr_beginning.line_num = line_no;
-                    curr_beginning.column_num = column_no;
-                    column_no+=1; 
-                    currentBuffer = yytext; 
-                 // printf("The non comment line is %s\n", yytext);
-                    BEGIN REST_OF_LINE;
-                 // BEGIN FORT_COMMENT; 
-               }
-        /*
-<REST_OF_LINE>"!"    {
+
+<NORMAL>{mlinkagespecification} { 
+                                    /*preprocessorList.addElement(PreprocessingInfo::ClinkageSpecificationStart, 
+                                            yytext,globalFileName,line_no,column_no,0); 
+                                            */
+                                    braces_no++; 
+                                    line_no+=num_of_newlines(yytext); 
+                                    column_no+=strlen(yytext); 
+                                    pushbracestack(braces_no); 
+                   }
+<NORMAL>"!"    {
                     start_line_no=line_no; 
                     start_column_no=column_no; 
                     curr_beginning.line_num = line_no;
@@ -280,8 +271,8 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                     currentBuffer = yytext; 
                     BEGIN FORT_COMMENT; 
                }
-<REST_OF_LINE>"'"    {
-                    //This begins a STRING LITERAL
+<NORMAL>"'"    {
+                    /*This begins a STRING LITERAL*/
                     start_line_no=line_no; 
                     start_column_no=column_no; 
                     curr_beginning.line_num = line_no;
@@ -290,9 +281,8 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                     currentBuffer = yytext; 
                     BEGIN STRING_LIT;
                }
-<REST_OF_LINE>\n                     { printf("in REST_OF_LINE\n"); line_no++; column_no=1; BEGIN NORMAL; } 
-                                    */
-<REST_OF_LINE>[a-zA-Z_][a-zA-Z0-9_]*       { 
+<NORMAL>\n                           { line_no++; column_no=1; } 
+<NORMAL>[a-zA-Z_][a-zA-Z0-9_]*       { 
                                           
                                           token_element *p_tok_elem = new token_element; 
                                           p_tok_elem->token_lexeme = yytext; 
@@ -319,44 +309,38 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                                           p_se->ending_fpi.line_num = line_no; 
                                           p_se->ending_fpi.column_num = column_no-1; 
                                           //push the element onto the token stream
-                                          ROSE_Fortran_fixed_format_token_stream_pointer->push_back(p_se); 
+                                          ROSE_Fortran_free_format_token_stream_pointer->push_back(p_se); 
                                     }
-<REST_OF_LINE>"+"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"-"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"**"       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"//"       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"*"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"/"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".and."    {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".or."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".eqv."    {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".neqv."   {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"=="       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"/="       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>">="       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"<="       {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>"<"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>">"        {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".not."    {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".eq."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".ne."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".ge."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".le."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".lt."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".gt."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>".true."     {process_operator(yytext);column_no+=strlen(yytext);} 
-<REST_OF_LINE>".false."     {process_operator(yytext);column_no+=strlen(yytext);}
-<REST_OF_LINE>";"        {//Do stuff to store semi colons
-                          //process_operator(yytext);
-                           column_no+=strlen(yytext);}
-<REST_OF_LINE>","        {//Do stuff to store commas
-                          //process_operator(yytext);
-                           column_no+=strlen(yytext);}
-<REST_OF_LINE>"::"       {//Do stuff to store colons
-                           //process_operator(yytext);
-                           column_no+=strlen(yytext);
-}
-<REST_OF_LINE>^[:blank:]*\n          {
+<NORMAL>"+"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"-"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"**"       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"//"       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"*"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"/"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".and."    {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".or."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".eqv."    {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".neqv."   {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"=="       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"/="       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>">="       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"<="       {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>"<"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>">"        {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".not."    {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".eq."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".ne."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".ge."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".le."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".lt."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".gt."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>".true."     {process_operator(yytext);column_no+=strlen(yytext);} 
+<NORMAL>".false."     {process_operator(yytext);column_no+=strlen(yytext);}
+<NORMAL>";"        {/*Do stuff to store semi colons*/ /*process_operator(yytext);*/column_no+=strlen(yytext);}
+<NORMAL>","        {/*Do stuff to store commas*/ /*process_operator(yytext);*/column_no+=strlen(yytext);}
+<NORMAL>"::"       {/*Do stuff to store colons*/ /*process_operator(yytext);*/column_no+=strlen(yytext);}
+               /*
+<NORMAL>^[:blank:]*\n          {
                                        //According to the STD, a line which has whitespaces is a comment line
                                        //We will store it
                                        printf("came across a blank line\n");
@@ -374,21 +358,17 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
 
                                        p_se->ending_fpi.line_num = line_no;
                                        p_se->ending_fpi.column_num = column_no;
-                                       ROSE_Fortran_fixed_format_token_stream_pointer->push_back(p_se);
+                                       ROSE_Fortran_free_format_token_stream_pointer->push_back(p_se);
 
                                        line_no++; column_no=1;
                                   }
-<NORMAL>.               {
-                        // printf("in <normal>.\n");
-                           column_no++;
-}
-                                  /*
+                                  */
+<NORMAL>.               {column_no++;}
 <STRING_LIT>[^']        {
                             column_no++; 
                             currentBuffer += yytext;
                         }
 <STRING_LIT>''          {
-                            printf("Fixed format\n");
                             column_no+=2; 
                             currentBuffer += yytext;
                         }
@@ -411,19 +391,16 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                             p_se->ending_fpi.line_num = line_no;
                             p_se->ending_fpi.column_num = column_no;
 
-                            ROSE_Fortran_fixed_format_token_stream.push_back(p_se);
+                            ROSE_Fortran_free_format_token_stream_pointer->push_back(p_se);
 
                             column_no++; 
                             BEGIN NORMAL;
                        }
-                      */
-
-<REST_OF_LINE>\n       { 
+<FORT_COMMENT>\n       { 
                             //This is also a comment
                             currentBuffer += yytext;
-                            //printf("this ends the comment string is %s", currentBuffer.c_str());
+                            //printf("the comment string is %s", currentBuffer.c_str());
 
-                            /* This was commented out by Rama, as it should be, since it does not work...
                             token_element *p_tok_elem = new token_element;
                             p_tok_elem->token_lexeme = currentBuffer;
                             p_tok_elem->token_id = SgToken::FORTRAN_COMMENTS;
@@ -433,34 +410,32 @@ mlinkagespecification        ^{whitespace}*"extern"{whitespace}*(("\"C\"")|("\"C
                             p_se->beginning_fpi = curr_beginning;
                             p_se->ending_fpi.line_num = line_no;
                             p_se->ending_fpi.column_num = column_no;
-                            ROSE_Fortran_fixed_format_token_stream_pointer->push_back(p_se);
-                            This was comment out by Rama */
+                            ROSE_Fortran_free_format_token_stream_pointer->push_back(p_se);
 
                             line_no++; column_no=1; 
                             BEGIN NORMAL;
                       }
-<REST_OF_LINE>.       { 
+<FORT_COMMENT>.       { 
                             column_no++; 
                             currentBuffer += yytext;
                       }
 %%
 
-// static const int maxstacksize=500;
-// static int bracestack[maxstacksize];
+static const int maxstacksize=500;
+static int bracestack[maxstacksize];
 
-// static int top=0;
-// static void pushbracestack(int brace_no) { bracestack[top++]=brace_no; }
+static int top=0;
+static void pushbracestack(int brace_no) { bracestack[top++]=brace_no; }
 // static int topbracestack() { if(top) return bracestack[top-1]; else return -1; }
 // static int popbracestack() { return bracestack[--top]; }
 // static bool isemptystack() { return top==0; }
 
-#if 0
+
 static int adjust_new_line_counter()
 {
     return 1;
 }
-#endif
-#if 0
+
 static int num_of_newlines(char* s)
 {
      int num = 0;
@@ -472,67 +447,46 @@ static int num_of_newlines(char* s)
         }
      return num;
 }
-#endif
 
-// int getFortranFixedFormatPreprocessorDirectives( std::string fileName )
+// This function is called by AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()
+// function when the input node is a SgFile IR node.
+// int getFortranFreeFormatPreprocessorDirectives( std::string fileName )
 LexTokenStreamTypePointer
-getFortranFixedFormatPreprocessorDirectives( std::string fileName )
+getFortranFreeFormatPreprocessorDirectives( std::string fileName )
    {
      FILE *fp = NULL; 
-    
-     ROSE_Fortran_fixed_format_token_stream_pointer = new LexTokenStreamType;
-     assert(ROSE_Fortran_fixed_format_token_stream_pointer != NULL);
+
+     ROSE_Fortran_free_format_token_stream_pointer = new LexTokenStreamType;
+     assert(ROSE_Fortran_free_format_token_stream_pointer != NULL);
 
      globalFileName = fileName;
 
-  // printf ("Opening Fixed Format Fortran file: %s \n",fileName.c_str());
+  // printf ("In getFortranFreeFormatPreprocessorDirectives(): Lexical pass to retrieve the token stream (Opening Free Format Fortran file: %s) \n",fileName.c_str());
 
-     if (fileName.empty() == false) 
+     if(fileName.empty() == false) 
         {
           fp = fopen(fileName.c_str(), "r"); 
           if (fp) 
-             {
-            // DQ (1/22/2008): I output a comment here to detect where extra LF are output to either cout or cerr as part of the lex phase.
-            // I have not been able to figure out why or where these are output yet (see test2007_189.f for the worst case of this).
-               printf ("In getFortranFixedFormatPreprocessorDirectives(): opened file %s for token stream processing \n",fileName.c_str()); 
-
+             { 
+            // printf ("opened file %s\n",fileName.c_str()); 
             // exit(0);
                yyin = fp; 
                yylex(); 
-            /*
-               char s[100];
-               while(fgets(s, 100, fp))
-                  {
-                    if((s[0] == 'C') || (s[0] == 'c'))
-                       {
-                         printf("The comment that is detected is %s\n", s);
-                       }
-                      else
-                       { 
-                         printf("calling the scanner on string '%s'\n", s); 
-                         yy_scan_string(s);
-                         yy_delete_buffer(YY_CURRENT_BUFFER);
-                       }
-                 // printf("Not calling the yylex()\n");
-                 // yy_scan_bytes(s,6);
-                  }
-            */
-               fclose(fp);
-               printf ("In getFortranFixedFormatPreprocessorDirectives(): closed file %s for token stream processing \n",fileName.c_str()); 
-             } 
+               fclose(fp);  
+             }
             else 
              {
                printf ("Error: can't find the requested file (%s) \n",fileName.c_str()); 
-               assert(false);
              }
         }
 
-     return ROSE_Fortran_fixed_format_token_stream_pointer;
+     assert(ROSE_Fortran_free_format_token_stream_pointer != NULL);
+     return ROSE_Fortran_free_format_token_stream_pointer;
    }
 
-static void clean_up_stream()
+void
+clean_up_stream()
 {
-
     //
     //This "rudimentary" post processing of the token stream helps in correct identification of keywords.
 
@@ -543,7 +497,7 @@ static void clean_up_stream()
 
 
 #if 0
-    for(SE_ITR ii = ROSE_Fortran_fixed_format_token_stream.begin(); ii != ROSE_Fortran_fixed_format_token_stream.end(); ii++)
+    for(SE_ITR ii = ROSE_Fortran_free_format_token_stream_pointer->begin(); ii != ROSE_Fortran_free_format_token_stream_pointer->end(); ii++)
     {
         if((*ii)->p_tok_elem->token_id == SgToken::FORTRAN_COMMENTS)
         { 
@@ -588,17 +542,17 @@ int main(int argc, char *argv[])
 {
     if(argc == 1) 
     {   //The "default" for now
-        getFortranFixedFormatPreprocessorDirectives("triangle-fixed.f77");
+        getFortranFreeFormatPreprocessorDirectives("triangle.f90");
     }
     else
     {
-        getFortranFixedFormatPreprocessorDirectives(argv[1]);
+        getFortranFreeFormatPreprocessorDirectives(argv[1]);
     }
 
     clean_up_stream();
 
     printf("*****************here is the stream *************\n"); 
-    for(SE_ITR ii = ROSE_Fortran_fixed_format_token_stream.begin(); ii != ROSE_Fortran_fixed_format_token_stream.end(); ii++)
+    for(SE_ITR ii = ROSE_Fortran_free_format_token_stream.begin(); ii != ROSE_Fortran_free_format_token_stream.end(); ii++)
     {
         if((*ii)->p_tok_elem->token_id == SgToken::FORTRAN_COMMENTS)
         { 
@@ -639,7 +593,7 @@ int main(int argc, char *argv[])
 
     return 1;
 }
-#endif
 
-// }//This ends the namespace Rose_Fortran_fixed_format_namespace
+#endif
+// }//This ends the namespace Rose_Fortran_free_format_namespace
 
