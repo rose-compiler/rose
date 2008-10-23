@@ -6,7 +6,7 @@ if DOT_TO_GML_TRANSLATOR
 bin_PROGRAMS = dot2gml
 
 dot2gml_SOURCES = \
-     main.C parseDot.ll parseDot.y
+     main.C parseDot.ll parseDotGrammar.y
 
 # Header files that need to be included in the distribution
 include_HEADERS = parse_header.h
@@ -20,4 +20,4 @@ clean-local:
 
 endif
 
-EXTRA_DIST = parse_header.h parseDot.ll parseDot.y README main.C 
+EXTRA_DIST = parse_header.h parseDot.ll parseDotGrammar.y README main.C 
