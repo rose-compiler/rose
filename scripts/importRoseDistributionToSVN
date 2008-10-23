@@ -16,7 +16,7 @@
 #  thisScript ROSE_TOP_TEST_DIR
 #
 # by Liao, 7/31/2008
-# Last Modified 8/27/2008
+# Last Modified 10/23/2008
 #------------------------------------------------------
 
 # the backup one is for testing only
@@ -72,9 +72,17 @@ rm -rf ${ROSE_DIST_DIR}/rose_config.h.in
 rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/configure
 rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
 find . -name Makefile.in | xargs rm -rf
+# remove generated scanners and parsers available from the source distribution
+# But should not be put into the external repository
 rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.cc
 rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.h
 rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/omplexer.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran-fixed.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/preproc.cc
+# dot2gml is not yet in distribution, added them here as a precaution 
+rm -rf ${ROSE_DIST_DIR}/src/roseIndependentSupport/dot2gml/parseDotGrammar.cc
+rm -rf ${ROSE_DIST_DIR}/src/roseIndependentSupport/dot2gml/parseDot.cc
 
 # restore a few third party Makefile.in which cannot yet been automatically built
 #cp ${ROSE_SRC}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libharu-2.1.0/script/Makefile.in
