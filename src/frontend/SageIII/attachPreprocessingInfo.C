@@ -333,8 +333,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
   // DQ (12/10/2007): Declare Fortran specific lexical pass function explicitly.
   // extern int getFortranFixedFormatPreprocessorDirectives( std::string fileName );
   // extern int getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      extern std::list <stream_element*>* getFortranFixedFormatPreprocessorDirectives( std::string fileName );
      extern std::list <stream_element*>* getFortranFreeFormatPreprocessorDirectives ( std::string fileName );
+#endif
 
   // Check if current AST node is an SgFile object
   // if ((currentFilePtr = dynamic_cast<SgFile*>(n)) != NULL)
@@ -358,6 +360,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
             // currentListOfAttributes       = getPreprocessorDirectives( Sg_File_Info::getFilenameFromID(currentFileNameId) );
                if (currentFilePtr->get_Fortran_only() == true)
                   {
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                  // This is either of two different kinds of Fortran program: fixed format or free format
                  //    * fix format is used for older Fortran code, F77 and earlier, and 
                  //    * free format is used for newer codes, F90 and later
@@ -431,6 +434,10 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute (
                        {
                          printf ("Done with processing of separate lexical pass to gather Fortran specific CPP directives and comments from the token stream \n");
                        }
+#else // for !USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+                    fprintf(stderr, "Fortran parser not enabled\n");
+                    abort();
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
                   }
                  else
                   {
