@@ -17,24 +17,16 @@ INCLUDES = $(ROSE_INCLUDES) # -I$(top_srcdir)/src/frontend/EDG_SAGE_Connection -
 ## The grammar generator (ROSETTA) should use its own template repository
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
-# Bugfix (10/17/2001)
-# For development we want to build the lex.yy.c file from the  preproc.lex file
-# but for distributions we want to use the distributed lex.yy.c file
-$(srcdir)/preproc.C : preproc.lex
-	$(LEX) -PRose_C_Cxx_ -o$(srcdir)/preproc.C $(srcdir)/preproc.lex
-
-preproc.o : $(srcdir)/preproc.C
-	$(CXXCOMPILE) -D__EXTERN_C__ -c $(srcdir)/preproc.C -o $@
-
 # Copy the original lex file and the C++ file generated from it to the distribution
 # so that users don't have to find an appropriate version of lex (flex).  Flex should
 # be used by developers so that ANSI C code is generated for g++.  This is something
 # for developers to worry about in the generation of sufficently portable distributions.
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
-EXTRA_DIST = preproc.lex preproc.C docs rtiHelpers.h attributeListMap.h \
+EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h \
             advanced_preprocessing_hooks.h rose_attributes_list.h
-CLEANFILES = preproc.o haveRosettaGeneratedSource
+CLEANFILES = haveRosettaGeneratedSource
+DISTCLEANFILES = preproc.cc
 
 
 # DQ (10/18/2007): Added AST_FILE_IO.C StorageClasses.C
@@ -97,7 +89,7 @@ libsage3Sources = \
 
 noinst_LTLIBRARIES = libsage3.la
 
-libsage3_la_SOURCES = $(libsage3Sources) preproc.C rose_paths.h
+libsage3_la_SOURCES = $(libsage3Sources) preproc.ll rose_paths.h
 nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE) $(top_builddir)/rose_config.h
 
 if ROSE_USE_BOOST_WAVE

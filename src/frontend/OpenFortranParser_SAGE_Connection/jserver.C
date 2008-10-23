@@ -147,7 +147,7 @@ void
 jserver_start(JvmT* je)
 { 
   JavaVMInitArgs jvm_args;  /* VM initialization args.  */
-  char *jni_version = NULL;
+  // char *jni_version = NULL;
   int res;
 
 //  char *classpathEnvVar = NULL;
@@ -312,7 +312,7 @@ jserver_getJavaString(const char *inString)
 	 return javaString;
 #endif
          JNIEnv*  env = get_env();
-         env->NewStringUTF(inString);
+         return env->NewStringUTF(inString);
 }
 
 
