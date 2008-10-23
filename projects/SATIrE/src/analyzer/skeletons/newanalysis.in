@@ -195,7 +195,7 @@ then
     fi
     cat $SATIRE_DATA/Makefile-template >> $ANALYSIS_DIR/Makefile
 else
-    echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.optla before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
+    echo "You must create the analysis specification $ANALYSIS_DIR/$ANALYSIS_NAME.optla before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
 fi
 
 if [ -e "$ANALYSIS_DIR/${ANALYSIS_NAME}.set" ]
@@ -205,7 +205,7 @@ else
     egrep -q "ENDDOMAIN" $ANALYSIS_DIR/$ANALYSIS_NAME.optla
     if [ $? -eq 0 ]
     then
-        echo "$ANALYSIS_DIR/$ANALYSIS_NAME.optla contains type definitions, creating empty $ANALYSIS_DIR/$ANALYSIS_NAME.set file."
+        echo "$ANALYSIS_DIR/$ANALYSIS_NAME.optla contains type definitions, no $ANALYSIS_DIR/$ANALYSIS_NAME.set needed."
     else
         echo "You must create $ANALYSIS_DIR/$ANALYSIS_NAME.set, or add type definitions to $ANALYSIS_DIR/$ANALYSIS_NAME.optla, before you can compile the analyzer $ANALYSIS_DIR/$ANALYSIS_NAME."
     fi

@@ -16,7 +16,7 @@ EXTRA_DIST= \
         sl2rd/tests/rdtest10all.C sl2rd/tests/rdtest10p1.C \
         sl2rd/tests/rdtest10p2.C  sl2rd/tests/rdtest10p3.C \
         sl2rd/sl2rd.set sl2rd/sl2rd.optla sl2rd/runtests \
-        constprop/constprop.set constprop/constprop.optla \
+        constprop/constprop.optla \
 	constprop/tests/cconstants.c  constprop/tests/classes_and_returns.C  \
 	constprop/tests/demo2.C       constprop/tests/intval.c \
 	constprop/tests/namespaces.C  constprop/tests/small.c \
@@ -127,6 +127,11 @@ installcheck-local:
 
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
+	##GB working around possible problems with old constprop.set files
+	if [ -e $(testdir)/constprop/constprop.set ] ; then \
+		echo "info: $(top_srcdir)/examples/constprop/constprop.set no longer in CVS, ignoring your local copy" ; \
+		rm -f $(testdir)/constprop/constprop.set ; \
+	fi
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
 	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite

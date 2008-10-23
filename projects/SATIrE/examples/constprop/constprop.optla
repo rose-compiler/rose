@@ -40,6 +40,16 @@
 // variables cannot be referenced by the program anymore.
 
 
+SET
+
+DOMAIN
+    Const = flat(snum)
+    State = VariableId -> Const
+    ConstStatePair = Const * State
+    LiftedState = lift(State)
+ENDDOMAIN
+
+
 PROBLEM Constant_Propagation
     direction:  forward
     carrier:    LiftedState

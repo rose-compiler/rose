@@ -30,9 +30,18 @@ D_FLAGS = -DCARRIER_TYPE=$(CARRIER_TYPE) -DPREFIX=$(PREFIX) -DPREFIX_SET=$(PREFI
 
 .PHONY: all clean check update newanalysis
 
-all: $(ANALYSIS)
+# GB: All of the specification (including the SET part) can be put into the
+# .optla file, the .set file is no longer mandatory. Thus $(ANALYSIS).a now
+# depends on the .optla file only because .set might not exist; however, IF
+# it exists and is newer than the .optla file, this rule touches the .optla
+# file to make sure that the analyzer is rebuilt.
+all:
+	@ if [ $(ANALYSIS).set -nt $(ANALYSIS).optla ]; then \
+		touch $(ANALYSIS).optla; $(MAKE) $(ANALYSIS).a; \
+	fi
+	$(MAKE) $(ANALYSIS)
 
-$(ANALYSIS).a: $(ANALYSIS).set $(ANALYSIS).optla
+$(ANALYSIS).a: $(ANALYSIS).optla
 	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
 	rm -rf $(ANALYSIS)-out/src/*
