@@ -41,7 +41,7 @@ all:
 	fi
 	$(MAKE) $(ANALYSIS)
 
-$(ANALYSIS).a: $(ANALYSIS).optla
+$(ANALYSIS).a: $(ANALYSIS).optla Makefile
 	mkdir -p anim-out
 	mkdir -p $(ANALYSIS)-out/src
 	rm -rf $(ANALYSIS)-out/src/*
@@ -61,13 +61,13 @@ $(ANALYSIS).a: $(ANALYSIS).optla
 	$(MAKE) `ar t $(SATIRE_LIB)/libpagdatatypes.a | sed -s 's/^/-o /'` CFLAGS="$(CUSTOM_CFLAGS) $(D_FLAGS) -w" -C $(ANALYSIS)-out/src/
 	cp $(ANALYSIS)-out/src/$(ANALYSIS).a .
 
-main.o: main.C
+main.o: main.C Makefile
 	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main.C
 
-main-support.o: main-support.C
+main-support.o: main-support.C Makefile
 	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c main-support.C
 
-$(ANALYSIS)_implementation.o: $(ANALYSIS)_implementation.h $(ANALYSIS)_implementation.C
+$(ANALYSIS)_implementation.o: $(ANALYSIS)_implementation.h $(ANALYSIS)_implementation.C Makefile
 	$(CXX) $(CXXFLAGS) $(D_FLAGS) $(CUSTOM_CFLAGS) -c $(ANALYSIS)_implementation.C
 
 $(ANALYSIS): $(ANALYSIS).a $(ANALYSIS)_implementation.o main.o main-support.o $(OTHERANALYSISLIBS)

@@ -92,7 +92,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
-	$(MAKE) check -C $(testdir)/sl1rd
+	$(MAKE) -j1 check -C $(testdir)/sl1rd
 
 	@echo
 	@echo "Testing sl2rd"
@@ -100,7 +100,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl2rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
-	$(MAKE) check -C $(testdir)/sl2rd
+	$(MAKE) -j1 check -C $(testdir)/sl2rd
 
 	@echo
 	@echo "Testing nnh99_shape"
@@ -108,7 +108,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
 	chmod u+rwx -R $(testdir)/nnh99_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) check -C $(testdir)/nnh99_shape
+	$(MAKE) -j1 check -C $(testdir)/nnh99_shape
 
 	@echo
 	@echo "Testing srw98_shape"
@@ -116,7 +116,7 @@ installcheck-local:
 	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) check -C $(testdir)/srw98_shape
+	$(MAKE) -j1 check -C $(testdir)/srw98_shape
 
 	@echo
 	@echo "Testsuite..."
@@ -133,7 +133,7 @@ installcheck-local:
 		rm -f $(testdir)/constprop/constprop.set ; \
 	fi
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	$(MAKE) -C $(testdir)/constprop
+	$(MAKE) -j1 -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite
 
 	##cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
