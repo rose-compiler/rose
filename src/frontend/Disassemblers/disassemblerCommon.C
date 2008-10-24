@@ -192,7 +192,7 @@ SgAsmInstruction* DisassemblerCommon::AsmFileWithData::disassembleOneAtAddress(u
     } else if (isa == SgAsmExecutableFileFormat::ISA_PowerPC) {
 
    // DQ (10/12/2008): Added support for PowerPC.
-      PowerpcDisassembler::Parameters params(addr, true);
+      PowerpcDisassembler::Parameters params(addr);
 
    // printf ("Initial file starting address (entry point) = %p  file size = %zu  fileOffset = %zu \n",&(file->content()[0]),file->get_orig_size(),fileOffset);
 
