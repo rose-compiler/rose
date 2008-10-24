@@ -22,6 +22,7 @@ include_HEADERS = \
      sageBuilder.h \
      sageBuilderAsm.h \
      endianWrappers.h \
+     integerOps.h \
      abiStuff.h
 #     highLevelInterface.h
 #     loopHelpers.h 
