@@ -78,6 +78,18 @@ inline T shiftRightArithmetic(T value, size_t count) {
   }
 }
 
+template <size_t NBits, typename T>
+inline T rotateLeft(T value, size_t count) {
+  count %= NBits;
+  return ((value << count) | (value >> (NBits - count))) & GenMask<T, NBits>::value;
+}
+
+template <size_t NBits, typename T>
+inline T rotateRight(T value, size_t count) {
+  count %= NBits;
+  return ((value >> count) | (value << (NBits - count))) & GenMask<T, NBits>::value;
+}
+
 } // namespace IntegerOps
 
 #endif // ROSE_INTEGEROPS_H

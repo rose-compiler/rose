@@ -18,28 +18,4 @@ static inline int numBytesInAsmType(SgAsmType* ty) {
   }
 }
 
-static inline uint64_t shl1(unsigned int amount) { // 2**amount, safe for when amount >= 64
-  if (amount >= 64) return 0;
-  return 1ULL << amount;
-}
-
-template <unsigned int Amount, bool AtLeast64>
-struct SHL1Helper {};
-
-template <unsigned int Amount>
-struct SHL1Helper<Amount, false> {
-  static const uint64_t value = (1ULL << Amount);
-};
-
-template <unsigned int Amount>
-struct SHL1Helper<Amount, true> {
-  static const uint64_t value = 0;
-};
-
-template <unsigned int Amount>
-struct SHL1 {
-  static const uint64_t value = SHL1Helper<Amount, (Amount >= 64)>::value;
-};
-
-
 #endif // ROSE_SEMANTICSMODULE_H
