@@ -72,11 +72,14 @@ testdir=installcheck-executable-examples
 
 .PHONY: tests sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
 
-installcheck-local: tests
+installcheck-local: 
+	rm -f init.token
+	$(MAKE) tests
 	@echo "Cleanup..."
 	chmod -R u+w $(testdir)
 	rm -rf $(testdir)
-	rm init.token
+	rm -f init.token
+
 
 tests: sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
 
@@ -104,7 +107,7 @@ sl1rd: init.token
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl1rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
-	$(MAKE) -j1 check -C $(testdir)/sl1rd
+	$(MAKE) check -C $(testdir)/sl1rd
 
 sl2rd: init.token
 	@echo
@@ -113,7 +116,7 @@ sl2rd: init.token
 	cp -ur $(top_srcdir)/examples/sl2rd $(testdir)
 	chmod u+rwx -R $(testdir)/sl2rd
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
-	$(MAKE) -j1 check -C $(testdir)/sl2rd
+	$(MAKE) check -C $(testdir)/sl2rd
 
 nnh99_shape: init.token
 	@echo
@@ -122,7 +125,7 @@ nnh99_shape: init.token
 	cp -ur $(top_srcdir)/examples/nnh99_shape $(testdir)
 	chmod u+rwx -R $(testdir)/nnh99_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
-	$(MAKE) -j1 check -C $(testdir)/nnh99_shape
+	$(MAKE) check -C $(testdir)/nnh99_shape
 
 srw98_shape: init.token
 	@echo
@@ -131,7 +134,7 @@ srw98_shape: init.token
 	cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
 	chmod u+rwx -R $(testdir)/srw98_shape
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
-	$(MAKE) -j1 check -C $(testdir)/srw98_shape
+	$(MAKE) check -C $(testdir)/srw98_shape
 
 testsuite: init.token
 	@echo
@@ -149,7 +152,7 @@ testsuite: init.token
 		rm -f $(testdir)/constprop/constprop.set ; \
 	fi
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis constprop
-	$(MAKE) -j1 -C $(testdir)/constprop
+	$(MAKE) -C $(testdir)/constprop
 	cd $(testdir) ; sh testsuite/testsuite.sh constprop/constprop testsuite
 
 	##cp -ur $(top_srcdir)/examples/srw98_shape $(testdir)
