@@ -20,7 +20,7 @@ powerpcAssemblyToCDemo_DEPENDENCIES = powerpcAssemblyToC.C powerpcInstructionSem
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-x86AssemblyToBtor_SOURCES = x86AssemblyToBtor.C btorProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h btorProblem.C semanticsModule.h
+x86AssemblyToBtor_SOURCES = x86AssemblyToBtor.C x86AssemblyToBtor.h btorProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h btorProblem.C semanticsModule.h
 x86AssemblyToBtor_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToBtor_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 readAndWriteSets_SOURCES = readAndWriteSets.C x86InstructionSemantics.h semanticsModule.h
@@ -37,7 +37,7 @@ lookForErrors_SOURCES = lookForErrors.C satProblem.h x86AssemblyToNetlist.h
 btorUnroll_SOURCES = btorUnroll.C btorProblem.h btorProblem.C
 btorCleanup_SOURCES = btorCleanup.C btorProblem.h btorProblem.C
 
-include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
+include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h
 
 # powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
