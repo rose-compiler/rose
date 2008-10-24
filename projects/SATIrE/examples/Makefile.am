@@ -67,26 +67,38 @@ EXTRA_DIST= \
 
 testdir=installcheck-executable-examples
 
-installcheck-local:
+# The tests are now split into separate targets to facilitate a
+# paralellized run of the testsuite (make -j #N installcheck)
+
+.PHONY: tests sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
+
+installcheck-local: tests
+	@echo "Cleanup..."
+	chmod -R u+w $(testdir)
+	rm -rf $(testdir)
+	rm init.token
+
+tests: sl1rd sl2rd nnh99_shape srw98_shape testsuite termite
+
+init.token:
+	@echo "Init..."
 	rm -rf $(testdir)
 	mkdir -p $(testdir)
+	touch init.token
 
+termite: init.token
 	@echo
 	@echo "========================================================================"
 	@echo "TERMITE tests"
 	@echo "========================================================================"
-
 	cp $(top_srcdir)/examples/constprop/tests/bigger.c $(testdir)/TEST0.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST0.c  TEST1.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose TEST1.pl TEST2.c
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/rose2term TEST2.c  TEST3.pl
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/term2rose TEST3.pl TEST4.c
 
-	@echo "========================================================================"
-	@echo "PAG tests"
-	@echo "========================================================================"
-
-	@echo 
+sl1rd: init.token
+	@echo
 	@echo "Testing sl1rd"
 	@echo "====================="
 	cp -ur $(top_srcdir)/examples/sl1rd $(testdir)
@@ -94,6 +106,7 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl1rd
 	$(MAKE) -j1 check -C $(testdir)/sl1rd
 
+sl2rd: init.token
 	@echo
 	@echo "Testing sl2rd"
 	@echo "====================="
@@ -102,6 +115,7 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u sl2rd
 	$(MAKE) -j1 check -C $(testdir)/sl2rd
 
+nnh99_shape: init.token
 	@echo
 	@echo "Testing nnh99_shape"
 	@echo "====================="
@@ -110,6 +124,7 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u nnh99_shape
 	$(MAKE) -j1 check -C $(testdir)/nnh99_shape
 
+srw98_shape: init.token
 	@echo
 	@echo "Testing srw98_shape"
 	@echo "====================="
@@ -118,6 +133,7 @@ installcheck-local:
 	cd $(testdir) ; $(DESTDIR)/$(bindir)/newanalysis -u srw98_shape
 	$(MAKE) -j1 check -C $(testdir)/srw98_shape
 
+testsuite: init.token
 	@echo
 	@echo "Testsuite..."
 	@echo "====================="
@@ -148,5 +164,3 @@ installcheck-local:
 	##$(MAKE) -C $(testdir)/nnh99_shape
 	##cd $(testdir) ; sh testsuite/testsuite.sh nnh99_shape/nnh99_shape testsuite 
 
-	chmod -R u+w $(testdir)
-	rm -rf $(testdir)
