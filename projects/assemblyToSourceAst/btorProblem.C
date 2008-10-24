@@ -1,5 +1,6 @@
 #include "btorProblem.h"
 #include "x86AssemblyToNetlist.h"
+#include "integerOps.h"
 #include <cassert>
 #include <vector>
 #include <map>
@@ -10,6 +11,7 @@
 #include <inttypes.h>
 
 using namespace std;
+using namespace IntegerOps;
 
 BtorOperatorInfo btorOperators[btor_NUM_OPERATORS] = {
   // Fields are enum value, string, num operands, num immediates, returns array, final string
@@ -192,24 +194,24 @@ uintmax_t BtorComputation::constantValue() const {
     case btor_op_const: return immediates[0];
     case btor_op_zero: return 0;
     case btor_op_one: return 1;
-    case btor_op_ones: return (~0ULL) & (shl1(type.bitWidth) - 1);
-    case btor_op_eq: return (((operands[0].constantValue() ^ operands[1].constantValue()) & (shl1(operands[0].bitWidth()) - 1)) == 0);
+    case btor_op_ones: return genMask<uintmax_t>(type.bitWidth);
+    case btor_op_eq: return (((operands[0].constantValue() ^ operands[1].constantValue()) & (genMask<uintmax_t>(operands[0].bitWidth()))) == 0);
     case btor_op_and: return operands[0].constantValue() & operands[1].constantValue();
     case btor_op_or: return operands[0].constantValue() | operands[1].constantValue();
     case btor_op_xor: return operands[0].constantValue() ^ operands[1].constantValue();
-    case btor_op_not: return operands[0].constantValue() ^ (shl1(type.bitWidth) - 1);
-    case btor_op_nand: return (operands[0].constantValue() & operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
-    case btor_op_nor: return (operands[0].constantValue() | operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
-    case btor_op_xnor: return (operands[0].constantValue() ^ operands[1].constantValue()) ^ (shl1(type.bitWidth) - 1);
-    case btor_op_redand: return operands[0].constantValue() == shl1(operands[0].bitWidth() - 1);
+    case btor_op_not: return operands[0].constantValue() ^ (genMask<uintmax_t>(type.bitWidth));
+    case btor_op_nand: return (operands[0].constantValue() & operands[1].constantValue()) ^ genMask<uintmax_t>(type.bitWidth);
+    case btor_op_nor: return (operands[0].constantValue() | operands[1].constantValue()) ^ genMask<uintmax_t>(type.bitWidth);
+    case btor_op_xnor: return (operands[0].constantValue() ^ operands[1].constantValue()) ^ genMask<uintmax_t>(type.bitWidth);
+    case btor_op_redand: return operands[0].constantValue() == genMask<uintmax_t>(type.bitWidth);
     case btor_op_redor: return operands[0].constantValue() != 0;
-    case btor_op_add: return (operands[0].constantValue() + operands[1].constantValue()) & (shl1(type.bitWidth) - 1);
-    case btor_op_neg: return (-operands[0].constantValue()) & (shl1(type.bitWidth) - 1);
+    case btor_op_add: return (operands[0].constantValue() + operands[1].constantValue()) & genMask<uintmax_t>(type.bitWidth);
+    case btor_op_neg: return (-operands[0].constantValue()) & genMask<uintmax_t>(type.bitWidth);
     case btor_op_cond: return operands[0].constantValue() ? operands[1].constantValue() : operands[2].constantValue();
     case btor_op_slice: {
       uintmax_t c = operands[0].constantValue();
       c >>= immediates[1];
-      c &= shl1(type.bitWidth) - 1;
+      c &= genMask<uintmax_t>(type.bitWidth);
       return c;
     }
     case btor_op_concat: return (operands[0].constantValue() << operands[1].bitWidth()) | operands[1].constantValue();

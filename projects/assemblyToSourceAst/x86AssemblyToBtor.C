@@ -1,4 +1,5 @@
 #include "x86InstructionSemantics.h"
+#include "integerOps.h"
 #include <cassert>
 #include <cstdio>
 #include <boost/static_assert.hpp>
@@ -6,6 +7,7 @@
 #include "x86AssemblyToNetlist.h" // Mostly for BMCError and numBmcErrors
 
 using namespace std;
+using namespace IntegerOps;
 using boost::array;
 
 typedef BtorComputationPtr Comp;
@@ -149,7 +151,7 @@ struct BtorTranslationPolicy {
 
   template <size_t Len>
   Comp number(uint64_t n) {
-    return problem.build_constant(Len, (n & (SHL1<Len>::value - 1)));
+    return problem.build_constant(Len, (n & (GenMask<uint64_t, Len>::value)));
   }
 
   Comp concat(const Comp& a, const Comp& b) {
@@ -230,14 +232,6 @@ struct BtorTranslationPolicy {
     return invert(problem.build_op_redor(a));
   }
 
-  template <size_t Len>
-  Comp generateMask(Comp w) {
-    uint fullLen = shl1(w.bitWidth());
-    assert (Len <= fullLen);
-    Comp w2 = ite(problem.build_op_ugt(w, problem.build_constant(w.bitWidth(), Len - 1)), problem.build_constant(w.bitWidth(), Len - 1), w);
-    return extractVar(invert(problem.build_op_sll(ones(fullLen), w2)), 0, Len);
-  }
-
   Comp zero(uint width) {
     assert (width != 0);
     return problem.build_op_zero(width);
@@ -264,13 +258,6 @@ struct BtorTranslationPolicy {
     Comp carriesFull = xor_(xor_(sumFull, aFull), bFull);
     carries = extractVar(carriesFull, 1, carriesFull.bitWidth());
     return sum;
-  }
-
-  static uint log2(uint a) {
-    uint n = 1ULL;
-    uint i = 0;
-    while (n != 0 && n < a) {n <<= 1; ++i;}
-    return i;
   }
 
   Comp rotateLeft(const Comp& a, const Comp& cnt) {

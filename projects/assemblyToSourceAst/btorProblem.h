@@ -16,6 +16,7 @@
 #include <map>
 #include <string>
 #include "semanticsModule.h"
+#include "integerOps.h"
 
 typedef unsigned int uint;
 
@@ -206,7 +207,7 @@ inline uint BtorComputationPtr::arraySize() const {return type().arraySize;}
 inline bool BtorComputationPtr::isConstant() const {return p->isConstant();}
 inline uintmax_t BtorComputationPtr::constantValue() const {
   uintmax_t val = p->constantValue();
-  if (inverted) val ^= (shl1(this->bitWidth()) - 1);
+  if (inverted) val ^= (IntegerOps::shl1<uintmax_t>(this->bitWidth()) - 1);
   return val;
 }
 
