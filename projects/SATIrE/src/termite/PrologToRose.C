@@ -3134,6 +3134,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //  cerr << message << "\n";
+  //    cerr << message << "\n";
 #endif
 }

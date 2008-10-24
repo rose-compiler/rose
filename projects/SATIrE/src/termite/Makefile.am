@@ -69,5 +69,6 @@ nobase_include_HEADERS = \
 
 EXTRA_DIST = README LICENCE doc Makefile.original tests \
              c2term term2c \
-             dfiparser.y++ dfiparser.tab.h++ dfiscanner.l++
+             dfiparser.y++ dfiparser.tab.h++ dfiscanner.l++ \
+	     clang/README clang/INSTALL clang/BUILD-clang.sh clang/clang-termite.patch
 

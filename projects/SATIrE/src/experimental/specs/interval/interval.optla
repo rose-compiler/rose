@@ -399,8 +399,8 @@ eval_branch_condition(exp, state, newstate, edge, isLoopBody) =
       _ => newstate;
     endcase
   else 
-    //lift([-> (top,top)])
-    newstate
+    lift([-> (top,top)])
+    //newstate
   endif;
 
 
