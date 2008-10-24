@@ -46,10 +46,10 @@ namespace PowerpcDisassembler
           SgAsmPowerpcInstruction* decode_MD_formInstruction();
           SgAsmPowerpcInstruction* decode_MDS_formInstruction();
 
-          SgAsmDoubleWordValueExpression* makeBranchTarget( uint32_t targetAddr ) const;
+          SgAsmQuadWordValueExpression* makeBranchTarget( uint64_t targetAddr ) const;
         };
 
-     SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn);
+     SgAsmPowerpcInstruction* makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn);
 
   // SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);
      SgAsmPowerpcRegisterReferenceExpression* makeRegister(PowerpcRegisterClass reg_class, int reg_number, PowerpcConditionRegisterAccessGranularity reg_grainularity = powerpc_condreggranularity_whole );
@@ -69,8 +69,8 @@ namespace PowerpcDisassembler
 #define MAKE_INSN4(Mne, Op1, Op2, Op3, Op4) (appendOperand(MAKE_INSN3(Mne, Op1, Op2, Op3), (Op4)))
 #define MAKE_INSN5(Mne, Op1, Op2, Op3, Op4, Op5) (appendOperand(MAKE_INSN4(Mne, Op1, Op2, Op3, Op4), (Op5)))
 
-SgAsmDoubleWordValueExpression*
-PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget ( uint32_t targetAddr ) const
+SgAsmQuadWordValueExpression*
+PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget ( uint64_t targetAddr ) const
    {
   // int32_t val = insn & 0xFFFFFF;
   // val <<= 8;
@@ -83,7 +83,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::makeBranchTarget ( uint32_t 
 #endif
 
      if (knownSuccessorsReturn) knownSuccessorsReturn->insert(targetAddr);
-     return makeDWordValue(targetAddr);
+     return makeQWordValue(targetAddr);
    }
 
 bool
@@ -94,7 +94,7 @@ PowerpcDisassembler::doesBBStartFunction(SgAsmBlock* bb, bool use64bit)
    }
 
 SgAsmPowerpcInstruction*
-PowerpcDisassembler::makeInstructionWithoutOperands(uint32_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn)
+PowerpcDisassembler::makeInstructionWithoutOperands(uint64_t address, const std::string& mnemonic, PowerpcInstructionKind kind, uint32_t insn)
    {
   // Constructor: SgAsmPowerpcInstruction(rose_addr_t address = 0, std::string mnemonic = "", PowerpcInstructionKind kind = powerpc_unknown_instruction);
      SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, mnemonic, kind);
@@ -432,7 +432,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_I_formInstruction()
                     targetBranchAddress += p.ip;
                   }
 
-               SgAsmDoubleWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
                ROSE_ASSERT(knownSuccessorsReturn->empty() == false);
 
                if (aaOpcode == 0)
@@ -519,7 +519,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
 
             // DQ (10/15/2008): Compute the address of the branch to restart the disassembly.
             // The address is BD || 0b00 sign-extended.
-               uint32_t computedAddress = (bdOpcode >= (1U << 13)) ? bdOpcode - (1U << 14) : bdOpcode;
+               uint64_t computedAddress = (bdOpcode >= (1U << 13)) ? bdOpcode - (1U << 14) : bdOpcode;
                computedAddress <<= 2;
 
                uint32_t targetBranchAddress = computedAddress;
@@ -530,7 +530,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
                     targetBranchAddress += p.ip;
                   }
 
-               SgAsmDoubleWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
+               SgAsmQuadWordValueExpression* targetAddressExpression = makeBranchTarget(targetBranchAddress);
                ROSE_ASSERT(knownSuccessorsReturn->empty() == false);
 
                if (lkOpcode == 0)

@@ -68,9 +68,9 @@ namespace PowerpcDisassembler
    {
      struct Parameters
         {
-          uint32_t ip;
+          uint64_t ip;
           bool decodeUnconditionalInstructions;
-          Parameters(uint32_t ip = 0, bool decodeUnconditionalInstructions = true): ip(ip), decodeUnconditionalInstructions(decodeUnconditionalInstructions) {}
+          Parameters(uint64_t ip = 0): ip(ip) {}
         };
 
   // SgAsmPowerpcRegisterReferenceExpression* makeRegister(uint8_t reg);

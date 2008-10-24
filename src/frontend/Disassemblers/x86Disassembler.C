@@ -2,16 +2,11 @@
 #include <fcntl.h>
 #include <vector>
 #include "rose.h"
-
-// DQ (8/21/2008): No longer used (using new IR nodes now)
-// #include "freebsd_elf_combined.h"
-// #include "ExecGeneric.h"
+#include "integerOps.h"
 
 using namespace std;
 using namespace SageBuilderAsm;
-
-// DQ (8/21/2008): No longer used (using new IR nodes now)
-// using namespace Exec;
+using namespace IntegerOps;
 
 namespace X86Disassembler {
 
@@ -372,7 +367,7 @@ namespace X86Disassembler {
         if (modeField == 0 && rmField == 5) { // Special case
           uint32_t offset;
           getDWord(offset);
-          addressExpr = makeAddrSizeValue((int64_t)(int32_t)offset);
+          addressExpr = makeAddrSizeValue(signExtend<32, 64>((uint64_t)offset));
           if (p.insnSize == x86_insnsize_64) {
             addressExpr = makeAdd(makeIP(), addressExpr);
           }
@@ -387,7 +382,7 @@ namespace X86Disassembler {
             SgAsmExpression* sibBase = NULL;
             if (sibBaseField == 5) {
               switch (modeField) {
-                case 0: {uint32_t offset; getDWord(offset); sibBase = makeAddrSizeValue((int64_t)(int32_t)offset); break;}
+                case 0: {uint32_t offset; getDWord(offset); sibBase = makeAddrSizeValue(signExtend<32, 64>((uint64_t)offset)); break;}
                 case 1: {sibBase = makeRegister((rexB ? 13 : 5), sizeToMode(p.insnSize)); defaultSeg = x86_segreg_ss; break;}
                 case 2: {sibBase = makeRegister((rexB ? 13 : 5), sizeToMode(p.insnSize)); defaultSeg = x86_segreg_ss; break;}
                 default: ROSE_ASSERT (false);
@@ -409,8 +404,8 @@ namespace X86Disassembler {
           }
           switch (modeField) {
             case 0: break; // No offset
-            case 1: {uint8_t offset; getByte(offset); addressExpr = makeAdd(addressExpr, makeAddrSizeValue((int64_t)(int8_t)offset)); break;}
-            case 2: {uint32_t offset; getDWord(offset); addressExpr = makeAdd(addressExpr, makeAddrSizeValue((int64_t)(int32_t)offset)); break;}
+            case 1: {uint8_t offset; getByte(offset); addressExpr = makeAdd(addressExpr, makeAddrSizeValue(signExtend<8, 64>((uint64_t)offset))); break;}
+            case 2: {uint32_t offset; getDWord(offset); addressExpr = makeAdd(addressExpr, makeAddrSizeValue(signExtend<32, 64>((uint64_t)offset))); break;}
             default: ROSE_ASSERT (false);
           }
         }
@@ -605,7 +600,7 @@ namespace X86Disassembler {
         case x86_insnsize_64: {
           uint32_t val;
           getDWord(val);
-          return makeQWordValue((int64_t)(int32_t)val);
+          return makeQWordValue(signExtend<32, 64>((uint64_t)val));
         }
         default: ROSE_ASSERT (false);
       }
@@ -624,37 +619,39 @@ namespace X86Disassembler {
       uint8_t val;
       getByte(val);
       switch (effectiveOperandSize()) {
-        case x86_insnsize_16: return makeWordValue((int16_t)(int8_t)val);
-        case x86_insnsize_32: return makeDWordValue((int32_t)(int8_t)val);
-        case x86_insnsize_64: return makeQWordValue((int64_t)(int8_t)val);
+        case x86_insnsize_16: return makeWordValue(signExtend<8, 16>((uint64_t)val));
+        case x86_insnsize_32: return makeDWordValue(signExtend<8, 32>((uint64_t)val));
+        case x86_insnsize_64: return makeQWordValue(signExtend<8, 64>((uint64_t)val));
         default: ROSE_ASSERT (false);
       }
     }
 
     SgAsmExpression* getImmJb() {
-      int8_t val;
-      getByte((uint8_t&)val);
+      uint8_t val;
+      getByte(val);
+      uint64_t target = p.ip + positionInInstruction + signExtend<8, 64>((uint64_t)val);
       if (knownSuccessorsReturn) {
-        knownSuccessorsReturn->insert(p.ip + positionInInstruction + (int64_t)(int8_t)val);
+        knownSuccessorsReturn->insert(target);
       }
-      return makeQWordValue(p.ip + positionInInstruction + (int64_t)(int8_t)val);
+      return makeQWordValue(target);
     }
 
     SgAsmExpression* getImmJz() {
-      int64_t val;
+      uint64_t val;
       if (effectiveOperandSize() == x86_insnsize_16) {
         uint16_t val2;
         getWord(val2);
-        val = (int64_t)(int16_t)val2;
+        val = signExtend<16, 64>((uint64_t)val2);
       } else {
         uint32_t val2;
         getDWord(val2);
-        val = (int64_t)(int32_t)val2;
+        val = signExtend<32, 64>((uint64_t)val2);
       }
+      uint64_t target = p.ip + positionInInstruction + val;
       if (knownSuccessorsReturn) {
-        knownSuccessorsReturn->insert(p.ip + positionInInstruction + val);
+        knownSuccessorsReturn->insert(target);
       }
-      return makeQWordValue(p.ip + positionInInstruction + val);
+      return makeQWordValue(target);
     }
 
     SgAsmExpression* getImmForAddr() {
