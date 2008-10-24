@@ -338,6 +338,12 @@ these can be ignored.
            type {\tt make installcheck}.
            A sample {\tt makefile} is generated.%; see section \ref{gettingStarted:compilingTranslator}.
 \end{enumerate}
+\subsection{Building ROSE from a Development Version}
+Building ROSE from an internal or external development version is very
+similar to building it from a distribution. The major difference is that
+for development versions, you have to type ./build in the source tree to 
+generate the configure script and Makefile.ins. Once this is done, the rest
+steps are the same as those of building a distribution version.
 
 \subsection{ROSE Configure Options}
 \label{gettingStarted:configureOptions}
@@ -506,6 +512,10 @@ Type {\tt make check} to run your build version of ROSE using these test codes.
 Several years of contributed bug reports and internal test codes have been accumulated 
 in the {\tt ROSE/tests} directory.
 
+Extra tests are available for development versions of ROSE. ROSE developers
+are highly recommended to run {\tt make dist} and {\tt make distcheck} to make
+sure that the modified development versions can be used to create functioning
+distributions.
 \subsection{Getting Help}
      You may use the following mailing list to ask for help from the ROSE development 
 team: {\it casc-rose *dot* llnl *dot* gov}.
