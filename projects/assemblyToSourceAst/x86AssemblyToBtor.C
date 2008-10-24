@@ -20,6 +20,7 @@ struct BTRegisterInfo {
   Comp memory;
 };
 
+template <typename Hooks>
 struct BtorTranslationPolicy {
   template <size_t Len>
   struct wordType {typedef Comp type;};
@@ -28,8 +29,10 @@ struct BtorTranslationPolicy {
   BTRegisterInfo newRegisterMap;
   BTRegisterInfo origRegisterMap;
   Comp isValidIp;
+  vector<uint32_t> validIPs;
   Comp notResetState;
   BtorProblem problem;
+  Hooks& hooks;
 
   void makeRegMap(BTRegisterInfo& rm, const string& prefix) {
     for (size_t i = 0; i < 8; ++i) {
@@ -56,7 +59,7 @@ struct BtorTranslationPolicy {
     for (size_t i = 0; i < numBmcErrors; ++i) {
       rm.errorFlag[i] = false_();
     }
-    rm.memory = problem.build_array(8, 32, "zeroMemory");
+    rm.memory = problem.build_array(8, 32, "initial_memory");
   }
 
   void addNext(Comp cur, Comp next) {
@@ -78,43 +81,76 @@ struct BtorTranslationPolicy {
     addAnext(origRegisterMap.memory, newRegisterMap.memory);
   }
 
-  void setInitialState(uint32_t entryPoint) {
+  void setInitialState(uint32_t entryPoint, bool initialConditionsAreUnknown) {
     registerMap = origRegisterMap;
-    writeGPR(x86_gpr_ax, zero(32));
-    writeGPR(x86_gpr_cx, zero(32));
-    writeGPR(x86_gpr_dx, zero(32));
-    writeGPR(x86_gpr_bx, zero(32));
-    writeGPR(x86_gpr_sp, number<32>(0xBFFF0000U));
-    writeGPR(x86_gpr_bp, zero(32));
-    writeGPR(x86_gpr_si, zero(32));
-    writeGPR(x86_gpr_di, zero(32));
-    writeIP(number<32>(entryPoint));
-    writeFlag(x86_flag_cf, false_());
-    writeFlag(x86_flag_1, true_());
-    writeFlag(x86_flag_pf, false_());
-    writeFlag(x86_flag_3, false_());
-    writeFlag(x86_flag_af, false_());
-    writeFlag(x86_flag_5, false_());
-    writeFlag(x86_flag_zf, false_());
-    writeFlag(x86_flag_sf, false_());
-    writeFlag(x86_flag_tf, false_());
-    writeFlag(x86_flag_if, true_());
-    writeFlag(x86_flag_df, false_());
-    writeFlag(x86_flag_of, false_());
-    writeFlag(x86_flag_iopl0, false_());
-    writeFlag(x86_flag_iopl1, false_());
-    writeFlag(x86_flag_nt, false_());
-    writeFlag(x86_flag_15, false_());
+    if (initialConditionsAreUnknown) {
+      writeGPR(x86_gpr_ax, problem.build_var(32, "initial_eax"));
+      writeGPR(x86_gpr_cx, problem.build_var(32, "initial_ecx"));
+      writeGPR(x86_gpr_dx, problem.build_var(32, "initial_edx"));
+      writeGPR(x86_gpr_bx, problem.build_var(32, "initial_ebx"));
+      writeGPR(x86_gpr_sp, problem.build_var(32, "initial_esp"));
+      writeGPR(x86_gpr_bp, problem.build_var(32, "initial_ebp"));
+      writeGPR(x86_gpr_si, problem.build_var(32, "initial_esi"));
+      writeGPR(x86_gpr_di, problem.build_var(32, "initial_edi"));
+      assert (!validIPs.empty());
+      Comp initialEip = number<32>(entryPoint);
+      for (size_t i = 0; i < validIPs.size(); ++i) {
+        initialEip = ite(problem.build_var(1), number<32>(validIPs[i]), initialEip);
+      }
+      writeIP(initialEip);
+      writeFlag(x86_flag_cf, problem.build_var(1, "initial_cf"));
+      writeFlag(x86_flag_1, true_());
+      writeFlag(x86_flag_pf, problem.build_var(1, "initial_pf"));
+      writeFlag(x86_flag_3, false_());
+      writeFlag(x86_flag_af, problem.build_var(1, "initial_af"));
+      writeFlag(x86_flag_5, false_());
+      writeFlag(x86_flag_zf, problem.build_var(1, "initial_zf"));
+      writeFlag(x86_flag_sf, problem.build_var(1, "initial_sf"));
+      writeFlag(x86_flag_tf, false_());
+      writeFlag(x86_flag_if, true_());
+      writeFlag(x86_flag_df, problem.build_var(1, "initial_df"));
+      writeFlag(x86_flag_of, problem.build_var(1, "initial_of"));
+      writeFlag(x86_flag_iopl0, false_());
+      writeFlag(x86_flag_iopl1, false_());
+      writeFlag(x86_flag_nt, false_());
+      writeFlag(x86_flag_15, false_());
+    } else {
+      writeGPR(x86_gpr_ax, zero(32));
+      writeGPR(x86_gpr_cx, zero(32));
+      writeGPR(x86_gpr_dx, zero(32));
+      writeGPR(x86_gpr_bx, zero(32));
+      writeGPR(x86_gpr_sp, number<32>(0xBFFF0000U));
+      writeGPR(x86_gpr_bp, zero(32));
+      writeGPR(x86_gpr_si, zero(32));
+      writeGPR(x86_gpr_di, zero(32));
+      writeIP(number<32>(entryPoint));
+      writeFlag(x86_flag_cf, false_());
+      writeFlag(x86_flag_1, true_());
+      writeFlag(x86_flag_pf, false_());
+      writeFlag(x86_flag_3, false_());
+      writeFlag(x86_flag_af, false_());
+      writeFlag(x86_flag_5, false_());
+      writeFlag(x86_flag_zf, false_());
+      writeFlag(x86_flag_sf, false_());
+      writeFlag(x86_flag_tf, false_());
+      writeFlag(x86_flag_if, true_());
+      writeFlag(x86_flag_df, false_());
+      writeFlag(x86_flag_of, false_());
+      writeFlag(x86_flag_iopl0, false_());
+      writeFlag(x86_flag_iopl1, false_());
+      writeFlag(x86_flag_nt, false_());
+      writeFlag(x86_flag_15, false_());
+    }
     writeBackReset();
   }
 
-  BtorTranslationPolicy(uint32_t entryPoint): problem() {
+  BtorTranslationPolicy(Hooks& hooks): problem(), hooks(hooks) {
     makeRegMap(origRegisterMap, "");
     makeRegMapZero(newRegisterMap);
     isValidIp = false_();
+    validIPs.clear();
     notResetState = problem.build_var(1, "notFirstStep");
     addNext(notResetState, true_());
-    setInitialState(entryPoint);
   }
 
   Comp readGPR(X86GeneralPurposeRegister r) {
@@ -376,8 +412,8 @@ struct BtorTranslationPolicy {
   }
 
   void hlt() {
-    registerMap.errorFlag[bmc_error_program_failure] = problem.build_op_redor(readGPR(x86_gpr_bx));
-  } // FIXME
+    hooks.hlt(*this);
+  }
   void interrupt(uint8_t num) {} // FIXME
   Comp rdtsc() {return problem.build_var(64, "timestamp");}
 
@@ -399,6 +435,7 @@ struct BtorTranslationPolicy {
   void writeBack(uint64_t addr) {
     Comp isThisIp = and_(problem.build_op_eq(origRegisterMap.ip, number<32>(addr)), notResetState);
     isValidIp = or_(isValidIp, isThisIp);
+    validIPs.push_back((uint32_t)addr);
     writeBackCond(isThisIp);
   }
 
@@ -412,33 +449,43 @@ struct BtorTranslationPolicy {
     registerMap = origRegisterMap;
     registerMap.ip = number<32>(0xDEADBEEF);
     fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
+    hooks.startBlock(*this, addr);
   }
 
   void finishBlock(uint64_t addr) {
     writeBack(addr);
+    hooks.finishBlock(*this, addr);
   }
 
-  void startInstruction(SgAsmInstruction*) {}
-  void finishInstruction(SgAsmInstruction*) {}
+  void startInstruction(SgAsmx86Instruction* insn) {
+    hooks.startInstruction(*this, insn);
+  }
+  void finishInstruction(SgAsmx86Instruction* insn) {
+    hooks.finishInstruction(*this, insn);
+  }
 
 };
 
-int main(int argc, char** argv) {
-  SgProject* proj = frontend(argc, argv);
-  FILE* f = fopen("foo.btor", "w");
-  assert (f);
+static void usage(const char* argv0) {
+  fprintf(stderr, "Usage: %s (start|middle) program\n", argv0);
+  exit(1);
+}
+
+template <typename TranslationPolicy>
+string btorTranslate(TranslationPolicy& policy, SgProject* proj, FILE* outfile, bool initialConditionsAreUnknown) {
   vector<SgNode*> headers = NodeQuery::querySubTree(proj, V_SgAsmGenericHeader);
   ROSE_ASSERT (headers.size() == 1);
   SgAsmGenericHeader* header = isSgAsmGenericHeader(headers[0]);
   rose_addr_t entryPoint = header->get_entry_rva() + header->get_base_va();
-  BtorTranslationPolicy policy((uint32_t)entryPoint);
-  X86InstructionSemantics<BtorTranslationPolicy> t(policy);
+  X86InstructionSemantics<TranslationPolicy> t(policy);
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);
     ROSE_ASSERT (b);
+    if (b->get_statementList().empty()) continue;
     t.processBlock(b);
   }
+  policy.setInitialState(entryPoint, initialConditionsAreUnknown);
   // Add "bogus IP" error
   policy.newRegisterMap.errorFlag[bmc_error_bogus_ip] =
     policy.invert(policy.isValidIp);
@@ -447,7 +494,45 @@ int main(int argc, char** argv) {
     policy.problem.computations.push_back(policy.problem.build_op_root(policy.newRegisterMap.errorFlag[i]));
   }
   policy.addNexts();
-  string s = policy.problem.unparse();
+  return policy.problem.unparse();
+}
+
+struct HLTHooks {
+  void hlt(BtorTranslationPolicy<HLTHooks>& policy) {
+    policy.registerMap.errorFlag[bmc_error_program_failure] = policy.problem.build_op_redor(policy.readGPR(x86_gpr_bx));
+  }
+  void startInstruction(BtorTranslationPolicy<HLTHooks>& policy, SgAsmx86Instruction* insn) {
+  }
+  void finishInstruction(BtorTranslationPolicy<HLTHooks>& policy, SgAsmx86Instruction* insn) {
+  }
+  void startBlock(BtorTranslationPolicy<HLTHooks>& policy, uint64_t addr) {
+  }
+  void finishBlock(BtorTranslationPolicy<HLTHooks>& policy, uint64_t addr) {
+  }
+};
+
+int main(int argc, char** argv) {
+  if (argc < 3) {
+    usage(argv[0]);
+  }
+  string initialCondFlag = argv[1];
+  argv[1] = argv[0];
+  ++argv;
+  --argc;
+  bool initialConditionsAreUnknown;
+  if (initialCondFlag == "start") { // Start of execution
+    initialConditionsAreUnknown = false;
+  } else if (initialCondFlag == "middle") { // Arbitrary point in execution
+    initialConditionsAreUnknown = true;
+  } else {
+    usage(argv[0]);
+  }
+  SgProject* proj = frontend(argc, argv);
+  FILE* f = fopen("foo.btor", "w");
+  assert (f);
+  HLTHooks hooks;
+  BtorTranslationPolicy<HLTHooks> policy(hooks);
+  string s = btorTranslate(policy, proj, f, initialConditionsAreUnknown);
   fprintf(f, "%s", s.c_str());
   fclose(f);
   return 0;
