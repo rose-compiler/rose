@@ -90,6 +90,14 @@ inline T rotateRight(T value, size_t count) {
   return ((value >> count) | (value << (NBits - count))) & GenMask<T, NBits>::value;
 }
 
+template <typename T>
+inline T log2(T a) {
+  T n = T(1);
+  T i = 0;
+  while (n != 0 && n < a) {n <<= 1; ++i;}
+  return i;
+}
+
 } // namespace IntegerOps
 
 #endif // ROSE_INTEGEROPS_H
