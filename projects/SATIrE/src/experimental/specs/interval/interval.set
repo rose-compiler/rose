@@ -1,6 +1,4 @@
 SET
-    // dummy declaration, the implementation of the type is provided by SATIrE
-    VariableId = set(unum) /* SATIrE predefined type */
 
 DOMAIN
     Bound = flat(snum)

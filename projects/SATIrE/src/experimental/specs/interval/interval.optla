@@ -1,7 +1,7 @@
 // -- -*- haskell -*- (Fake Emacs mode for syntax highlighting
 // -- ------------------------------------------------------------------------
 // -- Authors: Gergo Barany, 2006 (original constprop)
-// --          Adrian Prantl, 2008 (interval extensions
+// --          Adrian Prantl, 2008 (interval extensions)
 // --          
 // -- Contact: adrian@complang.tuwien.ac.at
 // --
@@ -439,13 +439,6 @@ interval_to_bool((lift(0), lift(0))) = lift(false);
 interval_to_bool((lift(1), lift(1))) = lift(true);
 interval_to_bool(_) = top;
 
-is_unary :: Expression -> bool;
-is_binary :: Expression -> bool;
-is_value :: Expression -> bool;
-unary_get_child :: Expression -> Expression;
-binary_get_left_child :: Expression -> Expression;
-binary_get_right_child :: Expression -> Expression;
-
 //shiftleft :: snum, snum -> snum;
 //shiftleft(a, 0) = a;
 //shiftleft(a, b) = shiftleft(a*2, b-1);
@@ -509,7 +502,3 @@ eq(a, b)   = //print("eq a: ") print(a) print("\n")
              //print("eq b: ") print(b) print("\n\n")
              (a = b);
 
-// -- Predefined SATIrE Support Functions 
-varsym_varid :: VariableSymbolNT -> VariableId;
-varref_varid :: Expression -> VariableId;
-is_tmpvarid :: VariableId -> bool;
