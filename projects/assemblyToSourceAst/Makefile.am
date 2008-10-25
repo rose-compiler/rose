@@ -29,6 +29,7 @@ x86AssemblyToBtor_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lroseBtorSupport
 readAndWriteSets_SOURCES = readAndWriteSets.C x86InstructionSemantics.h semanticsModule.h
 readAndWriteSets_CPPFLAGS = $(ROSE_INCLUDES)
 readAndWriteSets_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 simplifyCnf_SOURCES = simplifyCnf.C satProblem.h
 simplifyCnf_LDADD = -lroseSatProblem
 removeUnusedVariables_SOURCES = removeUnusedVariables.C satProblem.h
@@ -55,7 +56,7 @@ libroseSatProblem_la_SOURCES = satProblem.h satProblem.C
 
 include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h btorProblem.h
 
-# powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
+#powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
 check:
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
@@ -64,6 +65,11 @@ check:
 	  ./x86AssemblyToBtor start $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 && \
 	  ./readAndWriteSets $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 > fnord.rws ; \
 	fi
+
+#powerpcAssemblyToCDemo.o : powerpcInstructionSemantics.h
+# powerpcAssemblyToC.C: powerpcInstructionSemantics.h
+
+test-dep: powerpcAssemblyToCDemo powerpcInstructionSemantics.h
 
 ppc-check:
 	-rm powerpcAssemblyToCDemo-powerpcAssemblyToC.o

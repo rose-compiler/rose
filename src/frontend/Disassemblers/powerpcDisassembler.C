@@ -736,10 +736,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
              {
                SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               SgAsmExpression* addressExpr = makeAdd(RA,D);
-               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
-               instruction = MAKE_INSN2(addi,RT,mr);
+               SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
+            // SgAsmExpression* addressExpr = makeAdd(RA,D);
+            // SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+            // instruction = MAKE_INSN2(addi,RT,mr);
+               instruction = MAKE_INSN3(addi,RT,RA,SI);
                break;
              }
 

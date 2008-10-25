@@ -165,7 +165,36 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
-       default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); //abort();
+      case powerpc_addi:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(32) RA = read32(operands[1]);
+
+        // Need to make this a sign extended value
+           Word(32) signExtended_SI = read32(operands[2]);
+
+        // Word(32) result = policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI));
+           write32(operands[0], policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI)));
+           break;
+         }
+
+      case powerpc_stwu:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+#if 0
+           Word(32) RS = read32(operands[0]);
+           SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(operands[1]);
+
+        // Need to make this a sign extended value
+           Word(32) signExtended_SI = read32(operands[2]);
+
+        // Word(32) result = policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI));
+           write32(operands[0], policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI)));
+#endif
+           break;
+         }
+
+       default: fprintf(stderr, "Bad instruction %s\n", toString(kind).c_str()); abort();
     }
   }
 
