@@ -56,181 +56,196 @@ ostream& operator<<(ostream& o, const ReadAndWriteSet& rws) {
   return o;
 }
 
-struct W {};
+template <size_t Len> struct W {};
 
 struct ReadAndWriteSetPolicy {
-  template <size_t Len>
-  struct wordType {typedef W type;};
-
   map<SgAsmInstruction*, ReadAndWriteSet> readAndWriteSets;
   SgAsmInstruction* currentInstruction;
 
-  W readGPR(X86GeneralPurposeRegister r) {
+  W<32> readGPR(X86GeneralPurposeRegister r) {
     readAndWriteSets[currentInstruction].readGprs.insert(r);
-    return W();
+    return W<32>();
   }
 
-  void writeGPR(X86GeneralPurposeRegister r, const W& value) {
+  void writeGPR(X86GeneralPurposeRegister r, const W<32>& value) {
     readAndWriteSets[currentInstruction].writtenGprs.insert(r);
   }
 
-  W readSegreg(X86SegmentRegister r) {
-    return W();
+  W<16> readSegreg(X86SegmentRegister r) {
+    return W<16>();
   }
 
-  void writeSegreg(X86SegmentRegister r, const W& value) {
+  void writeSegreg(X86SegmentRegister r, const W<16>& value) {
   }
 
-  W readIP() {
-    return W();
+  W<32> readIP() {
+    return W<32>();
   }
 
-  void writeIP(const W& newIp) {
+  void writeIP(const W<32>& newIp) {
   }
 
-  W readFlag(X86Flag f) {
+  W<1> readFlag(X86Flag f) {
     readAndWriteSets[currentInstruction].readFlags.insert(f);
-    return W();
+    return W<1>();
   }
 
-  void writeFlag(X86Flag f, const W& value) {
+  void writeFlag(X86Flag f, const W<1>& value) {
     readAndWriteSets[currentInstruction].writtenFlags.insert(f);
   }
 
   template <size_t Len>
-  W number(uint64_t n) {
-    return W();
+  W<Len> number(uint64_t n) {
+    return W<Len>();
   }
 
-  W concat(const W& a, const W& b) {
-    return W();
+  template <size_t Len1, size_t Len2>
+  W<Len1 + Len2> concat(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len1 + Len2>();
   }
 
-  template <size_t From, size_t To>
-  W extract(const W& a) {
-    return W();
+  template <size_t From, size_t To, size_t Len>
+  W<To - From> extract(const W<Len>& a) {
+    return W<To - From>();
   }
 
-  W true_() {return W();}
-  W false_() {return W();}
-  W undefined_() {return W();}
+  W<1> true_() {return W<1>();}
+  W<1> false_() {return W<1>();}
+  W<1> undefined_() {return W<1>();}
 
-  W invert(const W& a) {
-    return W();
-  }
-
-  W negate(const W& a) {
-    return W();
-  }
-
-  W and_(const W& a, const W& b) {
-    return W();
-  }
-
-  W or_(const W& a, const W& b) {
-    return W();
-  }
-
-  W xor_(const W& a, const W& b) {
-    return W();
-  }
-
-  W parity(const W& a) {
-    return W();
-  }
-
-  template <size_t From, size_t To>
-  W signExtend(const W& a) {
-    return W();
-  }
-
-  W ite(const W& sel, const W& ifTrue, const W& ifFalse) {
-    return W();
-  }
-
-  W equalToZero(const W& a) {
-    return W();
+  template <size_t Len>
+  W<Len> invert(const W<Len>& a) {
+    return W<Len>();
   }
 
   template <size_t Len>
-  W generateMask(W) {
-    return W();
+  W<Len> negate(const W<Len>& a) {
+    return W<Len>();
   }
 
-  W add(const W& a, const W& b) { // Simple case
-    return W();
+  template <size_t Len>
+  W<Len> and_(const W<Len>& a, const W<Len>& b) {
+    return W<Len>();
   }
 
-  W addWithCarries(const W& a, const W& b, const W& carryIn, W& carries) { // Full case
-    return W();
+  template <size_t Len>
+  W<Len> or_(const W<Len>& a, const W<Len>& b) {
+    return W<Len>();
   }
 
-  W rotateLeft(const W& a, const W& cnt) {
-    return W();
+  template <size_t Len>
+  W<Len> xor_(const W<Len>& a, const W<Len>& b) {
+    return W<Len>();
   }
 
-  W rotateRight(const W& a, const W& cnt) {
-    return W();
+  template <size_t From, size_t To>
+  W<To> signExtend(const W<From>& a) {
+    return W<To>();
   }
 
-  W shiftLeft(const W& a, const W& cnt) {
-    return W();
+  template <size_t Len>
+  W<Len> ite(const W<1>& sel, const W<Len>& ifTrue, const W<Len>& ifFalse) {
+    return W<Len>();
   }
 
-  W shiftRight(const W& a, const W& cnt) {
-    return W();
+  template <size_t Len>
+  W<1> equalToZero(const W<Len>& a) {
+    return W<1>();
   }
 
-  W shiftRightArithmetic(const W& a, const W& cnt) {
-    return W();
+  template <size_t Len>
+  W<Len> add(const W<Len>& a, const W<Len>& b) { // Simple case
+    return W<Len>();
   }
 
-  W signedMultiply(const W& a, const W& b) {
-    return W();
+  template <size_t Len>
+  W<Len> addWithCarries(const W<Len>& a, const W<Len>& b, const W<1>& carryIn, W<Len>& carries) { // Full case
+    return W<Len>();
   }
 
-  W unsignedMultiply(const W& a, const W& b) {
-    return W();
+  template <size_t Len, size_t SCLen>
+  W<Len> rotateLeft(const W<Len>& a, const W<SCLen>& cnt) {
+    return W<Len>();
   }
 
-  W signedDivide(const W& a, const W& b) {
-    return W();
+  template <size_t Len, size_t SCLen>
+  W<Len> rotateRight(const W<Len>& a, const W<SCLen>& cnt) {
+    return W<Len>();
   }
 
-  W signedModulo(const W& a, const W& b) {
-    return W();
+  template <size_t Len, size_t SCLen>
+  W<Len> shiftLeft(const W<Len>& a, const W<SCLen>& cnt) {
+    return W<Len>();
   }
 
-  W unsignedDivide(const W& a, const W& b) {
-    return W();
+  template <size_t Len, size_t SCLen>
+  W<Len> shiftRight(const W<Len>& a, const W<SCLen>& cnt) {
+    return W<Len>();
   }
 
-  W unsignedModulo(const W& a, const W& b) {
-    return W();
+  template <size_t Len, size_t SCLen>
+  W<Len> shiftRightArithmetic(const W<Len>& a, const W<SCLen>& cnt) {
+    return W<Len>();
   }
 
-  W leastSignificantSetBit(const W& in) {
-    return W();
+  template <size_t Len1, size_t Len2>
+  W<Len1 + Len2> signedMultiply(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len1 + Len2>();
   }
 
-  W mostSignificantSetBit(const W& in) {
-    return W();
+  template <size_t Len1, size_t Len2>
+  W<Len1 + Len2> unsignedMultiply(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len1 + Len2>();
+  }
+
+  template <size_t Len1, size_t Len2>
+  W<Len1> signedDivide(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len1>();
+  }
+
+  template <size_t Len1, size_t Len2>
+  W<Len2> signedModulo(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len2>();
+  }
+
+  template <size_t Len1, size_t Len2>
+  W<Len1> unsignedDivide(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len1>();
+  }
+
+  template <size_t Len1, size_t Len2>
+  W<Len2> unsignedModulo(const W<Len1>& a, const W<Len2>& b) {
+    return W<Len2>();
+  }
+
+  template <size_t Len>
+  W<Len> leastSignificantSetBit(const W<Len>& in) {
+    return W<Len>();
+  }
+
+  template <size_t Len>
+  W<Len> mostSignificantSetBit(const W<Len>& in) {
+    return W<Len>();
   }
 
   template <size_t Len> // In bits
-  W readMemory(X86SegmentRegister segreg, const W& addr, W cond) {
+  W<Len> readMemory(X86SegmentRegister segreg, const W<32>& addr, W<1> cond) {
     readAndWriteSets[currentInstruction].readMemory = true;
-    return W();
+    return W<Len>();
   }
 
   template <size_t Len>
-  void writeMemory(X86SegmentRegister segreg, const W& addr, const W& data, W cond) {
+  void writeMemory(X86SegmentRegister segreg, const W<32>& addr, const W<Len>& data, W<1> cond) {
     readAndWriteSets[currentInstruction].writtenMemory = true;
   }
 
+  W<32> filterIndirectJumpTarget(const W<32>& addr) {return addr;}
+  W<32> filterCallTarget(const W<32>& addr) {return addr;}
+  W<32> filterReturnTarget(const W<32>& addr) {return addr;}
+
   void hlt() {} // FIXME
   void interrupt(uint8_t num) {} // FIXME
-  W rdtsc() {return W();} // FIXME
+  W<64> rdtsc() {return W<64>();} // FIXME
 
   void startBlock(uint64_t addr) {
   }
@@ -249,7 +264,7 @@ struct ReadAndWriteSetPolicy {
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ReadAndWriteSetPolicy policy;
-  X86InstructionSemantics<ReadAndWriteSetPolicy> t(policy);
+  X86InstructionSemantics<ReadAndWriteSetPolicy, W> t(policy);
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgAsmBlock* b = isSgAsmBlock(blocks[i]);

@@ -33,9 +33,6 @@ struct WordWithExpression {
 };
 
 struct CTranslationPolicy {
-  template <size_t Len>
-  struct wordType {typedef WordWithExpression<Len> type;};
-
   CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
   SgAsmFile* asmFile;
@@ -320,6 +317,18 @@ struct CTranslationPolicy {
     appendStatement(buildIfStmt(cond.expr(), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
   }
 
+  WordWithExpression<32> filterIndirectJumpTarget(const WordWithExpression<32>& addr) {
+    return addr;
+  }
+
+  WordWithExpression<32> filterCallTarget(const WordWithExpression<32>& addr) {
+    return addr;
+  }
+
+  WordWithExpression<32> filterReturnTarget(const WordWithExpression<32>& addr) {
+    return addr;
+  }
+
   void hlt() {
     appendStatement(buildExprStatement(buildFunctionCallExp(abortSym, buildExprListExp())), bb);
   }
@@ -333,19 +342,20 @@ struct CTranslationPolicy {
   }
 
   void startBlock(uint64_t addr) {
-    bb = buildBasicBlock();
-    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(addr), bb), switchBody);
   }
 
   void finishBlock(uint64_t addr) {
-    appendStatement(buildContinueStmt(), bb);
   }
 
   void startInstruction(SgAsmInstruction* insn) {
+    bb = buildBasicBlock();
+    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(insn->get_address()), bb), switchBody);
     appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
   }
 
-  void finishInstruction(SgAsmInstruction* insn) {}
+  void finishInstruction(SgAsmInstruction* insn) {
+    appendStatement(buildContinueStmt(), bb);
+  }
 };
 
 #if 0 // Unused
@@ -462,12 +472,12 @@ int main(int argc, char** argv) {
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
-  X86InstructionSemantics<CTranslationPolicy> t(policy);
-  vector<SgNode*> blocks = NodeQuery::querySubTree(asmFiles[0], V_SgAsmBlock);
-  for (size_t i = 0; i < blocks.size(); ++i) {
-    SgAsmBlock* b = isSgAsmBlock(blocks[i]);
-    ROSE_ASSERT (b);
-    t.processBlock(b);
+  X86InstructionSemantics<CTranslationPolicy, WordWithExpression> t(policy);
+  vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
+  for (size_t i = 0; i < instructions.size(); ++i) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    ROSE_ASSERT (insn);
+    t.processInstruction(insn);
   }
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
   AstTests::runAllTests(proj);

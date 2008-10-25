@@ -21,9 +21,6 @@ struct WriteMemoryHelper<Len, Len, NLTranslator> {
 };
 
 struct NetlistTranslationPolicy {
-  template <size_t Len>
-  struct wordType {typedef LitList(Len) type;};
-
   RegisterInfo registerMap;
   RegisterInfo newRegisterMap;
   RegisterInfo origRegisterMap;
@@ -311,6 +308,10 @@ struct NetlistTranslationPolicy {
   void interrupt(uint8_t num) {} // FIXME
   LitList(64) rdtsc() {return problem.newVars<64>();}
 
+  LitList(32) filterIndirectJumpTarget(const LitList(32)& addr) {return addr;}
+  LitList(32) filterCallTarget(const LitList(32)& addr) {return addr;}
+  LitList(32) filterReturnTarget(const LitList(32)& addr) {return addr;}
+
   void writeBack() {
     fprintf(stderr, "Have %zu variables and %zu clauses so far\n", problem.numVariables, problem.clauses.size());
     for (size_t i = 0; i < 8; ++i) {
@@ -345,7 +346,7 @@ int main(int argc, char** argv) {
   FILE* f = fopen("foo.dimacs", "w");
   assert (f);
   NetlistTranslationPolicy policy;
-  X86InstructionSemantics<NetlistTranslationPolicy> t(policy);
+  X86InstructionSemantics<NetlistTranslationPolicy, LitListType> t(policy);
   policy.makeRegMaps(policy.origRegisterMap, "in");
   vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {

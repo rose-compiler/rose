@@ -15,7 +15,9 @@
 
 typedef int Var;
 typedef int Lit; // Using Dimacs conventions, but with 0 for false and 0x80000000 for true
-#define LitList(N) boost::array<Lit, (N)> // Stored LSB first, counted in bits
+template <size_t Len>
+struct LitListType: public boost::array<Lit, Len> {};
+#define LitList(N) LitListType<(N)> // Stored LSB first, counted in bits
 typedef std::vector<Lit> Clause;
 // Len and similar template parameters are always in bits, not bytes
 const Lit TRUE = 0x80000000, FALSE = 0;

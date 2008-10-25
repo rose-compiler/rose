@@ -43,9 +43,9 @@ include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerp
 
 check:
 	if test -e $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; then \
-	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
-	  ./x86AssemblyToNetlist $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
-	  ./x86AssemblyToBtor $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386; \
+	  ./x86AssemblyToCDemo -c $(srcdir)/outputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 && \
+	  ./x86AssemblyToNetlist $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 && \
+	  ./x86AssemblyToBtor start $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 && \
 	  ./readAndWriteSets $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.i386 > fnord.rws ; \
 	fi
 
