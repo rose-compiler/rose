@@ -8,6 +8,9 @@ INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 bin_PROGRAMS = x86AssemblyToCDemo powerpcAssemblyToCDemo x86AssemblyToNetlist x86AssemblyToBtor simplifyCnf removeUnusedVariables unitResolve factorLiteralCoincidences doubleStep eliminateRedundantVariables readAndWriteSets binaryClauseSimplify lookForErrors btorUnroll btorCleanup
+lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
+
+BUILT_SOURCES = libroseBtorSupport.la libroseSatProblem.la
 
 # x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
 x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C x86InstructionSemantics.h semanticsModule.h
@@ -19,23 +22,36 @@ powerpcAssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 powerpcAssemblyToCDemo_DEPENDENCIES = powerpcAssemblyToC.C powerpcInstructionSemantics.h semanticsModule.h
 x86AssemblyToNetlist_SOURCES = x86AssemblyToNetlist.C satProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
 x86AssemblyToNetlist_CPPFLAGS = $(ROSE_INCLUDES)
-x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-x86AssemblyToBtor_SOURCES = x86AssemblyToBtor.C x86AssemblyToBtor.h btorProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h btorProblem.C semanticsModule.h
+x86AssemblyToNetlist_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lroseSatProblem
+x86AssemblyToBtor_SOURCES = x86AssemblyToBtorMain.C x86AssemblyToBtor.h btorProblem.h x86InstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h
 x86AssemblyToBtor_CPPFLAGS = $(ROSE_INCLUDES)
-x86AssemblyToBtor_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+x86AssemblyToBtor_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lroseBtorSupport
 readAndWriteSets_SOURCES = readAndWriteSets.C x86InstructionSemantics.h semanticsModule.h
 readAndWriteSets_CPPFLAGS = $(ROSE_INCLUDES)
 readAndWriteSets_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 simplifyCnf_SOURCES = simplifyCnf.C satProblem.h
+simplifyCnf_LDADD = -lroseSatProblem
 removeUnusedVariables_SOURCES = removeUnusedVariables.C satProblem.h
+removeUnusedVariables_LDADD = -lroseSatProblem
 unitResolve_SOURCES = unitResolve.C satProblem.h
+unitResolve_LDADD = -lroseSatProblem
 factorLiteralCoincidences_SOURCES = factorLiteralCoincidences.C satProblem.h
+factorLiteralCoincidences_LDADD = -lroseSatProblem
 doubleStep_SOURCES = doubleStep.C satProblem.h
+doubleStep_LDADD = -lroseSatProblem
 eliminateRedundantVariables_SOURCES = eliminateRedundantVariables.C satProblem.h
+eliminateRedundantVariables_LDADD = -lroseSatProblem
 binaryClauseSimplify_SOURCES = binaryClauseSimplify.C satProblem.h
+binaryClauseSimplify_LDADD = -lroseSatProblem
 lookForErrors_SOURCES = lookForErrors.C satProblem.h x86AssemblyToNetlist.h
-btorUnroll_SOURCES = btorUnroll.C btorProblem.h btorProblem.C
-btorCleanup_SOURCES = btorCleanup.C btorProblem.h btorProblem.C
+lookForErrors_LDADD = -lroseSatProblem $(ROSE_LIBS)
+btorUnroll_SOURCES = btorUnroll.C
+btorUnroll_LDADD = -lroseBtorSupport
+btorCleanup_SOURCES = btorCleanup.C
+btorCleanup_LDADD = -lroseBtorSupport
+libroseBtorSupport_la_SOURCES = btorProblem.C x86AssemblyToBtor.C btorProblem.h
+libroseBtorSupport_la_LIBADD = $(ROSE_LIBS)
+libroseSatProblem_la_SOURCES = satProblem.h satProblem.C
 
 include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h btorProblem.h
 
