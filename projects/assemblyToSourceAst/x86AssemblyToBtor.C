@@ -281,7 +281,9 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   }
 
   BtorWordType<32> BtorTranslationPolicy::filterReturnTarget(const BtorWordType<32>& addr) {
-    return returnPoints.empty() ? addr : limitToElements(addr, returnPoints);
+    // returnPoints seems not to work for some reason
+    // return addr; // return returnPoints.empty() ? addr : limitToElements(addr, returnPoints);
+    return returnPoints.empty() ? addr : limitToElements(addr, blockStarts);
   }
 
   BtorWordType<32> BtorTranslationPolicy::limitToElements(const BtorWordType<32>& elt, const vector<uint32_t>& ls) {
