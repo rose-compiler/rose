@@ -29,7 +29,8 @@ struct BtorTranslationPolicy {
   BTRegisterInfo origRegisterMap;
   Comp isValidIp;
   std::vector<uint32_t> validIPs;
-  Comp notResetState;
+  Comp resetState;
+  Comp errorsEnabled;
   BtorProblem problem;
   Hooks& hooks;
 
@@ -143,13 +144,18 @@ struct BtorTranslationPolicy {
     writeBackReset();
   }
 
-  BtorTranslationPolicy(Hooks& hooks): problem(), hooks(hooks) {
+  BtorTranslationPolicy(Hooks& hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError): problem(), hooks(hooks) {
+    assert (minNumStepsToFindError >= 1); // Can't find an error on the first step
+    assert (maxNumStepsToFindError < 0xFFFFFFFFU); // Prevent overflows
+    assert (minNumStepsToFindError <= maxNumStepsToFindError);
     makeRegMap(origRegisterMap, "");
     makeRegMapZero(newRegisterMap);
     isValidIp = false_();
     validIPs.clear();
-    notResetState = problem.build_var(1, "notFirstStep");
-    addNext(notResetState, true_());
+    Comp stepCount = problem.build_var(32, "stepCount_saturating_at_" + boost::lexical_cast<std::string>(maxNumStepsToFindError + 1));
+    addNext(stepCount, ite(problem.build_op_eq(stepCount, number<32>(maxNumStepsToFindError + 1)), number<32>(maxNumStepsToFindError + 1), problem.build_op_inc(stepCount)));
+    resetState = problem.build_op_eq(stepCount, zero(32));
+    errorsEnabled = and_(problem.build_op_ugte(stepCount, number<32>(minNumStepsToFindError)), problem.build_op_ulte(stepCount, number<32>(maxNumStepsToFindError)));
   }
 
   Comp readGPR(X86GeneralPurposeRegister r) {
@@ -432,14 +438,14 @@ struct BtorTranslationPolicy {
   }
 
   void writeBack(uint64_t addr) {
-    Comp isThisIp = and_(problem.build_op_eq(origRegisterMap.ip, number<32>(addr)), notResetState);
+    Comp isThisIp = and_(problem.build_op_eq(origRegisterMap.ip, number<32>(addr)), invert(resetState));
     isValidIp = or_(isValidIp, isThisIp);
     validIPs.push_back((uint32_t)addr);
     writeBackCond(isThisIp);
   }
 
   void writeBackReset() {
-    Comp cond = invert(notResetState);
+    Comp cond = resetState;
     isValidIp = or_(isValidIp, cond);
     writeBackCond(cond);
   }
@@ -447,7 +453,7 @@ struct BtorTranslationPolicy {
   void startBlock(uint64_t addr) {
     registerMap = origRegisterMap;
     registerMap.ip = number<32>(0xDEADBEEF);
-    fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
+    // fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
     hooks.startBlock(*this, addr);
   }
 
@@ -466,7 +472,7 @@ struct BtorTranslationPolicy {
 };
 
 template <typename TranslationPolicy>
-std::string btorTranslate(TranslationPolicy& policy, SgProject* proj, FILE* outfile, bool initialConditionsAreUnknown) {
+std::string btorTranslate(TranslationPolicy& policy, SgProject* proj, FILE* outfile, bool initialConditionsAreUnknown, bool bogusIpIsError) {
   std::vector<SgNode*> headers = NodeQuery::querySubTree(proj, V_SgAsmGenericHeader);
   ROSE_ASSERT (headers.size() == 1);
   SgAsmGenericHeader* header = isSgAsmGenericHeader(headers[0]);
@@ -484,8 +490,8 @@ std::string btorTranslate(TranslationPolicy& policy, SgProject* proj, FILE* outf
   policy.newRegisterMap.errorFlag[bmc_error_bogus_ip] =
     policy.invert(policy.isValidIp);
   for (size_t i = 0; i < numBmcErrors; ++i) {
-    if (i == bmc_error_bogus_ip) continue; // For testing
-    policy.problem.computations.push_back(policy.problem.build_op_root(policy.newRegisterMap.errorFlag[i]));
+    if (i == bmc_error_bogus_ip && !bogusIpIsError) continue; // For testing
+    policy.problem.computations.push_back(policy.problem.build_op_root(policy.and_(policy.errorsEnabled, policy.newRegisterMap.errorFlag[i])));
   }
   policy.addNexts();
   return policy.problem.unparse();

@@ -50,8 +50,8 @@ int main(int argc, char** argv) {
   FILE* f = fopen("foo.btor", "w");
   assert (f);
   HLTHooks hooks;
-  BtorTranslationPolicy<HLTHooks> policy(hooks);
-  string s = btorTranslate(policy, proj, f, initialConditionsAreUnknown);
+  BtorTranslationPolicy<HLTHooks> policy(hooks, 1, 0xFFFFFFFEU);
+  string s = btorTranslate(policy, proj, f, initialConditionsAreUnknown, true);
   fprintf(f, "%s", s.c_str());
   fclose(f);
   return 0;

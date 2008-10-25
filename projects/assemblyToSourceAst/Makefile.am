@@ -37,7 +37,7 @@ lookForErrors_SOURCES = lookForErrors.C satProblem.h x86AssemblyToNetlist.h
 btorUnroll_SOURCES = btorUnroll.C btorProblem.h btorProblem.C
 btorCleanup_SOURCES = btorCleanup.C btorProblem.h btorProblem.C
 
-include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h
+include_HEADERS = x86AssemblyToC.h satProblem.h x86InstructionSemantics.h powerpcInstructionSemantics.h x86AssemblyToNetlist.h semanticsModule.h x86AssemblyToBtor.h btorProblem.h
 
 # powerpcAssemblyToCDemo-powerpcAssemblyToC.o: powerpcInstructionSemantics.h
 
