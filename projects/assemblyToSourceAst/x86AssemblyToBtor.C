@@ -96,7 +96,7 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
     assert (!validIPs.empty());
     Comp initialEip = number<32>(entryPoint);
     for (size_t i = 0; i < validIPs.size(); ++i) {
-      initialEip = ite(problem.build_var(1), number<32>(validIPs[i]), initialEip);
+      initialEip = problem.build_op_cond(problem.build_var(1), number<32>(validIPs[i]), initialEip);
     }
     writeIP(initialEip);
     writeFlag(x86_flag_cf, problem.build_var(1, "initial_cf"));
@@ -145,10 +145,10 @@ void BtorTranslationPolicy::setInitialState(uint32_t entryPoint, bool initialCon
   writeBackReset();
 }
 
-BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError): problem(), hooks(hooks) {
+BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj): problem(), hooks(hooks) {
   assert (minNumStepsToFindError >= 1); // Can't find an error on the first step
   assert (maxNumStepsToFindError < 0xFFFFFFFFU); // Prevent overflows
-  assert (minNumStepsToFindError <= maxNumStepsToFindError);
+  assert (minNumStepsToFindError <= maxNumStepsToFindError || maxNumStepsToFindError == 0);
   makeRegMap(origRegisterMap, "");
   makeRegMapZero(newRegisterMap);
   isValidIp = false_();
@@ -156,7 +156,45 @@ BtorTranslationPolicy::BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32
   Comp stepCount = problem.build_var(32, "stepCount_saturating_at_" + boost::lexical_cast<std::string>(maxNumStepsToFindError + 1));
   addNext(stepCount, ite(problem.build_op_eq(stepCount, number<32>(maxNumStepsToFindError + 1)), number<32>(maxNumStepsToFindError + 1), problem.build_op_inc(stepCount)));
   resetState = problem.build_op_eq(stepCount, zero(32));
-  errorsEnabled = problem.build_op_and(problem.build_op_ugte(stepCount, number<32>(minNumStepsToFindError)), problem.build_op_ulte(stepCount, number<32>(maxNumStepsToFindError)));
+  errorsEnabled =
+    problem.build_op_and(
+      problem.build_op_ugte(stepCount, number<32>(minNumStepsToFindError)),
+      (maxNumStepsToFindError == 0 ?
+       true_() :
+       problem.build_op_ulte(stepCount, number<32>(maxNumStepsToFindError))));
+  {
+    vector<SgNode*> functions = NodeQuery::querySubTree(proj, V_SgAsmFunctionDeclaration);
+    for (size_t i = 0; i < functions.size(); ++i) {
+      functionStarts.push_back(isSgAsmFunctionDeclaration(functions[i])->get_address());
+      // fprintf(stderr, "functionStarts 0x%"PRIx64"\n", isSgAsmFunctionDeclaration(functions[i])->get_address());
+    }
+  }
+  {
+    vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
+    for (size_t i = 0; i < blocks.size(); ++i) {
+      SgAsmBlock* b = isSgAsmBlock(blocks[i]);
+      if (!b->get_statementList().empty() && isSgAsmx86Instruction(b->get_statementList().front())) {
+        blockStarts.push_back(b->get_address());
+        // fprintf(stderr, "blockStarts 0x%"PRIx64"\n", b->get_address());
+      }
+    }
+  }
+  {
+    vector<SgNode*> calls = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    for (size_t i = 0; i < calls.size(); ++i) {
+      SgAsmx86Instruction* b = isSgAsmx86Instruction(calls[i]);
+      if (b->get_kind() != x86_call) continue;
+      returnPoints.push_back(b->get_address() + b->get_raw_bytes().size());
+      // fprintf(stderr, "returnPoints 0x%"PRIx64"\n", b->get_address() + b->get_raw_bytes().size());
+    }
+  }
+  {
+    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    for (size_t i = 0; i < instructions.size(); ++i) {
+      SgAsmx86Instruction* b = isSgAsmx86Instruction(instructions[i]);
+      validIPs.push_back(b->get_address());
+    }
+  }
 }
 
 BtorWordType<32> BtorTranslationPolicy::readGPR(X86GeneralPurposeRegister r) {
@@ -235,15 +273,25 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   }
 
   BtorWordType<32> BtorTranslationPolicy::filterIndirectJumpTarget(const BtorWordType<32>& addr) {
-    return addr;
+    return blockStarts.empty() ? addr : limitToElements(addr, blockStarts);
   }
 
   BtorWordType<32> BtorTranslationPolicy::filterCallTarget(const BtorWordType<32>& addr) {
-    return addr;
+    return functionStarts.empty() ? addr : limitToElements(addr, functionStarts);
   }
 
   BtorWordType<32> BtorTranslationPolicy::filterReturnTarget(const BtorWordType<32>& addr) {
-    return addr;
+    return returnPoints.empty() ? addr : limitToElements(addr, returnPoints);
+  }
+
+  BtorWordType<32> BtorTranslationPolicy::limitToElements(const BtorWordType<32>& elt, const vector<uint32_t>& ls) {
+    // This is nasty, but seems to be needed
+    ROSE_ASSERT (!ls.empty());
+    Comp withinList = false_();
+    for (size_t i = 0; i < ls.size(); ++i) {
+      withinList = problem.build_op_or(withinList, problem.build_op_eq(elt, number<32>(ls[i])));
+    }
+    return problem.build_op_cond(withinList, elt, number<32>(ls[0]));
   }
 
   void BtorTranslationPolicy::hlt() {
@@ -270,7 +318,6 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   void BtorTranslationPolicy::writeBack(uint64_t addr) {
     Comp isThisIp = problem.build_op_and(problem.build_op_eq(origRegisterMap.ip, number<32>(addr)), invert(resetState));
     isValidIp = problem.build_op_or(isValidIp, isThisIp);
-    validIPs.push_back((uint32_t)addr);
     writeBackCond(isThisIp);
   }
 
@@ -287,12 +334,14 @@ void BtorTranslationPolicy::writeFlag(X86Flag f, const BtorWordType<1>& value) {
   }
 
   void BtorTranslationPolicy::startInstruction(SgAsmx86Instruction* insn) {
+    // fprintf(stderr, "startInstruction(0x%"PRIx64")\n", insn->get_address());
     registerMap = origRegisterMap;
-    registerMap.ip = number<32>(0xDEADBEEF);
-    // fprintf(stderr, "Block 0x%08X\n", (unsigned int)addr);
     hooks->startInstruction(this, insn); // Allow hook to modify initial conditions
+    registerMap.ip = number<32>(0xDEADBEEF); // For debugging
   }
+
   void BtorTranslationPolicy::finishInstruction(SgAsmx86Instruction* insn) {
+    // fprintf(stderr, "finishInstruction(0x%"PRIx64")\n", insn->get_address());
     hooks->finishInstruction(this, insn); // Allow hook to modify result
     writeBack(insn->get_address());
   }

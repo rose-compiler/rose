@@ -41,6 +41,9 @@ struct BtorTranslationPolicy {
   BTRegisterInfo origRegisterMap;
   Comp isValidIp;
   std::vector<uint32_t> validIPs;
+  std::vector<uint32_t> blockStarts;
+  std::vector<uint32_t> functionStarts;
+  std::vector<uint32_t> returnPoints;
   Comp resetState;
   Comp errorsEnabled;
   BtorProblem problem;
@@ -55,7 +58,7 @@ struct BtorTranslationPolicy {
 
   void setInitialState(uint32_t entryPoint, bool initialConditionsAreUnknown);
 
-  BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError);
+  BtorTranslationPolicy(BtorTranslationHooks* hooks, uint32_t minNumStepsToFindError, uint32_t maxNumStepsToFindError, SgProject* proj);
 
   BtorWordType<32> readGPR(X86GeneralPurposeRegister r);
   void writeGPR(X86GeneralPurposeRegister r, const BtorWordType<32>& value);
@@ -305,6 +308,7 @@ struct BtorTranslationPolicy {
   BtorWordType<32> filterIndirectJumpTarget(const BtorWordType<32>& addr);
   BtorWordType<32> filterCallTarget(const BtorWordType<32>& addr);
   BtorWordType<32> filterReturnTarget(const BtorWordType<32>& addr);
+  BtorWordType<32> limitToElements(const BtorWordType<32>& elt, const std::vector<uint32_t>& ls);
 
   void hlt();
   void interrupt(uint8_t num);

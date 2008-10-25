@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
   FILE* f = fopen("foo.btor", "w");
   assert (f);
   HLTHooks hooks;
-  BtorTranslationPolicy policy(&hooks, 1, 0xFFFFFFFEU);
+  BtorTranslationPolicy policy(&hooks, 1, 0, proj);
   string s = btorTranslate(policy, proj, f, initialConditionsAreUnknown, true);
   fprintf(f, "%s", s.c_str());
   fclose(f);
