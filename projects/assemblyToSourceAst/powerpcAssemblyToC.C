@@ -63,6 +63,8 @@ struct powerpcCTranslationPolicy {
   SgVariableSymbol* gprSym;
   SgVariableSymbol* crSym;
   SgVariableSymbol* ipSym;
+// DQ (10/25/2008): Added Special Purpose Register support
+  SgVariableSymbol* sprSym;
   SgFunctionSymbol* memoryReadByteSym;
   SgFunctionSymbol* memoryReadWordSym;
   SgFunctionSymbol* memoryReadDWordSym;
@@ -231,6 +233,17 @@ struct powerpcCTranslationPolicy {
     appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(ipSym), val.expr())), bb);
   }
 
+// DQ (10/25/2008): Added Special Purpose Register support
+  WordWithExpression<32> readSPR(int num) {
+    ROSE_ASSERT(sprSym != NULL);
+    return buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num));
+  }
+
+// DQ (10/25/2008): Added Special Purpose Register support
+  void writeSPR(int num, WordWithExpression<32> val) {
+    appendStatement(buildExprStatement(buildAssignOp(buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num)), val.expr())), bb);
+  }
+
   template <size_t Len>
   WordWithExpression<Len> readMemory(WordWithExpression<32> address, WordWithExpression<1> cond) {
     SgFunctionSymbol* mrSym = NULL;
@@ -287,8 +300,11 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
+
+// DQ (10/25/2008): Why is this a while loop with a single trip count???
 #define LOOKUP_FUNC(name) \
   do {name##Sym = globalScope->lookup_function_symbol(#name); ROSE_ASSERT (name##Sym);} while (0)
+
   LOOKUP_FUNC(mulhi16);
   LOOKUP_FUNC(mulhi32);
   LOOKUP_FUNC(mulhi64);
@@ -314,8 +330,9 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   LOOKUP_FUNC(bsr);
   LOOKUP_FUNC(bsf);
   gprSym = globalScope->lookup_variable_symbol("gpr"); ROSE_ASSERT (gprSym);
-  crSym = globalScope->lookup_variable_symbol("cr"); ROSE_ASSERT (crSym);
-  ipSym = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
+  crSym  = globalScope->lookup_variable_symbol("cr"); ROSE_ASSERT (crSym);
+  ipSym  = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
+  sprSym = globalScope->lookup_variable_symbol("spr"); ROSE_ASSERT (sprSym);
   LOOKUP_FUNC(memoryReadByte);
   LOOKUP_FUNC(memoryReadWord);
   LOOKUP_FUNC(memoryReadDWord);
@@ -336,11 +353,20 @@ int main(int argc, char** argv) {
   ROSE_ASSERT(newFile != NULL);
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
+
+// DQ (10/25/2008): Added testing!
+  ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
+
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
+
+// DQ (10/25/2008): Added testing!
+  ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
+  ROSE_ASSERT(g->lookup_variable_symbol("spr") != NULL);
+
   powerpcCTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
   policy.switchBody = buildBasicBlock();
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);

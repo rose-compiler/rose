@@ -31,6 +31,12 @@ unsigned int gpr[32];
 unsigned char cr[8];
 uint32_t ip;
 
+// DQ (10/25/2008): Added spr register array.  This might have to be
+// a lenth to fix register numbers 1-287 (9 bits, at least).  See:
+// http://www.go-ecs.com/ppc/ppctek1.htm for SPR details.
+// For "user mode" we only require entries 1,8, and 9.
+unsigned int spr[32];
+
 uint8_t memoryReadByte(uint64_t addr) {
   return 0;
 }

@@ -26,6 +26,8 @@ struct PowerpcInstructionSemantics {
 
 // DQ (10/20/2008): changed name of function from templated read version.
   Word(32) read32(SgAsmExpression* e) {
+    ROSE_ASSERT(e != NULL);
+ // printf ("In read32(): e = %p = %s \n",e,e->class_name().c_str());
     switch (e->variantT()) {
       case V_SgAsmByteValueExpression: {
         uint64_t val = isSgAsmByteValueExpression(e)->get_value();
@@ -45,11 +47,21 @@ struct PowerpcInstructionSemantics {
       }
       case V_SgAsmPowerpcRegisterReferenceExpression: {
         SgAsmPowerpcRegisterReferenceExpression* ref = isSgAsmPowerpcRegisterReferenceExpression(e);
+        ROSE_ASSERT(ref != NULL);
         switch(ref->get_register_class())
            {
              case powerpc_regclass_gpr:
                 {
                   Word(32) val = policy.readGPR(ref->get_register_number());
+                  return val;
+                }
+              
+             case powerpc_regclass_spr:
+                {
+               // printf ("Need support for reading SPR in policy! \n");
+               // ROSE_ASSERT(false);
+               // printf ("ref->get_register_number() = %d \n",ref->get_register_number());
+                  Word(32) val = policy.readSPR(ref->get_register_number());
                   return val;
                 }
               
@@ -105,6 +117,14 @@ struct PowerpcInstructionSemantics {
                   break;
                 }
               
+             case powerpc_regclass_spr:
+                {
+               // printf ("Need support for writing SPR in policy! \n");
+               // ROSE_ASSERT(false);
+
+                  policy.writeSPR(ref->get_register_number(),value);
+                }
+              
              default:
                 {
                   fprintf(stderr, "Bad register class %s\n", regclassToString(ref->get_register_class())); abort();
@@ -130,6 +150,7 @@ struct PowerpcInstructionSemantics {
            write32(operands[0], policy.or_(read32(operands[1]),read32(operands[2])));
            break;
          }
+
       case powerpc_rlwinm:
          {
            ROSE_ASSERT(operands.size() == 5);
@@ -170,9 +191,10 @@ struct PowerpcInstructionSemantics {
            ROSE_ASSERT(operands.size() == 3);
            Word(32) RA = read32(operands[1]);
 
-        // Need to make this a sign extended value
+        // Need to make this a sign extended value (not implemented)
            Word(32) signExtended_SI = read32(operands[2]);
 
+        // What does "ite" stand for?
         // Word(32) result = policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI));
            write32(operands[0], policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI)));
            break;
@@ -182,6 +204,7 @@ struct PowerpcInstructionSemantics {
          {
            ROSE_ASSERT(operands.size() == 2);
 #if 0
+        // I think I need to discuss the implementation of this instruction with Jeremiah.
            Word(32) RS = read32(operands[0]);
            SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(operands[1]);
 
@@ -191,6 +214,33 @@ struct PowerpcInstructionSemantics {
         // Word(32) result = policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI));
            write32(operands[0], policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI)));
 #endif
+           break;
+         }
+
+      case powerpc_and:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.and_(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+
+      case powerpc_mfspr:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+
+        // This is only a valid instruction if bits 0-4 or SPR are: 1, 8, or 9.  Should we be checking 
+        // this here or in the disassembler?
+           write32(operands[0],read32(operands[1]));
+           break;
+         }
+
+      case powerpc_mtspr:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+
+        // This is only a valid instruction if bits 0-4 or SPR are: 1, 8, or 9.  Should we be checking 
+        // this here or in the disassembler?
+           write32(operands[0],read32(operands[1]));
            break;
          }
 

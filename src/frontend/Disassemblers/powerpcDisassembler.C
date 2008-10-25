@@ -2214,7 +2214,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_XFX_formInstruction()
              {
                SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
                SgAsmExpression* SPR = makeRegister(powerpc_regclass_spr,sprOpcode,powerpc_condreggranularity_whole);
-               instruction = MAKE_INSN2(mfspr,RS,SPR);
+               instruction = MAKE_INSN2(mtspr,RS,SPR);
                break;
              }
 
