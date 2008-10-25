@@ -881,30 +881,52 @@ PrologToRose::createValueExp(Sg_File_Info* fi, SgNode* succ, PrologCompTerm* t) 
     debug("unparsing float");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
+
     float f;
-    istringstream i(s->getName());
-    i >> f;
+    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
+      istringstream i(s->getName());
+      i >> f;
+    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+      f = val->getValue();
+    } else {
+      // Must be either a string or an int
+      // FIXME: or a float?
+      ROSE_ASSERT(false);
+    }		
     ve = new SgFloatVal(fi,f);
     ROSE_ASSERT(ve != NULL);
   } else if (vtype == SG_PREFIX "double_val") {
     debug("unparsing double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     double f;
-    istringstream i(s->getName());
-    i >> f;
+    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
+      istringstream i(s->getName());
+      i >> f;
+    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+      f = val->getValue();
+    } else {
+      // Must be either a string or an int
+      // FIXME: or a float?
+      ROSE_ASSERT(false);
+    }		
     ve = new SgDoubleVal(fi,f);
     ROSE_ASSERT(ve != NULL);
   } else if (vtype == SG_PREFIX "long_double_val") {
     debug("unparsing long double");
     PrologCompTerm* annot = retrieveAnnotation(t);
     ROSE_ASSERT(annot != NULL);
-    PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0));
     long double f;
-    istringstream i(s->getName());
-    i >> f;
+    if (PrologAtom* s = dynamic_cast<PrologAtom*>(annot->at(0))) {
+      istringstream i(s->getName());
+      i >> f;
+    } else if (PrologInt* val = dynamic_cast<PrologInt*>(annot->at(0))) {
+      f = val->getValue();
+    } else {
+      // Must be either a string or an int
+      // FIXME: or a float?
+      ROSE_ASSERT(false);
+    }		
     ve = new SgLongDoubleVal(fi,f);
     ROSE_ASSERT(ve != NULL);
 	
@@ -3134,6 +3156,6 @@ PrologToRose::warn_msg(string msg) {
 void
 PrologToRose::debug(string message) {
 #ifndef NDEBUG
-  //    cerr << message << "\n";
+  // cerr << message << "\n";
 #endif
 }

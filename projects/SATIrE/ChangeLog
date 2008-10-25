@@ -10,6 +10,10 @@ V0.8.5 ??? GB
     and auxiliary functions are now declared automatically; user-defined
     declarations are no longer necessary (or allowed)
 
+* Termite [AP]
+  - better float/double support
+  - clang patch pre-release
+
 V0.8.4 2008-09-26 GB,AP
 
 * Tested with:
