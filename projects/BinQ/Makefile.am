@@ -9,7 +9,8 @@ bin_PROGRAMS = BinQ
 BinQ_SOURCES = \
 	BinQMain.C \
         BinQGui.C \
-	BinQSupport.C
+	BinQSupport.C \
+	slide.C
 
       
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
@@ -32,7 +33,8 @@ endif
 
 EXTRA_DIST = BinQGui.h \
              BinQSupport.h \
+             Slide.h \
              disks.xpm  \
              folder.xpm \
-             icons.h
-
+             icons.h \
+             Item.h

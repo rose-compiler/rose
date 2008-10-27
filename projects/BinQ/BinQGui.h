@@ -10,11 +10,26 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QCheckBox>
+#include <QRProgress.h>
+
+#include <QList>
+#include <QListWidget>
+#include <QListWidgetItem>
 
 #include <boost/smart_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 #include <stdint.h>
 #include "BinQSupport.h"
+#include <QDesktopWidget>
+#include <QApplication>
+
+#include "Item.h"
+
+class Slide;
+
+
+
+
 
 template <typename T>
 class scoped_array_with_size {
@@ -57,6 +72,7 @@ struct Element {
 };
 
 
+
 class BinQGUI
 {
   public:
@@ -77,16 +93,29 @@ class BinQGUI
 
     //std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
 
-    void selectView(int selection);
+
+    std::vector<Item*> items;
+    std::map<int,Item*> byteItem;
+    std::map<int,int> posRow;
+    int slideMax;
+    QTextEdit *analysisResult;
 
   protected:
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
     qrs::QRTable *codeTableWidget;
+
+    qrs::QRTable *tableWidget2;
+    qrs::QRTable *codeTableWidget2;
     //QTextEdit *codeWidget;
-    QTextEdit *codeWidget2;
+    //QTextEdit *codeWidget2;
+
     QComboBox *comboBox;
-    QComboBox *wholeFunction;
+    qrs::QRProgress *wholeFunction;
+    //    QPainter *painter;
+    Slide *slide;
+    QListWidget *listWidget;
+    
 
     QTextBrowser *codeBrowser;
     QLineEdit *smallerThanRestriction;
@@ -96,7 +125,7 @@ class BinQGUI
 
     std::vector<SgAsmFunctionDeclaration*> funcs;
     //    std::vector<SgAsmx86Instruction*> insns;
-    std::vector<SgAsmStatement*> stmts;
+
 
     BinQSupport* binqsupport;
     
@@ -104,12 +133,17 @@ class BinQGUI
     SgNode* fileA;
     SgNode* fileB;
 
+
+    int slideStep;
+
     double similarity;
     int stride;
     int windowSize;
     int activeFunctionRow;
     int activeInstructionRow;
 
+    int screenWidth;
+    int screenHeight;
 
     scoped_array_with_size<Element > vectorOfClones;
     std::pair<std::string,std::string> normalizedView;
