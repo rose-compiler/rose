@@ -404,9 +404,9 @@ int main(int argc, char** argv) {
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
   PowerpcInstructionSemantics<powerpcCTranslationPolicy, WordWithExpression> t(policy);
-  vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
+  vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmPowerpcInstruction);
   for (size_t i = 0; i < instructions.size(); ++i) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    SgAsmPowerpcInstruction* insn = isSgAsmPowerpcInstruction(instructions[i]);
     ROSE_ASSERT (insn);
     t.processInstruction(insn);
   }
