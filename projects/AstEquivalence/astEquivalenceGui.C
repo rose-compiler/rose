@@ -24,24 +24,6 @@ using namespace boost::filesystem;
 using namespace std;
 using namespace boost;
 using namespace __gnu_cxx;
-class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
-{
-  public:
-    void* operator()(first_argument_type node, std::vector<SgAsmFunctionDeclaration*>* insns ) const{
-      if (isSgAsmFunctionDeclaration(node)) insns->push_back(isSgAsmFunctionDeclaration(node));
-      return NULL;
-    }
-};
-#if 0
-class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
-{
-  public:
-    void* operator()(first_argument_type node, std::vector<SgAsmx86Instruction*>* insns ) const{
-      if (isSgAsmx86Instruction(node)) insns->push_back(isSgAsmx86Instruction(node));
-      return NULL;
-    }
-};
-#endif
 
 
 static string htmlEscape(const string& s) {

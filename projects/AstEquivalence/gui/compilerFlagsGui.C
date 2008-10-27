@@ -694,24 +694,6 @@ std::pair<std::string,std::string> BinaryCloneGui::getAddressFromVectorsTable(ui
   return std::pair<std::string,std::string>(line,offset);
 }  ;
 
-#if 0
-class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
-{
-  public:
-    void* operator()(first_argument_type node, std::vector<SgAsmx86Instruction*>* insns ) const{
-      if (isSgAsmx86Instruction(node)) insns->push_back(isSgAsmx86Instruction(node));
-      return NULL;
-    }
-};
-#endif
-class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
-{
-  public:
-    void* operator()(first_argument_type node, std::vector<SgAsmFunctionDeclaration*>* insns ) const{
-      if (isSgAsmFunctionDeclaration(node)) insns->push_back(isSgAsmFunctionDeclaration(node));
-      return NULL;
-    }
-};
 
 
 enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};

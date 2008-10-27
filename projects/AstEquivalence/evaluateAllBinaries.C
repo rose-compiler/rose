@@ -18,14 +18,6 @@ using namespace boost;
 using namespace boost::filesystem;
 using namespace boost::program_options;
 
-class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmFunctionDeclaration *>* , void* >
-{
-  public:
-    void* operator()(first_argument_type node, std::vector<SgAsmFunctionDeclaration*>* insns ) const{
-      if (isSgAsmFunctionDeclaration(node)) insns->push_back(isSgAsmFunctionDeclaration(node));
-      return NULL;
-    }
-};
 
 template <typename T>
 class vector_start_at_zero {
