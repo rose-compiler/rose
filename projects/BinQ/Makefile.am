@@ -33,7 +33,7 @@ endif
 
 EXTRA_DIST = BinQGui.h \
              BinQSupport.h \
-             Slide.h \
+             slide.h \
              disks.xpm  \
              folder.xpm \
              icons.h \
