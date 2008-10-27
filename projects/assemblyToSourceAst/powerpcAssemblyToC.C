@@ -1,5 +1,6 @@
 #include "rose.h"
 #include "powerpcInstructionSemantics.h"
+#include "integerOps.h"
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
