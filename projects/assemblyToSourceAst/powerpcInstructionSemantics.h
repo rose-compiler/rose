@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <iostream>
 
-template <typename Policy>
+template <typename Policy, template <size_t> class WordType>
 struct PowerpcInstructionSemantics {
 #define Word(Len) typename Policy::template wordType<(Len)>::type
   Policy& policy;
