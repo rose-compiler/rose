@@ -8,8 +8,8 @@ export JAVA_HOME="/home/liao6/64home/opt/jdk1.6.0_07"
 export BOOST_ROOT="/home/liao6/64home/opt/boost-1.36.0"
 export LD_LIBRARY_PATH="${JAVA_HOME}/lib:${JAVA_HOME}/jre/lib/amd64/server:$LD_LIBRARY_PATH"
 export LD_LIBRARY_PATH="${BOOST_ROOT}/lib:${LD_LIBRARY_PATH}"
+export PATH="${JAVA_HOME}/bin:$PATH:/home/liao6/64home/opt/graphviz-2.20.3/bin"
 
-PATH="${JAVA_HOME}/bin:$PATH:/home/liao6/64home/opt/graphviz-2.20.3/bin"
 # using a time stamp to avoid overwriting previous tests
 TIMESTAMP=$(date +%Y%m%d_%H%M%S) 
 ROSE_TOP=/home/liao6/64home/daily-test-rose/${TIMESTAMP}
@@ -26,7 +26,7 @@ SVNOP=checkout
 # check out the revision of the past 11:00pm PDT (06:00am UTC)
 # using data as revision number needs {}
 # default is head
-SVNVERSIONOPTION="{`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`}"
+#SVNVERSIONOPTION="{`date -d '06:00Z' -u '+%FT%H:%M:%SZ'`}"
 #SVNVERSIONOPTION=1303
 
 # How many processes for make
@@ -38,7 +38,7 @@ ENABLE_BUILD_BINARY_EDG=1
 #ENABLE_UPLOAD_SVN=yes
 #ENABLE_UPLOAD_WEB=yes
 
-#KEEP_TEST_DIR=yes
+KEEP_TEST_DIR=yes
 NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
 
 set -e
