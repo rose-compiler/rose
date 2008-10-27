@@ -229,18 +229,7 @@ struct CTranslationPolicy {
 
   template <size_t From, size_t To>
   WordWithExpression<To> signExtend(WordWithExpression<From> a) {
-    return buildBitOrOp(
-             a.expr(),
-             buildConditionalExp(
-               buildNotEqualOp(
-                 buildBitAndOp(
-                   a.expr(),
-                   buildUnsignedLongLongIntValHex(
-                     SHL1<unsigned long long, From - 1>::value)),
-                 buildIntVal(0)),
-               buildUnsignedLongLongIntValHex(
-                 SHL1<unsigned long long, To>::value - SHL1<unsigned long long, From>::value),
-               buildIntVal(0)));
+    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<(From - 1)>::value)), buildIntVal(0)), buildUnsignedLongLongIntValHex(SHL1<To>::value - SHL1<From>::value), buildIntVal(0)));
   }
 
   template <size_t Len>
