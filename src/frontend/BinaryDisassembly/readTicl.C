@@ -1,6 +1,9 @@
 #include "readTicl.h"
 #include <string.h>
 
+
+
+
 using namespace ticl;
 
 #define FILL_IN_STRUCT(STRUCT_NAME,FORMAT, FILENAME)			\
@@ -186,6 +189,8 @@ void ticl::get_address_comments_1(std::string directory, vector<address_comments
   FILL_IN_STRUCT(address_comments_1, "ss", "address_comments_1.tsv");
 
 };
+
+
 
 
 

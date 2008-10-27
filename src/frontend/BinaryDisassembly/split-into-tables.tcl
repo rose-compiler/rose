@@ -3,6 +3,7 @@
 exec tclsh "$0" "$@"
 
 proc getSqlFields {text} {
+  # FIXME: does not handled escaped single quotes in fields
   set result {}
   while {[string trim $text] != ""} {
     if {[regexp {^ *([^',]+)(?:,(.*))?$} $text _ firstField rest]} {
@@ -63,11 +64,7 @@ proc {process__basic_blocks_1(id, address, parent_function)} {id address parent_
 }
 
 proc {process__instructions_1(address, mnemonic, basic_block_id, sequence, data)} {address mnemonic basic_block_id sequence data} {
-  regsub -all {\\0} $data "\0" data
-  regsub -all {''} $data {'} data
-  regsub -all {\\\\} $data {\\} data
-  binary scan $data H* dataBytes
-  puts [getStreamForTableFile instructions_1] [join [list $address $basic_block_id $mnemonic $sequence $dataBytes] "\t"]
+  puts [getStreamForTableFile instructions_1] [join [list $address $basic_block_id $mnemonic $sequence $data] "\t"]
 }
 
 proc {process__callgraph_1(src, src_basic_block_id, dst, src_address)} {src src_basic_block_id dst src_address} {
@@ -136,36 +133,19 @@ if {[llength $argv] == 0} {
 }
 foreach filename $argv {
   puts $filename
-  set root [file tail [ file rootname $filename] ]
-  set rootdir [ file dirname $filename]
-  set newdir "${rootdir}/expanded-${root}"
+  set root [file rootname $filename]
+  set newdir "./${root}-tsv"
   file mkdir $newdir
   set f [open $filename r]
-  fconfigure $f -translation binary
-  set data ""
   set lineNumber 0
   while {1} {
-    set nextIdx1 [string first {INSERT INTO } $data 1]
-    set nextIdx2 [string first {CREATE TABLE} $data 1]
-    set nextIdx [expr {$nextIdx1 == -1 ? $nextIdx2 : $nextIdx2 == -1 ? $nextIdx1 :  ($nextIdx1 < $nextIdx2) ? $nextIdx1 : $nextIdx2 }]
-    if {$nextIdx == -1} {
-      if {[eof $f]} {
-        if {$data == ""} {
-          break
-        } else {
-          set nextIdx [string length $data]
-        }
-      } else {
-        # puts "Read block -- at line $lineNumber"
-        append data [read $f 16384]
-        continue
-      }
-    }
-    set line [string range $data 0 [expr {$nextIdx - 1}]]
-    set data [string range $data $nextIdx end]
     incr lineNumber
-    set line [string trim $line]
+    set line [gets $f]
+    if {[eof $f]} {break}
     if {![string match "INSERT INTO *" $line]} {continue}
+    while {![regexp {^INSERT INTO (.*) values\((.*)\);$} $line] && ![eof $f]} {
+      append line " [gets $f]"; # Handle continuation lines
+    }
     if {![regexp {^INSERT INTO (.*) values\((.*)\);$} $line _ tableinfo vals]} {
       global lineNumber
       error "Bad line '$line' at line $lineNumber of $filename"

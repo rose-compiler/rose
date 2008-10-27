@@ -100,53 +100,37 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
 
 SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
   SgNode* globalBlock;
-  std::cout << "\nDisassembling: " << tsv_directory << std::endl;
-  if(exists(tsv_directory) == false)  {
-    char buf[4096] = "\0";
-    int i = 0; 
-    while( exists ( relativePathPrefix +"/"+ tsv_directory) == false )     {
-      if(i>10){
-        std::string error_message = "user error: Relative Path to  ";
-        error_message+=tsv_directory;
-        error_message+=" not selected in " ;
-        error_message+= boost::lexical_cast<std::string>(i);
-        error_message+=" attempts.";
-        eAssert(0,  (error_message.c_str()) );
-      }
-
-      QFileDialog dialog;
-      dialog.setFileMode(QFileDialog::DirectoryOnly);
-      //relativePathPrefix = dialog.getOpenFileName( 0, "Relative Path To Binaries", getcwd(buf, 4096), "ASCII (*)").toStdString();
-      relativePathPrefix = dialog.getExistingDirectory(0,  "get existing directory", getcwd(buf, 4096)).toStdString();
-      i++;
-    }
-    tsv_directory = relativePathPrefix +"/"+tsv_directory;
-  };
+  int found = tsv_directory.rfind(".");
+  string ending="";
+  if (found!=string::npos) {
+    ending =tsv_directory.substr(found,tsv_directory.length());
+  }
+  std::cout << "\nDisassembling: " << tsv_directory << " Ending : " << ending << std::endl;
   
-  if(is_directory( tsv_directory  ) == true )
-    {
-      RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
-      RoseBin_Arch::arch=RoseBin_Arch::bit32;
-      RoseBin_OS::os_sys=RoseBin_OS::linux_op;
-      RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
-      RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
-      cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
-      // query the DB to retrieve all data
-      globalBlock = roseBin->retrieve_DB();
-      // traverse the AST and test it
-      roseBin->test();
-    }else{
+  if(ending==".sql" ) {
+    std::cout << "\nsql: " << tsv_directory << std::endl;
+    RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
+    RoseBin_Arch::arch=RoseBin_Arch::bit32;
+    RoseBin_OS::os_sys=RoseBin_OS::linux_op;
+    RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
+    RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
+    cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
+    // query the DB to retrieve all data
+    globalBlock = roseBin->retrieve_DB();
+    // traverse the AST and test it
+    roseBin->test();
+  } else {
     vector<char*> args;
     args.push_back(strdup(""));
     args.push_back(strdup(tsv_directory.c_str()));
     args.push_back(0);
-
+    
     ostringstream outStr; 
     for(vector<char*>::iterator iItr = args.begin(); iItr != args.end();
         ++iItr )    {
       outStr << *iItr << " ";
     }     
-    ;
+    
     std::cout << "Calling " << outStr.str() << std::endl;
     globalBlock =  frontend(args.size()-1,&args[0]);
   }
