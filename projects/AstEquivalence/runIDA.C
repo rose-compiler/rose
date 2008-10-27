@@ -208,9 +208,11 @@ main(int argc, char** argv)
 
     std::list<string> tsvDirectories; 
 
+
+    path dir_path(argv[1]); 
+    
     find_tsv_directories(dir_path, tsvDirectories);
 
-    tsvDirectories.push_back(argv[1]);
 
     std::cout << "We have " << tsvDirectories.size() << " files " << std::endl;
 
