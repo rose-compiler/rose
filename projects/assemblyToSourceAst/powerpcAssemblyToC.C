@@ -5,6 +5,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace IntegerOps;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -20,7 +21,7 @@ struct WordWithExpression {
   WordWithExpression(SgExpression* expr) {
     std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
     ++WordWithExpression_nameCounter;
-    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex((Len == 64 ? 0 : (1ULL << Len)) - 1))), bb);
+    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len>::value - 1))), bb);
     appendStatement(decl, bb);
     sym = getFirstVarSym(decl);
   }
@@ -29,9 +30,6 @@ struct WordWithExpression {
 };
 
 struct powerpcCTranslationPolicy {
-  template <size_t Len>
-  struct wordType {typedef WordWithExpression<Len> type;};
-
   powerpcCTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
   SgAsmFile* asmFile;
@@ -101,6 +99,7 @@ struct powerpcCTranslationPolicy {
 
   WordWithExpression<1> true_() {return buildIntVal(1);}
   WordWithExpression<1> false_() {return buildIntVal(0);}
+  WordWithExpression<1> undefined_() {return buildIntVal(0);}
 
   template <size_t Len>
   WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
@@ -119,7 +118,12 @@ struct powerpcCTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex((1ULL << Len) - 1));
+    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value));
+  }
+
+  template <size_t Len>
+  WordWithExpression<Len> negate(WordWithExpression<Len> a) {
+    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value)), buildIntVal(1));
   }
 
   template <size_t Len>
@@ -152,10 +156,35 @@ struct powerpcCTranslationPolicy {
   }
 
   template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildLshiftOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildRshiftOp(a.expr(), b.expr());
+  }
+
+  template <size_t Len1, size_t Len2>
+  WordWithExpression<Len1> shiftRightArithmetic(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
+    return buildBitOrOp(
+             buildRshiftOp(a.expr(), b.expr()),
+             buildConditionalExp(
+               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len1 - 1>::value)),
+               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value), b.expr())),
+               buildUnsignedLongLongIntValHex(0)));
+  }
+
+  template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
     return buildConditionalExp(
              buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
-             buildUnsignedLongLongIntValHex((1 << Len1) - 1),
+             buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value),
              buildSubtractOp(
                buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
                buildIntVal(1)));
@@ -273,19 +302,20 @@ struct powerpcCTranslationPolicy {
   }
 
   void startBlock(uint64_t addr) {
-    bb = buildBasicBlock();
-    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(addr), bb), switchBody);
   }
 
   void finishBlock(uint64_t addr) {
-    appendStatement(buildContinueStmt(), bb);
   }
 
   void startInstruction(SgAsmInstruction* insn) {
+    bb = buildBasicBlock();
+    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(insn->get_address()), bb), switchBody);
     appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
   }
 
-  void finishInstruction(SgAsmInstruction* insn) {}
+  void finishInstruction(SgAsmInstruction* insn) {
+    appendStatement(buildContinueStmt(), bb);
+  }
 };
 
 SgFunctionSymbol* powerpcCTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
@@ -372,12 +402,12 @@ int main(int argc, char** argv) {
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
-  PowerpcInstructionSemantics<powerpcCTranslationPolicy> t(policy);
-  vector<SgNode*> blocks = NodeQuery::querySubTree(asmFiles[0], V_SgAsmBlock);
-  for (size_t i = 0; i < blocks.size(); ++i) {
-    SgAsmBlock* b = isSgAsmBlock(blocks[i]);
-    ROSE_ASSERT (b);
-    t.processBlock(b);
+  PowerpcInstructionSemantics<powerpcCTranslationPolicy, WordWithExpression> t(policy);
+  vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
+  for (size_t i = 0; i < instructions.size(); ++i) {
+    SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+    ROSE_ASSERT (insn);
+    t.processInstruction(insn);
   }
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
   AstTests::runAllTests(proj);
