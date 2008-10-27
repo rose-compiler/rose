@@ -9,7 +9,7 @@
 
 template <typename Policy, template <size_t> class WordType>
 struct PowerpcInstructionSemantics {
-#define Word(Len) typename Policy::template wordType<(Len)>::type
+#define Word(Len) WordType<(Len)>
   Policy& policy;
 
   PowerpcInstructionSemantics(Policy& policy): policy(policy) {}
