@@ -107,30 +107,31 @@ SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
   }
   std::cout << "\nDisassembling: " << tsv_directory << " Ending : " << ending << std::endl;
   
-  if(ending==".sql" ) {
-    std::cout << "\nsql: " << tsv_directory << std::endl;
-    RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
-    RoseBin_Arch::arch=RoseBin_Arch::bit32;
-    RoseBin_OS::os_sys=RoseBin_OS::linux_op;
-    RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
-    RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
-    cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
-    // query the DB to retrieve all data
-    globalBlock = roseBin->retrieve_DB();
-    // traverse the AST and test it
-    roseBin->test();
-  } else {
+  if(is_directory( tsv_directory  ) == true )
+    {
+      std::cout << "\nsql: " << tsv_directory << std::endl;
+      RoseBin_Def::RoseAssemblyLanguage=RoseBin_Def::x86;
+      RoseBin_Arch::arch=RoseBin_Arch::bit32;
+      RoseBin_OS::os_sys=RoseBin_OS::linux_op;
+      RoseBin_OS_VER::os_ver=RoseBin_OS_VER::linux_26;
+      RoseFile* roseBin = new RoseFile( (char*)tsv_directory.c_str() );
+      cerr << " ASSEMBLY LANGUAGE :: " << RoseBin_Def::RoseAssemblyLanguage << endl;
+      // query the DB to retrieve all data
+      globalBlock = roseBin->retrieve_DB();
+      // traverse the AST and test it
+      roseBin->test();
+    }else{
     vector<char*> args;
     args.push_back(strdup(""));
     args.push_back(strdup(tsv_directory.c_str()));
     args.push_back(0);
-    
+
     ostringstream outStr; 
     for(vector<char*>::iterator iItr = args.begin(); iItr != args.end();
         ++iItr )    {
       outStr << *iItr << " ";
     }     
-    
+    ;
     std::cout << "Calling " << outStr.str() << std::endl;
     globalBlock =  frontend(args.size()-1,&args[0]);
   }
