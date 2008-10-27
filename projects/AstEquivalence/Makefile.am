@@ -6,7 +6,7 @@ SUBDIRS =  gui
 if ROSE_USE_QT
 if ROSE_USE_SQLITE_DATABASE
 
-bin_PROGRAMS = astEquivalence evaluateAllBinaries runIDA
+bin_PROGRAMS = astEquivalence createTextFiles evaluateAllBinaries runIDA
 
 astEquivalence_SOURCES = \
 	astEquivalenceGui.C \
@@ -14,6 +14,13 @@ astEquivalence_SOURCES = \
 
       
 astEquivalence_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+
+createTextFiles_SOURCES = \
+	createTextFiles.C 
+
+      
+createTextFiles_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
+
 
 evaluateAllBinaries_SOURCES = \
 	evaluateAllBinaries.C 

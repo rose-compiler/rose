@@ -206,14 +206,9 @@ main(int argc, char** argv)
 	   exit(1);
 	 }
 
-    path dir_path(argv[1]);
-
-    rename_windows_directories(dir_path);
-
-    exit(0);
     std::list<string> tsvDirectories; 
 
-  //  find_tsv_directories(dir_path, tsvDirectories);
+    find_tsv_directories(dir_path, tsvDirectories);
 
     tsvDirectories.push_back(argv[1]);
 
