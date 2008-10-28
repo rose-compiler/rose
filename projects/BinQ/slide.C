@@ -15,7 +15,7 @@ Slide::Slide(BinQGUI* g,
   lastStringB=QString("  ");
   lastRowB=-1;
   gui = g;
-  setPalette(QPalette(QColor(250, 250, 200)));
+  setPalette(QPalette(QColor(250, 250, 250)));
   setAutoFillBackground(true);
   posX=0;
   posY=0;
@@ -156,7 +156,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	if (lastStringB!=res) {
 	  lastStringB = res;
 	  gui->analysisResult->append(res);
-	  int row = gui->posRowA[selected];
+	  int row = gui->posRowB[selected];
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
