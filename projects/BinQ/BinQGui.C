@@ -91,6 +91,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
       QFont f = tableWidget->getFont(0, row);
       f.setBold(true);
       tableWidget->setFont(f, 0, row);
+      tableWidget->setBgColor(QColor(255,255,0),0,row);
       //showFileA(row);
       SgAsmFunctionDeclaration* func = funcsFileA[row];
       std::vector<Item*>::iterator it = itemsFileA.begin();
@@ -109,6 +110,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
       QFont f = tableWidget2->getFont(0, row);
       f.setBold(true);
       tableWidget2->setFont(f, 0, row);
+      tableWidget2->setBgColor(QColor(255,255,0),0,row);
       //      showFileB(row);
       SgAsmFunctionDeclaration* func = funcsFileB[row];
       std::vector<Item*>::iterator it = itemsFileB.begin();
@@ -133,10 +135,12 @@ void BinQGUI::unhighlightFunctionRow(int row, bool fileA) {
       QFont f = tableWidget->getFont(0, row);
       f.setBold(false);
       tableWidget->setFont(f, 0, row);
+      tableWidget->setBgColor(QColor(255,255,255),0,row);
     } else {
       QFont f = tableWidget2->getFont(0, row);
       f.setBold(false);
       tableWidget2->setFont(f, 0, row);
+      tableWidget2->setBgColor(QColor(255,255,255),0,row);
     }
   } //if (row >= 0)
 } //CompassGui::unhighlighFunctionRow(int row)
@@ -150,12 +154,40 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(true);
       codeTableWidget->setFont(f, 0, row);
+      codeTableWidget->setFont(f, 1, row);
+      codeTableWidget->setFont(f, 2, row);
       codeTableWidget->setCurrentCell(row,0);
+      Item* item = itemsFileA[row];
+      if (item->function) {
+	codeTableWidget->setBgColor(QColor(120,120,120),0,row);
+	codeTableWidget->setBgColor(QColor(120,120,120),1,row);
+	codeTableWidget->setBgColor(QColor(120,120,120),2,row);
+	codeTableWidget->setBgColor(QColor(120,120,120),3,row);
+      } else {
+	codeTableWidget->setBgColor(QColor(255,255,0),0,row);
+	codeTableWidget->setBgColor(QColor(255,255,0),1,row);
+	codeTableWidget->setBgColor(QColor(255,255,0),2,row);
+	codeTableWidget->setBgColor(QColor(255,255,0),3,row);
+      }
     } else {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(true);
       codeTableWidget2->setFont(f, 0, row);
+      codeTableWidget2->setFont(f, 1, row);
+      codeTableWidget2->setFont(f, 2, row);
       codeTableWidget2->setCurrentCell(row,0);
+      Item* item = itemsFileA[row];
+      if (item->function) {
+	codeTableWidget2->setBgColor(QColor(120,120,120),0,row);
+	codeTableWidget2->setBgColor(QColor(120,120,120),1,row);
+	codeTableWidget2->setBgColor(QColor(120,120,120),2,row);
+	codeTableWidget2->setBgColor(QColor(120,120,120),3,row);
+      } else {
+	codeTableWidget2->setBgColor(QColor(255,255,0),0,row);
+	codeTableWidget2->setBgColor(QColor(255,255,0),1,row);
+	codeTableWidget2->setBgColor(QColor(255,255,0),2,row);
+	codeTableWidget2->setBgColor(QColor(255,255,0),3,row);
+      }
     }
   } //if(row >= 0)
 } //CompassGui::highlighFunctionRow(int row)
@@ -166,10 +198,38 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(false);
       codeTableWidget->setFont(f, 0, row);
+      codeTableWidget->setFont(f, 1, row);
+      codeTableWidget->setFont(f, 2, row);
+      Item* item = itemsFileA[row];
+      if (!item->function) {
+	codeTableWidget->setBgColor(QColor(255,255,255),0,row);
+	codeTableWidget->setBgColor(QColor(255,255,255),1,row);
+	codeTableWidget->setBgColor(QColor(255,255,255),2,row);
+	codeTableWidget->setBgColor(QColor(255,255,255),3,row);
+      } else {
+	codeTableWidget->setBgColor(QColor(0,0,0),0,row);
+	codeTableWidget->setBgColor(QColor(0,0,0),1,row);
+	codeTableWidget->setBgColor(QColor(0,0,0),2,row);
+	codeTableWidget->setBgColor(QColor(0,0,0),3,row);
+      }
     } else {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(false);
       codeTableWidget2->setFont(f, 0, row);
+      codeTableWidget2->setFont(f, 1, row);
+      codeTableWidget2->setFont(f, 2, row);
+      Item* item = itemsFileA[row];
+      if (!item->function) {
+	codeTableWidget2->setBgColor(QColor(255,255,255),0,row);
+	codeTableWidget2->setBgColor(QColor(255,255,255),1,row);
+	codeTableWidget2->setBgColor(QColor(255,255,255),2,row);
+	codeTableWidget2->setBgColor(QColor(255,255,255),3,row);
+      } else {
+	codeTableWidget2->setBgColor(QColor(0,0,0),0,row);
+	codeTableWidget2->setBgColor(QColor(0,0,0),1,row);
+	codeTableWidget2->setBgColor(QColor(0,0,0),2,row);
+	codeTableWidget2->setBgColor(QColor(0,0,0),3,row);
+      }
     }
   } //if (row >= 0)
 } //CompassGui::unhighlighFunctionRow(int row)
@@ -257,7 +317,13 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
       byteItemFileB[i]=item;
     pos+=length;
   }
+  QDesktopWidget *desktop = QApplication::desktop();
 
+
+  screenWidth = desktop->width()-50;
+  screenHeight = desktop->height()-150;
+  if (screenWidth>1424) screenWidth=1424;
+  if (screenHeight>1124) screenHeight=1124;
 
 
   {
@@ -316,32 +382,31 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     {
       QRPanel &bottomPanelLeft = bottomPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
-	tableWidget = bottomPanelLeft << new QRTable( 2, "function","#instr" );
+	tableWidget = bottomPanelLeft << new QRTable( 1, "function" );
 	QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedA, this);
-	codeTableWidget = bottomPanelLeft << new QRTable( 4, "address","instr","operands","comment" );
-	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
+	tableWidget2 = bottomPanelLeft << new QRTable( 1, "function" );
+	QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedB, this);
 
-	bottomPanelLeft.setTileSize(20,80);
+	//	bottomPanelLeft.setTileSize(20,20);
       }
 
       QRPanel &bottomPanelRight = bottomPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
-	tableWidget2 = bottomPanelRight << new QRTable( 2, "function","#instr" );
-	QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)), &tableWidgetCellActivatedB, this);
+	codeTableWidget = bottomPanelRight << new QRTable( 4, "address","instr","operands","comment" );
+	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
 	codeTableWidget2 = bottomPanelRight << new QRTable( 4, "address","instr","operands","comment" );
 	QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
 
-	bottomPanelRight.setTileSize(20,80);
+	//	bottomPanelRight.setTileSize(0,80);
       }
+      bottomPanelLeft.setFixedWidth(screenWidth/4 );
+      //bottomPanelRight.setFixedWidth(screenWidth/2 );
 
     } //mainPanel
     mainPanel.setTileSize(30);
   } //window 
 
-  QDesktopWidget *desktop = QApplication::desktop();
 
-  screenWidth = desktop->width()-50;
-  screenHeight = desktop->height()-150;
 
   window->setGeometry(0,0,screenWidth,screenHeight);
   window->setTitle("BinQ");
@@ -393,14 +458,14 @@ BinQGUI::run( ) {
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
   //tableWidget->setHAlignment(true, false, 1); // left horizontal alignment
   tableWidget->setTextColor(QColor(0,0,255),0);
-  tableWidget->setHDim(0,100);
-  tableWidget->setHDim(1,40);
+  tableWidget->setHDim(0,140);
+  //tableWidget->setHDim(1,40);
   tableWidget->setShowGrid(false);
 
   tableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
   tableWidget2->setTextColor(QColor(0,0,255),0);
-  tableWidget2->setHDim(0,100);
-  tableWidget2->setHDim(1,40);
+  tableWidget2->setHDim(0,140);
+  //tableWidget2->setHDim(1,40);
   tableWidget2->setShowGrid(false);
 
   
@@ -463,9 +528,14 @@ void BinQGUI::showFileA(int row) {
     } else if (isSgAsmFunctionDeclaration(stmts),i) {
       codeTableWidget->addRows(1);
       //      codeTableWidget->addRows(1);
-      codeTableWidget->setTextColor(QColor(0,0,0),0,i);
-      codeTableWidget->setTextColor(QColor(0,0,0),1,i);
-      codeTableWidget->setTextColor(QColor(0,0,0),2,i);
+      codeTableWidget->setBgColor(QColor(0,0,0),0,i);
+      codeTableWidget->setBgColor(QColor(0,0,0),1,i);
+      codeTableWidget->setBgColor(QColor(0,0,0),2,i);
+      codeTableWidget->setBgColor(QColor(0,0,0),3,i);
+      codeTableWidget->setTextColor(QColor(255,255,255),0,i);
+      codeTableWidget->setTextColor(QColor(255,255,255),1,i);
+      codeTableWidget->setTextColor(QColor(255,255,255),2,i);
+      codeTableWidget->setTextColor(QColor(255,255,255),3,i);
       codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 0, i);
       codeTableWidget->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
       codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 2, i);
@@ -554,9 +624,14 @@ void BinQGUI::showFileB(int row) {
     } else if (isSgAsmFunctionDeclaration(stmts),i) {
       codeTableWidget2->addRows(1);
       //      codeTableWidget->addRows(1);
-      codeTableWidget2->setTextColor(QColor(0,0,0),0,i);
-      codeTableWidget2->setTextColor(QColor(0,0,0),1,i);
-      codeTableWidget2->setTextColor(QColor(0,0,0),2,i);
+      codeTableWidget2->setBgColor(QColor(0,0,0),0,i);
+      codeTableWidget2->setBgColor(QColor(0,0,0),1,i);
+      codeTableWidget2->setBgColor(QColor(0,0,0),2,i);
+      codeTableWidget2->setBgColor(QColor(0,0,0),3,i);
+      codeTableWidget2->setTextColor(QColor(255,255,255),0,i);
+      codeTableWidget2->setTextColor(QColor(255,255,255),1,i);
+      codeTableWidget2->setTextColor(QColor(255,255,255),2,i);
+      codeTableWidget2->setTextColor(QColor(255,255,255),3,i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 0, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 2, i);

@@ -10,9 +10,10 @@ Slide::Slide(BinQGUI* g,
 	     QWidget *parent)
   //  : QWidget(parent)
 {
-  lastString=QString("  ");
-  lastRow=-1;
-  //step =s;
+  lastStringA=QString("  ");
+  lastRowA=-1;
+  lastStringB=QString("  ");
+  lastRowB=-1;
   gui = g;
   setPalette(QPalette(QColor(250, 250, 200)));
   setAutoFillBackground(true);
@@ -82,19 +83,11 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 {
   posX=mevt->pos().x();
   posY=mevt->pos().y();
-  //  cerr << " posX = " << posX << " posY="<<posY<<endl;
-  int selected = 0;
-  //posX/step;
-  /*
-  SgAsmStatement* stmt=NULL;
-  if (selected>0 && selected<gui->itemsFileA.size())
-    stmt=gui->itemsFileA[selected]->statement;
-  if (stmt) {
-    //    cerr << " selected Item: " << stmt->class_name() << endl;
-  }
-  */
-  selected=posX;
+  int selected = posX;
   Item* item = gui->byteItemFileA[selected];
+  Item* item2 = gui->byteItemFileB[selected];
+
+
   if (item) {
     SgAsmStatement* stmt=isSgAsmStatement(item->statement);
     if (stmt) {
@@ -102,15 +95,14 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	QString res = QString("FILE_A: selected Function  %1    pos:%2")
 	  .arg(isSgAsmFunctionDeclaration(stmt)->get_name().c_str())
 	  .arg(selected);
-	//	cerr << " selected Byte Function: " << isSgAsmFunctionDeclaration(stmt)->get_name() << endl;
-	if (lastString!=res) {
-	  lastString = res;
+	if (lastStringA!=res) {
+	  lastStringA = res;
 	  gui->analysisResult->append(res);
 	}
       } else if (isSgAsmBlock(stmt)) {
 	QString res = QString("FILE_A: selected Block");
-	if (lastString!=res) {
-	  lastString = res;
+	if (lastStringA!=res) {
+	  lastStringA = res;
 	  gui->analysisResult->append(res);
 	}
       } else if (isSgAsmInstruction(stmt)) {
@@ -120,23 +112,62 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(	unparseInstruction(isSgAsmInstruction(stmt)).c_str())
 	  .arg(isSgAsmInstruction(stmt)->get_raw_bytes().size())
 	  .arg(selected);
-	if (lastString!=res) {
-	  lastString = res;
+	if (lastStringA!=res) {
+	  lastStringA = res;
 	  gui->analysisResult->append(res);
-	  // need to convert pos to row
-	  // 
 	  int row = gui->posRowA[selected];
-	  //cerr << "Selected row: " << row << "   lastRow:" << lastRow << endl;
+	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
-	    if (lastRow!=row) {
-	      gui->unhighlightInstructionRow(lastRow, true);
+	    if (lastRowA!=row) {
+	      gui->unhighlightInstructionRow(lastRowA, true);
 	      gui->highlightInstructionRow(row, true);
-	      lastRow=row;
+	      lastRowA=row;
 	    }
 	  }
 	}
-      }
-    }
+      } // if
+    } //if stmt
+  }
+
+  if (item2) {
+    SgAsmStatement* stmt=isSgAsmStatement(item2->statement);
+    if (stmt) {
+      if (isSgAsmFunctionDeclaration(stmt)) {
+	QString res = QString("FILE_B: selected Function  %1    pos:%2")
+	  .arg(isSgAsmFunctionDeclaration(stmt)->get_name().c_str())
+	  .arg(selected);
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->analysisResult->append(res);
+	}
+      } else if (isSgAsmBlock(stmt)) {
+	QString res = QString("FILE_B: selected Block");
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->analysisResult->append(res);
+	}
+      } else if (isSgAsmInstruction(stmt)) {
+	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
+	QString res = QString("FILE_B: selected Byte  %1: %2  size %3  pos: %4")
+	  .arg(RoseBin_support::HexToString((isSgAsmx86Instruction(stmt))->get_address()).c_str() )
+	  .arg(	unparseInstruction(isSgAsmInstruction(stmt)).c_str())
+	  .arg(isSgAsmInstruction(stmt)->get_raw_bytes().size())
+	  .arg(selected);
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->analysisResult->append(res);
+	  int row = gui->posRowA[selected];
+	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
+	  if (row>=0) {
+	    if (lastRowB!=row) {
+	      gui->unhighlightInstructionRow(lastRowB, false);
+	      gui->highlightInstructionRow(row, false);
+	      lastRowB=row;
+	    }
+	  }
+	}
+      } // if
+    } //if stmt
   }
 
   update();

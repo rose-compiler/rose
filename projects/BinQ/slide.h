@@ -25,8 +25,10 @@ class Slide : public QWidget
   int posX;
   int posY;
   BinQGUI* gui;
-  QString lastString;
-  int lastRow;
+  QString lastStringA;
+  int lastRowA;
+  QString lastStringB;
+  int lastRowB;
 };
 
 #endif
