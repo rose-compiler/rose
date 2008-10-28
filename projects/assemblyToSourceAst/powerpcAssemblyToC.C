@@ -6,7 +6,7 @@
 #include <iostream>
 
 using namespace std;
-using namespace IntegerOps;
+//using namespace IntegerOps;
 using namespace SageInterface;
 using namespace SageBuilder;
 
@@ -22,7 +22,7 @@ struct WordWithExpression {
   WordWithExpression(SgExpression* expr) {
     std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
     ++WordWithExpression_nameCounter;
-    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len>::value - 1))), bb);
+    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(IntegerOps::SHL1<unsigned long long, Len>::value - 1))), bb);
     appendStatement(decl, bb);
     sym = getFirstVarSym(decl);
   }
@@ -119,12 +119,12 @@ struct powerpcCTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value));
+    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len>::value));
   }
 
   template <size_t Len>
   WordWithExpression<Len> negate(WordWithExpression<Len> a) {
-    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len>::value)), buildIntVal(1));
+    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len>::value)), buildIntVal(1));
   }
 
   template <size_t Len>
@@ -176,8 +176,8 @@ struct powerpcCTranslationPolicy {
     return buildBitOrOp(
              buildRshiftOp(a.expr(), b.expr()),
              buildConditionalExp(
-               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(SHL1<unsigned long long, Len1 - 1>::value)),
-               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value), b.expr())),
+               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::SHL1<unsigned long long, Len1 - 1>::value)),
+               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len1>::value), b.expr())),
                buildUnsignedLongLongIntValHex(0)));
   }
 
@@ -185,7 +185,7 @@ struct powerpcCTranslationPolicy {
   WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
     return buildConditionalExp(
              buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
-             buildUnsignedLongLongIntValHex(GenMask<unsigned long long, Len1>::value),
+             buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len1>::value),
              buildSubtractOp(
                buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
                buildIntVal(1)));
@@ -269,7 +269,7 @@ struct powerpcCTranslationPolicy {
     return buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num));
   }
 
-// DQ (10/25/2008): Added Special Purpose Register support
+// DQ (10/25/2008): Added Special Purpose Register support (we need to restict this to 1,8, and 9 for user modes and support a number of others for other modes).
   void writeSPR(int num, WordWithExpression<32> val) {
     appendStatement(buildExprStatement(buildAssignOp(buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num)), val.expr())), bb);
   }
@@ -332,7 +332,7 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
 
-// DQ (10/25/2008): Why is this a while loop with a single trip count???
+// DQ (10/25/2008): This is a macro idiom to use a do ... while loop to force ";" at the end of each call, avoid dangling else, etc.
 #define LOOKUP_FUNC(name) \
   do {name##Sym = globalScope->lookup_function_symbol(#name); ROSE_ASSERT (name##Sym);} while (0)
 
@@ -380,14 +380,22 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
 int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ROSE_ASSERT (proj);
+
+// The source file is a C++ source file template/example with a collection
+// of variable declarations that predefine the support for grp, spr, etc.
   SgSourceFile* newFile = isSgSourceFile(proj->get_fileList().front());
   ROSE_ASSERT(newFile != NULL);
+
+// This is the existing global scope with required declarations prebuilt...
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
 
-// DQ (10/25/2008): Added testing!
+// DQ (10/25/2008): These have been added by the frontend reading the template/example
   ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
+  ROSE_ASSERT(g->lookup_variable_symbol("spr") != NULL);
 
+// Adding a function to have the emulation execute, the function body will be generated 
+// to be an emulation of the binary.
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
   appendStatement(decl, g);
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
@@ -398,19 +406,29 @@ int main(int argc, char** argv) {
   ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
   ROSE_ASSERT(g->lookup_variable_symbol("spr") != NULL);
 
+// Build the policy object which contains the details of the translation of the disassembled instructions
   powerpcCTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
   policy.switchBody = buildBasicBlock();
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
+
   PowerpcInstructionSemantics<powerpcCTranslationPolicy, WordWithExpression> t(policy);
+
   vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmPowerpcInstruction);
   for (size_t i = 0; i < instructions.size(); ++i) {
     SgAsmPowerpcInstruction* insn = isSgAsmPowerpcInstruction(instructions[i]);
     ROSE_ASSERT (insn);
+
+ // Convert to C code
     t.processInstruction(insn);
   }
+
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
+
+// Run the standard ROSE consistancy tests on the generated source file
   AstTests::runAllTests(proj);
+
+// Generate the source code and call the backend compiler.
   return backend(proj);
 }

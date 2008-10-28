@@ -480,12 +480,12 @@ Output of {\tt configure --help} is detailed in Figures
 simplify their use of ROSE by using it from an installed version of ROSE.  This permits
 compilation using a single include directory and the specification of only two libraries, 
 as in:
-% {\footnotesize
 \begin{verbatim}
      g++ -I{\<install dir\>/include} -o executable executable.C 
          -L{\<install dir\>/lib} -lrose -ledg -lm $(RT_LIBS)
 \end{verbatim}
-% }
+% $ reset emacs highlighting
+
 See the example makefile in \\
 {\tt ROSE/exampleTranslators/documentedExamples/simpleTranslatorExamples/exampleMakefile} \\
 in Section \ref{gettingStarted:compilingTranslator}
@@ -505,6 +505,32 @@ rerun the {\tt configure} script without rebuilding ROSE.
 %    documentation does not yet really reflect this detail.  Also since the build process
 %    writes to the install directory we have to explain this in the documentation.}
 
+\subsection{MPI Support}
+     ROSE supports the use of MPI for parallel distributed memory program analysis, a
+research focus within the ROSE project.  To support this use the {\tt --with-mpi}
+option on the configure command line.  If you get the following message:
+%{\footnotesize
+\begin{verbatim}
+configuration file /home/<user name>/.mpd.conf not found
+A file named .mpd.conf file must be present in the user's home
+directory (/etc/mpd.conf if root) with read and write access
+only for the user, and must contain at least a line with:
+MPD_SECRETWORD=<secretword>
+One way to safely create this file is to do the following:
+  cd $HOME
+  touch .mpd.conf
+  chmod 600 .mpd.conf
+and then use an editor to insert a line like
+  MPD_SECRETWORD=mr45-j9z
+into the file.  (Of course use some other secret word than mr45-j9z.)
+\end{verbatim}
+%}
+% $ reset emacs highlighting
+Then follow the directions to build the {\tt .mpd.conf} file.  The use of the 
+MPI configure option will allow additional code in ROSE to be compiled and 
+additional tests to be run.
+
+
 \subsection{Testing ROSE}
      A set of test programs is available.  %More details are in section \ref{testing}.
 % written about this in later versions of the manual.  
@@ -516,6 +542,26 @@ Extra tests are available for development versions of ROSE. ROSE developers
 are highly recommended to run {\tt make dist} and {\tt make distcheck} to make
 sure that the modified development versions can be used to create functioning
 distributions.
+
 \subsection{Getting Help}
-     You may use the following mailing list to ask for help from the ROSE development 
-team: {\it casc-rose *dot* llnl *dot* gov}.
+%     You may use the following mailing list to ask for help from the ROSE development 
+% team: {\it casc-rose *dot* llnl *dot* gov}.
+%    The ROSE project maintain a number of email lists for internal development, 
+% external devlopers, and external users. More information is in the ROSE User Manual
+% in the Developer's Appendix (see \ref{rose_email_list_info}).
+
+% DQ (10/28/2008): This information is copied from:
+%                  ROSE User Manual: Developer's: Appendix: ROSE Email Lists.
+
+We have three mailing lists for core developers (those who have write access to
+the internal repository), all developers (anyone who has write access to the
+internal or external repository) and all
+users of ROSE. They are:
+\begin{itemize}
+\item rose-core@nersc.gov, web interface: 
+\htmladdnormallink{https://mailman.nersc.gov/mailman/listinfo/rose-core}{https://mailman.nersc.gov/mailman/listinfo/rose-core}.
+\item rose-developer@nersc.gov, web interface: 
+\htmladdnormallink{https://mailman.nersc.gov/mailman/listinfo/rose-developer}{https://mailman.nersc.gov/mailman/listinfo/rose-developer}.
+\item rose-public@nersc.gov, web interface:
+\htmladdnormallink{https://mailman.nersc.gov/mailman/listinfo/rose-public}{https://mailman.nersc.gov/mailman/listinfo/rose-public}.
+\end{itemize}

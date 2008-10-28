@@ -5,6 +5,8 @@
 #include <vector>
 #include "rose.h"
 
+#include "integerOps.h"
+
 using namespace std;
 using namespace SageBuilderAsm;
 
@@ -490,13 +492,13 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
 
-  // Get bits 6-8, 3 bits as the BF opcode
+  // Get bits 6-10, 5 bits as the BO opcode
      uint8_t boOpcode = (insn >> 21) & 0x1F;
 
   // Get the bits 11-15, next 5 bits, as the tertiary opcode
      uint8_t biOpcode = (insn >> 16) & 0x1F;
 
-  // Get the bits 16-31, next 16 bits, as the tertiary opcode
+  // Get the bits 16-29, next 14 bits, as the tertiary opcode
      uint16_t bdOpcode = (insn >> 2) & 0x3FFF;
 
   // Get bit 30, 1 bit as the reserved flag
@@ -515,7 +517,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_B_formInstruction()
              {
             // Skip the registers for now!
                SgAsmExpression* BO = new SgAsmByteValueExpression(boOpcode);
-               SgAsmExpression* BI = makeRegister(powerpc_regclass_gpr,biOpcode,powerpc_condreggranularity_bit);
+               SgAsmExpression* BI = makeRegister(powerpc_regclass_cr,biOpcode,powerpc_condreggranularity_bit);
 
             // DQ (10/15/2008): Compute the address of the branch to restart the disassembly.
             // The address is BD || 0b00 sign-extended.
@@ -623,16 +625,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
      uint8_t raOpcode = (insn >> 16) & 0x1F;
 
   // Get bits 6-8, 3 bits as the BF opcode
-     uint8_t bfOpcode = (insn >> 21) & 0x8;
+     uint8_t bfOpcode = (insn >> 23) & 0x7;
 
   // Get bit 9, 1 bit as the reserved flag
   // uint8_t reservedOpcode = (insn >> 24) & 0x1;
 
   // Get bit 10, 1 bit as the length flag
-     uint8_t lengthOpcode = (insn >> 25) & 0x1;
+     uint8_t lengthOpcode = (insn >> 21) & 0x1;
 
   // Get the bits 16-31, next 16 bits, as the tertiary opcode
-     uint8_t lastOpcode = (insn >> 0) & 0xFFFF;
+     uint16_t lastOpcode = (insn >> 0) & 0xFFFF;
 
 #if DEBUG_OPCODES
   // printf ("D-Form instruction opcode = 0x%x secodaryOpcode = 0x%x bfOpcode = 0x%x reservedOpcode = 0x%x lengthOpcode = 0x%x raOpcode = 0x%x lastOpcode 0x%x \n",insn,secodaryOpcode,bfOpcode,reservedOpcode,lengthOpcode,raOpcode,lastOpcode);
@@ -692,11 +694,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 10
           case 0x0A:
              {
-               SgAsmExpression* BF = new SgAsmByteValueExpression(bfOpcode);
+                SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
                SgAsmExpression* L  = new SgAsmByteValueExpression(lengthOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* UI = new SgAsmWordValueExpression(lastOpcode);
-               instruction = MAKE_INSN4(cmpl,BF,L,RA,UI);
+               instruction = MAKE_INSN4(cmpli,BF,L,RA,UI);
                break;
              }
 
@@ -748,8 +750,13 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
           case 0x0F:
              {
                SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* SI = new SgAsmWordValueExpression(lastOpcode);
+               SgAsmExpression* RA = raOpcode == 0 ? new SgAsmDoubleWordValueExpression(0) : (SgAsmExpression*) makeRegister(powerpc_regclass_gpr,raOpcode);
+
+            // Compute the signExtended value directly in the disassembly instead of in the emulation.
+            // Computing this to be sign extended is more important for 64-bit mode (which is not currently supported).
+            // The signExtend keeps the same type, so it needs to be cast to a 32 bit value.
+               SgAsmExpression* SI = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+
                instruction = MAKE_INSN3(addis,RT,RA,SI);
                break;
              }
@@ -820,9 +827,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
                SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               SgAsmExpression* addressExpr = makeAdd(RA,D);
-               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+
+            // Compute the signExtended value directly in the disassembly instead of in the emulation.
+            // The signExtend keeps the same type, so it needs to be cast to a 32 bit value.
+               SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+               SgAsmExpression* addressExpr = raOpcode == 0 ? D : makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL,SgAsmTypeDoubleWord::createType());
                instruction = MAKE_INSN2(lwz,RT,mr);
                break;
              }
@@ -833,6 +843,12 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
                SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+
+               if (raOpcode == 0 || raOpcode == secodaryOpcode)
+                  {
+                    throw BadInstruction();
+                  }
+
                SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -846,9 +862,13 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
             // The correct form of this instruction is "xxx RT,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
                SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               SgAsmExpression* addressExpr = makeAdd(RA,D);
-               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+
+            // Compute the signExtended value directly in the disassembly instead of in the emulation.
+            // The signExtend keeps the same type, so it needs to be cast to a 32 bit value.
+               SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+               SgAsmExpression* addressExpr = raOpcode == 0 ? D : makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL,SgAsmTypeDoubleWord::createType());
+
                instruction = MAKE_INSN2(lbz,RT,mr);
                break;
              }
@@ -871,9 +891,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
              {
                SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               SgAsmExpression* addressExpr = makeAdd(RA,D);
-               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+
+            // Compute the signExtended value directly in the disassembly instead of in the emulation.
+            // The signExtend keeps the same type, so it needs to be cast to a 32 bit value.
+               SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+
+            // SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmExpression* addressExpr = raOpcode == 0 ? D : makeAdd(RA,D);
+
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL,SgAsmTypeDoubleWord::createType());
+
                instruction = MAKE_INSN2(stw,RS,mr);
                break;
              }
@@ -881,12 +908,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
        // 37
           case 0x25:
              {
-               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
-               SgAsmExpression* addressExpr = makeAdd(RA,D);
-               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
-               instruction = MAKE_INSN2(stwu,RT,mr);
+
+            // Compute the signExtended value directly in the disassembly instead of in the emulation.
+            // The signExtend keeps the same type, so it needs to be cast to a 32 bit value.
+               SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+
+            // SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmExpression* addressExpr = raOpcode == 0 ? D : makeAdd(RA,D);
+
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL,SgAsmTypeDoubleWord::createType());
+               instruction = MAKE_INSN2(stwu,RS,mr);
                break;
              }
 
@@ -1294,7 +1327,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
           case 0x20:
              {
                ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* BF = makeRegister(powerpc_regclass_gpr,bfOpcode);
+               SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
                SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
