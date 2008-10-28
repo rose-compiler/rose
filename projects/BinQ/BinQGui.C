@@ -176,7 +176,7 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
       codeTableWidget2->setFont(f, 1, row);
       codeTableWidget2->setFont(f, 2, row);
       codeTableWidget2->setCurrentCell(row,0);
-      Item* item = itemsFileA[row];
+      Item* item = itemsFileB[row];
       if (item->function) {
 	codeTableWidget2->setBgColor(QColor(120,120,120),0,row);
 	codeTableWidget2->setBgColor(QColor(120,120,120),1,row);
@@ -218,7 +218,7 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
       codeTableWidget2->setFont(f, 0, row);
       codeTableWidget2->setFont(f, 1, row);
       codeTableWidget2->setFont(f, 2, row);
-      Item* item = itemsFileA[row];
+      Item* item = itemsFileB[row];
       if (!item->function) {
 	codeTableWidget2->setBgColor(QColor(255,255,255),0,row);
 	codeTableWidget2->setBgColor(QColor(255,255,255),1,row);
@@ -268,9 +268,10 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
       AstQueryNamespace::querySubTree(fileA, std::bind2nd( visStat2, &stmts2 ));
       int funcsize= stmts2.size();
       item = new Item(true,*it,funcsize,2,row);
-    } else if (isSgAsmBlock(*it))
-      item = new Item(false,*it,0,1,row);
-    else
+    } else if (isSgAsmBlock(*it)) {
+            continue;
+      //item = new Item(false,*it,0,1,row);
+    } else
       item = new Item(false,*it,0,0,row);
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
@@ -300,9 +301,10 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
       AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts2 ));
       int funcsize= stmts2.size();
       item = new Item(true,*it,funcsize,2,row);
-    }    else if (isSgAsmBlock(*it))
-      item = new Item(false,*it,0,1,row);
-    else
+    }    else if (isSgAsmBlock(*it)) {
+      continue;
+      //item = new Item(false,*it,0,1,row);
+      } else
       item = new Item(false,*it,0,0,row);
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
