@@ -9,7 +9,7 @@ AC_ARG_WITH(dwarf,
 [  --with-dwarf=PATH	Specify the path where libdwarf is installed],
 ,
 if test ! "$with_dwarf" ; then
-   with_yices=no
+   with_dwarf=no
 fi
 )
 
