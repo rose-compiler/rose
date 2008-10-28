@@ -114,6 +114,14 @@ if ROSE_USE_YICES
 # ROSE_YICES_LIB_FILE = libyices.a
 endif
 
+# ROSE-DWARF libdwarf
+if ROSE_USE_DWARF
+  ROSE_DWARF_INCLUDES = -I$(dwarf_path)
+  ROSE_DWARF_LIBS = -ldwarf
+  ROSE_DWARF_LIBS_WITH_PATH = $(dwarf_path)/libdwarf.a -lelf
+# ROSE_DWARF_LIB_FILE = libdwarf.a
+endif
+
 # ROSE-WINE Package (Wine is a package to permit execution of Windows binaries under Linux)
 if ROSE_USE_WINDOWS_ANALYSIS_SUPPORT
   ROSE_WINE_INCLUDES = -I$(wine_path)/include
@@ -207,10 +215,15 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
      $(ROSE_PHP_INCLUDES) \
+     $(ROSE_YICES_INCLUDES) \
+     $(ROSE_DWARF_INCLUDES) \
+     $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
      $(BOOST_CPPFLAGS) $(SQLITE3_CFLAGS) -DBOOST_REGEX_MATCH_EXTRA
 
-# DQ: Not used currently
+# DQ (10/28/2008): I think these should be included, I don't know why they 
+# were removed (used with Microsoft Windows tests, and Yices tests).
+# DQ: Not used currently 
 #     $(ROSE_YICES_INCLUDES)
 #     $(ROSE_WINE_INCLUDES)
 
@@ -237,7 +250,7 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm $(MYSQL_DATABASE_LIBS) \
   $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB) \
   $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)  \
   $(BOOST_WAVE_LIB) $(SQLITE3_LDFLAGS)  $(JAVA_JVM_LINK) $(RT_LIBS) \
-  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
+  $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH)
 
 # This ROSE_SEPARATE_LIBS is used for the linking of preprocessor.C used within
