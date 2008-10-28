@@ -5,14 +5,15 @@
 class Item {
  public:
   Item(bool function, SgAsmStatement* statement,
-       int functionSize, int resolved):function(function),
+       int functionSize, int resolved, int row):function(function),
     statement(statement),functionSize(functionSize),
-    resolved(resolved){}
+    resolved(resolved),row(row){}
 
   bool function;
   SgAsmStatement* statement;
   int functionSize;
   int resolved;
+  int row;
 };
 
 #endif

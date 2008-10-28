@@ -121,8 +121,8 @@ void ticl::get_basic_blocks_1(std::string directory, vector<basic_blocks_1>& vec
 void ticl::get_instructions_1(std::string directory, vector<instructions_1>& vec_STRUCT)
 {
 #define ARGS_instructions_1  &elem_instructions_1->address, &elem_instructions_1->basic_block_id, &elem_instructions_1->mnemonic, \
-    &elem_instructions_1->sequence
-  FILL_IN_STRUCT(instructions_1, "ssss","instructions_1.tsv");
+    &elem_instructions_1->sequence, &elem_instructions_1->data
+  FILL_IN_STRUCT(instructions_1, "sssss","instructions_1.tsv");
 };
 
 void ticl::get_callgraph_1(std::string directory, vector<callgraph_1>& vec_STRUCT)

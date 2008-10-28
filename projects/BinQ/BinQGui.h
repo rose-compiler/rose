@@ -55,24 +55,6 @@ class scoped_array_with_size {
 };
 
 
-
-struct Element {
-  uint64_t size;
-  uint64_t function_A ;
-  uint64_t function_B ;
-  uint64_t begin_index_within_function_A ;
-  uint64_t end_index_within_function_A   ;
-  uint64_t begin_index_within_function_B ;
-  uint64_t end_index_within_function_B   ;
-  std::string file_A;
-  std::string function_name_A;
-  std::string file_B;
-  std::string function_name_B;
-
-};
-
-
-
 class BinQGUI
 {
   public:
@@ -81,23 +63,20 @@ class BinQGUI
     void run( ) ;
     void open();
     void reset();
-    void highlightFunctionRow(int);
-    void unhighlightFunctionRow(int);
-    void highlightInstructionRow(int);
-    void unhighlightInstructionRow(int);
+    void highlightFunctionRow(int,bool fileA);
+    void unhighlightFunctionRow(int,bool fileA);
+    void highlightInstructionRow(int,bool fileA);
+    void unhighlightInstructionRow(int,bool fileA);
 
     void showFileA(int row);
-    //SgNode* disassembleFile(std::string tsv_directory);
-    //std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-    //std::vector<SgAsmx86Instruction*>::iterator end);
+    void showFileB(int row);
 
-    //std::pair<std::string,std::string> getAddressFromVectorsTable(uint64_t function_id, uint64_t index);
-
-
-    std::vector<Item*> items;
-    std::map<int,Item*> byteItem;
-    std::map<int,int> posRow;
-    int slideMax;
+    std::vector<Item*> itemsFileA;
+    std::vector<Item*> itemsFileB;
+    std::map<int,Item*> byteItemFileA;
+    std::map<int,Item*> byteItemFileB;
+    std::map<int,int> posRowA;
+    std::map<int,int> posRowB;
     QTextEdit *analysisResult;
 
   protected:
@@ -107,12 +86,9 @@ class BinQGUI
 
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
-    //QTextEdit *codeWidget;
-    //QTextEdit *codeWidget2;
 
     QComboBox *comboBox;
     qrs::QRProgress *wholeFunction;
-    //    QPainter *painter;
     Slide *slide;
     QListWidget *listWidget;
     
@@ -120,35 +96,20 @@ class BinQGUI
     QTextBrowser *codeBrowser;
     QLineEdit *smallerThanRestriction;
     QLineEdit *largerThanRestriction;
-    //    QComboBox *checkBoxLockBars;
+
   private:
 
-    std::vector<SgAsmFunctionDeclaration*> funcs;
-    //    std::vector<SgAsmx86Instruction*> insns;
-
-
+    std::vector<SgAsmFunctionDeclaration*> funcsFileA;
+    std::vector<SgAsmFunctionDeclaration*> funcsFileB;
     BinQSupport* binqsupport;
     
     std::string fileNameA,fileNameB;
     SgNode* fileA;
     SgNode* fileB;
 
-
-    int slideStep;
-
-    double similarity;
-    int stride;
-    int windowSize;
-    int activeFunctionRow;
-    int activeInstructionRow;
-
     int screenWidth;
     int screenHeight;
 
-    scoped_array_with_size<Element > vectorOfClones;
-    std::pair<std::string,std::string> normalizedView;
-    std::pair<std::string,std::string> unparsedView;
-    std::pair<std::string,std::string> allInsnsUnparsedView;
    
 }; //class BinQGUI
 

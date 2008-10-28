@@ -165,10 +165,11 @@ int main(int argc, char** argv) {
   SgBinaryFile* binaryFile = isSgBinaryFile(project->get_fileList()[0]);
   SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
 
-  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-  ROSE_ASSERT (interps.size() == 1);
-  SgAsmInterpretation* interp = interps[0];
-
+  //  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
+  //ROSE_ASSERT (interps.size() == 1);
+  //SgAsmInterpretation* interp = interps[0];
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+                                
   if (containsArgument(argc, argv, "-printTree")) {
     fprintf(stderr, "Printing AST... _binary_tree.dot\n");
     string filename="_binary_tree.dot";

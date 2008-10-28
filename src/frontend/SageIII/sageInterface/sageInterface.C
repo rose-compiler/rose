@@ -6735,3 +6735,20 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
   }
 
 
+// tps : 28 Oct 2008 - support for finding the main interpretation
+ SgAsmInterpretation* 
+ SageInterface::getMainInterpretation(SgAsmFile* file) {
+   SgAsmInterpretationPtrList& interps = file->get_interpretations();
+   if (interps.size()==1)
+     return interps[0];
+   SgAsmInterpretation* mainInt=NULL;
+   SgAsmInterpretationPtrList::iterator it = interps.begin();
+   for (;it!=interps.end();++it) {
+     mainInt = *it;
+     SgAsmGenericHeader* header = mainInt->get_header();
+     if (isSgAsmPEFileHeader(header))
+       break;
+   }
+   ROSE_ASSERT(mainInt);
+   return mainInt;
+ }

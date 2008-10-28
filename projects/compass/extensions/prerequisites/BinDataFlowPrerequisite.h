@@ -30,9 +30,8 @@
       graph = new RoseBin_DotGraph(info);
       ROSE_ASSERT(graph);
 
-      const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-      ROSE_ASSERT (interps.size() == 1);
-      dfanalysis = new RoseBin_DataFlowAnalysis(interps[0]->get_global_block(), forward, new RoseObj(), info);
+      SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+      dfanalysis = new RoseBin_DataFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), info);
       dfanalysis->init(interprocedural, edges);
       dfanalysis->run(graph, dfgFileName, mergedEdges);
 

@@ -845,9 +845,9 @@ parseBinaryFile(std::string name) {
   SgAsmFile* file = binFile != NULL ? binFile->get_binaryFile() : NULL;
 
 
-  const SgAsmInterpretationPtrList& interps = file->get_interpretations();
-  ROSE_ASSERT (interps.size() == 1);
-  SgAsmInterpretation* interp = interps[0];
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  //  ROSE_ASSERT (interps.size() == 1);
+  //  SgAsmInterpretation* interp = interps[0];
 
   string fname = StringUtility::stripPathFromFileName(name);
 
