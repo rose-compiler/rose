@@ -68,6 +68,10 @@ namespace SageInterface
 //! An internal counter for generating unique SgName
 extern int gensym_counter;
 
+// tps : 28 Oct 2008 - support for finding the main interpretation
+ SgAsmInterpretation* getMainInterpretation(SgAsmFile* file);
+
+
 //------------------------------------------------------------------------
 //@{
 /*! @name Symbol tables
