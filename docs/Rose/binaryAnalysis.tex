@@ -45,6 +45,49 @@ represnt supporting infrastructure in the AST.  Arrows are either dark colored o
 light colored; dark colors represent class derivation, and light colors represent
 member relationships.
 
+% DQ (10/29/2008): Added documentation for file format (plus examples).
+% This figure uses a saved (static) pdf file (not generated during the ``make docs'' rule).
+% This was done because it is cropped using predefined pixel values which would not be
+% easy to generate for a pdf that might be constantly changed.
+\begin{figure}
+% \includegraphics[angle=90,scale=0.75,width=5in,height=1in]{\TopSourceDirectory/src/frontend/ExecFormats/BinaryFileFormat}
+% \includegraphics[scale=0.50]{\TopSourceDirectory/docs/Rose/asm_code_samples_gcc}
+\includegraphics[,viewport=5 1 100 30,scale=2]{\TopSourceDirectory/docs/Rose/asm_code_samples_gcc}
+\caption{The AST for a PE (Windows) binary executable (binary file format only), with long
+    list of symbols (half of which are clipped on the right side of the image).} 
+
+\label{binaryAnalysis:BinaryExecutableFormatAST_1}
+\end{figure}
+
+Figure \ref{binaryAnalysis:BinaryExecutableFormatAST_1} shows the graph of the AST
+formed by just the binary file format (sections, symbols, etc.).  This figure shows
+the different IR nodes used to represent the binary file format (without the disassembled 
+instructions, in this case) and the large list of symbols within the symbol table (the 
+long list that is partially truncated on the right edge of the figure).
+This graph is quite large and does not fit well on the page, the next figure
+\ref{binaryAnalysis:BinaryExecutableFormatAST_2} shows a clipped image with more detail.
+
+
+\begin{figure}
+% \includegraphics[angle=90,scale=0.75,width=5in,height=1in]{\TopSourceDirectory/src/frontend/ExecFormats/BinaryFileFormat}
+\includegraphics*[angle=90,viewport=5 1 40 30,scale=18]{\TopSourceDirectory/docs/Rose/asm_code_samples_gcc}
+\caption{The CROPPED AST for a PE (Windows) binary executable (binary file format only).} 
+
+\label{binaryAnalysis:BinaryExecutableFormatAST_2}
+\end{figure}
+
+Figure \ref{binaryAnalysis:BinaryExecutableFormatAST_2} shows a cropped view of the graph
+of the AST formed by just the binary file format (sections, symbols, etc.).  This figure
+shows two {\em SgAsmInterpretation} IR nodes; this is a Windows PE binary and all windows
+PE binaries contain both a 16-bit MSDOS header (and some 16-bit code) and a 32-bit Windows
+PE header (with sections that have 32-bit code); thus there are two SgAsmInterpretation IR
+nodes (one for the 16-bit interprestation of the instructions and one for the 32-bit 
+interpretation of the instructions).  Note that ELF format files will have only one
+SgAsmInterpretation IR nodes (because there is only a single interpreation possible), but
+other file formats can contain many interpretations; formed form a composite of code to
+support wide ranges of portability.
+
+
 \subsection{Instruction Disassembly}
 
     ROSE has its own disassembler (for x86, ARM, and PowerPC); a recursive disassembler that is well suited to

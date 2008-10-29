@@ -144,6 +144,75 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodeoption="color=\"orange\" ";
         }
      string nodelabel=string("\\n")+node->sage_class_name();
+
+  // DQ (10/29/2008): Added some support for additional output of internal names for specific IR nodes.
+  // In generall there are long list of these IR nodes in the binary and this helps make some sense of 
+  // the lists (sections, symbols, etc.).
+     SgAsmExecutableFileFormat* binaryFileFormatNode = isSgAsmExecutableFileFormat(node);
+     if (binaryFileFormatNode != NULL)
+        {
+       // The case of binary file format IR nodes can be especially confusing so we want the 
+       // default to output some more specific information for some IR nodes (e.g. sections).
+          string name;
+          SgAsmGenericSection* genericSection = isSgAsmGenericSection(node);
+          if (genericSection != NULL)
+             {
+               SgAsmGenericString* genericString = genericSection->get_name();
+               ROSE_ASSERT(genericString != NULL);
+
+               name = genericString->get_string();
+             }
+
+          SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
+          if (genericSymbol != NULL)
+             {
+               SgAsmGenericString* genericString = genericSymbol->get_name();
+               ROSE_ASSERT(genericString != NULL);
+
+               name = genericString->get_string();
+
+               if (name.empty() == true)
+                    name = "no_name_for_symbol";
+             }
+
+          SgAsmGenericDLL* genericDLL = isSgAsmGenericDLL(node);
+          if (genericDLL != NULL)
+             {
+               SgAsmGenericString* genericString = genericDLL->get_name();
+               ROSE_ASSERT(genericString != NULL);
+
+               name = genericString->get_string();
+             }
+
+          SgAsmPEImportHintName* peImportHintName = isSgAsmPEImportHintName(node);
+          if (peImportHintName != NULL)
+             {
+            // This does not use a SgAsmGenericString, at least not yet!
+               name = peImportHintName->get_name();
+             }
+
+#if 0
+       // This might not be the best way to implement this, since we want to detect common base classes of IR nodes.
+          switch (node->variantT())
+             {
+               case V_SgAsmElfSection:
+                  {
+                    SgAsmElfSection* n = isSgAsmElfSection(node);
+                    name = n->get_name();
+                    break;
+                  }
+
+               default:
+                  {
+                 // No additional information is suggested for the default case!
+                  }
+             }
+#endif
+
+          if (name.empty() == false)
+               nodelabel += string("\\n") + name;
+        }
+
      nodelabel += additionalNodeInfo(node);
 
   // DQ (11/1/2003) added mechanism to add additional options (to add color, etc.)
