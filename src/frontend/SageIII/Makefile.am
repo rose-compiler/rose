@@ -76,7 +76,8 @@ libsage3Sources = \
    fixupCopy_symbols.C \
    fixupCopy_references.C \
    rtiHelpers.C \
-   virtualCfgMemberFunctions.C
+   virtualCfgMemberFunctions.C \
+   OmpAttribute.C
 # $(GENERATED_SOURCE) is handled separately
 
 # DQ (5/27/2007): Files moved or removed
@@ -128,7 +129,8 @@ include_HEADERS = \
    attachPreprocessingInfo.h \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
-   general_token_defs.h rose_paths.h rtiHelpers.h
+   general_token_defs.h rose_paths.h rtiHelpers.h \
+   OmpAttribute.h omp.h
 
 nodist_include_HEADERS = \
    Cxx_Grammar.h \
