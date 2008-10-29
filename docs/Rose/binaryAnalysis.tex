@@ -5,9 +5,10 @@
 
 \section{Introduction}
 
-   ROSE supports the disassembly and analysis of binary executables for x86 and AMR
+   ROSE supports the disassembly and analysis of binary executables for x86, PowerPC, and AMR
 instruction sets.  ROSE implements this support as part of general research work
-to support combining analysis for source code and analysis for binaries.
+to support combining analysis for source code and analysis for binaries and supporting
+performance analysis and optimization.
 
 \section{The Binary AST}
 
@@ -17,7 +18,7 @@ to support combining analysis for source code and analysis for binaries.
 LE, DOS formats for Windows.  The details of each format are represented in IR nodes in
 the AST (using structures common to the representation of such low level data).  About
 60 IR nodes have been added to ROSE to support the binary executable formats; this
-support allows the analysis of any Linux or Windows, OS\/2, or DOS binary executable.
+support allows the analysis of any Linux, Windows, OS\/2, or DOS binary executable.
 
    The binary executable file format can be analyized seperately from the instructions
 using the command line option: {\tt -rose:read\_executable\_file\_format\_only}.  This
@@ -25,7 +26,7 @@ allows graphs generated using the ROSE visualization mechanisms (and even some a
 to be easily restricted (in size) to the just the IR nodes specific to the binary
 executable file format.
 
-\fixme{We need an example of the binary executable format AST.}
+% \fixme{We need an example of the binary executable format AST.}
 
 \begin{figure}
 % \includegraphics[angle=90,scale=0.75,width=5in,height=1in]{\TopSourceDirectory/src/frontend/ExecFormats/BinaryFileFormat}
@@ -125,7 +126,7 @@ debug information, symbols, etc.
 a number of techniques have been developed to support classes of transformations.
 This static rewritting of the binary permits the development of performance tools 
 that could support the analysis and rewritting of binaries for support of High 
-Performance Computing (HPC). As principal focus in on IBM BGL and Cray XT support 
+Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support 
 (DOE Office of Science supercomputers).
 
 \subsection{Generic Section/Segment Modifications}
@@ -140,19 +141,19 @@ Performance Computing (HPC). As principal focus in on IBM BGL and Cray XT suppor
    addresses (RVAs) that were primarily associated with the moved section.
 
    The main problems with this function are that it doesn't take into account the file locations of other sections, the file
-   alignment constraints of the moved section, or the memory mapping. Specifically, after calling this function to move ".text"
+   alignment constraints of the moved section, or the memory mapping. Specifically, after calling this function to move {\bf.text}
    one byte later in the file:
 \begin{itemize}
-   \item ".text" might not satisfy its file aligment constraint.
+   \item {\bf.text} might not satisfy its file aligment constraint.
 
-   \item The end of ".text" might overlap with the following section. The ELF unparser has undefined behavior when two sections
+   \item The end of {\bf.text} might overlap with the following section. The ELF unparser has undefined behavior when two sections
      overlap without storing identical bytes at the overlapping regions.
 
-   \item ".text", if memory mapped (which it surely is), might not be consistent with the mapping of other adjacent or overlapping
-     sections. For instance, ".text" is contained in "ELF Load Segment 2" both in the file address space and in the mapped
-     memory space. The offset from ELF Load Segment 2 to .text must be identical in both file and memory.
+   \item {\bf.text}, if memory mapped (which it surely is), might not be consistent with the mapping of other adjacent or overlapping
+     sections. For instance, {\bf.text} is contained in "ELF Load Segment 2" both in the file address space and in the mapped
+     memory space. The offset from ELF Load Segment 2 to {\bf.text} must be identical in both file and memory.
 
-   \item RVAs that point to instructions in ".text" can be associated with the ".text" section or with ELF Load Segment 2,
+   \item RVAs that point to instructions in {\bf.text} can be associated with the {\bf.text} section or with ELF Load Segment 2,
      depending on how they were parsed. Normally it doesn't matter which since the relationship between file address space and
      memory address space is consistent. But if you change the file addresses without changing memory addresses then the byte
      to which the RVA points could be ambiguous.
@@ -242,7 +243,7 @@ Performance Computing (HPC). As principal focus in on IBM BGL and Cray XT suppor
 
    NOTE: An RVA (rose\_rva\_t) is an offset with respect to the beginning of some section. If the section starting memory address
    changes then the RVA implicitly changes (RVA's are virtual addresses relative to some format-wide base address). Multiple
-   sections can be mapped to the same memory (e.g., ".text" and "ELF Load Segment 2" are typically overlap in memory), but
+   sections can be mapped to the same memory (e.g., {\bf.text} and {\bf ELF Load Segment 2} are typically overlap in memory), but
    since an RVA is associated with only one section, modifying the other section(s) has no effect on the RVA even if the RVA
    happens to be inside the other sections as well.
 
