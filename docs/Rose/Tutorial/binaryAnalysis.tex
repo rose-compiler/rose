@@ -1,14 +1,14 @@
 \chapter{Binary Analysis}
 
-This chapter discusses the capabilities of ROSE to read and analyze software binaries.
+This chapter discusses the capabilities of ROSE to read, analyze and transform 
+(transformations to the binary file format) binary executables.
 
-In the following we use a small example that demonstrates various features of Binary-Rose.
-The source code of our binary example is:
+In the following sections we use a small example that demonstrates various 
+features of Binary-Rose. The source code of our binary example is:
 
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
-
 
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
@@ -28,12 +28,22 @@ The source code of our binary example is:
 \label{Tutorial:examplesourcecode}
 \end{figure}
 
+Much larger binaries can be analized, but such larger binary executables are more
+difficult to present (in this tutorial).
+
 
 \section{Loading binaries}
 
-Binary-ROSE is currently based on two front-ends: \emph{objdump} and \emph{IdaPro-mysql}.
+Binary support in ROSE is currently based on two front-ends: 
+% \emph{objdump} and \emph{IdaPro-mysql}.
+\begin{enumerate}
+   \item A custom build \emph{ROSE Disassembler} (for ARM, x86, and PowerPC), and
+   \item \emph{IdaPro-mysql}
+\end{enumerate}
 
-\subsection{objdump}
+
+% \subsection{objdump}
+\subsection{ROSE Disassembler}
 
 The following code reads in a binary and creates a binary ROSE AST:
 
