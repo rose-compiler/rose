@@ -51,6 +51,7 @@
 \newcommand{\AstRewriteExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/AstRewriteExamples}
 \newcommand{\TutorialExampleDirectory}{@top_srcdir@/tutorial}
 \newcommand{\TutorialExampleBuildDirectory}{@top_builddir@/tutorial}
+\newcommand{\TopSourceDirectory}{@top_srcdir@}
 
 \newcommand{\DatabaseExampleDirectory}{@top_srcdir@/exampleTranslators/documentedExamples/dataBaseExamples}
 
