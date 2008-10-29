@@ -249,6 +249,23 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
   fileA = binqsupport->disassembleFile(fileNameA);
   fileB = binqsupport->disassembleFile(fileNameB);
 
+  FindInstructionsVisitor vis;
+  scoped_array<scoped_array<size_t> > C;
+  vector_start_at_one<SgNode*> insnsA;
+  AstQueryNamespace::querySubTree(fileA, std::bind2nd( vis, &insnsA ));
+  vector_start_at_one<SgNode*> insnsB;
+  AstQueryNamespace::querySubTree(fileB, std::bind2nd( vis, &insnsB ));
+
+  LCSLength(C,insnsA,insnsB);
+  std::vector<pair<int,int> > addInstr,minusInst;
+  printDiff(C,insnsA, insnsB,insnsA.size(),insnsB.size(),addInstr,minusInst);
+
+  
+  cerr << " found adds on left side : " << addInstr.size() << endl;
+  cerr << " found subbs on left side : " << minusInst.size() << endl;
+
+
+
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
   AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
@@ -281,7 +298,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     row++;
     itemsFileA.push_back(item);
     byteItemFileA[pos]=item;
-    cerr << "FILE_A: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
+    //cerr << "FILE_A: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
     for (int i=0;i<length;i++)
       byteItemFileA[i]=item;
     pos+=length;
@@ -314,7 +331,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     row++;
     itemsFileB.push_back(item);
     byteItemFileB[pos]=item;
-    cerr << "FILE_B: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
+    //cerr << "FILE_B: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
     for (int i=0;i<length;i++)
       byteItemFileB[i]=item;
     pos+=length;
