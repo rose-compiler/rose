@@ -212,7 +212,7 @@ EXTRA_DIST = \
    developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex preface.tex \
    requirements.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
-   roseExecutionOutput.txt roseHelpOutput.txt 
+   roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf
 
 clean-web-pages:
 	test ! -d ROSE_WebPages || (test -d ROSE_WebPages && ( chmod +w -R ROSE_WebPages ))
