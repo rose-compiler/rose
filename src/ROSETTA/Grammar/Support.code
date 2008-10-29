@@ -9584,7 +9584,7 @@ SgFile::initialization()
      p_outputFormat            = SgFile::e_unknown_output_format;
      p_backendCompileFormat    = SgFile::e_unknown_output_format;
      p_fortran_implicit_none   = false;
-     p_fortran_openmp          = false;
+     p_openmp          = false;
 
   // DQ (12/8/2007): Added commandline support for cray pointers.
      p_cray_pointer_support = false;
@@ -10208,7 +10208,7 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_backendCompileFormat                 = %s output format \n",backendCompileFormatName.c_str());
 
      printf ("     p_fortran_implicit_none                = %s \n",(p_fortran_implicit_none == true) ? "true" : "false");
-     printf ("     p_fortran_openmp                       = %s \n",(p_fortran_openmp == true) ? "true" : "false");
+     printf ("     p_openmp                       = %s \n",(p_openmp == true) ? "true" : "false");
      printf ("     p_cray_pointer_support                 = %s \n",(p_cray_pointer_support == true) ? "true" : "false");
      printf ("     p_output_parser_actions                = %s \n",(p_output_parser_actions == true) ? "true" : "false");
      printf ("     p_exit_after_parser                    = %s \n",(p_exit_after_parser == true) ? "true" : "false");

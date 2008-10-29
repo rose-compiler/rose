@@ -10,7 +10,7 @@ SUBDIRS = \
      C_tests C99_tests UPC_tests Cxx_tests C_subset_of_Cxx_tests \
      Fortran_tests copyAST_tests RoseExample_tests PythonExample_tests \
      colorAST_tests mergeAST_tests unparseToString_tests \
-     sourcePosition_tests \
+     sourcePosition_tests OpenMP_tests \
      OpenMP_C_tests boost_tests virtualCFG_tests uninitializedField_tests \
      A++Tests OvertureCode P++Tests A++Code ElsaTestCases \
      ExpressionTemplateExample_tests hiddenTypeAndDeclarationListTests

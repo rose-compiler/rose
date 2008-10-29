@@ -29,9 +29,7 @@ SUBDIRS = \
      assemblyToSourceAst \
      bugSeeding \
      binaryVisualization \
-     UpcTranslation \
-     OpenMP_Parser
-
+     UpcTranslation
 
 #AS(3/12/2008) the  NameConsistancyChecker is now part of compass
 #     NameConsistancyChecker 

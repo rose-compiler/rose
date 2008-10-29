@@ -391,6 +391,7 @@ class StatementGenerator {
   /*! Brief These traverse the memory pool of SgFile IR nodes and determine what languages are in use!
    */
   bool is_C_language ();
+  bool is_OpenMP_language ();
   bool is_UPC_language ();
   //! Check if dynamic threads compilation is used for UPC programs
   bool is_UPC_dynamic_threads();

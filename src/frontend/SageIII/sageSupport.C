@@ -1120,22 +1120,32 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              }
         }
 
+//Liao 10/28/2008: I changed it to a more generic flag to indicate support for either Fortran or C/C++
   // DQ (8/19/2007): I have added the option here so that we can start to support OpenMP for Fortran.
   // Allows handling of OpenMP "!$omp" directives in free form and "c$omp", *$omp and "!$omp" directives in fixed form, enables "!$" conditional 
   // compilation sentinels in free form and "c$", "*$" and "!$" sentinels in fixed form and when linking arranges for the OpenMP runtime library 
   // to be linked in. (Not implemented yet).
-     set_fortran_openmp(false);
-     ROSE_ASSERT (get_fortran_openmp() == false);
-     if ( CommandlineProcessing::isOption(argv,"-","fopenmp",true) == true )
+     set_openmp(false);
+     ROSE_ASSERT (get_openmp() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(OpenMP|openmp)",true) == true ) 
         {
           if ( SgProject::get_verbose() >= 1 )
-               printf ("Fortran OpenMP option specified \n");
-          set_fortran_openmp(true);
+               printf ("OpenMP option specified \n");
+          set_openmp(true);
+          /*
           if (get_sourceFileUsesFortranFileExtension() == false)
              {
                printf ("Warning, Non Fortran source file name specified with explicit OpenMP option! \n");
                set_fortran_openmp(false);
              }
+             */
+         //side effect for enabling OpenMP, define the macro as required 
+         //This new option does not reach the backend compiler
+         //But it is enough to reach EDG only.
+         //We can later on back end option to turn on their OpenMP handling flags, 
+         //like -fopenmp for GCC, depending on the version of gcc
+         //which will define this macro for GCC
+          argv.push_back("-D_OPENMP");
         }
 
   //
@@ -1543,6 +1553,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)^", "(upc_threads)", &integerOption, 1);
      optionCount = sla(argv, "-rose:", "($)", "(C|C_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(UPC|UPC_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(OpenMP|openmp)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
 
@@ -5289,6 +5300,8 @@ SgFile::usage ( int status )
 "                             follow C99 standard, disable C++\n"
 "     -rose:Cxx_only, -rose:Cxx\n"
 "                             follow C++ 89 standard\n"
+"     -rose:OpenMP, -rose:openmp\n"   
+"                             follow OpenMP 3.0 C/C++ specification\n"
 "     -rose:UPC_only, -rose:UPC\n"   
 "                             follow Unified Parallel C 1.2 specification\n"
 "     -rose:upc_threads n     Enable UPC static threads compilation with n threads\n"

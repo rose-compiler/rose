@@ -4,15 +4,19 @@ This is a project to
 * refine the OmpAttribute data structure to separate interface from implementation
 
 File List:
-* OpenMP persistent attributes:  OmpAttribute.C and OmpAttribute.h
-* Flex scanner:   omplexer.ll (omplexer.cc )
-* Bison parser:   ompparser.yy (ompparser.cc, ompparser.h)
-* test parser:    parseOmp.C
 
-ompparser.cc and omplexer.cc are put into distribution to eliminate
-the dependence on bison and flex for end-users.
-Maintainers should update them whenever .yy or .ll are changed!!
+* OpenMP persistent attributes:  OmpAttribute.C and OmpAttribute.h
+  Moved to src/frontend/SageIII
+
+* Flex scanner:   omplexer.ll (omplexer.cc )
+  Bison parser:   ompparser.yy (ompparser.cc, ompparser.h)
+
+  Moved to src/frontend/CxxFrontend/EDG_SAGE_Connection
+
+* test parser:    parseOmp.C 
 
 By Liao, 9/19/2008
+Latest modified: 10/28/2008
+
 
 

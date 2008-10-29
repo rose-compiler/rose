@@ -1027,8 +1027,6 @@ projects/OpenMP_Translator/tests/npb2.3-omp-c/IS/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/MG/Makefile
 projects/OpenMP_Translator/tests/npb2.3-omp-c/SP/Makefile
-projects/OpenMP_Parser/Makefile
-projects/OpenMP_Parser/tests/Makefile
 projects/MPICodeMotion/Makefile
 projects/javaport/Makefile
 projects/palette/Makefile
@@ -1072,6 +1070,7 @@ tests/CompileTests/RoseExample_tests/Makefile
 tests/CompileTests/ExpressionTemplateExample_tests/Makefile
 tests/CompileTests/PythonExample_tests/Makefile
 tests/CompileTests/UPC_tests/Makefile
+tests/CompileTests/OpenMP_tests/Makefile
 tests/CompileTests/copyAST_tests/Makefile
 tests/CompileTests/colorAST_tests/Makefile
 tests/CompileTests/mergeAST_tests/Makefile

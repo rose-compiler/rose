@@ -1,4 +1,11 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+
+noinst_PROGRAMS = parseOmp
+parseOmp_SOURCES = parseOmp.C
+
+INCLUDES = $(ROSE_INCLUDES)
+LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 C_TESTCODES_REQUIRED_TO_PASS = \
 	3loops.c \
 	atomic.c \
@@ -64,22 +71,20 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 
 TESTCODE_CURRENTLY_FAILING =  
 
-ROSE_FLAGS = -D_OPENMP --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-# used to find omp.h
-TESTCODE_INCLUDES = -I$(srcdir)
+ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict
+# used to find omp.h, added it as one of  rose headers
+#TESTCODE_INCLUDES = -I$(srcdir)
 
 PASSING_C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 
 PASSING_CXX_TEST_Objects = ${CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o}
 
-$(PASSING_C_TEST_Objects): ../parseOmp${EXE} $(srcdir)/$(@:.o=.c)
-	../parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.c)
+$(PASSING_C_TEST_Objects): parseOmp $(srcdir)/$(@:.o=.c)
+	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.c)
 
-$(PASSING_CXX_TEST_Objects): ../parseOmp${EXE} $(srcdir)/$(@:.o=.cpp)
-	../parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.cpp)
+$(PASSING_CXX_TEST_Objects): parseOmp $(srcdir)/$(@:.o=.cpp)
+	./parseOmp ${ROSE_FLAGS} ${TESTCODE_INCLUDES} -c $(srcdir)/$(@:.o=.cpp)
 
-../parseOmp:
-	cd ..; $(MAKE) parseOmp
 ALL_TESTCODES = \
 ${C_TESTCODES_REQUIRED_TO_PASS} \
 ${CXX_TESTCODES_REQUIRED_TO_PASS} \
@@ -91,10 +96,10 @@ check-local:
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
 	@echo "***********************************************************************************************************"
-	@echo "****** ROSE/projects/OpenMP_Parser/tests: make check rule complete (terminated normally) ******"
+	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"
 
-EXTRA_DIST = $(ALL_TESTCODES) omp.h
+EXTRA_DIST = $(ALL_TESTCODES) README
 
 clean-local:
 	rm -f *.o rose_*.* *.out
