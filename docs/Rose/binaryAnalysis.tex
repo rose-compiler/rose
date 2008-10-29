@@ -17,17 +17,37 @@ to support combining analysis for source code and analysis for binaries.
 LE, DOS formats for Windows.  The details of each format are represented in IR nodes in
 the AST (using structures common to the representation of such low level data).  About
 60 IR nodes have been added to ROSE to support the binary executable formats; this
-support allows the analysis of any Linux or Windows, OS\/2, or DOS binary.
+support allows the analysis of any Linux or Windows, OS\/2, or DOS binary executable.
 
-The binary executable file format can be analyized seperately from the instructions
-using the command line option: {\tt -rose:read\_executable\_file\_format\_only}.  this
-allows graphs generated using the ROSE visualization mechanisms to be easily restricted 
-(in size) to the just the IR nodes specific to the binary executable file format.
+   The binary executable file format can be analyized seperately from the instructions
+using the command line option: {\tt -rose:read\_executable\_file\_format\_only}.  This
+allows graphs generated using the ROSE visualization mechanisms (and even some analysis) 
+to be easily restricted (in size) to the just the IR nodes specific to the binary
+executable file format.
+
 \fixme{We need an example of the binary executable format AST.}
+
+\begin{figure}
+% \includegraphics[angle=90,scale=0.75,width=5in,height=1in]{\TopSourceDirectory/src/frontend/ExecFormats/BinaryFileFormat}
+\includegraphics[angle=90,width=7.5in,height=8.5in]{\TopSourceDirectory/src/frontend/ExecFormats/BinaryFileFormat}
+\caption{The class design of the IR nodes for the binary file format.} 
+
+\label{binaryAnalysis:BinaryExecutableFormatDesign}
+\end{figure}
+
+Figure \ref{binaryAnalysis:BinaryExecutableFormatDesign} shows the class design of the IR
+nodes for the binary file format address the
+requirements of ELF (Linux, and others), PE (MS Windows), NE (older MS Windows), 
+LE (OS\/2), and DOS (MS Dos) executable formats.  The colors represent different
+executable formats, brown classes are used as base classes for more than one
+format. Dark colors represent principle IR nodes in the AST, lighter color IR nodes
+represnt supporting infrastructure in the AST.  Arrows are either dark colored or
+light colored; dark colors represent class derivation, and light colors represent
+member relationships.
 
 \subsection{Instruction Disassembly}
 
-    ROSE has its own disassembler; a recursive disassembler that is well suited to
+    ROSE has its own disassembler (for x86, ARM, and PowerPC); a recursive disassembler that is well suited to
 details of variable length instruction set handling and data stored in the instruction
 stream.  All details of the instructions, and the roperands and operator expression trees,
 etc. are stored in the binary AST as seperate IR nodes.
