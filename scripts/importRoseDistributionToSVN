@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #!/bin/bash -v
 #
 # This script locates a distribution package in a ROSE test directory.
@@ -10,13 +10,14 @@
 #   x. Remove .svn directories
 #   x. Make sure no EDG copyrighted files exist
 #   x. Make sure the EDG binaries for all supported platforms do exist
+#   x. Remove generated lexer and scanners from source distributions
 # It imports the package which passes the check to 
 #  the head of an external repository using svn_load_dirs.1.4.5.pl
 # Use
 #  thisScript ROSE_TOP_TEST_DIR
 #
 # by Liao, 7/31/2008
-# Last Modified 10/23/2008
+# Last Modified 10/29/2008
 #------------------------------------------------------
 
 # the backup one is for testing only
@@ -74,9 +75,9 @@ rm -rf ${ROSE_DIST_DIR}/src/3rdPartyLibraries/libltdl/aclocal.m4
 find . -name Makefile.in | xargs rm -rf
 # remove generated scanners and parsers available from the source distribution
 # But should not be put into the external repository
-rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.cc
-rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/ompparser.h
-rm -rf ${ROSE_DIST_DIR}/projects/OpenMP_Parser/omplexer.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/ompparser.cc
+rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/ompparser.h
+rm -rf ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/EDG_SAGE_Connection/omplexer.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/OpenFortranParser_SAGE_Connection/preproc-fortran-fixed.cc
 rm -rf ${ROSE_DIST_DIR}/src/frontend/SageIII/preproc.cc
@@ -126,7 +127,14 @@ else
   echo Fatal Error: No EDG binaries for x86_64-pc-linux-gnu are available. 
   exit 3
 fi
-# TODO add OS-x binary check 
+
+EDG_BINARIES3=($(ls ${ROSE_DIST_DIR}/src/frontend/CxxFrontend/roseBinaryEDG-i686-apple-darwin*.tar.gz))
+if [ ${EDG_BINARIES3[0]} ]; then
+   echo Found the EDG binaries for i686-apple-darwin as expected. It is ${EDG_BINARIES3[@]}. 
+else 
+  echo Fatal Error: No EDG binaries for i686-apple-darwin are available. 
+  exit 3
+fi
 
 # Now we can upload the package
 #--------------------------------------------------------
