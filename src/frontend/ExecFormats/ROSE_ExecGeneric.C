@@ -1126,6 +1126,15 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
                                                        ELASTIC_HOLE==elasticity ? "unref+holes" :
                                                        "unknown"));
     }
+
+    /* No-op case */
+    if (0==sa && 0==sn) {
+        if (debug) {
+            fprintf(stderr, "%s    No change necessary.\n", p);
+            fprintf(stderr, "%s    -- END --\n", p);
+        }
+        return;
+    }
     
     bool filespace = (space & ADDRSP_FILE)!=0;
     bool memspace = (space & ADDRSP_MEMORY)!=0;
@@ -1135,15 +1144,29 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
     ExtentPair sp;
 
     /* Get a list of all sections that may need to be adjusted. */
-    SgAsmGenericSectionPtrList all = get_sections();
+    SgAsmGenericSectionPtrList all;
     switch (elasticity) {
       case ELASTIC_NONE:
       case ELASTIC_UNREF:
-        all = get_sections();
+        all = filespace ? get_sections() : get_mapped_sections();
         break;
       case ELASTIC_HOLE:
-        all = get_sections(false);
+        all = filespace ? get_sections(false) : get_mapped_sections();
         break;
+    }
+    if (debug) {
+        fprintf(stderr, "%s    Following sections are in 'all' set:\n", p);
+        for (size_t i=0; i<all.size(); i++) {
+            ExtentPair ep;
+            if (filespace) {
+                ep = all[i]->get_file_extent();
+            } else {
+                ROSE_ASSERT(all[i]->is_mapped());
+                ep = all[i]->get_mapped_extent();
+            }
+            fprintf(stderr, "%s        0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n",
+                    p, ep.first, ep.second, ep.first+ep.second, all[i]->get_id(), all[i]->get_name()->c_str());
+        }
     }
 
     for (size_t pass=0; pass<2; pass++) {
@@ -1162,21 +1185,37 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
         for (size_t i=0; i<all.size(); i++) {
             if (filespace) {
                 amap.insert(all[i]->get_file_extent());
-            } else if (all[i]->is_mapped()) {
+            } else {
+                ROSE_ASSERT(all[i]->is_mapped());
                 amap.insert(all[i]->get_mapped_extent());
             }
         }
-
+        if (debug) {
+            fprintf(stderr, "%s    Address map:\n", p);
+            amap.dump_extents(stderr, (std::string(p)+"        ").c_str(), "amap");
+            fprintf(stderr, "%s    Extent of S:\n", p);
+            fprintf(stderr, "%s        start=0x%08"PRIx64" size=0x%08"PRIx64" end=0x%08"PRIx64"\n",
+                    p, sp.first, sp.second, sp.first+sp.second);
+        }
+        
         /* Neighborhood (nhs) of S is a single extent */
         ExtentMap nhs_map = amap.overlap_with(sp);
+        if (debug) {
+            fprintf(stderr, "%s    Neighborhood of S:\n", p);
+            nhs_map.dump_extents(stderr, (std::string(p)+"        ").c_str(), "nhs_map");
+        }
         ROSE_ASSERT(nhs_map.size()==1);
         ExtentPair nhs = *(nhs_map.begin());
 
         /* What sections are in the neighborhood (including S), and right of the neighborhood? */
         neighbors.clear(); /*sections in neighborhood*/
+        neighbors.push_back(s);
         villagers.clear(); /*sections right of neighborhood*/
+        if (debug)
+            fprintf(stderr, "%s    Ignoring left (L) sections:\n", p);
         for (size_t i=0; i<all.size(); i++) {
             SgAsmGenericSection *a = all[i];
+            if (a==s) continue; /*already pushed onto neighbors*/
             ExtentPair ap;
             if (filespace) {
                 ap = a->get_file_extent();
@@ -1187,6 +1226,9 @@ SgAsmGenericFile::shift_extend(SgAsmGenericSection *s, addr_t sa, addr_t sn, Add
             }
             switch (ExtentMap::category(ap, nhs)) {
               case 'L':
+                if (debug)
+                    fprintf(stderr, "%s        L 0x%08"PRIx64" 0x%08"PRIx64" 0x%08"PRIx64" [%d] \"%s\"\n", 
+                            p, ap.first, ap.second, ap.first+ap.second, a->get_id(), a->get_name()->c_str());
                 break;
               case 'R':
                 /* If holes are elastic then treat things right of the hole as being part of the right village; otherwise
@@ -2238,7 +2280,7 @@ ExtentMap::overlap_with(rose_addr_t offset, rose_addr_t size) const
 {
     ExtentMap result;
     for (const_iterator i=begin(); i!=end(); ++i) {
-        if ((*i).first < offset+size && (*i).first+(*i).second > offset)
+        if ((*i).first <= offset+size && (*i).first+(*i).second > offset)
             result.super::insert(value_type((*i).first, (*i).second));
     }
     return result;
