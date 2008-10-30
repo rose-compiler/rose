@@ -73,7 +73,7 @@ TESTCODE_CURRENTLY_FAILING =
 
 ROSE_FLAGS = -rose:openmp --edg:no_warnings -w -rose:verbose 0 --edg:restrict
 # used to find omp.h, added it as one of  rose headers
-#TESTCODE_INCLUDES = -I$(srcdir)
+TESTCODE_INCLUDES = ${ROSE_INCLUDES}
 
 PASSING_C_TEST_Objects = ${C_TESTCODES_REQUIRED_TO_PASS:.c=.o}
 
