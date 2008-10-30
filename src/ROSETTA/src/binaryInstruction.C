@@ -902,11 +902,11 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportDirectory.setDataPrototype("rose_addr_t","hintnames_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t","hintnames_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("rose_addr_t","bindings_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t","bindings_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportDirectory.setDataPrototype("rose_addr_t","dll_name_rva","= 0",
+     AsmPEImportDirectory.setDataPrototype("rose_rva_t","dll_name_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("time_t","time","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -938,6 +938,9 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEExportDirectory.setDataPrototype("rose_rva_t", "ordinals_rva", "= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEExportDirectory.setDataPrototype("SgAsmGenericString*", "name", "= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
 
