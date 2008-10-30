@@ -556,8 +556,30 @@ SgAsmPEFileHeader::unparse(FILE *f)
             if (pesec && pesec->get_st_entry()!=NULL)
                 p_e_nsections++;
         }
-        p_e_header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
-                                p_e_file_align>0 ? p_e_file_align : 1);
+        addr_t header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
+                                   p_e_file_align>0 ? p_e_file_align : 1);
+#if 1
+        /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
+         * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
+         * it here as being the minimum file offset from all the sections defined in the PE Section Table, but not smaller
+         * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
+         * otherwise we use the correct value. (RPM 2008-10-21) */
+        addr_t min_offset;
+        for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
+            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
+            if (pesec && pesec->get_st_entry()!=NULL) {
+                if (0==nfound++) {
+                    min_offset = pesec->get_offset();
+                } else {
+                    min_offset = std::min(min_offset, pesec->get_offset());
+                }
+            }
+        }
+        addr_t header_size2 = std::max(header_size, min_offset);
+        if (p_e_header_size==header_size2)
+            header_size = header_size2;
+#endif
+        p_e_header_size = header_size;
     }
 
     /* Write sections that are pointed to by the file header and update data members in the file header */
