@@ -720,7 +720,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEFileHeader.setDataPrototype("unsigned","e_image_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_header_size","= 0",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_file_checksum","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEFileHeader.setDataPrototype("unsigned","e_subsystem","= 0",
