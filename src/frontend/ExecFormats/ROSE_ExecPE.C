@@ -543,54 +543,58 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     strftime(time_str, sizeof time_str, "%c", localtime(&t));
 
     SgAsmGenericHeader::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_cpu_type",          p_e_cpu_type);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_nsections",         p_e_nsections);
-    fprintf(f, "%s%-*s = %u (%s)\n",       p, w, "e_time",              p_e_time, time_str);
-    fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_coff_symtab",       p_e_coff_symtab);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_coff_nsyms",        p_e_coff_nsyms);
+    fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_cpu_type",          p_e_cpu_type, p_e_cpu_type);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_nsections",         p_e_nsections);
+    fprintf(f, "%s%-*s = %u (%s)\n",                   p, w, "e_time",              p_e_time, time_str);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_coff_symtab",       p_e_coff_symtab, p_e_coff_symtab);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_coff_nsyms",        p_e_coff_nsyms);
     if (p_coff_symtab) {
-        fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "coff_symtab", p_coff_symtab->get_id(), p_coff_symtab->get_name()->c_str());
+        fprintf(f, "%s%-*s = [%d] \"%s\"\n",           p, w, "coff_symtab",
+                p_coff_symtab->get_id(), p_coff_symtab->get_name()->c_str());
     } else {
-        fprintf(f, "%s%-*s = none\n",      p, w, "coff_symtab");
+        fprintf(f, "%s%-*s = none\n",                  p, w, "coff_symtab");
     }
-    fprintf(f, "%s%-*s = %"PRIu64"\n",     p, w, "e_nt_hdr_size",       p_e_nt_hdr_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_flags",             p_e_flags);
-    fprintf(f, "%s%-*s = 0x%04x %s\n",     p, w, "e_opt_magic",         p_e_opt_magic,
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_nt_hdr_size",       p_e_nt_hdr_size, p_e_nt_hdr_size);
+    fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_flags",             p_e_flags, p_e_flags);
+    fprintf(f, "%s%-*s = 0x%04x %s\n",                 p, w, "e_opt_magic",         p_e_opt_magic,
             0x10b == p_e_opt_magic ? "PE32" : (0x20b == p_e_opt_magic ? "PE32+" : "other"));
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_lmajor",            p_e_lmajor);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_lminor",            p_e_lminor);
-    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_code_size",         p_e_code_size);
-    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_data_size",         p_e_data_size);
-    fprintf(f, "%s%-*s = %u bytes\n",      p, w, "e_bss_size",          p_e_bss_size);
-    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_entrypoint_rva",    p_e_entrypoint_rva);
-    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_code_rva",          p_e_code_rva);
-    fprintf(f, "%s%-*s = 0x%08x\n",        p, w, "e_data_rva",          p_e_data_rva);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "e_image_base",        p_e_image_base);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_section_align",     p_e_section_align);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_file_align",        p_e_file_align);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_major",          p_e_os_major);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_os_minor",          p_e_os_minor);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_user_major",        p_e_user_major);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_user_minor",        p_e_user_minor);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsys_major",      p_e_subsys_major);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsys_minor",      p_e_subsys_minor);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_reserved9",         p_e_reserved9);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_image_size",        p_e_image_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_header_size",       p_e_header_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_file_checksum",     p_e_file_checksum);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_subsystem",         p_e_subsystem);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_dll_flags",         p_e_dll_flags);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_stack_reserve_size",p_e_stack_reserve_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_stack_commit_size", p_e_stack_commit_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_heap_reserve_size", p_e_heap_reserve_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_heap_commit_size",  p_e_heap_commit_size);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_loader_flags",      p_e_loader_flags);
-    fprintf(f, "%s%-*s = %u\n",            p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_lmajor",            p_e_lmajor);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_lminor",            p_e_lminor);
+    fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_code_size",         p_e_code_size, p_e_code_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_data_size",         p_e_data_size, p_e_data_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_entrypoint_rva",    p_e_entrypoint_rva, p_e_entrypoint_rva);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_code_rva",          p_e_code_rva, p_e_code_rva);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_data_rva",          p_e_data_rva, p_e_data_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_image_base",        p_e_image_base, p_e_image_base);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_major",          p_e_os_major);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_minor",          p_e_os_minor);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_user_major",        p_e_user_major);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_user_minor",        p_e_user_minor);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_subsys_major",      p_e_subsys_major);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_subsys_minor",      p_e_subsys_minor);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_reserved9",         p_e_reserved9);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_image_size",        p_e_image_size, p_e_image_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_header_size",       p_e_header_size, p_e_header_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_checksum",     p_e_file_checksum, p_e_file_checksum);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_subsystem",         p_e_subsystem);
+    fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_dll_flags",         p_e_dll_flags, p_e_dll_flags);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_stack_reserve_size",
+            p_e_stack_reserve_size, p_e_stack_reserve_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_stack_commit_size", p_e_stack_commit_size, p_e_stack_commit_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_heap_reserve_size", p_e_heap_reserve_size, p_e_heap_reserve_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_heap_commit_size",  p_e_heap_commit_size, p_e_heap_commit_size);
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_loader_flags",      p_e_loader_flags, p_e_loader_flags);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
     for (unsigned i = 0; i < p_e_num_rvasize_pairs; i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-        fprintf(f, "%s%-*s = 0x%08" PRIx64 "\n",  p, w, "e_rva",  p_rvasize_pairs->get_pairs()[i]->get_e_rva());
-        fprintf(f, "%s%-*s = %" PRIu64 " bytes\n", p, w, "e_size", p_rvasize_pairs->get_pairs()[i]->get_e_size());
+        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_rva",
+                p_rvasize_pairs->get_pairs()[i]->get_e_rva(), p_rvasize_pairs->get_pairs()[i]->get_e_rva());
+        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "e_size",
+                p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }
     if (p_dos2_header) {
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, "dos2_header", p_dos2_header->get_id(), p_dos2_header->get_name()->c_str());
