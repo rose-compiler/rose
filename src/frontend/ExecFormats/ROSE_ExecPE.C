@@ -157,7 +157,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         entry_rva              = le_to_host(oh32.e_entrypoint_rva);
         p_e_code_rva           = le_to_host(oh32.e_code_rva);
         p_e_data_rva           = le_to_host(oh32.e_data_rva);
-        p_e_image_base         = le_to_host(oh32.e_image_base);
+        p_base_va              = le_to_host(oh32.e_image_base);
         p_e_section_align      = le_to_host(oh32.e_section_align);
         p_e_file_align         = le_to_host(oh32.e_file_align);
         p_e_os_major           = le_to_host(oh32.e_os_major);
@@ -193,7 +193,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         entry_rva              = le_to_host(oh64.e_entrypoint_rva);
         p_e_code_rva           = le_to_host(oh64.e_code_rva);
      // p_e_data_rva           = le_to_host(oh.e_data_rva);             /* not in PE32+ */
-        p_e_image_base         = le_to_host(oh64.e_image_base);
+        p_base_va              = le_to_host(oh64.e_image_base);
         p_e_section_align      = le_to_host(oh64.e_section_align);
         p_e_file_align         = le_to_host(oh64.e_file_align);
         p_e_os_major           = le_to_host(oh64.e_os_major);
@@ -295,7 +295,6 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
 
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
-    p_base_va = p_e_image_base;
     add_entry_rva(entry_rva);
 }
 
@@ -337,7 +336,7 @@ SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk)
     host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
     host_to_le(p_e_code_rva,           &(disk->e_code_rva));
     host_to_le(p_e_data_rva,           &(disk->e_data_rva));
-    host_to_le(p_e_image_base,         &(disk->e_image_base));
+    host_to_le(get_base_va(),          &(disk->e_image_base));
     host_to_le(p_e_section_align,      &(disk->e_section_align));
     host_to_le(p_e_file_align,         &(disk->e_file_align));
     host_to_le(p_e_os_major,           &(disk->e_os_major));
@@ -373,7 +372,7 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk)
     host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
     host_to_le(p_e_code_rva,           &(disk->e_code_rva));
  // host_to_le(p_e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
-    host_to_le(p_e_image_base,         &(disk->e_image_base));
+    host_to_le(get_base_va(),          &(disk->e_image_base));
     host_to_le(p_e_section_align,      &(disk->e_section_align));
     host_to_le(p_e_file_align,         &(disk->e_file_align));
     host_to_le(p_e_os_major,           &(disk->e_os_major));
@@ -711,7 +710,6 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
             p_e_code_rva.get_rva(), p_e_code_rva.get_rva());
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",p, w, "e_data_rva",
             p_e_data_rva.get_rva(), p_e_data_rva.get_rva());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_image_base",        p_e_image_base, p_e_image_base);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_major",          p_e_os_major);

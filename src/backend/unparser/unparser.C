@@ -414,12 +414,7 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
 
                  // printf ("header name = %s \n",genericHeader->get_name()->c_str());
 
-                    SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
-                    rose_addr_t imageBase = 0ull;
-                    if (asmPEFileHeader != NULL)
-                       {
-                         imageBase = asmPEFileHeader->get_e_image_base();
-                       }
+                    rose_addr_t imageBase = genericHeader->get_base_va();
  
                  // printf ("section %s imageBase = 0x%08"PRIx64"\n",sections[i]->get_name()->c_str(),imageBase);
 
@@ -444,12 +439,7 @@ Unparser::unparseFile ( SgBinaryFile* file, SgUnparse_Info& info )
                          if ( (j != i) && (sections[j]->is_mapped() == true) )
                             {
                               SgAsmGenericHeader* genericHeader  = sections[j]->get_header();
-                              SgAsmPEFileHeader* asmPEFileHeader = isSgAsmPEFileHeader(genericHeader);
-                              rose_addr_t temp_imageBase = 0ull;
-                              if (asmPEFileHeader != NULL)
-                                 {
-                                   temp_imageBase = asmPEFileHeader->get_e_image_base();
-                                 }
+                              rose_addr_t temp_imageBase = genericHeader->get_base_va();
                               rose_addr_t nestedAddressBase  = temp_imageBase    + sections[j]->get_mapped_rva();
                               rose_addr_t nestedAddressBound = nestedAddressBase + sections[j]->get_mapped_size();
                            // printf ("Exclude range in section %s starting address = 0x%08"PRIx64" ending address = 0x%08"PRIx64"\n",sections[j]->get_name().c_str(),nestedAddressBase,nestedAddressBound);
