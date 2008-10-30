@@ -724,6 +724,19 @@ SgAsmGenericFile::get_sections(bool include_holes)
     return retval;
 }
 
+/* Returns list of all sections in the file that are memory mapped, including headers and holes. */
+SgAsmGenericSectionPtrList
+SgAsmGenericFile::get_mapped_sections()
+{
+    SgAsmGenericSectionPtrList retval;
+    SgAsmGenericSectionPtrList all = get_sections(true);
+    for (size_t i=0; i<all.size(); i++) {
+        if (all[i]->is_mapped())
+            retval.push_back(all[i]);
+    }
+    return retval;
+}
+
 /* Returns sections having specified ID across all headers, including headers and holes. */
 SgAsmGenericSectionPtrList
 SgAsmGenericFile::get_sections_by_id(int id)
@@ -2510,6 +2523,19 @@ SgAsmGenericHeader::add_symbol(SgAsmGenericSymbol *symbol)
     p_symbols->get_symbols().back()->set_parent(p_symbols);
 }
 
+/* Returns the list of sections that are memory mapped */
+SgAsmGenericSectionPtrList
+SgAsmGenericHeader::get_mapped_sections()
+{
+    SgAsmGenericSectionPtrList retval;
+    for (SgAsmGenericSectionPtrList::iterator i=p_sections->get_sections().begin(); i!=p_sections->get_sections().end(); ++i) {
+        if ((*i)->is_mapped()) {
+            retval.push_back(*i);
+        }
+    }
+    return retval;
+}
+    
 /* Returns sections in this header that have the specified ID. */
 SgAsmGenericSectionPtrList
 SgAsmGenericHeader::get_sections_by_id(int id)

@@ -872,6 +872,7 @@ HEADER_GENERIC_HEADER_START
           void remove_section(SgAsmGenericSection*); 	      /* Remove section from the file */
 
        /* Section lookup functions (plural) */
+	  SgAsmGenericSectionPtrList get_mapped_sections();
 	  SgAsmGenericSectionPtrList get_sections_by_id(int id);
 	  SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep=0);
 	  SgAsmGenericSectionPtrList get_sections_by_offset(addr_t offset, addr_t size);
@@ -917,6 +918,7 @@ HEADER_GENERIC_FILE_START
 		SgFileContentList content(addr_t offset, addr_t size);	/* Partial file contents */
 
 		/* Section lookup functions (plural) */
+		SgAsmGenericSectionPtrList get_mapped_sections();
 		SgAsmGenericSectionPtrList get_sections(bool include_holes=true);
 		SgAsmGenericSectionPtrList get_sections_by_id(int id);
 		SgAsmGenericSectionPtrList get_sections_by_name(std::string, char sep='\0');
