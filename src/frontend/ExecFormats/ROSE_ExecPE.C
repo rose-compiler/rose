@@ -610,6 +610,10 @@ SgAsmPEFileHeader::unparse(FILE *f)
         p_dos2_header->unparse(f);
     }
 
+    /* Update some additional header fields */
+    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
+    p_e_opt_magic = 4==get_word_size() ? 0x010b : 0x020b;
+
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
      * increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust it as little as possible.
@@ -624,7 +628,6 @@ SgAsmPEFileHeader::unparse(FILE *f)
         throw FormatError("unsupported PE word size");
     }
     unsigned char *oh = new unsigned char[oh_size];
-    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)oh);
         rvasize_offset = sizeof(PE32OptHeader_disk);
