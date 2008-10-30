@@ -2331,8 +2331,12 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
         if (!label) label = "Extent";
         sprintf(p, "%s%s[%zd]", prefix, label, idx);
         int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-        fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"), for 0x%08"PRIx64" (%"PRIu64") byte%s\n",
-                p, w, "", (*i).first, (*i).first, (*i).second, (*i).second, 1==(*i).second?"":"s");
+        fprintf(f, "%s%-*s = offset 0x%08"PRIx64" (%"PRIu64"),"
+                " for 0x%08"PRIx64" (%"PRIu64") byte%s,"
+                " ending at 0x%08"PRIx64" (%"PRIu64")\n",
+                p, w, "", (*i).first, (*i).first,
+                (*i).second, (*i).second, 1==(*i).second?"":"s", 
+                (*i).first+(*i).second, (*i).first+(*i).second);
     }
 }
 
