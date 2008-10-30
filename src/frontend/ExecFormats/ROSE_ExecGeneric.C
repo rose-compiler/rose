@@ -938,6 +938,8 @@ SgAsmGenericFile::get_best_section_by_va(addr_t va, size_t *nfound/*optional*/)
 SgAsmGenericSection *
 SgAsmGenericFile::best_section_by_va(const SgAsmGenericSectionPtrList &sections, addr_t va)
 {
+    if (0==sections.size())
+        return NULL;
     if (1==sections.size()) 
         return sections[0];
     SgAsmGenericSection *best = sections[0];

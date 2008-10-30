@@ -709,7 +709,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_code_rva",
             p_e_code_rva.get_rva(), p_e_code_rva.get_rva());
-    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_data_rva",          p_e_data_rva, p_e_data_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",p, w, "e_data_rva",
+            p_e_data_rva.get_rva(), p_e_data_rva.get_rva());
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_image_base",        p_e_image_base, p_e_image_base);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
@@ -1898,12 +1899,11 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
         fhdr->set_coff_symtab(symtab);
     }
 
-    /* Associate the entry point with a particular section. */
+    /* Associate RVAs with particular sections. */
     ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
     fhdr->get_entry_rvas()[0].set_section(fhdr);
-
-    /* Associate the e_code_rva with a particular section. */
     fhdr->get_e_code_rva().set_section(fhdr);
+    fhdr->get_e_data_rva().set_section(fhdr);
 
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     fhdr->create_table_sections();
