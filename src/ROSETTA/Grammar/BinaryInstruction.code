@@ -1926,6 +1926,8 @@ HEADER_PE_FILE_HEADER_START
 		void set_e_nsections(unsigned);
 		unsigned get_e_header_size() const {return p_e_header_size;}
 		void set_e_header_size(unsigned);
+		unsigned get_e_num_rvasize_pairs() const {return p_e_num_rvasize_pairs;}
+		void set_e_num_rvasize_pairs(unsigned);
 
 	private:
 		void ctor(SgAsmGenericFile *f, addr_t offset);

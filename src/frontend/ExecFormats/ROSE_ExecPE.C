@@ -407,6 +407,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     SgAsmPERVASizePair::RVASizePair_disk pairs_disk;
 
     ROSE_ASSERT(p_rvasize_pairs != NULL);
+    ROSE_ASSERT(p_rvasize_pairs->get_pairs().size()==0);
 
     extend_up_to(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
@@ -491,7 +492,7 @@ SgAsmPEFileHeader::reallocate()
     } else {
         throw FormatError("unsupported PE word size");
     }
-    need += p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    need += p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
     
     if (need<get_size()) {
         if (is_mapped()) {
@@ -532,6 +533,12 @@ SgAsmPEFileHeader::set_e_header_size(unsigned n)
 {
     ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
     p_e_header_size = n;
+}
+void
+SgAsmPEFileHeader::set_e_num_rvasize_pairs(unsigned n)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_num_rvasize_pairs = n;
 }
 
 /* Write the PE file header back to disk and all that it references */
@@ -591,7 +598,7 @@ SgAsmPEFileHeader::unparse(FILE *f)
     }
     
     /* Write the sections from the header RVA/size pair table. */
-    for (size_t i=0; i<p_e_num_rvasize_pairs; i++) {
+    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++) {
         SgAsmGenericSection *sizepair_section = p_rvasize_pairs->get_pairs()[i]->get_section();
         if (sizepair_section)
             sizepair_section->unparse(f);
@@ -617,6 +624,7 @@ SgAsmPEFileHeader::unparse(FILE *f)
         throw FormatError("unsupported PE word size");
     }
     unsigned char *oh = new unsigned char[oh_size];
+    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
     if (4==get_word_size()) {
         encode((PE32OptHeader_disk*)oh);
         rvasize_offset = sizeof(PE32OptHeader_disk);
@@ -706,7 +714,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_heap_commit_size",  p_e_heap_commit_size, p_e_heap_commit_size);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_loader_flags",      p_e_loader_flags, p_e_loader_flags);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_num_rvasize_pairs", p_e_num_rvasize_pairs);
-    for (unsigned i = 0; i < p_e_num_rvasize_pairs; i++) {
+    for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
         fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_rva",
