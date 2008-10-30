@@ -1917,6 +1917,12 @@ HEADER_PE_FILE_HEADER_START
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void create_table_sections();
 
+		/* Override some ROSETTA accessors */
+		rose_addr_t get_e_coff_symtab() const {return p_e_coff_symtab;}
+		void set_e_coff_symtab(addr_t);
+		unsigned get_e_coff_nsyms() const {return p_e_coff_nsyms;}
+		void set_e_coff_nsyms(unsigned);
+
 	private:
 		void ctor(SgAsmGenericFile *f, addr_t offset);
 		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*);

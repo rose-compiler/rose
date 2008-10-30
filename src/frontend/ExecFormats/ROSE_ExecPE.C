@@ -504,6 +504,20 @@ SgAsmPEFileHeader::reallocate()
     return reallocated;
 }
 
+/* Override ROSETTA accessors because we don't want users changing these values when traversing the AST */
+void
+SgAsmPEFileHeader::set_e_coff_symtab(addr_t a)
+{
+    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
+    p_e_coff_symtab = a;
+}
+void
+SgAsmPEFileHeader::set_e_coff_nsyms(unsigned nsyms)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_coff_nsyms = nsyms;
+}
+
 /* Write the PE file header back to disk and all that it references */
 void
 SgAsmPEFileHeader::unparse(FILE *f)
@@ -520,10 +534,12 @@ SgAsmPEFileHeader::unparse(FILE *f)
         p_section_table->unparse(f);
     }
 
-    /* Write sections that are pointed to by the file header */
+    /* Write sections that are pointed to by the file header and update data members in the file header */
     if (p_coff_symtab) {
         ROSE_ASSERT(p_coff_symtab->get_header()==this);
         p_coff_symtab->unparse(f);
+        p_e_coff_symtab = p_coff_symtab->get_offset();
+        p_e_coff_nsyms = p_coff_symtab->get_symbols()->get_symbols().size();
     }
     
     /* Write the sections from the header RVA/size pair table. */
