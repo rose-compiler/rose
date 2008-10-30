@@ -469,7 +469,7 @@ SgAsmPEFileHeader::create_table_sections()
           case 0:
             tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
             break;
-#if 0 /*not ready yet (RPM 2008-10-29)*/
+#if 1 /*not ready for prime-time yet (RPM 2008-10-29)*/
           case 1:
             tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
             break;
@@ -988,11 +988,11 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "hintnames_rva",   p_hintnames_rva);
-    fprintf(f, "%s%-*s = %lu %s",          p, w, "time",            (unsigned long)p_time, ctime(&p_time));
-    fprintf(f, "%s%-*s = %u\n",            p, w, "forwarder_chain", p_forwarder_chain);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "dll_name_rva",    p_dll_name_rva);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "bindings_rva",    p_bindings_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "hintnames_rva", p_hintnames_rva, p_hintnames_rva);
+    fprintf(f, "%s%-*s = %lu %s",                      p, w, "time", (unsigned long)p_time, ctime(&p_time));
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "forwarder_chain", p_forwarder_chain, p_forwarder_chain);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "dll_name_rva", p_dll_name_rva, p_dll_name_rva);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "bindings_rva", p_bindings_rva, p_bindings_rva);
 }
 
 /* Constructor */
@@ -1095,10 +1095,36 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         if (!memcmp(&zero, &idir_disk, sizeof zero)) break;
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(&idir_disk);
 
-        /* The library's name is indicated by RVA. We need a section offset instead. */
-        ROSE_ASSERT(idir->get_dll_name_rva() >= mapped_rva);
-        addr_t dll_name_offset = idir->get_dll_name_rva() - mapped_rva;
-        std::string dll_name = content_str(dll_name_offset);
+        /* The library name, indicated by RVA.
+         * 
+         * FIXME (RPM 2008-10-29) We're having problems with this because in some files (e.g., Windows XP
+         * WINDOWS/system32/msacm32.dll) have no ".idata" section defined in the Section Table, but sill have an Import Table
+         * defined in the RVA/Size pairs of the NT Optional Header. This would normally be OK, but it seems that the Import
+         * Table size is too small and doesn't include the strings for the library names; rather, they appear immediately
+         * after the Import Table in part of the file that isn't referenced by any other section and therefore has no RVA
+         * since it's not mapped. */
+        std::string dll_name;
+        rva_t rva = idir->get_dll_name_rva();
+        if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
+            fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
+                    "dll_name_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                    i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
+            rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
+            if (!rva.get_section()) {
+                fprintf(stderr, "SgAsmPEImportSection::ctor: error: 0x%08"PRIx64" is not in the mapped address space\n", 
+                        rva.get_rva());
+            } else {
+                fprintf(stderr, "SgAsmPEImportSection::ctor: note: 0x%08"PRIx64" was found at offset 0x%08"PRIx64" (%"PRIu64")"
+                        " in [%d] \"%s\"\n", rva.get_rva(), rva.get_rel(), rva.get_rel(),
+                        rva.get_section()->get_id(), rva.get_section()->get_name()->c_str());
+                dll_name = rva.get_section()->content_str(rva.get_rel());
+            }
+        } else {
+            /* Name is probably inside this import section, but we don't know for sure until we read it since it's run-length
+             * encoded (NUL-terminated). */
+            addr_t dll_name_offset = idir->get_dll_name_rva() - mapped_rva;
+            dll_name = content_str(dll_name_offset);
+        }
 
         /* Create the DLL objects */
         SgAsmPEDLL *dll = new SgAsmPEDLL(new SgAsmBasicString(dll_name));
@@ -1108,74 +1134,105 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 
         /* The idir->hintname_rvas is an (optional) RVA for a NULL-terminated array whose members are either:
          *    1. an RVA of a hint/name pair (if the high-order bit of the array member is clear)
-         *    2. an ordinal if the high-order bit is set */
+         *    2. an ordinal if the high-order bit is set
+         * This information suffers from the same problem as dll_name above. */
         if (idir->get_hintnames_rva() != 0) {
-            if (idir->get_hintnames_rva() < mapped_rva)
-                throw FormatError("hint/name RVA is before beginning of \".idata\" object");
-
-         // DQ (8/11/2008): Should this really be a "for loop"; test is "1;"
-            for (addr_t hintname_rvas_offset = idir->get_hintnames_rva() - mapped_rva; /*section offset of RVA/ordinal array */
-                 1; 
-                 hintname_rvas_offset += fhdr->get_word_size()) {
-                addr_t hintname_rva = 0; /*RVA of the hint/name pair*/
-                bool import_by_ordinal=false; /*was high-order bit of array element set?*/
-                if (4==fhdr->get_word_size()) {
-                    uint32_t word;
-                    content(hintname_rvas_offset, sizeof word, &word);
-                    hintname_rva = le_to_host(word);
-                    import_by_ordinal = (hintname_rva & 0x80000000) != 0;
-                } else if (8==fhdr->get_word_size()) {
-                    uint64_t word;
-                    content(hintname_rvas_offset, sizeof word, &word);
-                    hintname_rva = le_to_host(word);
-                    import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+            rva_t rva = idir->get_hintnames_rva();
+            if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
+                fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
+                        "hintnames_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                        i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
+                rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
+                if (!rva.get_section()) {
+                    fprintf(stderr, "SgAsmPEImportSection::ctor: error: 0x%08"PRIx64" is not in the mapped address space\n", 
+                            rva.get_rva());
                 } else {
-                    ROSE_ASSERT(!"unsupported word size");
+                    fprintf(stderr, "SgAsmPEImportSection::ctor: note: 0x%08"PRIx64" was found at offset 0x%08"PRIx64" (%"PRIu64")"
+                            " in [%d] \"%s\"\n", rva.get_rva(), rva.get_rel(), rva.get_rel(),
+                            rva.get_section()->get_id(), rva.get_section()->get_name()->c_str());
                 }
+            } else {
+                rva.set_section(this);
+            }
+            
+            if (rva.get_section()) {
+                for (addr_t hintname_rvas_offset = rva.get_rel(); 1; hintname_rvas_offset += fhdr->get_word_size()) {
+                    addr_t hintname_rva = 0; /*RVA of the hint/name pair*/
+                    bool import_by_ordinal=false; /*was high-order bit of array element set?*/
+                    if (4==fhdr->get_word_size()) {
+                        uint32_t word;
+                        content(hintname_rvas_offset, sizeof word, &word);
+                        hintname_rva = le_to_host(word);
+                        import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+                    } else if (8==fhdr->get_word_size()) {
+                        uint64_t word;
+                        content(hintname_rvas_offset, sizeof word, &word);
+                        hintname_rva = le_to_host(word);
+                        import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+                    } else {
+                        ROSE_ASSERT(!"unsupported word size");
+                    }
 
-                /* Array is NULL terminated */
-                if (0==hintname_rva)
-                    break;
+                    /* Array is NULL terminated */
+                    if (0==hintname_rva)
+                        break;
 
-                /* Add arrary value and hint/name pair to the DLL object */
-                dll->add_hintname_rva(hintname_rva);
-                if (!import_by_ordinal) {
-                    addr_t hintname_offset = (hintname_rva & 0x7fffffff) - mapped_rva;
-                    SgAsmPEImportHintName *hintname = new SgAsmPEImportHintName(this, hintname_offset);
-                    dll->add_function(hintname->get_name());
-                    dll->add_hintname(hintname);
+                    /* Add arrary value and hint/name pair to the DLL object */
+                    dll->add_hintname_rva(hintname_rva);
+                    if (!import_by_ordinal) {
+                        addr_t hintname_offset = (hintname_rva & 0x7fffffff) - mapped_rva;
+                        SgAsmPEImportHintName *hintname = new SgAsmPEImportHintName(this, hintname_offset);
+                        dll->add_function(hintname->get_name());
+                        dll->add_hintname(hintname);
 
-                 // Make the parent the list IR node
-                    hintname->set_parent(dll->get_hintnames());
+                     // Make the parent the list IR node
+                        hintname->set_parent(dll->get_hintnames());
+                    }
                 }
             }
         }
         
-        /* The idir->bindings_rva is a NULL-terminated array of RVAs */
+        /* The idir->bindings_rva is a NULL-terminated array of RVAs.
+         * This information suffers from the same problem as dll_name above.  */
         if (idir->get_bindings_rva() != 0) {
-            if (idir->get_bindings_rva() < mapped_rva)
-                throw FormatError("bindings RVA is before beginning of \".idata\" object");
-
-            for (addr_t bindings_offset  = idir->get_bindings_rva()  - mapped_rva; /*section offset of RVA array for bindings*/
-                 1; 
-                 bindings_offset += fhdr->get_word_size()) {
-                addr_t binding=0;
-                if (4==fhdr->get_word_size()) {
-                    uint32_t word;
-                    content(bindings_offset, sizeof word, &word);
-                    binding = le_to_host(word);
-                } else if (8==fhdr->get_word_size()) {
-                    uint64_t word;
-                    content(bindings_offset, sizeof word, &word);
-                    binding = le_to_host(word);
+            rva_t rva = idir->get_bindings_rva();
+            if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
+                fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
+                        "bindings_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                        i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
+                rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
+                if (!rva.get_section()) {
+                    fprintf(stderr, "SgAsmPEImportSection::ctor: error: 0x%08"PRIx64" is not in the mapped address space\n", 
+                            rva.get_rva());
                 } else {
-                    ROSE_ASSERT(!"unsupported word size");
+                    fprintf(stderr, "SgAsmPEImportSection::ctor: note: 0x%08"PRIx64" was found at offset 0x%08"PRIx64" (%"PRIu64")"
+                            " in [%d] \"%s\"\n", rva.get_rva(), rva.get_rel(), rva.get_rel(),
+                            rva.get_section()->get_id(), rva.get_section()->get_name()->c_str());
                 }
+            } else {
+                rva.set_section(this);
+            }
 
-                /* Array is NULL terminated; otherwise add binding to DLL object */
-                if (0==binding)
-                    break;
-                dll->add_binding(binding);
+            if (rva.get_section()) {
+                for (addr_t bindings_offset  = rva.get_rel(); 1; bindings_offset += fhdr->get_word_size()) {
+                    addr_t binding=0;
+                    if (4==fhdr->get_word_size()) {
+                        uint32_t word;
+                        content(bindings_offset, sizeof word, &word);
+                        binding = le_to_host(word);
+                    } else if (8==fhdr->get_word_size()) {
+                        uint64_t word;
+                        content(bindings_offset, sizeof word, &word);
+                        binding = le_to_host(word);
+                    } else {
+                        ROSE_ASSERT(!"unsupported word size");
+                    }
+
+                    /* Array is NULL terminated; otherwise add binding to DLL object */
+                    if (0==binding)
+                        break;
+                    dll->add_binding(binding);
+                }
             }
         }
 
