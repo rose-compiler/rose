@@ -269,6 +269,34 @@ SgAsmElfFileHeader::set_e_phoff(addr_t addr)
     p_e_phoff = addr;
 }
 
+/* Get the list of sections defined in the ELF Section Table */
+SgAsmGenericSectionPtrList
+SgAsmElfFileHeader::get_sectab_sections()
+{
+    SgAsmGenericSectionPtrList retval;
+    SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
+    for (size_t i=0; i<sections.size(); i++) {
+        SgAsmElfSection *elfsec = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        if (elfsec && elfsec->get_section_entry()!=NULL)
+            retval.push_back(elfsec);
+    }
+    return retval;
+}
+
+/* Get the list of sections defined in the ELF Segment Table */
+SgAsmGenericSectionPtrList
+SgAsmElfFileHeader::get_segtab_sections()
+{
+    SgAsmGenericSectionPtrList retval;
+    SgAsmGenericSectionPtrList sections = get_sections()->get_sections();
+    for (size_t i=0; i<sections.size(); i++) {
+        SgAsmElfSection *elfsec = dynamic_cast<SgAsmElfSection*>(sections[i]);
+        if (elfsec && elfsec->get_segment_entry()!=NULL)
+            retval.push_back(elfsec);
+    }
+    return retval;
+}
+
 /* Encode Elf header disk structure */
 void *
 SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
@@ -1219,14 +1247,11 @@ SgAsmElfSectionTable::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
-    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_sectab_sections();
 
     /* Write the sections first */
-    for (size_t i=0; i<sections.size(); i++) {
-        if (sections[i]->get_id() >= 0) {
-            sections[i]->unparse(f);
-        }
-    }
+    for (size_t i=0; i<sections.size(); i++)
+        sections[i]->unparse(f);
 
     /* Calculate sizes and update the ELF File Header */
     size_t ent_size, struct_size, opt_size, nentries;
@@ -1237,30 +1262,31 @@ SgAsmElfSectionTable::unparse(FILE *f)
     /* Write the section table entries */
     for (size_t i=0; i<sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
-        SgAsmElfSectionTableEntry *shdr = section ? section->get_section_entry() : NULL;
-        if (shdr) {
-            shdr->update_from_section(section);
-            int id = section->get_id();
-            ROSE_ASSERT(id>=0 && (size_t)id<nentries);
+        ROSE_ASSERT(section!=NULL);
+        SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
+        ROSE_ASSERT(shdr!=NULL);
 
-            SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk32;
-            SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk64;
-            void *disk  = NULL;
+        shdr->update_from_section(section);
+        int id = section->get_id();
+        ROSE_ASSERT(id>=0 && (size_t)id<nentries);
 
-            if (4==fhdr->get_word_size()) {
-                disk = shdr->encode(sex, &disk32);
-            } else if (8==fhdr->get_word_size()) {
-                disk = shdr->encode(sex, &disk64);
-            } else {
-                ROSE_ASSERT(!"invalid word size");
-            }
+        SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk32;
+        SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk64;
+        void *disk  = NULL;
 
-            /* The disk struct */
-            addr_t spos = write(f, id*ent_size, struct_size, disk);
-            if (shdr->get_extra().size() > 0) {
-                ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
-                write(f, spos, shdr->get_extra());
-            }
+        if (4==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk32);
+        } else if (8==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk64);
+        } else {
+            ROSE_ASSERT(!"invalid word size");
+        }
+
+        /* The disk struct */
+        addr_t spos = write(f, id*ent_size, struct_size, disk);
+        if (shdr->get_extra().size() > 0) {
+            ROSE_ASSERT(shdr->get_extra().size()<=opt_size);
+            write(f, spos, shdr->get_extra());
         }
     }
 
@@ -1600,15 +1626,11 @@ SgAsmElfSegmentTable::unparse(FILE *f)
     SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
     ByteOrder sex = fhdr->get_sex();
-    SgAsmGenericSectionPtrList sections = fhdr->get_sections()->get_sections();
+    SgAsmGenericSectionPtrList sections = fhdr->get_segtab_sections();
 
     /* Write the segments first */
-    for (size_t i=0; i<sections.size(); i++) {
-        SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
-        if (section && section->get_segment_entry()) {
-            section->unparse(f);
-        }
-    }
+    for (size_t i=0; i<sections.size(); i++)
+        sections[i]->unparse(f);
 
     /* Calculate sizes and update the ELF File Header */
     size_t ent_size, struct_size, opt_size, nentries;
@@ -1619,29 +1641,30 @@ SgAsmElfSegmentTable::unparse(FILE *f)
     /* Write the segment table entries */
     for (size_t i=0; i < sections.size(); ++i) {
         SgAsmElfSection *section = dynamic_cast<SgAsmElfSection*>(sections[i]);
-        SgAsmElfSegmentTableEntry *shdr = section ? section->get_segment_entry() : NULL;
-        if (shdr) {
-            shdr->update_from_section(section);
-            int id = shdr->get_index();
-            ROSE_ASSERT(id>=0 && (size_t)id<nentries);
+        ROSE_ASSERT(section!=NULL);
+        SgAsmElfSegmentTableEntry *shdr = section->get_segment_entry();
+        ROSE_ASSERT(shdr!=NULL);
+
+        shdr->update_from_section(section);
+        int id = shdr->get_index();
+        ROSE_ASSERT(id>=0 && (size_t)id<nentries);
             
-            SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk32;
-            SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
-            void *disk = NULL;
+        SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk disk32;
+        SgAsmElfSegmentTableEntry::Elf64SegmentTableEntry_disk disk64;
+        void *disk = NULL;
         
-            if (4==fhdr->get_word_size()) {
-                disk = shdr->encode(sex, &disk32);
-            } else if (8==fhdr->get_word_size()) {
-                disk = shdr->encode(sex, &disk64);
-            } else {
-                ROSE_ASSERT(!"invalid word size");
-            }
-        
-            /* The disk struct */
-            addr_t spos = write(f, id*ent_size, struct_size, disk);
-            if (shdr->get_extra().size() > 0)
-                write(f, spos, shdr->get_extra());
+        if (4==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk32);
+        } else if (8==fhdr->get_word_size()) {
+            disk = shdr->encode(sex, &disk64);
+        } else {
+            ROSE_ASSERT(!"invalid word size");
         }
+        
+        /* The disk struct */
+        addr_t spos = write(f, id*ent_size, struct_size, disk);
+        if (shdr->get_extra().size() > 0)
+            write(f, spos, shdr->get_extra());
     }
 
     unparse_holes(f);
