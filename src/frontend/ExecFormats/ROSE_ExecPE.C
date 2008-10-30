@@ -720,10 +720,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_code_size",         p_e_code_size, p_e_code_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_data_size",         p_e_data_size, p_e_data_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_code_rva",
-            p_e_code_rva.get_rva(), p_e_code_rva.get_rva());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n",p, w, "e_data_rva",
-            p_e_data_rva.get_rva(), p_e_data_rva.get_rva());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_code_rva",          p_e_code_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "e_data_rva",          p_e_data_rva.to_string().c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
     fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "os_vers",             p_e_os_major, p_e_os_minor);
@@ -968,11 +966,11 @@ SgAsmPEImportDirectory::ctor(const PEImportDirectory_disk *disk)
 void *
 SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk)
 {
-    host_to_le(p_hintnames_rva,   &(disk->hintnames_rva));
-    host_to_le(p_time,            &(disk->time));
-    host_to_le(p_forwarder_chain, &(disk->forwarder_chain));
-    host_to_le(p_dll_name_rva,    &(disk->dll_name_rva));
-    host_to_le(p_bindings_rva,    &(disk->bindings_rva));
+    host_to_le(p_hintnames_rva.get_rva(), &(disk->hintnames_rva));
+    host_to_le(p_time,                    &(disk->time));
+    host_to_le(p_forwarder_chain,         &(disk->forwarder_chain));
+    host_to_le(p_dll_name_rva.get_rva(),  &(disk->dll_name_rva));
+    host_to_le(p_bindings_rva.get_rva(),  &(disk->bindings_rva));
     return disk;
 }
 
@@ -987,12 +985,12 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
         sprintf(p, "%sPEImportDirectory.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "hintnames_rva", p_hintnames_rva, p_hintnames_rva);
-    fprintf(f, "%s%-*s = %lu %s",                      p, w, "time", (unsigned long)p_time, ctime(&p_time));
-    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "forwarder_chain", p_forwarder_chain, p_forwarder_chain);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "dll_name_rva", p_dll_name_rva, p_dll_name_rva);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "bindings_rva", p_bindings_rva, p_bindings_rva);
+
+    fprintf(f, "%s%-*s = %s\n",          p, w, "hintnames_rva", p_hintnames_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %lu %s",        p, w, "time", (unsigned long)p_time, ctime(&p_time));
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n", p, w, "forwarder_chain", p_forwarder_chain, p_forwarder_chain);
+    fprintf(f, "%s%-*s = %s\n",          p, w, "dll_name_rva", p_dll_name_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",          p, w, "bindings_rva", p_bindings_rva.to_string().c_str());
 }
 
 /* Constructor */
@@ -1107,7 +1105,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         rva_t rva = idir->get_dll_name_rva();
         if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
             fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
-                    "dll_name_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                    "Name RVA (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
                     i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
             rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
             if (!rva.get_section()) {
@@ -1117,15 +1115,15 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
                 fprintf(stderr, "SgAsmPEImportSection::ctor: note: 0x%08"PRIx64" was found at offset 0x%08"PRIx64" (%"PRIu64")"
                         " in [%d] \"%s\"\n", rva.get_rva(), rva.get_rel(), rva.get_rel(),
                         rva.get_section()->get_id(), rva.get_section()->get_name()->c_str());
-                dll_name = rva.get_section()->content_str(rva.get_rel());
             }
         } else {
-            /* Name is probably inside this import section, but we don't know for sure until we read it since it's run-length
-             * encoded (NUL-terminated). */
-            addr_t dll_name_offset = idir->get_dll_name_rva() - mapped_rva;
-            dll_name = content_str(dll_name_offset);
+            rva.set_section(this);
         }
-
+        if (rva.get_section()) {
+            idir->set_dll_name_rva(rva);
+            dll_name = rva.get_section()->content_str(rva.get_rel());
+        }
+        
         /* Create the DLL objects */
         SgAsmPEDLL *dll = new SgAsmPEDLL(new SgAsmBasicString(dll_name));
         dll->set_idir(idir);
@@ -1140,7 +1138,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             rva_t rva = idir->get_hintnames_rva();
             if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
                 fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
-                        "hintnames_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                        "Import Lookup Table RVA (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
                         i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
                 rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
                 if (!rva.get_section()) {
@@ -1156,6 +1154,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             }
             
             if (rva.get_section()) {
+                idir->set_hintnames_rva(rva);
                 for (addr_t hintname_rvas_offset = rva.get_rel(); 1; hintname_rvas_offset += fhdr->get_word_size()) {
                     addr_t hintname_rva = 0; /*RVA of the hint/name pair*/
                     bool import_by_ordinal=false; /*was high-order bit of array element set?*/
@@ -1198,7 +1197,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             rva_t rva = idir->get_bindings_rva();
             if (rva.get_rva()<mapped_rva || rva.get_rva()>=mapped_rva+get_size()) {
                 fprintf(stderr, "SgAsmPEImportSection::ctor: warning: in PE Import Directory entry %zu "
-                        "bindings_rva (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
+                        "Import Address Table RVA (0x%08"PRIx64") is outside of import section (0x%08"PRIx64"-0x%08"PRIx64")\n",
                         i, rva.get_rva(), mapped_rva, mapped_rva+get_size());
                 rva.set_section(fhdr->get_best_section_by_va(rva.get_rva()+fhdr->get_base_va()));
                 if (!rva.get_section()) {
@@ -1214,6 +1213,7 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             }
 
             if (rva.get_section()) {
+                idir->set_bindings_rva(rva);
                 for (addr_t bindings_offset  = rva.get_rel(); 1; bindings_offset += fhdr->get_word_size()) {
                     addr_t binding=0;
                     if (4==fhdr->get_word_size()) {
@@ -1256,8 +1256,6 @@ SgAsmPEImportSection::unparse(FILE *f)
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmGenericHeader *fhdr = get_header();
 
- // This is the same as accessing p_dlls and used to be redundant with "dlls" before being use with RISE IR nodes.
- // const std::vector<SgAsmPEDLL*> & dlls = get_dlls();
     const std::vector<SgAsmPEDLL*> & dlls = get_dlls()->get_dlls();
 
     for (size_t dllno = 0; dllno < dlls.size(); dllno++) {
@@ -1269,17 +1267,18 @@ SgAsmPEImportSection::unparse(FILE *f)
         idir->encode(&idir_disk);
         write(f, dllno*sizeof(idir_disk), sizeof idir_disk, &idir_disk);
 
-        /* Library name */
-        ROSE_ASSERT(idir->get_dll_name_rva() >= p_mapped_rva);
-        addr_t dll_name_offset = idir->get_dll_name_rva() - p_mapped_rva;
-        ROSE_ASSERT(dll_name_offset + dll->get_name()->get_string().size() + 1 < get_size());
-        addr_t spos = write(f, dll_name_offset, dll->get_name()->get_string());
-        write(f, spos, '\0');
+        /* Library name. Write it even if it's not in this section! (RPM 2008-10-29) */
+        rva_t rva = idir->get_dll_name_rva();
+        ROSE_ASSERT(rva >= p_mapped_rva);
+        ROSE_ASSERT(rva.get_section()); /*should have been bound in constructor*/
+        addr_t spos = rva.get_section()->write(f, rva.get_rel(), dll->get_name()->get_string());
+        rva.get_section()->write(f, spos, '\0');
 
-        /* Write the hint/name pairs and the array entries that point to them. */
-        if (idir->get_hintnames_rva() != 0) {
-            ROSE_ASSERT(idir->get_hintnames_rva() >= p_mapped_rva);
-            addr_t hintname_rvas_spos = idir->get_hintnames_rva() - p_mapped_rva; /*section offset*/
+        /* Write the hint/name pairs and the array entries that point to them. They might not even be in this section! See
+         * ctor */   
+        rva = idir->get_hintnames_rva();
+        if (rva != 0) {
+            ROSE_ASSERT(rva.get_section());
             const std::vector<addr_t> & hintname_rvas = dll->get_hintname_rvas();
             const std::vector<SgAsmPEImportHintName*> & hintnames = dll->get_hintnames()->get_hintnames();
             for (size_t i = 0; i <= hintname_rvas.size(); i++) {
@@ -1289,12 +1288,12 @@ SgAsmPEImportSection::unparse(FILE *f)
                 if (4 == fhdr->get_word_size()) {
                     uint32_t rva_le;
                     host_to_le(hintname_rva, &rva_le);
-                    write(f, hintname_rvas_spos + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
+                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
                     import_by_ordinal = (hintname_rva & 0x80000000) != 0;
                 } else if (8==fhdr->get_word_size()) {
                     uint64_t rva_le;
                     host_to_le(hintname_rva, &rva_le);
-                    write(f, hintname_rvas_spos + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
+                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
                     import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
@@ -1308,21 +1307,21 @@ SgAsmPEImportSection::unparse(FILE *f)
             }
         }
         
-        /* Write the bindings array */
-        if (idir->get_bindings_rva() != 0) {
-            ROSE_ASSERT(idir->get_bindings_rva() >= p_mapped_rva);
-            const addr_t bindings_spos = idir->get_bindings_rva() - p_mapped_rva; /*section offset*/
+        /* Write the bindings array. These could be in some other section (see constructor)! */
+        rva = idir->get_bindings_rva();
+        if (rva != 0) {
+            ROSE_ASSERT(rva.get_section());
             const std::vector<addr_t> & bindings = dll->get_bindings();
             for (size_t i=0; i<=bindings.size(); i++) {
                 addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
                 if (4==fhdr->get_word_size()) {
                     uint32_t binding_le;
                     host_to_le(binding, &binding_le);
-                    write(f, bindings_spos + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
+                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
                 } else if (8==fhdr->get_word_size()) {
                     uint64_t binding_le;
                     host_to_le(binding, &binding_le);
-                    write(f, bindings_spos + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
+                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
                 } else {
                     ROSE_ASSERT(!"unsupported word size");
                 }
@@ -1381,6 +1380,9 @@ SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
     p_expaddr_rva  = le_to_host(disk->expaddr_rva);    p_expaddr_rva.set_section(section);
     p_nameptr_rva  = le_to_host(disk->nameptr_rva);    p_nameptr_rva.set_section(section);
     p_ordinals_rva = le_to_host(disk->ordinals_rva);   p_ordinals_rva.set_section(section);
+
+    const char *name = p_name_rva.get_section()->content_str(p_name_rva.get_rel());
+    p_name = new SgAsmBasicString(name);
 }
 
 /* Print debugging info */
@@ -1395,17 +1397,18 @@ SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
+    fprintf(f, "%s%-*s = \"%s\"\n",                    p, w, "name", p_name->c_str());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "res1", p_res1, p_res1);
     fprintf(f, "%s%-*s = %lu %s",                      p, w, "timestamp", (unsigned long)p_timestamp, ctime(&p_timestamp));
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vmajor", p_vmajor);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "vminor", p_vminor);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "name_rva", p_name_rva.get_rva(), p_name_rva.get_rva());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "name_rva", p_name_rva.to_string().c_str());
     fprintf(f, "%s%-*s = %u\n",                        p, w, "ord_base", p_ord_base);
     fprintf(f, "%s%-*s = %zu\n",                       p, w, "expaddr_n", p_expaddr_n);
     fprintf(f, "%s%-*s = %zu\n",                       p, w, "nameptr_n", p_nameptr_n);
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "expaddr_rva", p_expaddr_rva.get_rva(), p_expaddr_rva.get_rva());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "nameptr_rva", p_nameptr_rva.get_rva(), p_nameptr_rva.get_rva());
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "ordinals_rva", p_ordinals_rva.get_rva(), p_ordinals_rva.get_rva());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "expaddr_rva", p_expaddr_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "nameptr_rva", p_nameptr_rva.to_string().c_str());
+    fprintf(f, "%s%-*s = %s\n",                        p, w, "ordinals_rva", p_ordinals_rva.to_string().c_str());
 }
 
 /* Constructor */
@@ -1430,8 +1433,7 @@ SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = [ord %u] rva=0x%08"PRIx64" (%"PRIu64") \"%s\"",
-            p, w, "info", p_ordinal, p_export_rva.get_rva(), p_export_rva.get_rva(), p_name->c_str());
+    fprintf(f, "%s%-*s = [ord %u] rva=%s \"%s\"", p, w, "info", p_ordinal, p_export_rva.to_string().c_str(), p_name->c_str());
     if (p_forwarder)
         fprintf(f, " -> \"%s\"", p_forwarder->c_str());
     fputc('\n', f);
@@ -1466,10 +1468,7 @@ SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
     ROSE_ASSERT(fhdr!=NULL);
 
     p_export_dir = new SgAsmPEExportDirectory(this);
-    
-    addr_t libname_offset = p_export_dir->get_name_rva().get_rel(this);
-    const char *libname = content_str(libname_offset);
-    fprintf(stderr, "ROBB: libname = 0x%"PRIx64" \"%s\"\n", libname_offset, libname);
+
 
     for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
         /* Function name */
@@ -1497,6 +1496,7 @@ SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             addr_t expaddr_offset = p_export_dir->get_expaddr_rva().get_rel(this) + expaddr_idx*sizeof(*expaddr_disk);
             expaddr_disk = (const ExportAddress_disk*)content(expaddr_offset, sizeof(*expaddr_disk));
             expaddr = le_to_host(*expaddr_disk);
+            expaddr.set_section(fhdr->get_best_section_by_va(expaddr.get_rva()+fhdr->get_base_va()));
         } else {
             expaddr = 0xffffffff; /*Ordinal out of range!*/
         }
@@ -2167,8 +2167,8 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     /* Associate RVAs with particular sections. */
     ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
     fhdr->get_entry_rvas()[0].set_section(fhdr);
-    fhdr->get_e_code_rva().set_section(fhdr);
-    fhdr->get_e_data_rva().set_section(fhdr);
+    fhdr->set_e_code_rva(fhdr->get_e_code_rva().set_section(fhdr));
+    fhdr->set_e_data_rva(fhdr->get_e_data_rva().set_section(fhdr));
 
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     fhdr->create_table_sections();

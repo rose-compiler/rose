@@ -20,6 +20,13 @@
 // A rose_rva_t is optionally tied to an SgAsmGenericSection so that if the mapped address of the section is modified then
 // the RVA stored in the rose_rva_t object is also adjusted.  The section-relative offset is always treated as an unsigned
 // quantity, but negative offsets can be accommodated via integer overflow.
+//
+// Be careful about adjusting the RVA (the address or section) using ROSETTA's accessors.
+//     symbol.p_address.set_section(section);          // this works
+//     symbol.get_address().set_section(section);      // using ROSETTA accessor modifies a temporary copy of the RVA
+// But if ROSETTA returns a vector then we can modify the RVA:
+//     symbol.p_addresses[0].set_section(section);     // this works
+//     symbol.get_addresses()[0].set_section(section); // so does this.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 rose_addr_t
@@ -30,12 +37,13 @@ rose_rva_t::get_rva() const
     return rva;
 }
 
-void
+rose_rva_t&
 rose_rva_t::set_rva(rose_addr_t rva)
 {
     addr = rva;
     if (section)
         addr -= section->get_mapped_rva();
+    return *this;
 }
 
 SgAsmGenericSection *
@@ -44,7 +52,7 @@ rose_rva_t::get_section() const
     return section;
 }
 
-void
+rose_rva_t&
 rose_rva_t::set_section(SgAsmGenericSection *new_section)
 {
     if (section) {
@@ -55,15 +63,16 @@ rose_rva_t::set_section(SgAsmGenericSection *new_section)
         addr -= new_section->get_mapped_rva();
     }
     section = new_section;
+    return *this;
 }
 
 /* Set the section to the section that best (most specifically) describes the virtual address */
-void
+rose_rva_t&
 rose_rva_t::set_section(SgAsmGenericHeader *fhdr)
 {
     rose_addr_t va = get_rva() + fhdr->get_base_va();
     SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va);
-    set_section(secbind);
+    return set_section(secbind);
 }
 
 /* Return address relative to currently bound section */
@@ -83,10 +92,25 @@ rose_rva_t::get_rel(SgAsmGenericSection *s)
     return get_rva() - s->get_mapped_rva();
 }
 
+/* Convert to a string representation */
+std::string
+rose_rva_t::to_string() const
+{
+    char s[1024];
+    sprintf(s, "0x%08"PRIx64" (%"PRIu64")", get_rva(), get_rva());
+    std::string ss = s;
+
+    if (get_section()) {
+        sprintf(s, " + 0x%08"PRIx64" (%"PRIu64")", get_rel(), get_rel());
+        ss += " <" + get_section()->get_name()->get_string() + s + ">";
+    }
+    return ss;
+}
+
 std::ostream &
 operator<<(std::ostream &os, const rose_rva_t &rva)
 {
-    os << rva.get_rva();
+    os << rva.to_string();
     return os;
 }
 

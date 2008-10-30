@@ -2021,7 +2021,7 @@ SgAsmElfDynamicEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     strcpy(label, stringify_tag(p_d_tag));
     for (char *s=label; *s; s++) *s = tolower(*s);
 
-    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, p_d_val.get_rva(), p_d_val.get_rva());
+    fprintf(f, "%s%-*s = %s\n", p, w, label, p_d_val.to_string().c_str());
     if (p_extra.size()>0) {
         fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
