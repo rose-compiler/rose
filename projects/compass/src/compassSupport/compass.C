@@ -3,6 +3,9 @@
 #endif
 
 #include "compass.h"
+
+//for exists
+#include "boost/filesystem/operations.hpp"
 #include <rose.h>
 #include <sstream>
 #include <fstream>
@@ -306,8 +309,19 @@ std::string Compass::parseString(const std::string& str)
 
 std::ifstream* Compass::openFile(std::string filename)
 {
+
+ 
+  if( boost::filesystem::exists(filename) == false )  
+  {
+//    std::cerr << "Error: Please specify which checkers you want to run in " << filename << std::endl;
+    std::cerr << "Error: Filename " << filename << " does not exists. " << std::endl;
+    abort();
+
+  }
   std::ifstream* streamPtr = new std::ifstream(filename.c_str());
+
   ROSE_ASSERT(streamPtr != NULL);
+  ROSE_ASSERT(streamPtr->good());
 
   return streamPtr;
 
