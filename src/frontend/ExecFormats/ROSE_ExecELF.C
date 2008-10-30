@@ -225,11 +225,8 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         break;
       default:
         /*FIXME: There's a whole lot more. See Dan's Elf reader. */
-
-     // DQ (10/12/2008): Need more information to address PowerPC support.
-        printf ("Warning: p_e_machine = %lu = 0x%lx \n",p_e_machine,p_e_machine);
-
-
+        // DQ (10/12/2008): Need more information to address PowerPC support.
+        fprintf(stderr, "Warning: SgAsmElfFileHeader::ctor::p_e_machine = 0x%lx (%lu)\n", p_e_machine, p_e_machine);
         set_isa(ISA_OTHER);
         break;
     }
