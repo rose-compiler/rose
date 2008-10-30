@@ -254,21 +254,6 @@ SgAsmElfFileHeader::max_page_size()
     return 4*1024;
 }
 
-/* Override ROSETTA version of accessors so the set_* functions check that we're still parsing. It should not be possible to
- * modify these values after parsing. */
-void
-SgAsmElfFileHeader::set_e_shoff(addr_t addr)
-{
-    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
-    p_e_shoff = addr;
-}
-void
-SgAsmElfFileHeader::set_e_phoff(addr_t addr)
-{
-    ROSE_ASSERT(!get_congealed()); /*must be still parsing*/
-    p_e_phoff = addr;
-}
-
 /* Get the list of sections defined in the ELF Section Table */
 SgAsmGenericSectionPtrList
 SgAsmElfFileHeader::get_sectab_sections()
@@ -394,12 +379,15 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf64FileHeader_disk *disk)
     return disk;
 }
 
-/* Change size of ELF header based on word size */
+/* Update prior to parsing */
 bool
 SgAsmElfFileHeader::reallocate()
 {
+
+    /* Reallocate superclass. This also calls reallocate() for all the sections associated with this ELF File Header. */
     bool reallocated = SgAsmGenericHeader::reallocate();
 
+    /* Resize header based on current word size */
     addr_t need;
     if (4==get_word_size()) {
         need = sizeof(Elf32FileHeader_disk);
@@ -408,7 +396,6 @@ SgAsmElfFileHeader::reallocate()
     } else {
         throw FormatError("unsupported ELF word size");
     }
-
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -439,14 +426,12 @@ SgAsmElfFileHeader::unparse(FILE *f)
     if (p_segment_table) {
         ROSE_ASSERT(p_segment_table->get_header()==this);
         p_segment_table->unparse(f);
-        p_e_phoff = p_segment_table->get_offset();
     }
 
     /* Write the ELF section table and, indirectly, the sections themselves. */
     if (p_section_table) {
         ROSE_ASSERT(p_section_table->get_header()==this);
         p_section_table->unparse(f);
-        p_e_shoff = p_section_table->get_offset();
     }
     
     /* Encode and write the ELF file header */
@@ -660,27 +645,36 @@ SgAsmElfSection::calculate_sizes(size_t *entsize, size_t *required, size_t *opti
     return calculate_sizes(0, 0, std::vector<size_t>(), entsize, required, optional, entcount);
 }
 
-/* Resize the section based on ELF word size. This is a no-op unless the section was defined in the ELF Section Table. */
+/* Called prior to unparse to make things consistent. */
 bool
 SgAsmElfSection::reallocate()
 {
-    if (get_section_entry()==NULL)
-        return false;
-
     bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
-    if (need < get_size()) {
-        if (is_mapped()) {
-            ROSE_ASSERT(get_mapped_size()==get_size());
-            set_mapped_size(need);
-        }
-        set_size(need);
-        reallocated = true;
+    SgAsmElfSectionTableEntry *sechdr = get_section_entry();
+    SgAsmElfSegmentTableEntry *seghdr = get_segment_entry();
 
-    } else if (need > get_size()) {
-        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
-        reallocated = true;
+    /* Change section size if this section was defined in the ELF Section Table */
+    if (sechdr!=NULL) {
+        addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+        if (need < get_size()) {
+            if (is_mapped()) {
+                ROSE_ASSERT(get_mapped_size()==get_size());
+                set_mapped_size(need);
+            }
+            set_size(need);
+            reallocated = true;
+        } else if (need > get_size()) {
+            get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+            reallocated = true;
+        }
     }
+
+    /* Update entry in the ELF Section Table and/or ELF Segment Table */
+    if (sechdr)
+        sechdr->update_from_section(this);
+    if (seghdr)
+        seghdr->update_from_section(this);
+    
     return reallocated;
 }
 
@@ -734,7 +728,10 @@ SgAsmElfStringSection::ctor()
 bool
 SgAsmElfStringSection::reallocate()
 {
-    return get_strtab()->reallocate(false);
+    bool reallocated = SgAsmElfSection::reallocate();
+    if (get_strtab()->reallocate(false))
+        reallocated = true;
+    return reallocated;
 }
 
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
@@ -1217,12 +1214,15 @@ SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 }
 
-/* Resize the section table based on ELF word size */
+/* Pre-unparsing updates */
 bool
 SgAsmElfSectionTable::reallocate()
 {
     bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+
+    /* Resize based on word size from ELF File Header */
+    size_t opt_size, nentries;
+    addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -1235,6 +1235,13 @@ SgAsmElfSectionTable::reallocate()
         get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
+
+    /* Update data members in the ELF File Header. No need to return true for these changes. */
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    fhdr->set_e_shoff(get_offset());
+    fhdr->set_shextrasz(opt_size);
+    fhdr->set_e_shnum(nentries);
+
     return reallocated;
 }
 
@@ -1253,11 +1260,12 @@ SgAsmElfSectionTable::unparse(FILE *f)
     for (size_t i=0; i<sections.size(); i++)
         sections[i]->unparse(f);
 
-    /* Calculate sizes and update the ELF File Header */
+    /* Calculate sizes. The ELF File Header should have been updated in reallocate() prior to unparsing. */
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
-    fhdr->set_shextrasz(opt_size);
-    fhdr->set_e_shnum(nentries);
+    ROSE_ASSERT(fhdr->get_e_shoff()==get_offset());
+    ROSE_ASSERT(fhdr->get_shextrasz()==opt_size);
+    ROSE_ASSERT(fhdr->get_e_shnum()==nentries);
     
     /* Write the section table entries */
     for (size_t i=0; i<sections.size(); ++i) {
@@ -1265,8 +1273,8 @@ SgAsmElfSectionTable::unparse(FILE *f)
         ROSE_ASSERT(section!=NULL);
         SgAsmElfSectionTableEntry *shdr = section->get_section_entry();
         ROSE_ASSERT(shdr!=NULL);
+        ROSE_ASSERT(shdr->get_sh_offset()==section->get_offset()); /*section table entry should have been updated in reallocate()*/
 
-        shdr->update_from_section(section);
         int id = section->get_id();
         ROSE_ASSERT(id>=0 && (size_t)id<nentries);
 
@@ -1596,12 +1604,15 @@ SgAsmElfSegmentTable::calculate_sizes(size_t *entsize, size_t *required, size_t 
     return entry_size * nentries;
 }
 
-/* Resize the segment table based on ELF word size */
+/* Pre-unparsing updates */
 bool
 SgAsmElfSegmentTable::reallocate()
 {
     bool reallocated = false;
-    addr_t need = calculate_sizes(NULL, NULL, NULL, NULL);
+
+    /* Resize based on word size from ELF File Header */
+    size_t opt_size, nentries;
+    addr_t need = calculate_sizes(NULL, NULL, &opt_size, &nentries);
     if (need < get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -1609,11 +1620,17 @@ SgAsmElfSegmentTable::reallocate()
         }
         set_size(need);
         reallocated = true;
-
     } else if (need > get_size()) {
         get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
+
+    /* Update data members in the ELF File Header. No need to return true for these changes. */
+    SgAsmElfFileHeader *fhdr = dynamic_cast<SgAsmElfFileHeader*>(get_header());
+    fhdr->set_e_phoff(get_offset());
+    fhdr->set_phextrasz(opt_size);
+    fhdr->set_e_phnum(nentries);
+
     return reallocated;
 }
 
@@ -1635,8 +1652,9 @@ SgAsmElfSegmentTable::unparse(FILE *f)
     /* Calculate sizes and update the ELF File Header */
     size_t ent_size, struct_size, opt_size, nentries;
     calculate_sizes(&ent_size, &struct_size, &opt_size, &nentries);
-    fhdr->set_phextrasz(opt_size);
-    fhdr->set_e_phnum(nentries);
+    ROSE_ASSERT(fhdr->get_e_phoff()==get_offset());
+    ROSE_ASSERT(fhdr->get_phextrasz()==opt_size);
+    ROSE_ASSERT(fhdr->get_e_phnum()==nentries);
     
     /* Write the segment table entries */
     for (size_t i=0; i < sections.size(); ++i) {
@@ -1644,8 +1662,8 @@ SgAsmElfSegmentTable::unparse(FILE *f)
         ROSE_ASSERT(section!=NULL);
         SgAsmElfSegmentTableEntry *shdr = section->get_segment_entry();
         ROSE_ASSERT(shdr!=NULL);
+        ROSE_ASSERT(shdr->get_offset()==section->get_offset()); /*segment table entry should have been updated in reallocate()*/
 
-        shdr->update_from_section(section);
         int id = shdr->get_index();
         ROSE_ASSERT(id>=0 && (size_t)id<nentries);
             
