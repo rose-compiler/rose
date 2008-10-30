@@ -30,6 +30,7 @@ class rose_rva_t {
     void set_rva(rose_addr_t rva);
     SgAsmGenericSection *get_section() const;
     void set_section(SgAsmGenericSection *section);
+    void set_section(SgAsmGenericHeader*);
   private:
     rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
     SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */

@@ -57,6 +57,15 @@ rose_rva_t::set_section(SgAsmGenericSection *new_section)
     section = new_section;
 }
 
+/* Set the section to the section that best (most specifically) describes the virtual address */
+void
+rose_rva_t::set_section(SgAsmGenericHeader *fhdr)
+{
+    rose_addr_t va = get_rva() + fhdr->get_base_va();
+    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va);
+    set_section(secbind);
+}
+
 std::ostream &
 operator<<(std::ostream &os, const rose_rva_t &rva)
 {
