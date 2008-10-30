@@ -1933,6 +1933,10 @@ HEADER_PE_FILE_HEADER_START
 		void set_e_header_size(unsigned);
 		unsigned get_e_num_rvasize_pairs() const {return p_e_num_rvasize_pairs;}
 		void set_e_num_rvasize_pairs(unsigned);
+		unsigned get_e_lmajor() const {return p_e_lmajor;}
+		void set_e_lmajor(unsigned);
+		unsigned get_e_lminor() const {return p_e_lminor;}
+		void set_e_lminor(unsigned);
 
 	private:
 		void ctor(SgAsmGenericFile *f, addr_t offset);

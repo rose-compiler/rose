@@ -540,6 +540,18 @@ SgAsmPEFileHeader::set_e_num_rvasize_pairs(unsigned n)
     ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
     p_e_num_rvasize_pairs = n;
 }
+void
+SgAsmPEFileHeader::set_e_lmajor(unsigned n)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_lmajor = n;
+}
+void
+SgAsmPEFileHeader::set_e_lminor(unsigned n)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_lminor = n;
+}
 
 /* Write the PE file header back to disk and all that it references */
 void
@@ -613,6 +625,8 @@ SgAsmPEFileHeader::unparse(FILE *f)
     /* Update some additional header fields */
     p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
     p_e_opt_magic = 4==get_word_size() ? 0x010b : 0x020b;
+    p_e_lmajor = (p_exec_format->get_version() >> 16) & 0xffff;
+    p_e_lminor = p_exec_format->get_version() & 0xffff;
 
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
