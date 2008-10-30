@@ -88,7 +88,8 @@ SgAsmPEExtendedDOSHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = %u\n",                     p, w, "e_res2[9]",  p_e_res2[9]);
     fprintf(f, "%s%-*s = %"PRIu64" byte offset (0x%"PRIx64")\n",  p, w, "e_lfanew",   p_e_lfanew,p_e_lfanew);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmPEExtendedDOSHeader) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -462,7 +463,21 @@ SgAsmPEFileHeader::create_table_sections()
         }
         addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva());
 
-        SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
+        /* Create the new section */
+        SgAsmGenericSection *tabsec = NULL;
+        switch (i) {
+          case 0:
+            tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
+            break;
+#if 0 /*not ready yet (RPM 2008-10-29)*/
+          case 1:
+            tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
+            break;
+#endif
+          default:
+            tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
+            break;
+        }
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
         tabsec->set_synthesized(true);
         tabsec->set_purpose(SP_HEADER);
@@ -701,8 +716,7 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%04x (%u)\n",               p, w, "e_flags",             p_e_flags, p_e_flags);
     fprintf(f, "%s%-*s = 0x%04x %s\n",                 p, w, "e_opt_magic",         p_e_opt_magic,
             0x10b == p_e_opt_magic ? "PE32" : (0x20b == p_e_opt_magic ? "PE32+" : "other"));
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_lmajor",            p_e_lmajor);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_lminor",            p_e_lminor);
+    fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "linker_vers",         p_e_lmajor, p_e_lminor);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_code_size",         p_e_code_size, p_e_code_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_data_size",         p_e_data_size, p_e_data_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
@@ -712,12 +726,9 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
             p_e_data_rva.get_rva(), p_e_data_rva.get_rva());
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_section_align",     p_e_section_align, p_e_section_align);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_file_align",        p_e_file_align, p_e_file_align);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_major",          p_e_os_major);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_os_minor",          p_e_os_minor);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_user_major",        p_e_user_major);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_user_minor",        p_e_user_minor);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_subsys_major",      p_e_subsys_major);
-    fprintf(f, "%s%-*s = %u\n",                        p, w, "e_subsys_minor",      p_e_subsys_minor);
+    fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "os_vers",             p_e_os_major, p_e_os_minor);
+    fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "user_vers",           p_e_user_major, p_e_user_minor);
+    fprintf(f, "%s%-*s = %u.%u\n",                     p, w, "subsys_vers",         p_e_subsys_major, p_e_subsys_minor);
     fprintf(f, "%s%-*s = %u\n",                        p, w, "e_reserved9",         p_e_reserved9);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_image_size",        p_e_image_size, p_e_image_size);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_header_size",       p_e_header_size, p_e_header_size);
@@ -734,9 +745,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_rva",
-                p_rvasize_pairs->get_pairs()[i]->get_e_rva(), p_rvasize_pairs->get_pairs()[i]->get_e_rva());
-        fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "e_size",
+        fprintf(f, "%s%-*s = rva 0x%08"PRIx64" (%"PRIu64"),\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
+                p_rvasize_pairs->get_pairs()[i]->get_e_rva(), p_rvasize_pairs->get_pairs()[i]->get_e_rva(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }
     if (p_dos2_header) {
@@ -751,7 +761,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = none\n", p, w, "section_table");
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmPEFileHeader) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -837,9 +848,11 @@ SgAsmPESection::dump(FILE *f, const char *prefix, ssize_t idx)
     }
 
     SgAsmGenericSection::dump(f, p, -1);
-    p_st_entry->dump(f, p, -1);
+    if (p_st_entry)
+        p_st_entry->dump(f, p, -1);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmPESection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 /* Constructor */
@@ -932,7 +945,8 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
     SgAsmGenericSection::dump(f, p, -1);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmPESectionTable) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1171,6 +1185,13 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
     }
 }
 
+void
+SgAsmPEImportSection::add_dll(SgAsmPEDLL *d)
+{
+    ROSE_ASSERT(p_dlls != NULL);
+    p_dlls->get_dlls().push_back(d);
+}
+
 /* Write the import section back to disk */
 void
 SgAsmPEImportSection::unparse(FILE *f)
@@ -1275,7 +1296,192 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx)
     
     SgAsmPESection::dump(f, p, -1);
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmPEImportSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// PE Export Section.
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Constructor */
+void
+SgAsmPEExportDirectory::ctor(SgAsmPEExportSection *section)
+{
+    set_parent(section);
+
+    size_t entry_size = sizeof(PEExportDirectory_disk);
+    const PEExportDirectory_disk *disk = (const PEExportDirectory_disk*)section->content(0, entry_size);
+    
+    p_res1         = le_to_host(disk->res1);
+    p_timestamp    = le_to_host(disk->timestamp);
+    p_vmajor       = le_to_host(disk->vmajor);
+    p_vminor       = le_to_host(disk->vminor);
+    p_name_rva     = le_to_host(disk->name_rva);       p_name_rva.set_section(section);
+    p_ord_base     = le_to_host(disk->ord_base);
+    p_expaddr_n    = le_to_host(disk->expaddr_n);
+    p_nameptr_n    = le_to_host(disk->nameptr_n);
+    p_expaddr_rva  = le_to_host(disk->expaddr_rva);    p_expaddr_rva.set_section(section);
+    p_nameptr_rva  = le_to_host(disk->nameptr_rva);    p_nameptr_rva.set_section(section);
+    p_ordinals_rva = le_to_host(disk->ordinals_rva);   p_ordinals_rva.set_section(section);
+}
+
+/* Print debugging info */
+void
+SgAsmPEExportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPEExportDirectory[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEExportDirectory.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+    
+    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "res1", p_res1, p_res1);
+    fprintf(f, "%s%-*s = %lu %s",                      p, w, "timestamp", (unsigned long)p_timestamp, ctime(&p_timestamp));
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "vmajor", p_vmajor);
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "vminor", p_vminor);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "name_rva", p_name_rva.get_rva(), p_name_rva.get_rva());
+    fprintf(f, "%s%-*s = %u\n",                        p, w, "ord_base", p_ord_base);
+    fprintf(f, "%s%-*s = %zu\n",                       p, w, "expaddr_n", p_expaddr_n);
+    fprintf(f, "%s%-*s = %zu\n",                       p, w, "nameptr_n", p_nameptr_n);
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "expaddr_rva", p_expaddr_rva.get_rva(), p_expaddr_rva.get_rva());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "nameptr_rva", p_nameptr_rva.get_rva(), p_nameptr_rva.get_rva());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "ordinals_rva", p_ordinals_rva.get_rva(), p_ordinals_rva.get_rva());
+}
+
+/* Constructor */
+void
+SgAsmPEExportEntry::ctor(SgAsmGenericString *fname, unsigned ordinal, rva_t expaddr, SgAsmGenericString *forwarder)
+{
+    set_name(fname);
+    set_ordinal(ordinal);
+    set_export_rva(expaddr);
+    set_forwarder(forwarder);
+}
+
+/* Print debugging info */
+void
+SgAsmPEExportEntry::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPEExportEntry[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEExportEntry.", prefix);
+    }
+    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
+
+    fprintf(f, "%s%-*s = [ord %u] rva=0x%08"PRIx64" (%"PRIu64") \"%s\"",
+            p, w, "info", p_ordinal, p_export_rva.get_rva(), p_export_rva.get_rva(), p_name->c_str());
+    if (p_forwarder)
+        fprintf(f, " -> \"%s\"", p_forwarder->c_str());
+    fputc('\n', f);
+}
+
+/* Override ROSETTA to set parent */
+void
+SgAsmPEExportEntry::set_name(SgAsmGenericString *fname)
+{
+    p_name = fname;
+    if (p_name) p_name->set_parent(this);
+}
+void
+SgAsmPEExportEntry::set_forwarder(SgAsmGenericString *forwarder)
+{
+    p_forwarder = forwarder;
+    if (p_forwarder) p_forwarder->set_parent(this);
+}
+    
+/* Constructor */
+void
+SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
+{
+    ROSE_ASSERT(p_exports  == NULL);
+    p_exports = new SgAsmPEExportEntryList();
+    p_exports->set_parent(this);
+
+    set_mapped_rva(mapped_rva);
+    set_mapped_size(size);
+
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
+    p_export_dir = new SgAsmPEExportDirectory(this);
+    
+    addr_t libname_offset = p_export_dir->get_name_rva().get_rel(this);
+    const char *libname = content_str(libname_offset);
+    fprintf(stderr, "ROBB: libname = 0x%"PRIx64" \"%s\"\n", libname_offset, libname);
+
+    for (size_t i=0; i<p_export_dir->get_nameptr_n(); i++) {
+        /* Function name */
+        const ExportNamePtr_disk *nameptr_disk;
+        addr_t nameptr_offset = p_export_dir->get_nameptr_rva().get_rel(this) + i*sizeof(*nameptr_disk);
+        nameptr_disk = (const ExportNamePtr_disk*)content(nameptr_offset, sizeof(*nameptr_disk));
+        rva_t nameptr = le_to_host(*nameptr_disk);
+        SgAsmGenericString *fname = new SgAsmBasicString(content_str(nameptr.get_rel(this)));
+
+        /* Ordinal (sort of an index into the Export Address Table contained in this same section) */
+        const ExportOrdinal_disk *ordinal_disk;
+        addr_t ordinal_offset = p_export_dir->get_ordinals_rva().get_rel(this) + i*sizeof(*ordinal_disk);
+        ordinal_disk = (const ExportOrdinal_disk*)content(ordinal_offset, sizeof(*ordinal_disk));
+        unsigned ordinal = le_to_host(*ordinal_disk);
+
+        /* Export address. Convert the symbol's Ordinal into an index into the Export Address Table. The spec says to subtract
+         * the ord_base from the Ordinal to get the index, but testing has shown this to be off by one (e.g., Windows-XP file
+         * /WINDOWS/system32/msacm32.dll's Export Table's first symbol has the name "XRegThunkEntry" with an Ordinal of zero
+         * and the ord_base is one. The index according to spec would be -1 rather than the correct value of zero.) */
+        rva_t expaddr;
+        if (ordinal >= (p_export_dir->get_ord_base()-1)) {
+            unsigned expaddr_idx = ordinal - (p_export_dir->get_ord_base()-1);
+            ROSE_ASSERT(expaddr_idx < p_export_dir->get_expaddr_n());
+            const ExportAddress_disk *expaddr_disk;
+            addr_t expaddr_offset = p_export_dir->get_expaddr_rva().get_rel(this) + expaddr_idx*sizeof(*expaddr_disk);
+            expaddr_disk = (const ExportAddress_disk*)content(expaddr_offset, sizeof(*expaddr_disk));
+            expaddr = le_to_host(*expaddr_disk);
+        } else {
+            expaddr = 0xffffffff; /*Ordinal out of range!*/
+        }
+
+        /* If export address is within this section then it points to a NUL-terminated name. */
+        SgAsmGenericString *forwarder = NULL;
+        if (expaddr.get_rva()>=get_mapped_rva() && expaddr.get_rva()<get_mapped_rva()+get_mapped_size()) {
+            forwarder = new SgAsmBasicString(content_str(expaddr.get_rel(this)));
+        }
+
+        SgAsmPEExportEntry *entry = new SgAsmPEExportEntry(fname, ordinal, expaddr, forwarder);
+        add_entry(entry);
+    }
+}
+
+void
+SgAsmPEExportSection::add_entry(SgAsmPEExportEntry *entry)
+{
+    ROSE_ASSERT(p_exports!=NULL);
+    p_exports->get_exports().push_back(entry);
+}
+
+/* Print debugging info */
+void
+SgAsmPEExportSection::dump(FILE *f, const char *prefix, ssize_t idx)
+{
+    char p[4096];
+    if (idx>=0) {
+        sprintf(p, "%sPEExportSection[%zd].", prefix, idx);
+    } else {
+        sprintf(p, "%sPEExportSection.", prefix);
+    }
+    
+    SgAsmPESection::dump(f, p, -1);
+
+    if (p_export_dir)
+        p_export_dir->dump(f, p, -1);
+    for (size_t i=0; i<p_exports->get_exports().size(); i++)
+        p_exports->get_exports()[i]->dump(f, p, i);
+
+    if (variantT() == V_SgAsmPEExportSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1345,6 +1551,9 @@ SgAsmPEStringSection::dump(FILE *f, const char *prefix, ssize_t idx)
 
     ROSE_ASSERT(get_strtab()!=NULL);
     get_strtab()->dump(f, p, -1);
+
+    if (variantT() == V_SgAsmPEStringSection) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1823,7 +2032,8 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx)
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }
 
-    hexdump(f, 0, std::string(p)+"data at ", p_data);
+    if (variantT() == V_SgAsmCoffSymbolTable) //unless a base class
+        hexdump(f, 0, std::string(p)+"data at ", p_data);
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

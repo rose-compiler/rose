@@ -430,6 +430,7 @@ SgAsmElfRelaEntryList
 SgAsmPESection
 SgAsmPESectionTable
 SgAsmPEImportSection
+SgAsmPEExportSection
 SgAsmCoffSymbolTable
 SgAsmNESection
 SgAsmNESectionTable
@@ -461,6 +462,9 @@ SgAsmElfSymbolList
 SgAsmElfSegmentTableEntryList
 SgAsmPEExtendedDOSHeader
 SgAsmPEImportDirectory
+SgAsmPEExportDirectory
+SgAsmPEExportEntry
+SgAsmPEExportEntryList
 SgAsmPEImportHintName
 SgAsmPESectionTableEntry
 SgAsmPEImportHintNameList

@@ -66,6 +66,23 @@ rose_rva_t::set_section(SgAsmGenericHeader *fhdr)
     set_section(secbind);
 }
 
+/* Return address relative to currently bound section */
+rose_addr_t
+rose_rva_t::get_rel() const
+{
+    return addr;
+}
+
+/* Return address relative to specified section */
+rose_addr_t
+rose_rva_t::get_rel(SgAsmGenericSection *s)
+{
+    ROSE_ASSERT(s!=NULL);
+    ROSE_ASSERT(s->is_mapped());
+    ROSE_ASSERT(get_rva() >= s->get_mapped_rva());
+    return get_rva() - s->get_mapped_rva();
+}
+
 std::ostream &
 operator<<(std::ostream &os, const rose_rva_t &rva)
 {
@@ -559,7 +576,7 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx)
 }
     
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ExecFile
+// SgAsmGenericFile
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructs by mapping file contents into memory */
@@ -1627,7 +1644,7 @@ SgAsmGenericFile::congeal()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ExecSection
+// GenericSection
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor.

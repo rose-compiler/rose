@@ -20,20 +20,20 @@ typedef uint64_t rose_addr_t; /* address and size (file and memory) */
  * with an SgAsmGenericSection so that if the section address (mapped_rva) is changed then all rose_rva_t objects bound to
  * that section are also automatically adjusted. */
 class rose_rva_t {
-  public:
-    rose_rva_t() : addr(0), section(0) {}
-    rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
-    rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
-
-    /* Accessors */
-    rose_addr_t get_rva() const;
-    void set_rva(rose_addr_t rva);
-    SgAsmGenericSection *get_section() const;
-    void set_section(SgAsmGenericSection *section);
-    void set_section(SgAsmGenericHeader*);
-  private:
-    rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
-    SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
+	public:
+		rose_rva_t() : addr(0), section(0) {}
+		rose_rva_t(rose_addr_t rva) : addr(rva), section(0) {} //implicit
+		rose_rva_t(rose_addr_t rva, SgAsmGenericSection *section) : addr(rva), section(0) {set_section(section);}
+		rose_addr_t get_rva() const;
+		rose_addr_t get_rel() const;	/* returns address relative to linked section */
+		rose_addr_t get_rel(SgAsmGenericSection*); /*returns address relative to specified section*/
+		void set_rva(rose_addr_t rva);
+		SgAsmGenericSection *get_section() const;
+		void set_section(SgAsmGenericSection *section);
+		void set_section(SgAsmGenericHeader*);
+	private:
+		rose_addr_t addr;             /* virtual address (relative to section if section is not null) */
+		SgAsmGenericSection *section; /* rva is relative to header base_va if section is null */
 };
 std::ostream &operator<<(std::ostream&, const rose_rva_t&);
 
@@ -382,6 +382,9 @@ typedef SgRVAList*                             SgRVAListPtr;
 
 typedef Rose_STL_Container<SgAsmPEDLL*>        SgAsmPEDLLPtrList;
 typedef SgAsmPEDLLPtrList*                     SgAsmPEDLLPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmPEExportEntry*> SgAsmPEExportEntryPtrList;
+typedef SgAsmPEExportEntryPtrList*		SgAsmPEExportEntryPtrListPtr;
 
 typedef Rose_STL_Container<unsigned>           SgUnsignedList;
 typedef SgUnsignedList*                        SgUnsignedListPtr;
