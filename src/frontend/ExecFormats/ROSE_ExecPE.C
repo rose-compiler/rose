@@ -433,21 +433,21 @@ SgAsmPEFileHeader::create_table_sections()
         /* Table names come from PE file specification and are hard coded by RVA/Size pair index */
         const char *tabname = NULL;
         switch (i) {
-          case 0:  tabname = "Export table";                 break;
-          case 1:  tabname = "Import table";                 break;
-          case 2:  tabname = "Resource table";               break;
-          case 3:  tabname = "Exception table";              break;
-          case 4:  tabname = "Certificate table";            break;
-          case 5:  tabname = "Base relocation table";        break;
+          case 0:  tabname = "Export Table";                 break;
+          case 1:  tabname = "Import Table";                 break;
+          case 2:  tabname = "Resource Table";               break;
+          case 3:  tabname = "Exception Table";              break;
+          case 4:  tabname = "Certificate Table";            break;
+          case 5:  tabname = "Base relocation Table";        break;
           case 6:  tabname = "Debug";                        break;
           case 7:  tabname = "Architecture";                 break;
-          case 8:  tabname = "Global ptr";                   break;
-          case 9:  tabname = "TLS table";                    break;
-          case 10: tabname = "Load config table";            break;
-          case 11: tabname = "Bound import";                 break;
-          case 12: tabname = "Import address table";         break;
-          case 13: tabname = "Delay import descriptor";      break;
-          case 14: tabname = "CLR runtime header";           break;
+          case 8:  tabname = "Global Ptr";                   break;
+          case 9:  tabname = "TLS Table";                    break;
+          case 10: tabname = "Load Config Table";            break;
+          case 11: tabname = "Bound Import";                 break;
+          case 12: tabname = "Import Address Table";         break;
+          case 13: tabname = "Delay Import Descriptor";      break;
+          case 14: tabname = "CLR Runtime Header";           break;
           case 15: ROSE_ASSERT(!"reserved; should be zero"); break;
           default: ROSE_ASSERT(!"too many RVA/Size pairs");  break;
         }
@@ -458,20 +458,20 @@ SgAsmPEFileHeader::create_table_sections()
         if (!contained_in) {
             fprintf(stderr, "SgAsmPEFileHeader::create_table_sections(): pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64" bytes \"%s\""
                     ": unable to find a section containing the virtual address (skipping)\n",
-                    i, pair->get_e_rva(), pair->get_e_size(), tabname?tabname:"");
+                    i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname?tabname:"");
             continue;
         }
-        addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva());
+        addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva().get_rva());
 
         /* Create the new section */
         SgAsmGenericSection *tabsec = NULL;
         switch (i) {
           case 0:
-            tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
+            tabsec = new SgAsmPEExportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
             break;
 #if 1 /*not ready for prime-time yet (RPM 2008-10-29)*/
           case 1:
-            tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva());
+            tabsec = new SgAsmPEImportSection(this, file_offset, pair->get_e_size(), pair->get_e_rva().get_rva());
             break;
 #endif
           default:
@@ -483,12 +483,13 @@ SgAsmPEFileHeader::create_table_sections()
         tabsec->set_purpose(SP_HEADER);
         tabsec->set_file_alignment(get_e_file_align());
         tabsec->set_mapped_alignment(get_e_section_align());
-        tabsec->set_mapped_rva(pair->get_e_rva());
+        tabsec->set_mapped_rva(pair->get_e_rva().get_rva());
         tabsec->set_mapped_size(pair->get_e_size());
         tabsec->set_mapped_rperm(true);
         tabsec->set_mapped_wperm(false);
         tabsec->set_mapped_xperm(false);
         pair->set_section(tabsec);
+        pair->set_e_rva(pair->get_e_rva().set_section(tabsec));
     }
 }
 
@@ -743,8 +744,8 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     for (unsigned i = 0; i < p_rvasize_pairs->get_pairs().size(); i++) {
         sprintf(p, "%sPEFileHeader.pair[%d].", prefix, i);
         w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-        fprintf(f, "%s%-*s = rva 0x%08"PRIx64" (%"PRIu64"),\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
-                p_rvasize_pairs->get_pairs()[i]->get_e_rva(), p_rvasize_pairs->get_pairs()[i]->get_e_rva(),
+        fprintf(f, "%s%-*s = rva %s,\tsize 0x%08"PRIx64" (%"PRIu64")\n", p, w, "..",
+                p_rvasize_pairs->get_pairs()[i]->get_e_rva().to_string().c_str(),
                 p_rvasize_pairs->get_pairs()[i]->get_e_size(), p_rvasize_pairs->get_pairs()[i]->get_e_size());
     }
     if (p_dos2_header) {
@@ -1501,7 +1502,7 @@ SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             expaddr = 0xffffffff; /*Ordinal out of range!*/
         }
 
-        /* If export address is within this section then it points to a NUL-terminated name. */
+        /* If export address is within this section then it points to a NUL-terminated forwarder name. */
         SgAsmGenericString *forwarder = NULL;
         if (expaddr.get_rva()>=get_mapped_rva() && expaddr.get_rva()<get_mapped_rva()+get_mapped_size()) {
             forwarder = new SgAsmBasicString(content_str(expaddr.get_rel(this)));
