@@ -4,6 +4,8 @@
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
+#define ALIGN(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Extended DOS File Header
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -525,6 +527,12 @@ SgAsmPEFileHeader::set_e_nsections(unsigned n)
     ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
     p_e_nsections = n;
 }
+void
+SgAsmPEFileHeader::set_e_header_size(unsigned n)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_header_size = n;
+}
 
 /* Write the PE file header back to disk and all that it references */
 void
@@ -548,6 +556,8 @@ SgAsmPEFileHeader::unparse(FILE *f)
             if (pesec && pesec->get_st_entry()!=NULL)
                 p_e_nsections++;
         }
+        p_e_header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
+                                p_e_file_align>0 ? p_e_file_align : 1);
     }
 
     /* Write sections that are pointed to by the file header and update data members in the file header */
