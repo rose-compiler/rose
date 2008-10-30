@@ -375,20 +375,24 @@ SgAsmElfFileHeader::reallocate()
 {
     bool reallocated = SgAsmGenericHeader::reallocate();
 
-    addr_t newsize;
+    addr_t need;
     if (4==get_word_size()) {
-        newsize = sizeof(Elf32FileHeader_disk);
+        need = sizeof(Elf32FileHeader_disk);
     } else if (8==get_word_size()) {
-        newsize = sizeof(Elf64FileHeader_disk);
+        need = sizeof(Elf64FileHeader_disk);
     } else {
         throw FormatError("unsupported ELF word size");
     }
 
-    if (newsize > get_size()) {
-        ROSE_ASSERT(!"increasing ELF header size not supported yet"); /*FIXME*/
+    if (need < get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
         reallocated = true;
-    } else if (newsize < get_size()) {
-        set_size(newsize);
+    } else if (need > get_size()) {
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
         reallocated = true;
     }
 
@@ -649,7 +653,8 @@ SgAsmElfSection::reallocate()
         reallocated = true;
 
     } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
     }
     return reallocated;
 }
@@ -1202,7 +1207,8 @@ SgAsmElfSectionTable::reallocate()
         reallocated = true;
         
     } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
     }
     return reallocated;
 }
@@ -1582,7 +1588,8 @@ SgAsmElfSegmentTable::reallocate()
         reallocated = true;
 
     } else if (need > get_size()) {
-        ROSE_ASSERT(!"can't expand word size yet"); /*FIXME*/
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
     }
     return reallocated;
 }
