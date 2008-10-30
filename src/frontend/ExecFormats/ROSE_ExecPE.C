@@ -145,13 +145,14 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
 
     /* Decode the optional header. */
+    addr_t entry_rva;
     if (4==p_exec_format->get_word_size()) {
         p_e_lmajor             = le_to_host(oh32.e_lmajor);
         p_e_lminor             = le_to_host(oh32.e_lminor);
         p_e_code_size          = le_to_host(oh32.e_code_size);
         p_e_data_size          = le_to_host(oh32.e_data_size);
         p_e_bss_size           = le_to_host(oh32.e_bss_size);
-        p_e_entrypoint_rva     = le_to_host(oh32.e_entrypoint_rva);
+        entry_rva              = le_to_host(oh32.e_entrypoint_rva);
         p_e_code_rva           = le_to_host(oh32.e_code_rva);
         p_e_data_rva           = le_to_host(oh32.e_data_rva);
         p_e_image_base         = le_to_host(oh32.e_image_base);
@@ -187,7 +188,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_code_size          = le_to_host(oh64.e_code_size);
         p_e_data_size          = le_to_host(oh64.e_data_size);
         p_e_bss_size           = le_to_host(oh64.e_bss_size);
-        p_e_entrypoint_rva     = le_to_host(oh64.e_entrypoint_rva);
+        entry_rva              = le_to_host(oh64.e_entrypoint_rva);
         p_e_code_rva           = le_to_host(oh64.e_code_rva);
      // p_e_data_rva           = le_to_host(oh.e_data_rva);             /* not in PE32+ */
         p_e_image_base         = le_to_host(oh64.e_image_base);
@@ -293,7 +294,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
      * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     p_base_va = p_e_image_base;
-    add_entry_rva(p_e_entrypoint_rva);
+    add_entry_rva(entry_rva);
 }
 
 SgAsmPEFileHeader::~SgAsmPEFileHeader() 
@@ -329,7 +330,7 @@ SgAsmPEFileHeader::encode(PE32OptHeader_disk *disk)
     host_to_le(p_e_code_size,          &(disk->e_code_size));
     host_to_le(p_e_data_size,          &(disk->e_data_size));
     host_to_le(p_e_bss_size,           &(disk->e_bss_size));
-    host_to_le(p_e_entrypoint_rva,     &(disk->e_entrypoint_rva));
+    host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
     host_to_le(p_e_code_rva,           &(disk->e_code_rva));
     host_to_le(p_e_data_rva,           &(disk->e_data_rva));
     host_to_le(p_e_image_base,         &(disk->e_image_base));
@@ -365,7 +366,7 @@ SgAsmPEFileHeader::encode(PE64OptHeader_disk *disk)
     host_to_le(p_e_code_size,          &(disk->e_code_size));
     host_to_le(p_e_data_size,          &(disk->e_data_size));
     host_to_le(p_e_bss_size,           &(disk->e_bss_size));
-    host_to_le(p_e_entrypoint_rva,     &(disk->e_entrypoint_rva));
+    host_to_le(get_entry_rva(),        &(disk->e_entrypoint_rva));
     host_to_le(p_e_code_rva,           &(disk->e_code_rva));
  // host_to_le(p_e_data_rva,           &(disk->e_data_rva)); /* not present in PE32+ */
     host_to_le(p_e_image_base,         &(disk->e_image_base));
@@ -605,7 +606,6 @@ SgAsmPEFileHeader::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_code_size",         p_e_code_size, p_e_code_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_data_size",         p_e_data_size, p_e_data_size);
     fprintf(f, "%s%-*s = 0x%08x (%u) bytes\n",         p, w, "e_bss_size",          p_e_bss_size, p_e_bss_size);
-    fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_entrypoint_rva",    p_e_entrypoint_rva, p_e_entrypoint_rva);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_code_rva",          p_e_code_rva, p_e_code_rva);
     fprintf(f, "%s%-*s = 0x%08x (%u)\n",               p, w, "e_data_rva",          p_e_data_rva, p_e_data_rva);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "e_image_base",        p_e_image_base, p_e_image_base);
