@@ -765,7 +765,7 @@ Grammar::setUpBinaryInstructions ()
 
   // addr_t e_rva, e_size;
      AsmPERVASizePair.setFunctionPrototype ( "HEADER_PE_RVA_SIZE_PAIR", "../Grammar/BinaryInstruction.code");
-     AsmPERVASizePair.setDataPrototype("rose_addr_t","e_rva","= 0",
+     AsmPERVASizePair.setDataPrototype("rose_rva_t","e_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPERVASizePair.setDataPrototype("rose_addr_t","e_size","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
