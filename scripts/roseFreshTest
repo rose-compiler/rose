@@ -256,6 +256,7 @@ if [ $buildstatus == 0 ]; then
      ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog || failed=yes
     if [ $failed = yes ]; then
       echo "Error: importRoseDistributionToSVN finishes abnormally!" >>$mailtext
+      tail buildlog >>$mailtext
     else
       echo "importRoseDistributionToSVN finishes normally.">>$mailtext
     fi
