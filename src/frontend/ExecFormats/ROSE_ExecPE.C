@@ -115,7 +115,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     if (fh.e_magic[0]!='P' || fh.e_magic[1]!='E' || fh.e_magic[2]!='\0' || fh.e_magic[3]!='\0')
         throw FormatError("Bad PE magic number");
 
-    /* Decode file header */
+    /* Decode COFF file header */
     p_e_cpu_type           = le_to_host(fh.e_cpu_type);
     p_e_nsections          = le_to_host(fh.e_nsections);
     p_e_time               = le_to_host(fh.e_time);
@@ -124,7 +124,8 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     p_e_nt_hdr_size        = le_to_host(fh.e_nt_hdr_size);
     p_e_flags              = le_to_host(fh.e_flags);
 
-    /* Read the optional header, the size of which is stored in the e_nt_hdr_size of the main PE file header. According to
+    /* Read the "Optional Header" (optional in the sense that not all files have one, but required for an executable), the
+     * size of which is stored in the e_nt_hdr_size of the main PE file header. According to 
      * http://www.phreedom.org/solar/code/tinype the Windows loader honors the e_nt_hdr_size even when set to smaller than the
      * smallest possible documented size of the optional header. Also it's possible for the optional header to extend beyond
      * the end of the file, in which case that part should be read as zero. */
@@ -135,9 +136,16 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     content(sizeof fh, sizeof oh32, &oh32);
     p_e_opt_magic = le_to_host(oh32.e_opt_magic);
     
+    /* File format */
+    p_exec_format->set_family(FAMILY_PE);
+    p_exec_format->set_purpose( p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY );
+    p_exec_format->set_sex( ORDER_LSB );
+    p_exec_format->set_abi( ABI_NT );
+    p_exec_format->set_abi_version(0);
+    p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
+
     /* Decode the optional header. */
-    if (0x010b == p_e_opt_magic) {                                           
-        p_exec_format->set_word_size(4);
+    if (4==p_exec_format->get_word_size()) {
         p_e_lmajor             = le_to_host(oh32.e_lmajor);
         p_e_lminor             = le_to_host(oh32.e_lminor);
         p_e_code_size          = le_to_host(oh32.e_code_size);
@@ -167,9 +175,8 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_heap_commit_size   = le_to_host(oh32.e_heap_commit_size);
         p_e_loader_flags       = le_to_host(oh32.e_loader_flags);
         p_e_num_rvasize_pairs  = le_to_host(oh32.e_num_rvasize_pairs);
-    } else if (0x020b == p_e_opt_magic) {
-        /* We guessed wrong so extend and read the 64-bit header. */
-        p_exec_format->set_word_size(8);
+    } else if (8==p_exec_format->get_word_size()) {
+        /* We guessed wrong. This is a 64-bit header, not 32-bit. */
         PE64OptHeader_disk oh64;
         memset(&oh64, 0, sizeof oh64);
         addr_t need64 = std::min(p_e_nt_hdr_size, (addr_t)(sizeof oh64));
@@ -182,7 +189,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_e_bss_size           = le_to_host(oh64.e_bss_size);
         p_e_entrypoint_rva     = le_to_host(oh64.e_entrypoint_rva);
         p_e_code_rva           = le_to_host(oh64.e_code_rva);
-     // p_e_data_rva         = le_to_host(oh.e_data_rva); /* not in PE32+ */
+     // p_e_data_rva           = le_to_host(oh.e_data_rva);             /* not in PE32+ */
         p_e_image_base         = le_to_host(oh64.e_image_base);
         p_e_section_align      = le_to_host(oh64.e_section_align);
         p_e_file_align         = le_to_host(oh64.e_file_align);
@@ -213,15 +220,9 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         p_magic.push_back(fh.e_magic[i]);
 
     /* File format */
-    p_exec_format->set_family(FAMILY_PE);
-    p_exec_format->set_purpose( p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY );
-    p_exec_format->set_sex( ORDER_LSB );
-    p_exec_format->set_abi( ABI_NT );
-    p_exec_format->set_abi_version(0);
- // p_exec_format.word_size   = ???; /*word size was set above*/
     ROSE_ASSERT(p_e_lmajor <= 0xffff && p_e_lminor <= 0xffff);
-    p_exec_format->set_version( (p_e_lmajor << 16) | p_e_lminor );
-    p_exec_format->set_is_current_version( true ); /*FIXME*/
+    p_exec_format->set_version((p_e_lmajor << 16) | p_e_lminor);
+    p_exec_format->set_is_current_version(true); /*FIXME*/
 
     /* Target architecture */
     switch (p_e_cpu_type) {
@@ -284,22 +285,21 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
         set_isa(ISA_Mitsubishi_M32R);
         break;
       default:
+        fprintf(stderr, "Warning: SgAsmPEFileHeader::ctor::p_e_cputype = 0x%x (%u)\n", p_e_cpu_type, p_e_cpu_type);
         set_isa(ISA_OTHER);
         break;
     }
 
-    /* Entry point */
+    /* Entry point. We will eventually bind the entry point to a particular section (in SgAsmPEFileHeader::parse) so that if
+     * sections are rearranged, extended, etc. the entry point will be updated automatically. */
     p_base_va = p_e_image_base;
     add_entry_rva(p_e_entrypoint_rva);
 }
 
 SgAsmPEFileHeader::~SgAsmPEFileHeader() 
 {
- // printf ("In ~SgAsmPEFileHeader() \n");
-
     ROSE_ASSERT(p_rvasize_pairs->get_pairs().empty() == true);
-    
- // Delete the pointers to the IR nodes containing the STL lists
+    // Delete the pointers to the IR nodes containing the STL lists
     delete p_rvasize_pairs;
     p_rvasize_pairs = NULL;
 }
@@ -456,7 +456,6 @@ SgAsmPEFileHeader::create_table_sections()
             continue;
         }
         addr_t file_offset = contained_in->get_rva_offset(pair->get_e_rva());
-        
 
         SgAsmGenericSection *tabsec = new SgAsmGenericSection(ef, this, file_offset, pair->get_e_size());
         if (tabname) tabsec->set_name(new SgAsmBasicString(tabname));
@@ -473,22 +472,82 @@ SgAsmPEFileHeader::create_table_sections()
     }
 }
 
+/* Change size of PE header based on word size */
+bool
+SgAsmPEFileHeader::reallocate()
+{
+    bool reallocated = SgAsmGenericHeader::reallocate();
+    
+    addr_t need = sizeof(PEFileHeader_disk);
+    if (4==get_word_size()) {
+        need += sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        need += sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    need += p_e_num_rvasize_pairs * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    
+    if (need<get_size()) {
+        if (is_mapped()) {
+            ROSE_ASSERT(get_mapped_size()==get_size());
+            set_mapped_size(need);
+        }
+        set_size(need);
+        reallocated = true;
+    } else if (need>get_size()) {
+        get_file()->shift_extend(this, 0, need-get_size(), SgAsmGenericFile::ADDRSP_ALL, SgAsmGenericFile::ELASTIC_HOLE);
+        reallocated = true;
+    }
+
+    return reallocated;
+}
+
 /* Write the PE file header back to disk and all that it references */
 void
 SgAsmPEFileHeader::unparse(FILE *f)
 {
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+    /* Allow sections to reallocate themselves until things settle. */
+    while (reallocate()) /*void*/;
 
-    /* The fixed length part of the header */
+    /* Write unreferenced areas back to the file before anything else. */
+    unparse_holes(f);
+    
+    /* Write the PE section table and, indirectly, the sections themselves. */
+    if (p_section_table) {
+        ROSE_ASSERT(p_section_table->get_header()==this);
+        p_section_table->unparse(f);
+    }
+
+    /* Write sections that are pointed to by the file header */
+    if (p_coff_symtab) {
+        ROSE_ASSERT(p_coff_symtab->get_header()==this);
+        p_coff_symtab->unparse(f);
+    }
+    
+    /* Write the sections from the header RVA/size pair table. */
+    for (size_t i=0; i<p_e_num_rvasize_pairs; i++) {
+        SgAsmGenericSection *sizepair_section = p_rvasize_pairs->get_pairs()[i]->get_section();
+        if (sizepair_section)
+            sizepair_section->unparse(f);
+    }
+
+    /* Write the extended DOS header */
+    if (p_dos2_header) {
+        ROSE_ASSERT(p_dos2_header->get_header()==this);
+        p_dos2_header->unparse(f);
+    }
+
+    /* Write the fixed-length (COFF) part of the header */
     PEFileHeader_disk fh;
     encode(&fh);
+    addr_t spos = write(f, 0, sizeof fh, &fh);
 
-    /* The optional header */
+    /* Write the "Optional Header" (required for executables) */
     PE32OptHeader_disk oh32;
     PE64OptHeader_disk oh64;
     void *oh       = NULL;
     size_t oh_size = 0;
-
     if (4==get_word_size()) {
         oh = encode(&oh32);
         oh_size = sizeof oh32;
@@ -498,32 +557,15 @@ SgAsmPEFileHeader::unparse(FILE *f)
     } else {
         ROSE_ASSERT(!"unsupported word size");
     }
-    
-    /* Write file and optional header to disk */
-    addr_t spos = write(f, 0, sizeof fh, &fh);
     spos = write(f, spos, oh_size, oh);
 
-    /* The variable length RVA/size pair table and its sections */
+    /* Write the variable length RVA/size pair table. */
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++) {
         SgAsmPERVASizePair::RVASizePair_disk rvasize_disk;
         p_rvasize_pairs->get_pairs()[i]->encode(&rvasize_disk);
         spos = write(f, spos, sizeof rvasize_disk, &rvasize_disk);
-        SgAsmGenericSection *sizepair_section = p_rvasize_pairs->get_pairs()[i]->get_section();
-        if (sizepair_section)
-            sizepair_section->unparse(f);
     }
 
-    /* The extended DOS header */
-    if (p_dos2_header)
-        p_dos2_header->unparse(f);
-
-    /* The section table and all the non-synthesized sections */
-    if (p_section_table)
-        p_section_table->unparse(f);
-
-    /* Sections that aren't in the section table */
-    if (p_coff_symtab)
-        p_coff_symtab->unparse(f);
 }
     
 /* Print some debugging information */
@@ -1724,38 +1766,45 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
     SgAsmPEExtendedDOSHeader *dos2_header = new SgAsmPEExtendedDOSHeader(ef, dos_header->get_size());
     
     /* The PE header has a fixed-size component followed by some number of RVA/Size pairs */
-    SgAsmPEFileHeader *pe_header = new SgAsmPEFileHeader(ef, dos2_header->get_e_lfanew());
-    ROSE_ASSERT(pe_header->get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
-    pe_header->add_rvasize_pairs();
+    SgAsmPEFileHeader *fhdr = new SgAsmPEFileHeader(ef, dos2_header->get_e_lfanew());
+    ROSE_ASSERT(fhdr->get_e_num_rvasize_pairs() < 1000); /* just a sanity check before we allocate memory */
+    fhdr->add_rvasize_pairs();
 
     /* The extended part of the DOS header is owned by the PE header */
-    dos2_header->set_header(pe_header);
-    pe_header->add_section(dos2_header);
-    pe_header->set_dos2_header(dos2_header);
+    dos2_header->set_header(fhdr);
+    fhdr->add_section(dos2_header);
+    fhdr->set_dos2_header(dos2_header);
 
     /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header, constrain it
      * to not extend beyond the beginning of the PE file header. This makes detecting holes in the PE format much easier. */
-    dos_header->add_rm_section(pe_header->get_offset());
+    dos_header->add_rm_section(fhdr->get_offset());
 
     /* Construct the section table and its sections (non-synthesized sections). The specification says that the section table
      * comes after the optional (NT) header, which in turn comes after the fixed part of the PE header. The size of the
      * optional header is indicated in the fixed header. */
-    addr_t secttab_offset = pe_header->get_offset() + sizeof(PEFileHeader_disk) + pe_header->get_e_nt_hdr_size();
-    addr_t secttab_size = pe_header->get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
-    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(pe_header, secttab_offset, secttab_size);
-    pe_header->set_section_table(secttab);
+    addr_t secttab_offset = fhdr->get_offset() + sizeof(PEFileHeader_disk) + fhdr->get_e_nt_hdr_size();
+    addr_t secttab_size = fhdr->get_e_nsections() * sizeof(SgAsmPESectionTableEntry::PESectionTableEntry_disk);
+    SgAsmPESectionTable *secttab = new SgAsmPESectionTable(fhdr, secttab_offset, secttab_size);
+    fhdr->set_section_table(secttab);
 
     /* Parse the COFF symbol table and add symbols to the PE header */
-    if (pe_header->get_e_coff_symtab() && pe_header->get_e_coff_nsyms()) {
-        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(pe_header);
+    if (fhdr->get_e_coff_symtab() && fhdr->get_e_coff_nsyms()) {
+        SgAsmCoffSymbolTable *symtab = new SgAsmCoffSymbolTable(fhdr);
         std::vector<SgAsmCoffSymbol*> & symbols = symtab->get_symbols()->get_symbols();
         for (size_t i = 0; i < symbols.size(); i++)
-            pe_header->add_symbol(symbols[i]);
-        pe_header->set_coff_symtab(symtab);
+            fhdr->add_symbol(symbols[i]);
+        fhdr->set_coff_symtab(symtab);
     }
 
+    /* Associate the entry point with a particular section. */
+    ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
+    addr_t entry_va = fhdr->get_entry_rvas()[0].get_rva() + fhdr->get_base_va();
+    SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(entry_va);
+    fhdr->get_entry_rvas()[0].set_section(secbind);
+    ROSE_ASSERT(fhdr->get_entry_rvas()[0].get_section()==secbind);
+
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
-    pe_header->create_table_sections();
+    fhdr->create_table_sections();
     
-    return pe_header;
+    return fhdr;
 }

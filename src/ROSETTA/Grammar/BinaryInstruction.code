@@ -1796,160 +1796,132 @@ HEADER_PE_RVA_SIZE_PAIR_LIST_END
 
 
 HEADER_PE_FILE_HEADER_START
+	public:
+		/* File format of a PE File Header. All fields are little endian. */
+		struct PEFileHeader_disk {
+			unsigned char e_magic[4];	/* magic number "PE\0\0" */
+			uint16_t    e_cpu_type;         /* e.g., 0x014c = Intel 386 */
+			uint16_t    e_nsections;        /* number of sections defined in the Section Table */
+			uint32_t    e_time;             /* time and date file was created or modified by the linker */
+			uint32_t    e_coff_symtab;      /* offset to COFF symbol table */
+			uint32_t    e_coff_nsyms;       /* number of symbols in COFF symbol table */
+			uint16_t    e_nt_hdr_size;      /* num remaining bytes in the header following the 'flags' field */
+			uint16_t    e_flags;            /* Bit flags: exe file, program/library image, fixed address, etc. */
+		} __attribute__((packed));
 
-     public:
-       // Overloaded base class virtual function
-          const char *format_name();
+		struct PE32OptHeader_disk {
+			uint16_t    e_opt_magic;        /* magic number */
+			uint16_t    e_lmajor;           /* linker version */
+			uint16_t    e_lminor;
+			uint16_t    e_code_size;        /* Size of .text or sum of all code sections */
+			uint32_t    e_data_size;        /* Sum size of initialized data */
+			uint32_t    e_bss_size;         /* Sum size of uninitialized data */
+			uint32_t    e_entrypoint_rva;   /* RVA="relative virtual address"; relative to 'image_base', below */
+			uint32_t    e_code_rva;         /* Address relative to image base for code section when memory mapped */
+			uint32_t    e_data_rva;         /* Address relative to image base for data section */
+			uint32_t    e_image_base;       /* Virtual base of image (first byte of file, DOS header). 64k aligned */
+			uint32_t    e_section_align;    /* Alignment of sections in memory. Power of two 512<=x<=256M */
+			uint32_t    e_file_align;       /* Alignment factor (in bytes) for image pages */
+			uint16_t    e_os_major;         /* OS version number required to run this image */
+			uint16_t    e_os_minor;
+			uint16_t    e_user_major;       /* User-specified at link time for differentiating between image revs */
+			uint16_t    e_user_minor;
+			uint16_t    e_subsys_major;     /* Subsystem version number */
+			uint16_t    e_subsys_minor;
+			uint32_t    e_reserved9;
+			uint32_t    e_image_size;       /* Virtual size (bytes) of the image inc. all headers; section_align */
+			uint32_t    e_header_size;      /* Total header size (DOS Header + PE Header + Section table */
+			uint32_t    e_file_checksum;    /* Checksum for entire file; Set to zero by the linker */
+			uint16_t    e_subsystem;        /* Unknown, Native, WindowsGUI, WindowsCharacter, OS/2 Character, etc. */
+			uint16_t    e_dll_flags;        /* Bit flags for library init/terminate per process or thread */
+			uint32_t    e_stack_reserve_size;/* Virtual memory reserved for stack; non-committed pages are guards */
+			uint32_t    e_stack_commit_size;/* Size of valid stack; other pages are guards; <= 'stack_reserve_size' */
+			uint32_t    e_heap_reserve_size;/* Size (bytes) of local heap to reserve */
+			uint32_t    e_heap_commit_size; /* Size (bytes) of valid local heap */
+			uint32_t    e_loader_flags;     /* Reserved, must be zero */
+			uint32_t    e_num_rvasize_pairs;/* Number of RVASizePair entries that follow this member; part of header */
+		} __attribute__((packed));
 
-          static bool is_PE (SgAsmGenericFile*);
-          static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
+		struct PE64OptHeader_disk {
+			uint16_t    e_opt_magic;
+			uint16_t    e_lmajor;
+			uint16_t    e_lminor;
+			uint16_t    e_code_size;
+			uint32_t    e_data_size;
+			uint32_t    e_bss_size;
+			uint32_t    e_entrypoint_rva;
+			uint32_t    e_code_rva;
+			// uint32_t  e_data_rva;             /* Not present in PE32+ */
+			uint64_t    e_image_base;
+			uint32_t    e_section_align;
+			uint32_t    e_file_align;
+			uint16_t    e_os_major;
+			uint16_t    e_os_minor;
+			uint16_t    e_user_major;
+			uint16_t    e_user_minor;
+			uint16_t    e_subsys_major;
+			uint16_t    e_subsys_minor;
+			uint32_t    e_reserved9;
+			uint32_t    e_image_size;
+			uint32_t    e_header_size;
+			uint32_t    e_file_checksum;
+			uint16_t    e_subsystem;
+			uint16_t    e_dll_flags;
+			uint64_t    e_stack_reserve_size;
+			uint64_t    e_stack_commit_size;
+			uint64_t    e_heap_reserve_size;
+			uint64_t    e_heap_commit_size;
+			uint32_t    e_loader_flags;
+			uint32_t    e_num_rvasize_pairs;
+		} __attribute__((packed));
 
-       /* File format of a PE File Header. All fields are little endian. */
-          struct PEFileHeader_disk {
-               unsigned char e_magic[4];           /* magic number "PE\0\0" */
-               uint16_t    e_cpu_type;             /* e.g., 0x014c = Intel 386 */
-               uint16_t    e_nsections;            /* number of sections defined in the Section Table */
-               uint32_t    e_time;                 /* time and date file was created or modified by the linker */
-               uint32_t    e_coff_symtab;          /* offset to COFF symbol table */
-               uint32_t    e_coff_nsyms;           /* number of symbols in COFF symbol table */
-               uint16_t    e_nt_hdr_size;          /* number of remaining bytes in the header following the 'flags' field */
-               uint16_t    e_flags;                /* Bit flags: executable file, program/library image, fixed address, etc. */
-             } __attribute__((packed));
+		/* Bit flags for the PE header 'flags' member */
+		enum HeaderFlags {
+			HF_PROGRAM          = 0x0000,       /* Program image (no non-reserved bits set) */
+			HF_EXECUTABLE       = 0x0002,       /* Clear indicates can't load: link errors or incrementally linked */
+			HF_FIXED            = 0x0200,       /* Image *must* be loaded at image_base address or error */
+			HF_LIBRARY          = 0x2000,       /* Library image */
+			HF_RESERVED_MASK    = 0xddfd        /* Reserved bits */
+		};
 
-          struct PE32OptHeader_disk {
-               uint16_t    e_opt_magic;            /* magic number */
-               uint16_t    e_lmajor;               /* linker version */
-               uint16_t    e_lminor;
-               uint16_t    e_code_size;            /* Size of .text or sum of all code sections */
-               uint32_t    e_data_size;            /* Sum size of initialized data */
-               uint32_t    e_bss_size;             /* Sum size of uninitialized data */
-               uint32_t    e_entrypoint_rva;       /* RVA="relative virtual address"; relative to 'image_base', below */
-               uint32_t    e_code_rva;             /* Address relative to image base for code section when memory mapped */
-               uint32_t    e_data_rva;             /* Address relative to image base for data section */
-               uint32_t    e_image_base;           /* Virtual base of the image (first byte of file, DOS header). Multiple of 64k. */
-               uint32_t    e_section_align;        /* Alignment of sections in memory. Power of two 512<=x<=256M */
-               uint32_t    e_file_align;           /* Alignment factor (in bytes) for image pages */
-               uint16_t    e_os_major;             /* OS version number required to run this image */
-               uint16_t    e_os_minor;
-               uint16_t    e_user_major;           /* User-specified at link time. Useful for differentiating between image revisions */
-               uint16_t    e_user_minor;
-               uint16_t    e_subsys_major;         /* Subsystem version number */
-               uint16_t    e_subsys_minor;
-               uint32_t    e_reserved9;
-               uint32_t    e_image_size;           /* Virtual size (bytes) of the image inc. all headers; multiple of 'section_align' */
-               uint32_t    e_header_size;          /* Total header size (DOS Header + PE Header + Section table */
-               uint32_t    e_file_checksum;        /* Checksum for entire file; Set to zero by the linker */
-               uint16_t    e_subsystem;            /* Unknown, Native, WindowsGUI, WindowsCharacter, OS/2 Character, POSIX Character */
-               uint16_t    e_dll_flags;            /* Bit flags for library init/terminate per process or thread */
-               uint32_t    e_stack_reserve_size;   /* Virtual memory reserved for stack; non-committed pages are guards */
-               uint32_t    e_stack_commit_size;    /* Size (bytes) of valid stack; other pages are guards; <= 'stack_reserve_size' */
-               uint32_t    e_heap_reserve_size;    /* Size (bytes) of local heap to reserve */
-               uint32_t    e_heap_commit_size;     /* Size (bytes) of valid local heap */
-               uint32_t    e_loader_flags;         /* Reserved, must be zero */
-               uint32_t    e_num_rvasize_pairs;    /* Number of RVASizePair entries that follow this member; also part of the PE header */
-             } __attribute__((packed));
+		/* Values for the PE header 'subsystem' member */
+		enum Subsystem {
+			HF_SPEC_UNKNOWN     = 0x0000,       /* Specified as 'unknown' in the file */
+			HF_NATIVE           = 0x0001,       /* Native */
+			HF_WINGUI           = 0x0002,       /* Windows GUI */
+			HF_WINCHAR          = 0x0003,       /* Windows character */
+			HF_OS2CHAR          = 0x0005,       /* OS/2 character */
+			HF_POSIX            = 0x0007        /* POSIX character */
+		};
 
-          struct PE64OptHeader_disk {
-               uint16_t    e_opt_magic;
-               uint16_t    e_lmajor;
-               uint16_t    e_lminor;
-               uint16_t    e_code_size;
-               uint32_t    e_data_size;
-               uint32_t    e_bss_size;
-               uint32_t    e_entrypoint_rva;
-               uint32_t    e_code_rva;
-            // uint32_t  e_data_rva;             /* Not present in PE32+ */
-               uint64_t    e_image_base;
-               uint32_t    e_section_align;
-               uint32_t    e_file_align;
-               uint16_t    e_os_major;
-               uint16_t    e_os_minor;
-               uint16_t    e_user_major;
-               uint16_t    e_user_minor;
-               uint16_t    e_subsys_major;
-               uint16_t    e_subsys_minor;
-               uint32_t    e_reserved9;
-               uint32_t    e_image_size;
-               uint32_t    e_header_size;
-               uint32_t    e_file_checksum;
-               uint16_t    e_subsystem;
-               uint16_t    e_dll_flags;
-               uint64_t    e_stack_reserve_size;
-               uint64_t    e_stack_commit_size;
-               uint64_t    e_heap_reserve_size;
-               uint64_t    e_heap_commit_size;
-               uint32_t    e_loader_flags;
-               uint32_t    e_num_rvasize_pairs;
-             } __attribute__((packed));
+		/* Bit flags for the PE header 'dll_flags' member */
+		enum DLLFlags {
+			DLL_PROC_INIT       = 0x0001,       /* Per-process library initialization */
+			DLL_PROC_TERM       = 0x0002,       /* Per-process library termination */
+			DLL_THRD_INIT       = 0x0004,       /* Per-thread library initialization */
+			DLL_THRD_TERM       = 0x0008,       /* Per-thread library termination */
+			DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
+		};
 
-          /* Bit flags for the PE header 'flags' member */
-          enum HeaderFlags {
-               HF_PROGRAM          = 0x0000,       /* Program image (no non-reserved bits set) */
-               HF_EXECUTABLE       = 0x0002,       /* Clear indicates can't load: either link errors or image is being incrementally linked */
-               HF_FIXED            = 0x0200,       /* Image *must* be loaded at image_base address or error */
-               HF_LIBRARY          = 0x2000,       /* Library image */
-               HF_RESERVED_MASK    = 0xddfd        /* Reserved bits */
-             };
+	public:
+		SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
+		virtual ~SgAsmPEFileHeader();
 
-          /* Values for the PE header 'subsystem' member */
-          enum Subsystem {
-               HF_SPEC_UNKNOWN     = 0x0000,       /* Specified as 'unknown' in the file */
-               HF_NATIVE           = 0x0001,       /* Native */
-               HF_WINGUI           = 0x0002,       /* Windows GUI */
-               HF_WINCHAR          = 0x0003,       /* Windows character */
-               HF_OS2CHAR          = 0x0005,       /* OS/2 character */
-               HF_POSIX            = 0x0007        /* POSIX character */
-             };
+		virtual const char *format_name();
+		static bool is_PE (SgAsmGenericFile*);
+		static SgAsmPEFileHeader *parse(SgAsmGenericFile*);
+		void add_rvasize_pairs();
 
-          /* Bit flags for the PE header 'dll_flags' member */
-          enum DLLFlags {
-               DLL_PROC_INIT       = 0x0001,       /* Per-process library initialization */
-               DLL_PROC_TERM       = 0x0002,       /* Per-process library termination */
-               DLL_THRD_INIT       = 0x0004,       /* Per-thread library initialization */
-               DLL_THRD_TERM       = 0x0008,       /* Per-thread library termination */
-               DLL_RESERVED_MASK   = 0xfff0        /* Reserved bits */
-             };
+		virtual bool reallocate();
+		virtual void unparse(FILE*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		void create_table_sections();
 
-     public:
-          SgAsmPEFileHeader(SgAsmGenericFile *f, addr_t offset);
-
-       // DQ (8/16/2008): Implemented destructor to delete the p_rvasize_pairs
-          virtual ~SgAsmPEFileHeader();
-
-          void add_rvasize_pairs();
-          virtual void unparse(FILE*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-	  void create_table_sections();
-
-       /* Accessors for protected/private data members */
-       // ExtendedDOSHeader *get_dos2_header() {return dos2_header;}
-       // void set_dos2_header(ExtendedDOSHeader *h) {dos2_header=h;}
-       // PESectionTable *get_section_table() {return section_table;}
-       // void set_section_table(PESectionTable *ot) {section_table=ot;}
-       // COFFSymtab *get_coff_symtab() {return coff_symtab;}
-       // void set_coff_symtab(COFFSymtab *st) {coff_symtab=st;}
-    
-    /* These are the native-format versions of the same members described in the PEFileHeader_disk format struct. */
-       // unsigned    e_cpu_type, e_nsections, e_time;
-       // addr_t      e_coff_symtab, e_nt_hdr_size;
-       // unsigned    e_coff_nsyms, e_flags, e_opt_magic;
-       // unsigned    e_lmajor, e_lminor, e_code_size, e_data_size, e_bss_size, e_entrypoint_rva, e_code_rva, e_data_rva;
-      //  addr_t      e_image_base;
-       // unsigned    e_section_align, e_file_align, e_os_major, e_os_minor, e_user_major, e_user_minor;
-       // unsigned    e_subsys_major, e_subsys_minor, e_reserved9, e_image_size, e_header_size, e_file_checksum, e_subsystem;
-       // unsigned    e_dll_flags, e_stack_reserve_size, e_stack_commit_size, e_heap_reserve_size, e_heap_commit_size;
-       // unsigned    e_loader_flags, e_num_rvasize_pairs;
-       // std::vector<RVASizePair> rvasize_pairs;
-
-     private:
-          void ctor(SgAsmGenericFile *f, addr_t offset);
-          void *encode(SgAsmPEFileHeader::PEFileHeader_disk*);
-          void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*);
-          void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*);
-       // ExtendedDOSHeader *dos2_header;
-       // PESectionTable *section_table;
-       // COFFSymtab *coff_symtab;
-
+	private:
+		void ctor(SgAsmGenericFile *f, addr_t offset);
+		void *encode(SgAsmPEFileHeader::PEFileHeader_disk*);
+		void *encode(SgAsmPEFileHeader::PE32OptHeader_disk*);
+		void *encode(SgAsmPEFileHeader::PE64OptHeader_disk*);
 HEADER_PE_FILE_HEADER_END
 
 HEADER_PE_SECTION_START
