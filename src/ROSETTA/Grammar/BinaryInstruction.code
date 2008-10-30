@@ -1922,6 +1922,8 @@ HEADER_PE_FILE_HEADER_START
 		void set_e_coff_symtab(addr_t);
 		unsigned get_e_coff_nsyms() const {return p_e_coff_nsyms;}
 		void set_e_coff_nsyms(unsigned);
+		unsigned get_e_nsections() const {return p_e_nsections;}
+		void set_e_nsections(unsigned);
 
 	private:
 		void ctor(SgAsmGenericFile *f, addr_t offset);

@@ -311,6 +311,8 @@ SgAsmPEFileHeader::encode(PEFileHeader_disk *disk)
 {
     for (size_t i=0; i<NELMTS(disk->e_magic); i++)
         disk->e_magic[i] = get_magic()[i];
+
+
     host_to_le(p_e_cpu_type,           &(disk->e_cpu_type));
     host_to_le(p_e_nsections,          &(disk->e_nsections));
     host_to_le(p_e_time,               &(disk->e_time));
@@ -512,10 +514,16 @@ SgAsmPEFileHeader::set_e_coff_symtab(addr_t a)
     p_e_coff_symtab = a;
 }
 void
-SgAsmPEFileHeader::set_e_coff_nsyms(unsigned nsyms)
+SgAsmPEFileHeader::set_e_coff_nsyms(unsigned n)
 {
     ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
-    p_e_coff_nsyms = nsyms;
+    p_e_coff_nsyms = n;
+}
+void
+SgAsmPEFileHeader::set_e_nsections(unsigned n)
+{
+    ROSE_ASSERT(!get_congealed()); /*must still be parsing*/
+    p_e_nsections = n;
 }
 
 /* Write the PE file header back to disk and all that it references */
@@ -528,10 +536,18 @@ SgAsmPEFileHeader::unparse(FILE *f)
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
     
-    /* Write the PE section table and, indirectly, the sections themselves. */
+    /* Write the PE section table and, indirectly, the sections themselves. Also, count the number of sections in the table
+     * and update the header's e_nsections member. */
     if (p_section_table) {
         ROSE_ASSERT(p_section_table->get_header()==this);
         p_section_table->unparse(f);
+        SgAsmGenericSectionList *all = get_sections();
+        p_e_nsections = 0;
+        for (size_t i=0; i<all->get_sections().size(); i++) {
+            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
+            if (pesec && pesec->get_st_entry()!=NULL)
+                p_e_nsections++;
+        }
     }
 
     /* Write sections that are pointed to by the file header and update data members in the file header */
