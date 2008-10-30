@@ -101,7 +101,7 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     set_synthesized(true);
     set_purpose(SP_HEADER);
 
- // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
+    // DQ (8/16/2008): Added code to set SgAsmPEFileHeader as parent of input SgAsmGenericFile
     f->set_parent(this);
 
     p_rvasize_pairs = new SgAsmPERVASizePairList;
@@ -138,9 +138,9 @@ SgAsmPEFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     
     /* File format */
     p_exec_format->set_family(FAMILY_PE);
-    p_exec_format->set_purpose( p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY );
-    p_exec_format->set_sex( ORDER_LSB );
-    p_exec_format->set_abi( ABI_NT );
+    p_exec_format->set_purpose(p_e_flags & HF_PROGRAM ? PURPOSE_EXECUTABLE : PURPOSE_LIBRARY);
+    p_exec_format->set_sex(ORDER_LSB);
+    p_exec_format->set_abi(ABI_NT);
     p_exec_format->set_abi_version(0);
     p_exec_format->set_word_size(0x010b==p_e_opt_magic? 4 : 8);
 
@@ -555,34 +555,46 @@ SgAsmPEFileHeader::unparse(FILE *f)
         p_dos2_header->unparse(f);
     }
 
-    /* Write the fixed-length (COFF) part of the header */
+    /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
+     * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
+     * increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust it as little as possible.
+     * The RVA/Size pairs are considered to be part of the NT Optional Header. */
+    size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
+    if (4==get_word_size()) {
+        oh_size += sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        oh_size += sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    unsigned char *oh = new unsigned char[oh_size];
+    if (4==get_word_size()) {
+        encode((PE32OptHeader_disk*)oh);
+        rvasize_offset = sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        encode((PE64OptHeader_disk*)oh);
+        rvasize_offset = sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    for (size_t i=0; i<p_rvasize_pairs->get_pairs().size(); i++, rvasize_offset+=sizeof(SgAsmPERVASizePair::RVASizePair_disk)) {
+        SgAsmPERVASizePair::RVASizePair_disk *rvasize_disk = (SgAsmPERVASizePair::RVASizePair_disk*)(oh+rvasize_offset);
+        p_rvasize_pairs->get_pairs()[i]->encode(rvasize_disk);
+    }
+    while (oh_size>p_e_nt_hdr_size) {
+        if (0!=oh[oh_size-1]) break;
+        --oh_size;
+    }
+    p_e_nt_hdr_size = oh_size;
+
+    /* Write the fixed-length COFF Header */
     PEFileHeader_disk fh;
     encode(&fh);
     addr_t spos = write(f, 0, sizeof fh, &fh);
 
-    /* Write the "Optional Header" (required for executables) */
-    PE32OptHeader_disk oh32;
-    PE64OptHeader_disk oh64;
-    void *oh       = NULL;
-    size_t oh_size = 0;
-    if (4==get_word_size()) {
-        oh = encode(&oh32);
-        oh_size = sizeof oh32;
-    } else if (8==get_word_size()) {
-        oh = encode(&oh64);
-        oh_size = sizeof oh64;
-    } else {
-        ROSE_ASSERT(!"unsupported word size");
-    }
+    /* Write the following "NT Optional Header" */
     spos = write(f, spos, oh_size, oh);
-
-    /* Write the variable length RVA/size pair table. */
-    for (size_t i = 0; i < p_e_num_rvasize_pairs; i++) {
-        SgAsmPERVASizePair::RVASizePair_disk rvasize_disk;
-        p_rvasize_pairs->get_pairs()[i]->encode(&rvasize_disk);
-        spos = write(f, spos, sizeof rvasize_disk, &rvasize_disk);
-    }
-
 }
     
 /* Print some debugging information */
