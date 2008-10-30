@@ -1076,6 +1076,9 @@ SgAsmPEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {
+    set_mapped_rva(mapped_rva);
+    set_mapped_size(size);
+
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
@@ -1250,95 +1253,101 @@ SgAsmPEImportSection::add_dll(SgAsmPEDLL *d)
     p_dlls->get_dlls().push_back(d);
 }
 
-/* Write the import section back to disk */
-void
-SgAsmPEImportSection::unparse(FILE *f)
-{
-    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
-    SgAsmGenericHeader *fhdr = get_header();
-
-    const std::vector<SgAsmPEDLL*> & dlls = get_dlls()->get_dlls();
-
-    for (size_t dllno = 0; dllno < dlls.size(); dllno++) {
-        SgAsmPEDLL *dll = dlls[dllno];
-        SgAsmPEImportDirectory *idir = dll->get_idir();
-        
-        /* Directory entry */
-        SgAsmPEImportDirectory::PEImportDirectory_disk idir_disk;
-        idir->encode(&idir_disk);
-        write(f, dllno*sizeof(idir_disk), sizeof idir_disk, &idir_disk);
-
-        /* Library name. Write it even if it's not in this section! (RPM 2008-10-29) */
-        rva_t rva = idir->get_dll_name_rva();
-        ROSE_ASSERT(rva >= p_mapped_rva);
-        ROSE_ASSERT(rva.get_section()); /*should have been bound in constructor*/
-        addr_t spos = rva.get_section()->write(f, rva.get_rel(), dll->get_name()->get_string());
-        rva.get_section()->write(f, spos, '\0');
-
-        /* Write the hint/name pairs and the array entries that point to them. They might not even be in this section! See
-         * ctor */   
-        rva = idir->get_hintnames_rva();
-        if (rva != 0) {
-            ROSE_ASSERT(rva.get_section());
-            const std::vector<addr_t> & hintname_rvas = dll->get_hintname_rvas();
-            const std::vector<SgAsmPEImportHintName*> & hintnames = dll->get_hintnames()->get_hintnames();
-            for (size_t i = 0; i <= hintname_rvas.size(); i++) {
-                /* Hint/name RVA */
-                addr_t hintname_rva = i < hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
-                bool import_by_ordinal = false;
-                if (4 == fhdr->get_word_size()) {
-                    uint32_t rva_le;
-                    host_to_le(hintname_rva, &rva_le);
-                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
-                    import_by_ordinal = (hintname_rva & 0x80000000) != 0;
-                } else if (8==fhdr->get_word_size()) {
-                    uint64_t rva_le;
-                    host_to_le(hintname_rva, &rva_le);
-                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
-                    import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
-                } else {
-                    ROSE_ASSERT(!"unsupported word size");
-                }
-            
-                /* Hint/name pair */
-                if (i<hintname_rvas.size() && !import_by_ordinal) {
-                    addr_t hintname_spos = (hintname_rvas[i] & 0x7fffffff) - p_mapped_rva; /*section offset*/
-                    hintnames[i]->unparse(f, this, hintname_spos);
-                }
-            }
-        }
-        
-        /* Write the bindings array. These could be in some other section (see constructor)! */
-        rva = idir->get_bindings_rva();
-        if (rva != 0) {
-            ROSE_ASSERT(rva.get_section());
-            const std::vector<addr_t> & bindings = dll->get_bindings();
-            for (size_t i=0; i<=bindings.size(); i++) {
-                addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
-                if (4==fhdr->get_word_size()) {
-                    uint32_t binding_le;
-                    host_to_le(binding, &binding_le);
-                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
-                } else if (8==fhdr->get_word_size()) {
-                    uint64_t binding_le;
-                    host_to_le(binding, &binding_le);
-                    rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
-                } else {
-                    ROSE_ASSERT(!"unsupported word size");
-                }
-            }
-        }
-    }
-
-    /* DLL list is zero terminated */
-    {
-        SgAsmPEImportDirectory::PEImportDirectory_disk zero;
-        memset(&zero, 0, sizeof zero);
-        write(f, dlls.size()*sizeof zero, sizeof zero, &zero);
-    }
-
-    unparse_holes(f);
-}
+// /* The following code is commented out pending some redesign work for SgAsmGenericDLL. The plan is to not use SgAsmGenericDLL
+//  * for the time being, which will make SgAsmPEImportSection look a lot more like SgAsmPEExportSection in terms of the IR nodes
+//  * that are created.  Part of what makes this necessary is that PE shared libraries have very messed up Import Tables -- the
+//  * Import Directory points off into completely unrelated parts of the file. Commenting out the unparser causes us to use the
+//  * implementation from the super class, which just writes the original data back to disk. (RPM 2008-10-29). */
+// 
+// /* Write the import section back to disk */
+// void
+// SgAsmPEImportSection::unparse(FILE *f)
+// {
+//     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+//     SgAsmGenericHeader *fhdr = get_header();
+// 
+//     const std::vector<SgAsmPEDLL*> & dlls = get_dlls()->get_dlls();
+// 
+//     for (size_t dllno = 0; dllno < dlls.size(); dllno++) {
+//         SgAsmPEDLL *dll = dlls[dllno];
+//         SgAsmPEImportDirectory *idir = dll->get_idir();
+//         
+//         /* Directory entry */
+//         SgAsmPEImportDirectory::PEImportDirectory_disk idir_disk;
+//         idir->encode(&idir_disk);
+//         write(f, dllno*sizeof(idir_disk), sizeof idir_disk, &idir_disk);
+// 
+//         /* Library name. Write it even if it's not in this section! (RPM 2008-10-29) */
+//         rva_t rva = idir->get_dll_name_rva();
+//         ROSE_ASSERT(rva >= p_mapped_rva);
+//         ROSE_ASSERT(rva.get_section()); /*should have been bound in constructor*/
+//         addr_t spos = rva.get_section()->write(f, rva.get_rel(), dll->get_name()->get_string());
+//         rva.get_section()->write(f, spos, '\0');
+// 
+//         /* Write the hint/name pairs and the array entries that point to them. They might not even be in this section! See
+//          * ctor */   
+//         rva = idir->get_hintnames_rva();
+//         if (rva != 0) {
+//             ROSE_ASSERT(rva.get_section());
+//             const std::vector<addr_t> & hintname_rvas = dll->get_hintname_rvas();
+//             const std::vector<SgAsmPEImportHintName*> & hintnames = dll->get_hintnames()->get_hintnames();
+//             for (size_t i = 0; i <= hintname_rvas.size(); i++) {
+//                 /* Hint/name RVA */
+//                 addr_t hintname_rva = i < hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
+//                 bool import_by_ordinal = false;
+//                 if (4 == fhdr->get_word_size()) {
+//                     uint32_t rva_le;
+//                     host_to_le(hintname_rva, &rva_le);
+//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
+//                     import_by_ordinal = (hintname_rva & 0x80000000) != 0;
+//                 } else if (8==fhdr->get_word_size()) {
+//                     uint64_t rva_le;
+//                     host_to_le(hintname_rva, &rva_le);
+//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
+//                     import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
+//                 } else {
+//                     ROSE_ASSERT(!"unsupported word size");
+//                 }
+//             
+//                 /* Hint/name pair */
+//                 if (i<hintname_rvas.size() && !import_by_ordinal) {
+//                     addr_t hintname_spos = (hintname_rvas[i] & 0x7fffffff) - p_mapped_rva; /*section offset*/
+//                     hintnames[i]->unparse(f, this, hintname_spos);
+//                 }
+//             }
+//         }
+//         
+//         /* Write the bindings array. These could be in some other section (see constructor)! */
+//         rva = idir->get_bindings_rva();
+//         if (rva != 0) {
+//             ROSE_ASSERT(rva.get_section());
+//             const std::vector<addr_t> & bindings = dll->get_bindings();
+//             for (size_t i=0; i<=bindings.size(); i++) {
+//                 addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
+//                 if (4==fhdr->get_word_size()) {
+//                     uint32_t binding_le;
+//                     host_to_le(binding, &binding_le);
+//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
+//                 } else if (8==fhdr->get_word_size()) {
+//                     uint64_t binding_le;
+//                     host_to_le(binding, &binding_le);
+//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
+//                 } else {
+//                     ROSE_ASSERT(!"unsupported word size");
+//                 }
+//             }
+//         }
+//     }
+// 
+//     /* DLL list is zero terminated */
+//     {
+//         SgAsmPEImportDirectory::PEImportDirectory_disk zero;
+//         memset(&zero, 0, sizeof zero);
+//         write(f, dlls.size()*sizeof zero, sizeof zero, &zero);
+//     }
+// 
+//     unparse_holes(f);
+// }
 
 /* Print debugging info */
 void

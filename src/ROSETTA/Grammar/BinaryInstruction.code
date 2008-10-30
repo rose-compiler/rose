@@ -1951,7 +1951,7 @@ HEADER_PE_IMPORT_SECTION_START
 		SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
 			: SgAsmPESection(fhdr, offset, size)
 			{ctor(offset, size, mapped_rva);}
-		virtual void unparse(FILE*);
+		//virtual void unparse(FILE*);  FIXME: Temporarily commented out (see implementation comments)
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void add_dll(SgAsmPEDLL *d);
 	private:
