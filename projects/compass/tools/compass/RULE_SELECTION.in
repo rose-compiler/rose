@@ -80,6 +80,7 @@
 +:OperatorOverloading
 +:OtherArgument
 +:PlaceConstantOnTheLhs
++:PointerComparison
 +:PreferAlgorithms
 +:PreferFseekToRewind
 +:PreferSetvbufToSetbuf
