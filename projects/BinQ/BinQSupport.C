@@ -100,8 +100,9 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
 
 SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
   SgNode* globalBlock;
-  unsigned int found = tsv_directory.rfind(".");
+  int found = tsv_directory.rfind(".");
   string ending="";
+
   if (found!=string::npos) {
     ending =tsv_directory.substr(found,tsv_directory.length());
   }

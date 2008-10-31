@@ -82,7 +82,8 @@ class BinQGUI //: public QWidget
 
     int screenWidth;
     int screenHeight;
-
+    void init();
+    void createGUI();
    
 }; //class BinQGUI
 

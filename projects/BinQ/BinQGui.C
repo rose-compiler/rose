@@ -110,17 +110,16 @@ void clicked1() {
 
 
   if (t=="Align Functions") {
-    cerr << "BEFORE IN: itemsFileA.size() : " << instance->itemsFileA.size()<<endl;
     
 #if 1
   // ------------------------------ Sync statments between itemsFileA amd itemsFileB
   // add padding 
-  int position=0, offset=0, currentPos=0;
+  int position=-1, offset=0, currentPos=0;
   bool fileAPadd = instance->findPosWhenFunctionsAreNotSync(position, offset,currentPos);
   cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
     " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
   //int count=0;
-  while (position!=0) {
+  while (position!=-1) {
     // lets add padding
     if (fileAPadd) {
       Item* oldItem = *(instance->itemsFileA.begin()+position);
@@ -175,7 +174,7 @@ void clicked1() {
 	c++;
       }
     }
-    position=0;
+    position=-1;
     offset=0;
     currentPos=0;
     fileAPadd = instance->findPosWhenFunctionsAreNotSync(position, offset,currentPos);
@@ -184,7 +183,7 @@ void clicked1() {
     //    count++;
     //if (count==5) break;
   }
-  cerr << "AFTER IN: itemsFileA.size() : " << instance->itemsFileA.size()<<endl;
+
   instance->updateByteItemList();
 #endif
 
@@ -390,7 +389,7 @@ void BinQGUI::updateByteItemList() {
   showFileB(0);
   //  codeTableWidget->viewport()->update();
   //codeTableWidget2->viewport()->update();
-  cerr << "AFTER OUT: itemsFileA.size() : " << itemsFileA.size()<<endl;
+
 }
 
 bool 
@@ -537,7 +536,11 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
+  init();
+  createGUI();
+}
 
+void BinQGUI::init(){
   fileA = binqsupport->disassembleFile(fileNameA);
   fileB = binqsupport->disassembleFile(fileNameB);
 
@@ -557,7 +560,9 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
   }
   // --------------------------------------------
 
-
+  itemsFileA.clear();
+  itemsFileB.clear();
+  
   // ---------------------- Create itemsFileA and itemsFileB , containing all statements
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
@@ -629,10 +634,10 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     pos+=length;
   }
 
+}
 
-
-
-  QDesktopWidget *desktop = QApplication::desktop();
+  void BinQGUI::createGUI() {
+    QDesktopWidget *desktop = QApplication::desktop();
 
 
   screenWidth = desktop->width()-50;
@@ -741,7 +746,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
 
   updateByteItemList();
   // ------------------------------------
-    cerr << "BEFORE OUT: itemsFileA.size() : " << itemsFileA.size()<<endl;
+
 
 } //BinQGUI::BinQGUI()
 
@@ -759,6 +764,8 @@ void BinQGUI::open() {
 } //CompassGui::open()
 
 void BinQGUI::reset() {
+  init();
+  updateByteItemList();
 } //CompassGui::open()
 
 
