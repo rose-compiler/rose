@@ -45,8 +45,14 @@ void clicked1() {
     LCSLength(C,insnsA,insnsB);
     std::vector<pair<int,int> > addInstr,minusInst;
     printDiff(C,insnsA, insnsB,insnsA.size(),insnsB.size(),addInstr,minusInst);
-    cerr << " found adds on left side : " << addInstr.size() << endl;
-    cerr << " found subbs on left side : " << minusInst.size() << endl;
+    //    cerr << " found adds on left side : " << addInstr.size() << endl;
+    //cerr << " found subbs on left side : " << minusInst.size() << endl;
+    
+    QString res = QString("Found adds:  %1.  Found subbs: %2. ")
+      .arg(addInstr.size())
+      .arg(minusInst.size());
+    instance->analysisResult->append(res);  
+
 
     for (unsigned int i=0;i<addInstr.size();++i) {
       std::pair<int,int> p = addInstr[i];
@@ -54,11 +60,24 @@ void clicked1() {
       int b = p.second;
       SgAsmInstruction* instA = isSgAsmInstruction(insnsA[a]);
       SgAsmInstruction* instB = isSgAsmInstruction(insnsB[b]);
+#if 0
       cerr << i << " Found ADD in A  (a:" << a <<",b:"<<b<<") : " << endl << 
 	"     " << RoseBin_support::HexToString(instA->get_address()) << "  " <<
 	instA->get_mnemonic() <<endl <<
 	"     " << RoseBin_support::HexToString(instB->get_address()) << "  " <<
 	instB->get_mnemonic() <<endl;
+#endif
+      QString res = QString("%1 Found ADD in A  (a:%2,b:%3)  %4 %5   %6 %7")
+	.arg(i)
+	.arg(a)
+	.arg(b)
+	.arg(QString(RoseBin_support::HexToString(instA->get_address()).c_str()))
+	.arg(QString(instA->get_mnemonic().c_str()))
+	.arg(QString(RoseBin_support::HexToString(instB->get_address()).c_str()))
+	.arg(QString(instB->get_mnemonic().c_str()));
+      instance->analysisResult->append(res);  
+
+
       for(size_t i=0; i < instance->itemsFileA.size(); i++ )    {
 	SgAsmStatement* stmts = instance->itemsFileA[i]->statement;
 	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
