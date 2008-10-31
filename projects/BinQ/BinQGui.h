@@ -45,10 +45,6 @@ class BinQGUI //: public QWidget
     std::vector<Item*> itemsFileB;
     std::map<int,Item*> byteItemFileA;
     std::map<int,Item*> byteItemFileB;
-    std::map<int,int> posRowA;
-    std::map<int,int> posRowB;
-    std::map<int,int> rowPosA;
-    std::map<int,int> rowPosB;
     QTextEdit *analysisResult;
     QTextEdit *fileInfo;
     QListWidget *listWidget;
@@ -63,6 +59,10 @@ class BinQGUI //: public QWidget
 
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
+
+    bool findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos);
+    void updateByteItemList();
+
   protected:
     QComboBox *comboBox;
     qrs::QRProgress *wholeFunction;
@@ -82,8 +82,6 @@ class BinQGUI //: public QWidget
 
     int screenWidth;
     int screenHeight;
-
-    bool findPosWhenFunctionsAreNotSync(int& position, int& offset);
 
    
 }; //class BinQGUI

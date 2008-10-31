@@ -31,27 +31,21 @@ void Slide::paintEvent(QPaintEvent * /* event */)
 {
   QPainter painter(this);
   painter.setPen(Qt::NoPen);
-
-
+  ROSE_ASSERT(gui);
   std::vector<Item*> ite = gui->itemsFileA;
   std::vector<Item*>::const_iterator it=gui->itemsFileA.begin();
   int pos=0;
-  ite = gui->itemsFileA;
-  it=gui->itemsFileA.begin();
-  pos=0;
   for (;it!=gui->itemsFileA.end();++it) {
     Item* item = *it;
-    int length=1;
-    SgAsmStatement* stmt = item->statement;
-    if (isSgAsmInstruction(stmt))
-      length = isSgAsmInstruction(stmt)->get_raw_bytes().size();
+    int pos = item->pos;
+    int length=item->length;
     int color = item->resolved;
     if (color==0)   painter.setBrush(Qt::black);
     if (color==1)   painter.setBrush(Qt::blue);
     if (color==2)   painter.setBrush(Qt::green);
     if (color==3)   painter.setBrush(Qt::red);
+    if (color==4)   painter.setBrush(Qt::gray);
     painter.drawRect(QRect(pos, 0, length, 15));
-    pos+=length;
   }
 
   ite = gui->itemsFileB;
@@ -59,17 +53,15 @@ void Slide::paintEvent(QPaintEvent * /* event */)
   pos=0;
   for (;it!=gui->itemsFileB.end();++it) {
     Item* item = *it;
-    int length=1;
-    SgAsmStatement* stmt = item->statement;
-    if (isSgAsmInstruction(stmt))
-      length = isSgAsmInstruction(stmt)->get_raw_bytes().size();
+    int pos = item->pos;
+    int length=item->length;
     int color = item->resolved;
     if (color==0)   painter.setBrush(Qt::black);
     if (color==1)   painter.setBrush(Qt::blue);
     if (color==2)   painter.setBrush(Qt::green);
     if (color==3)   painter.setBrush(Qt::red);
+    if (color==4)   painter.setBrush(Qt::gray);
     painter.drawRect(QRect(pos, 15, length, 15));
-    pos+=length;
   }
 
   painter.setPen(Qt::white);
@@ -115,7 +107,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	if (lastStringA!=res) {
 	  lastStringA = res;
 	  gui->analysisResult->append(res);
-	  int row = gui->posRowA[selected];
+	  int row = item->row;
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
 	    if (lastRowA!=row) {
@@ -156,7 +148,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	if (lastStringB!=res) {
 	  lastStringB = res;
 	  gui->analysisResult->append(res);
-	  int row = gui->posRowB[selected];
+	  int row = item2->row;
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
 	    if (lastRowB!=row) {
