@@ -451,7 +451,6 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
                ROSE_ASSERT(declaration->hasExplicitScope() == false || declaration->get_scope() == definingDeclaration->get_scope());
 
-               ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                if (firstNondefiningDeclaration != NULL)
                   {
 #if 0
@@ -489,6 +488,13 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // ROSE_ASSERT(declaration->get_scope() == firstNondefiningDeclaration->get_scope());
                     ROSE_ASSERT(declaration->hasExplicitScope() == false || declaration->get_scope() == firstNondefiningDeclaration->get_scope());
                  // firstNondefiningDeclaration->set_scope();
+                  }
+                  else
+                  { //Liao,10/31/2008
+                     //dump some debugging information before assertion 
+                    declaration->get_file_info()->display("fixupDefiningAndNondefiningDeclarations.C assertion:");
+
+                    ROSE_ASSERT(firstNondefiningDeclaration != NULL);
                   }
                break;
              }
