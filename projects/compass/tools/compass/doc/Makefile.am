@@ -45,4 +45,4 @@ clean-local:
 	find . -type l -maxdepth 1 -exec rm {} \;
 	rm -f *.log *.out *.aux *.toc
 
-CLEANFILES = compassCheckerDocs.tex
+CLEANFILES = compassCheckerDocs.tex compass.pdf 

@@ -381,6 +381,10 @@ std::string Compass::findParameterFile() {
   if (getenv("COMPASS_PARAMETERS")) {
     filename = getenv("COMPASS_PARAMETERS");
   }
+  else 
+  {
+    std::cout<<"Warning: environment variable COMPASS_PARAMETERS is not set, trying to use compass_parameters of the current path"<<std::endl;
+  }
   return filename;
 }
 

@@ -1,14 +1,50 @@
 \chapter{Using Compass}
+Compass is currently distributed as part of ROSE, and represents one
+of many tools that can be built using the ROSE open compiler infrastructure.
+The source code of Compass resides in the {\tt ROSE/projects/compass}.
+The compass project is currently divided into three subdirectories representing
+the compass infrastructure, extensions (checkers), and individual compass-like
+tools. As part of building ROSE Compass will be automatically built in the 
+compass directory. 
+
+\section{Installation}
+Please follow
+\htmladdnormallink{ROSE Installation
+Guide}{http://www.rosecompiler.org/ROSE_InstallationInstructions.pdf} to
+configure, make, and make install ROSE. The Compass executable file
+(compassMain) will be available from YOUR\_ROSE\_INSTALL\_PATH/bin. compassMain needs to know where to find its own configuration information from two
+files:
+\begin{itemize}
+\item compass\_parameters: configuration information for compass checkers.
+A default parameter file is generated in your ROSE build tree:
+buildrose/projects/compass/tools/compass/compass\_parameters. You can
+save a copy to your home directory for customization. 
+\item RULE\_SELECTION: This file lists which checkers to be used. A sample
+file is provided in the ROSE source tree:
+source/projects/compass/tools/compass/RULE\_SELECTION.in. You can save
+it as RULE\_SELECTION in your home directory and flip the $+$ or $-$ sign
+before each checker to turn on or off them when running compassMain. This
+file is specified as Compass.RuleSelection=/home/youraccount/RULE\_SELECTION
+inside of the compass\_parameters file.
+\end{itemize}
+
+After preparing compassMain's configuration files, you can set environment variables as follows (assuming using bash
+and you configured ROSE using --prefix=/home/youraccount/opt/roseLatest):
+
+\begin{verbatim}
+PATH=/home/youraccount/opt/roseLatest/bin:$PATH
+export PATH
+
+LD_LIBRARY_PATH=/home/youraccount/opt/roseLatest/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+export COMPASS_PARAMETERS=/home/youraccount/compass_parameters
+\end{verbatim}
+
 
 \section{Running Compass}
 
-    Compass is currently distributed as part of ROSE, and represents one
-of many tools that can be built using the ROSE open compiler infrastructure.
-Compass resides in the {\tt ROSE/projects/compass}.
-The compass project is currently divided into three subdirectories representing
-the compass instrastructure, extensions (checkers), and individual compass-like
-tools. As part of building ROSE Compass will be automatically built in the 
-compass directory.  Running compass is a matter if typing {\tt compassMain} 
+Once properly installed and configured, running compass is a matter if typing {\tt compassMain} 
 and handing in a number of options. The {\tt compassMain} program acts just 
 like a compiler so it is appropriate to hand it the same options required to 
 compile your source file (e.g {\tt -I} directory paths and a source file.  
@@ -18,6 +54,19 @@ available to ROSE based tools.  See also the section of this chapter on the
 include/exclude options for path and file names as these will permit the 
 output from header files to be tailored.
 
+For example, to test a checker which warns about error-prone pointer
+comparison. You can modify RULE\_SELECTION to only turn on
+PointerComparison. A test input code (pointerComparisonTest1.C) is provided
+in sourcetree/projects/compass/extensions/checkers/pointerComparison. 
+\begin{verbatim}
+# command line to run compassMain on a source file
+compassMain pointerComparisonTest1.C
+# output of the command
+ Running Prerequisite SgProject
+Running checker PointerComparison
+PointerComparison: pointerComparisonTest1.C:16.7-19: 
+Warning: Error-prone pointer comparison using <,<=,>,or >=
+\end{verbatim}
 
 \section{Output from Compass}
 
@@ -273,7 +322,7 @@ commands are:
 \begin{verbatim}
 " Vim compiler file
 " Compiler:     ROSE Compass 0.9.2a
-" Maintainer:   Chunhua Liao <liao6@llnl.gov>
+" Maintainer:   Chunhua Liao <youraccount@llnl.gov>
 " Last Change:  2008 Apr. 3
 "
 if exists("current_compiler")
@@ -327,26 +376,34 @@ checker. This skeleton can be easily adapted to write all checkers.
 
 Follow these steps to generate a checker skeleton:
 \begin{enumerate}
-   \item Enter a directory where you want the directory of your checker to be created
-   \item Execute {\tt ROSE\_SRC\_DIR/projects/compass/src/compass\_scripts/gen\_checker.sh $<$name of your checker$>$}
+   \item Enter a directory where you want the directory of your checker to
+   be created: For example,
+   rosesourcetree/projects/compass/extensions/checkers.
+   \item Execute {\tt
+   ROSE\_SRC\_DIR/projects/compass/src/compass\_scripts/gen\_checker.sh
+   $<$name of your checker$>$} (the name of your checker can have space and
+   the script will automatically concatenate them to camel case, e.g: 
+   "multiple case on same line")
 \end{enumerate}
 
 The results of executing gen\_checker.sh script is that a new directory name 
 ``multipleCasesOnSameLine''
 (name of your checker in camel case) is created with the following files:
+\begin{itemize}
+\item compass\_parameters : internal parameters for this checker 
+\item multipleCasesOnSameLine.C : main source file 
+\item multipleCasesOnSameLine.compass.external.makefile : makefile if this
+checker is to be built outside of the ROSE source tree.
+\item multipleCasesOnSameLineDocs.tex : documentation 
+\item multipleCasesOnSameLine.inc : Makefile include file
+\item multipleCasesOnSameLine.h : header
+\item multipleCasesOnSameLineMain.C : main driver
+\item multipleCasesOnSameLineTest1.C : test input code
+\end{itemize}
 
-\begin{verbatim}
-compass.C           multipleCasesOnSameLine.C
-compass.h           multipleCasesOnSameLineDocs.tex
-compass_parameters  multipleCasesOnSameLine.h
-compassTestMain.C   multipleCasesOnSameLine.inc
-Makefile            multipleCasesOnSameLineMain.C
-Makefile.am         multipleCasesOnSameLineTest1.C
-\end{verbatim}
-
-Some of these files (compass.[Ch], compass\_parameters, and compassTestMain.C)
+Some of these files (compass\_parameters)
 are copied from the compass\_template\_generator directory; while others are
-generated (multiple*, Makefile, Makefile.am)
+generated (multiple*, *.makefile)
 
 It is suggested that you keep the following in mind when using gen\_checker.sh:
 \begin{itemize}
@@ -357,7 +414,7 @@ It is suggested that you keep the following in mind when using gen\_checker.sh:
    directory-name. Which will make it redundant, as the compass project is
    about writing style-checkers!
 \item
-   Some of the files have read-only permissions and are intended only for
+   Some of the files\fixme{What are the readonly files exactly?} have read-only permissions and are intended only for
    such use. Please do not change the permissions of these files.
 %\item
 %Advanced: The file `multipleCasesOnSameLine.inc' is used to pass in custom LDADD lines
@@ -372,22 +429,24 @@ It is suggested that you keep the following in mind when using gen\_checker.sh:
 The process for integrating a new checker into Compass has been automated. 
 These directions are meant for checkers generated using gen\_checker.sh. 
 The process is similar for all compass-like tools that are built using the 
-common instrastructure.
+common infrastructure.
 
-The steps to integrate a new checker is
+The steps to integrate a new checker is (note that both of the source tree and
+build tree of ROSE are involved):
 \begin{enumerate}
-   \item Add $<$name of your checker$>$ to CHECKER\_LIST
+   \item Add $<$camel case of your checker name $>$ to
+   ROSE\_SOURCE\_DIR/projects/compass/tools/compass/CHECKER\_LIST
    \item Enter ROSE\_BUILD\_DIR/projects/compass/tools/compass
    \item Execute 'make regenerate'
    \item After running 'make regenerate' in the build tree then you may run make as usual.
-   \item %Before executing compassMain or any Make rule that uses compassMain, 
-	Examine the RULE\_SELECTION file and confirm it
+   \item Examine the ROSE\_SOURCE\_DIR/projects/compass/tools/compass/RULE\_SELECTION.in file and confirm it
 	reflects your most recent additional checker(s) choice of execution at
 	run-time; the default setting is ``on''. Please refer to section 
 	~\ref{ruleselection}.
 \end{enumerate}
 
-The file `CHECKER\_LIST' can use the `\#' comment delimiter at the beginning of
+The file `CHECKER\_LIST' is used to control which checkers are selected to
+be compiled into compassMain. It can use the `\#' comment delimiter at the beginning of
 any checker name to remove that checker from compilation. The hash mark may
 only appear at the beginning of the line. The compass\_submission\_setup.sh
 script must be run again with the ``regenerate'' option if any checkers are
