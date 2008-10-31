@@ -54,8 +54,8 @@ void clicked1() {
     instance->analysisResult->append(res);  
 
 
-    for (unsigned int i=0;i<addInstr.size();++i) {
-      std::pair<int,int> p = addInstr[i];
+    for (unsigned int k=0;k<addInstr.size();++k) {
+      std::pair<int,int> p = addInstr[k];
       int a = p.first;
       int b = p.second;
       SgAsmInstruction* instA = isSgAsmInstruction(insnsA[a]);
@@ -67,24 +67,17 @@ void clicked1() {
 	"     " << RoseBin_support::HexToString(instB->get_address()) << "  " <<
 	instB->get_mnemonic() <<endl;
 #endif
-      QString res = QString("%1 Found ADD in A  (a:%2,b:%3)  %4 %5   %6 %7")
-	.arg(i)
-	.arg(a)
-	.arg(b)
-	.arg(QString(RoseBin_support::HexToString(instA->get_address()).c_str()))
-	.arg(QString(instA->get_mnemonic().c_str()))
-	.arg(QString(RoseBin_support::HexToString(instB->get_address()).c_str()))
-	.arg(QString(instB->get_mnemonic().c_str()));
-      instance->analysisResult->append(res);  
 
-
+      int myPosA=0;
+      int myPosB=0;
       for(size_t i=0; i < instance->itemsFileA.size(); i++ )    {
 	SgAsmStatement* stmts = instance->itemsFileA[i]->statement;
 	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
 	if (inst && inst->get_address()==instA->get_address()) {
-	  instance->itemsFileA[i]->plus=true;
+	  myPosA=instance->itemsFileA[i]->row;
+	  //  instance->itemsFileA[i]->plus=true;
 	  instance->itemsFileA[i]->bg=QColor(135,206,255);
-	  for (int j=0;j<4;j++)
+	  for (int j=1;j<instance->maxrows;j++)
 	    instance->codeTableWidget->setBgColor(instance->itemsFileA[i]->bg,j,i);
 	}
       }
@@ -92,12 +85,26 @@ void clicked1() {
 	SgAsmStatement* stmts = instance->itemsFileB[i]->statement;
 	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
 	if (inst && inst->get_address()==instB->get_address()) {
-	  instance->itemsFileB[i]->plus=true;
+	  myPosB=instance->itemsFileB[i]->row;
+	  //instance->itemsFileB[i]->plus=true;
 	  instance->itemsFileB[i]->bg=QColor(135,206,255);
-	  for (int j=0;j<4;j++)
+	  for (int j=1;j<instance->maxrows;j++)
 	    instance->codeTableWidget2->setBgColor(instance->itemsFileB[i]->bg,j,i);
 	}
       }
+
+      QString res = QString("%1 Found ADD in A  (a:%2,b:%3) (a:%4,b:%5)  %6 %7   %8 %9")
+	.arg(k)
+	.arg(a)
+	.arg(b)
+	.arg(myPosA)
+	.arg(myPosB)
+	.arg(QString(RoseBin_support::HexToString(instA->get_address()).c_str()))
+	.arg(QString(instA->get_mnemonic().c_str()))
+	.arg(QString(RoseBin_support::HexToString(instB->get_address()).c_str()))
+	.arg(QString(instB->get_mnemonic().c_str()));
+      instance->analysisResult->append(res);  
+
     }
 
 
@@ -229,12 +236,10 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
     if (fileA) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(true);
-      codeTableWidget->setFont(f, 0, row);
-      codeTableWidget->setFont(f, 1, row);
-      codeTableWidget->setFont(f, 2, row);
       codeTableWidget->setCurrentCell(row,0);
       Item* item = itemsFileA[row];
-      for (int j=0;j<4;j++) {
+      for (int j=1;j<maxrows;j++) {
+	codeTableWidget->setFont(f, j, row);
 	if (item->function) 
 	  codeTableWidget->setBgColor(QColor(120,120,120),j,row);
 	else 
@@ -243,12 +248,10 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
     } else {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(true);
-      codeTableWidget2->setFont(f, 0, row);
-      codeTableWidget2->setFont(f, 1, row);
-      codeTableWidget2->setFont(f, 2, row);
       codeTableWidget2->setCurrentCell(row,0);
       Item* item = itemsFileB[row];
-      for (int j=0;j<4;j++) {
+      for (int j=1;j<maxrows;j++) {
+	codeTableWidget2->setFont(f, j, row);
 	if (item->function) 
 	  codeTableWidget2->setBgColor(QColor(120,120,120),j,row);
 	else
@@ -263,21 +266,17 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
     if (fileA) {
       QFont f = codeTableWidget->getFont(0, row);
       f.setBold(false);
-      codeTableWidget->setFont(f, 0, row);
-      codeTableWidget->setFont(f, 1, row);
-      codeTableWidget->setFont(f, 2, row);
       Item* item = itemsFileA[row];
-      for (int j=0;j<4;j++) {      
+      for (int j=1;j<maxrows;j++) {      
+	codeTableWidget->setFont(f, j, row);
 	codeTableWidget->setBgColor(item->bg,j,row);
       }
     } else {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(false);
-      codeTableWidget2->setFont(f, 0, row);
-      codeTableWidget2->setFont(f, 1, row);
-      codeTableWidget2->setFont(f, 2, row);
       Item* item = itemsFileB[row];
-      for (int j=0;j<4;j++) {      
+      for (int j=1;j<maxrows;j++) {      
+	codeTableWidget2->setFont(f, j, row);
 	codeTableWidget2->setBgColor(item->bg,j,row);
       }
     }
@@ -288,6 +287,52 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
 
 
 // ----------------------------------------------------------------------------------------------
+
+bool 
+BinQGUI::findPosWhenFunctionsAreNotSync(int& position, int& offset) {
+  unsigned int max = itemsFileA.size();
+  if (itemsFileB.size()>max) 
+    max=itemsFileB.size();
+  for (unsigned int i=0;i<max;++i) {
+    Item* itemA =NULL;
+    Item* itemB =NULL;
+    if (i<itemsFileA.size())
+      itemA=itemsFileA[i];
+    if (i<itemsFileB.size())
+      itemB=itemsFileB[i];
+    if (itemA && itemB) {
+      SgAsmFunctionDeclaration* fa = isSgAsmFunctionDeclaration(itemA->statement);
+      SgAsmFunctionDeclaration* fb = isSgAsmFunctionDeclaration(itemB->statement);
+      if (fa && !fb) {
+	// fa occured but fb is further away, need padding for fa
+	for (unsigned int k=i;k<itemsFileB.size();++k) {
+	    itemB=itemsFileB[k];
+	    fb = isSgAsmFunctionDeclaration(itemB->statement);
+	    if (fb) {
+	      // We need a padding in B at pos i with length (k-i)
+	      position=i-1;
+	      offset=k-i;
+	      return true; //left (A)
+	    }
+	}
+      } else if (fb && !fa) {
+	// fa occured but fb is further away, need padding for fa
+	for (unsigned int k=i;k<itemsFileA.size();++k) {
+	    itemA=itemsFileA[k];
+	    fa = isSgAsmFunctionDeclaration(itemA->statement);
+	    if (fa) {
+	      // We need a padding in A at pos i with length (k-i)
+	      position=i-1;
+	      offset=k-i;
+	      return false; //right (B)
+	    }
+	}
+      }
+
+    }
+  }
+  return true; // should not be reached
+}
 
 void
 BinQGUI::insertFileInformation() {
@@ -384,7 +429,7 @@ BinQGUI::insertFileInformation() {
 BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), fileNameB(fB) {
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
-
+  maxrows=5;
 
   fileA = binqsupport->disassembleFile(fileNameA);
   fileB = binqsupport->disassembleFile(fileNameB);
@@ -406,7 +451,7 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
   // --------------------------------------------
 
 
-
+  // ---------------------- Create itemsFileA and itemsFileB , containing all statements
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
   AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
@@ -440,8 +485,11 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     itemsFileA.push_back(item);
     byteItemFileA[pos]=item;
     //cerr << "FILE_A: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
-    for (int i=0;i<length;i++)
+    for (int i=0;i<length;i++) {
       byteItemFileA[i]=item;
+      posRowA[pos+i]=row;
+    }
+    rowPosA[row]=pos;
     pos+=length;
   }
 
@@ -472,11 +520,77 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
     row++;
     itemsFileB.push_back(item);
     byteItemFileB[pos]=item;
+
     //cerr << "FILE_B: Adding item at pos:"<<pos<<"  length: " <<length<< "   " << item->statement->class_name()<<endl;
-    for (int i=0;i<length;i++)
+    for (int i=0;i<length;i++) {
       byteItemFileB[i]=item;
+      posRowB[pos+i]=row;
+    }
+    rowPosB[row]=pos;
     pos+=length;
   }
+
+#if 1
+  // ------------------------------ Sync statments between itemsFileA amd itemsFileB
+  // add padding 
+  int position=0, offset=0;
+  bool fileAPadd = findPosWhenFunctionsAreNotSync(position, offset);
+  cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << " A? " << fileAPadd << endl;
+  //int count=0;
+  while (position!=0) {
+    // lets add padding
+    if (fileAPadd) {
+      vector<Item*>::iterator it = itemsFileA.begin()+position+1;
+      for (int i=0; i<offset;++i) {
+	Item* item = new Item(false,NULL,0,0,position+i+1);
+	it = itemsFileA.insert(it,item);
+	//byteItemFileA[rowPosA[position+i+1]]=item;
+	++it;
+	cerr << "    A: adding NULL item at : " << (position+i) << endl;
+      }
+      // need to adjust the remainder
+      int c=1;
+      for (; it!=itemsFileA.end();++it) {
+	Item* item = (*it);
+	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
+	item->row = position+offset+c;
+	c++;
+      }
+    }
+
+    if (!fileAPadd) {
+      vector<Item*>::iterator it = itemsFileB.begin()+position+1;
+      for (int i=0; i<offset;++i) {
+	Item* item = new Item(false,NULL,0,0,position+i+1);
+	it = itemsFileB.insert(it,item);
+	//byteItemFileB[rowPosB[position+i+1]]=item;
+	++it;
+	cerr << "    B: adding NULL item at : " << (position+i) << endl;
+      }
+      // need to adjust the remainder
+      int c=1;
+      for (; it!=itemsFileB.end();++it) {
+	Item* item = (*it);
+	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
+	item->row = position+offset+c;
+	c++;
+      }
+    }
+    position=0;
+    offset=0;
+    fileAPadd = findPosWhenFunctionsAreNotSync(position, offset);
+    cerr << " 2 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << " A? " << fileAPadd << endl;
+    //    count++;
+    //if (count==5) break;
+  }
+
+
+#endif
+
+
+
+
+
   QDesktopWidget *desktop = QApplication::desktop();
 
 
@@ -555,9 +669,9 @@ BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), f
 
       QRPanel &bottomPanelRight = bottomPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
-	codeTableWidget = bottomPanelRight << new QRTable( 4, "address","instr","operands","comment" );
+	codeTableWidget = bottomPanelRight << new QRTable( 5, "pos","address","instr","operands","comment" );
 	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
-	codeTableWidget2 = bottomPanelRight << new QRTable( 4, "address","instr","operands","comment" );
+	codeTableWidget2 = bottomPanelRight << new QRTable( 5, "pos","address","instr","operands","comment" );
 	QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
 
 	//	bottomPanelRight.setTileSize(0,80);
@@ -671,7 +785,7 @@ void BinQGUI::showFileA(int row) {
     SgAsmStatement* stmts = itemsFileA[i]->statement;
     int length=1;    
     bool addRow=false;
-    posRowA[posC]=-1;
+    //posRowA[posC]=-1;
     if (isSgAsmx86Instruction(stmts)) {
       codeTableWidget->addRows(1);
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
@@ -680,18 +794,20 @@ void BinQGUI::showFileA(int row) {
 
       itemsFileA[i]->bg=QColor(255,255,255);
       QColor back = itemsFileA[i]->bg;
-      itemsFileA[i]->fg=QColor(255,0,0);
+      itemsFileA[i]->fg=QColor(0,0,0);
       QColor front = itemsFileA[i]->fg;
 
-      for (int j=0;j<4;++j) {
+      for (int j=1;j<maxrows;++j) {
 	codeTableWidget->setBgColor(back,j,i);
       }
       codeTableWidget->setTextColor(front,0,i);
-      codeTableWidget->setTextColor(QColor(0,0,255),1,i);
-      codeTableWidget->setTextColor(QColor(0,155,0),2,i);
+      codeTableWidget->setTextColor(QColor(255,0,0),1,i);
+      codeTableWidget->setTextColor(QColor(0,0,255),2,i);
       codeTableWidget->setTextColor(QColor(0,155,0),3,i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 0, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 1, i);
+      codeTableWidget->setTextColor(QColor(0,155,0),4,i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
       SgAsmOperandList * ops = isSgAsmx86Instruction(stmts)->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       SgAsmExpressionPtrList::iterator it = opsList.begin();
@@ -699,16 +815,18 @@ void BinQGUI::showFileA(int row) {
       for (;it!=opsList.end();++it) {
 	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
       }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(opsName), 2, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 3, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);
       addRow=true;
     } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {
       //cerr << " isSgAsmBlock(stmts[i])->get_parent() " << isSgAsmBlock(stmts[i])->get_parent()->class_name() << endl;
       codeTableWidget->addRows(1);
       codeTableWidget->setTextColor(QColor(128,128,128),0,i);
-      codeTableWidget->setTextColor(QColor(255,255,0),1,i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 0, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>("***"), 1, i);
+      codeTableWidget->setTextColor(QColor(128,128,128),1,i);
+      codeTableWidget->setTextColor(QColor(255,255,0),2,i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>("***"), 2, i);
       addRow=true;
     } else if (isSgAsmFunctionDeclaration(stmts)) {
       codeTableWidget->addRows(1);
@@ -716,17 +834,31 @@ void BinQGUI::showFileA(int row) {
       QColor back = itemsFileA[i]->bg;
       itemsFileA[i]->fg=QColor(255,255,255);
       QColor front = itemsFileA[i]->fg;
-      for (int j=0;j<4;++j) {
+      for (int j=1;j<maxrows;++j) {
 	codeTableWidget->setBgColor(back,j,i);
 	codeTableWidget->setTextColor(front,j,i);
       }
-      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 0, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 2, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
+      codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
       addRow=true;
     } else {
       codeTableWidget->addRows(1);
-      cerr << " FOUND UNEXPECTED NODE " << stmts->class_name() << endl;
+      /*
+      cerr << " FOUND UNEXPECTED NODE " << endl;
+      if (stmts)
+	cerr << "      NODE IS : " << stmts->class_name() << endl;
+      else 
+	cerr << "      NODE IS : NULL " << endl;
+      */
+      itemsFileA[i]->bg=QColor(128,128,128);
+      QColor back = itemsFileA[i]->bg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget->setBgColor(back,j,i);
+      }
+      if (itemsFileA[i]->row)
+	codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->row), 0, i);	
       addRow=true;
     }
     if (addRow) {
@@ -736,12 +868,13 @@ void BinQGUI::showFileA(int row) {
       codeTableWidget->setHAlignment(true, false, 3); // left horizontal alignment
       
       codeTableWidget->setVDim(i,18);
-      codeTableWidget->setHDim(0,80);
-      codeTableWidget->setHDim(1,50);
-      codeTableWidget->setHDim(2,170);
-      codeTableWidget->setHDim(3,130);
+      codeTableWidget->setHDim(0,30);
+      codeTableWidget->setHDim(1,80);
+      codeTableWidget->setHDim(2,50);
+      codeTableWidget->setHDim(3,170);
+      codeTableWidget->setHDim(4,130);
       
-      posRowA[posC]=rowC;
+      //posRowA[posC]=rowC;
       //      cerr << "added at pos:" << posC << "  rowC:" << rowC<<endl;
       rowC++;
       posC+=length;
@@ -777,7 +910,7 @@ void BinQGUI::showFileB(int row) {
     SgAsmStatement* stmts = itemsFileB[i]->statement;
     int length=1;    
     bool addRow=false;
-    posRowB[posC]=-1;
+    //posRowB[posC]=-1;
     if (isSgAsmx86Instruction(stmts)) {
       codeTableWidget2->addRows(1);
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
@@ -786,18 +919,19 @@ void BinQGUI::showFileB(int row) {
       //      if (itemsFileB[i]->plus)
       //	itemsFileB[i]->bg=QColor(135,206,255);
       QColor back = itemsFileB[i]->bg;
-      itemsFileB[i]->fg=QColor(255,0,0);
+      itemsFileB[i]->fg=QColor(0,0,0);
       QColor front = itemsFileB[i]->fg;
-
-      for (int j=0;j<4;++j) {
+      for (int j=1;j<maxrows;++j) {
 	codeTableWidget2->setBgColor(back,j,i);
       }
       codeTableWidget2->setTextColor(front,0,i);
-      codeTableWidget2->setTextColor(QColor(0,0,255),1,i);
-      codeTableWidget2->setTextColor(QColor(0,155,0),2,i);
+      codeTableWidget2->setTextColor(QColor(255,0,0),1,i);
+      codeTableWidget2->setTextColor(QColor(0,0,255),2,i);
       codeTableWidget2->setTextColor(QColor(0,155,0),3,i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 0, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 1, i);
+      codeTableWidget2->setTextColor(QColor(0,155,0),4,i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
       SgAsmOperandList * ops = isSgAsmx86Instruction(stmts)->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       SgAsmExpressionPtrList::iterator it = opsList.begin();
@@ -805,16 +939,18 @@ void BinQGUI::showFileB(int row) {
       for (;it!=opsList.end();++it) {
 	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(opsName), 2, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);
       addRow=true;
     } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {
       //cerr << " isSgAsmBlock(stmts[i])->get_parent() " << isSgAsmBlock(stmts[i])->get_parent()->class_name() << endl;
       codeTableWidget2->addRows(1);
       codeTableWidget2->setTextColor(QColor(128,128,128),0,i);
-      codeTableWidget2->setTextColor(QColor(255,255,0),1,i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 0, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("***"), 1, i);
+      codeTableWidget2->setTextColor(QColor(128,128,128),1,i);
+      codeTableWidget2->setTextColor(QColor(255,255,0),2,i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>("***"), 2, i);
       addRow=true;
     } else if (isSgAsmFunctionDeclaration(stmts)) {
       codeTableWidget2->addRows(1);
@@ -822,17 +958,33 @@ void BinQGUI::showFileB(int row) {
       QColor back = itemsFileB[i]->bg;
       itemsFileB[i]->fg=QColor(255,255,255);
       QColor front = itemsFileB[i]->fg;
-      for (int j=0;j<4;++j) {
+      for (int j=1;j<maxrows;++j) {
 	codeTableWidget2->setBgColor(back,j,i);
 	codeTableWidget2->setTextColor(front,j,i);
       }
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 0, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmFunctionDeclaration(stmts))->get_address()) ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmFunctionDeclaration(stmts))->get_name() ), 3, i);
       addRow=true;
     } else {
       codeTableWidget2->addRows(1);
-      cerr << " FOUND UNEXPECTED NODE " << stmts->class_name() << endl;
+      /*
+      cerr << " FOUND UNEXPECTED NODE " << endl;
+      if (stmts)
+	cerr << "      NODE IS : " << stmts->class_name() << endl;
+      else 
+	cerr << "      NODE IS : NULL " << endl;
+      */
+      itemsFileB[i]->bg=QColor(128,128,128);
+      QColor back = itemsFileB[i]->bg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+      }
+
+      if (itemsFileB[i]->row)
+	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+
       addRow=true;
     }
     if (addRow) {
@@ -842,12 +994,13 @@ void BinQGUI::showFileB(int row) {
       codeTableWidget2->setHAlignment(true, false, 3); // left horizontal alignment
       
       codeTableWidget2->setVDim(i,18);
-      codeTableWidget2->setHDim(0,80);
-      codeTableWidget2->setHDim(1,50);
-      codeTableWidget2->setHDim(2,170);
-      codeTableWidget2->setHDim(3,130);
+      codeTableWidget2->setHDim(0,30);
+      codeTableWidget2->setHDim(1,80);
+      codeTableWidget2->setHDim(2,50);
+      codeTableWidget2->setHDim(3,170);
+      codeTableWidget2->setHDim(4,130);
       
-      posRowB[posC]=rowC;
+      //posRowB[posC]=rowC;
       //      cerr << "added at pos:" << posC << "  rowC:" << rowC<<endl;
       rowC++;
       posC+=length;

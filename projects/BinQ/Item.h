@@ -8,8 +8,6 @@ class Item {
        int functionSize, int resolved, int row):function(function),
     statement(statement),functionSize(functionSize),
     resolved(resolved),row(row){
-    plus=false;
-    minus=false;
     fg = QColor(128,128,128);
     bg = QColor(128,128,128);
 }
@@ -20,8 +18,6 @@ class Item {
   int resolved;
   int row;
   // is this a added or removed instruction (clone detection)
-  bool plus;
-  bool minus;
 
   QColor bg;
   QColor fg;

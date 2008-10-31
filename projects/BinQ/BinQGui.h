@@ -47,13 +47,15 @@ class BinQGUI //: public QWidget
     std::map<int,Item*> byteItemFileB;
     std::map<int,int> posRowA;
     std::map<int,int> posRowB;
+    std::map<int,int> rowPosA;
+    std::map<int,int> rowPosB;
     QTextEdit *analysisResult;
     QTextEdit *fileInfo;
     QListWidget *listWidget;
     SgNode* fileA;
     SgNode* fileB;
     Slide *slide;
-
+    int maxrows;
 
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
@@ -81,10 +83,8 @@ class BinQGUI //: public QWidget
     int screenWidth;
     int screenHeight;
 
-    //    private slots:
-    //void clicked1(int);
+    bool findPosWhenFunctionsAreNotSync(int& position, int& offset);
 
-    //void analysisWidgetActivated(int);
    
 }; //class BinQGUI
 
