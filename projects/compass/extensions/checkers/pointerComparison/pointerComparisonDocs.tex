@@ -1,0 +1,56 @@
+% 9.5.07
+% This is a sample documentation for Compass in the tex format.
+% We restrict the use of tex to the following subset of commands:
+%
+% \section, \subsection, \subsubsection, \paragraph
+% \begin{enumerate} (no-nesting), \begin{quote}, \item
+% {\tt ... }, {\bf ...}, {\it ... }
+% \htmladdnormallink{}{}
+% \begin{verbatim}...\end{verbatim} is reserved for code segments
+% ...''
+%
+
+\section{Pointer Comparison}
+\label{PointerComparison::overview}
+
+This checker tries to find comparison operations involving
+pointers. These comparison results are determined by the memory locations of
+the objects pointed to in the program's address space. Using $==$ is usually
+safe. But using $<$, $<=$,$>$, and $>=$ is error-prone given the
+uncertainty of memory locations of objects across executions and platforms. 
+
+\subsection{Parameter Requirements}
+
+%Write the Parameter specification here.
+There is not parameter requirement.
+
+\subsection{Implementation}
+
+%Details of the implementation go here.
+The checker finds relational operators such as $<$ , $<=$,$>$, and $>=$
+and sends out warnings if at least one of their operands is of pointer types.
+
+\subsection{Non-Compliant Code Example}
+
+% write your non-compliant code subsection
+Here is the original code piece which inspired this checker. 
+It assumes in the ROSE AST, a parent scope node resides in a memory location of smaller
+address compared to the address of its descendent scope node. 
+This assumption is wrong given the difference of memory management across
+platforms or even executions. A right solution is to walk the AST tree to
+find out their relationship.
+\begin{verbatim}
+
+SgScopeStatement * scope1, * scope2; 
+// ....
+if (scope1<scope2)
+  //
+else
+  //
+
+\end{verbatim}
+
+\subsection{References}
+No reference.
+% Write some references
+% ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
