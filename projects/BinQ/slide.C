@@ -22,8 +22,8 @@ Slide::Slide(BinQGUI* g,
 }
 
 void
-Slide::colorize(BinQGUI* g) {
-  gui=g;
+Slide::colorize() {
+  ROSE_ASSERT(gui);
   update();
 }
 

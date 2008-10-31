@@ -8,11 +8,13 @@ bin_PROGRAMS = BinQ
 
 BinQ_SOURCES = \
 	BinQMain.C \
-        BinQGui.C \
 	BinQSupport.C \
-	slide.C
+	BinQGui.C \
+	slide.C \
+	Clone.C
 
-      
+
+
 BinQ_LDADD = $(ROSE_LIBS) $(QT_LDFLAGS) $(QROSE_LDFLAGS) -lrt
 
 INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
@@ -27,7 +29,7 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ
+	rm -f *.o BinQ *.s
 
 endif
 
@@ -37,4 +39,5 @@ EXTRA_DIST = BinQGui.h \
              disks.xpm  \
              folder.xpm \
              icons.h \
-             Item.h
+             Item.h \
+             Clone.h

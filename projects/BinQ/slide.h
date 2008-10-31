@@ -14,7 +14,7 @@ class Slide : public QWidget
 
  public:
   Slide(BinQGUI* gui, QWidget *parent = 0);
-  void colorize(BinQGUI* gui);
+  void colorize();
 
  protected:
   void paintEvent(QPaintEvent *event);

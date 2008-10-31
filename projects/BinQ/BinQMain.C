@@ -2,6 +2,7 @@
  *
  */
 
+#include "rose.h"
 #include <vector>
 #include <qrose.h>
 #include "BinQGui.h"
@@ -16,6 +17,15 @@ using namespace std;
 
 int main( int argc, char **argv )
 {
+#if 0
+  RoseBin_Def::RoseAssemblyLanguage = RoseBin_Def::x86;
+  fprintf(stderr, "Starting binCompass frontend...\n");
+  SgProject* project = frontend(argc,argv);
+  ROSE_ASSERT (project != NULL);
+  fprintf(stderr, "End binCompass frontend...\n\n\n");
+#endif
+
+
   QROSE::init(argc,argv);
 
   std::string fileA,fileB;
@@ -41,7 +51,7 @@ int main( int argc, char **argv )
     }
 
     if (vm.count("fileA")!=1 ||vm.count("fileB")!=1 ) {
-      std::cerr << "Missing options. Call as: astEquivalence --fileA <file A> --fileB <file B>" 
+      std::cerr << "Missing options. Call as: BinQ --fileA <file A> --fileB <file B>" 
         << std::endl;
       exit(1);
 
@@ -59,10 +69,7 @@ int main( int argc, char **argv )
 
 
 
-  
   BinQGUI binGui(fileA,fileB);
-
   binGui.run();
-  
   return QROSE::exec();
 }

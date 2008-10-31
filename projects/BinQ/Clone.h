@@ -1,0 +1,45 @@
+#ifndef CLONE_R_H
+#define CLONE_R_H
+#include "rose.h"
+
+#include <boost/smart_ptr.hpp>
+
+#include <iostream>
+#include <list>
+
+
+template <typename T>
+class vector_start_at_one {
+  std::vector<T> sa;
+  size_t theSize;
+
+ public:
+  vector_start_at_one(): sa(), theSize(0) {}
+
+  size_t size() const {return sa.size();}
+  T* get() const {return sa.get();}
+
+  void push_back(T v){ sa.push_back(v); }
+  T& operator[](size_t i) {return sa[i-1];}
+  const T& operator[](size_t i) const {return sa[i];}
+
+ private:
+  vector_start_at_one(const vector_start_at_one<T>&); // Not copyable
+};
+
+
+std::string
+unparseInstrFast(SgAsmInstruction* iA);
+
+static bool
+isEqual(SgNode* A, SgNode* B);
+
+void LCSLength( boost::scoped_array<boost::scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B );
+
+void printDiff( boost::scoped_array<boost::scoped_array<size_t> >& C,
+		vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
+		std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInstr
+		);
+
+
+#endif

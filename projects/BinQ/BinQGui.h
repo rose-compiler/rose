@@ -16,46 +16,16 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 
-#include <boost/smart_ptr.hpp>
-#include <boost/lexical_cast.hpp>
-#include <stdint.h>
-#include "BinQSupport.h"
 #include <QDesktopWidget>
 #include <QApplication>
 
 #include "Item.h"
 
 class Slide;
+class BinQSupport;
 
 
-
-
-
-template <typename T>
-class scoped_array_with_size {
-  boost::scoped_array<T> sa;
-  size_t theSize;
-
-  public:
-  scoped_array_with_size(): sa(), theSize(0) {}
-  scoped_array_with_size(size_t s): sa(new T[s]), theSize(s) {}
-
-  void allocate(size_t s) {
-    sa.reset(new T[s]);
-    theSize = s;
-  }
-  size_t size() const {return theSize;}
-  T* get() const {return sa.get();}
-
-  T& operator[](size_t i) {return sa[i];}
-  const T& operator[](size_t i) const {return sa[i];}
-
-  private:
-  scoped_array_with_size(const scoped_array_with_size<T>&); // Not copyable
-};
-
-
-class BinQGUI
+class BinQGUI //: public QWidget
 {
   public:
     BinQGUI(std::string, std::string );
@@ -78,19 +48,22 @@ class BinQGUI
     std::map<int,int> posRowA;
     std::map<int,int> posRowB;
     QTextEdit *analysisResult;
+    QTextEdit *fileInfo;
+    QListWidget *listWidget;
+    SgNode* fileA;
+    SgNode* fileB;
+    Slide *slide;
 
-  protected:
+
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
     qrs::QRTable *codeTableWidget;
 
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
-
+  protected:
     QComboBox *comboBox;
     qrs::QRProgress *wholeFunction;
-    Slide *slide;
-    QListWidget *listWidget;
     
 
     QTextBrowser *codeBrowser;
@@ -98,18 +71,20 @@ class BinQGUI
     QLineEdit *largerThanRestriction;
 
   private:
-
+    void insertFileInformation();
     std::vector<SgAsmFunctionDeclaration*> funcsFileA;
     std::vector<SgAsmFunctionDeclaration*> funcsFileB;
     BinQSupport* binqsupport;
     
     std::string fileNameA,fileNameB;
-    SgNode* fileA;
-    SgNode* fileB;
 
     int screenWidth;
     int screenHeight;
 
+    //    private slots:
+    //void clicked1(int);
+
+    //void analysisWidgetActivated(int);
    
 }; //class BinQGUI
 

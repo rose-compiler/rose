@@ -100,7 +100,7 @@ void numberOperands(std::vector<SgAsmx86Instruction*>::iterator beg,
 
 SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
   SgNode* globalBlock;
-  int found = tsv_directory.rfind(".");
+  unsigned int found = tsv_directory.rfind(".");
   string ending="";
   if (found!=string::npos) {
     ending =tsv_directory.substr(found,tsv_directory.length());
@@ -121,20 +121,20 @@ SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
       // traverse the AST and test it
       roseBin->test();
     }else{
-    vector<char*> args;
-    args.push_back(strdup(""));
-    args.push_back(strdup(tsv_directory.c_str()));
-    args.push_back(0);
+      vector<char*> args;
+      args.push_back(strdup(""));
+      args.push_back(strdup(tsv_directory.c_str()));
+      args.push_back(0);
 
-    ostringstream outStr; 
-    for(vector<char*>::iterator iItr = args.begin(); iItr != args.end();
-        ++iItr )    {
-      outStr << *iItr << " ";
-    }     
-    ;
-    std::cout << "Calling " << outStr.str() << std::endl;
-    globalBlock =  frontend(args.size()-1,&args[0]);
-  }
+      ostringstream outStr; 
+      for(vector<char*>::iterator iItr = args.begin(); iItr != args.end();
+	  ++iItr )    {
+	outStr << *iItr << " ";
+      }     
+      ;
+      std::cout << "Calling " << outStr.str() << std::endl;
+      globalBlock =  frontend(args.size()-1,&args[0]);
+    }
   return globalBlock;
 };
 
@@ -143,7 +143,7 @@ SgNode* BinQSupport::disassembleFile(std::string tsv_directory){
 
 std::string 
 BinQSupport::normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
-					    std::vector<SgAsmx86Instruction*>::iterator end) {
+					 std::vector<SgAsmx86Instruction*>::iterator end) {
   string normalizedUnparsedInstructions;
   map<SgAsmExpression*, size_t> valueNumbers[3];
   numberOperands( beg,end, valueNumbers);
