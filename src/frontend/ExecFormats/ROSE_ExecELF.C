@@ -1445,21 +1445,38 @@ SgAsmElfSegmentTableEntry::stringifyType(SegmentType kind) const
     std::string s;
 
     switch (kind) {
-      case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break;
-      case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break;
-      case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break;
-      case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break;
-      case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break;
-      case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break;
-      case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break;
-      case SgAsmElfSegmentTableEntry::PT_LOPROC:  s = "PT_LOPROC";  break;
-      case SgAsmElfSegmentTableEntry::PT_HIPROC:  s = "PT_HIPROC";  break;
+      case SgAsmElfSegmentTableEntry::PT_NULL:    s = "PT_NULL";    break; // 0
+      case SgAsmElfSegmentTableEntry::PT_LOAD:    s = "PT_LOAD";    break; // 1
+      case SgAsmElfSegmentTableEntry::PT_DYNAMIC: s = "PT_DYNAMIC"; break; // 2
+      case SgAsmElfSegmentTableEntry::PT_INTERP:  s = "PT_INTERP";  break; // 3
+      case SgAsmElfSegmentTableEntry::PT_NOTE:    s = "PT_NOTE";    break; // 4
+      case SgAsmElfSegmentTableEntry::PT_SHLIB:   s = "PT_SHLIB";   break; // 5
+      case SgAsmElfSegmentTableEntry::PT_PHDR:    s = "PT_PHDR";    break; // 6
+
+   // DQ (10/31/2008): Added mising enum values to prevent run-time warnings
+   /* OS- and Processor-specific ranges */
+      case SgAsmElfSegmentTableEntry::PT_LOOS: s = "PT_LOOS";  break; // 0x60000000, Values reserved for OS-specific semantics
+      case SgAsmElfSegmentTableEntry::PT_HIOS: s = "PT_HIOS";  break; // 0x6fffffff,
+
+   /* Values reserved for processor-specific semantics */
+      case SgAsmElfSegmentTableEntry::PT_LOPROC: s = "PT_LOPROC";  break;
+      case SgAsmElfSegmentTableEntry::PT_HIPROC: s = "PT_HIPROC";  break;
+
+	 /* OS-specific values for GNU/Linux */
+      case SgAsmElfSegmentTableEntry::PT_GNU_EH_FRAME: s = "PT_GNU_EH_FRAME"; break; // 0x6474e550, /* GCC .eh_frame_hdr segment */
+      case SgAsmElfSegmentTableEntry::PT_GNU_STACK:    s = "PT_GNU_STACK";    break; // 0x6474e551, /* Indicates stack executability */
+      case SgAsmElfSegmentTableEntry::PT_GNU_RELRO:    s = "PT_GNU_RELRO";    break; // 0x6474e552, /* Read-only after relocation */
+      case SgAsmElfSegmentTableEntry::PT_PAX_FLAGS:    s = "PT_PAX_FLAGS";    break; // 0x65041580, /* Indicates PaX flag markings */
+
+	  /* OS-specific values for Sun */
+      case SgAsmElfSegmentTableEntry::PT_SUNWBSS:      s = "PT_SUNWBSS";   break; // 0x6ffffffa, /* Sun Specific segment */
+      case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    s = "PT_SUNWSTACK"; break; // 0x6ffffffb  /* Stack segment */
 
       default:
       {
           s = "error";
 
-          // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
+       // DQ (8/29/2008): This case is exercised frequently, I think it warrants only a warning, instead of an error.
           printf ("Warning: default reached for SgAsmElfSegmentTableEntry::stringifyType = 0x%x \n",kind);
       }
     }
