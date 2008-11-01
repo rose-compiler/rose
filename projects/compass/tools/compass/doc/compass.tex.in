@@ -182,13 +182,15 @@
 
 \input{usingCompassVerifier}
 
+\newpage
 
+\input{compass_categories}
 
 
 % Put the list of detector documentation here
 \newpage
 
-\chapter{Compass Checkers}
+\chapter{List of Compass Checkers}
 
 \input{compassCheckerDocs}
 

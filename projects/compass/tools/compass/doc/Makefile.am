@@ -39,6 +39,7 @@ EXTRA_DIST = acknowledgments.tex \
 	ToolGear_gui_compass_01.pdf \
 	ToolGear_gui_compass_01.png \
 	usingCompass.tex \
+	compass_categories.tex \
 	usingCompassVerifier.tex
 
 clean-local:
