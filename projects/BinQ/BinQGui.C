@@ -130,9 +130,9 @@ void clicked1() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos));
+	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"");
 	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length);
+	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"");
 	it = instance->itemsFileA.insert(it,item);
 	++it;
 	cerr << "    A: adding NULL item at : " << (position+i+1) << "  pos : " << (oldPos+i) <<endl;
@@ -157,9 +157,9 @@ void clicked1() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos));
+	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"");
 	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length);
+	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"");
 	it = instance->itemsFileB.insert(it,item);
 	++it;
 	cerr << "    B: adding NULL item at : " << (position+i+1) << "  pos : " << oldPos+i<<endl;
@@ -582,19 +582,38 @@ void BinQGUI::init(){
       std::vector<SgAsmStatement*> stmts2;
       AstQueryNamespace::querySubTree(fileA, std::bind2nd( visStat2, &stmts2 ));
       int funcsize= stmts2.size();
-      item = new Item(true,*it,funcsize,2,row,length, pos);
+      item = new Item(true,*it,funcsize,2,row,length, pos,"");
     } else if (isSgAsmBlock(*it)) {
       continue;
       //item = new Item(false,*it,0,1,row,0);
     } else {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(false,*it,0,0,row,length,pos);
+      item = new Item(false,*it,0,0,row,length,pos,"");
     }
     // color code pushes as an example
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_push)
-	item = new Item(false,*it,0,3,row,length,pos);
+      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) { 
+	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
+	SgAsmOperandList * ops = inst->get_operandList();
+	SgAsmExpressionPtrList& opsList = ops->get_operands();
+	std::string addrDest="";
+	SgAsmExpressionPtrList::iterator itOP = opsList.begin();
+	for (;itOP!=opsList.end();++itOP) {
+	  addrDest += unparseX86Expression(*itOP, false) ;
+	}
+	string s="<...>";
+	for (unsigned int j=0; j<funcsFileA.size();++j) {
+	  SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileA[j]);
+	  string addrF= RoseBin_support::HexToString(f->get_address());
+	  addrF="0x"+addrF.substr(1,addrF.size());
+	  if (addrF==addrDest) {
+	    s="<"+f->get_name()+">";
+	    break;
+	  }
+	}
+	item = new Item(false,*it,0,3,row,length,pos,s);
+      }
     }
     row++;
     itemsFileA.push_back(item);
@@ -615,19 +634,39 @@ void BinQGUI::init(){
       std::vector<SgAsmStatement*> stmts2;
       AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts2 ));
       int funcsize= stmts2.size();
-      item = new Item(true,*it,funcsize,2,row,length,pos);
+      item = new Item(true,*it,funcsize,2,row,length,pos,"");
     }    else if (isSgAsmBlock(*it)) {
       continue;
       //item = new Item(false,*it,0,1,row,0);
     } else {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(false,*it,0,0,row,length,pos);
+      item = new Item(false,*it,0,0,row,length,pos,"");
     }
     //example
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_push)
-	item = new Item(false,*it,0,3,row,length,pos);
+      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
+	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
+	SgAsmOperandList * ops = inst->get_operandList();
+	SgAsmExpressionPtrList& opsList = ops->get_operands();
+	std::string addrDest="";
+	SgAsmExpressionPtrList::iterator itOP = opsList.begin();
+	for (;itOP!=opsList.end();++itOP) {
+	  addrDest += unparseX86Expression(*itOP, false) ;
+	}
+	string s="<...>";
+	for (unsigned int j=0; j<funcsFileB.size();++j) {
+	  SgAsmFunctionDeclaration* f = isSgAsmFunctionDeclaration(funcsFileB[j]);
+	  string addrF= RoseBin_support::HexToString(f->get_address());
+	  addrF="0x"+addrF.substr(1,addrF.size());
+	  if (addrF==addrDest) {
+	    s="<"+f->get_name()+">";
+	    break;
+	  }
+	}
+	item = new Item(false,*it,0,3,row,length,pos,s);
+
+      }
     }
     row++;
     itemsFileB.push_back(item);
@@ -864,7 +903,7 @@ void BinQGUI::showFileA(int row) {
 	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
       }
       codeTableWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
-      codeTableWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);
+      codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->comment ), 4, i);
       codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->pos), 5, i);	
       codeTableWidget->setText(boost::lexical_cast<std::string>(itemsFileA[i]->length), 6, i);	
       addRow=true;
@@ -997,7 +1036,7 @@ void BinQGUI::showFileB(int row) {
 	opsName += boost::lexical_cast<std::string>(unparseX86Expression(*it, false) )+", ";
       }
       codeTableWidget2->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
       addRow=true;
