@@ -1,6 +1,6 @@
 
-std::vector<std::pair<SgNode**,std::string> >
-$CLASSNAME::returnDataMemberReferenceToPointers()
+void
+$CLASSNAME::processDataMemberReferenceToPointers(ReferenceToPointerHandler* handler)
    {
   // ------------ checking pointers of $CLASSNAME -------------------
      ROSE_ASSERT ( p_freepointer == AST_FileIO::IS_VALID_POINTER() );

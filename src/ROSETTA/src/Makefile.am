@@ -56,7 +56,7 @@ GRAMMAR_SOURCE_FILES = \
      ../Grammar/grammarStaticDataManagingClassHeader.macro \
      ../Grammar/grammarStaticDataManagingClassStorageClassHeader.macro \
      ../Grammar/grammarReturnDataMemberPointers.macro \
-     ../Grammar/grammarReturnDataMemberReferenceToPointers.macro \
+     ../Grammar/grammarProcessDataMemberReferenceToPointers.macro \
      ../Grammar/grammarGetChildIndex.macro \
      ../astNodeList
 
@@ -124,8 +124,8 @@ $(CXX_PREPROC_CODES): CxxGrammarMetaProgram$(EXEEXT) $(GRAMMAR_SOURCE_FILES)
 	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarReturnDataMemberPointers.C
 	mv Cxx_GrammarReturnDataMemberPointers.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarReturnDataMemberPointers.C
 #	DQ (4/30/2006): Added support for function to return references to IR nodes pointers
-	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarReturnDataMemberReferenceToPointers.C
-	mv Cxx_GrammarReturnDataMemberReferenceToPointers.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarReturnDataMemberReferenceToPointers.C
+	rm -f $(CXX_GRAMMAR_DIR)/Cxx_GrammarProcessDataMemberReferenceToPointers.C
+	mv Cxx_GrammarProcessDataMemberReferenceToPointers.C $(CXX_GRAMMAR_DIR)/Cxx_GrammarProcessDataMemberReferenceToPointers.C
 #	DQ (4/6/2006): Added from Jochen's multifile I/O support
 	rm -f $(CXX_GRAMMAR_DIR)/astFileIO/SourcesOfIRNodesAstFileIOSupport.C
 	mv SourcesOfIRNodesAstFileIOSupport.C $(CXX_GRAMMAR_DIR)/astFileIO/SourcesOfIRNodesAstFileIOSupport.C

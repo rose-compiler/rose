@@ -1695,8 +1695,8 @@ Terminal::buildReturnDataMemberPointers ()
 /*************************************************************************************************
 *  The function
 *       Terminal::buildListIteratorStringForReferenceToPointers()
-*  supports buildReturnDataMemberReferenceToPointers() by building the string representing the code 
-*  necessary to return references (pointers) all data member pointers to IR nodes contained in STL lists.
+*  supports buildProcessDataMemberReferenceToPointers() by building the string representing the code 
+*  necessary to process references (pointers) all data member pointers to IR nodes contained in STL lists.
 *************************************************************************************************/
 string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, string variableName, string classNameString)
    {
@@ -1798,20 +1798,17 @@ string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, 
        // Open up the loop over the list elements
           if (accessOperator=="->")
              {
-               returnString += "     if (" + originalList + "== NULL)\n";
-            // Return a NULL pointer so that the graph shows that this pointer equals NULL
-               returnString += "        returnVector.push_back(pair<SgNode**,std::string>( NULL,\""+variableName+"\"));\n";
-
+               returnString += "     if (" + originalList + "== NULL) {}\n";
                returnString += "     else\n";
              }
 
-          returnString += "     for ( " +iteratorBaseType + "::const_iterator " + iteratorName + " = " + originalList + accessOperator + "begin() \n"
+          returnString += "     for ( " +iteratorBaseType + "::iterator " + iteratorName + " = " + originalList + accessOperator + "begin() \n"
                        + "; " + iteratorName
                        + " != " + originalList + accessOperator + "end(); ++" 
                        + iteratorName + ") \n        { \n";
 
        // Declare the a loop variable (reference to current element of list)
-          returnString += "          returnVector.push_back(pair<SgNode**,std::string>( (SgNode**)(&(*" + iteratorName + ")),\""+variableName+"\"));\n";
+          returnString += "          handler->apply(*" + iteratorName + ",SgName(\""+variableName+"\"));\n";
                 
        // close off the loop
           returnString += "        } \n";
@@ -1823,11 +1820,11 @@ string Terminal::buildListIteratorStringForReferenceToPointers(string typeName, 
 //DQ (4/30/2006): This function is similar to buildReturnDataMemberPointers but returns reference to the pointers.
 /*************************************************************************************************
 *  The function
-*       Terminal::buildReturnDataMemberReferenceToPointers()
-*  builds the code for returning references to all data member pointers to IR nodes in the AST.
+*       Terminal::buildProcessDataMemberReferenceToPointers()
+*  builds the code for processing references to all data member pointers to IR nodes in the AST.
 *************************************************************************************************/
 string
-Terminal::buildReturnDataMemberReferenceToPointers ()
+Terminal::buildProcessDataMemberReferenceToPointers ()
    {
   // DQ (4/30/2006): This is a modified version of the code for buildReturnDataMemberPointers()
 
@@ -1840,7 +1837,7 @@ Terminal::buildReturnDataMemberReferenceToPointers ()
      vector<GrammarString *>::iterator stringListIterator;
 
      string classNameString = this-> name;
-     string s("std::vector<std::pair<SgNode**,std::string> > returnVector;\n") ;
+     string s ;
   // s += "   std::cout << \"------------ checking pointers of " + classNameString + "  -------------------\" << std::endl;\n" ;
   // s += "   ROSE_ASSERT ( pointer->p_freepointer == AST_FileIO::IS_VALID_POINTER() );\n";
   // AS Iterate over the terminal and its parents (base-classes).
@@ -1878,7 +1875,7 @@ Terminal::buildReturnDataMemberReferenceToPointers ()
                        {
                       // AS Checks to see if the pointer is a data member. Because the mechanism for generating access to variables
                       // is the same as the one accessing access member functions. We do not want the last case to show up here.
-                         s += "          returnVector.push_back(pair<SgNode**,std::string>( (SgNode**)(&(p_" + varNameString + ")),\""+varNameString+"\"));\n";
+                         s += "          handler->apply(p_" + varNameString + ",SgName(\""+varNameString+"\"));\n";
                        }
                       else
                        {
@@ -1889,15 +1886,13 @@ Terminal::buildReturnDataMemberReferenceToPointers ()
                               accessOperator = "->";
                               s += "     if (p_" + varNameString + " == NULL)\n";
                               s += "        {\n";
-                           // Return a NULL pointer so that th graph shows that this pointer equals NULL
-                              s += "          returnVector.push_back(pair<SgNode**,std::string>( NULL,\"" + varNameString + "\"));\n";
                               s += "        }\n";
                               s += "     else\n";
                               s += "        {\n";
-                              s += "          for ( rose_hash_multimap::const_iterator it_"+varNameString+ "= p_" + varNameString + accessOperator + "begin(); it_" + varNameString + "!= p_" + varNameString + accessOperator + "end(); ++" + "it_" + varNameString + ")\n";
+                              s += "          for ( rose_hash_multimap::iterator it_"+varNameString+ "= p_" + varNameString + accessOperator + "begin(); it_" + varNameString + "!= p_" + varNameString + accessOperator + "end(); ++" + "it_" + varNameString + ")\n";
                               s += "             {\n";
                            // Declare the a loop variable (reference to current element of list)
-                              s += "               returnVector.push_back(pair<SgNode**,std::string>( (SgNode**)(&(it_" + varNameString + "->second)), std::string(it_" + varNameString + "->first.str()) ) );\n";
+                              s += "               handler->apply(it_" + varNameString + "->second, it_" + varNameString + "->first);\n";
                            // close off the loop
                               s += "             }\n";
                               s += "        }\n";
@@ -1906,8 +1901,6 @@ Terminal::buildReturnDataMemberReferenceToPointers ()
                   }
              }
         }
-
-     s += "     return returnVector;\n";
 
      return s;
    }

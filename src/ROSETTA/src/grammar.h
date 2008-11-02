@@ -339,7 +339,7 @@ class Grammar
        // AS (2/14/06): Added support for building code to return data member pointers to IR nodes
 	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberPointersSource ( Terminal & node );
 
-	  StringUtility::FileWithLineNumbers buildStringForReturnDataMemberReferenceToPointersSource ( Terminal & node );
+	  StringUtility::FileWithLineNumbers buildStringForProcessDataMemberReferenceToPointersSource ( Terminal & node );
 
        // DQ (3/7/2007): support for getChildIndex member function
 	  StringUtility::FileWithLineNumbers buildStringForGetChildIndexSource ( Terminal & node );
@@ -388,7 +388,8 @@ class Grammar
           void buildStringForReturnDataMemberPointersSupport ( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (4/30/2006): Support for buildStringForReturnDataMemberReferenceToPointersSource
-          void buildStringForReturnDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
+       // JJW (11/1/2008): Changed to process rather than return the references
+          void buildStringForProcessDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );
 
        // DQ (12/23/2005): Relocated copy function to a separate file to imrove readability of source code
           void buildCopyMemberFunctions( Terminal & node, StringUtility::FileWithLineNumbers & outputFile );

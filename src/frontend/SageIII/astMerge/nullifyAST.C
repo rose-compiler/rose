@@ -38,22 +38,11 @@ NullTreeMemoryPoolTraversal::visit ( SgNode* node)
 
      if (nullifyIRchildren == true)
         {
-       // Only traverse the new part of the AST
-          typedef vector<pair<SgNode**,string> > DataMemberMapType;
-          DataMemberMapType dataMemberMap = node->returnDataMemberReferenceToPointers();
-
-          DataMemberMapType::iterator i = dataMemberMap.begin();
-          while (i != dataMemberMap.end())
-             {
-            // Ignore the parent pointer since it will be reset differently if required
-               SgNode** pointerToKey = i->first;
-            // SgNode* key           = *(i->first);
-            // string & debugString  = i->second;
-
-               *pointerToKey = NULL;
-
-               i++;
-             }
+          struct Nullifier: public ReferenceToPointerHandler {
+            virtual void operator()(SgNode*& n, const SgName&) {n = NULL;}
+          };
+          Nullifier nf;
+          node->processDataMemberReferenceToPointers(&nf);
         }
    }
 
