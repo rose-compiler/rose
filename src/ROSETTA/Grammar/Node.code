@@ -767,6 +767,8 @@ class RTIMemberData
 
 typedef std::vector<RTIMemberData> RTIReturnType;
 
+struct ReferenceToPointerHandler;
+
 
 /*! \brief Supporting class from copy mechanism within ROSE.
 

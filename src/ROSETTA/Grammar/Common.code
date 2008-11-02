@@ -181,18 +181,16 @@ HEADER_START
        */
           virtual std::vector<std::pair<SgNode*,std::string> > returnDataMemberPointers() const;
 
-      /*! \brief \b FOR \b INTERNAL \b USE Returns STL vector of pairs of references to SgNode* and strings for use in AST tools
+      /*! \brief \b FOR \b INTERNAL \b USE Processes pairs of references to SgNode* and strings for use in AST tools
 
-          This functions similar to returnDataMemberPointers() except that it containes pointers to SgNode* instead 
-          of SgNode pointers as values.  As a result there is FAR more damage that can be done by using this function.
+          This functions similar to returnDataMemberPointers() except that it passes references to a handler object.
+          As a result there is FAR more damage that can be done by using this function, but it is type-safe.
           This is provided for support of internal tools that operate on the AST, e.g the AST Merge mechanism.
 
           \warning This function can return unexpected data members and thus the order and the number of elements is unpredicable 
                    and subject to change.
-
-          \returns STL vector of pairs of SgNode** and strings
        */
-          virtual std::vector<std::pair<SgNode**,std::string> > returnDataMemberReferenceToPointers();
+          virtual void processDataMemberReferenceToPointers(ReferenceToPointerHandler*);
 
       /*! \brief \b FOR \b INTERNAL \b USE Returns a unique index value for the childNode in the list of children at this IR node.
 

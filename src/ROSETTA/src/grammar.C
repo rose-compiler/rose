@@ -911,17 +911,17 @@ Grammar::buildStringForReturnDataMemberPointersSupport( Terminal & node, StringU
 
 
 StringUtility::FileWithLineNumbers
-Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( Terminal & node )
+Grammar::buildStringForProcessDataMemberReferenceToPointersSource ( Terminal & node )
    {
   // DQ & JH (1/17/2006): Added support for testing data members pointers if they point to IR nodes
 
      //AS Look at this one to see how the code in buildStringToTestPointerForContainmentInMemoryPoolSource is called
      //to generate code for checking the memory pool.
-     string isClassNameFunctionTemplateFileName   = "../Grammar/grammarReturnDataMemberReferenceToPointers.macro";
+     string isClassNameFunctionTemplateFileName   = "../Grammar/grammarProcessDataMemberReferenceToPointers.macro";
      StringUtility::FileWithLineNumbers returnString = readFileWithPos (isClassNameFunctionTemplateFileName);
   // printf ("returnString = %s \n",returnString);
 
-     string dataMemberSpecificString = node.buildReturnDataMemberReferenceToPointers();
+     string dataMemberSpecificString = node.buildProcessDataMemberReferenceToPointers();
 
      returnString = GrammarString::copyEdit(returnString,"$CODE_STRING",dataMemberSpecificString.c_str());
 
@@ -938,9 +938,9 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSource ( Terminal & no
    }
 
 void
-Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
+Grammar::buildStringForProcessDataMemberReferenceToPointersSupport( Terminal & node, StringUtility::FileWithLineNumbers & outputFile )
    {
-     StringUtility::FileWithLineNumbers editString = buildStringForReturnDataMemberReferenceToPointersSource(node);
+     StringUtility::FileWithLineNumbers editString = buildStringForProcessDataMemberReferenceToPointersSource(node);
 
   // printf ("editString = %s \n",editString.c_str());
 
@@ -956,7 +956,7 @@ Grammar::buildStringForReturnDataMemberReferenceToPointersSupport( Terminal & no
           ROSE_ASSERT ((*treeNodeIterator) != NULL);
           ROSE_ASSERT ((*treeNodeIterator)->getBaseClass() != NULL);
 
-          buildStringForReturnDataMemberReferenceToPointersSupport(**treeNodeIterator,outputFile);
+          buildStringForProcessDataMemberReferenceToPointersSupport(**treeNodeIterator,outputFile);
         }
 #endif
    }
@@ -2577,18 +2577,18 @@ Grammar::buildCode ()
   // --------------------------------------------
   // generate code for returning data member pointers to IR nodes
   // --------------------------------------------
-     StringUtility::FileWithLineNumbers ROSE_ReturnDataMemberReferenceToPointersSourceFile;
+     StringUtility::FileWithLineNumbers ROSE_ProcessDataMemberReferenceToPointersSourceFile;
 
-     ROSE_ReturnDataMemberReferenceToPointersSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
+     ROSE_ProcessDataMemberReferenceToPointersSourceFile.push_back(StringUtility::StringWithLineNumber(includeHeaderString, "", 1));
   // Now build the source code for the terminals and non-terminals in the grammar
      ROSE_ASSERT (rootNode != NULL);
 
-     buildStringForReturnDataMemberReferenceToPointersSupport(*rootNode,ROSE_ReturnDataMemberReferenceToPointersSourceFile);
-     cout << "DONE: buildStringForReturnDataMemberReferenceToPointersSupport()" << endl;
+     buildStringForProcessDataMemberReferenceToPointersSupport(*rootNode,ROSE_ProcessDataMemberReferenceToPointersSourceFile);
+     cout << "DONE: buildStringForProcessDataMemberReferenceToPointersSupport()" << endl;
 
   // printf ("Exiting after building code to return references data members which are pointers to IR nodes \n");
   // ROSE_ASSERT(false);
-     Grammar::writeFile(ROSE_ReturnDataMemberReferenceToPointersSourceFile, ".", getGrammarName() + "ReturnDataMemberReferenceToPointers", ".C");
+     Grammar::writeFile(ROSE_ProcessDataMemberReferenceToPointersSourceFile, ".", getGrammarName() + "ProcessDataMemberReferenceToPointers", ".C");
 #endif
 
 #if 1

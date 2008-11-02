@@ -71,7 +71,7 @@ static std::string toStringForRTI(const SgSharedVector<T>& x)
      ss << "[";
 
      printf ("Warning: SgSharedVector iterator support is not finished! \n");
-     ROSE_ASSERT(false);
+     // ROSE_ASSERT(false);
 
   // for (typename std::vector<T>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << (*i);}
 

@@ -51,7 +51,7 @@ GENERATED_SOURCE = \
 	StorageClasses.h \
 	StorageClasses.C \
 	Cxx_GrammarReturnDataMemberPointers.C \
-	Cxx_GrammarReturnDataMemberReferenceToPointers.C \
+	Cxx_GrammarProcessDataMemberReferenceToPointers.C \
 	Cxx_GrammarNewConstructors.C \
 	Cxx_GrammarGetChildIndex.C
 
