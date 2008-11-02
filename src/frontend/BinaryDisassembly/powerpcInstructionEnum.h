@@ -154,12 +154,91 @@ enum PowerpcInstructionKind
      powerpc_fnmsub_record, // Floating Negative Multiply-Subtract 
      powerpc_fnmsubs, // Floating Negative Multiply-Subtract Single 
      powerpc_fnmsubs_record, // Floating Negative Multiply-Subtract Single 
+
+  // DQ (11/1/2008): Added PowerPC 440 BGL (Double Hummer) specific floating point instructions.
+     powerpc_fpmul,  // FP2 Floating Parallel Multiply (BGL specific)
+     powerpc_fxmul,  // FP2 Floating Cross Multiply (BGL specific)
+     powerpc_fxpmul, // FP2 Floating Cross Copy-Primary Multiply (BGL specific)
+     powerpc_fxsmul, // FP2 Floating Cross Copy-Secondary Multiply (BGL specific)
+     powerpc_fpadd,  // FP2 Floating Parallel Add (BGL specific)
+     powerpc_fpsub,  // FP2 Floating Parallel Subtract (BGL specific)
+     powerpc_fpre,   // FP2 Floating Parallel Reciprocal Estimate (BGL specific)
+     powerpc_fprsqrte, // FP2 Floating Parallel Reciprocal Square Root Estimate (BGL specific)
+     powerpc_fpmr,
+     powerpc_fpabs,
+     powerpc_lfssx,
+     powerpc_fpneg,
+     powerpc_lfssux,
+     powerpc_fprsp,
+     powerpc_lfsdx,
+     powerpc_fpnabs,
+     powerpc_lfsdux,
+     powerpc_lfxsx,
+     powerpc_fsmr,
+     powerpc_lfxsux,
+     powerpc_lfxdx,
+     powerpc_fsabs,
+     powerpc_lfxdux,
+     powerpc_lfpsx,
+     powerpc_fsneg,
+     powerpc_lfpsux,
+     powerpc_lfpdx,
+     powerpc_fsnabs,
+     powerpc_lfpdux,
+     powerpc_stfpiwx,
+     powerpc_fxmr,
+     powerpc_fpctiw,
+     powerpc_stfssx,
+     powerpc_stfssux,
+     powerpc_fpctiwz,
+     powerpc_stfsdx,
+     powerpc_stfsdux,
+     powerpc_stfxsx,
+     powerpc_fsmtp,
+     powerpc_stfxsux,
+     powerpc_stfxdx,
+     powerpc_stfxdux,
+     powerpc_stfpsx,
+     powerpc_fsmfp,
+     powerpc_stfpsux,
+     powerpc_stfpdx,
+     powerpc_stfpdux,
+     powerpc_fpsel,
+     powerpc_fpmadd,
+     powerpc_fpmsub,
+     powerpc_fxmadd,
+     powerpc_fxcpmadd,
+     powerpc_fxcsmadd,
+     powerpc_fpnmadd,
+     powerpc_fxnmadd,
+     powerpc_fxcpnmadd,
+     powerpc_fxcsnmadd,
+     powerpc_fxcpnpma,
+     powerpc_fxmsub,
+     powerpc_fxcsnpma,
+     powerpc_fxcpmsub,
+     powerpc_fxcpnsma,
+     powerpc_fxcsmsub,
+     powerpc_fxcsnsma,
+     powerpc_fpnmsub,
+     powerpc_fxcxma,
+     powerpc_fxnmsub,
+     powerpc_fxcxnpma,
+     powerpc_fxcpnmsub,
+     powerpc_fxcxnsma,
+     powerpc_fxcsnmsub,
+     powerpc_fxcxnms,
+
+     powerpc_fre, // Floating Reciprocal Estimate Single (optional) 
+     powerpc_fre_record, // Floating Reciprocal Estimate Single (optional) 
      powerpc_fres, // Floating Reciprocal Estimate Single (optional) 
      powerpc_fres_record, // Floating Reciprocal Estimate Single (optional) 
      powerpc_frsp, // Floating Round to Single Precision 
      powerpc_frsp_record, // Floating Round to Single Precision 
      powerpc_frsqrte, // Floating Reciprocal Square Root Estimate (optional) 
      powerpc_frsqrte_record, // Floating Reciprocal Square Root Estimate (optional) 
+     powerpc_frsqrtes, // Floating Reciprocal Square Root Estimate (optional) 
+     powerpc_frsqrtes_record, // Floating Reciprocal Square Root Estimate (optional) 
      powerpc_fsel, // Floating-Point Select (optional) 
      powerpc_fsel_record, // Floating-Point Select (optional) 
      powerpc_fsqrt, // Floating-Point Square Root (optional)

@@ -165,6 +165,8 @@ PowerpcDisassembler::disassemble(const Parameters& p, const uint8_t* const instr
   // Added this to get pass zero instruction (padding?)
      if (c == 0)
         {
+       // DQ (11/1/2008): This case generates a lot of calls to the BadInstruction() handler! Why?
+
 #if DEBUG_OPCODES
           printf ("####### In PowerpcDisassembler::disassemble(): Return NULL pointer for case of c == 0 ####### \n");
 #endif
@@ -203,14 +205,38 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
    // Handle all the different legal Primary Opcode values
      switch (primaryOpcode)
         {
-#if 0
-          case 0x00:
+       // 0 : These are the BGL specific PowerPC440 FP2 Architecture instructions
+           case 0x00: // { instruction = decode_A_formInstruction(); break; }
+             {
+            // Depending on if this is A form or X form, the extended opCode maps to different bit ranges, so this code is incorrect!
+            // uint16_t x_Opcode   = (insn >> 1) & 0x3FF;
+               uint8_t  a_Opcode   = (insn >> 1) & 0x1F;
+
+            // printf ("x_Opcode = 0x%x = %d xfl_Opcode = 0x%x = %d a_Opcode = 0x%x = %d \n",x_Opcode,x_Opcode,xfl_Opcode,xfl_Opcode,a_Opcode,a_Opcode);
+
+            // Different parts of the instruction are used to identify what kind of instruction this is!
+               if (  a_Opcode == 5 || (a_Opcode >= 8 && a_Opcode <= 31) )
+                  {
+                    instruction = decode_A_formInstruction();
+                  }
+                 else
+                  {
+                    instruction = decode_X_formInstruction();
+                  }
+
+               ROSE_ASSERT(instruction != NULL);
+               break;
+             }
+
+#if 1
           case 0x01: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 #endif
           case 0x02: { instruction = decode_D_formInstruction(); break; }
           case 0x03: { instruction = decode_D_formInstruction(); break; }
 
-          case 0x04: 
+       // 4 : These are the BGL specific PowerPC440 FP2 Architecture instructions
+          case 0x04: { instruction = decode_A_formInstruction(); break; }
+
           case 0x05: 
           case 0x06: { /* illegal instruction */ ROSE_ASSERT(false); break; }
 
@@ -335,9 +361,10 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
        // 58
           case 0x3A: { instruction = decode_DS_formInstruction(); break; }
 
+       // 59
           case 0x3B: { instruction = decode_A_formInstruction(); break; }
 
-       // 60
+       // 60, 61
           case 0x3C: 
           case 0x3D: { /* illeagal instruction */ ROSE_ASSERT(false); break; }
 
@@ -380,8 +407,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble(const uint8_t* c
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Primary opcode not handled yet: primaryOpcode = %d \n",primaryOpcode);
-            // ROSE_ASSERT(false);
-               throw BadInstruction();
+               ROSE_ASSERT(false);
+            // throw BadInstruction();
              }
         }
 
@@ -861,6 +888,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
 
                if (raOpcode == 0 || raOpcode == secodaryOpcode)
                   {
+                    printf ("bad instruction: raOpcode == 0 || raOpcode == secodaryOpcode \n");
                     throw BadInstruction();
                   }
 
@@ -1095,6 +1123,13 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
                SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode);
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
             // SgAsmExpression* D = new SgAsmWordValueExpression(lastOpcode);
+
+               if (raOpcode == 0)
+                  {
+                    printf ("bad instruction: raOpcode == 0 case 0x31 = 49 \n");
+                    throw BadInstruction();
+                  }
+
                SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
@@ -1113,6 +1148,27 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_D_formInstruction()
                SgAsmExpression* addressExpr = makeAdd(RA,D);
                SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
                instruction = MAKE_INSN2(lfd,FRT,mr);
+               break;
+             }
+
+       // 51
+          case 0x33:
+             {
+            // The correct form of this instruction is "xxx FRS,D(RA)", so maybe we need a more elaborate way to form "D(RA)" explicitly, perhaps as "(RA) + D".
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_fpr,secodaryOpcode);
+               SgAsmExpression* RA  = makeRegister(powerpc_regclass_gpr,raOpcode);
+            // SgAsmExpression* D   = new SgAsmWordValueExpression(lastOpcode);
+
+               if (raOpcode == 0)
+                  {
+                    printf ("bad instruction: raOpcode == 0 case 0x33 = 51 \n");
+                    throw BadInstruction();
+                  }
+
+               SgAsmExpression* D = new SgAsmDoubleWordValueExpression(IntegerOps::signExtend<16,32>(uint32_t(lastOpcode)));
+               SgAsmExpression* addressExpr = makeAdd(RA,D);
+               SgAsmMemoryReferenceExpression* mr = makeMemoryReference(addressExpr,NULL);
+               instruction = MAKE_INSN2(lfdu,FRT,mr);
                break;
              }
 
@@ -1204,13 +1260,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
   // The primaryOpcode 
      uint8_t primaryOpcode = (insn >> 26) & 0x3F;
 
-  // X-form instructions can be associated with only 2 primary opcodes.
-     ROSE_ASSERT(primaryOpcode == 0x1F || primaryOpcode == 0x3F);
-
   // Get the bits 6-10, next 5 bits
      uint8_t rtOpcode  = (insn >> 21) & 0x1F;
      uint8_t rsOpcode  = rtOpcode;
      uint8_t btOpcode  = rtOpcode;
+     uint8_t toOpcode  = rtOpcode;
 
      uint8_t bfOpcode  = (rtOpcode >> 2) & 0x7;
      uint8_t lOpcode   = (rtOpcode >> 0) & 0x1;
@@ -1218,7 +1272,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
   // Values currently commented out are expected to be used later!
   // uint8_t toOpcode  = rtOpcode;
      uint8_t frtOpcode = rtOpcode;
-  // uint8_t frsOpcode = rtOpcode;
+     uint8_t frsOpcode = rtOpcode;
   // uint8_t boOpcode  = rtOpcode;
 
   // Values currently commented out are expected to be used later!
@@ -1232,6 +1286,8 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
      uint8_t shOpcode  = rbOpcode;
      uint8_t frbOpcode = rbOpcode;
 
+     uint8_t uOpcode  = (insn >> 12) & 0xF;
+
   // Get the bits 21-30, next 10 bits
      uint16_t xoOpcode = (insn >> 1) & 0x3FF;
 
@@ -1239,8 +1295,11 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
 #if DEBUG_OPCODES
-     printf ("X-Form instruction opcode = 0x%x xoOpcode = 0x%x \n",insn,xoOpcode);
+     printf ("X-Form instruction opcode = 0x%x primaryOpcode = 0x%x xoOpcode = 0x%x \n",insn,primaryOpcode,xoOpcode);
 #endif
+
+  // X-form instructions can be associated with only 2 primary opcodes (or zero for BGL FP2 instructions).
+     ROSE_ASSERT(primaryOpcode == 0x0 || primaryOpcode == 0x1F || primaryOpcode == 0x3F);
 
      switch(xoOpcode)
         {
@@ -1263,6 +1322,80 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                     SgAsmExpression* FRB = makeRegister(powerpc_regclass_fpr,frbOpcode);
                     instruction = MAKE_INSN3(fcmpu,BF,FRA,FRB);
                   }
+               break;
+             }
+
+       // 4
+          case 0x4:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(tw,TO,RA,RB);
+               break;
+             }
+
+       // 12
+          case 0xC:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(frsp,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(frsp_record,FRT,FRB);
+                  }
+               break;
+             }
+
+       // 14
+          case 0xE:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fctiw,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fctiw_record,FRT,FRB);
+                  }
+               break;
+             }
+
+       // 15
+          case 0xF:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fctiwz,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fctiwz_record,FRT,FRB);
+                  }
+               break;
+             }
+
+       // 20
+          case 0x14:
+             {
+            // This is a Book II instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RT = makeRegister(powerpc_regclass_gpr,rtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(lwarx,RT,RA,RB);
                break;
              }
 
@@ -1362,12 +1495,22 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
        // 32
           case 0x20:
              {
-               ROSE_ASSERT(primaryOpcode == 0x1F);
-               SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
-               SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
-               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
-               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
-               instruction = MAKE_INSN4(cmpl,BF,L,RA,RB);
+               if (primaryOpcode == 0x1F)
+                  {
+                    ROSE_ASSERT(primaryOpcode == 0x1F);
+                    SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
+                    SgAsmExpression* L  = new SgAsmByteValueExpression(lOpcode);
+                    SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+                    SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+                    instruction = MAKE_INSN4(cmpl,BF,L,RA,RB);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(primaryOpcode == 0x0);
+                    SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+                    SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+                    instruction = MAKE_INSN2(fpmr,FRT,FRB);
+                  }
                break;
              }
 
@@ -1383,6 +1526,23 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                  else
                   {
                     instruction = MAKE_INSN1(mtfsb1_record,BT);
+                  }
+               break;
+             }
+
+       // 40
+          case 0x28:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fneg,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fneg_record,FRT,FRB);
                   }
                break;
              }
@@ -1427,6 +1587,17 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 68
+          case 0x44:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* TO = makeRegister(powerpc_regclass_gpr,toOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(td,TO,RA,RB);
+               break;
+             }
+
        // 70
           case 0x46:
              {
@@ -1439,6 +1610,23 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                  else
                   {
                     instruction = MAKE_INSN1(mtfsb0_record,BT);
+                  }
+               break;
+             }
+
+       // 72
+          case 0x48:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fmr,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fmr_record,FRT,FRB);
                   }
                break;
              }
@@ -1461,6 +1649,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lbzx,RT,RA,RB);
+               break;
+             }
+
+       // 96
+          case 0x60:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fpabs,FRT,FRB);
                break;
              }
 
@@ -1493,6 +1691,54 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 134
+          case 0x86:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* U  = new SgAsmByteValueExpression(uOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(mtfsfi,BF,U);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(mtfsfi_record,BF,U);
+                  }
+               break;
+             }
+
+       // 136
+          case 0x88:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fnabs,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fnabs_record,FRT,FRB);
+                  }
+               break;
+             }
+
+       // 142
+          case 0x8E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfssx,FRT,FRA,FRB);
+               break;
+             }
+
        // 149
           case 0x95:
              {
@@ -1504,6 +1750,17 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 150
+          case 0x96:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(stwcx_record,RS,RA,RB);
+               break;
+             }
+
        // 151
           case 0x97:
              {
@@ -1512,6 +1769,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stwx,RS,RA,RB);
+               break;
+             }
+
+       // 160
+          case 0xA0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fpneg,FRT,FRB);
+               break;
+             }
+
+       // 174
+          case 0xAE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfssux,FRT,FRA,FRB);
                break;
              }
 
@@ -1562,6 +1841,39 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 192
+          case 0xC0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fprsp,FRT,FRB);
+               break;
+             }
+
+       // 206
+          case 0xCE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfsdx,FRT,FRA,FRB);
+               break;
+             }
+
+       // 214
+          case 0xD6:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(stdcx_record,RS,RA,RB);
+               break;
+             }
+
        // 215
           case 0xD7:
              {
@@ -1573,6 +1885,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 224
+          case 0xE0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fpnabs,FRT,FRB);
+               break;
+             }
+
+       // 238
+          case 0xEE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfsdux,FRT,FRA,FRB);
+               break;
+             }
+
        // 247
           case 0xF7:
              {
@@ -1581,6 +1915,36 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stbux,RS,RA,RB);
+               break;
+             }
+
+       // 264
+          case 0x108:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN2(fabs,FRT,FRB);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN2(fabs_record,FRT,FRB);
+                  }
+               break;
+             }
+
+       // 270
+          case 0x10E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfxsx,FRT,FRA,FRB);
                break;
              }
 
@@ -1624,6 +1988,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 288
+          case 0x120:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsmr,FRT,FRB);
+               break;
+             }
+
+       // 302
+          case 0x12E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfxsux,FRT,FRA,FRB);
+               break;
+             }
+
        // 311
           case 0x137:
              {
@@ -1653,6 +2039,29 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 320
+          case 0x140:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* BF = makeRegister(powerpc_regclass_cr,bfOpcode,powerpc_condreggranularity_field);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lhzux,BF,FRA,FRB);
+               break;
+             }
+
+       // 334
+          case 0x14E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfxdx,FRT,FRA,FRB);
+               break;
+             }
+
        // 341
           case 0x155:
              {
@@ -1675,6 +2084,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 352
+          case 0x160:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsabs,FRT,FRB);
+               break;
+             }
+
+       // 366
+          case 0x16E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfxdux,FRT,FRA,FRB);
+               break;
+             }
+
        // 373
           case 0x175:
              {
@@ -1694,6 +2125,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lhaux,RT,RA,RB);
+               break;
+             }
+
+       // 398
+          case 0x18E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfpsx,FRT,FRA,FRB);
                break;
              }
 
@@ -1726,6 +2169,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 416
+          case 0x1A0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsneg,FRT,FRB);
+               break;
+             }
+
+       // 430
+          case 0x1AE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfpsux,FRT,FRA,FRB);
+               break;
+             }
+
        // 439
           case 0x1B7:
              {
@@ -1755,6 +2220,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 462
+          case 0x1CE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfpdx,FRT,FRA,FRB);
+               break;
+             }
+
        // 476
           case 0x1DC:
              {
@@ -1770,6 +2247,40 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                   {
                     instruction = MAKE_INSN3(nand_record,RA,RS,RB);
                   }
+               break;
+             }
+
+       // 480
+          case 0x1E0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsnabs,FRT,FRB);
+               break;
+             }
+
+       // 494
+          case 0x1EE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(lfpdux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 526
+          case 0x20E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfpiwx,FRT,FRA,FRB);
                break;
              }
 
@@ -1792,6 +2303,18 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lwbrx,RT,RA,RB);
+               break;
+             }
+
+       // 535
+          case 0x217:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(lfsx,FRT,RA,RB);
                break;
              }
 
@@ -1831,6 +2354,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 544
+          case 0x220:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fxmr,FRT,FRB);
+               break;
+             }
+
+       // 567
+          case 0x237:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(lfsux,FRT,RA,RB);
+               break;
+             }
+
        // 583
           case 0x247:
              {
@@ -1847,6 +2392,16 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 576
+          case 0x240:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fpctiw,FRT,FRB);
+               break;
+             }
+
        // 597
           case 0x255:
              {
@@ -1855,6 +2410,42 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(lswx,RT,RA,RB);
+               break;
+             }
+
+       // 599
+          case 0x257:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(lfdx,FRT,RA,RB);
+               break;
+             }
+
+       // 631
+          case 0x277:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(lfdux,FRT,RA,RB);
+               break;
+             }
+
+       // 654
+          case 0x28E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfssx,FRT,FRA,FRB);
                break;
              }
 
@@ -1880,6 +2471,40 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 686
+          case 0x2AE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfssux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 704
+          case 0x2C0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fpctiwz,FRT,FRB);
+               break;
+             }
+
+       // 718
+          case 0x2CE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfsdx,FRT,FRA,FRB);
+               break;
+             }
+
        // 725
            case 0x2D5:
              {
@@ -1888,6 +2513,30 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
                SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
                instruction = MAKE_INSN3(stswi,RS,RA,RB);
+               break;
+             }
+
+       // 750
+          case 0x2EE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfsdux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 782
+          case 0x30E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfxsx,FRT,FRA,FRB);
                break;
              }
 
@@ -1938,6 +2587,28 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 800
+          case 0x320:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsmtp,FRT,FRB);
+               break;
+             }
+
+       // 814
+          case 0x32E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfxsux,FRT,FRA,FRB);
+               break;
+             }
+
        // 824
           case 0x338:
              {
@@ -1956,12 +2627,48 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 846
+          case 0x34E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfxdx,FRT,FRA,FRB);
+               break;
+             }
+
        // 854
           case 0x356:
              {
             // This is a book II instruction "Enforce In-order Execution of I/O
                ROSE_ASSERT(primaryOpcode == 0x1F);
                instruction = MAKE_INSN0(eieio);
+               break;
+             }
+
+       // 878
+          case 0x36E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfxdux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 910
+          case 0x38E:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfpsx,FRT,FRA,FRB);
                break;
              }
 
@@ -1976,32 +2683,174 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction()
                break;
              }
 
+       // 922
+          case 0x39A:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN3(extsh,RA,RS,SH);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN3(extsh_record,RA,RS,SH);
+                  }
+               break;
+             }
+
+       // 928
+          case 0x3A0:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN2(fsmfp,FRT,FRB);
+               break;
+             }
+
+       // 942
+          case 0x3AE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfpsux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 954
+          case 0x3BA:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN3(extsb,RA,RS,SH);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN3(extsb_record,RA,RS,SH);
+                  }
+               break;
+             }
+
+       // 974
+          case 0x3CE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfpdx,FRT,FRA,FRB);
+               break;
+             }
+
+       // 983
+          case 0x3D7:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRS = makeRegister(powerpc_regclass_gpr,frsOpcode);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN3(stfiwx,FRS,RA,RB);
+               break;
+             }
+
+       // 986
+          case 0x3DA:
+             {
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RS = makeRegister(powerpc_regclass_gpr,rsOpcode);
+               SgAsmExpression* SH = new SgAsmByteValueExpression(shOpcode);
+               if (rcOpcode == 0)
+                  {
+                    instruction = MAKE_INSN3(extsw,RA,RS,SH);
+                  }
+                 else
+                  {
+                    instruction = MAKE_INSN3(extsw_record,RA,RS,SH);
+                  }
+               break;
+             }
+
+       // 1006
+          case 0x3EE:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               instruction = MAKE_INSN3(stfpdux,FRT,FRA,FRB);
+               break;
+             }
+
+       // 1014
+          case 0x3F6:
+             {
+            // BGL instruction!
+               ROSE_ASSERT(primaryOpcode == 0x1F);
+               SgAsmExpression* RA = makeRegister(powerpc_regclass_gpr,raOpcode);
+               SgAsmExpression* RB = makeRegister(powerpc_regclass_gpr,rbOpcode);
+               instruction = MAKE_INSN2(dcbz,RA,RB);
+               break;
+             }
+
+       // BGL specific instructions
+          case 0x2A0: // 672
+             {
+            // These appear to be BGL specific instructions (not a part of the public PowerPC instruction set documentation).
+               ROSE_ASSERT(primaryOpcode == 0x0);
+               instruction = MAKE_INSN0(unknown_instruction);
+               break;
+             }
+
        // BGL specific instructions
           case 0x36: // 54
           case 0x56: // 86
-          case 0x1CE: // 462
-          case 0x1EE: // 494
+//        case 0x1CE: // 462
+//        case 0x1EE: // 494
           case 0x256: // 598
-          case 0x257: // 599
+//        case 0x257: // 599
           case 0x2D7: // 727
-          case 0x3BA: // 954
+//        case 0x3BA: // 954
           case 0x3BE: // 958
-          case 0x3CE: // 974
-          case 0x3EE: // 1006
+//        case 0x3CE: // 974
+//        case 0x3EE: // 1006
              {
             // These appear to be BGL specific instructions (not a part of the public PowerPC instruction set documentation).
                ROSE_ASSERT(primaryOpcode == 0x1F);
                instruction = MAKE_INSN0(unknown_instruction);
                break;
              }
-
+#if 0
+       // BGL specific instructions
+          case 0x48: // 72
+             {
+            // These appear to be BGL specific instructions (not a part of the public PowerPC instruction set documentation).
+               ROSE_ASSERT(primaryOpcode == 0x3F);
+               instruction = MAKE_INSN0(unknown_instruction);
+               break;
+             }
+#endif
           default:
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
                printf ("Error: X-Form xoOpcode = %d not handled! \n",xoOpcode);
-               throw BadInstruction();
-            // ROSE_ASSERT(false);
+               ROSE_ASSERT(false);
+
+           // throw BadInstruction();
              }
         }
 
@@ -2988,13 +3837,129 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
      uint8_t rcOpcode = (insn >> 0) & 0x1;
 
 #if DEBUG_OPCODES
-     printf ("A-Form instruction opcode = 0x%x frtOpcode = 0x%x fraOpcode = 0x%x frbOpcode = 0x%x frcOpcode = 0x%x xOpcode = 0x%x rcOpcode = 0x%x \n",insn,frtOpcode,fraOpcode,frbOpcode,frcOpcode,xOpcode,rcOpcode);
+     printf ("A-Form instruction opcode = 0x%x primaryOpcode = 0x%x frtOpcode = 0x%x fraOpcode = 0x%x frbOpcode = 0x%x frcOpcode = 0x%x xOpcode = 0x%x rcOpcode = 0x%x \n",insn,primaryOpcode,frtOpcode,fraOpcode,frbOpcode,frcOpcode,xOpcode,rcOpcode);
 #endif
 
      SgAsmExpression* FRT = makeRegister(powerpc_regclass_gpr,frtOpcode);
 
+  // Decode these instructions last, to avoid confusion!
+     ROSE_ASSERT(primaryOpcode != 0x4);
+
      switch(xOpcode)
         {
+       // 5
+          case 0x5:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN4(fpsel,FRT,FRA,FRB,FRC);
+               break;
+             }
+
+       // 8
+          case 0x8:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fpmul,FRT,FRA,FRC);
+               break;
+             }
+
+       // 9
+          case 0x9:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fxmul,FRT,FRA,FRC);
+               break;
+             }
+
+       // 10
+          case 0xA:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fxpmul,FRT,FRA,FRC);
+               break;
+             }
+
+       // 11
+          case 0xB:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fxsmul,FRT,FRA,FRC);
+               break;
+             }
+
+       // 12
+          case 0xC:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fpadd,FRT,FRA,FRB);
+               break;
+             }
+
+       // 13
+          case 0xD:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN3(fpsub,FRT,FRA,FRB);
+               break;
+             }
+
+       // 14
+          case 0xE:
+             {
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN2(fpre,FRT,FRB);
+               break;
+             }
+
+       // 15
+          case 0xF:
+             {
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN2(fprsqrte,FRT,FRB);
+               break;
+             }
+
+       // 16
+          case 0x10:
+             {
+            // FP2 BGL instruction
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN4(fpmadd,FRT,FRA,FRB,FRC);
+               break;
+             }
+
+       // 17
+          case 0x11:
+             {
+            // FP2 BGL instruction
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN4(fxmadd,FRT,FRA,FRB,FRC);
+               break;
+             }
+
        // 18
           case 0x12:
              {
@@ -3004,18 +3969,6 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                   {
                     if (rcOpcode == 0)
                        {
-                         instruction = MAKE_INSN3(fdiv,FRT,FRA,FRB);
-                       }
-                      else
-                       {
-                         instruction = MAKE_INSN3(fdiv_record,FRT,FRA,FRB);
-                       }
-                  }
-                 else
-                  {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
-                       {
                          instruction = MAKE_INSN3(fdivs,FRT,FRA,FRB);
                        }
                       else
@@ -3023,6 +3976,40 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                          instruction = MAKE_INSN3(fdivs_record,FRT,FRA,FRB);
                        }
                   }
+                 else
+                  {
+                    if (primaryOpcode == 0x3F /*63*/)
+                       {
+                         ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN3(fdiv,FRT,FRA,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN3(fdiv_record,FRT,FRA,FRB);
+                            }
+                       }
+                      else
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpmadd,FRT,FRA,FRB,FRC);
+                       }
+                  }
+               break;
+             }
+
+       // 19
+          case 0x13:
+             {
+            // FP2 BGL instruction
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+               instruction = MAKE_INSN4(fxcsmadd,FRT,FRA,FRB,FRC);
                break;
              }
 
@@ -3035,23 +4022,33 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                   {
                     if (rcOpcode == 0)
                        {
-                         instruction = MAKE_INSN3(fsub,FRT,FRA,FRB);
-                       }
-                      else
-                       {
-                         instruction = MAKE_INSN3(fsub_record,FRT,FRA,FRB);
-                       }
-                  }
-                 else
-                  {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
-                       {
                          instruction = MAKE_INSN3(fsubs,FRT,FRA,FRB);
                        }
                       else
                        {
                          instruction = MAKE_INSN3(fsubs_record,FRT,FRA,FRB);
+                       }
+                  }
+                 else
+                  {
+                    if (primaryOpcode == 0x3F /*63*/)
+                       {
+                         ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN3(fsub,FRT,FRA,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN3(fsub_record,FRT,FRA,FRB);
+                            }
+                       }
+                      else
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fpnmadd,FRT,FRA,FRB,FRC);
                        }
                   }
                break;
@@ -3066,23 +4063,168 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                   {
                     if (rcOpcode == 0)
                        {
-                         instruction = MAKE_INSN3(fadd,FRT,FRA,FRB);
-                       }
-                      else
-                       {
-                         instruction = MAKE_INSN3(fadd_record,FRT,FRA,FRB);
-                       }
-                  }
-                 else
-                  {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
-                       {
                          instruction = MAKE_INSN3(fadds,FRT,FRA,FRB);
                        }
                       else
                        {
                          instruction = MAKE_INSN3(fadds_record,FRT,FRA,FRB);
+                       }
+                  }
+                 else
+                  {
+                    if (primaryOpcode == 0x3F /*63*/)
+                       {
+                         ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN3(fadd,FRT,FRA,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN3(fadd_record,FRT,FRA,FRB);
+                            }
+                       }
+                      else
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxnmadd,FRT,FRA,FRB,FRC);
+                       }
+                  }
+               break;
+             }
+
+       // 22
+          case 0x16:
+             {
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               if (primaryOpcode == 0x3B /*59*/)
+                  {
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN2(fsqrts,FRT,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN2(fsqrts_record,FRT,FRB);
+                       }
+                  }
+                 else
+                  {
+                    if (primaryOpcode == 0x3F /*63*/)
+                       {
+                         ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fsqrt,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fsqrt_record,FRT,FRB);
+                            }
+                       }
+                      else
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpnmadd,FRT,FRA,FRB,FRC);
+                       }
+                  }
+               break;
+             }
+
+       // 23
+          case 0x17:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               if (primaryOpcode == 0x3F /*63*/)
+                  {
+                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
+                    if (rcOpcode == 0)
+                       {
+                         instruction = MAKE_INSN4(fsel,FRT,FRA,FRC,FRB);
+                       }
+                      else
+                       {
+                         instruction = MAKE_INSN4(fsel_record,FRT,FRA,FRC,FRB);
+                       }
+                  }
+                 else
+                  {
+                 // FP2 BGL instruction
+                    ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                    instruction = MAKE_INSN4(fxcsnmadd,FRT,FRA,FRB,FRC);
+                  }
+               break;
+             }
+
+       // 24
+          case 0x18:
+             {
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               switch(primaryOpcode)
+                  {
+                 // 0
+                    case 0x0:
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fpmsub,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 4
+                    case 0x4:
+                       {
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpnpma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fres,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fres_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fre,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fre_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
                break;
@@ -3093,27 +4235,167 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
              {
                SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
                SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
-               if (primaryOpcode == 0x3B /*59*/)
+               switch(primaryOpcode)
                   {
-                    if (rcOpcode == 0)
+                 // 0
+                    case 0x0:
                        {
-                         instruction = MAKE_INSN3(fmul,FRT,FRA,FRC);
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxmsub,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                      else
+
+                 // 4
+                    case 0x4:
                        {
-                         instruction = MAKE_INSN3(fmul_record,FRT,FRA,FRC);
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcsnpma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN3(fmuls,FRT,FRA,FRC);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN3(fmuls_record,FRT,FRA,FRC);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN3(fmul,FRT,FRA,FRC);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN3(fmul_record,FRT,FRA,FRC);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
-                 else
+               break;
+             }
+
+       // 26
+          case 0x1A:
+             {
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               switch(primaryOpcode)
                   {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
+                 // 0
+                    case 0x0:
                        {
-                         instruction = MAKE_INSN3(fmuls,FRT,FRA,FRC);
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpmsub,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                      else
+
+                 // 4
+                    case 0x4:
                        {
-                         instruction = MAKE_INSN3(fmuls_record,FRT,FRA,FRC);
+                      // FP2 BGL instruction
+                         SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+                         SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpnsma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(frsqrtes,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(frsqrtes_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(frsqrte,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(frsqrte_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+               break;
+             }
+
+       // 27
+          case 0x1B:
+             {
+            // FP2 BGL instruction
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               switch(primaryOpcode)
+                  {
+                 // 0
+                    case 0x0:
+                       {
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcsmsub,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 4
+                    case 0x4:
+                       {
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x4 /*4*/);
+                         instruction = MAKE_INSN4(fxcsnsma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
                break;
@@ -3125,27 +4407,60 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
                SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
                SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
-               if (primaryOpcode == 0x3B /*59*/)
+               switch(primaryOpcode)
                   {
-                    if (rcOpcode == 0)
+                 // 0
+                    case 0x0:
                        {
-                         instruction = MAKE_INSN4(fmsub,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fpnmsub,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                      else
+
+                 // 4
+                    case 0x4:
                        {
-                         instruction = MAKE_INSN4(fmsub_record,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcxma,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                  }
-                 else
-                  {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
+
+                 // 59
+                    case 0x3B:
                        {
-                         instruction = MAKE_INSN4(fmsubs,FRT,FRA,FRC,FRB);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fmsubs,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fmsubs_record,FRT,FRB);
+                            }
+                         break;
                        }
-                      else
+
+                 // 63
+                    case 0x3F:
                        {
-                         instruction = MAKE_INSN4(fmsubs_record,FRT,FRA,FRC,FRB);
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fmsub,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fmsub_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
                break;
@@ -3157,27 +4472,190 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
                SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
                SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
                SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
-               if (primaryOpcode == 0x3B /*59*/)
+               switch(primaryOpcode)
                   {
-                    if (rcOpcode == 0)
+                 // 0
+                    case 0x0:
                        {
-                         instruction = MAKE_INSN4(fmadd,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxnmsub,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                      else
+
+                 // 4
+                    case 0x4:
                        {
-                         instruction = MAKE_INSN4(fmadd_record,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcxnpma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fmadds,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fmadds_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fmadd,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fmadd_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
-                 else
+               break;
+             }
+
+       // 30
+          case 0x1E:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               switch(primaryOpcode)
                   {
-                    ROSE_ASSERT (primaryOpcode == 0x3F /*63*/);
-                    if (rcOpcode == 0)
+                 // 0
+                    case 0x0:
                        {
-                         instruction = MAKE_INSN4(fmadds,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcpnmsub,FRT,FRA,FRB,FRC);
+                         break;
                        }
-                      else
+
+                 // 4
+                    case 0x4:
                        {
-                         instruction = MAKE_INSN4(fmadds_record,FRT,FRA,FRC,FRB);
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcxnsma,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fnmsubs,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fnmsubs_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fnmsub,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fnmsub_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
+                       }
+                  }
+               break;
+             }
+
+       // 31
+          case 0x1F:
+             {
+               SgAsmExpression* FRA = makeRegister(powerpc_regclass_gpr,fraOpcode);
+               SgAsmExpression* FRB = makeRegister(powerpc_regclass_gpr,frbOpcode);
+               SgAsmExpression* FRC = makeRegister(powerpc_regclass_gpr,frcOpcode);
+               switch(primaryOpcode)
+                  {
+                 // 0
+                    case 0x0:
+                       {
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcsnmsub,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 4
+                    case 0x4:
+                       {
+                      // FP2 BGL instruction
+                         ROSE_ASSERT (primaryOpcode == 0x0 /*0*/);
+                         instruction = MAKE_INSN4(fxcxnms,FRT,FRA,FRB,FRC);
+                         break;
+                       }
+
+                 // 59
+                    case 0x3B:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fnmadds,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fnmadds_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                 // 63
+                    case 0x3F:
+                       {
+                         if (rcOpcode == 0)
+                            {
+                              instruction = MAKE_INSN2(fnmadd,FRT,FRB);
+                            }
+                           else
+                            {
+                              instruction = MAKE_INSN2(fnmadd_record,FRT,FRB);
+                            }
+                         break;
+                       }
+
+                    default:
+                       {
+                      // The default case is now used for handling illegal instructions 
+                      // (during development it was for those not yet implemented).
+                         printf ("Error: A-Form primaryOpcode = %d xOpcode = %d (illegal instruction) \n",primaryOpcode,xOpcode);
+                         ROSE_ASSERT(false);
                        }
                   }
                break;
@@ -3187,7 +4665,7 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_A_formInstruction()
              {
             // The default case is now used for handling illegal instructions 
             // (during development it was for those not yet implemented).
-               printf ("Error: A-Form primaryOpcode = %d (illegal instruction) \n",xOpcode);
+               printf ("Error: A-Form xOpcode = %d (illegal instruction) \n",xOpcode);
                ROSE_ASSERT(false);
              }
         }
