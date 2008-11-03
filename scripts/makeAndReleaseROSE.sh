@@ -142,7 +142,7 @@ fi
 # rose-0.9.4a-source-with-EDG-binary-2759.tar.gz
 cd ${UPLOAD_DIR}
 
-FILE_NAME=${PACKAGE_NAME}-${VERSION_NO}-with-EDG-binary-${REVISION_NO}.tar.gz
+FILE_NAME=${PACKAGE_NAME}-${VERSION_NO}-source-with-EDG-binary-${REVISION_NO}.tar.gz
 
 if [ -d ${PACKAGE_NAME}-${VERSION_NO} ]; then
   tar czvf "${FILE_NAME}" ${PACKAGE_NAME}-${VERSION_NO} &>/dev/null || {echo "error in tar czvf ...tar.gz packge; exit 1;"}
@@ -160,7 +160,6 @@ else
 fi  
 
 # call the upload script 
-# prepare the environment variables in a file
 # VERSION_NO, REVISION_NO, FULL_PACKAGE_NAME
 ${SCRIPT_TOP}/makeRelease.sh ${VERSION_NO} ${REVISION_NO} ${FULL_PACKAGE_NAME} 
 if [ $? -ne 0 ]; then
