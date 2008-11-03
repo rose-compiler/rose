@@ -700,7 +700,7 @@ BinQGUI::run( ) {
   for (size_t row = 0; row < funcsFileA.size(); ++row) {
     tableWidget->addRows(1);
     ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
-		tableWidget->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name()), 0, row);
+    tableWidget->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name()), 0, row);
     //tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.size), 1, row);
     tableWidget->setVDim(row,18);
   }
@@ -708,8 +708,11 @@ BinQGUI::run( ) {
     tableWidget2->addRows(1);
     if (isSgAsmFunctionDeclaration(funcsFileB[row]))
       tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
-    if (isSgFunctionDeclaration(funcsFileB[row]))
+    if (isSgFunctionDeclaration(funcsFileB[row])) {
+      if (isSgFunctionDeclaration(funcsFileB[row])->get_file_info()->isCompilerGenerated())
+	tableWidget->setTextColor(QColor(255,0,0),0);	
       tableWidget2->setText(boost::lexical_cast<std::string>(isSgFunctionDeclaration(funcsFileB[row])->get_name().str()), 0, row);
+    }
     tableWidget2->setVDim(row,18);
   }
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
@@ -861,7 +864,6 @@ void BinQGUI::showFileA(int row) {
 
 }
 
-
 void BinQGUI::showFileB(int row) {
   QROSE::unlink(codeTableWidget2, SIGNAL(activated(int, int, int, int)));
 
@@ -961,6 +963,8 @@ void BinQGUI::showFileB(int row) {
       codeTableWidget2->setText(boost::lexical_cast<std::string>(" " ), 1, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 3, i);
+      std::string comment = func->get_file_info()->isCompilerGenerated() ? "compiler gen": " ";
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(comment ), 4, i);
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
       addRow=true;
