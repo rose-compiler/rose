@@ -4,17 +4,17 @@
 
 class Item {
  public:
-  Item(bool function, SgAsmStatement* statement,
+  Item(bool function, SgNode* statement,
        int functionSize, int resolved, int row, int length, int pos,
-       std::string comment):function(function),
+       std::string comment, int lineNr):function(function),
     statement(statement),functionSize(functionSize),
-    resolved(resolved),row(row),length(length),pos(pos),comment(comment){
+    resolved(resolved),row(row),length(length),pos(pos),comment(comment),lineNr(lineNr){
     fg = QColor(128,128,128);
     bg = QColor(128,128,128);
 }
 
   bool function;
-  SgAsmStatement* statement;
+  SgNode* statement;
   int functionSize;
   int resolved;
   int row;
@@ -22,6 +22,7 @@ class Item {
   int length;
   int pos;
   std::string comment;
+  int lineNr;
   // is this a added or removed instruction (clone detection)
 
   QColor bg;

@@ -23,7 +23,11 @@ using namespace boost;
 using namespace __gnu_cxx;
 
 
-
+// ----------------------------------------------------------------------------------------------
+// specify analyses here!
+void alignFunctions();
+void andreasDiff();
+void alignFunctionsSmart();
 
 void clicked1() {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
@@ -34,162 +38,20 @@ void clicked1() {
   cerr << " Selected : " << t << endl;
 
   if (t=="Andreas's Diff") {
-    // this part is to find the added and removed code (from Andreas)
-    FindInstructionsVisitor vis;
-    scoped_array<scoped_array<size_t> > C;
-    vector_start_at_one<SgNode*> insnsA;
-    AstQueryNamespace::querySubTree(instance->fileA, std::bind2nd( vis, &insnsA ));
-    vector_start_at_one<SgNode*> insnsB;
-    AstQueryNamespace::querySubTree(instance->fileB, std::bind2nd( vis, &insnsB ));
-
-    LCSLength(C,insnsA,insnsB);
-    std::vector<pair<int,int> > addInstr,minusInst;
-    printDiff(C,insnsA, insnsB,insnsA.size(),insnsB.size(),addInstr,minusInst);
-    //    cerr << " found adds on left side : " << addInstr.size() << endl;
-    //cerr << " found subbs on left side : " << minusInst.size() << endl;
-    
-    QString res = QString("Found adds:  %1.  Found subbs: %2. ")
-      .arg(addInstr.size())
-      .arg(minusInst.size());
-    instance->analysisResult->append(res);  
-
-
-    for (unsigned int k=0;k<addInstr.size();++k) {
-      std::pair<int,int> p = addInstr[k];
-      int a = p.first;
-      int b = p.second;
-      SgAsmInstruction* instA = isSgAsmInstruction(insnsA[a]);
-      SgAsmInstruction* instB = isSgAsmInstruction(insnsB[b]);
-#if 0
-      cerr << i << " Found ADD in A  (a:" << a <<",b:"<<b<<") : " << endl << 
-	"     " << RoseBin_support::HexToString(instA->get_address()) << "  " <<
-	instA->get_mnemonic() <<endl <<
-	"     " << RoseBin_support::HexToString(instB->get_address()) << "  " <<
-	instB->get_mnemonic() <<endl;
-#endif
-
-      int myPosA=0;
-      int myPosB=0;
-      for(size_t i=0; i < instance->itemsFileA.size(); i++ )    {
-	SgAsmStatement* stmts = instance->itemsFileA[i]->statement;
-	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
-	if (inst && inst->get_address()==instA->get_address()) {
-	  myPosA=instance->itemsFileA[i]->row;
-	  //  instance->itemsFileA[i]->plus=true;
-	  instance->itemsFileA[i]->bg=QColor(135,206,255);
-	  for (int j=1;j<instance->maxrows;j++)
-	    instance->codeTableWidget->setBgColor(instance->itemsFileA[i]->bg,j,i);
-	}
-      }
-      for(size_t i=0; i < instance->itemsFileB.size(); i++ )    {
-	SgAsmStatement* stmts = instance->itemsFileB[i]->statement;
-	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
-	if (inst && inst->get_address()==instB->get_address()) {
-	  myPosB=instance->itemsFileB[i]->row;
-	  //instance->itemsFileB[i]->plus=true;
-	  instance->itemsFileB[i]->bg=QColor(135,206,255);
-	  for (int j=1;j<instance->maxrows;j++)
-	    instance->codeTableWidget2->setBgColor(instance->itemsFileB[i]->bg,j,i);
-	}
-      }
-
-      QString res = QString("%1 Found ADD in A  (a:%2,b:%3) (a:%4,b:%5)  %6 %7   %8 %9")
-	.arg(k)
-	.arg(a)
-	.arg(b)
-	.arg(myPosA)
-	.arg(myPosB)
-	.arg(QString(RoseBin_support::HexToString(instA->get_address()).c_str()))
-	.arg(QString(instA->get_mnemonic().c_str()))
-	.arg(QString(RoseBin_support::HexToString(instB->get_address()).c_str()))
-	.arg(QString(instB->get_mnemonic().c_str()));
-      instance->analysisResult->append(res);  
-
-    }
+    andreasDiff();
   } // andreas diff
-
-
-  if (t=="Align Functions") {
-    
-#if 1
-  // ------------------------------ Sync statments between itemsFileA amd itemsFileB
-  // add padding 
-  int position=-1, offset=0, currentPos=0;
-  bool fileAPadd = instance->findPosWhenFunctionsAreNotSync(position, offset,currentPos);
-  cerr << " 1 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
-    " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
-  //int count=0;
-  while (position!=-1) {
-    // lets add padding
-    if (fileAPadd) {
-      Item* oldItem = *(instance->itemsFileA.begin()+position);
-      int oldPos = oldItem->pos+oldItem->length;
-      cerr << "    A: old item at : " << (position) << "  oldPos : " << oldPos << endl;
-      vector<Item*>::iterator it = instance->itemsFileA.begin()+position+1;
-      int length=currentPos-oldPos;
-      for (int i=0; i<offset;++i) {
-	Item* item =NULL;
-	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"");
-	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"");
-	it = instance->itemsFileA.insert(it,item);
-	++it;
-	cerr << "    A: adding NULL item at : " << (position+i+1) << "  pos : " << (oldPos+i) <<endl;
-      }
-      // need to adjust the remainder
-      int c=1;
-      for (; it!=instance->itemsFileA.end();++it) {
-	Item* item = (*it);
-	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
-	item->row = position+offset+c;
-	item->pos = item->pos+length;
-	c++;
-      }
-    }
-
-    if (!fileAPadd) {
-      Item* oldItem = *(instance->itemsFileB.begin()+position);
-      int oldPos = oldItem->pos+oldItem->length;
-      cerr << "    B: old item at : " << (position) << "  oldPos : " << oldPos << endl;
-      vector<Item*>::iterator it = instance->itemsFileB.begin()+position+1;
-      int length=currentPos-oldPos;
-      for (int i=0; i<offset;++i) {
-	Item* item =NULL;
-	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"");
-	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"");
-	it = instance->itemsFileB.insert(it,item);
-	++it;
-	cerr << "    B: adding NULL item at : " << (position+i+1) << "  pos : " << oldPos+i<<endl;
-      }
-      // need to adjust the remainder
-      int c=1;
-      for (; it!=instance->itemsFileB.end();++it) {
-	Item* item = (*it);
-	//cerr << "    changing row at : " << (item->row) << "  to : " << (position+offset+c) <<endl;
-	item->row = position+offset+c;
-	item->pos = item->pos+length;
-	c++;
-      }
-    }
-    position=-1;
-    offset=0;
-    currentPos=0;
-    fileAPadd = instance->findPosWhenFunctionsAreNotSync(position, offset,currentPos);
-    cerr << " 2 Found PosWhenFunctionsAre not sync : " << position << "   offset : " << offset << 
-      " A? " << fileAPadd << "  currentPos : " << currentPos << endl;
-    //    count++;
-    //if (count==5) break;
+  else if (t=="Align Functions") {
+    alignFunctions();
   }
-
-  instance->updateByteItemList();
-#endif
-
+  else if (t=="Align Functions Smart") {
+    alignFunctionsSmart();
   }
 
 } 
+
+
+
+
 
 // ----------------------------------------------------------------------------------------------
 void toolbarClick(int action) {
@@ -256,38 +118,58 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
       tableWidget->setFont(f, 0, row);
       tableWidget->setBgColor(QColor(255,255,0),0,row);
       //showFileA(row);
-      SgAsmFunctionDeclaration* func = funcsFileA[row];
-      std::vector<Item*>::iterator it = itemsFileA.begin();
-      int offset=0;
-      for (;it!=itemsFileA.end();++it) {
-	Item* item = *it;
-	SgAsmStatement* stat = item->statement;
-	if (func==isSgAsmFunctionDeclaration(stat)) {
-	  offset=item->row;
-	  break;
+      if (isSgAsmFunctionDeclaration(funcsFileA[row])) {
+	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileA[row]);
+	std::vector<Item*>::iterator it = itemsFileA.begin();
+	int offset=0;
+	for (;it!=itemsFileA.end();++it) {
+	  Item* item = *it;
+	  if (isSgAsmStatement(item->statement)) {
+	    SgAsmStatement* stat = isSgAsmStatement(item->statement);
+	    if (func==isSgAsmFunctionDeclaration(stat)) {
+	      offset=item->row;
+	      break;
+	    }
+	  } 
 	}
-      }
+      
       //cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
       codeTableWidget->setCurrentCell(offset,0);
+      }
     } else {
       QFont f = tableWidget2->getFont(0, row);
       f.setBold(true);
       tableWidget2->setFont(f, 0, row);
       tableWidget2->setBgColor(QColor(255,255,0),0,row);
       //      showFileB(row);
-      SgAsmFunctionDeclaration* func = funcsFileB[row];
-      std::vector<Item*>::iterator it = itemsFileB.begin();
-      int offset=0;
-      for (;it!=itemsFileB.end();++it) {
-	Item* item = *it;
-	SgAsmStatement* stat = item->statement;
-	if (func==isSgAsmFunctionDeclaration(stat)) {
-	  offset=item->row;
-	  break;
+      if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
+	SgAsmFunctionDeclaration* func = isSgAsmFunctionDeclaration(funcsFileB[row]);
+	std::vector<Item*>::iterator it = itemsFileB.begin();
+	int offset=0;
+	for (;it!=itemsFileB.end();++it) {
+	  Item* item = *it;
+	  SgAsmStatement* stat = isSgAsmStatement(item->statement);
+	  if (func==isSgAsmFunctionDeclaration(stat)) {
+	    offset=item->row;
+	    break;
+	  }
 	}
-      }
       //      cerr << " highlight func row : " << row << "  inst row : " << offset << endl;
       codeTableWidget2->setCurrentCell(offset,0);
+      } else if (isSgFunctionDeclaration(funcsFileB[row])) {
+	SgFunctionDeclaration* func = isSgFunctionDeclaration(funcsFileB[row]);
+	std::vector<Item*>::iterator it = itemsFileB.begin();
+	int offset=0;
+	for (;it!=itemsFileB.end();++it) {
+	  Item* item = *it;
+	  SgStatement* stat = isSgStatement(item->statement);
+	  if (func==isSgFunctionDeclaration(stat)) {
+	    offset=item->row;
+	    break;
+	  }
+	}
+	codeTableWidget2->setCurrentCell(offset,0);
+      }
     }
   } //if(row >= 0)
 } //CompassGui::highlighFunctionRow(int row)
@@ -392,53 +274,7 @@ void BinQGUI::updateByteItemList() {
 
 }
 
-bool 
-BinQGUI::findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos) {
-  unsigned int max = itemsFileA.size();
-  if (itemsFileB.size()>max) 
-    max=itemsFileB.size();
-  for (unsigned int i=0;i<max;++i) {
-    Item* itemA =NULL;
-    Item* itemB =NULL;
-    if (i<itemsFileA.size())
-      itemA=itemsFileA[i];
-    if (i<itemsFileB.size())
-      itemB=itemsFileB[i];
-    if (itemA && itemB) {
-      SgAsmFunctionDeclaration* fa = isSgAsmFunctionDeclaration(itemA->statement);
-      SgAsmFunctionDeclaration* fb = isSgAsmFunctionDeclaration(itemB->statement);
-      if (fa && !fb) {
-	// fa occured but fb is further away, need padding for fa
-	for (unsigned int k=i;k<itemsFileB.size();++k) {
-	    itemB=itemsFileB[k];
-	    fb = isSgAsmFunctionDeclaration(itemB->statement);
-	    if (fb) {
-	      // We need a padding in B at pos i with length (k-i)
-	      position=i-1;
-	      offset=k-i;
-	      currentPos = itemB->pos;
-	      return true; //left (A)
-	    }
-	}
-      } else if (fb && !fa) {
-	// fa occured but fb is further away, need padding for fa
-	for (unsigned int k=i;k<itemsFileA.size();++k) {
-	    itemA=itemsFileA[k];
-	    fa = isSgAsmFunctionDeclaration(itemA->statement);
-	    if (fa) {
-	      // We need a padding in A at pos i with length (k-i)
-	      position=i-1;
-	      offset=k-i;
-	      currentPos = itemA->pos;
-	      return false; //right (B)
-	    }
-	}
-      }
 
-    }
-  }
-  return true; // should not be reached
-}
 
 void
 BinQGUI::insertFileInformation() {
@@ -532,33 +368,41 @@ BinQGUI::insertFileInformation() {
 }
 
 
-BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), fileNameA(fA), fileNameB(fB) {
+BinQGUI::BinQGUI(std::string fA, std::string fB ) :  window(0), 
+						     fileNameA(fA), fileNameB(fB) {
   window = new QRWindow( "mainWindow", QROSE::TopDown );
   binqsupport= new BinQSupport();
   maxrows=5;
+  sourceFile=false;
   init();
   createGUI();
 }
 
 void BinQGUI::init(){
-  fileA = binqsupport->disassembleFile(fileNameA);
-  fileB = binqsupport->disassembleFile(fileNameB);
+  cerr << "Disassemble File A ... " << fileNameA << endl;
+  std::string sourceFileS;
+  fileA = binqsupport->disassembleFile(fileNameA, sourceFileS);
+  cerr << "\nDisassemble File B ... " << fileNameB << endl;
+  fileB = binqsupport->disassembleFile(fileNameB, sourceFileS);
+  ROSE_ASSERT(fileA);
+  ROSE_ASSERT(fileB);
+  if (sourceFileS=="true")
+    sourceFile=true;
 
-
-  // this part writes the file out to an assembly file
+  // this part writes the file out to an assembly file -----------------------------------
   SgBinaryFile* binaryFileA = isSgBinaryFile(isSgProject(fileA)->get_fileList()[0]);
   SgAsmFile* file1 = binaryFileA != NULL ? binaryFileA->get_binaryFile() : NULL;
   SgAsmInterpretation* interpA = SageInterface::getMainInterpretation(file1);
 
   unparseAsmStatementToFile("unparsedA.s", interpA->get_global_block());
 
-  if(is_directory( fileNameB  ) == false ) {
+  if(is_directory( fileNameB  ) == false && sourceFile==false) {
     SgBinaryFile* binaryFileB = isSgBinaryFile(isSgProject(fileB)->get_fileList()[0]);
     SgAsmFile* file2 = binaryFileB != NULL ? binaryFileB->get_binaryFile() : NULL;
     SgAsmInterpretation* interpB = SageInterface::getMainInterpretation(file2);
     unparseAsmStatementToFile("unparsedB.s", interpB->get_global_block());
   }
-  // --------------------------------------------
+  // -------------------------------------------------------------------------------------
 
   itemsFileA.clear();
   itemsFileB.clear();
@@ -566,29 +410,38 @@ void BinQGUI::init(){
   // ---------------------- Create itemsFileA and itemsFileB , containing all statements
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
-  AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
+  if (sourceFile) {
+    FindFunctionsVisitor funcVisSource;
+    AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVisSource, &funcsFileB ));
+  } else
+    AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
 
-  FindStatementsVisitor visStat;
-  std::vector<SgAsmStatement*> stmts;
+  cerr << " File A has " << funcsFileA.size() << " funcs." << endl;
+  cerr << " File B has " << funcsFileB.size() << " funcs." << endl;
+
+  FindAsmStatementsVisitor visStat;
+  std::vector<SgNode*> stmts;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( visStat, &stmts ));
-  vector<SgAsmStatement*>::iterator it= stmts.begin();
+  vector<SgNode*>::iterator it= stmts.begin();
   int pos=0;
   int row=0;
   for (;it!=stmts.end();++it) {
     Item* item;
     int length=1;
+    // make sure file 1 is a binary file -- source file only for file 2 allowed
+    ROSE_ASSERT(isSgAsmStatement(*it));
     if (isSgAsmFunctionDeclaration(*it)) {
-      FindStatementsVisitor visStat2;
+      FindAsmStatementsVisitor visStat2;
       std::vector<SgAsmStatement*> stmts2;
       AstQueryNamespace::querySubTree(fileA, std::bind2nd( visStat2, &stmts2 ));
       int funcsize= stmts2.size();
-      item = new Item(true,*it,funcsize,2,row,length, pos,"");
+      item = new Item(true,isSgAsmFunctionDeclaration(*it),funcsize,2,row,length, pos,"",0);
     } else if (isSgAsmBlock(*it)) {
       continue;
       //item = new Item(false,*it,0,1,row,0);
-    } else {
+    } else if (isSgAsmInstruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(false,*it,0,0,row,length,pos,"");
+      item = new Item(false,isSgAsmInstruction(*it),0,0,row,length,pos,"",0);
     }
     // color code pushes as an example
     if (isSgAsmx86Instruction(*it)) {
@@ -612,7 +465,7 @@ void BinQGUI::init(){
 	    break;
 	  }
 	}
-	item = new Item(false,*it,0,3,row,length,pos,s);
+	item = new Item(false,isSgAsmx86Instruction(*it),0,3,row,length,pos,s,0);
       }
     }
     row++;
@@ -622,7 +475,13 @@ void BinQGUI::init(){
 
 
   stmts.clear();
-  AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat, &stmts ));
+  if (!sourceFile) {
+    FindAsmStatementsVisitor visStat2;
+    AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
+  } else {
+    FindStatementsVisitor visStat2;
+    AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
+  }
   it= stmts.begin();
   pos=0;
   row=0;
@@ -630,19 +489,37 @@ void BinQGUI::init(){
     Item* item;
     int length=1;
     if (isSgAsmFunctionDeclaration(*it)){
-      FindStatementsVisitor visStat2;
+      int funcsize=0;
+      FindAsmStatementsVisitor visStat2;
       std::vector<SgAsmStatement*> stmts2;
       AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts2 ));
-      int funcsize= stmts2.size();
-      item = new Item(true,*it,funcsize,2,row,length,pos,"");
+      funcsize= stmts2.size();
+      item = new Item(true,isSgAsmFunctionDeclaration(*it),funcsize,2,row,length,pos,"",0);
     }    else if (isSgAsmBlock(*it)) {
       continue;
       //item = new Item(false,*it,0,1,row,0);
-    } else {
+    } else if (isSgAsmInstruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      item = new Item(false,*it,0,0,row,length,pos,"");
+      item = new Item(false,isSgAsmInstruction(*it),0,0,row,length,pos,"",0);
+    } else if (isSgFunctionDeclaration(*it)) {
+      int funcsize=0;
+      FindStatementsVisitor visStat2;
+      std::vector<SgStatement*> stmts2;
+      AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts2 ));
+      funcsize= stmts2.size();
+      item = new Item(true,isSgFunctionDeclaration(*it),funcsize,2,row,length,pos,"",0);
+    } else if (isSgStatement(*it)) {
+      Sg_File_Info* fi = isSgStatement(*it)->get_file_info();
+      int line = -1;
+      if (fi) {
+	line = fi->get_line();
+	length = 1;
+      }
+      //      cerr << fi << " creating statement : " << isSgStatement(*it)->class_name() << " ... comment " << line << endl;
+      item = new Item(false,isSgStatement(*it),0,0,row,length,pos,
+		      isSgStatement(*it)->class_name(),line);
     }
-    //example
+    //example -- color pushes red
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
       if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
@@ -664,7 +541,7 @@ void BinQGUI::init(){
 	    break;
 	  }
 	}
-	item = new Item(false,*it,0,3,row,length,pos,s);
+	item = new Item(false,isSgAsmx86Instruction(*it),0,3,row,length,pos,s,0);
 
       }
     }
@@ -712,9 +589,11 @@ void BinQGUI::init(){
       selectGroup->setFixedHeight(70);
       QRPanel &analysisPanel = topPanels << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
       {
+	// add analyses here
 	QTabWidget *qtabwidgetL =  analysisPanel << new QTabWidget( );
 	listWidget = new QListWidget;
 	new QListWidgetItem(("Align Functions"), listWidget);
+	new QListWidgetItem(("Align Functions Smart"), listWidget);
 	new QListWidgetItem(("Andreas's Diff"), listWidget);
 
 	QROSE::link(listWidget, 
@@ -786,7 +665,6 @@ void BinQGUI::init(){
   updateByteItemList();
   // ------------------------------------
 
-
 } //BinQGUI::BinQGUI()
 
 
@@ -821,13 +699,17 @@ BinQGUI::run( ) {
 
   for (size_t row = 0; row < funcsFileA.size(); ++row) {
     tableWidget->addRows(1);
-    tableWidget->setText(boost::lexical_cast<std::string>(funcsFileA[row]->get_name()), 0, row);
+    ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
+		tableWidget->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name()), 0, row);
     //tableWidget->setText(boost::lexical_cast<std::string>(cur_elem.size), 1, row);
     tableWidget->setVDim(row,18);
   }
   for (size_t row = 0; row < funcsFileB.size(); ++row) {
     tableWidget2->addRows(1);
-    tableWidget2->setText(boost::lexical_cast<std::string>(funcsFileB[row]->get_name()), 0, row);
+    if (isSgAsmFunctionDeclaration(funcsFileB[row]))
+      tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
+    if (isSgFunctionDeclaration(funcsFileB[row]))
+      tableWidget2->setText(boost::lexical_cast<std::string>(isSgFunctionDeclaration(funcsFileB[row])->get_name().str()), 0, row);
     tableWidget2->setVDim(row,18);
   }
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
@@ -860,8 +742,9 @@ void BinQGUI::showFileA(int row) {
   ROSE_ASSERT(fileA != NULL);
   ROSE_ASSERT(fileB != NULL);
 
+  ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
   QString res = QString("FILE A : Looking at function  %1  row: %2  size ")
-    .arg(funcsFileA[row]->get_name().c_str())
+    .arg(isSgAsmFunctionDeclaration(funcsFileA[row])->get_name().c_str())
     .arg(row);
   //    .arg(elem.size);
   analysisResult->append(res);  
@@ -869,7 +752,8 @@ void BinQGUI::showFileA(int row) {
   int rowC=0;
   int posC=0;
   for(size_t i=0; i < itemsFileA.size(); i++ )    {
-    SgAsmStatement* stmts = itemsFileA[i]->statement;
+    SgAsmStatement* stmts = isSgAsmStatement(itemsFileA[i]->statement);
+    //    ROSE_ASSERT(stmts);
     int length=1;    
     bool addRow=false;
     //posRowA[posC]=-1;
@@ -936,13 +820,6 @@ void BinQGUI::showFileA(int row) {
       addRow=true;
     } else {
       codeTableWidget->addRows(1);
-      /*
-      cerr << " FOUND UNEXPECTED NODE " << endl;
-      if (stmts)
-	cerr << "      NODE IS : " << stmts->class_name() << endl;
-      else 
-	cerr << "      NODE IS : NULL " << endl;
-      */
       itemsFileA[i]->bg=QColor(128,128,128);
       QColor back = itemsFileA[i]->bg;
       for (int j=1;j<maxrows;++j) {
@@ -993,9 +870,12 @@ void BinQGUI::showFileB(int row) {
 
   ROSE_ASSERT(fileA != NULL);
   ROSE_ASSERT(fileB != NULL);
-
+  std::string funcname ="";
+  if (isSgAsmFunctionDeclaration(funcsFileB[row])) {
+    funcname=isSgAsmFunctionDeclaration(funcsFileB[row])->get_name();
+  }
   QString res = QString("FILE B : Looking at function  %1  row: %2  size ")
-    .arg(funcsFileB[row]->get_name().c_str())
+    .arg(funcname.c_str())
     .arg(row);
   //    .arg(elem.size);
   analysisResult->append(res);  
@@ -1003,7 +883,7 @@ void BinQGUI::showFileB(int row) {
   int rowC=0;
   int posC=0;
   for(size_t i=0; i < itemsFileB.size(); i++ )    {
-    SgAsmStatement* stmts = itemsFileB[i]->statement;
+    SgNode* stmts = itemsFileB[i]->statement;
     int length=1;    
     bool addRow=false;
     //posRowB[posC]=-1;
@@ -1012,8 +892,6 @@ void BinQGUI::showFileB(int row) {
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
 
       itemsFileB[i]->bg=QColor(255,255,255);
-      //      if (itemsFileB[i]->plus)
-      //	itemsFileB[i]->bg=QColor(135,206,255);
       QColor back = itemsFileB[i]->bg;
       itemsFileB[i]->fg=QColor(0,0,0);
       QColor front = itemsFileB[i]->fg;
@@ -1067,15 +945,53 @@ void BinQGUI::showFileB(int row) {
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
       addRow=true;
-    } else {
+    } 
+    else if (isSgFunctionDeclaration(stmts)) {
+      SgFunctionDeclaration* func = isSgFunctionDeclaration(stmts);
       codeTableWidget2->addRows(1);
-      /*
-      cerr << " FOUND UNEXPECTED NODE " << endl;
-      if (stmts)
-	cerr << "      NODE IS : " << stmts->class_name() << endl;
-      else 
-	cerr << "      NODE IS : NULL " << endl;
-      */
+      itemsFileB[i]->bg=QColor(0,0,0);
+      QColor back = itemsFileB[i]->bg;
+      itemsFileB[i]->fg=QColor(255,255,255);
+      QColor front = itemsFileB[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+	codeTableWidget2->setTextColor(front,j,i);
+      }
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(" " ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      addRow=true;
+
+    } else if (isSgStatement(stmts)) {
+      SgStatement* st = isSgStatement(stmts);
+      codeTableWidget2->addRows(1);
+      itemsFileB[i]->bg=QColor(255,255,255);
+      QColor back = itemsFileB[i]->bg;
+      itemsFileB[i]->fg=QColor(0,0,0);
+      QColor front = itemsFileB[i]->fg;
+      for (int j=1;j<maxrows;++j) {
+	codeTableWidget2->setBgColor(back,j,i);
+      }
+      codeTableWidget2->setTextColor(front,0,i);
+      codeTableWidget2->setTextColor(QColor(255,0,0),1,i);
+      codeTableWidget2->setTextColor(QColor(0,0,255),2,i);
+      codeTableWidget2->setTextColor(QColor(0,155,0),3,i);
+      codeTableWidget2->setTextColor(QColor(0,155,0),4,i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->lineNr ), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>("STMT"), 2, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(st->class_name() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      addRow=true;
+
+    } 
+    else {
+      codeTableWidget2->addRows(1);
       itemsFileB[i]->bg=QColor(128,128,128);
       QColor back = itemsFileB[i]->bg;
       for (int j=1;j<maxrows;++j) {
@@ -1086,7 +1002,7 @@ void BinQGUI::showFileB(int row) {
 	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
 	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
 	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-    }
+      }
       addRow=true;
     }
     if (addRow) {

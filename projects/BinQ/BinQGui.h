@@ -28,7 +28,7 @@ class BinQSupport;
 class BinQGUI //: public QWidget
 {
   public:
-    BinQGUI(std::string, std::string );
+  BinQGUI(std::string, std::string );
     ~BinQGUI();
     void run( ) ;
     void open();
@@ -60,7 +60,7 @@ class BinQGUI //: public QWidget
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
 
-    bool findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos);
+    
     void updateByteItemList();
 
   protected:
@@ -74,8 +74,8 @@ class BinQGUI //: public QWidget
 
   private:
     void insertFileInformation();
-    std::vector<SgAsmFunctionDeclaration*> funcsFileA;
-    std::vector<SgAsmFunctionDeclaration*> funcsFileB;
+    std::vector<SgNode*> funcsFileA;
+    std::vector<SgNode*> funcsFileB;
     BinQSupport* binqsupport;
     
     std::string fileNameA,fileNameB;
@@ -84,6 +84,7 @@ class BinQGUI //: public QWidget
     int screenHeight;
     void init();
     void createGUI();
+    bool sourceFile;
    
 }; //class BinQGUI
 

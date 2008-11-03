@@ -29,7 +29,7 @@ int main( int argc, char **argv )
   QROSE::init(argc,argv);
 
   std::string fileA,fileB;
-
+    bool test=false;
   try {
     options_description desc("Allowed options");
     desc.add_options()
@@ -38,8 +38,9 @@ int main( int argc, char **argv )
        "file A to be diffed")
       ("fileB,b", value< string >()->composing(), 
        "file B to be diffed")
+      ("test", "for testing")
       ;
-
+//, value< bool >()->composing(), 
     variables_map vm;
     store(command_line_parser(argc, argv).options(desc)
         .run(), vm);
@@ -49,6 +50,9 @@ int main( int argc, char **argv )
       cout << desc;            
       exit(0);
     }
+    if (vm.count("test")) {
+      test=true;
+    }
 
     if (vm.count("fileA")!=1 ||vm.count("fileB")!=1 ) {
       std::cerr << "Missing options. Call as: BinQ --fileA <file A> --fileB <file B>" 
@@ -57,9 +61,11 @@ int main( int argc, char **argv )
 
     }
 
+
     fileA = vm["fileA"].as<string >();
     fileB = vm["fileB"].as<string >();
-    cout << "File A: " << fileA << " File B: " << fileB << std::endl;
+    //    test = vm["test"].as<bool >();
+    cout << "File A: " << fileA << " File B: " << fileB << "  test? " << test << std::endl;
 
 
   }
@@ -71,5 +77,7 @@ int main( int argc, char **argv )
 
   BinQGUI binGui(fileA,fileB);
   binGui.run();
+  if (test)
+    exit(0);
   return QROSE::exec();
 }

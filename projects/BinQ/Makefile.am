@@ -11,7 +11,9 @@ BinQ_SOURCES = \
 	BinQSupport.C \
 	BinQGui.C \
 	slide.C \
-	Clone.C
+	Clone.C \
+	AlignFunctions.C \
+	AlignFunctionsSmart.C
 
 
 
@@ -21,9 +23,13 @@ INCLUDES = $(ROSE_INCLUDES) $(BOOST_CPPFLAGS) -I.
 
 
 check-local:
+	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2b.bin --test 
+	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2-tsv --test 
+	./BinQ --fileA $(srcdir)/buffer2.bin --fileB $(srcdir)/buffer2.c --test 
 	@echo "************************************************************************************"
 	@echo "*** ROSE/projects/AstEquivalence: make check rule complete (terminated normally) ***"
 	@echo "************************************************************************************"
+
 
 CLEANFILES = 
 

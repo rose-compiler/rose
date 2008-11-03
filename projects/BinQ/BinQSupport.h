@@ -8,7 +8,7 @@ class BinQSupport
   public:
   BinQSupport(){};
     ~BinQSupport();
-    SgNode* disassembleFile(std::string tsv_directory);
+    SgNode* disassembleFile(std::string tsv_directory, std::string& sourceFile);
     std::string normalizeInstructionsToHTML(std::vector<SgAsmx86Instruction*>::iterator beg, 
 					    std::vector<SgAsmx86Instruction*>::iterator end);
 
@@ -17,7 +17,7 @@ class BinQSupport
 
   private:
     std::string relativePathPrefix;
-   
+    std::string ToUpper(std::string myString);   
 }; //class BinQGUI
 
 #endif

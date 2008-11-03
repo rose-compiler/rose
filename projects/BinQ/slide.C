@@ -122,7 +122,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
   }
 
   if (item2) {
-    SgAsmStatement* stmt=isSgAsmStatement(item2->statement);
+    SgNode* stmt=item2->statement;
     if (stmt) {
       if (isSgAsmFunctionDeclaration(stmt)) {
 	QString res = QString("FILE_B: selected Function  %1    pos:%2")
@@ -138,7 +138,33 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  lastStringB = res;
 	  gui->analysisResult->append(res);
 	}
-      } else if (isSgAsmInstruction(stmt)) {
+      } else if (isSgFunctionDeclaration(stmt)) {
+	QString res = QString("FILE_B: Func selected");
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->analysisResult->append(res);
+	}
+      } else if (isSgStatement(stmt)) {
+	//	cerr << " selected statement!! " << endl;
+	QString res = QString("FILE_B: selected Byte  %1: %2  size %3  pos: %4")
+	  .arg(QString(" ") )
+	  .arg(	isSgStatement(stmt)->class_name().c_str())
+	  .arg(QString(" "))
+	  .arg(selected);
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->analysisResult->append(res);
+	  int row = item2->row;
+	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
+	  if (row>=0) {
+	    if (lastRowB!=row) {
+	      gui->unhighlightInstructionRow(lastRowB, false);
+	      gui->highlightInstructionRow(row, false);
+	      lastRowB=row;
+	    }
+	  }
+	}
+      }else if (isSgAsmInstruction(stmt)) {
 	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
 	QString res = QString("FILE_B: selected Byte  %1: %2  size %3  pos: %4")
 	  .arg(RoseBin_support::HexToString((isSgAsmx86Instruction(stmt))->get_address()).c_str() )
