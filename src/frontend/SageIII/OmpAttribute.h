@@ -1,9 +1,8 @@
 /*!
  * ROSE persistent attribute to represent OpenMP 3.0 C/C++ directives
- *
+ * All things go to the OmpSupport namespace to avoid conflicts 
  */
-//TODO: Add this into rose/src/midend somewhere, 
-//and share it by both OpenMP translation and automatic OpenMP insertion
+// Goal: share it by both OpenMP translation and automatic OpenMP insertion
 //
 // Liao 9/17, 2008
 
@@ -86,7 +85,7 @@ namespace OmpSupport{
      e_reduction_logand,
      e_reduction_logor, 
 
-     // TODO reduction intrinsic procedure name for Fortran  
+     // TODO more reduction intrinsic procedure name for Fortran  
      e_reduction_min, //?
      e_reduction_max,
 
@@ -126,9 +125,12 @@ namespace OmpSupport{
 
 //------------------------------------------------------------------
 //------------------------------------------------------------------
-// the persistent attribute attached to an OpenMP pragma node in SAGE III AST
+// By default, the persistent attribute attached to an OpenMP pragma node in SAGE III AST
 // Attaching to pragma is easier since a few directives have no obvious 
-// associated code blocks, like threadprivate
+// associated code blocks, like threadprivate.
+//
+// The attribute can also be attached by a scope affected by OpenMP. This is used during
+// automatic parallelization when the corresponding pragma is not yet generated.
 //
 // A cure-all approach is used to simplify the handling. 
 // OmpAttribute is implemented using a 'flat' data structure encompass all 
@@ -148,20 +150,25 @@ class OmpAttribute : public AstAttribute
   //!Default constructors
    OmpAttribute()
     {
-      pragma = NULL;
+      mNode = NULL;
       omp_type = e_unknown;
       init();
     }
-   //! Constructor for known directive type and originating pragma node
-   OmpAttribute(omp_construct_enum omptye,SgPragmaDeclaration* pragmaDecl):
-   pragma(pragmaDecl),omp_type(omptye){ 
+   //! Constructor for known directive type and originating pragma/scope node
+   OmpAttribute(omp_construct_enum omptye, SgNode* mynode):
+   mNode(mynode),omp_type(omptye){ 
      /*The initialization order has to match the declaration order, 
       * otherwise get a compilation warning*/
         init();
    }
-  //! get the associated SgPragmaDeclaration
+
+  //! Get the associated SgPragmaDeclaration if any
   SgPragmaDeclaration* getPragmaDeclaration();
 
+  //! Get the associated SgNode, can be SgPragmaDeclaration or others( during parallelization)
+  SgNode* getNode();
+
+   //!-----------clauses----------------
    //!Add a clause into an OpenMP directive, the content of the clause is set by other interface, such as addVariable(), addExpression() , setReductionOperator() etc.
    void addClause(omp_construct_enum clause_type);
    //! Check if a directive has a clause of the specified type 
@@ -170,6 +177,7 @@ class OmpAttribute : public AstAttribute
    //! Get all existing clauses
    std::vector<omp_construct_enum> getClauses();
 
+   //!--------var list --------------
    //! Add a variable into a variable list of a construct
    void addVariable(omp_construct_enum targetConstruct, const std::string& varString);
    //! Check if a variable list is associated with a construct
@@ -180,6 +188,8 @@ class OmpAttribute : public AstAttribute
 
    //! Find the relevant clauses for a variable 
    std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
+
+   //!--------Expressions -----------------------------
    //! Add an expression to a clause
    void addExpression(omp_construct_enum targetConstruct, const std::string& expString, SgExpression*    sgexp=NULL); 
 
@@ -187,6 +197,7 @@ class OmpAttribute : public AstAttribute
    std::pair<std::string, SgExpression*>  
    getExpression(omp_construct_enum targetConstruct);
 
+   //!--------values for some clauses ----------
    //! Get reduction operator from reduction(op:kind)
    void setReductionOperator(omp_construct_enum operatorx);
    omp_construct_enum getReductionOperator();
@@ -214,8 +225,8 @@ class OmpAttribute : public AstAttribute
    std::string toOpenMPString();
 //------------------hide the implementation details, could be changed anytime!!
 private:  
-   //! The associated pragma declaration for OpenMP 
-   SgPragmaDeclaration *pragma; 
+   //! The associated SgNode for this attribute, could be SgPragmaDeclaration or other nodes
+   SgNode*  mNode; 
 
    //!Directive information: type of OpenMP directive
    enum omp_construct_enum  omp_type; 
@@ -267,13 +278,12 @@ private:
 
    //optional information
    OmpAttribute * parent; //upper-level OMP pragma's attribute
-   SgPragmaDeclaration *parentPragma;
 
    //!Member functions --------------------------------- 
     //! Initialize internal data
     void init() ;
 
-   //! convert entire directives and clauses to string ,
+   //! Convert entire directives and clauses to string ,
     // invoke OmpSupport::toString() to stringify the enumerate type internally
    std::string toOpenMPString(omp_construct_enum omp_type);
 

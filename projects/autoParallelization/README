@@ -1,0 +1,4 @@
+A project to automatically insert OpenMP directives based on
+* dependence analysis
+* liveness analysis
+* source code annotation

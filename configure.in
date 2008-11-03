@@ -967,6 +967,8 @@ src/roseIndependentSupport/dot2gml/Makefile
 projects/Makefile
 projects/AstEquivalence/Makefile
 projects/AstEquivalence/gui/Makefile
+projects/autoParallelization/Makefile
+projects/autoParallelization/tests/Makefile
 projects/BinQ/Makefile
 projects/compass/Makefile
 projects/compass/src/Makefile
