@@ -190,6 +190,9 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/midend/programAnalysis/pointerAnal \
      -I$(top_srcdir)/src/midend/programAnalysis/valuePropagation \
      -I$(top_srcdir)/src/midend/loopProcessing/driver \
+     -I$(top_srcdir)/src/midend/loopProcessing/computation \
+     -I$(top_srcdir)/src/midend/loopProcessing/depGraph \
+     -I$(top_srcdir)/src/midend/loopProcessing/depInfo \
       $(ROSE_SIDEEFFECTS_INCLUDE) \
       $(ROSE_DATABASE_INCLUDE) \
       $(ROSE_GUI_INCLUDE) \
