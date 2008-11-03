@@ -70,7 +70,7 @@ $(ROSE_MAINPAGE_DOCUMENTATION): $(top_srcdir)/rose.docs.in
 	cd $(top_builddir); $(MAKE) rose.docs
 
 # A more complex dependence is defined that requires the sage.tag file
-$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION)
+$(RoseDoxygenDocumentation): $(RoseDocsDependencies) $(ROSE_MAINPAGE_DOCUMENTATION) rose.cfg
 	cd $(top_builddir)/src/frontend/SageIII; $(MAKE) sage.docs
 	doxygen rose.cfg
 

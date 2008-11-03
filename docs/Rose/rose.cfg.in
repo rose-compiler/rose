@@ -451,35 +451,35 @@ INPUT                  = \
                          @top_srcdir@/src/extra.docs \
                          @top_srcdir@/projects/projects.docs
 
-EXTRA_STUFF 			= \
-		         @top_srcdir@/src/roseExtensions/roseHPCToolkit/docs \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/util \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml-xercesc \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/sage \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml2profir \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/examples \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/util \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml-xercesc \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/profir \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/sage \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml2profir \
-                         @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/profir2sage
+# EXTRA_STUFF 			= \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/docs \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/util \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml-xercesc \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/sage \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/xml2profir \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/include/rosehpct/profir2sage \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/examples \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/util \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml-xercesc \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/profir \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/sage \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/xml2profir \
+#                          @top_srcdir@/src/roseExtensions/roseHPCToolkit/src/profir2sage
 
-SIMPLE_INPUT                  = \
-                         @top_pwd@/rose.docs \
-                         @top_pwd@/docs/Rose/AvailableDocumentation.docs \
-                         @top_srcdir@/src/frontend/frontend.docs \
-                         @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
-                         @top_srcdir@/src/frontend/Open64/documentation.docs \
-                         @top_pwd@/src/frontend/SageIII/sage.docs \
-                         @top_srcdir@/src/frontend/SageIII/docs \
-                         @top_srcdir@/src/extra.docs
+# SIMPLE_INPUT                  = \
+#                          @top_pwd@/rose.docs \
+#                          @top_pwd@/docs/Rose/AvailableDocumentation.docs \
+#                          @top_srcdir@/src/frontend/frontend.docs \
+#                          @top_srcdir@/src/frontend/CxxFrontend/EDG_3.3/documentation.docs \
+#                          @top_srcdir@/src/frontend/Open64/documentation.docs \
+#                          @top_pwd@/src/frontend/SageIII/sage.docs \
+#                          @top_srcdir@/src/frontend/SageIII/docs \
+#                          @top_srcdir@/src/extra.docs
 
 
 # If the value of the INPUT tag contains directories, you can use the 
@@ -511,7 +511,7 @@ EXCLUDE                = @top_srcdir@/AST_RewriteMechanism/testRewrite.h \
                          @top_srcdir@/AST_RewriteMechanism/testRewriteReplacementPermutations.C \
                          @top_srcdir@/AST_RewriteMechanism/test1.C \
                          @top_srcdir@/AST_RewriteMechanism/inputProgram1.C \
-    			@top_srcdir@/src/frontend/SageIII/sageInterface/highLevelInterface.h \
+                         @top_srcdir@/src/frontend/SageIII/sageInterface/highLevelInterface.h \
                          @top_srcdir@/util/testStrings.C \
                          @top_srcdir@/util/roseString.h \
                          @top_srcdir@/util/roseString.C \
@@ -552,7 +552,8 @@ EXAMPLE_RECURSIVE      = NO
 # directories that contain image that are included in the documentation (see 
 # the \image command).
 
-IMAGE_PATH             = .
+# IMAGE_PATH             = .
+IMAGE_PATH             = @top_srcdir@/docs/Rose
 
 # The INPUT_FILTER tag can be used to specify a program that doxygen should 
 # invoke to filter for each input file. Doxygen will invoke the filter program 
