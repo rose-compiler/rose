@@ -80,9 +80,7 @@ one million lines of code in size).
      about the ROSE project. Built in 2005, it has been slow to evolve since we wanted to 
      keep a low profile as long as possible while we focused on robustness issues within
      the ROSE project and infrastructure. \n
-     <a href="http://www.llnl.gov/casc/rose"> External LLNL ROSE Web Pages </a> \n
-     The LLNL ROSE internal web site is at:
-     <a href="http://cmg-1/casc/rose"> Internal LLNL ROSE Web Pages </a> \n
+     <a href="http://www.llnl.gov/casc/rose"> ROSE Web Site </a> \n
 
 \subsection dummyA ROSE User Manual Documentation
      The ROSE User Manual can be found at (link to LaTeX document): \n
@@ -114,41 +112,25 @@ one million lines of code in size).
 
 \subsection dummyD ROSE Email List
 
-    The ROSE project maintains a mailing list (casc-rose *at* llnl *dot* gov).
-    The email list is only used to get help and announce internal and external releases.
-    Anyone who would like to be on the email list can send email to dquinlan *at* llnl *dot* gov.
-    Those with access to LLNL internal web pages may check who is on the email list at the \n
-     <a href="http://cmg-r.llnl.gov/casc/computing/mailing_lists/casc-rose.html"> ROSE Email List </a> \n
+    The ROSE project supports three email lists, information about this is loacted in 
+    the ROSE Installation Guide and the ROSE User Manual (developers appendix).
 
 \subsection RosePublications ROSE Publications
 
     ROSE is a research project which emphasises publication about the new technologies
     that we are developing, every often as part of external collaborations.  Publications
-    specific to the ROSE project can be found at: \n
-    \ref ProjectPublications
+    specific to the ROSE project can be found at the main ROSE web page.
 
 \section DownLoadInstructions ROSE Download Instructions
 
-    \b ROSE will be released on the web late \b Summer \b 2006.
+    ROSE is an open source project. The ROSE project is publically release via the
+    outreach.scidac.gov web site (which hosts the main ROSE web page).
 
-    ROSE is an open source project. The ROSE project is however not yet presently 
-    distributed on the web.  A increasing 
-    number of groups world-wide have been given external access to ROSE
-    as part of an incremental approach to an initial external release.  In each case the 
-    propriatary EDG source can only be distributed to those research groups having a free 
-    research license (or a commerical license in a few cases).  The full source code to
-    ROSE \b will be made available as an \b open \b source \b project.  The code that
-    connects EDG to
-    ROSE can \b only be made available in binary form to those without the free EDG research
-    license.  ROSE by itself does not depend on EDG directly, only indirectly as one 
-    of a number of front-ends. \n
-    \ref ProjectDownLoadPage
+\if debuggingDocumentation
 
 \section RoseRelatedWork Related Work & Background Material
 
     For more information about related work and background material \ref ProjectRelatedWorkPage.
-
-\if debuggingDocumentation
 
    There are two levels of documentation: user level and developer level. 
       -# The user level documentation documents only the interfaces that are 
