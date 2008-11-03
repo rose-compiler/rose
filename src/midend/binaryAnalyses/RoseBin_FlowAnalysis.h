@@ -32,6 +32,16 @@ class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<
     }
 };
 
+class FindFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgFunctionDeclaration *>* , void* >
+{
+  public:
+    void* operator()(first_argument_type node, std::vector<SgFunctionDeclaration*>* insns ) const{
+      if (isSgFunctionDeclaration(node)) insns->push_back(isSgFunctionDeclaration(node));
+      return NULL;
+    }
+};
+
+
 class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmInstruction *>* , void* >
 {
  public:
@@ -50,11 +60,23 @@ class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vect
   }
 };
 
-class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmStatement *>* , void* >
+class FindAsmStatementsVisitor: public std::binary_function<SgNode*, std::vector<SgAsmStatement *>* , void* >
 {
  public:
   void* operator()(first_argument_type node, std::vector<SgAsmStatement*>* insns ) const{
     if (isSgAsmStatement(node)) insns->push_back(isSgAsmStatement(node));
+    return NULL;
+  }
+};
+
+class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<SgStatement *>* , void* >
+{
+ public:
+  void* operator()(first_argument_type node, std::vector<SgStatement*>* insns ) const{
+    if (isSgStatement(node)) 
+      //      if (!isSgStatement(node)->get_file_info()->isCompilerGenerated())
+	insns->push_back(isSgStatement(node));
+	//}
     return NULL;
   }
 };
