@@ -9,6 +9,9 @@
 # debug=42
 debug=0
 
+# work in the 'C' locale to avoid trouble with different numeric formats
+LC_ALL=C
+
 if [ $# = 2 ]; then
   ANALYSIS=$1
   SUITE=$2

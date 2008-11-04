@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: set_pag_options.C,v 1.9 2008-07-01 09:45:09 gergo Exp $
+// $Id: set_pag_options.C,v 1.10 2008-11-04 10:04:22 gergo Exp $
 
 // Author: Markus Schordan, 2006+
 
@@ -7,6 +7,7 @@
 #include "o_VariableId.h"
 #include "o_ExpressionId.h"
 #include <iostream>
+#include <cstdlib>
 
 extern char* animation;
 extern int cfg_ordering;

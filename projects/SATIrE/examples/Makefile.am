@@ -147,7 +147,7 @@ testsuite: init.token
 	cp -ur $(top_srcdir)/examples/constprop $(testdir)
 	chmod u+rwx -R $(testdir)/constprop
 	##GB working around possible problems with old constprop.set files
-	if [ -e $(testdir)/constprop/constprop.set ] ; then \
+	@if [ -e $(testdir)/constprop/constprop.set ] ; then \
 		echo "info: $(top_srcdir)/examples/constprop/constprop.set no longer in CVS, ignoring your local copy" ; \
 		rm -f $(testdir)/constprop/constprop.set ; \
 	fi

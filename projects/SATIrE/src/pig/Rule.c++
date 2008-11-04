@@ -1,9 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: Rule.c++,v 1.2 2007-03-08 15:36:49 markus Exp $
+// $Id: Rule.c++,v 1.3 2008-11-04 10:04:27 gergo Exp $
 
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cstring>
 
 #include "spec.h"
 #include "Rule.h"

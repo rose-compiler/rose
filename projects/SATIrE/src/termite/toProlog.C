@@ -26,8 +26,11 @@ int main ( int argc, char ** argv ) {
     return 1;
   }
   char *outputFileName = argv[2];
-  argc = 2;
-  argv[argc] = NULL;
+  // GB (2008-11-04): Now that argv[2] is unused, we can use it to turn off
+  // the frontend's warnings; they are distracting in the automated test
+  // outputs.
+  char warningFlag[] = "-edg:w";
+  argv[2] = warningFlag;
 
   SgProject * root = frontend(argc,argv);
 	

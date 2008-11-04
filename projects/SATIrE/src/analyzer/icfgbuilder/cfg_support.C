@@ -1,9 +1,10 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.C,v 1.28 2008-10-21 13:40:40 gergo Exp $
+// $Id: cfg_support.C,v 1.29 2008-11-04 10:04:24 gergo Exp $
 
 #include "CFGTraversal.h"
 #include "cfg_support.h"
 #include "IrCreation.h"
+#include <cstring>
 
 CFG::~CFG()
 {

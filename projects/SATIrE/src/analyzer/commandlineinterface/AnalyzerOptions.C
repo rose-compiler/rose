@@ -1,10 +1,11 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany, Adrian Prantl, Viktor Pavlu
-// $Id: AnalyzerOptions.C,v 1.27 2008-07-01 09:45:09 gergo Exp $
+// $Id: AnalyzerOptions.C,v 1.28 2008-11-04 10:04:22 gergo Exp $
 
 // todo: inheritance mechanism for help text (w/ automagic "[default]" labelling)
 
 #include "AnalyzerOptions.h"
 #include <iostream>
+#include <cstring>
 
 AnalyzerOptions::~AnalyzerOptions() {}
 AnalyzerOptions::AnalyzerOptions(): _optionsErrorMessage(""),_optionsInfo(""),_numberOfInputFiles(0) {

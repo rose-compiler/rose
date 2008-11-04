@@ -12,6 +12,7 @@
 #include "gc_mem.h"
 #include "unum.h"
 #include "str.h"
+#include <cstring>
 
 #include "cfg_support.h"
 

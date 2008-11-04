@@ -1,8 +1,9 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: generate.c++,v 1.5 2007-11-09 11:16:24 adrian Exp $
+// $Id: generate.c++,v 1.6 2008-11-04 10:04:27 gergo Exp $
 
 #include <fstream>
 #include <vector>
+#include <cstdlib>
 
 #include "spec.h"
 #include "Rule.h"
