@@ -122,6 +122,13 @@ main()):
 SourceFile<name,"/home/PERI/test222.c">::FunctionDeclaration<name,"main">::
 ForStatement<numbering,2>
 \end{verbatim}
+\item A nested loop using numbering information (The first loop inside the second loop in function
+main()): 
+\begin{verbatim}
+SourceFile<name,"/home/PERI/test222.c">::FunctionDeclaration<name,"main">::
+ForStatement<numbering,2>::ForStatement<numbering,1>
+\end{verbatim}
+
 \end{itemize}
 
 \section{Reference Implementation}
@@ -288,7 +295,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 We give yet another example to demonstrate how to use the abstract interface
 with any other tools, which may have less features in terms of
 supported language constructs and their correlations compared to a compiler. 
-Assume a tool operating on some simple non-nesting for-loops
+Assume a tool operating on some simple for-loops
 within a source file. The data structure representing such loops is given
 in Figure~\ref{Tutorial:myloop}.
 
@@ -318,12 +325,15 @@ An adapter (loopAdapter.h and loopAdapter.cpp) using the proposed abstract
 handle interface is given in \textit{src/midend/abstractHandle}.
 It provides a concrete implementation for the interface for the simple loops and adds a
 node to support file nodes (Compared to the full-featured ROSE IR, this
-additional file node is an additional work when using tools without internal nodes
+additional file node is additional work when using tools without internal nodes
 supporting files). 
 The test program is given in Figure ~\ref{Tutorial:testMyLoop}.
-Again, it creates a top level file handle first. Then a loop handle is
-created within the file handle. Another loop handle is created from its 
-string format. 
+Again, it creates a top level file handle first. Then a loop handle
+(loop\_handle1) is
+created within the file handle using its relative numbering information. 
+loop\_handl2 is created from from its string format using file position
+information. loop\_handl3 uses its relative numbering information within
+loop\_handle1. 
 \begin{figure}[!h]
 {\indent
 {\mySmallestFontSize
