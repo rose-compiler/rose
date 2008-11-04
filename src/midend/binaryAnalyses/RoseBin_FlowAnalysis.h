@@ -32,7 +32,7 @@ class FindAsmFunctionsVisitor: public std::binary_function<SgNode*, std::vector<
     }
 };
 
-class FindFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgFunctionDeclaration *>* , void* >
+class FindSgFunctionsVisitor: public std::binary_function<SgNode*, std::vector<SgFunctionDeclaration *>* , void* >
 {
   public:
     void* operator()(first_argument_type node, std::vector<SgFunctionDeclaration*>* insns ) const{
@@ -77,6 +77,16 @@ class FindStatementsVisitor: public std::binary_function<SgNode*, std::vector<Sg
       //      if (!isSgStatement(node)->get_file_info()->isCompilerGenerated())
 	insns->push_back(isSgStatement(node));
 	//}
+    return NULL;
+  }
+};
+
+class FindNodeVisitor: public std::binary_function<SgNode*, std::vector<SgLocatedNode *>* , void* >
+{
+ public:
+  void* operator()(first_argument_type node, std::vector<SgLocatedNode*>* insns ) const{
+    if (isSgNode(node)) 
+      insns->push_back(isSgLocatedNode(node));
     return NULL;
   }
 };
