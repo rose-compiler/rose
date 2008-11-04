@@ -162,7 +162,7 @@ void BinQGUI::highlightFunctionRow(int row, bool fileA) {
 	int offset=0;
 	for (;it!=itemsFileB.end();++it) {
 	  Item* item = *it;
-	  SgStatement* stat = isSgStatement(item->statement);
+	  SgLocatedNode* stat = isSgLocatedNode(item->statement);
 	  if (func==isSgFunctionDeclaration(stat)) {
 	    offset=item->row;
 	    break;
@@ -411,7 +411,7 @@ void BinQGUI::init(){
   FindAsmFunctionsVisitor funcVis;
   AstQueryNamespace::querySubTree(fileA, std::bind2nd( funcVis, &funcsFileA ));
   if (sourceFile) {
-    FindFunctionsVisitor funcVisSource;
+    FindSgFunctionsVisitor funcVisSource;
     AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVisSource, &funcsFileB ));
   } else
     AstQueryNamespace::querySubTree(fileB, std::bind2nd( funcVis, &funcsFileB ));
@@ -479,14 +479,14 @@ void BinQGUI::init(){
     FindAsmStatementsVisitor visStat2;
     AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
   } else {
-    FindStatementsVisitor visStat2;
+    FindNodeVisitor visStat2;
     AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts ));
   }
   it= stmts.begin();
   pos=0;
   row=0;
   for (;it!=stmts.end();++it) {
-    Item* item;
+    Item* item = NULL;
     int length=1;
     if (isSgAsmFunctionDeclaration(*it)){
       int funcsize=0;
@@ -503,21 +503,31 @@ void BinQGUI::init(){
       item = new Item(false,isSgAsmInstruction(*it),0,0,row,length,pos,"",0);
     } else if (isSgFunctionDeclaration(*it)) {
       int funcsize=0;
-      FindStatementsVisitor visStat2;
-      std::vector<SgStatement*> stmts2;
+      FindNodeVisitor visStat2;
+      std::vector<SgLocatedNode*> stmts2;
       AstQueryNamespace::querySubTree(fileB, std::bind2nd( visStat2, &stmts2 ));
       funcsize= stmts2.size();
-      item = new Item(true,isSgFunctionDeclaration(*it),funcsize,2,row,length,pos,"",0);
-    } else if (isSgStatement(*it)) {
-      Sg_File_Info* fi = isSgStatement(*it)->get_file_info();
+      int color=4;
+      SgFunctionDefinition* def = isSgFunctionDefinition(isSgFunctionDeclaration(*it)->get_definition());
+      if (def)
+	color=2;
+      if (isSgFunctionDeclaration(*it)->get_file_info()->isCompilerGenerated())
+	color=3;
+      item = new Item(true,isSgFunctionDeclaration(*it),funcsize,color,row,length,pos,"",0);
+    } else if (isSgLocatedNode(*it)) {
+      Sg_File_Info* fi = isSgLocatedNode(*it)->get_file_info();
       int line = -1;
       if (fi) {
 	line = fi->get_line();
 	length = 1;
       }
-      //      cerr << fi << " creating statement : " << isSgStatement(*it)->class_name() << " ... comment " << line << endl;
-      item = new Item(false,isSgStatement(*it),0,0,row,length,pos,
-		      isSgStatement(*it)->class_name(),line);
+      //      cerr << fi << " creating statement : " << isSgLocatedNode(*it)->class_name() << " ... comment " << line << endl;
+      item = new Item(false,isSgLocatedNode(*it),0,0,row,length,pos,
+		      isSgLocatedNode(*it)->class_name(),line);
+    } else {
+      cerr << "unknown node" << endl;//*it->class_name() << endl;
+      item = new Item(false,NULL,0,0,row,0,pos,
+		      " ",0);
     }
     //example -- color pushes red
     if (isSgAsmx86Instruction(*it)) {
@@ -635,14 +645,16 @@ void BinQGUI::init(){
       {
 	codeTableWidget = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
 	QROSE::link(codeTableWidget, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedA, this);
-	codeTableWidget2 = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
+	if (sourceFile) {
+	  codeTableWidget2 = bottomPanelRight << new QRTable( 5, "row","line","text","type","pos" );
+	  maxrows=3;
+	} else {
+	  codeTableWidget2 = bottomPanelRight << new QRTable( 7, "row","address","instr","operands","comment","pos","byte" );
+	}
 	QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
 
-	//	bottomPanelRight.setTileSize(0,80);
       }
       bottomPanelLeft.setFixedWidth(screenWidth/5 );
-      //bottomPanelRight.setFixedWidth(screenWidth/2 );
-
     } //mainPanel
     mainPanel.setTileSize(30);
   } //window 
@@ -697,6 +709,8 @@ BinQGUI::run( ) {
   while(tableWidget2->rowCount()) 
     tableWidget2->removeRow(0);
 
+  tableWidget->setTextColor(QColor(0,0,255),0);
+  tableWidget2->setTextColor(QColor(0,0,255),0);
   for (size_t row = 0; row < funcsFileA.size(); ++row) {
     tableWidget->addRows(1);
     ROSE_ASSERT(isSgAsmFunctionDeclaration(funcsFileA[row]));
@@ -709,29 +723,31 @@ BinQGUI::run( ) {
     if (isSgAsmFunctionDeclaration(funcsFileB[row]))
       tableWidget2->setText(boost::lexical_cast<std::string>(isSgAsmFunctionDeclaration(funcsFileB[row])->get_name()), 0, row);
     if (isSgFunctionDeclaration(funcsFileB[row])) {
-      if (isSgFunctionDeclaration(funcsFileB[row])->get_file_info()->isCompilerGenerated())
-	tableWidget->setTextColor(QColor(255,0,0),0);	
+      SgFunctionDeclaration* func = isSgFunctionDeclaration(funcsFileB[row]);
+      if (func->get_file_info()->isCompilerGenerated())
+	tableWidget2->setTextColor(QColor(255,0,0),0,row);	
+      else if (isSgFunctionDefinition(func->get_definition()))
+	tableWidget2->setTextColor(QColor(0,0,0),0,row);
+      else
+	tableWidget2->setTextColor(QColor(128,128,128),0,row);
+      //      cerr << row << " comp : " << func->get_file_info()->isCompilerGenerated() <<
+      //	"   def : " << isSgFunctionDefinition(func->get_definition()) << endl;
       tableWidget2->setText(boost::lexical_cast<std::string>(isSgFunctionDeclaration(funcsFileB[row])->get_name().str()), 0, row);
     }
     tableWidget2->setVDim(row,18);
   }
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
-  //tableWidget->setHAlignment(true, false, 1); // left horizontal alignment
-  tableWidget->setTextColor(QColor(0,0,255),0);
-  tableWidget->setHDim(0,140);
-  //tableWidget->setHDim(1,40);
-  tableWidget->setShowGrid(false);
 
+  tableWidget->setHDim(0,140);
+  tableWidget->setShowGrid(false);
   tableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
-  tableWidget2->setTextColor(QColor(0,0,255),0);
   tableWidget2->setHDim(0,140);
-  //tableWidget2->setHDim(1,40);
   tableWidget2->setShowGrid(false);
 
   
   QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedA, this);
   QROSE::link(tableWidget2, SIGNAL(activated(int, int, int, int)),  &tableWidgetCellActivatedB, this);
-  showFileA(0);
+    showFileA(0);
   showFileB(0);
 }
 
@@ -804,7 +820,7 @@ void BinQGUI::showFileA(int row) {
       codeTableWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmBlock(stmts))->get_address()) ), 1, i);
       codeTableWidget->setText(boost::lexical_cast<std::string>("***"), 2, i);
       addRow=true;
-    } else if (isSgAsmFunctionDeclaration(stmts)) {
+    }  else if (isSgAsmFunctionDeclaration(stmts)) {
       codeTableWidget->addRows(1);
       itemsFileA[i]->bg=QColor(0,0,0);
       QColor back = itemsFileA[i]->bg;
@@ -950,6 +966,7 @@ void BinQGUI::showFileB(int row) {
     } 
     else if (isSgFunctionDeclaration(stmts)) {
       SgFunctionDeclaration* func = isSgFunctionDeclaration(stmts);
+      //cerr << func->class_name() << "  maxrows: " << maxrows << endl;
       codeTableWidget2->addRows(1);
       itemsFileB[i]->bg=QColor(0,0,0);
       QColor back = itemsFileB[i]->bg;
@@ -959,19 +976,22 @@ void BinQGUI::showFileB(int row) {
 	codeTableWidget2->setBgColor(back,j,i);
 	codeTableWidget2->setTextColor(front,j,i);
       }
+      //      if (isSgFunctionDefinition(func->get_definition()))
+      //	cerr << row << " " << func->unparseToString() << endl;
+
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(" " ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>("FUNC"), 1, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(func->get_name().str() ), 2, i);
       std::string comment = func->get_file_info()->isCompilerGenerated() ? "compiler gen": " ";
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(comment ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 4, i);	
       addRow=true;
 
-    } else if (isSgStatement(stmts)) {
-      SgStatement* st = isSgStatement(stmts);
+    } else if (isSgLocatedNode(stmts)) {
+      SgLocatedNode* st = isSgLocatedNode(stmts);
+      //cerr << st->class_name() << "  maxrows: " << maxrows << endl;
       codeTableWidget2->addRows(1);
+
       itemsFileB[i]->bg=QColor(255,255,255);
       QColor back = itemsFileB[i]->bg;
       itemsFileB[i]->fg=QColor(0,0,0);
@@ -984,58 +1004,67 @@ void BinQGUI::showFileB(int row) {
       codeTableWidget2->setTextColor(QColor(0,0,255),2,i);
       codeTableWidget2->setTextColor(QColor(0,155,0),3,i);
       codeTableWidget2->setTextColor(QColor(0,155,0),4,i);
+
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
       codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->lineNr ), 1, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>("STMT"), 2, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(st->class_name() ), 3, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 4, i);
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      addRow=true;
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(st->unparseToString()), 2, i);
+      //int size = st->get_traversalSuccessorContainer().size();
+      //cerr << size << " : " << st->unparseToString() << endl;
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->comment ), 3, i);
+      codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 4, i);	
 
+      addRow=true;
     } 
     else {
-      codeTableWidget2->addRows(1);
-      itemsFileB[i]->bg=QColor(128,128,128);
-      QColor back = itemsFileB[i]->bg;
-      for (int j=1;j<maxrows;++j) {
-	codeTableWidget2->setBgColor(back,j,i);
-      }
+      //      cerr << itemsFileB[i]->statement->class_name() << endl;
+	codeTableWidget2->addRows(1);
+	itemsFileB[i]->bg=QColor(128,128,128);
+	QColor back = itemsFileB[i]->bg;
+	for (int j=1;j<maxrows;++j) {
+	  codeTableWidget2->setBgColor(back,j,i);
+	}
 
-      if (itemsFileB[i]->row) {
-	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
-	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
-	codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
-      }
+	if (itemsFileB[i]->row) {
+	  codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->row), 0, i);	
+	  if (!sourceFile) {
+	    codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->pos), 5, i);	
+	    codeTableWidget2->setText(boost::lexical_cast<std::string>(itemsFileB[i]->length), 6, i);	
+	  }
+	}
       addRow=true;
     }
+
     if (addRow) {
       codeTableWidget2->setHAlignment(true, false, 0); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 1); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 2); // left horizontal alignment
       codeTableWidget2->setHAlignment(true, false, 3); // left horizontal alignment
+      codeTableWidget2->setHAlignment(true, false, 4); // left horizontal alignment
       
       codeTableWidget2->setVDim(i,18);
-      codeTableWidget2->setHDim(0,30);
-      codeTableWidget2->setHDim(1,80);
-      codeTableWidget2->setHDim(2,50);
-      codeTableWidget2->setHDim(3,190);
-      codeTableWidget2->setHDim(4,110);
-      codeTableWidget2->setHDim(5,30);
-      codeTableWidget2->setHDim(6,30);
-      
-      //posRowB[posC]=rowC;
-      //      cerr << "added at pos:" << posC << "  rowC:" << rowC<<endl;
+      if (sourceFile) {
+	codeTableWidget2->setHDim(0,30);
+	codeTableWidget2->setHDim(1,50);
+	codeTableWidget2->setHDim(2,300);
+	codeTableWidget2->setHDim(3,110);
+	codeTableWidget2->setHDim(4,40);
+      } else {
+	codeTableWidget2->setHDim(0,30);
+	codeTableWidget2->setHDim(1,80);
+	codeTableWidget2->setHDim(2,50);
+	codeTableWidget2->setHDim(3,190);
+	codeTableWidget2->setHDim(4,110);
+	codeTableWidget2->setHDim(5,30);
+	codeTableWidget2->setHDim(6,30);
+      }
       rowC++;
       posC+=length;
     }
   }
-
   codeTableWidget2->setShowGrid(false);
   codeTableWidget2->setCurrentCell(row,0);
 
   QROSE::link(codeTableWidget2, SIGNAL(activated(int, int, int, int)), &codeTableWidgetCellActivatedB, this);
-
 }
 
 
