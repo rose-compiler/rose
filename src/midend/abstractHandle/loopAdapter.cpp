@@ -60,7 +60,7 @@ source_position loopNode::getStartPos() const
 }
 
 // return the numbering within a scope (file)
-// MyLoop only cares about numbering inside its source file
+// MyLoop can be attached to a file node or another loop node.
 // The parameter must be either of a fileNode or a loopNode
 size_t loopNode::getNumbering(const abstract_node * another_node) const
 {
@@ -165,6 +165,13 @@ AbstractHandle::abstract_node* fileNode::findNode(std::string construct_type_str
     if (mspecifier.get_type()==e_position)
     {
       if (isEqual(mspecifier.get_value().positions, cnode->getSourcePos()))
+      {
+        result = cnode;
+        break;
+      }
+    } else if (mspecifier.get_type()==e_numbering)
+    {
+      if (mspecifier.get_value().int_v == cnode->getNumbering(this))
       {
         result = cnode;
         break;
