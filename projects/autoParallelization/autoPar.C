@@ -34,6 +34,7 @@
 using namespace std;
 // new attribute support for 3.0 specification
 using namespace OmpSupport;
+using namespace SageInterface;
 
 int
 main (int argc, char *argv[])
@@ -111,7 +112,7 @@ main (int argc, char *argv[])
         LoopTreeDepCompCreate comp(la,head);
 
         // Retrieve dependence graph here!
-        cout<<"-------------Dump the dependence graph for the first loop in a function body!------------"<<endl; 
+        cout<<"Dump the dependence graph for the loop in question:"<<endl; 
         comp.DumpDep();
         //LoopTreeNodeDepMap depmap = comp.GetTreeNodeMap();
        
@@ -156,6 +157,8 @@ main (int argc, char *argv[])
        // (Carry level ==0 for top level common loops)
        bool isParallelizable = true;
 
+       vector<DepInfo>  remainingDependences;
+
         LoopTreeDepGraph * depgraph =  comp.GetDepGraph(); 
         LoopTreeDepGraph::NodeIterator nodes = depgraph->GetNodeIterator();
         for (; !nodes.ReachEnd(); ++ nodes)
@@ -167,17 +170,41 @@ main (int argc, char *argv[])
              for (; !edges.ReachEnd(); ++edges)
              { 
                LoopTreeDepGraph::Edge *e= *edges;
-               //cout<<"dependence edge: "<<e->toString()<<endl;
+               cout<<"dependence edge: "<<e->toString()<<endl;
                DepInfo info =e->GetInfo();
-               if (info.CarryLevel()==0)
-                 isParallelizable = false;
+             
+               // eliminate dependence relationship if
+               // the variables are thread-local: (within the scope of the loop's scope)
+               SgScopeStatement * currentscope= getScope(sg_node);  
+               SgScopeStatement* varscope =NULL;
+               SgNode* src_node = AstNodePtr2Sage(info.SrcRef());
+               if (src_node)
+               {
+                 SgVarRefExp* var_ref = isSgVarRefExp(src_node);
+                 if (var_ref)
+                 {  
+                   varscope= var_ref->get_symbol()->get_scope();
+                   if (isAncestor(currentscope,varscope))
+                     continue;
+                 } //end if(var_ref)
+               } // end if (src_node)
+
+                // skip non loop carried dependencies: 
+                // TODO scalar issue, wrong CarryLevel
+               if ((info.CarryLevel()!=0)&&(info.GetDepType()!=DEPTYPE_SCALAR)) 
+                 continue;
+                
+               remainingDependences.push_back(info); 
              } //end iterator edges for a node
           } // end if 
         } // end of iterate dependence graph 
 
-      //TODO liveness analysis to classify variables 
+      //TODO liveness analysis to classify variables and further eliminate dependences
+      
+      // Set to unparallelizable if it has dependences which can not eliminated
+      if (remainingDependences.size()>0) isParallelizable = false;
 
-        //comp.DetachDepGraph();// TODO release resources here?
+       comp.DetachDepGraph();// release resources here
       //4.  Attach OmpAttribute to the loop node if it is parallelizable 
        if (isParallelizable)
        {  
@@ -185,17 +212,31 @@ main (int argc, char *argv[])
           OmpAttribute* omp_attribute = buildOmpAttribute(e_parallel_for,sg_node);
           addOmpAttribute(omp_attribute,sg_node);
           hasOpenMP = true;
-        }
+        } 
+        else
+        {
+          cout<<"\n Unparallelizable loop at line:"<<sg_node->get_file_info()->get_line()<<
+               " due to the following dependencies:"<<endl;
+          for (vector<DepInfo>::iterator iter= remainingDependences.begin();     
+               iter != remainingDependences.end(); iter ++ )
+          {
+            cout<<(*iter).toString()<<endl;
+          }
+
+        } // end if 
 
         // 5. Generate and insert #pragma omp parallel for 
         // This phase is deliberately separated from buildOmpAttribute()
         OmpAttribute* att = getOmpAttribute(sg_node); 
         if(att)
         {  
+            cout<<"\n Parallelizing a loop at line:"
+              <<sg_node->get_file_info()->get_line()<<endl;
             string pragma_str= att->toOpenMPString();
             SgPragmaDeclaration * pragma = SageBuilder::buildPragmaDeclaration(pragma_str); 
             SageInterface::insertStatementBefore(isSgStatement(sg_node), pragma);
         } // end inserting #pragma   
+
      } // end for-loop for declarations
      // insert omp.h if OpenMP directives have been inserted into the current file 
      if (hasOpenMP)

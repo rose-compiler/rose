@@ -2,13 +2,16 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 # the code which can be parallelized or confirmed as not parallelizable now
 C_TESTCODES_REQUIRED_TO_PASS = \
-doall.c 
+anti_dep.c \
+doall.c \
+scalar_privatization.c \
+true_dep.c \
+output_dep.c
 
 CXX_TESTCODES_REQUIRED_TO_PASS = 
 
 # the code which can not yet be parallelized now
 TESTCODE_CURRENTLY_FAILING = \
-anti_dep.c \
 doall_2.c \
 firstprivate.c \
 inner_only.c \
@@ -16,13 +19,11 @@ jacobi_seq.c \
 matrixmultiply.c \
 output_dep2.c \
 output_dep3.c \
-output_dep.c \
 pointer.c \
 private.c \
 reduction.c \
 shared.c \
 true_dep_2.c \
-true_dep.c \
 true_l2.c \
 vectorize_1.c \
 doall_vector.C \
@@ -49,9 +50,6 @@ $(C_TEST_Objects): ../autoPar $(@:.o=.c)
 $(CXX_TEST_Objects): ../autoPar $(@:.o=.C)
 	$(VALGRIND) ../autoPar $(ROSE_FLAGS) -c $(srcdir)/$(@:.o=.C)
 
-../autoPar:../autoPar.C
-	cd .. 
-	make
 check-local:
 	@echo "Test for ROSE automatic parallelization."
 	@$(MAKE) $(C_TEST_Objects)
