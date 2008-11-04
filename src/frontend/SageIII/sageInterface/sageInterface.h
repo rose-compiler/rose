@@ -443,6 +443,8 @@ class StatementGenerator {
 			   SgFunctionDeclaration * functionDeclaration,
 			   SgDeclarationStatement * startingAtDeclaration);
 
+  //!check if node1 is an ancestor of node 2, mostly used to compare which scope node is in higher level
+  bool isAncestor(SgNode* node1, SgNode* node2);
 //@}
 //------------------------------------------------------------------------
 //@{
