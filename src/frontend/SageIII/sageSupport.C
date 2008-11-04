@@ -2896,7 +2896,9 @@ SgSourceFile::callFrontEnd()
      ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
 
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
      delete  currStks ;
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
      return frontendErrorLevel;
    }
