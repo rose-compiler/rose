@@ -2,6 +2,8 @@
 #define BINQSUPPORT_H
 #include "rose.h"
 
+SgAsmExpressionPtrList& getOperands(SgAsmInstruction* insn);
+
 
 class BinQSupport
 {

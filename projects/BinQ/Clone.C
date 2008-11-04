@@ -1,9 +1,14 @@
 #include "BinQGui.h"
 #include "BinQSupport.h"
 #include "Clone.h"
+#include <boost/algorithm/string.hpp>
+
 using namespace boost;
 using namespace std;
 using namespace qrs;
+
+
+
 
 std::string
 unparseInstrFast(SgAsmInstruction* iA)
@@ -14,7 +19,22 @@ unparseInstrFast(SgAsmInstruction* iA)
   std::string value = "";
   if(iItr == strMap.end() )
     {
-      value = unparseInstruction(iA);
+
+      // Unparse the normalized forms of the instructions
+      string mne = iA->get_mnemonic();
+      boost::to_lower(mne);
+
+      value += mne;
+      const SgAsmExpressionPtrList& operands = getOperands(iA);
+      // Add to total for this variant
+      // Add to total for each kind of operand
+      size_t operandCount = operands.size();
+
+      for (size_t i = 0; i < operandCount; ++i) {
+        SgAsmExpression* operand = operands[i];
+        value += (  isSgAsmRegisterReferenceExpression(operand) ? " R" : isSgAsmMemoryReferenceExpression(operand) ? " M" : " V");
+      }
+      
       strMap[iA] = value;
     }else
     value = iItr->second;
