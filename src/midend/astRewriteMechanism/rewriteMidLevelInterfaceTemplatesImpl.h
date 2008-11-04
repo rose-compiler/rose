@@ -333,7 +333,11 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
 
   // We need the lifetime to be extended beyond that of this function (to avoid purify error)
   // SgFile transformationAST (transformation_argc,transformation_argv,errorCode);
-     SgSourceFile* transformationASTPointer = new SgSourceFile (transformation_argv,errorCode, 0, project);
+     //AS(10/04/08) Because it is hard to get all the initializations correct without doing determine file type we now require the
+     //calling of the constructor directly to create the AST
+  //   SgSourceFile* transformationASTPointer = new SgSourceFile (transformation_argv,errorCode, 0, project);
+     SgSourceFile* transformationASTPointer = isSgSourceFile(determineFileType(transformation_argv, errorCode, project));
+
      ROSE_ASSERT (transformationASTPointer != NULL);
      ROSE_ASSERT (errorCode <= 2);
 
@@ -407,6 +411,7 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
   // specification via strings.
      NodeCollectionType dataCollection = synthesizedAttribute.treeFragementListArray;
 
+
   // Error checking
      bool notAnEmptyContainer = false;
      for (unsigned int i=0; i < dataCollection.size(); i++)
@@ -414,7 +419,11 @@ MidLevelRewrite<ASTNodeCollection>::fileStringToNodeCollection (
           if (dataCollection[i].size() > 0)
                notAnEmptyContainer = true;
         }
-     ROSE_ASSERT (notAnEmptyContainer == true);
+
+    
+     std::cout << "AST NODE " << astNode->class_name() << std::endl;
+     
+     ROSE_ASSERT (notAnEmptyContainer == true || isSgUnknownFile(astNode) != NULL );
 
      return dataCollection;
    }

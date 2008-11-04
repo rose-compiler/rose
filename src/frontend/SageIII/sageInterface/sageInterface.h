@@ -1,7 +1,10 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
+
 #include "sage3.h"
+SgFile*                         determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
+
 #include "rewrite.h"
 
 // DQ (7/20/2008): Added support for unparsing abitrary strings in the unparser.
@@ -1046,7 +1049,6 @@ void changeAllLoopBodiesToBlocks(SgNode* top);
 //! Get the constant value from a constant integer expression; abort on
 //! everything else.  Note that signed long longs are converted to unsigned.
 unsigned long long getIntegerConstantValue(SgValueExp* expr);
-
 //@}
 
 

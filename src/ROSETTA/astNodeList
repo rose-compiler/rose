@@ -161,6 +161,7 @@ SgExprStatement
 SgFile
 SgSourceFile
 SgBinaryFile
+SgUnknownFile
 Sg_File_Info
 SgFileList
 SgFloatVal

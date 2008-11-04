@@ -3738,11 +3738,13 @@ HEADER_APPLICATION_FILE_START
       //! errorCode is the return value assembled from the multiple error codes associated with the 
       //! different phases of the compilation.  The fileNameIndex is the index into the list of
       //! file names input on the user's command line.  We need a way to process them individually!
-          SgFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+          SgFile ( int & argc, char** & argv,  SgProject* project = NULL );
+          SgFile(std::vector<std::string>& argv,  SgProject* project = NULL);
 
        // SgFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex, SgProject* project );
-          void doSetupForConstructor(const std::vector<std::string>& argv, int& errorCode, int fileNameIndex, SgProject* project);
+       //   virtual void doSetupForConstructor(const std::vector<std::string>& argv, int& errorCode, int fileNameIndex, SgProject* project);
+       //AS(10/04/08) Changed semantics of doSetupForConstructor to not call frontend
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
        // DQ (8/16/2008): Added this function to the SgFile IR node (defined in sageSupport.C).
           void generateBinaryExecutableFileInformation ( std::string sourceFilename, SgAsmFile* asmFile );
@@ -3800,7 +3802,7 @@ HEADER_APPLICATION_FILE_START
        // int callFrontEnd ( int & argc, char** & argv );
 
        // Get the commandline from where it is stored internally
-          int callFrontEnd();
+          virtual int callFrontEnd();
 
        // DQ (9/2/2008): Added to factor out detail fo building the AST in callFrontEnd().
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
@@ -3896,7 +3898,8 @@ HEADER_APPLICATION_FILE_END
 HEADER_APPLICATION_SOURCE_FILE_START
      public:
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgSourceFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+          SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
+          virtual int callFrontEnd();
        // SgSourceFile ( const SgSourceFile & X );
 
       //! Default constructor (not meant to be used)
@@ -3911,6 +3914,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Fortran_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_C_and_Cxx_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_PHP_AST();
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
 
        // DQ (9/5/2008): Support for older name of the SgGlobal in SgSourceFile
        // SgGlobal* get_root() const;
@@ -3930,16 +3934,29 @@ HEADER_APPLICATION_SOURCE_FILE_END
 HEADER_APPLICATION_BINARY_FILE_START
      public:
        // SgBinaryFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
-          SgBinaryFile(std::vector<std::string>& argv, int& errorCode, int fileNameIndex = 0, SgProject* project = NULL);
+          SgBinaryFile(std::vector<std::string>& argv,  SgProject* project = NULL);
        // SgBinaryFile ( const SgBinaryFile & X );
 
+          virtual int callFrontEnd();
       //  Default constructor (not meant to be used)
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
       //  SgBinaryFile() ROSE_DEPRECATED_FUNCTION;
 
+           virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+
           virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
 HEADER_APPLICATION_BINARY_FILE_END
+
+HEADER_APPLICATION_UNKNOWN_FILE_START
+     public:
+          SgUnknownFile(std::vector<std::string>& argv, SgProject* project = NULL);
+
+          virtual int callFrontEnd();
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project);
+
+HEADER_APPLICATION_UNKNOWN_FILE_END
+
 
 
 HEADER_APPLICATION_FILE_LIST_START
@@ -9413,21 +9430,21 @@ ROSEAttributesListPtr getPreprocessorDirectives( char *fileName);
 // Moved to sageSupport.C: void SgFile::setupSourceFilename ( const vector<string>& argv )
 // Moved to sageSupport.C: void SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
 
-SgFile::SgFile ( int & argc, char** & argv , int & errorCode, int fileNameIndex, SgProject* project )
+SgFile::SgFile ( int & argc, char** & argv , SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
    {
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
      ROSE_ASSERT (argv && argc >= 0);
 
   // Note use of pointer arithmetic in the computation of "argv + argc", this is standard STL fair.
-     doSetupForConstructor(vector<string>(argv, argv + argc), errorCode, fileNameIndex, project);
+     doSetupForConstructor(vector<string>(argv, argv + argc),  project);
    }
 
-SgFile::SgFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
+SgFile::SgFile ( vector<string> & argv ,  SgProject* project )
 // : p_numberOfCommandLineArguments(argc) , p_commandLineArgumentList(NULL)
    {
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-     doSetupForConstructor(argv, errorCode, fileNameIndex, project);
+     doSetupForConstructor(argv,  project);
    }
 
 #if 0
@@ -10413,6 +10430,15 @@ SOURCE_APPLICATION_SOURCE_FILE_END
 
 SOURCE_APPLICATION_BINARY_FILE_START
 SOURCE_APPLICATION_BINARY_FILE_END
+
+SOURCE_APPLICATION_UNKNOWN_FILE_START
+SgUnknownFile::SgUnknownFile ( vector<string> & argv ,  SgProject* project )
+   {
+     SgFile(argv, project);
+   }
+
+SOURCE_APPLICATION_UNKNOWN_FILE_END
+
 
 SOURCE_APPLICATION_FILE_LIST_START
 SOURCE_APPLICATION_FILE_LIST_END

@@ -1993,8 +1993,12 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
    // DQ (9/3/2008): Added support for SgSourceFile IR node
    // SgFile* result = new SgFile (arglist, nextErrorCode, 0, project);
-      SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
-
+      //AS(10/04/08) Because of refactoring we require the determineFileType function to be called 
+      //to construct the node. 
+      //SgSourceFile* result = new SgSourceFile (arglist, nextErrorCode, 0, project);
+      SgSourceFile* result = isSgSourceFile(determineFileType(arglist, nextErrorCode, project));
+      
+      
       ROSE_ASSERT(result!=NULL);
       result->set_parent(project);
       project->set_file(*result); 

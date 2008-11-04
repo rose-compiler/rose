@@ -70,7 +70,8 @@ FortranModuleInfo::createSgSourceFile(string modName)
      nestedSgFile++;
      SgProject*  project = getCurrentProject();
 
-     SgSourceFile* newFile = new SgSourceFile (argv, errorCode, 0, project);
+     SgSourceFile* newFile = isSgSourceFile(determineFileType(argv,errorCode,project));
+       // SgSourceFile* newFile =  new SgSourceFile (argv, errorCode, 0, project);
 
      ROSE_ASSERT (newFile != NULL);
      ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);

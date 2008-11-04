@@ -625,7 +625,10 @@ SgSymbol* AstInterfaceImpl::CreateDeclarationStmts( const string& _decl)
 
   // Build the AST
   // std::cerr << "generating declaration: \n";
-     SgSourceFile* addDecls = new SgSourceFile(argv, error);
+     //SgSourceFile* addDecls = new SgSourceFile(argv, error);
+     //AS (10/04/08) using factory function to determine file type. This is due to
+     //cleanup of ROSE code
+     SgSourceFile* addDecls = isSgSourceFile(determineFileType(argv,error,0));
   // std::cerr << "Finished generating declaration \n";
 
   // system( "rm _astInterface_Tmp.c");
