@@ -164,7 +164,7 @@ andreasDiff() {
 	if (inst && inst->get_address()==instA->get_address()) {
 	  myPosA=instance->itemsFileA[i]->row;
 	  //  instance->itemsFileA[i]->plus=true;
-	  instance->itemsFileA[i]->bg=QColor(233,250,122);
+	  instance->itemsFileA[i]->bg=QColor(233,150,122);
 	  for (int j=1;j<instance->maxrows;j++)
 	    instance->codeTableWidget->setBgColor(instance->itemsFileA[i]->bg,j,i);
 	}
@@ -174,7 +174,7 @@ andreasDiff() {
 	SgAsmInstruction* inst = isSgAsmInstruction(stmts);
 	if (inst && inst->get_address()==instB->get_address()) {
 	  myPosB=instance->itemsFileB[i]->row;
-	  instance->itemsFileA[i]->bg=QColor(233,250,122);
+	  instance->itemsFileA[i]->bg=QColor(233,150,122);
 	  for (int j=1;j<instance->maxrows;j++)
 	    instance->codeTableWidget2->setBgColor(instance->itemsFileB[i]->bg,j,i);
 	}
