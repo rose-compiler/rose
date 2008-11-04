@@ -1757,6 +1757,253 @@ isBinaryExecutableFile ( string sourceFilename )
       return returnValue;
     }
 
+
+SgFile* 
+determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
+   {
+     SgFile* file = NULL;
+  // DQ (4/21/2006): New version of source file name handling (set the source file name early)
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+
+  // this->display("In SgFile::setupSourceFilename()");
+     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+
+     if (fileList.empty() == false)
+        {
+          ROSE_ASSERT(fileList.size() == 1);
+
+       // DQ (8/31/2006): Convert the source file to have a path if it does not already
+       // p_sourceFileNameWithPath    = *(fileList.begin());
+          string sourceFilename = *(fileList.begin());
+
+       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
+          sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+
+       // printf ("After conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+       // This should be an absolute path
+          string targetSubstring = "/";
+       // if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+       //      printf ("@@@@@@@@@@@@@@@@@@@@ In SgFile::setupSourceFilename(int,char**): sourceFilename = %s @@@@@@@@@@@@@@@@@@@@\n",sourceFilename.c_str());
+       // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
+
+       // Rama: 12/06/06: Fixup for problem with file names.  
+	    // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
+	    // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
+
+          if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
+               printf ("sourceFilename encountered an error in filename\n");
+
+       // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro 
+       // if we detect we are processing a source file using a C++ filename extension.
+          string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
+
+       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
+       // ROSE_ASSERT(false);
+
+       // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+          //file->set_requires_C_preprocessor(true);
+
+       // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
+          if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
+             {
+               file = new SgSourceFile ( argv,  project );
+
+            // printf ("Calling file->set_sourceFileUsesFortranFileExtension(true) \n");
+               file->set_sourceFileUsesFortranFileExtension(true);
+
+            // Use the filename suffix as a default means to set this value
+               file->set_outputLanguage(SgFile::e_Fortran_output_language);
+
+               file->set_Fortran_only(true);
+
+            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
+               file->set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
+
+            // Now set the specific types of Fortran file extensions
+               if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
+                  {
+                 // printf ("Calling file->set_sourceFileUsesFortran77FileExtension(true) \n");
+                    file->set_sourceFileUsesFortran77FileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_fixed_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_fixed_form_output_format);
+
+                    file->set_F77_only(true);
+                  }
+
+               if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
+                  {
+                 // printf ("Calling file->set_sourceFileUsesFortran90FileExtension(true) \n");
+                    file->set_sourceFileUsesFortran90FileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_free_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                    file->set_F90_only(true);
+                  }
+
+               if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
+                  {
+                 // printf ("Calling file->set_sourceFileUsesFortran95FileExtension(true) \n");
+                    file->set_sourceFileUsesFortran95FileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_free_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                    file->set_F95_only(true);
+                  }
+
+               if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
+                  {
+                 // printf ("Calling file->set_sourceFileUsesFortran2003FileExtension(true) \n");
+                    file->set_sourceFileUsesFortran2003FileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_free_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+
+                    file->set_F2003_only(true);
+                  }
+
+               if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
+                  {
+                    printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
+                    ROSE_ASSERT(false);
+
+                 // This is not yet supported.
+                 // file->set_sourceFileUsesFortran2008FileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputFormat(SgFile::e_free_form_output_format);
+                    file->set_backendCompileFormat(SgFile::e_free_form_output_format);
+                  }
+             }
+            else if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
+             {
+
+                    file = new SgSourceFile ( argv,  project );
+
+                    file->set_sourceFileUsesPHPFileExtension(true);
+
+                    file->set_outputLanguage(SgFile::e_PHP_output_language);
+
+                    file->set_PHP_only(true);
+              }
+            else
+             {
+            // printf ("Calling file->set_sourceFileUsesFortranFileExtension(false) \n");
+               
+            // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
+               if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
+                  {
+                    file = new SgSourceFile ( argv,  project );
+
+                 // This is a C++ file (so define __cplusplus, just like GNU gcc would)
+                 // file->set_requires_cplusplus_macro(true);
+                    file->set_sourceFileUsesCppFileExtension(true);
+
+                 // Use the filename suffix as a default means to set this value
+                    file->set_outputLanguage(SgFile::e_Cxx_output_language);
+
+                    file->set_Cxx_only(true);
+                  
+                  }
+                 else
+                  {
+             
+                  // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
+                    if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
+                         ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
+                       {
+
+                         file = new SgSourceFile ( argv,  project );
+
+                      // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
+                         file->set_sourceFileUsesCppFileExtension(false);
+
+                      // Use the filename suffix as a default means to set this value
+                         file->set_outputLanguage(SgFile::e_C_output_language);
+
+                         file->set_C_only(true);
+                         // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
+                         //
+                         if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true) 
+                           file->set_UPC_only(true);
+                       }
+                      else
+                       {
+                      // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
+
+                      // Detect if this is a binary (executable) file!
+                         bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
+
+                         if (isBinaryExecutable == true)
+                            {
+
+                              file = new SgBinaryFile ( argv,  project );
+
+                              file->set_sourceFileUsesBinaryFileExtension(true);
+                              file->set_binary_only(true);
+
+                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
+                              file->set_requires_C_preprocessor(false);
+                            }
+                           else
+                            {
+
+                              file = new SgUnknownFile ( argv,  project );
+
+                           // If all else fails, then output the type of file and exit.
+                              file->set_sourceFileTypeIsUnknown(true);
+                              file->set_requires_C_preprocessor(false);
+                              //outputTypeOfFileAndExit(sourceFilename);
+                            }
+                       }
+                  }
+                 file->set_sourceFileUsesFortranFileExtension(false);
+
+             }
+
+        }
+       else
+        {
+
+          //AS Is this option possible?
+          abort();
+       // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
+          ROSE_ASSERT (file->get_sourceFileNameWithPath().empty() == true);
+       // If no source code file name was found then likely this is a link command
+       // using the C++ compiler.  In this case skip the EDG processing.
+          file->set_disable_edg_backend(true);
+       // printf ("No source file found on command line, assuming to be linker command line \n");
+        }
+
+    //The frontend is called exlicitly outside the constructor since that allows for a cleaner
+    //control flow. The callFrontEnd() relies on all the "set_" flags to be already called therefore
+    //it was placed here.
+    if( isSgUnknownFile(file) == NULL && file != NULL  )
+    {
+
+      nextErrorCode =   file->callFrontEnd() ;
+      ROSE_ASSERT ( nextErrorCode <= 3);
+
+    }
+       
+  // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
+  // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
+  // the integer values instead of string comparisions.
+     
+  // display("SgFile::setupSourceFilename()");
+     return file;
+   }
+
  
 void
 SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFile* asmFile )
@@ -1796,220 +2043,7 @@ SgFile::generateBinaryExecutableFileInformation ( string sourceFilename, SgAsmFi
 
 
 
-void
-SgFile::setupSourceFilename ( const vector<string>& argv )
-   {
-  // DQ (4/21/2006): New version of source file name handling (set the source file name early)
-     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
 
-  // this->display("In SgFile::setupSourceFilename()");
-     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
-     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
-
-     if (fileList.empty() == false)
-        {
-          ROSE_ASSERT(fileList.size() == 1);
-
-       // DQ (8/31/2006): Convert the source file to have a path if it does not already
-       // p_sourceFileNameWithPath    = *(fileList.begin());
-          string sourceFilename = *(fileList.begin());
-
-       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
-
-       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
-          sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
-
-       // printf ("After conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
-
-          p_sourceFileNameWithPath = sourceFilename;
-
-       // printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",p_sourceFileNameWithPath.c_str());
-
-       // This should be an absolute path
-          string targetSubstring = "/";
-       // if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-       //      printf ("@@@@@@@@@@@@@@@@@@@@ In SgFile::setupSourceFilename(int,char**): sourceFilename = %s @@@@@@@@@@@@@@@@@@@@\n",sourceFilename.c_str());
-       // ROSE_ASSERT(sourceFilename.substr(0,targetSubstring.size()) == targetSubstring);
-
-       // Rama: 12/06/06: Fixup for problem with file names.  
-	    // Made changes to this file and string utilities function getAbsolutePathFromRelativePath by cloning it with name getAbsolutePathFromRelativePathWithErrors
-	    // Also refer to script that tests -- reasonably exhaustively -- to various combinarions of input files.
-
-          if (sourceFilename.substr(0,targetSubstring.size()) != targetSubstring)
-               printf ("sourceFilename encountered an error in filename\n");
-
-       // DQ (11/29/2006): Even if this is C mode, we have to define the __cplusplus macro 
-       // if we detect we are processing a source file using a C++ filename extension.
-          string filenameExtension = StringUtility::fileNameSuffix(sourceFilename);
-
-       // printf ("filenameExtension = %s \n",filenameExtension.c_str());
-       // ROSE_ASSERT(false);
-
-       // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
-          set_requires_C_preprocessor(true);
-
-       // DQ (11/17/2007): Mark this as a file using a Fortran file extension (else this turns off options down stream).
-          if (CommandlineProcessing::isFortranFileNameSuffix(filenameExtension) == true)
-             {
-            // printf ("Calling set_sourceFileUsesFortranFileExtension(true) \n");
-               set_sourceFileUsesFortranFileExtension(true);
-
-            // Use the filename suffix as a default means to set this value
-               set_outputLanguage(SgFile::e_Fortran_output_language);
-
-               set_Fortran_only(true);
-
-            // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
-               set_requires_C_preprocessor(CommandlineProcessing::isFortranFileNameSuffixRequiringCPP(filenameExtension));
-
-            // Now set the specific types of Fortran file extensions
-               if (CommandlineProcessing::isFortran77FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling set_sourceFileUsesFortran77FileExtension(true) \n");
-                    set_sourceFileUsesFortran77FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputFormat(SgFile::e_fixed_form_output_format);
-                    set_backendCompileFormat(SgFile::e_fixed_form_output_format);
-
-                    set_F77_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran90FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling set_sourceFileUsesFortran90FileExtension(true) \n");
-                    set_sourceFileUsesFortran90FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputFormat(SgFile::e_free_form_output_format);
-                    set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                    set_F90_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran95FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling set_sourceFileUsesFortran95FileExtension(true) \n");
-                    set_sourceFileUsesFortran95FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputFormat(SgFile::e_free_form_output_format);
-                    set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                    set_F95_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran2003FileNameSuffix(filenameExtension) == true)
-                  {
-                 // printf ("Calling set_sourceFileUsesFortran2003FileExtension(true) \n");
-                    set_sourceFileUsesFortran2003FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputFormat(SgFile::e_free_form_output_format);
-                    set_backendCompileFormat(SgFile::e_free_form_output_format);
-
-                    set_F2003_only(true);
-                  }
-
-               if (CommandlineProcessing::isFortran2008FileNameSuffix(filenameExtension) == true)
-                  {
-                    printf ("Sorry, Fortran 2008 specific support is not yet implemented in ROSE ... \n");
-                    ROSE_ASSERT(false);
-
-                 // This is not yet supported.
-                 // set_sourceFileUsesFortran2008FileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputFormat(SgFile::e_free_form_output_format);
-                    set_backendCompileFormat(SgFile::e_free_form_output_format);
-                  }
-             }
-            else if (CommandlineProcessing::isPHPFileNameSuffix(filenameExtension) == true)
-             {
-                    set_sourceFileUsesPHPFileExtension(true);
-
-                    set_outputLanguage(SgFile::e_PHP_output_language);
-
-                    set_PHP_only(true);
-              }
-            else
-             {
-            // printf ("Calling set_sourceFileUsesFortranFileExtension(false) \n");
-               set_sourceFileUsesFortranFileExtension(false);
-
-            // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
-               if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
-                  {
-                 // This is a C++ file (so define __cplusplus, just like GNU gcc would)
-                 // set_requires_cplusplus_macro(true);
-                    set_sourceFileUsesCppFileExtension(true);
-
-                 // Use the filename suffix as a default means to set this value
-                    set_outputLanguage(SgFile::e_Cxx_output_language);
-
-                    set_Cxx_only(true);
-                  }
-                 else
-                  {
-                  // Liao, 6/6/2008, Assume AST with UPC will be unparsed using the C unparser
-                    if ( ( CommandlineProcessing::isCFileNameSuffix(filenameExtension)   == true ) ||
-                         ( CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true ) )
-                       {
-                      // This a not a C++ file (assume it is a C file and don't define the __cplusplus macro, just like GNU gcc would)
-                         set_sourceFileUsesCppFileExtension(false);
-
-                      // Use the filename suffix as a default means to set this value
-                         set_outputLanguage(SgFile::e_C_output_language);
-
-                         set_C_only(true);
-                         // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
-                         //
-                         if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true) 
-                           set_UPC_only(true);
-                       }
-                      else
-                       {
-                      // printf ("This still might be a binary file (can not be an object file, since these are not accepted into the fileList by CommandlineProcessing::generateSourceFilenames()) \n");
-
-                      // Detect if this is a binary (executable) file!
-                         bool isBinaryExecutable = isBinaryExecutableFile(sourceFilename);
-
-                         if (isBinaryExecutable == true)
-                            {
-                              set_sourceFileUsesBinaryFileExtension(true);
-                              set_binary_only(true);
-
-                           // DQ (5/18/2008): Set this to false (since binaries are never preprocessed using the C preprocessor).
-                              set_requires_C_preprocessor(false);
-                            }
-                           else
-                            {
-                           // If all else fails, then output the type of file and exit.
-                              outputTypeOfFileAndExit(sourceFilename);
-                            }
-                       }
-                  }
-             }
-
-          p_sourceFileNameWithoutPath = ROSE::stripPathFromFileName(p_sourceFileNameWithPath.c_str());
-        }
-       else
-        {
-       // ROSE_ASSERT (p_numberOfSourceFileNames == 0);
-          ROSE_ASSERT (p_sourceFileNameWithPath.empty() == true);
-       // If no source code file name was found then likely this is a link command
-       // using the C++ compiler.  In this case skip the EDG processing.
-          set_disable_edg_backend(true);
-       // printf ("No source file found on command line, assuming to be linker command line \n");
-        }
-
-  // Keep the filename stored in the Sg_File_Info consistant.  Later we will want to remove this redundency
-  // The reason we have the Sg_File_Info object is so that we can easily support filename matching based on
-  // the integer values instead of string comparisions.
-     get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-
-  // display("SgFile::setupSourceFilename()");
-   }
 
 static string makeSysIncludeList(const Rose_STL_Container<string>& dirs) {
   string includeBase = findRoseSupportPathFromBuild("include-staging", "include");
@@ -2818,8 +2852,19 @@ SgProject::parse(const vector<string>& argv)
    }
 
 
+SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
+// : SgFile (argv,errorCode,fileNameIndex,project)
+   {
+  // printf ("In the SgSourceFile constructor \n");
 
+     set_globalScope(NULL);
 
+  // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
+     doSetupForConstructor(argv,  project);
+
+    }
+
+#if 0
 SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
@@ -2830,6 +2875,17 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNa
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
      doSetupForConstructor(argv, errorCode, fileNameIndex, project);
 
+    }
+#endif
+
+int
+SgSourceFile::callFrontEnd()
+   {
+#ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+     FortranParserState* currStks = new FortranParserState(); 
+#endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
+
+     int frontendErrorLevel = SgFile::callFrontEnd();
   // DQ (1/21/2008): This must be set for all languages
      ROSE_ASSERT(get_globalScope() != NULL);
      ROSE_ASSERT(get_globalScope()->get_file_info() != NULL);
@@ -2839,9 +2895,28 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNa
   // DQ (8/21/2008): Added assertion.
      ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
-    }
- 
-SgBinaryFile::SgBinaryFile ( vector<string> & argv , int & errorCode, int fileNameIndex, SgProject* project )
+
+     delete  currStks ;
+
+     return frontendErrorLevel;
+   }
+
+int
+SgBinaryFile::callFrontEnd()
+   {
+     int frontendErrorLevel = SgFile::callFrontEnd();
+  // DQ (1/21/2008): This must be set for all languages
+     return frontendErrorLevel;
+   }
+
+int
+SgUnknownFile::callFrontEnd()
+   {
+     abort(); 
+     return 0;
+   }
+
+SgBinaryFile::SgBinaryFile ( vector<string> & argv ,  SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
      p_binaryFile = NULL;
@@ -2850,7 +2925,7 @@ SgBinaryFile::SgBinaryFile ( vector<string> & argv , int & errorCode, int fileNa
   // printf ("In the SgBinaryFile constructor \n");
 
   // This constructor actually makes the call to EDG to build the AST (via callFrontEnd()).
-     doSetupForConstructor(argv, errorCode, fileNameIndex, project);
+     doSetupForConstructor(argv,  project);
    }
 
 
@@ -2930,17 +3005,9 @@ SgProject::parse()
 
             // printf ("currentFileName = %s \n",currentFileName.c_str());
 
-               if (isBinaryExecutableFile(currentFileName) == true)
-                  {
-                 // printf ("This is a binary file so building a SgBinaryFile IR node! \n");
-                    newFile = new SgBinaryFile ( argv, nextErrorCode, 0, this );
-                  }
-                 else
-                  {
-                 // printf ("This is NOT a binary file so building a SgSourceFile IR node! \n");
-                    newFile = new SgSourceFile ( argv, nextErrorCode, 0, this );
-                  }
 
+               newFile = determineFileType(argv, nextErrorCode, this);
+               
                ROSE_ASSERT (newFile != NULL);
 
             // printf ("In SgProject::parse(): newFile = %p = %s \n",newFile,newFile->class_name().c_str());
@@ -3005,6 +3072,7 @@ SgProject::parse()
      return errorCode;
    }
 
+#if 0
 void
 SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fileNameIndex, SgProject* project)
    {
@@ -3049,8 +3117,37 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      ROSE_ASSERT(get_parent() != NULL);
 
   // DQ (4/21/2006): Setup the source filename as early as possible
-     setupSourceFilename(argv);
+     //setupSourceFilename(argv);
 
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+
+     // this->display("In SgFile::setupSourceFilename()");
+     // printf ("listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
+     // printf ("listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
+
+     if (fileList.empty() == false)
+     {
+
+       string sourceFilename = *(fileList.begin());
+
+       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
+       sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+
+       set_sourceFileNameWithPath(sourceFilename);
+
+       //printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
+
+
+       set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+       get_file_info()->set_filenameString( get_sourceFileNameWithPath() );
+     }else{
+       //A file should never be created without a filename so this branch should be impossible
+       abort();
+     }
+
+     
 #if 1
   // DQ (9/5/2008): Handle the case that this is a SgSourceFile.  This is awkward code, and may be a temporary fix.
      const SgSourceFile* sourceFile = isSgSourceFile(this);
@@ -3066,6 +3163,8 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
 
        // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
        // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
+
+
           sourceFile->get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
           ROSE_ASSERT(sourceFile->get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
 
@@ -3151,14 +3250,19 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
           get_skipfinalCompileStep() ? "true" : "false");
 #endif
 
-#if 1
+
+#if 0
+  //AS(10/04/08) Removed code because of refactoring into determineFileType(..). callFrontEnd relies on all
+  //the appropriate flags being set first.
+
   // DQ (10/16/2005): Modified to make clear that argc and argv are not modified
   // Call the EDG fron-end to generate the abstract syntax tree
   // int EDG_FrontEndErrorCode = callFrontEnd ( argc, argv, *this, fileNameIndex );
   // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList, *this, fileNameIndex );
   // int EDG_FrontEndErrorCode = callFrontEnd (  local_commandLineArgumentList );
   // int EDG_FrontEndErrorCode = callFrontEnd();
-     int EDG_FrontEndErrorCode = callFrontEnd();
+
+     int EDG_FrontEndErrorCode =  get_sourceFileTypeIsUnknown() == false ? callFrontEnd() : 0 ;
 
   // Warning from EDG processing are OK but not errors
      ROSE_ASSERT (EDG_FrontEndErrorCode <= 3);
@@ -3179,32 +3283,13 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
   // ROSE_ASSERT (localfileInfo != NULL);
   // set_file_info(localfileInfo);
 
-#if 0
-  // DQ (9/5/2008): This was easier to move to the constructor for SgSourceFile
 
-  // DQ (10/15/2005): This has not been converted to a C++ string!
-  // DQ (5/24/2005): Now fixup the file info's file name in the global scope!
-  // printf ("In SgFile::doSetupForConstructor p_sourceFileNamesWithPath[%d] = %s \n",fileNameIndex,p_sourceFileNamesWithPath[fileNameIndex]);
-  // p_root->get_file_info()->set_filename(p_sourceFileNamesWithPath[fileNameIndex]);
-
-  // DQ (1/22/2008): This should have been set above!
-  // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
-
-  // DQ (1/21/2008): This must be set for all languages
-     ROSE_ASSERT(p_root != NULL);
-     ROSE_ASSERT(p_root->get_file_info() != NULL);
-     ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
-  // printf ("p_root->get_file_info()->get_filenameString() = %s \n",p_root->get_file_info()->get_filenameString().c_str());
-#endif
 
   // DQ (1/18/2006): Set the filename in the SgFile::p_file_info
      ROSE_ASSERT(get_file_info() != NULL);
      get_file_info()->set_filenameString(p_sourceFileNameWithPath);
 
-#if 0
-     printf ("In SgFile::doSetupForConstructor(): get_skipfinalCompileStep() = %s \n",
-          get_skipfinalCompileStep() ? "true" : "false");
-#endif
+
 
   // DQ (5/3/2007): Added assertion.
      ROSE_ASSERT (get_startOfConstruct() != NULL);
@@ -3218,6 +3303,140 @@ SgFile::doSetupForConstructor(const vector<string>& argv, int& errorCode, int fi
      delete  currStks ;
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
    }
+
+
+#endif
+
+
+void
+SgSourceFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+   {
+
+     SgFile::doSetupForConstructor(argv, project);
+     
+     // DQ (1/21/2008): Set the filename in the SgGlobal IR node so that the traversal to add CPP directives and comments will succeed.
+     ROSE_ASSERT (get_globalScope() != NULL);
+     ROSE_ASSERT(get_globalScope()->get_startOfConstruct() != NULL);
+
+     // DQ (8/21/2008): Modified to make endOfConstruct consistant (avoids warning in AST consistancy check).
+     // ROSE_ASSERT(p_root->get_endOfConstruct()   == NULL);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()   != NULL);
+
+     // p_root->get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+     // ROSE_ASSERT(p_root->get_file_info()->get_filenameString().empty() == false);
+
+
+     get_globalScope()->get_startOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     ROSE_ASSERT(get_globalScope()->get_startOfConstruct()->get_filenameString().empty() == false);
+
+     // DQ (8/21/2008): Uncommented to make the endOfConstruct consistant (avoids warning in AST consistancy check).
+     get_globalScope()->get_endOfConstruct()->set_filenameString(p_sourceFileNameWithPath);
+     ROSE_ASSERT(get_globalScope()->get_endOfConstruct()->get_filenameString().empty() == false);
+
+     
+   }
+
+void
+SgBinaryFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+   {
+       SgFile::doSetupForConstructor(argv, project);
+
+   }
+
+void
+SgUnknownFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+   {
+       SgFile::doSetupForConstructor(argv, project);
+
+   }
+
+void
+SgFile::doSetupForConstructor(const vector<string>& argv, SgProject* project)
+   {
+
+  // JJW 10-26-2007 ensure that this object is not on the stack
+     preventConstructionOnStack(this);
+
+
+  // Set the project early in the construction phase so that we can access data in 
+  // the parent if needed (useful for template handling but also makes sure the parent is
+  // set (and avoids fixup (currently done, but too late in the construction process for 
+  // the template support).
+     if (project != NULL)
+          set_parent(project);
+
+     ROSE_ASSERT (project != NULL);
+
+     ROSE_ASSERT(get_parent() != NULL);
+
+
+  // initalize all local variables to default values
+     initialization();
+
+     ROSE_ASSERT(get_parent() != NULL);
+
+  // DQ (4/21/2006): Setup the source filename as early as possible
+     //setupSourceFilename(argv);
+
+     Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(argv);
+
+
+     if (fileList.empty() == false)
+     {
+
+       string sourceFilename = *(fileList.begin());
+
+       // printf ("Before conversion to absolute path: sourceFilename = %s \n",sourceFilename.c_str());
+
+       // sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename);
+       sourceFilename = StringUtility::getAbsolutePathFromRelativePath(sourceFilename, true);
+
+       set_sourceFileNameWithPath(sourceFilename);
+
+       //printf ("In SgFile::setupSourceFilename(const vector<string>& argv): p_sourceFileNameWithPath = %s \n",get_sourceFileNameWithPath().c_str());
+
+
+       set_sourceFileNameWithoutPath( ROSE::stripPathFromFileName(get_sourceFileNameWithPath().c_str()) );
+       get_file_info()->set_filenameString( get_sourceFileNameWithPath() );
+     }else{
+       //A file should never be created without a filename so this branch should be impossible
+       abort();
+     }
+
+     
+  // DQ (5/9/2007): Moved this call from above to where the file name is available so that we could include 
+  // the filename in the label.  This helps to identify the performance data with individual files where
+  // multiple source files are specificed on the command line.
+  // printf ("p_sourceFileNameWithPath = %s \n",p_sourceFileNameWithPath);
+     string timerLabel = "AST SgFile Constructor for " + p_sourceFileNameWithPath + ":";
+     TimingPerformance timer (timerLabel);
+
+  // Build a DEEP COPY of the input parameters!
+     vector<string> local_commandLineArgumentList = argv;
+
+  // Save the commandline as a list of strings (we made a deep copy because the "callFrontEnd()" function might change it!
+     set_originalCommandLineArgumentList( local_commandLineArgumentList );
+
+  // DQ (5/22/2005): Store the file name index in the SgFile object so that it can figure out 
+  // which file name applies to it.  This helps support functions such as "get_filename()" 
+  // used elsewhere in Sage III.  Not clear if we really need this!
+  // error checking
+     ROSE_ASSERT (argv.size() > 1);
+
+  // DQ (1/18/2006): Set the filename in the SgFile::p_file_info
+     ROSE_ASSERT(get_file_info() != NULL);
+     get_file_info()->set_filenameString(p_sourceFileNameWithPath);
+
+
+
+  // DQ (5/3/2007): Added assertion.
+     ROSE_ASSERT (get_startOfConstruct() != NULL);
+
+
+   }
+
+
+
 
 #if 1
 #define CASE_SENSITIVE_SYSTEM 1
@@ -3778,6 +3997,10 @@ SgFile::callFrontEnd()
                        {
                          SgBinaryFile* binaryFile = const_cast<SgBinaryFile*>(isSgBinaryFile(this));
                          frontendErrorLevel = binaryFile->buildAST(argv,inputCommandLine);
+                         break;
+                       }
+                    case V_SgUnknownFile:
+                       {
                          break;
                        }
 

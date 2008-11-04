@@ -630,7 +630,7 @@ int AstMergeSupport ( SgProject* project )
                     int nextErrorCode = 0;
 #if 1
                     int fileIndex = 0;
-                    SgFile* newFile = new SgFile ( argc, argv, nextErrorCode, fileIndex, project );
+                    SgFile* newFile = determineFileType( vector<string>(argv, argv+argc), nextErrorCode,  project );
                     ROSE_ASSERT (newFile != NULL);
 
                     newFile->set_parent(project);

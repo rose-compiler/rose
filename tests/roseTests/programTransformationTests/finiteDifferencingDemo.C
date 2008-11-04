@@ -29,7 +29,7 @@ class FindNotVisitor: public AstSimpleProcessing {
 
 vector<SgFunctionDefinition*> functions;
 
-class FindFunctionsVisitor: public AstSimpleProcessing {
+class FindFunctionsVis: public AstSimpleProcessing {
   public:
   virtual void visit(SgNode* n) {
     if (isSgFunctionDefinition(n)) {
@@ -53,7 +53,7 @@ int main (int argc, char* argv[]) {
   sageProject = isSgProject(tempProject);
   ROSE_ASSERT (sageProject);
 
-  FindFunctionsVisitor().traverse(sageProject, preorder);
+  FindFunctionsVis().traverse(sageProject, preorder);
 
   for (unsigned int x = 0; x < functions.size(); ++x) {
     SgBasicBlock* body = functions[x]->get_body();

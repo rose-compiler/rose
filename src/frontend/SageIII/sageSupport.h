@@ -14,3 +14,4 @@ StringUtility::FileNameLibrary  get_library     ( Sg_File_Info* X );
 std::string                     get_libraryName ( Sg_File_Info* X );
 StringUtility::OSType           get_OS_type      ();
 int                             get_distanceFromSourceDirectory ( Sg_File_Info* X );
+SgFile*                         determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project );

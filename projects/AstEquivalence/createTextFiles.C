@@ -242,6 +242,28 @@ int main(int argc, char** argv)
 //  SgNode* disFile = disassembleFile(argv[1]);
   SgProject* disFile = frontend(argc,argv);
 
+
+  VariantVector vv1(V_SgAsmPEDLL);
+  vv1.push_back(V_SgAsmPEDLL); 
+  std::vector<SgNode*> peDLL = NodeQuery::querySubTree(disFile,vv1);
+
+  std::cout << "size: " << peDLL.size();
+    std::cout << "BEGIN - PEDLL" <<std::endl;
+
+  for(int i=0; i < peDLL.size() ; i++)
+  {
+    SgAddressList addrList = isSgAsmPEDLL(peDLL[i])->get_hintname_rvas();
+    for(int j = 0; i < addrList.size() ; j++ )
+    {
+    std::cout << addrList[j] << " ";
+
+    }
+      
+
+  };
+ 
+  std::cout << "END - PEDLL" <<std::endl;
+ 
   {
 //  normalizeInstructionInSubTree(disFile);
   
@@ -250,6 +272,7 @@ int main(int argc, char** argv)
   //  backend((SgProject*)disFile);
   vector<SgNode*> insnsA;
 
+  
 
   AstQueryNamespace::querySubTree(disFile, std::bind2nd( vis, &insnsA ));
 

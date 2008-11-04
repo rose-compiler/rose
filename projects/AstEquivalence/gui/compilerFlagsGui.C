@@ -371,7 +371,7 @@ BinaryCloneGui::readIntoVector( sqlite3x::sqlite3_connection& cur_con,
       {
         selectSeparateDatasets += " join function_statistics stat1 on stat1.function_id=function_id_A join function_statistics stat2 on stat2.function_id=function_id_B ";
 
-        selectSeparateDatasets += " where ( (stat1.num_instructions - " +boost::lexical_cast<string>(windowSize)+ ")/" +boost::lexical_cast<string>(stride)+") =( end_index_within_function_A-begin_index_within_function_A  )";
+        selectSeparateDatasets += " AND ( (stat1.num_instructions - " +boost::lexical_cast<string>(windowSize)+ ")/" +boost::lexical_cast<string>(stride)+") =( end_index_within_function_A-begin_index_within_function_A  )";
         selectSeparateDatasets += " AND   ( (stat2.num_instructions - " +boost::lexical_cast<string>(windowSize)+ ")/" +boost::lexical_cast<string>(stride)+") =( end_index_within_function_B-begin_index_within_function_B  )"  ;
 
       }
@@ -380,10 +380,10 @@ BinaryCloneGui::readIntoVector( sqlite3x::sqlite3_connection& cur_con,
       {
        
 
-        if(wholeFunction->currentIndex() == 1) 
+//        if(wholeFunction->currentIndex() == 1) 
           selectSeparateDatasets += " AND ";
-        else
-          selectSeparateDatasets+=" where ";
+  //      else
+    //      selectSeparateDatasets+=" where ";
 
 
         
@@ -446,117 +446,118 @@ void
 BinaryCloneGui::run( ) 
 {
 
-    
-    //Fill in table
-    // unlink activation callback, which otherwise would trigger each
-    // time we add a row in the table.
-    QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
 
-    while(tableWidget->rowCount()) tableWidget->removeRow(0);
+  //Fill in table
+  // unlink activation callback, which otherwise would trigger each
+  // time we add a row in the table.
+  QROSE::unlink(tableWidget, SIGNAL(activated(int, int, int, int)));
 
-    //Read in all largest clones
-    readIntoVector(conA, vectorOfClonesA);
-    std::cout << "Opening database B" << std::endl;
-    readIntoVector(conB, vectorOfClonesB);
-    std::cout << "Opening database B" << std::endl;
+  while(tableWidget->rowCount()) tableWidget->removeRow(0);
 
-    //vectorOfClones.allocate(  vectorOfClonesA.size() > vectorOfClonesB.size() ? vectorOfClonesA.size()  : vectorOfClonesB.size()  );
+  //Read in all largest clones
+  readIntoVector(conA, vectorOfClonesA);
+  std::cout << "Opening database B" << std::endl;
+  readIntoVector(conB, vectorOfClonesB);
+  std::cout << "Opening database B" << std::endl;
+
+  //vectorOfClones.allocate(  vectorOfClonesA.size() > vectorOfClonesB.size() ? vectorOfClonesA.size()  : vectorOfClonesB.size()  );
 
 
-    std::cout << "WALLIE" << std::endl;
-    //FIXME: Some functions in B may not be in A
-    for(unsigned int i = 0 ; i < vectorOfClonesA.size() ; i++ )
+  std::cout << "WALLIE" << std::endl;
+  //FIXME: Some functions in B may not be in A
+  for(unsigned int i = 0 ; i < vectorOfClonesA.size() ; i++ )
+  {
+    int j=0;
+    for(j = 0 ; j != (int)vectorOfClonesB.size() ; j++ )
     {
-      int j=0;
-      for(j = 0 ; j != (int)vectorOfClonesB.size() ; j++ )
+      if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
+          vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
+          vectorOfClonesA[i].file_B == vectorOfClonesB[j].file_B && 
+          vectorOfClonesA[i].function_name_B == vectorOfClonesB[j].function_name_B 
+        )
       {
-        if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
-            vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
-            vectorOfClonesA[i].file_B == vectorOfClonesB[j].file_B && 
-            vectorOfClonesA[i].function_name_B == vectorOfClonesB[j].function_name_B 
-            )
-        {
 
-          mapAtoB[i] = j;
-          break;
-        }
+        mapAtoB[i] = j;
+        break;
       }
-      if(j == (int)vectorOfClonesB.size())
-        mapAtoB[i]=-1;
-
     }
+    if(j == (int)vectorOfClonesB.size())
+      mapAtoB[i]=-1;
 
-    //FIXME: Some functions in B may not be in A
-    for(unsigned int i = 0 ; i < vectorOfClonesB.size() ; i++ )
+  }
+
+  //FIXME: Some functions in B may not be in A
+  for(unsigned int j = 0 ; j < vectorOfClonesB.size() ; j++ )
+  {
+    int i=0;
+    for(i = 0 ; i != (int)vectorOfClonesA.size() ; i++ )
     {
-      int j=0;
-      for(j = 0 ; j != (int)vectorOfClonesA.size() ; j++ )
+      if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
+          vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
+          vectorOfClonesA[i].file_B == vectorOfClonesB[j].file_B && 
+          vectorOfClonesA[i].function_name_B == vectorOfClonesB[j].function_name_B 
+        )
       {
-        if( vectorOfClonesA[i].file_A == vectorOfClonesB[j].file_A && 
-            vectorOfClonesA[i].function_name_A == vectorOfClonesB[j].function_name_A &&
-            vectorOfClonesA[i].file_B == vectorOfClonesB[j].file_B && 
-            vectorOfClonesA[i].function_name_B == vectorOfClonesB[j].function_name_B 
-            )
-        {
 
-          mapBtoA[i] = j;
-          break;
-        }
+        mapBtoA[i] = j;
+        break;
       }
-      if(j == (int)vectorOfClonesB.size())
-        mapBtoA[i]=-1;
-
     }
+    if(i == (int)vectorOfClonesA.size())
+      mapBtoA[j]=-1;
 
-    std::cout << "WALLIE" << std::endl;
+  }
 
-    int row =0;
+  std::cout << "WALLIE" << std::endl;
 
-    if(displayResults->currentIndex() == 0)
+  int row =0;
+
+  if(displayResults->currentIndex() == 0)
+  {
+    for(int i = 0 ; i < (int) vectorOfClonesA.size() ; i++ )
     {
-      for(int i = 0 ; i < (int) vectorOfClonesA.size() ; i++ )
+      if(mapAtoB[i] != -1 )
       {
-        if(mapAtoB[i] != -1 )
-        {
         Element cur_elem  = vectorOfClonesA[i];
         insert_into_table_row(row, cur_elem);
         mapRowtoDB[row]=i;
-        }
+        row++;
       }
-    }else if( displayResults->currentIndex() == 1 )
-    {
+    }
+  }else if( displayResults->currentIndex() == 1 )
+  {
 
     int row =0;
 
     for( std::map<int,int>::iterator mapAitr = mapAtoB.begin(); mapAitr != mapAtoB.end(); ++ mapAitr )
     {
       if(mapAitr->second == -1)
-        {
-          Element cur_elem  = vectorOfClonesA[mapAitr->first];
-          insert_into_table_row(row, cur_elem);
-          mapRowtoDB[row] = mapAitr->first;
-          row++;
+      {
+        Element cur_elem  = vectorOfClonesA[mapAitr->first];
+        insert_into_table_row(row, cur_elem);
+        mapRowtoDB[row] = mapAitr->first;
+        row++;
 
-        }
+      }
     }
 
-    }else if( displayResults->currentIndex() == 2 )
-    {
+  }else if( displayResults->currentIndex() == 2 )
+  {
 
     int row =0;
 
     for( std::map<int,int>::iterator mapBitr = mapBtoA.begin(); mapBitr != mapBtoA.end(); ++ mapBitr )
     {
       if(mapBitr->second == -1)
-        {
-          Element cur_elem  = vectorOfClonesB[mapBitr->first];
-          insert_into_table_row(row, cur_elem);
-          mapRowtoDB[row] = mapBitr->first;
-          row++;
-        }
+      {
+        Element cur_elem  = vectorOfClonesB[mapBitr->first];
+        insert_into_table_row(row, cur_elem);
+        mapRowtoDB[row] = mapBitr->first;
+        row++;
+      }
     }
 
-    }
+  }
 
     QROSE::link(tableWidget, SIGNAL(activated(int, int, int, int)), 
         &tableCellActivated, this);
@@ -567,10 +568,24 @@ void
 BinaryCloneGui::insert_into_table_row(int row, Element& cur_elem )
 {
 
-  int rowInB = mapAtoB.find(row)->second;
+  int rowInB = -1;
+  Element cur_elemB; 
+  
+  if(displayResults->currentIndex() == 0)
+  {
 
+    rowInB = mapAtoB.find(row)->second;
   ROSE_ASSERT(rowInB >= 0);
-  Element cur_elemB  =  rowInB >= 0 ? vectorOfClonesA[row] : Element();
+  Element cur_elemB  = vectorOfClonesB[rowInB] ;
+
+  }else if( displayResults->currentIndex() == 1 )
+  {
+  }else if( displayResults->currentIndex() == 2 )
+  {
+
+  }
+
+
 
   tableWidget->addRows(1);
   int diffA =  (cur_elem.end_index_within_function_A-cur_elem.begin_index_within_function_A+1)*windowSize;
@@ -593,7 +608,7 @@ BinaryCloneGui::insert_into_table_row(int row, Element& cur_elem )
 
   tableWidget->setHAlignment(true, false, 0); // left horizontal alignment
 
-  mapRowtoDB[row] = row;
+//  mapRowtoDB[row] = row;
 
 };
 
