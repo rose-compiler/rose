@@ -37,6 +37,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
   int pos=0;
   for (;it!=gui->itemsFileA.end();++it) {
     Item* item = *it;
+    if (item) {
     int pos = item->pos;
     int length=item->length;
     int color = item->resolved;
@@ -46,6 +47,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
     painter.drawRect(QRect(pos, 0, length, 15));
+    }
   }
 
   ite = gui->itemsFileB;
@@ -53,6 +55,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
   pos=0;
   for (;it!=gui->itemsFileB.end();++it) {
     Item* item = *it;
+    if (item) {
     int pos = item->pos;
     int length=item->length;
     int color = item->resolved;
@@ -62,6 +65,7 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
     painter.drawRect(QRect(pos, 15, length, 15));
+    }
   }
 
   painter.setPen(Qt::white);

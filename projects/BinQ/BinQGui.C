@@ -212,12 +212,14 @@ void BinQGUI::highlightInstructionRow(int row, bool fileA) {
       f.setBold(true);
       codeTableWidget2->setCurrentCell(row,0);
       Item* item = itemsFileB[row];
-      for (int j=1;j<maxrows;j++) {
-	codeTableWidget2->setFont(f, j, row);
-	if (item->function) 
-	  codeTableWidget2->setBgColor(QColor(120,120,120),j,row);
-	else
-	  codeTableWidget2->setBgColor(QColor(255,255,0),j,row);
+      if (item) {
+	for (int j=1;j<maxrows;j++) {
+	  codeTableWidget2->setFont(f, j, row);
+	  if (item->function) 
+	    codeTableWidget2->setBgColor(QColor(120,120,120),j,row);
+	  else
+	    codeTableWidget2->setBgColor(QColor(255,255,0),j,row);
+	}
       }
     }
   } //if(row >= 0)
@@ -237,9 +239,11 @@ void BinQGUI::unhighlightInstructionRow(int row,bool fileA) {
       QFont f = codeTableWidget2->getFont(0, row);
       f.setBold(false);
       Item* item = itemsFileB[row];
-      for (int j=1;j<maxrows;j++) {      
-	codeTableWidget2->setFont(f, j, row);
-	codeTableWidget2->setBgColor(item->bg,j,row);
+      if (item) {
+	for (int j=1;j<maxrows;j++) {      
+	  codeTableWidget2->setFont(f, j, row);
+	  codeTableWidget2->setBgColor(item->bg,j,row);
+	}
       }
     }
   } //if (row >= 0)
@@ -254,17 +258,21 @@ void BinQGUI::updateByteItemList() {
   // update byteItemList
   for (unsigned int i=0;i<itemsFileA.size();++i) {
     Item* a = itemsFileA[i];
-    int pos = a->pos;
-    int length = a->length;
-    for (int k=0; k<length;++k)
-      byteItemFileA[pos+k]=a;
+    if (a) {
+      int pos = a->pos;
+      int length = a->length;
+      for (int k=0; k<length;++k)
+	byteItemFileA[pos+k]=a;
+    }
   }
   for (unsigned int i=0;i<itemsFileB.size();++i) {
     Item* b = itemsFileB[i];
-    int pos = b->pos;
-    int length = b->length;
-    for (int k=0; k<length;++k)
-      byteItemFileB[pos+k]=b;
+    if (b) {
+      int pos = b->pos;
+      int length = b->length;
+      for (int k=0; k<length;++k)
+	byteItemFileB[pos+k]=b;
+    }
   }
   slide->colorize();
   showFileA(0);
@@ -525,9 +533,8 @@ void BinQGUI::init(){
       item = new Item(false,isSgLocatedNode(*it),0,0,row,length,pos,
 		      isSgLocatedNode(*it)->class_name(),line);
     } else {
-      cerr << "unknown node" << endl;//*it->class_name() << endl;
-      item = new Item(false,NULL,0,0,row,0,pos,
-		      " ",0);
+      //      cerr << "unknown node " << endl;//*it->class_name() << endl;
+      //      item = new Item(false,NULL,0,0,row,0,pos, " ",0);
     }
     //example -- color pushes red
     if (isSgAsmx86Instruction(*it)) {
@@ -555,9 +562,11 @@ void BinQGUI::init(){
 
       }
     }
-    row++;
-    itemsFileB.push_back(item);
-    pos+=length;
+    if (item) {
+      row++;
+      itemsFileB.push_back(item);
+      pos+=length;
+    }
   }
 
 }
@@ -1016,7 +1025,6 @@ void BinQGUI::showFileB(int row) {
       addRow=true;
     } 
     else {
-      //      cerr << itemsFileB[i]->statement->class_name() << endl;
 	codeTableWidget2->addRows(1);
 	itemsFileB[i]->bg=QColor(128,128,128);
 	QColor back = itemsFileB[i]->bg;
