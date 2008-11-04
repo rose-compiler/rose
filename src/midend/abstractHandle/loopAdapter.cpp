@@ -61,15 +61,23 @@ source_position loopNode::getStartPos() const
 
 // return the numbering within a scope (file)
 // MyLoop only cares about numbering inside its source file
-// The parameter has to be a fileNode
+// The parameter must be either of a fileNode or a loopNode
 size_t loopNode::getNumbering(const abstract_node * another_node) const
 {
   int number=1;
   const fileNode* file_node = dynamic_cast<const fileNode*> (another_node);
-  assert(file_node!=NULL);
-  vector<MyLoop*> *loops = file_node->getMLoops();
- for (vector<MyLoop *>::iterator i=(*loops).begin();
-      i!=(*loops).end(); i++)
+  const loopNode* p_loop_node = dynamic_cast<const loopNode*> (another_node);
+
+  vector<MyLoop*> loops;
+
+  if (file_node)
+    loops = file_node->getMLoops();
+  else if (p_loop_node)  
+    loops = p_loop_node->getChildren();
+  else
+    assert(false);
+ for (vector<MyLoop*>::iterator i=loops.begin();
+      i!=loops.end(); i++)
   {
     if ((*i)==getNode())
       break;
@@ -77,6 +85,40 @@ size_t loopNode::getNumbering(const abstract_node * another_node) const
       number++;
   }  
   return number;
+}
+
+AbstractHandle::abstract_node* loopNode::findNode(std::string construct_type_str, AbstractHandle::specifier mspecifier) const
+{
+   abstract_node* result=NULL;
+    //Get all matched nodes according to node type
+  vector<MyLoop*> loops = getChildren();  
+  for (vector<MyLoop *>::iterator i=loops.begin();i!=loops.end();i++)
+  {
+    abstract_node* cnode = new loopNode(*i);
+    if (mspecifier.get_type()==e_position)
+    {
+      if (isEqual(mspecifier.get_value().positions, cnode->getSourcePos()))
+      {
+        result = cnode;
+        break;
+      }
+    }
+    else if (mspecifier.get_type()==e_numbering)
+    {
+      if (mspecifier.get_value().int_v == cnode->getNumbering(this))
+      {
+        result = cnode;
+        break;
+      }
+    }
+    else 
+    {
+      cerr<<"error: unhandled specifier type in loopNode::findNode()"<<endl;
+      assert(false);
+    }
+  }//end for
+  return result;
+
 }
 
 std::string loopNode::toString() const
@@ -115,7 +157,7 @@ AbstractHandle::abstract_node* fileNode::findNode(std::string construct_type_str
   abstract_node* result=NULL;
 
   //Get all matched nodes according to node type
-  vector<MyLoop*> loops = *mLoops;  
+  vector<MyLoop*> loops = mLoops;  
 
   for (vector<MyLoop *>::iterator i=loops.begin();i!=loops.end();i++)
   {

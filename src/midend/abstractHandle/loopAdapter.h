@@ -21,11 +21,14 @@ class loopNode: public AbstractHandle::abstract_node
    virtual bool hasSourcePos() const;
    virtual AbstractHandle::abstract_node* getFileNode() const;
    virtual AbstractHandle::abstract_node* getParent() const;
+   virtual AbstractHandle::abstract_node* findNode(std::string construct_type_str, AbstractHandle::specifier mspecifier) const;
    virtual std::string getFileName() const;
    virtual AbstractHandle::source_position getStartPos() const;
    virtual std::string toString() const;
    virtual size_t getNumbering( const abstract_node*  another_node) const;
    virtual bool operator == (const abstract_node & x) const;
+   //Additional stuff
+   std::vector<MyLoop*> getChildren() const {return mNode->children;};
 protected:
   MyLoop* mNode;
 };
@@ -48,11 +51,11 @@ class fileNode: public AbstractHandle::abstract_node
   virtual bool operator == (const abstract_node & x) const;
 
   //Additional stuff
-  void setMLoops(std::vector<MyLoop*>* myloops ){mLoops = myloops;}
-  std::vector<MyLoop*>* getMLoops() const {return mLoops;}
+  void setMLoops(std::vector<MyLoop*> myloops ){mLoops = myloops;}
+  std::vector<MyLoop*> getMLoops() const {return mLoops;}
 
 protected:
   std::string mfileName;
-  std::vector<MyLoop*>* mLoops;
+  std::vector<MyLoop*> mLoops;
 };
 #endif
