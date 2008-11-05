@@ -1,38 +1,66 @@
 \chapter{Abstract Handles to Language Constructs}
-This chapter describes a reference design and its corresponding implementation for supporting abstract handles to language constructs in source code and optimization phases. 
-It can be used to facilitate the interoperability between compilers and tools. 
+This chapter describes a reference design and its corresponding implementation for
+supporting abstract handles to language constructs in source code and optimization
+phases. It can be used to facilitate the interoperability between compilers and tools.
+We define an abstract handle as a representation for a unique language construct in a
+specific program.  Interoperability between tools is achieved by writing out the abstract handles as
+strings and reading them within other tools to build the equivalent abstract handle.
+\footnote{Abstract Handles are not appropriate for program analysis
+since they are not intended to be used to capture the full structure of a program. Instead, 
+Abstract Handles represent references to language constructs in a program, capturing only
+a program's local structure; intended to support interoperability between source based
+tools (including compilers).  We don't advise the use of abstract handles in an
+aggressive way to construct an alternative intermediate representation (IR) for a full
+program.}
 
-The idea is to define unique identifiers for statements, loops, functions, 
-and other language constructs in source code. Given the diverse user
-requirements, an ideal specification should include multiple forms to specify a language construct. 
-Current, we are interested in the following forms for specifying language constructs:
+The idea is to define identifiers for unique statements, loops, functions, 
+and other language constructs in source code. Given the diverse user requirements, an
+ideal specification should include multiple forms to specify a language construct.
+
+Currently, we are interested in the following forms for specifying language constructs:
 \begin{itemize}
-\item Source file position information including path, filename, line and column number etc. 
-GNU standard source position from
-\url{http://www.gnu.org/prep/standards/html\_node/Errors.html} presents
-some examples.  
-\item Global or local numbering of specified language construct in source file
-  (e.g. 2nd "do" loop in a global scope).  The file is itself specified using an abstract
-          handle (typically generated from the file name). 
-\item Global or local names of constructs. Some language constructs, such
-as files, function definitions and namespace, have names which can be
-used as their handle within a context.
-\item Language-specific label mechanisms. They include named constructs in Fortran, numbered labels in Fortran, and statement labels in C and C++ and so on. 
+   \item Source file position information including path, filename, line and column number etc. 
+      GNU standard source position from 
+      \url{http://www.gnu.org/prep/standards/html\_node/Errors.html} presents
+      some examples.  
+   \item Global or local numbering of specified language construct in source file
+      (e.g. 2nd "do" loop in a global scope).  The file is itself specified using an
+       abstract handle (typically generated from the file name). 
+   \item Global or local names of constructs. Some language constructs, such
+      as files, function definitions and namespace, have names which can be
+      used as their handle within a context.
+   \item Language-specific label mechanisms. These include named constructs in Fortran,
+      numbered labels in Fortran, and statement labels in C and C++, etc. 
 \end{itemize}
 In addition to human-readable forms, compilers and tools can generate
 internal IDs for language constructs. It is up to compiler/tool developers
 to provide a way to convert their internal representations into human-readable formats. 
 
-We define an abstract handle as a unique representation for a language construct. It can have any of the human-readable or machine-generated forms. 
-A handle can be used alone or combined with other handles to specify a language construct. 
-A handle can also be converted from one form to another.
+% We define an abstract handle as a unique representation for a language construct. It can
+Abstract Handles can
+have any of the human-readable or machine-generated forms. A handle can be used alone or
+combined with other handles to specify a language construct. A handle can also be
+converted from one form to another (e.g. from a compiler specific form to an human
+readable form relative to the source position; filename, line number, etc.).
 Abstract handles can have different lifetimes depending on their use and implementation. 
-An abstract handle might be required to be persistent if it is used to reference a language construct that would be optimized over  multiple executions of one or more different tools. 
-Where as an abstract-handle might be internally generated only for purposes of
-           optimizations used in a single execution (e.g. optimization within a compiler). 
+An abstract handle might be required to be persistent if it is used to reference a
+language construct that would be optimized over multiple executions of one or more
+different tools. Where as an abstract-handle might be internally generated only for
+purposes of optimizations used in a single execution (e.g. optimization within a compiler).
+
+\section{Use Case}
+   A typical use can for Abstract Handles might be for a performance tool to 
+identify a collection of loops in functions that are computationally intensive
+and to construct Abstract Handles that refer to this specific loops.  Then
+pass the Abstract Handles to a second tool that might analyze the source code
+and/or the binary executable to evaluate if the computational costs are reasonable 
+or if optimizations might be possible.  The specific goal of the Abstract Handles
+is to support these sorts of uses within autotuning using diverse tools used
+and/or developed as part of autotuning research within the DOE SciDAC PERI project.
 
 \section{Syntax}
-A possible specification of language handles can have the following syntax:
+%  A possible specification of language handles can have the following syntax:
+   A possible grammar for abstract handles could be:
 
 \begin{verbatim}
 /* a handle is a single handle item or a link of them separated by ::, or
@@ -86,7 +114,7 @@ string_lit ::= [a-z][a-z0-9]*
 
 \section{Examples}
 We give some examples of language handles using the syntax mentioned above. 
-ROSE AST's node type names are used as the construct type names. 
+Canonical AST's node type names are used as the construct type names. 
 Other implementations can use their own construct type names.
 
 \begin{itemize}
@@ -132,25 +160,30 @@ ForStatement<numbering,2>::ForStatement<numbering,1>
 \end{itemize}
 
 \section{Reference Implementation}
-We provide a reference implementation of the abstract handle concept. 
-The source files are located in \textit{src/midend/abstractHandle}.
+Abstract Handles are fundamentally compiler and tool independent, however to
+clarify the concepts, provide meaningful examples, a working reference 
+implementation we have provided a reference implementation in ROSE.
+% Within ROSE we provide a reference implementation of the abstract handle concept. 
+The source files are located in \textit{src/midend/abstractHandle} in the ROSE distribution.
 A generic interface (abstract\_handle.h and abstract\_handle.cpp) provides
-data structures and operations for manipulating abstract handles using source file positions, numbering, or names. 
-Any compilers and tools can have their own implementations using the same interface.  
+data structures and operations for manipulating abstract handles using source file
+positions, numbering, or names. Any compilers and tools can have their own implementations
+using the same interface.
+
 \subsection{Connecting to ROSE}
 A ROSE adapter (roseAdapter.h and roseAdapter.cpp) using the interface is
 provided as a concrete implementation for the maximum capability of the
-implementation.
-
-Figure~\ref{Tutorial:abstractHandle1} shows the code to generate abstract
+implementation (within a source-to-source compiler).
+Figure~\ref{Tutorial:abstractHandle1} shows the code (using ROSE) to generate abstract
 handles for loops in an input source file (as in
 Figure~\ref{Tutorial:abstractHandle1input}). 
-Abstract handle constructors generate handles from abstract nodes, which are implemented using ROSE AST nodes. 
-Source position is used by default to generate a handle item. 
+Abstract handle constructors generate handles from abstract nodes, which are implemented
+using ROSE AST nodes. Source position is used by default to generate a handle item. 
 Names or numbering are used instead when source position information is not available. 
-The Constructor can also be used to generate a handle item using a
-specified handle type (numbering handles in the example).
-Figure~\ref{Tutorial:abstractHandle1out} is the output showing the generated handles for the loops.
+The Constructor can also be used to generate a handle item using a specified handle type
+(numbering handles in the example). Figure~\ref{Tutorial:abstractHandle1out} is the output
+showing the generated handles for the loops.
+
 %---------------------example 1. ----------------------
 \begin{figure}[!h]
 {\indent
@@ -169,7 +202,7 @@ Figure~\ref{Tutorial:abstractHandle1out} is the output showing the generated han
 }
 % End of scope in indentation
 }
-\caption{Generated handles for loops: using constructors with or without a specified handle type}
+\caption{Example 1: Generated handles for loops: using constructors with or without a specified handle type.}
 \label{Tutorial:abstractHandle1}
 \end{figure}
 %------------------ input------------------------------
@@ -190,7 +223,7 @@ Figure~\ref{Tutorial:abstractHandle1out} is the output showing the generated han
 }
 % End of scope in indentation
 }
-\caption{Source code with some loops}
+\caption{Example 1: Example source code with some loops, used as input.}
 \label{Tutorial:abstractHandle1input}
 \end{figure}
 
@@ -213,11 +246,11 @@ Figure~\ref{Tutorial:abstractHandle1out} is the output showing the generated han
 }
 % End of scope in indentation
 }
-\caption{Handles generated for loops}
+\caption{Example 1: Abstract handles generated for loops.}
 \label{Tutorial:abstractHandle1out}
 \end{figure}
 
-Another example (shown in Figure~\ref{Tutorial:abstractHandle2})
+A second example (shown in Figure~\ref{Tutorial:abstractHandle2})
 demonstrates how to create handles using user-specified strings
 representing handle items for language constructs within a source file
 (shown in Figure~\ref{Tutorial:abstractHandle2input}). 
@@ -242,7 +275,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 }
 % End of scope in indentation
 }
-\caption{Generated handles from strings representing handle items}
+\caption{Example 2: Generated handles from strings representing handle items.}
 \label{Tutorial:abstractHandle2}
 \end{figure}
 
@@ -264,7 +297,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 }
 % End of scope in indentation
 }
-\caption{Source code with some language constructs}
+\caption{Example 2: Source code with some language constructs.}
 \label{Tutorial:abstractHandle2input}
 \end{figure}
 
@@ -287,18 +320,21 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 }
 % End of scope in indentation
 }
-\caption{Handles generated from string and their language constructs}
+\caption{Example 2: Handles generated from string and their language constructs.}
 \label{Tutorial:abstractHandle2out}
 \end{figure}
 
 \subsection{Connecting to External Tools}
-We give yet another example to demonstrate how to use the abstract interface
-with any other tools, which may have less features in terms of
-supported language constructs and their correlations compared to a compiler. 
-Assume a tool operating on some simple for-loops
-within a source file. The data structure representing such loops is given
-in Figure~\ref{Tutorial:myloop}.
-
+   A third example is provided to demonstrate how to use the abstract interface
+with any other tools, which may have less features in terms of supported language
+constructs and their correlations compared to a compiler. 
+Assume a tool operating on some simple for-loops within an arbitrary source file (the
+input file is not shown in this example). Such a tool might
+have an internal data structure representing loops; such as that in given in 
+Figure~\ref{Tutorial:myloop}.  We will show how the tool specific data structure
+for loops can be used to generate abstract handles and output as strings that can
+be used by other tools which use abstract handles (which would generate the
+abstract handles by reading the strings).
 \begin{figure}[!h]
 {\indent
 {\mySmallestFontSize
@@ -316,24 +352,22 @@ in Figure~\ref{Tutorial:myloop}.
 }
 % End of scope in indentation
 }
-\caption{A simple data structure representing a loop}
+\caption{Example 3: A simple data structure used to represent a loop in an arbitrary tool.}
 \label{Tutorial:myloop}
 \end{figure}
-
 
 An adapter (loopAdapter.h and loopAdapter.cpp) using the proposed abstract
 handle interface is given in \textit{src/midend/abstractHandle}.
 It provides a concrete implementation for the interface for the simple loops and adds a
-node to support file nodes (Compared to the full-featured ROSE IR, this
-additional file node is additional work when using tools without internal nodes
-supporting files). 
+node to support file nodes (Compared to a full-featured IR for a compiler, the
+file node is an additional detail for tools without data structures to support files).
 The test program is given in Figure ~\ref{Tutorial:testMyLoop}.
 Again, it creates a top level file handle first. Then a loop handle
-(loop\_handle1) is
-created within the file handle using its relative numbering information. 
-loop\_handl2 is created from from its string format using file position
-information. loop\_handl3 uses its relative numbering information within
-loop\_handle1. 
+({\em loop\_handle1}) is created within the file handle using its relative numbering information. 
+The {\em loop\_handle2} is created from from its string format using file position
+information (using GNU standard file position syntax). The {\em loop\_handle3} uses its
+relative numbering information within {\em loop\_handle1}.
+
 \begin{figure}[!h]
 {\indent
 {\mySmallestFontSize
@@ -351,19 +385,23 @@ loop\_handle1.
 }
 % End of scope in indentation
 }
-\caption{A test program for simple loops' abstract handles}
+\caption{Example 3: A test program for simple loops' abstract handles.}
 \label{Tutorial:testMyLoop}
 \end{figure}
 
 
-The output of the program is shown in Figure~\ref{Tutorial:testMyLoopOutput}
+The output of the program is shown in Figure~\ref{Tutorial:testMyLoopOutput}.  It
+demonstrates the generated strings to represent the abstract handles in the 
+arbitrary code operated upon by the tool.  Interoperability is achieved by 
+another tool reading in the generated string representation to generate an
+abstract handle to the same source code language construct.
 %\begin{verbatim}
 \begin{figure}[!h]
 {\indent
 {\mySmallestFontSize
 \begin{latexonly}
 \begin{lstlisting} 
-bash-3.00$ ./testMyLoop
+bash-3.00: ./testMyLoop
 Created a file handle:
 SourceFile<name,file1.c>
 Created a loop handle:
@@ -378,10 +416,21 @@ SourceFile<name,file1.c>::ForStatement<numbering,1>::ForStatement<numbering,1>
 }
 % End of scope in indentation
 }
-\caption{Output of the test program for simple loops' abstract handles}
+\caption{Example 3: Output of the test program for simple loops' abstract handles (as strings).}
 \label{Tutorial:testMyLoopOutput}
 \end{figure}
 
+\section{Summary}
+
+   Abstract handles are low level mechanisms to support multiple tools
+to exchange references to source code.  Several examples are used to
+present the different features of abstract handles.  Importantly, the 
+specification of abstract handles is tool independent.  A reference
+implementation is provided and is publically available within the
+ROSE compiler framework.  We encourage debate on the pros and cons
+of this concept to support interoperability of tools which must
+pass references to source code between them.  This work is expected
+to a small piece of the infrastructure to suport autotuning research.
 
 %\end{verbatim}
 
