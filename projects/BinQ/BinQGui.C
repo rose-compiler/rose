@@ -338,12 +338,16 @@ BinQGUI::insertFileInformation() {
       if (entry) {
 	rose_addr_t addr = entry->get_sh_addr();
 	rose_addr_t size = entry->get_sh_size();
+	rose_addr_t offset = entry->get_sh_offset();
 	string addrS = RoseBin_support::HexToString(addr);
 	string sizeS = RoseBin_support::HexToString(size);
-	fileInfo->append( QString("%1 Addr: %2  Size: %3")
+	string offsetS = RoseBin_support::HexToString(offset);
+	fileInfo->append( QString("%1           type:     %2 Addr: %3  Size: %4   Offset: %5")
+			  .arg(QString(h->get_name()->get_string().c_str()))
 			  .arg(h->class_name().c_str())
 			  .arg(addrS.c_str())
-			  .arg(sizeS.c_str()));	 
+			  .arg(sizeS.c_str())
+			  .arg(offsetS.c_str()));	 
       }
     } else {
       fileInfo->append( QString("%1")
