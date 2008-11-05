@@ -8,6 +8,27 @@ using namespace std;
 using namespace SageBuilderAsm;
 using namespace IntegerOps;
 
+// These are macros to make them look like constants while they are really
+// function calls
+#define BYTET (SgAsmTypeByte::createType())
+#define WORDT (SgAsmTypeWord::createType())
+#define DWORDT (SgAsmTypeDoubleWord::createType())
+#define QWORDT (SgAsmTypeQuadWord::createType())
+#define DQWORDT (SgAsmTypeDoubleQuadWord::createType())
+#define FLOATT (SgAsmTypeSingleFloat::createType())
+#define DOUBLET (SgAsmTypeDoubleFloat::createType())
+#define LDOUBLET (SgAsmType80bitFloat::createType())
+#define V8BYTET (SgAsmTypeVector::createType(8, BYTET))
+#define V16BYTET (SgAsmTypeVector::createType(16, BYTET))
+#define V4WORDT (SgAsmTypeVector::createType(4, WORDT))
+#define V8WORDT (SgAsmTypeVector::createType(8, WORDT))
+#define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
+#define V4DWORDT (SgAsmTypeVector::createType(4, DWORDT))
+#define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
+#define V4FLOATT (SgAsmTypeVector::createType(4, FLOATT))
+#define V2QWORDT (SgAsmTypeVector::createType(2, QWORDT))
+#define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
+
 namespace X86Disassembler {
 
   enum RepeatPrefix {rpNone, rpRepne, rpRepe};
@@ -56,44 +77,44 @@ namespace X86Disassembler {
       case rmLegacyByte: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber % 4);
         ref->set_position_in_register((fullRegisterNumber & 4) ? x86_regpos_high_byte : x86_regpos_low_byte);
-        ref->set_type(SgAsmTypeByte::createType());
+        ref->set_type(BYTET);
         break;
       }
       case rmRexByte: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_low_byte);
-        ref->set_type(SgAsmTypeByte::createType());
+        ref->set_type(BYTET);
         break;
       }
       case rmWord: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_word);
-        ref->set_type(SgAsmTypeWord::createType());
+        ref->set_type(WORDT);
         break;
       }
       case rmDWord: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_dword);
-        ref->set_type(SgAsmTypeDoubleWord::createType());
+        ref->set_type(DWORDT);
         break;
       }
       case rmQWord: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_gpr, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_qword);
-        ref->set_type(SgAsmTypeQuadWord::createType());
+        ref->set_type(QWORDT);
         break;
       }
       case rmSegment: {
         if (fullRegisterNumber >= 6) throw BadInstruction();
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_segment, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_all);
-        ref->set_type(SgAsmTypeWord::createType());
+        ref->set_type(WORDT);
         break;
       }
       case rmST: {
         ref = new SgAsmx86RegisterReferenceExpression(x86_regclass_st, fullRegisterNumber);
         ref->set_position_in_register(x86_regpos_all);
-        ref->set_type(SgAsmType80bitFloat::createType());
+        ref->set_type(LDOUBLET);
         break;
       }
       case rmMM: {
@@ -448,7 +469,7 @@ namespace X86Disassembler {
     }
 
     SgAsmExpression* getModrmForByte() {
-      return makeModrmNormal(rmLegacyByte, SgAsmTypeByte::createType());
+      return makeModrmNormal(rmLegacyByte, BYTET);
     }
 
     SgAsmExpression* getModrmForXword() {
@@ -456,7 +477,7 @@ namespace X86Disassembler {
     }
 
     SgAsmExpression* getModrmForWord() {
-      return makeModrmNormal(rmWord, SgAsmTypeWord::createType());
+      return makeModrmNormal(rmWord, WORDT);
     }
 
     SgAsmExpression* getModrmForFloat(SgAsmType* t) {
@@ -465,9 +486,6 @@ namespace X86Disassembler {
 
     SgAsmx86Instruction* makeNullaryInstruction(const string& mnemonic, X86InstructionKind kind) {
       SgAsmx86Instruction* newInsn = makeInstructionWithoutOperands(p.ip, mnemonic, kind, p.insnSize, effectiveOperandSize(), effectiveAddressSize(), lock);
-
-   // DQ (8/30/2008): IR node now uses a SgUnsignedCharList instead of a std::string.
-   // newInsn->set_raw_bytes(string(insn + positionInVector, insn + positionInVector + positionInInstruction));
       newInsn->set_raw_bytes(SgUnsignedCharList(insn + positionInVector, insn + positionInVector + positionInInstruction));
 
       SgAsmOperandList* operands = new SgAsmOperandList();
@@ -679,65 +697,65 @@ namespace X86Disassembler {
     getByte(opcode);
     SgAsmx86Instruction* insn = 0;
     switch (opcode) {
-      case 0x00: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(add, add, modrm, reg); goto done;}
+      case 0x00: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(add, add, modrm, reg); goto done;}
       case 0x01: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(add, add, modrm, reg); goto done;}
-      case 0x02: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(add, add, reg, modrm); goto done;}
+      case 0x02: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(add, add, reg, modrm); goto done;}
       case 0x03: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(add, add, reg, modrm); goto done;}
       case 0x04: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(add, add, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x05: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(add, add, makeRegisterEffective(0), imm); goto done;}
       case 0x06: {not64(); insn = MAKE_INSN1(push, push, makeRegister(0, rmSegment)); goto done;}
       case 0x07: {not64(); insn = MAKE_INSN1(pop, pop, makeRegister(0, rmSegment)); goto done;}
-      case 0x08: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(or, or, modrm, reg); goto done;}
+      case 0x08: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(or, or, modrm, reg); goto done;}
       case 0x09: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(or, or, modrm, reg); goto done;}
-      case 0x0A: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(or, or, reg, modrm); goto done;}
+      case 0x0A: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(or, or, reg, modrm); goto done;}
       case 0x0B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(or, or, reg, modrm); goto done;}
       case 0x0C: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(or, or, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x0D: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(or, or, makeRegisterEffective(0), imm); goto done;}
       case 0x0E: {not64(); insn = MAKE_INSN1(push, push, makeRegister(1, rmSegment)); goto done;}
       case 0x0F: {insn = decodeOpcode0F(); goto done;}
-      case 0x10: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(adc, adc, modrm, reg); goto done;}
+      case 0x10: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(adc, adc, modrm, reg); goto done;}
       case 0x11: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(adc, adc, modrm, reg); goto done;}
-      case 0x12: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(adc, adc, reg, modrm); goto done;}
+      case 0x12: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(adc, adc, reg, modrm); goto done;}
       case 0x13: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(adc, adc, reg, modrm); goto done;}
       case 0x14: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(adc, adc, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x15: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(adc, adc, makeRegisterEffective(0), imm); goto done;}
       case 0x16: {not64(); insn = MAKE_INSN1(push, push, makeRegister(2, rmSegment)); goto done;}
       case 0x17: {not64(); insn = MAKE_INSN1(pop, pop, makeRegister(2, rmSegment)); goto done;}
-      case 0x18: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(sbb, sbb, modrm, reg); goto done;}
+      case 0x18: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(sbb, sbb, modrm, reg); goto done;}
       case 0x19: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(sbb, sbb, modrm, reg); goto done;}
-      case 0x1A: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(sbb, sbb, reg, modrm); goto done;}
+      case 0x1A: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(sbb, sbb, reg, modrm); goto done;}
       case 0x1B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(sbb, sbb, reg, modrm); goto done;}
       case 0x1C: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(sbb, sbb, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x1D: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(sbb, sbb, makeRegisterEffective(0), imm); goto done;}
       case 0x1E: {not64(); insn = MAKE_INSN1(push, push, makeRegister(3, rmSegment)); goto done;}
       case 0x1F: {not64(); insn = MAKE_INSN1(pop, pop, makeRegister(3, rmSegment)); goto done;}
-      case 0x20: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(and, and, modrm, reg); goto done;}
+      case 0x20: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(and, and, modrm, reg); goto done;}
       case 0x21: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(and, and, modrm, reg); goto done;}
-      case 0x22: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(and, and, reg, modrm); goto done;}
+      case 0x22: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(and, and, reg, modrm); goto done;}
       case 0x23: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(and, and, reg, modrm); goto done;}
       case 0x24: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(and, and, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x25: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(and, and, makeRegisterEffective(0), imm); goto done;}
       case 0x26: {segOverride = x86_segreg_es; insn = disassemble(); goto done;}
       case 0x27: {not64(); insn = MAKE_INSN0(daa, daa); goto done;}
-      case 0x28: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(sub, sub, modrm, reg); goto done;}
+      case 0x28: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(sub, sub, modrm, reg); goto done;}
       case 0x29: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(sub, sub, modrm, reg); goto done;}
-      case 0x2A: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(sub, sub, reg, modrm); goto done;}
+      case 0x2A: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(sub, sub, reg, modrm); goto done;}
       case 0x2B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(sub, sub, reg, modrm); goto done;}
       case 0x2C: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(sub, sub, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x2D: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(sub, sub, makeRegisterEffective(0), imm); goto done;}
       case 0x2E: {segOverride = x86_segreg_cs; branchPrediction = x86_branch_prediction_not_taken; insn = disassemble(); goto done;}
       case 0x2F: {not64(); insn = MAKE_INSN0(das, das); goto done;}
-      case 0x30: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(xor, xor, modrm, reg); goto done;}
+      case 0x30: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(xor, xor, modrm, reg); goto done;}
       case 0x31: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(xor, xor, modrm, reg); goto done;}
-      case 0x32: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(xor, xor, reg, modrm); goto done;}
+      case 0x32: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(xor, xor, reg, modrm); goto done;}
       case 0x33: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(xor, xor, reg, modrm); goto done;}
       case 0x34: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(xor, xor, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x35: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(xor, xor, makeRegisterEffective(0), imm); goto done;}
       case 0x36: {segOverride = x86_segreg_ss; insn = disassemble(); goto done;}
       case 0x37: {not64(); insn = MAKE_INSN0(aaa, aaa); goto done;}
-      case 0x38: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(cmp, cmp, modrm, reg); goto done;}
+      case 0x38: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(cmp, cmp, modrm, reg); goto done;}
       case 0x39: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(cmp, cmp, modrm, reg); goto done;}
-      case 0x3A: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(cmp, cmp, reg, modrm); goto done;}
+      case 0x3A: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(cmp, cmp, reg, modrm); goto done;}
       case 0x3B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(cmp, cmp, reg, modrm); goto done;}
       case 0x3C: {SgAsmExpression* imm = getImmByteAsIv(); insn = MAKE_INSN2(cmp, cmp, makeRegister(0, rmLegacyByte), imm); goto done;}
       case 0x3D: {SgAsmExpression* imm = getImmIzAsIv(); insn = MAKE_INSN2(cmp, cmp, makeRegisterEffective(0), imm); goto done;}
@@ -778,7 +796,7 @@ namespace X86Disassembler {
       case 0x60: {not64(); if (effectiveOperandSize() == x86_insnsize_32) insn = MAKE_INSN0(pushad, pushad); else insn = MAKE_INSN0(pusha, pusha); goto done;}
       case 0x61: {not64(); if (effectiveOperandSize() == x86_insnsize_32) insn = MAKE_INSN0(popad, popad); else insn = MAKE_INSN0(popa, popa); goto done;}
       case 0x62: {not64(); getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); insn = MAKE_INSN2(bound, bound, reg, modrm); goto done;}
-      case 0x63: {if (longMode()) {getModRegRM(effectiveOperandMode(), rmDWord, SgAsmTypeDoubleWord::createType()); insn = MAKE_INSN2(movsxd, movsxd, reg, modrm); goto done;} else {getModRegRM(rmWord, rmWord, SgAsmTypeWord::createType()); insn = MAKE_INSN2(arpl, arpl, modrm, reg); goto done;}}
+      case 0x63: {if (longMode()) {getModRegRM(effectiveOperandMode(), rmDWord, DWORDT); insn = MAKE_INSN2(movsxd, movsxd, reg, modrm); goto done;} else {getModRegRM(rmWord, rmWord, WORDT); insn = MAKE_INSN2(arpl, arpl, modrm, reg); goto done;}}
       case 0x64: {segOverride = x86_segreg_fs; insn = disassemble(); goto done;}
       case 0x65: {segOverride = x86_segreg_gs; insn = disassemble(); goto done;}
       case 0x66: {operandSizeOverride = true; insn = disassemble(); goto done;}
@@ -853,21 +871,21 @@ namespace X86Disassembler {
       case 0x7D: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jge, jge, /* prediction, */ imm); goto done;}
       case 0x7E: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jle, jle, /* prediction, */ imm); goto done;}
       case 0x7F: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jg , jg , /* prediction, */ imm); goto done;}
-      case 0x80: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
+      case 0x80: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
       case 0x81: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmIzAsIv(); insn = decodeGroup1(imm); goto done;}
-      case 0x82: {not64(); getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
+      case 0x82: {not64(); getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
       case 0x83: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmByteAsIv(); insn = decodeGroup1(imm); goto done;}
-      case 0x84: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(test, test, modrm, reg); goto done;}
+      case 0x84: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(test, test, modrm, reg); goto done;}
       case 0x85: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(test, test, modrm, reg); goto done;}
-      case 0x86: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(xchg, xchg, modrm, reg); goto done;}
+      case 0x86: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(xchg, xchg, modrm, reg); goto done;}
       case 0x87: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(xchg, xchg, modrm, reg); goto done;}
-      case 0x88: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(mov, mov, modrm, reg); goto done;}
+      case 0x88: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(mov, mov, modrm, reg); goto done;}
       case 0x89: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(mov, mov, modrm, reg); goto done;}
-      case 0x8A: {getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); insn = MAKE_INSN2(mov, mov, reg, modrm); goto done;}
+      case 0x8A: {getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); insn = MAKE_INSN2(mov, mov, reg, modrm); goto done;}
       case 0x8B: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); insn = MAKE_INSN2(mov, mov, reg, modrm); goto done;}
-      case 0x8C: {getModRegRM(rmSegment, effectiveOperandMode(), SgAsmTypeWord::createType()); insn = MAKE_INSN2(mov, mov, modrm, reg); goto done;}
+      case 0x8C: {getModRegRM(rmSegment, effectiveOperandMode(), WORDT); insn = MAKE_INSN2(mov, mov, modrm, reg); goto done;}
       case 0x8D: {getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); insn = MAKE_INSN2(lea, lea, reg, modrm); goto done;}
-      case 0x8E: {getModRegRM(rmSegment, rmWord, SgAsmTypeWord::createType()); insn = MAKE_INSN2(mov, mov, reg, modrm); goto done;}
+      case 0x8E: {getModRegRM(rmSegment, rmWord, WORDT); insn = MAKE_INSN2(mov, mov, reg, modrm); goto done;}
       case 0x8F: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup1a(); goto done;}
       case 0x90: {
         if (rexB) {
@@ -924,9 +942,9 @@ namespace X86Disassembler {
       }
       case 0x9E: {insn = MAKE_INSN0(sahf, sahf); goto done;}
       case 0x9F: {insn = MAKE_INSN0(lahf, lahf); goto done;}
-      case 0xA0: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeRegister(0, rmLegacyByte), makeMemoryReference(addr, currentDataSegment(), SgAsmTypeByte::createType())); goto done;}
+      case 0xA0: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeRegister(0, rmLegacyByte), makeMemoryReference(addr, currentDataSegment(), BYTET)); goto done;}
       case 0xA1: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeRegisterEffective(0), makeMemoryReference(addr, currentDataSegment(), effectiveOperandType())); goto done;}
-      case 0xA2: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeMemoryReference(addr, currentDataSegment(), SgAsmTypeByte::createType()), makeRegister(0, rmLegacyByte)); goto done;}
+      case 0xA2: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeMemoryReference(addr, currentDataSegment(), BYTET), makeRegister(0, rmLegacyByte)); goto done;}
       case 0xA3: {SgAsmExpression* addr = getImmForAddr(); insn = MAKE_INSN2(mov, mov, makeMemoryReference(addr, currentDataSegment(), effectiveOperandType()), makeRegisterEffective(0)); goto done;}
       case 0xA4: {
         switch (repeatPrefix) {
@@ -1104,13 +1122,13 @@ namespace X86Disassembler {
       case 0xBD: {SgAsmExpression* imm = getImmIv(); insn = MAKE_INSN2(mov, mov, makeRegisterEffective(rexB, 5), imm); goto done;}
       case 0xBE: {SgAsmExpression* imm = getImmIv(); insn = MAKE_INSN2(mov, mov, makeRegisterEffective(rexB, 6), imm); goto done;}
       case 0xBF: {SgAsmExpression* imm = getImmIv(); insn = MAKE_INSN2(mov, mov, makeRegisterEffective(rexB, 7), imm); goto done;}
-      case 0xC0: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); SgAsmExpression* imm = getImmByte(); insn = decodeGroup2(imm); goto done;}
+      case 0xC0: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup2(imm); goto done;}
       case 0xC1: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmByteAsIv(); insn = decodeGroup2(imm); goto done;}
       case 0xC2: {isUnconditionalJump = true; SgAsmExpression* imm = getImmWord(); insn = MAKE_INSN1(ret, ret, imm); goto done;}
       case 0xC3: {isUnconditionalJump = true; insn = MAKE_INSN0(ret, ret); goto done;}
       case 0xC4: {not64(); getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); insn = MAKE_INSN2(les, les, reg, modrm); goto done;}
       case 0xC5: {not64(); getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); insn = MAKE_INSN2(lds, lds, reg, modrm); goto done;}
-      case 0xC6: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); SgAsmExpression* imm = getImmByte(); insn = decodeGroup11(imm); goto done;}
+      case 0xC6: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup11(imm); goto done;}
       case 0xC7: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmIzAsIv(); insn = decodeGroup11(imm); goto done;}
       case 0xC8: {SgAsmExpression* immw; {SgAsmExpression* imm = getImmWord(); immw = imm;} SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN2(enter, enter, immw, imm); goto done;}
       case 0xC9: {insn = MAKE_INSN0(leave, leave); goto done;}
@@ -1120,9 +1138,9 @@ namespace X86Disassembler {
       case 0xCD: {SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(int, int, imm); goto done;}
       case 0xCE: {not64(); insn = MAKE_INSN0(into, into); goto done;}
       case 0xCF: {isUnconditionalJump = true; insn = MAKE_INSN0(iret, iret); goto done;}
-      case 0xD0: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeByteValue(1)); goto done;}
+      case 0xD0: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); insn = decodeGroup2(makeByteValue(1)); goto done;}
       case 0xD1: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeByteValue(1)); goto done;}
-      case 0xD2: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup2(makeRegister(1, rmLegacyByte)); goto done;}
+      case 0xD2: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); insn = decodeGroup2(makeRegister(1, rmLegacyByte)); goto done;}
       case 0xD3: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); insn = decodeGroup2(makeRegister(1, rmLegacyByte)); goto done;}
       case 0xD4: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aam, aam, imm); goto done;}
       case 0xD5: {not64(); SgAsmExpression* imm = getImmByte(); insn = MAKE_INSN1(aad, aad, imm); goto done;}
@@ -1167,7 +1185,7 @@ namespace X86Disassembler {
       case 0xF3: {repeatPrefix = rpRepe; insn = disassemble(); goto done;}
       case 0xF4: {insn = MAKE_INSN0(hlt, hlt); isUnconditionalJump = true; goto done;}
       case 0xF5: {insn = MAKE_INSN0(cmc, cmc); goto done;}
-      case 0xF6: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); SgAsmExpression* immMaybe = NULL; if (regField <= 1) {SgAsmExpression* imm = getImmByteAsIv(); immMaybe = imm;}; insn = decodeGroup3(immMaybe); goto done;}
+      case 0xF6: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* immMaybe = NULL; if (regField <= 1) {SgAsmExpression* imm = getImmByteAsIv(); immMaybe = imm;}; insn = decodeGroup3(immMaybe); goto done;}
       case 0xF7: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* immMaybe = NULL; if (regField <= 1) {SgAsmExpression* imm = getImmIzAsIv(); immMaybe = imm;}; insn = decodeGroup3(immMaybe); goto done;}
       case 0xF8: {insn = MAKE_INSN0(clc, clc); goto done;}
       case 0xF9: {insn = MAKE_INSN0(stc, stc); goto done;}
@@ -1175,7 +1193,7 @@ namespace X86Disassembler {
       case 0xFB: {insn = MAKE_INSN0(sti, sti); goto done;}
       case 0xFC: {insn = MAKE_INSN0(cld, cld); goto done;}
       case 0xFD: {insn = MAKE_INSN0(std, std); goto done;}
-      case 0xFE: {getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType()); insn = decodeGroup4(); goto done;}
+      case 0xFE: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); insn = decodeGroup4(); goto done;}
       case 0xFF: {
         getModRegRM(rmReturnNull, rmReturnNull, NULL);
         if (regField >= 2 && regField <= 6) {sizeMustBe64Bit = true;}
@@ -1193,9 +1211,9 @@ done:
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeX87InstructionD8() {
-    getModRegRM(rmReturnNull, rmST, SgAsmTypeSingleFloat::createType());
+    getModRegRM(rmReturnNull, rmST, FLOATT);
     if (isSgAsmMemoryReferenceExpression(modrm)) {
-      isSgAsmMemoryReferenceExpression(modrm)->set_type(SgAsmTypeSingleFloat::createType());
+      isSgAsmMemoryReferenceExpression(modrm)->set_type(FLOATT);
     }
     if (modregrmByte < 0xC0) { // Using memory
       switch (regField) {
@@ -1230,14 +1248,14 @@ done:
       SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
       ROSE_ASSERT (mr);
       switch (regField) {
-        case 0: mr->set_type(SgAsmTypeSingleFloat::createType()); return MAKE_INSN1(fld, fld, modrm);
+        case 0: mr->set_type(FLOATT); return MAKE_INSN1(fld, fld, modrm);
         case 1: throw BadInstruction();
-        case 2: mr->set_type(SgAsmTypeSingleFloat::createType()); return MAKE_INSN1(fst, fst, modrm);
-        case 3: mr->set_type(SgAsmTypeSingleFloat::createType()); return MAKE_INSN1(fstp, fstp, modrm);
-        case 4: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(fldenv, fldenv, modrm);
-        case 5: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fldcw, fldcw, modrm);
-        case 6: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(fnstenv, fnstenv, modrm);
-        case 7: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fnstcw, fnstcw, modrm);
+        case 2: mr->set_type(FLOATT); return MAKE_INSN1(fst, fst, modrm);
+        case 3: mr->set_type(FLOATT); return MAKE_INSN1(fstp, fstp, modrm);
+        case 4: mr->set_type(BYTET); return MAKE_INSN1(fldenv, fldenv, modrm);
+        case 5: mr->set_type(WORDT); return MAKE_INSN1(fldcw, fldcw, modrm);
+        case 6: mr->set_type(BYTET); return MAKE_INSN1(fnstenv, fnstenv, modrm);
+        case 7: mr->set_type(WORDT); return MAKE_INSN1(fnstcw, fnstcw, modrm);
         default: ROSE_ASSERT (false);
       }
     } else if (regField == 0 || regField == 1) { // FLD and FXCH on registers
@@ -1283,7 +1301,7 @@ done:
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeX87InstructionDA() {
-    getModRegRM(rmReturnNull, rmReturnNull, SgAsmTypeDoubleWord::createType());
+    getModRegRM(rmReturnNull, rmReturnNull, DWORDT);
     if (modeField < 3) {
       switch (regField) {
         case 0: return MAKE_INSN1(fiadd, fiadd, modrm);
@@ -1319,9 +1337,9 @@ done:
       SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
       ROSE_ASSERT (mr);
       if (regField <= 3) {
-        mr->set_type(SgAsmTypeDoubleWord::createType());
+        mr->set_type(DWORDT);
       } else {
-        mr->set_type(SgAsmType80bitFloat::createType());
+        mr->set_type(LDOUBLET);
       }
       switch (regField) {
         case 0: return MAKE_INSN1(fild, fild, modrm);
@@ -1355,7 +1373,7 @@ done:
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeX87InstructionDC() {
-    getModRegRM(rmReturnNull, rmST, SgAsmTypeDoubleFloat::createType());
+    getModRegRM(rmReturnNull, rmST, DOUBLET);
     if (modeField < 3) { // Using memory
       switch (regField & 7) {
         case 0: return MAKE_INSN1(fadd, fadd, modrm);
@@ -1389,14 +1407,14 @@ done:
       SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
       ROSE_ASSERT (mr);
       switch (regField) {
-        case 0: mr->set_type(SgAsmTypeDoubleFloat::createType()); return MAKE_INSN1(fld, fld, modrm);
-        case 1: mr->set_type(SgAsmTypeQuadWord::createType()); return MAKE_INSN1(fisttp, fisttp, modrm);
-        case 2: mr->set_type(SgAsmTypeDoubleFloat::createType()); return MAKE_INSN1(fst, fst, modrm);
-        case 3: mr->set_type(SgAsmTypeDoubleFloat::createType()); return MAKE_INSN1(fstp, fstp, modrm);
-        case 4: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(frstor, frstor, modrm);
+        case 0: mr->set_type(DOUBLET); return MAKE_INSN1(fld, fld, modrm);
+        case 1: mr->set_type(QWORDT); return MAKE_INSN1(fisttp, fisttp, modrm);
+        case 2: mr->set_type(DOUBLET); return MAKE_INSN1(fst, fst, modrm);
+        case 3: mr->set_type(DOUBLET); return MAKE_INSN1(fstp, fstp, modrm);
+        case 4: mr->set_type(BYTET); return MAKE_INSN1(frstor, frstor, modrm);
         case 5: throw BadInstruction();
-        case 6: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(fnsave, fnsave, modrm);
-        case 7: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fnstsw, fnstsw, modrm);
+        case 6: mr->set_type(BYTET); return MAKE_INSN1(fnsave, fnsave, modrm);
+        case 7: mr->set_type(WORDT); return MAKE_INSN1(fnstsw, fnstsw, modrm);
         default: ROSE_ASSERT (false);
       }
     } else { // Register forms
@@ -1415,7 +1433,7 @@ done:
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeX87InstructionDE() {
-    getModRegRM(rmReturnNull, rmST, SgAsmTypeWord::createType());
+    getModRegRM(rmReturnNull, rmST, WORDT);
     if (modeField < 3) { // Using memory
       switch (regField & 7) {
         case 0: return MAKE_INSN1(fiadd, fiadd, modrm);
@@ -1454,14 +1472,14 @@ done:
       SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(modrm);
       ROSE_ASSERT (mr);
       switch (regField) {
-        case 0: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fild, fild, modrm);
-        case 1: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fisttp, fisttp, modrm);
-        case 2: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fist, fist, modrm);
-        case 3: mr->set_type(SgAsmTypeWord::createType()); return MAKE_INSN1(fistp, fistp, modrm);
-        case 4: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(fbld, fbld, modrm);
-        case 5: mr->set_type(SgAsmTypeQuadWord::createType()); return MAKE_INSN1(fild, fild, modrm);
-        case 6: mr->set_type(SgAsmTypeByte::createType()); return MAKE_INSN1(fbstp, fbstp, modrm);
-        case 7: mr->set_type(SgAsmTypeQuadWord::createType()); return MAKE_INSN1(fistp, fistp, modrm);
+        case 0: mr->set_type(WORDT); return MAKE_INSN1(fild, fild, modrm);
+        case 1: mr->set_type(WORDT); return MAKE_INSN1(fisttp, fisttp, modrm);
+        case 2: mr->set_type(WORDT); return MAKE_INSN1(fist, fist, modrm);
+        case 3: mr->set_type(WORDT); return MAKE_INSN1(fistp, fistp, modrm);
+        case 4: mr->set_type(BYTET); return MAKE_INSN1(fbld, fbld, modrm);
+        case 5: mr->set_type(QWORDT); return MAKE_INSN1(fild, fild, modrm);
+        case 6: mr->set_type(BYTET); return MAKE_INSN1(fbstp, fbstp, modrm);
+        case 7: mr->set_type(QWORDT); return MAKE_INSN1(fistp, fistp, modrm);
         default: ROSE_ASSERT (false);
       }
     } else {
@@ -1490,10 +1508,10 @@ done:
     uint8_t opcode;
     getByte(opcode);
     switch (opcode) {
-      case 0x00: {getModRegRM(rmReturnNull, rmWord, SgAsmTypeWord::createType()); return decodeGroup6();}
+      case 0x00: {getModRegRM(rmReturnNull, rmWord, WORDT); return decodeGroup6();}
       case 0x01: return decodeGroup7();
-      case 0x02: {getModRegRM(rmWord, rmWord, SgAsmTypeWord::createType()); return MAKE_INSN2(lar, lar, reg, modrm);}
-      case 0x03: {getModRegRM(rmWord, rmWord, SgAsmTypeWord::createType()); return MAKE_INSN2(lsl, lsl, reg, modrm);}
+      case 0x02: {getModRegRM(rmWord, rmWord, WORDT); return MAKE_INSN2(lar, lar, reg, modrm);}
+      case 0x03: {getModRegRM(rmWord, rmWord, WORDT); return MAKE_INSN2(lsl, lsl, reg, modrm);}
       case 0x04: throw BadInstruction();
       case 0x05: return MAKE_INSN0(syscall, syscall);
       case 0x06: return MAKE_INSN0(clts, clts);
@@ -1512,30 +1530,30 @@ done:
         if (thirdOpcodeByte < 0x80) { // Conversions
           switch (thirdOpcodeByte) {
             case 0x0C: {
-              fillInModRM(rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); 
-              reg = makeModrmRegister(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()));
+              fillInModRM(rmMM, V4WORDT); 
+              reg = makeModrmRegister(rmMM, V2FLOATT);
               return MAKE_INSN2(pi2fw, pi2fw, reg, modrm);
             }
             case 0x0D: {
-              fillInModRM(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); 
-              reg = makeModrmRegister(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()));
+              fillInModRM(rmMM, V2DWORDT); 
+              reg = makeModrmRegister(rmMM, V2FLOATT);
               return MAKE_INSN2(pi2fd, pi2fd, reg, modrm);
             }
             case 0x1C: {
-              fillInModRM(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType())); 
-              reg = makeModrmRegister(rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()));
+              fillInModRM(rmMM, V2FLOATT); 
+              reg = makeModrmRegister(rmMM, V4WORDT);
               return MAKE_INSN2(pf2iw, pf2iw, reg, modrm);
             }
             case 0x1D: {
-              fillInModRM(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType())); 
-              reg = makeModrmRegister(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()));
+              fillInModRM(rmMM, V2FLOATT); 
+              reg = makeModrmRegister(rmMM, V2DWORDT);
               return MAKE_INSN2(pf2id, pf2id, reg, modrm);
             }
             default: throw BadInstruction();
           }
         } else if (thirdOpcodeByte < 0xB7) { // Floating-point operations
-          fillInModRM(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()));
-          reg = makeModrmRegister(rmMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()));
+          fillInModRM(rmMM, V2FLOATT);
+          reg = makeModrmRegister(rmMM, V2FLOATT);
           switch (thirdOpcodeByte) {
             case 0x8A: return MAKE_INSN2(pfnacc, pfnacc, reg, modrm);
             case 0x8E: return MAKE_INSN2(pfpnacc, pfpnacc, reg, modrm);
@@ -1558,78 +1576,78 @@ done:
           }
         } else { // Extra integer operations
           switch (thirdOpcodeByte) {
-            case 0xB7: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pmulhrw, pmulhrw, reg, modrm);
-            case 0xBB: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pswapd, pswapd, reg, modrm);
-            case 0xBF: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pavgusb, pavgusb, reg, modrm);
+            case 0xB7: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pmulhrw, pmulhrw, reg, modrm);
+            case 0xBB: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(pswapd, pswapd, reg, modrm);
+            case 0xBF: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pavgusb, pavgusb, reg, modrm);
             default: throw BadInstruction();
           }
         }
       }
       case 0x10: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movups, movups, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(movss, movss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(movupd, movupd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(movsd_sse, movsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movups, movups, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(movss, movss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(movupd, movupd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(movsd_sse, movsd, reg, modrm);
         }
       }
       case 0x11: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movups, movups, modrm, reg);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(movss, movss, modrm, reg);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(movupd, movupd, modrm, reg);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(movsd_sse, movsd, modrm, reg);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movups, movups, modrm, reg);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(movss, movss, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(movupd, movupd, modrm, reg);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(movsd_sse, movsd, modrm, reg);
         }
       }
       case 0x12: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); if (modeField == 3) return MAKE_INSN2(movhlps, movhlps, reg, modrm); else return MAKE_INSN2(movlps, movlps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movsldup, movsldup, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); requireMemory(); return MAKE_INSN2(movlpd, movlpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(movddup, movddup, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); if (modeField == 3) return MAKE_INSN2(movhlps, movhlps, reg, modrm); else return MAKE_INSN2(movlps, movlps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movsldup, movsldup, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); requireMemory(); return MAKE_INSN2(movlpd, movlpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(movddup, movddup, reg, modrm);
         }
       }
       case 0x13: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); requireMemory(); return MAKE_INSN2(movlps, movlps, modrm, reg);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); requireMemory(); return MAKE_INSN2(movlps, movlps, modrm, reg);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); requireMemory(); return MAKE_INSN2(movlpd, movlpd, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); requireMemory(); return MAKE_INSN2(movlpd, movlpd, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x14: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(unpcklps, unpcklps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V2FLOATT, V4FLOATT); return MAKE_INSN2(unpcklps, unpcklps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType(), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(unpcklpd, unpcklpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET, V2DOUBLET); return MAKE_INSN2(unpcklpd, unpcklpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x15: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(unpckhps, unpckhps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V2FLOATT, V4FLOATT); return MAKE_INSN2(unpckhps, unpckhps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType(), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(unpckhpd, unpckhpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET, V2DOUBLET); return MAKE_INSN2(unpckhpd, unpckhpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x16: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); if (modeField == 3) return MAKE_INSN2(movlhps, movlhps, reg, modrm); else return MAKE_INSN2(movhps, movhps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movshdup, movshdup, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); requireMemory(); return MAKE_INSN2(movhpd, movhpd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); if (modeField == 3) return MAKE_INSN2(movlhps, movlhps, reg, modrm); else return MAKE_INSN2(movhps, movhps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movshdup, movshdup, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); requireMemory(); return MAKE_INSN2(movhpd, movhpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x17: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); requireMemory(); return MAKE_INSN2(movhps, movhps, modrm, reg);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); requireMemory(); return MAKE_INSN2(movhps, movhps, modrm, reg);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); requireMemory(); return MAKE_INSN2(movhpd, movhpd, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); requireMemory(); return MAKE_INSN2(movhpd, movhpd, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
-      case 0x18: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return decodeGroup16();
+      case 0x18: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return decodeGroup16();
       case 0x19: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
       case 0x1A: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
       case 0x1B: getModRegRM(rmReturnNull, rmReturnNull, NULL); return MAKE_INSN0(nop, nop);
@@ -1647,66 +1665,66 @@ done:
       case 0x27: throw BadInstruction();
       case 0x28: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movaps, movaps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movaps, movaps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(movapd, movapd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(movapd, movapd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x29: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movaps, movaps, modrm, reg);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movaps, movaps, modrm, reg);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(movapd, movapd, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(movapd, movapd, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x2A: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cvtpi2ps, cvtpi2ps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cvtsi2ss, cvtsi2ss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cvtpi2pd, cvtpi2pd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cvtsi2sd, cvtsi2sd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmMM, V2DWORDT, V4FLOATT); return MAKE_INSN2(cvtpi2ps, cvtpi2ps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V4FLOATT); return MAKE_INSN2(cvtsi2ss, cvtsi2ss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmMM, V2DWORDT, V2DOUBLET); return MAKE_INSN2(cvtpi2pd, cvtpi2pd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), V2DOUBLET); return MAKE_INSN2(cvtsi2sd, cvtsi2sd, reg, modrm);
         }
       }
       case 0x2B: {
         requireMemory();
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(movntps, movntps, modrm, reg);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(movntss, movntss, modrm, reg);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(movntpd, movntpd, modrm, reg);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(movntsd, movntsd, modrm, reg);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(movntps, movntps, modrm, reg);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(movntss, movntss, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(movntpd, movntpd, modrm, reg);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(movntsd, movntsd, modrm, reg);
         }
       }
       case 0x2C: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvttps2pi, cvttps2pi, reg, modrm);
-          case mmF3: getModRegRM(effectiveOperandMode(), rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), effectiveOperandType()); return MAKE_INSN2(cvttss2si, cvttss2si, reg, modrm);
-          case mm66: getModRegRM(rmMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvttpd2pi, cvttpd2pi, reg, modrm);
-          case mmF2: getModRegRM(effectiveOperandMode(), rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), effectiveOperandType()); return MAKE_INSN2(cvttsd2si, cvttsd2si, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmXMM, V4FLOATT, V2DWORDT); return MAKE_INSN2(cvttps2pi, cvttps2pi, reg, modrm);
+          case mmF3: getModRegRM(effectiveOperandMode(), rmXMM, V4FLOATT, effectiveOperandType()); return MAKE_INSN2(cvttss2si, cvttss2si, reg, modrm);
+          case mm66: getModRegRM(rmMM, rmXMM, V2DOUBLET, V2DWORDT); return MAKE_INSN2(cvttpd2pi, cvttpd2pi, reg, modrm);
+          case mmF2: getModRegRM(effectiveOperandMode(), rmXMM, V2DOUBLET, effectiveOperandType()); return MAKE_INSN2(cvttsd2si, cvttsd2si, reg, modrm);
         }
       }
       case 0x2D: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvtps2pi, cvtps2pi, reg, modrm);
-          case mmF3: getModRegRM(effectiveOperandMode(), rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), effectiveOperandType()); return MAKE_INSN2(cvtss2si, cvtss2si, reg, modrm);
-          case mm66: getModRegRM(rmMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvtpd2pi, cvtpd2pi, reg, modrm);
-          case mmF2: getModRegRM(effectiveOperandMode(), rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), effectiveOperandType()); return MAKE_INSN2(cvtsd2si, cvtsd2si, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmXMM, V4FLOATT, V2DWORDT); return MAKE_INSN2(cvtps2pi, cvtps2pi, reg, modrm);
+          case mmF3: getModRegRM(effectiveOperandMode(), rmXMM, V4FLOATT, effectiveOperandType()); return MAKE_INSN2(cvtss2si, cvtss2si, reg, modrm);
+          case mm66: getModRegRM(rmMM, rmXMM, V2DOUBLET, V2DWORDT); return MAKE_INSN2(cvtpd2pi, cvtpd2pi, reg, modrm);
+          case mmF2: getModRegRM(effectiveOperandMode(), rmXMM, V2DOUBLET, effectiveOperandType()); return MAKE_INSN2(cvtsd2si, cvtsd2si, reg, modrm);
         }
       }
       case 0x2E: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(ucomiss, ucomiss, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(ucomiss, ucomiss, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(ucomisd, ucomisd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(ucomisd, ucomisd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x2F: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(comiss, comiss, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(comiss, comiss, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(comisd, comisd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(comisd, comisd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -1744,225 +1762,225 @@ done:
       case 0x4F: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(cmovg, cmovg, reg, modrm);
       case 0x50: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmDWord, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); if (modeField == 3) return MAKE_INSN2(movmskps, movmskps, reg, modrm); else throw BadInstruction();
+          case mmNone: getModRegRM(rmDWord, rmXMM, V4FLOATT); if (modeField == 3) return MAKE_INSN2(movmskps, movmskps, reg, modrm); else throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmDWord, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); if (modeField == 3) return MAKE_INSN2(movmskpd, movmskpd, reg, modrm); else throw BadInstruction();
+          case mm66: getModRegRM(rmDWord, rmXMM, V2DOUBLET); if (modeField == 3) return MAKE_INSN2(movmskpd, movmskpd, reg, modrm); else throw BadInstruction();
           case mmF2: throw BadInstruction();
         }
       }
       case 0x51: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(sqrtps, sqrtps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(sqrtss, sqrtss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(sqrtpd, sqrtpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(sqrtsd, sqrtsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(sqrtps, sqrtps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(sqrtss, sqrtss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(sqrtpd, sqrtpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(sqrtsd, sqrtsd, reg, modrm);
         }
       }
       case 0x52: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(rsqrtps, rsqrtps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(rsqrtss, rsqrtss, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(rsqrtps, rsqrtps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(rsqrtss, rsqrtss, reg, modrm);
           case mm66: throw BadInstruction();
           case mmF2: throw BadInstruction();
         }
       }
       case 0x53: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(rcpps, rcpps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(rcpss, rcpss, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(rcpps, rcpps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(rcpss, rcpss, reg, modrm);
           case mm66: throw BadInstruction();
           case mmF2: throw BadInstruction();
         }
       }
       case 0x54: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(andps, andps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(andps, andps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(andpd, andpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(andpd, andpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x55: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(andnps, andnps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(andnps, andnps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(andnpd, andnpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(andnpd, andnpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x56: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(orps, orps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(orps, orps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(orpd, orpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(orpd, orpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x57: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(xorps, xorps, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(xorps, xorps, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(xorpd, xorpd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(xorpd, xorpd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x58: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(addps, addps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(addss, addss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(addpd, addpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(addsd, addsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(addps, addps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(addss, addss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(addpd, addpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(addsd, addsd, reg, modrm);
         }
       }
       case 0x59: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(mulps, mulps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(mulss, mulss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(mulpd, mulpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(mulsd, mulsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(mulps, mulps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(mulss, mulss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(mulpd, mulpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(mulsd, mulsd, reg, modrm);
         }
       }
       case 0x5A: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cvtps2pd, cvtps2pd, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType(), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cvtss2sd, cvtss2sd, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cvtpd2ps, cvtpd2ps, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType(), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cvtsd2ss, cvtsd2ss, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT, V2DOUBLET); return MAKE_INSN2(cvtps2pd, cvtps2pd, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT, V2DOUBLET); return MAKE_INSN2(cvtss2sd, cvtss2sd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET, V4FLOATT); return MAKE_INSN2(cvtpd2ps, cvtpd2ps, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET, V4FLOATT); return MAKE_INSN2(cvtsd2ss, cvtsd2ss, reg, modrm);
         }
       }
       case 0x5B: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cvtdq2ps, cvtdq2ps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvttps2dq, cvttps2dq, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()), SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(cvtps2dq, cvtps2dq, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4DWORDT, V4FLOATT); return MAKE_INSN2(cvtdq2ps, cvtdq2ps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, V4FLOATT, V4DWORDT); return MAKE_INSN2(cvttps2dq, cvttps2dq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4FLOATT, V4DWORDT); return MAKE_INSN2(cvtps2dq, cvtps2dq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x5C: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(subps, subps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(subss, subss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(subpd, subpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(subsd, subsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(subps, subps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(subss, subss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(subpd, subpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(subsd, subsd, reg, modrm);
         }
       }
       case 0x5D: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(minps, minps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(minss, minss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(minpd, minpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(minsd, minsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(minps, minps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(minss, minss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(minpd, minpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(minsd, minsd, reg, modrm);
         }
       }
       case 0x5E: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(divps, divps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(divss, divss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(divpd, divpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(divsd, divsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(divps, divps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(divss, divss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(divpd, divpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(divsd, divsd, reg, modrm);
         }
       }
       case 0x5F: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(maxps, maxps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(maxss, maxss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(maxpd, maxpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(maxsd, maxsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(maxps, maxps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(maxss, maxss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(maxpd, maxpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(maxsd, maxsd, reg, modrm);
         }
       }
       case 0x60: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(punpcklbw, punpcklbw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT); return MAKE_INSN2(punpcklbw, punpcklbw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(punpcklbw, punpcklbw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT); return MAKE_INSN2(punpcklbw, punpcklbw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x61: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(punpcklwd, punpcklwd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT); return MAKE_INSN2(punpcklwd, punpcklwd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(punpcklwd, punpcklwd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT); return MAKE_INSN2(punpcklwd, punpcklwd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x62: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeQuadWord::createType()); return MAKE_INSN2(punpckldq, punpckldq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT); return MAKE_INSN2(punpckldq, punpckldq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(punpckldq, punpckldq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT); return MAKE_INSN2(punpckldq, punpckldq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x63: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(packsswb, packsswb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT, V8BYTET); return MAKE_INSN2(packsswb, packsswb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(packsswb, packsswb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT, V16BYTET); return MAKE_INSN2(packsswb, packsswb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x64: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pcmpgtb, pcmpgtb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pcmpgtb, pcmpgtb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(pcmpgtb, pcmpgtb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(pcmpgtb, pcmpgtb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x65: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pcmpgtw, pcmpgtw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pcmpgtw, pcmpgtw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pcmpgtw, pcmpgtw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pcmpgtw, pcmpgtw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x66: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pcmpgtd, pcmpgtd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(pcmpgtd, pcmpgtd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pcmpgtd, pcmpgtd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(pcmpgtd, pcmpgtd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x67: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(packuswb, packuswb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT, V8BYTET); return MAKE_INSN2(packuswb, packuswb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(packuswb, packuswb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT, V16BYTET); return MAKE_INSN2(packuswb, packuswb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x68: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(punpckhbw, punpckhbw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT); return MAKE_INSN2(punpckhbw, punpckhbw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(punpckhbw, punpckhbw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT); return MAKE_INSN2(punpckhbw, punpckhbw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x69: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(punpckhwd, punpckhwd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT); return MAKE_INSN2(punpckhwd, punpckhwd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(punpckhwd, punpckhwd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT); return MAKE_INSN2(punpckhwd, punpckhwd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x6A: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeQuadWord::createType()); return MAKE_INSN2(punpckhdq, punpckhdq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT); return MAKE_INSN2(punpckhdq, punpckhdq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(punpckhdq, punpckhdq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT); return MAKE_INSN2(punpckhdq, punpckhdq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x6B: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(packssdw, packssdw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT, V4WORDT); return MAKE_INSN2(packssdw, packssdw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(packssdw, packssdw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT, V8WORDT); return MAKE_INSN2(packssdw, packssdw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -1970,7 +1988,7 @@ done:
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()), SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(punpcklqdq, punpcklqdq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT, DQWORDT); return MAKE_INSN2(punpcklqdq, punpcklqdq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -1978,38 +1996,38 @@ done:
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()), SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(punpckhqdq, punpckhqdq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT, DQWORDT); return MAKE_INSN2(punpckhqdq, punpckhqdq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x6E: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)SgAsmTypeQuadWord::createType() : SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()))); return MAKE_INSN2(movd, movd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)QWORDT : V2DWORDT)); return MAKE_INSN2(movd, movd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()) : SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()))); return MAKE_INSN2(movd, movd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? V2QWORDT : V4DWORDT)); return MAKE_INSN2(movd, movd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x6F: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(movq, movq, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(movdqu, movdqu, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(movdqa, movdqa, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(movq, movq, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(movdqu, movdqu, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(movdqa, movdqa, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x70: {
         switch (mmPrefix()) {
-          case mmNone: {getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufw, pshufw, reg, modrm, shufConstant);}
-          case mmF3: {getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufhw, pshufhw, reg, modrm, shufConstant);}
-          case mm66: {getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufd, pshufd, reg, modrm, shufConstant);}
-          case mmF2: {getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshuflw, pshuflw, reg, modrm, shufConstant);}
+          case mmNone: {getModRegRM(rmMM, rmMM, V4WORDT); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufw, pshufw, reg, modrm, shufConstant);}
+          case mmF3: {getModRegRM(rmXMM, rmXMM, V8WORDT); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufhw, pshufhw, reg, modrm, shufConstant);}
+          case mm66: {getModRegRM(rmXMM, rmXMM, V4DWORDT); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshufd, pshufd, reg, modrm, shufConstant);}
+          case mmF2: {getModRegRM(rmXMM, rmXMM, V8WORDT); SgAsmExpression* shufConstant = getImmByte(); return MAKE_INSN3(pshuflw, pshuflw, reg, modrm, shufConstant);}
         }
       }
       case 0x71: { // Group 12
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmReturnNull, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()));
+            getModRegRM(rmReturnNull, rmMM, V4WORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
@@ -2026,7 +2044,7 @@ done:
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmReturnNull, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()));
+            getModRegRM(rmReturnNull, rmXMM, V8WORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
@@ -2047,7 +2065,7 @@ done:
       case 0x72: { // Group 13
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmReturnNull, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()));
+            getModRegRM(rmReturnNull, rmMM, V2DWORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
@@ -2064,7 +2082,7 @@ done:
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmReturnNull, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()));
+            getModRegRM(rmReturnNull, rmXMM, V4DWORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
@@ -2085,7 +2103,7 @@ done:
       case 0x73: { // Group 14
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmReturnNull, rmMM, SgAsmTypeQuadWord::createType());
+            getModRegRM(rmReturnNull, rmMM, QWORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
@@ -2102,18 +2120,18 @@ done:
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmReturnNull, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()));
+            getModRegRM(rmReturnNull, rmXMM, V2QWORDT);
             if (modeField != 3) throw BadInstruction();
             SgAsmExpression* shiftAmount = getImmByte();
             switch (regField) {
               case 0: throw BadInstruction();
               case 1: throw BadInstruction();
               case 2: return MAKE_INSN2(psrlq, psrlq, modrm, shiftAmount);
-              case 3: isSgAsmx86RegisterReferenceExpression(modrm)->set_type(SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(psrldq, psrldq, modrm, shiftAmount);
+              case 3: isSgAsmx86RegisterReferenceExpression(modrm)->set_type(DQWORDT); return MAKE_INSN2(psrldq, psrldq, modrm, shiftAmount);
               case 4: throw BadInstruction();
               case 5: throw BadInstruction();
               case 6: return MAKE_INSN2(psllq, psllq, modrm, shiftAmount);
-              case 7: isSgAsmx86RegisterReferenceExpression(modrm)->set_type(SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(pslldq, pslldq, modrm, shiftAmount);
+              case 7: isSgAsmx86RegisterReferenceExpression(modrm)->set_type(DQWORDT); return MAKE_INSN2(pslldq, pslldq, modrm, shiftAmount);
               default: ROSE_ASSERT (false);
             }
           }
@@ -2122,25 +2140,25 @@ done:
       }
       case 0x74: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pcmpeqb, pcmpeqb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pcmpeqb, pcmpeqb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(pcmpeqb, pcmpeqb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(pcmpeqb, pcmpeqb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x75: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pcmpeqw, pcmpeqw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pcmpeqw, pcmpeqw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pcmpeqw, pcmpeqw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pcmpeqw, pcmpeqw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x76: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pcmpeqd, pcmpeqd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(pcmpeqd, pcmpeqd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pcmpeqd, pcmpeqd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(pcmpeqd, pcmpeqd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -2157,7 +2175,7 @@ done:
           case mmNone: ROSE_ASSERT (!"vmread not supported");
           case mmF3: throw BadInstruction();
           case mm66: { // Group 17
-            getModRegRM(rmReturnNull, rmXMM, SgAsmTypeDoubleQuadWord::createType());
+            getModRegRM(rmReturnNull, rmXMM, DQWORDT);
             SgAsmExpression* imm1 = getImmByte();
             SgAsmExpression* imm2 = getImmByte();
             switch (regField) {
@@ -2170,7 +2188,7 @@ done:
             }
           }
           case mmF2: {
-            getModRegRM(rmXMM, rmXMM, SgAsmTypeQuadWord::createType(), SgAsmTypeDoubleQuadWord::createType());
+            getModRegRM(rmXMM, rmXMM, QWORDT, DQWORDT);
             SgAsmExpression* imm1 = getImmByte();
             SgAsmExpression* imm2 = getImmByte();
             if (modeField == 3)
@@ -2184,8 +2202,8 @@ done:
         switch (mmPrefix()) {
           case mmNone: ROSE_ASSERT (!"vmwrite not supported");
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeQuadWord::createType(), SgAsmTypeDoubleQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(extrq, extrq, reg, modrm); else throw BadInstruction();
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(insertq, insertq, reg, modrm); else throw BadInstruction();
+          case mm66: getModRegRM(rmXMM, rmXMM, QWORDT, DQWORDT); if (modeField == 3) return MAKE_INSN2(extrq, extrq, reg, modrm); else throw BadInstruction();
+          case mmF2: getModRegRM(rmXMM, rmXMM, DQWORDT); if (modeField == 3) return MAKE_INSN2(insertq, insertq, reg, modrm); else throw BadInstruction();
         }
       }
       case 0x7A: throw BadInstruction();
@@ -2194,31 +2212,31 @@ done:
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(haddpd, haddpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(haddps, haddps, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(haddpd, haddpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(haddps, haddps, reg, modrm);
         }
       }
       case 0x7D: {
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(hsubpd, hsubpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(hsubps, hsubps, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(hsubpd, hsubpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(hsubps, hsubps, reg, modrm);
         }
       }
       case 0x7E: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)SgAsmTypeQuadWord::createType() : SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()))); return MAKE_INSN2(movd, movd, modrm, reg);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(movq, movq, reg, modrm);
-          case mm66: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()) : SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()))); return MAKE_INSN2(movd, movd, modrm, reg);
+          case mmNone: getModRegRM(rmMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? (SgAsmType*)QWORDT : V2DWORDT)); return MAKE_INSN2(movd, movd, modrm, reg);
+          case mmF3: getModRegRM(rmXMM, rmXMM, V2QWORDT); return MAKE_INSN2(movq, movq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, effectiveOperandMode(), effectiveOperandType(), (effectiveOperandSize() == x86_insnsize_64 ? V2QWORDT : V4DWORDT)); return MAKE_INSN2(movd, movd, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
       case 0x7F: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(movq, movq, modrm, reg);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(movdqu, movdqu, modrm, reg);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(movdqa, movdqa, modrm, reg);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(movq, movq, modrm, reg);
+          case mmF3: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(movdqu, movdqu, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(movdqa, movdqa, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
@@ -2238,22 +2256,22 @@ done:
       case 0x8D: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jge, jge, /* prediction, */ imm);}
       case 0x8E: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jle, jle, /* prediction, */ imm);}
       case 0x8F: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jg,  jg, /* prediction, */ imm);}
-      case 0x90: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(seto,  seto, modrm);
-      case 0x91: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setno, setno, modrm);
-      case 0x92: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setb,  setb, modrm);
-      case 0x93: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setae, setae, modrm);
-      case 0x94: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(sete,  sete, modrm);
-      case 0x95: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setne, setne, modrm);
-      case 0x96: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setbe, setbe, modrm);
-      case 0x97: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(seta,  seta, modrm);
-      case 0x98: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(sets,  sets, modrm);
-      case 0x99: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setns, setns, modrm);
-      case 0x9A: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setpe, setpe, modrm);
-      case 0x9B: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setpo, setpo, modrm);
-      case 0x9C: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setl,  setl, modrm);
-      case 0x9D: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setge, setge, modrm);
-      case 0x9E: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setle, setle, modrm);
-      case 0x9F: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN1(setg,  setg, modrm);
+      case 0x90: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(seto,  seto, modrm);
+      case 0x91: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setno, setno, modrm);
+      case 0x92: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setb,  setb, modrm);
+      case 0x93: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setae, setae, modrm);
+      case 0x94: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(sete,  sete, modrm);
+      case 0x95: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setne, setne, modrm);
+      case 0x96: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setbe, setbe, modrm);
+      case 0x97: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(seta,  seta, modrm);
+      case 0x98: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(sets,  sets, modrm);
+      case 0x99: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setns, setns, modrm);
+      case 0x9A: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setpe, setpe, modrm);
+      case 0x9B: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setpo, setpo, modrm);
+      case 0x9C: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setl,  setl, modrm);
+      case 0x9D: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setge, setge, modrm);
+      case 0x9E: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setle, setle, modrm);
+      case 0x9F: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setg,  setg, modrm);
       case 0xA0: return MAKE_INSN1(push, push, makeRegister(4, rmSegment));
       case 0xA1: return MAKE_INSN1(pop, pop, makeRegister(4, rmSegment));
       case 0xA2: return MAKE_INSN0(cpuid, cpuid);
@@ -2270,14 +2288,14 @@ done:
       case 0xAD: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN3(shrd, shrd, modrm, reg, makeRegister(1, rmLegacyByte));
       case 0xAE: return decodeGroup15();
       case 0xAF: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(imul, imul, reg, modrm);
-      case 0xB0: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN2(cmpxchg, cmpxchg, modrm, reg);
+      case 0xB0: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN2(cmpxchg, cmpxchg, modrm, reg);
       case 0xB1: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(cmpxchg, cmpxchg, modrm, reg);
       case 0xB2: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); return MAKE_INSN2(lss, lss, reg, modrm);
       case 0xB3: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(bts, bts, modrm, reg);
       case 0xB4: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); return MAKE_INSN2(lfs, lfs, reg, modrm);
       case 0xB5: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); requireMemory(); return MAKE_INSN2(lgs, lgs, reg, modrm);
-      case 0xB6: getModRegRM(effectiveOperandMode(), rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN2(movzx, movzx, reg, modrm);
-      case 0xB7: getModRegRM(effectiveOperandMode(), rmWord, SgAsmTypeWord::createType()); return MAKE_INSN2(movzx, movzx, reg, modrm);
+      case 0xB6: getModRegRM(effectiveOperandMode(), rmLegacyByte, BYTET); return MAKE_INSN2(movzx, movzx, reg, modrm);
+      case 0xB7: getModRegRM(effectiveOperandMode(), rmWord, WORDT); return MAKE_INSN2(movzx, movzx, reg, modrm);
       case 0xB8: {
         getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType());
         switch (mmPrefix()) {
@@ -2291,16 +2309,16 @@ done:
       case 0xBB: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(btc, btc, modrm, reg);
       case 0xBC: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(bsf, bsf, reg, modrm);
       case 0xBD: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); if (repeatPrefix == rpRepe) return MAKE_INSN2(lzcnt, lzcnt, reg, modrm); else return MAKE_INSN2(bsr, bsr, reg, modrm);
-      case 0xBE: getModRegRM(effectiveOperandMode(), rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN2(movsx, movsx, reg, modrm);
-      case 0xBF: getModRegRM(effectiveOperandMode(), rmWord, SgAsmTypeWord::createType()); return MAKE_INSN2(movsx, movsx, reg, modrm);
-      case 0xC0: getModRegRM(rmLegacyByte, rmLegacyByte, SgAsmTypeByte::createType()); return MAKE_INSN2(xadd, xadd, modrm, reg);
+      case 0xBE: getModRegRM(effectiveOperandMode(), rmLegacyByte, BYTET); return MAKE_INSN2(movsx, movsx, reg, modrm);
+      case 0xBF: getModRegRM(effectiveOperandMode(), rmWord, WORDT); return MAKE_INSN2(movsx, movsx, reg, modrm);
+      case 0xC0: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN2(xadd, xadd, modrm, reg);
       case 0xC1: getModRegRM(effectiveOperandMode(), effectiveOperandMode(), effectiveOperandType()); return MAKE_INSN2(xadd, xadd, modrm, reg);
       case 0xC2: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(cmpps, cmpps, reg, modrm);
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeSingleFloat::createType()); return MAKE_INSN2(cmpss, cmpss, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cmppd, cmppd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleFloat::createType()); return MAKE_INSN2(cmpsd, cmpsd, reg, modrm);
+          case mmNone: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(cmpps, cmpps, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, FLOATT); return MAKE_INSN2(cmpss, cmpss, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(cmppd, cmppd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DOUBLET); return MAKE_INSN2(cmpsd, cmpsd, reg, modrm);
         }
       }
       case 0xC3: {
@@ -2314,13 +2332,13 @@ done:
       case 0xC4: {
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmMM, rmWord, SgAsmTypeWord::createType(), SgAsmTypeQuadWord::createType());
+            getModRegRM(rmMM, rmWord, WORDT, QWORDT);
             SgAsmExpression* imm = getImmByte();
             return MAKE_INSN3(pinsrw, pinsrw, reg, modrm, imm);
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmXMM, rmWord, SgAsmTypeWord::createType(), SgAsmTypeDoubleQuadWord::createType());
+            getModRegRM(rmXMM, rmWord, WORDT, DQWORDT);
             SgAsmExpression* imm = getImmByte();
             return MAKE_INSN3(pinsrw, pinsrw, reg, modrm, imm);
           }
@@ -2330,13 +2348,13 @@ done:
       case 0xC5: {
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmDWord, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeDoubleWord::createType());
+            getModRegRM(rmDWord, rmMM, V4WORDT, DWORDT);
             SgAsmExpression* imm = getImmByte();
             if (modeField == 3) return MAKE_INSN3(pextrw, pextrw, reg, modrm, imm); else throw BadInstruction();
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmDWord, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeDoubleWord::createType());
+            getModRegRM(rmDWord, rmXMM, V8WORDT, DWORDT);
             SgAsmExpression* imm = getImmByte();
             if (modeField == 3) return MAKE_INSN3(pextrw, pextrw, reg, modrm, imm); else throw BadInstruction();
           }
@@ -2346,13 +2364,13 @@ done:
       case 0xC6: {
         switch (mmPrefix()) {
           case mmNone: {
-            getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType()));
+            getModRegRM(rmXMM, rmXMM, V4FLOATT);
             SgAsmExpression* shufConstant = getImmByte();
             return MAKE_INSN3(shufps, shufps, reg, modrm, shufConstant);
           }
           case mmF3: throw BadInstruction();
           case mm66: {
-            getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()));
+            getModRegRM(rmXMM, rmXMM, V2DOUBLET);
             SgAsmExpression* shufConstant = getImmByte();
             return MAKE_INSN3(shufpd, shufpd, reg, modrm, shufConstant);
           }
@@ -2365,15 +2383,15 @@ done:
         switch (regField) {
           case 1: {
             if (effectiveOperandSize() == x86_insnsize_64) {
-              fillInModRM(rmReturnNull, SgAsmTypeDoubleQuadWord::createType());
+              fillInModRM(rmReturnNull, DQWORDT);
               return MAKE_INSN1(cmpxchg16b, cmpxchg16b, modrm);
             } else {
-              fillInModRM(rmReturnNull, SgAsmTypeQuadWord::createType());
+              fillInModRM(rmReturnNull, QWORDT);
               return MAKE_INSN1(cmpxchg8b, cmpxchg8b, modrm);
             }
           }
           case 6: {
-            fillInModRM(rmReturnNull, SgAsmTypeQuadWord::createType());
+            fillInModRM(rmReturnNull, QWORDT);
             switch (mmPrefix()) {
               case mmNone: return MAKE_INSN1(vmptrld, vmptrld, modrm);
               case mmF3: return MAKE_INSN1(vmxon, vmxon, modrm);
@@ -2382,7 +2400,7 @@ done:
             }
           }
           case 7: {
-            fillInModRM(rmReturnNull, SgAsmTypeQuadWord::createType());
+            fillInModRM(rmReturnNull, QWORDT);
             return MAKE_INSN1(vmptrst, vmptrst, modrm);
           }
           default: throw BadInstruction();
@@ -2400,255 +2418,255 @@ done:
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(addsubpd, addsubpd, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeSingleFloat::createType())); return MAKE_INSN2(addsubps, addsubps, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET); return MAKE_INSN2(addsubpd, addsubpd, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, V4FLOATT); return MAKE_INSN2(addsubps, addsubps, reg, modrm);
         }
       }
       case 0xD1: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psrlw, psrlw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psrlw, psrlw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psrlw, psrlw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psrlw, psrlw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD2: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psrld, psrld, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(psrld, psrld, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psrld, psrld, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(psrld, psrld, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD3: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(psrlq, psrlq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(psrlq, psrlq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(psrlq, psrlq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT); return MAKE_INSN2(psrlq, psrlq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD4: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(paddq, paddq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(paddq, paddq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(paddq, paddq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT); return MAKE_INSN2(paddq, paddq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD5: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pmullw, pmullw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pmullw, pmullw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pmullw, pmullw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pmullw, pmullw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD6: {
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
-          case mmF3: getModRegRM(rmMM, rmXMM, SgAsmTypeQuadWord::createType(), SgAsmTypeDoubleQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(movq2dq, movq2dq, reg, modrm); else throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(movq, movq, modrm, reg);
-          case mmF2: getModRegRM(rmXMM, rmMM, SgAsmTypeDoubleQuadWord::createType(), SgAsmTypeQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(movdq2q, movdq2q, reg, modrm); else throw BadInstruction();
+          case mmF3: getModRegRM(rmMM, rmXMM, QWORDT, DQWORDT); if (modeField == 3) return MAKE_INSN2(movq2dq, movq2dq, reg, modrm); else throw BadInstruction();
+          case mm66: getModRegRM(rmXMM, rmXMM, QWORDT); return MAKE_INSN2(movq, movq, modrm, reg);
+          case mmF2: getModRegRM(rmXMM, rmMM, DQWORDT, QWORDT); if (modeField == 3) return MAKE_INSN2(movdq2q, movdq2q, reg, modrm); else throw BadInstruction();
         }
       }
       case 0xD7: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmDWord, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType()), SgAsmTypeDoubleWord::createType()); if (modeField == 3) return MAKE_INSN2(pmovmskb, pmovmskb, reg, modrm); else throw BadInstruction();
+          case mmNone: getModRegRM(rmDWord, rmMM, V8BYTET, DWORDT); if (modeField == 3) return MAKE_INSN2(pmovmskb, pmovmskb, reg, modrm); else throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmDWord, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType()), SgAsmTypeDoubleWord::createType()); if (modeField == 3) return MAKE_INSN2(pmovmskb, pmovmskb, reg, modrm); else throw BadInstruction();
+          case mm66: getModRegRM(rmDWord, rmXMM, V16BYTET, DWORDT); if (modeField == 3) return MAKE_INSN2(pmovmskb, pmovmskb, reg, modrm); else throw BadInstruction();
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD8: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(psubusb, psubusb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(psubusb, psubusb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(psubusb, psubusb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(psubusb, psubusb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xD9: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psubusw, psubusw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psubusw, psubusw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psubusw, psubusw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psubusw, psubusw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDA: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pminub, pminub, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pminub, pminub, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(pminub, pminub, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(pminub, pminub, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDB: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(pand, pand, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(pand, pand, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(pand, pand, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(pand, pand, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDC: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(paddusb, paddusb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(paddusb, paddusb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(paddusb, paddusb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(paddusb, paddusb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDD: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(paddusw, paddusw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(paddusw, paddusw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(paddusw, paddusw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(paddusw, paddusw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDE: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pmaxub, pmaxub, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pmaxub, pmaxub, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(pmaxub, pmaxub, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(pmaxub, pmaxub, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xDF: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(pandn, pandn, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(pandn, pandn, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(pandn, pandn, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(pandn, pandn, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE0: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(pavgb, pavgb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(pavgb, pavgb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(pavgb, pavgb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(pavgb, pavgb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE1: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psraw, psraw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psraw, psraw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psraw, psraw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psraw, psraw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE2: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psrad, psrad, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(psrad, psrad, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psrad, psrad, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(psrad, psrad, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE3: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pavgw, pavgw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pavgw, pavgw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pavgw, pavgw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pavgw, pavgw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE4: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pmulhuw, pmulhuw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pmulhuw, pmulhuw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pmulhuw, pmulhuw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pmulhuw, pmulhuw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE5: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pmulhw, pmulhw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pmulhw, pmulhw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pmulhw, pmulhw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pmulhw, pmulhw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE6: {
         switch (mmPrefix()) {
           case mmNone: throw BadInstruction();
-          case mmF3: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType())); return MAKE_INSN2(cvtdq2pd, cvtdq2pd, reg, modrm);
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(cvttpd2dq, cvttpd2dq, reg, modrm);
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleFloat::createType()), SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(cvtpd2dq, cvtpd2dq, reg, modrm);
+          case mmF3: getModRegRM(rmXMM, rmXMM, V2QWORDT, V2DOUBLET); return MAKE_INSN2(cvtdq2pd, cvtdq2pd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2DOUBLET, V2QWORDT); return MAKE_INSN2(cvttpd2dq, cvttpd2dq, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, V2DOUBLET, V2QWORDT); return MAKE_INSN2(cvtpd2dq, cvtpd2dq, reg, modrm);
         }
       }
       case 0xE7: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); requireMemory(); return MAKE_INSN2(movntq, movntq, modrm, reg);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); requireMemory(); return MAKE_INSN2(movntq, movntq, modrm, reg);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); requireMemory(); return MAKE_INSN2(movntdq, movntdq, modrm, reg);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); requireMemory(); return MAKE_INSN2(movntdq, movntdq, modrm, reg);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE8: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(psubsb, psubsb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(psubsb, psubsb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(psubsb, psubsb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(psubsb, psubsb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xE9: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psubsw, psubsw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psubsw, psubsw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psubsw, psubsw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psubsw, psubsw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xEA: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pminsw, pminsw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pminsw, pminsw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pminsw, pminsw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pminsw, pminsw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xEB: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(por, por, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(por, por, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(por, por, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(por, por, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xEC: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(paddsb, paddsb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(paddsb, paddsb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(paddsb, paddsb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(paddsb, paddsb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xED: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(paddsw, paddsw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(paddsw, paddsw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(paddsw, paddsw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(paddsw, paddsw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xEE: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(pmaxsw, pmaxsw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(pmaxsw, pmaxsw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(pmaxsw, pmaxsw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(pmaxsw, pmaxsw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xEF: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(pxor, pxor, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(pxor, pxor, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); return MAKE_INSN2(pxor, pxor, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); return MAKE_INSN2(pxor, pxor, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -2657,118 +2675,118 @@ done:
           case mmNone: throw BadInstruction();
           case mmF3: throw BadInstruction();
           case mm66: throw BadInstruction();
-          case mmF2: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); requireMemory(); return MAKE_INSN2(lddqu, lddqu, reg, modrm);
+          case mmF2: getModRegRM(rmXMM, rmXMM, DQWORDT); requireMemory(); return MAKE_INSN2(lddqu, lddqu, reg, modrm);
         }
       }
       case 0xF1: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psllw, psllw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psllw, psllw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psllw, psllw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psllw, psllw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF2: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pslld, pslld, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(pslld, pslld, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pslld, pslld, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(pslld, pslld, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF3: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(psllq, psllq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(psllq, psllq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(psllq, psllq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT); return MAKE_INSN2(psllq, psllq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF4: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType()), SgAsmTypeQuadWord::createType()); return MAKE_INSN2(pmuludq, pmuludq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT, QWORDT); return MAKE_INSN2(pmuludq, pmuludq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(pmuludq, pmuludq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT, V2QWORDT); return MAKE_INSN2(pmuludq, pmuludq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF5: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pmaddwd, pmaddwd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT, V2DWORDT); return MAKE_INSN2(pmaddwd, pmaddwd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType()), SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(pmaddwd, pmaddwd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT, V4DWORDT); return MAKE_INSN2(pmaddwd, pmaddwd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF6: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psadbw, psadbw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET, V4WORDT); return MAKE_INSN2(psadbw, psadbw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType()), SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psadbw, psadbw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET, V8WORDT); return MAKE_INSN2(psadbw, psadbw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF7: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(movntq, movntq, reg, modrm); else throw BadInstruction();
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); if (modeField == 3) return MAKE_INSN2(movntq, movntq, reg, modrm); else throw BadInstruction();
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeDoubleQuadWord::createType()); if (modeField == 3) return MAKE_INSN2(movntdq, movntdq, reg, modrm); else throw BadInstruction();
+          case mm66: getModRegRM(rmXMM, rmXMM, DQWORDT); if (modeField == 3) return MAKE_INSN2(movntdq, movntdq, reg, modrm); else throw BadInstruction();
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF8: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(psubb, psubb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(psubb, psubb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(psubb, psubb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(psubb, psubb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xF9: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(psubw, psubw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(psubw, psubw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(psubw, psubw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(psubw, psubw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xFA: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psubd, psubd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(psubd, psubd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(psubd, psubd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(psubd, psubd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xFB: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeQuadWord::createType()); return MAKE_INSN2(psubq, psubq, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, QWORDT); return MAKE_INSN2(psubq, psubq, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(2, SgAsmTypeQuadWord::createType())); return MAKE_INSN2(psubq, psubq, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V2QWORDT); return MAKE_INSN2(psubq, psubq, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xFC: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(8, SgAsmTypeByte::createType())); return MAKE_INSN2(paddb, paddb, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V8BYTET); return MAKE_INSN2(paddb, paddb, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(16, SgAsmTypeByte::createType())); return MAKE_INSN2(paddb, paddb, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V16BYTET); return MAKE_INSN2(paddb, paddb, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xFD: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(4, SgAsmTypeWord::createType())); return MAKE_INSN2(paddw, paddw, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V4WORDT); return MAKE_INSN2(paddw, paddw, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(8, SgAsmTypeWord::createType())); return MAKE_INSN2(paddw, paddw, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V8WORDT); return MAKE_INSN2(paddw, paddw, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
       case 0xFE: {
         switch (mmPrefix()) {
-          case mmNone: getModRegRM(rmMM, rmMM, SgAsmTypeVector::createType(2, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(paddd, paddd, reg, modrm);
+          case mmNone: getModRegRM(rmMM, rmMM, V2DWORDT); return MAKE_INSN2(paddd, paddd, reg, modrm);
           case mmF3: throw BadInstruction();
-          case mm66: getModRegRM(rmXMM, rmXMM, SgAsmTypeVector::createType(4, SgAsmTypeDoubleWord::createType())); return MAKE_INSN2(paddd, paddd, reg, modrm);
+          case mm66: getModRegRM(rmXMM, rmXMM, V4DWORDT); return MAKE_INSN2(paddd, paddd, reg, modrm);
           case mmF2: throw BadInstruction();
         }
       }
@@ -2873,7 +2891,7 @@ done:
             default: throw BadInstruction();
           }
         } else {
-          fillInModRM(rmReturnNull, SgAsmTypeByte::createType() /* pseudo-descriptor */ );
+          fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
           return MAKE_INSN1(sgdt, sgdt, modrm);
         }
       }
@@ -2885,7 +2903,7 @@ done:
             default: throw BadInstruction();
           }
         } else {
-          fillInModRM(rmReturnNull, SgAsmTypeByte::createType() /* pseudo-descriptor */ );
+          fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
           return MAKE_INSN1(sidt, sidt, modrm);
         }
       }
@@ -2897,7 +2915,7 @@ done:
             default: throw BadInstruction();
           }
         } else {
-          fillInModRM(rmReturnNull, SgAsmTypeByte::createType() /* pseudo-descriptor */ );
+          fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
           return MAKE_INSN1(lgdt, lgdt, modrm);
         }
       }
@@ -2915,17 +2933,17 @@ done:
             default: ROSE_ASSERT (false);
           }
         } else {
-          fillInModRM(rmReturnNull, SgAsmTypeByte::createType() /* pseudo-descriptor */ );
+          fillInModRM(rmReturnNull, BYTET /* pseudo-descriptor */ );
           return MAKE_INSN1(lidt, lidt, modrm);
         }
       }
       case 4: {
-        fillInModRM(effectiveOperandMode(), SgAsmTypeWord::createType());
+        fillInModRM(effectiveOperandMode(), WORDT);
         return MAKE_INSN1(smsw, smsw, modrm);
       }
       case 5: throw BadInstruction();
       case 6: {
-        fillInModRM(rmWord, SgAsmTypeWord::createType());
+        fillInModRM(rmWord, WORDT);
         return MAKE_INSN1(lmsw, lmsw, modrm);
       }
       case 7: {
@@ -2936,7 +2954,7 @@ done:
             default: throw BadInstruction();
           }
         } else {
-          fillInModRM(rmReturnNull, SgAsmTypeByte::createType());
+          fillInModRM(rmReturnNull, BYTET);
           return MAKE_INSN1(invlpg, invlpg, modrm);
         }
       }
@@ -2968,11 +2986,11 @@ done:
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeGroup15() {
     getModRegRM(rmReturnNull, rmReturnNull, NULL);
     switch (regField) {
-      case 0: requireMemory(); fillInModRM(rmReturnNull, SgAsmTypeByte::createType()); return MAKE_INSN1(fxsave, fxsave, modrm);
-      case 1: requireMemory(); fillInModRM(rmReturnNull, SgAsmTypeByte::createType()); return MAKE_INSN1(fxrstor, fxrstor, modrm);
-      case 2: requireMemory(); fillInModRM(rmReturnNull, SgAsmTypeDoubleWord::createType()); return MAKE_INSN1(ldmxcsr, ldmxcsr, modrm);
-      case 3: requireMemory(); fillInModRM(rmReturnNull, SgAsmTypeDoubleWord::createType()); return MAKE_INSN1(stmxcsr, stmxcsr, modrm);
-      case 4: requireMemory(); fillInModRM(rmReturnNull, SgAsmTypeByte::createType()); return MAKE_INSN1(xsave, xsave, modrm);
+      case 0: requireMemory(); fillInModRM(rmReturnNull, BYTET); return MAKE_INSN1(fxsave, fxsave, modrm);
+      case 1: requireMemory(); fillInModRM(rmReturnNull, BYTET); return MAKE_INSN1(fxrstor, fxrstor, modrm);
+      case 2: requireMemory(); fillInModRM(rmReturnNull, DWORDT); return MAKE_INSN1(ldmxcsr, ldmxcsr, modrm);
+      case 3: requireMemory(); fillInModRM(rmReturnNull, DWORDT); return MAKE_INSN1(stmxcsr, stmxcsr, modrm);
+      case 4: requireMemory(); fillInModRM(rmReturnNull, BYTET); return MAKE_INSN1(xsave, xsave, modrm);
       case 5: if (modeField == 3) return MAKE_INSN0(lfence, lfence); else return MAKE_INSN1(xrstor, xrstor, modrm);
       case 6: if (modeField == 3) return MAKE_INSN0(mfence, mfence); else throw BadInstruction();
       case 7: if (modeField == 3) return MAKE_INSN0(sfence, sfence); else return MAKE_INSN1(clflush, clflush, modrm);
@@ -2992,7 +3010,7 @@ done:
   }
 
   SgAsmx86Instruction* SingleInstructionDisassembler::decodeGroupP() {
-    getModRegRM(rmReturnNull, rmLegacyByte, SgAsmTypeByte::createType());
+    getModRegRM(rmReturnNull, rmLegacyByte, BYTET);
     requireMemory();
     switch (regField) {
       case 0: return MAKE_INSN1(prefetch, prefetch, modrm);
@@ -3000,29 +3018,6 @@ done:
       case 3: return MAKE_INSN1(prefetchw, prefetchw, modrm);
       default: return MAKE_INSN1(prefetch, prefetch, modrm);
     }
-  }
-
-  static bool is_mov_edi_edi(SgAsmStatement* insnx) {
-    SgAsmx86Instruction* insn = isSgAsmx86Instruction(insnx);
-    if (!insn) return false;
-    if (insn->get_kind() != x86_mov) return false;
-    const SgAsmExpressionPtrList& operands = insn->get_operandList()->get_operands();
-    if (operands.size() != 2) return false;
-    SgAsmx86RegisterReferenceExpression* rr0 = isSgAsmx86RegisterReferenceExpression(operands[0]);
-    if (!rr0) return false;
-    SgAsmx86RegisterReferenceExpression* rr1 = isSgAsmx86RegisterReferenceExpression(operands[1]);
-    if (!rr1) return false;
-    if (rr0->get_register_class() != x86_regclass_gpr ||
-        rr0->get_register_number() != x86_gpr_di ||
-        (rr0->get_position_in_register() != x86_regpos_all &&
-         rr0->get_position_in_register() != x86_regpos_dword))
-      return false;
-    if (rr1->get_register_class() != x86_regclass_gpr ||
-        rr1->get_register_number() != x86_gpr_di ||
-        (rr1->get_position_in_register() != x86_regpos_all &&
-         rr1->get_position_in_register() != x86_regpos_dword))
-      return false;
-    return true;
   }
 
   static bool is_push_ebp(SgAsmStatement* insnx, bool reg64) {
