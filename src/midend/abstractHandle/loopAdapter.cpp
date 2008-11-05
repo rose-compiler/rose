@@ -10,8 +10,9 @@
 using namespace std;
 using namespace AbstractHandle;
 
-// an internal map to avoid duplicated nodes for a same file
+// an internal map to avoid duplicated nodes 
 map<string, abstract_node*> file_node_map;
+map<MyLoop*, abstract_node*> loop_node_map;
 
 /* Only handle for loops
 * */
@@ -31,12 +32,20 @@ string loopNode::getFileName() const
  return getNode()->sourceFileName;
 }
 
-/* Assume MyLoop only works for flat list of loops, no real parent-child relation 
- * but file node can be treated as their parent here
+/* 
  * */
 abstract_node* loopNode::getParent() const
 {
-  return getFileNode();
+  if (getNode()->parent!=NULL)
+  {
+    abstract_node* result = loop_node_map[getNode()->parent];
+    if (result == NULL)
+      return new loopNode(getNode()->parent);
+    else
+      return result;
+  }
+  else
+    return getFileNode();
 }
 
 /* 
@@ -46,7 +55,10 @@ abstract_node* loopNode::getFileNode() const
 {
  abstract_node* filenode = file_node_map[getNode()->sourceFileName];
  if (filenode==NULL)
+ {
    filenode = new fileNode (getNode()->sourceFileName);
+   file_node_map[getNode()->sourceFileName]=filenode;
+ }
  return filenode;
 }
 
@@ -124,7 +136,8 @@ AbstractHandle::abstract_node* loopNode::findNode(std::string construct_type_str
 std::string loopNode::toString() const
 {
   std::string result;
-  result= getNode()->loop_code;
+  //We ignore this for simplicity
+  //result= getNode()->loop_code;
   return result;
 }
 

@@ -10,31 +10,30 @@ using namespace AbstractHandle;
 
 int main()
 {
+  //-------------Preparing the internal loop representation---------
   // declare and initialize a list of loops using MyLoop  
+  // The loop tool should be able to generate its representation from 
+  // source code somehow. We fill it up manually here. 
   vector <MyLoop* > loops;
 
   MyLoop loop1, loop2, loop3;
-
   loop1.sourceFileName="file1.c";
   loop1.line_number = 7;
-  loop1.loop_code = "for (i=0;i<100;i++) \n ";
-
-  loop3.sourceFileName="file1.c";
-  loop3.line_number = 8;
-  loop3.loop_code = "for (j=0;j<100;j++) \n a[i][j]=0;";
-  loop1.children.push_back(&loop3);
-
+  loop1.parent = NULL;
   loop2.sourceFileName="file1.c";
-  loop2.line_number = 12;
-  loop2.loop_code = "for (i=0;i<100;i++) \n b[i]=0;";
-
+  loop2.line_number = 8;
+  loop2.parent=&loop1;
+  loop1.children.push_back(&loop2);
+  loop3.sourceFileName="file1.c";
+  loop3.line_number = 12;
+  loop3.parent=NULL;
   loops.push_back(&loop1);
-  loops.push_back(&loop2);
+  loops.push_back(&loop3);
 
+  //------------------ using abstract handles-------------
   //Generate the abstract handle  for the source file
   fileNode* filenode = new fileNode("file1.c");
   filenode->setMLoops(loops);
- 
   abstract_handle* file_handle = new abstract_handle(filenode);
   cout<<"Created a file handle:"<<endl<<file_handle->toString()<<endl;
 

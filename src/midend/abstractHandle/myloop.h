@@ -12,8 +12,8 @@ class MyLoop
 public:  
   std::string sourceFileName;
   size_t line_number;
-  std::string loop_code;
   std::vector<MyLoop*> children; 
+  MyLoop* parent;
 };
 
 #endif
