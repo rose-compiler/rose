@@ -27,6 +27,8 @@ class CountRefHandle
   
  protected:
    const T* ConstPtr() const { return obj;}
+   //We do want to modify obj in rare case
+   T* NonConstPtr() const { return obj;}
    T* UpdatePtr()
     { if (RefCount() > 1) {
         DecreaseUse();
@@ -37,6 +39,7 @@ class CountRefHandle
      }
 
    const T& ConstRef() const { return *obj; }
+   T& NonConstRef() const { return *obj; }
    T& UpdateRef() { return *UpdatePtr(); }
 
  public:

@@ -1764,6 +1764,8 @@ IsMemoryAccess( const AstNodePtr& _s)
   return true;
 }
 
+//! Check if _s is an array access.
+//If so, store array name in array, and subscripts into index[], Liao 11/5/2008
 bool AstInterface::
 IsArrayAccess( const AstNodePtr& _s, AstNodePtr* array, AstNodeList* index)
 {
