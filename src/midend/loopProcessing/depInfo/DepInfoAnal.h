@@ -70,6 +70,8 @@ class DepInfoAnal
                       const AstNodePtr& s1,  const AstNodePtr& s2,
                       DepInfoCollect &outDeps, DepInfoCollect &inDeps, 
                       DepType t = DEPTYPE_CTRL);
+  //! Compute all possible data dependencies among two references n1, n2 
+  //Store n1->n2 dependences in outDeps, n2->n1 oens int inDeps
   void ComputeDataDep( LoopTransformInterface &la, 
                       const AstNodePtr& n1,  const AstNodePtr& n2,
                       DepInfoCollect &outDeps, DepInfoCollect &inDeps, 
@@ -93,7 +95,8 @@ class AdhocDependenceTesting : public DependenceTesting {
     DepInfo ComputeArrayDep(LoopTransformInterface &fa, DepInfoAnal& anal,
                        const DepInfoAnal::StmtRefDep& ref, DepType deptype);
 };
-
+//! Analyze variable references within a statement n, put read and write references
+// into two sets (rRefs and wRefs)
 bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n,
                       CollectObject<AstNodePtr> &wRefs, 
                       CollectObject<AstNodePtr> &rRefs);

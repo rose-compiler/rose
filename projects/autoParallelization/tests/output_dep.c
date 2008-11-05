@@ -1,4 +1,8 @@
 // an example of output dependence preventing parallelization
+// x: not live-in, yes live-out
+//    outer scope
+//    loop-carried output-dependence: x=... : accept values based on loop variable; or not. 
+//Solution: Can be parallelized using lastprivate(x)
 #include <stdio.h> 
 void foo()
 {

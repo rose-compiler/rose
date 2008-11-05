@@ -3,7 +3,7 @@
  */
 void foo()
 {
-  int i,x;
+  int i,x=1;
   int a[100];
   int b[100];
 // x should be recognized as a firstprivate variable during parallelization

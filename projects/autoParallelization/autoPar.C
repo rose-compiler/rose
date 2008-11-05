@@ -170,7 +170,7 @@ main (int argc, char *argv[])
              for (; !edges.ReachEnd(); ++edges)
              { 
                LoopTreeDepGraph::Edge *e= *edges;
-               cout<<"dependence edge: "<<e->toString()<<endl;
+              // cout<<"dependence edge: "<<e->toString()<<endl;
                DepInfo info =e->GetInfo();
              
                // eliminate dependence relationship if
@@ -191,7 +191,8 @@ main (int argc, char *argv[])
 
                 // skip non loop carried dependencies: 
                 // TODO scalar issue, wrong CarryLevel
-               if ((info.CarryLevel()!=0)&&(info.GetDepType()!=DEPTYPE_SCALAR)) 
+                // loop independent dependencies: need privatization can eliminate most of them
+               if (info.CarryLevel()!=0) 
                  continue;
                 
                remainingDependences.push_back(info); 

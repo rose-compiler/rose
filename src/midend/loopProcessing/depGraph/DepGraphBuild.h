@@ -38,6 +38,7 @@ class  AstTreeDepGraphAnal
   const DomainCond& GetStmtDomain( LoopTransformInterface &fa, const AstNodePtr& s) 
      { return impl.GetStmtInfo(fa, s).domain; }
 
+  //! Compute the dependence (one of type set t) between two statements: n1 and n2
   void ComputeStmtDep(LoopTransformInterface &fa,const StmtNodeInfo& n1, const StmtNodeInfo& n2, int t);
   void ComputeDataDep(LoopTransformInterface &fa, const StmtNodeInfo& n1,
                       const StmtNodeInfo& n2, DepType t = DEPTYPE_ALL);

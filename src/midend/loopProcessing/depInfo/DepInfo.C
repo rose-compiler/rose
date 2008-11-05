@@ -6,15 +6,18 @@
 class DepEDDTypeInfo : public DepInfoImpl
 {
   DepType t;
+  DepType st; //Supplementary information when t ==SCALAR_DEP or SCALAR_BACK_DEP
  public:
   DepEDDTypeInfo( DepType _t, int dim1, int dim2, bool p, int cl)
-    : DepInfoImpl( dim1, dim2,p, cl) { t = _t; }
+    : DepInfoImpl( dim1, dim2,p, cl) { t = _t; st = DEPTYPE_NONE; }
   DepEDDTypeInfo( const DepEDDTypeInfo &that) 
     : DepInfoImpl( that ) { t = that.t; }
   virtual ~DepEDDTypeInfo() {}
   virtual DepInfoImpl* Clone() const { return new DepEDDTypeInfo(*this); }
 
   virtual DepType GetDepType() const { return t; }
+  virtual DepType GetScalarDepType() const { return st; }
+  virtual void SetScalarDepType(DepType s_type) { st=s_type; }
 };
 
 class DepEDDRefInfo : public DepEDDTypeInfo
@@ -71,9 +74,26 @@ DepInfo DepInfoGenerator:: GetDepInfo( int nr, int nc, DepType t, bool p, int co
 DepInfo DepInfoGenerator:: 
 GetDepInfo( int nr, int nc, DepType t, const AstNodePtr& srcRef, const AstNodePtr& snkRef,
             bool p, int commLevel)
-  { return ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )? 
-                      DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel))
-                     :  DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; }
+  {
+    DepInfo result;
+    if ( (t & DEPTYPE_DATA) || (t & DEPTYPE_INPUT) )
+    {
+      result= DepInfo(new DepEDDRefInfo( t, nr, nc, srcRef, snkRef,p, commLevel));
+    }
+    else
+    {
+      result= DepInfo(new DepEDDTypeInfo(t, nr, nc, p, commLevel)) ; 
+    }
+#if 0    
+    // Provide extra information for DEPTYPE_SCALAR and DEPTYPE_BACKSCALAR
+    if  ( (t & DEPTYPE_SCALAR) || (t & DEPTYPE_BACKSCALAR) )
+    {  // how to tell read/write access ??
+       if (srcRef == snkRef) // OUTPUT dependence for scalars
+          result.SetScalarDepType(DEPTYPE_OUTPUT);
+    }
+#endif    
+    return result;
+  }
 
 std::string DepType2String(DepType t) 
 {
@@ -100,6 +120,8 @@ std::string DepInfo :: toString() const
   out << rows() << "*" << cols()<<" ";
   out << DepType2String(GetDepType()) << " commonlevel = " << CommonLevel() << " ";
   out << "CarryLevel = "<<CarryLevel()<< " ";
+  if ((GetDepType()==DEPTYPE_SCALAR)||(GetDepType()==DEPTYPE_BACKSCALAR))
+    out<< "Scalar dep type "<<DepType2String(GetScalarDepType()) ;
   if (is_precise()) 
       out << " Is precise ";
   out << AstToString(SrcRef())<<getAstLocation(SrcRef())<<"->" << AstToString(SnkRef())<<getAstLocation(SnkRef())<<" ";
@@ -444,7 +466,11 @@ void DepInfo :: CarryLevels( int &minLevel, int &maxLevel) const
     }
   }
   if (minLevel < 0) {
+    //Adjustment for DEPTYPE_BACKSCALAR. It must be loop-carried dependence
+    //For DEPTYPE_SCALAR with two same references to a variable, it also must be loop-carried dependence
      if (GetDepType() == DEPTYPE_BACKSCALAR)
+        minLevel = maxLevel = num-1;
+     else if (GetScalarDepType() == DEPTYPE_OUTPUT)
         minLevel = maxLevel = num-1;
      else
         minLevel = num;

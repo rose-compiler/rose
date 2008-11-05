@@ -19,6 +19,11 @@
 extern DepTestStatistics DepStats;
 #endif
 
+//Liao, 11/5/2008
+//Support extra dependence type information for DEPTYPE_SCALAR and DEPTYPE_BACKSCALAR
+//This global variable is used to store the temp type t, which gets discarded 
+//when calling ComputeGlobalScalarDep() and ComputePrivateScalarDep()
+static DepType scalar_dep_type = DEPTYPE_NONE;
 
 extern bool DebugDep();
 
@@ -50,6 +55,8 @@ class AccuAstRefs : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >
       return col(n.first);
    }
 };
+//! Analyze variable references within a statement n, put read and write references
+// into two sets (rRefs and wRefs)
 bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n, 
                       CollectObject<AstNodePtr> &wRefs, 
                       CollectObject<AstNodePtr> &rRefs)
@@ -76,6 +83,7 @@ std::string toString( std::vector< std::vector<SymbolicVal> > & analMatrix)
   return result;
 }
 
+//This is indeed a static function within this file, pos =1 (inDeps) or -1 (outDeps)
 DepInfo ComputePrivateDep( LoopTransformInterface &la, DepInfoAnal& anal,
                           const DepInfoAnal::StmtRefDep& ref, 
                           DepType t, int pos)
@@ -83,7 +91,7 @@ DepInfo ComputePrivateDep( LoopTransformInterface &la, DepInfoAnal& anal,
      const DepInfoAnal::LoopDepInfo& info1 = anal.GetStmtInfo(la, ref.r1.stmt);
      const DepInfoAnal::LoopDepInfo& info2 = anal.GetStmtInfo(la, ref.r2.stmt);
      int dim1 = info1.domain.NumOfLoops(), dim2 = info2.domain.NumOfLoops();
-
+     //Return default DepInfo if no common loops and pos <=0
      if (! ref.commLevel && pos <= 0)
        return DepInfo();
      DepInfo result=DepInfoGenerator::GetDepInfo( dim1, dim2, t, 
@@ -100,6 +108,25 @@ DepInfo ComputePrivateDep( LoopTransformInterface &la, DepInfoAnal& anal,
      }
      info2.domain.RestrictDepInfo( result, DEP_SINK);
      info1.domain.RestrictDepInfo( result, DEP_SRC);
+
+    //Extra info. for DEPTYPE_SCALAR and DEPTYPE_BACKSCALAR
+    if( ((result.GetDepType()==DEPTYPE_SCALAR) ||(result.GetDepType()==DEPTYPE_BACKSCALAR))
+      &&(scalar_dep_type!=DEPTYPE_NONE) )
+    {
+      if (pos>0) // inDeps
+        result.SetScalarDepType(scalar_dep_type);
+       else   //outDeps, reverse type 
+       {
+         if (scalar_dep_type==DEPTYPE_TRUE)
+           result.SetScalarDepType(DEPTYPE_ANTI);
+         else if (scalar_dep_type==DEPTYPE_ANTI)
+           result.SetScalarDepType(DEPTYPE_TRUE);
+         else if (scalar_dep_type==DEPTYPE_OUTPUT)
+           result.SetScalarDepType(DEPTYPE_INPUT);
+         else if (scalar_dep_type==DEPTYPE_INPUT)
+           result.SetScalarDepType(DEPTYPE_OUTPUT);
+       }
+    }
      return result;
   }
       
@@ -181,17 +208,18 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
     assert(!info.IsTop());
     return info;
 }
-
 void DepInfoAnal :: 
 ComputePrivateScalarDep( LoopTransformInterface &fa, const StmtRefDep& ref,
                              DepInfoCollect &outDeps, DepInfoCollect &inDeps)
 {
    DepType t1 = DEPTYPE_SCALAR, t2 = DEPTYPE_BACKSCALAR;
+   // has common loops, or references involve two different variables
    if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref) {
      DepInfo d = ComputePrivateDep( fa, *this, ref, t1, 1);
      assert(!d.IsTop());
      outDeps(d);
    }
+   // has common loops and references involve two different variables
    if ( ref.commLevel > 0 && ref.r1.ref != ref.r2.ref) {
       StmtRefDep ref2(ref.r2, ref.r1, ref.commLoop, ref.commLevel);
       DepInfo d1 = ComputePrivateDep( fa, *this, ref2, t2, -1);
@@ -547,7 +575,7 @@ GetStmtRefDep( LoopTransformInterface &la,
                              &r.commLevel);
   return r;
 }
-
+// t should be DEPTYPE_IO here
 void DepInfoAnal ::
 ComputeIODep(LoopTransformInterface &fa,  
              const AstNodePtr& s1,  const AstNodePtr& s2,
@@ -580,7 +608,6 @@ ComputeCtrlDep(LoopTransformInterface &fa,
   }
 }
 
-
 void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la, 
                        DepInfoAnal::StmtRefDep& ref,
                        DoublyLinkedListWrap<AstNodePtr> *rs1, 
@@ -610,7 +637,11 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
            else if (b1 || b2) 
                anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps);
            else 
+           {   
+               scalar_dep_type = t;
                anal.ComputePrivateScalarDep( la, ref, outDeps, inDeps);
+               scalar_dep_type = DEPTYPE_NONE; 
+           }
        }
        else if ( la.IsAliasedRef( r1, r2)) {
           anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps); 
@@ -646,6 +677,7 @@ ComputeDataDep(LoopTransformInterface &fa,
 {
   DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1, rRef2, wRef2;
   CollectDoublyLinkedList<AstNodePtr> crRef1(rRef1),cwRef1(wRef1),crRef2(rRef2),cwRef2(wRef2);
+
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1) || 
         (s1 != s2 && !AnalyzeStmtRefs(fa, s2, cwRef2, crRef2))) {
        if (DebugDep())
