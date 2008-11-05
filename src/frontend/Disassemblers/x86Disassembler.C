@@ -855,22 +855,22 @@ namespace X86Disassembler {
           default: ROSE_ASSERT (false);
         }
       }
-      case 0x70: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jo , jo , /* prediction, */ imm); goto done;}
-      case 0x71: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jno, jno, /* prediction, */ imm); goto done;}
-      case 0x72: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jb , jb , /* prediction, */ imm); goto done;}
-      case 0x73: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jae, jae, /* prediction, */ imm); goto done;}
-      case 0x74: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(je , je , /* prediction, */ imm); goto done;}
-      case 0x75: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jne, jne, /* prediction, */ imm); goto done;}
-      case 0x76: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jbe, jbe, /* prediction, */ imm); goto done;}
-      case 0x77: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(ja , ja , /* prediction, */ imm); goto done;}
-      case 0x78: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(js , js , /* prediction, */ imm); goto done;}
-      case 0x79: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jns, jns, /* prediction, */ imm); goto done;}
-      case 0x7A: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jpe, jpe, /* prediction, */ imm); goto done;}
-      case 0x7B: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jpo, jpo, /* prediction, */ imm); goto done;}
-      case 0x7C: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jl , jl , /* prediction, */ imm); goto done;}
-      case 0x7D: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jge, jge, /* prediction, */ imm); goto done;}
-      case 0x7E: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jle, jle, /* prediction, */ imm); goto done;}
-      case 0x7F: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jg , jg , /* prediction, */ imm); goto done;}
+      case 0x70: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jo , jo , imm); goto done;}
+      case 0x71: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jno, jno, imm); goto done;}
+      case 0x72: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jb , jb , imm); goto done;}
+      case 0x73: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jae, jae, imm); goto done;}
+      case 0x74: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(je , je , imm); goto done;}
+      case 0x75: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jne, jne, imm); goto done;}
+      case 0x76: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jbe, jbe, imm); goto done;}
+      case 0x77: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(ja , ja , imm); goto done;}
+      case 0x78: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(js , js , imm); goto done;}
+      case 0x79: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jns, jns, imm); goto done;}
+      case 0x7A: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jpe, jpe, imm); goto done;}
+      case 0x7B: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jpo, jpo, imm); goto done;}
+      case 0x7C: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jl , jl , imm); goto done;}
+      case 0x7D: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jge, jge, imm); goto done;}
+      case 0x7E: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jle, jle, imm); goto done;}
+      case 0x7F: {SgAsmExpression* imm = getImmJb(); branchPredictionEnabled = true; insn = MAKE_INSN1(jg , jg , imm); goto done;}
       case 0x80: {getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
       case 0x81: {getModRegRM(rmReturnNull, effectiveOperandMode(), effectiveOperandType()); SgAsmExpression* imm = getImmIzAsIv(); insn = decodeGroup1(imm); goto done;}
       case 0x82: {not64(); getModRegRM(rmReturnNull, rmLegacyByte, BYTET); SgAsmExpression* imm = getImmByte(); insn = decodeGroup1(imm); goto done;}
@@ -1154,16 +1154,16 @@ namespace X86Disassembler {
       case 0xDD: {insn = decodeX87InstructionDD(); goto done;}
       case 0xDE: {insn = decodeX87InstructionDE(); goto done;}
       case 0xDF: {insn = decodeX87InstructionDF(); goto done;}
-      case 0xE0: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loopnz, loopnz, /* prediction, */ imm); goto done;}
-      case 0xE1: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loopz, loopz, /* prediction, */ imm); goto done;}
-      case 0xE2: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loop, loop, /* prediction, */ imm); goto done;}
+      case 0xE0: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loopnz, loopnz, imm); goto done;}
+      case 0xE1: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loopz, loopz, imm); goto done;}
+      case 0xE2: {SgAsmExpression* imm = getImmJb(); insn = MAKE_INSN1(loop, loop, imm); goto done;}
       case 0xE3: {
         SgAsmExpression* imm = getImmJb();
         branchPredictionEnabled = true;
         switch (effectiveOperandSize()) {
-          case x86_insnsize_16: insn = MAKE_INSN1(jcxz, jcxz, /* prediction, */ imm); goto done;
-          case x86_insnsize_32: insn = MAKE_INSN1(jecxz, jecxz, /* prediction, */ imm); goto done;
-          case x86_insnsize_64: insn = MAKE_INSN1(jrcxz, jrcxz, /* prediction, */ imm); goto done;
+          case x86_insnsize_16: insn = MAKE_INSN1(jcxz, jcxz, imm); goto done;
+          case x86_insnsize_32: insn = MAKE_INSN1(jecxz, jecxz, imm); goto done;
+          case x86_insnsize_64: insn = MAKE_INSN1(jrcxz, jrcxz, imm); goto done;
           default: ROSE_ASSERT (false);
         }
       }
@@ -2240,22 +2240,22 @@ done:
           case mmF2: throw BadInstruction();
         }
       }
-      case 0x80: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jo , jo, /* prediction, */ imm);}
-      case 0x81: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jno, jno, /* prediction, */ imm);}
-      case 0x82: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jb,  jb, /* prediction, */ imm);}
-      case 0x83: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jae, jae, /* prediction, */ imm);}
-      case 0x84: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(je,  je, /* prediction, */ imm);}
-      case 0x85: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jne, jne, /* prediction, */ imm);}
-      case 0x86: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jbe, jbe, /* prediction, */ imm);}
-      case 0x87: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(ja,  ja, /* prediction, */ imm);}
-      case 0x88: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(js , js, /* prediction, */ imm);}
-      case 0x89: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jns, jns, /* prediction, */ imm);}
-      case 0x8A: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jpe, jpe, /* prediction, */ imm);}
-      case 0x8B: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jpo, jpo, /* prediction, */ imm);}
-      case 0x8C: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jl,  jl, /* prediction, */ imm);}
-      case 0x8D: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jge, jge, /* prediction, */ imm);}
-      case 0x8E: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jle, jle, /* prediction, */ imm);}
-      case 0x8F: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jg,  jg, /* prediction, */ imm);}
+      case 0x80: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jo , jo, imm);}
+      case 0x81: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jno, jno, imm);}
+      case 0x82: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jb,  jb, imm);}
+      case 0x83: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jae, jae, imm);}
+      case 0x84: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(je,  je, imm);}
+      case 0x85: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jne, jne, imm);}
+      case 0x86: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jbe, jbe, imm);}
+      case 0x87: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(ja,  ja, imm);}
+      case 0x88: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(js , js, imm);}
+      case 0x89: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jns, jns, imm);}
+      case 0x8A: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jpe, jpe, imm);}
+      case 0x8B: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jpo, jpo, imm);}
+      case 0x8C: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jl,  jl, imm);}
+      case 0x8D: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jge, jge, imm);}
+      case 0x8E: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jle, jle, imm);}
+      case 0x8F: {SgAsmExpression* imm = getImmJz(); branchPredictionEnabled = true; return MAKE_INSN1(jg,  jg, imm);}
       case 0x90: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(seto,  seto, modrm);
       case 0x91: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setno, setno, modrm);
       case 0x92: getModRegRM(rmLegacyByte, rmLegacyByte, BYTET); return MAKE_INSN1(setb,  setb, modrm);
