@@ -323,6 +323,9 @@ SgAsmArmInstruction* createArmInstruction(uint64_t address,
 SgAsmx86Instruction* createx86Instruction(uint64_t address,
                                           const std::string& mnemonic);
 
+void normalizex86Mnemonic(std::string& mnemonic);
+void normalizeArmMnemonic(std::string& mnemonic);
+
 // From RoseBin_support.cpp:
 bool isAsmUnconditionalBranch(SgAsmInstruction*);
 bool isAsmBranch(SgAsmInstruction*);
