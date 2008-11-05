@@ -187,7 +187,7 @@ showing the generated handles for the loops.
 %---------------------example 1. ----------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/abstractHandle1.cpp}
@@ -208,7 +208,7 @@ showing the generated handles for the loops.
 %------------------ input------------------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/inputCode_AbstractHandle1.cpp}
@@ -231,7 +231,7 @@ showing the generated handles for the loops.
 %---------------------example 1's output ----------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleBuildDirectory/abstractHandle1.outx}
@@ -250,6 +250,7 @@ showing the generated handles for the loops.
 \label{Tutorial:abstractHandle1out}
 \end{figure}
 
+\clearpage
 A second example (shown in Figure~\ref{Tutorial:abstractHandle2})
 demonstrates how to create handles using user-specified strings
 representing handle items for language constructs within a source file
@@ -260,7 +261,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 %---------------------example 2. ----------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/abstractHandle2.cpp}
@@ -282,7 +283,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 %------------------ input------------------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/inputCode_AbstractHandle2.cpp}
@@ -305,7 +306,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 %---------------------example 2's output ----------------------
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleBuildDirectory/abstractHandle2.outx}
@@ -324,6 +325,7 @@ The output of the example is given in Figure~\ref{Tutorial:abstractHandle2out}.
 \label{Tutorial:abstractHandle2out}
 \end{figure}
 
+\clearpage
 \subsection{Connecting to External Tools}
    A third example is provided to demonstrate how to use the abstract interface
 with any other tools, which may have less features in terms of supported language
@@ -337,7 +339,7 @@ be used by other tools which use abstract handles (which would generate the
 abstract handles by reading the strings).
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/../src/midend/abstractHandle/myloop.h}
@@ -370,7 +372,7 @@ relative numbering information within {\em loop\_handle1}.
 
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 % Do this when processing latex to generate non-html (not using latex2html)
 \begin{latexonly}
   \lstinputlisting{\TutorialExampleDirectory/../src/midend/abstractHandle/testMyLoop.cpp}
@@ -398,7 +400,7 @@ abstract handle to the same source code language construct.
 %\begin{verbatim}
 \begin{figure}[!h]
 {\indent
-{\mySmallestFontSize
+{\mySmallFontSize
 \begin{latexonly}
 \begin{lstlisting} 
 bash-3.00: ./testMyLoop
@@ -420,6 +422,7 @@ SourceFile<name,file1.c>::ForStatement<numbering,1>::ForStatement<numbering,1>
 \label{Tutorial:testMyLoopOutput}
 \end{figure}
 
+\clearpage
 \section{Summary}
 
    Abstract handles are low level mechanisms to support multiple tools

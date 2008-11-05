@@ -20,19 +20,19 @@ int main(int argc, char * argv[])
 
   // Generate a file handle from the first file of the project
   abstract_node* file_node= new roseNode((project->get_fileList())[0]);
-  abstract_handle* handle1 = new abstract_handle(file_node);
-  cout<<"Created a file handle:\n"<<handle1->toString()<<endl<<endl;;
+  abstract_handle* handle0 = new abstract_handle(file_node);
+  cout<<"Created a file handle:\n"<<handle0->toString()<<endl<<endl;;
 
   //Create a handle to a namespace given its name and parent handle 
-  string input1("NamespaceDeclarationStatement<name,space1>");
-  abstract_handle* handle0 = new abstract_handle(handle1,input1);
-  cout<<"Created a handle:\n"<<handle0->toString()<<endl<<endl;
-  cout<<"It points to:\n"<<handle0->getNode()->toString()<<endl<<endl;
+  string input1="NamespaceDeclarationStatement<name,space1>";
+  abstract_handle* handle1 = new abstract_handle(handle0,input1);
+  cout<<"Created a handle:\n"<<handle1->toString()<<endl<<endl;
+  cout<<"It points to:\n"<<handle1->getNode()->toString()<<endl<<endl;
 
   // Create a handle within the file, given a string specifying  
   // its construct type (class declaration) and source position 
-  string input("ClassDeclaration<position,4.3-9.2>");
-  abstract_handle* handle2 = new abstract_handle(handle1,input);
+  string input="ClassDeclaration<position,4.3-9.2>";
+  abstract_handle* handle2 = new abstract_handle(handle0,input);
 
   cout<<"Created a handle:\n"<<handle2->toString()<<endl<<endl;
   cout<<"It points to:\n"<<handle2->getNode()->toString()<<endl<<endl;;
