@@ -513,7 +513,7 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx)
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ExecFormat
+// SgAsmGenericFormat
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Print some debugging info */
@@ -523,9 +523,9 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx)
     char p[4096], sbuf[256];
     const char *s;
     if (idx>=0) {
-        sprintf(p, "%sExecFormat[%zd].", prefix, idx);
+        sprintf(p, "%sFormat[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sExecFormat.", prefix);
+        sprintf(p, "%sFormat.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -1945,7 +1945,7 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *b
             char mesg[1024];
             sprintf(mesg, "non-zero value truncated: buf[0x%zx]=0x%02x", i, ((const unsigned char*)buf)[i]);
 #if 1
-            fprintf(stderr, "ROBB: Exec::ExecSection::write(): %s\n", mesg);
+            fprintf(stderr, "ROBB: SgAsmGenericSection::write(): %s\n", mesg);
             hexdump(stderr, get_offset()+offset, "      ", (const unsigned char*)buf, bufsize);
             abort(); /*DEBUGGING*/
 #endif
@@ -2046,7 +2046,7 @@ SgAsmGenericSection::extend_up_to(addr_t size)
     p_size = new_size;
 }
 
-/* True (the ExecHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
+/* True (the SgAsmGenericHeader pointer) if this section is also a top-level file header, false (NULL) otherwise. */
 SgAsmGenericHeader *
 SgAsmGenericSection::is_file_header()
 {
@@ -2068,7 +2068,7 @@ SgAsmGenericSection::unparse(FILE *f)
 #if 0
     /* FIXME: for now we print the names of all sections we dump using this method. Eventually most of these sections will
      *        have subclasses that override this method. */
-    fprintf(stderr, "Exec::ExecSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
+    fprintf(stderr, "SgAsmGenericSection::unparse(FILE*) for section [%d] \"%s\"\n", id, name.c_str());
 #endif
 
     write(f, 0, p_data);
@@ -2135,9 +2135,9 @@ SgAsmGenericSection::dump(FILE *f, const char *prefix, ssize_t idx)
     char p[4096], sbuf[256];
     const char *s;
     if (idx>=0) {
-        sprintf(p, "%sExecSection[%zd].", prefix, idx);
+        sprintf(p, "%sSection[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sExecSection.", prefix);
+        sprintf(p, "%sSection.", prefix);
     }
     
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
@@ -2438,7 +2438,7 @@ ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label) const
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// ExecHeader
+// SgAsmGenericHeader
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /* Constructor.
@@ -2759,9 +2759,9 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sExecHeader[%zd].", prefix, idx);
+        sprintf(p, "%sHeader[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sExecHeader.", prefix);
+        sprintf(p, "%sHeader.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -2810,11 +2810,11 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx)
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->c_str());
     }
     
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecDLL.size", p_dlls->get_dlls().size());
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
 
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "ExecSymbol.size", p_symbols->get_symbols().size());
+    fprintf(f, "%s%-*s = %zu entries\n", p, w, "Symbol.size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++)
         p_symbols->get_symbols()[i]->dump(f, p, i);
 }
@@ -2843,15 +2843,15 @@ SgAsmGenericDLL::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sExecDLL[%zd].", prefix, idx);
+        sprintf(p, "%sDLL[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sExecDLL.", prefix);
+        sprintf(p, "%sDLL.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "name", p_name->c_str());
-    for (size_t i = 0; i < p_funcs.size(); i++)
-        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "func", i, p_funcs[i].c_str());
+    fprintf(f, "%s%-*s = \"%s\"\n", p, w, "lib_name", p_name->c_str());
+    for (size_t i = 0; i < p_symbols.size(); i++)
+        fprintf(f, "%s%-*s = [%zd] \"%s\"\n", p, w, "symbol_name", i, p_symbols[i].c_str());
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2878,9 +2878,9 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sExecSymbol[%zd].", prefix, idx);
+        sprintf(p, "%sSymbol[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sExecSymbol.", prefix);
+        sprintf(p, "%sSymbol.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
