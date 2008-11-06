@@ -530,6 +530,24 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_addic_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(32) carries = number<32>(0);
+           Word(32) result = policy.addWithCarries(read32(operands[1]),signExtend<16,32>(extract<0,16>(read32(operands[2]))),policy.false_(),carries);
+
+        // Policy class bit numbering is opposite ordering from powerpc (based on x86).
+           Word(1)  carry_out = extract<31,32>(carries);
+           write32(operands[0], result);
+
+        // This should be a helper function to read/write CA (and other flags)
+        // The value 0xDFFFFFFFU is the mask for the Carry (CA) flag
+           policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
+
+           record(result);
+           break;
+         }
+
       case powerpc_subfe:
          {
            ROSE_ASSERT(operands.size() == 3);
