@@ -2603,7 +2603,7 @@ SgAsmElfFileHeader::parse(SgAsmGenericFile *ef)
 
     /* Associate the entry point with a particular section. */
     ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
-    fhdr->get_entry_rvas()[0].set_section(fhdr);
+    fhdr->get_entry_rvas()[0].bind(fhdr);
 
     /* Use symbols from either ".symtab" or ".dynsym" */
     SgAsmElfSymbolSection *symtab = dynamic_cast<SgAsmElfSymbolSection*>(ef->get_section_by_name(".symtab"));

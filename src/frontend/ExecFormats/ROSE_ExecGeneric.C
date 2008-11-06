@@ -29,6 +29,7 @@
 //     symbol.get_addresses()[0].set_section(section); // so does this.
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
 rose_addr_t
 rose_rva_t::get_rva() const 
 {
@@ -68,7 +69,7 @@ rose_rva_t::set_section(SgAsmGenericSection *new_section)
 
 /* Set the section to the section that best (most specifically) describes the virtual address */
 rose_rva_t&
-rose_rva_t::set_section(SgAsmGenericHeader *fhdr)
+rose_rva_t::bind(SgAsmGenericHeader *fhdr)
 {
     rose_addr_t va = get_rva() + fhdr->get_base_va();
     SgAsmGenericSection *secbind = fhdr->get_best_section_by_va(va);

@@ -963,9 +963,9 @@ SgAsmPEImportDirectory::ctor(SgAsmPEFileHeader *fhdr, const PEImportDirectory_di
     p_iat_rva         = le_to_host(disk->iat_rva);
 
     /* Bind RVAs to best sections */
-    p_ilt_rva.set_section(fhdr->get_best_section_by_va(p_ilt_rva.get_rva() + fhdr->get_base_va()));
-    p_dll_name_rva.set_section(fhdr->get_best_section_by_va(p_dll_name_rva.get_rva() + fhdr->get_base_va()));
-    p_iat_rva.set_section(fhdr->get_best_section_by_va(p_iat_rva.get_rva() + fhdr->get_base_va()));
+    p_ilt_rva.bind(fhdr);
+    p_dll_name_rva.bind(fhdr);
+    p_iat_rva.bind(fhdr);
 
     if (p_dll_name_rva.get_section()) {
         p_dll_name = new SgAsmBasicString(p_dll_name_rva.get_section()->content_str(p_dll_name_rva.get_rel()));
@@ -1048,12 +1048,12 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
         /* Bound address */
         p_entry_type = ILT_BOUND_RVA;
         p_bound_rva = ilt_word;
-        p_bound_rva.set_section(fhdr->get_best_section_by_va(p_bound_rva.get_rva() + fhdr->get_base_va()));
+        p_bound_rva.bind(fhdr);
     } else {
         /* Hint/Name Pair RVA */
         p_entry_type = ILT_HNT_ENTRY_RVA;
         p_hnt_entry_rva = ilt_word & hnrvamask;
-        p_hnt_entry_rva.set_section(fhdr->get_best_section_by_va(p_hnt_entry_rva.get_rva() + fhdr->get_base_va()));
+        p_hnt_entry_rva.bind(fhdr);
     }
 }
 
@@ -1725,7 +1725,7 @@ SgAsmPEExportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
             addr_t expaddr_offset = p_export_dir->get_expaddr_rva().get_rel(this) + expaddr_idx*sizeof(*expaddr_disk);
             expaddr_disk = (const ExportAddress_disk*)content(expaddr_offset, sizeof(*expaddr_disk));
             expaddr = le_to_host(*expaddr_disk);
-            expaddr.set_section(fhdr->get_best_section_by_va(expaddr.get_rva()+fhdr->get_base_va()));
+            expaddr.bind(fhdr);
         } else {
             expaddr = 0xffffffff; /*Ordinal out of range!*/
         }
@@ -2395,9 +2395,9 @@ SgAsmPEFileHeader::parse(SgAsmGenericFile *ef)
 
     /* Associate RVAs with particular sections. */
     ROSE_ASSERT(fhdr->get_entry_rvas().size()==1);
-    fhdr->get_entry_rvas()[0].set_section(fhdr);
-    fhdr->set_e_code_rva(fhdr->get_e_code_rva().set_section(fhdr));
-    fhdr->set_e_data_rva(fhdr->get_e_data_rva().set_section(fhdr));
+    fhdr->get_entry_rvas()[0].bind(fhdr);
+    fhdr->set_e_code_rva(fhdr->get_e_code_rva().bind(fhdr));
+    fhdr->set_e_data_rva(fhdr->get_e_data_rva().bind(fhdr));
 
     /* Turn header-specified tables (RVA/Size pairs) into generic sections */
     fhdr->create_table_sections();
