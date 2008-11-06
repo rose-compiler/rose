@@ -153,9 +153,7 @@ enum PowerpcInstructionKind
      powerpc_fnmsub, // Floating Negative Multiply-Subtract 
      powerpc_fnmsub_record, // Floating Negative Multiply-Subtract 
      powerpc_fnmsubs, // Floating Negative Multiply-Subtract Single 
-     powerpc_fnmsubs_record, // Floating Negative Multiply-Subtract Single 
-
-  // DQ (11/1/2008): Added PowerPC 440 BGL (Double Hummer) specific floating point instructions.
+     powerpc_fnmsubs_record, // Floating Negative Multiply-Subtract Single
      powerpc_fpmul,  // FP2 Floating Parallel Multiply (BGL specific)
      powerpc_fxmul,  // FP2 Floating Cross Multiply (BGL specific)
      powerpc_fxpmul, // FP2 Floating Cross Copy-Primary Multiply (BGL specific)
@@ -227,8 +225,7 @@ enum PowerpcInstructionKind
      powerpc_fxcpnmsub,
      powerpc_fxcxnsma,
      powerpc_fxcsnmsub,
-     powerpc_fxcxnms,
-
+     powerpc_fxcxnms, // Last FP2 specific enum value
      powerpc_fre, // Floating Reciprocal Estimate Single (optional) 
      powerpc_fre_record, // Floating Reciprocal Estimate Single (optional) 
      powerpc_fres, // Floating Reciprocal Estimate Single (optional) 

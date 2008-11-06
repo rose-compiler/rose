@@ -274,6 +274,23 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmStringStorage,   "AsmStringStorage",   "AsmStringStorageTag"   );
 #endif
 
+// DQ (11/3/2008): Later this might go into a separate file.
+// ***************************************************************************************
+// DWARF Support for mapping information in the binary executable back to the source code.
+// ***************************************************************************************
+
+     NEW_TERMINAL_MACRO ( AsmDwarfMacro, "AsmDwarfMacro", "AsmDwarfMacroTag" );
+     NEW_TERMINAL_MACRO ( AsmDwarfLine,  "AsmDwarfLine",  "AsmDwarfLineTag"  );
+     NEW_TERMINAL_MACRO ( AsmDwarfMacroList, "AsmDwarfMacroList", "AsmDwarfMacroListTag" );
+     NEW_TERMINAL_MACRO ( AsmDwarfLineList,  "AsmDwarfLineList",  "AsmDwarfLineListTag"  );
+     NEW_TERMINAL_MACRO ( AsmDwarfCompilationUnit,  "AsmDwarfCompilationUnit",  "AsmDwarfCompilationUnitTag"  );
+     NEW_NONTERMINAL_MACRO ( AsmDwarfInformation, AsmDwarfMacro | AsmDwarfMacroList | 
+               AsmDwarfLine | AsmDwarfLineList | AsmDwarfCompilationUnit, "AsmDwarfInformation", "AsmDwarfInformationTag", false /* canHaveInstances = false */ );
+
+// ***************************************************************************************
+//                     END OF DWARF SPECIFIC IR NODE DEFINITIONS
+// ***************************************************************************************
+
 
 
   // Root of class hierarchy for binary file support
@@ -286,9 +303,10 @@ Grammar::setUpBinaryInstructions ()
                AsmElfDynamicEntry      | AsmElfDynamicEntryList  | AsmElfSegmentTableEntryList | AsmStringStorage     |
                AsmPEImportDirectory    | AsmPEImportHintName     | AsmPESectionTableEntry      | AsmPEExportDirectory |
                AsmPERVASizePair        | AsmCoffSymbolList       | AsmPERVASizePairList        | AsmPEDLLList         |
-               AsmPEImportHintNameList |
+               AsmPEImportHintNameList | 
                AsmNEEntryPoint         | AsmNERelocEntry         | AsmNESectionTableEntry      |
-               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
+               AsmLEPageTableEntry     | AsmLEEntryPoint         | AsmLESectionTableEntry      | 
+               AsmDwarfInformation, "AsmExecutableFileFormat", "AsmExecutableFileFormatTag", false /* canHaveInstances = false */ );
 
 
   // This is the IR node for a binary executable that loosely corresponds to the SgFile IR node for 
@@ -297,23 +315,9 @@ Grammar::setUpBinaryInstructions ()
      NEW_TERMINAL_MACRO ( AsmInterpretation, "AsmInterpretation", "AsmInterpretationTag" );
 
 #if USE_OLD_BINARY_EXECUTABLE_IR_NODES
-  // DQ (8/2/2008): these might be required for now, but we need to be removed later!
 
 #error "Dead Code!"
 
-  // DQ (1/6/2008): Added ELF program header and section header support to AST.
-     NEW_TERMINAL_MACRO ( AsmProgramHeader, "AsmProgramHeader", "AsmProgramHeaderTag" );
-     NEW_TERMINAL_MACRO ( AsmSectionHeader, "AsmSectionHeader", "AsmSectionHeaderTag" );
-
-  // DQ (1/6/2008): These store the lists of AsmProgramHeader and AsmSectionHeader objects.
-  // AsmFile can not have traversed data members and lists, so this give it two additional data members.
-     NEW_TERMINAL_MACRO ( AsmProgramHeaderList, "AsmProgramHeaderList", "AsmProgramHeaderListTag" );
-     NEW_TERMINAL_MACRO ( AsmSectionHeaderList, "AsmSectionHeaderList", "AsmSectionHeaderListTag" );
-
-  // We will elimiate: AsmFile, AsmProgramHeader, AsmSectionHeader, AsmProgramHeaderList, AsmSectionHeaderList
-  // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
-  // NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
-     NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmProgramHeader | AsmSectionHeader | AsmProgramHeaderList | AsmSectionHeaderList | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
 #else
      NEW_NONTERMINAL_MACRO (AsmNode, AsmStatement | AsmExpression | AsmFile | AsmInterpretation | AsmOperandList | AsmType | AsmExecutableFileFormat, "AsmNode","AsmNodeTag", false);
 #endif
@@ -395,6 +399,12 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmFile.setDataPrototype("SgAsmInterpretationPtrList","interpretations","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/5/2008): This currently added to the SgBinaryFile instead of the SgAsmFile, we may want to 
+  // move it later.  For now we can't add it to SgAsmFile becuase we could not traverse both a list and 
+  // a data member in the definition of an AST traversal.
+  // AsmFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
+  //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
   // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
@@ -1849,8 +1859,80 @@ Grammar::setUpBinaryInstructions ()
      AsmNode.setDataPrototype("AstAttributeMechanism*","attributeMechanism","= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      AsmNode.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
-     AsmNode.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
+
+// DQ (11/3/2008): Later this might go into a separate file.
+// ***************************************************************************************
+// DWARF Support for mapping information in the binary executable back to the source code.
+// ***************************************************************************************
+
+  // This is the base class for all the AsmDwarf IR nodes
+     AsmDwarfInformation.setFunctionPrototype     ( "HEADER_DWARF_INFORMATION", "../Grammar/BinaryInstruction.code");
+
+  // This is the Dwarf CU:
+/*  Dwarf_Debug cc_dbg;
+    Dwarf_Word cc_length;
+    Dwarf_Small cc_length_size;
+    Dwarf_Small cc_extension_size;
+    Dwarf_Half cc_version_stamp;
+    Dwarf_Sword cc_abbrev_offset;
+    Dwarf_Small cc_address_size;
+    Dwarf_Word cc_debug_info_offset;
+    Dwarf_Byte_Ptr cc_last_abbrev_ptr;
+    Dwarf_Hash_Table cc_abbrev_hash_table;
+    Dwarf_CU_Context cc_next;
+    unsigned char cc_offset_length;
+*/
+     AsmDwarfCompilationUnit.setFunctionPrototype ( "HEADER_DWARF_COMPILATION_UNIT", "../Grammar/BinaryInstruction.code");
+     AsmDwarfCompilationUnit.setDataPrototype("std::string","name","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("std::string","producer","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("std::string","language","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("uint64_t","low_pc","= 0x0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("uint64_t","hi_pc","= 0x0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("int","version_stamp","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("uint64_t","abbrev_offset","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("uint64_t","address_size","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("uint64_t","offset_length","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("SgAsmDwarfLineList*","line_info","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AsmDwarfCompilationUnit.setDataPrototype("SgAsmDwarfMacroList*","macro_info","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+
+     AsmDwarfMacroList.setFunctionPrototype ( "HEADER_DWARF_MACRO_LIST", "../Grammar/BinaryInstruction.code");
+     AsmDwarfMacroList.setDataPrototype("SgAsmDwarfMacroPtrList","macro_list","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AsmDwarfMacro.setFunctionPrototype     ( "HEADER_DWARF_MACRO", "../Grammar/BinaryInstruction.code");
+     AsmDwarfMacro.setDataPrototype("std::string","macro_string","= \"\"",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AsmDwarfLineList.setFunctionPrototype  ( "HEADER_DWARF_LINE_LIST", "../Grammar/BinaryInstruction.code");
+     AsmDwarfLineList.setDataPrototype("SgAsmDwarfLinePtrList","line_list","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AsmDwarfLine.setFunctionPrototype      ( "HEADER_DWARF_LINE", "../Grammar/BinaryInstruction.code");
+     AsmDwarfLine.setDataPrototype("uint64_t","address","= 0",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfLine.setDataPrototype("int","file_id","= Sg_File_Info::NULL_FILE_ID",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfLine.setDataPrototype("int","line","= 0",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfLine.setDataPrototype("int","column","= 0",
+                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+// ***************************************************************************************
+//                     END OF DWARF SPECIFIC IR NODE DEFINITIONS
+// ***************************************************************************************
 
 
 
@@ -1860,6 +1942,8 @@ Grammar::setUpBinaryInstructions ()
   //                       Source Code Definition
   // ***********************************************************************
   // ***********************************************************************
+
+     AsmNode.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 
   // Binary File Format
      AsmExecutableFileFormat.setFunctionSource ( "SOURCE_EXECUTABLE_FILE_FORMAT", "../Grammar/BinaryInstruction.code");
@@ -1980,5 +2064,20 @@ Grammar::setUpBinaryInstructions ()
      AsmSectionHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_SECTION_HEADER_LIST", "../Grammar/BinaryInstruction.code");
      AsmProgramHeaderList.setFunctionSource ( "SOURCE_BINARY_FILE_PROGRAM_HEADER_LIST", "../Grammar/BinaryInstruction.code");
 #endif
+
+// DQ (11/3/2008): Later this might go into a separate file.
+// ***************************************************************************************
+// DWARF Support for mapping information in the binary executable back to the source code.
+// ***************************************************************************************
+
+     AsmDwarfInformation.setFunctionSource        ( "SOURCE_DWARF_INFORMATION", "../Grammar/BinaryInstruction.code");
+     AsmDwarfCompilationUnit.setFunctionPrototype ( "SOURCE_DWARF_COMPILATION_UNIT", "../Grammar/BinaryInstruction.code");
+     AsmDwarfMacro.setFunctionSource              ( "SOURCE_DWARF_MACRO", "../Grammar/BinaryInstruction.code");
+     AsmDwarfLine.setFunctionSource               ( "SOURCE_DWARF_LINE", "../Grammar/BinaryInstruction.code");
+
+// ***************************************************************************************
+//                     END OF DWARF SPECIFIC IR NODE DEFINITIONS
+// ***************************************************************************************
+
 
    }

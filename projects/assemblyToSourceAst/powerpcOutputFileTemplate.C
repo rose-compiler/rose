@@ -27,6 +27,8 @@ uint64_t imod64(uint64_t ah, uint64_t al, uint64_t b);
 int bsr(uint64_t a);
 int bsf(uint64_t a);
 
+void systemCall(uint8_t a);
+
 unsigned int gpr[32];
 unsigned char cr[8];
 uint32_t ip;

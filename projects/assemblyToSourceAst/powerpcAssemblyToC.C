@@ -75,6 +75,7 @@ struct powerpcCTranslationPolicy {
   SgFunctionSymbol* abortSym;
   SgFunctionSymbol* interruptSym;
   SgFunctionSymbol* startingInstructionSym;
+  SgFunctionSymbol* systemCallSym;
   SgBasicBlock* switchBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
@@ -317,6 +318,11 @@ struct powerpcCTranslationPolicy {
   void finishInstruction(SgAsmInstruction* insn) {
     appendStatement(buildContinueStmt(), bb);
   }
+
+  void systemCall(uint8_t num) {
+    appendStatement(buildExprStatement(buildFunctionCallExp(systemCallSym, buildExprListExp(buildIntVal(num)))), bb);
+  }
+
 };
 
 SgFunctionSymbol* powerpcCTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
@@ -374,6 +380,7 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   LOOKUP_FUNC(memoryWriteQWord);
   LOOKUP_FUNC(abort);
   LOOKUP_FUNC(startingInstruction);
+  LOOKUP_FUNC(systemCall);
 #undef LOOKUP_FUNC
 }
 

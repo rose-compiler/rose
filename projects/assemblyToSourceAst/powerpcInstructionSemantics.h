@@ -212,6 +212,50 @@ struct PowerpcInstructionSemantics {
     }
   }
 
+
+void record( Word(32) result )
+   {
+     Word(3) c = policy.ite(
+                    policy.equalToZero(result),
+                    number<3>(1),
+                    policy.ite(
+                       extract<31,32>(result),
+                       number<3>(4),
+                       number<3>(2)));
+
+  // This should be a helper function!
+     Word(1) SO = extract<31,32>(policy.readSPR(powerpc_spr_xer));
+
+  // Put "SO" into the lower bits, and "c" into the higher order bits
+     policy.writeCRField(0,policy.concat(SO,c));
+   }
+
+uint32_t 
+build_mask(uint8_t mb_value, uint8_t me_value)
+   {
+  // Builds mask of 1's from the bit value starting at mb_value to me_value.
+  // See page 71 of PowerPC manual.
+
+     uint32_t mask = 0;
+     if (mb_value <= me_value)
+        {
+       // PowerPC counts bits from the left.
+          for(int i=mb_value; i <= me_value;  i++)
+               mask |= (1 << (31- i));
+        }
+       else
+        {
+          for(int i=mb_value; i <= 31;  i++)
+               mask |= (1 << (31- i));
+          for(int i=0; i <= me_value; i++)
+               mask |= (1 << (31- i));
+        }
+
+     return mask;
+   }
+      
+
+
   void translate(SgAsmPowerpcInstruction* insn) {
     fprintf(stderr, "%s\n", unparseInstructionWithAddress(insn).c_str());
     policy.writeIP(policy.template number<32>((unsigned int)(insn->get_address() + 4)));
@@ -233,6 +277,15 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
+      case powerpc_or_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(32) result = policy.or_(read32(operands[1]),read32(operands[2]));
+           write32(operands[0], result);
+           record(result);
+           break;
+         }
+
       case powerpc_ori:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -240,11 +293,38 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
+      case powerpc_oris:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.or_(read32(operands[1]),policy.concat(number<16>(0),extract<0,16>(read32(operands[2])))));
+           break;
+         }
+
+      case powerpc_xor:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.xor_(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+
+      case powerpc_xori:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.xor_(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+
+      case powerpc_xoris:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.xor_(read32(operands[1]),policy.concat(number<16>(0),extract<0,16>(read32(operands[2])))));
+           break;
+         }
+
       case powerpc_rlwinm:
          {
            ROSE_ASSERT(operands.size() == 5);
            Word(32) RS = read32(operands[1]);
-        // Word(5) SH = policy.template extract<0, 5>(read32(operands[2]));
            Word(5) SH = extract<0, 5>(read32(operands[2]));
 
            SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
@@ -253,27 +333,38 @@ struct PowerpcInstructionSemantics {
 
            SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
            ROSE_ASSERT(ME != NULL);
+
            int me_value = ME->get_value();
-           uint32_t mask = 0;
-           if (mb_value <= me_value)
-              {
-             // PowerPC counts bits from the left.
-                for(int i=mb_value; i <= me_value;  i++)
-                     mask |= (1 << (31- i));
-              }
-             else
-              {
-                for(int i=mb_value; i <= 31;  i++)
-                     mask |= (1 << (31- i));
-                for(int i=0; i <= me_value; i++)
-                     mask |= (1 << (31- i));
-              }
+           uint32_t mask = build_mask(mb_value,me_value);
 
            Word(32) rotatedReg = policy.rotateLeft(RS,SH);
-        // Word(32) bitMask = policy.template number<32>(mask);
            Word(32) bitMask = number<32>(mask);
 
            write32(operands[0],policy.and_(rotatedReg,bitMask));
+           break;
+         }
+
+      case powerpc_rlwimi:
+         {
+           ROSE_ASSERT(operands.size() == 5);
+           Word(32) RS = read32(operands[0]);
+           Word(32) RA = read32(operands[1]);
+           Word(5) SH = extract<0, 5>(read32(operands[2]));
+
+           SgAsmByteValueExpression* MB = isSgAsmByteValueExpression(operands[3]);
+           ROSE_ASSERT(MB != NULL);
+           int mb_value = MB->get_value();
+
+           SgAsmByteValueExpression* ME = isSgAsmByteValueExpression(operands[4]);
+           ROSE_ASSERT(ME != NULL);
+
+           int me_value = ME->get_value();
+           uint32_t mask = build_mask(mb_value,me_value);
+
+           Word(32) rotatedReg = policy.rotateLeft(RS,SH);
+           Word(32) bitMask = number<32>(mask);
+
+           write32(operands[0],policy.or_(policy.and_(rotatedReg,bitMask),policy.and_(RA,policy.invert(bitMask))));
            break;
          }
 
@@ -344,14 +435,14 @@ struct PowerpcInstructionSemantics {
       case powerpc_stb:
          {
            ROSE_ASSERT(operands.size() == 2);
-           write8(operands[1],policy.extract<0,8>(read32(operands[0])));
+           write8(operands[1],extract<0,8>(read32(operands[0])));
            break;
          }
 
       case powerpc_sth:
          {
            ROSE_ASSERT(operands.size() == 2);
-           write16(operands[1],policy.extract<0,16>(read32(operands[0])));
+           write16(operands[1],extract<0,16>(read32(operands[0])));
            break;
          }
 
@@ -400,6 +491,7 @@ struct PowerpcInstructionSemantics {
          }
 
       case powerpc_lwz:
+      case powerpc_lwzx:
          {
            ROSE_ASSERT(operands.size() == 2);
            write32(operands[0],read32(operands[1]));
@@ -474,10 +566,45 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
+      case powerpc_subfic:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(32) carries = number<32>(0);
+
+        // To do the subtraction we invert the first operand and add.  To add "1" we set the carry in to true.
+           Word(32) result = policy.addWithCarries(policy.invert(read32(operands[1])),signExtend<16,32>(extract<0,16>(read32(operands[2]))),policy.true_(),carries);
+
+        // Policy class bit numbering is opposite ordering from powerpc (based on x86).
+           Word(1)  carry_out = extract<31,32>(carries);
+           write32(operands[0], result);
+
+        // This should be a helper function to read/write CA (and other flags)
+        // The value 0xDFFFFFFFU is the mask for the Carry (CA) flag
+           policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
+           break;
+         }
+
       case powerpc_lbz:
+      case powerpc_lbzx:
          {
            ROSE_ASSERT(operands.size() == 2);
            write32(operands[0],policy.concat(read8(operands[1]),number<24>(0)));
+           break;
+         }
+
+      case powerpc_lha:
+      case powerpc_lhax:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+           write32(operands[0],signExtend<16,32>(read16(operands[1])));
+           break;
+         }
+
+      case powerpc_lhz:
+      case powerpc_lhzx:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+           write32(operands[0],policy.concat(read16(operands[1]),number<16>(0)));
            break;
          }
 
@@ -596,6 +723,17 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
+      case powerpc_subf_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+
+           Word(32) result = policy.add(policy.negate(read32(operands[1])),read32(operands[2]));
+           write32(operands[0],result);
+
+           record(result);
+           break;
+         }
+
       case powerpc_bclr:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -669,14 +807,35 @@ struct PowerpcInstructionSemantics {
       case powerpc_mulhwu:
          {
            ROSE_ASSERT(operands.size() == 3);
-           write32(operands[0], policy.extract<32,64>(policy.unsignedMultiply(read32(operands[1]),read32(operands[2]))));
+           write32(operands[0], extract<32,64>(policy.unsignedMultiply(read32(operands[1]),read32(operands[2]))));
+           break;
+         }
+
+      case powerpc_mulhw:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], extract<32,64>(policy.signedMultiply(read32(operands[1]),read32(operands[2]))));
+           break;
+         }
+
+      case powerpc_mullw:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], extract<0,32>(policy.signedMultiply(read32(operands[1]),read32(operands[2]))));
            break;
          }
 
       case powerpc_mulli:
          {
            ROSE_ASSERT(operands.size() == 3);
-           write32(operands[0], policy.extract<0,32>(policy.signedMultiply(read32(operands[1]),read32(operands[2]))));
+           write32(operands[0], extract<0,32>(policy.signedMultiply(read32(operands[1]),read32(operands[2]))));
+           break;
+         }
+
+      case powerpc_divw:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.signedDivide(read32(operands[1]),read32(operands[2])));
            break;
          }
 
@@ -736,6 +895,26 @@ struct PowerpcInstructionSemantics {
            break;
          }
 
+      case powerpc_addme:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+
+        // This should be a helper function to read CA (and other flags)
+           Word(1)  carry_in = extract<29,30>(policy.readSPR(powerpc_spr_xer));
+
+           Word(32) carries = number<32>(0);
+           Word(32) result = policy.addWithCarries(read32(operands[1]),number<32>(0xFFFFFFFFU),carry_in,carries);
+
+        // Policy class bit numbering is opposite ordering from powerpc (based on x86).
+           Word(1)  carry_out = extract<31,32>(carries);
+           write32(operands[0], result);
+
+        // This should be a helper function to read/write CA (and other flags)
+        // The value 0xDFFFFFFFU is the mask for the Carry (CA) flag
+           policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
+           break;
+         }
+
       case powerpc_adde:
          {
            ROSE_ASSERT(operands.size() == 3);
@@ -760,25 +939,21 @@ struct PowerpcInstructionSemantics {
          {
            ROSE_ASSERT(operands.size() == 3);
 
-        // write32(operands[0], policy.and_(read32(operands[1]),read32(operands[2])));
            Word(32) result = policy.and_(read32(operands[1]),read32(operands[2]));
+           write32(operands[0],result);
 
+           record(result);
+           break;
+         }
 
-           printf ("Need to test the result using the logic on page 18! \n");
-           ROSE_ASSERT(false);
+      case powerpc_andis_record:
+         {
+           ROSE_ASSERT(operands.size() == 3);
 
-        // I think we need this, but how is it to be set?
-           Word(32) carries = number<32>(0);
+           Word(32) result = policy.and_(read32(operands[1]),policy.concat(number<16>(0),extract<0,16>(read32(operands[2]))));
+           write32(operands[0],result);
 
-           Word(3) c = policy.ite(
-                           policy.equalToZero(result),
-                           number<3>(1),
-                           policy.ite(
-                              extract<31,32>(carries),
-                                 number<3>(4),
-                                 number<3>(2)));
-
-           policy.writeCRField(0,policy.concat(c,number<1>(0x0)));
+           record(result);
            break;
          }
 
@@ -805,6 +980,100 @@ struct PowerpcInstructionSemantics {
 
            write32(operands[0],policy.shiftRightArithmetic(RS,SH));
            policy.writeSPR(powerpc_spr_xer,policy.or_(policy.and_(policy.readSPR(powerpc_spr_xer),number<32>(0xDFFFFFFFU)),policy.ite(carry_out,number<32>(0x20000000U),number<32>(0x0))));
+           break;
+         }
+
+      case powerpc_bcctrl:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           SgAsmByteValueExpression* byteValue = isSgAsmByteValueExpression(operands[0]);
+           ROSE_ASSERT(byteValue != NULL);
+           uint8_t boConstant = byteValue->get_value();
+
+           bool BO_1 = boConstant & 0x8;
+           bool BO_0 = boConstant & 0x10;
+
+           SgAsmPowerpcRegisterReferenceExpression* BI = isSgAsmPowerpcRegisterReferenceExpression(operands[1]);
+           ROSE_ASSERT(BI != NULL);
+           ROSE_ASSERT(BI->get_register_class() == powerpc_regclass_cr);
+           ROSE_ASSERT(BI->get_conditionRegisterGranularity() == powerpc_condreggranularity_bit);
+
+        // This needs a collection of helpfer functions!
+           int bi_value = BI->get_register_number();
+           Word(4) CR_field = policy.readCRField(bi_value/4);
+           Word(1) CR_bi = extract<3,4>(policy.shiftLeft(CR_field,number<2>(bi_value % 4)));
+           Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
+
+        // Write the incremented IP value to the link register so that function can return.
+           policy.writeSPR(powerpc_spr_lr,policy.readIP());
+
+           policy.writeIP(policy.ite(COND_ok,policy.and_(policy.readSPR(powerpc_spr_ctr),number<32>(0xFFFFFFFC)),policy.readIP()));
+
+           break;
+         }
+
+      case powerpc_sc:
+         {
+           ROSE_ASSERT(operands.size() == 1);
+           SgAsmByteValueExpression* bv = isSgAsmByteValueExpression(operands[0]);
+           ROSE_ASSERT (bv);
+           policy.systemCall(bv->get_value());
+           break;
+         }
+
+      case powerpc_stmw:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+
+           Word(32) effectiveAddress = readEffectiveAddress(operands[1]);
+
+           SgAsmPowerpcRegisterReferenceExpression* RS = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           ROSE_ASSERT(RS != NULL);
+           ROSE_ASSERT(RS->get_register_class() == powerpc_regclass_gpr);
+
+           uint8_t r = RS->get_register_number();
+           uint32_t offset = 0;
+
+           while (r <= 31)
+              {
+                writeMemory<32>(policy.add(effectiveAddress,number<32>(offset)),policy.readGPR(r),policy.true_());
+                offset += 4;
+                ++r;
+              }
+           break;
+         }
+
+      case powerpc_lmw:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+
+           Word(32) effectiveAddress = readEffectiveAddress(operands[1]);
+
+           SgAsmPowerpcRegisterReferenceExpression* RT = isSgAsmPowerpcRegisterReferenceExpression(operands[0]);
+           ROSE_ASSERT(RT != NULL);
+           ROSE_ASSERT(RT->get_register_class() == powerpc_regclass_gpr);
+
+           uint8_t r = RT->get_register_number();
+           uint32_t offset = 0;
+
+           while (r <= 31)
+              {
+                policy.writeGPR(r, readMemory<32>(policy.add(effectiveAddress,number<32>(offset)),policy.true_()));
+                offset += 4;
+                ++r;
+              }
+           break;
+         }
+
+      case powerpc_cntlzw:
+         {
+           ROSE_ASSERT(operands.size() == 2);
+           Word(32) RS = read32(operands[1]);
+
+        // Using xor to do the subtract from 31
+           Word(32) result = policy.ite(policy.equalToZero(RS),number<32>(32),policy.xor_(policy.mostSignificantSetBit(RS),number<32>(31)));
+
+           write32(operands[0],result);
            break;
          }
 

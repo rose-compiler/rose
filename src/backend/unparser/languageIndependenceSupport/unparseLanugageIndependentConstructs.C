@@ -527,6 +527,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                case V_SgNullStatement:     unparseNullStatement(stmt, info); break;
 
                default:
+                 // DQ (11/4/2008): This is a bug for the case of a SgFortranDo statement, unclear what to do about this.
                  // Call the derived class implementation for C, C++, or Fortran specific language unparsing.
                     unparseLanguageSpecificStatement(stmt,info);
                     break;

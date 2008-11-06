@@ -435,6 +435,13 @@ typedef SgRenamePairPtrList*              SgRenamePairPtrListPtr;
 typedef Rose_STL_Container<SgInterfaceBody*> SgInterfaceBodyPtrList;
 typedef SgInterfaceBodyPtrList*              SgInterfaceBodyPtrListPtr;
 
+// DQ (11/5/2008): Addes as part of general Dwarf support in the AST for binary executables.
+typedef Rose_STL_Container<SgAsmDwarfLine*> SgAsmDwarfLinePtrList;
+typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
+
+typedef Rose_STL_Container<SgAsmDwarfMacro*> SgAsmDwarfMacroPtrList;
+typedef SgAsmDwarfMacroPtrList*              SgAsmDwarfMacroPtrListPtr;
+
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:

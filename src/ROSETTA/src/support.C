@@ -1017,6 +1017,12 @@ Grammar::setUpSupport ()
      BinaryFile.setDataPrototype         ( "SgAsmFile*", "binaryFile", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/5/2008): This should maybe be added to the SgAsmFile instead of the SgBinaryFile, if so 
+  // we will move it.  For now we can't add it to SgAsmFile becuase we could not traverse both a 
+  // list and a data member in the definition of an AST traversal.
+     BinaryFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
      File.setDataPrototype         ( "bool", "read_executable_file_format_only", "= false",

@@ -34,7 +34,7 @@ libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
      AST_BIN_Traversal.C
 
 
-BUILT_SOURCES = x86InstructionEnumPrinter.C armInstructionEnumPrinter.C
+BUILT_SOURCES = x86InstructionEnumPrinter.C armInstructionEnumPrinter.C powerpcInstructionEnumPrinter.C
 
 CLEANFILES = $(BUILT_SOURCES)
 

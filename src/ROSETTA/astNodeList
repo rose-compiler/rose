@@ -511,5 +511,10 @@ SgAsmPEStringSection
 SgRenameSymbol
 SgAsmPowerpcInstruction
 SgAsmPowerpcRegisterReferenceExpression
-
+SgAsmDwarfInformation
+SgAsmDwarfCompilationUnit
+SgAsmDwarfMacro
+SgAsmDwarfMacroList
+SgAsmDwarfLine
+SgAsmDwarfLineList
 
