@@ -1013,7 +1013,7 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
         p_iat->dump(f, p, -1);
 }
 
-/* Constructor */
+/* Construct an Import Lookup Table Entry or a Lookup Address Table Entry */
 void
 SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
 {
@@ -1057,7 +1057,7 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
     }
 }
 
-/* Print debugging info */
+/* Print debugging info for an Import Lookup Table Entry or an Import Address Table Entry */
 void
 SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
@@ -1095,9 +1095,9 @@ SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 void
 SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idir_idx, bool is_iat)
 {
-    ROSE_ASSERT(p_ilt_entries==NULL);
-    p_ilt_entries = new SgAsmPEImportILTEntryList();
-    p_ilt_entries->set_parent(this);
+    ROSE_ASSERT(p_entries==NULL);
+    p_entries = new SgAsmPEImportILTEntryList();
+    p_entries->set_parent(this);
     p_is_iat = is_iat;
     const char *tname = is_iat ? "Import Address Table" : "Import Lookup Table";
 
@@ -1148,18 +1148,18 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
     }
 }
 
-/* Adds another Import Lookup Table Entry to the Import Lookup Table */
+/* Adds another Import Lookup Table Entry or Import Address Table Entry to the Import Lookup Table */
 void
 SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 {
-    ROSE_ASSERT(p_ilt_entries!=NULL);
+    ROSE_ASSERT(p_entries!=NULL);
     ROSE_ASSERT(ilt_entry);
-    p_ilt_entries->get_vector().push_back(ilt_entry);
-    ROSE_ASSERT(p_ilt_entries->get_vector().size()>0);
+    p_entries->get_vector().push_back(ilt_entry);
+    ROSE_ASSERT(p_entries->get_vector().size()>0);
     ilt_entry->set_parent(this);
 }
 
-/* Print some debugging info */
+/* Print some debugging info for an Import Lookup Table or Import Address Table */
 void
 SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
@@ -1173,9 +1173,9 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
-    fprintf(f, "%s%-*s = %zu\n", p, w, "nentries", p_ilt_entries->get_vector().size());
-    for (size_t i=0; i<p_ilt_entries->get_vector().size(); i++)
-        p_ilt_entries->get_vector()[i]->dump(f, p, i);
+    fprintf(f, "%s%-*s = %zu\n", p, w, "nentries", p_entries->get_vector().size());
+    for (size_t i=0; i<p_entries->get_vector().size(); i++)
+        p_entries->get_vector()[i]->dump(f, p, i);
 }
 
 /* Constructor */

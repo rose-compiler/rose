@@ -1991,6 +1991,7 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 	// PE -> Import Table -> Import Address Table
 	public:
 		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx, bool is_iat=false)
+			: p_entries(NULL)
 			{ctor(isec, table_rva, idir_idx, is_iat);}
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);

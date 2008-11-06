@@ -954,7 +954,7 @@ Grammar::setUpBinaryInstructions ()
      AsmPEImportLookupTable.setFunctionPrototype("HEADER_PE_IMPORT_LOOKUP_TABLE", "../Grammar/BinaryInstruction.code");
      AsmPEImportLookupTable.setDataPrototype("bool", "is_iat", "= false",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportLookupTable.setDataPrototype("SgAsmPEImportILTEntryList*","ilt_entries","= NULL",
+     AsmPEImportLookupTable.setDataPrototype("SgAsmPEImportILTEntryList*","entries","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
