@@ -1946,6 +1946,65 @@ HEADER_PE_SECTION_START
 
 HEADER_PE_SECTION_END
 
+
+
+HEADER_PE_IMPORT_DIRECTORY_START
+	public:
+		struct PEImportDirectory_disk {
+			uint32_t ilt_rva;		/* 0x00 Import Lookup Table RVA */
+			uint32_t time;			/* 0x04 Zero until the image is bound, then time stamp of the DLL */
+			uint32_t forwarder_chain;	/* 0x08 Index of the first forwarder chain */
+			uint32_t dll_name_rva;    	/* 0x0c address of NUL-terminated DLL name */
+			uint32_t iat_rva;		/* 0x10 Import Address Table (Thunk Table) RVA */
+		} __attribute__((packed));		/* 0x14 */
+
+		SgAsmPEImportDirectory(SgAsmPEFileHeader *fhdr, const SgAsmPEImportDirectory::PEImportDirectory_disk *disk)
+			{ctor(fhdr,disk);}
+		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmPEFileHeader *fhdr, const SgAsmPEImportDirectory::PEImportDirectory_disk*);
+HEADER_PE_IMPORT_DIRECTORY_END
+
+
+
+HEADER_PE_IMPORT_ILT_ENTRY_START
+	// PE -> Import Table -> Import Lookup Table -> Entry
+	public:
+		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
+			{ctor(isec,entry_word);}
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmPEImportSection*, uint64_t);
+HEADER_PE_IMPORT_ILT_ENTRY_END
+
+
+
+HEADER_PE_IMPORT_LOOKUP_TABLE_START
+	// PE -> Import Table -> Import Lookup Table
+	public:
+		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx)
+			{ctor(isec, table_rva, idir_idx);}
+		void add_ilt_entry(SgAsmPEImportILTEntry*);
+		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
+	private:
+		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx);
+HEADER_PE_IMPORT_LOOKUP_TABLE_END
+
+
+
+HEADER_PE_IMPORT_HNT_ENTRY_START
+	// PE -> Import Table -> Hint/Name Table -> Entry
+	public:
+		SgAsmPEImportHNTEntry(rose_rva_t offset)
+			{ctor(offset);}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+	private:
+		void ctor(rose_rva_t offset);
+HEADER_PE_IMPORT_HNT_ENTRY_END
+
+
+
 HEADER_PE_IMPORT_SECTION_START
 	public:
 		SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
@@ -1953,7 +2012,7 @@ HEADER_PE_IMPORT_SECTION_START
 			{ctor(offset, size, mapped_rva);}
 		//virtual void unparse(FILE*);  FIXME: Temporarily commented out (see implementation comments)
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
-		void add_dll(SgAsmPEDLL *d);
+		void add_import_directory(SgAsmPEImportDirectory*);
 	private:
 		void ctor(addr_t offset, addr_t size, addr_t mapped_rva);
 HEADER_PE_IMPORT_SECTION_END
@@ -2065,59 +2124,6 @@ HEADER_PE_COFF_SYMBOL_TABLE_START
 
 HEADER_PE_COFF_SYMBOL_TABLE_END
 
-HEADER_PE_IMPORT_HINT_NAME_START
-     public:
-       /* Hint/name pairs */
-          struct PEImportHintName_disk {
-               uint16_t            hint;  /* Possible index into lib's export name pointer table */
-            /* NUL-terminated name follows */
-            /* Optional byte to pad struct to an even number of bytes */
-             };
-
-          SgAsmPEImportHintName(SgAsmGenericSection*, addr_t offset);
-       // virtual ~PEImportHintName() {};
-
-          void unparse(FILE *f, SgAsmGenericSection*, addr_t spos); /*not the standard unparse() function*/
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-       /* Accessors for protected/private data members */
-       // void set_name(std::string name) {this->name=name;}
-       // std::string get_name() {return name;}
-
-     private:
-          void ctor(SgAsmGenericSection*, addr_t offset);
-       // unsigned hint;
-       // std::string name;
-       // unsigned char padding;
-
-HEADER_PE_IMPORT_HINT_NAME_END
-
-HEADER_PE_IMPORT_DIRECTORY_START
-
-     public:
-          struct PEImportDirectory_disk {
-               uint32_t            hintnames_rva;   /* address (RVA) of array of addresses (RVAs) of hint/name pairs */
-               uint32_t            time;
-               uint32_t            forwarder_chain;
-               uint32_t            dll_name_rva;    /* address of NUL-terminated library name */
-               uint32_t            bindings_rva;    /* address (RVA) of array of object addresses after binding to DLL */
-             } __attribute__((packed));
-
-          SgAsmPEImportDirectory(const SgAsmPEImportDirectory::PEImportDirectory_disk *disk);
-       // virtual ~PEImportDirectory() {}
-
-          void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-       /* Native versions of the fields in PEImportDirectory_disk */
-       // addr_t              hintnames_rva, bindings_rva, dll_name_rva;
-       // time_t              time;
-       // unsigned            forwarder_chain;
-
-     private:
-          void ctor(const SgAsmPEImportDirectory::PEImportDirectory_disk*);
-
-HEADER_PE_IMPORT_DIRECTORY_END
 
 HEADER_PE_EXTENDED_DOS_HEADER_START
 
@@ -2217,20 +2223,20 @@ HEADER_PE_DLL_START
 
           virtual void dump(FILE*, const char *prefix, ssize_t idx);
           void add_hintname_rva(addr_t a);
-          void add_hintname(SgAsmPEImportHintName *hn);
+          void add_hintname(SgAsmPEImportHNTEntry *hn);
           void add_binding(addr_t a);
 
        /* Accessors for protected/private data members */
        // PEImportDirectory *get_idir() {return idir;}
        // void set_idir(PEImportDirectory *d) {idir=d;}
        // const std::vector<addr_t>& get_hintname_rvas() const {return hintname_rvas;}
-       // const std::vector<PEImportHintName*>& get_hintnames() const {return hintnames;}
+       // const std::vector<PEImportHNTEntry*>& get_hintnames() const {return hintnames;}
        // const std::vector<addr_t>& get_bindings() const {return bindings;}
 
   // private:
        // PEImportDirectory *idir;
        // std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
-       // std::vector<PEImportHintName*> hintnames;   /* The hint/name pairs */
+       // std::vector<PEImportHNTEntry*> hintnames;   /* The hint/name pairs */
        // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
 	  void ctor();
 HEADER_PE_DLL_END
@@ -4502,20 +4508,9 @@ SgAsmCoffSymbolTable::SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
 SOURCE_PE_COFF_SYMBOL_TABLE_END
 
 SOURCE_PE_IMPORT_HINT_NAME_START
-SgAsmPEImportHintName::SgAsmPEImportHintName(SgAsmGenericSection *section, addr_t offset)
-   : p_hint(0), p_padding('\0')
-   {
-     ctor(section, offset);
-   }
-
 SOURCE_PE_IMPORT_HINT_NAME_END
 
 SOURCE_PE_IMPORT_DIRECTORY_START
-SgAsmPEImportDirectory::SgAsmPEImportDirectory(const SgAsmPEImportDirectory::PEImportDirectory_disk *disk)
-   {
-     ctor(disk);
-   }
-
 SOURCE_PE_IMPORT_DIRECTORY_END
 
 SOURCE_PE_EXTENDED_DOS_HEADER_START
@@ -4558,7 +4553,7 @@ SgAsmPEDLL::add_hintname_rva(addr_t a)
    }
 
 void
-SgAsmPEDLL::add_hintname(SgAsmPEImportHintName *hn)
+SgAsmPEDLL::add_hintname(SgAsmPEImportHNTEntry *hn)
    {
      ROSE_ASSERT(p_hintnames != NULL);
      p_hintnames->get_hintnames().push_back(hn);

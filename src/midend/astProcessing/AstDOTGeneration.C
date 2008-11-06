@@ -189,11 +189,13 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                name = genericString->get_string();
              }
 
-          SgAsmPEImportHintName* peImportHintName = isSgAsmPEImportHintName(node);
-          if (peImportHintName != NULL)
+          SgAsmPEImportHNTEntry* peImportHNTEntry = isSgAsmPEImportHNTEntry(node);
+          if (peImportHNTEntry != NULL)
              {
-            // This does not use a SgAsmGenericString, at least not yet!
-               name = peImportHintName->get_name();
+               SgAsmGenericString* genericString = peImportHNTEntry->get_name();
+               ROSE_ASSERT(genericString != NULL);
+
+               name = genericString->get_string();
              }
 
           SgAsmDwarfLine* asmDwarfLine = isSgAsmDwarfLine(node);
