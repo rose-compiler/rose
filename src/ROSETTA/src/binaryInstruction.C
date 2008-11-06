@@ -1707,7 +1707,7 @@ Grammar::setUpBinaryInstructions ()
      AsmGenericDLL.setFunctionPrototype ( "HEADER_GENERIC_DLL", "../Grammar/BinaryInstruction.code");
      AsmGenericDLL.setDataPrototype("SgAsmGenericString*","name","= 0",
                             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
-     AsmGenericDLL.setDataPrototype("SgStringList","funcs","",
+     AsmGenericDLL.setDataPrototype("SgStringList","symbols","",
                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
 
