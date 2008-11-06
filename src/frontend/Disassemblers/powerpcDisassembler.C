@@ -13,6 +13,17 @@ using namespace SageBuilderAsm;
 #define DEBUG_OPCODES 0
 #define DEBUG_BRANCH_LOGIC 0
 
+// These are macros to make them look like constants while they are really
+// function calls
+#define BYTET (SgAsmTypeByte::createType())
+#define WORDT (SgAsmTypeWord::createType())
+#define DWORDT (SgAsmTypeDoubleWord::createType())
+#define QWORDT (SgAsmTypeQuadWord::createType())
+#define FLOATT (SgAsmTypeSingleFloat::createType())
+#define DOUBLET (SgAsmTypeDoubleFloat::createType())
+#define V2DWORDT (SgAsmTypeVector::createType(2, DWORDT))
+#define V2FLOATT (SgAsmTypeVector::createType(2, FLOATT))
+#define V2DOUBLET (SgAsmTypeVector::createType(2, DOUBLET))
 
 namespace PowerpcDisassembler
    {
@@ -75,27 +86,27 @@ namespace PowerpcDisassembler
           SgAsmValueExpression* SH_32bit() const {return makeByteValue(fld<16, 20>());}
           SgAsmValueExpression* SH_64bit() const {return makeByteValue(fld<16, 20>() + fld<30, 30>() * 32);} // FIXME check
           SgAsmValueExpression* SI() const {return D();}
-          SgAsmPowerpcRegisterReferenceExpression* SPR() const {return makeRegister(powerpc_regclass_spr, fld<16, 20>() * 32 + fld<11, 15>());} // FIXME check
+          SgAsmPowerpcRegisterReferenceExpression* SPR() const {return makeRegister(powerpc_regclass_spr, fld<16, 20>() * 32 + fld<11, 15>());}
           SgAsmPowerpcRegisterReferenceExpression* SR() const {return makeRegister(powerpc_regclass_sr, fld<12, 15>());}
-          SgAsmPowerpcRegisterReferenceExpression* TBR() const {return makeRegister(powerpc_regclass_tbr, fld<16, 20>() * 32 + fld<11, 15>());} // FIXME check
+          SgAsmPowerpcRegisterReferenceExpression* TBR() const {return makeRegister(powerpc_regclass_tbr, fld<16, 20>() * 32 + fld<11, 15>());}
           SgAsmValueExpression* TH() const {return makeByteValue(fld<9, 10>());}
           SgAsmValueExpression* TO() const {return makeByteValue(fld<6, 10>());}
           SgAsmValueExpression* U() const {return makeByteValue(fld<16, 19>());}
           SgAsmValueExpression* UI() const {return makeQWordValue(fld<16, 31>());}
 
-          SgAsmMemoryReferenceExpression* memref() const {
-            return makeMemoryReference(makeAdd(RA_or_zero(), D()));
+          SgAsmMemoryReferenceExpression* memref(SgAsmType* t) const {
+            return makeMemoryReference(makeAdd(RA_or_zero(), D()), NULL, t);
           }
-          SgAsmMemoryReferenceExpression* memrefx() const {
-            return makeMemoryReference(makeAdd(RA_or_zero(), RB()));
+          SgAsmMemoryReferenceExpression* memrefx(SgAsmType* t) const {
+            return makeMemoryReference(makeAdd(RA_or_zero(), RB()), NULL, t);
           }
-          SgAsmMemoryReferenceExpression* memrefu() const {
+          SgAsmMemoryReferenceExpression* memrefu(SgAsmType* t) const {
             if (fld<11, 15>() == 0) throw BadInstruction();
-            return makeMemoryReference(makeAdd(RA(), D()));
+            return makeMemoryReference(makeAdd(RA(), D()), NULL, t);
           }
-          SgAsmMemoryReferenceExpression* memrefux() const {
+          SgAsmMemoryReferenceExpression* memrefux(SgAsmType* t) const {
             if (fld<11, 15>() == 0) throw BadInstruction();
-            return makeMemoryReference(makeAdd(RA(), RB()));
+            return makeMemoryReference(makeAdd(RA(), RB()), NULL, t);
           }
 
        // There are 15 different forms of PowerPC instructions, but all are 32-bit (fixed length instruction set).
@@ -323,30 +334,30 @@ PowerpcDisassembler::SingleInstructionDisassembler::disassemble()
        // 31: includes X form, XO form, XFX form, and XS form
           case 0x1F: { instruction = decode_X_formInstruction_1F(); break; }
 
-          case 0x20: instruction = MAKE_INSN2(lwz, RT(), memref()); break;
-          case 0x21: instruction = MAKE_INSN2(lwzu, RT(), memrefu()); break;
-          case 0x22: instruction = MAKE_INSN2(lbz, RT(), memref()); break;
-          case 0x23: instruction = MAKE_INSN2(lbzu, RT(), memrefu()); break;
-          case 0x24: instruction = MAKE_INSN2(stw, RS(), memref()); break;
-          case 0x25: instruction = MAKE_INSN2(stwu, RS(), memrefu()); break;
-          case 0x26: instruction = MAKE_INSN2(stb, RS(), memref()); break;
-          case 0x27: instruction = MAKE_INSN2(stbu, RS(), memrefu()); break;
-          case 0x28: instruction = MAKE_INSN2(lhz, RT(), memref()); break;
-          case 0x29: instruction = MAKE_INSN2(lhzu, RT(), memrefu()); break;
-          case 0x2A: instruction = MAKE_INSN2(lha, RT(), memref()); break;
-          case 0x2B: instruction = MAKE_INSN2(lhau, RT(), memrefu()); break;
-          case 0x2C: instruction = MAKE_INSN2(sth, RS(), memref()); break;
-          case 0x2D: instruction = MAKE_INSN2(sthu, RS(), memrefu()); break;
-          case 0x2E: instruction = MAKE_INSN2(lmw, RT(), memref()); break;
-          case 0x2F: instruction = MAKE_INSN2(stmw, RS(), memref()); break;
-          case 0x30: instruction = MAKE_INSN2(lfs, FRT(), memref()); break;
-          case 0x31: instruction = MAKE_INSN2(lfsu, FRT(), memrefu()); break;
-          case 0x32: instruction = MAKE_INSN2(lfd, FRT(), memref()); break;
-          case 0x33: instruction = MAKE_INSN2(lfdu, FRT(), memrefu()); break;
-          case 0x34: instruction = MAKE_INSN2(stfs, FRS(), memref()); break;
-          case 0x35: instruction = MAKE_INSN2(stfsu, FRS(), memrefu()); break;
-          case 0x36: instruction = MAKE_INSN2(stfd, FRS(), memref()); break;
-          case 0x37: instruction = MAKE_INSN2(stfdu, FRS(), memrefu()); break;
+          case 0x20: instruction = MAKE_INSN2(lwz, RT(), memref(DWORDT)); break;
+          case 0x21: instruction = MAKE_INSN2(lwzu, RT(), memrefu(DWORDT)); break;
+          case 0x22: instruction = MAKE_INSN2(lbz, RT(), memref(BYTET)); break;
+          case 0x23: instruction = MAKE_INSN2(lbzu, RT(), memrefu(BYTET)); break;
+          case 0x24: instruction = MAKE_INSN2(stw, RS(), memref(DWORDT)); break;
+          case 0x25: instruction = MAKE_INSN2(stwu, RS(), memrefu(DWORDT)); break;
+          case 0x26: instruction = MAKE_INSN2(stb, RS(), memref(BYTET)); break;
+          case 0x27: instruction = MAKE_INSN2(stbu, RS(), memrefu(BYTET)); break;
+          case 0x28: instruction = MAKE_INSN2(lhz, RT(), memref(WORDT)); break;
+          case 0x29: instruction = MAKE_INSN2(lhzu, RT(), memrefu(WORDT)); break;
+          case 0x2A: instruction = MAKE_INSN2(lha, RT(), memref(WORDT)); break;
+          case 0x2B: instruction = MAKE_INSN2(lhau, RT(), memrefu(WORDT)); break;
+          case 0x2C: instruction = MAKE_INSN2(sth, RS(), memref(WORDT)); break;
+          case 0x2D: instruction = MAKE_INSN2(sthu, RS(), memrefu(WORDT)); break;
+          case 0x2E: instruction = MAKE_INSN2(lmw, RT(), memref(DWORDT)); break;
+          case 0x2F: instruction = MAKE_INSN2(stmw, RS(), memref(DWORDT)); break;
+          case 0x30: instruction = MAKE_INSN2(lfs, FRT(), memref(FLOATT)); break;
+          case 0x31: instruction = MAKE_INSN2(lfsu, FRT(), memrefu(FLOATT)); break;
+          case 0x32: instruction = MAKE_INSN2(lfd, FRT(), memref(DOUBLET)); break;
+          case 0x33: instruction = MAKE_INSN2(lfdu, FRT(), memrefu(DOUBLET)); break;
+          case 0x34: instruction = MAKE_INSN2(stfs, FRS(), memref(FLOATT)); break;
+          case 0x35: instruction = MAKE_INSN2(stfsu, FRS(), memrefu(FLOATT)); break;
+          case 0x36: instruction = MAKE_INSN2(stfd, FRS(), memref(DOUBLET)); break;
+          case 0x37: instruction = MAKE_INSN2(stfdu, FRS(), memrefu(DOUBLET)); break;
        // 56
           case 0x38: throw BadInstruction(); break;
           case 0x39: throw BadInstruction(); break;
@@ -600,129 +611,129 @@ PowerpcDisassembler::SingleInstructionDisassembler::decode_X_formInstruction_1F(
           case 0x009: instruction = MAKE_INSN3_RC(mulhdu, RT(), RA(), RB()); break;
           case 0x00A: instruction = MAKE_INSN3_RC(addc, RT(), RA(), RB()); break;
           case 0x00B: instruction = MAKE_INSN3_RC(mulhwu, RT(), RA(), RB()); break;
-          case 0x014: instruction = MAKE_INSN2(lwarx, RT(), memrefx()); break;
-          case 0x015: instruction = MAKE_INSN2(ldx, RT(), memrefx()); break;
-          case 0x017: instruction = MAKE_INSN2(lwzx, RT(), memrefx()); break;
+          case 0x014: instruction = MAKE_INSN2(lwarx, RT(), memrefx(DWORDT)); break;
+          case 0x015: instruction = MAKE_INSN2(ldx, RT(), memrefx(QWORDT)); break;
+          case 0x017: instruction = MAKE_INSN2(lwzx, RT(), memrefx(DWORDT)); break;
           case 0x018: instruction = MAKE_INSN3_RC(slw, RA(), RS(), RB()); break;
           case 0x01A: instruction = MAKE_INSN2_RC(cntlzw, RA(), RS()); break;
           case 0x01B: instruction = MAKE_INSN3_RC(sld, RA(), RS(), RB()); break;
           case 0x01C: instruction = MAKE_INSN3_RC(and, RA(), RS(), RB()); break;
           case 0x020: instruction = MAKE_INSN4(cmpl, BF_cr(), L_10(), RA(), RB()); break;
           case 0x028: instruction = MAKE_INSN3_RC(subf, RT(), RA(), RB()); break;
-          case 0x035: instruction = MAKE_INSN2(ldux, RT(), memrefux()); break;
-          case 0x037: instruction = MAKE_INSN2(lwzux, RT(), memrefux()); break;
+          case 0x035: instruction = MAKE_INSN2(ldux, RT(), memrefux(QWORDT)); break;
+          case 0x037: instruction = MAKE_INSN2(lwzux, RT(), memrefux(DWORDT)); break;
           case 0x03C: instruction = MAKE_INSN3_RC(andc, RA(), RS(), RB()); break;
           case 0x044: instruction = MAKE_INSN3(td, TO(), RA(), RB()); break;
           case 0x049: instruction = MAKE_INSN3_RC(mulhd, RT(), RA(), RB()); break;
           case 0x04B: instruction = MAKE_INSN3_RC(mulhw, RT(), RA(), RB()); break;
           case 0x053: instruction = MAKE_INSN1(mfmsr, RT()); break;
-          case 0x057: instruction = MAKE_INSN2(lbzx, RT(), memrefx()); break;
+          case 0x057: instruction = MAKE_INSN2(lbzx, RT(), memrefx(BYTET)); break;
           case 0x068: instruction = MAKE_INSN2_RC(neg, RT(), RA()); break;
-          case 0x077: instruction = MAKE_INSN2(lbzux, RT(), memrefux()); break;
+          case 0x077: instruction = MAKE_INSN2(lbzux, RT(), memrefux(BYTET)); break;
           case 0x07C: instruction = MAKE_INSN3_RC(nor, RA(), RS(), RB()); break;
           case 0x088: instruction = MAKE_INSN3_RC(adde, RT(), RA(), RB()); break;
           case 0x08A: instruction = MAKE_INSN3_RC(subfe, RT(), RA(), RB()); break;
-          case 0x08E: instruction = MAKE_INSN2(lfssx, FRT(), memrefx()); break;
-          case 0x095: instruction = MAKE_INSN2(stdx, RS(), memrefx()); break;
-          case 0x096: instruction = MAKE_INSN2(stwcx_record, RS(), memrefx()); break;
-          case 0x097: instruction = MAKE_INSN2(stwx, RS(), memrefx()); break;
-          case 0x0AE: instruction = MAKE_INSN2(lfssux, FRT(), memrefux()); break;
-          case 0x0B5: instruction = MAKE_INSN2(stdux, RS(), memrefux()); break;
-          case 0x0B7: instruction = MAKE_INSN2(stwux, RS(), memrefux()); break;
+          case 0x08E: instruction = MAKE_INSN2(lfssx, FRT(), memrefx(FLOATT)); break;
+          case 0x095: instruction = MAKE_INSN2(stdx, RS(), memrefx(QWORDT)); break;
+          case 0x096: instruction = MAKE_INSN2(stwcx_record, RS(), memrefx(DWORDT)); break;
+          case 0x097: instruction = MAKE_INSN2(stwx, RS(), memrefx(DWORDT)); break;
+          case 0x0AE: instruction = MAKE_INSN2(lfssux, FRT(), memrefux(FLOATT)); break;
+          case 0x0B5: instruction = MAKE_INSN2(stdux, RS(), memrefux(QWORDT)); break;
+          case 0x0B7: instruction = MAKE_INSN2(stwux, RS(), memrefux(DWORDT)); break;
           case 0x0C8: instruction = MAKE_INSN2_RC(subfze, RT(), RA()); break;
           case 0x0CA: instruction = MAKE_INSN2_RC(addze, RT(), RA()); break;
-          case 0x0CE: instruction = MAKE_INSN2(lfsdx, FRT(), memrefx()); break;
-          case 0x0D6: instruction = MAKE_INSN2(stdcx_record, RS(), memrefx()); break;
-          case 0x0D7: instruction = MAKE_INSN2(stbx, RS(), memrefx()); break;
+          case 0x0CE: instruction = MAKE_INSN2(lfsdx, FRT(), memrefx(DOUBLET)); break;
+          case 0x0D6: instruction = MAKE_INSN2(stdcx_record, RS(), memrefx(QWORDT)); break;
+          case 0x0D7: instruction = MAKE_INSN2(stbx, RS(), memrefx(BYTET)); break;
           case 0x0E8: instruction = MAKE_INSN2_RC(subfme, RT(), RA()); break;
           case 0x0EA: instruction = MAKE_INSN2_RC(addme, RT(), RA()); break;
           case 0x0EB: instruction = MAKE_INSN3_RC(mullw, RT(), RA(), RB()); break;
-          case 0x0EE: instruction = MAKE_INSN2(lfsdux, FRT(), memrefux()); break;
-          case 0x0F7: instruction = MAKE_INSN2(stbux, RS(), memrefux()); break;
+          case 0x0EE: instruction = MAKE_INSN2(lfsdux, FRT(), memrefux(DOUBLET)); break;
+          case 0x0F7: instruction = MAKE_INSN2(stbux, RS(), memrefux(BYTET)); break;
           case 0x10A: instruction = MAKE_INSN3_RC(add, RT(), RA(), RB()); break;
-          case 0x10E: instruction = MAKE_INSN2(lfxsx, FRT(), memrefx()); break;
-          case 0x116: instruction = MAKE_INSN1(dcbt, memrefx()); break;
-          case 0x117: instruction = MAKE_INSN2(lhzx, RT(), memrefx()); break;
+          case 0x10E: instruction = MAKE_INSN2(lfxsx, FRT(), memrefx(V2FLOATT)); break;
+          case 0x116: instruction = MAKE_INSN1(dcbt, memrefx(BYTET)); break;
+          case 0x117: instruction = MAKE_INSN2(lhzx, RT(), memrefx(WORDT)); break;
           case 0x11C: instruction = MAKE_INSN3_RC(eqv, RA(), RS(), RB()); break;
-          case 0x12E: instruction = MAKE_INSN2(lfxsux, FRT(), memrefux()); break;
-          case 0x137: instruction = MAKE_INSN2(lhzux, RT(), memrefux()); break;
+          case 0x12E: instruction = MAKE_INSN2(lfxsux, FRT(), memrefux(V2FLOATT)); break;
+          case 0x137: instruction = MAKE_INSN2(lhzux, RT(), memrefux(WORDT)); break;
           case 0x13C: instruction = MAKE_INSN3_RC(xor, RA(), RS(), RB()); break;
-          case 0x14E: instruction = MAKE_INSN2(lfxdx, FRT(), memrefx()); break;
+          case 0x14E: instruction = MAKE_INSN2(lfxdx, FRT(), memrefx(V2DOUBLET)); break;
           case 0x153: instruction = MAKE_INSN2(mfspr, RT(), SPR()); break;
-          case 0x155: instruction = MAKE_INSN2(lwax, RT(), memrefx()); break;
-          case 0x157: instruction = MAKE_INSN2(lhax, RT(), memrefx()); break;
-          case 0x16E: instruction = MAKE_INSN2(lfxdux, FRT(), memrefux()); break;
-          case 0x175: instruction = MAKE_INSN2(lwaux, RT(), memrefux()); break;
-          case 0x177: instruction = MAKE_INSN2(lhaux, RT(), memrefux()); break;
-          case 0x18E: instruction = MAKE_INSN2(lfpsx, FRT(), memrefx()); break;
-          case 0x197: instruction = MAKE_INSN2(sthx, RS(), memrefx()); break;
+          case 0x155: instruction = MAKE_INSN2(lwax, RT(), memrefx(DWORDT)); break;
+          case 0x157: instruction = MAKE_INSN2(lhax, RT(), memrefx(WORDT)); break;
+          case 0x16E: instruction = MAKE_INSN2(lfxdux, FRT(), memrefux(V2DOUBLET)); break;
+          case 0x175: instruction = MAKE_INSN2(lwaux, RT(), memrefux(DWORDT)); break;
+          case 0x177: instruction = MAKE_INSN2(lhaux, RT(), memrefux(WORDT)); break;
+          case 0x18E: instruction = MAKE_INSN2(lfpsx, FRT(), memrefx(V2FLOATT)); break;
+          case 0x197: instruction = MAKE_INSN2(sthx, RS(), memrefx(WORDT)); break;
           case 0x19C: instruction = MAKE_INSN3_RC(orc, RA(), RS(), RB()); break;
-          case 0x1AE: instruction = MAKE_INSN2(lfpsux, FRT(), memrefux()); break;
-          case 0x1B7: instruction = MAKE_INSN2(sthux, RS(), memrefux()); break;
+          case 0x1AE: instruction = MAKE_INSN2(lfpsux, FRT(), memrefux(V2FLOATT)); break;
+          case 0x1B7: instruction = MAKE_INSN2(sthux, RS(), memrefux(WORDT)); break;
           case 0x1BC: instruction = MAKE_INSN3_RC(or, RA(), RS(), RB()); break;
           case 0x1C9: instruction = MAKE_INSN3_RC(divdu, RT(), RA(), RB()); break;
           case 0x1CB: instruction = MAKE_INSN3_RC(divwu, RT(), RA(), RB()); break;
-          case 0x1CE: instruction = MAKE_INSN2(lfpdx, FRT(), memrefx()); break;
+          case 0x1CE: instruction = MAKE_INSN2(lfpdx, FRT(), memrefx(V2DOUBLET)); break;
           case 0x1D3: instruction = MAKE_INSN2(mtspr, RS(), SPR()); break;
           case 0x1DC: instruction = MAKE_INSN3_RC(nand, RA(), RS(), RB()); break;
           case 0x1E9: instruction = MAKE_INSN3_RC(divd, RT(), RA(), RB()); break;
           case 0x1EB: instruction = MAKE_INSN3_RC(divw, RT(), RA(), RB()); break;
-          case 0x1EE: instruction = MAKE_INSN2(lfpdux, FRT(), memrefux()); break;
+          case 0x1EE: instruction = MAKE_INSN2(lfpdux, FRT(), memrefux(V2DOUBLET)); break;
           case 0x208: instruction = MAKE_INSN3_RC(subfco, RT(), RA(), RB()); break;
           case 0x20A: instruction = MAKE_INSN3_RC(addco, RT(), RA(), RB()); break;
-          case 0x20E: instruction = MAKE_INSN2(stfpiwx, FRT(), memrefx()); break;
-          case 0x215: instruction = MAKE_INSN2(lswx, RT(), memrefx()); break;
-          case 0x216: instruction = MAKE_INSN2(lwbrx, RT(), memrefx()); break;
-          case 0x217: instruction = MAKE_INSN2(lfsx, FRT(), memrefx()); break;
+          case 0x20E: instruction = MAKE_INSN2(stfpiwx, FRT(), memrefx(V2DWORDT)); break;
+          case 0x215: instruction = MAKE_INSN2(lswx, RT(), memrefx(DWORDT)); break;
+          case 0x216: instruction = MAKE_INSN2(lwbrx, RT(), memrefx(DWORDT)); break;
+          case 0x217: instruction = MAKE_INSN2(lfsx, FRT(), memrefx(FLOATT)); break;
           case 0x218: instruction = MAKE_INSN3_RC(srw, RA(), RS(), RB()); break;
           case 0x21B: instruction = MAKE_INSN3_RC(srd, RA(), RS(), RB()); break;
           case 0x228: instruction = MAKE_INSN3_RC(subfo, RT(), RA(), RB()); break;
-          case 0x237: instruction = MAKE_INSN2(lfsux, FRT(), memrefux()); break;
-          case 0x255: instruction = MAKE_INSN2(lswx, RT(), memrefx()); break;
-          case 0x257: instruction = MAKE_INSN2(lfdx, FRT(), memrefx()); break;
+          case 0x237: instruction = MAKE_INSN2(lfsux, FRT(), memrefux(FLOATT)); break;
+          case 0x255: instruction = MAKE_INSN2(lswx, RT(), memrefx(DWORDT)); break;
+          case 0x257: instruction = MAKE_INSN2(lfdx, FRT(), memrefx(DOUBLET)); break;
           case 0x268: instruction = MAKE_INSN2_RC(nego, RT(), RA()); break;
           case 0x288: instruction = MAKE_INSN3_RC(addeo, RT(), RA(), RB()); break;
           case 0x28A: instruction = MAKE_INSN3_RC(subfeo, RT(), RA(), RB()); break;
-          case 0x28E: instruction = MAKE_INSN2(stfssx, FRT(), memrefx()); break;
-          case 0x295: instruction = MAKE_INSN2(stswx, RS(), memrefx()); break;
-          case 0x296: instruction = MAKE_INSN2(stwbrx, RS(), memrefx()); break;
-          case 0x2AE: instruction = MAKE_INSN2(stfssux, FRT(), memrefux()); break;
+          case 0x28E: instruction = MAKE_INSN2(stfssx, FRT(), memrefx(FLOATT)); break;
+          case 0x295: instruction = MAKE_INSN2(stswx, RS(), memrefx(DWORDT)); break;
+          case 0x296: instruction = MAKE_INSN2(stwbrx, RS(), memrefx(DWORDT)); break;
+          case 0x2AE: instruction = MAKE_INSN2(stfssux, FRT(), memrefux(FLOATT)); break;
           case 0x2C8: instruction = MAKE_INSN2_RC(subfzeo, RT(), RA()); break;
           case 0x2CA: instruction = MAKE_INSN2_RC(addzeo, RT(), RA()); break;
-          case 0x2CE: instruction = MAKE_INSN2(stfsdx, FRT(), memrefx()); break;
-          case 0x2D5: instruction = MAKE_INSN2(stswi, RS(), memrefx()); break;
-          case 0x2D7: instruction = MAKE_INSN2(stfdx, FRS(), memrefx()); break;
+          case 0x2CE: instruction = MAKE_INSN2(stfsdx, FRT(), memrefx(DOUBLET)); break;
+          case 0x2D5: instruction = MAKE_INSN2(stswi, RS(), memrefx(DWORDT)); break;
+          case 0x2D7: instruction = MAKE_INSN2(stfdx, FRS(), memrefx(DOUBLET)); break;
           case 0x2E8: instruction = MAKE_INSN2_RC(subfmeo, RT(), RA()); break;
           case 0x2EA: instruction = MAKE_INSN2_RC(addmeo, RT(), RA()); break;
           case 0x2EB: instruction = MAKE_INSN3_RC(mullwo, RT(), RA(), RB()); break;
-          case 0x2EE: instruction = MAKE_INSN2(stfsdux, FRT(), memrefux()); break;
-          case 0x2F7: instruction = MAKE_INSN2(stfdux, FRS(), memrefx()); break;
+          case 0x2EE: instruction = MAKE_INSN2(stfsdux, FRT(), memrefux(DOUBLET)); break;
+          case 0x2F7: instruction = MAKE_INSN2(stfdux, FRS(), memrefx(DOUBLET)); break;
           case 0x30A: instruction = MAKE_INSN3_RC(addo, RT(), RA(), RB()); break;
-          case 0x30E: instruction = MAKE_INSN2(stfxsx, FRT(), memrefx()); break;
-          case 0x316: instruction = MAKE_INSN2(lhbrx, RT(), memrefx()); break;
+          case 0x30E: instruction = MAKE_INSN2(stfxsx, FRT(), memrefx(V2FLOATT)); break;
+          case 0x316: instruction = MAKE_INSN2(lhbrx, RT(), memrefx(WORDT)); break;
           case 0x318: instruction = MAKE_INSN3_RC(sraw, RA(), RS(), RB()); break;
           case 0x31A: instruction = MAKE_INSN3_RC(srad, RA(), RS(), RB()); break;
-          case 0x32E: instruction = MAKE_INSN2(stfxsux, FRT(), memrefux()); break;
+          case 0x32E: instruction = MAKE_INSN2(stfxsux, FRT(), memrefux(V2FLOATT)); break;
           case 0x338: instruction = MAKE_INSN3_RC(srawi, RA(), RS(), SH_32bit()); break;
           case 0x33A: instruction = MAKE_INSN3_RC(sradi, RA(), RS(), SH_64bit()); break; // The last bit of the ext. opcode is part of SH
           case 0x33B: instruction = MAKE_INSN3_RC(sradi, RA(), RS(), SH_64bit()); break; // Same as previous insn
-          case 0x34E: instruction = MAKE_INSN2(stfxdx, FRT(), memrefx()); break;
+          case 0x34E: instruction = MAKE_INSN2(stfxdx, FRT(), memrefx(V2DOUBLET)); break;
           case 0x356: instruction = MAKE_INSN0(eieio); break;
-          case 0x36E: instruction = MAKE_INSN2(stfxdux, FRT(), memrefux()); break;
-          case 0x38E: instruction = MAKE_INSN2(stfpsx, FRT(), memrefx()); break;
-          case 0x396: instruction = MAKE_INSN2(sthbrx, RS(), memrefx()); break;
+          case 0x36E: instruction = MAKE_INSN2(stfxdux, FRT(), memrefux(V2DOUBLET)); break;
+          case 0x38E: instruction = MAKE_INSN2(stfpsx, FRT(), memrefx(V2FLOATT)); break;
+          case 0x396: instruction = MAKE_INSN2(sthbrx, RS(), memrefx(WORDT)); break;
           case 0x39A: instruction = MAKE_INSN2_RC(extsh, RA(), RS()); break;
-          case 0x3AE: instruction = MAKE_INSN2(stfpsux, FRT(), memrefux()); break;
+          case 0x3AE: instruction = MAKE_INSN2(stfpsux, FRT(), memrefux(V2FLOATT)); break;
           case 0x3BA: instruction = MAKE_INSN2_RC(extsb, RA(), RS()); break;
           case 0x3C9: instruction = MAKE_INSN3_RC(divduo, RT(), RA(), RB()); break;
           case 0x3CB: instruction = MAKE_INSN3_RC(divwuo, RT(), RA(), RB()); break;
-          case 0x3CE: instruction = MAKE_INSN2(stfpdx, FRT(), memrefx()); break;
-          case 0x3D7: instruction = MAKE_INSN2(stfiwx, FRS(), memrefx()); break;
+          case 0x3CE: instruction = MAKE_INSN2(stfpdx, FRT(), memrefx(V2DOUBLET)); break;
+          case 0x3D7: instruction = MAKE_INSN2(stfiwx, FRS(), memrefx(DWORDT)); break;
           case 0x3DA: instruction = MAKE_INSN2_RC(extsw, RA(), RS()); break;
           case 0x3E9: instruction = MAKE_INSN3_RC(divdo, RT(), RA(), RB()); break;
           case 0x3EB: instruction = MAKE_INSN3_RC(divwo, RT(), RA(), RB()); break;
-          case 0x3EE: instruction = MAKE_INSN2(stfpdux, FRT(), memrefux()); break;
-          case 0x3F6: instruction = MAKE_INSN1(dcbz, memrefx()); break;
+          case 0x3EE: instruction = MAKE_INSN2(stfpdux, FRT(), memrefux(V2DOUBLET)); break;
+          case 0x3F6: instruction = MAKE_INSN1(dcbz, memrefx(BYTET)); break;
 
         // FIXME: merge these into list
           case 0x13:
