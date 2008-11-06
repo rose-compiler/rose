@@ -68,7 +68,7 @@ string unparsePowerpcRegister(
   }
 }
 
-string unparsePowerpcExpression(SgAsmExpression* expr) {
+string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex) {
   string result = "";
   if (expr == NULL) return "BOGUS:NULL";
   switch (expr->variantT()) {
@@ -99,14 +99,17 @@ string unparsePowerpcExpression(SgAsmExpression* expr) {
       result = unparsePowerpcRegister(rr->get_register_class(), rr->get_register_number(), rr->get_conditionRegisterGranularity());
       break;
     }
-    case V_SgAsmByteValueExpression: result = StringUtility::intToHex(isSgAsmByteValueExpression(expr)->get_value());
-                                     break;
-    case V_SgAsmWordValueExpression: result = StringUtility::intToHex(isSgAsmWordValueExpression(expr)->get_value());
-                                     break;
-    case V_SgAsmDoubleWordValueExpression: result = StringUtility::intToHex(isSgAsmDoubleWordValueExpression(expr)->get_value());
-                                           break;
-    case V_SgAsmQuadWordValueExpression: result = StringUtility::intToHex(isSgAsmQuadWordValueExpression(expr)->get_value());
-                                         break;
+    case V_SgAsmByteValueExpression:
+    case V_SgAsmWordValueExpression:
+    case V_SgAsmDoubleWordValueExpression:
+    case V_SgAsmQuadWordValueExpression: {
+      if (useHex) {
+        result = StringUtility::intToHex(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+      } else {
+        result = StringUtility::numberToString((int64_t)SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+      }
+      break;
+    }
     default: {
       cerr << "Unhandled expression kind " << expr->class_name() << endl;
       ROSE_ASSERT (false);
@@ -126,7 +129,18 @@ string unparsePowerpcInstruction(SgAsmPowerpcInstruction* insn) {
   const SgAsmExpressionPtrList& operands = opList->get_operands();
   for (size_t i = 0; i < operands.size(); ++i) {
     if (i != 0) result += ", ";
-    result += unparsePowerpcExpression(operands[i]);
+    PowerpcInstructionKind kind = insn->get_kind();
+    bool isBranchTarget = (
+      ((kind == powerpc_b ||
+        kind == powerpc_bl ||
+        kind == powerpc_ba ||
+        kind == powerpc_bla) && i == 0) ||
+      ((kind == powerpc_bc ||
+        kind == powerpc_bcl ||
+        kind == powerpc_bca ||
+        kind == powerpc_bcla) && i == 2) ||
+      false);
+    result += unparsePowerpcExpression(operands[i], isBranchTarget);
   }
   return result;
 }

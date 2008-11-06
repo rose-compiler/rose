@@ -27,7 +27,7 @@ std::string unparsePowerpcRegister(
          PowerpcRegisterClass cl,
          int num,
          PowerpcConditionRegisterAccessGranularity gr);
-std::string unparsePowerpcExpression(SgAsmExpression* expr);
+std::string unparsePowerpcExpression(SgAsmExpression* expr, bool useHex = false);
 std::string unparsePowerpcInstruction(SgAsmPowerpcInstruction* insn);
 std::string unparsePowerpcInstructionWithAddress(SgAsmPowerpcInstruction* insn);
 
