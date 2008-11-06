@@ -24,11 +24,6 @@ unparseInstrFast(SgAsmInstruction* iA)
       string mne = iA->get_mnemonic();
       boost::to_lower(mne);
 
-      if( isSgAsmx86Instruction(iA) != NULL) 
-        normalizex86Mnemonic(mne);
-      else if( isSgAsmArmInstruction(iA) != NULL  )
-        normalizeArmMnemonic(mne);
-      
       value += mne;
       const SgAsmExpressionPtrList& operands = getOperands(iA);
       // Add to total for this variant

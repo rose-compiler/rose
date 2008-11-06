@@ -265,7 +265,12 @@ movss -> Movss
 addss -> Addss
 ucomiss -> Ucomiss
 andpd -> Andpd
-paddusb paddusw -> Paddus
-pcmpeqb pcmpeqw pcmpeqd -> Pcmpeq
-andnpd andnps -> Andnpd
-psubusb psubusw -> Psubus
+paddusb -> Paddusb
+paddusw -> Paddusw
+pcmpeqb -> Pcmpeqb
+pcmpeqw -> Pcmpeqw
+pcmpeqd -> Pcmpeqd
+andnpd -> Andnpd
+andnps -> Andnps
+psubusb -> Psubusb
+psubusw -> Psubusw
