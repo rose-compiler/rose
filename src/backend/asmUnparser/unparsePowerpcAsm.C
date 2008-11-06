@@ -83,7 +83,7 @@ string unparsePowerpcExpression(SgAsmExpression* expr) {
           SgAsmBinaryAdd* a = isSgAsmBinaryAdd(addr);
           string lhs = unparsePowerpcExpression(a->get_lhs());
           if (isSgAsmValueExpression(a->get_rhs())) {
-            result = boost::lexical_cast<string>(IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(isSgAsmValueExpression(a->get_rhs())))); // Sign-extend from 16 bits
+            result = boost::lexical_cast<string>((int64_t)IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(isSgAsmValueExpression(a->get_rhs())))); // Sign-extend from 16 bits
             result += "(" + lhs + ")";
           } else {
             result = lhs + ", " + unparsePowerpcExpression(a->get_rhs());
