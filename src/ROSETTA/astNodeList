@@ -462,13 +462,17 @@ SgAsmElfSymbol
 SgAsmElfSymbolList
 SgAsmElfSegmentTableEntryList
 SgAsmPEExtendedDOSHeader
+SgAsmPEImportILTEntry
+SgAsmPEImportILTEntryList
 SgAsmPEImportDirectory
+SgAsmPEImportDirectoryList
 SgAsmPEExportDirectory
 SgAsmPEExportEntry
 SgAsmPEExportEntryList
-SgAsmPEImportHintName
+SgAsmPEImportHNTEntry
+SgAsmPEImportLookupTable
 SgAsmPESectionTableEntry
-SgAsmPEImportHintNameList
+SgAsmPEImportHNTEntryList
 SgAsmPERVASizePair
 SgAsmPERVASizePairList
 SgAsmCoffSymbol
@@ -482,7 +486,6 @@ SgAsmLEEntryPoint
 SgAsmLESectionTableEntry
 SgAsmDOSFileHeader
 SgAsmExecutableFileFormat
-SgAsmPEDLLList
 SgStringKeyedBidirectionalGraph
 SgIntKeyedBidirectionalGraph
 SgDummyGraph
