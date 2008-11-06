@@ -930,25 +930,31 @@ Grammar::setUpBinaryInstructions ()
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("rose_rva_t","iat_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportDirectory.setDataPrototype("SgAsmPEImportLookupTable*", "iat", "= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
      AsmPEImportILTEntry.setFunctionPrototype("HEADER_PE_IMPORT_ILT_ENTRY", "../Grammar/BinaryInstruction.code");
-     AsmPEImportILTEntry.setDataPrototype("uint64_t","extra_bits","= 0",
+     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportILTEntry::ILTEntryType", "entry_type", "=ILT_ORDINAL", 
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("bool","is_ordinal","= true",
+     AsmPEImportILTEntry.setDataPrototype("unsigned","ordinal","= 0",                   /*if entry_type==ILT_ORDINAL*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("unsigned","ordinal","= 0",
+     AsmPEImportILTEntry.setDataPrototype("rose_rva_t","hnt_entry_rva","= 0",           /*if entry_type==ILT_HNT_ENTRY_RVA*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("rose_rva_t","hntable_rva","= 0",
+     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportHNTEntry*","hnt_entry","= 0",   /*if entry_type==ILT_HNT_ENTRY_RVA*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmPEImportILTEntry.setDataPrototype("SgAsmPEImportHNTEntry*","hnt_entry","= 0",
+     AsmPEImportILTEntry.setDataPrototype("rose_rva_t","bound_rva","= 0",               /*if entry_type==ILT_BOUND_RVA*/
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportILTEntry.setDataPrototype("uint64_t","extra_bits","= 0",                /*non-zero reserved bits, all entry types*/
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
 
      AsmPEImportLookupTable.setFunctionPrototype("HEADER_PE_IMPORT_LOOKUP_TABLE", "../Grammar/BinaryInstruction.code");
-     AsmPEImportLookupTable.setDataPrototype ("SgAsmPEImportILTEntryList*","ilt_entries","= NULL",
+     AsmPEImportLookupTable.setDataPrototype("bool", "is_iat", "= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmPEImportLookupTable.setDataPrototype("SgAsmPEImportILTEntryList*","ilt_entries","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
