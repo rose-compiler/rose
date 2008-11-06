@@ -1009,6 +1009,8 @@ SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx)
     fprintf(f, "%s%-*s = 0x%08x (%u)\n", p, w, "forwarder_chain", p_forwarder_chain, p_forwarder_chain);
     if (p_ilt)
         p_ilt->dump(f, p, -1);
+    if (p_iat)
+        p_iat->dump(f, p, -1);
 }
 
 /* Constructor */
@@ -1019,36 +1021,39 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
     ROSE_ASSERT(fhdr!=NULL);
     p_hnt_entry = NULL;
 
+    /* Initialize */
+    p_ordinal = 0;
+    p_hnt_entry_rva = 0;
+    p_hnt_entry = NULL;
+    p_extra_bits = 0;
+    p_bound_rva = 0;
+
+    /* Masks for different word sizes */
+    uint64_t ordmask;                                           /* if bit is set then ILT Entry is an Ordinal */
+    uint64_t hnrvamask = 0x7fffffff;                            /* Hint/Name RVA mask (both word sizes use 31 bits) */
     if (4==fhdr->get_word_size()) {
-        uint64_t ordmask = (uint64_t)1<<31;
-        if (ilt_word & ordmask) {
-            p_is_ordinal = true;
-            p_ordinal = ilt_word & 0xffff;
-            p_hntable_rva = 0;
-            p_extra_bits = ilt_word & 0x7fff0000;
-        } else {
-            p_is_ordinal = false;
-            p_ordinal = 0;
-            p_hntable_rva = ilt_word;
-            p_hntable_rva.set_section(fhdr->get_best_section_by_va(p_hntable_rva.get_rva()+fhdr->get_base_va()));
-            p_extra_bits = 0;
-        }
+        ordmask = (uint64_t)1<<31;
     } else if (8==fhdr->get_word_size()) {
-        uint64_t ordmask = (uint64_t)1<<63;
-        if (ilt_word & ordmask) {
-            p_is_ordinal = true;
-            p_ordinal = ilt_word & 0xffff;
-            p_hntable_rva = 0;
-            p_extra_bits = ilt_word & ~(ordmask|0xffff);
-        } else {
-            p_is_ordinal = false;
-            p_ordinal = 0;
-            p_hntable_rva = ilt_word;
-            p_hntable_rva.set_section(fhdr->get_best_section_by_va(p_hntable_rva.get_rva()+fhdr->get_base_va()));
-            p_extra_bits = 0;
-        }
+        ordmask = (uint64_t)1<<63;
     } else {
         throw FormatError("unsupported PE word size");
+    }
+    
+    if (ilt_word & ordmask) {
+        /* Ordinal */
+        p_entry_type = ILT_ORDINAL;
+        p_ordinal = ilt_word & 0xffff;
+        p_extra_bits = ilt_word & ~(ordmask|0xffff);
+    } else if (0!=(ilt_word & ~hnrvamask) || NULL==fhdr->get_best_section_by_va((ilt_word&hnrvamask) + fhdr->get_base_va())) {
+        /* Bound address */
+        p_entry_type = ILT_BOUND_RVA;
+        p_bound_rva = ilt_word;
+        p_bound_rva.set_section(fhdr->get_best_section_by_va(p_bound_rva.get_rva() + fhdr->get_base_va()));
+    } else {
+        /* Hint/Name Pair RVA */
+        p_entry_type = ILT_HNT_ENTRY_RVA;
+        p_hnt_entry_rva = ilt_word & hnrvamask;
+        p_hnt_entry_rva.set_section(fhdr->get_best_section_by_va(p_hnt_entry_rva.get_rva() + fhdr->get_base_va()));
     }
 }
 
@@ -1058,46 +1063,59 @@ SgAsmPEImportILTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sILTEntry[%zd].", prefix, idx);
+        sprintf(p, "%sentry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sILTEntry.", prefix);
+        sprintf(p, "%sentry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    
-    if (p_extra_bits)
-        fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "ilt_word", p_extra_bits);
-    if (p_is_ordinal) {
+
+    switch (p_entry_type) {
+      case ILT_ORDINAL:
         fprintf(f, "%s%-*s = 0x%04x (%u)\n", p, w, "ordinal", p_ordinal, p_ordinal);
-    } else {
-        fprintf(f, "%s%-*s = %s\n", p, w, "hntable_rva", p_hntable_rva.to_string().c_str());
+        break;
+      case ILT_HNT_ENTRY_RVA:
+        fprintf(f, "%s%-*s = %s\n", p, w, "hnt_entry_rva", p_hnt_entry_rva.to_string().c_str());
+        break;
+      case ILT_BOUND_RVA:
+        fprintf(f, "%s%-*s = %s\n", p, w, "bound_rva", p_bound_rva.to_string().c_str());
+        break;
+      default:
+        ROSE_ASSERT(!"PE Import Lookup Table entry type is not valid");
     }
+    if (p_extra_bits)
+        fprintf(f, "%s%-*s = 0x%08"PRIx64"\n", p, w, "extra_bits", p_extra_bits);
     if (p_hnt_entry)
         p_hnt_entry->dump(f, p, -1);
 }
 
-/* Constructor. rva is the address of the table and should be bound to a section (which may not necessarily be isec). */
+/* Constructor. rva is the address of the table and should be bound to a section (which may not necessarily be isec). This
+ * C object represents one of two PE objects depending on the value of is_iat.
+ *    true  => PE Import Address Table
+ *    false => PE Import Lookup Table */
 void
-SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idir_idx)
+SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idir_idx, bool is_iat)
 {
     ROSE_ASSERT(p_ilt_entries==NULL);
     p_ilt_entries = new SgAsmPEImportILTEntryList();
     p_ilt_entries->set_parent(this);
+    p_is_iat = is_iat;
+    const char *tname = is_iat ? "Import Address Table" : "Import Lookup Table";
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(isec->get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    /* Read the Import Lookup Table, and array of 32 or 64 bit values, the last of which is zero */
+    /* Read the Import Lookup (or Address) Table, an array of 32 or 64 bit values, the last of which is zero */
     if (!rva.get_section()) {
         fprintf(stderr, "SgAsmPEImportSection::ctor: error: in PE Import Directory entry %zu "
-                "Import Lookup Table RVA (0x%08"PRIx64") is not in the mapped address space.\n",
-                idir_idx, rva.get_rva());
+                "%s RVA (0x%08"PRIx64") is not in the mapped address space.\n",
+                idir_idx, tname, rva.get_rva());
         return;
     }
     
     if (rva.get_section()!=isec) {
-        fprintf(stderr, "SgAsmPEImportSection::ctor: warning: Import Lookup Table RVA is outside PE Import Table\n");
+        fprintf(stderr, "SgAsmPEImportSection::ctor: warning: %s RVA is outside PE Import Table\n", tname);
         fprintf(stderr, "        Import Directory Entry #%zu\n", idir_idx);
-        fprintf(stderr, "        Import Lookup Table RVA is %s\n", rva.to_string().c_str());
+        fprintf(stderr, "        %s RVA is %s\n", tname, rva.to_string().c_str());
         fprintf(stderr, "        PE Import Table mapped from 0x%08"PRIx64" to 0x%08"PRIx64"\n", 
                 isec->get_mapped_rva(), isec->get_mapped_rva()+isec->get_mapped_size());
     }
@@ -1115,17 +1133,15 @@ SgAsmPEImportLookupTable::ctor(SgAsmPEImportSection *isec, rva_t rva, size_t idi
         } else {
             throw FormatError("unsupported PE word size");
         }
-        rva.set_rva(rva.get_rva()+fhdr->get_word_size());
+        rva.set_rva(rva.get_rva()+fhdr->get_word_size()); /*advance to next entry of table*/
         if (0==ilt_entry_word)
             break;
+
         SgAsmPEImportILTEntry *ilt_entry = new SgAsmPEImportILTEntry(isec, ilt_entry_word);
-        ilt_entry->dump(stderr, "    ", i);
         add_ilt_entry(ilt_entry);
 
-        if (ilt_entry->get_is_ordinal()) {
-            //FIXME
-        } else {
-            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(ilt_entry->get_hntable_rva());
+        if (SgAsmPEImportILTEntry::ILT_HNT_ENTRY_RVA==ilt_entry->get_entry_type()) {
+            SgAsmPEImportHNTEntry *hnt_entry = new SgAsmPEImportHNTEntry(ilt_entry->get_hnt_entry_rva());
             ilt_entry->set_hnt_entry(hnt_entry);
             hnt_entry->set_parent(ilt_entry);
         }
@@ -1147,11 +1163,13 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 void
 SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
 {
+    prefix = "    ...";
+    const char *tabbr = p_is_iat ? "IAT" : "ILT";
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sImportLookupTable[%zd].", prefix, idx);
+        sprintf(p, "%s%s[%zd].", prefix, tabbr, idx);
     } else {
-        sprintf(p, "%sImportLookupTable.", prefix);
+        sprintf(p, "%s%s.", prefix, tabbr);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -1208,9 +1226,9 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
 {
     char p[4096];
     if (idx>=0) {
-        sprintf(p, "%sImportHNTEntry[%zd].", prefix, idx);
+        sprintf(p, "%sHNTEntry[%zd].", prefix, idx);
     } else {
-        sprintf(p, "%sImportHNTEntry.", prefix);
+        sprintf(p, "%sHNTEntry.", prefix);
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
@@ -1299,9 +1317,6 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         if (!memcmp(&zero, &idir_disk, sizeof zero)) break;
         SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(fhdr, &idir_disk);
 
-        fprintf(stderr, "\n");
-        idir->dump(stderr, "", i);
-
         /* Library name warnings and errors */
         rva_t rva = idir->get_dll_name_rva();
         if (!rva.get_section()) {
@@ -1317,14 +1332,14 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
         }
 
         /* Import Lookup Table */
-        SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(this, idir->get_ilt_rva(), i);
+        SgAsmPEImportLookupTable *ilt = new SgAsmPEImportLookupTable(this, idir->get_ilt_rva(), i, false);
         idir->set_ilt(ilt);
         ilt->set_parent(idir);
 
         /* Import Address Table (same class as the Import Lookup Table) */
-        //SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(this, idir->get_iat_rva(), i);
-        //idir->set_iat(ilt);
-        //iat->set_parent(idir);
+        SgAsmPEImportLookupTable *iat = new SgAsmPEImportLookupTable(this, idir->get_iat_rva(), i, true);
+        idir->set_iat(iat);
+        iat->set_parent(idir);
 
 
         add_import_directory(idir);

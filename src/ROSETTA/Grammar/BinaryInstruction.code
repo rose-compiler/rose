@@ -1971,6 +1971,12 @@ HEADER_PE_IMPORT_DIRECTORY_END
 HEADER_PE_IMPORT_ILT_ENTRY_START
 	// PE -> Import Table -> Import Lookup Table -> Entry
 	public:
+		enum ILTEntryType {
+			ILT_ORDINAL,			/* Entry is an ordinal */
+			ILT_HNT_ENTRY_RVA,		/* Entry is the RVA of a Hint/Name Pair in the Hint/Name Table */
+			ILT_BOUND_RVA,			/* Entry is the actual memory address of the symbol */
+		};
+
 		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
 			{ctor(isec,entry_word);}
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
@@ -1981,14 +1987,15 @@ HEADER_PE_IMPORT_ILT_ENTRY_END
 
 
 HEADER_PE_IMPORT_LOOKUP_TABLE_START
-	// PE -> Import Table -> Import Lookup Table
+	// PE -> Import Table -> Import Lookup Table   or
+	// PE -> Import Table -> Import Address Table
 	public:
-		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx)
-			{ctor(isec, table_rva, idir_idx);}
+		SgAsmPEImportLookupTable(SgAsmPEImportSection *isec, rose_rva_t table_rva, size_t idir_idx, bool is_iat=false)
+			{ctor(isec, table_rva, idir_idx, is_iat);}
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
-		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx);
+		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
 HEADER_PE_IMPORT_LOOKUP_TABLE_END
 
 
