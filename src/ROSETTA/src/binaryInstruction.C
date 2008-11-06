@@ -911,6 +911,8 @@ Grammar::setUpBinaryInstructions ()
 
 
      AsmPEImportDirectory.setFunctionPrototype ( "HEADER_PE_IMPORT_DIRECTORY", "../Grammar/BinaryInstruction.code");
+     AsmPEImportDirectory.setDataPrototype("int","idx","= 0",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("rose_rva_t","ilt_rva","= 0",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmPEImportDirectory.setDataPrototype("SgAsmPEImportLookupTable*", "ilt", "= 0",

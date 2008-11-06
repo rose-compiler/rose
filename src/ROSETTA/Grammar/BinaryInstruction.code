@@ -1957,12 +1957,13 @@ HEADER_PE_IMPORT_DIRECTORY_START
 			uint32_t iat_rva;		/* 0x10 Import Address Table (Thunk Table) RVA */
 		} __attribute__((packed));		/* 0x14 */
 
-		SgAsmPEImportDirectory(SgAsmPEFileHeader *fhdr, const SgAsmPEImportDirectory::PEImportDirectory_disk *disk)
-			{ctor(fhdr,disk);}
+		SgAsmPEImportDirectory(SgAsmPEImportSection *isec, size_t idx)
+			{ctor(isec,idx);}
 		void *encode(SgAsmPEImportDirectory::PEImportDirectory_disk*);
+		virtual void unparse(FILE*, SgAsmPEImportSection*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
-		void ctor(SgAsmPEFileHeader *fhdr, const SgAsmPEImportDirectory::PEImportDirectory_disk*);
+		void ctor(SgAsmPEImportSection*, size_t idx);
 HEADER_PE_IMPORT_DIRECTORY_END
 
 
@@ -1978,6 +1979,8 @@ HEADER_PE_IMPORT_ILT_ENTRY_START
 
 		SgAsmPEImportILTEntry(SgAsmPEImportSection *isec, uint64_t entry_word)
 			{ctor(isec,entry_word);}
+		uint64_t encode(SgAsmPEFileHeader*);
+		void unparse(FILE *f, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmPEImportSection*, uint64_t);
@@ -1993,6 +1996,7 @@ HEADER_PE_IMPORT_LOOKUP_TABLE_START
 			: p_entries(NULL)
 			{ctor(isec, table_rva, idir_idx, is_iat);}
 		void add_ilt_entry(SgAsmPEImportILTEntry*);
+		virtual void unparse(FILE*, SgAsmPEFileHeader*, rose_rva_t);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
 	private:
 		void ctor(SgAsmPEImportSection*, rose_rva_t table_rva, size_t idir_idx, bool is_iat);
@@ -2005,6 +2009,7 @@ HEADER_PE_IMPORT_HNT_ENTRY_START
 	public:
 		SgAsmPEImportHNTEntry(rose_rva_t offset)
 			{ctor(offset);}
+		void unparse(FILE *f, rva_t rva);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
 		void ctor(rose_rva_t offset);
@@ -2017,7 +2022,7 @@ HEADER_PE_IMPORT_SECTION_START
 		SgAsmPEImportSection(SgAsmPEFileHeader *fhdr, addr_t offset, addr_t size, addr_t mapped_rva)
 			: SgAsmPESection(fhdr, offset, size)
 			{ctor(offset, size, mapped_rva);}
-		//virtual void unparse(FILE*);  FIXME: Temporarily commented out (see implementation comments)
+		virtual void unparse(FILE*);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 		void add_import_directory(SgAsmPEImportDirectory*);
 	private:

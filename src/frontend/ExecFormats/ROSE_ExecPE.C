@@ -954,13 +954,29 @@ SgAsmPESectionTable::dump(FILE *f, const char *prefix, ssize_t idx)
 
 /* Constructor */
 void
-SgAsmPEImportDirectory::ctor(SgAsmPEFileHeader *fhdr, const PEImportDirectory_disk *disk)
+SgAsmPEImportDirectory::ctor(SgAsmPEImportSection *section, size_t idx)
 {
-    p_ilt_rva         = le_to_host(disk->ilt_rva);
-    p_time            = le_to_host(disk->time);
-    p_forwarder_chain = le_to_host(disk->forwarder_chain);
-    p_dll_name_rva    = le_to_host(disk->dll_name_rva);
-    p_iat_rva         = le_to_host(disk->iat_rva);
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(section->get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
+    set_parent(section);
+
+    size_t entry_size = sizeof(PEImportDirectory_disk);
+    PEImportDirectory_disk disk, zero;
+    memset(&zero, 0, sizeof zero);
+    section->content(idx*entry_size, entry_size, &disk);
+
+    if (0==memcmp(&disk, &zero, sizeof zero)) {
+        p_idx = -1;
+    } else {
+        p_idx = idx;
+    }
+    
+    p_ilt_rva         = le_to_host(disk.ilt_rva);
+    p_time            = le_to_host(disk.time);
+    p_forwarder_chain = le_to_host(disk.forwarder_chain);
+    p_dll_name_rva    = le_to_host(disk.dll_name_rva);
+    p_iat_rva         = le_to_host(disk.iat_rva);
 
     /* Bind RVAs to best sections */
     p_ilt_rva.bind(fhdr);
@@ -985,6 +1001,30 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk)
     host_to_le(p_iat_rva.get_rva(),      &(disk->iat_rva));
     return disk;
 }
+
+void
+SgAsmPEImportDirectory::unparse(FILE *f, SgAsmPEImportSection *section)
+{
+    fprintf(stderr, "  SgAsmPEImportDirectory::unparse #%d\n", get_idx());
+    ROSE_ASSERT(get_idx()>=0);
+
+    SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(section->get_header());
+    ROSE_ASSERT(fhdr!=NULL);
+
+    if (p_dll_name_rva>0) {
+        addr_t spos = p_dll_name_rva.get_section()->write(f, p_dll_name_rva.get_rel(), p_dll_name->get_string());
+        p_dll_name_rva.get_section()->write(f, spos, '\0');
+    }
+    if (p_ilt)
+        p_ilt->unparse(f, fhdr, p_ilt_rva);
+    if (p_iat)
+        p_iat->unparse(f, fhdr, p_iat_rva);
+    
+    PEImportDirectory_disk disk;
+    encode(&disk);
+    section->write(f, get_idx()*sizeof disk, sizeof disk, &disk);
+}
+
 
 /* Print debugging info */
 void
@@ -1055,6 +1095,59 @@ SgAsmPEImportILTEntry::ctor(SgAsmPEImportSection *isec, uint64_t ilt_word)
         p_hnt_entry_rva = ilt_word & hnrvamask;
         p_hnt_entry_rva.bind(fhdr);
     }
+}
+
+/* Encode the PE Import Lookup Table or PE Import Address Table object into a word. */
+uint64_t
+SgAsmPEImportILTEntry::encode(SgAsmPEFileHeader *fhdr)
+{
+    uint64_t w = 0;
+
+    /* Masks for different word sizes */
+    uint64_t ordmask;                                           /* if bit is set then ILT Entry is an Ordinal */
+    if (4==fhdr->get_word_size()) {
+        ordmask = (uint64_t)1<<31;
+    } else if (8==fhdr->get_word_size()) {
+        ordmask = (uint64_t)1<<63;
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    
+    switch (p_entry_type) {
+      case ILT_ORDINAL:
+        w |= ordmask | p_extra_bits | p_ordinal;
+        break;
+      case ILT_BOUND_RVA:
+        w |= p_bound_rva.get_rva();
+        break;
+      case ILT_HNT_ENTRY_RVA:
+        w |= p_hnt_entry_rva.get_rva();
+        break;
+    }
+    return w;
+}
+
+void
+SgAsmPEImportILTEntry::unparse(FILE *f, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx)
+{
+    fprintf(stderr, "      SgAsmPEImportILTEntry::unparse: #%zu\n", idx);
+
+    ROSE_ASSERT(rva.get_section()!=NULL);
+    uint64_t ilt_entry_word = encode(fhdr);
+    if (4==fhdr->get_word_size()) {
+        uint32_t ilt_entry_disk;
+        host_to_le(ilt_entry_word, &ilt_entry_disk);
+        rva.get_section()->write(f, rva.get_rel()+idx*4, 4, &ilt_entry_disk);
+    } else if (8==fhdr->get_word_size()) {
+        uint64_t ilt_entry_disk;
+        host_to_le(ilt_entry_word, &ilt_entry_disk);
+        rva.get_section()->write(f, rva.get_rel()+idx*8, 8, &ilt_entry_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+
+    if (p_hnt_entry)
+        p_hnt_entry->unparse(f, p_hnt_entry_rva);
 }
 
 /* Print debugging info for an Import Lookup Table Entry or an Import Address Table Entry */
@@ -1159,6 +1252,23 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
     ilt_entry->set_parent(this);
 }
 
+void
+SgAsmPEImportLookupTable::unparse(FILE *f, SgAsmPEFileHeader *fhdr, rva_t rva)
+{
+    const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
+    fprintf(stderr, "    SgAsmPEImportLookupTable::unparse: %s\n", tname);
+    for (size_t i=0; i<p_entries->get_vector().size(); i++) {
+        SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
+        ilt_entry->unparse(f, fhdr, rva, i);
+    }
+
+    /* Zero terminated */
+    uint64_t zero = 0;
+    ROSE_ASSERT(fhdr->get_word_size()<=sizeof zero);
+    addr_t spos = rva.get_rel() + p_entries->get_vector().size() * fhdr->get_word_size();
+    rva.get_section()->write(f, spos, fhdr->get_word_size(), &zero);
+}
+
 /* Print some debugging info for an Import Lookup Table or Import Address Table */
 void
 SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
@@ -1174,8 +1284,10 @@ SgAsmPEImportLookupTable::dump(FILE *f, const char *prefix, ssize_t idx)
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
     
     fprintf(f, "%s%-*s = %zu\n", p, w, "nentries", p_entries->get_vector().size());
-    for (size_t i=0; i<p_entries->get_vector().size(); i++)
-        p_entries->get_vector()[i]->dump(f, p, i);
+    for (size_t i=0; i<p_entries->get_vector().size(); i++) {
+        SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
+        ilt_entry->dump(f, p, i);
+    }
 }
 
 /* Constructor */
@@ -1198,27 +1310,18 @@ SgAsmPEImportHNTEntry::ctor(rva_t rva)
     }
 }
 
-// /* Writes the hint/name back to disk at the specified offset */
-// void
-// SgAsmPEImportHintName::unparse(FILE *f, SgAsmGenericSection *section, addr_t spos)
-// {
-//     /* The hint */
-//     uint16_t hint_le;
-// 
-//  // DQ (8/16/2008): Assertion on p_hint in host_to_le
-//     assert(0==(p_hint & ~0xffff));
-// 
-//     host_to_le(p_hint, &hint_le);
-//     spos = section->write(f, spos, sizeof hint_le, &hint_le);
-// 
-//     /* NUL-terminated name */
-//     spos = section->write(f, spos, p_name);
-//     spos = section->write(f, spos, '\0');
-//     
-//     /* Padding to make an even size */
-//     if ((p_name.size() + 1) % 2)
-//         section->write(f, spos, p_padding);
-// }
+void
+SgAsmPEImportHNTEntry::unparse(FILE *f, rva_t rva)
+{
+    uint16_t hint_disk;
+    host_to_le(p_hint, &hint_disk);
+    addr_t spos = rva.get_rel();
+    spos = rva.get_section()->write(f, spos, 2, &hint_disk);
+    spos = rva.get_section()->write(f, spos, p_name->get_string());
+    spos = rva.get_section()->write(f, spos, '\0');
+    if ((p_name->get_string().size()+1) % 2)
+        rva.get_section()->write(f, spos, p_padding);
+}
 
 /* Print debugging info */
 void
@@ -1269,23 +1372,19 @@ SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {
     set_mapped_rva(mapped_rva);
     set_mapped_size(size);
+    p_import_directories = new SgAsmPEImportDirectoryList();
+    p_import_directories->set_parent(this);
 
     SgAsmPEFileHeader *fhdr = dynamic_cast<SgAsmPEFileHeader*>(get_header());
     ROSE_ASSERT(fhdr!=NULL);
 
-    size_t entry_size = sizeof(SgAsmPEImportDirectory::PEImportDirectory_disk);
-    SgAsmPEImportDirectory::PEImportDirectory_disk zero;
-    memset(&zero, 0, sizeof zero);
-
-    p_import_directories = new SgAsmPEImportDirectoryList();
-    p_import_directories->set_parent(this);
-
     for (size_t i = 0; 1; i++) {
-        /* Read idata directory entries. The list is terminated with a zero-filled entry. */
-        SgAsmPEImportDirectory::PEImportDirectory_disk idir_disk;
-        content(i*entry_size, entry_size, &idir_disk);
-        if (!memcmp(&zero, &idir_disk, sizeof zero)) break;
-        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(fhdr, &idir_disk);
+        /* Read idata directory entries. The list is terminated with a zero-filled entry whose idx will be negative */
+        SgAsmPEImportDirectory *idir = new SgAsmPEImportDirectory(this, i);
+        if (idir->get_idx()<0) {
+            delete idir;
+            break;
+        }
 
         /* Library name warnings and errors */
         rva_t rva = idir->get_dll_name_rva();
@@ -1333,101 +1432,24 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
     d->set_parent(this);
 }
 
-// /* The following code is commented out pending some redesign work for SgAsmGenericDLL. The plan is to not use SgAsmGenericDLL
-//  * for the time being, which will make SgAsmPEImportSection look a lot more like SgAsmPEExportSection in terms of the IR nodes
-//  * that are created.  Part of what makes this necessary is that PE shared libraries have very messed up Import Tables -- the
-//  * Import Directory points off into completely unrelated parts of the file. Commenting out the unparser causes us to use the
-//  * implementation from the super class, which just writes the original data back to disk. (RPM 2008-10-29). */
-// 
-// /* Write the import section back to disk */
-// void
-// SgAsmPEImportSection::unparse(FILE *f)
-// {
-//     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
-//     SgAsmGenericHeader *fhdr = get_header();
-// 
-//     const std::vector<SgAsmPEDLL*> & dlls = get_dlls()->get_dlls();
-// 
-//     for (size_t dllno = 0; dllno < dlls.size(); dllno++) {
-//         SgAsmPEDLL *dll = dlls[dllno];
-//         SgAsmPEImportDirectory *idir = dll->get_idir();
-//         
-//         /* Directory entry */
-//         SgAsmPEImportDirectory::PEImportDirectory_disk idir_disk;
-//         idir->encode(&idir_disk);
-//         write(f, dllno*sizeof(idir_disk), sizeof idir_disk, &idir_disk);
-// 
-//         /* Library name. Write it even if it's not in this section! (RPM 2008-10-29) */
-//         rva_t rva = idir->get_dll_name_rva();
-//         ROSE_ASSERT(rva >= p_mapped_rva);
-//         ROSE_ASSERT(rva.get_section()); /*should have been bound in constructor*/
-//         addr_t spos = rva.get_section()->write(f, rva.get_rel(), dll->get_name()->get_string());
-//         rva.get_section()->write(f, spos, '\0');
-// 
-//         /* Write the hint/name pairs and the array entries that point to them. They might not even be in this section! See
-//          * ctor */   
-//         rva = idir->get_hintnames_rva();
-//         if (rva != 0) {
-//             ROSE_ASSERT(rva.get_section());
-//             const std::vector<addr_t> & hintname_rvas = dll->get_hintname_rvas();
-//             const std::vector<SgAsmPEImportHintName*> & hintnames = dll->get_hintnames()->get_hintnames();
-//             for (size_t i = 0; i <= hintname_rvas.size(); i++) {
-//                 /* Hint/name RVA */
-//                 addr_t hintname_rva = i < hintname_rvas.size() ? hintname_rvas[i] : 0; /*zero terminated*/
-//                 bool import_by_ordinal = false;
-//                 if (4 == fhdr->get_word_size()) {
-//                     uint32_t rva_le;
-//                     host_to_le(hintname_rva, &rva_le);
-//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
-//                     import_by_ordinal = (hintname_rva & 0x80000000) != 0;
-//                 } else if (8==fhdr->get_word_size()) {
-//                     uint64_t rva_le;
-//                     host_to_le(hintname_rva, &rva_le);
-//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof rva_le, &rva_le);
-//                     import_by_ordinal = (hintname_rva & 0x8000000000000000ull) != 0;
-//                 } else {
-//                     ROSE_ASSERT(!"unsupported word size");
-//                 }
-//             
-//                 /* Hint/name pair */
-//                 if (i<hintname_rvas.size() && !import_by_ordinal) {
-//                     addr_t hintname_spos = (hintname_rvas[i] & 0x7fffffff) - p_mapped_rva; /*section offset*/
-//                     hintnames[i]->unparse(f, this, hintname_spos);
-//                 }
-//             }
-//         }
-//         
-//         /* Write the bindings array. These could be in some other section (see constructor)! */
-//         rva = idir->get_bindings_rva();
-//         if (rva != 0) {
-//             ROSE_ASSERT(rva.get_section());
-//             const std::vector<addr_t> & bindings = dll->get_bindings();
-//             for (size_t i=0; i<=bindings.size(); i++) {
-//                 addr_t binding = i<bindings.size() ? bindings[i] : 0; /*zero terminated*/
-//                 if (4==fhdr->get_word_size()) {
-//                     uint32_t binding_le;
-//                     host_to_le(binding, &binding_le);
-//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
-//                 } else if (8==fhdr->get_word_size()) {
-//                     uint64_t binding_le;
-//                     host_to_le(binding, &binding_le);
-//                     rva.get_section()->write(f, rva.get_rel() + i*fhdr->get_word_size(), sizeof binding_le, &binding_le);
-//                 } else {
-//                     ROSE_ASSERT(!"unsupported word size");
-//                 }
-//             }
-//         }
-//     }
-// 
-//     /* DLL list is zero terminated */
-//     {
-//         SgAsmPEImportDirectory::PEImportDirectory_disk zero;
-//         memset(&zero, 0, sizeof zero);
-//         write(f, dlls.size()*sizeof zero, sizeof zero, &zero);
-//     }
-// 
-//     unparse_holes(f);
-// }
+/* Write the import section back to disk */
+void
+SgAsmPEImportSection::unparse(FILE *f)
+{
+    ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
+    unparse_holes(f);
+
+    /* Import Directory Entries and all they point to (even in other sections) */
+    fprintf(stderr, "SgAsmPEImportSection::unparse: unparsing [%d] \"%s\"\n", get_id(), get_name()->c_str());
+    for (size_t i=0; i<get_import_directories()->get_vector().size(); i++) {
+        get_import_directories()->get_vector()[i]->unparse(f, this);
+    }
+    
+    /* Zero terminated */
+    SgAsmPEImportDirectory::PEImportDirectory_disk zero;
+    memset(&zero, 0, sizeof zero);
+    write(f, get_import_directories()->get_vector().size()*sizeof(zero), sizeof zero, &zero);
+}
 
 /* Print debugging info */
 void
