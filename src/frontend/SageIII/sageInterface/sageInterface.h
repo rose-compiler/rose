@@ -1,6 +1,8 @@
 #ifndef ROSE_SAGE_INTERFACE
 #define ROSE_SAGE_INTERFACE
 
+#include <stdint.h>
+
 
 #include "sage3.h"
 SgFile*                         determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
@@ -73,6 +75,9 @@ extern int gensym_counter;
 
 // tps : 28 Oct 2008 - support for finding the main interpretation
  SgAsmInterpretation* getMainInterpretation(SgAsmFile* file);
+
+ // Get the value of a disassembled constant
+ uint64_t getAsmConstant(SgAsmValueExpression* e);
 
 
 //------------------------------------------------------------------------

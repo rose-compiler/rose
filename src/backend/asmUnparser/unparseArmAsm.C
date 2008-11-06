@@ -140,13 +140,9 @@ string unparseArmExpression(SgAsmExpression* expr, ArmSignForExpressionUnparsing
       result += unparseArmRegister(isSgAsmArmRegisterReferenceExpression(expr)->get_arm_register_code());
       break;
     case V_SgAsmByteValueExpression:
-      result += "#" + unparseArmSign(sign) + StringUtility::numberToString(isSgAsmByteValueExpression(expr)->get_value());
-      break;
     case V_SgAsmWordValueExpression:
-      result += "#" + unparseArmSign(sign) + StringUtility::numberToString(isSgAsmWordValueExpression(expr)->get_value());
-      break;
     case V_SgAsmDoubleWordValueExpression:
-      result += "#" + unparseArmSign(sign) + StringUtility::numberToString(isSgAsmDoubleWordValueExpression(expr)->get_value());
+      result += "#" + unparseArmSign(sign) + StringUtility::numberToString(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
       break;
     default: {
       cerr << "Unhandled expression kind " << expr->class_name() << endl;

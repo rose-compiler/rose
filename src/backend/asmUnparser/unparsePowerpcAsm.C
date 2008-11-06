@@ -8,6 +8,7 @@
 #include "rose.h"
 #include <iomanip>
 #include <boost/lexical_cast.hpp>
+#include "integerOps.h"
 
 using namespace std;
 
@@ -46,12 +47,10 @@ string unparsePowerpcRegister(
       return "fpscr";
     }
     case powerpc_regclass_spr: {
-      // FIXME: add names
-      return "spr" + boost::lexical_cast<string>(reg);
+      return sprToString((PowerpcSpecialPurposeRegister)reg);
     }
     case powerpc_regclass_tbr: {
-      // FIXME: add names
-      return "tbr" + boost::lexical_cast<string>(reg);
+      return tbrToString((PowerpcTimeBaseRegister)reg);
     }
     case powerpc_regclass_msr: {
       return "msr";
@@ -83,8 +82,8 @@ string unparsePowerpcExpression(SgAsmExpression* expr) {
         case V_SgAsmBinaryAdd: {
           SgAsmBinaryAdd* a = isSgAsmBinaryAdd(addr);
           string lhs = unparsePowerpcExpression(a->get_lhs());
-          if (isSgAsmWordValueExpression(a->get_rhs())) {
-            result = boost::lexical_cast<string>((int)(int16_t)(isSgAsmWordValueExpression(a->get_rhs())->get_value())); // Sign-extend from 16 bits
+          if (isSgAsmValueExpression(a->get_rhs())) {
+            result = boost::lexical_cast<string>(IntegerOps::signExtend<16, 64>(SageInterface::getAsmConstant(isSgAsmValueExpression(a->get_rhs())))); // Sign-extend from 16 bits
             result += "(" + lhs + ")";
           } else {
             result = lhs + ", " + unparsePowerpcExpression(a->get_rhs());

@@ -103,20 +103,11 @@ struct X86InstructionSemantics {
       case V_SgAsmMemoryReferenceExpression: {
         return readMemory<8>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), policy.true_());
       }
-      case V_SgAsmByteValueExpression: {
-        uint64_t val = isSgAsmByteValueExpression(e)->get_value();
-        return number<8>(val & 0xFFU);
-      }
-      case V_SgAsmWordValueExpression: {
-        uint64_t val = isSgAsmWordValueExpression(e)->get_value();
-        return number<8>(val & 0xFFU);
-      }
-      case V_SgAsmDoubleWordValueExpression: {
-        uint64_t val = isSgAsmDoubleWordValueExpression(e)->get_value();
-        return number<8>(val & 0xFFU);
-      }
+      case V_SgAsmByteValueExpression:
+      case V_SgAsmWordValueExpression:
+      case V_SgAsmDoubleWordValueExpression:
       case V_SgAsmQuadWordValueExpression: {
-        uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
+        uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
         return number<8>(val & 0xFFU);
       }
       default: fprintf(stderr, "Bad variant %s in read8\n", e->class_name().c_str()); abort();
@@ -155,20 +146,11 @@ struct X86InstructionSemantics {
       case V_SgAsmMemoryReferenceExpression: {
         return readMemory<16>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), policy.true_());
       }
-      case V_SgAsmByteValueExpression: {
-        uint64_t val = isSgAsmByteValueExpression(e)->get_value();
-        return number<16>(val & 0xFFFFU);
-      }
-      case V_SgAsmWordValueExpression: {
-        uint64_t val = isSgAsmWordValueExpression(e)->get_value();
-        return number<16>(val & 0xFFFFU);
-      }
-      case V_SgAsmDoubleWordValueExpression: {
-        uint64_t val = isSgAsmDoubleWordValueExpression(e)->get_value();
-        return number<16>(val & 0xFFFFU);
-      }
+      case V_SgAsmByteValueExpression:
+      case V_SgAsmWordValueExpression:
+      case V_SgAsmDoubleWordValueExpression:
       case V_SgAsmQuadWordValueExpression: {
-        uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
+        uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
         return number<16>(val & 0xFFFFU);
       }
       default: fprintf(stderr, "Bad variant %s in read16\n", e->class_name().c_str()); abort();
@@ -207,20 +189,11 @@ struct X86InstructionSemantics {
       case V_SgAsmMemoryReferenceExpression: {
         return readMemory<32>(getSegregFromMemoryReference(isSgAsmMemoryReferenceExpression(e)), readEffectiveAddress(e), policy.true_());
       }
-      case V_SgAsmByteValueExpression: {
-        uint64_t val = isSgAsmByteValueExpression(e)->get_value();
-        return number<32>(val & 0xFFFFFFFFU);
-      }
-      case V_SgAsmWordValueExpression: {
-        uint64_t val = isSgAsmWordValueExpression(e)->get_value();
-        return number<32>(val & 0xFFFFFFFFU);
-      }
-      case V_SgAsmDoubleWordValueExpression: {
-        uint64_t val = isSgAsmDoubleWordValueExpression(e)->get_value();
-        return number<32>(val & 0xFFFFFFFFU);
-      }
+      case V_SgAsmByteValueExpression:
+      case V_SgAsmWordValueExpression:
+      case V_SgAsmDoubleWordValueExpression:
       case V_SgAsmQuadWordValueExpression: {
-        uint64_t val = isSgAsmQuadWordValueExpression(e)->get_value();
+        uint64_t val = SageInterface::getAsmConstant(isSgAsmValueExpression(e));
         return number<32>(val & 0xFFFFFFFFU);
       }
       default: fprintf(stderr, "Bad variant %s in read32\n", e->class_name().c_str()); abort();

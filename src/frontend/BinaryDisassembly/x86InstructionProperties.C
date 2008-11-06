@@ -457,12 +457,7 @@ bool x86GetKnownBranchTarget(SgAsmx86Instruction* insn, uint64_t& addr) {
       if (exprs.size() != 1) return false;
       SgAsmExpression* dest = exprs[0];
       if (!isSgAsmValueExpression(dest)) return false;
-      switch (dest->variantT()) {
-        case V_SgAsmWordValueExpression: addr = isSgAsmWordValueExpression(dest)->get_value(); break;
-        case V_SgAsmDoubleWordValueExpression: addr = isSgAsmDoubleWordValueExpression(dest)->get_value(); break;
-        case V_SgAsmQuadWordValueExpression: addr = isSgAsmQuadWordValueExpression(dest)->get_value(); break;
-        default: return false;
-      }
+      addr = SageInterface::getAsmConstant(isSgAsmValueExpression(dest));
       return true;
     }
     default: return false;

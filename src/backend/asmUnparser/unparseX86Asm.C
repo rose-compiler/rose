@@ -117,14 +117,12 @@ string unparseX86Expression(SgAsmExpression* expr, bool leaMode) {
       result = unparseX86Register(rr->get_register_class(), rr->get_register_number(), rr->get_position_in_register());
       break;
     }
-    case V_SgAsmByteValueExpression: result = StringUtility::intToHex(isSgAsmByteValueExpression(expr)->get_value());
-                                     break;
-    case V_SgAsmWordValueExpression: result = StringUtility::intToHex(isSgAsmWordValueExpression(expr)->get_value());
-                                     break;
-    case V_SgAsmDoubleWordValueExpression: result = StringUtility::intToHex(isSgAsmDoubleWordValueExpression(expr)->get_value());
-                                           break;
-    case V_SgAsmQuadWordValueExpression: result = StringUtility::intToHex(isSgAsmQuadWordValueExpression(expr)->get_value());
-                                         break;
+    case V_SgAsmByteValueExpression:
+    case V_SgAsmWordValueExpression:
+    case V_SgAsmDoubleWordValueExpression:
+    case V_SgAsmQuadWordValueExpression:
+      result = StringUtility::intToHex(SageInterface::getAsmConstant(isSgAsmValueExpression(expr)));
+      break;
     default: {
       cerr << "Unhandled expression kind " << expr->class_name() << endl;
       ROSE_ASSERT (false);
