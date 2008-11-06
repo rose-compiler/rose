@@ -419,6 +419,10 @@ Grammar::setUpBinaryInstructions ()
      AsmInterpretation.setDataPrototype("SgAsmBlock*","global_block","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile.
+     AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // *****************************************************
   //           NEW BINARY FILE FORMAT IR NODES
   // *****************************************************

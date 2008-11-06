@@ -3495,6 +3495,9 @@ HEADER_FILE_INFORMATION_START
 
           void post_construction_initialization();
 
+       // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
+          static int addFilenameToMap ( const std::string & filename );
+
           void set_filename (const char* filename) ROSE_DEPRECATED_FUNCTION;
           void set_filenameString ( const std::string & filename );
           void set_line (int line);
@@ -8678,6 +8681,29 @@ Sg_File_Info::set_file_id ( int file_id )
      set_isModified(true);
      
      p_file_id = file_id;
+   }
+
+int
+Sg_File_Info::addFilenameToMap ( const std::string & filename )
+   {
+  // DQ (11/6/2008): Added support for extending the internal static filename to integer id map.
+  // This static function is used the the Dwarf support to convert filenames to integer values and 
+  // maintain a map similar to the Dwarf mapping of integers to filenames as a way to save space
+  // in the represnetation of source position mappings of the instructions in the binary.
+
+     int returnValue = 0;
+     if (p_nametofileid_map.count(filename) == 0)
+        {
+          returnValue = p_nametofileid_map.size();
+          p_nametofileid_map[filename]  = returnValue;
+          p_fileidtoname_map[returnValue] = filename;
+        }
+       else
+        {
+          returnValue = p_nametofileid_map[filename];
+        }
+
+     return returnValue;
    }
 
 void

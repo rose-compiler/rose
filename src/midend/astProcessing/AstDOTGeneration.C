@@ -8,6 +8,11 @@
 #include "AstDOTGeneration.h"
 #include "AstConsistencyTests.h"
 
+// DQ (11/6/2008): Added to support the PRIx64 macro for portable (32/64)-bit address I/O.
+// It might be that this should be added more uniformally in ROSE.
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
@@ -189,6 +194,20 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              {
             // This does not use a SgAsmGenericString, at least not yet!
                name = peImportHintName->get_name();
+             }
+
+          SgAsmDwarfLine* asmDwarfLine = isSgAsmDwarfLine(node);
+          if (asmDwarfLine != NULL)
+             {
+               char buffer[100];
+
+            // It does not work to embed the "\n" into the single sprintf parameter.
+            // sprintf(buffer," Addr: 0x%08"PRIx64" \n line: %d col: %d ",asmDwarfLine->get_address(),asmDwarfLine->get_line(),asmDwarfLine->get_column());
+
+               sprintf(buffer,"Addr: 0x%08"PRIx64,asmDwarfLine->get_address());
+               name = buffer;
+               sprintf(buffer,"line: %d col: %d",asmDwarfLine->get_line(),asmDwarfLine->get_column());
+               name += string("\\n") + buffer;
              }
 
 #if 0
