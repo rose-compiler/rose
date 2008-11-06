@@ -1238,34 +1238,6 @@ SgAsmPEImportHNTEntry::dump(FILE *f, const char *prefix, ssize_t idx)
     fputc('\n', f);
 }
 
-/* Constructor */
-void
-SgAsmPEDLL::ctor() 
-{
-    p_hintnames = new SgAsmPEImportHNTEntryList;
-    p_hintnames->set_parent(this);
-}
-
-/* Print debugging info */
-void
-SgAsmPEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
-{
-    char p[4096];
-    if (idx>=0) {
-        sprintf(p, "%sPEDLL[%zd].", prefix, idx);
-    } else {
-        sprintf(p, "%sPEDLL.", prefix);
-    }
-    const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
-    SgAsmGenericDLL::dump(f, p, -1);
-    if (p_idir)
-        p_idir->dump(f, p, -1);
-    for (size_t i=0; i < p_hintname_rvas.size(); i++) {
-        fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64"\n", p, w, "hintname_rva", i, p_hintname_rvas[i]);
-        fprintf(f, "%s%-*s = [%zu] 0x%08"PRIx64"\n", p, w, "binding", i, p_bindings[i]);
-    }
-}
-
 /** Constructor for PE import data. Constructs an SgAsmPEImportSection that represents either a PE ".idata" section as defined
  *  by the PE Section Table, or a PE Import Table as described by the RVA/Size pairs at the end of the NT Optional Header. The
  *  ".idata" section and PE Import Table both have the same format, which is generally:
@@ -1292,8 +1264,6 @@ SgAsmPEDLL::dump(FILE *f, const char *prefix, ssize_t idx)
  * +-------------------------------+
  * @endcode
  */
-/* NOTES (RPM 2008-10-31)
- *    SgAsmPEDLLList is no longer used; delete from ROSETTA */
 void
 SgAsmPEImportSection::ctor(addr_t offset, addr_t size, addr_t mapped_rva)
 {

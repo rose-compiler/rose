@@ -2224,31 +2224,6 @@ HEADER_PE_SECTION_TABLE_ENTRY_START
 
 HEADER_PE_SECTION_TABLE_ENTRY_END
 
-HEADER_PE_DLL_START
-     public:
-          SgAsmPEDLL(SgAsmGenericString *name);
-       // virtual ~SgAsmPEDLL() {}
-
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-          void add_hintname_rva(addr_t a);
-          void add_hintname(SgAsmPEImportHNTEntry *hn);
-          void add_binding(addr_t a);
-
-       /* Accessors for protected/private data members */
-       // PEImportDirectory *get_idir() {return idir;}
-       // void set_idir(PEImportDirectory *d) {idir=d;}
-       // const std::vector<addr_t>& get_hintname_rvas() const {return hintname_rvas;}
-       // const std::vector<PEImportHNTEntry*>& get_hintnames() const {return hintnames;}
-       // const std::vector<addr_t>& get_bindings() const {return bindings;}
-
-  // private:
-       // PEImportDirectory *idir;
-       // std::vector<addr_t> hintname_rvas;          /* RVAs for the hint/name pairs of the DLL functions */
-       // std::vector<PEImportHNTEntry*> hintnames;   /* The hint/name pairs */
-       // std::vector<addr_t> bindings;               /* Bindings (RVA) for each function */
-	  void ctor();
-HEADER_PE_DLL_END
-
 
 
 HEADER_PE_COFF_SYMBOL_LIST_START
@@ -4546,34 +4521,6 @@ SgAsmCoffSymbol::SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *s
    }
 
 SOURCE_PE_COFF_SYMBOL_END
-
-SOURCE_PE_DLL_START
-SgAsmPEDLL::SgAsmPEDLL(SgAsmGenericString *name)
-   : SgAsmGenericDLL(name), p_idir(NULL)
-   {
-     ctor();
-   }
-
-void
-SgAsmPEDLL::add_hintname_rva(addr_t a)
-   {
-     p_hintname_rvas.push_back(a);
-   }
-
-void
-SgAsmPEDLL::add_hintname(SgAsmPEImportHNTEntry *hn)
-   {
-     ROSE_ASSERT(p_hintnames != NULL);
-     p_hintnames->get_hintnames().push_back(hn);
-   }
-
-void
-SgAsmPEDLL::add_binding(addr_t a)
-   {
-     p_bindings.push_back(a);
-   }
-
-SOURCE_PE_DLL_END
 
 SOURCE_COFF_STRING_TABLE_START
 SOURCE_COFF_STRING_TABLE_END

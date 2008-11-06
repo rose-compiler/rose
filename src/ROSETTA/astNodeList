@@ -410,8 +410,6 @@ SgUpcFenceStatement
 SgUpcForAllStatement
 SgUpcThreads
 SgUpcMythread
-SgAsmLEDLL
-SgAsmPEDLL
 SgAsmGenericDLL
 SgAsmPEFileHeader
 SgAsmLEFileHeader
