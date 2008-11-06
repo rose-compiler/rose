@@ -100,6 +100,8 @@ namespace StringUtility
        //! Substring replacement function
            std::string copyEdit ( const std::string& inputString, const std::string & oldToken, const std::string & newToken );
        //! Convert a number to a string
+           std::string numberToString ( long long x );
+           std::string numberToString ( unsigned long long x );
            std::string numberToString ( long x );
            std::string numberToString ( unsigned long x );
            std::string numberToString ( int x );

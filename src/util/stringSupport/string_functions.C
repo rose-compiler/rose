@@ -17,6 +17,7 @@
 #include <sstream>              /* std::ostringstream */
 
 #include "string_functions.h"
+#include <boost/lexical_cast.hpp>
 
 // DQ (9/29/2006): This is required for 64-bit g++ 3.4.4 compiler.
 #include <errno.h>
@@ -260,39 +261,39 @@ StringUtility::listToString ( const list<int> & X, bool separateStrings )
    }
 
 string
+StringUtility::numberToString ( long long x )
+   {
+     return boost::lexical_cast<std::string>(x);
+   }
+
+string
+StringUtility::numberToString ( unsigned long long x )
+   {
+     return boost::lexical_cast<std::string>(x);
+   }
+
+string
 StringUtility::numberToString ( long x )
    {
-  // Build a string representing the dimensionOfArrayStatement
-     std::ostringstream os;
-     os << x;
-     return os.str();
+     return boost::lexical_cast<std::string>(x);
    }
 
 string
 StringUtility::numberToString ( unsigned long x )
    {
-  // Build a string representing the dimensionOfArrayStatement
-     std::ostringstream os;
-     os << x;
-     return os.str();
+     return boost::lexical_cast<std::string>(x);
    }
 
 string
 StringUtility::numberToString ( int x )
    {
-  // Build a string representing the dimensionOfArrayStatement
-     std::ostringstream os;
-     os << x;
-     return os.str();
+     return boost::lexical_cast<std::string>(x);
    }
 
 string
 StringUtility::numberToString ( unsigned int x )
    {
-  // Build a string representing the dimensionOfArrayStatement
-     std::ostringstream os;
-     os << x;
-     return os.str();
+     return boost::lexical_cast<std::string>(x);
    }
 
 #if 0
