@@ -13,48 +13,22 @@
 \section{Binary Interrupt Analysis}
 \label{BinaryInterruptAnalysis::overview}
 
-% write your introduction
+This analysis looks for intx80 instruction calls. If such a call is detected,
+a dataflow analysis traces back the eax register to determine what Linux system call will being executed.
+
+E.g. if eax == 1 , its a sys\_exit, eax == 3, its a sys\_read or eax == 4 is a sys\_write.
+
 
 \subsection{Parameter Requirements}
 
-%Write the Parameter specification here.
-   No Parameter specifications yet!
+None.
 
 \subsection{Implementation}
 
-%Details of the implementation go here.
-   No implementation yet!
+This analysis operates on a graph, not an AST.
 
-\subsection{Non-Compliant Code Example}
+See binaryInterruptAnalysis.C
 
-% write your non-compliant code subsection
-
-\begin{verbatim}
-
-% write your non-compliant code example
-
-\end{verbatim}
-
-\subsection{Compliant Solution}
-
-% write your compliant code subsection
-
-\begin{verbatim}
-
-% write your compliant code example
-
-\end{verbatim}
-
-\subsection{Mitigation Strategies}
-\subsubsection{Static Analysis} 
-
-Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
-
-\begin{enumerate}
-\item Write your checker algorithm
-\end{enumerate}
-
-\subsection{References}
 
 % Write some references
 % ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''

@@ -570,7 +570,7 @@ RoseBin_FlowAnalysis::visit(SgNode* node) {
     ROSE_ASSERT(stat);
 
     //   if (RoseBin_support::DEBUG_MODE())
-    //      cout << " checking statement in function : " << name << " .. " << stat->class_name() << endl;
+    //    cout << ">>>>>>>>>>>>>. checking statement in function : " << name << " .. " << stat->class_name() << endl;
     if (isSgAsmInstruction(stat)) {
       SgAsmInstruction* inst = isSgAsmInstruction(stat);
       ROSE_ASSERT(inst);
@@ -666,7 +666,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	src= vizzGraph->checkIfGraphNodeExists(hexStr);
 	if (src==NULL) {
 	  src= vizzGraph->createNode (src_mnemonic, typeNode, src_address, vizzGraph->graph->get_graph_id(), false, thisbin);
-	
+
 	  string unp_name = unparseInstructionWithAddress(thisbin);
 	  src->append_properties(RoseBin_Def::name,unp_name);
 	  if (analysisName=="dfa")
@@ -779,9 +779,10 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
 	  target_visited=true;
       
 	if (trg==NULL) {
-	  if (analysisName=="callgraph") 
+	  if (analysisName=="callgraph") { 
+	    //	    cerr << " >>> TARGET FUNC NAME " << trg_func_name << endl;
 	    trg = vizzGraph->createNode (trg_func_name, typeNode, trg_func_address, vizzGraph->graph->get_graph_id(),false, funcDeclparent);
-	  else
+	  }	  else
 	    trg = vizzGraph->createNode (trg_mnemonic, typeNode, trg_address, vizzGraph->graph->get_graph_id(),false, bin_target);
 	
 	  string unp_name = unparseInstructionWithAddress(bin_target);

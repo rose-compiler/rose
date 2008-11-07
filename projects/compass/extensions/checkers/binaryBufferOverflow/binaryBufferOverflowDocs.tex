@@ -13,48 +13,45 @@
 \section{Binary Buffer Overflow}
 \label{BinaryBufferOverflow::overview}
 
-% write your introduction
+This analysis looks for buffer overflows in binaries.
 
 \subsection{Parameter Requirements}
 
-%Write the Parameter specification here.
-   No Parameter specifications yet!
+None.
 
 \subsection{Implementation}
 
-%Details of the implementation go here.
-   No implementation yet!
+The implementation is dependent on the availability of symbols.
+Functions must have names. The algorithm looks then for the malloc function
+and determines the memory allocation made.
+
+Using the def-use algorithm, uses of the allocated variable are looked for
+and any access beyond the allocation size are flagged as a buffer overflow.
+
+This analysis operates on a graph, not an AST.
 
 \subsection{Non-Compliant Code Example}
 
-% write your non-compliant code subsection
+This is an example of a code that will trigger a buffer overflow.
 
 \begin{verbatim}
 
-% write your non-compliant code example
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char* argv) {
+  int* arr = malloc( sizeof(int)*10);
+
+  int i=0;
+  for (i=0; i<10;++i) {
+    arr[i]=5;
+  }
+  int x = arr[12];
+}
 
 \end{verbatim}
 
-\subsection{Compliant Solution}
 
-% write your compliant code subsection
-
-\begin{verbatim}
-
-% write your compliant code example
-
-\end{verbatim}
-
-\subsection{Mitigation Strategies}
-\subsubsection{Static Analysis} 
-
-Compliance with this rule can be checked using structural static analysis checkers using the following algorithm:
-
-\begin{enumerate}
-\item Write your checker algorithm
-\end{enumerate}
-
-\subsection{References}
 
 % Write some references
 % ex. \htmladdnormallink{ISO/IEC 9899-1999:TC2}{https://www.securecoding.cert.org/confluence/display/seccode/AA.+C+References} Forward, Section 6.9.1, Function definitions''
