@@ -725,8 +725,15 @@ typedef SgIntegerStringMapPtrList* SgIntegerStringMapPtrListPtr;
 // std::tr1::tuple<int, int, int> tp;
 typedef std::pair<int,int> LineColumnFilePosition;
 typedef std::pair<int,LineColumnFilePosition> FileIdLineColumnFilePosition;
-typedef std::map<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
-typedef std::map<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
+
+typedef std::pair<uint64_t,FileIdLineColumnFilePosition> AddressFileIdLineColumnFilePositionPair;
+typedef std::pair<FileIdLineColumnFilePosition,uint64_t> FileIdLineColumnFilePositionAddressPair;
+
+// typedef std::multimap<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
+// typedef std::multimap<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
+typedef std::multimap<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
+typedef std::multimap<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
+
 typedef std::pair<SgInstructionAddressSourcePositionMapPtrList*,SgSourcePositionInstructionAddressMapPtrList*> DwarfInstructionSourceMapReturnType;
 
 
