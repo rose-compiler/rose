@@ -556,10 +556,10 @@ void BinQGUI::init(){
 	isSgAsmNode(*it)->class_name() << " length : " << length << endl;
 
     }
-    // color code ret as an example
+    // color code call as an example
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_ret) { 
+      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) { 
 	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
 	SgAsmOperandList * ops = inst->get_operandList();
 	SgAsmExpressionPtrList& opsList = ops->get_operands();
@@ -578,6 +578,7 @@ void BinQGUI::init(){
 	    break;
 	  }
 	}
+	delete item;
 	item = new Item(inst->get_address(),inst,3,row,length,pos,s,0);
       }
     }
@@ -642,10 +643,10 @@ void BinQGUI::init(){
       //      cerr << "unknown node " << endl;//*it->class_name() << endl;
       //      item = new Item(false,NULL,0,0,row,0,pos, " ",0);
     }
-    //example -- color pushes red
+    //example -- color calls red
     if (isSgAsmx86Instruction(*it)) {
       length = isSgAsmInstruction(*it)->get_raw_bytes().size();
-      if (isSgAsmx86Instruction(*it)->get_kind() == x86_ret) {
+      if (isSgAsmx86Instruction(*it)->get_kind() == x86_call) {
 	SgAsmx86Instruction* inst = isSgAsmx86Instruction(*it);
 	SgAsmOperandList * ops = inst->get_operandList();
 	SgAsmExpressionPtrList& opsList = ops->get_operands();
@@ -664,6 +665,7 @@ void BinQGUI::init(){
 	    break;
 	  }
 	}
+	delete item;
 	item = new Item(inst->get_address(),inst,3,row,length,pos,s,0);
 
       }
