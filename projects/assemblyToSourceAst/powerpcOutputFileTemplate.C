@@ -77,6 +77,18 @@ void startingInstruction() {
 
 void run();
 
+uint32_t readCRFields() 
+   {
+     uint32_t result = 0;
+     for (int i=0; i < 8; i++)
+        {
+          result |= ((uint32_t)cr[i]) << ((7-i)*4); 
+        }
+
+     return result;
+   }
+
+
 int main(int, char**) {
   run();
   return 0;

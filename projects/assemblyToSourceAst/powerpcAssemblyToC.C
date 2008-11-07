@@ -76,6 +76,7 @@ struct powerpcCTranslationPolicy {
   SgFunctionSymbol* interruptSym;
   SgFunctionSymbol* startingInstructionSym;
   SgFunctionSymbol* systemCallSym;
+  SgFunctionSymbol* readCRFieldsSym;
   SgBasicBlock* switchBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
@@ -248,6 +249,11 @@ struct powerpcCTranslationPolicy {
     appendStatement(buildAssignStatement(buildPntrArrRefExp(buildVarRefExp(crSym), buildIntVal(fld)), value.expr()), bb);
   }
 
+  WordWithExpression<32> readCR() {
+     return buildFunctionCallExp(readCRFieldsSym, buildExprListExp());
+  }
+
+
   WordWithExpression<32> readGPR(int num) {
     return buildPntrArrRefExp(buildVarRefExp(gprSym), buildIntVal(num));
   }
@@ -381,6 +387,7 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   LOOKUP_FUNC(abort);
   LOOKUP_FUNC(startingInstruction);
   LOOKUP_FUNC(systemCall);
+  LOOKUP_FUNC(readCRFields);
 #undef LOOKUP_FUNC
 }
 

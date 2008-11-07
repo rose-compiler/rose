@@ -426,6 +426,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
          }
 
       case powerpc_stw:
+      case powerpc_stwx:
          {
            ROSE_ASSERT(operands.size() == 2);
            write32(operands[1],read32(operands[0]));
@@ -857,6 +858,13 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            break;
          }
 
+      case powerpc_divwu:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           write32(operands[0], policy.unsignedDivide(read32(operands[1]),read32(operands[2])));
+           break;
+         }
+
       case powerpc_cmp:
          {
            ROSE_ASSERT(operands.size() == 4);
@@ -1092,6 +1100,29 @@ build_mask(uint8_t mb_value, uint8_t me_value)
            Word(32) result = policy.ite(policy.equalToZero(RS),number<32>(32),policy.xor_(policy.mostSignificantSetBit(RS),number<32>(31)));
 
            write32(operands[0],result);
+           break;
+         }
+
+      case powerpc_mfcr:
+         {
+           ROSE_ASSERT(operands.size() == 1);
+           write32(operands[0],policy.readCR());
+           break;
+         }
+
+      case powerpc_slw:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(6) shiftCount = extract<0,6>(read32(operands[2]));
+           write32(operands[0], policy.ite(extract<5,6>(shiftCount),number<32>(0),policy.shiftLeft(read32(operands[1]),extract<0,5>(shiftCount))));
+           break;
+         }
+
+      case powerpc_srw:
+         {
+           ROSE_ASSERT(operands.size() == 3);
+           Word(6) shiftCount = extract<0,6>(read32(operands[2]));
+           write32(operands[0], policy.ite(extract<5,6>(shiftCount),number<32>(0),policy.shiftRight(read32(operands[1]),extract<0,5>(shiftCount))));
            break;
          }
 
