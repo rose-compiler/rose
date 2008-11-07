@@ -3499,7 +3499,11 @@ HEADER_FILE_INFORMATION_START
           void post_construction_initialization();
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
+      //! Access function to permit files referenced in Dwarf to be mapped to integers using the same scheme as for source code.
           static int addFilenameToMap ( const std::string & filename );
+
+      //! Returns the number of entries in the filename map
+          static int numberOfSourceFiles();
 
           void set_filename (const char* filename) ROSE_DEPRECATED_FUNCTION;
           void set_filenameString ( const std::string & filename );
@@ -8700,6 +8704,12 @@ Sg_File_Info::set_file_id ( int file_id )
      set_isModified(true);
      
      p_file_id = file_id;
+   }
+
+int
+Sg_File_Info::numberOfSourceFiles()
+   {
+     return p_nametofileid_map.size();
    }
 
 int
