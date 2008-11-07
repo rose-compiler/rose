@@ -51,6 +51,7 @@ class FindInstructionsVisitor: public std::binary_function<SgNode*, std::vector<
   }
 };
 
+
 class FindInstructionsVisitorx86: public std::binary_function<SgNode*, std::vector<SgAsmx86Instruction *>* , void* >
 {
  public:
@@ -65,6 +66,16 @@ class FindAsmStatementsVisitor: public std::binary_function<SgNode*, std::vector
  public:
   void* operator()(first_argument_type node, std::vector<SgAsmStatement*>* insns ) const{
     if (isSgAsmStatement(node)) insns->push_back(isSgAsmStatement(node));
+    return NULL;
+  }
+};
+
+class FindAsmStatementsHeaderVisitor: public std::binary_function<SgNode*, std::vector<SgAsmNode *>* , void* >
+{
+ public:
+  void* operator()(first_argument_type node, std::vector<SgAsmNode*>* insns ) const{
+    if (isSgAsmStatement(node)) insns->push_back(isSgAsmStatement(node));
+    if (isSgAsmExecutableFileFormat(node)) insns->push_back(isSgAsmExecutableFileFormat(node));
     return NULL;
   }
 };
