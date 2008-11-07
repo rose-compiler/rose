@@ -114,6 +114,23 @@ static std::string toStringForRTI(const std::map<K, V>& x) {
   return ss.str();
 }
 
+#if 0
+static std::string toStringForRTI(const std::map<std::pair<int,std::pair<int,int> >, uint64_t > & x) {
+  std::ostringstream ss;
+  ss << "[";
+// for (std::vector<bool>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << (*i ? "T" : "F");}
+  ss << "]";
+  return ss.str();
+}
+#endif
+
+static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pair<int,int> > > & x) {
+  std::ostringstream ss;
+  ss << "[";
+// for (std::vector<bool>::const_iterator i = x.begin(); i != x.end(); ++i) {if (i != x.begin()) ss << ", "; ss << (*i ? "T" : "F");}
+  ss << "]";
+  return ss.str();
+}
 
 #if 0
 #if !OLD_GRAPH_NODES

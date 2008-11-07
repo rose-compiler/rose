@@ -3493,6 +3493,9 @@ HEADER_FILE_INFORMATION_START
        // DQ (2/15/2003): added copy constructor
           Sg_File_Info(const Sg_File_Info & X);
 
+       // DQ (11/6/2008): Added to support construction of objects using Dwarf information.
+          Sg_File_Info( int file_id, int line, int column );
+
           void post_construction_initialization();
 
        // DQ (11/6/2008): Added support for extending the internal static filename to integer id map
@@ -8608,6 +8611,22 @@ Sg_File_Info::Sg_File_Info ( const char* filename, int line, int col )
      post_construction_initialization();
    }
 #endif
+
+// DQ (11/6/2008): added constructor to support building objects from Dwarf 
+// information (which uses a pre-resolved integer file_id instead of a string)
+Sg_File_Info::Sg_File_Info( int file_id, int line, int column )
+   : p_file_id(file_id),
+     p_line(line),
+     p_col(column),
+     p_classificationBitField(0)
+   {
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT (p_col >= 0);
+
+  // Provide a common function called for initialization support.
+     post_construction_initialization();
+   }
 
 void
 Sg_File_Info::post_construction_initialization()

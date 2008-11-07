@@ -718,6 +718,16 @@ typedef std::map<int, std::string> SgIntegerStringMapPtrList;
 typedef SgIntegerStringMapPtrList* SgIntegerStringMapPtrListPtr;
 #endif
 
+// DQ (11/6/2008): This is the support for mapping instructions to source code and back.
+// When it is further along it will be moved to the SgAsmDwarfCompilationUnit as a member
+// function which will built it if it has not previously been built.
+// This is how a triplet would be built (in the future), instead of a pair, but for now use a pair.
+// std::tr1::tuple<int, int, int> tp;
+typedef std::pair<int,int> LineColumnFilePosition;
+typedef std::pair<int,LineColumnFilePosition> FileIdLineColumnFilePosition;
+typedef std::map<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMapPtrList;
+typedef std::map<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMapPtrList;
+typedef std::pair<SgInstructionAddressSourcePositionMapPtrList*,SgSourcePositionInstructionAddressMapPtrList*> DwarfInstructionSourceMapReturnType;
 
 
 // DQ (11/26/2005): Support for visitor pattern.
