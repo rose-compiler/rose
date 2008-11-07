@@ -14,8 +14,11 @@
 #include "slide.h"
 
 #include <qtabwidget.h>
+
+
 #include "Clone.h"
 #include "AlignFunctions.h"
+#include "BinCallGraph.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -464,6 +467,7 @@ void BinQGUI::init(){
   analyses.clear();
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new AlignFunction());
+  analyses.push_back(new BinCallGraph());
 
 
   cerr << "Disassemble File A ... " << fileNameA << endl;
@@ -724,7 +728,7 @@ void BinQGUI::createGUI() {
 	  
 	}
 	analysisPanelLeft.setFixedWidth(screenWidth/4 );
-	analysisPanelLeft.setFixedHeight(170);
+	//	analysisPanelLeft.setFixedHeight(170);
 
 	QRPanel &analysisPanelRight = analysisPanel << *new QRPanel(QROSE::LeftRight, QROSE::UseSplitter);
 	{

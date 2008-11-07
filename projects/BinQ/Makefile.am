@@ -12,7 +12,8 @@ BinQ_SOURCES = \
 	BinQGui.C \
 	slide.C \
 	Clone.C \
-	AlignFunctions.C 
+	AlignFunctions.C \
+	BinCallGraph.C
 #	AlignFunctionsSmart.C
 
 
@@ -48,4 +49,5 @@ EXTRA_DIST = BinQGui.h \
              folder.xpm \
              icons.h \
              Item.h \
-             Clone.h
+             Clone.h \
+             BinCallGraph.h
