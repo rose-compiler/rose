@@ -20,6 +20,7 @@
 #include <QApplication>
 
 #include "Item.h"
+#include "BinAnalyses.h"
 
 class Slide;
 class BinQSupport;
@@ -45,9 +46,14 @@ class BinQGUI //: public QWidget
     std::vector<Item*> itemsFileB;
     std::map<int,Item*> byteItemFileA;
     std::map<int,Item*> byteItemFileB;
+    std::map<int,Item*> rowItemFileA;
+    std::map<int,Item*> rowItemFileB;
+    QTextEdit *console;
     QTextEdit *analysisResult;
     QTextEdit *fileInfo;
+    QTextEdit *sectionInfo;
     QListWidget *listWidget;
+    QTextEdit *analysisInfo;
     SgNode* fileA;
     SgNode* fileB;
     Slide *slide;
@@ -56,12 +62,17 @@ class BinQGUI //: public QWidget
     qrs::QRWindow *window;
     qrs::QRTable *tableWidget;
     qrs::QRTable *codeTableWidget;
+    QTabWidget *analysisTab;
 
     qrs::QRTable *tableWidget2;
     qrs::QRTable *codeTableWidget2;
 
+    std::string fileNameA,fileNameB;
     
     void updateByteItemList();
+    void insertSectionInformation(SgAsmElfSection* sec,std::string filename);
+    void insertFileInformation();
+    std::vector<BinAnalyses*> analyses;
 
   protected:
     QComboBox *comboBox;
@@ -73,12 +84,12 @@ class BinQGUI //: public QWidget
     QLineEdit *largerThanRestriction;
 
   private:
-    void insertFileInformation();
+
+
     std::vector<SgNode*> funcsFileA;
     std::vector<SgNode*> funcsFileB;
     BinQSupport* binqsupport;
     
-    std::string fileNameA,fileNameB;
 
     int screenWidth;
     int screenHeight;

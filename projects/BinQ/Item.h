@@ -4,27 +4,25 @@
 
 class Item {
  public:
-  Item(bool function, SgNode* statement,
-       int functionSize, int resolved, int row, int length, int pos,
-       std::string comment, int lineNr):function(function),
-    statement(statement),functionSize(functionSize),
-    resolved(resolved),row(row),length(length),pos(pos),comment(comment),lineNr(lineNr){
+  Item(rose_addr_t addr, SgNode* statement,
+       int resolvedColor, int row, int length, int pos,
+       std::string comment, int lineNr):
+    addr(addr),statement(statement),
+    resolvedColor(resolvedColor),
+    row(row),length(length),pos(pos),
+    comment(comment),lineNr(lineNr){
     fg = QColor(128,128,128);
     bg = QColor(128,128,128);
 }
 
-  bool function;
+  rose_addr_t addr;
   SgNode* statement;
-  int functionSize;
-  int resolved;
+  int resolvedColor;
   int row;
-  
   int length;
   int pos;
   std::string comment;
   int lineNr;
-  // is this a added or removed instruction (clone detection)
-
   QColor bg;
   QColor fg;
 

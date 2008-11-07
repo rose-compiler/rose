@@ -12,8 +12,8 @@ BinQ_SOURCES = \
 	BinQGui.C \
 	slide.C \
 	Clone.C \
-	AlignFunctions.C \
-	AlignFunctionsSmart.C
+	AlignFunctions.C 
+#	AlignFunctionsSmart.C
 
 
 
@@ -35,12 +35,14 @@ CLEANFILES =
 
 
 clean:
-	rm -f *.o BinQ *.s
+	rm -f *.o BinQ *.s *.dump
 
 endif
 
 EXTRA_DIST = BinQGui.h \
              BinQSupport.h \
+             AlignFunctions.h \
+             BinAnalyses.h \
              slide.h \
              disks.xpm  \
              folder.xpm \

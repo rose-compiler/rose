@@ -11,7 +11,7 @@ using namespace qrs;
 
 
 std::string
-unparseInstrFast(SgAsmInstruction* iA)
+DiffAlgo::unparseInstrFast(SgAsmInstruction* iA)
 {
   static std::map<SgAsmInstruction*,std::string> strMap = std::map<SgAsmInstruction*,std::string>();
   std::map<SgAsmInstruction*,std::string>::iterator iItr =
@@ -42,8 +42,8 @@ unparseInstrFast(SgAsmInstruction* iA)
 };
 
 
-static bool
-isEqual(SgNode* A, SgNode* B)
+ bool
+DiffAlgo::isEqual(SgNode* A, SgNode* B)
 {
   if(A==NULL || B == NULL) return false;
   SgAsmInstruction* iA = isSgAsmx86Instruction(A);
@@ -61,7 +61,8 @@ isEqual(SgNode* A, SgNode* B)
 }
 
 
-void LCSLength( scoped_array<scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B )
+void 
+DiffAlgo::LCSLength( scoped_array<scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B )
 {
   int m = A.size()+1;
   int n = B.size()+1;
@@ -87,8 +88,12 @@ void LCSLength( scoped_array<scoped_array<size_t> >& C  ,vector_start_at_one<SgN
 
 }
 
+std::string DiffAlgo::name() {
+  return "BinaryDiff";
+}
 
-void printDiff( scoped_array<scoped_array<size_t> >& C,
+void 
+DiffAlgo::printDiff( scoped_array<scoped_array<size_t> >& C,
 		vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
 		std::vector<pair<int,int> >& addInstr, std::vector<pair<int,int> >& minusInstr
 		)
@@ -112,10 +117,14 @@ void printDiff( scoped_array<scoped_array<size_t> >& C,
     }
 }
 
+std::string 
+DiffAlgo::getDescription() {
+  return "This Analysis detects the diff between two binary files. It marks the additions and removals between them.";
+}
 
 
 void
-andreasDiff() {
+DiffAlgo::run() {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
     // this part is to find the added and removed code (from Andreas)
     FindInstructionsVisitor vis;
@@ -134,6 +143,7 @@ andreasDiff() {
     QString res = QString("Found adds:  %1.  Found subbs: %2. ")
       .arg(addInstr.size())
       .arg(minusInst.size());
+    instance->analysisTab->setCurrentIndex(1);
     instance->analysisResult->append(res);  
 
 

@@ -6,7 +6,7 @@
 
 #include <iostream>
 #include <list>
-
+#include "BinAnalyses.h"
 
 template <typename T>
 class vector_start_at_one {
@@ -27,19 +27,30 @@ class vector_start_at_one {
   vector_start_at_one(const vector_start_at_one<T>&); // Not copyable
 };
 
+class DiffAlgo : public BinAnalyses {
+ public:
 
-std::string
-unparseInstrFast(SgAsmInstruction* iA);
+  DiffAlgo(){};
+  virtual ~DiffAlgo(){};
+  void run();
+  std::string name();
+  std::string getDescription();
+ private:
+  std::string
+    unparseInstrFast(SgAsmInstruction* iA);
 
-static bool
-isEqual(SgNode* A, SgNode* B);
+  bool
+   isEqual(SgNode* A, SgNode* B);
+ 
+  void LCSLength( boost::scoped_array<boost::scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B );
+  
+  void printDiff( boost::scoped_array<boost::scoped_array<size_t> >& C,
+		  vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
+		  std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInstr
+		  );
 
-void LCSLength( boost::scoped_array<boost::scoped_array<size_t> >& C  ,vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B );
+};
 
-void printDiff( boost::scoped_array<boost::scoped_array<size_t> >& C,
-		vector_start_at_one<SgNode*>& A, vector_start_at_one<SgNode*>& B, int i, int j,
-		std::vector<std::pair<int,int> >& addInstr, std::vector<std::pair<int,int> >& minusInstr
-		);
 
 
 #endif

@@ -9,7 +9,7 @@
 #include "slide.h"
 
 #include <qtabwidget.h>
-#include "Clone.h"
+#include "AlignFunctions.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -17,10 +17,12 @@ using namespace std;
 using namespace boost;
 using namespace __gnu_cxx;
 
-
+std::string AlignFunction::name() {
+  return "Align Functions";
+}
 
 bool 
-findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos) {
+AlignFunction::findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos) {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
   unsigned int max = instance->itemsFileA.size();
   if (instance->itemsFileB.size()>max) 
@@ -68,9 +70,14 @@ findPosWhenFunctionsAreNotSync(int& position, int& offset, int& currentPos) {
   return true; // should not be reached
 }
 
+std::string 
+AlignFunction::getDescription() {
+  return "This Analysis aligns functions of two binaries. It is a simple algorithm that aligns functions based on their first encounter.";
+}
+
 
 void
-alignFunctions() {
+AlignFunction::run() {
   BinQGUI *instance = QROSE::cbData<BinQGUI *>();
 
 #if 1
@@ -92,9 +99,9 @@ alignFunctions() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"",0);
+	  item = new Item(0,NULL,4,(position+i+1),length,(oldPos),"",0);
 	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"",0);
+	  item = new Item(0,NULL,4,(position+i+1),0,(oldPos)+length,"",0);
 	it = instance->itemsFileA.insert(it,item);
 	++it;
 	//	cerr << "    A: adding NULL item at : " << (position+i+1) << "  pos : " << (oldPos+i) <<endl;
@@ -119,9 +126,9 @@ alignFunctions() {
       for (int i=0; i<offset;++i) {
 	Item* item =NULL;
 	if (i==0)
-	  item = new Item(false,NULL,0,4,(position+i+1),length,(oldPos),"",0);
+	  item = new Item(0,NULL,4,(position+i+1),length,(oldPos),"",0);
 	else
-	  item = new Item(false,NULL,0,4,(position+i+1),0,(oldPos)+length,"",0);
+	  item = new Item(0,NULL,4,(position+i+1),0,(oldPos)+length,"",0);
 	it = instance->itemsFileB.insert(it,item);
 	++it;
 	//cerr << "    B: adding NULL item at : " << (position+i+1) << "  pos : " << oldPos+i<<endl;

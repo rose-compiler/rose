@@ -40,12 +40,13 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (item) {
     int pos = item->pos;
     int length=item->length;
-    int color = item->resolved;
+    int color = item->resolvedColor;
     if (color==0)   painter.setBrush(Qt::black);
     if (color==1)   painter.setBrush(Qt::blue);
     if (color==2)   painter.setBrush(Qt::green);
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
+    if (color==5)   painter.setBrush(Qt::white);
     painter.drawRect(QRect(pos, 0, length, 15));
     }
   }
@@ -58,12 +59,13 @@ void Slide::paintEvent(QPaintEvent * /* event */)
     if (item) {
     int pos = item->pos;
     int length=item->length;
-    int color = item->resolved;
+    int color = item->resolvedColor;
     if (color==0)   painter.setBrush(Qt::black);
     if (color==1)   painter.setBrush(Qt::blue);
     if (color==2)   painter.setBrush(Qt::green);
     if (color==3)   painter.setBrush(Qt::red);
     if (color==4)   painter.setBrush(Qt::gray);
+    if (color==5)   painter.setBrush(Qt::white);
     painter.drawRect(QRect(pos, 15, length, 15));
     }
   }
@@ -82,10 +84,10 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
   int selected = posX;
   Item* item = gui->byteItemFileA[selected];
   Item* item2 = gui->byteItemFileB[selected];
-
+  ROSE_ASSERT(gui);
 
   if (item) {
-    SgAsmStatement* stmt=isSgAsmStatement(item->statement);
+    SgAsmNode* stmt=isSgAsmNode(item->statement);
     if (stmt) {
       if (isSgAsmFunctionDeclaration(stmt)) {
 	QString res = QString("FILE_A: selected Function  %1    pos:%2")
@@ -93,13 +95,29 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(selected);
 	if (lastStringA!=res) {
 	  lastStringA = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	}
       } else if (isSgAsmBlock(stmt)) {
 	QString res = QString("FILE_A: selected Block");
 	if (lastStringA!=res) {
 	  lastStringA = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
+	}
+      } else if (isSgAsmElfSection(stmt)) {
+	QString res = QString("FILE_A: selected Section %1")
+	.arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
+	if (lastStringA!=res) {
+	  lastStringA = res;
+	  gui->console->append(res);
+	  int row = item->row;
+	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
+	  if (row>=0) {
+	    if (lastRowA!=row) {
+	      gui->unhighlightInstructionRow(lastRowA, true);
+	      gui->highlightInstructionRow(row, true);
+	      lastRowA=row;
+	    }
+	  }
 	}
       } else if (isSgAsmInstruction(stmt)) {
 	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
@@ -110,7 +128,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(selected);
 	if (lastStringA!=res) {
 	  lastStringA = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	  int row = item->row;
 	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
 	  if (row>=0) {
@@ -134,19 +152,19 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(selected);
 	if (lastStringB!=res) {
 	  lastStringB = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	}
       } else if (isSgAsmBlock(stmt)) {
 	QString res = QString("FILE_B: selected Block");
 	if (lastStringB!=res) {
 	  lastStringB = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	}
       } else if (isSgFunctionDeclaration(stmt)) {
 	QString res = QString("FILE_B: Func selected");
 	if (lastStringB!=res) {
 	  lastStringB = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	}
       } else if (isSgStatement(stmt)) {
 	//	cerr << " selected statement!! " << endl;
@@ -157,7 +175,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(selected);
 	if (lastStringB!=res) {
 	  lastStringB = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	  int row = item2->row;
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
@@ -168,7 +186,23 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	    }
 	  }
 	}
-      }else if (isSgAsmInstruction(stmt)) {
+      }else if (isSgAsmElfSection(stmt)) {
+	QString res = QString("FILE_B: selected Section %1")
+	.arg(isSgAsmElfSection(stmt)->get_name()->get_string().c_str());
+	if (lastStringB!=res) {
+	  lastStringB = res;
+	  gui->console->append(res);
+	  int row = item2->row;
+	  //cerr << "Selected row: " << row << "   lastRowA:" << lastRowA << endl;
+	  if (row>=0) {
+	    if (lastRowB!=row) {
+	      gui->unhighlightInstructionRow(lastRowB, false);
+	      gui->highlightInstructionRow(row, false);
+	      lastRowB=row;
+	    }
+	  }
+	}
+      } else if (isSgAsmInstruction(stmt)) {
 	//cerr << " selected Byte: " << isSgAsmInstruction(stmt)->get_mnemonic() << endl;
 	QString res = QString("FILE_B: selected Byte  %1: %2  size %3  pos: %4")
 	  .arg(RoseBin_support::HexToString((isSgAsmx86Instruction(stmt))->get_address()).c_str() )
@@ -177,7 +211,7 @@ void Slide::mouseMoveEvent( QMouseEvent *mevt )
 	  .arg(selected);
 	if (lastStringB!=res) {
 	  lastStringB = res;
-	  gui->analysisResult->append(res);
+	  gui->console->append(res);
 	  int row = item2->row;
 	  //cerr << "Selected row: " << row << "   lastRowB:" << lastRowB << endl;
 	  if (row>=0) {
