@@ -4889,8 +4889,13 @@ SgAsmDwarfLineList::buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompila
 
                FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
 
-               instruction_source_code_map->operator[](address)   = file_info;
-               source_code_instruction_map->operator[](file_info) = address;
+            // This works for stp::map, but for std::multimap
+            // instruction_source_code_map->operator[](address)   = file_info;
+            // source_code_instruction_map->operator[](file_info) = address;
+
+            // This is the std::multiset version ...
+               instruction_source_code_map->insert(AddressFileIdLineColumnFilePositionPair(address,file_info));
+               source_code_instruction_map->insert(FileIdLineColumnFilePositionAddressPair(file_info,address));
              }
         }
        else
