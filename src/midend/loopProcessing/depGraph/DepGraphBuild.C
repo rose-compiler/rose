@@ -109,6 +109,7 @@ ProcessGoto( AstInterface &fa, const AstNodePtr& s, const AstNodePtr& dest)
    return ProcessAstTree::ProcessGoto(fa, s, dest);
 }
 
+//!Compute dependence relations between current statement and any other previously visited statements, including self-to-self.
 bool BuildAstTreeDepGraph ::
 ProcessStmt( AstInterface &fa, const AstNodePtr& s)
 {

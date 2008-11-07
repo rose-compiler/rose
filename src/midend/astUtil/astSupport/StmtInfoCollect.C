@@ -85,7 +85,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    else  {
       if (DebugLocalInfoCollect()) 
          std::cerr << "previsiting cur node " << AstToString(s) << "\n";
-      if (curstmt == AST_NULL) {
+      if (curstmt == AST_NULL) { //Fixup curstmt if not yet set
         AstNodePtr s1 = fa.GetParent(s);
         for ( ; s1 != AST_NULL && !fa.IsStatement(s1); s1 = fa.GetParent(s1));
         if (s1 != AST_NULL)
@@ -102,8 +102,11 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
    bool readlhs = false;
 
    if (fa.IsAssignment(s, &lhs, &rhs, &readlhs)) {
+     // For an assignment statement or expression, 
+     // get its lhs, rhs, and check if lhs is being read also 
      ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
      if (mp == 0 || mp->find(lhs) == mp->end()) {
+       // Add a new stack entry and ModRecord only for lhs not visited before
         modstack.push_back(s);
         modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
      }
@@ -140,12 +143,16 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
          if (DebugLocalInfoCollect()) 
              std::cerr << " append function call " << AstToString(s) << std::endl;
          AppendFuncCall(fa, s);
-         Skip(s);
+         Skip(s); 
      }
      if ( fa.IsMemoryAccess(s)) {
         ModMap *mp = modstack.size()?  &modstack.back().modmap : 0;
+        //Get the latest ModMap from modstack
+        //If cannot find a record for s, then s is being read
+        //Or if can find a record for s, but readlhs is true, then s is being read
         if (mp == 0 || mp->find(s) == mp->end() || (*mp)[s].readlhs)
            AppendReadLoc(fa, s);
+        // For array reference, collect references in its subscripts one by one   
         if (fa.IsArrayAccess(s, 0, &args))  {
            for (AstInterface::AstNodeList::const_iterator p = args.begin(); 
                 p != args.end();  ++p) {
@@ -157,7 +164,7 @@ ProcessTree( AstInterface &fa, const AstNodePtr& s,
       }
    }   
  }
- else {
+ else { // only for post-visiting 
       if (DebugLocalInfoCollect()) 
          std::cerr << "postvisiting cur node " << AstToString(s) << "\n";
        if (modstack.size() && modstack.back().root == s) {

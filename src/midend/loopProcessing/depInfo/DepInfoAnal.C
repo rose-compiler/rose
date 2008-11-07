@@ -43,7 +43,9 @@ void PrintResults(const std::string buffer) {
       std::cerr << buffer;
    }
 }
-
+//! A class to with an operator () to 
+//access and store the first element of a pair of AST node pointers ???
+// Accumulate AST references
 class AccuAstRefs : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >
 {
    CollectObject<AstNodePtr> &col;
@@ -64,6 +66,7 @@ bool AnalyzeStmtRefs(LoopTransformInterface &la, const AstNodePtr& n,
   AstInterface &fa = la;
   AccuAstRefs colw(wRefs);
   AccuAstRefs colr(rRefs);
+  // Construct a StmtSideEffectCollect object and call its operator 
   return StmtSideEffectCollect(la.getSideEffectInterface())(fa,n,&colw,&colr);
 }
 
@@ -204,7 +207,7 @@ GetLoopInfo( LoopTransformInterface &la, const AstNodePtr& s)
        info.domain.ClosureCond();
        if (DebugDep())
          std::cerr << "domain of statement " << AstToString(s) << " is : " << info.domain.toString() << std::endl;
-    }
+    } // end if IsTop()
     assert(!info.IsTop());
     return info;
 }
@@ -220,6 +223,7 @@ ComputePrivateScalarDep( LoopTransformInterface &fa, const StmtRefDep& ref,
      outDeps(d);
    }
    // has common loops and references involve two different variables
+   // Compute the reverse dependence edge stmt2->stmt1
    if ( ref.commLevel > 0 && ref.r1.ref != ref.r2.ref) {
       StmtRefDep ref2(ref.r2, ref.r1, ref.commLoop, ref.commLevel);
       DepInfo d1 = ComputePrivateDep( fa, *this, ref2, t2, -1);
@@ -301,7 +305,7 @@ void DepInfoAnal :: ComputeArrayDep( LoopTransformInterface &fa, const StmtRefDe
 	if (CmdOptions::GetInstance()->HasOption("-adhoc") || !test)
 		test |= PlatoOmegaInterface::ADHOC;
 #endif
-
+       //! Calculate dependence only if having common loops OR two different array accesses 
 	if (ref.commLevel > 0 || ref.r1.ref != ref.r2.ref)
 	{
 		/*AstInterface& ai  = fa;
@@ -607,7 +611,10 @@ ComputeCtrlDep(LoopTransformInterface &fa,
      outDeps(d);
   }
 }
-
+//! Compute dependence edges between two statements (ref.r1.stmt, ref.r2.stmt) between 
+// two data accesses from two read/write data sets (rs1,rs2), 
+//with known dependence type t, 
+//store stmt1->stmt2 edges into outDeps,   stmt2->stmt1 edges into inDeps
 void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la, 
                        DepInfoAnal::StmtRefDep& ref,
                        DoublyLinkedListWrap<AstNodePtr> *rs1, 
@@ -619,6 +626,7 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
   for (DoublyLinkedListWrap<AstNodePtr>::iterator iter1 = rs1->begin(); 
       iter1 != rs1->end(); ++iter1) {
     AstNodePtr r1 = *iter1, array1;
+    // First access is array access?
     bool b1 = la.IsArrayAccess(r1, &array1);
     if (!b1)
        array1 = r1; 
@@ -631,6 +639,7 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
        if (!b2)
           array2 = r2;
        ref.r2.ref = r2;
+       // Dependence only exists for accesses to the same memory location
        if ( fa.IsSameVarRef( array1, array2) ) {
            if (b1 && b2) 
                anal.ComputeArrayDep( la, ref, t, outDeps, inDeps);
@@ -646,8 +655,8 @@ void ComputeRefSetDep( DepInfoAnal& anal, LoopTransformInterface &la,
        else if ( la.IsAliasedRef( r1, r2)) {
           anal.ComputeGlobalScalarDep( la, ref, outDeps, inDeps); 
        }
-    }
-  }
+    }// end for (rs1)
+  } //end for (rs1)
 }
 
 void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
@@ -670,6 +679,9 @@ void RemoveIvars( AstInterface& ai, DoublyLinkedListWrap<AstNodePtr>& refs,
    }
 }
 
+//! Compute data dependence between two statements s1 and s2
+// Collect their read and write reference sets first, then generate dependence edges
+// among the elements of the reference sets. 
 void DepInfoAnal ::
 ComputeDataDep(LoopTransformInterface &fa, 
                const AstNodePtr& s1,  const AstNodePtr& s2,

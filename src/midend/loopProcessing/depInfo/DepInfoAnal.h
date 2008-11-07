@@ -24,11 +24,13 @@ class DepInfoAnal
       std::vector<SymbolicBound> ivarbounds;
       bool IsTop() const { return domain.IsTop(); }
    };
+   //!Store a single reference within a statement
    struct StmtRefInfo { 
      AstNodePtr stmt, ref;
      StmtRefInfo( const AstNodePtr& s, const AstNodePtr& r) 
         : stmt(s), ref(r) {}
    };
+   //!Store common loops and levels for two references from two statements
    struct StmtRefDep { 
      StmtRefInfo r1, r2;
      AstNodePtr commLoop;
