@@ -12,11 +12,10 @@ lib_LTLIBRARIES = libroseBtorSupport.la libroseSatProblem.la
 
 BUILT_SOURCES = libroseBtorSupport.la libroseSatProblem.la
 
-# x86AssemblyToCDemo_SOURCES = x86AssemblyToCDemo.C x86AssemblyToC.C
-x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C x86InstructionSemantics.h semanticsModule.h
+x86AssemblyToCDemo_SOURCES = x86AssemblyToC.C generatedCOpts.C generatedCOpts.h x86InstructionSemantics.h semanticsModule.h
 x86AssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 x86AssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-powerpcAssemblyToCDemo_SOURCES = powerpcAssemblyToC.C powerpcInstructionSemantics.h semanticsModule.h
+powerpcAssemblyToCDemo_SOURCES = powerpcAssemblyToC.C generatedCOpts.C generatedCOpts.h powerpcInstructionSemantics.h semanticsModule.h
 powerpcAssemblyToCDemo_CPPFLAGS = $(ROSE_INCLUDES)
 powerpcAssemblyToCDemo_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 powerpcAssemblyToCDemo_DEPENDENCIES = powerpcAssemblyToC.C powerpcInstructionSemantics.h semanticsModule.h
