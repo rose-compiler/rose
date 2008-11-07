@@ -13,8 +13,12 @@ BinQ_SOURCES = \
 	slide.C \
 	Clone.C \
 	AlignFunctions.C \
-	BinCallGraph.C
-#	AlignFunctionsSmart.C
+	BinCallGraph.C \
+	BinControlFlowAnalysis.C \
+	BinDataFlowAnalysis.C \
+	BufferOverflow.C \
+	InterruptAnalysis.C
+
 
 
 
@@ -50,4 +54,9 @@ EXTRA_DIST = BinQGui.h \
              icons.h \
              Item.h \
              Clone.h \
-             BinCallGraph.h
+             BinCallGraph.h \
+             BinControlFlowAnalysis.h \
+             BinDataFlowAnalysis.h \
+             BufferOverflow.h \
+             InterruptAnalysis.h
+

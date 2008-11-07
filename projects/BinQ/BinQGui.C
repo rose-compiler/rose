@@ -19,6 +19,10 @@
 #include "Clone.h"
 #include "AlignFunctions.h"
 #include "BinCallGraph.h"
+#include "BinControlFlowAnalysis.h"
+#include "BinDataFlowAnalysis.h"
+#include "BufferOverflow.h"
+#include "InterruptAnalysis.h"
 
 using namespace qrs;
 using namespace boost::filesystem;
@@ -468,6 +472,10 @@ void BinQGUI::init(){
   analyses.push_back(new DiffAlgo());
   analyses.push_back(new AlignFunction());
   analyses.push_back(new BinCallGraph());
+  analyses.push_back(new BinControlFlowAnalysis());
+  analyses.push_back(new BinDataFlowAnalysis());
+  analyses.push_back(new BufferOverflow());
+  analyses.push_back(new InterruptAnalysis());
 
 
   cerr << "Disassemble File A ... " << fileNameA << endl;

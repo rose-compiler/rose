@@ -1,0 +1,65 @@
+#include "BinQGui.h"
+
+#include <iostream>
+
+
+#include "BinQSupport.h"
+#include "slide.h"
+
+#include <qtabwidget.h>
+#include "BinControlFlowAnalysis.h"
+
+using namespace qrs;
+using namespace std;
+using namespace __gnu_cxx;
+
+std::string BinControlFlowAnalysis::name() {
+  return "Control Flow Graph";
+}
+
+std::string BinControlFlowAnalysis::getDescription() {
+  return "Creates a control flow graph. Outputs cfg.dot";
+}
+
+
+void
+BinControlFlowAnalysis::run() {
+  BinQGUI *instance = QROSE::cbData<BinQGUI *>();
+
+  RoseBin_Graph* graph=NULL;
+  ROSE_ASSERT(isSgProject(instance->fileA));
+  SgBinaryFile* binaryFile = isSgBinaryFile(isSgProject(instance->fileA)->get_fileList()[0]);
+  SgAsmFile* file = binaryFile != NULL ? binaryFile->get_binaryFile() : NULL;
+  ROSE_ASSERT(file);
+
+  VirtualBinCFG::AuxiliaryInformation* info = new VirtualBinCFG::AuxiliaryInformation(file);
+
+
+  // control flow analysis  *******************************************************
+  instance->analysisTab->setCurrentIndex(1);
+  QString res = QString("Creating control flow graph ");
+  instance->analysisResult->append(res);  
+  string cfgFileName = "cfg.dot";
+  graph= new RoseBin_DotGraph(info);
+  bool dot=true;
+  bool forward=true;
+  bool edges=true;
+  bool mergedEdges=true;
+  if (dot==false) {
+    cfgFileName = "cfg.gml";
+    graph= new RoseBin_GMLGraph(info);
+  }
+
+
+  SgAsmInterpretation* interp = SageInterface::getMainInterpretation(file);
+  RoseBin_ControlFlowAnalysis* cfganalysis = 
+    new RoseBin_ControlFlowAnalysis(interp->get_global_block(), forward, new RoseObj(), edges, info);
+  ROSE_ASSERT(cfganalysis);
+  cfganalysis->run(graph, cfgFileName, mergedEdges);
+  res = QString("nr of nodes visited %1. nr of edges visited %2. ")
+    .arg(cfganalysis->nodesVisited())
+    .arg(cfganalysis->edgesVisited());
+    
+  instance->analysisResult->append(res);  
+  
+}
