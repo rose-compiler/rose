@@ -69,6 +69,7 @@ class SinglyLinkedListWrap
        }
        return e;
      }
+     //! Prepend an entry to a list
      SinglyLinkedEntryWrap<T>* PushFirst( const T& o )
      {
        ++count;

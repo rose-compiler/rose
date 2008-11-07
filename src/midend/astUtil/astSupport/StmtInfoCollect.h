@@ -13,19 +13,25 @@
 class StmtInfoCollect : public ProcessAstTreeBase
 { 
  protected:
+  //Store the rhs operand (read) of operations, indicate if lhs is also read 
   struct ModRecord{
      AstNodePtr rhs;
-     bool readlhs;
+     bool readlhs; //Some operations like +=, -= also read lhs operand
+     // default constructor: 
      ModRecord() : readlhs(false) {}
+     // Constructor
      ModRecord( const AstNodePtr& _rhs, bool _readlhs)
       : rhs(_rhs), readlhs(_readlhs) {}
   };
+  // A map between a lhs operand (write) and its corresponding rhs operand
   typedef std::map<AstNodePtr, ModRecord, std::less<AstNodePtr> > ModMap;
+
   struct ModStackEntry {
-      AstNodePtr root;
-      ModMap modmap;
+      AstNodePtr root; //The statement/expression in question
+      ModMap modmap;   // Its lhs and rhs operand
       ModStackEntry(const AstNodePtr& r) : root(r) {}
   };
+  //Use: modstack.back().modmap[lhs] =  ModRecord( rhs,readlhs); 
   std::list<ModStackEntry> modstack;
   AstNodePtr curstmt;
  protected:
@@ -44,6 +50,7 @@ class StmtInfoCollect : public ProcessAstTreeBase
 };
 
 class FunctionSideEffectInterface;
+//! Collect statement side effects with the help of side effect analysis
 class StmtSideEffectCollect 
 : public StmtInfoCollect, public SideEffectAnalysisInterface
 {
@@ -66,6 +73,7 @@ class StmtSideEffectCollect
 		       CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectread = 0,
                        CollectObject<std::pair<AstNodePtr,AstNodePtr> >* collectkill = 0)
     { return operator()( fa, h, collectmod, collectread, collectkill); }
+  //! Collect mod, read, and kill information for a node h using an interface fa  
   bool operator()( AstInterface& fa, const AstNodePtr& h, 
                    CollectObject< std::pair<AstNodePtr,AstNodePtr> >* mod, 
                    CollectObject< std::pair<AstNodePtr,AstNodePtr> >* read=0,
@@ -151,6 +159,8 @@ class StmtVarAliasCollect
 		 const AstNodePtr& r2);
 };
 
+//! An interface to collect modified variables, and to query if a variable is modifed
+//within a subtree
 template <class Select>
 class ModifyVariableMap 
    : public CollectObject<std::pair<AstNodePtr,AstNodePtr> >,

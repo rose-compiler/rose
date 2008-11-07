@@ -1219,7 +1219,8 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
   }
   return true;
 }
-
+//! Check if a node is an assignment statement/expression, grab its lhs and rhs
+//Set readlhs to false if the operation is not Assign op (Others read lhs and write it also)
 bool AstInterface::
 IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *readlhs) 
 { 
@@ -1257,6 +1258,7 @@ IsAssignment( const AstNodePtr& _s, AstNodePtr* lhs, AstNodePtr* rhs, bool *read
   return false;
 }
 
+//! Check if a node is a variable declaration, store its declared variables and initial values
 bool AstInterface:: 
 IsVariableDecl(const AstNodePtr& _s, AstNodeList* vars, AstNodeList* init)
 {
@@ -1428,6 +1430,7 @@ IsConstant( const AstNodePtr& _exp, string* valtype, string *val)
   return true;
 }
 
+//! Two references are the same if they have the same name and same scope
 bool AstInterface::
 IsSameVarRef( const AstNodePtr& _n1, const AstNodePtr& _n2)
 {
@@ -1760,7 +1763,7 @@ IsMemoryAccess( const AstNodePtr& _s)
      }
      return false;
     }
-  }
+  } // end switch
   return true;
 }
 
@@ -1879,6 +1882,7 @@ IsBinaryOp( const AstNodePtr& _exp, OperatorEnum* opr,
   return true;
 }
 
+//! Check if a node is an unary operation , return its operation type and operand when needed
 bool AstInterface::
 IsUnaryOp( const AstNodePtr& _exp, OperatorEnum* opr, AstNodePtr* opd) 
 { 
@@ -1929,7 +1933,7 @@ bool AstInterface::IsBlock( const AstNodePtr& _exp)
   };
   return false;
 }
-
+//! Check if there is a function call: store its declaration and argument list
 bool AstInterfaceImpl::
 IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
 {
@@ -1946,7 +1950,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   case V_SgFunctionCallExp:
     {
       SgFunctionCallExp *fs = isSgFunctionCallExp(exp);
-      f = fs->get_function();
+      f = fs->get_function(); //Should be SgFunctionRefExp
       argexp = fs->get_args();
     }
     break;
@@ -2001,6 +2005,9 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
     *func = f;
   return true;
 }
+//! Check if a node is a function all, store function declaration, argument list, 
+//outargs: arguments using pass-by-reference, only consider C++ reference type now
+// parameter type list, return type
 bool AstInterface::
 IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args, 
                 AstNodeList* outargs, AstTypeList* paramtypes, AstNodeType* returntype)

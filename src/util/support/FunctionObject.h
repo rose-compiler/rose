@@ -33,7 +33,8 @@ class Select2Object
    virtual bool operator()(const T1& t1, const T2& t2) const  = 0;
    virtual ~Select2Object() {}
 };
-
+//!A container interface to add elements only
+// operator() should be provided in its implementation, such as CollectDoublyLinkedList
 template <class T> class CollectObject
 {
   public:

@@ -27,12 +27,15 @@ class SymbolicVisitor
   virtual ~SymbolicVisitor() {}
 };
 
+//! Supported symbolic expression value types: only integer?
 typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4, 
               VAL_FUNCTION = 8, VAL_EXPR = 16}
       SymbolicValType;
+//! Supported operators: *, +, -, max(), power(^)      
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
 
+//! Base interface for symbolic values
 class SymbolicValImpl 
 {
  protected:
@@ -54,11 +57,11 @@ class SymbolicValImpl
 inline SymbolicValImpl* Clone(const SymbolicValImpl& that) 
   { return that.Clone(); }
 
-
+//! Constant symbol for integers and fractions
 class SymbolicConst : public SymbolicValImpl
 {
-  std:: string val, type;
-  int intval, dval;
+  std:: string val, type;//val: string format; type: one of "int" or "fraction"
+  int intval, dval; // dval is for denominator of a fraction type
 
   SymbolicValImpl* Clone() const { return new SymbolicConst(*this); }
  public:
@@ -90,6 +93,7 @@ class SymbolicConst : public SymbolicValImpl
   std:: string GetVal() const { return val; }
 };
 
+//! Symbolic variable: name and scope
 class SymbolicVar : public SymbolicValImpl
 {
   std:: string varname;
@@ -139,6 +143,7 @@ class SymbolicAstWrap : public SymbolicValImpl
   const AstNodePtr& get_ast() const { return ast; }
 };
 
+//! A count reference handle to all kinds of symbolic variables
 class SymbolicVal : public CountRefHandle <SymbolicValImpl>
 {
  public:
@@ -211,7 +216,7 @@ class SymbolicVal : public CountRefHandle <SymbolicValImpl>
 
 class SymbolicFunction : public SymbolicValImpl
 {
-  std:: string op;
+  std:: string op; // Function name?
   std:: vector<SymbolicVal> args;
  protected:
   typedef AstInterface::OperatorEnum OpType;
@@ -303,6 +308,7 @@ inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
 typedef enum {REL_NONE = 0, REL_EQ = 1, REL_LT = 2, REL_LE = 3,
               REL_GT = 4, REL_GE = 5, REL_NE = 6, REL_UNKNOWN = 8} CompareRel;
  
+//! Symbolic conditions: x>y  
 class SymbolicCond
 {
   SymbolicVal val1, val2;
