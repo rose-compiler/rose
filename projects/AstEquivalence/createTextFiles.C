@@ -242,7 +242,7 @@ int main(int argc, char** argv)
 //  SgNode* disFile = disassembleFile(argv[1]);
   SgProject* disFile = frontend(argc,argv);
 
-
+#if 0
   VariantVector vv1(V_SgAsmPEDLL);
   vv1.push_back(V_SgAsmPEDLL); 
   std::vector<SgNode*> peDLL = NodeQuery::querySubTree(disFile,vv1);
@@ -261,7 +261,8 @@ int main(int argc, char** argv)
       
 
   };
- 
+#endif
+  
   std::cout << "END - PEDLL" <<std::endl;
  
   {
