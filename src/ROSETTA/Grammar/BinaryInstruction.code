@@ -3416,8 +3416,18 @@ HEADER_DWARF_MACRO_LIST_END
 
 HEADER_DWARF_LINE_LIST_START
 
+       // Once the maps are setup using a valid SgAsmDwarfCompilationUnit, NULL is an acceptable value.
       //! Support for building maps to and from instruction addresses to source positions (files, line numbers, column numbers).
-          DwarfInstructionSourceMapReturnType buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu );
+          DwarfInstructionSourceMapReturnType buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu = NULL );
+
+      //! Output information about instruction address <--> source position
+          void display( const std::string & label );
+
+          std::pair<uint64_t,uint64_t> instructionRange();
+          std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceCodeRange( int file_id );
+
+          uint64_t sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition );
+          FileIdLineColumnFilePosition addressToSourceCode ( uint64_t address );
 
 HEADER_DWARF_LINE_LIST_END
 
@@ -4865,13 +4875,13 @@ SgAsmDwarfLineList::buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompila
           source_code_instruction_map = new SgSourcePositionInstructionAddressMapPtrList;
      ROSE_ASSERT(source_code_instruction_map != NULL);
 
-     ROSE_ASSERT(dwarf_cu != NULL);
-     ROSE_ASSERT(dwarf_cu->get_line_info() != NULL);
-
-     SgAsmDwarfLinePtrList & line_list = dwarf_cu->get_line_info()->get_line_list();
-
      if (recomputeMap == true)
         {
+          ROSE_ASSERT(dwarf_cu != NULL);
+          ROSE_ASSERT(dwarf_cu->get_line_info() != NULL);
+
+          SgAsmDwarfLinePtrList & line_list = dwarf_cu->get_line_info()->get_line_list();
+
           int listSize = (int) line_list.size();
           for (int i = 0; i < listSize; i++)
              {
@@ -4900,7 +4910,7 @@ SgAsmDwarfLineList::buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompila
         }
        else
         {
-          printf ("Maps were computed previously \n");
+       // printf ("Maps were computed previously \n");
         }
 
      DwarfInstructionSourceMapReturnType returnValue(instruction_source_code_map,source_code_instruction_map);
