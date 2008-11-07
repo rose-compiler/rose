@@ -404,6 +404,13 @@ Grammar::setUpBinaryInstructions ()
   // AsmFile.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
   //                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile. Moved ahead of the 
+  // SgAsmGenericHeader so that maps (of instructions to source) built in the Dwarf section can be 
+  // used in analysis in the instruction sections. since Dwarf is meant to be read-only (at least 
+  // for now) this is a simpler design and avoids redundant traversals.
+     AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
   // DQ (8/13/2008): Required data member for Jeremiah's ROSE/projects/assemblyToSourceAst/x86AssemblyToC.C
   // DQ (8/13/2008): This needs to be removed once the x86AssemblyToC.C file is fixed up to not require it.
   // This is redundant with the more complete information in the SgAsmGenericSections of the binary file format.
@@ -415,10 +422,6 @@ Grammar::setUpBinaryInstructions ()
 
   // This is where the instructions are put...(put it last so the instructions are traversed last, after the binary file format)
      AsmInterpretation.setDataPrototype("SgAsmBlock*","global_block","= NULL",
-                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-  // DQ (11/6/2008): Moved Dwarf support to AsmInterpretation from SgBinaryFile.
-     AsmInterpretation.setDataPrototype("SgAsmDwarfCompilationUnit*","dwarf_info","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // *****************************************************
@@ -1940,6 +1943,13 @@ Grammar::setUpBinaryInstructions ()
      AsmDwarfLineList.setFunctionPrototype  ( "HEADER_DWARF_LINE_LIST", "../Grammar/BinaryInstruction.code");
      AsmDwarfLineList.setDataPrototype("SgAsmDwarfLinePtrList","line_list","",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#if 0
+  // I am having trouble making these proper data members so just use function to return them, so that they are computed dynamically.
+     AsmDwarfLineList.setDataPrototype("SgInstructionAddressSourcePositionMapPtrList","instructionToSourceMap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AsmDwarfLineList.setDataPrototype("SgSourcePositionInstructionAddressMapPtrList","sourceToInstructionMap","",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
      AsmDwarfLine.setFunctionPrototype      ( "HEADER_DWARF_LINE", "../Grammar/BinaryInstruction.code");
      AsmDwarfLine.setDataPrototype("uint64_t","address","= 0",
@@ -2092,6 +2102,8 @@ Grammar::setUpBinaryInstructions ()
      AsmDwarfCompilationUnit.setFunctionPrototype ( "SOURCE_DWARF_COMPILATION_UNIT", "../Grammar/BinaryInstruction.code");
      AsmDwarfMacro.setFunctionSource              ( "SOURCE_DWARF_MACRO", "../Grammar/BinaryInstruction.code");
      AsmDwarfLine.setFunctionSource               ( "SOURCE_DWARF_LINE", "../Grammar/BinaryInstruction.code");
+     AsmDwarfMacroList.setFunctionSource          ( "SOURCE_DWARF_MACRO_LIST", "../Grammar/BinaryInstruction.code");
+     AsmDwarfLineList.setFunctionSource           ( "SOURCE_DWARF_LINE_LIST", "../Grammar/BinaryInstruction.code");
 
 // ***************************************************************************************
 //                     END OF DWARF SPECIFIC IR NODE DEFINITIONS
