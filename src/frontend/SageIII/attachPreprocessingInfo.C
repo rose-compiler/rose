@@ -1268,13 +1268,13 @@ attachPreprocessingInfo(SgFile *sageFilePtr)
                printf ("Adding preinclude file = %s \n",i->c_str());
 
        // DQ (4/7/2006): This currently fails
-          //first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
+          first.force_include( i->c_str(), copyOf_i == preincludeList.rend() );
 //          first.force_include( i->c_str(), false);
           
           if(SgProject::get_verbose() >= 1)
                printf ("DONE: Adding preinclude file = %s \n",i->c_str());
         }
-#if 0
+#if 1
 
                                  
      if(SgProject::get_verbose() >= 1)
