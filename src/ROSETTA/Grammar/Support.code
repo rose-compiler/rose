@@ -3882,7 +3882,7 @@ HEADER_APPLICATION_FILE_START
 
       //! Sets up the source file name (there should only be one source file in the 
       //! commandline to a SgFile, there can be multiple ones to a SgProject).
-          void setupSourceFilename ( const std::vector<std::string>& argv );
+      //    void setupSourceFilename ( const std::vector<std::string>& argv );
 
       //! Access function calling get_startOfConstruct(), provided to support older interface.
           Sg_File_Info* get_file_info() const;
