@@ -209,7 +209,6 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/src/roseSupport \
      -I$(top_srcdir)/src/3rdPartyLibraries/MSTL \
 \
-     -I$(top_srcdir)/src/3rdPartyLibraries/libltdl \
      -I$(top_srcdir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/include \
      -I$(top_srcdir)/src/3rdPartyLibraries/qrose/Framework \
@@ -217,6 +216,7 @@ ROSE_INCLUDES = \
      -I$(top_srcdir)/projects/dataBase \
      -I$(top_srcdir)/src/util/graphs \
      -I$(top_srcdir)/src/midend/astUtil/astInterface \
+     -I$(top_srcdir)/libltdl \
      $(ROSE_PHP_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
