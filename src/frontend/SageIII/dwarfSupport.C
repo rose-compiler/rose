@@ -80,15 +80,6 @@ print_error(Dwarf_Debug dbg, string msg, int dwarf_code, Dwarf_Error err)
    }
 
 void
-print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt)
-   {
-  // This function is not implemented!
-
-     printf ("Error: print_attribute is not implemented! \n");
-  // ROSE_ASSERT(false);
-   }
-
-void
 print_source_intro(Dwarf_Die cu_die)
    {
      Dwarf_Off off = 0;
@@ -590,6 +581,270 @@ get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 /*NOTREACHED*/
 }
 
+#if 1
+void
+print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt)
+   {
+  // This function is not implemented!
+
+     printf ("Error: print_attribute is not implemented! \n");
+  // ROSE_ASSERT(false);
+   }
+#else
+
+void
+print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,Dwarf_Attribute attr_in,bool print_information,char **srcfiles, Dwarf_Signed cnt)
+   {
+     Dwarf_Attribute attrib = 0;
+     Dwarf_Unsigned uval = 0;
+     string atname;
+     string valname;
+     int tres = 0;
+     Dwarf_Half tag = 0;
+
+  // Added C++ string support to replace C style string support
+     string esb_base;
+
+     atname = get_AT_name(dbg, attr);
+
+  /* the following gets the real attribute, even in the face of an 
+     incorrect doubling, or worse, of attributes */
+     attrib = attr_in;
+  /* do not get attr via dwarf_attr: if there are (erroneously) 
+     multiple of an attr in a DIE, dwarf_attr will not get the
+     second, erroneous one and dwarfdump will print the first one
+     multiple times. Oops. */
+
+     tres = dwarf_tag(die, &tag, &rose_dwarf_error);
+     if (tres == DW_DLV_ERROR)
+        {
+          tag = 0;
+        }
+       else
+        {
+          if (tres == DW_DLV_NO_ENTRY)
+             {
+               tag = 0;
+             }
+            else
+             {
+            /* ok */
+             }
+        }
+
+     if (check_attr_tag)
+        {
+          string tagname = "<tag invalid>";
+
+          attr_tag_result.checks++;
+          if (tres == DW_DLV_ERROR)
+             {
+               attr_tag_result.errors++;
+               DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination.");
+             }
+            else
+             {
+               if (tres == DW_DLV_NO_ENTRY)
+                  {
+                    attr_tag_result.errors++;
+                    DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination..")
+                  }
+                 else 
+                  {
+                    if (tag_attr_combination(tag, attr))
+                       {
+                      /* OK */
+                       }
+                      else
+                       {
+                         attr_tag_result.errors++;
+                         tagname = get_TAG_name(dbg, tag);
+                         DWARF_CHECK_ERROR3(tagname.c_str(),get_AT_name(dbg, attr).c_str(),"check the tag-attr combination")
+                       }
+                  }
+             }
+        }
+
+     switch (attr)
+        {
+          case DW_AT_language:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_language", &valname,get_LANG_name, &rose_dwarf_error);
+               break;
+          case DW_AT_accessibility:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_accessibility",&valname, get_ACCESS_name,&rose_dwarf_error);
+               break;
+          case DW_AT_visibility:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_visibility",&valname, get_VIS_name,&rose_dwarf_error);
+               break;
+          case DW_AT_virtuality:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_virtuality",&valname,get_VIRTUALITY_name, &rose_dwarf_error);
+               break;
+          case DW_AT_identifier_case:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_identifier",&valname, get_ID_name,&rose_dwarf_error);
+               break;
+          case DW_AT_inline:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_inline", &valname,get_INL_name, &rose_dwarf_error);
+               break;
+          case DW_AT_encoding:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_encoding", &valname,get_ATE_name, &rose_dwarf_error);
+               break;
+          case DW_AT_ordering:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_ordering", &valname,get_ORD_name, &rose_dwarf_error);
+               break;
+          case DW_AT_calling_convention:
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_calling_convention",&valname, get_CC_name,&rose_dwarf_error);
+               break;
+          case DW_AT_discr_list:      /* DWARF3 */
+               get_small_encoding_integer_and_name(dbg, attrib, &uval,"DW_AT_discr_list",&valname, get_DSC_name,&rose_dwarf_error);
+               break;
+
+          case DW_AT_location:
+          case DW_AT_data_member_location:
+          case DW_AT_vtable_elem_location:
+          case DW_AT_string_length:
+          case DW_AT_return_addr:
+          case DW_AT_use_location:
+          case DW_AT_static_link:
+          case DW_AT_frame_base:
+        /* value is a location description or location list */
+
+            // valname = "Need to use C++ class!!!";
+            // printf ("DW_AT_frame_base: This should be replaced by the C++ string object! \n");
+            // ROSE_ASSERT(false);
+
+            // esb_empty_string(&esb_base);
+            // get_location_list(dbg, die, attrib, &esb_base);
+            // valname = esb_get_string(&esb_base);
+
+               get_location_list(dbg, die, attrib, &esb_base);
+               valname = esb_base;
+               break;
+
+          case DW_AT_SUN_func_offsets:
+
+            // printf ("DW_AT_SUN_func_offsets: This should be replaced by the C++ string object! \n");
+            // get_FLAG_BLOCK_string(dbg, attrib);
+            // valname = esb_get_string(&esb_base);
+
+               get_FLAG_BLOCK_string(dbg, attrib, esb_base);
+               valname = esb_base;
+               break;
+
+          case DW_AT_SUN_cf_kind:
+             {
+               Dwarf_Half kind;
+               Dwarf_Unsigned tempud;
+               Dwarf_Error err;
+               int wres;
+               wres = dwarf_formudata (attrib,&tempud, &err);
+               if(wres == DW_DLV_OK) {
+                   kind = tempud;
+                   valname = get_ATCF_name(dbg, kind);
+               } else if (wres == DW_DLV_NO_ENTRY) {
+                   valname = "?";
+               } else {
+                   print_error(dbg,"Cannot get formudata....",wres,err);
+                   valname = "??";
+               }
+
+               break;
+             }
+
+          case DW_AT_upper_bound:
+             {
+               Dwarf_Half theform;
+               int rv;
+               rv = dwarf_whatform(attrib,&theform,&rose_dwarf_error);
+            /* depending on the form and the attribute, process the form */
+               if(rv == DW_DLV_ERROR) {
+                    print_error(dbg, "dwarf_whatform cannot find attr form",rv, rose_dwarf_error);
+               } else if (rv == DW_DLV_NO_ENTRY) {
+                   break;
+               }
+
+               switch (theform)
+                  {
+                    case DW_FORM_block1:
+                      // valname = "Need to use C++ class!!!";
+                      // printf ("This should be replaced by the C++ string object! \n");
+                      // ROSE_ASSERT(false);
+
+                      // get_location_list(dbg, die, attrib, &esb_base);
+                      // valname = esb_get_string(&esb_base);
+
+                         get_location_list(dbg, die, attrib, &esb_base);
+                         valname = esb_base;
+                         break;
+
+                     default:
+                      // valname = "Need to use C++ class!!!";
+                      // printf ("This should be replaced by the C++ string object! \n");
+                      // ROSE_ASSERT(false);
+
+                      // esb_empty_string(&esb_base);
+                      // get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+                      // valname = esb_get_string(&esb_base);
+
+                         get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+                         valname = esb_base;
+                         break;
+                  }
+               break;
+             }
+
+          case DW_AT_high_pc:
+        {
+            Dwarf_Half theform;
+            int rv;
+            rv = dwarf_whatform(attrib,&theform,&rose_dwarf_error);
+            /* depending on the form and the attribute, process the form */
+            if(rv == DW_DLV_ERROR) {
+                print_error(dbg, "dwarf_whatform cannot find attr form",
+                            rv, rose_dwarf_error);
+            } else if (rv == DW_DLV_NO_ENTRY) {
+                break;
+            }
+
+         // esb_empty_string(&esb_base);
+            get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+            if( theform != DW_FORM_addr) {
+              /* New in DWARF4: other forms are not an address
+                 but are instead offset from pc.
+                 One could test for DWARF4 here before adding
+                 this string, but that seems unnecessary as this
+                 could not happen with DWARF3 or earlier. 
+                 A normal consumer would have to add this value to
+                 DW_AT_low_pc to get a true pc. */
+           // esb_append(&esb_base,"<offset-from-lowpc>");
+              esb_base += "<offset-from-lowpc>";
+            }
+
+         // valname = esb_get_string(&esb_base);
+            valname = esb_base;
+        }
+
+          default:
+            // valname = "Need to use C++ class!!!";
+            // printf ("This should be replaced by the C++ string object! \n");
+            // ROSE_ASSERT(false);
+               esb_base = "";
+               get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+               valname = esb_base;
+            // esb_empty_string(&esb_base);
+            // get_attr_value(dbg, tag, attrib, srcfiles, cnt, &esb_base);
+            // valname = esb_get_string(&esb_base);
+               break;
+        }
+
+     if (print_information)
+        {
+          if (dense)
+               printf(" %s<%s>", atname.c_str(), valname.c_str());
+            else
+               printf("\t\t%-28s%s\n", atname.c_str(), valname.c_str());
+        }
+   }
+#endif
 
 
 /* print info about die */
@@ -625,17 +880,6 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
      if (ores != DW_DLV_OK)
         {
           print_error(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
-        }
-
-
-     if (indent_level == 0)
-        {
-       // This is the header
-
-        }
-       else
-        {
-       // These are local symbols
         }
 
 
@@ -701,6 +945,15 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
              }
        }
 
+     if (indent_level == 0)
+        {
+       // This is the CU header
+        }
+       else
+        {
+       // These are local symbols
+        }
+
      atres = dwarf_attrlist(die, &atlist, &atcnt, &rose_dwarf_error);
      if (atres == DW_DLV_ERROR)
         {
@@ -717,6 +970,8 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
         }
 
      printf ("Handle attributes: atcnt = %d \n",(int)atcnt);
+
+  // Setup attribute specific fields in the different kinds of Dwarf nodes
      for (i = 0; i < atcnt; i++)
         {
           Dwarf_Half attr;
@@ -726,6 +981,15 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
           if (ares == DW_DLV_OK)
              {
                print_attribute(dbg, die, attr,atlist[i],print_information, srcfiles, cnt);
+
+               if (indent_level == 0)
+                  {
+                 // This is the CU header
+                  }
+                 else
+                  {
+                 // These are local symbols
+                  }
              }
             else
              {
