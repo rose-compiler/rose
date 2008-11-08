@@ -85,7 +85,7 @@ print_attribute(Dwarf_Debug dbg, Dwarf_Die die, Dwarf_Half attr,Dwarf_Attribute 
   // This function is not implemented!
 
      printf ("Error: print_attribute is not implemented! \n");
-     ROSE_ASSERT(false);
+  // ROSE_ASSERT(false);
    }
 
 void
@@ -594,7 +594,7 @@ get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 
 /* print info about die */
 void
-print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **srcfiles, Dwarf_Signed cnt)
+print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **srcfiles, Dwarf_Signed cnt, SgAsmDwarfCompilationUnit* asmDwarfCompilationUnit)
    {
      Dwarf_Signed i;
      Dwarf_Off offset, overall_offset;
@@ -627,6 +627,18 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
           print_error(dbg, "dwarf_die_CU_offset", ores, rose_dwarf_error);
         }
 
+
+     if (indent_level == 0)
+        {
+       // This is the header
+
+        }
+       else
+        {
+       // These are local symbols
+        }
+
+
   // if (!dst_format && print_information)
      if (print_information)
         {
@@ -638,6 +650,9 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
                  {
                    printf("\nCOMPILE_UNIT<header overall offset = %llu>:\n",overall_offset - offset);
                  }
+
+           // Initialize the information in the SgAsmDwarfCompilationUnit IR node
+
             }
            else
             {
@@ -701,7 +716,7 @@ print_one_die(Dwarf_Debug dbg, Dwarf_Die die, bool print_information, char **src
              }
         }
 
-  // printf ("Handle attributes: atcnt = %d \n",(int)atcnt);
+     printf ("Handle attributes: atcnt = %d \n",(int)atcnt);
      for (i = 0; i < atcnt; i++)
         {
           Dwarf_Half attr;
@@ -821,14 +836,14 @@ build_dwarf_IR_node_from_die_and_children(Dwarf_Debug dbg, Dwarf_Die in_die_in,c
                       }
                   }
              }
-#if 0
+#if 1
        // Suppress output!
 
        // DQ (11/4/2008): This is the location were we will have to generate IR nodes using each debug info entry (die)
           printf ("Calling print_one_die to output the information about each specific debug info entry (die) \n");
 
        /* here to pre-descent processing of the die */
-          print_one_die(dbg, in_die, info_flag, srcfiles, cnt);
+          print_one_die(dbg, in_die, /* info_flag */ true, srcfiles, cnt, asmDwarfCompilationUnit);
 
           printf ("Process children \n");
 #endif
@@ -939,7 +954,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
      if (verbose > 1)
         {
           print_source_intro(cu_die);
-          print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0);
+          print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0, asmDwarfCompilationUnit);
 
           lres = dwarf_print_lines(cu_die, &rose_dwarf_error);
           if (lres == DW_DLV_ERROR)
@@ -964,13 +979,12 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
              }
             else
              {
-#if 0
+#if 1
             // Suppress output!
-
                print_source_intro(cu_die);
                if (verbose)
                   {
-                    print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0);
+                    print_one_die(dbg, cu_die, /* print_information= */ 1,/* srcfiles= */ 0, /* cnt= */ 0, asmDwarfCompilationUnit);
                   }
 #endif
             // Output a header for the data
