@@ -14,8 +14,8 @@ namespace VirtualCFG
     template < typename FindSuccessors, typename FindEnd, typename DontAddChildren,
         typename Join, typename FilteredEdge > struct MakeClosure
     {
-        std::set < CFGNode > visitedNodes;
-        std::set < CFGPath > visitedPaths;
+        std::vector < CFGNode > visitedNodes;
+        std::vector < CFGPath > visitedPaths;
         const FindSuccessors & findSuccessors;
         const FindEnd & findEnd;
         const DontAddChildren & dontAddChildren;
@@ -33,10 +33,10 @@ namespace VirtualCFG
         {
             CFGNode end = findEnd(p);
 
-            if (visitedNodes.find(end) != visitedNodes.end())
+            if (std::find(visitedNodes.begin(), visitedNodes.end(), end) != visitedNodes.end())
                   return;
-              visitedNodes.insert(end);
-              visitedPaths.insert(p);
+              visitedNodes.push_back(end);
+              visitedPaths.push_back(p);
             if (dontAddChildren(end))
                   return;
               std::vector < CFGEdge > edges = findSuccessors(end);
@@ -49,7 +49,7 @@ namespace VirtualCFG
         std::vector < FilteredEdge > filter() const
         {
             std::vector < FilteredEdge > edges;
-            for (std::set < CFGPath >::const_iterator i = visitedPaths.begin();
+            for (std::vector < CFGPath >::const_iterator i = visitedPaths.begin();
                  i != visitedPaths.end(); ++i)
             {
                 const CFGPath & p = *i;
