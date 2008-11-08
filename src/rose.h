@@ -141,5 +141,10 @@ namespace ELF{
 
 #include "PHPFrontend.h"
 
+// DQ (11/7/2008): Added Dwarf support to ROSE AST (applies only to binary executables generated with dwarf debugging information).
+#if USE_ROSE_DWARF_SUPPORT
+#include "dwarfSupport.h"
+#endif
+
 // ifndef ROSE_H
 #endif

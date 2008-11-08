@@ -33,66 +33,6 @@ string getVariantName ( VariantT v )
      return string(roseGlobalVariantNameList[v]);
    }
 
-#if 0
-// DQ (11/6/2008): This is the support for mapping instructions to source code and back.
-// When it is further along it will be moved to the SgAsmDwarfCompilationUnit as a member
-// function which will built it if it has not previously been built.
-// typedef std::map<uint64_t,Sg_File_Info*> SgInstructionAddressSourcePositionMap;
-// typedef std::map<Sg_File_Info*,uint64_t> SgSourcePositionInstructionAddressMap;
-typedef std::pair<int,int> LineColumnFilePosition;
-typedef std::pair<int,LineColumnFilePosition> FileIdLineColumnFilePosition;
-
-typedef std::map<uint64_t,FileIdLineColumnFilePosition> SgInstructionAddressSourcePositionMap;
-typedef std::map<FileIdLineColumnFilePosition,uint64_t> SgSourcePositionInstructionAddressMap;
-
-// This is how a triplet would be built, instead of a pair, for now use a pair.
-// std::tr1::tuple<int, int, int> tp;
-#endif
-
-#if 0
-DwarfInstructionSourceMapReturnType
-buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu )
-   {
-     SgInstructionAddressSourcePositionMapPtrList* instruction_source_code_map = new SgInstructionAddressSourcePositionMapPtrList;
-     ROSE_ASSERT(instruction_source_code_map != NULL);
-
-     SgSourcePositionInstructionAddressMapPtrList* source_code_instruction_map = new SgSourcePositionInstructionAddressMapPtrList;
-     ROSE_ASSERT(source_code_instruction_map != NULL);
-
-     ROSE_ASSERT(dwarf_cu != NULL);
-     ROSE_ASSERT(dwarf_cu->get_line_info() != NULL);
-
-     SgAsmDwarfLinePtrList & line_list = dwarf_cu->get_line_info()->get_line_list();
-
-     int listSize = (int) line_list.size();
-     for (int i = 0; i < listSize; i++)
-        {
-       // Loop over each of the entries in the Dwarf line section.
-          uint64_t address = line_list[i]->get_address();
-
-       // Note that file_id values are already in terms of the Sg_File_Info maps 
-       // between file name integers and file name strings.
-          int file_id      = line_list[i]->get_file_id();
-
-          int line         = line_list[i]->get_line();
-          int column       = line_list[i]->get_column();
-
-          printf ("address = 0x%lx file_id = %d line = %d  column = %d \n",address,file_id,line,column);
-
-       // Sg_File_Info* file_info = new Sg_File_Info(file_id,line,column);
-       // FileIdLineColumnFilePosition file_info = std::pair< int, std::pair<int,int> >(file_id ;
-          FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
-
-          instruction_source_code_map->operator[](address)   = file_info;
-          source_code_instruction_map->operator[](file_info) = address;
-        }
-
-     DwarfInstructionSourceMapReturnType returnValue(instruction_source_code_map,source_code_instruction_map);
-
-     return returnValue;
-   }
-#endif
-
 
 SgNamespaceDefinitionStatement*
 SageInterface::enclosingNamespaceScope( SgDeclarationStatement* declaration )
