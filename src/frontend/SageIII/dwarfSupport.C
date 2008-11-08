@@ -1116,7 +1116,7 @@ build_dwarf_line_numbers_this_cu(Dwarf_Debug dbg, Dwarf_Die cu_die, SgAsmDwarfCo
 #if 1
   // Output the line information from the generated maps.
   // printf ("SgProject::get_verbose() = %d \n",SgProject::get_verbose());
-     if (SgProject::get_verbose() > 2)
+     if (SgProject::get_verbose() > 0)
         {
           asmDwarfLineList->display("Inside of build_dwarf_line_numbers_this_cu()");
         }
