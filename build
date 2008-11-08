@@ -26,12 +26,13 @@ rm -rf autom4te.cache
 # JJW (10/5/2008): force glibtoolize on Mac, even for external releases where
 # it wouldn't otherwise be needed (the files are there, they just don't work
 # when linking in Java)
-if test -x /usr/bin/glibtoolize; then
-  /usr/bin/glibtoolize --force --copy --ltdl
-elif test -f ./config/ltmain.sh; then
-  :
-else
-  libtoolize --force --copy --ltdl
+# JJW (11/8/2008): force libtoolize everywhere, and prefer libtoolize to
+# glibtoolize if it is present (libltdl is missing on ninjai, so I need to use
+# my own libtool installation)
+if which libtoolize > /dev/null; then
+  libtoolize --force --copy --ltdl --automake
+elif which glibtoolize > /dev/null; then
+  glibtoolize --force --copy --ltdl --automake
 fi
 
 aclocal -I ./config -I ./acmacros -I /usr/share/aclocal || : exit 1
