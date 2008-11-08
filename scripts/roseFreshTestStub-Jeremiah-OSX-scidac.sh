@@ -2,7 +2,7 @@
 
 # Stub file to include settings for roseFreshTest-common
 
-export PATH=/Users/willcock2/fontconfig-install/bin/:/Users/willcock2/ghostscript-install/bin/:/Users/willcock2/latex2html-install/bin/:/Users/willcock2/texlive-install/2007/bin/i386-darwin/:/Users/willcock2/graphviz-install/bin:/Users/willcock2/doxygen-install/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin
+export PATH=/Users/willcock2/libtool-install/bin:/Users/willcock2/fontconfig-install/bin/:/Users/willcock2/ghostscript-install/bin/:/Users/willcock2/latex2html-install/bin/:/Users/willcock2/texlive-install/2007/bin/i386-darwin/:/Users/willcock2/graphviz-install/bin:/Users/willcock2/doxygen-install/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/usr/X11/bin
 export DYLD_LIBRARY_PATH=/Users/willcock2/boost-1.35-install/lib
 
 ROSE_TOP="/Users/willcock2/svn-test-rose/$$/"
