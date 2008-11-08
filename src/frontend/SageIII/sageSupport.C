@@ -1600,6 +1600,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
      optionCount = sla(argv, "-rose:", "($)", "(prelink)",1);
      optionCount = sla(argv, "-"     , "($)", "(ansi)",1);
      optionCount = sla(argv, "-rose:", "($)", "(markGeneratedFiles)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(wave)",1);
      optionCount = sla(argv, "-rose:", "($)", "(negative_test)",1);
      integerOption = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(embedColorCodesInGeneratedCode)", &integerOption, 1);
