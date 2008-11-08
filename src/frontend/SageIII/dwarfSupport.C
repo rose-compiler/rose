@@ -1382,10 +1382,10 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
           Dwarf_Unsigned myerr = dwarf_errno(rose_dwarf_error);
 
           fprintf(stderr, "%s ERROR:  %s:  %s (%lu)\n",program_name.c_str(), "attempting to print .debug_info",errmsg.c_str(), (unsigned long) myerr);
-          fprintf(stderr, "attempting to continue.\n");
+       // fprintf(stderr, "attempting to continue.\n");
 
-          printf ("Error: nres = %d \n",nres);
-          ROSE_ASSERT(false);
+       // printf ("Error: nres = %d \n",nres);
+       // ROSE_ASSERT(false);
         }
 
   // printf ("Exiting print_infos() \n");
@@ -1406,21 +1406,31 @@ readDwarf ( SgAsmFile* asmFile )
   // printf ("dwarf_init_status = %d \n",dwarf_init_status);
 
   // Test if the call to dwarf_init worked!
-     ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
+  // ROSE_ASSERT(dwarf_init_status == DW_DLV_OK);
+     if (dwarf_init_status == DW_DLV_OK)
+        {
+       // I am unclear about the functionality of these two functions!
+       // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
+       // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
 
-  // I am unclear about the functionality of these two functions!
-  // dwarf_set_frame_rule_inital_value(rose_dwarf_dbg,global_config_file_data.cf_initial_rule_value);
-  // dwarf_set_frame_rule_table_size(rose_dwarf_dbg,global_config_file_data.cf_table_entry_count);
+       // Dwarf information will be attached to the main SgAsmInterpretation for the binary file.
+          SgAsmInterpretation* asmInterpretation = SageInterface::getMainInterpretation(asmFile);     
 
-  // Dwarf information will be attached to the main SgAsmInterpretation for the binary file.
-     SgAsmInterpretation* asmInterpretation = SageInterface::getMainInterpretation(asmFile);     
+       // Main function to read dwarf information
+          build_dwarf_IR_nodes(rose_dwarf_dbg,asmInterpretation);
 
-  // Main function to read dwarf information
-     build_dwarf_IR_nodes(rose_dwarf_dbg,asmInterpretation);
-
-  // printf ("\n\nFinishing Dwarf handling... \n\n");
-     int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
-     ROSE_ASSERT(dwarf_finish_status == DW_DLV_OK);
+       // printf ("\n\nFinishing Dwarf handling... \n\n");
+          int dwarf_finish_status = dwarf_finish( rose_dwarf_dbg, &rose_dwarf_error);
+          ROSE_ASSERT(dwarf_finish_status == DW_DLV_OK);
+        }
+       else
+        {
+       // This might be a PE file (or just non-ELF)
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("No dwarf debug sections found! \n");
+             }
+        }
    }
 
 // endif for "if USE_ROSE_DWARF_SUPPORT" at top of file.
