@@ -4895,7 +4895,7 @@ SgAsmDwarfLineList::buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompila
                int line         = line_list[i]->get_line();
                int column       = line_list[i]->get_column();
 
-               printf ("address = 0x%lx file_id = %d line = %d  column = %d \n",address,file_id,line,column);
+            // printf ("address = 0x%lx file_id = %d line = %d  column = %d \n",address,file_id,line,column);
 
                FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
 

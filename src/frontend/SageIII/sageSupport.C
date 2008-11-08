@@ -4683,7 +4683,7 @@ SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
   // Find the headers in the executable format and convert
   // them into SgAsmInterpretation objects
      SgAsmGenericFile* genericFile = asmFile->get_genericFile();
-     ROSE_ASSERT (genericFile);
+     ROSE_ASSERT (genericFile != NULL);
      SgAsmGenericHeaderList* headerList = genericFile->get_headers();
      ROSE_ASSERT (headerList);
      const SgAsmGenericHeaderPtrList& headers = headerList->get_headers();
@@ -4693,7 +4693,14 @@ SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
           interp->set_parent(asmFile);
           interp->set_header(headers[i]);
           asmFile->get_interpretations().push_back(interp);
+
+       // If dwarf is available then read it into the AST.
         }
+
+#if USE_ROSE_DWARF_SUPPORT
+  // DQ (11/7/2008): New Dwarf support in ROSE (Dwarf IR nodes are generated in the AST).
+     readDwarf(asmFile);
+#endif
 
   // Fill in the instructions into the SgAsmFile IR node
      SgProject* project = isSgProject(this->get_parent());
@@ -6126,14 +6133,13 @@ SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
           int column  = sourcePosition.second.second;
           string filename = Sg_File_Info::getFilenameFromID(file_id);
 
-          printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
+       // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
 #endif
         }
 
   // return FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
      return sourcePosition;
    }
- 
 
 
 void

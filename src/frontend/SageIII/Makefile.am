@@ -24,7 +24,7 @@ CXX_TEMPLATE_REPOSITORY_PATH = .
 # EXTRA_DIST = preproc.lex preproc.C sageClasses.docs sage.docs.in docs
 # EXTRA_DIST = preproc.lex preproc.C astGraphTemplate.C docs
 EXTRA_DIST = preproc.ll docs rtiHelpers.h attributeListMap.h \
-            advanced_preprocessing_hooks.h rose_attributes_list.h
+            advanced_preprocessing_hooks.h rose_attributes_list.h dwarfSupport.h
 CLEANFILES = haveRosettaGeneratedSource
 DISTCLEANFILES = preproc.cc
 
@@ -77,7 +77,9 @@ libsage3Sources = \
    fixupCopy_references.C \
    rtiHelpers.C \
    virtualCfgMemberFunctions.C \
-   OmpAttribute.C
+   OmpAttribute.C \
+   dwarfSupport.C
+
 # $(GENERATED_SOURCE) is handled separately
 
 # DQ (5/27/2007): Files moved or removed
