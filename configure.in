@@ -213,8 +213,8 @@ AC_ARG_WITH(valgrind, [  --with-valgrind ... Run uninitialized field tests that 
              if test "x$withval" = "xyes"; then VALGRIND_BINARY="`which valgrind`"; else VALGRIND_BINARY="$withval"; fi])
 
 AC_ARG_WITH(wave-default, [  --with-wave-default ... Use Wave as the default preprocessor],
-            [AC_DEFINE([ROSE_WAVE_DEFAULT], "true", [Use Wave as default in ROSE])],
-            [AC_DEFINE([ROSE_WAVE_DEFAULT], "false", [Simple preprocessor as default in ROSE])]
+            [AC_DEFINE([ROSE_WAVE_DEFAULT], true, [Use Wave as default in ROSE])],
+            [AC_DEFINE([ROSE_WAVE_DEFAULT], false, [Simple preprocessor as default in ROSE])]
             )
 
 # Don't set VALGRIND here because that turns on actually running valgrind in
