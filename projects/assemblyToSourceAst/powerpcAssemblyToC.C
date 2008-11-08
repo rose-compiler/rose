@@ -471,18 +471,30 @@ int main(int argc, char** argv) {
 
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
 
-  // addDirectJumpsToSwitchCases(policy);
+#if 0
+  cerr << "addDirectJumpsToSwitchCases" << endl;
+  addDirectJumpsToSwitchCases(policy);
+#endif
+#if 0
+  cerr << "plugInAllConstVarDefs 1" << endl;
   plugInAllConstVarDefs(proj, policy);
-  simplifyAllExpressions(proj);
-  removeIfConstants(proj);
-  plugInAllConstVarDefs(proj, policy);
-  simplifyAllExpressions(proj);
-  removeIfConstants(proj);
+  cerr << "removeUnusedVariables 1" << endl;
   removeUnusedVariables(proj);
+  cerr << "plugInAllConstVarDefs 2" << endl;
+  plugInAllConstVarDefs(proj, policy);
+  cerr << "simplifyAllExpressions 2" << endl;
+  simplifyAllExpressions(proj);
+  cerr << "removeIfConstants 2" << endl;
+  removeIfConstants(proj);
+  cerr << "removeUnusedVariables 2" << endl;
+  removeUnusedVariables(proj);
+#endif
 
 // Run the standard ROSE consistancy tests on the generated source file
-  // AstTests::runAllTests(proj);
+  cerr << "testing" << endl;
+  AstTests::runAllTests(proj);
 
 // Generate the source code and call the backend compiler.
+  cerr << "unparsing" << endl;
   return backend(proj);
 }

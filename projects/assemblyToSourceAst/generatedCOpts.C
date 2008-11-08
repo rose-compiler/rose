@@ -490,7 +490,7 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
         es->set_expression(plugInDefsForExpression(e, defs));
         es->get_expression()->set_parent(es);
       }
-#if 1
+#if 0
       if (isSgAssignOp(e) && isSgVarRefExp(isSgAssignOp(e)->get_lhs_operand())) {
         SgInitializedName* in = isSgVarRefExp(isSgAssignOp(e)->get_lhs_operand())->get_symbol()->get_declaration();
         SgExpression* rhs = isSgAssignOp(e)->get_rhs_operand();
