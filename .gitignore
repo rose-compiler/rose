@@ -24,10 +24,5 @@ Makefile.in
 /config/ylwrap
 /configure
 /rose_config.h.in
-/libltdl/aclocal.m4
-/libltdl/autom4te.cache/
-/libltdl/config.guess
-/libltdl/config.sub
-/libltdl/configure
-/libltdl/install-sh
+/libltdl
 *.pyc
