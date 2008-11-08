@@ -451,14 +451,16 @@ class RemoveUnusedDeclarationsVisitor: public AstSimpleProcessing {
                                   const set<SgFunctionDeclaration*>& s):
     used_decls(u), safe_functions(s) {}
 
+  // Note: this now (11/7/2008) considers pointer derefs and array derefs safe,
+  // which doesn't preserve invalid memory access behavior
   bool isSimpleInitializer(SgExpression* e) {
     if (isSgVarRefExp(e)) return true;
     if (isSgValueExp(e)) return true;
     if (isSgUnaryOp(e) && isSimpleInitializer(isSgUnaryOp(e)->get_operand())) {
-      return isSgBitComplementOp(e) || isSgMinusOp(e) || isSgNotOp(e) || isSgUnaryAddOp(e) || isSgCastExp(e);
+      return isSgBitComplementOp(e) || isSgMinusOp(e) || isSgNotOp(e) || isSgUnaryAddOp(e) || isSgCastExp(e) || isSgPointerDerefExp(e);
     }
     if (isSgBinaryOp(e) && isSimpleInitializer(isSgBinaryOp(e)->get_lhs_operand()) && isSimpleInitializer(isSgBinaryOp(e)->get_rhs_operand())) {
-      return isSgAddOp(e) || isSgAndOp(e) || isSgBitAndOp(e) || isSgBitOrOp(e) || isSgBitXorOp(e) || isSgCommaOpExp(e) || isSgDivideOp(e) || isSgEqualityOp(e) || isSgGreaterOrEqualOp(e) || isSgGreaterThanOp(e) || isSgLessOrEqualOp(e) || isSgLessThanOp(e) || isSgLshiftOp(e) || isSgModOp(e) || isSgMultiplyOp(e) || isSgNotEqualOp(e) || isSgOrOp(e) || isSgRshiftOp(e) || isSgSubtractOp(e);
+      return isSgAddOp(e) || isSgAndOp(e) || isSgBitAndOp(e) || isSgBitOrOp(e) || isSgBitXorOp(e) || isSgCommaOpExp(e) || isSgDivideOp(e) || isSgEqualityOp(e) || isSgGreaterOrEqualOp(e) || isSgGreaterThanOp(e) || isSgLessOrEqualOp(e) || isSgLessThanOp(e) || isSgLshiftOp(e) || isSgModOp(e) || isSgMultiplyOp(e) || isSgNotEqualOp(e) || isSgOrOp(e) || isSgRshiftOp(e) || isSgSubtractOp(e) || isSgPntrArrRefExp(e);
     }
     if (isSgConditionalExp(e)) {
       SgConditionalExp* c = isSgConditionalExp(e);
