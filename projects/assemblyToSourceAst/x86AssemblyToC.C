@@ -1,6 +1,7 @@
 #include "rose.h"
 #include "x86AssemblyToC.h"
 #include "integerOps.h"
+#include "generatedCOpts.h"
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -32,8 +33,8 @@ struct WordWithExpression {
   private: BOOST_STATIC_ASSERT (Len <= 64); // FIXME handle longer operations
 };
 
-struct CTranslationPolicy {
-  CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
+struct X86CTranslationPolicy: public CTranslationPolicy {
+  X86CTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
   SgAsmFile* asmFile;
   SgGlobal* globalScope;
@@ -79,6 +80,7 @@ struct CTranslationPolicy {
   SgFunctionSymbol* interruptSym;
   SgFunctionSymbol* startingInstructionSym;
   SgBasicBlock* switchBody;
+  SgStatement* whileBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
   std::set<uint64_t> externallyVisibleBlocks;
@@ -156,12 +158,12 @@ struct CTranslationPolicy {
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
   }
 
   template <size_t Len1, size_t Len2>
@@ -303,7 +305,7 @@ struct CTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mwSym);
-    appendStatement(buildIfStmt(cond.expr(), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
+    appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
   }
 
   WordWithExpression<32> filterIndirectJumpTarget(const WordWithExpression<32>& addr) {
@@ -345,6 +347,32 @@ struct CTranslationPolicy {
   void finishInstruction(SgAsmInstruction* insn) {
     appendStatement(buildContinueStmt(), bb);
   }
+
+  virtual bool isMemoryWrite(SgFunctionRefExp* func) const {
+    return (
+        func->get_symbol()->get_declaration() == memoryWriteByteSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteDWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteQWordSym->get_declaration());
+  }
+  virtual bool isMemoryRead(SgFunctionRefExp* func) const {
+    return (
+        func->get_symbol()->get_declaration() == memoryReadByteSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadDWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadQWordSym->get_declaration());
+  }
+  virtual bool isVolatileOperation(SgExpression* e) const {
+    return (
+        isSgFunctionCallExp(e) &&
+        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
+        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == interruptSym->get_declaration());
+  }
+  virtual SgStatement* getWhileBody() const {return whileBody;}
+  virtual SgBasicBlock* getSwitchBody() const {return switchBody;}
+  virtual SgVariableSymbol* getIPSymbol() const {return ipSym;}
+  virtual const std::map<uint64_t, SgLabelStatement*>& getLabelsForBlocks() const {return labelsForBlocks;}
+  virtual const std::set<uint64_t>& getExternallyVisibleBlocks() const {return externallyVisibleBlocks;}
 };
 
 #if 0 // Unused
@@ -358,7 +386,7 @@ static int sizeOfInsnSize(X86InstructionSize s) {
 }
 #endif
 
-SgFunctionSymbol* CTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
+SgFunctionSymbol* X86CTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
   SgFunctionDeclaration* decl = buildNondefiningFunctionDeclaration(name, returnType, params, globalScope);
   appendStatement(decl, globalScope);
   SgFunctionSymbol* sym = globalScope->lookup_function_symbol(name);
@@ -366,7 +394,7 @@ SgFunctionSymbol* CTranslationPolicy::addHelperFunction(const std::string& name,
   return sym;
 }
 
-CTranslationPolicy::CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
+X86CTranslationPolicy::X86CTranslationPolicy(SgSourceFile* f, SgAsmFile* asmFile): asmFile(asmFile), globalScope(NULL) {
   ROSE_ASSERT (f);
   ROSE_ASSERT (f->get_globalScope());
   globalScope = f->get_globalScope();
@@ -456,12 +484,13 @@ int main(int argc, char** argv) {
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
-  CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
+  X86CTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
   policy.switchBody = buildBasicBlock();
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
-  X86InstructionSemantics<CTranslationPolicy, WordWithExpression> t(policy);
+  policy.whileBody = sw;
+  X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
   vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
   for (size_t i = 0; i < instructions.size(); ++i) {
     SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);

@@ -2,6 +2,7 @@
 #include "x86AssemblyToC.h"
 #include "filteredCFG.h"
 #include <fstream>
+#include "generatedCOpts.h"
 
 using namespace std;
 using namespace SageInterface;
@@ -37,7 +38,7 @@ SgValueExp* buildConstantOfType(unsigned long long val, SgType* t) {
 }
 
 // Returns true only if top level expr was changed
-bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPolicy& conv) {
+bool simplifyExpression(SgExpression*& expr, bool& changed) {
   // cerr << "simplifyExpression " << expr->class_name() << endl;
   SgUnaryOp* uo = isSgUnaryOp(expr);
   SgBinaryOp* bo = isSgBinaryOp(expr);
@@ -45,7 +46,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     return false;
   } else if (uo) {
     SgExpression* op = uo->get_operand();
-    if (simplifyExpression(op, changed, conv)) {
+    if (simplifyExpression(op, changed)) {
       uo->set_operand(op);
       op->set_parent(uo);
     }
@@ -90,24 +91,24 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     return false;
   } else if (isSgAssignInitializer(expr)) {
     SgExpression* op = isSgAssignInitializer(expr)->get_operand();
-    if (simplifyExpression(op, changed, conv)) {
+    if (simplifyExpression(op, changed)) {
       isSgAssignInitializer(expr)->set_operand(op);
       op->set_parent(isSgAssignInitializer(expr));
     }
     return false;
   } else if (bo) {
     SgExpression* op1 = bo->get_lhs_operand();
-    if (simplifyExpression(op1, changed, conv)) {
+    if (simplifyExpression(op1, changed)) {
       bo->set_lhs_operand(op1);
       op1->set_parent(bo);
     }
     SgExpression* op2 = bo->get_rhs_operand();
-    if (simplifyExpression(op2, changed, conv)) {
+    if (simplifyExpression(op2, changed)) {
       bo->set_rhs_operand(op2);
       op2->set_parent(bo);
     }
     SgType* op1type = op1->get_type()->stripType();
-    SgType* op2type = op2->get_type()->stripType();
+    // SgType* op2type = op2->get_type()->stripType();
     SgType* exprtype = expr->get_type()->stripType();
     if (isSgBitAndOp(expr) && isSgValueExp(op1) && isSgValueExp(op2)) {
       expr = buildConstantOfType(getValue(op1) & getValue(op2), exprtype);
@@ -115,7 +116,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
       return true;
     } else if (isSgBitAndOp(expr) &&
                isSgValueExp(op2) &&
-               (getValue(op2) == ~0UL || getValue(op2) == ~0ULL) &&
+               (getValue(op2) == (unsigned int)(~0UL)) &&
                isSgTypeUnsignedInt(op1type)) { // Remove unnecessary mask operations
       expr = op1;
       changed = true;
@@ -131,7 +132,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     } else if (isSgBitAndOp(expr) && isSgValueExp(op1)) { // Must be after the case for where both are value exprs
       bo->set_lhs_operand(op2);
       bo->set_rhs_operand(op1);
-      return simplifyExpression(expr, changed, conv);
+      return simplifyExpression(expr, changed);
     } else if (isSgBitAndOp(expr) && expressionTreeEqual(op1, op2)) {
       expr = op1;
       changed = true;
@@ -260,7 +261,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     } else if (isSgSubtractOp(expr) && isSgValueExp(op2)) {
       expr = buildCastExp(buildAddOp(op1, buildConstantOfType(-getValue(op2), exprtype)), exprtype);
       changed = true;
-      simplifyExpression(expr, changed, conv);
+      simplifyExpression(expr, changed);
       return true;
     } else if (isSgSubtractOp(expr) && expressionTreeEqual(op1, op2)) {
       expr = buildConstantOfType(0, exprtype);
@@ -277,17 +278,17 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     }
   } else if (isSgConditionalExp(expr)) {
     SgExpression* op1 = isSgConditionalExp(expr)->get_conditional_exp();
-    if (simplifyExpression(op1, changed, conv)) {
+    if (simplifyExpression(op1, changed)) {
       isSgConditionalExp(expr)->set_conditional_exp(op1);
       op1->set_parent(isSgConditionalExp(expr));
     }
     SgExpression* op2 = isSgConditionalExp(expr)->get_true_exp();
-    if (simplifyExpression(op2, changed, conv)) {
+    if (simplifyExpression(op2, changed)) {
       isSgConditionalExp(expr)->set_true_exp(op2);
       op2->set_parent(isSgConditionalExp(expr));
     }
     SgExpression* op3 = isSgConditionalExp(expr)->get_false_exp();
-    if (simplifyExpression(op3, changed, conv)) {
+    if (simplifyExpression(op3, changed)) {
       isSgConditionalExp(expr)->set_false_exp(op3);
       op3->set_parent(isSgConditionalExp(expr));
     }
@@ -304,36 +305,24 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
     }
   } else if (isSgFunctionCallExp(expr)) {
     SgExpression* op1 = isSgFunctionCallExp(expr)->get_function();
-    if (simplifyExpression(op1, changed, conv)) {
+    if (simplifyExpression(op1, changed)) {
       isSgFunctionCallExp(expr)->set_function(op1);
       op1->set_parent(isSgFunctionCallExp(expr));
     }
     SgExpression* op2 = isSgFunctionCallExp(expr)->get_args();
-    if (simplifyExpression(op2, changed, conv)) {
+    if (simplifyExpression(op2, changed)) {
       ROSE_ASSERT (isSgExprListExp(op2));
       isSgFunctionCallExp(expr)->set_args(isSgExprListExp(op2));
       op2->set_parent(isSgFunctionCallExp(expr));
     }
     SgFunctionRefExp* fr = isSgFunctionRefExp(op1);
     ROSE_ASSERT (fr);
-    SgFunctionDeclaration* decl = fr->get_symbol()->get_declaration();
-    SgExpressionPtrList& args = isSgExprListExp(op2)->get_expressions();
-    if (decl == conv.paritySym->get_declaration() && args.size() == 1 && isSgValueExp(args[0])) {
-      uint8_t val = getValue(args[0]);
-      val ^= (val >> 4);
-      val ^= (val >> 2);
-      val ^= (val >> 1);
-      expr = buildBoolValExp((val & 1) == 0); // Even number of 1 bits
-      changed = true;
-      return true;
-    } else {
-      return false;
-    }
+    return false;
   } else if (isSgExprListExp(expr)) {
     SgExprListExp* el = isSgExprListExp(expr);
     for (size_t i = 0; i < el->get_expressions().size(); ++i) {
       SgExpression* e = el->get_expressions()[i];
-      if (simplifyExpression(e, changed, conv)) {
+      if (simplifyExpression(e, changed)) {
         el->get_expressions()[i] = e;
         e->set_parent(el);
       }
@@ -343,7 +332,7 @@ bool simplifyExpression(SgExpression*& expr, bool& changed, const CTranslationPo
   return false;
 }
 
-void simplifyAllExpressions(SgNode* top, const X86AssemblyToCWithVariables& conv) {
+void simplifyAllExpressions(SgNode* top) {
   while (true) {
     int changeCount = 0;
     // cerr << "simplifyAllExpressions" << endl;
@@ -357,7 +346,7 @@ void simplifyAllExpressions(SgNode* top, const X86AssemblyToCWithVariables& conv
     for (size_t i = 0; i < exprs2.size(); ++i) {
       SgExpression* newE = exprs2[i];
       bool changed = false;
-      if (simplifyExpression(newE, changed, conv)) {
+      if (simplifyExpression(newE, changed)) {
         replaceExpression(exprs2[i], newE);
       }
       if (changed) {
@@ -426,9 +415,9 @@ SgExpression* plugInDefsForExpression(SgExpression* e, const map<SgInitializedNa
   }
 }
 
-void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const X86AssemblyToCWithVariables& conv);
+void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const CTranslationPolicy& conv);
 
-void plugInAllConstVarDefs(SgNode* top, const X86AssemblyToCWithVariables& conv) { // Const is not required anymore
+void plugInAllConstVarDefs(SgNode* top, const CTranslationPolicy& conv) { // Const is not required anymore
   vector<SgNode*> blocks = NodeQuery::querySubTree(top, V_SgBasicBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     map<SgInitializedName*, SgExpression*> defs;
@@ -444,7 +433,7 @@ void getUsedVariables(SgExpression* e, set<SgInitializedName*>& vars);
 bool isSimple(SgExpression* e) {
   if (isSgValueExp(e)) return true;
   if (isSgVarRefExp(e)) return true;
-#if 0
+#if 1
   if (isSgAssignOp(e)) return false;
   // No side-effecting operators allowed here
   if (isSgUnaryOp(e) && isSimple(isSgUnaryOp(e)->get_operand())) return true;
@@ -456,7 +445,7 @@ bool isSimple(SgExpression* e) {
   return false;
 }
 
-void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const X86AssemblyToCWithVariables& conv) {
+void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const CTranslationPolicy& conv) {
   for (size_t j = 0; j < bb->get_statements().size(); ++j) {
     SgStatement* s = bb->get_statements()[j];
     if (isSgExprStatement(s)) {
@@ -479,11 +468,7 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
         }
       } else if (isSgFunctionCallExp(e) &&
                  isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
-                 (
-                   isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == conv.memoryWriteByteSym->get_declaration() ||
-                   isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == conv.memoryWriteWordSym->get_declaration() ||
-                   isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == conv.memoryWriteDWordSym->get_declaration() ||
-                   isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == conv.memoryWriteQWordSym->get_declaration())) {
+                 conv.isMemoryWrite(isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()))) {
         es->set_expression(plugInDefsForExpression(e, defs));
         es->get_expression()->set_parent(es);
         // Any writes to memory need to uncache reads from memory
@@ -492,18 +477,13 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
           inext = i; ++inext;
           vector<SgNode*> funcrefs = NodeQuery::querySubTree(i->second, V_SgFunctionRefExp);
           for (size_t k = 0; k < funcrefs.size(); ++k) {
-            if (isSgFunctionRefExp(funcrefs[k])->get_symbol()->get_declaration() == conv.memoryReadByteSym->get_declaration() ||
-                isSgFunctionRefExp(funcrefs[k])->get_symbol()->get_declaration() == conv.memoryReadWordSym->get_declaration() ||
-                isSgFunctionRefExp(funcrefs[k])->get_symbol()->get_declaration() == conv.memoryReadDWordSym->get_declaration() ||
-                isSgFunctionRefExp(funcrefs[k])->get_symbol()->get_declaration() == conv.memoryReadQWordSym->get_declaration()) {
+            if (conv.isMemoryRead(isSgFunctionRefExp(funcrefs[k]))) {
               defs.erase(i);
               break;
             }
           }
         }
-      } else if (isSgFunctionCallExp(e) &&
-                 isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
-                 isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == conv.interruptSym->get_declaration()) {
+      } else if (conv.isVolatileOperation(e)) {
         // Interrupts need to uncache everything
         defs.clear();
       } else {
@@ -552,7 +532,7 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
     } else {
       defs.clear();
     }
-    simplifyAllExpressions(s, conv);
+    simplifyAllExpressions(s);
   }
   // Remove vars that are going out of scope
   SgInitializedNamePtrList initnames = findInitializedNamesInScope(bb);
@@ -570,10 +550,10 @@ void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgE
   }
 }
 
-void addDirectJumpsToSwitchCases(SgBasicBlock* switchBody, SgBasicBlock* whileBody, SgVariableSymbol* ipSym, const X86AssemblyToCWithVariables& conv) {
+void addDirectJumpsToSwitchCases(const CTranslationPolicy& conv) {
   map<uint64_t, SgLabelStatement*> addressToTargetMap;
-  vector<SgNode*> cases = NodeQuery::querySubTree(switchBody, V_SgCaseOptionStmt);
-  vector<SgNode*> blocks = NodeQuery::querySubTree(whileBody, V_SgBasicBlock);
+  vector<SgNode*> cases = NodeQuery::querySubTree(conv.getSwitchBody(), V_SgCaseOptionStmt);
+  vector<SgNode*> blocks = NodeQuery::querySubTree(conv.getWhileBody(), V_SgBasicBlock);
   for (size_t i = 0; i < blocks.size(); ++i) {
     SgStatementPtrList& stmts = isSgBasicBlock(blocks[i])->get_statements();
     if (stmts.size() < 2) continue;
@@ -583,13 +563,13 @@ void addDirectJumpsToSwitchCases(SgBasicBlock* switchBody, SgBasicBlock* whileBo
     SgAssignOp* ao = isSgAssignOp(es->get_expression());
     if (!ao) continue;
     if (!isSgVarRefExp(ao->get_lhs_operand()) ||
-        isSgVarRefExp(ao->get_lhs_operand())->get_symbol()->get_declaration() != ipSym->get_declaration()) continue;
+        isSgVarRefExp(ao->get_lhs_operand())->get_symbol()->get_declaration() != conv.getIPSymbol()->get_declaration()) continue;
     if (!isSgValueExp(ao->get_rhs_operand())) continue;
     uint64_t tgtAddr = getValue(ao->get_rhs_operand());
-    if (conv.labelsForBlocks.find(tgtAddr) == conv.labelsForBlocks.end()) {
+    if (conv.getLabelsForBlocks().find(tgtAddr) == conv.getLabelsForBlocks().end()) {
       continue;
     }
-    SgLabelStatement* tgt = conv.labelsForBlocks.find(tgtAddr)->second;
+    SgLabelStatement* tgt = conv.getLabelsForBlocks().find(tgtAddr)->second;
     if (!tgt) continue;
     stmts.erase(stmts.end() - 2, stmts.end());
     appendStatement(buildGotoStatement(tgt), isSgBasicBlock(blocks[i]));
@@ -598,7 +578,7 @@ void addDirectJumpsToSwitchCases(SgBasicBlock* switchBody, SgBasicBlock* whileBo
     SgCaseOptionStmt* c = isSgCaseOptionStmt(cases[i]);
     SgExpression* addrExpr = c->get_key();
     ROSE_ASSERT (isSgValueExp(addrExpr));
-    if (conv.externallyVisibleBlocks.find(getValue(addrExpr)) == conv.externallyVisibleBlocks.end()) {
+    if (conv.getExternallyVisibleBlocks().find(getValue(addrExpr)) == conv.getExternallyVisibleBlocks().end()) {
       // We only need the case label if there can be external jumps to this address
       isSgStatement(c->get_parent())->replace_statement(c, c->get_body());
     }
@@ -682,6 +662,7 @@ void getPredecessorsFromEnd(SgStatement* s, set<SgStatement*>& result, const map
   }
 }
 
+#if 0
 set<SgInitializedName*> makeAllPossibleVars(const X86AssemblyToCWithVariables& conv) {
   set<SgInitializedName*> result;
   for (size_t i = 0; i < 16; ++i) {
@@ -699,18 +680,7 @@ set<SgInitializedName*> makeAllPossibleVars(const X86AssemblyToCWithVariables& c
   result.insert(conv.zf_or_cfSym->get_declaration());
   return result;
 }
-
-template <typename T>
-bool setUnionInplace(set<T>& a, const set<T>& b) {
-  bool changed = false;
-  for (typename set<T>::const_iterator i = b.begin(); i != b.end(); ++i) {
-    if (a.find(*i) == a.end()) {
-      changed = true;
-      a.insert(*i);
-    }
-  }
-  return changed;
-}
+#endif
 
 void getUsedVariables(SgExpression* e, set<SgInitializedName*>& vars) {
   ROSE_ASSERT (e);
@@ -744,6 +714,7 @@ GotoMap buildGotoMap(SgBasicBlock* bb) {
   return gotoMap;
 }
 
+#if 0
 set<SgInitializedName*> computeLiveVars(SgStatement* stmt, const X86AssemblyToCWithVariables& conv, map<SgLabelStatement*, set<SgInitializedName*> >& liveVarsForLabels, set<SgInitializedName*> currentLiveVars, bool actuallyRemove) {
   switch (stmt->variantT()) {
     case V_SgBasicBlock: {
@@ -868,6 +839,7 @@ void removeDeadStores(SgBasicBlock* switchBody, const X86AssemblyToCWithVariable
   }
   computeLiveVars(switchBody, conv, liveVars, set<SgInitializedName*>(), true);
 }
+#endif
 
 void removeEmptyBasicBlocks(SgNode* top) {
   bool changed = true;
@@ -1026,6 +998,7 @@ void flattenBlocksWithoutVariables(SgNode* top) {
   }
 }
 
+#if 0
 class TrackVariableDefs {
   public:
   const X86AssemblyToCWithVariables& conv;
@@ -1269,6 +1242,7 @@ int TrackVariableDefs::go(SgStatement* s, TrackVariableDefs::DefMap& lastDef) co
     default: cerr << "TrackVariableDefs " << s->class_name() << endl; abort();
   }
 }
+#endif
 
 SgStatement* getBodyOfLabel(SgLabelStatement* l) {
   SgBasicBlock* bb = isSgBasicBlock(l->get_parent());
@@ -1280,6 +1254,7 @@ SgStatement* getBodyOfLabel(SgLabelStatement* l) {
   return *it;
 }
 
+#if 0
 void doSimpleSSA(SgBasicBlock* top, const X86AssemblyToCWithVariables& conv) {
   map<SgLabelStatement*, map<SgInitializedName*, SgVariableSymbol*> > localVarMap;
   vector<SgNode*> labels = NodeQuery::querySubTree(top, V_SgLabelStatement);
@@ -1333,6 +1308,7 @@ void doSimpleSSA(SgBasicBlock* top, const X86AssemblyToCWithVariables& conv) {
     }
   }
 }
+#endif
 
 void unparseAsSExpressions(ostream& o, SgType* t) {
   switch (t->variantT()) {
@@ -1731,14 +1707,6 @@ set<SgInitializedName*> getVariablesUsedInExpression(SgExpression* e) {
   return result;
 }
 
-struct StatementFilter {
-  bool operator()(const CFGNode& n) const {
-    return (isSgExprStatement(n.getNode()) || isSgVariableDeclaration(n.getNode())) && n.getIndex() == 0;
-  }
-};
-
-typedef map<CFGNode, set<SgStatement*> > ReachingStatementMap;
-
 bool isStoppingPointStatement(SgNode* n) {
   return isSgExprStatement(n) || isSgVariableDeclaration(n);
 }
@@ -1784,6 +1752,7 @@ void getReachingStatements(CFGNode start, ReachingStatementMap& result) {
   }
 }
 
+#if 0
 void renumberVariableDefinitions(SgNode* top, const X86AssemblyToCWithVariables& conv) {
   vector<SgNode*> stmtsRaw = NodeQuery::querySubTree(top, V_SgStatement);
   vector<SgStatement*> stmts;
@@ -1977,16 +1946,7 @@ void renumberVariableDefinitions(SgNode* top, const X86AssemblyToCWithVariables&
     }
   }
 }
-
-struct InterestingStatementFilter {
-  bool operator()(const CFGNode& n) const {
-    // bool ok = n.isInteresting() && (isSgStatement(n.getNode())) && !isSgVariableDeclaration(n.getNode()) && !isSgPragmaDeclaration(n.getNode()) && !isSgGotoStatement(n.getNode()) && !isSgExprStatement(n.getNode());
-    bool ok = n.outEdges().size() != 1;
-    if (ok) 
-      cerr << n.id() << endl;
-    return ok;
-  }
-};
+#endif
 
 void moveVariableDeclarationsToTop(SgBasicBlock* top) {
   vector<SgNode*> varDecls = NodeQuery::querySubTree(top, V_SgVariableDeclaration);
@@ -2006,135 +1966,4 @@ void moveVariableDeclarationsToTop(SgBasicBlock* top) {
     isSgScopeStatement(varDecl->get_parent())->remove_statement(varDecl);
     prependStatement(varDecl, top);
   }
-}
-
-int main(int argc, char** argv) {
-  SgProject* proj = frontend(argc, argv);
-  ROSE_ASSERT (proj);
-  SgSourceFile* newFile = isSgSourceFile(proj->get_fileList().front());
-  ROSE_ASSERT(newFile != NULL);
-  SgGlobal* g = newFile->get_globalScope();
-  ROSE_ASSERT (g);
-  SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
-  appendStatement(decl, g);
-  vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
-  ROSE_ASSERT (asmFiles.size() == 1);
-  X86AssemblyToCWithVariables converter(newFile, isSgAsmFile(asmFiles[0]));
-  SgBasicBlock* body = decl->get_definition()->get_body();
-  converter.makeAllCode(body);
-  proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
-  cerr << "Simplifying" << endl;
-  set<SgFunctionDeclaration*> safeFunctions;
-#define SAFE(f) \
-  do {safeFunctions.insert(converter.f##Sym->get_declaration());} while (0)
-  SAFE(parity);
-  SAFE(mulhi64);
-  SAFE(imulhi16);
-  SAFE(imulhi32);
-  SAFE(imulhi64);
-  SAFE(div8);
-  SAFE(mod8);
-  SAFE(div16);
-  SAFE(mod16);
-  SAFE(div32);
-  SAFE(mod32);
-  SAFE(div64);
-  SAFE(mod64);
-  SAFE(idiv8);
-  SAFE(imod8);
-  SAFE(idiv16);
-  SAFE(imod16);
-  SAFE(idiv32);
-  SAFE(imod32);
-  SAFE(idiv64);
-  SAFE(imod64);
-  SAFE(bsr);
-  SAFE(bsf);
-  SAFE(memoryReadByte);
-  SAFE(memoryReadWord);
-  SAFE(memoryReadDWord);
-  SAFE(memoryReadQWord);
-#undef SAFE
-  // moveVariableDeclarationsToTop(converter.whileBody);
-  // addDirectJumpsToSwitchCases(converter.switchBody, converter.whileBody, converter.ipSym, converter);
-  /// // doSimpleSSA(converter.whileBody, converter);
-  /// // structureCode(converter.whileBody); cerr << "X" << endl;
-  removeUnusedLabels(converter.whileBody); cerr << "X" << endl;
-  /// removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
-  /// plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  /// simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  /// // trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
-  /// plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  /// removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
-  /// removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
-  /// removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  /// // flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
-  /// simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  /// // removeIfConstants(proj); cerr << "X" << endl;
-  /// removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
-  /// // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  /// renumberVariableDefinitions(converter.whileBody, converter); cerr << "X" << endl;
-  // trackVariableDefs(converter.whileBody, converter); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
-  // removeIfConstants(proj); cerr << "X" << endl;
-  // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
-  // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  // flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // removeDeadStores(converter.whileBody, converter); cerr << "X" << endl;
-  // removeUnusedVariables(proj, safeFunctions); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // structureCode(converter.switchBody); cerr << "X" << endl;
-  // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // removeIfConstants(proj); cerr << "X" << endl;
-  // removeDeadStores(converter.switchBody, converter); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // for (size_t i = 0; i < 10; ++i) {
-  //   cerr << i << endl;
-  //   flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
-  //   structureCode(converter.switchBody); cerr << "X" << endl;
-  // }
-  // flattenBlocksWithoutVariables(proj); cerr << "X" << endl;
-  // removeJumpsToNextStatement(proj); cerr << "X" << endl;
-  // removeUnusedLabels(proj); cerr << "X" << endl;
-  // removeEmptyBasicBlocks(proj); cerr << "X" << endl;
-  // PRE::partialRedundancyElimination(proj); cerr << "X" << endl;
-  // removeDeadStores(converter.switchBody, converter); cerr << "X" << endl;
-  // cleanupInlinedCode(proj); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // removeIfConstants(proj); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // simpleCopyAndConstantPropagation(proj); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // cleanupInlinedCode(proj); cerr << "X" << endl;
-  // flattenBlocks(proj); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // cleanupInlinedCode(proj); cerr << "X" << endl;
-  // removeIfConstants(proj); cerr << "X" << endl;
-  // flattenBlocks(proj); cerr << "X" << endl;
-  // plugInAllConstVarDefs(proj, converter); cerr << "X" << endl;
-  // simplifyAllExpressions(proj, converter); cerr << "X" << endl;
-  // cleanupInlinedCode(proj); cerr << "X" << endl;
-  cerr << "Unparsing" << endl;
-#if 0
-  {
-    ofstream dotFile("foo.dot");
-    cfgToDot(dotFile, "foo", FilteredCFGNode<InterestingStatementFilter>(converter.whileBody->cfgForBeginning()));
-  }
-  return 0;
-#endif
-#if 1
-  {
-    ofstream sexpr("fnord.ss");
-    unparseAsSExpressionsTop(sexpr, converter.whileBody);
-  }
-#endif
-  return backend(proj);
 }

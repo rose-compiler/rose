@@ -1,6 +1,7 @@
 #include "rose.h"
 #include "powerpcInstructionSemantics.h"
 #include "integerOps.h"
+#include "generatedCOpts.h"
 #include <boost/static_assert.hpp>
 #include <boost/lexical_cast.hpp>
 #include <iostream>
@@ -30,7 +31,7 @@ struct WordWithExpression {
   private: BOOST_STATIC_ASSERT (Len <= 64); // FIXME handle longer operations
 };
 
-struct powerpcCTranslationPolicy {
+struct powerpcCTranslationPolicy: public CTranslationPolicy {
   powerpcCTranslationPolicy(SgSourceFile* sourceFile, SgAsmFile* asmFile);
 
   SgAsmFile* asmFile;
@@ -78,6 +79,7 @@ struct powerpcCTranslationPolicy {
   SgFunctionSymbol* systemCallSym;
   SgFunctionSymbol* readCRFieldsSym;
   SgBasicBlock* switchBody;
+  SgStatement* whileBody;
   std::map<uint64_t, SgAsmBlock*> blocks;
   std::map<uint64_t, SgLabelStatement*> labelsForBlocks;
   std::set<uint64_t> externallyVisibleBlocks;
@@ -131,7 +133,7 @@ struct powerpcCTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> ite(WordWithExpression<1> sel, WordWithExpression<Len> a, WordWithExpression<Len> b) {
-    return buildConditionalExp(sel.expr(), a.expr(), b.expr());
+    return buildConditionalExp(buildNotEqualOp(sel.expr(), buildIntVal(0)), a.expr(), b.expr());
   }
 
   template <size_t Len>
@@ -155,12 +157,12 @@ struct powerpcCTranslationPolicy {
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateLeft(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+    return buildBitOrOp(buildLshiftOp(a.expr(), b.expr()), buildRshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> rotateRight(WordWithExpression<Len1> a, WordWithExpression<Len2> b) {
-    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildSubtractOp(buildIntVal(Len1), b.expr())));
+    return buildBitOrOp(buildRshiftOp(a.expr(), b.expr()), buildLshiftOp(a.expr(), buildModOp(buildSubtractOp(buildIntVal(Len1), b.expr()), buildIntVal(Len1))));
   }
 
   template <size_t Len1, size_t Len2>
@@ -292,7 +294,7 @@ struct powerpcCTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mrSym);
-    return buildConditionalExp(cond.expr(), buildFunctionCallExp(mrSym, buildExprListExp(address.expr())), buildIntVal(0));
+    return buildConditionalExp(buildNotEqualOp(cond.expr(), buildIntVal(0)), buildFunctionCallExp(mrSym, buildExprListExp(address.expr())), buildIntVal(0));
   }
 
   template <size_t Len>
@@ -306,7 +308,7 @@ struct powerpcCTranslationPolicy {
       default: ROSE_ASSERT (false);
     }
     ROSE_ASSERT (mwSym);
-    appendStatement(buildIfStmt(cond.expr(), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
+    appendStatement(buildIfStmt(buildNotEqualOp(cond.expr(), buildIntVal(0)), buildExprStatement(buildFunctionCallExp(mwSym, buildExprListExp(address.expr(), data.expr()))), NULL), bb);
   }
 
   void startBlock(uint64_t addr) {
@@ -319,6 +321,9 @@ struct powerpcCTranslationPolicy {
     bb = buildBasicBlock();
     appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(insn->get_address()), bb), switchBody);
     appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
+    SgLabelStatement* label = buildLabelStatement("addr_0x" + StringUtility::intToHex(insn->get_address()), bb);
+    appendStatement(label, bb);
+    labelsForBlocks[insn->get_address()] = label;
   }
 
   void finishInstruction(SgAsmInstruction* insn) {
@@ -329,6 +334,31 @@ struct powerpcCTranslationPolicy {
     appendStatement(buildExprStatement(buildFunctionCallExp(systemCallSym, buildExprListExp(buildIntVal(num)))), bb);
   }
 
+  virtual bool isMemoryWrite(SgFunctionRefExp* func) const {
+    return (
+        func->get_symbol()->get_declaration() == memoryWriteByteSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteDWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryWriteQWordSym->get_declaration());
+  }
+  virtual bool isMemoryRead(SgFunctionRefExp* func) const {
+    return (
+        func->get_symbol()->get_declaration() == memoryReadByteSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadDWordSym->get_declaration() ||
+        func->get_symbol()->get_declaration() == memoryReadQWordSym->get_declaration());
+  }
+  virtual bool isVolatileOperation(SgExpression* e) const {
+    return (
+        isSgFunctionCallExp(e) &&
+        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function()) &&
+        isSgFunctionRefExp(isSgFunctionCallExp(e)->get_function())->get_symbol()->get_declaration() == systemCallSym->get_declaration());
+  }
+  virtual SgStatement* getWhileBody() const {return whileBody;}
+  virtual SgBasicBlock* getSwitchBody() const {return switchBody;}
+  virtual SgVariableSymbol* getIPSymbol() const {return ipSym;}
+  virtual const std::map<uint64_t, SgLabelStatement*>& getLabelsForBlocks() const {return labelsForBlocks;}
+  virtual const std::set<uint64_t>& getExternallyVisibleBlocks() const {return externallyVisibleBlocks;}
 };
 
 SgFunctionSymbol* powerpcCTranslationPolicy::addHelperFunction(const std::string& name, SgType* returnType, SgFunctionParameterList* params) {
@@ -426,6 +456,7 @@ int main(int argc, char** argv) {
   SgSwitchStatement* sw = buildSwitchStatement(buildVarRefExp(policy.ipSym), policy.switchBody);
   SgWhileStmt* whileStmt = buildWhileStmt(buildBoolValExp(true), sw);
   appendStatement(whileStmt, body);
+  policy.whileBody = sw;
 
   PowerpcInstructionSemantics<powerpcCTranslationPolicy, WordWithExpression> t(policy);
 
@@ -440,8 +471,17 @@ int main(int argc, char** argv) {
 
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
 
+  // addDirectJumpsToSwitchCases(policy);
+  plugInAllConstVarDefs(proj, policy);
+  simplifyAllExpressions(proj);
+  removeIfConstants(proj);
+  plugInAllConstVarDefs(proj, policy);
+  simplifyAllExpressions(proj);
+  removeIfConstants(proj);
+  removeUnusedVariables(proj);
+
 // Run the standard ROSE consistancy tests on the generated source file
-  AstTests::runAllTests(proj);
+  // AstTests::runAllTests(proj);
 
 // Generate the source code and call the backend compiler.
   return backend(proj);
