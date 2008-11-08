@@ -24,10 +24,10 @@ Makefile.in
 /config/ylwrap
 /configure
 /rose_config.h.in
-/src/3rdPartyLibraries/libltdl/aclocal.m4
-/src/3rdPartyLibraries/libltdl/autom4te.cache/
-/src/3rdPartyLibraries/libltdl/config.guess
-/src/3rdPartyLibraries/libltdl/config.sub
-/src/3rdPartyLibraries/libltdl/configure
-/src/3rdPartyLibraries/libltdl/install-sh
+/libltdl/aclocal.m4
+/libltdl/autom4te.cache/
+/libltdl/config.guess
+/libltdl/config.sub
+/libltdl/configure
+/libltdl/install-sh
 *.pyc
