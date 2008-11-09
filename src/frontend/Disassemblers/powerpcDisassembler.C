@@ -180,6 +180,10 @@ PowerpcDisassembler::makeInstructionWithoutOperands(uint64_t address, const std:
      SgAsmPowerpcInstruction* instruction = new SgAsmPowerpcInstruction(address, mnemonic, kind);
      ROSE_ASSERT (instruction);
 
+     if (mnemonic.size() >= 7 && mnemonic.substr(mnemonic.size() - 7) == "_record") {
+       instruction->set_mnemonic(mnemonic.substr(0, mnemonic.size() - 7) + ".");
+     }
+
      SgAsmOperandList* operands = new SgAsmOperandList();
      instruction->set_operandList(operands);
      operands->set_parent(instruction);
