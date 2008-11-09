@@ -446,7 +446,7 @@ AC_DISABLE_STATIC
 LT_AC_PROG_SED dnl This seems to not be called, even though it is needed in the other macros
 m4_pattern_allow([LT_LIBEXT])dnl From http://www.mail-archive.com/libtool-commit@gnu.org/msg01369.html
 AC_PROG_LIBTOOL
-AC_LIBLTDL_INSTALLABLE
+AC_LIBLTDL_CONVENIENCE dnl We need to use our version because libtool can't handle when we use libtool v2 but the v1 libltdl is installed on a system
 AC_SUBST(LTDLINCL)
 AC_SUBST(LIBLTDL)
 AC_LIBTOOL_DLOPEN
