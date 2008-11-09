@@ -73,7 +73,7 @@ test-dep: powerpcAssemblyToCDemo powerpcInstructionSemantics.h
 ppc-check:
 	-rm powerpcAssemblyToCDemo-powerpcAssemblyToC.o
 	$(MAKE) powerpcAssemblyToCDemo
-	./powerpcAssemblyToCDemo $(srcdir)/powerpcOutputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
+	./powerpcAssemblyToCDemo -c $(srcdir)/powerpcOutputFileTemplate.C $(top_srcdir)/developersScratchSpace/Dan/Disassembler_tests/fnord.ppc
 
 CLEANFILES = outputFileTemplate.o rose_outputFileTemplate.C fnord.rws
 

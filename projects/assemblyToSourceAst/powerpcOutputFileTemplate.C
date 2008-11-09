@@ -29,15 +29,16 @@ int bsf(uint64_t a);
 
 void systemCall(uint8_t a);
 
-unsigned int gpr[32];
-unsigned char cr[8];
+unsigned int gpr0, gpr1, gpr2, gpr3, gpr4, gpr5, gpr6, gpr7, gpr8, gpr9, gpr10, gpr11, gpr12, gpr13, gpr14, gpr15, gpr16, gpr17, gpr18, gpr19, gpr20, gpr21, gpr22, gpr23, gpr24, gpr25, gpr26, gpr27, gpr28, gpr29, gpr30, gpr31; 
+unsigned char cr0, cr1, cr2, cr3, cr4, cr5, cr6, cr7;
 uint32_t ip;
 
 // DQ (10/25/2008): Added spr register array.  This might have to be
 // a lenth to fix register numbers 1-287 (9 bits, at least).  See:
 // http://www.go-ecs.com/ppc/ppctek1.htm for SPR details.
 // For "user mode" we only require entries 1,8, and 9.
-unsigned int spr[32];
+// JJW (11/8/2008): Only have the three we actually use
+unsigned int xer, lr, ctr;
 
 uint8_t memoryReadByte(uint64_t addr) {
   return 0;
@@ -80,11 +81,14 @@ void run();
 uint32_t readCRFields() 
    {
      uint32_t result = 0;
-     for (int i=0; i < 8; i++)
-        {
-          result |= ((uint32_t)cr[i]) << ((7-i)*4); 
-        }
-
+     result |= (uint32_t)cr0 << 28;
+     result |= (uint32_t)cr1 << 24;
+     result |= (uint32_t)cr2 << 20;
+     result |= (uint32_t)cr3 << 16;
+     result |= (uint32_t)cr4 << 12;
+     result |= (uint32_t)cr5 << 8;
+     result |= (uint32_t)cr6 << 4;
+     result |= (uint32_t)cr7;
      return result;
    }
 

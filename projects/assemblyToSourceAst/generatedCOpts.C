@@ -9,6 +9,36 @@ using namespace SageInterface;
 using namespace SageBuilder;
 using namespace VirtualCFG;
 
+// FIXME: put these in a common location
+static SgType* lengthToType(size_t Len) {
+  if (Len <= 1) return SgTypeBool::createType();
+  if (Len <= 8) return SgTypeUnsignedChar::createType();
+  if (Len <= 16) return SgTypeUnsignedShort::createType();
+  if (Len <= 32) return SgTypeUnsignedInt::createType();
+  if (Len <= 64) return SgTypeUnsignedLongLong::createType();
+  cerr << "lengthToType(" << Len << ")" << endl; abort();
+}
+
+static SgExpression* constantOfLength(size_t Len, uintmax_t c) {
+  if (Len <= 1) return buildBoolValExp((bool)c);
+  if (Len <= 32) return buildUnsignedIntValHex(c);
+  if (Len <= 64) return buildUnsignedLongLongIntValHex(c);
+  cerr << "constantOfLength(" << Len << ")" << endl; abort();
+}
+
+static size_t typeToLength(SgType* t) {
+  switch (t->variantT()) {
+    case V_SgTypeBool: return 1;
+    case V_SgTypeUnsignedChar: return 8;
+    case V_SgTypeUnsignedShort: return 16;
+    case V_SgTypeUnsignedInt: return 32;
+    case V_SgTypeInt: return 32;
+    case V_SgTypeUnsignedLongLong: return 64;
+    case V_SgTypedefType: return typeToLength(isSgTypedefType(t)->get_base_type());
+    default: {cerr << "typeToLength: " << t->class_name() << endl; abort();}
+  }
+}
+
 unsigned long long getValue(SgExpression* e) {
   switch (e->variantT()) {
     case V_SgBoolValExp: return isSgBoolValExp(e)->get_value();
@@ -29,7 +59,7 @@ SgValueExp* buildConstantOfType(unsigned long long val, SgType* t) {
     case V_SgTypeUnsignedChar: return buildUnsignedCharValHex(val);
     case V_SgTypeUnsignedShort: return buildUnsignedShortValHex(val);
     case V_SgTypeInt: return buildIntValHex(val);
-    case V_SgTypeUnsignedInt: return buildUnsignedLongValHex(val);
+    case V_SgTypeUnsignedInt: return buildUnsignedIntValHex(val);
     case V_SgTypeUnsignedLong: return buildUnsignedLongValHex(val);
     case V_SgTypeUnsignedLongLong: return buildUnsignedLongLongIntValHex(val);
     case V_SgTypeBool: return buildBoolValExp((bool)val);
@@ -267,6 +297,18 @@ bool simplifyExpression(SgExpression*& expr, bool& changed) {
       expr = buildConstantOfType(0, exprtype);
       changed = true;
       return true;
+    } else if (isSgModOp(expr) && isSgValueExp(op1) && isSgValueExp(op2)) {
+      expr = buildConstantOfType(getValue(op1) % getValue(op2), exprtype);
+      changed = true;
+      return true;
+    } else if (isSgLshiftOp(expr) && isSgValueExp(op1) && isSgValueExp(op2)) {
+      expr = buildConstantOfType((getValue(op1) << getValue(op2)) & IntegerOps::genMask<uintmax_t>(typeToLength(exprtype)), exprtype);
+      changed = true;
+      return true;
+    } else if (isSgRshiftOp(expr) && isSgValueExp(op1) && isSgValueExp(op2)) {
+      expr = buildConstantOfType(getValue(op1) >> getValue(op2), exprtype);
+      changed = true;
+      return true;
     } else if (isSgAndOp(expr) && isSgNotEqualOp(op1) && isSgGreaterOrEqualOp(op2) && expressionTreeEqual(isSgBinaryOp(op1)->get_lhs_operand(), isSgBinaryOp(op2)->get_lhs_operand()) && expressionTreeEqual(isSgBinaryOp(op1)->get_rhs_operand(), isSgBinaryOp(op2)->get_rhs_operand())) {
       expr = buildGreaterThanOp(isSgBinaryOp(op1)->get_lhs_operand(), isSgBinaryOp(op1)->get_rhs_operand());
       changed = true;
@@ -378,6 +420,7 @@ SgExpression* plugInDefsForExpression(SgExpression* e, const map<SgInitializedNa
     SgInitializedName* in = isSgVarRefExp(e)->get_symbol()->get_declaration();
     map<SgInitializedName*, SgExpression*>::const_iterator it = defs.find(in);
     if (it == defs.end()) return e;
+    delete e;
     return copyExpression(it->second);
   } else if (isSgUnaryOp(e)) {
     isSgUnaryOp(e)->set_operand(plugInDefsForExpression(isSgUnaryOp(e)->get_operand(), defs));
@@ -431,6 +474,8 @@ void plugInAllConstVarDefs(SgNode* top, const CTranslationPolicy& conv) { // Con
 void getUsedVariables(SgExpression* e, set<SgInitializedName*>& vars);
 
 bool isSimple(SgExpression* e) {
+  return true; // Only called on expressions that don't have unsafe function calls or assignments
+#if 0
   if (isSgValueExp(e)) return true;
   if (isSgVarRefExp(e)) return true;
 #if 1
@@ -443,6 +488,7 @@ bool isSimple(SgExpression* e) {
   if (isSgLessThanOp(e) && isSgBitXorOp(isSgBinaryOp(e)->get_rhs_operand()) && isSgBitXorOp(isSgBinaryOp(e)->get_lhs_operand()) && isSimple(isSgBinaryOp(e)->get_lhs_operand()) && isSimple(isSgBinaryOp(e)->get_rhs_operand())) return true; // Special case for signed comparisons
 #endif
   return false;
+#endif
 }
 
 void plugInAllConstVarDefsForBlock(SgBasicBlock* bb, map<SgInitializedName*, SgExpression*>& defs, const CTranslationPolicy& conv) {

@@ -15,6 +15,35 @@ static SgBasicBlock* bb; // Global location to append new statements
 
 static size_t WordWithExpression_nameCounter = 0;
 
+static SgType* lengthToType(size_t Len) {
+  if (Len <= 1) return SgTypeBool::createType();
+  if (Len <= 8) return SgTypeUnsignedChar::createType();
+  if (Len <= 16) return SgTypeUnsignedShort::createType();
+  if (Len <= 32) return SgTypeUnsignedInt::createType();
+  if (Len <= 64) return SgTypeUnsignedLongLong::createType();
+  cerr << "lengthToType(" << Len << ")" << endl; abort();
+}
+
+static SgExpression* constantOfLength(size_t Len, uintmax_t c) {
+  if (Len <= 1) return buildBoolValExp((bool)c);
+  if (Len <= 32) return buildUnsignedIntValHex(c);
+  if (Len <= 64) return buildUnsignedLongLongIntValHex(c);
+  cerr << "constantOfLength(" << Len << ")" << endl; abort();
+}
+
+static size_t typeToLength(SgType* t) {
+  switch (t->variantT()) {
+    case V_SgTypeBool: return 1;
+    case V_SgTypeUnsignedChar: return 8;
+    case V_SgTypeUnsignedShort: return 16;
+    case V_SgTypeUnsignedInt: return 32;
+    case V_SgTypeInt: return 32;
+    case V_SgTypeUnsignedLongLong: return 64;
+    case V_SgTypedefType: return typeToLength(isSgTypedefType(t)->get_base_type());
+    default: {cerr << "typeToLength: " << t->class_name() << endl; abort();}
+  }
+}
+
 template <size_t Len>
 struct WordWithExpression {
   private:
@@ -23,7 +52,13 @@ struct WordWithExpression {
   WordWithExpression(SgExpression* expr) {
     std::string name = "var" + boost::lexical_cast<std::string>(WordWithExpression_nameCounter);
     ++WordWithExpression_nameCounter;
-    SgVariableDeclaration* decl = buildVariableDeclaration(name, SgTypeUnsignedLongLong::createType(), buildAssignInitializer(buildBitAndOp(expr, buildUnsignedLongLongIntValHex(IntegerOps::SHL1<unsigned long long, Len>::value - 1))), bb);
+    SgExpression* rhs = expr;
+    if (typeToLength(expr->get_type()) < Len) { // Need to cast to a larger type
+      rhs = buildCastExp(rhs, lengthToType(Len));
+    } else if (typeToLength(expr->get_type()) > Len) { // Need to mask to a smaller number of bits
+      rhs = buildBitAndOp(rhs, buildUnsignedLongLongIntValHex(IntegerOps::GenMask<uint64_t, Len>::value));
+    }
+    SgVariableDeclaration* decl = buildVariableDeclaration(name, rhs->get_type(), buildAssignInitializer(rhs), bb);
     appendStatement(decl, bb);
     sym = getFirstVarSym(decl);
   }
@@ -60,11 +95,11 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
   SgFunctionSymbol* imod64Sym;
   SgFunctionSymbol* bsrSym;
   SgFunctionSymbol* bsfSym;
-  SgVariableSymbol* gprSym;
-  SgVariableSymbol* crSym;
+  SgVariableSymbol* gprSym[32];
+  SgVariableSymbol* crSym[8];
   SgVariableSymbol* ipSym;
 // DQ (10/25/2008): Added Special Purpose Register support
-  SgVariableSymbol* sprSym;
+  SgVariableSymbol* sprSym[1024];
   SgFunctionSymbol* memoryReadByteSym;
   SgFunctionSymbol* memoryReadWordSym;
   SgFunctionSymbol* memoryReadDWordSym;
@@ -88,7 +123,7 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> number(uint64_t n) {
-    return buildUnsignedLongLongIntValHex(n);
+    return constantOfLength(Len, n);
   }
 
   template <size_t From, size_t To, size_t Len>
@@ -102,9 +137,9 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
     return buildBitOrOp(a.expr(), buildLshiftOp(b.expr(), buildIntVal(Len1)));
   }
 
-  WordWithExpression<1> true_() {return buildIntVal(1);}
-  WordWithExpression<1> false_() {return buildIntVal(0);}
-  WordWithExpression<1> undefined_() {return buildIntVal(0);}
+  WordWithExpression<1> true_() {return buildBoolValExp(true);}
+  WordWithExpression<1> false_() {return buildBoolValExp(false);}
+  WordWithExpression<1> undefined_() {return buildBoolValExp(false);}
 
   template <size_t Len>
   WordWithExpression<Len> and_(WordWithExpression<Len> a, WordWithExpression<Len> b) {
@@ -123,12 +158,16 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> invert(WordWithExpression<Len> a) {
-    return buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len>::value));
+    if (Len == 1) {
+      return buildNotOp(a.expr());
+    } else {
+      return buildBitXorOp(a.expr(), constantOfLength(Len, IntegerOps::GenMask<unsigned long long, Len>::value));
+    }
   }
 
   template <size_t Len>
   WordWithExpression<Len> negate(WordWithExpression<Len> a) {
-    return buildAddOp(buildBitXorOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len>::value)), buildIntVal(1));
+    return buildAddOp(buildBitXorOp(a.expr(), constantOfLength(Len, IntegerOps::GenMask<unsigned long long, Len>::value)), constantOfLength(Len, 1));
   }
 
   template <size_t Len>
@@ -138,7 +177,7 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<1> equalToZero(WordWithExpression<Len> a) {
-    return buildEqualityOp(a.expr(), buildIntVal(0));
+    return buildEqualityOp(a.expr(), constantOfLength(Len, 0));
   }
 
   template <size_t Len>
@@ -148,9 +187,12 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   template <size_t Len>
   WordWithExpression<Len> addWithCarries(WordWithExpression<Len> a, WordWithExpression<Len> b, WordWithExpression<1> carryIn, WordWithExpression<Len>& carries) {
-    WordWithExpression<Len + 1> e = buildAddOp(a.expr(), buildAddOp(b.expr(), carryIn.expr()));
+    WordWithExpression<Len + 1> aExpanded = a.expr(); // Do casts
+    WordWithExpression<Len + 1> bExpanded = b.expr(); // Do casts
+    WordWithExpression<Len + 1> cExpanded = carryIn.expr(); // Do casts
+    WordWithExpression<Len + 1> e = buildAddOp(aExpanded.expr(), buildAddOp(bExpanded.expr(), cExpanded.expr()));
     carries = buildRshiftOp(
-                buildBitXorOp(buildBitXorOp(a.expr(), b.expr()), e.expr()),
+                buildBitXorOp(buildBitXorOp(aExpanded.expr(), bExpanded.expr()), e.expr()),
                 buildIntVal(1));
     return extract<0, Len>(e);
   }
@@ -180,19 +222,19 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
     return buildBitOrOp(
              buildRshiftOp(a.expr(), b.expr()),
              buildConditionalExp(
-               buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(IntegerOps::SHL1<unsigned long long, Len1 - 1>::value)),
-               buildBitComplementOp(buildRshiftOp(buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len1>::value), b.expr())),
-               buildUnsignedLongLongIntValHex(0)));
+               buildBitAndOp(a.expr(), constantOfLength(Len1, IntegerOps::SHL1<unsigned long long, Len1 - 1>::value)),
+               buildBitComplementOp(buildRshiftOp(constantOfLength(Len1, IntegerOps::GenMask<unsigned long long, Len1>::value), b.expr())),
+               constantOfLength(Len1, 0)));
   }
 
   template <size_t Len1, size_t Len2>
   WordWithExpression<Len1> generateMask(WordWithExpression<Len2> w) { // Set lowest w bits of result
     return buildConditionalExp(
              buildGreaterOrEqualOp(w.expr(), buildIntVal(Len1)),
-             buildUnsignedLongLongIntValHex(IntegerOps::GenMask<unsigned long long, Len1>::value),
+             constantOfLength(Len1, IntegerOps::GenMask<unsigned long long, Len1>::value),
              buildSubtractOp(
-               buildLshiftOp(buildUnsignedLongLongIntValHex(1), w.expr()),
-               buildIntVal(1)));
+               buildLshiftOp(constantOfLength(Len1, 1), w.expr()),
+               constantOfLength(Len1, 1)));
   }
 
   template <size_t Len1, size_t Len2>
@@ -230,7 +272,7 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   template <size_t From, size_t To>
   WordWithExpression<To> signExtend(WordWithExpression<From> a) {
-    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), buildUnsignedLongLongIntValHex(1ULL << (From - 1))), buildIntVal(0)), buildUnsignedLongLongIntValHex((To == 64 ? 0 : (1ULL << To)) - (1ULL << From)), buildIntVal(0)));
+    return buildBitOrOp(a.expr(), buildConditionalExp(buildNotEqualOp(buildBitAndOp(a.expr(), constantOfLength(To, IntegerOps::SHL1<uint64_t, From - 1>::value)), buildIntVal(0)), constantOfLength(To, IntegerOps::SHL1<uint64_t, To>::value - IntegerOps::SHL1<uint64_t, From>::value), constantOfLength(To, 0)));
   }
 
   template <size_t Len>
@@ -244,11 +286,11 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
   }
 
   WordWithExpression<4> readCRField(int fld) {
-    return buildPntrArrRefExp(buildVarRefExp(crSym), buildIntVal(fld));
+    return buildVarRefExp(crSym[fld]);
   }
 
   void writeCRField(int fld, WordWithExpression<4> value) {
-    appendStatement(buildAssignStatement(buildPntrArrRefExp(buildVarRefExp(crSym), buildIntVal(fld)), value.expr()), bb);
+    appendStatement(buildAssignStatement(buildVarRefExp(crSym[fld]), value.expr()), bb);
   }
 
   WordWithExpression<32> readCR() {
@@ -257,11 +299,11 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
 
   WordWithExpression<32> readGPR(int num) {
-    return buildPntrArrRefExp(buildVarRefExp(gprSym), buildIntVal(num));
+    return buildVarRefExp(gprSym[num]);
   }
 
   void writeGPR(int num, WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildPntrArrRefExp(buildVarRefExp(gprSym), buildIntVal(num)), val.expr())), bb);
+    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(gprSym[num]), val.expr())), bb);
   }
 
   WordWithExpression<32> readIP() {
@@ -274,13 +316,14 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
 // DQ (10/25/2008): Added Special Purpose Register support
   WordWithExpression<32> readSPR(int num) {
-    ROSE_ASSERT(sprSym != NULL);
-    return buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num));
+    ROSE_ASSERT(sprSym[num] != NULL);
+    return buildVarRefExp(sprSym[num]);
   }
 
 // DQ (10/25/2008): Added Special Purpose Register support (we need to restict this to 1,8, and 9 for user modes and support a number of others for other modes).
   void writeSPR(int num, WordWithExpression<32> val) {
-    appendStatement(buildExprStatement(buildAssignOp(buildPntrArrRefExp(buildVarRefExp(sprSym), buildIntVal(num)), val.expr())), bb);
+    ROSE_ASSERT(sprSym[num] != NULL);
+    appendStatement(buildExprStatement(buildAssignOp(buildVarRefExp(sprSym[num]), val.expr())), bb);
   }
 
   template <size_t Len>
@@ -319,9 +362,9 @@ struct powerpcCTranslationPolicy: public CTranslationPolicy {
 
   void startInstruction(SgAsmInstruction* insn) {
     bb = buildBasicBlock();
-    appendStatement(buildCaseOptionStmt(buildUnsignedLongLongIntValHex(insn->get_address()), bb), switchBody);
+    appendStatement(buildCaseOptionStmt(buildUnsignedIntValHex(insn->get_address()), bb), switchBody);
     appendStatement(buildPragmaDeclaration(unparseInstructionWithAddress(insn), bb), bb);
-    SgLabelStatement* label = buildLabelStatement("addr_0x" + StringUtility::intToHex(insn->get_address()), bb);
+    SgLabelStatement* label = buildLabelStatement("addr_" + StringUtility::intToHex(insn->get_address()), buildBasicBlock());
     appendStatement(label, bb);
     labelsForBlocks[insn->get_address()] = label;
   }
@@ -402,10 +445,17 @@ powerpcCTranslationPolicy::powerpcCTranslationPolicy(SgSourceFile* f, SgAsmFile*
   LOOKUP_FUNC(imod64);
   LOOKUP_FUNC(bsr);
   LOOKUP_FUNC(bsf);
-  gprSym = globalScope->lookup_variable_symbol("gpr"); ROSE_ASSERT (gprSym);
-  crSym  = globalScope->lookup_variable_symbol("cr"); ROSE_ASSERT (crSym);
+  for (size_t i = 0; i < 32; ++i) {
+    gprSym[i]  = globalScope->lookup_variable_symbol("gpr" + boost::lexical_cast<string>(i)); ROSE_ASSERT (gprSym[i]);
+  }
+  for (size_t i = 0; i < 8; ++i) {
+    crSym[i]  = globalScope->lookup_variable_symbol("cr" + boost::lexical_cast<string>(i)); ROSE_ASSERT (crSym[i]);
+  }
   ipSym  = globalScope->lookup_variable_symbol("ip"); ROSE_ASSERT (ipSym);
-  sprSym = globalScope->lookup_variable_symbol("spr"); ROSE_ASSERT (sprSym);
+  for (size_t i = 0; i < 1024; ++i) sprSym[i] = NULL;
+  sprSym[powerpc_spr_xer] = globalScope->lookup_variable_symbol("xer"); ROSE_ASSERT (sprSym[powerpc_spr_xer]);
+  sprSym[powerpc_spr_lr] = globalScope->lookup_variable_symbol("lr"); ROSE_ASSERT (sprSym[powerpc_spr_lr]);
+  sprSym[powerpc_spr_ctr] = globalScope->lookup_variable_symbol("ctr"); ROSE_ASSERT (sprSym[powerpc_spr_ctr]);
   LOOKUP_FUNC(memoryReadByte);
   LOOKUP_FUNC(memoryReadWord);
   LOOKUP_FUNC(memoryReadDWord);
@@ -434,10 +484,6 @@ int main(int argc, char** argv) {
   SgGlobal* g = newFile->get_globalScope();
   ROSE_ASSERT (g);
 
-// DQ (10/25/2008): These have been added by the frontend reading the template/example
-  ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
-  ROSE_ASSERT(g->lookup_variable_symbol("spr") != NULL);
-
 // Adding a function to have the emulation execute, the function body will be generated 
 // to be an emulation of the binary.
   SgFunctionDeclaration* decl = buildDefiningFunctionDeclaration("run", SgTypeVoid::createType(), buildFunctionParameterList(), g);
@@ -445,10 +491,6 @@ int main(int argc, char** argv) {
   vector<SgNode*> asmFiles = NodeQuery::querySubTree(proj, V_SgAsmFile);
   ROSE_ASSERT (asmFiles.size() == 1);
   SgBasicBlock* body = decl->get_definition()->get_body();
-
-// DQ (10/25/2008): Added testing!
-  ROSE_ASSERT(g->lookup_variable_symbol("gpr") != NULL);
-  ROSE_ASSERT(g->lookup_variable_symbol("spr") != NULL);
 
 // Build the policy object which contains the details of the translation of the disassembled instructions
   powerpcCTranslationPolicy policy(newFile, isSgAsmFile(asmFiles[0]));
@@ -471,24 +513,32 @@ int main(int argc, char** argv) {
 
   proj->get_fileList().erase(proj->get_fileList().end() - 1); // Remove binary file before calling backend
 
+  set<SgFunctionDeclaration*> safeFunctions;
+  safeFunctions.insert(policy.memoryReadByteSym->get_declaration());
+  safeFunctions.insert(policy.memoryReadWordSym->get_declaration());
+  safeFunctions.insert(policy.memoryReadDWordSym->get_declaration());
+  safeFunctions.insert(policy.memoryReadQWordSym->get_declaration());
+
 #if 0
   cerr << "addDirectJumpsToSwitchCases" << endl;
   addDirectJumpsToSwitchCases(policy);
 #endif
-#if 0
   cerr << "plugInAllConstVarDefs 1" << endl;
-  plugInAllConstVarDefs(proj, policy);
+  plugInAllConstVarDefs(policy.switchBody, policy);
+  cerr << "simplifyAllExpressions 1" << endl;
+  simplifyAllExpressions(policy.switchBody);
+  cerr << "removeIfConstants 1" << endl;
+  removeIfConstants(policy.switchBody);
   cerr << "removeUnusedVariables 1" << endl;
-  removeUnusedVariables(proj);
+  removeUnusedVariables(policy.switchBody, safeFunctions);
   cerr << "plugInAllConstVarDefs 2" << endl;
-  plugInAllConstVarDefs(proj, policy);
+  plugInAllConstVarDefs(policy.switchBody, policy);
   cerr << "simplifyAllExpressions 2" << endl;
-  simplifyAllExpressions(proj);
+  simplifyAllExpressions(policy.switchBody);
   cerr << "removeIfConstants 2" << endl;
-  removeIfConstants(proj);
+  removeIfConstants(policy.switchBody);
   cerr << "removeUnusedVariables 2" << endl;
-  removeUnusedVariables(proj);
-#endif
+  removeUnusedVariables(policy.switchBody, safeFunctions);
 
 // Run the standard ROSE consistancy tests on the generated source file
   cerr << "testing" << endl;

@@ -378,7 +378,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
 
         // "ite" is "if then else"
         // Word(32) result = policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI));
-           write32(operands[0], policy.ite(policy.equalToZero(RA), signExtended_SI, policy.add(RA,signExtended_SI)));
+           write32(operands[0], policy.add(RA,signExtended_SI));
            break;
          }
 
@@ -729,7 +729,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
         // This needs a collection of helpfer functions!
            int bi_value = BI->get_register_number();
            Word(4) CR_field = policy.readCRField(bi_value/4);
-           Word(1) CR_bi = extract<3,4>(policy.shiftLeft(CR_field,number<2>(bi_value % 4)));
+           Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
            policy.writeIP(policy.ite(policy.and_(CTR_ok,COND_ok),read32(operands[2]),policy.readIP()));
            break;
@@ -781,7 +781,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
         // This needs a collection of helpfer functions!
            int bi_value = BI->get_register_number();
            Word(4) CR_field = policy.readCRField(bi_value/4);
-           Word(1) CR_bi = extract<3,4>(policy.shiftLeft(CR_field,number<2>(bi_value % 4)));
+           Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
            policy.writeIP(policy.ite(policy.and_(CTR_ok,COND_ok),policy.and_(policy.readSPR(powerpc_spr_lr),number<32>(0xFFFFFFFC)),policy.readIP()));
            break;
@@ -1027,7 +1027,7 @@ build_mask(uint8_t mb_value, uint8_t me_value)
         // This needs a collection of helpfer functions!
            int bi_value = BI->get_register_number();
            Word(4) CR_field = policy.readCRField(bi_value/4);
-           Word(1) CR_bi = extract<3,4>(policy.shiftLeft(CR_field,number<2>(bi_value % 4)));
+           Word(1) CR_bi = extract<0,1>(policy.shiftRight(CR_field,number<2>(3 - bi_value % 4)));
            Word(1) COND_ok = BO_0 ? policy.true_() : BO_1 ? CR_bi : policy.invert(CR_bi);
 
         // Write the incremented IP value to the link register so that function can return.
