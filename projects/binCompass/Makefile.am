@@ -4,11 +4,11 @@ EXTRA_DIST = buffer2.bin
 
 SUBDIRS = analyses graphanalyses
 
-INCLUDES = $(ROSE_INCLUDES) -I$(builddir) $(LTDLINCL)
+INCLUDES = $(ROSE_INCLUDES) -I$(builddir) # $(LTDLINCL)
 
 bin_PROGRAMS = binCompassMain 
 
-LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl $(LIBLTDL)
+LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -ldl # $(LIBLTDL)
 
 binCompassMain_SOURCES = binCompassMain.cpp  
 
