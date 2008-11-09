@@ -14,7 +14,7 @@ DEVELOPER_DISTRIBUTION_DIRECTORY = developersScratchSpace proposals
 # they generate data that is subsequently used in the generated 
 # ROSE documentation (examples, input codes, and generated output).
 # SUBDIRS = config src projects tests tutorial exampleTranslators docs developersScratchSpace tools proposals scripts
-SUBDIRS = config src projects tests tutorial exampleTranslators docs tools scripts libltdl $(DEVELOPER_DISTRIBUTION_DIRECTORY)
+SUBDIRS = libltdl config src projects tests tutorial exampleTranslators docs tools scripts $(DEVELOPER_DISTRIBUTION_DIRECTORY)
 
 ACLOCAL_AMFLAGS = -I ./config -I ./acmacros -I ./libltdl -I /usr/share/aclocal
 
