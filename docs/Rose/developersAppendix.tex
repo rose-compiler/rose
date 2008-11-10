@@ -1,6 +1,6 @@
 \chapter{ Developer's Appendix }
-
 \label{developersAppendix:developersAppendix}
+
 %Added by Liao 10/17/2008
 \section{Working with the ROSE SVN repositories}
 \label{gettingStarted::svn}
@@ -8,6 +8,23 @@ We have two subversion repositories for ROSE: an internal one at LLNL and
 an external one at SciDAC Outreach Center (using a vendor drop scheme). 
 Some tips for using them are gathered in this section. 
 \subsection{The External Repository}
+If you are our external (non-LLNL) users who make contributions to ROSE,
+we highly recommend you to work on a dedicated branch of the external repository. 
+We can create the branch for you on request. And you need to apply an account of
+the SciDAC Outreach Center to have write access to your branch. 
+
+Here are the steps to have an account with write access to ROSE's branches:
+Please follow the link on
+\htmladdnormallink{https://outreach.scidac.gov/account/register.php}{https://outreach.scidac.gov/account/register.php}
+to fill out a registration form (Project name: ROSE, PI: Daniel Quinlan)
+and fax a signed use policies form as instructed on the registration page.
+After getting your account, you need to log into the website and go to page
+\htmladdnormallink{https://outreach.scidac.gov/projects/rose/}{https://outreach.scidac.gov/projects/rose/}.
+Click "Request to join" on the top-right screen to request to join the ROSE
+project and we will grant you the write access to your branch. 
+
+Some frequently used commands for ROSE external developers are listed
+below:
 \begin{itemize}
 \item Install your svn client ($>=$1.5.1 is recommended ) with
 \textit{libsvn\_ra\_dav} support
@@ -40,8 +57,8 @@ the second is usually the head revision of the main trunk.
         \textit{svn merge -r 56:69
         https://outreach.scidac.gov/svn/rose/trunk} 
    \item Solve conflicts as needed.     
-   \item svn commit: please record the start and end revision numbers of
-   the main trunk being merged into the log to keep track of merging.   
+   \item svn commit: {\bf Note:please record the start and end revision numbers of
+   the main trunk being merged into the commit log to keep track of merging.}
 \end{itemize}                
 \item You can check the archive of email notifications of the svn commits
 from \htmladdnormallink{https://osp5.lbl.gov/pipermail/rose-commits}{https://osp5.lbl.gov/pipermail/rose-commits} 
@@ -49,6 +66,8 @@ from \htmladdnormallink{https://osp5.lbl.gov/pipermail/rose-commits}{https://osp
 
 
 \subsection{The Internal Repository}
+The tips here only apply to internal users who have access to LLNL
+machines.
 Again, make sure you are using subversion $>$ 1.4.x, 1.5.1 and up is recommended.
 \begin{itemize}
 \item Set local subversion configuration to ignore certain files and
@@ -112,6 +131,7 @@ svn/text/hooks or svn/ROSE/hooks) keeps our email recipient list.\\
 \item Building distributions of ROSE MUST be done with \textit{svn export}. Otherwise, .svn directories are copied into the distribution trees. 
 
 \end{itemize}
+
 
 % DQ (6/5/2008): This is the resulting lesson from the erasure
 % of my ROSE directory as the result of a bad cron script.
