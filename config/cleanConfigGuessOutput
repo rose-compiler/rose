@@ -1,0 +1,3 @@
+#!/bin/sh
+# echo "cleanConfigGuessOutput \'$1\'" >&2
+echo "$1" | sed 's/-unknown-/-pc-/' | sed 's/-redhat-/-pc-/' | sed 's/-darwin[^-]*-/-darwin-/'
