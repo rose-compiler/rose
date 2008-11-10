@@ -336,7 +336,7 @@ BinaryCloneGui::readIntoVector( sqlite3x::sqlite3_connection& cur_con,
 
     try {
       eltCount = boost::lexical_cast<size_t>(cur_con.executestring("select max(row_number) from largest_clones"));
-    } catch (exception& e) { 
+    } catch (std::exception& e) { 
       eAssert(0, ("internal error: No largest_clones table found -- invalid database?!"));
     }
 
@@ -434,7 +434,7 @@ BinaryCloneGui::readIntoVector( sqlite3x::sqlite3_connection& cur_con,
       std::cout << "Output A" << std::endl;;
 
     }
-    catch(exception& e) {
+    catch(std::exception& e) {
 	//cout << e.what() << "\n";
   }
 

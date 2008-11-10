@@ -319,7 +319,7 @@ BinaryCloneGui::run( )
 
     try {
       eltCount = boost::lexical_cast<size_t>(con.executestring("select max(row_number) from largest_clones"));
-    } catch (exception& e) { 
+    } catch (std::exception& e) { 
       eAssert(0, ("internal error: No largest_clones table found -- invalid database?!"));
     }
 
@@ -429,7 +429,7 @@ BinaryCloneGui::run( )
         row++;
       }
     }
-    catch(exception& e) {
+    catch(std::exception& e) {
 	//cout << e.what() << "\n";
   }
 

@@ -69,7 +69,7 @@ int main( int argc, char **argv )
 
 
   }
-  catch(exception& e) {
+  catch(std::exception& e) {
     cout << e.what() << "\n";
   }
 

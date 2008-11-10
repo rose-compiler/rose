@@ -108,7 +108,7 @@ void createDatabases(sqlite3_connection& con) {
   try {
 	  con.executenonquery("create table IF NOT EXISTS timing(property_name TEXT, total_wallclock FLOAT, total_usertime FLOAT, total_systime FLOAT, wallclock FLOAT, usertime FLOAT, systime FLOAT )");
   }
-  catch(exception &ex) {
+  catch(std::exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
@@ -116,14 +116,14 @@ void createDatabases(sqlite3_connection& con) {
     // Function IDs are only unique within a file
 	  con.executenonquery("create table IF NOT EXISTS function_statistics(row_number INTEGER PRIMARY KEY, function_id INTEGER, num_instructions INTEGER )");
   }
-  catch(exception &ex) {
+  catch(std::exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
   try {
 	  con.executenonquery("create table IF NOT EXISTS function_ids(row_number INTEGER PRIMARY KEY, file TEXT, function_name TEXT)");
   }
-  catch(exception &ex) {
+  catch(std::exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
@@ -132,7 +132,7 @@ void createDatabases(sqlite3_connection& con) {
 	  con.executenonquery("create table IF NOT EXISTS vectors(row_number INTEGER PRIMARY KEY, function_id INTEGER,  index_within_function INTEGER, line INTEGER, offset INTEGER, sum_of_counts INTEGER, counts BLOB, instr_seq BLOB)");
 
   }
-  catch(exception &ex) {
+  catch(std::exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
@@ -141,7 +141,7 @@ void createDatabases(sqlite3_connection& con) {
 
 
   }
-  catch(exception &ex) {
+  catch(std::exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
