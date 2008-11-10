@@ -16,6 +16,7 @@ doall_2.c \
 firstprivate.c \
 inner_only.c \
 jacobi_seq.c \
+lastprivate.c \
 matrixmultiply.c \
 output_dep2.c \
 output_dep3.c \
