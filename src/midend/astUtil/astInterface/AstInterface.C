@@ -1378,6 +1378,8 @@ bool AstInterface::
 IsIOOutputStmt( const AstNodePtr& s, AstNodeList* explist) 
 { return false; }
 
+//! Check if a node '_exp' is an expression for an integer constant
+// If true, store the integer value into 'val'
 bool AstInterface::IsConstInt( const AstNodePtr& _exp, int *val) 
 { 
   SgNode* exp = AstNodePtrImpl(_exp).get_ptr();

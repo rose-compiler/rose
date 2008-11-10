@@ -22,6 +22,7 @@ class ReadAnnotCollectionWrap {
    { 
       if (peek_ch(in) == end)
           return false;
+      // Read in the next identifier as the annotation type name 	  
       string annot = read_id(in);
       if (annot == "")
          return false;
@@ -43,17 +44,22 @@ class ReadAnnotCollectionWrap {
    }
 };
 
-
+//! Read a collection of annotations of type TargeInfo (a typedescriptor or an operator declaration)
+// They begin after 'sep1', separated by 'sep2', and end with 'e'
 template <class TargetInfo, char sep1, char sep2, char e>
 void ReadAnnotCollection<TargetInfo,sep1,sep2,e>:: read( istream& in)
 {
   TargetInfo target;
   try {
+     // Read in the string for a type descriptor or an operator declaration
      target.read(in);
+     // Read in the start character for annotation collections
      if (sep1 != 0)
         read_ch(in, sep1);
+     	
      ReadAnnotCollectionWrap<TargetInfo,sep1,sep2,e> op(target, *this);
      read_list( in, op, sep2);
+     // Read in the end character.
      if (e != 0)
        read_ch(in, e);
   }

@@ -49,6 +49,7 @@ void ReplaceParams::operator()( SymbolicValDescriptor& v)
 }
 
 bool OperatorDeclaration::unique = false; 
+//! Get a unique string name for a type, similar to qualified names in C++
 string OperatorDeclaration:: 
 get_signiture( AstInterface& fa, const std::string& fname,
                                     const AstInterface::AstTypeList& plist)
@@ -64,9 +65,10 @@ get_signiture( AstInterface& fa, const std::string& fname,
     }
   return r;
 }
-
+//! Read in an operator (function) declaration: name + a list of parameter types and names) 
 OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
    {
+      // Signature is the full function name, possibly with several qualifiers
       signiture = read_id(in);
 
       string classname, funcname;
@@ -79,13 +81,14 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
         signiture = signiture + "::";
         c = peek_ch(in);
       }
+      // Plus other special characters in the operator's name, such as <=, *,~
       while ( in.good() && c != '(') {
          read_ch(in,c);
          signiture.push_back(c);
          funcname.push_back(c);
          c = peek_ch(in);
       }
-
+      // Append () for "::operator()" ?
       char* opstart = strrchr(signiture.c_str(), ':');
       if (opstart != 0 && string(opstart+1) == "operator") {
          signiture = signiture + "()";
@@ -93,13 +96,15 @@ OperatorDeclaration& OperatorDeclaration:: read ( istream& in )
          read_ch(in,')');
       }
 
-
+      // Read in the parameter declaration: a list of (type, name)
       int index = 0;
       if (classname != "" && classname != funcname) {
         index = 1;
         pars.add_param( signiture, "this");
       }
       pars.read(in);
+      
+      
       for (unsigned i = index; i < pars.num_of_params(); ++i) {
          string partype = pars.get_param_type(i);
          if (!unique)

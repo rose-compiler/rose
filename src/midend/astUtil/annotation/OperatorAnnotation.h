@@ -158,8 +158,10 @@ class OperatorAliasAnnotation : public FunctionAliasInterface
   static OperatorAliasAnnotation* get_inst() 
     { if (inst == 0) inst = new OperatorAliasAnnotation();
       return inst; }
+  //! Inherited from FunctionAliasInterface    
   bool may_alias(AstInterface& fa, const AstNodePtr& fc, const AstNodePtr& result, 
                CollectObject<std::pair<AstNodePtr,int> >& collectalias);
+  //! Inherited from FunctionAliasInterface
   bool allow_alias( AstInterface& fa, const AstNodePtr& fd, 
                     CollectObject<std::pair<AstNodePtr,int> >& collectalias);
   void Dump() const

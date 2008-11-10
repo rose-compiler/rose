@@ -5,7 +5,7 @@
 #include <FunctionObject.h>
 
 class VoidPtrSet : public std::set<void*, std::less<void*> > {};
-
+//! A custom container based on std::set for arbitrary pointers of type T
 template <class T>
 class PtrSetWrap  
 {

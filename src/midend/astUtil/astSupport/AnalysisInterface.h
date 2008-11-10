@@ -1,15 +1,20 @@
 #ifndef ANALYSIS_INTERFACE_H
 #define ANALYSIS_INTERFACE_H
+// This header provide abstract interfaces to some common program analyses,
+// such as
+// * side effects
+// * alias
 
 #include "FunctionObject.h"
 
 class FunctionSideEffectInterface
 {
  public:
+   //! Store modifying reference nodes (collect) within a function (fc)
   // returns false if unknown function encountered
   virtual bool get_modify(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0 ;
-
+  
   virtual bool get_read(AstInterface& fa, const AstNodePtr& fc,
                                CollectObject<AstNodePtr>* collect = 0) = 0;
   virtual ~FunctionSideEffectInterface() {}
@@ -65,6 +70,7 @@ class NoFunctionAliasAnalysis : public FunctionAliasInterface
 class AliasAnalysisInterface
 {
  public:
+   //! Check if two references r1, r2 may be alias to each other
   virtual bool
      may_alias(AstInterface& fa, const AstNodePtr& r1, const AstNodePtr& r2) = 0;
   virtual ~AliasAnalysisInterface() {}

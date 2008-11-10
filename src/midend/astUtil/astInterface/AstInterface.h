@@ -47,6 +47,7 @@ std::string getAstLocation( const AstNodePtr& s);
 
 class AstObserver {
   public:
+   //! Copy certain value associated with 'orig' to the corresponding value associated with 'n'. 
    virtual void ObserveCopyAst( AstInterfaceImpl& fa, const AstNodePtr& orig, const AstNodePtr& n) = 0;
    virtual ~AstObserver() {}
 };

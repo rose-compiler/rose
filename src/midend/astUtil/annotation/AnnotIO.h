@@ -28,16 +28,19 @@ class ReadError {
   std::string msg;
   ReadError( const std::string& s) : msg(s) {}
 };
-
+//! Read a list of items of type ItemGen, they are separated using 'sep'
 template <class ItemGen>
 bool read_list( std::istream& in, ItemGen& op, char sep )
 {
+  // Read the first item in the list
   if (! op.read(in))
      return false;
   while (in.good()) {
     char c = peek_ch(in);
+    //Stop if the next char is not the delimitor
     if (sep != 0 && c != sep) 
        break;
+    // else we keep reading  
     if (sep != 0)
        read_ch(in,c);
     if (!  op.read(in))
