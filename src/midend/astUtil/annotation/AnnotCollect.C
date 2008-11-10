@@ -11,7 +11,7 @@ ReadAnnotation* ReadAnnotation::get_inst()
      inst = new ReadAnnotation();
   return inst;
 }
-
+//! Process command line and call read(istream & in)
 void ReadAnnotation::read()
     {
        const vector<string>& opts = CmdOptions::GetInstance()->opts;
@@ -25,6 +25,7 @@ void ReadAnnotation::read()
          }
        }
     }
+//! Read the annotation file and recognize type and operator annotation collections    
 void ReadAnnotation:: read( istream & in)
 {
   while (in.good()) {

@@ -210,7 +210,13 @@ class ArrayModifyOpCollection : public OperatorAnnotCollection<ArrayModifyDescri
       OperatorAnnotCollection<ArrayModifyDescriptor>::Dump(); 
     }
 };
-
+//! Array annotations contains semantics for 
+// * types/classes:    array attributes: dimension, length, 
+// * operators/functions: side effects such as mod/read; and alias information
+// Please refer to the following paper for details
+// Yi, Qing, and Dan Quinlan, \u201cApplying Loop Optimizations to Object-oriented Abstractions
+// Through General Classification of Array Semantics\u201d, the 17th International Workshop on
+// Languages and Compilers for Parallel Computing, West Lafayette, Indiana, USA. Sep. 2004.
 class ArrayAnnotation 
     : public FunctionSideEffectInterface,
       public FunctionAliasInterface
@@ -249,7 +255,8 @@ class ArrayAnnotation
   bool is_array_construct_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                               CPPAstInterface::AstNodeList* alias = 0,
                               ArrayDescriptor* desc = 0, ReplaceParams* repl = 0);
-
+  //! Check if a node 'orig' is a reference to an array element
+  // If true, return the array node 'array', and the list of subscripts 'args'
   bool is_access_array_elem( CPPAstInterface& fa, const AstNodePtr& orig,
                           AstNodePtr* array=0, CPPAstInterface::AstNodeList* args=0);
   bool is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig,

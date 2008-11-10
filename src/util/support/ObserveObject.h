@@ -6,6 +6,7 @@
 #include <PtrSet.h>
 #include <string>
 
+//! Interface to access an observer object
 template <class Observer>
 class ObserveInfo
 {
@@ -15,6 +16,7 @@ class ObserveInfo
   virtual ~ObserveInfo() {}
 };
 
+//! A container for Observer
 template <class Observer>
 class ObserveObject 
 {
@@ -23,6 +25,7 @@ class ObserveObject
   public:
     typedef typename PtrSetWrap<Observer>::const_iterator Iterator;
     virtual ~ObserveObject() {}
+    
     void AttachObserver( Observer *o)
         { assert(!obList.IsMember(o) );
           obList.insert( o ); }

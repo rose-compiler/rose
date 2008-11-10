@@ -371,7 +371,9 @@ is_access_array_length( CPPAstInterface& fa, const SymbolicVal& orig,
   }
   return false;
 }
-
+//! Check if a node is a known member function of an array to access the length of one dimension
+// If true, return the array node 'arrayp', function parameter 'dimAst', 
+// and the integer value of the prameter 'dim'
 bool ArrayAnnotation ::
 is_access_array_length( CPPAstInterface& fa, const AstNodePtr& orig, AstNodePtr* arrayp,
                         AstNodePtr* dimAst, int *dim)

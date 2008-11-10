@@ -9,18 +9,24 @@
 #include <sstream>
 #include <assert.h>
 #include <stdio.h>
-
+//! Input interface of a container
+// 'Container' contains element of 'Member' type 
+// Its string format uses 'char sep' as the separator (delimitor) , 
+// left and right are the beginning and end characters, such as '{' and '}'
 template <class Container, class Member, char sep, char left, char right>
 class ReadContainer
 {
  public:
+     //! Fill in the content of container 'c' from the input stream 'in'
      static bool read( Container& c, std::istream& in) ;
 };
-
+//! Output interface of a container
 template <class Container, char sep, char left, char right>
 class WriteContainer 
 {
  public:
+    //! Write the elements inside a container to string format, with delimitor 'seq'
+    //, beginning character 'left' and ending character 'right'
     static void write( const Container& c, std::ostream& out);
 };
 
@@ -97,7 +103,8 @@ class SetDescriptor : public std::set<Member>
             }
 
     };
-
+//! 'char sep' means the separator (delimitor) , 
+// left and right are the beginning and end characters, such as '{' and '}'
 template <class Key, class Member, char sep, char left, char right>
 class MapDescriptor : public std::map< Key,Member>
 {
@@ -137,7 +144,7 @@ class MapDescriptor : public std::map< Key,Member>
      std::string ToString() const { std::stringstream out; write(out); return out.str(); }
     };
 
-
+//! A descriptor for an identifier
 class StringDescriptor
 {
   std::string name;
@@ -151,6 +158,7 @@ class StringDescriptor
   std::string get_string() const { return name; }
   bool operator < ( const StringDescriptor& that) const { return name < that.name; }
   bool operator == ( const StringDescriptor& that) const { return name == that.name; }
+  //! Set the descriptor with the next identifier read from an input stream
   bool read( std::istream& in) 
       { 
          name = read_id(in); 

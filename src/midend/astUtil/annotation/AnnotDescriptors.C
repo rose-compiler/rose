@@ -126,7 +126,8 @@ void CloseDescriptor<Descriptor, left, right> ::write(ostream& out) const
   }
 
 #ifndef TEMPLATE_ONLY
-
+//! Read in a class name, could be a derived class with a qualified name
+// "class" is already processed before calling this function
 bool TypeDescriptor:: read(istream& in)
 {
   if (!StringDescriptor::read(in))
@@ -140,6 +141,7 @@ bool TypeDescriptor:: read(istream& in)
      get_name() = get_name() + "::" + read_id(in);
      c = peek_ch(in);
   } 
+  // The type name could be reference or pointer type?
   if (c == '&' || c == '*') {
     read_ch(in,c);
     get_name().push_back(c);

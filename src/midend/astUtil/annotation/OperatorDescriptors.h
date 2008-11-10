@@ -5,12 +5,13 @@
 #include "TypeAnnotation.h"
 #include "AnnotExpr.h"
 #include "FunctionObject.h"
-
+//!Paramter names
 typedef ContainerDescriptor<std::vector<NameDescriptor>, NameDescriptor,',','(',')'>
     ParamDescriptor;
+//!Parameter types    
 typedef ContainerDescriptor<std::vector<TypeDescriptor>, TypeDescriptor,',','(',')'>
     ParamTypeDescriptor;
-
+//! Representation for function parameter names and types.
 class ParameterDeclaration
 {
   ParamDescriptor pars;
@@ -61,10 +62,10 @@ public:
   void operator() (SymbolicValDescriptor& result);
   SymbolicAstWrap find( const std::string& parname);
 };
-
+//! Representation for an operator (function)
 class OperatorDeclaration {
-  std::string signiture;
-  ParameterDeclaration pars;
+  std::string signiture; //operator name
+  ParameterDeclaration pars; // parameter names and types
   static bool unique;
 public:
   OperatorDeclaration() : signiture("") {}
@@ -105,8 +106,9 @@ class OPDescriptorTemp : public BaseClass
    }
   void Dump() const { write(std::cerr); }
 };
-
+//! a set of names separated by ',', begin with '(', end with ')'
 typedef  SetDescriptor<NameDescriptor,',','(',')'> NameGroup; 
+//! A container of std::list<> of elment of NameGroup type
 typedef OPDescriptorTemp
          <ContainerDescriptor<std::list<NameGroup>, NameGroup,',','{','}'> > 
 OperatorAliasDescriptor;

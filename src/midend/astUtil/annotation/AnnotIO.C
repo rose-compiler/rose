@@ -36,12 +36,12 @@ bool is_space( char c)
 {
   return c == ' ' || c == '\t' || c == '\n';
 }
-
+//! Check if a character is a numerical character: 0 to 9
 bool is_num( char c)
 {
   return c >= '0' && c <= '9';
 }
-
+//! Check if a character is part of an indentifier: _ or a to z or A to Z
 bool is_id( char c)
 {
   return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
@@ -55,7 +55,8 @@ int is_operator( char c)
       return 0;
   return p - op.c_str() + 1;
 }
-
+//! Grab the next char from an annotation buffer, 
+// if the buffer is fully processed already, get the char from an input stream
 char getch( istream& in)
  { 
     if (annotation::buffer != "") {
@@ -85,7 +86,8 @@ char peek_ch(istream& in)
         getch(in);
       return c;
 }
-
+//! Peek the next char, don't increase the positioning index
+// Peek the input stream if the annotation buffer is already processed. 
 char peek_next(istream& in)
 {
    if (annotation::buffer != "") 
@@ -93,7 +95,10 @@ char peek_next(istream& in)
     else 
       return in.peek();
 }
-
+//! Peek the next sub string of size 'size', 
+// append the annotation buffer using characters from 'in' to get sufficent substring
+// if the existing buffer is not long enough to be peeked up to 'size' characters from 
+// the current positioning pointer (index)
 string peek_next(istream& in, unsigned size)
 {
    unsigned bufsize = annotation::buffer.size();
@@ -127,7 +132,7 @@ void read_ch( istream& in, char c)
      throw m;
   }
 }
-
+//! Grab the next identifier from an input stream 
 string read_id( istream& in )
 {
   char c = peek_ch(in);
@@ -139,7 +144,7 @@ string read_id( istream& in )
   }
   return buf;
 }
-
+//! Grab the identifier s from an input stream 'in'
 void read_id( istream& in, const string& s)
 {
   string r = read_id(in);
