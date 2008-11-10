@@ -1969,12 +1969,17 @@ string Grammar::getNodeForVariant(size_t var) const {
   return it->second;
 }
 
-Terminal& Grammar::getTerminalForVariant(size_t var) {
-  std::map<size_t, Terminal*>::const_iterator it = this->astVariantToTerminalMap.find(var);
-  ROSE_ASSERT (it != this->astVariantToTerminalMap.end());
-  ROSE_ASSERT (it->second);
-  return *(it->second);
-}
+Terminal& Grammar::getTerminalForVariant(size_t var)
+   {
+     std::map<size_t, Terminal*>::const_iterator it = this->astVariantToTerminalMap.find(var);
+
+  // Note that when this assertion fails it can be because the IR nodes 
+  // name is listed more than once in the "astNodeList" file.
+     ROSE_ASSERT (it != this->astVariantToTerminalMap.end());
+
+     ROSE_ASSERT (it->second);
+     return *(it->second);
+   }
 
 StringUtility::FileWithLineNumbers
 Grammar::buildVariants ()

@@ -445,6 +445,12 @@ typedef SgAsmDwarfLinePtrList*              SgAsmDwarfLinePtrListPtr;
 typedef Rose_STL_Container<SgAsmDwarfMacro*> SgAsmDwarfMacroPtrList;
 typedef SgAsmDwarfMacroPtrList*              SgAsmDwarfMacroPtrListPtr;
 
+typedef Rose_STL_Container<SgAsmDwarfConstruct*> SgAsmDwarfConstructPtrList;
+typedef SgAsmDwarfConstructPtrList*              SgAsmDwarfConstructPtrListPtr;
+
+typedef Rose_STL_Container<SgAsmDwarfCompilationUnit*> SgAsmDwarfCompilationUnitPtrList;
+typedef SgAsmDwarfCompilationUnitPtrList*              SgAsmDwarfCompilationUnitPtrListPtr;
+
 
 // FIXME: This might not the the right place for this class. (RPM 2008-08-26)
 /* An SgSharedVector is like an STL vector except for two things:

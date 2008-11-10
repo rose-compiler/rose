@@ -212,6 +212,12 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                name += string("\\n") + buffer;
              }
 
+          SgAsmDwarfConstruct* asmDwarfConstruct = isSgAsmDwarfConstruct(node);
+          if (asmDwarfConstruct != NULL)
+             {
+               name = asmDwarfConstruct->get_name();
+             }
+
 #if 0
        // This might not be the best way to implement this, since we want to detect common base classes of IR nodes.
           switch (node->variantT())
@@ -254,8 +260,12 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      bool commentoutNode = commentOutNodeInGraph(node);
      if (commentoutNode == true)
         {
+       // DQ (11/10/2008): Fixed to only output message when (verbose_level > 0); command-line option.
        // DQ (7/27/2008): For now just return to test this mechanism, then we want to add comment "//" propoerly to generated DOT file.
-          printf ("Skipping the use of this IR node in the DOT Graph \n");
+          if (SgProject::get_verbose() > 0)
+             {
+               printf ("Skipping the use of this IR node in the DOT Graph \n");
+             }
         }
        else
         {
