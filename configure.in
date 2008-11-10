@@ -1152,6 +1152,7 @@ docs/Rose/AvailableDocumentation.docs
 docs/Rose/Makefile
 docs/Rose/manual.tex
 docs/Rose/ROSE_InstallationInstructions.tex
+docs/Rose/ROSE_DeveloperInstructions.tex
 docs/Rose/gettingStarted.tex
 docs/Rose/rose.cfg
 docs/Rose/sage.cfg

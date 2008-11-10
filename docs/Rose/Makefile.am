@@ -82,7 +82,7 @@ latexFiles = preface.tex acknowledgments.tex introduction.tex requirements.tex \
              tridvpk.tex appendix.tex glossary.tex bibliography.tex \
              rose-processing-phases.pdf testing.tex \
              writingYourFirstTranslator.tex overviewOfRose.tex \
-             developersAppendix.tex astMerge.tex installRose.tex binaryAnalysis.tex
+             developersAppendix.tex astMerge.tex installRose.tex binaryAnalysis.tex 
 
 roseDirectoryMap.pdf: Makefile
 	$(top_srcdir)/scripts/lsdot $(top_srcdir) --format=ps --exclude='CVS\|\.svn\|autom4te.cache\|developersScratchSpace\|testDoxygen\|ckpt\|compass' --basename -o=roseDirectoryMap.ps;
@@ -145,7 +145,7 @@ COMPASS_MANUAL = $(compass_build_tooldir)/compass/compass.pdf
 $(COMPASS_MANUAL):
 	cd $(compass_build_tooldir)/compass && $(MAKE) docs
 
-make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
+make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf footer.html leftmenu.html $(COMPASS_MANUAL)
 	cd Tutorial; $(MAKE) make-web-pages
 	mkdir -p ROSE_WebPages
 	mkdir -p ROSE_WebPages/ROSE_HTML_Reference;
@@ -161,6 +161,7 @@ make-web-pages: $(RoseDoxygenDocumentation) $(PACKAGE_NAME)-$(PACKAGE_VERSION)-U
 #	cp -r $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/ROSE_ResearchPapers
 	cp -fr $(top_srcdir)/ROSE_ResearchPapers ROSE_WebPages/
 	cp -f ROSE_InstallationInstructions.pdf ROSE_WebPages/ROSE_InstallationInstructions.pdf
+	cp -f ROSE_DeveloperInstructions.pdf ROSE_WebPages/ROSE_DeveloperInstructions.pdf
 	mkdir -p ROSE_WebPages/ROSE_UserManual
 	cp -f $(srcdir)/WEB_DOCS_README ROSE_WebPages
 	cp -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_WebPages/ROSE_UserManual/$(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf
@@ -183,12 +184,18 @@ $(PACKAGE_NAME)-$(PACKAGE_VERSION)-HTML-Docs.tar.gz: make-web-pages
 # Simpler rule
 latex-docs: pdf
 
-pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf
+pdf-local: $(PACKAGE_NAME)-$(PACKAGE_VERSION)-UserManual.pdf ROSE_InstallationInstructions.pdf ROSE_DeveloperInstructions.pdf
 
 ROSE_InstallationInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_InstallationInstructions.tex
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex && \
 	$(PDFLATEX) ROSE_InstallationInstructions.tex
+
+ROSE_DeveloperInstructions.pdf: $(latexFiles) $(latexDependences) ROSE_DeveloperInstructions.tex
+	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
+	$(PDFLATEX) ROSE_DeveloperInstructions.tex && \
+	$(PDFLATEX) ROSE_DeveloperInstructions.tex
+
 
 # DQ (7/25/2004): Need to include manual.tex and reference.tex since they are build from 
 # manual.tex.in and reference.tex.in
