@@ -1,4 +1,4 @@
-#!/bin/sh -x
+#!/bin/sh
 
 # This is a script to automatically release a ROSE package.
 # It will
@@ -28,7 +28,10 @@ SCRIPT_TOP=/home/liao6/rose/scripts
 #----------get revision no etc ----------------------
 # x. grab package name, version no, and revision no from 
 # the log of the head version
-LOG_TEXT=`$SVN log -r head $SOURCE_REPOS|grep '^Load rose'|cut -d' ' -f 2`
+# This will cause problem if a branch is the last changed thing. 
+# The head log of main trunk will be empty
+#LOG_TEXT=`$SVN log -r head $SOURCE_REPOS|grep '^Load rose'|cut -d' ' -f 2`
+LOG_TEXT=`$SVN log -l 1 $SOURCE_REPOS|grep '^Load rose'|cut -d' ' -f 2`
 
 if [ "x$LOG_TEXT" = "x" ]; then
   echo "Fatal error: cannot get the package-version-revision string!"
