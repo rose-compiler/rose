@@ -8,7 +8,12 @@
    ROSE supports the disassembly and analysis of binary executables for x86, PowerPC, and AMR
 instruction sets.  ROSE implements this support as part of general research work
 to support combining analysis for source code and analysis for binaries and supporting
-performance analysis and optimization.
+performance analysis and optimization.  Through this support ROSE addresses the
+requirements for the analysis and transformation of software in a general context useful
+to as wide a group of users as possible.
+
+   ROSE handles a number of binary executable file formats and also reads Dwarf information
+into the AST to support additional analysis.
 
 \section{The Binary AST}
 
@@ -20,7 +25,7 @@ the AST (using structures common to the representation of such low level data). 
 60 IR nodes have been added to ROSE to support the binary executable formats; this
 support allows the analysis of any Linux, Windows, OS\/2, or DOS binary executable.
 
-   The binary executable file format can be analyized seperately from the instructions
+   The binary executable file format can be analyzed separately from the instructions
 using the command line option: {\tt -rose:read\_executable\_file\_format\_only}.  This
 allows graphs generated using the ROSE visualization mechanisms (and even some analysis) 
 to be easily restricted (in size) to the just the IR nodes specific to the binary
@@ -42,7 +47,7 @@ requirements of ELF (Linux, and others), PE (MS Windows), NE (older MS Windows),
 LE (OS\/2), and DOS (MS Dos) executable formats.  The colors represent different
 executable formats, brown classes are used as base classes for more than one
 format. Dark colors represent principle IR nodes in the AST, lighter color IR nodes
-represnt supporting infrastructure in the AST.  Arrows are either dark colored or
+represent supporting infrastructure in the AST.  Arrows are either dark colored or
 light colored; dark colors represent class derivation, and light colors represent
 member relationships.
 
@@ -80,11 +85,11 @@ This graph is quite large and does not fit well on the page, the next figure
 Figure \ref{binaryAnalysis:BinaryExecutableFormatAST_2} shows a cropped view of the graph
 of the AST formed by just the binary file format (sections, symbols, etc.).  This figure
 shows two {\em SgAsmInterpretation} IR nodes; this is a Windows PE binary and all windows
-PE binaries contain both a 16-bit MSDOS header (and some 16-bit code) and a 32-bit Windows
+PE binaries contain both a 16-bit MS-DOS header (and some 16-bit code) and a 32-bit Windows
 PE header (with sections that have 32-bit code); thus there are two SgAsmInterpretation IR
-nodes (one for the 16-bit interprestation of the instructions and one for the 32-bit 
+nodes (one for the 16-bit interpretation of the instructions and one for the 32-bit 
 interpretation of the instructions).  Note that ELF format files will have only one
-SgAsmInterpretation IR nodes (because there is only a single interpreation possible), but
+SgAsmInterpretation IR nodes (because there is only a single interpretation possible), but
 other file formats can contain many interpretations; formed form a composite of code to
 support wide ranges of portability.
 
@@ -94,15 +99,33 @@ support wide ranges of portability.
 
     ROSE has its own disassembler (for x86, ARM, and PowerPC); a recursive disassembler that is well suited to
 details of variable length instruction set handling and data stored in the instruction
-stream.  All details of the instructions, and the roperands and operator expression trees,
-etc. are stored in the binary AST as seperate IR nodes.
+stream.  All details of the instructions, and the operands and operator expression trees,
+etc. are stored in the binary AST as separate IR nodes.
 \fixme{We need an example of the AST for a few instructions.}
+
+
+\subsection{Dwarf Debug Support}
+
+   ROSE can now read the Dwarf debug information stored into binary executables (ELF only
+at this point). This information is represented as Dwarf specific IR nodes in the AST and
+thus can be optionally used (when it is available in the binary) as part of any binary 
+analysis.  Only a few sections are supported at present: {\em .debug\_info},
+{\em .debug\_line}, etc.  The dwarf support in ROSE uses {\em libdwarf} and is enabled in
+ROSE using a configuration option: {\tt (configure --with-dwarf={\em<path to libdwarf>}}.
+Note that {\em libdwarf} is optional, must be separately installed by the user, and
+thus is obviously not distributed within ROSE.  
+% The future of the Dwarf support in ROSE is not clear, 
+We anticipate the Dwarf information in the AST to be useful for performance tools that
+operate on the binary executable when the binary executable has been generated to include 
+Dwarf debug information.
+
+
 
 \section{Binary Analysis}
 
    A number of binary analysis passes are provided, most are a part of the Compass
-framework for software analysis.  See the Compass manual for more details on supported
-binary analysis.
+framework for software analysis.  See the {\em Compass User Manual} for more details on
+supported binary analysis.
 
    The ROSE tutorial shows a number of binary analysis passes over both the binary
 instructions and the executable file format.
@@ -112,7 +135,7 @@ instructions and the executable file format.
    Compass is a tool framework for building software analysis tools using rules (on source
 code and alternatively directly on binary executables). Compass
 reports violations of the rules in the evaluation of the software.  Compass is a
-reletively simple application built on top of ROSE.  Most of the complexity and code 
+relatively simple application built on top of ROSE.  Most of the complexity and code 
 within Compass is that it includes a large collection to rules, each rule has its
 own implementation of an arbitrary test over the source code or the binary.  Rules
 (checkers) may be defined over the AST or any other graph built within ROSE to store 
@@ -125,8 +148,8 @@ debug information, symbols, etc.
 \section{Static Binary Rewriting}
    As part of general research on transformations of binaries (separate from analysis)
 a number of techniques have been developed to support classes of transformations.
-This static rewritting of the binary permits the development of performance tools 
-that could support the analysis and rewritting of binaries for support of High 
+This static rewriting of the binary permits the development of performance tools 
+that could support the analysis and rewriting of binaries for support of High 
 Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support 
 (DOE Office of Science supercomputers).
 
@@ -145,7 +168,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
    alignment constraints of the moved section, or the memory mapping. Specifically, after calling this function to move {\bf.text}
    one byte later in the file:
 \begin{itemize}
-   \item {\bf.text} might not satisfy its file aligment constraint.
+   \item {\bf.text} might not satisfy its file alignment constraint.
 
    \item The end of {\bf.text} might overlap with the following section. The ELF unparser has undefined behavior when two sections
      overlap without storing identical bytes at the overlapping regions.
@@ -261,9 +284,9 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
    NOTE: Modifying the byte order affects only those sections that are actually parsed. If the ELF file contains a section
    whose purpose we don't recognize then the original section data is written to the new file.
 
-   FIXME: If the byte order is not specified in the ELF header (e\_ident\_data\_encoding other than 1 or 2) then the parser will
+\fixme{If the byte order is not specified in the ELF header (e\_ident\_data\_encoding other than 1 or 2) then the parser will
    make an educated guess and assign a byte order.  The unparsed file will differ from the original in this case at the sixth
-   byte of the file.
+   byte of the file.}
 
 \subsubsection{3. ELF Word Size}
 
@@ -279,9 +302,9 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
    NOTE: Modifying the word size affects only those sections that are actually parsed. If the ELF file contains a section whose
    purpose we don't recognize then the original section data is written to the new file.
 
-   FIXME: Increasing word size probably requires allocating more space for many of the sections. Vice versa for decreasing the
-   word size.
-      
+\fixme{Increasing word size probably requires allocating more space for many of the sections. Vice versa for decreasing the
+   word size.}
+
 \subsubsection{4. ELF Header Magic Number}
 
    An ELF header has a four-byte magic number, usually 0x7f, 'E', 'L', 'F'.  The magic number can be modified by changing the
@@ -299,7 +322,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
    Both members should be set to compatible values. The former is the value from the ELF specification and the latter is a
    constant: PURPOSE\_UNSPECIFIED, PURPOSE\_LIBRARY, PURPOSE\_EXECUTABLE, PURPOSE\_CORE\_DUMP, PURPOSE\_PROC\_SPECIFIC, PURPOSE\_OTHER.
 
-   FIXME: set\_p\_e\_type should probably call set\_purpose, but we can't go the other direction because the mapping is N:1.
+\fixme{set\_p\_e\_type should probably call set\_purpose, but we can't go the other direction because the mapping is N:1.}
 
 \subsubsection{6. ELF Version}
 
@@ -325,7 +348,7 @@ Performance Computing (HPC). A principal focus is on IBM BGL and Cray XT support
 \subsubsection{9. ELF Section or Segment Table size}
 
    The number of entries in the section or segment table cannot be modified by calling set\_e\_shnum or set\_e\_phnum on the
-   SgAsmElfFileHeader (FIXME: Remove these function). Rather, the sizes are obtained by looking at what sections and segments
+   SgAsmElfFileHeader \fixme{Remove these functions.}. Rather, the sizes are obtained by looking at what sections and segments
    are currently defined and writing an entry to the file for each one.
 
 \subsubsection{10. ELF Section Names}
@@ -437,9 +460,9 @@ members of these objects can be modified and some can't.
 \begin{itemize}
    \item SgAsmElfSectionTableEntry::set\_sh\_type
    \item SgAsmElfSectionTableEntry::set\_sh\_flags, although the Write and Execute bits are ignored
-   \item SgAsmElfSectionTableEntry::set\_sh\_info   ???
-   \item SgAsmElfSectionTableEntry::set\_sh\_addralign ???
-   \item SgAsmElfSectionTableEntry::set\_sh\_entsize ???
+   \item SgAsmElfSectionTableEntry::set\_sh\_info      \fixme{Is this complete?}
+   \item SgAsmElfSectionTableEntry::set\_sh\_addralign \fixme{Is this complete?}
+   \item SgAsmElfSectionTableEntry::set\_sh\_entsize   \fixme{Is this complete?}
 \end{itemize}
 
 

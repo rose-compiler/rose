@@ -2417,7 +2417,7 @@ SgAsmElfSymbolSection::ctor(SgAsmElfSectionTableEntry *shdr)
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
     ROSE_ASSERT(entry_size==shdr->get_sh_entsize());
-    
+
     /* Parse each entry; some fields can't be initialized until set_linked_section() is called. */
     for (size_t i=0; i<nentries; i++) {
         SgAsmElfSymbol *entry=0;

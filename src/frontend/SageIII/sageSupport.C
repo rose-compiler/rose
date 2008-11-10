@@ -1345,6 +1345,14 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_read_executable_file_format_only(true);
         }
 
+  // DQ (11/9/2008): parse binary executable file format only omit the symbols since there can be thousands of them.
+  //
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only_skip_symbols)",true) == true )
+        {
+       // printf ("option -rose:read_executable_file_format_only_skip_symbols found \n");
+          set_read_executable_file_format_only_skip_symbols(true);
+        }
+
   // DQ (9/2/2008): This is now set in the new SgBinaryFile IR node.
   // DQ (8/26/2008): support for optional more agressive mode of disassembly of binary from all 
   // executable segments instead of just section based.
@@ -1638,6 +1646,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
      optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only_skip_symbols)",1);
 
   // DQ (8/26/2007): Disassembly support from segments (true) instead of sections (false, default).
      optionCount = sla(argv, "-rose:", "($)", "(aggressive)",1);

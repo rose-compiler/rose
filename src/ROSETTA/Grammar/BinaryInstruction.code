@@ -3399,11 +3399,23 @@ HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_START
 HEADER_BINARY_MEMORY_REFERENCE_EXPRESSION_END
 
 
+
+// ************************************
+//           DWARF SUPPORT
+// ************************************
+
 HEADER_DWARF_INFORMATION_START
 HEADER_DWARF_INFORMATION_END
 
 HEADER_DWARF_COMPILATION_UNIT_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
 HEADER_DWARF_COMPILATION_UNIT_END
+
+HEADER_DWARF_COMPILATION_UNIT_LIST_START
+HEADER_DWARF_COMPILATION_UNIT_LIST_END
 
 HEADER_DWARF_MACRO_START
 HEADER_DWARF_MACRO_END
@@ -3418,18 +3430,110 @@ HEADER_DWARF_LINE_LIST_START
 
        // Once the maps are setup using a valid SgAsmDwarfCompilationUnit, NULL is an acceptable value.
       //! Support for building maps to and from instruction addresses to source positions (files, line numbers, column numbers).
-          DwarfInstructionSourceMapReturnType buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu = NULL );
+          static DwarfInstructionSourceMapReturnType buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompilationUnit* dwarf_cu = NULL );
 
       //! Output information about instruction address <--> source position
           void display( const std::string & label );
 
-          std::pair<uint64_t,uint64_t> instructionRange();
-          std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceCodeRange( int file_id );
+          static std::pair<uint64_t,uint64_t> instructionRange();
+          static std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceCodeRange( int file_id );
 
-          uint64_t sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition );
-          FileIdLineColumnFilePosition addressToSourceCode ( uint64_t address );
+          static uint64_t sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition );
+          static FileIdLineColumnFilePosition addressToSourceCode ( uint64_t address );
 
 HEADER_DWARF_LINE_LIST_END
+
+HEADER_DWARF_CONSTRUCT_START
+
+     public:
+      //! Factory pattern to build IR nodes based on the tag
+          static SgAsmDwarfConstruct* createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset );
+
+          virtual SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_CONSTRUCT_END
+
+HEADER_DWARF_CONSTRUCT_LIST_START
+HEADER_DWARF_CONSTRUCT_LIST_END
+
+HEADER_DWARF_SUBPROGRAM_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_SUBPROGRAM_END
+
+HEADER_DWARF_STRUCTURE_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_STRUCTURE_TYPE_END
+
+HEADER_DWARF_ARRAY_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_ARRAY_TYPE_END
+
+HEADER_DWARF_LEXICAL_BLOCK_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_LEXICAL_BLOCK_END
+
+
+HEADER_DWARF_INLINED_SUBROUTINE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_INLINED_SUBROUTINE_END
+
+HEADER_DWARF_ENUMERATION_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_ENUMERATION_TYPE_END
+
+HEADER_DWARF_SUBROUTINE_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_SUBROUTINE_TYPE_END
+
+HEADER_DWARF_UNION_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_UNION_TYPE_END
+
+HEADER_DWARF_NAMESPACE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_NAMESPACE_END
+
+HEADER_DWARF_CLASS_TYPE_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_CLASS_TYPE_END
+
+HEADER_DWARF_COMMON_BLOCK_START
+
+     public:
+          SgAsmDwarfConstructList* get_children();
+
+HEADER_DWARF_COMMON_BLOCK_END
+
 
 /* --------------------------------------------------------------------------------- */
 /* --------------------------------------------------------------------------------- */
@@ -4839,7 +4943,22 @@ SOURCE_DWARF_INFORMATION_START
 SOURCE_DWARF_INFORMATION_END
 
 SOURCE_DWARF_COMPILATION_UNIT_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfCompilationUnit::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_language_constructs == NULL)
+          p_language_constructs = new SgAsmDwarfConstructList();
+
+     return p_language_constructs;
+   }
+
 SOURCE_DWARF_COMPILATION_UNIT_END
+
+SOURCE_DWARF_COMPILATION_UNIT_LIST_START
+SOURCE_DWARF_COMPILATION_UNIT_LIST_END
 
 SOURCE_DWARF_MACRO_START
 SOURCE_DWARF_MACRO_END
@@ -4920,5 +5039,198 @@ SgAsmDwarfLineList::buildInstructionAddressSourcePositionMaps( SgAsmDwarfCompila
 
 SOURCE_DWARF_LINE_LIST_END
 
+SOURCE_DWARF_CONSTRUCT_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfConstruct::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+     printf ("Error: base class of virtual function called by mistake: class_name = %s \n",class_name().c_str());
+     ROSE_ASSERT(false);
+#else
+     printf ("Warning: base class of virtual function called by mistake: class_name = %s \n",class_name().c_str());
+#endif
+     return NULL;
+   }
+
+SOURCE_DWARF_CONSTRUCT_END
+
+SOURCE_DWARF_CONSTRUCT_LIST_START
+SOURCE_DWARF_CONSTRUCT_LIST_END
+
+SOURCE_DWARF_SUBPROGRAM_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfSubprogram::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_SUBPROGRAM_END
+
+SOURCE_DWARF_STRUCTURE_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfStructureType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_STRUCTURE_TYPE_END
+
+SOURCE_DWARF_ARRAY_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfArrayType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_ARRAY_TYPE_END
+
+
+SOURCE_DWARF_LEXICAL_BLOCK_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfLexicalBlock::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_LEXICAL_BLOCK_END
+
+
+SOURCE_DWARF_INLINED_SUBROUTINE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfInlinedSubroutine::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_INLINED_SUBROUTINE_END
+
+
+SOURCE_DWARF_ENUMERATION_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfEnumerationType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_ENUMERATION_TYPE_END
+
+
+SOURCE_DWARF_SUBROUTINE_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfSubroutineType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_SUBROUTINE_TYPE_END
+
+
+SOURCE_DWARF_UNION_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfUnionType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_UNION_TYPE_END
+
+
+SOURCE_DWARF_NAMESPACE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfNamespace::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_NAMESPACE_END
+
+
+SOURCE_DWARF_CLASS_TYPE_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfClassType::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_CLASS_TYPE_END
+
+
+SOURCE_DWARF_COMMON_BLOCK_START
+
+SgAsmDwarfConstructList*
+SgAsmDwarfCommonBlock::get_children()
+   {
+     ROSE_ASSERT(this != NULL);
+
+     if (p_body == NULL)
+          p_body = new SgAsmDwarfConstructList();
+
+     return p_body;
+   }
+
+SOURCE_DWARF_COMMON_BLOCK_END
 
 

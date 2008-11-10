@@ -124,6 +124,7 @@ static std::string toStringForRTI(const std::map<std::pair<int,std::pair<int,int
 }
 #endif
 
+#if 0
 static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pair<int,int> > > & x) {
   std::ostringstream ss;
   ss << "[";
@@ -131,6 +132,7 @@ static std::string toStringForRTI(const std::map<uint64_t ,std::pair<int,std::pa
   ss << "]";
   return ss.str();
 }
+#endif
 
 #if 0
 #if !OLD_GRAPH_NODES
