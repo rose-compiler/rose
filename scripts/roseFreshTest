@@ -68,7 +68,7 @@ svnversion=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Revision:
 svnmodificationdate=`${SVN} info -r${SVNVERSIONOPTION} ${ROSE_SVNROOT} | grep '^Last Changed Date: ' | cut -f 4- -d \ `
 
 (
-if [ $TIMESTAMP -ne 0 ]; then
+if [ 0$TIMESTAMP -ne 0 ]; then
   echo "Subject: ROSE test $TIMESTAMP on `hostname` 1. start" > mailtext1
 else
   echo "Subject: Starting ROSE test $$ on `hostname`" > mailtext1
@@ -128,7 +128,7 @@ buildstatus=0
 # should not run this for external repository or released packages
 # JJW (10/5/2008) note: on OS X, we need this for Java to work with the
 # external repository
-if [ $SKIP_BUILD_SOURCE -ne 0 ]; then
+if [ 0$SKIP_BUILD_SOURCE -ne 0 ]; then
   echo "Skipping ./build in the source tree..."
 else  
   echo "Build configuration and Makefile.in in the source tree...."
@@ -143,7 +143,7 @@ fi
 
 # Prevent writing to the install tree
   mkdir install
-if [ $NORMAL_INSTALL_DIR -ne 0 ] ; then
+if [ 0$NORMAL_INSTALL_DIR -ne 0 ] ; then
   echo "Normal file permission for the installation directory"
 else  
   chmod 000 install
@@ -167,7 +167,7 @@ fi
   echo "############ make installcheck done"
 
   # skip the rest if we are testing the head of the SciDAC repository of ROSE
-  if [ $SKIP_DIST_TEST -ne 0 ] ; then
+  if [ 0$SKIP_DIST_TEST -ne 0 ] ; then
     echo "Skipping make dist, distcheck, source_with_binary_edg_dist.." 
   else  
     make $MAKEFLAGS dist || exit 1
@@ -177,7 +177,7 @@ fi
     # Build a binary version of EDG and put it into the source tree
     SYSTEM_NAME=`${ROSE_TOP}/sourcetree/config/config.guess | sed s/-redhat-/-pc-/ | sed s/-unknown-/-pc-/`
     echo "SYSTEM_NAME = \"$SYSTEM_NAME\"" >&2
-    if [ $ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
+    if [ 0$ENABLE_BUILD_BINARY_EDG -ne 0 ]; then
       cd ${ROSE_TOP}/build
       make binary_edg_tarball || exit 1
       ${ROSE_TOP}/sourcetree/scripts/copy_binary_edg_tarball_to_source_tree_svn ${ROSE_SVNROOT} "${SYSTEM_NAME}" || exit 1
@@ -193,7 +193,7 @@ fi
 #------------------------------------------------------
  mailtext=${ROSE_TOP}/mailtext  # using absolute path to work with changing current dir.
 if [ $buildstatus == 0 ]; then  
-  if [ $TIMESTAMP -ne 0 ]; then
+  if [ 0$TIMESTAMP -ne 0 ]; then
     echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (pass)" > $mailtext
   else
     echo "Subject: ROSE test $$ on `hostname` results (pass)" > $mailtext
@@ -215,12 +215,12 @@ if [ $buildstatus == 0 ]; then
   #------------------------------------------------------
 
   #
-  if [ $ENABLE_RRQM_PLUMHALL -ne 0 ] ; then
+  if [ 0$ENABLE_RRQM_PLUMHALL -ne 0 ] ; then
     echo "Running QMtest on Plumhall..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
     make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose
 
-    if [[ $ENABLE_RRQM_PUBLISH -ne 0 && $LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
+    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && 0$LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
       echo "Publishing plumhall results..." >> $mailtext
       make -f ${ROSE_TEST_REGRESSION_ROOT}/plumhall.makefile publish
     fi
@@ -232,12 +232,12 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 
-  if [ $ENABLE_RRQM_MOZILLA -ne 0 ] ; then
+  if [ 0$ENABLE_RRQM_MOZILLA -ne 0 ] ; then
     echo "Running QMtest on Mozilla..." >> $mailtext
     cd ${ROSE_TEST_REGRESSION_ROOT}
     make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile mozilla_using_rose
 
-    if [[ $ENABLE_RRQM_PUBLISH -ne 0 && $LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
+    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && 0$LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
       echo "Publishing mozilla results..." >> $mailtext
       make -f ${ROSE_TEST_REGRESSION_ROOT}/mozilla.makefile publish
     fi
@@ -250,7 +250,7 @@ if [ $buildstatus == 0 ]; then
   fi
 
  # upload ROSE sources-with-EDG-binary to the SciDAC Outreach repository 
-  if [ $ENABLE_UPLOAD_SVN -ne 0 ] ; then
+  if [ 0$ENABLE_UPLOAD_SVN -ne 0 ] ; then
  # bypass set -e by using own flag, so the child script can return to its parent    
      failed=no 
      ${ROSE_TOP}/sourcetree/scripts/importRoseDistributionToSVN ${ROSE_TOP} >>${ROSE_TOP}/buildlog || failed=yes
@@ -263,7 +263,7 @@ if [ $buildstatus == 0 ]; then
   fi
 
   # documentations to www.roseCompiler.org
-  if [ $ENABLE_UPLOAD_WEB -ne 0 ] ; then
+  if [ 0$ENABLE_UPLOAD_WEB -ne 0 ] ; then
     # update the web site
     cd ${ROSE_TOP}/build/docs/Rose
     make copyWebPages
@@ -274,7 +274,7 @@ if [ $buildstatus == 0 ]; then
     fi
   fi
 else
-  if [ $TIMESTAMP -ne 0 ]; then
+  if [ 0$TIMESTAMP -ne 0 ]; then
     echo "Subject: ROSE test $TIMESTAMP on `hostname` 2. end (fail)" > $mailtext
   else
     echo "Subject: ROSE test $$ on `hostname` results (fail)" > $mailtext
@@ -298,7 +298,7 @@ fi
 # echo "-------------------- Full log      --------------------" >> $mailtext
 # cat buildlog >> $mailtext (too big)
 /usr/sbin/sendmail -i $MAILADDRS < $mailtext
-if [ $KEEP_TEST_DIR -ne 0 ] ; then
+if [ 0$KEEP_TEST_DIR -ne 0 ] ; then
   : # echo "Test directory is preserved."
 else  
   # echo "Test directory has been removed."
