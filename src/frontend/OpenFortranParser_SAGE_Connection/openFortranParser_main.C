@@ -101,7 +101,7 @@ int openFortranParser_main(int argc, char **argv)
  /* Save the old value */
     const char* old_value = getenv(ROSE_SHLIBPATH_VAR); // Might be null
 
-#if 1 
+#if 0
     printf ("Old value: LD_LIBRARY_PATH = %s \n",old_value);
     printf ("New value: LD_LIBRARY_PATH = %s \n",new_value.c_str());
  /* This value can be empty if the configuration was done using a relative path, as I recall! */
