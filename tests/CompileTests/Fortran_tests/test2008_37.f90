@@ -1,4 +1,4 @@
-module convert_mod
+module test2008_37_convert_mod
 implicit none
 contains
 function cels_from_fahr(degrees_fahr) result(degrees_cels)
@@ -6,10 +6,10 @@ real, intent(in) :: degrees_fahr
 real             :: degrees_cels
 degrees_cels = (degrees_fahr-32)/1.8
 end function cels_from_fahr
-end module convert_mod
+end module test2008_37_convert_mod
 
 program xtemperature
-use convert_mod, only: cels_from_fahr
+use test2008_37_convert_mod, only: cels_from_fahr
 real    :: deg
 integer :: i
 write (*,"(2a10)") "degrees_F","degrees_C"

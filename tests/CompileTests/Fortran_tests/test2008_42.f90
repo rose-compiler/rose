@@ -1,4 +1,4 @@
-module temp
+module test2008_42_temp
    type real_num
       real :: x
    end type
@@ -20,7 +20,7 @@ program main
  ! This is a F03 feature
  ! use temp , operator(.plus.) => operator(.add.)
 
-   use temp
+   use test2008_42_temp
    type(real_num) :: a,b,c
 
  ! This is a F03 feature

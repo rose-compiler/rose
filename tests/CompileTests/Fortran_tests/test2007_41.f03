@@ -1,4 +1,4 @@
-module test
+module test2007_41_test
    interface test_interface
       subroutine foo (i)
          import
@@ -8,4 +8,4 @@ module test
     ! end subroutine sub
       end subroutine foo
    end interface test_interface
-end module test
+end module test2007_41_test

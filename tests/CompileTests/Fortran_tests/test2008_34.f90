@@ -1,6 +1,6 @@
 ! This is a fragement from POP, which causes a bug in ROSE!
 
- module kinds_mod
+ module test2008_34_kinds_mod
 
    implicit none
    private
@@ -15,4 +15,4 @@
       r4        = selected_real_kind(6)  ,&
       r8        = selected_real_kind(13)
 
- end module kinds_mod
+ end module test2008_34_kinds_mod

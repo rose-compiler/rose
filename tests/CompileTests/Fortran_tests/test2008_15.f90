@@ -1,4 +1,4 @@
-module m2
+module test2008_15_m2
   integer i
   contains
     subroutine ffff(i,pppp)
@@ -7,10 +7,10 @@ module m2
        integer x
        x = i+2
     end subroutine ffff
-end module m2
+end module test2008_15_m2
 
 subroutine u1
- use m2
+ use test2008_15_m2
  integer,parameter::cc=12
  integer,allocatable::a(:)
  allocate(a(cc))

@@ -1,4 +1,4 @@
-module m1
+module test2008_14_m1
   integer i
   contains
     subroutine ffff(i,pppp)
@@ -7,4 +7,4 @@ module m1
        integer x
        x = i+2
     end subroutine ffff
-end module m1
+end module test2008_14_m1

@@ -1,4 +1,4 @@
-module module_A
+module test2008_35_module_A
 
    implicit none
 !  private
@@ -6,11 +6,11 @@ module module_A
 
    integer, parameter :: r8 = selected_real_kind(13)
 
-end module module_A
+end module test2008_35_module_A
 
-module module_B
+module test2008_35_module_B
 
-   use module_A
+   use test2008_35_module_A
 
    implicit none
    private
@@ -19,4 +19,4 @@ module module_B
  ! This mean build a real type like r8 defined in the module: kinds_mod
    real (r8), parameter, public :: c0 = 0.0_r8
 
-end module module_B
+end module test2008_35_module_B

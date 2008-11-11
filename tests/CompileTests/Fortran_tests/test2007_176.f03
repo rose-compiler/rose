@@ -1,4 +1,4 @@
-      module mod1
+      module test2007_176_mod1
           integer, protected :: val
           integer :: age
           protected :: age
@@ -13,7 +13,7 @@
               end subroutine
       end module
       program dt_init01
-          use mod1
+          use test2007_176_mod1
           implicit none
           integer :: value, his_age
           call set_val(88)

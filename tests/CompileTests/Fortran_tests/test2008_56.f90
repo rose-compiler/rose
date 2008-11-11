@@ -1,4 +1,5 @@
-module test2008_43_temp
+! This test code demonstrates a F03 feature in an F90 program and thus is expected to fail.
+module test2008_56_temp
    type real_num
    real :: x
    end type
@@ -18,11 +19,10 @@ end module
 
 program main
  ! This is a F03 feature
-   use test2008_43_temp , operator(.plus.) => operator(.add.)
+   use test2008_56_temp , operator(.plus.) => operator(.add.)
 
    type(real_num) :: a,b,c
 
  ! This is a F03 feature
- ! c = a.plus.b
+ ! c = a + b
 end program
-
