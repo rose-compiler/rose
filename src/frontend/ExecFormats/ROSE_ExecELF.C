@@ -425,7 +425,7 @@ SgAsmElfFileHeader::reallocate()
 
 /* Write ELF contents back to a file. */
 void
-SgAsmElfFileHeader::unparse(FILE *f)
+SgAsmElfFileHeader::unparse(std::ostream &f)
 {
     /* Allow sections to reallocate themselves until things settle */
     while (reallocate()) /*void*/;
@@ -748,7 +748,7 @@ SgAsmElfStringSection::reallocate()
 
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
 void
-SgAsmElfStringSection::unparse(FILE *f)
+SgAsmElfStringSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     get_strtab()->unparse(f);
@@ -911,7 +911,7 @@ SgAsmElfStrtab::allocate_overlap(SgAsmStringStorage *storage)
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
-SgAsmElfStrtab::unparse(FILE *f)
+SgAsmElfStrtab::unparse(std::ostream &f)
 {
     SgAsmGenericSection *container = get_container();
     ROSE_ASSERT(0==reallocate(false)); /*should have been called well before any unparsing started*/
@@ -1259,7 +1259,7 @@ SgAsmElfSectionTable::reallocate()
 
 /* Write the section table section back to disk */
 void
-SgAsmElfSectionTable::unparse(FILE *f)
+SgAsmElfSectionTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -1665,7 +1665,7 @@ SgAsmElfSegmentTable::reallocate()
 
 /* Write the segment table to disk. */
 void
-SgAsmElfSegmentTable::unparse(FILE *f)
+SgAsmElfSegmentTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -1854,7 +1854,7 @@ SgAsmElfRelaSection::calculate_sizes(size_t *entsize, size_t *required, size_t *
 
 /* Write section back to disk */
 void
-SgAsmElfRelaSection::unparse(FILE *f)
+SgAsmElfRelaSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -2184,7 +2184,7 @@ SgAsmElfDynamicSection::set_linked_section(SgAsmElfSection *_strsec)
 
 /* Write the dynamic section back to disk */
 void
-SgAsmElfDynamicSection::unparse(FILE *f)
+SgAsmElfDynamicSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -2509,7 +2509,7 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
 
 /* Write symbol table sections back to disk */
 void
-SgAsmElfSymbolSection::unparse(FILE *f)
+SgAsmElfSymbolSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 

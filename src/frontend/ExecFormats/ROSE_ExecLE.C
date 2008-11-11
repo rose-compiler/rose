@@ -190,7 +190,7 @@ SgAsmLEFileHeader::encode(ByteOrder sex, LEFileHeader_disk *disk)
 
 /* Write the LE file header back to disk and all that it references */
 void
-SgAsmLEFileHeader::unparse(FILE *f)
+SgAsmLEFileHeader::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     LEFileHeader_disk fh;
@@ -422,7 +422,7 @@ SgAsmLEPageTable::get_page(size_t idx)
 
 /* Write page table back to disk */
 void
-SgAsmLEPageTable::unparse(FILE *f)
+SgAsmLEPageTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
@@ -612,7 +612,7 @@ SgAsmLESectionTable::ctor()
 
 /* Writes the section table back to disk along with each of the sections. */
 void
-SgAsmLESectionTable::unparse(FILE *f)
+SgAsmLESectionTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     SgAsmLEFileHeader *fhdr = dynamic_cast<SgAsmLEFileHeader*>(get_header());
@@ -687,7 +687,7 @@ SgAsmLENameTable::ctor()
 
 /* Writes the section back to disk. */
 void
-SgAsmLENameTable::unparse(FILE *f)
+SgAsmLENameTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
@@ -749,7 +749,7 @@ SgAsmLEEntryPoint::ctor(ByteOrder sex, const SgAsmLEEntryPoint::LEEntryPoint_dis
 
 /* Write the entry information back to the disk at the specified section and section offset, returning the new section offset. */
 rose_addr_t
-SgAsmLEEntryPoint::unparse(FILE *f, ByteOrder sex, SgAsmGenericSection *section, rose_addr_t spos)
+SgAsmLEEntryPoint::unparse(std::ostream &f, ByteOrder sex, SgAsmGenericSection *section, rose_addr_t spos)
 {
     if (0==(p_flags & 0x01)) {
         /* Empty entry; write only the flag byte */
@@ -841,7 +841,7 @@ SgAsmLEEntryTable::ctor()
 
 /* Write entry table back to file */
 void
-SgAsmLEEntryTable::unparse(FILE *f)
+SgAsmLEEntryTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos=0; /*section offset*/
@@ -907,7 +907,7 @@ SgAsmLERelocTable::ctor()
 #if 0 /*FIXME: not implemented yet*/
 /* Write relocation table back to disk */
 void
-SgAsmLERelocTable::unparse(FILE *f)
+SgAsmLERelocTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate(false)); /*should have been called well before any unparsing started*/
 }

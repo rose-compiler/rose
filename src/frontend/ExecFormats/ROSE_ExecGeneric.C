@@ -1604,24 +1604,24 @@ SgAsmGenericFile::unfill_holes()
     ROSE_ASSERT(get_holes()->get_sections().size()==0);
 }
 
-/* Mirror image of parsing an executable file. The result should be identical to the original file. */
+/* Mirror image of parsing an executable file. The result (unless the AST has been modified) should be identical to the
+ * original file. */
 void
-SgAsmGenericFile::unparse(const std::string &filename)
+SgAsmGenericFile::unparse(std::ostream &f)
 {
-    FILE *f = fopen(filename.c_str(), "wb");
-    ROSE_ASSERT(f);
-
-#if 0
+#if 1
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
-    addr_t remaining = get_size();
-    unsigned char fill=0xaa, buf[4096];
-    memset(buf, fill, sizeof buf);
+    addr_t remaining = get_current_size();
+    unsigned char buf[4096];
+    memset(buf, 0xaa, sizeof buf);
     while (remaining>=sizeof buf) {
-        fwrite(buf, sizeof buf, 1, f);
+        f.write((const char*)buf, sizeof buf);
+        ROSE_ASSERT(f);
         remaining -= sizeof buf;
     }
-    fwrite(buf, remaining, 1, f);
+    f.write((const char*)buf, remaining);
+    ROSE_ASSERT(f);
 #endif
 
     /* Write unreferenced sections (i.e., "holes") back to disk */
@@ -1631,8 +1631,6 @@ SgAsmGenericFile::unparse(const std::string &filename)
     /* Write file headers (and indirectly, all that they reference) */
     for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i)
         (*i)->unparse(f);
-
-    fclose(f);
 }
 
 /* Return a string describing the file format. We use the last header so that files like PE, NE, LE, LX, etc. which also have
@@ -1921,7 +1919,7 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
 /* Write data back to a file section. The data to write may be larger than the file section as long as the extra (which will
  * not be written) is all zero. The offset is relative to the start of the section. */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const void *buf)
 {
     size_t nwrite, nzero;
     if (offset>=get_size()) {
@@ -1934,12 +1932,13 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *b
         nwrite = get_size() - offset;
         nzero = bufsize - nwrite;
     }
-    
-    int status = fseek(f, get_offset()+offset, SEEK_SET);
-    ROSE_ASSERT(status>=0);
-    size_t nwritten = fwrite(buf, 1, nwrite, f);
-    ROSE_ASSERT(nwrite==nwritten);
-    
+
+    ROSE_ASSERT(f);
+    f.seekp(get_offset()+offset);
+    ROSE_ASSERT(f);
+    f.write((const char*)buf, nwrite);
+    ROSE_ASSERT(f);
+
     for (size_t i=nwrite; i<bufsize; i++) {
         if (((const char*)buf)[i]) {
             char mesg[1024];
@@ -1958,7 +1957,7 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, size_t bufsize, const void *b
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, const SgFileContentList &buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentList &buf)
 {
     if (0==buf.size())
         return 0;
@@ -1967,7 +1966,7 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, const SgFileContentList &buf)
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, const SgUnsignedCharList &buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharList &buf)
 {
     if (0==buf.size())
         return 0;
@@ -1976,14 +1975,14 @@ SgAsmGenericSection::write(FILE *f, addr_t offset, const SgUnsignedCharList &buf
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, const std::string &str)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const std::string &str)
 {
     return write(f, offset, str.size(), &(str[0]));
 }
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(FILE *f, addr_t offset, char c)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c)
 {
     return write(f, offset, 1, &c);
 }
@@ -2061,7 +2060,7 @@ SgAsmGenericSection::is_file_header()
 /* Write a section back to the file. This is the generic version that simply writes the content. Subclasses should override
  * this. */
 void
-SgAsmGenericSection::unparse(FILE *f)
+SgAsmGenericSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -2076,7 +2075,7 @@ SgAsmGenericSection::unparse(FILE *f)
 
 /* Write just the specified regions back to the file */
 void
-SgAsmGenericSection::unparse(FILE *f, const ExtentMap &map)
+SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map)
 {
     for (ExtentMap::const_iterator i=map.begin(); i!=map.end(); ++i) {
         ROSE_ASSERT((*i).first+(*i).second <= get_size());
@@ -2087,7 +2086,7 @@ SgAsmGenericSection::unparse(FILE *f, const ExtentMap &map)
 
 /* Write holes (unreferenced areas) back to the file */
 void
-SgAsmGenericSection::unparse_holes(FILE *f)
+SgAsmGenericSection::unparse_holes(std::ostream &f)
 {
     bool was_congealed = get_congealed();
     unparse(f, congeal());
@@ -2513,7 +2512,7 @@ SgAsmGenericHeader::reallocate()
     
 /* Unparse headers and all they point to */
 void
-SgAsmGenericHeader::unparse(FILE *f)
+SgAsmGenericHeader::unparse(std::ostream &f)
 {
     /* Allow all sections to reallocate themselves until things settle */
     while (reallocate()) /*void*/;
@@ -3471,16 +3470,24 @@ SgAsmExecutableFileFormat::hexdump(FILE *f, addr_t base_addr, const std::string 
         hexdump(f, base_addr, prefix.c_str(), &(data[0]), data.size());
 }
 
-/* Writes a new file from the IR node for a parse executable file.  This is primarily to debug the parser by creating
- * an executable that *should* be identical to the original. */
+/* Writes a new file from the IR node for a parse executable file. */
 void
 SgAsmExecutableFileFormat::unparseBinaryFormat(const std::string &name, SgAsmFile *asmFile)
 {
-    FILE *output = fopen(name.c_str(), "wb");
-    ROSE_ASSERT(output!=NULL);
+    std::ofstream f(name.c_str(), std::ios_base::out|std::ios_base::binary|std::ios_base::trunc);
+    ROSE_ASSERT(f.is_open());
+    f.exceptions(std::ios::badbit | std::ios::failbit);
+    unparseBinaryFormat(f, asmFile);
+    f.close();
+}
+
+/* Unparses an executable file into the supplied output stream. */
+void
+SgAsmExecutableFileFormat::unparseBinaryFormat(std::ostream &f, SgAsmFile *asmFile)
+{
     ROSE_ASSERT(asmFile!=NULL);
     ROSE_ASSERT(asmFile->get_genericFile() != NULL);
-    asmFile->get_genericFile()->unparse(name);
+    asmFile->get_genericFile()->unparse(f);
 }
 
 // FIXME: This cut-n-pasted version of Exec::ELF::parse() is out-of-date (rpm 2008-07-10)

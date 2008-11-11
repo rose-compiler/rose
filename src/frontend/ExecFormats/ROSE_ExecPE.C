@@ -49,7 +49,7 @@ SgAsmPEExtendedDOSHeader::encode(ExtendedDOSHeader_disk *disk)
 
 /* Write an extended header back to disk */
 void
-SgAsmPEExtendedDOSHeader::unparse(FILE *f)
+SgAsmPEExtendedDOSHeader::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -570,7 +570,7 @@ SgAsmPEFileHeader::set_e_lminor(unsigned n)
 
 /* Write the PE file header back to disk and all that it references */
 void
-SgAsmPEFileHeader::unparse(FILE *f)
+SgAsmPEFileHeader::unparse(std::ostream &f)
 {
     /* Allow sections to reallocate themselves until things settle. */
     while (reallocate()) /*void*/;
@@ -905,7 +905,7 @@ SgAsmPESectionTable::ctor()
 
 /* Writes the section table back to disk along with each of the sections. */
 void
-SgAsmPESectionTable::unparse(FILE *f)
+SgAsmPESectionTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
 
@@ -1003,7 +1003,7 @@ SgAsmPEImportDirectory::encode(PEImportDirectory_disk *disk)
 }
 
 void
-SgAsmPEImportDirectory::unparse(FILE *f, SgAsmPEImportSection *section)
+SgAsmPEImportDirectory::unparse(std::ostream &f, SgAsmPEImportSection *section)
 {
     ROSE_ASSERT(get_idx()>=0);
 
@@ -1127,7 +1127,7 @@ SgAsmPEImportILTEntry::encode(SgAsmPEFileHeader *fhdr)
 }
 
 void
-SgAsmPEImportILTEntry::unparse(FILE *f, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx)
+SgAsmPEImportILTEntry::unparse(std::ostream &f, SgAsmPEFileHeader *fhdr, rva_t rva, size_t idx)
 {
     ROSE_ASSERT(rva.get_section()!=NULL);
     uint64_t ilt_entry_word = encode(fhdr);
@@ -1250,7 +1250,7 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 }
 
 void
-SgAsmPEImportLookupTable::unparse(FILE *f, SgAsmPEFileHeader *fhdr, rva_t rva)
+SgAsmPEImportLookupTable::unparse(std::ostream &f, SgAsmPEFileHeader *fhdr, rva_t rva)
 {
     const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
     for (size_t i=0; i<p_entries->get_vector().size(); i++) {
@@ -1307,7 +1307,7 @@ SgAsmPEImportHNTEntry::ctor(rva_t rva)
 }
 
 void
-SgAsmPEImportHNTEntry::unparse(FILE *f, rva_t rva)
+SgAsmPEImportHNTEntry::unparse(std::ostream &f, rva_t rva)
 {
     uint16_t hint_disk;
     host_to_le(p_hint, &hint_disk);
@@ -1430,7 +1430,7 @@ SgAsmPEImportSection::add_import_directory(SgAsmPEImportDirectory *d)
 
 /* Write the import section back to disk */
 void
-SgAsmPEImportSection::unparse(FILE *f)
+SgAsmPEImportSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     unparse_holes(f);
@@ -1678,7 +1678,7 @@ SgAsmPEStringSection::reallocate()
 
 /* Unparse an ElfStringSection by unparsing the ElfStrtab */
 void
-SgAsmPEStringSection::unparse(FILE *f)
+SgAsmPEStringSection::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     get_strtab()->unparse(f);
@@ -1808,7 +1808,7 @@ SgAsmCoffStrtab::get_storage_size(const SgAsmStringStorage *storage) {
 
 /* Write string table back to disk. Free space is zeroed out; holes are left as they are. */
 void
-SgAsmCoffStrtab::unparse(FILE *f)
+SgAsmCoffStrtab::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate(false)); /*should have been called well before any unparsing started*/
     SgAsmGenericSection *container = get_container();
@@ -2166,7 +2166,7 @@ SgAsmCoffSymbolTable::ctor()
 
 /* Write symbol table back to disk */
 void
-SgAsmCoffSymbolTable::unparse(FILE *f)
+SgAsmCoffSymbolTable::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     addr_t spos = 0; /*section offset*/

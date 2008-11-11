@@ -93,7 +93,7 @@ SgAsmDOSFileHeader::encode(DOSFileHeader_disk *disk)
 
 /* Write the DOS file header back to disk */
 void
-SgAsmDOSFileHeader::unparse(FILE *f)
+SgAsmDOSFileHeader::unparse(std::ostream &f)
 {
     ROSE_ASSERT(0==reallocate()); /*should have been called well before any unparsing started*/
     DOSFileHeader_disk disk;
