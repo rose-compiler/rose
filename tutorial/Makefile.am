@@ -1155,7 +1155,7 @@ rose_inputCode_VolatileTypeModifier.C: volatileTypeModifier
 
 inputCode_dwarfAnalysis.pdf: dwarfAnalysis inputCode_dwarfAnalysis.C
 #	g++ -g3 -o inputCode_dwarfAnalysis -c $(srcdir)/inputCode_dwarfAnalysis.C
-	./dwarfAnalysis -rose:visualize_dwarf_only inputCode_dwarfAnalysis
+	./dwarfAnalysis -rose:visualize_dwarf_only -rose:read_executable_file_format_only inputCode_dwarfAnalysis
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dwarfAnalysis.dot inputCode_dwarfAnalysis.pdf
 
 inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis
