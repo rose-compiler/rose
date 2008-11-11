@@ -1030,7 +1030,12 @@ Grammar::setUpSupport ()
 
   // DQ (11/9/2008): parse binary executable file format only (but skip the representation of 
   // symbols since there can be thousands of them and they make the dot graphs impossible to manage).
-     File.setDataPrototype         ( "bool", "read_executable_file_format_only_skip_symbols", "= false",
+     File.setDataPrototype         ( "bool", "visualize_executable_file_format_skip_symbols", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/9/2008): parse binary executable file format only (but skip the representation of 
+  // symbols since there can be thousands of them and they make the dot graphs impossible to manage).
+     File.setDataPrototype         ( "bool", "visualize_dwarf_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (8/26/2008): Adds support for only disassembling the instructions, skips use of information 

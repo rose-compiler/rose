@@ -60,6 +60,8 @@ noinst_PROGRAMS = \
    debuggingIRnodeToString \
    debuggingSourceCodePositionInformation \
    defuseAnalysis \
+   dwarfAnalysis \
+   dwarfInstructionAddressToSourceLineAnalysis \
    runtimeCheck \
    generatingUniqueNamesFromDeclaration \
    graphGenerationOfSubtree \
@@ -220,6 +222,10 @@ callGraphAnalysis_SOURCES = callGraphAnalysis.C
 classHierarchyGraph_SOURCES = classHierarchyGraph.C
 
 dataBaseUsage_SOURCES = dataBaseUsage.C
+
+dwarfAnalysis_SOURCES = dwarfAnalysis.C
+
+dwarfInstructionAddressToSourceLineAnalysis_SOURCES = dwarfInstructionAddressToSourceLineAnalysis.C
 
 loopNestingInfoProcessing_SOURCES = loopNestingInfoProcessing.C
 
@@ -597,6 +603,23 @@ testSeedBugsExample_arrayIndexing: seedBugsExample_arrayIndexing
 testVolatileTypeModifier: volatileTypeModifier
 	./volatileTypeModifier -rose:verbose 0 -c $(srcdir)/inputCode_volatileTypeModifier.C
 
+inputCode_dwarfAnalysis:
+	g++ -g3 -o inputCode_dwarfAnalysis $(srcdir)/inputCode_dwarfAnalysis.C
+
+testDwarfAnalysis: dwarfAnalysis inputCode_dwarfAnalysis 
+# Note: different stages of AST representation and visualization.
+#	./dwarfAnalysis -c $(srcdir)/inputCode_dwarfAnalysis.C
+#	./dwarfAnalysis -rose:visualize_dwarf_only inputCode_dwarfAnalysis
+#	./dwarfAnalysis -rose:visualize_executable_file_format_skip_symbols inputCode_dwarfAnalysis
+#	./dwarfAnalysis -rose:read_executable_file_format_only inputCode_dwarfAnalysis
+#	./dwarfAnalysis -rose:read_executable_file_format_only -rose:visualize_executable_file_format_skip_symbols inputCode_dwarfAnalysis
+	./dwarfAnalysis -rose:visualize_dwarf_only -rose:read_executable_file_format_only inputCode_dwarfAnalysis
+
+testDwarfInstructionAddressToSourceLineAnalysis: dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis
+#	./dwarfAnalysis -rose:verbose 0 -c $(srcdir)/inputCode_dwarfAnalysis.C
+#	./dwarfInstructionAddressToSourceLineAnalysis -rose:visualize_dwarf_only inputCode_dwarfAnalysis
+	./dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis
+
 
 # #####################################
 # Output files use in tutorial
@@ -692,7 +715,9 @@ generatedCodeExamples = \
    rose_input_runtimeErrorCheck.C \
    rose_input_runtimeErrorCheck2.C \
    rose_inputCode_seedBugsExample_arrayIndexing.C \
-   rose_inputCode_VolatileTypeModifier.C
+   rose_inputCode_VolatileTypeModifier.C \
+   inputCode_dwarfAnalysis.pdf \
+   inputCode_dwarfAnalysis.out
 
 # #####################################
 # Output file generation rules
@@ -1128,6 +1153,16 @@ rose_inputCode_seedBugsExample_arrayIndexing.C: seedBugsExample_arrayIndexing
 rose_inputCode_VolatileTypeModifier.C: volatileTypeModifier
 	./volatileTypeModifier $(ROSE_FLAGS) -c $(srcdir)/inputCode_VolatileTypeModifier.C
 
+inputCode_dwarfAnalysis.pdf: dwarfAnalysis inputCode_dwarfAnalysis.C
+#	g++ -g3 -o inputCode_dwarfAnalysis -c $(srcdir)/inputCode_dwarfAnalysis.C
+	./dwarfAnalysis -rose:visualize_dwarf_only inputCode_dwarfAnalysis
+	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dwarfAnalysis.dot inputCode_dwarfAnalysis.pdf
+
+inputCode_dwarfAnalysis.out: dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis
+	./dwarfInstructionAddressToSourceLineAnalysis inputCode_dwarfAnalysis > inputCode_dwarfAnalysis.out
+
+
+
 # Note that we have made multiple copies of "inputCode_ExampleTraversals.C"
 # so that the processing could be done in parallel with out collisions.
 EXTRA_DIST = \
@@ -1220,7 +1255,9 @@ EXTRA_DIST = \
    inputCode_addStruct.C \
    rose_bin_example_backup.s \
    buffer2.bin \
-   inputCode_seedBugsExample_arrayIndexing.C
+   inputCode_seedBugsExample_arrayIndexing.C \
+   inputCode_dwarfAnalysis.C
+
 
 # disabled this one due to problem with copy mechanism, Liao
 #   inputCode_varSubstCopy.C 

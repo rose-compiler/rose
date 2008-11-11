@@ -6,6 +6,11 @@
 // Dwarf information and build special IR nodes into the AST.  This work effects
 // only AST for binary executable files (the ROSE Binary AST).
 
+
+// DONE: Dwarf support handles sections: .debug_info, .debug_line
+// TODO: Add support for sections: .debug_pubnames, .debug_pubtypes, and .debug_macinfo
+
+
 #include "rose.h"
 
 // This is controled by using the --with-dwarf configure command line option.
@@ -120,455 +125,186 @@ get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
 	switch (val) {
 	case DW_TAG_array_type:
-		if (ellipsis)
-			return "array_type";
-		else
 			return "DW_TAG_array_type";
 	case DW_TAG_class_type:
-		if (ellipsis)
-			return "class_type";
-		else
 			return "DW_TAG_class_type";
 	case DW_TAG_entry_point:
-		if (ellipsis)
-			return "entry_point";
-		else
 			return "DW_TAG_entry_point";
 	case DW_TAG_enumeration_type:
-		if (ellipsis)
-			return "enumeration_type";
-		else
 			return "DW_TAG_enumeration_type";
 	case DW_TAG_formal_parameter:
-		if (ellipsis)
-			return "formal_parameter";
-		else
 			return "DW_TAG_formal_parameter";
 	case DW_TAG_imported_declaration:
-		if (ellipsis)
-			return "imported_declaration";
-		else
 			return "DW_TAG_imported_declaration";
 	case DW_TAG_label:
-		if (ellipsis)
-			return "label";
-		else
 			return "DW_TAG_label";
 	case DW_TAG_lexical_block:
-		if (ellipsis)
-			return "lexical_block";
-		else
 			return "DW_TAG_lexical_block";
 	case DW_TAG_member:
-		if (ellipsis)
-			return "member";
-		else
 			return "DW_TAG_member";
 	case DW_TAG_pointer_type:
-		if (ellipsis)
-			return "pointer_type";
-		else
 			return "DW_TAG_pointer_type";
 	case DW_TAG_reference_type:
-		if (ellipsis)
-			return "reference_type";
-		else
 			return "DW_TAG_reference_type";
 	case DW_TAG_compile_unit:
-		if (ellipsis)
-			return "compile_unit";
-		else
 			return "DW_TAG_compile_unit";
 	case DW_TAG_string_type:
-		if (ellipsis)
-			return "string_type";
-		else
 			return "DW_TAG_string_type";
 	case DW_TAG_structure_type:
-		if (ellipsis)
-			return "structure_type";
-		else
 			return "DW_TAG_structure_type";
 	case DW_TAG_subroutine_type:
-		if (ellipsis)
-			return "subroutine_type";
-		else
 			return "DW_TAG_subroutine_type";
 	case DW_TAG_typedef:
-		if (ellipsis)
-			return "typedef";
-		else
 			return "DW_TAG_typedef";
 	case DW_TAG_union_type:
-		if (ellipsis)
-			return "union_type";
-		else
 			return "DW_TAG_union_type";
 	case DW_TAG_unspecified_parameters:
-		if (ellipsis)
-			return "unspecified_parameters";
-		else
 			return "DW_TAG_unspecified_parameters";
 	case DW_TAG_variant:
-		if (ellipsis)
-			return "variant";
-		else
 			return "DW_TAG_variant";
 	case DW_TAG_common_block:
-		if (ellipsis)
-			return "common_block";
-		else
 			return "DW_TAG_common_block";
 	case DW_TAG_common_inclusion:
-		if (ellipsis)
-			return "common_inclusion";
-		else
 			return "DW_TAG_common_inclusion";
 	case DW_TAG_inheritance:
-		if (ellipsis)
-			return "inheritance";
-		else
 			return "DW_TAG_inheritance";
 	case DW_TAG_inlined_subroutine:
-		if (ellipsis)
-			return "inlined_subroutine";
-		else
 			return "DW_TAG_inlined_subroutine";
 	case DW_TAG_module:
-		if (ellipsis)
-			return "module";
-		else
 			return "DW_TAG_module";
 	case DW_TAG_ptr_to_member_type:
-		if (ellipsis)
-			return "ptr_to_member_type";
-		else
 			return "DW_TAG_ptr_to_member_type";
 	case DW_TAG_set_type:
-		if (ellipsis)
-			return "set_type";
-		else
 			return "DW_TAG_set_type";
 	case DW_TAG_subrange_type:
-		if (ellipsis)
-			return "subrange_type";
-		else
 			return "DW_TAG_subrange_type";
 	case DW_TAG_with_stmt:
-		if (ellipsis)
-			return "with_stmt";
-		else
 			return "DW_TAG_with_stmt";
 	case DW_TAG_access_declaration:
-		if (ellipsis)
-			return "access_declaration";
-		else
 			return "DW_TAG_access_declaration";
 	case DW_TAG_base_type:
-		if (ellipsis)
-			return "base_type";
-		else
 			return "DW_TAG_base_type";
 	case DW_TAG_catch_block:
-		if (ellipsis)
-			return "catch_block";
-		else
 			return "DW_TAG_catch_block";
 	case DW_TAG_const_type:
-		if (ellipsis)
-			return "const_type";
-		else
 			return "DW_TAG_const_type";
 	case DW_TAG_constant:
-		if (ellipsis)
-			return "constant";
-		else
 			return "DW_TAG_constant";
 	case DW_TAG_enumerator:
-		if (ellipsis)
-			return "enumerator";
-		else
 			return "DW_TAG_enumerator";
 	case DW_TAG_file_type:
-		if (ellipsis)
-			return "file_type";
-		else
 			return "DW_TAG_file_type";
 	case DW_TAG_friend:
-		if (ellipsis)
-			return "friend";
-		else
 			return "DW_TAG_friend";
 	case DW_TAG_namelist:
-		if (ellipsis)
-			return "namelist";
-		else
 			return "DW_TAG_namelist";
 	case DW_TAG_namelist_item:
-		if (ellipsis)
-			return "namelist_item";
-		else
 			return "DW_TAG_namelist_item";
 	case DW_TAG_packed_type:
-		if (ellipsis)
-			return "packed_type";
-		else
 			return "DW_TAG_packed_type";
 	case DW_TAG_subprogram:
-		if (ellipsis)
-			return "subprogram";
-		else
 			return "DW_TAG_subprogram";
 	case DW_TAG_template_type_parameter:
-		if (ellipsis)
-			return "template_type_parameter";
-		else
 			return "DW_TAG_template_type_parameter";
 	case DW_TAG_template_value_parameter:
-		if (ellipsis)
-			return "template_value_parameter";
-		else
 			return "DW_TAG_template_value_parameter";
 	case DW_TAG_thrown_type:
-		if (ellipsis)
-			return "thrown_type";
-		else
 			return "DW_TAG_thrown_type";
 	case DW_TAG_try_block:
-		if (ellipsis)
-			return "try_block";
-		else
 			return "DW_TAG_try_block";
 	case DW_TAG_variant_part:
-		if (ellipsis)
-			return "variant_part";
-		else
 			return "DW_TAG_variant_part";
 	case DW_TAG_variable:
-		if (ellipsis)
-			return "variable";
-		else
 			return "DW_TAG_variable";
 	case DW_TAG_volatile_type:
-		if (ellipsis)
-			return "volatile_type";
-		else
 			return "DW_TAG_volatile_type";
 	case DW_TAG_dwarf_procedure:
-		if (ellipsis)
-			return "dwarf_procedure";
-		else
 			return "DW_TAG_dwarf_procedure";
 	case DW_TAG_restrict_type:
-		if (ellipsis)
-			return "restrict_type";
-		else
 			return "DW_TAG_restrict_type";
 	case DW_TAG_interface_type:
-		if (ellipsis)
-			return "interface_type";
-		else
 			return "DW_TAG_interface_type";
 	case DW_TAG_namespace:
-		if (ellipsis)
-			return "namespace";
-		else
 			return "DW_TAG_namespace";
 	case DW_TAG_imported_module:
-		if (ellipsis)
-			return "imported_module";
-		else
 			return "DW_TAG_imported_module";
 	case DW_TAG_unspecified_type:
-		if (ellipsis)
-			return "unspecified_type";
-		else
 			return "DW_TAG_unspecified_type";
 	case DW_TAG_partial_unit:
-		if (ellipsis)
-			return "partial_unit";
-		else
 			return "DW_TAG_partial_unit";
 	case DW_TAG_imported_unit:
-		if (ellipsis)
-			return "imported_unit";
-		else
 			return "DW_TAG_imported_unit";
 	case DW_TAG_mutable_type:
-		if (ellipsis)
-			return "mutable_type";
-		else
 			return "DW_TAG_mutable_type";
 	case DW_TAG_condition:
-		if (ellipsis)
-			return "condition";
-		else
 			return "DW_TAG_condition";
 	case DW_TAG_shared_type:
-		if (ellipsis)
-			return "shared_type";
-		else
 			return "DW_TAG_shared_type";
 	case DW_TAG_lo_user:
-		if (ellipsis)
-			return "lo_user";
-		else
 			return "DW_TAG_lo_user";
 	case DW_TAG_MIPS_loop:
-		if (ellipsis)
-			return "MIPS_loop";
-		else
 			return "DW_TAG_MIPS_loop";
 	case DW_TAG_HP_array_descriptor:
-		if (ellipsis)
-			return "HP_array_descriptor";
-		else
 			return "DW_TAG_HP_array_descriptor";
 	case DW_TAG_format_label:
-		if (ellipsis)
-			return "format_label";
-		else
 			return "DW_TAG_format_label";
 	case DW_TAG_function_template:
-		if (ellipsis)
-			return "function_template";
-		else
 			return "DW_TAG_function_template";
 	case DW_TAG_class_template:
-		if (ellipsis)
-			return "class_template";
-		else
 			return "DW_TAG_class_template";
 	case DW_TAG_GNU_BINCL:
-		if (ellipsis)
-			return "GNU_BINCL";
-		else
 			return "DW_TAG_GNU_BINCL";
 	case DW_TAG_GNU_EINCL:
-		if (ellipsis)
-			return "GNU_EINCL";
-		else
 			return "DW_TAG_GNU_EINCL";
 	case DW_TAG_ALTIUM_circ_type:
-		if (ellipsis)
-			return "ALTIUM_circ_type";
-		else
 			return "DW_TAG_ALTIUM_circ_type";
 	case DW_TAG_ALTIUM_mwa_circ_type:
-		if (ellipsis)
-			return "ALTIUM_mwa_circ_type";
-		else
 			return "DW_TAG_ALTIUM_mwa_circ_type";
 	case DW_TAG_ALTIUM_rev_carry_type:
-		if (ellipsis)
-			return "ALTIUM_rev_carry_type";
-		else
 			return "DW_TAG_ALTIUM_rev_carry_type";
 	case DW_TAG_ALTIUM_rom:
-		if (ellipsis)
-			return "ALTIUM_rom";
-		else
 			return "DW_TAG_ALTIUM_rom";
 	case DW_TAG_upc_shared_type:
-		if (ellipsis)
-			return "upc_shared_type";
-		else
 			return "DW_TAG_upc_shared_type";
 	case DW_TAG_upc_strict_type:
-		if (ellipsis)
-			return "upc_strict_type";
-		else
 			return "DW_TAG_upc_strict_type";
 	case DW_TAG_upc_relaxed_type:
-		if (ellipsis)
-			return "upc_relaxed_type";
-		else
 			return "DW_TAG_upc_relaxed_type";
 	case DW_TAG_PGI_kanji_type:
-		if (ellipsis)
-			return "PGI_kanji_type";
-		else
 			return "DW_TAG_PGI_kanji_type";
 	case DW_TAG_PGI_interface_block:
-		if (ellipsis)
-			return "PGI_interface_block";
-		else
 			return "DW_TAG_PGI_interface_block";
 	case DW_TAG_SUN_function_template:
-		if (ellipsis)
-			return "SUN_function_template";
-		else
 			return "DW_TAG_SUN_function_template";
 	case DW_TAG_SUN_class_template:
-		if (ellipsis)
-			return "SUN_class_template";
-		else
 			return "DW_TAG_SUN_class_template";
 	case DW_TAG_SUN_struct_template:
-		if (ellipsis)
-			return "SUN_struct_template";
-		else
 			return "DW_TAG_SUN_struct_template";
 	case DW_TAG_SUN_union_template:
-		if (ellipsis)
-			return "SUN_union_template";
-		else
 			return "DW_TAG_SUN_union_template";
 	case DW_TAG_SUN_indirect_inheritance:
-		if (ellipsis)
-			return "SUN_indirect_inheritance";
-		else
 			return "DW_TAG_SUN_indirect_inheritance";
 	case DW_TAG_SUN_codeflags:
-		if (ellipsis)
-			return "SUN_codeflags";
-		else
 			return "DW_TAG_SUN_codeflags";
 	case DW_TAG_SUN_memop_info:
-		if (ellipsis)
-			return "SUN_memop_info";
-		else
 			return "DW_TAG_SUN_memop_info";
 	case DW_TAG_SUN_omp_child_func:
-		if (ellipsis)
-			return "SUN_omp_child_func";
-		else
 			return "DW_TAG_SUN_omp_child_func";
 	case DW_TAG_SUN_rtti_descriptor:
-		if (ellipsis)
-			return "SUN_rtti_descriptor";
-		else
 			return "DW_TAG_SUN_rtti_descriptor";
 	case DW_TAG_SUN_dtor_info:
-		if (ellipsis)
-			return "SUN_dtor_info";
-		else
 			return "DW_TAG_SUN_dtor_info";
 	case DW_TAG_SUN_dtor:
-		if (ellipsis)
-			return "SUN_dtor";
-		else
 			return "DW_TAG_SUN_dtor";
 	case DW_TAG_SUN_f90_interface:
-		if (ellipsis)
-			return "SUN_f90_interface";
-		else
 			return "DW_TAG_SUN_f90_interface";
 	case DW_TAG_SUN_fortran_vax_structure:
-		if (ellipsis)
-			return "SUN_fortran_vax_structure";
-		else
 			return "DW_TAG_SUN_fortran_vax_structure";
 	case DW_TAG_SUN_hi:
-		if (ellipsis)
-			return "SUN_hi";
-		else
 			return "DW_TAG_SUN_hi";
 	case DW_TAG_hi_user:
-		if (ellipsis)
-			return "hi_user";
-		else
 			return "DW_TAG_hi_user";
+
 	default:
 		{ 
 		  char buf[100]; 
@@ -579,7 +315,7 @@ get_TAG_name (Dwarf_Debug dbg, Dwarf_Half val)
 		  return n;
 		}
 	}
-/*NOTREACHED*/
+
 }
 
 #if 0
@@ -598,897 +334,368 @@ get_AT_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
 	switch (val) {
 	case DW_AT_sibling:
-		if (ellipsis)
-			return "sibling";
-		else
 			return "DW_AT_sibling";
 	case DW_AT_location:
-		if (ellipsis)
-			return "location";
-		else
 			return "DW_AT_location";
 	case DW_AT_name:
-		if (ellipsis)
-			return "name";
-		else
 			return "DW_AT_name";
 	case DW_AT_ordering:
-		if (ellipsis)
-			return "ordering";
-		else
 			return "DW_AT_ordering";
 	case DW_AT_subscr_data:
-		if (ellipsis)
-			return "subscr_data";
-		else
 			return "DW_AT_subscr_data";
 	case DW_AT_byte_size:
-		if (ellipsis)
-			return "byte_size";
-		else
 			return "DW_AT_byte_size";
 	case DW_AT_bit_offset:
-		if (ellipsis)
-			return "bit_offset";
-		else
 			return "DW_AT_bit_offset";
 	case DW_AT_bit_size:
-		if (ellipsis)
-			return "bit_size";
-		else
 			return "DW_AT_bit_size";
 	case DW_AT_element_list:
-		if (ellipsis)
-			return "element_list";
-		else
 			return "DW_AT_element_list";
 	case DW_AT_stmt_list:
-		if (ellipsis)
-			return "stmt_list";
-		else
 			return "DW_AT_stmt_list";
 	case DW_AT_low_pc:
-		if (ellipsis)
-			return "low_pc";
-		else
 			return "DW_AT_low_pc";
 	case DW_AT_high_pc:
-		if (ellipsis)
-			return "high_pc";
-		else
 			return "DW_AT_high_pc";
 	case DW_AT_language:
-		if (ellipsis)
-			return "language";
-		else
 			return "DW_AT_language";
 	case DW_AT_member:
-		if (ellipsis)
-			return "member";
-		else
 			return "DW_AT_member";
 	case DW_AT_discr:
-		if (ellipsis)
-			return "discr";
-		else
 			return "DW_AT_discr";
 	case DW_AT_discr_value:
-		if (ellipsis)
-			return "discr_value";
-		else
 			return "DW_AT_discr_value";
 	case DW_AT_visibility:
-		if (ellipsis)
-			return "visibility";
-		else
 			return "DW_AT_visibility";
 	case DW_AT_import:
-		if (ellipsis)
-			return "import";
-		else
 			return "DW_AT_import";
 	case DW_AT_string_length:
-		if (ellipsis)
-			return "string_length";
-		else
 			return "DW_AT_string_length";
 	case DW_AT_common_reference:
-		if (ellipsis)
-			return "common_reference";
-		else
 			return "DW_AT_common_reference";
 	case DW_AT_comp_dir:
-		if (ellipsis)
-			return "comp_dir";
-		else
 			return "DW_AT_comp_dir";
 	case DW_AT_const_value:
-		if (ellipsis)
-			return "const_value";
-		else
 			return "DW_AT_const_value";
 	case DW_AT_containing_type:
-		if (ellipsis)
-			return "containing_type";
-		else
 			return "DW_AT_containing_type";
 	case DW_AT_default_value:
-		if (ellipsis)
-			return "default_value";
-		else
 			return "DW_AT_default_value";
 	case DW_AT_inline:
-		if (ellipsis)
-			return "inline";
-		else
 			return "DW_AT_inline";
 	case DW_AT_is_optional:
-		if (ellipsis)
-			return "is_optional";
-		else
 			return "DW_AT_is_optional";
 	case DW_AT_lower_bound:
-		if (ellipsis)
-			return "lower_bound";
-		else
 			return "DW_AT_lower_bound";
 	case DW_AT_producer:
-		if (ellipsis)
-			return "producer";
-		else
 			return "DW_AT_producer";
 	case DW_AT_prototyped:
-		if (ellipsis)
-			return "prototyped";
-		else
 			return "DW_AT_prototyped";
 	case DW_AT_return_addr:
-		if (ellipsis)
-			return "return_addr";
-		else
 			return "DW_AT_return_addr";
 	case DW_AT_start_scope:
-		if (ellipsis)
-			return "start_scope";
-		else
 			return "DW_AT_start_scope";
 	case DW_AT_bit_stride:
-		if (ellipsis)
-			return "bit_stride";
-		else
 			return "DW_AT_bit_stride";
 	case DW_AT_upper_bound:
-		if (ellipsis)
-			return "upper_bound";
-		else
 			return "DW_AT_upper_bound";
 	case DW_AT_abstract_origin:
-		if (ellipsis)
-			return "abstract_origin";
-		else
 			return "DW_AT_abstract_origin";
 	case DW_AT_accessibility:
-		if (ellipsis)
-			return "accessibility";
-		else
 			return "DW_AT_accessibility";
 	case DW_AT_address_class:
-		if (ellipsis)
-			return "address_class";
-		else
 			return "DW_AT_address_class";
 	case DW_AT_artificial:
-		if (ellipsis)
-			return "artificial";
-		else
 			return "DW_AT_artificial";
 	case DW_AT_base_types:
-		if (ellipsis)
-			return "base_types";
-		else
 			return "DW_AT_base_types";
 	case DW_AT_calling_convention:
-		if (ellipsis)
-			return "calling_convention";
-		else
 			return "DW_AT_calling_convention";
 	case DW_AT_count:
-		if (ellipsis)
-			return "count";
-		else
 			return "DW_AT_count";
 	case DW_AT_data_member_location:
-		if (ellipsis)
-			return "data_member_location";
-		else
 			return "DW_AT_data_member_location";
 	case DW_AT_decl_column:
-		if (ellipsis)
-			return "decl_column";
-		else
 			return "DW_AT_decl_column";
 	case DW_AT_decl_file:
-		if (ellipsis)
-			return "decl_file";
-		else
 			return "DW_AT_decl_file";
 	case DW_AT_decl_line:
-		if (ellipsis)
-			return "decl_line";
-		else
 			return "DW_AT_decl_line";
 	case DW_AT_declaration:
-		if (ellipsis)
-			return "declaration";
-		else
 			return "DW_AT_declaration";
 	case DW_AT_discr_list:
-		if (ellipsis)
-			return "discr_list";
-		else
 			return "DW_AT_discr_list";
 	case DW_AT_encoding:
-		if (ellipsis)
-			return "encoding";
-		else
 			return "DW_AT_encoding";
 	case DW_AT_external:
-		if (ellipsis)
-			return "external";
-		else
 			return "DW_AT_external";
 	case DW_AT_frame_base:
-		if (ellipsis)
-			return "frame_base";
-		else
 			return "DW_AT_frame_base";
 	case DW_AT_friend:
-		if (ellipsis)
-			return "friend";
-		else
 			return "DW_AT_friend";
 	case DW_AT_identifier_case:
-		if (ellipsis)
-			return "identifier_case";
-		else
 			return "DW_AT_identifier_case";
 	case DW_AT_macro_info:
-		if (ellipsis)
-			return "macro_info";
-		else
 			return "DW_AT_macro_info";
 	case DW_AT_namelist_item:
-		if (ellipsis)
-			return "namelist_item";
-		else
 			return "DW_AT_namelist_item";
 	case DW_AT_priority:
-		if (ellipsis)
-			return "priority";
-		else
 			return "DW_AT_priority";
 	case DW_AT_segment:
-		if (ellipsis)
-			return "segment";
-		else
 			return "DW_AT_segment";
 	case DW_AT_specification:
-		if (ellipsis)
-			return "specification";
-		else
 			return "DW_AT_specification";
 	case DW_AT_static_link:
-		if (ellipsis)
-			return "static_link";
-		else
 			return "DW_AT_static_link";
 	case DW_AT_type:
-		if (ellipsis)
-			return "type";
-		else
 			return "DW_AT_type";
 	case DW_AT_use_location:
-		if (ellipsis)
-			return "use_location";
-		else
 			return "DW_AT_use_location";
 	case DW_AT_variable_parameter:
-		if (ellipsis)
-			return "variable_parameter";
-		else
 			return "DW_AT_variable_parameter";
 	case DW_AT_virtuality:
-		if (ellipsis)
-			return "virtuality";
-		else
 			return "DW_AT_virtuality";
 	case DW_AT_vtable_elem_location:
-		if (ellipsis)
-			return "vtable_elem_location";
-		else
 			return "DW_AT_vtable_elem_location";
 	case DW_AT_allocated:
-		if (ellipsis)
-			return "allocated";
-		else
 			return "DW_AT_allocated";
 	case DW_AT_associated:
-		if (ellipsis)
-			return "associated";
-		else
 			return "DW_AT_associated";
 	case DW_AT_data_location:
-		if (ellipsis)
-			return "data_location";
-		else
 			return "DW_AT_data_location";
 	case DW_AT_byte_stride:
-		if (ellipsis)
-			return "byte_stride";
-		else
 			return "DW_AT_byte_stride";
 	case DW_AT_entry_pc:
-		if (ellipsis)
-			return "entry_pc";
-		else
 			return "DW_AT_entry_pc";
 	case DW_AT_use_UTF8:
-		if (ellipsis)
-			return "use_UTF8";
-		else
 			return "DW_AT_use_UTF8";
 	case DW_AT_extension:
-		if (ellipsis)
-			return "extension";
-		else
 			return "DW_AT_extension";
 	case DW_AT_ranges:
-		if (ellipsis)
-			return "ranges";
-		else
 			return "DW_AT_ranges";
 	case DW_AT_trampoline:
-		if (ellipsis)
-			return "trampoline";
-		else
 			return "DW_AT_trampoline";
 	case DW_AT_call_column:
-		if (ellipsis)
-			return "call_column";
-		else
 			return "DW_AT_call_column";
 	case DW_AT_call_file:
-		if (ellipsis)
-			return "call_file";
-		else
 			return "DW_AT_call_file";
 	case DW_AT_call_line:
-		if (ellipsis)
-			return "call_line";
-		else
 			return "DW_AT_call_line";
 	case DW_AT_description:
-		if (ellipsis)
-			return "description";
-		else
 			return "DW_AT_description";
 	case DW_AT_binary_scale:
-		if (ellipsis)
-			return "binary_scale";
-		else
 			return "DW_AT_binary_scale";
 	case DW_AT_decimal_scale:
-		if (ellipsis)
-			return "decimal_scale";
-		else
 			return "DW_AT_decimal_scale";
 	case DW_AT_small:
-		if (ellipsis)
-			return "small";
-		else
 			return "DW_AT_small";
 	case DW_AT_decimal_sign:
-		if (ellipsis)
-			return "decimal_sign";
-		else
 			return "DW_AT_decimal_sign";
 	case DW_AT_digit_count:
-		if (ellipsis)
-			return "digit_count";
-		else
 			return "DW_AT_digit_count";
 	case DW_AT_picture_string:
-		if (ellipsis)
-			return "picture_string";
-		else
 			return "DW_AT_picture_string";
 	case DW_AT_mutable:
-		if (ellipsis)
-			return "mutable";
-		else
 			return "DW_AT_mutable";
 	case DW_AT_threads_scaled:
-		if (ellipsis)
-			return "threads_scaled";
-		else
 			return "DW_AT_threads_scaled";
 	case DW_AT_explicit:
-		if (ellipsis)
-			return "explicit";
-		else
 			return "DW_AT_explicit";
 	case DW_AT_object_pointer:
-		if (ellipsis)
-			return "object_pointer";
-		else
 			return "DW_AT_object_pointer";
 	case DW_AT_endianity:
-		if (ellipsis)
-			return "endianity";
-		else
 			return "DW_AT_endianity";
 	case DW_AT_elemental:
-		if (ellipsis)
-			return "elemental";
-		else
 			return "DW_AT_elemental";
 	case DW_AT_pure:
-		if (ellipsis)
-			return "pure";
-		else
 			return "DW_AT_pure";
 	case DW_AT_recursive:
-		if (ellipsis)
-			return "recursive";
-		else
 			return "DW_AT_recursive";
 	case DW_AT_HP_block_index:
-		if (ellipsis)
-			return "HP_block_index";
-		else
 			return "DW_AT_HP_block_index";
 	case DW_AT_MIPS_fde:
-		if (ellipsis)
-			return "MIPS_fde";
-		else
 			return "DW_AT_MIPS_fde";
 	case DW_AT_MIPS_loop_begin:
-		if (ellipsis)
-			return "MIPS_loop_begin";
-		else
 			return "DW_AT_MIPS_loop_begin";
 	case DW_AT_MIPS_tail_loop_begin:
-		if (ellipsis)
-			return "MIPS_tail_loop_begin";
-		else
 			return "DW_AT_MIPS_tail_loop_begin";
 	case DW_AT_MIPS_epilog_begin:
-		if (ellipsis)
-			return "MIPS_epilog_begin";
-		else
 			return "DW_AT_MIPS_epilog_begin";
 	case DW_AT_MIPS_loop_unroll_factor:
-		if (ellipsis)
-			return "MIPS_loop_unroll_factor";
-		else
 			return "DW_AT_MIPS_loop_unroll_factor";
 	case DW_AT_MIPS_software_pipeline_depth:
-		if (ellipsis)
-			return "MIPS_software_pipeline_depth";
-		else
 			return "DW_AT_MIPS_software_pipeline_depth";
 	case DW_AT_MIPS_linkage_name:
-		if (ellipsis)
-			return "MIPS_linkage_name";
-		else
 			return "DW_AT_MIPS_linkage_name";
 	case DW_AT_MIPS_stride:
-		if (ellipsis)
-			return "MIPS_stride";
-		else
 			return "DW_AT_MIPS_stride";
 	case DW_AT_MIPS_abstract_name:
-		if (ellipsis)
-			return "MIPS_abstract_name";
-		else
 			return "DW_AT_MIPS_abstract_name";
 	case DW_AT_MIPS_clone_origin:
-		if (ellipsis)
-			return "MIPS_clone_origin";
-		else
 			return "DW_AT_MIPS_clone_origin";
 	case DW_AT_MIPS_has_inlines:
-		if (ellipsis)
-			return "MIPS_has_inlines";
-		else
 			return "DW_AT_MIPS_has_inlines";
 	case DW_AT_MIPS_stride_byte:
-		if (ellipsis)
-			return "MIPS_stride_byte";
-		else
 			return "DW_AT_MIPS_stride_byte";
 	case DW_AT_MIPS_stride_elem:
-		if (ellipsis)
-			return "MIPS_stride_elem";
-		else
 			return "DW_AT_MIPS_stride_elem";
 	case DW_AT_MIPS_ptr_dopetype:
-		if (ellipsis)
-			return "MIPS_ptr_dopetype";
-		else
 			return "DW_AT_MIPS_ptr_dopetype";
 	case DW_AT_MIPS_allocatable_dopetype:
-		if (ellipsis)
-			return "MIPS_allocatable_dopetype";
-		else
 			return "DW_AT_MIPS_allocatable_dopetype";
 	case DW_AT_MIPS_assumed_shape_dopetype:
-		if (ellipsis)
-			return "MIPS_assumed_shape_dopetype";
-		else
 			return "DW_AT_MIPS_assumed_shape_dopetype";
 	case DW_AT_MIPS_assumed_size:
-		if (ellipsis)
-			return "MIPS_assumed_size";
-		else
 			return "DW_AT_MIPS_assumed_size";
 	case DW_AT_HP_raw_data_ptr:
-		if (ellipsis)
-			return "HP_raw_data_ptr";
-		else
 			return "DW_AT_HP_raw_data_ptr";
 	case DW_AT_HP_pass_by_reference:
-		if (ellipsis)
-			return "HP_pass_by_reference";
-		else
 			return "DW_AT_HP_pass_by_reference";
 	case DW_AT_HP_opt_level:
-		if (ellipsis)
-			return "HP_opt_level";
-		else
 			return "DW_AT_HP_opt_level";
 	case DW_AT_HP_prof_version_id:
-		if (ellipsis)
-			return "HP_prof_version_id";
-		else
 			return "DW_AT_HP_prof_version_id";
 	case DW_AT_HP_opt_flags:
-		if (ellipsis)
-			return "HP_opt_flags";
-		else
 			return "DW_AT_HP_opt_flags";
 	case DW_AT_HP_cold_region_low_pc:
-		if (ellipsis)
-			return "HP_cold_region_low_pc";
-		else
 			return "DW_AT_HP_cold_region_low_pc";
 	case DW_AT_HP_cold_region_high_pc:
-		if (ellipsis)
-			return "HP_cold_region_high_pc";
-		else
 			return "DW_AT_HP_cold_region_high_pc";
 	case DW_AT_HP_all_variables_modifiable:
-		if (ellipsis)
-			return "HP_all_variables_modifiable";
-		else
 			return "DW_AT_HP_all_variables_modifiable";
 	case DW_AT_HP_linkage_name:
-		if (ellipsis)
-			return "HP_linkage_name";
-		else
 			return "DW_AT_HP_linkage_name";
 	case DW_AT_HP_prof_flags:
-		if (ellipsis)
-			return "HP_prof_flags";
-		else
 			return "DW_AT_HP_prof_flags";
 	case DW_AT_sf_names:
-		if (ellipsis)
-			return "sf_names";
-		else
 			return "DW_AT_sf_names";
 	case DW_AT_src_info:
-		if (ellipsis)
-			return "src_info";
-		else
 			return "DW_AT_src_info";
 	case DW_AT_mac_info:
-		if (ellipsis)
-			return "mac_info";
-		else
 			return "DW_AT_mac_info";
 	case DW_AT_src_coords:
-		if (ellipsis)
-			return "src_coords";
-		else
 			return "DW_AT_src_coords";
 	case DW_AT_body_begin:
-		if (ellipsis)
-			return "body_begin";
-		else
 			return "DW_AT_body_begin";
 	case DW_AT_body_end:
-		if (ellipsis)
-			return "body_end";
-		else
 			return "DW_AT_body_end";
 	case DW_AT_GNU_vector:
-		if (ellipsis)
-			return "GNU_vector";
-		else
 			return "DW_AT_GNU_vector";
 	case DW_AT_ALTIUM_loclist:
-		if (ellipsis)
-			return "ALTIUM_loclist";
-		else
 			return "DW_AT_ALTIUM_loclist";
 	case DW_AT_PGI_lbase:
-		if (ellipsis)
-			return "PGI_lbase";
-		else
 			return "DW_AT_PGI_lbase";
 	case DW_AT_PGI_soffset:
-		if (ellipsis)
-			return "PGI_soffset";
-		else
 			return "DW_AT_PGI_soffset";
 	case DW_AT_PGI_lstride:
-		if (ellipsis)
-			return "PGI_lstride";
-		else
 			return "DW_AT_PGI_lstride";
 	case DW_AT_upc_threads_scaled:
-		if (ellipsis)
-			return "upc_threads_scaled";
-		else
 			return "DW_AT_upc_threads_scaled";
 	case DW_AT_SUN_template:
-		if (ellipsis)
-			return "SUN_template";
-		else
 			return "DW_AT_SUN_template";
 	case DW_AT_SUN_alignment:
-		if (ellipsis)
-			return "SUN_alignment";
-		else
 			return "DW_AT_SUN_alignment";
 	case DW_AT_SUN_vtable:
-		if (ellipsis)
-			return "SUN_vtable";
-		else
 			return "DW_AT_SUN_vtable";
 	case DW_AT_SUN_count_guarantee:
-		if (ellipsis)
-			return "SUN_count_guarantee";
-		else
 			return "DW_AT_SUN_count_guarantee";
 	case DW_AT_SUN_command_line:
-		if (ellipsis)
-			return "SUN_command_line";
-		else
 			return "DW_AT_SUN_command_line";
 	case DW_AT_SUN_vbase:
-		if (ellipsis)
-			return "SUN_vbase";
-		else
 			return "DW_AT_SUN_vbase";
 	case DW_AT_SUN_compile_options:
-		if (ellipsis)
-			return "SUN_compile_options";
-		else
 			return "DW_AT_SUN_compile_options";
 	case DW_AT_SUN_language:
-		if (ellipsis)
-			return "SUN_language";
-		else
 			return "DW_AT_SUN_language";
 	case DW_AT_SUN_browser_file:
-		if (ellipsis)
-			return "SUN_browser_file";
-		else
 			return "DW_AT_SUN_browser_file";
 	case DW_AT_SUN_vtable_abi:
-		if (ellipsis)
-			return "SUN_vtable_abi";
-		else
 			return "DW_AT_SUN_vtable_abi";
 	case DW_AT_SUN_func_offsets:
-		if (ellipsis)
-			return "SUN_func_offsets";
-		else
 			return "DW_AT_SUN_func_offsets";
 	case DW_AT_SUN_cf_kind:
-		if (ellipsis)
-			return "SUN_cf_kind";
-		else
 			return "DW_AT_SUN_cf_kind";
 	case DW_AT_SUN_vtable_index:
-		if (ellipsis)
-			return "SUN_vtable_index";
-		else
 			return "DW_AT_SUN_vtable_index";
 	case DW_AT_SUN_omp_tpriv_addr:
-		if (ellipsis)
-			return "SUN_omp_tpriv_addr";
-		else
 			return "DW_AT_SUN_omp_tpriv_addr";
 	case DW_AT_SUN_omp_child_func:
-		if (ellipsis)
-			return "SUN_omp_child_func";
-		else
 			return "DW_AT_SUN_omp_child_func";
 	case DW_AT_SUN_func_offset:
-		if (ellipsis)
-			return "SUN_func_offset";
-		else
 			return "DW_AT_SUN_func_offset";
 	case DW_AT_SUN_memop_type_ref:
-		if (ellipsis)
-			return "SUN_memop_type_ref";
-		else
 			return "DW_AT_SUN_memop_type_ref";
 	case DW_AT_SUN_profile_id:
-		if (ellipsis)
-			return "SUN_profile_id";
-		else
 			return "DW_AT_SUN_profile_id";
 	case DW_AT_SUN_memop_signature:
-		if (ellipsis)
-			return "SUN_memop_signature";
-		else
 			return "DW_AT_SUN_memop_signature";
 	case DW_AT_SUN_obj_dir:
-		if (ellipsis)
-			return "SUN_obj_dir";
-		else
 			return "DW_AT_SUN_obj_dir";
 	case DW_AT_SUN_obj_file:
-		if (ellipsis)
-			return "SUN_obj_file";
-		else
 			return "DW_AT_SUN_obj_file";
 	case DW_AT_SUN_original_name:
-		if (ellipsis)
-			return "SUN_original_name";
-		else
 			return "DW_AT_SUN_original_name";
 	case DW_AT_SUN_hwcprof_signature:
-		if (ellipsis)
-			return "SUN_hwcprof_signature";
-		else
 			return "DW_AT_SUN_hwcprof_signature";
 	case DW_AT_SUN_amd64_parmdump:
-		if (ellipsis)
-			return "SUN_amd64_parmdump";
-		else
 			return "DW_AT_SUN_amd64_parmdump";
 	case DW_AT_SUN_part_link_name:
-		if (ellipsis)
-			return "SUN_part_link_name";
-		else
 			return "DW_AT_SUN_part_link_name";
 	case DW_AT_SUN_link_name:
-		if (ellipsis)
-			return "SUN_link_name";
-		else
 			return "DW_AT_SUN_link_name";
 	case DW_AT_SUN_pass_with_const:
-		if (ellipsis)
-			return "SUN_pass_with_const";
-		else
 			return "DW_AT_SUN_pass_with_const";
 	case DW_AT_SUN_return_with_const:
-		if (ellipsis)
-			return "SUN_return_with_const";
-		else
 			return "DW_AT_SUN_return_with_const";
 	case DW_AT_SUN_import_by_name:
-		if (ellipsis)
-			return "SUN_import_by_name";
-		else
 			return "DW_AT_SUN_import_by_name";
 	case DW_AT_SUN_f90_pointer:
-		if (ellipsis)
-			return "SUN_f90_pointer";
-		else
 			return "DW_AT_SUN_f90_pointer";
 	case DW_AT_SUN_pass_by_ref:
-		if (ellipsis)
-			return "SUN_pass_by_ref";
-		else
 			return "DW_AT_SUN_pass_by_ref";
 	case DW_AT_SUN_f90_allocatable:
-		if (ellipsis)
-			return "SUN_f90_allocatable";
-		else
 			return "DW_AT_SUN_f90_allocatable";
 	case DW_AT_SUN_f90_assumed_shape_array:
-		if (ellipsis)
-			return "SUN_f90_assumed_shape_array";
-		else
 			return "DW_AT_SUN_f90_assumed_shape_array";
 	case DW_AT_SUN_c_vla:
-		if (ellipsis)
-			return "SUN_c_vla";
-		else
 			return "DW_AT_SUN_c_vla";
 	case DW_AT_SUN_return_value_ptr:
-		if (ellipsis)
-			return "SUN_return_value_ptr";
-		else
 			return "DW_AT_SUN_return_value_ptr";
 	case DW_AT_SUN_dtor_start:
-		if (ellipsis)
-			return "SUN_dtor_start";
-		else
 			return "DW_AT_SUN_dtor_start";
 	case DW_AT_SUN_dtor_length:
-		if (ellipsis)
-			return "SUN_dtor_length";
-		else
 			return "DW_AT_SUN_dtor_length";
 	case DW_AT_SUN_dtor_state_initial:
-		if (ellipsis)
-			return "SUN_dtor_state_initial";
-		else
 			return "DW_AT_SUN_dtor_state_initial";
 	case DW_AT_SUN_dtor_state_final:
-		if (ellipsis)
-			return "SUN_dtor_state_final";
-		else
 			return "DW_AT_SUN_dtor_state_final";
 	case DW_AT_SUN_dtor_state_deltas:
-		if (ellipsis)
-			return "SUN_dtor_state_deltas";
-		else
 			return "DW_AT_SUN_dtor_state_deltas";
 	case DW_AT_SUN_import_by_lname:
-		if (ellipsis)
-			return "SUN_import_by_lname";
-		else
 			return "DW_AT_SUN_import_by_lname";
 	case DW_AT_SUN_f90_use_only:
-		if (ellipsis)
-			return "SUN_f90_use_only";
-		else
 			return "DW_AT_SUN_f90_use_only";
 	case DW_AT_SUN_namelist_spec:
-		if (ellipsis)
-			return "SUN_namelist_spec";
-		else
 			return "DW_AT_SUN_namelist_spec";
 	case DW_AT_SUN_is_omp_child_func:
-		if (ellipsis)
-			return "SUN_is_omp_child_func";
-		else
 			return "DW_AT_SUN_is_omp_child_func";
 	case DW_AT_SUN_fortran_main_alias:
-		if (ellipsis)
-			return "SUN_fortran_main_alias";
-		else
 			return "DW_AT_SUN_fortran_main_alias";
 	case DW_AT_SUN_fortran_based:
-		if (ellipsis)
-			return "SUN_fortran_based";
-		else
 			return "DW_AT_SUN_fortran_based";
 	case DW_AT_hi_user:
-		if (ellipsis)
-			return "hi_user";
-		else
 			return "DW_AT_hi_user";
+
 	default:
 		{ 
-		    char buf[100]; 
-		    char *n; 
-		    snprintf(buf,sizeof(buf),"<Unknown AT value 0x%x>",(int)val);
-		 fprintf(stderr,"AT of %d (0x%x) is unknown to dwarfdump. " 
- 		 "Continuing. \n",(int)val,(int)val );  
-		    n = makename(buf);
-		    return n; 
-		} 
+        char buf[100]; 
+        char *n; 
+        snprintf(buf,sizeof(buf),"<Unknown AT value 0x%x>",(int)val);
+        fprintf(stderr,"AT of %d (0x%x) is unknown to dwarfdump. Continuing. \n",(int)val,(int)val );  
+        n = makename(buf);
+        return n; 
+		}
 	}
-/*NOTREACHED*/
 }
 
 string
@@ -1496,144 +703,70 @@ get_LANG_name (Dwarf_Debug dbg, Dwarf_Half val)
 {
 	switch (val) {
 	case DW_LANG_C89:
-		if (ellipsis)
-			return "C89";
-		else
 			return "DW_LANG_C89";
 	case DW_LANG_C:
-		if (ellipsis)
-			return "C";
-		else
 			return "DW_LANG_C";
 	case DW_LANG_Ada83:
-		if (ellipsis)
-			return "Ada83";
-		else
 			return "DW_LANG_Ada83";
 	case DW_LANG_C_plus_plus:
-		if (ellipsis)
-			return "C_plus_plus";
-		else
 			return "DW_LANG_C_plus_plus";
 	case DW_LANG_Cobol74:
-		if (ellipsis)
-			return "Cobol74";
-		else
 			return "DW_LANG_Cobol74";
 	case DW_LANG_Cobol85:
-		if (ellipsis)
-			return "Cobol85";
-		else
 			return "DW_LANG_Cobol85";
 	case DW_LANG_Fortran77:
-		if (ellipsis)
-			return "Fortran77";
-		else
 			return "DW_LANG_Fortran77";
 	case DW_LANG_Fortran90:
-		if (ellipsis)
-			return "Fortran90";
-		else
 			return "DW_LANG_Fortran90";
 	case DW_LANG_Pascal83:
-		if (ellipsis)
-			return "Pascal83";
-		else
 			return "DW_LANG_Pascal83";
 	case DW_LANG_Modula2:
-		if (ellipsis)
-			return "Modula2";
-		else
 			return "DW_LANG_Modula2";
 	case DW_LANG_Java:
-		if (ellipsis)
-			return "Java";
-		else
 			return "DW_LANG_Java";
 	case DW_LANG_C99:
-		if (ellipsis)
-			return "C99";
-		else
 			return "DW_LANG_C99";
 	case DW_LANG_Ada95:
-		if (ellipsis)
-			return "Ada95";
-		else
 			return "DW_LANG_Ada95";
 	case DW_LANG_Fortran95:
-		if (ellipsis)
-			return "Fortran95";
-		else
 			return "DW_LANG_Fortran95";
 	case DW_LANG_PLI:
-		if (ellipsis)
-			return "PLI";
-		else
 			return "DW_LANG_PLI";
 	case DW_LANG_ObjC:
-		if (ellipsis)
-			return "ObjC";
-		else
 			return "DW_LANG_ObjC";
 	case DW_LANG_ObjC_plus_plus:
-		if (ellipsis)
-			return "ObjC_plus_plus";
-		else
 			return "DW_LANG_ObjC_plus_plus";
 	case DW_LANG_UPC:
-		if (ellipsis)
-			return "UPC";
-		else
 			return "DW_LANG_UPC";
 	case DW_LANG_D:
-		if (ellipsis)
-			return "D";
-		else
 			return "DW_LANG_D";
 	case DW_LANG_lo_user:
-		if (ellipsis)
-			return "lo_user";
-		else
 			return "DW_LANG_lo_user";
 	case DW_LANG_Mips_Assembler:
-		if (ellipsis)
-			return "Mips_Assembler";
-		else
 			return "DW_LANG_Mips_Assembler";
 	case DW_LANG_Upc:
-		if (ellipsis)
-			return "Upc";
-		else
 			return "DW_LANG_Upc";
 	case DW_LANG_ALTIUM_Assembler:
-		if (ellipsis)
-			return "ALTIUM_Assembler";
-		else
 			return "DW_LANG_ALTIUM_Assembler";
 	case DW_LANG_SUN_Assembler:
-		if (ellipsis)
-			return "SUN_Assembler";
-		else
 			return "DW_LANG_SUN_Assembler";
 	case DW_LANG_hi_user:
-		if (ellipsis)
-			return "hi_user";
-		else
 			return "DW_LANG_hi_user";
+
 	default:
 		{ 
-		    char buf[100]; 
-		    char *n; 
-		    snprintf(buf,sizeof(buf),"<Unknown LANG value 0x%x>",(int)val);
-		 fprintf(stderr,"LANG of %d (0x%x) is unknown to dwarfdump. " 
- 		 "Continuing. \n",(int)val,(int)val );  
-		    n = makename(buf);
-		    return n; 
+        char buf[100]; 
+        char *n; 
+        snprintf(buf,sizeof(buf),"<Unknown LANG value 0x%x>",(int)val);
+        fprintf(stderr,"LANG of %d (0x%x) is unknown to dwarfdump. Continuing. \n",(int)val,(int)val );  
+        n = makename(buf);
+        return n; 
 		} 
 	}
-/*NOTREACHED*/
 }
 
+
+// Typedef for function pointer type used in get_small_encoding_integer_and_name() function paramter.
 typedef string(*encoding_type_func) (Dwarf_Debug dbg, Dwarf_Half val);
 
 int
@@ -1674,8 +807,7 @@ get_small_encoding_integer_and_name( Dwarf_Debug dbg, Dwarf_Attribute attrib, Dw
 static void formx_unsigned(Dwarf_Unsigned u, string *esbp)
    {
      char small_buf[40];
-     snprintf(small_buf, sizeof(small_buf),
-      "%llu", (unsigned long long)u);
+     snprintf(small_buf, sizeof(small_buf),"%llu", (unsigned long long)u);
   // esb_append(esbp, small_buf);
      *esbp += small_buf;
    }
@@ -1684,8 +816,7 @@ static void formx_unsigned(Dwarf_Unsigned u, string *esbp)
 void formx_signed(Dwarf_Signed u, string *esbp)
    {
      char small_buf[40];
-     snprintf(small_buf, sizeof(small_buf),
-      "%lld", (long long)u);
+     snprintf(small_buf, sizeof(small_buf),"%lld", (long long)u);
   // esb_append(esbp, small_buf);
      *esbp += small_buf;
    }
@@ -1800,8 +931,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
     case DW_FORM_addr:
         bres = dwarf_formaddr(attrib, &addr, &rose_dwarf_error);
         if (bres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf), "%#llx",
-                     (unsigned long long) addr);
+            snprintf(small_buf, sizeof(small_buf), "%#llx",(unsigned long long) addr);
          // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
@@ -1814,15 +944,11 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
            section. */
         bres = dwarf_global_formref(attrib, &off, &rose_dwarf_error);
         if (bres == DW_DLV_OK) {
-            snprintf(small_buf, sizeof(small_buf),
-                     "<global die offset %llu>",
-                     (unsigned long long) off);
+            snprintf(small_buf, sizeof(small_buf),"<global die offset %llu>",(unsigned long long) off);
          // esb_append(esbp, small_buf);
             *esbp += small_buf;
         } else {
-            print_error(dbg,
-                        "DW_FORM_ref_addr form with no reference?!",
-                        bres, rose_dwarf_error);
+            print_error(dbg,"DW_FORM_ref_addr form with no reference?!",bres, rose_dwarf_error);
         }
         break;
     case DW_FORM_ref1:
@@ -1852,8 +978,7 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
             } else if (wres == DW_DLV_NO_ENTRY) {
             }
             if (attr == DW_AT_type) {
-                dres = dwarf_offdie(dbg, cu_offset + off,
-                                    &die_for_check, &rose_dwarf_error);
+                dres = dwarf_offdie(dbg, cu_offset + off,&die_for_check, &rose_dwarf_error);
                 type_offset_result.checks++;
                 if (dres != DW_DLV_OK) {
                     type_offset_result.errors++;
@@ -1889,15 +1014,13 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
                             break;
                         default:
                             type_offset_result.errors++;
-                            DWARF_CHECK_ERROR
-                                ("DW_AT_type offset does not point to type info")
+                            DWARF_CHECK_ERROR("DW_AT_type offset does not point to type info")
                                 break;
                         }
                         dwarf_dealloc(dbg, die_for_check, DW_DLA_DIE);
                     } else {
                         type_offset_result.errors++;
-                        DWARF_CHECK_ERROR
-                            ("DW_AT_type offset does not exist")
+                        DWARF_CHECK_ERROR("DW_AT_type offset does not exist")
                     }
                 }
             }
@@ -1912,15 +1035,13 @@ void get_attr_value(Dwarf_Debug dbg, Dwarf_Half tag, Dwarf_Attribute attrib,char
         if (fres == DW_DLV_OK) {
          // for (i = 0; i < tempb->bl_len; i++) {
             for (i = 0; i < (int) tempb->bl_len; i++) {
-                snprintf(small_buf, sizeof(small_buf), "%02x",
-                         *(i + (unsigned char *) tempb->bl_data));
+                snprintf(small_buf, sizeof(small_buf), "%02x",*(i + (unsigned char *) tempb->bl_data));
              // esb_append(esbp, small_buf);
                 *esbp += small_buf;
             }
             dwarf_dealloc(dbg, tempb, DW_DLA_BLOCK);
         } else {
-            print_error(dbg, "DW_FORM_blockn cannot get block\n", fres,
-                        rose_dwarf_error);
+            print_error(dbg, "DW_FORM_blockn cannot get block\n", fres,rose_dwarf_error);
         }
         break;
     case DW_FORM_data1:
@@ -3368,6 +2489,10 @@ build_dwarf_IR_nodes(Dwarf_Debug dbg, SgAsmInterpretation* asmInterpretation)
  */
 void commentOutSymbolsFromDotGraph (SgNode* node)
    {
+  // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
+  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member 
+  // function and return "true".
+
   // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
      class SymbolPruningAttribute : public AstAttribute
         {
@@ -3385,8 +2510,63 @@ void commentOutSymbolsFromDotGraph (SgNode* node)
           public:
                void visit ( SgNode* node )
                   {
-#if 1
-                  // Also remove sections to make the Dwarf graph dominate!
+
+                     SgAsmGenericSymbolList* genericSymbolList = isSgAsmGenericSymbolList(node);
+                     if (genericSymbolList != NULL)
+                        {
+                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
+                          genericSymbolList->addNewAttribute("SymbolPruningAttribute",att);
+                        }
+
+                     SgAsmElfSymbolList* elfSymbolList = isSgAsmElfSymbolList(node);
+                     if (elfSymbolList != NULL)
+                        {
+                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
+                          elfSymbolList->addNewAttribute("SymbolPruningAttribute",att);
+                        }
+
+                     SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
+                     if (genericSymbol != NULL)
+                        {
+                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
+                          genericSymbol->addNewAttribute("SymbolPruningAttribute",att);
+                        }
+                  }
+        };
+
+     CommentOutSymbolsFromDotGraph traversal;
+     traversal.traverse(node,preorder);
+   }
+
+// DQ (11/10/2008):
+/*! \brief This traversal permits non-dwarf IR nodes to be commented out from the DOT graphs.
+
+ */
+void commentOutEvertythingButDwarf (SgNode* node)
+   {
+  // Remove the symbols and related symbol lists so that the generated DOT file will be simpler.
+  // To do this we add an attribute that implements the virtual commentOutNodeInGraph() member 
+  // function and return "true".
+
+  // Define the attribute class containing the virtual function "commentOutNodeInGraph()"
+     class SymbolPruningAttribute : public AstAttribute
+        {
+       // This is a persistant attribute used to mark locations in the AST where we don't want IR nodes to be generated for the DOT graph.
+
+          public:
+               bool commentOutNodeInGraph() { return true; }
+               virtual AstAttribute* copy() { return new SymbolPruningAttribute(*this); }
+               virtual ~SymbolPruningAttribute() {}
+        };
+
+  // Define the traversal class over the AST
+     class CommentOutSymbolsFromDotGraph : public SgSimpleProcessing
+        {
+          public:
+               void visit ( SgNode* node )
+                  {
+                  // Remove sections to make the Dwarf graph dominate (assume symbols were alread removed)!
+
                      SgAsmGenericSectionList* genericSectionList = isSgAsmGenericSectionList(node);
                      if (genericSectionList != NULL)
                         {
@@ -3449,30 +2629,13 @@ void commentOutSymbolsFromDotGraph (SgNode* node)
                           SymbolPruningAttribute* att = new SymbolPruningAttribute();
                           genericDLLList->addNewAttribute("SymbolPruningAttribute",att);
                         }
-#endif
-                     SgAsmGenericSymbolList* genericSymbolList = isSgAsmGenericSymbolList(node);
-                     if (genericSymbolList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSymbolList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmElfSymbolList* elfSymbolList = isSgAsmElfSymbolList(node);
-                     if (elfSymbolList != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          elfSymbolList->addNewAttribute("SymbolPruningAttribute",att);
-                        }
-
-                     SgAsmGenericSymbol* genericSymbol = isSgAsmGenericSymbol(node);
-                     if (genericSymbol != NULL)
-                        {
-                          SymbolPruningAttribute* att = new SymbolPruningAttribute();
-                          genericSymbol->addNewAttribute("SymbolPruningAttribute",att);
-                        }
                   }
         };
 
+  // Comment out the symbols (factored out)
+     commentOutSymbolsFromDotGraph(node);
+
+  // Now comment out the rest of the non-dwarf IR nodes.
      CommentOutSymbolsFromDotGraph traversal;
      traversal.traverse(node,preorder);
    }
@@ -3525,12 +2688,18 @@ readDwarf ( SgAsmFile* asmFile )
      ROSE_ASSERT (binaryFile != NULL);
 
   // This is used to reduce the size of the DOT file to simplify debugging Dwarf stuff.
-     if (binaryFile->get_read_executable_file_format_only_skip_symbols() == true)
+     if (binaryFile->get_visualize_executable_file_format_skip_symbols() == true)
         {
-          printf ("Calling commentOutSymbolsFromDotGraph() \n");
+          printf ("Calling commentOutSymbolsFromDotGraph() (for visualization of binary file format withouth symbols) \n");
           commentOutSymbolsFromDotGraph(asmFile);
         }
 
+  // Nothing but dwarf!
+     if (binaryFile->get_visualize_dwarf_only() == true)
+        {
+          printf ("Calling commentOutEvertythingButDwarf() (for visualization of Dwarf) \n");
+          commentOutEvertythingButDwarf(asmFile);
+        }
    }
 
 
@@ -3633,6 +2802,313 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 // endif for "if USE_ROSE_DWARF_SUPPORT" at top of file.
 #endif
 
+
+
+
+
+
+// ***********************************************************************************
+// ***********************************************************************************
+// This code is independent of the "if USE_ROSE_DWARF_SUPPORT" at the top of this file
+// ***********************************************************************************
+// ***********************************************************************************
+
+std::pair<uint64_t,uint64_t>
+SgAsmDwarfLineList::instructionRange()
+   {
+     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+
+     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+
+     SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.begin();
+     SgInstructionAddressSourcePositionMapPtrList::reverse_iterator upperBound = instruction_source_code_map.rbegin();
+
+     return std::pair<uint64_t,uint64_t>(lowerBound->first,upperBound->first);
+   }
+ 
+std::pair<LineColumnFilePosition,LineColumnFilePosition>
+SgAsmDwarfLineList::sourceCodeRange( int file_id )
+   {
+     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+
+     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+
+     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.begin();
+     SgSourcePositionInstructionAddressMapPtrList::reverse_iterator upperBound = source_code_instruction_map.rbegin();
+
+  // Find the first source position in the file specified by the input file_id
+     while ( (lowerBound != source_code_instruction_map.end()) && (lowerBound->first.first != file_id) )
+        {
+          lowerBound++;
+        }
+
+     while ( (upperBound != source_code_instruction_map.rend()) && (upperBound->first.first != file_id) )
+        {
+          upperBound++;
+        }
+
+     LineColumnFilePosition start(lowerBound->first.second);
+     LineColumnFilePosition end(upperBound->first.second);
+
+  // Check if this was a case of there not being any entries for this file
+     if (lowerBound == source_code_instruction_map.end())
+        {
+          ROSE_ASSERT(upperBound == source_code_instruction_map.rend());
+       // printf ("lowerBound == source_code_instruction_map.end() --- no entries for file %d \n",file_id);
+
+       // Reset the line and column information to indicate that there were no entries.
+          start = LineColumnFilePosition(std::pair<int,int>(-1,-1));
+          end = LineColumnFilePosition(std::pair<int,int>(-1,-1));
+        }
+
+     return std::pair<LineColumnFilePosition,LineColumnFilePosition>(start,end);
+   }
+ 
+
+uint64_t
+SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition )
+   {
+  // Return the nearest address for the source code position
+     int file_id = sourcePosition.first;
+  // int line    = sourcePosition.second.first;
+  // int column  = sourcePosition.second.second;
+
+     uint64_t returnAddress = NULL;
+
+     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+
+     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
+     SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
+     
+     returnAddress = lowerBound->second;
+
+     if (lowerBound == source_code_instruction_map.begin())
+        {
+       // printf ("lowerBound == source_code_instruction_map.begin() \n");
+          if (lowerBound->first.first != file_id)
+             {
+            // printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
+               returnAddress = NULL;
+             }
+        }
+
+     if (lowerBound == source_code_instruction_map.end())
+        {
+       // printf ("lowerBound == source_code_instruction_map.end() \n");
+#if 0
+          if (lowerBound->first.first != file_id)
+             {
+               printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
+               returnAddress = NULL;
+             }
+            else
+             {
+               returnAddress = NULL;
+             }
+#else
+          returnAddress = NULL;
+#endif
+        }
+#if 0
+  // I think this is redundant code
+     if (upperBound == source_code_instruction_map.end())
+        {
+       // printf ("upperBound == source_code_instruction_map.end() \n");
+          returnAddress = NULL;
+        }
+#endif
+
+     return returnAddress;
+   }
+
+FileIdLineColumnFilePosition
+SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
+   {
+  // Set to default value
+     FileIdLineColumnFilePosition sourcePosition(0,pair<int,int>(0,0));
+
+     std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
+     if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) )
+        {
+       // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
+
+       // Set to error value
+          sourcePosition = FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
+        }
+       else
+        {
+          DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+          SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+
+          SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
+
+       // Set the the lower bound found in the map
+          sourcePosition = lowerBound->second;
+
+#if 0
+          int file_id = sourcePosition.first;
+          int line    = sourcePosition.second.first;
+          int column  = sourcePosition.second.second;
+          string filename = Sg_File_Info::getFilenameFromID(file_id);
+
+       // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
+#endif
+        }
+
+  // return FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
+     return sourcePosition;
+   }
+
+
+void
+SgAsmDwarfLineList::display( const string & label )
+   {
+  // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
+     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
+
+  // Output the SgInstructionAddressSourcePositionMapPtrList map so the we can test the linear ordering of the addresses.
+     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
+     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
+
+     std::pair<uint64_t,uint64_t> addressRange = instructionRange();
+     printf ("addressRange = (0x%lx, 0x%lx) \n",addressRange.first,addressRange.second);
+
+  // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
+  // int numberOfSourceFiles = Sg_File_Info::get_fileidtoname_map().size();
+     int numberOfSourceFiles = Sg_File_Info::numberOfSourceFiles();
+     printf ("numberOfSourceFiles = %d \n",numberOfSourceFiles);
+
+  // DQ: I think that the initial value is 1 not 0!
+     for (int i=1; i < numberOfSourceFiles; i++)
+        {
+          std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceFileRange = sourceCodeRange( i );
+
+          std::string filename = Sg_File_Info::getFilenameFromID(i);
+
+          if ( (sourceFileRange.first.first < 0) && (sourceFileRange.second.first < 0) )
+             {
+               printf ("This file_id = %d is not a valid source file: filename = %s \n",i,filename.c_str());
+             }
+            else
+             {
+               printf ("Source range for file = %s (id = %d) [(line=%d, col=%d), (line=%d, col=%d)] \n",
+                    filename.c_str(),i,
+                    sourceFileRange.first.first, sourceFileRange.first.second, 
+                    sourceFileRange.second.first, sourceFileRange.second.second);
+             }
+        }
+
+
+     printf ("\n\nTest sourceCodeToAddress: \n");
+     FileIdLineColumnFilePosition s1(2,pair<int,int>(10,-1));
+     uint64_t instructionAddress1 = sourceCodeToAddress(s1);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s1.first,s1.second.first,s1.second.second,instructionAddress1);
+
+     FileIdLineColumnFilePosition s2(2,pair<int,int>(11,-1));
+     uint64_t instructionAddress2 = sourceCodeToAddress(s2);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
+
+     FileIdLineColumnFilePosition s3(1,pair<int,int>(11,-1));
+     uint64_t instructionAddress3 = sourceCodeToAddress(s3);
+     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
+
+     for (int fileNumber = 1; fileNumber < 4; fileNumber++)
+        {
+          for (int lineNumber = -2; lineNumber < 35; lineNumber++)
+             {
+               for (int columnNumber = -2; columnNumber < 1; columnNumber++)
+                  {
+                    FileIdLineColumnFilePosition s(fileNumber,pair<int,int>(lineNumber,columnNumber));
+                    uint64_t instructionAddress = sourceCodeToAddress(s);
+                    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s.first,s.second.first,s.second.second,instructionAddress);
+                  }
+             }
+        }
+
+     printf ("\n\nTest addressToSourceCode: (not tested yet) \n");
+
+     FileIdLineColumnFilePosition s1map = addressToSourceCode(instructionAddress1);
+     printf ("addressToSourceCode: address 0x%lx = (%d,%d,%d) \n",instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
+
+     for (uint64_t address = instructionAddress1-15; address < instructionAddress1+ 85; address++)
+        {
+          FileIdLineColumnFilePosition s_map = addressToSourceCode(address);
+          printf ("addressToSourceCode: address 0x%lx = (%d,%d,%d) \n",address,s_map.first,s_map.second.first,s_map.second.second);
+        }
+
+     printf ("\nOutput entries in instruction_source_code_map \n");
+     SgInstructionAddressSourcePositionMapPtrList::iterator it1 = instruction_source_code_map.begin();
+     while ( it1 != instruction_source_code_map.end() )
+        {
+          uint64_t address = it1->first;
+
+       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
+       //    "it->second.first, it->second.second.first, it->second.second.second"
+       // for the last three terms.
+          int file_id = it1->second.first;
+          int line    = it1->second.second.first;
+          int column  = it1->second.second.second;
+
+          printf ("instruction_source_code_map[0x%lx] = (file=%d, line=%d, col=%d) \n",address, file_id, line, column);
+
+       // A test of the evaluation of ranges of lines for each instruction
+          SgInstructionAddressSourcePositionMapPtrList::iterator it1_lb = instruction_source_code_map.lower_bound(address);
+          SgInstructionAddressSourcePositionMapPtrList::iterator it1_ub = instruction_source_code_map.upper_bound(address);
+
+          if (it1_lb != it1_ub)
+             {
+               if (it1_ub != instruction_source_code_map.end())
+                  {
+                    printf ("   ----- range = [(file=%d, line=%d, col=%d), (file=%d, line=%d, col=%d)) \n",
+                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second,
+                         it1_ub->second.first, it1_ub->second.second.first, it1_ub->second.second.second);
+                  }
+                 else
+                  {
+                    printf ("   ----- range = [(file=%d, line=%d, col=%d), last_source_position) \n",
+                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second);
+                  }
+             }
+
+          it1++;
+        }
+
+     printf ("\nOutput entries in source_code_instruction_map \n");
+     SgSourcePositionInstructionAddressMapPtrList::iterator it2 = source_code_instruction_map.begin();
+     while ( it2 != source_code_instruction_map.end() )
+        {
+          uint64_t address = it2->second;
+
+       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
+       //    "it->second.first, it->second.second.first, it->second.second.second"
+       // for the last three terms.
+          int file_id = it2->first.first;
+          int line    = it2->first.second.first;
+          int column  = it2->first.second.second;
+
+          printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%lx \n",file_id, line, column, address);
+
+       // A test of the evaluation of ranges of instructions for each line of source code.
+          FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
+          SgSourcePositionInstructionAddressMapPtrList::iterator it2_lb = source_code_instruction_map.lower_bound(file_info);
+          SgSourcePositionInstructionAddressMapPtrList::iterator it2_ub = source_code_instruction_map.upper_bound(file_info);
+
+          if (it2_lb != it2_ub)
+             {
+               if (it2_ub != source_code_instruction_map.end())
+                  {
+                    printf ("   ----- range = [0x%lx, 0x%lx) \n",it2_lb->second,it2_ub->second);
+                  }
+                 else
+                  {
+                    printf ("   ----- range = [0x%lx, last_instruction) \n",it2_lb->second);
+                  }
+             }
+
+          it2++;
+        }
+   }
 
 
 

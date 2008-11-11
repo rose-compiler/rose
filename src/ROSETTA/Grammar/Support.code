@@ -9874,7 +9874,15 @@ X aggressive
   // DQ (10/19/2007): Added initialization new data member added to support handing of binary AST and source code AST.
   // p_binaryFile = NULL;
 
+  // This will cause only the binary file format to be read and skipps instruction disassembly
      p_read_executable_file_format_only = false;
+
+  // DQ (11/11/2008): Added to support visualization of only parts of the AST.
+  // this will cause attributes to be added to IR nodes that will be skipped 
+  // in the generation of DOT files.  This is helpful for debugging and in 
+  // tutorial examples/presentations.
+     p_visualize_executable_file_format_skip_symbols = false;
+     p_visualize_dwarf_only = false;
 
      p_read_instructions_only = false;
 
