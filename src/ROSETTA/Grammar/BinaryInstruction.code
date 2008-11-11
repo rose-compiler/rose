@@ -1148,7 +1148,7 @@ HEADER_STRING_STORAGE_END
 HEADER_GENERIC_STRTAB_START
 	public:
 		SgAsmGenericStrtab(SgAsmGenericSection *container)
-			: p_container(container) {}
+			: p_container(container), p_dont_free(0), p_num_freed(0) {}
 		virtual ~SgAsmGenericStrtab() {}
 
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
