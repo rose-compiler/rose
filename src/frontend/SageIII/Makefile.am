@@ -132,7 +132,7 @@ include_HEADERS = \
    attach_all_info.h manglingSupport.h C++_include_files.h \
    fixupCopy.h \
    general_token_defs.h rose_paths.h rtiHelpers.h \
-   OmpAttribute.h omp.h
+   OmpAttribute.h omp.h dwarfSupport.h
 
 nodist_include_HEADERS = \
    Cxx_Grammar.h \
