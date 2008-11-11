@@ -25,20 +25,20 @@ source /home/yuan5/tmp/fresh/NIGHTLY_ROSE_Regression/scripts/rosetestrc
 ROSE_SVNROOT=file:///usr/casc/overture/ROSE/svn/ROSE/trunk/ROSE
 MAILADDRS="yuangm@gmail.com"
 
-KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes
+KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1
 
 SVNOP=checkout
 SVN=/nfs/apps/subversion/1.4.5/bin/svn
 
 CONFIGURE_FLAGS=( --with-edg_source_code=true --with-CXX_DEBUG=-g --with-C_DEBUG=-g --with-CXX_WARNINGS=-Wall --with-CXXFLAGS=-fPIC -with-CFLAGS=-fPIC --enable-ltdl-convenience --with-boost=${BOOST_ROOTX} --prefix=${ROSE_TOP}/install "$@")
 
-KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
-ENABLE_RRQM_PLUMHALL=yes
-ENABLE_RRQM_MOZILLA=yes
-#ENABLE_RRQM_PUBLISH=yes
-SKIP_DIST_TEST=yes
+KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
+ENABLE_RRQM_PLUMHALL=1
+ENABLE_RRQM_MOZILLA=1
+#ENABLE_RRQM_PUBLISH=1
+SKIP_DIST_TEST=1
 
 MAKEFLAGS="-j2"
 

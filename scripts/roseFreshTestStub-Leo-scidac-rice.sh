@@ -42,14 +42,14 @@ source /home/liao6/opt/python-2.4.5/setup.sh
 MAKEFLAGS="-j16"
 
 #Upload external svn, upload web site, not suitable for the external repository
-#ENABLE_UPLOAD_SVN=yes
-#ENABLE_UPLOAD_WEB=yes
+#ENABLE_UPLOAD_SVN=1
+#ENABLE_UPLOAD_WEB=1
 
-#KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
+#KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
 # skip make dist, make distcheck, 
 # We do want to run make dist and make distcheck for external branches.
-#SKIP_DIST_TEST=yes
+#SKIP_DIST_TEST=1
 
 #make source_with_binary_edg_dist etc, Build EDG binaries or not
 #ENABLE_BUILD_BINARY_EDG=1

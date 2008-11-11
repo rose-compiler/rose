@@ -34,15 +34,15 @@ SVNOP=checkout
 MAKEFLAGS="-j4"
 
 # my additional stuff, not suitable for the external repository
-#ENABLE_UPLOAD_SVN=yes
-#ENABLE_UPLOAD_WEB=yes
+#ENABLE_UPLOAD_SVN=1
+#ENABLE_UPLOAD_WEB=1
 
-#KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
+#KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
 # skip make dist, make distcheck, 
-#SKIP_DIST_TEST=yes
+#SKIP_DIST_TEST=1
 # end-users are not supposed to run ./build in source tree
-#SKIP_BUILD_SOURCE=yes
+#SKIP_BUILD_SOURCE=1
 #make source_with_binary_edg_dist etc
 #ENABLE_BUILD_BINARY_EDG=1
 set -e

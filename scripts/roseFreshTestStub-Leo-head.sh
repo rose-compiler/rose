@@ -41,11 +41,11 @@ MAKEFLAGS="-j16"
 ENABLE_BUILD_BINARY_EDG=1
 
 # my additional stuff
-ENABLE_UPLOAD_SVN=yes
-ENABLE_UPLOAD_WEB=yes
+ENABLE_UPLOAD_SVN=1
+ENABLE_UPLOAD_WEB=1
 
-KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
+#KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
 
 set -e
 set -o pipefail

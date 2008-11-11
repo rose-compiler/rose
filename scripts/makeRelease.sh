@@ -7,6 +7,9 @@
 # 
 # It will be called by another script: makeAndReleaseROSE.sh
 #
+# Use:
+#  ./makeRelease.sh 0.9.4a 2927 /home/liao6/daily-test-rose/release/upload/rose-0.9.4a-source-with-EDG-binary-2927.tar.gz
+#
 # by Jeremiah, 10/14/2008
 # Modified by Liao, 10.29.2008
 if [ $# -lt 3 ]

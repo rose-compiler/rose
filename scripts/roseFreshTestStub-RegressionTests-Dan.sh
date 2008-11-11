@@ -36,13 +36,13 @@ SVN=/nfs/apps/subversion/1.4.5/bin/svn
 SVNOP=checkout
 
 # Variables controling use of ROSE Regression Tests
-KEEP_TEST_DIR=yes
-NORMAL_INSTALL_DIR=yes # no chmod 000 for 'install'
-# ENABLE_RRQM=yes
-ENABLE_RRQM_PLUMHALL=yes
-ENABLE_RRQM_MOZILLA=yes
-# ENABLE_RRQM_PUBLISH=yes
-SKIP_DIST_TEST=yes
+KEEP_TEST_DIR=1
+NORMAL_INSTALL_DIR=1 # no chmod 000 for 'install'
+# ENABLE_RRQM=1
+ENABLE_RRQM_PLUMHALL=1
+ENABLE_RRQM_MOZILLA=1
+# ENABLE_RRQM_PUBLISH=1
+SKIP_DIST_TEST=1
 
 export LBL_RRQM_ROOT=dquinlan@web-dev.nersc.gov:/www/host/rosecompiler/rrqm
 source /home/dquinlan/ROSE/svn-test-rose-alt/ROSE_RegressionTests/scripts/rosetestrc
