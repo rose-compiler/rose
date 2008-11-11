@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007,2008 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.C,v 1.50 2008-10-21 13:40:40 gergo Exp $
+// $Id: CFGTraversal.C,v 1.51 2008-11-11 13:25:17 gergo Exp $
 
 #include <iostream>
 #include <string.h>
@@ -674,7 +674,7 @@ public:
     }
 
 protected:
-    void visit(SgNode *node)
+    void icfgVisit(SgNode *node)
     {
         if (isIcfgStmt(node))
         {
@@ -1890,6 +1890,7 @@ CFGTraversal::transform_block(SgStatement *ast_statement, BasicBlock *after,
 	  new_block = NULL;
 	  break;
 	}
+    new_block->call_target = Ir::createFunctionRefExp(proc->funcsym);
 	SgExpression *new_expr 
 	  = isSgExpression(Ir::deepCopy(returns->get_expression()));
 #if 0
@@ -2532,7 +2533,7 @@ IcfgTraversal::traverse(CFG *cfg)
  // We are not traversing statements yet.
     icfg_statement = false;
  // Call start hook.
-    atTraversalStart();
+    atIcfgTraversalStart();
 
  // First, we traverse expressions, not statements.
     icfg_statement = false;
@@ -2540,7 +2541,7 @@ IcfgTraversal::traverse(CFG *cfg)
     for (itr = cfg->globals_initializers.begin();
          itr != cfg->globals_initializers.end(); ++itr)
     {
-        visit(itr->second);
+        icfgVisit(itr->second);
     }
 
  // From now on, we traverse statements.
@@ -2563,23 +2564,23 @@ IcfgTraversal::traverse(CFG *cfg)
         for (stmt = (*block)->statements.begin();
              stmt != (*block)->statements.end(); ++stmt)
         {
-            visit(*stmt);
+            icfgVisit(*stmt);
             statement_index++;
         }
     }
  // We are not traversing statements anymore.
     icfg_statement = false;
  // Call end hook.
-    atTraversalEnd();
+    atIcfgTraversalEnd();
 }
 
 void
-IcfgTraversal::atTraversalStart()
+IcfgTraversal::atIcfgTraversalStart()
 {
 }
 
 void
-IcfgTraversal::atTraversalEnd()
+IcfgTraversal::atIcfgTraversalEnd()
 {
 }
 
