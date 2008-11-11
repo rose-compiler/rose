@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: CFGTraversal.h,v 1.12 2008-09-29 12:33:37 gergo Exp $
+// $Id: CFGTraversal.h,v 1.13 2008-11-11 13:25:24 gergo Exp $
 
 #ifndef H_CFGTRAVERSAL
 #define H_CFGTRAVERSAL
@@ -76,9 +76,9 @@ private:
 
 // GB (2008-04-04): This class can be used to traverse the SATIrE ICFG. The
 // design is similar to the ROSE AST traversals: You subclass this class and
-// override the visit method; if you wish, you can also override
-// atTraversalStart and atTraversalEnd. The traversal is started using the
-// traverse method. There is no support for passing attributes.
+// override the icfgVisit method; if you wish, you can also override
+// atIcfgTraversalStart and atIcfgTraversalEnd. The traversal is started
+// using the traverse method. There is no support for passing attributes.
 // Right now, this traversal proceeds as follows:
 //  - visit each initializer expression for global variables in no
 //    particular order
@@ -98,9 +98,9 @@ public:
 
 protected:
  // This mirrors the ROSE AST traversal interface.
-    virtual void atTraversalStart();
-    virtual void visit(SgNode *node) = 0;
-    virtual void atTraversalEnd();
+    virtual void atIcfgTraversalStart();
+    virtual void icfgVisit(SgNode *node) = 0;
+    virtual void atIcfgTraversalEnd();
 
  // This method can be called from within the traversal to get a pointer to
  // the ICFG being traversed.
