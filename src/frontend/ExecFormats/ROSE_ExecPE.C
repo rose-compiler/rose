@@ -1252,17 +1252,19 @@ SgAsmPEImportLookupTable::add_ilt_entry(SgAsmPEImportILTEntry *ilt_entry)
 void
 SgAsmPEImportLookupTable::unparse(std::ostream &f, SgAsmPEFileHeader *fhdr, rva_t rva)
 {
-    const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
-    for (size_t i=0; i<p_entries->get_vector().size(); i++) {
-        SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
-        ilt_entry->unparse(f, fhdr, rva, i);
-    }
+    if (rva!=0) {
+        const char *tname = p_is_iat ? "Import Address Table" : "Import Lookup Table";
+        for (size_t i=0; i<p_entries->get_vector().size(); i++) {
+            SgAsmPEImportILTEntry *ilt_entry = p_entries->get_vector()[i];
+            ilt_entry->unparse(f, fhdr, rva, i);
+        }
 
-    /* Zero terminated */
-    uint64_t zero = 0;
-    ROSE_ASSERT(fhdr->get_word_size()<=sizeof zero);
-    addr_t spos = rva.get_rel() + p_entries->get_vector().size() * fhdr->get_word_size();
-    rva.get_section()->write(f, spos, fhdr->get_word_size(), &zero);
+        /* Zero terminated */
+        uint64_t zero = 0;
+        ROSE_ASSERT(fhdr->get_word_size()<=sizeof zero);
+        addr_t spos = rva.get_rel() + p_entries->get_vector().size() * fhdr->get_word_size();
+        rva.get_section()->write(f, spos, fhdr->get_word_size(), &zero);
+    }
 }
 
 /* Print some debugging info for an Import Lookup Table or Import Address Table */
