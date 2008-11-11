@@ -1,11 +1,12 @@
 \chapter{Dwarf Debug Support}
 
 This chapter presents the support in ROSE for Dwarf debug information; its 
-represnetation in the AST and its use in binary analysis tools.
+representation in the AST and its use in binary analysis tools.
 
 In the following sections we use a small example (see figure \ref{Tutorial:dwarfAnalysisExampleSourceCode}) 
 that demonstrates various features of Dwarf. The source code of our binary example is:
 
+\commentout{
 \begin{figure}[!h]
 {\indent
 {\mySmallFontSize
@@ -27,8 +28,32 @@ that demonstrates various features of Dwarf. The source code of our binary examp
 \caption{Example source code (typical for reading in a binary or source file).}
 \label{Tutorial:dwarfAnalysisExampleSourceCode}
 \end{figure}
+}
 
-Much larger binaries can be analized, but such larger binary executables are more
+\begin{figure}[!h]
+{\indent
+{\mySmallFontSize
+
+% Do this when processing latex to generate non-html (not using latex2html)
+\begin{latexonly}
+   \lstinputlisting{\TutorialExampleDirectory/inputCode_dwarfAnalysis.C}
+\end{latexonly}
+
+% Do this when processing latex to build html (using latex2html)
+\begin{htmlonly}
+   \verbatiminput{\TutorialExampleDirectory/inputCode_dwarfAnalysis.C}
+\end{htmlonly}
+
+% end of scope in font size
+}
+% End of scope in indentation
+}
+\caption{Example source code used to generate Dwarf AST for analysis.}
+\label{Tutorial:dwarfAnalysisExampleSourceCode}
+\end{figure}
+
+
+Much larger binaries can be analyzed, but such larger binary executables are more
 difficult to present (in this tutorial).
 
 
@@ -39,7 +64,9 @@ information in the binary executable.  Figure \ref{Tutorial:Dwarf_AST_example}
 shows the subset of that AST (which includes the rest of the binary file format
 and the disassembled instructions) that is specific to Dwarf.  A command line option
 ({\em -rose:visualize\_dwarf\_only}) is used to restrict the generated dot file 
-visualization to just the Dwarf infomation.
+visualization to just the Dwarf information. This option is used in combination with 
+{\em -rose:read\_executable\_file\_format\_only} to process only the binary file format
+(thus skipping the instruction disassembly).
 
 \begin{figure}[h]
 {\indent
@@ -72,7 +99,7 @@ visualization to just the Dwarf infomation.
 source lines and the instruction addresses at a statement level
 (provided in the {\em .debug\_line} section).
 Even though Dwarf does not represent all statements in the source
-code, the mapping is significantly finer grainularity than that
+code, the mapping is significantly finer granularity than that
 provided at only the function level by the symbol table (which
 identifies the functions by instruction address, but not the 
 source file line numbers; the later requires source code analysis).
@@ -107,7 +134,7 @@ shows the mapping between the source code lines and the instruction addresses.
 
 Output from the compilation of this test code and running it with the example input
 results in the output shown in figure \ref{Tutorial:dwarfInstructionAddressToSourceLineExampleOutput}.
-This output shows the binary exectuables instruction address range (binary compiled on
+This output shows the binary executables instruction address range (binary compiled on
 Linux x86 system), the range of lines of source code used by the binary executable,
 the mapping of a source code range of line numbers to the instruction addresses,
 and the mapping of a range of instruction addresses to the source code line numbers.
