@@ -2872,6 +2872,90 @@ SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
     p_name = s;
 }
 
+std::string
+SgAsmGenericSymbol::stringifyDefState() const
+{
+    std::string s;
+    switch (p_def_state) {
+      case SYM_UNDEFINED: 
+        s = "SYM_UNDEFINED";
+        break;
+      case SYM_TENTATIVE: 
+        s = "SYM_TENTATIVE";
+        break;
+      case SYM_DEFINED:
+        s = "SYM_DEFINED";
+        break;
+      default:
+        printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+        ROSE_ASSERT(false);
+    }
+    return s;
+}
+
+std::string
+SgAsmGenericSymbol::stringifyType() const
+{
+    std::string s;
+    switch (p_type) {
+      case SYM_NO_TYPE: 
+        s = "SYM_NO_TYPE";
+        break;
+      case SYM_DATA: 
+        s = "SYM_DATA";
+        break;
+      case SYM_FUNC:
+        s = "SYM_FUNC";
+        break;
+      case SYM_SECTION:
+        s = "SYM_SECTION";
+        break;
+      case SYM_FILE:
+        s = "SYM_FILE";
+        break;
+      case SYM_ARRAY:
+        s = "SYM_ARRAY";
+        break;
+      case SYM_TLS:
+        s = "SYM_TLS";
+        break;
+      case SYM_REGISTER:
+        s = "SYM_REGISTER";
+        break;
+      case SYM_COMMON:
+        s = "SYM_COMMON";
+        break;
+      default:
+        printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+        ROSE_ASSERT(false);
+    }
+    return s;
+}
+
+std::string
+SgAsmGenericSymbol::stringifyBinding() const
+{
+    std::string s;
+    switch (p_binding) {
+      case SYM_NO_BINDING: 
+        s = "SYM_NO_BINDING";
+        break;
+      case SYM_LOCAL: 
+        s = "SYM_LOCAL";
+        break;
+      case SYM_GLOBAL:
+        s = "SYM_GLOBAL";
+        break;
+      case SYM_WEAK:
+        s = "SYM_WEAK";
+        break;
+      default:
+        printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
+        ROSE_ASSERT(false);
+    }
+    return s;
+}
+
 /* Print some debugging info */
 void
 SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) 

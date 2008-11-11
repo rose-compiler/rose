@@ -69,6 +69,7 @@ SgAsmElfFileHeader::ctor(SgAsmGenericFile *f, addr_t offset)
     }
     ROSE_ASSERT(p_exec_format != NULL);
     p_exec_format->set_sex(sex);
+    p_e_ident_data_encoding = disk32.e_ident_data_encoding; /*save original value*/
 
     /* Decode header to native format */
     addr_t entry_rva;
@@ -304,8 +305,19 @@ SgAsmElfFileHeader::encode(ByteOrder sex, Elf32FileHeader_disk *disk)
     }
     host_to_disk(sex, ident_file_class, &(disk->e_ident_file_class));
 
-    unsigned data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    /* Byte order. According to the spec, valid values are 1 (little-endian) and 2 (big-endian). However, we've seen cases
+     * where a value of zero is used to indicate "native" order (loader assumes words are in the order of the machine on which
+     * the loader is running, and the ROSE ELF parser determines the order by looking at other fields in the header). Any
+     * original value other than 1 or 2 will be written to the new output; otherwise we choose 1 or 2 based on the currently
+     * defined byte order. */
+    unsigned data_encoding;
+    if (p_e_ident_data_encoding==1 || p_e_ident_data_encoding==2) {
+        data_encoding = ORDER_LSB==get_sex() ? 1 : 2;
+    } else {
+        data_encoding = p_e_ident_data_encoding;
+    }
     host_to_disk(sex, data_encoding, &(disk->e_ident_data_encoding));
+
     host_to_disk(sex, p_e_ident_file_version,  &(disk->e_ident_file_version));
     ROSE_ASSERT(p_e_ident_padding.size() == NELMTS(disk->e_ident_padding));
     for (size_t i=0; i<NELMTS(disk->e_ident_padding); i++)
@@ -2292,6 +2304,8 @@ SgAsmElfSymbol::ctor_common()
       case STT_FUNC:    p_type = SYM_FUNC;    break;
       case STT_SECTION: p_type = SYM_SECTION; break;
       case STT_FILE:    p_type = SYM_FILE;    break;
+      case STT_COMMON:  p_type = SYM_COMMON;  break;
+      case STT_TLS:     p_type = SYM_TLS;     break;
       default:
         fprintf(stderr, "ROBB: unknown elf symbol type: %u\n", get_elf_type());
         ROSE_ASSERT(0);

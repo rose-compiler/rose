@@ -1022,55 +1022,51 @@ HEADER_GENERIC_DLL_END
 HEADER_GENERIC_DLL_LIST_START
 HEADER_GENERIC_DLL_LIST_END
 
+
+
 HEADER_GENERIC_SYMBOL_START
+	public:
+		enum SymbolDefState {
+			SYM_UNDEFINED,		/* Symbol has not been defined yet */
+			SYM_TENTATIVE,          /* Does not have size/value yet (uninitialized C or Fortran common blks) */
+			SYM_DEFINED             /* Created and assigned storage */
+		};
 
-     public:
-          enum SymbolDefState {
-              SYM_UNDEFINED,                                      /* Symbol has not been defined yet */
-              SYM_TENTATIVE,                                      /* Does not have size/value yet (uninitialized C or Fortran common blks) */
-              SYM_DEFINED                                         /* Created and assigned storage */
-          };
+		enum SymbolType {
+			SYM_NO_TYPE,            /* No type or type is unknown */
+			SYM_DATA,               /* Normal variable definitions */
+			SYM_FUNC,               /* Function or other code */
+			SYM_SECTION,            /* Section of a file */
+			SYM_FILE,               /* Name of a file */
+			SYM_ARRAY,              /* Array of some other type */
+			SYM_TLS,                /* Thread-local storage */
+			SYM_REGISTER,           /* CPU register value (see Sparc) */
+			SYM_COMMON		/* Common block */
+		};
 
-          enum SymbolType {
-              SYM_NO_TYPE,                                        /* No type or type is unknown */
-              SYM_DATA,                                           /* Normal variable definitions */
-              SYM_FUNC,                                           /* Function */
-              SYM_SECTION,                                        /* Section of a file */
-              SYM_FILE,                                           /* Name of a file */
-              SYM_ARRAY,                                          /* Array of some other type */
-              SYM_TLS,                                            /* Thread-local storage */
-              SYM_REGISTER                                        /* CPU register value (see Sparc) */
-          };
+		enum SymbolBinding {
+			SYM_NO_BINDING,         /* Unknown binding */
+			SYM_LOCAL,
+			SYM_GLOBAL,
+			SYM_WEAK
+		};
 
-          enum SymbolBinding {
-              SYM_NO_BINDING,                                     /* Unknown binding */
-              SYM_LOCAL,
-              SYM_GLOBAL,
-              SYM_WEAK
-          };
+		SgAsmGenericSymbol(SgAsmGenericString *name)
+			: p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
+			p_bound(NULL), p_name(NULL)
+			{set_name(name);}
 
-	  // Rosetta-generated version doesn't set the name
-          //SgAsmGenericSymbol()
-	  //    : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
-          //      p_bound(NULL), p_name(NULL)
-	  //    {set_name(new SgAsmBasicString(""));}
-          SgAsmGenericSymbol(SgAsmGenericString *name)
-	      : p_def_state(SYM_UNDEFINED), p_binding(SYM_NO_BINDING), p_type(SYM_NO_TYPE), p_value(0), p_size(0),
-	        p_bound(NULL), p_name(NULL)
-	        {set_name(name);}
-          //virtual ~SgAsmGenericSymbol() {}
+		virtual void dump(FILE*, const char *prefix, ssize_t idx);
+		std::string stringifyDefState() const;
+		std::string stringifyType() const;
+		std::string stringifyBinding() const;
 
-          virtual void dump(FILE*, const char *prefix, ssize_t idx);
-
-          std::string stringifyDefState() const;
-          std::string stringifyType() const;
-          std::string stringifyBinding() const;
-
-       // Accessors
-          SgAsmGenericString *get_name() const; // same as ROSETTA-generated version
-          void set_name(SgAsmGenericString *s); // also sets s.parent
-
+		// Accessors
+		SgAsmGenericString *get_name() const; // same as ROSETTA-generated version
+		void set_name(SgAsmGenericString *s); // also sets s.parent
 HEADER_GENERIC_SYMBOL_END
+
+
 
 HEADER_GENERIC_SYMBOL_LIST_START
 HEADER_GENERIC_SYMBOL_LIST_END
@@ -1712,11 +1708,13 @@ HEADER_ELF_SYMBOL_START
 		};
 
 		enum ElfSymType {
-			STT_NOTYPE  = 0,
-			STT_OBJECT  = 1,
-			STT_FUNC    = 2,
-			STT_SECTION = 3,
-			STT_FILE    = 4
+			STT_NOTYPE  	= 0,	/* unspecified type */
+			STT_OBJECT  	= 1,	/* data object */
+			STT_FUNC    	= 2,	/* code object */
+			STT_SECTION 	= 3,	/* associated with a section */
+			STT_FILE    	= 4,	/* name of a file */
+			STT_COMMON  	= 5,	/* common data object */
+			STT_TLS		= 6	/* thread-local data object */
 		};
 
 		struct Elf32SymbolEntry_disk {
@@ -4148,145 +4146,6 @@ SOURCE_GENERIC_ARCHITECTURE_START
 SOURCE_GENERIC_ARCHITECTURE_END
 
 SOURCE_GENERIC_SYMBOL_START
-
-std::string
-SgAsmGenericSymbol::stringifyDefState() const
-   {
-     std::string s;
-     switch (p_def_state)
-        {
-          case SYM_UNDEFINED: 
-             {
-               s = "SYM_UNDEFINED";
-               break;
-             }
-
-          case SYM_TENTATIVE: 
-             {
-               s = "SYM_TENTATIVE";
-               break;
-             }
-
-          case SYM_DEFINED:
-             {
-               s = "SYM_DEFINED";
-               break;
-             }
-
-          default:
-             {
-               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
-               ROSE_ASSERT(false);
-             }
-        }
-
-     return s;
-   }
-
-std::string
-SgAsmGenericSymbol::stringifyType() const
-   {
-     std::string s;
-     switch (p_type)
-        {
-          case SYM_NO_TYPE: 
-             {
-               s = "SYM_NO_TYPE";
-               break;
-             }
-
-          case SYM_DATA: 
-             {
-               s = "SYM_DATA";
-               break;
-             }
-
-          case SYM_FUNC:
-             {
-               s = "SYM_FUNC";
-               break;
-             }
-
-          case SYM_SECTION:
-             {
-               s = "SYM_SECTION";
-               break;
-             }
-
-          case SYM_FILE:
-             {
-               s = "SYM_FILE";
-               break;
-             }
-
-          case SYM_ARRAY:
-             {
-               s = "SYM_ARRAY";
-               break;
-             }
-
-          case SYM_TLS:
-             {
-               s = "SYM_TLS";
-               break;
-             }
-
-          case SYM_REGISTER:
-             {
-               s = "SYM_REGISTER";
-               break;
-             }
-
-          default:
-             {
-               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
-               ROSE_ASSERT(false);
-             }
-        }
-
-     return s;
-   }
-
-std::string
-SgAsmGenericSymbol::stringifyBinding() const
-   {
-     std::string s;
-     switch (p_binding)
-        {
-          case SYM_NO_BINDING: 
-             {
-               s = "SYM_NO_BINDING";
-               break;
-             }
-
-          case SYM_LOCAL: 
-             {
-               s = "SYM_LOCAL";
-               break;
-             }
-
-          case SYM_GLOBAL:
-             {
-               s = "SYM_GLOBAL";
-               break;
-             }
-
-          case SYM_WEAK:
-             {
-               s = "SYM_WEAK";
-               break;
-             }
-
-          default:
-             {
-               printf ("Error: (out of range) p_def_state = %d \n",p_def_state);
-               ROSE_ASSERT(false);
-             }
-        }
-
-     return s;
-   }
-
 SOURCE_GENERIC_SYMBOL_END
 
 SOURCE_GENERIC_SYMBOL_LIST_START
