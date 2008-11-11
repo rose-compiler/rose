@@ -1609,7 +1609,7 @@ SgAsmGenericFile::unfill_holes()
 void
 SgAsmGenericFile::unparse(std::ostream &f)
 {
-#if 1
+#if 0
     /* This is only for debugging -- fill the file with something other than zero so we have a better chance of making sure
      * that all data is written back to the file, including things that are zero. */
     addr_t remaining = get_current_size();
@@ -2996,6 +2996,7 @@ SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx)
       case SYM_TLS:      s_type = "thread";   break;
       case SYM_REGISTER: s_type = "register"; break;
       case SYM_ARRAY:    s_type = "array";    break;
+      case SYM_COMMON:   s_type = "common";   break;
     }
     fprintf(f, "%s%-*s = %s\n", p, w, "type", s_type);
     if (p_bound) {
