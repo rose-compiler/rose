@@ -2926,7 +2926,7 @@ FileIdLineColumnFilePosition
 SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
    {
   // Set to default value
-     FileIdLineColumnFilePosition sourcePosition(0,pair<int,int>(0,0));
+     FileIdLineColumnFilePosition sourcePosition(0,std::pair<int,int>(0,0));
 
      std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
      if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) )
@@ -2934,7 +2934,7 @@ SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
        // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
 
        // Set to error value
-          sourcePosition = FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
+          sourcePosition = FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
         }
        else
         {
@@ -2956,7 +2956,7 @@ SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
 #endif
         }
 
-  // return FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
+  // return FileIdLineColumnFilePosition(-1,std::pair<int,int>(-1,-1));
      return sourcePosition;
    }
 
@@ -3001,15 +3001,15 @@ SgAsmDwarfLineList::display( const string & label )
 
 
      printf ("\n\nTest sourceCodeToAddress: \n");
-     FileIdLineColumnFilePosition s1(2,pair<int,int>(10,-1));
+     FileIdLineColumnFilePosition s1(2,std::pair<int,int>(10,-1));
      uint64_t instructionAddress1 = sourceCodeToAddress(s1);
      printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s1.first,s1.second.first,s1.second.second,instructionAddress1);
 
-     FileIdLineColumnFilePosition s2(2,pair<int,int>(11,-1));
+     FileIdLineColumnFilePosition s2(2,std::pair<int,int>(11,-1));
      uint64_t instructionAddress2 = sourceCodeToAddress(s2);
      printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
 
-     FileIdLineColumnFilePosition s3(1,pair<int,int>(11,-1));
+     FileIdLineColumnFilePosition s3(1,std::pair<int,int>(11,-1));
      uint64_t instructionAddress3 = sourceCodeToAddress(s3);
      printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
 
@@ -3019,7 +3019,7 @@ SgAsmDwarfLineList::display( const string & label )
              {
                for (int columnNumber = -2; columnNumber < 1; columnNumber++)
                   {
-                    FileIdLineColumnFilePosition s(fileNumber,pair<int,int>(lineNumber,columnNumber));
+                    FileIdLineColumnFilePosition s(fileNumber,std::pair<int,int>(lineNumber,columnNumber));
                     uint64_t instructionAddress = sourceCodeToAddress(s);
                     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s.first,s.second.first,s.second.second,instructionAddress);
                   }
