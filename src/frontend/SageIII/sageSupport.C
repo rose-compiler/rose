@@ -1338,19 +1338,28 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
-  //
      if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only)",true) == true )
         {
        // printf ("option -rose:read_executable_file_format_only found \n");
           set_read_executable_file_format_only(true);
         }
 
-  // DQ (11/9/2008): parse binary executable file format only omit the symbols since there can be thousands of them.
-  //
-     if ( CommandlineProcessing::isOption(argv,"-rose:","(read_executable_file_format_only_skip_symbols)",true) == true )
+  // DQ (11/11/2008): parse binary executable file format only and add attributes to the symbols so that 
+  // they will not be output in the generation of DOT files.  They will still be present for all other 
+  // forms of analysis.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(visualize_executable_file_format_skip_symbols)",true) == true )
         {
-       // printf ("option -rose:read_executable_file_format_only_skip_symbols found \n");
-          set_read_executable_file_format_only_skip_symbols(true);
+       // printf ("option -rose:visualize_executable_file_format_skip_symbols found \n");
+          set_visualize_executable_file_format_skip_symbols(true);
+        }
+
+  // DQ (11/11/2008): parse binary executable file format only and add attributes to the symbols and most 
+  // other binary file format IR nodes so that they will not be output in the generation of DOT files.  
+  // They will still be present for all other forms of analysis.
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(visualize_dwarf_only)",true) == true )
+        {
+       // printf ("option -rose:visualize_dwarf_only found \n");
+          set_visualize_dwarf_only(true);
         }
 
   // DQ (9/2/2008): This is now set in the new SgBinaryFile IR node.
@@ -1646,7 +1655,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string>& argv )
   // DQ (8/16/2008): parse binary executable file format only (some uses of ROSE may only do analysis of 
   // the binary executable file format and not the instructions).  This is also useful for testing.
      optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only)",1);
-     optionCount = sla(argv, "-rose:", "($)", "(read_executable_file_format_only_skip_symbols)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(visualize_executable_file_format_skip_symbols)",1);
+     optionCount = sla(argv, "-rose:", "($)", "(visualize_dwarf_only)",1);
 
   // DQ (8/26/2007): Disassembly support from segments (true) instead of sections (false, default).
      optionCount = sla(argv, "-rose:", "($)", "(aggressive)",1);
@@ -6004,299 +6014,3 @@ SgModuleStatement::get_interfaces() const
      return  returnList;
    }
 
-std::pair<uint64_t,uint64_t>
-SgAsmDwarfLineList::instructionRange()
-   {
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-
-     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
-
-     SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.begin();
-     SgInstructionAddressSourcePositionMapPtrList::reverse_iterator upperBound = instruction_source_code_map.rbegin();
-
-     return std::pair<uint64_t,uint64_t>(lowerBound->first,upperBound->first);
-   }
- 
-std::pair<LineColumnFilePosition,LineColumnFilePosition>
-SgAsmDwarfLineList::sourceCodeRange( int file_id )
-   {
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
-
-     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.begin();
-     SgSourcePositionInstructionAddressMapPtrList::reverse_iterator upperBound = source_code_instruction_map.rbegin();
-
-  // Find the first source position in the file specified by the input file_id
-     while ( (lowerBound != source_code_instruction_map.end()) && (lowerBound->first.first != file_id) )
-        {
-          lowerBound++;
-        }
-
-     while ( (upperBound != source_code_instruction_map.rend()) && (upperBound->first.first != file_id) )
-        {
-          upperBound++;
-        }
-
-     LineColumnFilePosition start(lowerBound->first.second);
-     LineColumnFilePosition end(upperBound->first.second);
-
-  // Check if this was a case of there not being any entries for this file
-     if (lowerBound == source_code_instruction_map.end())
-        {
-          ROSE_ASSERT(upperBound == source_code_instruction_map.rend());
-          printf ("lowerBound == source_code_instruction_map.end() --- no entries for file %d \n",file_id);
-
-       // Reset the line and column information to indicate that there were no entries.
-          start = LineColumnFilePosition(std::pair<int,int>(-1,-1));
-          end = LineColumnFilePosition(std::pair<int,int>(-1,-1));
-        }
-
-     return std::pair<LineColumnFilePosition,LineColumnFilePosition>(start,end);
-   }
- 
-
-uint64_t
-SgAsmDwarfLineList::sourceCodeToAddress ( FileIdLineColumnFilePosition sourcePosition )
-   {
-  // Return the nearest address for the source code position
-     int file_id = sourcePosition.first;
-  // int line    = sourcePosition.second.first;
-  // int column  = sourcePosition.second.second;
-
-     uint64_t returnAddress = NULL;
-
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
-
-     SgSourcePositionInstructionAddressMapPtrList::iterator lowerBound = source_code_instruction_map.lower_bound(sourcePosition);
-     SgSourcePositionInstructionAddressMapPtrList::iterator upperBound = source_code_instruction_map.upper_bound(sourcePosition);
-     
-     returnAddress = lowerBound->second;
-
-     if (lowerBound == source_code_instruction_map.begin())
-        {
-       // printf ("lowerBound == source_code_instruction_map.begin() \n");
-          if (lowerBound->first.first != file_id)
-             {
-            // printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
-               returnAddress = NULL;
-             }
-        }
-
-     if (lowerBound == source_code_instruction_map.end())
-        {
-       // printf ("lowerBound == source_code_instruction_map.end() \n");
-#if 0
-          if (lowerBound->first.first != file_id)
-             {
-               printf ("This source position is not from a valide file in the map: file_id = %d lowerBound->first = %d \n",file_id,lowerBound->first.first);
-               returnAddress = NULL;
-             }
-            else
-             {
-               returnAddress = NULL;
-             }
-#else
-          returnAddress = NULL;
-#endif
-        }
-#if 0
-  // I think this is redundant code
-     if (upperBound == source_code_instruction_map.end())
-        {
-       // printf ("upperBound == source_code_instruction_map.end() \n");
-          returnAddress = NULL;
-        }
-#endif
-
-     return returnAddress;
-   }
-
-FileIdLineColumnFilePosition
-SgAsmDwarfLineList::addressToSourceCode ( uint64_t address )
-   {
-  // Set to default value
-     FileIdLineColumnFilePosition sourcePosition(0,pair<int,int>(0,0));
-
-     std::pair<uint64_t,uint64_t> validInstructionRange = instructionRange();
-     if ( (address < validInstructionRange.first) || (address > validInstructionRange.second) )
-        {
-       // printf ("Address out of range: address = 0x%lx  range (0x%lx, 0x%lx) \n",address,validInstructionRange.first,validInstructionRange.second);
-
-       // Set to error value
-          sourcePosition = FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
-        }
-       else
-        {
-          DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-          SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
-
-          SgInstructionAddressSourcePositionMapPtrList::iterator lowerBound = instruction_source_code_map.lower_bound(address);
-
-       // Set the the lower bound found in the map
-          sourcePosition = lowerBound->second;
-
-#if 0
-          int file_id = sourcePosition.first;
-          int line    = sourcePosition.second.first;
-          int column  = sourcePosition.second.second;
-          string filename = Sg_File_Info::getFilenameFromID(file_id);
-
-       // printf ("address = 0x%lx maps to source position (file = %d = %s, line = %d, column = %d) \n",address,file_id,filename.c_str(),line,column);
-#endif
-        }
-
-  // return FileIdLineColumnFilePosition(-1,pair<int,int>(-1,-1));
-     return sourcePosition;
-   }
-
-
-void
-SgAsmDwarfLineList::display( const string & label )
-   {
-  // Note that once the maps are setup NULL is an acceptable value (perhaps it should be the default parameter!)
-     DwarfInstructionSourceMapReturnType maps = buildInstructionAddressSourcePositionMaps();
-
-  // Output the SgInstructionAddressSourcePositionMapPtrList map so the we can test the linear ordering of the addresses.
-     SgInstructionAddressSourcePositionMapPtrList & instruction_source_code_map = *(maps.first);
-     SgSourcePositionInstructionAddressMapPtrList & source_code_instruction_map = *(maps.second);
-
-     std::pair<uint64_t,uint64_t> addressRange = instructionRange();
-     printf ("addressRange = (0x%lx, 0x%lx) \n",addressRange.first,addressRange.second);
-
-  // Iterate over all the files in the static Sg_File_Info::get_fileidtoname_map
-  // int numberOfSourceFiles = Sg_File_Info::get_fileidtoname_map().size();
-     int numberOfSourceFiles = Sg_File_Info::numberOfSourceFiles();
-     printf ("numberOfSourceFiles = %d \n",numberOfSourceFiles);
-
-  // DQ: I think that the initial value is 1 not 0!
-     for (int i=1; i < numberOfSourceFiles; i++)
-        {
-          std::pair<LineColumnFilePosition,LineColumnFilePosition> sourceFileRange = sourceCodeRange( i );
-
-          std::string filename = Sg_File_Info::getFilenameFromID(i);
-
-          if ( (sourceFileRange.first.first < 0) && (sourceFileRange.second.first < 0) )
-             {
-               printf ("This file_id = %d is not a valid source file: filename = %s \n",i,filename.c_str());
-             }
-            else
-             {
-               printf ("Source range for file = %s (id = %d) [(line=%d, col=%d), (line=%d, col=%d)] \n",
-                    filename.c_str(),i,
-                    sourceFileRange.first.first, sourceFileRange.first.second, 
-                    sourceFileRange.second.first, sourceFileRange.second.second);
-             }
-        }
-
-
-     printf ("\n\nTest sourceCodeToAddress: \n");
-     FileIdLineColumnFilePosition s1(2,pair<int,int>(10,-1));
-     uint64_t instructionAddress1 = sourceCodeToAddress(s1);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s1.first,s1.second.first,s1.second.second,instructionAddress1);
-
-     FileIdLineColumnFilePosition s2(2,pair<int,int>(11,-1));
-     uint64_t instructionAddress2 = sourceCodeToAddress(s2);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s2.first,s2.second.first,s2.second.second,instructionAddress2);
-
-     FileIdLineColumnFilePosition s3(1,pair<int,int>(11,-1));
-     uint64_t instructionAddress3 = sourceCodeToAddress(s3);
-     printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s3.first,s3.second.first,s3.second.second,instructionAddress3);
-
-     for (int fileNumber = 1; fileNumber < 4; fileNumber++)
-        {
-          for (int lineNumber = -2; lineNumber < 35; lineNumber++)
-             {
-               for (int columnNumber = -2; columnNumber < 1; columnNumber++)
-                  {
-                    FileIdLineColumnFilePosition s(fileNumber,pair<int,int>(lineNumber,columnNumber));
-                    uint64_t instructionAddress = sourceCodeToAddress(s);
-                    printf ("sourceCodeToAddress(%d,%d,%d) = 0x%lx \n",s.first,s.second.first,s.second.second,instructionAddress);
-                  }
-             }
-        }
-
-     printf ("\n\nTest addressToSourceCode: (not tested yet) \n");
-
-     FileIdLineColumnFilePosition s1map = addressToSourceCode(instructionAddress1);
-     printf ("addressToSourceCode: address 0x%lx = (%d,%d,%d) \n",instructionAddress1,s1map.first,s1map.second.first,s1map.second.second);
-
-     for (uint64_t address = instructionAddress1-15; address < instructionAddress1+ 85; address++)
-        {
-          FileIdLineColumnFilePosition s_map = addressToSourceCode(address);
-          printf ("addressToSourceCode: address 0x%lx = (%d,%d,%d) \n",address,s_map.first,s_map.second.first,s_map.second.second);
-        }
-
-     printf ("\nOutput entries in instruction_source_code_map \n");
-     SgInstructionAddressSourcePositionMapPtrList::iterator it1 = instruction_source_code_map.begin();
-     while ( it1 != instruction_source_code_map.end() )
-        {
-          uint64_t address = it1->first;
-
-       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
-       //    "it->second.first, it->second.second.first, it->second.second.second"
-       // for the last three terms.
-          int file_id = it1->second.first;
-          int line    = it1->second.second.first;
-          int column  = it1->second.second.second;
-
-          printf ("instruction_source_code_map[0x%lx] = (file=%d, line=%d, col=%d) \n",address, file_id, line, column);
-
-       // A test of the evaluation of ranges of lines for each instruction
-          SgInstructionAddressSourcePositionMapPtrList::iterator it1_lb = instruction_source_code_map.lower_bound(address);
-          SgInstructionAddressSourcePositionMapPtrList::iterator it1_ub = instruction_source_code_map.upper_bound(address);
-
-          if (it1_lb != it1_ub)
-             {
-               if (it1_ub != instruction_source_code_map.end())
-                  {
-                    printf ("   ----- range = [(file=%d, line=%d, col=%d), (file=%d, line=%d, col=%d)) \n",
-                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second,
-                         it1_ub->second.first, it1_ub->second.second.first, it1_ub->second.second.second);
-                  }
-                 else
-                  {
-                    printf ("   ----- range = [(file=%d, line=%d, col=%d), last_source_position) \n",
-                         it1_lb->second.first, it1_lb->second.second.first, it1_lb->second.second.second);
-                  }
-             }
-
-          it1++;
-        }
-
-     printf ("\nOutput entries in source_code_instruction_map \n");
-     SgSourcePositionInstructionAddressMapPtrList::iterator it2 = source_code_instruction_map.begin();
-     while ( it2 != source_code_instruction_map.end() )
-        {
-          uint64_t address = it2->second;
-
-       // This is a std::map<uint64_t,std::pair<int,std::pair<int,int> > >, so we get
-       //    "it->second.first, it->second.second.first, it->second.second.second"
-       // for the last three terms.
-          int file_id = it2->first.first;
-          int line    = it2->first.second.first;
-          int column  = it2->first.second.second;
-
-          printf ("source_code_instruction_map[file=%d, line=%d, col=%d] = 0x%lx \n",file_id, line, column, address);
-
-       // A test of the evaluation of ranges of instructions for each line of source code.
-          FileIdLineColumnFilePosition file_info(file_id,std::pair<int,int>(line,column));
-          SgSourcePositionInstructionAddressMapPtrList::iterator it2_lb = source_code_instruction_map.lower_bound(file_info);
-          SgSourcePositionInstructionAddressMapPtrList::iterator it2_ub = source_code_instruction_map.upper_bound(file_info);
-
-          if (it2_lb != it2_ub)
-             {
-               if (it2_ub != source_code_instruction_map.end())
-                  {
-                    printf ("   ----- range = [0x%lx, 0x%lx) \n",it2_lb->second,it2_ub->second);
-                  }
-                 else
-                  {
-                    printf ("   ----- range = [0x%lx, last_instruction) \n",it2_lb->second);
-                  }
-             }
-
-          it2++;
-        }
-   }
