@@ -37,15 +37,6 @@ public:
 
 #endif
 
-EXTERN_C FLO_BOOL o_varid_has_location(void *vp);
-EXTERN_C void *o_varid_location(void *vp);
-EXTERN_C FLO_BOOL o_exprid_has_location(void *ep);
-EXTERN_C void *o_exprid_location(void *ep);
-EXTERN_C void *o_location_varsyms(void *lp);
-EXTERN_C FLO_BOOL o_may_be_aliased(void *lp);
-EXTERN_C FLO_BOOL o_is_ptr_location(void *lp);
-EXTERN_C void *o_dereference(void *lp);
-
 typedef void *o_Location;
 
 #define o_Location_mark_self(x)  \

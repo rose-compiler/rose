@@ -184,19 +184,7 @@ PointsToAnalysis::Implementation::evaluateSynthesizedAttribute(
             {
              // The global return variable: Look up the call target's return
              // location.
-             // a = expressionLocation(icfgNode->call_target);
-             // result = a->baseLocation()->return_location;
-             // The above lookup only works when invoked during an ICFG
-             // traversal, but not when this method is invoked via the PAG
-             // support function exprid_location. So we had to move to an
-             // attribute-based solution as for the local return variables.
-             // Which means that this case and the next should be merged as
-             // soon as this is debugged.
-                CallAttribute *ca;
-                assert(varRef->attributeExists("SATIrE: call target"));
-                ca = (CallAttribute *) varRef->getAttribute(
-                                               "SATIrE: call target");
-                a = expressionLocation(ca->call_target);
+                a = expressionLocation(icfgNode->call_target);
                 result = a->baseLocation()->return_location;
             }
             else if (varRef->attributeExists("SATIrE: call target"))
@@ -1317,8 +1305,6 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
     Location *a, *b;
     SynthesizedAttributesList::iterator syn;
     std::vector<Location *>::iterator s, t;
-    SgFunctionSymbol *funcSym;
-    SgExpression *funcExpr;
  // Access to the current ICFG node. Note that we also traverse some stuff
  // that is not within ICFG nodes, such as global initializers. So this
  // requires some care.
@@ -1351,22 +1337,7 @@ PointsToAnalysis::Implementation::handleIcfgStatement(
      // for ArgumentAssignment etc.
     case V_FunctionCall:
     case V_ExternalCall:
-     // Determine the enclosing function's symbol, the call target
-     // expression, and the corresponding location.
-        funcSym = (*icfgTraversal->get_icfg()->procedures)[icfgNode->procnum]
-                                                          ->funcsym;
-        funcExpr = icfgNode->call_target;
-        a = expressionLocation(funcExpr);
-     // Store the information in the maps, and we're done!
-        info->callGraph.callSiteExpressionMap[funcSym].push_back(funcExpr);
-        info->callLocationMap[funcExpr] = a->baseLocation();
-#if VERBOSE_DEBUG
-        std::cout
-            << "in function " << Utils::name(funcSym) << ": "
-            << "recorded call to " << Ir::fragmentToString(funcExpr)
-            << " with location " << a->baseLocation()->id
-            << std::endl;
-#endif
+     // TODO: implement this
         result = NULL;
         break;
 
@@ -3212,36 +3183,31 @@ PointsToAnalysis::Implementation::findSymbolForInitializedName(
 void
 PointsToAnalysis::Implementation::run(Program *program)
 {
- // SgProject *ast = program->astRoot; // actually: run on program->icfg
+    TimingPerformance *timer;
+    SgProject *ast = program->astRoot; // actually: run on program->icfg
 
+    timer = new TimingPerformance("Points-to analysis traversal:");
  // traverse(ast);
- // IcfgTraversal::traverse(program->icfg);
-    run(program->icfg);
-}
-
-void
-PointsToAnalysis::Implementation::run(CFG *icfg)
-{
-    TimingPerformance *timer
-        = new TimingPerformance("Points-to analysis traversal:");
-    IcfgTraversal::traverse(icfg);
+    IcfgTraversal::traverse(program->icfg);
     delete timer;
 
+ // First, we would like the ICFG traversal to work. Then we can move on to
+ // the call graph stuff. Ideally, it should work without modification, but
+ // who knows what sorts of problems might creep up.
+#if 0
  // After the traversal, we need to finalize the call graph by resolving
  // function symbols from function expression location nodes. To do this,
  // iterate over each entry in callLocationMap, which maps expressions to
  // points-to locations; simply extract the set of all function symbols in
  // each location, and insert it into the callGraph's callCandidateMap.
     timer = new TimingPerformance("Call graph finalization:");
-    PointsToInformation::CallLocationMap::iterator t;
-    for (t = info->callLocationMap.begin();
-         t != info->callLocationMap.end();
-         ++t)
+    CallLocationMap::iterator t;
+    for (t = callLocationMap.begin(); t != callLocationMap.end(); ++t)
     {
         SgExpression *expr = t->first;
      // The default constructor will create an empty set in the map for us.
         std::set<SgFunctionSymbol *> &functionSyms
-            = info->callGraph.callCandidateMap[expr];
+            = callGraph.callCandidateMap[expr];
      // There is a special case here: If the expression is a function ref
      // expression, then it is statically bound to its function, even if the
      // points-to location node for that function may be shared for several
@@ -3249,33 +3215,19 @@ PointsToAnalysis::Implementation::run(CFG *icfg)
         if (SgFunctionRefExp *fref = isSgFunctionRefExp(expr))
         {
             functionSyms.insert(canonicalSymbol(fref->get_symbol()));
-#if VERBOSE_DEBUG
-            std::cout
-                << "| recorded: " << Ir::fragmentToString(expr)
-                << " (static call)"
-                << std::endl;
-#endif
         }
         else
         {
          // Normal case: Take the symbols from the function node.
-            Location *func_location = info->disjointSets.find_set(t->second);
+            Location *func_location = disjointSets.find_set(t->second);
             std::list<SgFunctionSymbol *>::iterator sym;
             std::list<SgFunctionSymbol *> &syms = func_location->func_symbols;
             for (sym = syms.begin(); sym != syms.end(); ++sym)
-            {
                 functionSyms.insert(canonicalSymbol(*sym));
-#if VERBOSE_DEBUG
-                std::cout
-                    << "| recorded: " << Ir::fragmentToString(expr)
-                    << " (location " << func_location->id << ")"
-                    << "  -->  " << Utils::name(*sym)
-                    << std::endl;
-#endif
-            }
         }
     }
     delete timer;
+#endif
 
 #if VERBOSE_DEBUG
  // This should be somewhere else, I think. Maybe. Actually, debug code
@@ -3729,13 +3681,6 @@ PointsToAnalysis::Implementation::location_id(
     return loc->id;
 }
 
-PointsToAnalysis::Location *
-PointsToAnalysis::Implementation::location_representative(
-        PointsToAnalysis::Location *loc)
-{
-    return info->disjointSets.find_set(loc);
-}
-
 void
 PointsToAnalysis::Implementation::print(
         std::ostream &stream, std::string pre, std::string post,
@@ -3918,9 +3863,6 @@ PointsToAnalysis::Implementation::print(
 PointsToAnalysis::Location *
 PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
 {
- // This method computes the location for the given expression which refers
- // to a function (such as the "function" child of a function call
- // expression).
     if (expr == NULL)
     {
         std::cerr
@@ -3928,39 +3870,68 @@ PointsToAnalysis::Implementation::expressionLocation(SgExpression *expr)
             << std::endl;
         std::abort();
     }
+ // This method computes the location for the given expression which refers
+ // to a function (such as the "function" child of a function call
+ // expression).
 
- // If we don't have an auxiliary traversal, create one. In general, it
- // seems that sometimes (for $tmpvars, although we try to avoid these) the
- // "main" traversal's auxiliary traversal might need one. This is not a
- // problem, but we also ensure that nobody tries to create an unreasonable
- // number of these.
-    if (auxiliaryTraversal == NULL)
-    {
-        auxiliaryTraversal = new Implementation(info, this);
-        info->auxctr++;
-        if (info->auxctr >= 10)
-        {
-            std::cerr
-                << "*** error: SATIrE points-to analysis internal error: "
-                << "auxctr >= 10, this probably means infinite recursion"
-                << std::endl;
-            std::abort();
-        }
-    }
+ // This method computes the location for the given expression. This can be
+ // done by traversing the expression using the same traversal as used for
+ // the whole program. If the expression consists only of dereferences,
+ // struct accesses, variable references and other harmless stuff, this
+ // should not have any side-effects. It may also contain assignments,
+ // actually; if the expression is from the analyzed program, it cannot
+ // unify anything that's not already unified. If the expression is not from
+ // the same program, this should still be fine somehow.
 
+ // OOPS: Calling traverse() from within traverse() seems to be a bad idea,
+ // it messes with the stack containing synthesized attributes.
     Location *result = auxiliaryTraversal->
                             AstBottomUpProcessing<Location *>::traverse(expr);
+ // TODO: Find a general solution! Maybe by having an extra PointsToAnalysis
+ // instance which somehow shares our data structures; that instance could
+ // be used for traversing. That would be possible, but somewhat complex.
+ // Why isn't this stuff synthesized anyway? Because it's always invoked on
+ // icfg_node->call_target, for statements like ArgumentAssignment.
+ // A partial solution wouldn't do, as a function pointer expression can be
+ // arbitrarily complex: (foo->func_structs[42].f23)(args)
 
-#if VERBOSE_DEBUG
+ // *** SOLUTION (I think) *** If the expression is not a function ref exp,
+ // i.e. it is more complicated to look up, proceed as follows:
+ //  - create a new location
+ //  - record a mapping between the expression and the location
+ //  - at the end of the traversal, visit each of the left-over expressions,
+ //    evaluate them one by one, and unify accordingly
+ // This can be improved by handling several important special cases right
+ // away, not just the simple FunctionRefExp case. In particular, a
+ // dereference of a simple function pointer variable can be done right
+ // away.
+ // *** PROBLEM *** If we create a preliminary function location here, we do
+ // not know how many args it should have. But the number of args is very
+ // important for ellipse handling! So we need to have this info earlier on.
+#if 0
+    Location *result = NULL;
+    if (SgFunctionRefExp *fre = isSgFunctionRefExp(expr))
+        result = functionSymbol_location(fre->get_symbol());
+    else if (SgPointerDerefExp *pde = isSgPointerDerefExp(expr))
+    {
+     // AAARGH: This will not work correctly if the VarRefExp is for a
+     // special $tmpvar variable!
+        if (SgVarRefExp *vre = isSgVarRefExp(pde->get_operand()))
+        {
+            Location *funcnode = symbol_location(vre->get_symbol());
+            result = createLocation(createFunctionLocation());
+        }
+    }
+#endif
+
+#if DEBUG
     if (result == NULL)
     {
-     // Not sure whether this should be enabled in general. The output might
-     // annoy users, but it may be interesting to developers.
         std::cerr
-            << "*** warning: tried to determine location for expr '"
-            << Ir::fragmentToString(expr)
-            << "' (" << expr->class_name() << ")"
-            << ", got NULL!"
+            << "*** panic: tried to determine location for expr '"
+            << expr->unparseToString()
+            << " (" << expr->class_name() << ")"
+            << "', got NULL!"
             << std::endl;
     }
 #endif
@@ -4300,8 +4271,7 @@ PointsToAnalysis::PointsToInformation::PointsToInformation()
   : rankMap(), parentMap(),
     disjointSets(RankMap(rankMap), ParentMap(parentMap)),
     integerConstantLocation(NULL),
-    stringConstantLocation(NULL),
-    auxctr(1)
+    stringConstantLocation(NULL)
 {
     specialFunctionNames.insert("__assert_fail");
     specialFunctionNames.insert("__ctype_b_loc");

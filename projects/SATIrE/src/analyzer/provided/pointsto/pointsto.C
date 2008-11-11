@@ -70,13 +70,6 @@ PointsToAnalysis::run(Program *program)
 }
 
 void
-PointsToAnalysis::run(CFG *icfg)
-{
-    TimingPerformance timer("Steensgaard-style points-to analysis on ICFG:");
-    p_impl->run(icfg);
-}
-
-void
 PointsToAnalysis::print()
 {
     p_impl->print();
@@ -91,7 +84,7 @@ PointsToAnalysis::doDot(std::string filename)
 PointsToAnalysis::Location *
 PointsToAnalysis::expressionLocation(SgExpression *expr)
 {
-    return location_representative(p_impl->expressionLocation(expr));
+    return p_impl->expressionLocation(expr);
 }
 
 std::string
@@ -115,7 +108,7 @@ PointsToAnalysis::get_locations() const
 PointsToAnalysis::Location *
 PointsToAnalysis::symbol_location(SgSymbol *sym)
 {
-    return location_representative(p_impl->symbol_location(sym));
+    return p_impl->symbol_location(sym);
 }
 
 bool
@@ -134,24 +127,6 @@ unsigned long
 PointsToAnalysis::location_id(PointsToAnalysis::Location *loc) const
 {
     return p_impl->location_id(loc);
-}
-
-PointsToAnalysis::Location *
-PointsToAnalysis::location_representative(PointsToAnalysis::Location *loc)
-{
-    return p_impl->location_representative(loc);
-}
-
-PointsToAnalysis::Location *
-PointsToAnalysis::base_location(PointsToAnalysis::Location *loc)
-{
-    return location_representative(loc->baseLocation());
-}
-
-bool
-PointsToAnalysis::valid_location(Location *loc) const
-{
-    return (loc != NULL && !loc->dummy);
 }
 
 } // namespace Analyses

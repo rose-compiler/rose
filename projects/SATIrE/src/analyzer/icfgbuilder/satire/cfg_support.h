@@ -1,5 +1,5 @@
 // Copyright 2005,2006,2007 Markus Schordan, Gergo Barany
-// $Id: cfg_support.h,v 1.29 2008-10-21 13:40:42 gergo Exp $
+// $Id: cfg_support.h,v 1.30 2008-11-11 13:57:36 gergo Exp $
 
 #ifndef H_CFG_SUPPORT
 #define H_CFG_SUPPORT
@@ -48,6 +48,13 @@ enum
 class BasicBlock;
 class Procedure;
 class CFG;
+
+// GB (2008-11-11): Including "pointsto.h" here doesn't work; it leads to
+// cycles and keeps certain type declarations from being seen. However, we
+// don't really need anything here except the name of the PointsToAnalysis
+// class to declare a pointer member in CFG. So we declare it directly.
+// #include "pointsto.h"
+namespace SATIrE { namespace Analyses { class PointsToAnalysis; } }
 
 typedef std::pair<BasicBlock *, KFG_EDGE_TYPE> Edge;
 // typedef std::deque<BasicBlock *> BlockList;
@@ -136,6 +143,8 @@ public:
     EqualityTraversal equalityTraversal;
 
     AnalyzerOptions *analyzerOptions;
+
+    SATIrE::Analyses::PointsToAnalysis *pointsToAnalysis;
 
     ~CFG();
 

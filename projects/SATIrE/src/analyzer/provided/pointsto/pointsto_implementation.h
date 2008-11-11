@@ -143,8 +143,6 @@ private:
 
  // Some random stuff that we need in some places.
     SgType *ptr_to_void_type;
- // the number of "auxiliary traversals" that have this info
-    unsigned int auxctr;
 };
 
 
@@ -158,7 +156,6 @@ class PointsToAnalysis::Implementation
 public:
  // user interface
     void run(Program *program);
-    void run(CFG *icfg);
     void print();
     void doDot(std::string filename);
 
@@ -169,7 +166,6 @@ public:
     bool mayBeAliased(Location *loc) const;
     const std::list<SgSymbol *> &location_symbols(Location *) const;
     unsigned long location_id(Location *loc) const;
-    Location *location_representative(Location *loc);
 
     const CallGraph &getCallGraph();
 
