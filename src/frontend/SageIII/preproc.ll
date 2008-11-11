@@ -557,22 +557,22 @@ std::stack<int> square_bracket;
 // Store the name of the current file so that we can generate Sg_File_Info objects
 // for each comment.  Later we might want starting and ending fileInfo for each 
 // comments and CPP directive.
-std::string globalFileName;
+static std::string globalFileName;
 
-int curr_brace_depth=0;
-int ls_startingline_no; 
-int ls_startingpreproc_column_num; 
-int brace_counting_on=0;
-PreprocessingInfo::DirectiveType macrotype = PreprocessingInfo::CpreprocessorUnknownDeclaration;
+static int curr_brace_depth=0;
+// static int ls_startingline_no; 
+// static int ls_startingpreproc_column_num; 
+// static int brace_counting_on=0;
+static PreprocessingInfo::DirectiveType macrotype = PreprocessingInfo::CpreprocessorUnknownDeclaration;
 
-int topcurlybracestack();
-void pushbracestack(int);
-int popbracestack();
-bool isemptystack();
+static int topcurlybracestack();
+static void pushbracestack(int);
+static int popbracestack();
+static bool isemptystack();
 
-int num_of_newlines(char*);
+static int num_of_newlines(char*);
 
-ROSEAttributesList preprocessorList;
+static ROSEAttributesList preprocessorList;
 
 // DQ (10/30/2005): Changed
 // string			\"([^"]|"\\\""|"\\\n")*\"
@@ -636,11 +636,11 @@ string			\"([^"]|"\\\n")*\"
 %s NORMAL CXX_COMMENT C_COMMENT STRING_LIT MACRO C_COMMENT_INMACRO
 %%
 %{
-int preproc_line_num = 1;
+static int preproc_line_num = 1;
 	/*bad way to initialize*/
-int preproc_start_line_num = preproc_line_num;
-int preproc_column_num = 1;
-int preproc_start_column_num = preproc_column_num;
+static int preproc_start_line_num = preproc_line_num;
+static int preproc_column_num = 1;
+static int preproc_start_column_num = preproc_column_num;
 			/*Do we need this  ???*/
 BEGIN NORMAL;
 %}
@@ -908,16 +908,16 @@ BEGIN NORMAL;
 			    }
 %%
 
-const int maxstacksize=500;
-int bracestack[maxstacksize];
+static const int maxstacksize=500;
+static int bracestack[maxstacksize];
 
-int top=0;
-void pushbracestack(int brace_no) { bracestack[top++]=brace_no; }
-int topcurlybracestack() { if(top) return bracestack[top-1]; else return -1; }
-int popbracestack() { return bracestack[--top]; }
-bool isemptystack() { return top==0; }
+static int top=0;
+static void pushbracestack(int brace_no) { bracestack[top++]=brace_no; }
+static int topcurlybracestack() { if(top) return bracestack[top-1]; else return -1; }
+static int popbracestack() { return bracestack[--top]; }
+static bool isemptystack() { return top==0; }
 
-int num_of_newlines(char* s)
+static int num_of_newlines(char* s)
 {
      int num = 0;
      while(*s != '\0')
