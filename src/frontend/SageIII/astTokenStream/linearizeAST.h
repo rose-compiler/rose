@@ -7,13 +7,13 @@
 #include "rose.h"
 #include <stack>
 
-class InheritedAttribute
+class LinInheritedAttribute
    {
      public:
           int loopNestDepth;
 
-          InheritedAttribute ();
-          InheritedAttribute ( const InheritedAttribute & X );
+          LinInheritedAttribute ();
+          LinInheritedAttribute ( const LinInheritedAttribute & X );
    };
 
 class LinSynthesizedAttribute
@@ -23,7 +23,7 @@ class LinSynthesizedAttribute
    };
 
 
-class LinearizeAST : public SgTopDownBottomUpProcessing<InheritedAttribute,LinSynthesizedAttribute>
+class LinearizeAST : public SgTopDownBottomUpProcessing<LinInheritedAttribute,LinSynthesizedAttribute>
    {
      private:
 	  //The idea is to create an inorder ordering of the nodes using a SgTopDownBottomUp
@@ -52,13 +52,13 @@ std::vector<SgNode*> inorder;
 
 
        // Functions required
-          InheritedAttribute evaluateInheritedAttribute (
+          LinInheritedAttribute evaluateInheritedAttribute (
              SgNode* astNode, 
-             InheritedAttribute inheritedAttribute );
+             LinInheritedAttribute inheritedAttribute );
 
           LinSynthesizedAttribute evaluateSynthesizedAttribute (
              SgNode* astNode,
-             InheritedAttribute inheritedAttribute,
+             LinInheritedAttribute inheritedAttribute,
              SubTreeSynthesizedAttributes synthesizedAttributeList );
 
 	  std::vector<SgNode*>

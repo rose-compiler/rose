@@ -2,16 +2,16 @@
 // rose.C: Example (default) ROSE Preprocessor: used for testing ROSE infrastructure
 
 #include "linearizeAST.h"
-InheritedAttribute::InheritedAttribute () : loopNestDepth(0) {};
-InheritedAttribute::InheritedAttribute ( const InheritedAttribute & X ) {};
+LinInheritedAttribute::LinInheritedAttribute () : loopNestDepth(0) {};
+LinInheritedAttribute::LinInheritedAttribute ( const LinInheritedAttribute & X ) {};
 
 LinSynthesizedAttribute::LinSynthesizedAttribute() {};
 
 
-InheritedAttribute
+LinInheritedAttribute
 LinearizeAST::evaluateInheritedAttribute (
      SgNode* astNode,
-     InheritedAttribute inheritedAttribute )
+     LinInheritedAttribute inheritedAttribute )
    {
 
      if( (isSgLocatedNode(astNode)!=NULL) && ( (isSgScopeStatement(astNode)!=NULL)||(isSgValueExp(astNode)!=NULL)||(isSgVarRefExp(astNode)!=NULL)|| (isSgLocatedNode(astNode)->get_file_info()->isCompilerGenerated() == false)) ){
@@ -38,7 +38,7 @@ LinearizeAST::evaluateInheritedAttribute (
 LinSynthesizedAttribute
 LinearizeAST::evaluateSynthesizedAttribute (
      SgNode* astNode,
-     InheritedAttribute inheritedAttribute,
+     LinInheritedAttribute inheritedAttribute,
      SubTreeSynthesizedAttributes synthesizedAttributeList )
    {
      LinSynthesizedAttribute returnAttribute;
@@ -92,7 +92,7 @@ std::vector<SgNode*>
 linearize_subtree( SgNode* node )
    {
   // Build the inherited attribute
-     InheritedAttribute inheritedAttribute;
+     LinInheritedAttribute inheritedAttribute;
 
      LinearizeAST myTraversal;
 
