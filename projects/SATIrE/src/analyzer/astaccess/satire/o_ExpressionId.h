@@ -33,6 +33,24 @@ public:
     static void setPrintFormat(PrintFormat format);
     static PrintFormat printFormat;
 };
+
+#include "global.h"
+#include "str.h"
+
+extern "C" FLO_BOOL o_ExpressionId_eq(void *p, void *q);
+extern "C" FLO_BOOL o_ExpressionId_neq(void *p, void *q);
+extern "C" void *o_expr_exprid(void *p);
+extern "C" void *o_exprid_expr(void *p);
+extern "C" str o_exprid_str(void *p);
+extern "C" char *o_ExpressionId_print(void *p);
+extern "C" void o_ExpressionId_print_fp(FILE *f, void *p);
+extern "C" char *o_ExpressionId_to_charp(void *p);
+extern "C" char *o_ExpressionId_gdlprint(void *p);
+extern "C" void o_ExpressionId_acur_reset(unsigned long *p);
+extern "C" void o_ExpressionId_acur_next(unsigned long *p);
+extern "C" void *o_ExpressionId_acur_get(unsigned long *p);
+extern "C" FLO_BOOL o_ExpressionId_acur_is_empty(unsigned long *p);
+
 #else
 /* C part */
 #define EXTERN_C

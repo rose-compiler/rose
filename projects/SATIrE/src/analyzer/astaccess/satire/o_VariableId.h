@@ -39,6 +39,27 @@ public:
  // Allocate a new garbage-collected instance with the given Id.
     static VariableId *allocateGC(unsigned long id);
 };
+
+#include "global.h"
+#include "str.h"
+
+extern "C" FLO_BOOL o_VariableId_eq(void *p, void *q);
+extern "C" FLO_BOOL o_VariableId_neq(void *p, void *q);
+extern "C" void *o_varsym_varid(void *p);
+extern "C" void *o_varref_varid(void *p);
+extern "C" FLO_BOOL o_is_tmpvarid(void *p);
+extern "C" str o_varid_str(void *p);
+extern "C" void *o_varid_exprid(void *p);
+extern "C" void *o_add_tmpvarid(void *p_type);
+extern "C" char *o_VariableId_print(void *p);
+extern "C" void o_VariableId_print_fp(FILE *f, void *p);
+extern "C" char *o_VariableId_to_charp(void *p);
+extern "C" char *o_VariableId_gdlprint(void *p);
+extern "C" void o_VariableId_acur_reset(unsigned long *p);
+extern "C" void o_VariableId_acur_next(unsigned long *p);
+extern "C" void *o_VariableId_acur_get(unsigned long *p);
+extern "C" FLO_BOOL o_VariableId_acur_is_empty(unsigned long *p);
+
 #else
 /* C part */
 #define EXTERN_C

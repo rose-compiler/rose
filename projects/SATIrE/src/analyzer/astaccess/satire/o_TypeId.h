@@ -24,6 +24,25 @@ public:
     static void setPrintFormat(PrintFormat format);
     static PrintFormat printFormat;
 };
+
+#include "global.h"
+#include "str.h"
+
+extern "C" FLO_BOOL o_TypeId_eq(void *p, void *q);
+extern "C" FLO_BOOL o_TypeId_neq(void *p, void *q);
+extern "C" void *o_type_typeid(void *p);
+extern "C" void *o_typeid_type(void *p);
+extern "C" str o_typeid_str(void *p);
+extern "C" void *o_exprid_typeid(void *p);
+extern "C" char *o_TypeId_print(void *p);
+extern "C" void o_TypeId_print_fp(FILE *f, void *p);
+extern "C" char *o_TypeId_to_charp(void *p);
+extern "C" char *o_TypeId_gdlprint(void *p);
+extern "C" void o_TypeId_acur_reset(unsigned long *p);
+extern "C" void o_TypeId_acur_next(unsigned long *p);
+extern "C" void *o_TypeId_acur_get(unsigned long *p);
+extern "C" FLO_BOOL o_TypeId_acur_is_empty(unsigned long *p);
+
 #else
 /* C part */
 #define EXTERN_C
