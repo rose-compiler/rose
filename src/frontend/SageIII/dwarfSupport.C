@@ -13,6 +13,10 @@
 
 #include "rose.h"
 
+// Allow "string" and "pair" to be used (whether or not USE_ROSE_DWARF_SUPPORT id defined to be true).
+using namespace std;
+
+
 // This is controled by using the --with-dwarf configure command line option.
 #if USE_ROSE_DWARF_SUPPORT
 
@@ -72,9 +76,6 @@ Dwarf_Unsigned cu_offset = 0;
 
 std::string program_name = "roseDwarfReader";
 
-
-// Allow "string" to be used.
-using namespace std;
 
 
 void

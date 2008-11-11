@@ -6,6 +6,9 @@ main(int argc, char** argv)
      SgProject* project = frontend(argc,argv);
      ROSE_ASSERT (project != NULL);
 
+// This is controled by using the --with-dwarf configure command line option.
+#if USE_ROSE_DWARF_SUPPORT
+
   // The input file is the binary file...
      int binary_file_id = project->get_fileList()[0]->get_file_info()->get_file_id();
 
@@ -54,6 +57,9 @@ main(int argc, char** argv)
           FileIdLineColumnFilePosition s_map = SgAsmDwarfLineList::addressToSourceCode(address);
           printf ("   addressToSourceCode: address 0x%lx = (%d,%d,%d) \n",address,s_map.first,s_map.second.first,s_map.second.second);
         }
+#else
+     printf ("\n\nROSE must be configured with --with-dwarf=<path to libdwarf> to use Dwarf support. \n\n");
+#endif
 
      printf ("\nProgram Terminated Normally! \n\n");
 
