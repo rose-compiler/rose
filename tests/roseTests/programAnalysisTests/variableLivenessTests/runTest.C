@@ -143,6 +143,7 @@ int main( int argc, char * argv[] )
     std::string srcdir = srcdirVar;
     srcdir += "/";
 
+#if 0
     if (startNrInt<=1 || testAll) {
       // ------------------------------ TESTCASE 1 -----------------------------------------
       argvList[1]=srcdir+"tests/test1.C";
@@ -364,9 +365,9 @@ int main( int argc, char * argv[] )
       results.insert(pair<string,int>("a",11));
       testOneFunction("::func",argvList, debug, 30, results,useresults);
     }
-
+#endif  
   }
-  
+
   cout << ">> TEST END ... " << endl;
   argvList.clear();
   return 0;
