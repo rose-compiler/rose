@@ -208,7 +208,7 @@ string get_type_name(SgType* t)
                 ROSE_ASSERT(class_type != NULL);
                 SgClassDeclaration *cdecl = isSgClassDeclaration(class_type->get_declaration());
                 SgName nm = cdecl->get_qualified_name();
-                printf ("In unparseType(%p): nm = %s \n",t,nm.str());
+                //printf ("In unparseType(%p): nm = %s \n",t,nm.str());
                 if (nm.getString() != "")
                     return nm.getString();
                 else
