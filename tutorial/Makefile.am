@@ -1153,8 +1153,7 @@ rose_inputCode_seedBugsExample_arrayIndexing.C: seedBugsExample_arrayIndexing
 rose_inputCode_VolatileTypeModifier.C: volatileTypeModifier
 	./volatileTypeModifier $(ROSE_FLAGS) -c $(srcdir)/inputCode_VolatileTypeModifier.C
 
-inputCode_dwarfAnalysis.pdf: dwarfAnalysis inputCode_dwarfAnalysis.C
-#	g++ -g3 -o inputCode_dwarfAnalysis -c $(srcdir)/inputCode_dwarfAnalysis.C
+inputCode_dwarfAnalysis.pdf: dwarfAnalysis inputCode_dwarfAnalysis
 	./dwarfAnalysis -rose:visualize_dwarf_only -rose:read_executable_file_format_only inputCode_dwarfAnalysis
 	$(top_srcdir)/scripts/dotgenLetterPDF inputCode_dwarfAnalysis.dot inputCode_dwarfAnalysis.pdf
 
