@@ -257,7 +257,7 @@ has_array_opt( CPPAstInterface& fa, const AstNodePtr array, ArrayOptDescriptor* 
 {
   return arrayopt.known_type( fa, array, r);
 }
-
+//! Check if an expression 'arrayExp' is an expression(operation) modifying an array(creation or modifying)
 bool ArrayAnnotation::
 is_array_mod_op( CPPAstInterface& fa, const AstNodePtr& arrayExp,
                  AstNodePtr* arrayp, ArrayDescriptor* descp, bool* reshape,

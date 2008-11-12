@@ -2181,7 +2181,8 @@ bool AstInterface::GetArrayBound( const AstNodePtr& _arrayref, int dim, int &lb,
       lb = 0;
       return IsConstInt( AstNodePtrImpl(exp), &ub);
     }
-
+//! Check if _s is an expression, 
+// If yes, return its real expression node (strip off SgExpressionRoot) and grab its type
 AstNodePtr AstInterface::
 IsExpression( const AstNodePtr& _s, AstNodeType* exptype)
 {

@@ -147,7 +147,7 @@ class ArrayConstructDescriptor
      second.replace_val(repl);
    }
 };
-
+//! Modify Array[symbolic_value]
 class ArrayModifyDescriptor : 
 public OPDescriptorTemp < CollectPair< CloseDescriptor<SymbolicValDescriptor, '(', ')'>, 
                          ArrayDescriptor,0> > 

@@ -211,7 +211,7 @@ class IntDescriptor
   void Dump() const { write(std::cerr); }
   std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
-
+//! A descriptor with begin(left) and end(right) characters, such as {x}, (x), etc
 template <class Descriptor, char left, char right>
 class CloseDescriptor : public Descriptor {
  public:

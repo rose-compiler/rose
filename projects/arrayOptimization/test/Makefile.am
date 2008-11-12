@@ -6,8 +6,10 @@ EXTRA_DIST = funcs.annot  interp1.C  redBlack1.C rose_redBlack1.C.save  rose_red
 check-local:
 	@echo "SKIPPING TEST CODES RUN BY \"make check\" rule in projects/arrayOptimization/test directory ..."
 #	DQ (11/8/2008): Commented out as requested by Liao.
-#	$(MAKE) FORCE_TEST_CODES_TO_RUN
+	$(MAKE) FORCE_TEST_CODES_TO_RUN
 
 FORCE_TEST_CODES_TO_RUN:
 	$(srcdir)/TestDriver $(srcdir) $(top_builddir)/projects/arrayOptimization
 
+clean-local:
+	rm -f *.o rose_*.[cC] 
