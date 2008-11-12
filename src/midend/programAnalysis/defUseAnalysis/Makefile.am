@@ -19,7 +19,7 @@ noinst_LTLIBRARIES = libDefUseAnalysis.la
 
 # DQ (11/8/2007): The runTest.cpp file was moved to tests/roseTests/programAnalysisTests/defUseAnalysisTests/runTest.C by Thomas.
 # libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/runTest.cpp
-libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp
+libDefUseAnalysis_la_SOURCES = $(srcdir)/GlobalVarAnalysis.cpp $(srcdir)/DefUseAnalysis.cpp $(srcdir)/DefUseAnalysis_perFunction.cpp $(srcdir)/dfaToDot.cpp $(srcdir)/LivenessAnalysis.cpp $(srcdir)/DefUseAnalysisAbstract.cpp
 
 
 
@@ -29,4 +29,4 @@ clean-local:
 distclean-local:
 	rm -rf Templates.DB
 
-include_HEADERS =  DefUseAnalysis.h  DefUseAnalysis_perFunction.h  DFAFilter.h  DFAnalysis.h  dfaToDot.h  filteredCFG.h  filteredCFGImpl.h  GlobalVarAnalysis.h  support.h
+include_HEADERS =  DefUseAnalysis.h  DefUseAnalysis_perFunction.h  DFAFilter.h  DFAnalysis.h  dfaToDot.h  filteredCFG.h  filteredCFGImpl.h  GlobalVarAnalysis.h  support.h LivenessAnalysis.h DefUseAnalysisAbstract.h
