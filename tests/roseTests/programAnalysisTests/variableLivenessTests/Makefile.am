@@ -14,7 +14,7 @@ runTest_SOURCES = runTest.C
 # testCallGraph_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 runTest_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-TESTCODES = test1.C
+TESTCODES = # test1.C
 
 # Build the list of object files
 TEST_Objects = ${TESTCODES:.C=.o}
