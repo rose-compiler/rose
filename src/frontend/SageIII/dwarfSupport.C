@@ -2801,6 +2801,23 @@ SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t 
 
 
 // endif for "if USE_ROSE_DWARF_SUPPORT" at top of file.
+#else
+
+// DQ (11/12/2008): Function defined so that java-port will not complain.
+SgAsmDwarfConstruct*
+SgAsmDwarfConstruct::createDwarfConstruct( int tag, int nesting_level, uint64_t offset, uint64_t overall_offset )
+   {
+  // This function implements the factory pattern.
+
+     SgAsmDwarfConstruct* returnConstruct = NULL;
+
+#if 1
+     printf ("Dwarf support not enabled (configure command-line option: --with-dwarf) \n");
+#endif
+
+     return returnConstruct;
+   }
+
 #endif
 
 
