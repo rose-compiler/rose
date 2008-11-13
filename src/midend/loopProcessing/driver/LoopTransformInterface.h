@@ -8,14 +8,20 @@
 #include "SymbolicVal.h"
 #include "AnalysisInterface.h"
 
+//! Base pure virtual interface to Array, Used by ArrayInterface, ArrayUseAccessFunction etc.
 class ArrayAbstractionInterface {
  public:
+  //! Check if 's' is an array access. 
+  // Return the array node and list of subscripts if yes and requested
   virtual bool IsArrayAccess( AstInterface& fa,
                                  const AstNodePtr& s, AstNodePtr* array = 0,
                                  AstInterface::AstNodeList* index = 0) = 0 ;
+  //! Get the lower and upper bound of an array's dim'th dimension
+  // Return true if successful.				 
   virtual bool GetArrayBound( AstInterface& fa,
                                  const AstNodePtr& array, 
                                  int dim, int &lb, int &ub) = 0;
+  //! Create an array access node to array 'arr' using a list of subscripts 'index'
   virtual AstNodePtr CreateArrayAccess( AstInterface& fa, const AstNodePtr& arr,
                                 AstInterface::AstNodeList& index) = 0;
   virtual ~ArrayAbstractionInterface() {}

@@ -34,7 +34,7 @@ class Select2Object
    virtual ~Select2Object() {}
 };
 //!A container interface to add elements only
-// operator() should be provided in its implementation, such as CollectDoublyLinkedList
+// operator() does the adding operation and its implementation should be provided in its sub classes, such as CollectDoublyLinkedList
 template <class T> class CollectObject
 {
   public:

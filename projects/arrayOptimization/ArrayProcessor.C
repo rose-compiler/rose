@@ -1,4 +1,3 @@
-
 #include <sage3.h>
 #include <CPPAstInterface.h>
 #include <ArrayAnnot.h>
@@ -38,7 +37,6 @@ bool ToArrayOnly( const vector<string>& argv )
 int
 main ( int argc,  char * argv[] )
    {
-
      if (argc <= 1) {
          PrintUsage(argv[0]);
          return 1;
@@ -59,8 +57,6 @@ main ( int argc,  char * argv[] )
     SgProject* sageProject = new SgProject( argvList);
     int filenum = sageProject->numberOfFiles();
    for (int i = 0; i < filenum; ++i) {
-  // SgSourceFile &sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
-  // SgGlobal *root = sageFile.get_root();
      SgSourceFile* sageFile = isSgSourceFile(sageProject->get_fileList()[i]);
      SgGlobal *root = sageFile->get_globalScope();
      SgDeclarationStatementPtrList& declList = root->get_declarations ();
@@ -75,30 +71,39 @@ main ( int argc,  char * argv[] )
          SgBasicBlock* body = defn->get_body();
          AstInterfaceImpl scope(body);
          CPPAstInterface fa(&scope);
-
+         // Replace operators with their equivalent counterparts defined in "inline" annotations
          OperatorInlineRewrite()( fa, AstNodePtrImpl(body));
-
+         
+	 // Read in annotations as arrayInterface  
          ArrayInterface anal(*annot);
          anal.initialize(fa, AstNodePtrImpl(defn));
          anal.observe(fa);
 
          RewriteToArrayAst toArray( anal);
          RewriteFromArrayAst fromArray( anal); 
+	 // Write collective operations into explicit loops with 
+	 // array element accesses using element access member functions
          AstNodePtr r = TransformAstTraverse( fa, AstNodePtrImpl(body), toArray);
          fa.SetRoot(r);
+         
+	 // Conduct loop transformation as requested 
          r = LoopTransformTraverse( fa, r, anal, annot, &anal);
          fa.SetRoot(r);
          if (!toOnly) {
+	     // Replace high level array class object reference with equivalent C-style raw array accesses
              TransformAstTraverse( fa, AstNodePtrImpl(defn), fromArray);
           }
+
      }
    }
 
   // Generate the final C++ source code from the potentially modified SAGE AST
   if (!GenerateObj())
+   { 
      sageProject->unparse();
+     return 0;
+   }  
   else
-     return backend(sageProject);
-  return 0;
+    return backend(sageProject);
 }
 

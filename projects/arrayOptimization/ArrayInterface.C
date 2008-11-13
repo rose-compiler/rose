@@ -475,6 +475,7 @@ GetArrayBound( AstInterface& _fa, const AstNodePtr& array,
      return false;
   if (!rval.isConstInt(ub))
      return false;
+  //lower bound is fixed to 0 ???   
   lb = 0;
   return true;
 }

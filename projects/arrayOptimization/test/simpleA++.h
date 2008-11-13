@@ -250,6 +250,9 @@ class floatArray
           float* getDataPointer();
           int getLocalBase(int dim);
           int getLength( int dim);
+          //Liao, 11/12/2008. Add alias functions used in the annotation
+          int length();
+          float & elem(int i);
 
           floatArray & redim ( floatArray & X );
           floatArray & resize ( int i );

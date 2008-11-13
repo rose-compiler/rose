@@ -373,7 +373,8 @@ get_unique_name(AstInterface& fa, const AstNodePtr& _scope, const std::string& v
      return get_unique_name(fname, func, varname);
  }
 
-
+//! Find the alias group of a variable named 'varname' within 'scope'
+// Create a new alias group if it does not exist for this variable
 UF_elem*  StmtVarAliasCollect::VarAliasMap::
 get_alias_map( const std::string& varname, const AstNodePtr& scope)
 {

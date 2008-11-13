@@ -171,7 +171,9 @@ class OperatorAliasAnnotation : public FunctionAliasInterface
       op->add_OperatorCollection(&aliasInfo); 
       op->add_OperatorCollection(&allowaliasInfo); }
 };
-
+//! Replace an operator with another equivalent operation, which is specified by "inline" annotation
+//e.g: operator floatArray::operator() (int index) {  inline { this.elem(index) }; }
+//     All ..array(index).. will be replaced by array.elem(index) in the code
 class OperatorInlineRewrite : public TransformAstTree
 {
  public:

@@ -143,7 +143,7 @@ class SymbolicAstWrap : public SymbolicValImpl
   const AstNodePtr& get_ast() const { return ast; }
 };
 
-//! A count reference handle to all kinds of symbolic variables
+//! A count reference handle to all kinds of symbolic items, including variables and values
 class SymbolicVal : public CountRefHandle <SymbolicValImpl>
 {
  public:
@@ -334,7 +334,7 @@ class SymbolicCond
   std:: string toString () const;
   AstNodePtr  CodeGen(AstInterface &fa) const;
 };
-
+//! A bound using symbolic lower bound and upper bound
 struct SymbolicBound{
   SymbolicVal lb, ub;
   SymbolicBound() {}
@@ -403,6 +403,7 @@ SymbolicVal UnwrapVarCond( const SymbolicCond& valCond,
                          const SymbolicVar &pivot, SymbolicBound& pivotBound ); //return pivot coefficient
 
 bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
+//! Replace the variable 'sub' in 'v' with 'newval'
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 

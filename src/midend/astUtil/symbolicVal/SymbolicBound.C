@@ -37,7 +37,7 @@ SymbolicBound VarInfo:: GetVarRestr( const SymbolicVar v)
         r.Intersect( r2);
     return r;
 }
-
+//! A map for symbolic variables and their bound information
 class ValGetBound : public SymbolicVisitor
 {
  protected:

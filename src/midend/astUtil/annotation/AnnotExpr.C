@@ -472,6 +472,7 @@ get_val(AstInterface& fa, AstInterface::AstNodeList& argList, AstNodePtr& r) con
 void SymbolicFunctionDeclarationGroup::Dump() const
 { write(cerr); }
 
+//! store the function name in r ??  Store the result in 'r' ?
 bool SymbolicFunctionDeclaration:: 
 get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 {
@@ -479,6 +480,7 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 
   int j = 0;
   r = second;
+  // For each parameter in this function declaration's parameter list
   for (size_t i = 0; i < first.size(); ++i) {
     const ExtendibleParamDescriptor& cur = first[i];
     const SymbolicValDescriptor& cur1 = cur.get_param();
@@ -488,9 +490,9 @@ get_val(const std::vector<SymbolicVal>& parList, SymbolicVal& r) const
 	return false;
       ++j;
     }
-    else {
-      string basename = cur1.get_val().toString();
-      string extname = cur.get_extend_var();
+    else { // variable parameter may have range information
+      string basename = cur1.get_val().toString(); // parameter name
+      string extname = cur.get_extend_var();    // extension name
       if (extname == "") {
 	r = ReplaceVal(r, SymbolicVar(basename, AST_NULL), parList[j]);
 	++j;

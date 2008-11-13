@@ -220,13 +220,14 @@ if [ $buildstatus == 0 ]; then
     cd ${ROSE_TEST_REGRESSION_ROOT}
     make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile plumhall_using_rose
 
-    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && 0$LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
+    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && -n "$LBL_RRQM_ROOT" && $? -eq 0 ]] ; then
       echo "Publishing plumhall results..." >> $mailtext
       make -f ${ROSE_TEST_REGRESSION_ROOT}/plumhall.makefile publish
     fi
 
     if [ $? -ne 0 ]; then
       echo "Error: make plumhall finishes abnormally!" >>$mailtext
+      KEEP_TEST_DIR=1
     else
       echo "make plumhall finishes normally.">>$mailtext
     fi
@@ -237,13 +238,14 @@ if [ $buildstatus == 0 ]; then
     cd ${ROSE_TEST_REGRESSION_ROOT}
     make -f ${ROSE_TEST_REGRESSION_ROOT}/nightly.makefile mozilla_using_rose
 
-    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && 0$LBL_RRQM_ROOT -ne 0 && $? -eq 0 ]] ; then
+    if [[ 0$ENABLE_RRQM_PUBLISH -ne 0 && -n "$LBL_RRQM_ROOT"  && $? -eq 0 ]] ; then
       echo "Publishing mozilla results..." >> $mailtext
       make -f ${ROSE_TEST_REGRESSION_ROOT}/mozilla.makefile publish
     fi
 
     if [ $? -ne 0 ]; then
       echo "Error: make mozilla finishes abnormally!" >>$mailtext
+      KEEP_TEST_DIR=1
     else
       echo "make mozilla finishes normally.">>$mailtext
     fi
@@ -257,6 +259,7 @@ if [ $buildstatus == 0 ]; then
     if [ $failed = yes ]; then
       echo "Error: importRoseDistributionToSVN finishes abnormally!" >>$mailtext
       tail buildlog >>$mailtext
+      KEEP_TEST_DIR=1
     else
       echo "importRoseDistributionToSVN finishes normally.">>$mailtext
     fi
@@ -269,6 +272,7 @@ if [ $buildstatus == 0 ]; then
     make copyWebPages
     if [ $? -ne 0 ]; then
       echo "Error: make copyWebPages finishes abnormally!" >>$mailtext
+      KEEP_TEST_DIR=1
     else
       echo "make copyWebPages finishes normally.">>$mailtext
     fi

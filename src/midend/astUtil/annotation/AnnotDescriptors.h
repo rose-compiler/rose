@@ -29,7 +29,7 @@ class WriteContainer
     //, beginning character 'left' and ending character 'right'
     static void write( const Container& c, std::ostream& out);
 };
-
+//! A pair of items separated by 'sep'
 template <class First, class Second, char sep>
 struct CollectPair : public std::pair<First, Second>
 {
@@ -43,7 +43,7 @@ struct CollectPair : public std::pair<First, Second>
    void Dump() const  { write(std::cerr); }
    std::string ToString() const { std::stringstream out; write(out); return out.str(); }
 };
-
+//! Similar to CollectPair, but the second item may start with 'sel' without 'sep' in front of it.
 template <class First, class Second, char sep, char sel>
 struct SelectPair : public std::pair<First, Second>
 {
