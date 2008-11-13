@@ -1517,6 +1517,17 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                     roseUnparser.unparseFile(binaryFile,inheritedAttributeInfo);
                     break;
                   }
+
+               case V_SgUnknownFile:
+                  {
+                    SgUnknownFile* unknownFile = isSgUnknownFile(file);
+
+                    unknownFile->set_skipfinalCompileStep(true);
+
+                    printf ("Warning: Unclear what to unparse from a SgUnknownFile (set skipfinalCompileStep) \n");
+                    break;
+                  }
+
                default:
                   {
                     printf ("Error: default reached in unparser: file = %s \n",file->class_name().c_str());

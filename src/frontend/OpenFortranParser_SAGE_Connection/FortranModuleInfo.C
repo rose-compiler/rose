@@ -43,6 +43,10 @@ FortranModuleInfo::setCurrentProject(SgProject* project)
 SgModuleStatement*
 FortranModuleInfo::getModule(string modName)
   {
+ // DQ (11/12/2008): I am unclear if the conversion of the module name to lowercase 
+ // should happen here, it does not appear to be required since at least the tests 
+ // codes we have appear to work.
+
     SgModuleStatement *modStmt = moduleNameAstMap[modName];
 
     if (modStmt)
@@ -60,7 +64,11 @@ SgSourceFile*
 FortranModuleInfo::createSgSourceFile(string modName)
    {
      int errorCode = 0;
-     vector<string> argv ;
+     vector<string> argv;
+
+  // DQ (11/12/2008): Modified to force filename to lower case.
+  // printf ("In FortranModuleInfo::createSgSourceFile(): generating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(modName).c_str(),modName.c_str());
+     modName = StringUtility::convertToLowerCase(modName);
 
      string rmodFileName = modName + MOD_FILE_SUFFIX;
 
@@ -76,15 +84,18 @@ FortranModuleInfo::createSgSourceFile(string modName)
      ROSE_ASSERT (newFile != NULL);
      ROSE_ASSERT (newFile->get_startOfConstruct() != NULL);
 
-     //Set the project as the  parent 
+  // Set the project as the  parent 
      newFile->set_parent(project);
+
+  // DQ (11/12/2008): This rmod file should be explicitly marked to not be compiled.
+  // printf ("Marking the new module file to not be compiled \n");
+     newFile->set_skipfinalCompileStep(true);
 
      project->set_file(*newFile);
 
      nestedSgFile--;
 
      return newFile;
-
    }
 
 
@@ -92,9 +103,11 @@ FortranModuleInfo::createSgSourceFile(string modName)
 void       
 FortranModuleInfo::addMapping(string modName,SgModuleStatement* modNode)
   {
+  // printf ("In FortranModuleInfo::addMapping() modName = %s \n",modName.c_str());
+
      if ( moduleNameAstMap[modName] == NULL ) 
             moduleNameAstMap[modName] = modNode;
-     else 
+     else
             cerr << "Warning: The map entry for " << modName 
                  << " is not empty. " << endl;
      

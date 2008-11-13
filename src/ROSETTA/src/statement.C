@@ -2039,6 +2039,13 @@ Grammar::setUpStatements ()
      UseStatement.setDataPrototype ( "SgRenamePairPtrList", "rename_list", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/12/2008): With the Rice support for module files (thanks) we can now always reference 
+  // the module statement used by any use statement.  There can only be a single module per use statement.
+  // UseStatement.setDataPrototype ( "SgModuleStatementPtrList", "module_list", "",
+  //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     UseStatement.setDataPrototype ( "SgModuleStatement*", "module", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // UseStatement.setDataPrototype ( "SgUseOnlyExpression*", "use_only"   , "= NULL",
   //      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
