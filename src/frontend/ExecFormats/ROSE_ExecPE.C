@@ -499,6 +499,7 @@ SgAsmPEFileHeader::reallocate()
 {
     bool reallocated = SgAsmGenericHeader::reallocate();
     
+    /* Resize if necessary */
     addr_t need = sizeof(PEFileHeader_disk);
     if (4==get_word_size()) {
         need += sizeof(PE32OptHeader_disk);
@@ -508,7 +509,6 @@ SgAsmPEFileHeader::reallocate()
         throw FormatError("unsupported PE word size");
     }
     need += p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
-    
     if (need<get_size()) {
         if (is_mapped()) {
             ROSE_ASSERT(get_mapped_size()==get_size());
@@ -521,6 +521,90 @@ SgAsmPEFileHeader::reallocate()
         reallocated = true;
     }
 
+    /* Make sure header is consistent with sections. Reallocate() has already been called recursively for the sections.
+     * Count the number of sections in the table and update the header's e_nsections member. */
+    if (p_section_table) {
+        ROSE_ASSERT(p_section_table->get_header()==this);
+        SgAsmGenericSectionList *all = get_sections();
+        p_e_nsections = 0;
+        for (size_t i=0; i<all->get_sections().size(); i++) {
+            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
+            if (pesec && pesec->get_st_entry()!=NULL)
+                p_e_nsections++;
+        }
+
+        addr_t header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
+                                   p_e_file_align>0 ? p_e_file_align : 1);
+#if 1
+        /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
+         * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
+         * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
+         * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
+         * otherwise we use the correct value. (RPM 2008-10-21) */
+        addr_t min_offset;
+        for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
+            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
+            if (pesec && pesec->get_st_entry()!=NULL) {
+                if (0==nfound++) {
+                    min_offset = pesec->get_offset();
+                } else {
+                    min_offset = std::min(min_offset, pesec->get_offset());
+                }
+            }
+        }
+        addr_t header_size2 = std::max(header_size, min_offset);
+        if (p_e_header_size==header_size2)
+            header_size = header_size2;
+
+        /* If the original header size was zero then don't change that--leave it at zero. Some tiny executables have a zero
+         * value here and as a result, since this is near the end of the NT Optional Header, they can truncate the file and
+         * the loader will fill the optional header with zeros when reading. (RPM 2008-11-11) */
+        if (p_e_header_size==0)
+            header_size = 0;
+#endif
+        p_e_header_size = header_size;
+    }
+            
+    /* Update COFF symbol table related data members in the file header */
+    if (p_coff_symtab) {
+        ROSE_ASSERT(p_coff_symtab->get_header()==this);
+        p_e_coff_symtab = p_coff_symtab->get_offset();
+        p_e_coff_nsyms = p_coff_symtab->get_symbols()->get_symbols().size();
+    }
+
+    /* Update some additional header fields */
+    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
+    p_e_opt_magic = 4==get_word_size() ? 0x010b : 0x020b;
+    p_e_lmajor = (p_exec_format->get_version() >> 16) & 0xffff;
+    p_e_lminor = p_exec_format->get_version() & 0xffff;
+
+    /* Adjust the COFF Header's e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com
+     * don't change (i.e., don't increase e_nt_hdr_size if the bytes beyond it are zero anyway, and if they aren't then adjust
+     * it as little as possible.  The RVA/Size pairs are considered to be part of the NT Optional Header. */
+    size_t oh_size = p_rvasize_pairs->get_pairs().size() * sizeof(SgAsmPERVASizePair::RVASizePair_disk);
+    size_t rvasize_offset; /*offset with respect to "oh" buffer allocated below*/
+    if (4==get_word_size()) {
+        oh_size += sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        oh_size += sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    unsigned char *oh = new unsigned char[oh_size];
+    if (4==get_word_size()) {
+        encode((PE32OptHeader_disk*)oh);
+        rvasize_offset = sizeof(PE32OptHeader_disk);
+    } else if (8==get_word_size()) {
+        encode((PE64OptHeader_disk*)oh);
+        rvasize_offset = sizeof(PE64OptHeader_disk);
+    } else {
+        throw FormatError("unsupported PE word size");
+    }
+    while (oh_size>p_e_nt_hdr_size) {
+        if (0!=oh[oh_size-1]) break;
+        --oh_size;
+    }
+    p_e_nt_hdr_size = oh_size;
     return reallocated;
 }
 
@@ -575,57 +659,15 @@ SgAsmPEFileHeader::unparse(std::ostream &f)
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
     
-    /* Write the PE section table and, indirectly, the sections themselves. Also, count the number of sections in the table
-     * and update the header's e_nsections member. */
-    if (p_section_table) {
-        ROSE_ASSERT(p_section_table->get_header()==this);
+    /* Write the PE section table and, indirectly, the sections themselves. */
+    if (p_section_table)
         p_section_table->unparse(f);
-        SgAsmGenericSectionList *all = get_sections();
-        p_e_nsections = 0;
-        for (size_t i=0; i<all->get_sections().size(); i++) {
-            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
-            if (pesec && pesec->get_st_entry()!=NULL)
-                p_e_nsections++;
-        }
 
-        addr_t header_size = ALIGN(p_section_table->get_offset() + p_section_table->get_size(),
-                                   p_e_file_align>0 ? p_e_file_align : 1);
-#if 1
-        /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
-         * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
-         * it here as being the minimum RVA from all the sections defined in the PE Section Table, but not smaller
-         * than the value according to the specification. This alternate value is kept if it's already in the parse tree,
-         * otherwise we use the correct value. (RPM 2008-10-21) */
-        addr_t min_offset;
-        for (size_t i=0, nfound=0; i<all->get_sections().size(); i++) {
-            SgAsmPESection *pesec = dynamic_cast<SgAsmPESection*>(all->get_sections()[i]);
-            if (pesec && pesec->get_st_entry()!=NULL) {
-                if (0==nfound++) {
-                    min_offset = pesec->get_offset();
-                } else {
-                    min_offset = std::min(min_offset, pesec->get_offset());
-                }
-            }
-        }
-        addr_t header_size2 = std::max(header_size, min_offset);
-        if (p_e_header_size==header_size2)
-            header_size = header_size2;
-
-        /* If the original header size was zero then don't change that--leave it at zero. Some tiny executables have a zero
-         * value here and as a result, since this is near the end of the NT Optional Header, they can truncate the file and
-         * the loader will fill the optional header with zeros when reading. (RPM 2008-11-11) */
-        if (p_e_header_size==0)
-            header_size = 0;
-#endif
-        p_e_header_size = header_size;
-    }
-
-    /* Write sections that are pointed to by the file header and update data members in the file header */
+    /* Write sections that are pointed to by the file header */
     if (p_coff_symtab) {
-        ROSE_ASSERT(p_coff_symtab->get_header()==this);
+        ROSE_ASSERT(p_e_coff_symtab == p_coff_symtab->get_offset());
+        ROSE_ASSERT(p_e_coff_nsyms == p_coff_symtab->get_symbols()->get_symbols().size());
         p_coff_symtab->unparse(f);
-        p_e_coff_symtab = p_coff_symtab->get_offset();
-        p_e_coff_nsyms = p_coff_symtab->get_symbols()->get_symbols().size();
     }
     
     /* Write the sections from the header RVA/size pair table. */
@@ -640,12 +682,6 @@ SgAsmPEFileHeader::unparse(std::ostream &f)
         ROSE_ASSERT(p_dos2_header->get_header()==this);
         p_dos2_header->unparse(f);
     }
-
-    /* Update some additional header fields */
-    p_e_num_rvasize_pairs = p_rvasize_pairs->get_pairs().size();
-    p_e_opt_magic = 4==get_word_size() ? 0x010b : 0x020b;
-    p_e_lmajor = (p_exec_format->get_version() >> 16) & 0xffff;
-    p_e_lminor = p_exec_format->get_version() & 0xffff;
 
     /* Encode the "NT Optional Header" before the COFF Header since the latter depends on the former. Adjust the COFF Header's
      * e_nt_hdr_size to accommodate the NT Optional Header in such a way that EXEs from tinype.com don't change (i.e., don't
@@ -678,7 +714,7 @@ SgAsmPEFileHeader::unparse(std::ostream &f)
         if (0!=oh[oh_size-1]) break;
         --oh_size;
     }
-    p_e_nt_hdr_size = oh_size;
+    ROSE_ASSERT(p_e_nt_hdr_size==oh_size); /*set in reallocate()*/
 
     /* Write the fixed-length COFF Header */
     PEFileHeader_disk fh;
