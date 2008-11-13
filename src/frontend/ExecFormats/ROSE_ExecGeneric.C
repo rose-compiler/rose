@@ -470,6 +470,11 @@ SgAsmGenericStrtab::reallocate(bool shrink)
 
 /* Returns a reference to the free list. Don't use ROSETTA-generated version because callers need to be able to modify the
  * free list. */
+const ExtentMap&
+SgAsmGenericStrtab::get_freelist() const
+{
+    return p_freelist;
+}
 ExtentMap&
 SgAsmGenericStrtab::get_freelist()
 {
