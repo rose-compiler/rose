@@ -31,7 +31,7 @@ namespace X86Disassembler {
       case x86_insnsize_16: return SgAsmTypeWord::createType();
       case x86_insnsize_32: return SgAsmTypeDoubleWord::createType();
       case x86_insnsize_64: return SgAsmTypeQuadWord::createType();
-      default: ROSE_ASSERT (false);
+      default: abort();;
     }
   }
 
@@ -41,7 +41,7 @@ namespace X86Disassembler {
       case x86_insnsize_16: return x86_regpos_word;
       case x86_insnsize_32: return x86_regpos_dword;
       case x86_insnsize_64: return x86_regpos_qword;
-      default: ROSE_ASSERT (false);
+      default: abort();;
     }
   }
 
