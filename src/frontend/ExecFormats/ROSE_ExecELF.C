@@ -2337,9 +2337,9 @@ SgAsmElfSymbol::ctor_common()
     }
 }
 
-/* Encode a symbol into disk format */
-void *
-SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
+/* Called before unparsing. Updates the symbol table entry to a consistent state. */
+void
+SgAsmElfSymbol::reallocate(SgAsmGenericStrtab *strtab)
 {
     SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
     if (s && s->get_strtab()==strtab) {
@@ -2347,7 +2347,12 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericS
     } else {
         p_st_name = 0;
     }
+}
 
+/* Encode a symbol into disk format */
+void *
+SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
+{
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));
     host_to_disk(sex, p_st_res1,     &(disk->st_res1));
@@ -2359,13 +2364,6 @@ SgAsmElfSymbol::encode(ByteOrder sex, Elf32SymbolEntry_disk *disk, SgAsmGenericS
 void *
 SgAsmElfSymbol::encode(ByteOrder sex, Elf64SymbolEntry_disk *disk, SgAsmGenericStrtab *strtab)
 {
-    SgAsmStoredString *s = dynamic_cast<SgAsmStoredString*>(get_name());
-    if (s && s->get_strtab()==strtab) {
-        p_st_name = get_name()->get_offset();
-    } else {
-        p_st_name = 0;
-    }
-
     host_to_disk(sex, p_st_name,     &(disk->st_name));
     host_to_disk(sex, p_st_info,     &(disk->st_info));
     host_to_disk(sex, p_st_res1,     &(disk->st_res1));
@@ -2520,6 +2518,20 @@ SgAsmElfSymbolSection::set_linked_section(SgAsmElfSection *_strsec)
                 symbol->set_size(symbol->get_bound()->get_size());
         }
     }
+}
+
+/* Called prior to unparsing. Updates symbol entries with name offsets */
+bool
+SgAsmElfSymbolSection::reallocate()
+{
+    bool reallocated = SgAsmElfSection::reallocate();
+    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
+    SgAsmGenericStrtab *strtab = strsec ? strsec->get_strtab() : NULL;
+    for (size_t i=0; i<p_symbols->get_symbols().size(); i++) {
+        SgAsmElfSymbol *entry = p_symbols->get_symbols()[i];
+        entry->reallocate(strtab);
+    }
+    return reallocated;
 }
 
 /* Write symbol table sections back to disk */

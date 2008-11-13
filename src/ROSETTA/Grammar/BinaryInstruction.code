@@ -1691,6 +1691,7 @@ HEADER_ELF_SYMBOL_SECTION_START
 		using SgAsmElfSection::calculate_sizes;
 		virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const;
 		virtual void set_linked_section(SgAsmElfSection*);
+		virtual bool reallocate();
 		virtual void unparse(std::ostream&);
 		virtual void dump(FILE*, const char *prefix, ssize_t idx);
 	private:
@@ -1740,6 +1741,7 @@ HEADER_ELF_SYMBOL_START
 		SgAsmElfSymbol(SgAsmExecutableFileFormat::ByteOrder sex, const SgAsmElfSymbol::Elf64SymbolEntry_disk *disk);
 		//virtual ~SgAsmElfSymbol() {};
 
+		void reallocate(SgAsmGenericStrtab*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf32SymbolEntry_disk*, SgAsmGenericStrtab*);
 		void *encode(SgAsmExecutableFileFormat::ByteOrder, SgAsmElfSymbol::Elf64SymbolEntry_disk*, SgAsmGenericStrtab*);
 		virtual void dump(FILE *f, const char *prefix, ssize_t idx);
