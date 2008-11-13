@@ -1278,7 +1278,10 @@ docs: $(noinst_PROGRAMS) $(generatedCodeExamples)
 cleanDocs:
 #	This can not be called after make distclean (by make distcheck)
 #	cd outliner; $(MAKE) cleanDocs
-	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* inputCode_AST_PDF_Generator.C rose_inputCode_dwarfAnalysis.s inputCode_dwarfAnalysis
+	rm -f rose_*.C rose_*.cpp *.out *.a[a-l] *.dot *.ps *.pdf *.trace *.binaryAST 
+	rm -f ExampleCodeCoverage_GeneratedBinary test_runtimeCheck* output_runtimeCheck* 
+	rm -f inputCode_AST_PDF_Generator.C 
+	rm -f rose_inputCode_dwarfAnalysis.s inputCode_dwarfAnalysis rose_inputCode_dwarfAnalysis
 
 clean-local: cleanDocs
 	rm -rf Templates.DB ii_files ti_files *.ti *.svg test_runtimeCheck* *.new rose_bin_example.s rose_bin_example_2.s bin_example_2 *.dump
