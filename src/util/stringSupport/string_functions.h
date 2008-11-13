@@ -168,6 +168,9 @@ namespace StringUtility
        //  unsigned short int chksum(char *buffer, int len);
            unsigned long generate_checksum( std::string s );
 
+       //! Convert string to lower case (e.g. for module file name generation).
+           std::string convertToLowerCase( const std::string & inputString );
+
 //--------------------------------------------------------------
 //@{
 /*! @name File name strings

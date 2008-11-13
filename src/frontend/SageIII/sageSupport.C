@@ -1980,10 +1980,15 @@ determineFileType ( vector<string> argv, int nextErrorCode, SgProject* project )
 
                               file = new SgUnknownFile ( argv,  project );
 
+                              ROSE_ASSERT(file->get_parent() != NULL);
+                              ROSE_ASSERT(file->get_parent() == project);
+
                            // If all else fails, then output the type of file and exit.
                               file->set_sourceFileTypeIsUnknown(true);
                               file->set_requires_C_preprocessor(false);
-                              //outputTypeOfFileAndExit(sourceFilename);
+
+                           // file->set_parent(project);
+                           // outputTypeOfFileAndExit(sourceFilename);
                             }
                        }
                   }
@@ -4086,12 +4091,18 @@ SgFile::callFrontEnd()
  
      AstPostProcessing(this);
 
-   // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
+  // FMZ: 05/30/2008.  Do not generate .rmod file for the PU imported by "use" stmt
 #ifdef USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
-     if (get_Fortran_only() == true &&
-                 FortranModuleInfo::isRmodFile()==false) {
-               generateModFile(this);
-     }
+     if (get_Fortran_only() == true && FortranModuleInfo::isRmodFile()==false)
+        {
+          if (get_verbose() > 1)
+               printf ("Generating a Fortran 90 module file (*.rmod) \n");
+
+          generateModFile(this);
+
+          if (get_verbose() > 1)
+               printf ("DONE: Generating a Fortran 90 module file (*.rmod) \n");
+        }
 #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 
 
@@ -4203,6 +4214,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // build the Fotran AST using the existing SgFile.
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
+  // printf ("######################### Inside of SgSourceFile::build_Fortran_AST() ############################ \n");
+
      bool requires_C_preprocessor = get_requires_C_preprocessor();
      if (requires_C_preprocessor == true)
         {
@@ -4260,6 +4273,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // bool syntaxCheckInputCode = true;
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
 
+  // printf ("In build_Fortran_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
+
      if (syntaxCheckInputCode == true)
         {
        // Note that syntax checking of Fortran 2003 code using gfortran versions greater than 4.1 can 
@@ -4285,6 +4300,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string syntaxCheckingCommandline = "gfortran -S " + get_sourceFileNameWithPath();
        // string warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow -Wunused-labels";
        // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
+
+       // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 
           vector<string> fortranCommandLine;
           fortranCommandLine.push_back(ROSE_GFORTRAN_PATH);
@@ -4370,7 +4387,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
        // Note that "-c" is required to enforce that we only compile and not link the result (even though -fno-backend is specified)
        // A web page specific to -fno-backend suggests using -fsyntax-only instead (so the "-c" options is not required).
-#if 0
+#if 1
        // if ( SgProject::get_verbose() > 0 )
           if ( get_verbose() > 0 )
              {
@@ -4416,6 +4433,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                exit(1);
              }
           ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
+
+       // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 
 #if 0
           printf ("Exiting as a test ... (after syntax check) \n");
@@ -4760,7 +4779,9 @@ SgBinaryFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
 int
 SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
    {
-  // printf ("Calling SgSourceFile::buildAST() \n");
+  // printf ("######################## Calling SgSourceFile::buildAST() ##########################\n");
+
+  // ROSE_ASSERT(false);
 
      int frontendErrorLevel = 0;
      if (get_Fortran_only() == true)
@@ -4846,7 +4867,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
 #if 0
-     display("SgFile::buildCompilerCommandLineOptions()");
+  // display("SgFile::buildCompilerCommandLineOptions()");
      printf ("C   compiler       = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("C++ compiler       = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
      printf ("Fortran compiler   = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
@@ -5143,7 +5164,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-  // printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",compilerNameString.c_str());
+  // printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 
 #if 0
      printf ("Exiting at base of buildCompilerCommandLineOptions() ... \n");
@@ -5161,6 +5182,12 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
 
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
+
+#if 0
+     printf ("\n\n***************************************************** \n");
+     printf ("Calling SgFile::compileOutput() \n");
+     printf ("***************************************************** \n\n\n");
+#endif
 
   // This function does the final compilation of the unparsed file
   // Remaining arguments from the original compile time are used as well
@@ -5234,18 +5261,23 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex, const string& c
   // Now call the compiler that rose is replacing
   // if (get_useBackendOnly() == false)
      if ( SgProject::get_verbose() >= 1 )
+        {
           printf ("Now call the backend (vendor's) compiler compilerNameOrig = %s for file = %s \n",compilerNameOrig.c_str(),get_unparse_output_filename().c_str());
+        }
 
   // Build the commandline to hand off to the C++/C compiler
      vector<string> compilerNameString = buildCompilerCommandLineOptions (argv,fileNameIndex, compilerName );
   // ROSE_ASSERT (compilerNameString != NULL);
+
+  // printf ("SgFile::compileOutput(): compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 
      int returnValueForCompiler = 0;
 
   // error checking
   // display("Called from SgFile::compileOutput()");
 
-  // allow conditional skipping of the final compile step for testing ROSE
+  // Allow conditional skipping of the final compile step for testing ROSE.
+  // printf ("SgFile::compileOutput(): get_skipfinalCompileStep() = %s \n",get_skipfinalCompileStep() ? "true" : "false");
      if (get_skipfinalCompileStep() == false)
         {
        // Debugging code
@@ -5334,6 +5366,8 @@ SgProject::compileOutput( const std::string& compilerName )
        // exit(1);
         }
 
+  // printf ("In SgProject::compileOutput(): get_C_PreprocessorOnly() = %s \n",get_C_PreprocessorOnly() ? "true" : "false");
+
      if (get_C_PreprocessorOnly() == true)
         {
        // DQ (10/16/2005): Handle special case (issue a single compile command for all files)
@@ -5396,21 +5430,26 @@ SgProject::compileOutput( const std::string& compilerName )
         }
        else
         {
+       // printf ("In Project::compileOutput(): Compiling numberOfFiles() = %d \n",numberOfFiles());
+
        // Typical case
           for (i=0; i < numberOfFiles(); i++)
              {
                SgFile & file = get_file(i);
 #if 0
-               printf ("In Project::compileOutput(%s): get_file(%d).get_skipfinalCompileStep() = %s \n",
-                    compilerName,i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
+               printf ("In Project::compileOutput(%s): (in loop) get_file(%d).get_skipfinalCompileStep() = %s \n",compilerName,i,(get_file(i).get_skipfinalCompileStep()) ? "true" : "false");
 #endif
+            // printf ("In Project::compileOutput(): (TOP of loop) file = %d \n",i);
 
             // DQ (8/13/2006): Only use the first file (I don't think this
             // makes sense with multiple files specified on the commandline)!
             // int localErrorCode = file.compileOutput(i, compilerName);
                int localErrorCode = file.compileOutput(0, compilerName);
+
                if (localErrorCode > errorCode)
                     errorCode = localErrorCode;
+
+            // printf ("In Project::compileOutput(): (BASE of loop) file = %d errorCode = %d localErrorCode = %d \n",i,errorCode,localErrorCode);
              }
         }
 

@@ -10496,8 +10496,9 @@ SOURCE_APPLICATION_BINARY_FILE_END
 
 SOURCE_APPLICATION_UNKNOWN_FILE_START
 SgUnknownFile::SgUnknownFile ( vector<string> & argv ,  SgProject* project )
+   : SgFile(argv, project)
    {
-     SgFile(argv, project);
+  // set_parent(project);
    }
 
 SOURCE_APPLICATION_UNKNOWN_FILE_END

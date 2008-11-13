@@ -1,6 +1,36 @@
 \chapter{ Developer's Appendix }
 \label{developersAppendix:developersAppendix}
 
+\section{Adding Contributions to ROSE}
+
+   We will be happy to work with you if you want to add new features to ROSE.
+We can setup a special SVN branch for you so that you can checkin your work and
+also update with our constant work on ROSE (on you schedule).  We can syncronize with 
+you to decide when we can review your work and merge your branch into the main trunk.
+
+{\bf The number one most important aspect about any contribution you make is that it
+should include test codes that demonstrate the feature and test it within our 
+automate test mechanism (the {\em make check} makefile rules).}. Depending upon the 
+feature this can include an additional demonstrative example of how it works, such
+examples go into the ROSE Tutorial (often as a separate chapter).  Most new work
+starts in the {\em Experimental} part of the ROSE Tutorial and is moved forward
+in the document over time.
+
+The purpose of the test codes in our automated tests are:
+\begin{itemize}
+   \item Make sure that future great ideas in ROSE gon't break your feature.
+   \item Allow us to easily detect maintaince problems as early as possible.
+   \item Help us sleep at night knowing that ROSE is really working.
+   \item Give everyone else using ROSE confidence in future releases.
+\end{itemize}
+
+We take this subject very seriously, since it can be a significant problem.
+In the future we will likely not accept contributions that are not accompanied 
+by sufficent test codes that demontrate that they work and will be part of the
+automated tests ({\em make check} makefile rule).  If you want to add a new 
+feature to ROSE, show us your tests.
+
+
 %Added by Liao 10/17/2008
 \section{Working with the ROSE SVN repositories}
 \label{gettingStarted::svn}
@@ -640,17 +670,17 @@ My rules for style are as follows. Adhere to them if you like, or don't, if you'
 
 
 
-\section{Things That May Happen to Your Code After You Leave}
+\section{Things That May Happen to Your Code}
 
     No one likes to have their code touched, and we would like to
 avoid having to do so. We would like to have your contribution to ROSE
 always work and never have to be touched.  We don't wish to pass
 critical judgment on style since we want to allow many people to 
 contribute to ROSE.  However, if we have to debug your code, be prepared 
-that we will do a number of things to it that might offend you:
+that we may do a number of things to it that might offend you:
 \begin{enumerate}
    \item We will add documentation where we think it is appropriate.
-   \item We will add assertion tests (using ROSE\_ASSERT() macros)
+   \item We will add assertion tests (using {\tt ROSE\_ASSERT()} macros)
          wherever we think it is appropriate.
    \item We will reformat your code if we have to understand it and the 
          formatting is a problem.  This may offend
@@ -679,6 +709,8 @@ users of ROSE. They are:
 
 
 We are phasing out the casc-rose@llnl.gov mail list. 
+
+\commentout{
    There is an open email list for ROSE which can be subscribed to
 automatically.  The list name is: {\bf casc-rose}.
 
@@ -750,8 +782,12 @@ Details: \\
 %   \item Password is required (Tom Leher and Hichhicker's Guide).
 \end{enumerate}
 
+% commented out
+}
 
 \section{How To Build a Binary Distribution}
+
+\fixme{I think this is out of date now.}
 
    The construction of a binary distribution is done as part of making
 ROSE available externally on the web to users who do not have an EDG
@@ -961,9 +997,12 @@ the additional \texttt{--with-php=/usr/local/php} option.
 
 \section{Binary Analysis}
 
+\fixme{Move this binary analysis documentation into the ROSE Manual Binary Analysis chapter.}
+
    The documentation for the binary analysis can be found in the ROSE manual at
-\ref{binaryAnalysis::overview}.  However, there are a collection of details 
-that we need to document about the design; so for how these details can go here.
+\ref{binaryAnalysis::overview}.  There are also examples in the ROSE Tutorial.
+However, there are a collection of details 
+that we need to document about the design; so for now these details can go here.
    The design behind the support for binary analysis in ROSE has caused a number of
 design meetings to discuss details.  This section is specific to the support
 in ROSE for binary analysis and the development of the support in ROSE for the 

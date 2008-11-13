@@ -3233,6 +3233,7 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
             // case V_SgFile:
                case V_SgSourceFile:
                case V_SgBinaryFile:
+               case V_SgUnknownFile:
                case V_SgTypedefSeq:
                case V_SgFunctionParameterTypeList:
                case V_SgPragma:

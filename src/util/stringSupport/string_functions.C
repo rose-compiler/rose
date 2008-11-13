@@ -1250,3 +1250,20 @@ std::string StringUtility::intToHex(uint64_t i) {
   os << "0x" << std::hex << i;
   return os.str();
 }
+
+
+string
+StringUtility::convertToLowerCase( const string & inputString )
+   {
+  // DQ (11/12/2008): Used to convert module names to lower case.
+
+  // printf ("Before conversion to lower case: inputString = %s \n",inputString.c_str());
+     string returnString = inputString;
+     for (int i=0; i < returnString.length(); i++)
+        {
+          returnString[i] = tolower(returnString[i]);
+        }
+  // printf ("After conversion to lower case: returnString = %s \n",returnString.c_str());
+
+     return returnString;
+   }

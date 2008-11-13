@@ -356,6 +356,14 @@ PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $
 
 if ROSE_USE_OPEN_FORTRAN_PARSER
 
+# Go back and build the translator we are using to test Fortran (in case make check 
+# is run directly in this directory before make has been run from the root of the 
+# ROSE directory structure).  This does not appear to work!
+../../testTranslator:
+	cd ../..; $(MAKE) testTranslator
+
+testTranslator: ../../testTranslator
+
 $(TEST_F90_Objects): ../../testTranslator ${ALL_TESTCODES}
 # $(TEST_F90_Objects): ../../testTranslator
 # Example of how to call the OpenFortranParser
@@ -398,6 +406,17 @@ $(QMTEST_Objects): ../../testTranslator $(srcdir)/$(@:.qmt=.c)
 # Include makefile rules specific to QMTest
 include $(top_srcdir)/config/QMTest_makefile.inc
 
+# DQ (11/11/2008): Module test copied from developersScratchSpace/Dan/Fortran_tests
+# This file declares a module used by module_B_file.f90
+module_A_file.o: testTranslator
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+
+# Force representation of module dependency so that mod files are properly generated before use.
+module_B_file.o: testTranslator module_A_file.o
+	$(VALGRIND) ../../testTranslator $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.f90)
+
+# We will build a larger collection of module tests soon (supported by makefile dependence rules).
+PASSING_MODULE_TEST_Objects = module_B_file.o
 
 testSuffixRules:
 	java parser.java.FortranMain --dump $(srcdir)/test2007_suffixTest_01.f
@@ -428,6 +447,7 @@ check-local:
 #  Run this test explicitly since it has to be run using a specific rule and can't be lumped with the rest
 #	These Fortran programs must be called externally to the test codes in the "TESTCODES" make variable
 	@$(MAKE) $(PASSING_TEST_Objects)
+	@$(MAKE) $(PASSING_MODULE_TEST_Objects)
 	@echo "***************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Fortran_tests: make check rule complete (terminated normally) ******"
 	@echo "***************************************************************************************************"
@@ -450,7 +470,7 @@ listProblemFiles: $(F77_TESTCODES_CURRENTLY_FAILING) $(F90_TESTCODES_CURRENTLY_F
 EXTRA_DIST = $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_TESTCODES) $(ALL_F90_TESTCODES) $(ALL_F03_TESTCODES) \
    test2007_suffixTest_01.f test2007_suffixTest_02.f77 test2007_suffixTest_03.f90 test2007_suffixTest_04.f95 \
    test2007_suffixTest_05.f03 test2007_suffixTest_06.F test2007_suffixTest_07.F90 test2007_suffixTest_08.F95 \
-   test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08
+   test2007_suffixTest_09.F03 test2007_suffixTest_10.F08 test2007_suffixTest_11.f08 module_A_file.f90 module_B_file.f90
 
 clean-local:
 	rm -f *.o rose_*.f* *.rmod

@@ -1114,6 +1114,7 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
                   }
 
                case V_SgClassDeclaration:
+               case V_SgModuleStatement:
                case V_SgTemplateInstantiationDecl:
                   {
                     SgClassDeclaration* classDeclaration = isSgClassDeclaration(node);

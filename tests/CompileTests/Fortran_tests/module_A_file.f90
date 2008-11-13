@@ -7,7 +7,9 @@ module module_A_file_module_A
    save
 
  ! This variable "r8" will be used a a kind parameter in the rest of the application
-   integer, parameter, public :: r8 = selected_real_kind(13)
+ !  integer, parameter, public :: r8 = selected_real_kind(13)
+
+   integer x
 
 end module module_A_file_module_A
 

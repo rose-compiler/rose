@@ -425,12 +425,12 @@ void c_action_defined_operator(Token_t * definedOp, ofp_bool isExtendedIntrinsic
         }
 
   // DQ (10/8/2008): this rule causes the token to sometime appear on the stack a 2nd time.
-     printf ("Should we push the token on the stack? (YES) \n");
+  // printf ("Should we push the token on the stack? (YES) \n");
 
   // DQ (10/9/2008): To be uniform in the handling of operators (used defined and intrinsic, we ALWAYS push the token onto the stack!
      astNameStack.push_front(definedOp);
 
-#if 1
+#if 0
   // Output debugging information about saved state (stack) information.
      outputState("At BOTTOM of R311 c_action_defined_operator()");
 #endif
@@ -13787,6 +13787,11 @@ void c_action_end_module_stmt(Token_t *label, Token_t *endKeyword, Token_t *modu
 
   // FMZ: 05/30/2008  add the subtree root to the map
      string  fileName = moduleStatement->get_name();
+
+  // DQ (11/12/2008): Modified to force filename to lower case.
+  // printf ("Creating a module file %s using module name = %s \n",StringUtility::convertToLowerCase(fileName).c_str(),fileName.c_str());
+     fileName = StringUtility::convertToLowerCase(fileName);
+
      FortranModuleInfo::addMapping(fileName,moduleStatement);
 
      setStatementNumericLabel(moduleStatement,label);
@@ -14113,11 +14118,18 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
         //  need to check module/def/decl or read from .rmod file
           string modName = useStatement->get_name();
 
+       // DQ (11/12/2008): Convert generated file name to lower case.
+       // Fortran is case insensitive so this maps any module name to 
+       // a unique name module file.
+          modName = StringUtility::convertToLowerCase(modName);
+
           moduleStatement = FortranModuleInfo::getModule(modName);
-      
-         if (moduleStatement == NULL) {
-            cout << "Error : cannot find the module : "<< modName << endl;
-         }
+
+          if (moduleStatement == NULL)
+             {
+               cout << "Error : cannot find the module (module should have been seen in a previously generated file) : "<< modName << endl;
+               ROSE_ASSERT(false);
+             }
     
          ROSE_ASSERT (moduleStatement != NULL);
          
@@ -14140,6 +14152,11 @@ void c_action_use_stmt(Token_t *label, Token_t *useKeyword, Token_t *id, Token_t
           ROSE_ASSERT(moduleStatement != NULL);
         }
      
+  // DQ (11/12/2008): Now set the reference to the module statement from the use statement
+  // (to help support general analysis).  Note that we still do all the symbol table support
+  // to alias symbols in the module statement.
+     useStatement->set_module(moduleStatement);
+
   // Found the module, now read the module's symbols for public members...
   // printf ("Found the module, now read the symbols from the module's symbol table for all public members...\n");
 
@@ -14758,7 +14775,7 @@ void c_action_interface_stmt(Token_t *label, Token_t *abstractToken, Token_t *ke
        // DQ (10/10/2008): We want to use the actual operator name if it is a .xxx. form
           interfaceNameString = interfaceOperatorNameString;
 
-          printf ("interfaceNameString = %s \n",interfaceNameString.c_str());
+       // printf ("interfaceNameString = %s \n",interfaceNameString.c_str());
        // ROSE_ASSERT(interfaceNameString.size() > 1);
 #endif
 
@@ -16236,7 +16253,7 @@ void c_action_start_of_file(const char *filename)
 
           ROSE_ASSERT(astScopeStack.empty() == false);
 
-          printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
+       // printf ("Inserting includeLine into astScopeStack.front() = %s \n",astScopeStack.front()->class_name().c_str());
 
           astScopeStack.front()->append_statement(includeLine);
         }

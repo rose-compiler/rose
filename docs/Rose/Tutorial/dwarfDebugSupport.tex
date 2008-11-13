@@ -1,7 +1,15 @@
 \chapter{Dwarf Debug Support}
 
-This chapter presents the support in ROSE for Dwarf debug information; its 
-representation in the AST and its use in binary analysis tools.
+% Copied from the Dwarf wikipedia page.
+DWARF is a widely used, standardized debugging data format. DWARF was originally designed
+along with ELF, although it is independent of object file formats. The name is a
+pun on "ELF" that has no official meaning but "may be an acronym for 'Debug With
+Attributed Record Format'".  See Wikipedia for more information about the Dwarf 
+debug format.
+
+This chapter presents the support in ROSE for Dwarf 3 debug information; its 
+representation in the AST and its use in binary analysis tools.  This work is part of
+general work to support as much information as possible about binaries.
 
 In the following sections we use a small example (see figure \ref{Tutorial:dwarfAnalysisExampleSourceCode}) 
 that demonstrates various features of Dwarf. The source code of our binary example is:

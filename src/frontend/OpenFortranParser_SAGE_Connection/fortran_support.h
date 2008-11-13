@@ -247,5 +247,8 @@ bool isImplicitNoneScope();
 
 bool isPubliclyAccessible( SgSymbol* symbol );
 
+// DQ (11/12/2008): Used to convert module names to lower case.
+std::string convertToLowerCase( const std::string & inputString );
+
 // endif for ROSE_FORTRAN_SUPPORT
 #endif
