@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 
 # To keep compile commands tidy, please ONLY put required include flags here.
-INCLUDES = $(ROSE_INCLUDES) -I$(builddir) 
+INCLUDES = $(ROSE_INCLUDES) -I.
 INCLUDES2 = $(ROSE_INCLUDES) -I../../
 
 # This test program does not require the rest of ROSE so it can be handled locally
