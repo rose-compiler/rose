@@ -59,16 +59,17 @@ ostream& operator<<(ostream& o, const ReadAndWriteSet& rws) {
 template <size_t Len> struct W {};
 
 struct ReadAndWriteSetPolicy {
-  map<SgAsmInstruction*, ReadAndWriteSet> readAndWriteSets;
+  map<rose_addr_t, ReadAndWriteSet> readAndWriteSets;
   SgAsmInstruction* currentInstruction;
+  rose_addr_t currentAddr;
 
   W<32> readGPR(X86GeneralPurposeRegister r) {
-    readAndWriteSets[currentInstruction].readGprs.insert(r);
+    readAndWriteSets[currentAddr].readGprs.insert(r);
     return W<32>();
   }
 
   void writeGPR(X86GeneralPurposeRegister r, const W<32>& value) {
-    readAndWriteSets[currentInstruction].writtenGprs.insert(r);
+    readAndWriteSets[currentAddr].writtenGprs.insert(r);
   }
 
   W<16> readSegreg(X86SegmentRegister r) {
@@ -86,12 +87,12 @@ struct ReadAndWriteSetPolicy {
   }
 
   W<1> readFlag(X86Flag f) {
-    readAndWriteSets[currentInstruction].readFlags.insert(f);
+    readAndWriteSets[currentAddr].readFlags.insert(f);
     return W<1>();
   }
 
   void writeFlag(X86Flag f, const W<1>& value) {
-    readAndWriteSets[currentInstruction].writtenFlags.insert(f);
+    readAndWriteSets[currentAddr].writtenFlags.insert(f);
   }
 
   template <size_t Len>
@@ -230,13 +231,13 @@ struct ReadAndWriteSetPolicy {
 
   template <size_t Len> // In bits
   W<Len> readMemory(X86SegmentRegister segreg, const W<32>& addr, W<1> cond) {
-    readAndWriteSets[currentInstruction].readMemory = true;
+    readAndWriteSets[currentAddr].readMemory = true;
     return W<Len>();
   }
 
   template <size_t Len>
   void writeMemory(X86SegmentRegister segreg, const W<32>& addr, const W<Len>& data, W<1> cond) {
-    readAndWriteSets[currentInstruction].writtenMemory = true;
+    readAndWriteSets[currentAddr].writtenMemory = true;
   }
 
   W<32> filterIndirectJumpTarget(const W<32>& addr) {return addr;}
@@ -244,7 +245,7 @@ struct ReadAndWriteSetPolicy {
   W<32> filterReturnTarget(const W<32>& addr) {return addr;}
 
   void hlt() {} // FIXME
-  void interrupt(uint8_t num) {} // FIXME
+  void interrupt(uint8_t num) {readAndWriteSets[currentAddr].readMemory |= false;}
   W<64> rdtsc() {return W<64>();} // FIXME
 
   void startBlock(uint64_t addr) {
@@ -255,6 +256,7 @@ struct ReadAndWriteSetPolicy {
 
   void startInstruction(SgAsmInstruction* insn) {
     currentInstruction = insn;
+    currentAddr = insn->get_address();
   }
 
   void finishInstruction(SgAsmInstruction*) {}
@@ -265,14 +267,15 @@ int main(int argc, char** argv) {
   SgProject* proj = frontend(argc, argv);
   ReadAndWriteSetPolicy policy;
   X86InstructionSemantics<ReadAndWriteSetPolicy, W> t(policy);
-  vector<SgNode*> blocks = NodeQuery::querySubTree(proj, V_SgAsmBlock);
-  for (size_t i = 0; i < blocks.size(); ++i) {
-    SgAsmBlock* b = isSgAsmBlock(blocks[i]);
+  vector<SgNode*> insns = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+  for (size_t i = 0; i < insns.size(); ++i) {
+    SgAsmx86Instruction* b = isSgAsmx86Instruction(insns[i]);
     ROSE_ASSERT (b);
-    t.processBlock(b);
+    t.processInstruction(b);
   }
-  for (map<SgAsmInstruction*, ReadAndWriteSet>::const_iterator i = policy.readAndWriteSets.begin(); i != policy.readAndWriteSets.end(); ++i) {
-    cout << '"' << unparseInstruction(i->first) << '"' << ' ' << i->second << endl;
+  VirtualBinCFG::AuxiliaryInformation info(proj);
+  for (map<rose_addr_t, ReadAndWriteSet>::const_iterator i = policy.readAndWriteSets.begin(); i != policy.readAndWriteSets.end(); ++i) {
+    cout << '"' << unparseInstructionWithAddress(info.getInstructionAtAddress(i->first)) << '"' << ' ' << i->second << endl;
   }
   return 0;
 }
