@@ -427,9 +427,6 @@ SgAsmElfFileHeader::reallocate()
 void
 SgAsmElfFileHeader::unparse(std::ostream &f)
 {
-    /* Allow sections to reallocate themselves until things settle */
-    while (reallocate()) /*void*/;
-
     /* Write unreferenced areas back to the file before anything else. */
     unparse_holes(f);
 

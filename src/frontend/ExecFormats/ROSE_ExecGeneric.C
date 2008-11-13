@@ -2560,9 +2560,6 @@ SgAsmGenericHeader::reallocate()
 void
 SgAsmGenericHeader::unparse(std::ostream &f)
 {
-    /* Allow all sections to reallocate themselves until things settle */
-    while (reallocate()) /*void*/;
-
     SgAsmGenericSection::unparse(f);
 
     /* Unparse each section */
