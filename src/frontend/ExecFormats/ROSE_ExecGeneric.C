@@ -2139,10 +2139,8 @@ SgAsmGenericSection::unparse(std::ostream &f, const ExtentMap &map)
 void
 SgAsmGenericSection::unparse_holes(std::ostream &f)
 {
-    bool was_congealed = get_congealed();
-    unparse(f, congeal());
-    if (!was_congealed)
-        uncongeal();
+    ROSE_ASSERT(get_congealed()); /*done parsing*/
+    unparse(f, p_extents);
 }
 
 /* Returns the file offset associated with the relative virtual address of a mapped section. */
