@@ -2,6 +2,8 @@
 // on Linux (ELF) or Windows (PE) binary executables.
 
 #include "rose.h"
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 class Visitor: public AstSimpleProcessing
    {
@@ -18,8 +20,8 @@ Visitor::visit(SgNode* n)
           printf("Found a SgAsmGenericSymbol, Here: offset = %zu, %p = %s = %s \n",(size_t)0,symbol,symbol->class_name().c_str(),symbol->get_name()->c_str());
           printf ("symbol->get_name()      = %s \n",symbol->get_name()->c_str());
           printf ("symbol->get_bound()     = %p \n",symbol->get_bound());
-          printf ("symbol->get_size()      = %zu \n",symbol->get_size());
-          printf ("symbol->get_value()     = %zu \n",symbol->get_value());
+          printf ("symbol->get_size()      = %"PRIu64" \n",symbol->get_size());
+          printf ("symbol->get_value()     = %"PRIu64" \n",symbol->get_value());
 
           printf ("symbol->get_type()      = %u = %s \n",symbol->get_type(),symbol->stringifyType().c_str());
           printf ("symbol->get_binding()   = %u = %s \n",symbol->get_binding(),symbol->stringifyBinding().c_str());
@@ -30,17 +32,17 @@ Visitor::visit(SgNode* n)
 
           if (elfSymbol != NULL)
              {
-               printf ("   elfSymbol->get_st_name()  = %zu \n",elfSymbol->get_st_name());
+               printf ("   elfSymbol->get_st_name()  = %"PRIu64" \n",elfSymbol->get_st_name());
                printf ("   elfSymbol->get_st_info()  = %u  \n",elfSymbol->get_st_info());
                printf ("   elfSymbol->get_st_res1()  = %u  \n",elfSymbol->get_st_res1());
                printf ("   elfSymbol->get_st_shndx() = %u  \n",elfSymbol->get_st_shndx());
-               printf ("   elfSymbol->get_st_size()  = %zu \n",elfSymbol->get_st_size());
+               printf ("   elfSymbol->get_st_size()  = %"PRIu64" \n",elfSymbol->get_st_size());
              }
 
           if (coffSymbol != NULL)
              {
                printf ("   coffSymbol->get_st_name()            = %s \n",coffSymbol->get_st_name().c_str());
-               printf ("   coffSymbol->get_st_name_offset()     = %zu \n",coffSymbol->get_st_name_offset());
+               printf ("   coffSymbol->get_st_name_offset()     = %"PRIu64" \n",coffSymbol->get_st_name_offset());
                printf ("   coffSymbol->get_st_section_num()     = %d  \n",coffSymbol->get_st_section_num());
                printf ("   coffSymbol->get_st_type()            = %u  \n",coffSymbol->get_st_type());
                printf ("   coffSymbol->get_st_storage_class()   = %u  \n",coffSymbol->get_st_storage_class());
