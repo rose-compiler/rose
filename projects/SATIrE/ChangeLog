@@ -1,11 +1,17 @@
-V0.8.5 ??? GB
+V0.8.5 ??? GB,AP,VP
 
-* Changes in PAG analyzer architecture
+* Experimental points-to/alias analysis for C programs [GB]
+  - specify --run-pointsto-analysis command line flag, PAG analyses then
+    have access to the new Location type and associated auxiliary functions;
+    see docs/satire_attributes_auxiliary_functions for details and
+    examples/pointsto_live_variables for a small example
+
+* Changes in PAG analyzer architecture [GB,VP]
   - analyzers are encapsulated as C++ objects, and it will soon be possible
     to mix and match/distribute analyzers as a library with a simple header
     file
 
-* Predefined SATIrE attribute, type, and auxiliary function declarations
+* Predefined SATIrE attribute, type, and auxiliary function declarations [GB]
   - using new features provided by PAG 9.2.2.48, SATIrE's attributes, types,
     and auxiliary functions are now declared automatically; user-defined
     declarations are no longer necessary (or allowed)
