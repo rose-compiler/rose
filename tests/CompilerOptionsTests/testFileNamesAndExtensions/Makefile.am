@@ -102,3 +102,4 @@ clean-local:
 	*.C.pdf *.C.edg.pdf *.pdf *.int.C rose_directives_list.txt core \
 	rose_*.s *.new *.dump
 	rm -rf ti_files a*.out
+	rm rose_testFileNamesAndExtensions
