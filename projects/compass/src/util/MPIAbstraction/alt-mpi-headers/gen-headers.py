@@ -260,7 +260,9 @@ for (fn_in, fn_out) in rewrite_file_pairs:
     fp_out = open_file (filenames[fn_out], 'w')
 
     # Insert a warning message just to verify that we got the right header.
-    write_line (fp_out, '#warning "%s, derived from %s."' \
+    # JJW (11/13/2008): #warning messages are not useful -- use a comment
+    # instead
+    write_line (fp_out, '// "%s, derived from %s."' \
                 % (filenames[fn_out], filenames[fn_in]))
 
     rewrite_mpi_header (fp_in, fp_out, new_defs)
