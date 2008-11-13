@@ -345,6 +345,28 @@ for development versions, you have to type ./build in the source tree to
 generate the configure script and Makefile.ins. Once this is done, the rest
 steps are the same as those of building a distribution version.
 
+\subsection{TroubleShooting the ROSE Installation}
+
+% DQ (11/12/2008): This is where we need to accumulate the symptoms of what goes wrong.
+
+   There are a number of famous ways to screw up yur installation of ROSE.
+\begin{enumerate}
+   \item Message: {\tt configure: error: Could not link against boost\_filesystem-gcc41-mt} \\
+   This message from running the {\tt configure} command in ROSE (an initial step in building
+   ROSE) indicates that your {\tt LD\_LIBRARY\_PATH} (environment variable) is not set to 
+   to the location of the boost install tree.  The ROSE configure scripts (autoconf) will
+   test the linking to specific boost libraries and this is the first dynamic link library 
+   that it tests and so it will fail when many other tests on boost succeed because your
+   {\tt LD\_LIBRARY\_PATH} is finally required and is not properly set.
+
+   \item {\bf Don't build ROSE in the source tree, it is not tested often, but it should work.} \\
+    Save yourself some trouble and build a separate compile tree.  This will also allow
+    you to build a number of different versions of ROSE with different options.
+
+\end{enumerate}
+
+
+
 \subsection{ROSE Configure Options}
 \label{gettingStarted:configureOptions}
      A few example configure options are:
@@ -393,6 +415,8 @@ steps are the same as those of building a distribution version.
          \ref{gettingStarted:configureHelpOptionOutputPart1} for complete
          listing.
 \end{itemize}
+
+
 
 %\fixme{It is suggested by TID that we move the figures to this location.
 %       Checkout if this is possible.}
