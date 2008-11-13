@@ -1916,12 +1916,25 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
     return returnValue;
 }
 
-/* Write data back to a file section. The data to write may be larger than the file section as long as the extra (which will
- * not be written) is all zero. The offset is relative to the start of the section. */
+/** Write data to a file section.
+ *
+ *   @param f       Output steam to which to write
+ *   @param offset  Byte offset relative to start of this section
+ *   @param bufsize Size of @p buf in bytes
+ *   @param buf     Buffer of bytes to be written
+ *
+ *  @returns Returns the section-relative byte offset for the first byte beyond what would have been written if all bytes
+ *  of the buffer were written.
+ *
+ *  The buffer is allowed to extend past the end of the section as long as the part that extends beyond is all zeros. The
+ *  zeros will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the end of the file will
+ *  not be written (end-of-file is determined by SgAsmGenericFile::get_orig_size()) */
 rose_addr_t
 SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const void *buf)
 {
     size_t nwrite, nzero;
+
+    /* Don't write past end of section */
     if (offset>=get_size()) {
         nwrite = 0;
         nzero  = bufsize;
@@ -1933,12 +1946,20 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
         nzero = bufsize - nwrite;
     }
 
+    /* Don't write past end of current EOF if we can help it. */
+    SgAsmGenericFile *file = get_file();
+    while (nwrite>0 && 0==((const char*)buf)[nwrite-1] &&
+           get_offset()+offset+nwrite>file->get_orig_size())
+        --nwrite;
+
+    /* Write bytes to file */
     ROSE_ASSERT(f);
     f.seekp(get_offset()+offset);
     ROSE_ASSERT(f);
     f.write((const char*)buf, nwrite);
     ROSE_ASSERT(f);
 
+    /* Check that truncated data is all zero and fail if it isn't */
     for (size_t i=nwrite; i<bufsize; i++) {
         if (((const char*)buf)[i]) {
             char mesg[1024];
