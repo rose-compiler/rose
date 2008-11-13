@@ -22,8 +22,8 @@ EXTRA_DIST = \
      install-sh \
      dirincludes \
      create_system_headers \
-     macro_names_to_remove
-
+     macro_names_to_remove \
+     cleanConfigGuessOutput
 
 # DQ (9/3/2006): I think that if we have config.guess, depend, install-sh, and dirincludes; then we don't need "missing"
 # missing
