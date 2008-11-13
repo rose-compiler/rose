@@ -1930,7 +1930,7 @@ SgAsmGenericSection::content_ucl(addr_t offset, addr_t size)
  *  zeros will not be written to the output file.  Furthermore, any trailing zeros that extend beyond the end of the file will
  *  not be written (end-of-file is determined by SgAsmGenericFile::get_orig_size()) */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const void *buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const void *buf) const
 {
     size_t nwrite, nzero;
 
@@ -1981,7 +1981,7 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, size_t bufsize, const
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentList &buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentList &buf) const
 {
     if (0==buf.size())
         return 0;
@@ -1990,7 +1990,7 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgFileContentLi
 
 /* See related method above */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharList &buf)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharList &buf) const
 {
     if (0==buf.size())
         return 0;
@@ -1999,14 +1999,14 @@ SgAsmGenericSection::write(std::ostream &f, addr_t offset, const SgUnsignedCharL
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, const std::string &str)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, const std::string &str) const
 {
     return write(f, offset, str.size(), &(str[0]));
 }
 
 /* See related method above. */
 rose_addr_t
-SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c)
+SgAsmGenericSection::write(std::ostream &f, addr_t offset, char c) const
 {
     return write(f, offset, 1, &c);
 }
