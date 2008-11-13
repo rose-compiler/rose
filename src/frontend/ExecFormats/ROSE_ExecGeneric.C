@@ -1604,6 +1604,28 @@ SgAsmGenericFile::unfill_holes()
     ROSE_ASSERT(get_holes()->get_sections().size()==0);
 }
 
+/* Call this before unparsing to make sure everything is consistent. */
+void
+SgAsmGenericFile::reallocate()
+{
+    bool reallocated;
+    do {
+        reallocated = false;
+
+        /* holes */
+        for (SgAsmGenericSectionPtrList::iterator i=p_holes->get_sections().begin(); i!=p_holes->get_sections().end(); ++i) {
+            if ((*i)->reallocate())
+                reallocated = true;
+        }
+
+        /* file headers (and indirectly, all that they reference) */
+        for (SgAsmGenericHeaderPtrList::iterator i=p_headers->get_headers().begin(); i!=p_headers->get_headers().end(); ++i) {
+            if ((*i)->reallocate())
+                reallocated = true;
+        }
+    } while (reallocated);
+}
+
 /* Mirror image of parsing an executable file. The result (unless the AST has been modified) should be identical to the
  * original file. */
 void

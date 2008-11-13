@@ -907,6 +907,7 @@ HEADER_GENERIC_FILE_START
 	public:
 		SgAsmGenericFile(std::string file_name);
 		virtual ~SgAsmGenericFile();				/* Destructor deletes children and unmaps/closes file */
+		void reallocate();					/* Make consistent before calling unparse */
 		void unparse(std::ostream&);				/* Unparse the file -- mirror image of parsing */
 		void dump(FILE*);                                   	/* Print some debugging info */
 
