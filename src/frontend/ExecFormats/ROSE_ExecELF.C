@@ -574,6 +574,13 @@ SgAsmElfSection::ctor(SgAsmElfSegmentTableEntry *shdr)
     set_mapped_xperm(shdr->get_flags() & SgAsmElfSegmentTableEntry::PF_XPERM ? true : false);
 }
 
+/* Just a convenience function so we don't need to constantly cast the return value from get_header() */
+SgAsmElfFileHeader*
+SgAsmElfSection::get_elf_header() const
+{
+    return dynamic_cast<SgAsmElfFileHeader*>(get_header());
+}
+
 /* Returns info about the size of the entries based on information already available. Any or all arguments may be null
  * pointers if the caller is not interested in the value. Return values are:
  *
