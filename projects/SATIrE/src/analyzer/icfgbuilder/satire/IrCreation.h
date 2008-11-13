@@ -114,12 +114,15 @@ private:
 // allocate memory for the array, and do that only once if we keep a map
 // from the lists in the AST to any already allocated lists. The map is kept
 // in the garbage bin and automatically emptied at some point.
+// GB (2008-11-12): The identify-objects-by-their-address approach fails for
+// stack-allocated vectors, of course. So we skip the lookup for now and
+// always allocate a new array.
 template <class T>
 void **
 Ir::createNodeList(std::vector<T> &vec)
 {
     void *address = (void *) &vec;
-    void **array = garbageBin.findNodeList(address);
+    void **array = NULL; // garbageBin.findNodeList(address);
     if (array == NULL)
     {
      // allocate, fill, and null-terminate the array, put it in the map, and
